@@ -52,6 +52,8 @@ World Championship.
 - `RosterMembership`: A person's role on a team or other participant roster.
 - `CountryConnection`: One reason a country is connected to an event.
 - `Relevance`: One reason an event should appear for a followed country.
+- `ImportRun`: One attempt to collect events from a source.
+- `ImportIssue`: A warning or error found while importing source data.
 - `EventQuery`: A user-defined event filter over schedules and country
   connection evidence.
 - `Source`: An external data source, such as a league, federation, or API.
