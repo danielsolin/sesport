@@ -1,7 +1,8 @@
 namespace SESport.Sources.Iihf;
 
 public sealed class IihfEventSourceImporter(
-   IIihfScheduleClient scheduleClient
+   IIihfScheduleClient scheduleClient,
+   IihfCompetitionSource competitionSource
 ) : IEventSourceImporter
 {
    public Source Source { get; } = new(
@@ -29,6 +30,7 @@ public sealed class IihfEventSourceImporter(
       var importedEvents = games
          .Select(ToImportedEvent)
          .ToList();
+      var issues = CreateIssues(importedEvents);
 
       var importRun = new ImportRun(
          new ImportRunId(CreateImportRunId(request)),
@@ -37,7 +39,7 @@ public sealed class IihfEventSourceImporter(
          request.StartsAfter,
          request.StartsAfter,
          importedEvents,
-         []
+         issues
       );
 
       return importRun;
@@ -83,8 +85,31 @@ public sealed class IihfEventSourceImporter(
       );
    }
 
-   private static string CreateImportRunId(ImportRequest request)
+   private string CreateImportRunId(ImportRequest request)
    {
-      return $"import-run:iihf:{request.StartsAfter:yyyyMMddHHmmss}";
+      var eventPath = competitionSource.EventPath.Replace("/", "-");
+
+      return $"import-run:iihf:{eventPath}:" +
+         $"{request.StartsAfter:yyyyMMddHHmmss}";
+   }
+
+   private IReadOnlyCollection<ImportIssue> CreateIssues(
+      IReadOnlyCollection<ImportedEvent> importedEvents
+   )
+   {
+      if (importedEvents.Count > 0)
+      {
+         return [];
+      }
+
+      return
+      [
+         new ImportIssue(
+            ImportIssueKind.NoEventsFound,
+            ImportIssueSeverity.Warning,
+            null,
+            $"No IIHF events were found for {competitionSource.EventPath}."
+         )
+      ];
    }
 }

@@ -16,7 +16,10 @@ public class IihfEventSourceImporterTests
       var scheduleClient = new InMemoryIihfScheduleClient(
          [CreateSwedenVsSwitzerlandGame()]
       );
-      var importer = new IihfEventSourceImporter(scheduleClient);
+      var importer = new IihfEventSourceImporter(
+         scheduleClient,
+         CreateCompetitionSource()
+      );
       var request = new ImportRequest(
          new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.FromHours(2)),
          new DateTimeOffset(2026, 5, 29, 0, 0, 0, TimeSpan.FromHours(2))
@@ -44,6 +47,32 @@ public class IihfEventSourceImporterTests
       );
    }
 
+   [Fact]
+   public async Task IihfImporterReportsIssueWhenNoEventsAreFound()
+   {
+      var scheduleClient = new InMemoryIihfScheduleClient([]);
+      var importer = new IihfEventSourceImporter(
+         scheduleClient,
+         CreateCompetitionSource()
+      );
+      var request = new ImportRequest(
+         new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.FromHours(2)),
+         new DateTimeOffset(2026, 5, 29, 0, 0, 0, TimeSpan.FromHours(2))
+      );
+
+      var importRun = await importer.ImportEventsAsync(
+         request,
+         CancellationToken.None
+      );
+
+      var issue = importRun.Issues.Single();
+
+      Assert.Empty(importRun.Events);
+      Assert.Equal(ImportIssueKind.NoEventsFound, issue.Kind);
+      Assert.Equal(ImportIssueSeverity.Warning, issue.Severity);
+      Assert.Equal("No IIHF events were found for 2026/wm.", issue.Message);
+   }
+
    private static IihfGame CreateSwedenVsSwitzerlandGame()
    {
       return new IihfGame(
@@ -64,6 +93,15 @@ public class IihfEventSourceImporterTests
             "Switzerland",
             "Switzerland men's national ice hockey team"
          )
+      );
+   }
+
+   private static IihfCompetitionSource CreateCompetitionSource()
+   {
+      return new IihfCompetitionSource(
+         new CompetitionId("competition:iihf-world-championship-2026"),
+         "2026/wm",
+         new Uri("https://stats.iihf.com/Hydra/969/index.html")
       );
    }
 }
