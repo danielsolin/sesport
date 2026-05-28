@@ -2,38 +2,18 @@ namespace SESport.Core.Tests;
 
 public class RelevanceTests
 {
+   private static readonly Country Sweden = new("SE", "Sweden");
+   private static readonly Country Switzerland = new("CH", "Switzerland");
+
    [Fact]
    public void SwedenVsSwitzerlandIsRelevantToSweden()
    {
-      var sweden = new Country("SE", "Sweden");
-      var switzerland = new Country("CH", "Switzerland");
-      var iceHockey = new Sport("Ice hockey");
-      var competition = new Competition(
-         "2026 IIHF Ice Hockey World Championship",
-         iceHockey
-      );
+      var game = CreateSwedenVsSwitzerlandGame();
 
-      var game = new SportEvent(
-         "Sweden vs Switzerland",
-         competition,
-         new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
-         "Quarter-final",
-         [
-            new Participant(
-               "Sweden men's national ice hockey team",
-               sweden
-            ),
-            new Participant(
-               "Switzerland men's national ice hockey team",
-               switzerland
-            )
-         ]
-      );
+      var relevance = game.GetRelevanceFor(Sweden).Single();
 
-      var relevance = game.GetRelevanceFor(sweden);
-
-      Assert.NotNull(relevance);
-      Assert.Equal(sweden, relevance.Country);
+      Assert.Equal(Sweden, relevance.Country);
+      Assert.Null(relevance.Person);
       Assert.Equal(
          "Sweden men's national ice hockey team represents Sweden.",
          relevance.Reason
@@ -43,16 +23,42 @@ public class RelevanceTests
    [Fact]
    public void SwedenVsSwitzerlandIsNotRelevantToFinland()
    {
-      var sweden = new Country("SE", "Sweden");
-      var switzerland = new Country("CH", "Switzerland");
       var finland = new Country("FI", "Finland");
+      var game = CreateSwedenVsSwitzerlandGame();
+
+      var relevance = game.GetRelevanceFor(finland);
+
+      Assert.Empty(relevance);
+   }
+
+   [Fact]
+   public void ClubGameIsRelevantWhenTeamHasSwedishRosterMember()
+   {
+      var game = CreateVegasVsFloridaGame();
+
+      var relevance = game.GetRelevanceFor(Sweden).Single();
+
+      Assert.Equal(Sweden, relevance.Country);
+      Assert.Equal(
+         "Las Vegas Golden Knights",
+         relevance.EventParticipant.Name
+      );
+      Assert.Equal("William Karlsson", relevance.Person?.Name);
+      Assert.Equal(
+         "William Karlsson is a Sweden player on Las Vegas Golden Knights.",
+         relevance.Reason
+      );
+   }
+
+   private static SportEvent CreateSwedenVsSwitzerlandGame()
+   {
       var iceHockey = new Sport("Ice hockey");
       var competition = new Competition(
          "2026 IIHF Ice Hockey World Championship",
          iceHockey
       );
 
-      var game = new SportEvent(
+      return new SportEvent(
          "Sweden vs Switzerland",
          competition,
          new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
@@ -60,17 +66,45 @@ public class RelevanceTests
          [
             new Participant(
                "Sweden men's national ice hockey team",
-               sweden
+               ParticipantKind.NationalTeam,
+               Sweden
             ),
             new Participant(
                "Switzerland men's national ice hockey team",
-               switzerland
+               ParticipantKind.NationalTeam,
+               Switzerland
             )
          ]
       );
+   }
 
-      var relevance = game.GetRelevanceFor(finland);
+   private static SportEvent CreateVegasVsFloridaGame()
+   {
+      var iceHockey = new Sport("Ice hockey");
+      var competition = new Competition("Stanley Cup Final", iceHockey);
+      var williamKarlsson = new Person("William Karlsson", [Sweden]);
 
-      Assert.Null(relevance);
+      return new SportEvent(
+         "Las Vegas Golden Knights vs Florida Panthers",
+         competition,
+         new DateTimeOffset(2026, 6, 10, 2, 0, 0, TimeSpan.Zero),
+         "Final",
+         [
+            new Participant(
+               "Las Vegas Golden Knights",
+               ParticipantKind.ClubTeam,
+               null,
+               [
+                  new RosterMembership(williamKarlsson, "player")
+               ]
+            ),
+            new Participant(
+               "Florida Panthers",
+               ParticipantKind.ClubTeam,
+               null,
+               []
+            )
+         ]
+      );
    }
 }

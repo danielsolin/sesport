@@ -43,16 +43,24 @@ World Championship.
   round, or game.
 - `Participant`: A team, national team, club, athlete, player, driver,
   fighter, or esports player taking part in an event.
-- `Relevance`: The reason an event should appear for a followed country.
+- `Person`: A person connected to a participant, such as a player on a roster.
+- `RosterMembership`: A person's role on a team or other participant roster.
+- `Relevance`: One reason an event should appear for a followed country.
 
 ## First Relevance Rule
 
 An event is relevant to a country when at least one participant in the event
-represents that country.
+represents that country, or when a person connected to an event participant
+has that country as a nationality.
 
 For the first domain slice, Sweden vs Switzerland is relevant to Sweden
 because the Sweden men's national ice hockey team represents Sweden in the
 event.
+
+For club-team events, relevance can come from roster evidence. If Las Vegas
+Golden Knights play a Stanley Cup Final and have Swedish players on the roster,
+the event can be relevant to Sweden even though Las Vegas does not represent
+Sweden.
 
 This rule should later extend to individual athletes, club teams, esports
 players, motorsport drivers, and other country-specific participation patterns

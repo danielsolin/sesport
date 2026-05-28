@@ -1,7 +1,8 @@
 namespace SESport.Core;
 
 public sealed record Relevance(
-    Country Country,
-    Participant Participant,
-    string Reason
+   Country Country,
+   Participant EventParticipant,
+   Person? Person,
+   string Reason
 );
