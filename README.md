@@ -35,7 +35,7 @@ World Championship.
 - Event: Sweden vs Switzerland
 - Stage: Quarter-final
 - Start time: May 28, 2026, 20:20 Europe/Stockholm
-- Relevance: Sweden participates as a national team
+- Country connection: Sweden participates as a national team
 
 ## Core Concepts
 
@@ -51,7 +51,6 @@ World Championship.
 - `Person`: A person connected to a participant, such as a player on a roster.
 - `RosterMembership`: A person's role on a team or other participant roster.
 - `CountryConnection`: One reason a country is connected to an event.
-- `Relevance`: One reason an event should appear for a followed country.
 - `ImportRun`: One attempt to collect events from a source.
 - `ImportIssue`: A warning or error found while importing source data.
 - `IEventSourceImporter`: A source adapter that can produce import runs.
@@ -61,7 +60,13 @@ World Championship.
 - `ImportedEvent`: A raw event shape from a source before full resolution.
 - `ExternalMapping`: A link from a source-specific ID to an internal entity.
 
-## First Relevance Rule
+## Source Adapters
+
+Source-specific adapters live outside `SESport.Core`. The first adapter project
+is `SESport.Sources.Iihf`, which maps IIHF-like schedule data into the shared
+ingestion model without performing network access yet.
+
+## First Country Connection Rule
 
 An event is relevant to a country when the event has one or more country
 connections for that country.
@@ -75,10 +80,10 @@ For the first domain slice, Sweden vs Switzerland is relevant to Sweden
 because the Sweden men's national ice hockey team creates a country connection
 to Sweden by representing Sweden in the event.
 
-For club-team events, relevance can come from roster evidence. If Las Vegas
-Golden Knights play a Stanley Cup Final and have Swedish players on the roster,
-the event can be relevant to Sweden even though Las Vegas does not represent
-Sweden.
+For club-team events, country connections can come from roster evidence. If
+Las Vegas Golden Knights play a Stanley Cup Final and have Swedish players on
+the roster, the event can be relevant to Sweden even though Las Vegas does not
+represent Sweden.
 
 This rule should later extend to individual athletes, club teams, esports
 players, motorsport drivers, and other country-specific participation patterns

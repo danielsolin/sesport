@@ -57,17 +57,4 @@ public sealed record SportEvent(
 
       return connections;
    }
-
-   public IReadOnlyCollection<Relevance> GetRelevanceFor(Country country)
-   {
-      return GetCountryConnectionsFor(country)
-         .Select(connection => new Relevance(
-            connection.Country,
-            connection.EventParticipant,
-            connection.Person,
-            connection.Kind,
-            connection.Reason
-         ))
-         .ToList();
-   }
 }

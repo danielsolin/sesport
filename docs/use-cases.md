@@ -1,7 +1,7 @@
 # Use Cases
 
 SE Sport should eventually support user-defined views over sports events,
-participants, people, rosters, and country relevance evidence.
+participants, people, rosters, and country connection evidence.
 
 These use cases depend on data availability. They describe product direction,
 not guaranteed v1 behavior.
