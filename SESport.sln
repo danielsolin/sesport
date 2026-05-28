@@ -14,6 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{FF5E4F5A-4E3D-47E4-82DB-1AC8E67DDDAC}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		docs\use-cases.md = docs\use-cases.md
 	EndProjectSection
 EndProject
 Global
@@ -57,5 +58,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{F906B288-C7C9-4DDA-A8C8-0AACC2B0AE5E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{25C8B4DF-8175-4AFF-B83E-F5FA397E05E8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C80B2B88-11D1-4C2E-9732-6EAB6E858671}
 	EndGlobalSection
 EndGlobal
