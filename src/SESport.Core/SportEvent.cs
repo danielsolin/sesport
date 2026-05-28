@@ -1,25 +1,48 @@
 namespace SESport.Core;
 
 public sealed record SportEvent(
-    string Name,
-    Competition Competition,
-    DateTimeOffset StartsAt,
-    string Stage,
-    IReadOnlyCollection<Participant> Participants
+   string Name,
+   Competition Competition,
+   DateTimeOffset StartsAt,
+   string Stage,
+   IReadOnlyCollection<Participant> Participants
 )
 {
-   public Relevance? GetRelevanceFor(Country country)
+   public IReadOnlyCollection<Relevance> GetRelevanceFor(Country country)
    {
-      var participant = Participants.FirstOrDefault(
-          candidate => candidate.RepresentsCountry == country);
+      var relevance = new List<Relevance>();
 
-      if(participant is null)
+      foreach (var participant in Participants)
       {
-         return null;
+         if (participant.RepresentsCountry == country)
+         {
+            var reason = $"{participant.Name} represents {country.Name}.";
+
+            relevance.Add(new Relevance(country, participant, null, reason));
+         }
+
+         foreach (var membership in participant.Roster)
+         {
+            if (!membership.Person.Nationalities.Contains(country))
+            {
+               continue;
+            }
+
+            var reason =
+               $"{membership.Person.Name} is a {country.Name} " +
+               $"{membership.Role} on {participant.Name}.";
+
+            relevance.Add(
+               new Relevance(
+                  country,
+                  participant,
+                  membership.Person,
+                  reason
+               )
+            );
+         }
       }
 
-      var reason = $"{participant.Name} represents {country.Name}.";
-
-      return new Relevance(country, participant, reason);
+      return relevance;
    }
 }
