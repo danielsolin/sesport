@@ -1,4 +1,4 @@
-namespace SESport.Core;
+namespace SESport.Core.Queries;
 
 public sealed record EventQuery(
    Country Country,
