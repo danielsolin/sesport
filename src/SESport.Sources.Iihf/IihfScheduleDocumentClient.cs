@@ -1,9 +1,9 @@
 namespace SESport.Sources.Iihf;
 
-public sealed class HttpIihfScheduleClient(
+public sealed class IihfScheduleDocumentClient(
    HttpClient httpClient,
    IihfScheduleHtmlParser parser,
-   Uri scheduleUri
+   Uri documentUri
 ) : IIihfScheduleClient
 {
    public async Task<IReadOnlyCollection<IihfGame>> GetGamesAsync(
@@ -12,7 +12,7 @@ public sealed class HttpIihfScheduleClient(
    )
    {
       var html = await httpClient.GetStringAsync(
-         scheduleUri,
+         documentUri,
          cancellationToken
       );
 

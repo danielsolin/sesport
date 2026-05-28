@@ -65,8 +65,8 @@ World Championship.
 
 Source-specific adapters live outside `SESport.Core`. The first adapter project
 is `SESport.Sources.Iihf`, which maps IIHF-like schedule data into the shared
-ingestion model. The first HTTP client fetches IIHF schedule HTML and parses it
-behind a testable schedule client boundary.
+ingestion model. The first document client can read IIHF schedule HTML behind a
+testable schedule client boundary.
 
 ## First Country Connection Rule
 

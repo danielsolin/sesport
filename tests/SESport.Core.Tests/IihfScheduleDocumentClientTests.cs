@@ -3,16 +3,16 @@ using SESport.Sources.Iihf;
 
 namespace SESport.Core.Tests;
 
-public class HttpIihfScheduleClientTests
+public class IihfScheduleDocumentClientTests
 {
    [Fact]
-   public async Task ClientFetchesScheduleHtmlAndReturnsMatchingGames()
+   public async Task ClientFetchesScheduleDocumentAndReturnsMatchingGames()
    {
       var handler = new StubHttpMessageHandler(ScheduleHtml);
-      var client = new HttpIihfScheduleClient(
+      var client = new IihfScheduleDocumentClient(
          new HttpClient(handler),
          new IihfScheduleHtmlParser(),
-         new Uri("https://www.iihf.com/en/events/2026/wm/schedule")
+         new Uri("https://www.iihf.com/en/events/2026/wm/static/game_schedule")
       );
       var request = new ImportRequest(
          new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.FromHours(2)),
