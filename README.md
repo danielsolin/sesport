@@ -18,6 +18,8 @@ indentation.
 All project artifacts, documentation, code, UI text, schemas, and comments
 should be written in English.
 
+Prefer small, focused commits that preserve detailed project history.
+
 Multi-line C# declarations should place the closing parenthesis and semicolon
 on their own line, aligned with the declaration that opened the parameter list.
 
@@ -48,7 +50,7 @@ World Championship.
 - `RosterMembership`: A person's role on a team or other participant roster.
 - `Relevance`: One reason an event should appear for a followed country.
 - `Source`: An external data source, such as a league, federation, or API.
-- `ExternalMapping`: A link from a source-specific ID to an internal ID.
+- `ExternalMapping`: A link from a source-specific ID to an internal entity.
 
 ## First Relevance Rule
 
