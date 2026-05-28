@@ -26,6 +26,10 @@ Use scraping only after checking that the source allows it, that the data
 cannot reasonably be fetched through a cleaner interface, and that the adapter
 can cache results and avoid unnecessary traffic.
 
+Do not bypass anti-bot or security systems. If a source blocks plain server-side
+requests, prefer official documents, cached source files, or a different
+provider surface over browser emulation or Cloudflare workarounds.
+
 ## First Provider Types
 
 - Official or source-specific providers, such as IIHF schedule data.
@@ -45,13 +49,17 @@ can cache results and avoid unnecessary traffic.
 
 ## Current Direction
 
-The first source-specific adapter project is `SESport.Sources.Iihf`. It should
-start by mapping IIHF-like schedule data into the shared ingestion model before
-performing network access.
+The first source-specific adapter project is `SESport.Sources.Iihf`. It maps
+IIHF-like schedule data into the shared ingestion model.
 
-Before adding network access, inspect the real IIHF data surface for public
-APIs, embedded JSON, static documents, robots rules, usage terms, and caching
-requirements.
+IIHF does not expose a public `robots.txt` at the standard location. Direct
+server-side requests to schedule pages may be blocked by Cloudflare. The IIHF
+adapter should therefore prefer official schedule documents, cached HTML, or
+other stable public document surfaces before attempting direct live HTML
+fetching.
+
+Before adding broader network access, inspect each IIHF data surface for public
+APIs, embedded JSON, static documents, usage terms, and caching requirements.
 
 ## References
 
