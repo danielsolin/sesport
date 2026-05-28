@@ -50,6 +50,7 @@ World Championship.
   fighter, or esports player taking part in an event.
 - `Person`: A person connected to a participant, such as a player on a roster.
 - `RosterMembership`: A person's role on a team or other participant roster.
+- `CountryConnection`: One reason a country is connected to an event.
 - `Relevance`: One reason an event should appear for a followed country.
 - `EventQuery`: A user-defined event filter over schedules and country
   connection evidence.
@@ -58,13 +59,17 @@ World Championship.
 
 ## First Relevance Rule
 
-An event is relevant to a country when at least one participant in the event
-represents that country, or when a person connected to an event participant
-has that country as a nationality.
+An event is relevant to a country when the event has one or more country
+connections for that country.
+
+The first supported country connection types are:
+
+- A participant represents the country.
+- A person connected to an event participant has that country as a nationality.
 
 For the first domain slice, Sweden vs Switzerland is relevant to Sweden
-because the Sweden men's national ice hockey team represents Sweden in the
-event.
+because the Sweden men's national ice hockey team creates a country connection
+to Sweden by representing Sweden in the event.
 
 For club-team events, relevance can come from roster evidence. If Las Vegas
 Golden Knights play a Stanley Cup Final and have Swedish players on the roster,

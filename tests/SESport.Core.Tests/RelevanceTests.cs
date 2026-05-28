@@ -18,6 +18,10 @@ public class RelevanceTests
       Assert.Equal(Sweden, relevance.Country);
       Assert.Null(relevance.Person);
       Assert.Equal(
+         CountryConnectionKind.ParticipantRepresentsCountry,
+         relevance.Kind
+      );
+      Assert.Equal(
          "Sweden men's national ice hockey team represents Sweden.",
          relevance.Reason
       );
@@ -47,6 +51,10 @@ public class RelevanceTests
          relevance.EventParticipant.Name
       );
       Assert.Equal("William Karlsson", relevance.Person?.Name);
+      Assert.Equal(
+         CountryConnectionKind.RosterMemberNationality,
+         relevance.Kind
+      );
       Assert.Equal(
          "William Karlsson is a Sweden player on Las Vegas Golden Knights.",
          relevance.Reason
