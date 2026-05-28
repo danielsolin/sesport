@@ -1,6 +1,7 @@
 namespace SESport.Core;
 
 public sealed record SportEvent(
+   EventId Id,
    string Name,
    Competition Competition,
    DateTimeOffset StartsAt,

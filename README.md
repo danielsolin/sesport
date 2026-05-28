@@ -35,6 +35,7 @@ World Championship.
 
 ## Core Concepts
 
+- `Id`: A stable internal identifier for a domain object.
 - `Country`: The country a user follows, such as Sweden.
 - `Sport`: The sport an event belongs to, such as ice hockey.
 - `Competition`: The tournament, league, cup, tour, or series that contains
@@ -46,6 +47,8 @@ World Championship.
 - `Person`: A person connected to a participant, such as a player on a roster.
 - `RosterMembership`: A person's role on a team or other participant roster.
 - `Relevance`: One reason an event should appear for a followed country.
+- `Source`: An external data source, such as a league, federation, or API.
+- `ExternalMapping`: A link from a source-specific ID to an internal ID.
 
 ## First Relevance Rule
 
