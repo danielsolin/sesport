@@ -1,4 +1,4 @@
-namespace SESport.Core;
+namespace SESport.Core.Sources;
 
 public enum InternalEntityKind
 {

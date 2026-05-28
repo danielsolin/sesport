@@ -55,6 +55,7 @@ World Championship.
 - `EventQuery`: A user-defined event filter over schedules and country
   connection evidence.
 - `Source`: An external data source, such as a league, federation, or API.
+- `ImportedEvent`: A raw event shape from a source before full resolution.
 - `ExternalMapping`: A link from a source-specific ID to an internal entity.
 
 ## First Relevance Rule

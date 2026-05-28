@@ -1,4 +1,4 @@
-namespace SESport.Core;
+namespace SESport.Core.Domain;
 
 public sealed record Relevance(
    Country Country,
