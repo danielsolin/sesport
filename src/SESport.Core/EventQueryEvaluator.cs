@@ -39,20 +39,8 @@ public sealed class EventQueryEvaluator
       EventQuery query
    )
    {
-      return candidate.Participants.Any(
-         participant =>
-            CountCountryConnections(participant, query.Country) >=
-               query.MinimumCountryConnections
-      );
-   }
-
-   private static int CountCountryConnections(
-      Participant participant,
-      Country country
-   )
-   {
-      return participant.Roster.Count(
-         membership => membership.Person.Nationalities.Contains(country)
-      );
+      return candidate
+         .GetCountryConnectionsFor(query.Country)
+         .Count() >= query.MinimumCountryConnections;
    }
 }

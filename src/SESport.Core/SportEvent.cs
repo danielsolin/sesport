@@ -9,9 +9,11 @@ public sealed record SportEvent(
    IReadOnlyCollection<Participant> Participants
 )
 {
-   public IReadOnlyCollection<Relevance> GetRelevanceFor(Country country)
+   public IReadOnlyCollection<CountryConnection> GetCountryConnectionsFor(
+      Country country
+   )
    {
-      var relevance = new List<Relevance>();
+      var connections = new List<CountryConnection>();
 
       foreach (var participant in Participants)
       {
@@ -19,7 +21,15 @@ public sealed record SportEvent(
          {
             var reason = $"{participant.Name} represents {country.Name}.";
 
-            relevance.Add(new Relevance(country, participant, null, reason));
+            connections.Add(
+               new CountryConnection(
+                  country,
+                  participant,
+                  null,
+                  CountryConnectionKind.ParticipantRepresentsCountry,
+                  reason
+               )
+            );
          }
 
          foreach (var membership in participant.Roster)
@@ -33,17 +43,31 @@ public sealed record SportEvent(
                $"{membership.Person.Name} is a {country.Name} " +
                $"{membership.Role} on {participant.Name}.";
 
-            relevance.Add(
-               new Relevance(
+            connections.Add(
+               new CountryConnection(
                   country,
                   participant,
                   membership.Person,
+                  CountryConnectionKind.RosterMemberNationality,
                   reason
                )
             );
          }
       }
 
-      return relevance;
+      return connections;
+   }
+
+   public IReadOnlyCollection<Relevance> GetRelevanceFor(Country country)
+   {
+      return GetCountryConnectionsFor(country)
+         .Select(connection => new Relevance(
+            connection.Country,
+            connection.EventParticipant,
+            connection.Person,
+            connection.Kind,
+            connection.Reason
+         ))
+         .ToList();
    }
 }
