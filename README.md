@@ -5,6 +5,7 @@ find upcoming sports events where a selected country is relevant, across
 sports, competitions, teams, and individual athletes.
 
 See [use cases](docs/use-cases.md) for examples of future user-defined views.
+See [source strategy](docs/source-strategy.md) for data ingestion direction.
 
 The first configured country is Sweden, but Sweden is not a hardcoded product
 rule. The same model should be able to support other countries later.
