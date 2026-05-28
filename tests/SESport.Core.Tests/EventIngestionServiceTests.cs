@@ -19,7 +19,7 @@ public class EventIngestionServiceTests
          [Sweden, Switzerland]
       );
 
-      var relevance = sportEvent.GetRelevanceFor(Sweden).Single();
+      var connection = sportEvent.GetCountryConnectionsFor(Sweden).Single();
 
       Assert.Equal("Sweden vs Switzerland", sportEvent.Name);
       Assert.Equal(
@@ -28,7 +28,7 @@ public class EventIngestionServiceTests
       );
       Assert.Equal(
          "Sweden men's national ice hockey team represents Sweden.",
-         relevance.Reason
+         connection.Reason
       );
    }
 

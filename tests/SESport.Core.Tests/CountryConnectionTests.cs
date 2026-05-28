@@ -1,6 +1,6 @@
 namespace SESport.Core.Tests;
 
-public class RelevanceTests
+public class CountryConnectionTests
 {
    private static readonly Country Sweden =
       new(new CountryId("country:se"), "SE", "Sweden");
@@ -13,17 +13,17 @@ public class RelevanceTests
    {
       var game = CreateSwedenVsSwitzerlandGame();
 
-      var relevance = game.GetRelevanceFor(Sweden).Single();
+      var connection = game.GetCountryConnectionsFor(Sweden).Single();
 
-      Assert.Equal(Sweden, relevance.Country);
-      Assert.Null(relevance.Person);
+      Assert.Equal(Sweden, connection.Country);
+      Assert.Null(connection.Person);
       Assert.Equal(
          CountryConnectionKind.ParticipantRepresentsCountry,
-         relevance.Kind
+         connection.Kind
       );
       Assert.Equal(
          "Sweden men's national ice hockey team represents Sweden.",
-         relevance.Reason
+         connection.Reason
       );
    }
 
@@ -33,9 +33,9 @@ public class RelevanceTests
       var finland = new Country(new CountryId("country:fi"), "FI", "Finland");
       var game = CreateSwedenVsSwitzerlandGame();
 
-      var relevance = game.GetRelevanceFor(finland);
+      var connections = game.GetCountryConnectionsFor(finland);
 
-      Assert.Empty(relevance);
+      Assert.Empty(connections);
    }
 
    [Fact]
@@ -43,21 +43,21 @@ public class RelevanceTests
    {
       var game = CreateVegasVsFloridaGame();
 
-      var relevance = game.GetRelevanceFor(Sweden).Single();
+      var connection = game.GetCountryConnectionsFor(Sweden).Single();
 
-      Assert.Equal(Sweden, relevance.Country);
+      Assert.Equal(Sweden, connection.Country);
       Assert.Equal(
          "Las Vegas Golden Knights",
-         relevance.EventParticipant.Name
+         connection.EventParticipant.Name
       );
-      Assert.Equal("William Karlsson", relevance.Person?.Name);
+      Assert.Equal("William Karlsson", connection.Person?.Name);
       Assert.Equal(
          CountryConnectionKind.RosterMemberNationality,
-         relevance.Kind
+         connection.Kind
       );
       Assert.Equal(
          "William Karlsson is a Sweden player on Las Vegas Golden Knights.",
-         relevance.Reason
+         connection.Reason
       );
    }
 
