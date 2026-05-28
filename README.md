@@ -54,6 +54,7 @@ World Championship.
 - `Relevance`: One reason an event should appear for a followed country.
 - `ImportRun`: One attempt to collect events from a source.
 - `ImportIssue`: A warning or error found while importing source data.
+- `IEventSourceImporter`: A source adapter that can produce import runs.
 - `EventQuery`: A user-defined event filter over schedules and country
   connection evidence.
 - `Source`: An external data source, such as a league, federation, or API.
