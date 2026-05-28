@@ -1,6 +1,7 @@
 namespace SESport.Core;
 
 public sealed record Participant(
+   ParticipantId Id,
    string Name,
    ParticipantKind Kind,
    Country? RepresentsCountry,
@@ -8,10 +9,11 @@ public sealed record Participant(
 )
 {
    public Participant(
+      ParticipantId id,
       string name,
       ParticipantKind kind,
       Country? representsCountry
-   ) : this(name, kind, representsCountry, [])
+   ) : this(id, name, kind, representsCountry, [])
    {
    }
 }
