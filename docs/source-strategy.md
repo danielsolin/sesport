@@ -47,10 +47,40 @@ provider surface over browser emulation or Cloudflare workarounds.
 - Source adapters should preserve source IDs for later mapping and audits.
 - Provider lock-in should be isolated to adapter projects.
 
+## Assisted Import Operations
+
+SE Sport should treat imports as assisted automation. Importers should automate
+the normal case, but they must report uncertainty instead of silently hiding it.
+
+SE Sport should not pretend to know. It should know when it knows. When it does
+not know, it should explain what is uncertain.
+
+If more of the import process can be automated later than expected, that is a
+bonus. The operating model should still assume that humans or AI agents may
+need to review and repair source mappings, cached documents, and parser logic.
+
+Each import run should produce issues that explain what happened in operational
+terms. Useful issue kinds include:
+
+- `MissingSourceMapping`: A required provider mapping is not configured.
+- `NoEventsFound`: The source was readable, but no events were found.
+- `ParsingFailed`: A known value could not be parsed.
+- `SourceUnavailable`: The source could not be reached.
+- `UnexpectedSourceShape`: The source shape no longer matches expectations.
+- `UnknownCountryCode`: A source country code is not mapped.
+
+Reviewers can then inspect failed or suspicious runs, update provider mappings,
+refresh cached files, or adjust parser logic.
+
 ## Current Direction
 
 The first source-specific adapter project is `SESport.Sources.Iihf`. It maps
 IIHF-like schedule data into the shared ingestion model.
+
+IIHF stats endpoints are provider mappings, not domain identifiers. For example,
+`2026/wm` currently maps to `https://stats.iihf.com/Hydra/969/index.html`.
+This mapping should live in adapter configuration or data, not in core domain
+code.
 
 IIHF does not expose a public `robots.txt` at the standard location. Direct
 server-side requests to schedule pages may be blocked by Cloudflare. The IIHF

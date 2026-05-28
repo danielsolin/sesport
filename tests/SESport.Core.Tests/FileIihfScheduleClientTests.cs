@@ -31,8 +31,14 @@ public class FileIihfScheduleClientTests
          );
 
          Assert.Single(games);
-         Assert.Equal("SUI", games.Single().HomeTeam.ExternalId[..3].ToUpper());
-         Assert.Equal("SWE", games.Single().AwayTeam.ExternalId[..3].ToUpper());
+         Assert.Equal(
+            "SUI",
+            games.Single().HomeTeam.ExternalId[..3].ToUpper()
+         );
+         Assert.Equal(
+            "SWE",
+            games.Single().AwayTeam.ExternalId[..3].ToUpper()
+         );
       }
       finally
       {

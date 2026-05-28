@@ -11,6 +11,7 @@ public class ImportRunTests
       );
       var importedEvent = CreateImportedEvent(source);
       var issue = new ImportIssue(
+         ImportIssueKind.UnexpectedSourceShape,
          ImportIssueSeverity.Warning,
          importedEvent.ExternalId,
          "Venue was not available in the source payload."
@@ -30,6 +31,10 @@ public class ImportRunTests
       Assert.Equal(ImportRunStatus.Completed, importRun.Status);
       Assert.Single(importRun.Events);
       Assert.Single(importRun.Issues);
+      Assert.Equal(
+         ImportIssueKind.UnexpectedSourceShape,
+         importRun.Issues.Single().Kind
+      );
       Assert.Equal(
          ImportIssueSeverity.Warning,
          importRun.Issues.Single().Severity
