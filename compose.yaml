@@ -1,0 +1,23 @@
+services:
+   postgres:
+      image: postgres:17
+      container_name: sesport-postgres
+      environment:
+         POSTGRES_DB: ${SESPORT_POSTGRES_DB:-sesport}
+         POSTGRES_USER: ${SESPORT_POSTGRES_USER:-sesport}
+         POSTGRES_PASSWORD: ${SESPORT_POSTGRES_PASSWORD:-sesport}
+      ports:
+         - "${SESPORT_POSTGRES_PORT:-5432}:5432"
+      volumes:
+         - sesport-postgres:/var/lib/postgresql/data
+         - ./database/postgres/migrations:/migrations:ro
+      healthcheck:
+         test:
+            - CMD-SHELL
+            - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+         interval: 5s
+         timeout: 5s
+         retries: 10
+
+volumes:
+   sesport-postgres:

@@ -6,6 +6,9 @@ sports, competitions, teams, and individual athletes.
 
 See [use cases](docs/use-cases.md) for examples of future user-defined views.
 See [source strategy](docs/source-strategy.md) for data ingestion direction.
+See [PostgreSQL](database/postgres/README.md) for the first persistence slice.
+
+Local PostgreSQL development uses Docker Compose.
 
 The first configured country is Sweden, but Sweden is not a hardcoded product
 rule. The same model should be able to support other countries later.
@@ -45,6 +48,7 @@ World Championship.
 - `Sport`: The sport an event belongs to, such as ice hockey.
 - `Competition`: The tournament, league, cup, tour, or series that contains
   events.
+- `CompetitionStatus`: The lifecycle state of a competition.
 - `Event`: A scheduled sports occurrence, such as a match, race, bout, meet,
   round, or game.
 - `Participant`: A team, national team, club, athlete, player, driver,
