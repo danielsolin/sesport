@@ -1,4 +1,4 @@
-namespace SESport.Core.Tests;
+namespace SESport.Core.Tests.Ingestion;
 
 public class EventSourceImporterTests
 {
