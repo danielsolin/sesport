@@ -29,6 +29,22 @@ This view should help the user answer:
 
 Everything else is secondary until this works.
 
+## Launch Data Rule
+
+Every event shown in the public version must come through the standard SE Sport
+ingestion process and be stored in the application database.
+
+The source collection step may be automated, semi-manual, or manual for the
+first launch. For example, manually downloaded source files are acceptable if
+they are imported through the same source adapter and ingestion flow as any
+automated source.
+
+The public site should read normalized SE Sport data from PostgreSQL. It should
+not contain one-off hardcoded launch events, hand-written page content, or
+source-specific shortcuts that bypass the ingestion model.
+
+This rule matters more than full automation for the first version.
+
 ## Required Coverage
 
 The exact sports, leagues, competitions, and tours required for version 1 are
