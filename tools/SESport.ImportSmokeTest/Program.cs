@@ -15,7 +15,10 @@ var games = await client.GetGamesAsync(
    CancellationToken.None
 );
 
-foreach(var game in games)
+foreach (var game in games)
 {
-   Console.WriteLine($"{game.StartsAt:u} {game.HomeTeam.CountryName} vs {game.AwayTeam.CountryName} ({game.Stage})");
+   var homeName = game.HomeTeam?.CountryName ?? "TBD";
+   var awayName = game.AwayTeam?.CountryName ?? "TBD";
+
+   Console.WriteLine($"{game.StartsAt:u} {homeName} vs {awayName} ({game.Stage})");
 }
