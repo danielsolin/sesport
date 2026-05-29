@@ -20,5 +20,7 @@ foreach (var game in games)
    var homeName = game.HomeTeam?.CountryName ?? "TBD";
    var awayName = game.AwayTeam?.CountryName ?? "TBD";
 
-   Console.WriteLine($"{game.StartsAt:u} {homeName} vs {awayName} ({game.Stage})");
+   Console.WriteLine(
+      $"{game.StartsAt:u} {homeName} vs {awayName} ({game.Stage})"
+   );
 }
