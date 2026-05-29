@@ -5,6 +5,8 @@ namespace SESport.Core.Tests.Sources.Iihf;
 
 public class IihfScheduleDocumentClientTests
 {
+   private static readonly Uri FakeScheduleUri =
+      new("https://example.test/iihf/schedule");
    [Fact]
    public async Task ClientFetchesScheduleDocumentAndReturnsMatchingGames()
    {
@@ -12,7 +14,7 @@ public class IihfScheduleDocumentClientTests
       var client = new IihfScheduleDocumentClient(
          new HttpClient(handler),
          new IihfScheduleHtmlParser(),
-         new Uri("https://www.iihf.com/en/events/2026/wm/static/game_schedule")
+         FakeScheduleUri
       );
       var request = new ImportRequest(
          new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.FromHours(2)),

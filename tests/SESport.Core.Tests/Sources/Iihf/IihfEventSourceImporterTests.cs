@@ -101,7 +101,7 @@ public class IihfEventSourceImporterTests
       return new IihfCompetitionSource(
          new CompetitionId("competition:iihf-world-championship-2026"),
          "2026/wm",
-         new Uri("https://stats.iihf.com/Hydra/969/index.html")
+         new Uri("https://example.test/iihf/stats")
       );
    }
 }
