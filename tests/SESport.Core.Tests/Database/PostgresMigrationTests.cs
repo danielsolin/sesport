@@ -1,4 +1,4 @@
-namespace SESport.Core.Tests.Persistence;
+namespace SESport.Core.Tests.Database;
 
 public class PostgresMigrationTests
 {
