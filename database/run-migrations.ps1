@@ -14,7 +14,7 @@ if ([string]::IsNullOrWhiteSpace($user))
 }
 
 $migrations = Get-ChildItem `
-   -Path "database/postgres/migrations" `
+   -Path "database/migrations" `
    -Filter "*.sql" |
    Sort-Object Name
 

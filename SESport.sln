@@ -21,17 +21,15 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Sources.Iihf", "src\SESport.Sources.Iihf\SESport.Sources.Iihf.csproj", "{B8EAAA3C-9B50-430D-8528-E4D7AD6DD875}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "database", "database", "{5E54E42B-A5A1-4D3E-AD95-F2D0392FC0F2}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postgres", "postgres", "{53A5FDDB-C71F-418D-8A5D-C8EFF00C9781}"
 	ProjectSection(SolutionItems) = preProject
-		database\postgres\README.md = database\postgres\README.md
-		database\postgres\run-migrations.ps1 = database\postgres\run-migrations.ps1
-		database\postgres\run-migrations.sh = database\postgres\run-migrations.sh
+		database\README.md = database\README.md
+		database\run-migrations.ps1 = database\run-migrations.ps1
+		database\run-migrations.sh = database\run-migrations.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", "{9A7A1DAD-F8E4-47CE-BBE7-172429F58F1D}"
 	ProjectSection(SolutionItems) = preProject
-		database\postgres\migrations\001_create_competitions.sql = database\postgres\migrations\001_create_competitions.sql
+		database\migrations\001_create_competitions.sql = database\migrations\001_create_competitions.sql
 	EndProjectSection
 EndProject
 Global
@@ -88,8 +86,7 @@ Global
 		{F906B288-C7C9-4DDA-A8C8-0AACC2B0AE5E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{25C8B4DF-8175-4AFF-B83E-F5FA397E05E8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{B8EAAA3C-9B50-430D-8528-E4D7AD6DD875} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
-		{53A5FDDB-C71F-418D-8A5D-C8EFF00C9781} = {5E54E42B-A5A1-4D3E-AD95-F2D0392FC0F2}
-		{9A7A1DAD-F8E4-47CE-BBE7-172429F58F1D} = {53A5FDDB-C71F-418D-8A5D-C8EFF00C9781}
+		{9A7A1DAD-F8E4-47CE-BBE7-172429F58F1D} = {5E54E42B-A5A1-4D3E-AD95-F2D0392FC0F2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C80B2B88-11D1-4C2E-9732-6EAB6E858671}
