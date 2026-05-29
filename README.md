@@ -1,21 +1,30 @@
 # SE Sport
 
-SE Sport is a country-based sports calendar and watchlist. It helps a user
-find upcoming sports events where a selected country is relevant, across
-sports, competitions, teams, and individual athletes.
+SE Sport is a country-relevant international sports calendar and watchlist.
+It helps a user find upcoming international sports events where a selected
+country is relevant, across sports, competitions, teams, clubs, and individual
+athletes.
 
-The first public version should answer one question before anything else:
-what blue-and-yellow sport is happening today?
+The core product question is:
 
+```text
+What country-relevant international sport is happening today?
+```
+
+The first configured country is Sweden, but Sweden is not a hardcoded product
+rule. The same model should be able to support other countries later.
+
+The project is not a domestic sports calendar. It is about international sport
+from the perspective of a selected country.
+
+See [core concept](docs/core-concept.md) for the definition that must guide the
+project.
 See [product goal](docs/product-goal.md) for the v1 product priority.
 See [use cases](docs/use-cases.md) for examples of future user-defined views.
 See [source strategy](docs/source-strategy.md) for data ingestion direction.
 See [database](database/README.md) for the first persistence slice.
 
 Local PostgreSQL development uses Docker Compose.
-
-The first configured country is Sweden, but Sweden is not a hardcoded product
-rule. The same model should be able to support other countries later.
 
 ## Project Rules
 
