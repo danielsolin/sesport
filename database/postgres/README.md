@@ -7,11 +7,17 @@ Ice Hockey World Championship as an ongoing competition.
 
 Start PostgreSQL with Docker Compose:
 
-```powershell
+```bash
 docker compose up -d postgres
 ```
 
-Run migrations in order:
+Run migrations in order from a Linux or WSL shell:
+
+```bash
+./database/postgres/run-migrations.sh
+```
+
+On Windows, the PowerShell helper can be used instead:
 
 ```powershell
 .\database\postgres\run-migrations.ps1
