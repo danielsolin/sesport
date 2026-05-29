@@ -14,7 +14,7 @@ public class FileIihfScheduleClientTests
 
       try
       {
-         await File.WriteAllTextAsync(filePath, ScheduleHtml);
+         await File.WriteAllTextAsync(filePath, CreateScheduleHtml());
 
          var client = new FileIihfScheduleClient(
             filePath,
@@ -29,15 +29,15 @@ public class FileIihfScheduleClientTests
             request,
             CancellationToken.None
          );
+         var game = games.Single();
 
-         Assert.Single(games);
          Assert.Equal(
             "SUI",
-            games.Single().HomeTeam.ExternalId[..3].ToUpper()
+            game.HomeTeam!.ExternalId[..3].ToUpper()
          );
          Assert.Equal(
             "SWE",
-            games.Single().AwayTeam.ExternalId[..3].ToUpper()
+            game.AwayTeam!.ExternalId[..3].ToUpper()
          );
       }
       finally
@@ -49,14 +49,8 @@ public class FileIihfScheduleClientTests
       }
    }
 
-   private const string ScheduleHtml = """
-      <html>
-         <body>
-            <p>28 May</p>
-            <p>SUI vs SWE</p>
-            <p>Swiss Life Arena, Quarterfinals</p>
-            <p>20:20</p>
-         </body>
-      </html>
-      """;
+   private static string CreateScheduleHtml()
+   {
+      return "<p>28 May</p><p>SUI vs SWE</p><p>20:20</p>";
+   }
 }
