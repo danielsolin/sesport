@@ -4,7 +4,7 @@ set -euo pipefail
 database="${SESPORT_POSTGRES_DB:-sesport}"
 user="${SESPORT_POSTGRES_USER:-sesport}"
 
-migration_dir="database/postgres/migrations"
+migration_dir="database/migrations"
 
 if [ ! -d "$migration_dir" ]; then
    echo "Migration directory not found: $migration_dir" >&2

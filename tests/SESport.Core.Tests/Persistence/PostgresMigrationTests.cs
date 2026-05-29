@@ -1,4 +1,4 @@
-namespace SESport.Core.Tests.Persistence.Postgres;
+namespace SESport.Core.Tests.Persistence;
 
 public class PostgresMigrationTests
 {
@@ -9,7 +9,6 @@ public class PostgresMigrationTests
          Path.Combine(
             FindRepositoryRoot(),
             "database",
-            "postgres",
             "migrations",
             "001_create_competitions.sql"
          )
