@@ -17,7 +17,12 @@ public class IihfCompetitionSourceTests
          "competition:iihf-world-championship-2026",
          source.CompetitionId.Value
       );
-      Assert.Equal("2026/wm", source.EventPath);
+
+      Assert.Equal(
+         "2026/wm",
+         source.EventPath
+      );
+
       Assert.Equal(
          "https://stats.iihf.com/Hydra/969/index.html",
          source.StatsUri.ToString()
