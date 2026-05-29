@@ -10,7 +10,7 @@ what blue-and-yellow sport is happening today?
 See [product goal](docs/product-goal.md) for the v1 product priority.
 See [use cases](docs/use-cases.md) for examples of future user-defined views.
 See [source strategy](docs/source-strategy.md) for data ingestion direction.
-See [PostgreSQL](database/postgres/README.md) for the first persistence slice.
+See [database](database/README.md) for the first persistence slice.
 
 Local PostgreSQL development uses Docker Compose.
 
