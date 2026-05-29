@@ -10,7 +10,7 @@ services:
          - "${SESPORT_POSTGRES_PORT:-5432}:5432"
       volumes:
          - sesport-postgres:/var/lib/postgresql/data
-         - ./database/postgres/migrations:/migrations:ro
+         - ./database/migrations:/migrations:ro
       healthcheck:
          test:
             - CMD-SHELL
