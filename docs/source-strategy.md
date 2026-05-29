@@ -72,6 +72,30 @@ terms. Useful issue kinds include:
 Reviewers can then inspect failed or suspicious runs, update provider mappings,
 refresh cached files, or adjust parser logic.
 
+## Useful Refresh Timing
+
+Collectors should avoid polling a source just because time passed. They should
+refresh when new country-relevant information can reasonably exist.
+
+For scheduled sports events, this often means using a sport-specific expected
+event duration. If an imported event has unresolved participants, the earliest
+useful refresh is usually after the event starts, the sport's expected duration
+has passed, and a small publication buffer has elapsed.
+
+Example for ice hockey:
+
+```text
+semi-final starts at 15:20
+expected ice hockey duration is 2h 30m
+publication buffer is 15m
+next useful refresh is around 18:05
+```
+
+This is operational scheduling metadata, not provider truth. A collector may
+still retry earlier after source failures, and a manual refresh should remain
+possible. The goal is to avoid unnecessary source traffic when the source cannot
+reasonably contain new participant information yet.
+
 ## Current Direction
 
 The first source-specific adapter project is `SESport.Sources.Iihf`. It maps
