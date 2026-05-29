@@ -40,8 +40,7 @@ upcoming games for that team.
 
 This requires:
 
-- league or competition membership
 - current team rosters
 - person nationalities
-- ranking or aggregation over roster evidence
-- a way to save the resulting participant as a followed target
+- game schedule
+- the ability to rank teams by matching roster members
