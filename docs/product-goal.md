@@ -1,0 +1,65 @@
+# Product Goal
+
+The core idea behind SE Sport is simple: a user should be able to open
+`www.sesport.se` and immediately see what Swedish-relevant sport is happening
+today.
+
+The first version must answer this question before anything else:
+
+```text
+What blue-and-yellow sport is happening today?
+```
+
+In this context, blue-and-yellow sport means sports events with a clear Sweden
+connection. The connection can come from Sweden participating as a national
+team, Swedish athletes participating individually, or Swedish people being
+present on relevant team rosters.
+
+## Version 1 Minimum
+
+The first public version of `www.sesport.se` should, at minimum, provide a
+today view for Swedish-relevant sports events.
+
+This view should help the user answer:
+
+- what is happening today
+- when it starts
+- which sport and competition it belongs to
+- why the event is relevant to Sweden
+
+Everything else is secondary until this works.
+
+## Required Coverage
+
+The exact sports, leagues, competitions, and tours required for version 1 are
+not decided yet.
+
+This list must be defined before the first public version:
+
+- Ice hockey: to be decided
+- Football: to be decided
+- Handball: to be decided
+- Motorsport: to be decided
+- Winter sports: to be decided
+- Other individual sports: to be decided
+- Other team sports: to be decided
+
+The list should be based on whether a normal Swedish sports fan would expect the
+event to appear when asking what Swedish-relevant sport is happening today.
+
+## Product Priority
+
+When making tradeoffs, prefer work that improves the today view over broader but
+less focused features.
+
+Examples of lower-priority work until the today view is useful:
+
+- advanced user-defined watchlists
+- historical statistics
+- broad multi-country support
+- complex bracket prediction
+- generic sports news
+- exhaustive source coverage without Sweden relevance
+
+The product should stay focused on country-relevant sports discovery, not become
+a generic sports calendar.
