@@ -6,6 +6,6 @@ public sealed record IihfGame(
    string CompetitionName,
    DateTimeOffset StartsAt,
    string Stage,
-   IihfTeam HomeTeam,
-   IihfTeam AwayTeam
+   IihfTeam? HomeTeam,
+   IihfTeam? AwayTeam
 );
