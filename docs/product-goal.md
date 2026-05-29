@@ -34,14 +34,22 @@ Everything else is secondary until this works.
 Every event shown in the public version must come through the standard SE Sport
 ingestion process and be stored in the application database.
 
-The source collection step may be automated, semi-manual, or manual for the
-first launch. For example, manually downloaded source files are acceptable if
-they are imported through the same source adapter and ingestion flow as any
-automated source.
+For the first public version, source collection should be manual by default. The
+operator should personally collect source files from a defined source list,
+place them in a defined local structure, and run the normal import process.
 
-The public site should read normalized SE Sport data from PostgreSQL. It should
-not contain one-off hardcoded launch events, hand-written page content, or
-source-specific shortcuts that bypass the ingestion model.
+The import process may be started through a CLI command or a UI button. The
+important rule is that the public site must read normalized SE Sport data from
+PostgreSQL after import. It should not contain one-off hardcoded launch events,
+hand-written page content, or source-specific shortcuts that bypass the
+ingestion model.
+
+A once-per-day manual collection cycle is acceptable for the first version,
+because the initial product only promises to show what is happening today.
+
+This manual path is not a temporary embarrassment. It is the baseline recovery
+path. Automation can be added later, but the product should still have a working
+manual source collection and import process if automated collection fails.
 
 This rule matters more than full automation for the first version.
 
