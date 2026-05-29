@@ -7,6 +7,7 @@ public class IihfScheduleDocumentClientTests
 {
    private static readonly Uri FakeScheduleUri =
       new("https://example.test/iihf/schedule");
+
    [Fact]
    public async Task ClientFetchesScheduleDocumentAndReturnsMatchingGames()
    {
