@@ -13,8 +13,8 @@ public class IihfScheduleHtmlParserTests
 
       var game = games.Single();
 
-      Assert.Equal("SUI vs SWE", $"{game.HomeTeam.ExternalId[..3].ToUpper()} " +
-         $"vs {game.AwayTeam.ExternalId[..3].ToUpper()}");
+      Assert.Equal("SUI vs SWE", $"{game.HomeTeam!.ExternalId[..3].ToUpper()} " +
+         $"vs {game.AwayTeam!.ExternalId[..3].ToUpper()}");
       Assert.Equal(
          new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
          game.StartsAt
@@ -28,7 +28,7 @@ public class IihfScheduleHtmlParserTests
    {
       var parser = new IihfScheduleHtmlParser();
 
-      var games = parser.Parse(StatsTableHtml);
+      var games = parser.Parse(CreateStatsTable("59", "QF", "SUI", "SWE"));
 
       var game = games.Single();
 
@@ -38,8 +38,52 @@ public class IihfScheduleHtmlParserTests
          new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
          game.StartsAt
       );
-      Assert.Equal("Switzerland", game.HomeTeam.CountryName);
-      Assert.Equal("Sweden", game.AwayTeam.CountryName);
+      Assert.Equal("Switzerland", game.HomeTeam!.CountryName);
+      Assert.Equal("Sweden", game.AwayTeam!.CountryName);
+   }
+
+   [Fact]
+   public void ParserCanReadStatsTableGameWithOneUnresolvedTeam()
+   {
+      var parser = new IihfScheduleHtmlParser();
+
+      var games = parser.Parse(CreateStatsTable("63", "GMG", "SWE", ""));
+
+      var game = games.Single();
+
+      Assert.Equal("iihf-2026-game-63", game.ExternalId);
+      Assert.Equal("Gold medal game", game.Stage);
+      Assert.Equal("Sweden", game.HomeTeam!.CountryName);
+      Assert.Null(game.AwayTeam);
+   }
+
+   private static string CreateStatsTable(
+      string gameNumber,
+      string stage,
+      string homeCode,
+      string awayCode
+   )
+   {
+      return $$"""
+         <html>
+            <body>
+               <table id="gameReports">
+                  <tr>
+                     <td class="even" id="gdt{{gameNumber}}" tzo="120">
+                        28 May 2026, Thu 20:20 GMT+2
+                     </td>
+                     <td class="even">Zurich</td>
+                     <td class="even">{{gameNumber}} {{stage}}</td>
+                     <td class="even">{{homeCode}}</td>
+                     <td class="even">-</td>
+                     <td class="even">{{awayCode}}</td>
+                     <td class="even"></td>
+                     <td class="even">Scheduled</td>
+                  </tr>
+               </table>
+            </body>
+         </html>
+         """;
    }
 
    private const string ScheduleHtml = """
@@ -55,41 +99,6 @@ public class IihfScheduleHtmlParserTests
                   <time>20:20</time>
                </div>
             </section>
-         </body>
-      </html>
-      """;
-
-   private const string StatsTableHtml = """
-      <html>
-         <body>
-            <table id="gameReports">
-               <tr>
-                  <td class="even" id="gdt59" utc="29666540" tzo="120">
-                     <nobr>&nbsp;28 May 2026, Thu<br>
-                     &nbsp;20:20&nbsp;&nbsp;GMT+2</nobr>
-                  </td>
-                  <td width="1" class="even2"></td>
-                  <td class="even">
-                     <nobr>&nbsp;Zurich</nobr><br>
-                     <nobr>&nbsp;Swiss Life Arena</nobr>
-                  </td>
-                  <td width="1" class="even2"></td>
-                  <td class="even" align="right">
-                     &nbsp;<nobr>59</nobr><br>
-                     <b>QF</b>
-                  </td>
-                  <td width="1" class="even2"></td>
-                  <td class="even" align="right">
-                     <b>SUI</b>&nbsp;
-                  </td>
-                  <td class="even">-</td>
-                  <td class="even">&nbsp;<b>SWE</b></td>
-                  <td width="1" class="even2"></td>
-                  <td class="even" align="center"></td>
-                  <td width="1" class="even2"></td>
-                  <td class="even"> Scheduled </td>
-               </tr>
-            </table>
          </body>
       </html>
       """;
