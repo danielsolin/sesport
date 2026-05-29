@@ -56,19 +56,32 @@ public sealed class IihfEventSourceImporter(
          game.CompetitionName,
          iceHockey
       );
+      var participants = new[]
+      {
+         game.HomeTeam,
+         game.AwayTeam
+      }
+      .Where(team => team is not null)
+      .Select(team => ToImportedParticipant(team!))
+      .ToList();
 
       return new ImportedEvent(
          Source,
          new ExternalEntityId(game.ExternalId),
-         $"{game.HomeTeam.CountryName} vs {game.AwayTeam.CountryName}",
+         CreateEventName(game),
          competition,
          game.StartsAt,
          game.Stage,
-         [
-            ToImportedParticipant(game.HomeTeam),
-            ToImportedParticipant(game.AwayTeam)
-         ]
+         participants
       );
+   }
+
+   private static string CreateEventName(IihfGame game)
+   {
+      var homeName = game.HomeTeam?.CountryName ?? "TBD";
+      var awayName = game.AwayTeam?.CountryName ?? "TBD";
+
+      return $"{homeName} vs {awayName}";
    }
 
    private static ImportedParticipant ToImportedParticipant(IihfTeam team)
