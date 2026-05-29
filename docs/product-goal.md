@@ -34,15 +34,27 @@ Everything else is secondary until this works.
 The exact sports, leagues, competitions, and tours required for version 1 are
 not decided yet.
 
-This list must be defined before the first public version:
+Version 1 coverage should be based on the season when the first public version
+is launched. The goal is not to cover every important Swedish sport immediately.
+The goal is to cover the sports and competitions a normal Swedish sports fan
+would expect to see at that time of year.
 
-- Ice hockey: to be decided
+If the first public version launches during summer, summer-relevant sources
+should be prioritized. This likely means many football sources. Ice hockey and
+cross-country skiing would not be launch requirements in that case, even though
+they are important Swedish sports overall.
+
+This launch coverage list must be defined before the first public version:
+
 - Football: to be decided
-- Handball: to be decided
+- Athletics: to be decided
 - Motorsport: to be decided
-- Winter sports: to be decided
-- Other individual sports: to be decided
-- Other team sports: to be decided
+- Tennis: to be decided
+- Golf: to be decided
+- Other summer individual sports: to be decided
+- Other summer team sports: to be decided
+- Ice hockey: not required for a summer launch
+- Winter sports: not required for a summer launch
 
 The list should be based on whether a normal Swedish sports fan would expect the
 event to appear when asking what Swedish-relevant sport is happening today.
