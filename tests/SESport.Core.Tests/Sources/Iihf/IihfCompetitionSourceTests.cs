@@ -4,13 +4,16 @@ namespace SESport.Core.Tests.Sources.Iihf;
 
 public class IihfCompetitionSourceTests
 {
+   private static readonly Uri ExampleIihfStatsUri =
+      new("https://example.test/iihf/stats");
+
    [Fact]
    public void CompetitionSourceKeepsProviderMappingOutOfCoreDomain()
    {
       var source = new IihfCompetitionSource(
          new CompetitionId("competition:iihf-world-championship-2026"),
          "2026/wm",
-         new Uri("https://stats.iihf.com/Hydra/969/index.html")
+         ExampleIihfStatsUri
       );
 
       Assert.Equal(
@@ -24,7 +27,7 @@ public class IihfCompetitionSourceTests
       );
 
       Assert.Equal(
-         "https://stats.iihf.com/Hydra/969/index.html",
+         ExampleIihfStatsUri.OriginalString,
          source.StatsUri.ToString()
       );
    }
