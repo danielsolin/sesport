@@ -1,24 +1,30 @@
 # Product Goal
 
 The core idea behind SE Sport is simple: a user should be able to open
-`www.sesport.se` and immediately see what Swedish-relevant sport is happening
-today.
+`www.sesport.se` and immediately see what country-relevant international sport
+is happening today.
 
-The first version must answer this question before anything else:
+The first configured country is Sweden, so the first public version should
+answer this question before anything else:
 
 ```text
-What blue-and-yellow sport is happening today?
+What Sweden-relevant international sport is happening today?
 ```
 
-In this context, blue-and-yellow sport means sports events with a clear Sweden
-connection. The connection can come from Sweden participating as a national
-team, Swedish athletes participating individually, or Swedish people being
-present on relevant team rosters.
+Country-relevant international sport means international, foreign, or
+cross-border sports events where the selected country is represented directly
+or indirectly. The connection can come from a national team, an individual
+athlete, a club from the selected country competing internationally, or people
+from the selected country being present in meaningful roles for foreign teams
+or clubs.
+
+See [core concept](core-concept.md) for the full definition. That definition is
+the product boundary for SE Sport.
 
 ## Version 1 Minimum
 
 The first public version of `www.sesport.se` should, at minimum, provide a
-today view for Swedish-relevant sports events.
+today view for Sweden-relevant international sports events.
 
 This view should help the user answer:
 
@@ -60,13 +66,15 @@ not decided yet.
 
 Version 1 coverage should be based on the season when the first public version
 is launched. The goal is not to cover every important Swedish sport immediately.
-The goal is to cover the sports and competitions a normal Swedish sports fan
-would expect to see at that time of year.
+The goal is to cover the international sports and competitions a normal Swedish
+sports fan would expect to see at that time of year.
 
-If the first public version launches during summer, summer-relevant sources
-should be prioritized. This likely means many football sources. Ice hockey and
-cross-country skiing would not be launch requirements in that case, even though
-they are important Swedish sports overall.
+If the first public version launches during summer, summer-relevant
+international sources should be prioritized. This likely means football sources
+for European club competitions, international fixtures, and foreign leagues
+with relevant Swedish participation. Ice hockey and cross-country skiing would
+not be launch requirements in that case, even though they are important Swedish
+sports overall.
 
 This launch coverage list must be defined before the first public version:
 
@@ -81,7 +89,8 @@ This launch coverage list must be defined before the first public version:
 - Winter sports: not required for a summer launch
 
 The list should be based on whether a normal Swedish sports fan would expect the
-event to appear when asking what Swedish-relevant sport is happening today.
+event to appear when asking what Sweden-relevant international sport is
+happening today.
 
 ## Product Priority
 
@@ -95,7 +104,8 @@ Examples of lower-priority work until the today view is useful:
 - broad multi-country support
 - complex bracket prediction
 - generic sports news
-- exhaustive source coverage without Sweden relevance
+- exhaustive source coverage without country relevance
+- domestic sports calendars, league tables, fixture lists, or result feeds
 
-The product should stay focused on country-relevant sports discovery, not become
-a generic sports calendar.
+The product should stay focused on country-relevant international sports
+discovery, not become a generic sports calendar.
