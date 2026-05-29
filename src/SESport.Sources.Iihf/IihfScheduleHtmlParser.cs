@@ -19,7 +19,7 @@ public sealed partial class IihfScheduleHtmlParser
    {
       var statsGames = ParseStatsTable(html);
 
-      if (statsGames.Count > 0)
+      if(statsGames.Count > 0)
       {
          return statsGames;
       }
@@ -28,11 +28,11 @@ public sealed partial class IihfScheduleHtmlParser
       var games = new List<IihfGame>();
       DateOnly? currentDate = null;
 
-      for (var index = 0; index < lines.Count; index++)
+      for(var index = 0; index < lines.Count; index++)
       {
          var line = lines[index];
 
-         if (TryParseDate(line, out var date))
+         if(TryParseDate(line, out var date))
          {
             currentDate = date;
             continue;
@@ -40,7 +40,7 @@ public sealed partial class IihfScheduleHtmlParser
 
          var match = MatchupPattern().Match(line);
 
-         if (!match.Success || currentDate is null)
+         if(!match.Success || currentDate is null)
          {
             continue;
          }
@@ -49,7 +49,7 @@ public sealed partial class IihfScheduleHtmlParser
          var awayCode = match.Groups["away"].Value;
          var time = FindNextTime(lines, index + 1);
 
-         if (time is null)
+         if(time is null)
          {
             continue;
          }
@@ -86,7 +86,7 @@ public sealed partial class IihfScheduleHtmlParser
          .Where(IsGameDataCell)
          .ToList();
 
-      if (cells.Count < 8 || cells[0].GetAttributeValue("id", "") == "")
+      if(cells.Count < 8 || cells[0].GetAttributeValue("id", "") == "")
       {
          return null;
       }
@@ -97,7 +97,7 @@ public sealed partial class IihfScheduleHtmlParser
       var awayCode = ExtractTeamCode(cells[5]);
       var gameNumber = ExtractGameNumber(ExtractText(cells[2]));
 
-      if (
+      if(
          startsAt is null ||
          stage is null ||
          gameNumber is null ||
@@ -113,8 +113,8 @@ public sealed partial class IihfScheduleHtmlParser
          CompetitionName,
          startsAt.Value,
          stage,
-         homeCode is null ? null : CreateTeam(homeCode),
-         awayCode is null ? null : CreateTeam(awayCode)
+         homeCode is not null ? CreateTeam(homeCode) : null,
+         awayCode is not null ? CreateTeam(awayCode) : null
       );
    }
 
@@ -130,7 +130,7 @@ public sealed partial class IihfScheduleHtmlParser
       var text = ExtractText(dateCell);
       var match = StatsDatePattern().Match(text);
 
-      if (!match.Success)
+      if(!match.Success)
       {
          return null;
       }
@@ -141,7 +141,7 @@ public sealed partial class IihfScheduleHtmlParser
       var value = $"{match.Groups["date"].Value} " +
          match.Groups["time"].Value;
 
-      if (!DateTime.TryParseExact(
+      if(!DateTime.TryParseExact(
          value,
          "d MMM yyyy HH:mm",
          CultureInfo.InvariantCulture,
@@ -159,7 +159,7 @@ public sealed partial class IihfScheduleHtmlParser
    {
       var match = StagePattern().Match(gameInfo);
 
-      if (!match.Success)
+      if(!match.Success)
       {
          return null;
       }
@@ -228,9 +228,9 @@ public sealed partial class IihfScheduleHtmlParser
       int startIndex
    )
    {
-      for (var index = startIndex; index < lines.Count; index++)
+      for(var index = startIndex; index < lines.Count; index++)
       {
-         if (TimeOnly.TryParseExact(
+         if(TimeOnly.TryParseExact(
             lines[index],
             "HH:mm",
             CultureInfo.InvariantCulture,
@@ -241,7 +241,7 @@ public sealed partial class IihfScheduleHtmlParser
             return time;
          }
 
-         if (TryParseDate(lines[index], out _))
+         if(TryParseDate(lines[index], out _))
          {
             return null;
          }
