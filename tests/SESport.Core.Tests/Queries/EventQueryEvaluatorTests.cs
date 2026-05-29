@@ -1,4 +1,4 @@
-namespace SESport.Core.Tests;
+namespace SESport.Core.Tests.Queries;
 
 public class EventQueryEvaluatorTests
 {
