@@ -100,9 +100,8 @@ public sealed partial class IihfScheduleHtmlParser
       if (
          startsAt is null ||
          stage is null ||
-         homeCode is null ||
-         awayCode is null ||
-         gameNumber is null
+         gameNumber is null ||
+         (homeCode is null && awayCode is null)
       )
       {
          return null;
@@ -114,8 +113,8 @@ public sealed partial class IihfScheduleHtmlParser
          CompetitionName,
          startsAt.Value,
          stage,
-         CreateTeam(homeCode),
-         CreateTeam(awayCode)
+         homeCode is null ? null : CreateTeam(homeCode),
+         awayCode is null ? null : CreateTeam(awayCode)
       );
    }
 
