@@ -13,12 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Core.Tests", "tests
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{FF5E4F5A-4E3D-47E4-82DB-1AC8E67DDDAC}"
 	ProjectSection(SolutionItems) = preProject
-		.env.example = .env.example
-		database\postgres\migrations\001_create_competitions.sql = database\postgres\migrations\001_create_competitions.sql
-		compose.yaml = compose.yaml
 		README.md = README.md
-		database\postgres\README.md = database\postgres\README.md
-		database\postgres\run-migrations.ps1 = database\postgres\run-migrations.ps1
 		docs\source-strategy.md = docs\source-strategy.md
 		docs\use-cases.md = docs\use-cases.md
 	EndProjectSection
