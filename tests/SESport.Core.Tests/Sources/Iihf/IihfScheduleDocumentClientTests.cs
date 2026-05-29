@@ -1,7 +1,7 @@
 using System.Net;
 using SESport.Sources.Iihf;
 
-namespace SESport.Core.Tests;
+namespace SESport.Core.Tests.Sources.Iihf;
 
 public class IihfScheduleDocumentClientTests
 {
