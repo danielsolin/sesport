@@ -22,9 +22,8 @@ This requires:
 
 - upcoming event schedules
 - event participants
-- team rosters
+- current team rosters
 - person nationalities
-- roster membership validity
 
 ## Derived Team Watchlists
 
