@@ -34,7 +34,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{084226A2-8533-49C9-82FD-B9F1FE3349AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportSmokeTest", "SESport.ImportSmokeTest\SESport.ImportSmokeTest.csproj", "{A79AFA24-A462-4773-ADA7-5244BB7D3552}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportSmokeTest", "tools\SESport.ImportSmokeTest\SESport.ImportSmokeTest.csproj", "{A79AFA24-A462-4773-ADA7-5244BB7D3552}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
