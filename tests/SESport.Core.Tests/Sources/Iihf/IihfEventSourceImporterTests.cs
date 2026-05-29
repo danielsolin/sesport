@@ -10,6 +10,9 @@ public class IihfEventSourceImporterTests
    private static readonly Country Switzerland =
       new(new CountryId("country:ch"), "CH", "Switzerland");
 
+   private static readonly Uri UnusedStatsUri =
+      new("https://example.test/iihf/stats");
+
    [Fact]
    public async Task IihfImporterCanImportSwedenVsSwitzerland()
    {
@@ -101,7 +104,7 @@ public class IihfEventSourceImporterTests
       return new IihfCompetitionSource(
          new CompetitionId("competition:iihf-world-championship-2026"),
          "2026/wm",
-         new Uri("https://example.test/iihf/stats")
+         UnusedStatsUri
       );
    }
 }
