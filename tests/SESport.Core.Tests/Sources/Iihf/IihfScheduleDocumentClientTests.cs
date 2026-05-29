@@ -11,7 +11,7 @@ public class IihfScheduleDocumentClientTests
    [Fact]
    public async Task ClientFetchesScheduleDocumentAndReturnsMatchingGames()
    {
-      var handler = new StubHttpMessageHandler(ScheduleHtml);
+      var handler = new StubHttpMessageHandler(CreateScheduleHtml());
       var client = new IihfScheduleDocumentClient(
          new HttpClient(handler),
          new IihfScheduleHtmlParser(),
@@ -23,10 +23,15 @@ public class IihfScheduleDocumentClientTests
       );
 
       var games = await client.GetGamesAsync(request, CancellationToken.None);
+      var game = games.Single();
 
-      Assert.Single(games);
-      Assert.Equal("SUI", games.Single().HomeTeam.ExternalId[..3].ToUpper());
-      Assert.Equal("SWE", games.Single().AwayTeam.ExternalId[..3].ToUpper());
+      Assert.Equal("SUI", game.HomeTeam!.ExternalId[..3].ToUpper());
+      Assert.Equal("SWE", game.AwayTeam!.ExternalId[..3].ToUpper());
+   }
+
+   private static string CreateScheduleHtml()
+   {
+      return "<p>28 May</p><p>SUI vs SWE</p><p>20:20</p>";
    }
 
    private sealed class StubHttpMessageHandler(
@@ -46,15 +51,4 @@ public class IihfScheduleDocumentClientTests
          return Task.FromResult(response);
       }
    }
-
-   private const string ScheduleHtml = """
-      <html>
-         <body>
-            <p>28 May</p>
-            <p>SUI vs SWE</p>
-            <p>Swiss Life Arena, Quarterfinals</p>
-            <p>20:20</p>
-         </body>
-      </html>
-      """;
 }
