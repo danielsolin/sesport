@@ -37,13 +37,13 @@ hour by hour.
 
 ## Entity Types
 
-Initial entity types:
+Initial entity types might include:
 
 - `Person`
 - `NationalTeam`
 - `Club`
 - `RecurringEvent`
-- `FamilyOrGroup`
+- `Pair`
 - `Organization`
 - `Other`
 
@@ -159,40 +159,4 @@ For recurring event entities, country relevance may come from both origin and
 interest. Vasaloppet belongs to Sweden because it is Swedish and creates major
 sporting interest for Swedish users. Thailand Grand Prix belongs to Thailand
 because it is based in Thailand and creates major international sport interest
-from a Thai perspective.
-
-## Relationship to the Older Event-First Model
-
-Earlier parts of the codebase were designed around an event-first model:
-
-```text
-collect event -> determine country connection
-```
-
-The new direction is:
-
-```text
-track entity -> collect related activity
-```
-
-Older event, participant, roster, import, and source concepts may still be
-useful, but they should support the entity-first model rather than define the
-product model.
-
-Do not delete the older model until the replacement is implemented and the data
-migration path is understood.
-
-## Implementation Direction
-
-The next implementation step should introduce minimal domain types for:
-
-- `TrackedEntity`
-- `TrackedEntityType`
-- `EntityCountryRelevance`
-- `EntityRelationship`
-- `Activity`
-- `ActivityType`
-- `EntityActivityLink`
-
-The first version can keep these types simple. The goal is to give future code a
-correct center of gravity, not to model every sport-specific detail immediately.
+from a Thai perspective.  
