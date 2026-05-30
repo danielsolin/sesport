@@ -7,7 +7,7 @@ The user's "team" is instead a country, and that country is represented
 by athletes, national teams, clubs, coaches, or people inside foreign teams.
 
 Example: "team Sweden" can be part of a New York Rangers game if Swedish players
-are meaningfully involved.
+are meaningfully involved.  
 Example 2: "team Sweden" can be represented by IF Elfsborg if the club is competing
 on a international level, like the UEFA Europa League.
 
