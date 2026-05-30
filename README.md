@@ -3,8 +3,8 @@
 SE Sport helps users discover country-relevant international sport.
 
 It is for users whose main sports interest is not one traditional club or team.
-The user's "team" is instead a country, and that country is represented
-by athletes, national teams, clubs, coaches, or people inside foreign teams.
+The user's "team" is instead a country, and that country is represented by athletes,
+national teams, clubs, coaches, or people inside foreign teams.
 
 Example 1: "Team Sweden" can be part of a New York Rangers game if Swedish players
 are meaningfully involved.  
@@ -32,12 +32,9 @@ Examples of Swedish entities:
 - Sweden Women's National Football Team (national team)
 - Åhman/Hellvig (beach volleyball pair)
 
-An activity can be a match, race, tournament, stage, championship,
-qualification event, roster announcement, or another international
-sport-related occurrence.
+An activity can be a match, race, tournament, stage, championship, qualification event,
+roster announcement, or another international sport-related occurrence.
 
-The project is not intended to be a general domestic sports calendar.
-
-See `docs/product-goal.md` for product scope.
-See `docs/source-strategy.md` for collection strategy.
-See `docs/use-cases.md` for example queries.
+See `docs/product-goal.md` for product scope.  
+See `docs/source-strategy.md` for collection strategy.  
+See `docs/use-cases.md` for example queries.  
