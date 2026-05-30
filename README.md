@@ -28,7 +28,7 @@ Examples of Swedish entities:
 
 - Ebba Andersson (athlete)
 - William Karlsson (athlete)
-- Tre Kronor (national team(
+- Tre Kronor (national team)
 - Sweden Women's National Football Team (national team)
 - Åhman/Hellvig (beach volleyball pair)
 
