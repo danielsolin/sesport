@@ -42,7 +42,6 @@ Different entities may require different collection methods.
 - Preserve source information.
 - Prefer explainable relevance.
 - Allow manual verification and correction.
-- Treat AI as an assistant, not as the source of truth.
 - Store normalized data that can be queried later.
 
 The system should always be able to explain:
