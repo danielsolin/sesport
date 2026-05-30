@@ -2,6 +2,13 @@
 
 SE Sport helps users discover country-relevant international sport.
 
+It is for users whose main sports interest is not one traditional club or team.
+The user's "team" may instead be a country, and that country may be represented
+by athletes, national teams, clubs, coaches, or people inside foreign teams.
+
+Example: for a Swedish user, Sweden can be part of a New York Rangers game if
+Swedish players are meaningfully involved.
+
 The first configured country is Sweden, but the model must work for any
 country.
 
