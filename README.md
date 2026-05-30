@@ -8,7 +8,7 @@ by athletes, national teams, clubs, coaches, or people inside foreign teams.
 
 Example 1: "Team Sweden" can be part of a New York Rangers game if Swedish players
 are meaningfully involved.  
-Example 2: Team Sweden" can be represented by IF Elfsborg if the club is competing
+Example 2: "Team Sweden" can be represented by IF Elfsborg if the club is competing
 on an international level, like the UEFA Europa League.  
 Example 3: "Team Sweden" can be represented by Armand Duplantis in a Diamond League
 event.
