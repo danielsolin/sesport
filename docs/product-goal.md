@@ -35,3 +35,10 @@ When making tradeoffs, prioritize:
 
 Avoid work that turns the product into a generic sports calendar, results
 service, or sports news site.
+
+SE Sport is not a sports celebrity product.
+
+The system should not collect private-life, gossip, lifestyle, or social media
+attention around tracked entities unless it has a direct and credible connection
+to sporting participation, sporting role, availability, selection, competition,
+or performance.
