@@ -24,6 +24,27 @@ activity collection work.
 The goal is not comprehensive sports coverage. The goal is useful coverage of
 activities connected to relevant entities.
 
+## Product Boundary
+
+SE Sport is not a sports celebrity product by default.
+
+The default product should focus on activities with direct sporting relevance:
+competition, participation, performance, selection, availability, transfers,
+rankings, coaching roles, and other events that affect or describe an entity's
+sport-related role.
+
+Private-life, gossip, lifestyle, social media, dating, fashion, parties, and
+similar public-personal attention should not be collected or shown by default.
+
+Such material may be supported later as an explicit user opt-in, but it must be
+clearly classified and kept separate from the default sporting experience.
+
+A useful rule is:
+
+```text
+Sporting relevance by default. Personal/public context only by explicit opt-in.
+```
+
 ## Product Priority
 
 When making tradeoffs, prioritize:
@@ -34,9 +55,4 @@ When making tradeoffs, prioritize:
 - maintaining data quality.
 
 Avoid work that turns the product into a generic sports calendar, results
-service, or sports news site.
-
-SE Sport is **not a sports celebrity product**. The system should not collect private-life, gossip, lifestyle, or social media
-attention around tracked entities unless it has a direct and credible connection
-to sporting participation, sporting role, availability, selection, competition,
-or performance.
+service, sports news site, or sports celebrity feed.
