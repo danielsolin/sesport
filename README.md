@@ -6,8 +6,10 @@ It is for users whose main sports interest is not one traditional club or team.
 The user's "team" is instead a country, and that country is represented
 by athletes, national teams, clubs, coaches, or people inside foreign teams.
 
-Example: for a Swedish user, Sweden can be part of a New York Rangers game if
-Swedish players are meaningfully involved.
+Example: "team Sweden" can be part of a New York Rangers game if Swedish players
+are meaningfully involved.
+Example 2: "team Sweden" can be represented by IF Elfsborg if the club is competing
+on a international level, like the UEFA Europa League.
 
 The first configured country is Sweden, but the model must work for any
 country.
