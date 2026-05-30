@@ -109,12 +109,33 @@ Why is this activity relevant to this country?
 
 A good answer names the relevant entity and explains the connection.
 
-Example:
+Examples:
 
 ```text
 This activity is relevant to Sweden because William Karlsson, a Swedish ice
 hockey player, is connected to one of the participating teams.
 ```
+
+```text
+This activity is relevant to Sweden because Vasaloppet is a Swedish recurring
+sports event with major Swedish sporting and public interest.
+```
+
+A tracked entity can be relevant to a country for different reasons. Initial
+country relevance reasons include:
+
+- the entity is a person with that country's nationality or sporting identity;
+- the entity is a national team representing that country;
+- the entity is a club or organization based in that country;
+- the entity is a foreign team with meaningful people from that country;
+- the entity is a recurring event based in that country with major sporting or
+  public interest for that country.
+
+For recurring event entities, country relevance may come from both origin and
+interest. Vasaloppet belongs to Sweden because it is Swedish and creates major
+sporting interest for Swedish users. Thailand Grand Prix belongs to Thailand
+because it is based in Thailand and creates major international sport interest
+from a Thai perspective.
 
 ## Relationship to the Older Event-First Model
 
