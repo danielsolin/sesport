@@ -6,6 +6,8 @@ It is for users whose main sports interest is not one traditional club or team.
 The user's "team" is instead a country, and that country is represented by athletes,
 national teams, clubs, coaches, or people inside foreign teams.
 
+In the following examples, Sweden is used as the user's "team": 
+
 Example 1: "Team Sweden" can be part of a New York Rangers game if Swedish players
 are meaningfully involved.  
 Example 2: "Team Sweden" can be represented by IF Elfsborg if the club is competing
