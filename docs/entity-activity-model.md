@@ -27,10 +27,6 @@ Examples with Sweden as the selected country:
 - Stockholm Marathon
 - Vasaloppet
 
-Examples with Thailand as the selected country:
-
-- Thailand Grand Prix
-
 Entities should be relatively stable. The entity watchlist may change when new
 athletes, teams, events, or groups become relevant, but it should not change
 hour by hour.
@@ -54,7 +50,7 @@ be modeled as a stable Sweden-relevant entity because of that relationship.
 
 A recurring event can be an entity when the event itself is a stable thing worth
 tracking for a country, not merely one activity instance. Examples include
-Stockholm Marathon, Vasaloppet, and Thailand Grand Prix.
+Stockholm Marathon and Vasaloppet.
 
 The list should stay broad enough to support different sports without making
 sport-specific assumptions in the core model.
@@ -71,10 +67,6 @@ Examples:
 - stage
 - championship
 - qualification event
-- roster announcement
-- transfer
-- ranking update
-- injury update
 - other international sport-related occurrence
 
 A sports event is one type of activity. It should not be treated as the root of
@@ -113,9 +105,8 @@ Examples:
 - William Karlsson plays for Vegas Golden Knights in an NHL game.
 - Tre Kronor participates in an IIHF World Championship game.
 - A Swedish football club plays in a European club qualifier.
-- The Solberg family is connected to a motorsport championship activity.
-- Vasaloppet has a race edition with international elite participation.
-- Thailand Grand Prix has a MotoGP race weekend.
+- Oliver Solberg is competes in a WRC event.
+- Vasaloppet has a race with international elite participation.
 
 ## Country Relevance
 
@@ -157,6 +148,4 @@ relationship target with validity dates and evidence.
 
 For recurring event entities, country relevance may come from both origin and
 interest. Vasaloppet belongs to Sweden because it is Swedish and creates major
-sporting interest for Swedish users. Thailand Grand Prix belongs to Thailand
-because it is based in Thailand and creates major international sport interest
-from a Thai perspective.  
+sporting interest for Swedish users. 
