@@ -26,11 +26,11 @@ The project starts with entities, not events.
 
 Examples of Swedish entities:
 
-- Ebba Andersson
-- William Karlsson
-- Tre Kronor
-- Sweden Women's National Football Team
-- The Solberg family
+- Ebba Andersson (athlete)
+- William Karlsson (athlete)
+- Tre Kronor (national team(
+- Sweden Women's National Football Team (national team)
+- Åhman/Hellvig (beach volleyball pair)
 
 An activity can be a match, race, tournament, stage, championship,
 qualification event, roster announcement, or another international
