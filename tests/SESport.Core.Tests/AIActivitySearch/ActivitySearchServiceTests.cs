@@ -53,6 +53,8 @@ public class ActivitySearchServiceTests
       Assert.Equal("Tre Kronor vs Finland", proposal.Title);
       Assert.Equal(ActivityTimeKind.Scheduled, proposal.Time.Kind);
       Assert.Equal(new TimeOnly(19, 0), proposal.Time.LocalStartTime);
+      Assert.Null(proposal.Time.StartsAt);
+      Assert.Equal("Europe/Stockholm", proposal.Time.TimeZoneId);
       Assert.Single(proposal.EntityLinks);
       Assert.Single(proposal.Evidence);
       Assert.Equal(0.88m, proposal.Confidence);

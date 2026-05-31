@@ -89,13 +89,12 @@ public sealed class ActivitySearchService(
          );
       }
 
-      var startsAt = new DateTimeOffset(
+      return ActivityTime.ScheduledLocal(
          draft.ActivityDate,
          draft.LocalStartTime.Value,
-         TimeSpan.Zero
+         draft.TimeZoneId,
+         "AI search provided a local start time without an offset."
       );
-
-      return ActivityTime.Scheduled(startsAt, draft.TimeZoneId);
    }
 
    private static ActivityProposalEvidence ToEvidence(

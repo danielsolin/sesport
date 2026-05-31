@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace SESport.Core.AIActivitySearch;
 
-public sealed class OpenAiResponsesActivitySearchClient
+public sealed class LmStudioChatActivitySearchClient
    : IActivitySearchModelClient
 {
    private static readonly JsonSerializerOptions JsonOptions = new(
@@ -16,11 +16,11 @@ public sealed class OpenAiResponsesActivitySearchClient
    };
 
    private readonly HttpClient httpClient;
-   private readonly OpenAiResponsesActivitySearchClientOptions options;
+   private readonly LmStudioChatActivitySearchClientOptions options;
 
-   public OpenAiResponsesActivitySearchClient(
+   public LmStudioChatActivitySearchClient(
       HttpClient httpClient,
-      OpenAiResponsesActivitySearchClientOptions options
+      LmStudioChatActivitySearchClientOptions options
    )
    {
       this.httpClient = httpClient;
@@ -39,7 +39,7 @@ public sealed class OpenAiResponsesActivitySearchClient
    )
    {
       var response = await httpClient.PostAsJsonAsync(
-         new Uri(options.BaseAddress, "responses"),
+         new Uri(options.BaseAddress, "chat"),
          CreateRequestPayload(request),
          JsonOptions,
          cancellationToken
@@ -52,8 +52,8 @@ public sealed class OpenAiResponsesActivitySearchClient
       if (!response.IsSuccessStatusCode)
       {
          throw new HttpRequestException(
-            $"AI activity search failed with {(int)response.StatusCode}: " +
-            rawResponse
+            $"LM Studio activity search failed with " +
+            $"{(int)response.StatusCode}: {rawResponse}"
          );
       }
 
@@ -72,16 +72,18 @@ public sealed class OpenAiResponsesActivitySearchClient
 
    private object CreateRequestPayload(ActivitySearchRequest request)
    {
-      var tools = request.AllowWebSearch
-         ? new object[] { new { type = options.WebSearchToolType } }
+      var integrations = request.AllowWebSearch
+         ? new[] { options.PluginId }
          : [];
 
       return new
       {
          model = options.Model,
          input = ActivitySearchPrompt.Create(request),
-         tools,
-         tool_choice = request.AllowWebSearch ? "auto" : null
+         integrations,
+         context_length = 8000,
+         temperature = 0.1,
+         store = true
       };
    }
 
@@ -89,14 +91,6 @@ public sealed class OpenAiResponsesActivitySearchClient
    {
       using var document = JsonDocument.Parse(rawResponse);
       var root = document.RootElement;
-
-      if (
-         root.TryGetProperty("output_text", out var outputText) &&
-         outputText.ValueKind == JsonValueKind.String
-      )
-      {
-         return outputText.GetString() ?? "";
-      }
 
       if (!root.TryGetProperty("output", out var output))
       {
@@ -107,33 +101,21 @@ public sealed class OpenAiResponsesActivitySearchClient
 
       foreach (var item in output.EnumerateArray())
       {
-         if (!item.TryGetProperty("content", out var content))
+         if (
+            item.TryGetProperty("type", out var itemType) &&
+            itemType.GetString() == "message" &&
+            TryGetMessageContent(item, out var messageContent)
+         )
          {
-            continue;
+            return messageContent;
          }
 
-         foreach (var contentItem in content.EnumerateArray())
+         if (
+            string.IsNullOrWhiteSpace(fallbackText) &&
+            TryGetMessageContent(item, out var fallback)
+         )
          {
-            if (
-               item.TryGetProperty("type", out var itemType) &&
-               itemType.GetString() == "message" &&
-               contentItem.TryGetProperty("type", out var contentType) &&
-               contentType.GetString() == "output_text" &&
-               contentItem.TryGetProperty("text", out var text) &&
-               text.ValueKind == JsonValueKind.String
-            )
-            {
-               return text.GetString() ?? "";
-            }
-
-            if (
-               string.IsNullOrWhiteSpace(fallbackText) &&
-               contentItem.TryGetProperty("text", out var fallback) &&
-               fallback.ValueKind == JsonValueKind.String
-            )
-            {
-               fallbackText = fallback.GetString() ?? "";
-            }
+            fallbackText = fallback;
          }
       }
 
@@ -142,4 +124,43 @@ public sealed class OpenAiResponsesActivitySearchClient
          : fallbackText;
    }
 
+   private static bool TryGetMessageContent(
+      JsonElement item,
+      out string content
+   )
+   {
+      content = "";
+
+      if (!item.TryGetProperty("content", out var contentElement))
+      {
+         return false;
+      }
+
+      if (contentElement.ValueKind == JsonValueKind.String)
+      {
+         content = contentElement.GetString() ?? "";
+
+         return true;
+      }
+
+      if (contentElement.ValueKind != JsonValueKind.Array)
+      {
+         return false;
+      }
+
+      foreach (var contentItem in contentElement.EnumerateArray())
+      {
+         if (
+            contentItem.TryGetProperty("text", out var text) &&
+            text.ValueKind == JsonValueKind.String
+         )
+         {
+            content = text.GetString() ?? "";
+
+            return true;
+         }
+      }
+
+      return false;
+   }
 }
