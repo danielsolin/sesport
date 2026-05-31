@@ -15,21 +15,6 @@ player is meaningfully involved.
 Example 3: "Team Sweden" can be represented by IF Elfsborg if the club is competing
 on an international level, like the UEFA Europa League.  
 
-## Current Launch Goal
-
-SE Sport must be live at `www.sesport.se` on June 14, 2026, ahead of Sweden's
-first FIFA World Cup match on June 15, 2026.
-
-The launch target is intentionally manual-first. The priority is to ship a
-reliable administration interface for manually creating, editing, reviewing,
-and publishing country-relevant activities, and a public site that presents
-that curated activity data clearly to users.
-
-Automation remains part of the long-term product direction, but it is secondary
-for this launch. Any source imports, AI-assisted discovery, proposal generation,
-or deduplication completed before launch should support the manual workflow
-rather than block the public release.
-
 ## Core Concept
 
 The project starts with entities, not events.
@@ -52,3 +37,18 @@ roster announcement, or another international sport-related occurrence.
 See `docs/product-goal.md` for product scope.  
 See `docs/source-strategy.md` for collection strategy.  
 See `docs/use-cases.md` for example queries.  
+
+## Current Launch Goal
+
+SE Sport must be live at `www.sesport.se` on June 14, 2026, ahead of Sweden's
+first FIFA World Cup match on June 15, 2026.
+
+The launch target is intentionally manual-first. The priority is to ship a
+reliable administration interface for manually creating, editing, reviewing,
+and publishing country-relevant activities, and a public site that presents
+that curated activity data clearly to users.
+
+Automation remains part of the long-term product direction, but it is secondary
+for this launch. Any source imports, AI-assisted discovery, proposal generation,
+or deduplication completed before launch should support the manual workflow
+rather than block the public release.
