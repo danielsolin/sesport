@@ -182,6 +182,67 @@ h2 {
    color: #ffffff;
 }
 
+.button-row {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 10px;
+}
+
+.admin-card-grid {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 14px;
+}
+
+.admin-card {
+   display: grid;
+   gap: 6px;
+   padding: 18px;
+   border: 1px solid var(--line);
+   border-radius: 8px;
+   background: var(--surface);
+   color: var(--text);
+}
+
+.admin-card span {
+   color: var(--muted);
+}
+
+.admin-layout {
+   display: grid;
+   grid-template-columns: 260px minmax(0, 1fr);
+   gap: 20px;
+}
+
+.admin-sidebar {
+   display: grid;
+   align-content: start;
+   overflow: hidden;
+   border: 1px solid var(--line);
+   border-radius: 8px;
+   background: var(--surface);
+}
+
+.admin-sidebar a {
+   padding: 12px 14px;
+   border-bottom: 1px solid var(--line);
+   color: var(--text);
+   font-weight: 800;
+}
+
+.admin-sidebar a:last-child {
+   border-bottom: 0;
+}
+
+.compact-heading {
+   margin-bottom: 14px;
+}
+
+.compact-heading p {
+   margin-bottom: 0;
+   color: var(--muted);
+}
+
 .admin-table-wrap {
    overflow-x: auto;
    border: 1px solid var(--line);
@@ -232,6 +293,22 @@ h2 {
 
 .table-actions {
    text-align: right !important;
+   white-space: nowrap;
+}
+
+.table-actions form {
+   display: inline;
+   margin-left: 12px;
+}
+
+.table-actions button {
+   padding: 0;
+   border: 0;
+   background: transparent;
+   color: var(--warning);
+   font: inherit;
+   font-weight: 800;
+   cursor: pointer;
 }
 
 .edit-form {
@@ -319,6 +396,8 @@ textarea {
    }
 
    .activity-row,
+   .admin-card-grid,
+   .admin-layout,
    .form-grid {
       grid-template-columns: 1fr;
    }

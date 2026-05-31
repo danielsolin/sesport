@@ -1,0 +1,127 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Web.Data;
+
+namespace SESport.Web.Pages.Admin.Entities;
+
+public class EditModel(AdminRepository repository) : PageModel
+{
+   [BindProperty]
+   public EntityEditModel Entity { get; set; } = new();
+
+   public IReadOnlyList<ReferenceRow> EntityTypes { get; private set; } = [];
+
+   public IReadOnlyList<ReferenceRow> Sports { get; private set; } = [];
+
+   public IReadOnlyList<ReferenceRow> CountryRelevanceKinds
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<ReferenceRow> WatchPriorities
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<ReferenceRow> StabilityKinds { get; private set; } = [];
+
+   public string? LoadError { get; private set; }
+
+   public async Task<IActionResult> OnGetAsync(
+      Guid? id,
+      CancellationToken cancellationToken
+   )
+   {
+      await LoadOptionsAsync(cancellationToken);
+
+      if (id is null)
+      {
+         return Page();
+      }
+
+      Entity = await repository.GetEntityForEditAsync(
+         id.Value,
+         cancellationToken
+      ) ?? new EntityEditModel();
+
+      return Entity.Id is null ? NotFound() : Page();
+   }
+
+   public async Task<IActionResult> OnPostAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      ValidateEntity();
+
+      if (!ModelState.IsValid)
+      {
+         await LoadOptionsAsync(cancellationToken);
+         return Page();
+      }
+
+      try
+      {
+         await repository.SaveEntityAsync(Entity, cancellationToken);
+      }
+      catch (Exception exception)
+      {
+         LoadError = exception.Message;
+         await LoadOptionsAsync(cancellationToken);
+         return Page();
+      }
+
+      return RedirectToPage("./Index");
+   }
+
+   private async Task LoadOptionsAsync(CancellationToken cancellationToken)
+   {
+      try
+      {
+         EntityTypes = await repository.GetReferenceRowsAsync(
+            "entity-types",
+            cancellationToken
+         );
+         Sports = await repository.GetReferenceRowsAsync(
+            "sports",
+            cancellationToken
+         );
+         CountryRelevanceKinds = await repository.GetReferenceRowsAsync(
+            "country-relevance-kinds",
+            cancellationToken
+         );
+         WatchPriorities = await repository.GetReferenceRowsAsync(
+            "entity-watch-priorities",
+            cancellationToken
+         );
+         StabilityKinds = await repository.GetReferenceRowsAsync(
+            "entity-stability-kinds",
+            cancellationToken
+         );
+      }
+      catch (Exception exception)
+      {
+         LoadError = exception.Message;
+      }
+   }
+
+   private void ValidateEntity()
+   {
+      if (string.IsNullOrWhiteSpace(Entity.CanonicalName))
+      {
+         ModelState.AddModelError(
+            "Entity.CanonicalName",
+            "Canonical name is required."
+         );
+      }
+
+      if (string.IsNullOrWhiteSpace(Entity.CountryRelevanceReason))
+      {
+         ModelState.AddModelError(
+            "Entity.CountryRelevanceReason",
+            "Country relevance reason is required."
+         );
+      }
+   }
+}

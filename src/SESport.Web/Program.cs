@@ -14,6 +14,7 @@ builder.Services.AddSingleton(
    )
 );
 builder.Services.AddScoped<ActivityRepository>();
+builder.Services.AddScoped<AdminRepository>();
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
    .AddCookie(

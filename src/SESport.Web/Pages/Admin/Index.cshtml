@@ -1,0 +1,20 @@
+@page
+@model SESport.Web.Pages.Admin.IndexModel
+@{
+   ViewData["Title"] = "Admin";
+}
+
+<section class="page-heading">
+   <p class="eyebrow">Admin</p>
+   <h1>Admin</h1>
+</section>
+
+<div class="admin-card-grid">
+   @foreach (var area in Model.Areas)
+   {
+      <a class="admin-card" href="@area.Href">
+         <strong>@area.Title</strong>
+         <span>@area.Description</span>
+      </a>
+   }
+</div>
