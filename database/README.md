@@ -22,6 +22,12 @@ Run migrations in order from a Linux or WSL shell:
 ./database/run-migrations.sh
 ```
 
+Import the curated entity watchlist after migrations:
+
+```bash
+dotnet run --project tools/SESport.ImportEntities/SESport.ImportEntities.csproj
+```
+
 During pre-launch development, incompatible schema rewrites may require
 recreating the local Postgres volume before rerunning migrations.
 

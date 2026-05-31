@@ -21,6 +21,14 @@ public class PostgresMigrationTests
          "create table if not exists activity_entity_link_roles",
          migration
       );
+      Assert.Contains(
+         "create table if not exists entity_watch_priorities",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists entity_stability_kinds",
+         migration
+      );
       Assert.Contains("create table if not exists sources", migration);
       Assert.Contains(
          "create table if not exists entity_relationships",
