@@ -1,0 +1,151 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using SESport.Core.AIActivitySearch;
+using SESport.Core.Ingestion;
+
+namespace SESport.Core.Tests.AIActivitySearch;
+
+public class OpenAiResponsesActivitySearchClientTests
+{
+   [Fact]
+   public async Task SearchPostsResponsesPayloadWithWebSearchTool()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/v1/"),
+            "gpt-oss-20b"
+         )
+      );
+
+      var result = await client.SearchAsync(
+         new ActivitySearchRequest(CreateEntity(), new DateOnly(2026, 5, 31)),
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         new Uri("http://127.0.0.1:1234/v1/responses"),
+         handler.RequestUri
+      );
+      Assert.Contains("\"model\":\"gpt-oss-20b\"", handler.RequestBody);
+      Assert.Contains("\"type\":\"web_search\"", handler.RequestBody);
+      Assert.Contains("Tre Kronor vs Finland", result.RawContent);
+      Assert.Single(result.Proposals);
+   }
+
+   [Fact]
+   public async Task SearchCanOmitWebSearchTool()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/v1/"),
+            "gpt-oss-20b"
+         )
+      );
+
+      await client.SearchAsync(
+         new ActivitySearchRequest(
+            CreateEntity(),
+            new DateOnly(2026, 5, 31),
+            AllowWebSearch: false
+         ),
+         CancellationToken.None
+      );
+
+      Assert.DoesNotContain("\"type\":\"web_search\"", handler.RequestBody);
+   }
+
+   private static string CreateResponseJson()
+   {
+      var content = """
+      {
+         "proposals": [
+            {
+               "title": "Tre Kronor vs Finland",
+               "description": "A scheduled match.",
+               "activityType": "Match",
+               "activityDate": "2026-06-01",
+               "localStartTime": "19:00",
+               "timeZoneId": "Europe/Stockholm",
+               "context": "International friendly",
+               "entityRole": "CompetesIn",
+               "entityExplanation": "Tre Kronor participates.",
+               "confidence": 0.8,
+               "evidence": [
+                  {
+                     "sourceName": "Swehockey",
+                     "uri": "https://example.test/game",
+                     "title": "Schedule",
+                     "summary": "The source lists the match."
+                  }
+               ]
+            }
+         ]
+      }
+      """;
+      var payload = new
+      {
+         output = new[]
+         {
+            new
+            {
+               content = new[]
+               {
+                  new { text = content }
+               }
+            }
+         }
+      };
+
+      return JsonSerializer.Serialize(payload);
+   }
+
+   private static ActivitySearchEntity CreateEntity()
+   {
+      return new ActivitySearchEntity(
+         new ExternalEntityId("tre-kronor"),
+         "Tre Kronor",
+         "national_team",
+         new ImportedSport(new ExternalEntityId("ice-hockey"), "ice hockey"),
+         "Represents Sweden",
+         "Current Swedish men's national ice hockey team.",
+         ["championships", "roster announcements"],
+         "Swehockey",
+         "Strong long-term watchlist anchor"
+      );
+   }
+
+   private sealed class RecordingHandler(string responseJson)
+      : HttpMessageHandler
+   {
+      public Uri? RequestUri { get; private set; }
+
+      public string RequestBody { get; private set; } = "";
+
+      protected override async Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         RequestUri = request.RequestUri;
+         RequestBody = request.Content is null
+            ? ""
+            : await request.Content.ReadAsStringAsync(cancellationToken);
+
+         return new HttpResponseMessage(HttpStatusCode.OK)
+         {
+            Content = new StringContent(
+               responseJson,
+               Encoding.UTF8,
+               "application/json"
+            )
+         };
+      }
+   }
+}
