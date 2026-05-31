@@ -64,12 +64,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   public async Task<IReadOnlyList<LookupOption>> GetEntityRoleOptionsAsync(
+   public async Task<IReadOnlyList<LookupOption>> GetSportOptionsAsync(
       CancellationToken cancellationToken
    )
    {
       return await GetLookupOptionsAsync(
-         "select id, label from activity_entity_link_roles order by sort_order, label",
+         "select id, name from sports order by name",
          cancellationToken
       );
    }
@@ -86,38 +86,26 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.description,
             a.activity_type_id,
             a.sport_id,
-            s.name as sport_name,
-            a.context,
-            a.time_kind_id,
             a.activity_date,
             a.local_start_time,
             a.time_zone_id,
-            a.time_description,
-            a.country_relevance_explanation,
             a.publication_status_id,
-            a.slug,
             l.entity_id,
-            l.role_id,
-            l.explanation,
-            l.context_name,
-            e.source_name,
             e.uri,
             e.title,
-            e.summary
+            e.comment
          from activities a
-         join sports s on s.id = a.sport_id
          left join lateral (
-            select entity_id, role_id, explanation, context_name
+            select entity_id
             from activity_entity_links
             where activity_id = a.id
             order by id
             limit 1
          ) l on true
          left join lateral (
-            select src.name as source_name, e.uri, e.title, e.summary
-            from activity_evidence e
-            join sources src on src.id = e.source_id
-            where e.activity_id = a.id
+            select uri, title, comment
+            from activity_evidence
+            where activity_id = a.id
             order by created_at desc
             limit 1
          ) e on true
@@ -142,24 +130,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          Description = ReadString(reader, 2),
          ActivityType = reader.GetString(3),
          SportId = reader.GetString(4),
-         SportName = reader.GetString(5),
-         Context = ReadString(reader, 6),
-         TimeKind = reader.GetString(7),
-         ActivityDate = reader.GetFieldValue<DateOnly>(8),
-         LocalStartTime = ReadTimeOnly(reader, 9),
-         TimeZoneId = reader.GetString(10),
-         TimeDescription = ReadString(reader, 11),
-         CountryRelevanceExplanation = reader.GetString(12),
-         IsPublished = reader.GetString(13) == "Published",
-         Slug = ReadString(reader, 14),
-         EntityId = reader.IsDBNull(15) ? null : reader.GetGuid(15),
-         EntityRole = ReadString(reader, 16) ?? "CompetesIn",
-         EntityExplanation = ReadString(reader, 17),
-         EntityContextName = ReadString(reader, 18),
-         EvidenceSourceName = ReadString(reader, 19),
-         EvidenceUri = ReadString(reader, 20),
-         EvidenceTitle = ReadString(reader, 21),
-         EvidenceSummary = ReadString(reader, 22)
+         ActivityDate = reader.GetFieldValue<DateOnly>(5),
+         LocalStartTime = ReadTimeOnly(reader, 6),
+         TimeZoneId = reader.GetString(7),
+         IsPublished = reader.GetString(8) == "Published",
+         EntityId = reader.IsDBNull(9) ? null : reader.GetGuid(9),
+         EvidenceUri = ReadString(reader, 10),
+         EvidenceTitle = ReadString(reader, 11),
+         EvidenceComment = ReadString(reader, 12)
       };
    }
 
@@ -171,7 +149,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       var id = model.Id ?? Guid.NewGuid();
       var status = model.IsPublished ? "Published" : "Draft";
       var startsAt = GetStartsAt(model);
-      var slug = NormalizeSlug(model.Slug, model.Title);
+      var slug = NormalizeSlug(model.Title, model.ActivityDate);
 
       await using var connection = await dataSource.OpenConnectionAsync(
          cancellationToken
@@ -179,8 +157,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var transaction = await connection.BeginTransactionAsync(
          cancellationToken
       );
-
-      await EnsureSportAsync(connection, transaction, model, cancellationToken);
 
       if (model.Id is null)
       {
@@ -213,7 +189,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          connection,
          transaction,
          id,
-         model,
+         model.EntityId,
          cancellationToken
       );
       await ReplaceEvidenceAsync(
@@ -239,14 +215,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.description,
             at.label,
             s.name,
-            a.context,
-            a.time_kind_id,
             a.activity_date,
             a.local_start_time,
-            a.time_description,
-            a.country_relevance_explanation,
             a.publication_status_id,
-            a.slug,
             coalesce(string_agg(te.canonical_name, ', '), '') as entities
          from activities a
          join sports s on s.id = a.sport_id
@@ -276,37 +247,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ReadString(reader, 2),
                reader.GetString(3),
                reader.GetString(4),
-               ReadString(reader, 5),
                FormatTime(reader),
-               reader.GetString(10),
-               reader.GetString(11),
-               ReadString(reader, 12),
-               reader.GetString(13)
+               reader.GetString(7),
+               reader.GetString(8)
             )
          );
       }
 
       return activities;
-   }
-
-   private static async Task EnsureSportAsync(
-      NpgsqlConnection connection,
-      NpgsqlTransaction transaction,
-      ActivityEditModel model,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         insert into sports (id, name)
-         values (@id, @name)
-         on conflict (id) do update
-         set name = excluded.name
-         """;
-
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("id", model.SportId.Trim());
-      command.Parameters.AddWithValue("name", model.SportName.Trim());
-      await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
    private static async Task InsertActivityAsync(
@@ -316,7 +264,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       ActivityEditModel model,
       DateTimeOffset? startsAt,
       string status,
-      string? slug,
+      string slug,
       CancellationToken cancellationToken
    )
    {
@@ -327,14 +275,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             description,
             activity_type_id,
             sport_id,
-            context,
-            time_kind_id,
             activity_date,
             local_start_time,
             starts_at,
             time_zone_id,
-            time_description,
-            country_relevance_explanation,
             publication_status_id,
             slug,
             published_at
@@ -345,14 +289,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @description,
             @activity_type_id,
             @sport_id,
-            @context,
-            @time_kind_id,
             @activity_date,
             @local_start_time,
             @starts_at,
             @time_zone_id,
-            @time_description,
-            @country_relevance_explanation,
             @publication_status_id,
             @slug,
             case when @publication_status_id = 'Published' then now() else null end
@@ -371,7 +311,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       ActivityEditModel model,
       DateTimeOffset? startsAt,
       string status,
-      string? slug,
+      string slug,
       CancellationToken cancellationToken
    )
    {
@@ -382,14 +322,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             description = @description,
             activity_type_id = @activity_type_id,
             sport_id = @sport_id,
-            context = @context,
-            time_kind_id = @time_kind_id,
             activity_date = @activity_date,
             local_start_time = @local_start_time,
             starts_at = @starts_at,
             time_zone_id = @time_zone_id,
-            time_description = @time_description,
-            country_relevance_explanation = @country_relevance_explanation,
             publication_status_id = @publication_status_id,
             slug = @slug,
             published_at = case
@@ -412,7 +348,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid activityId,
-      ActivityEditModel model,
+      Guid? entityId,
       CancellationToken cancellationToken
    )
    {
@@ -424,44 +360,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       deleteCommand.Parameters.AddWithValue("activity_id", activityId);
       await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-      if (model.EntityId is null)
+      if (entityId is null)
       {
          return;
       }
 
       const string sql = """
-         insert into activity_entity_links (
-            id,
-            activity_id,
-            entity_id,
-            role_id,
-            explanation,
-            context_name
-         )
-         values (
-            @id,
-            @activity_id,
-            @entity_id,
-            @role_id,
-            @explanation,
-            @context_name
-         )
+         insert into activity_entity_links (id, activity_id, entity_id)
+         values (@id, @activity_id, @entity_id)
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue("entity_id", model.EntityId.Value);
-      command.Parameters.AddWithValue("role_id", model.EntityRole);
-      command.Parameters.AddWithValue(
-         "explanation",
-         BlankToNullable(model.EntityExplanation) ??
-         model.CountryRelevanceExplanation
-      );
-      command.Parameters.AddWithValue(
-         "context_name",
-         BlankToDbNull(model.EntityContextName)
-      );
+      command.Parameters.AddWithValue("entity_id", entityId.Value);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -481,7 +393,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       deleteCommand.Parameters.AddWithValue("activity_id", activityId);
       await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-      if (string.IsNullOrWhiteSpace(model.EvidenceSourceName))
+      if (
+         string.IsNullOrWhiteSpace(model.EvidenceUri) &&
+         string.IsNullOrWhiteSpace(model.EvidenceTitle) &&
+         string.IsNullOrWhiteSpace(model.EvidenceComment)
+      )
       {
          return;
       }
@@ -494,7 +410,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             uri,
             title,
             observed_at,
-            summary
+            comment
          )
          values (
             @id,
@@ -503,30 +419,31 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @uri,
             @title,
             now(),
-            @summary
+            @comment
          )
          """;
+
+      var source = GetSource(model.EvidenceUri);
+      await EnsureSourceAsync(
+         connection,
+         transaction,
+         source.Id,
+         source.Name,
+         cancellationToken
+      );
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
-      var sourceId = Slugify(model.EvidenceSourceName);
-      await EnsureSourceAsync(
-         connection,
-         transaction,
-         sourceId,
-         model.EvidenceSourceName,
-         cancellationToken
-      );
-      command.Parameters.AddWithValue("source_id", sourceId);
+      command.Parameters.AddWithValue("source_id", source.Id);
       command.Parameters.AddWithValue("uri", BlankToDbNull(model.EvidenceUri));
       command.Parameters.AddWithValue(
          "title",
          BlankToDbNull(model.EvidenceTitle)
       );
       command.Parameters.AddWithValue(
-         "summary",
-         BlankToNullable(model.EvidenceSummary) ?? model.EvidenceSourceName
+         "comment",
+         BlankToDbNull(model.EvidenceComment)
       );
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
@@ -548,7 +465,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", sourceId);
-      command.Parameters.AddWithValue("name", sourceName.Trim());
+      command.Parameters.AddWithValue("name", sourceName);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -558,7 +475,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       ActivityEditModel model,
       DateTimeOffset? startsAt,
       string status,
-      string? slug
+      string slug
    )
    {
       command.Parameters.AddWithValue("id", id);
@@ -569,8 +486,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue("activity_type_id", model.ActivityType);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
-      command.Parameters.AddWithValue("context", BlankToDbNull(model.Context));
-      command.Parameters.AddWithValue("time_kind_id", model.TimeKind);
       command.Parameters.AddWithValue("activity_date", model.ActivityDate!.Value);
       command.Parameters.AddWithValue(
          "local_start_time",
@@ -581,25 +496,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          startsAt?.ToUniversalTime() ?? (object)DBNull.Value
       );
       command.Parameters.AddWithValue("time_zone_id", model.TimeZoneId.Trim());
-      command.Parameters.AddWithValue(
-         "time_description",
-         BlankToDbNull(model.TimeDescription)
-      );
-      command.Parameters.AddWithValue(
-         "country_relevance_explanation",
-         model.CountryRelevanceExplanation.Trim()
-      );
       command.Parameters.AddWithValue("publication_status_id", status);
-      command.Parameters.AddWithValue("slug", slug ?? (object)DBNull.Value);
+      command.Parameters.AddWithValue("slug", slug);
    }
 
    private static DateTimeOffset? GetStartsAt(ActivityEditModel model)
    {
-      if (model.TimeKind != "Scheduled")
-      {
-         return null;
-      }
-
       if (model.ActivityDate is null || model.LocalStartTime is null)
       {
          return null;
@@ -630,10 +532,24 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
-   private static string? NormalizeSlug(string? slug, string title)
+   private static (string Id, string Name) GetSource(string? uri)
    {
-      var value = string.IsNullOrWhiteSpace(slug) ? title : slug;
-      return string.IsNullOrWhiteSpace(value) ? null : Slugify(value);
+      if (
+         !string.IsNullOrWhiteSpace(uri) &&
+         Uri.TryCreate(uri, UriKind.Absolute, out var parsedUri)
+      )
+      {
+         var host = parsedUri.Host.ToLowerInvariant();
+         return ($"source:{host}", host);
+      }
+
+      return ("source:manual", "Manual");
+   }
+
+   private static string NormalizeSlug(string title, DateOnly? activityDate)
+   {
+      var datePart = activityDate?.ToString("yyyy-MM-dd") ?? "undated";
+      return Slugify($"{datePart}-{title}");
    }
 
    private static string Slugify(string value)
@@ -660,19 +576,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static string FormatTime(NpgsqlDataReader reader)
    {
-      var kind = reader.GetString(6);
-      var activityDate = reader.GetFieldValue<DateOnly>(7);
-      var localStartTime = ReadTimeOnly(reader, 8);
-      var description = ReadString(reader, 9);
+      var activityDate = reader.GetFieldValue<DateOnly>(5);
+      var localStartTime = ReadTimeOnly(reader, 6);
 
-      if (kind == "Scheduled" && localStartTime is not null)
-      {
-         return $"{activityDate:yyyy-MM-dd} {localStartTime:HH:mm}";
-      }
-
-      return string.IsNullOrWhiteSpace(description)
+      return localStartTime is null
          ? $"{activityDate:yyyy-MM-dd}"
-         : $"{activityDate:yyyy-MM-dd} · {description}";
+         : $"{activityDate:yyyy-MM-dd} {localStartTime:HH:mm}";
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
@@ -690,10 +599,5 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private static object BlankToDbNull(string? value)
    {
       return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
-   }
-
-   private static string? BlankToNullable(string? value)
-   {
-      return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
    }
 }

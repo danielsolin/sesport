@@ -6,9 +6,7 @@ public sealed record Activity(
    string? Description,
    ActivityType Type,
    Sport Sport,
-   string? Context,
    ActivityTime Time,
    IReadOnlyCollection<ActivityEntityLink> EntityLinks,
-   IReadOnlyCollection<ActivityEvidence> Evidence,
-   string CountryRelevanceExplanation
+   IReadOnlyCollection<ActivityEvidence> Evidence
 );
