@@ -83,6 +83,41 @@ set
    label = excluded.label,
    sort_order = excluded.sort_order;
 
+create table if not exists entity_watch_priorities
+(
+   id text primary key,
+   label text not null,
+   sort_order integer not null
+);
+
+insert into entity_watch_priorities (id, label, sort_order)
+values
+   ('tier_1', 'Tier 1', 10),
+   ('tier_2', 'Tier 2', 20),
+   ('tier_3', 'Tier 3', 30),
+   ('review', 'Review', 100)
+on conflict (id) do update
+set
+   label = excluded.label,
+   sort_order = excluded.sort_order;
+
+create table if not exists entity_stability_kinds
+(
+   id text primary key,
+   label text not null,
+   sort_order integer not null
+);
+
+insert into entity_stability_kinds (id, label, sort_order)
+values
+   ('long_term', 'Long term', 10),
+   ('medium_term', 'Medium term', 20),
+   ('short_term', 'Short term', 30)
+on conflict (id) do update
+set
+   label = excluded.label,
+   sort_order = excluded.sort_order;
+
 create table if not exists entity_relationship_types
 (
    id text primary key,
@@ -179,6 +214,8 @@ create table if not exists tracked_entities
    country_name text not null,
    country_relevance_kind_id text not null references country_relevance_kinds(id),
    country_relevance_reason text not null,
+   watch_priority_id text not null references entity_watch_priorities(id),
+   expected_stability_id text not null references entity_stability_kinds(id),
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now()
 );
