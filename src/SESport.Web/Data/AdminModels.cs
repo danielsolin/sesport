@@ -1,0 +1,79 @@
+namespace SESport.Web.Data;
+
+public sealed record AdminArea(string Title, string Description, string Href);
+
+public sealed record ReferenceTableInfo(
+   string Id,
+   string Title,
+   string Description
+);
+
+public sealed record ReferenceRow(
+   string Id,
+   string Label,
+   int? SortOrder,
+   bool? IsActive
+);
+
+public sealed class ReferenceEditModel
+{
+   public string? OriginalId { get; set; }
+
+   public string Id { get; set; } = string.Empty;
+
+   public string Label { get; set; } = string.Empty;
+
+   public int? SortOrder { get; set; }
+
+   public bool IsActive { get; set; } = true;
+}
+
+public sealed record SourceListItem(
+   string Id,
+   string Name,
+   DateTimeOffset UpdatedAt
+);
+
+public sealed class SourceEditModel
+{
+   public string? OriginalId { get; set; }
+
+   public string Id { get; set; } = string.Empty;
+
+   public string Name { get; set; } = string.Empty;
+}
+
+public sealed record EntityListItem(
+   Guid Id,
+   string Name,
+   string EntityType,
+   string Sport,
+   string WatchPriority,
+   string Stability
+);
+
+public sealed class EntityEditModel
+{
+   public Guid? Id { get; set; }
+
+   public string CanonicalName { get; set; } = string.Empty;
+
+   public string EntityTypeId { get; set; } = "Person";
+
+   public string SportId { get; set; } = "football";
+
+   public string CountryId { get; set; } = "se";
+
+   public string CountryCode { get; set; } = "SE";
+
+   public string CountryName { get; set; } = "Sweden";
+
+   public string CountryRelevanceKindId { get; set; } =
+      "NationalityOrSportingIdentity";
+
+   public string CountryRelevanceReason { get; set; } = string.Empty;
+
+   public string WatchPriorityId { get; set; } = "review";
+
+   public string ExpectedStabilityId { get; set; } = "medium_term";
+}

@@ -1,0 +1,61 @@
+@page
+@model SESport.Web.Pages.Admin.Sources.IndexModel
+@{
+   ViewData["Title"] = "Sources";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Admin</p>
+      <h1>Sources</h1>
+   </div>
+   <div class="button-row">
+      <a class="button" asp-page="/Admin/Index">Back</a>
+      <a class="button button-primary" asp-page="./Edit">New source</a>
+   </div>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      The source table is not available right now.
+   </div>
+}
+else if (Model.Sources.Count == 0)
+{
+   <div class="notice">No sources have been created yet.</div>
+}
+else
+{
+   <div class="admin-table-wrap">
+      <table class="admin-table">
+         <thead>
+            <tr>
+               <th>ID</th>
+               <th>Name</th>
+               <th>Updated</th>
+               <th></th>
+            </tr>
+         </thead>
+         <tbody>
+            @foreach (var source in Model.Sources)
+            {
+               <tr>
+                  <td><code>@source.Id</code></td>
+                  <td>@source.Name</td>
+                  <td>@source.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                  <td class="table-actions">
+                     <a asp-page="./Edit" asp-route-id="@source.Id">Edit</a>
+                     <form method="post"
+                           asp-page-handler="Delete"
+                           asp-route-id="@source.Id"
+                           onsubmit="return confirm('Are you sure?');">
+                        <button type="submit">Delete</button>
+                     </form>
+                  </td>
+               </tr>
+            }
+         </tbody>
+      </table>
+   </div>
+}

@@ -1,0 +1,57 @@
+@page "{table}/{id?}"
+@model SESport.Web.Pages.Admin.ReferenceData.EditModel
+@{
+   ViewData["Title"] = Model.Row.OriginalId is null
+      ? "New Reference Row"
+      : "Edit Reference Row";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Admin</p>
+      <h1>@ViewData["Title"]</h1>
+   </div>
+   <a class="button"
+      asp-page="./Index"
+      asp-route-table="@Model.CurrentTable?.Id">
+      Back
+   </a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">@Model.LoadError</div>
+}
+
+<form method="post" class="edit-form">
+   <input asp-for="Row.OriginalId" type="hidden" />
+
+   <section class="form-section">
+      <h2>@Model.CurrentTable?.Title</h2>
+      <div class="form-grid">
+         <label>
+            <span>ID</span>
+            <input asp-for="Row.Id"
+                   readonly="@(Model.Row.OriginalId is not null)" />
+            <span asp-validation-for="Row.Id"></span>
+         </label>
+         <label>
+            <span>Label</span>
+            <input asp-for="Row.Label" />
+            <span asp-validation-for="Row.Label"></span>
+         </label>
+         <label>
+            <span>Sort order</span>
+            <input asp-for="Row.SortOrder" type="number" />
+         </label>
+         <label class="check-row">
+            <input asp-for="Row.IsActive" type="checkbox" />
+            <span>Active</span>
+         </label>
+      </div>
+   </section>
+
+   <section class="form-actions">
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>
