@@ -1,0 +1,59 @@
+# SESport.Web
+
+`SESport.Web` is the Razor Pages web application for the public SE Sport
+site and the manual administration interface.
+
+## Prerequisites
+
+- .NET 10 SDK
+
+## Start the local server
+
+Run these commands from the repository root:
+
+```powershell
+dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
+```
+
+The `http` launch profile serves the app at:
+
+```text
+http://localhost:5109
+```
+
+The `https` launch profile is also available if local HTTPS is configured:
+
+```powershell
+dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile https
+```
+
+It serves:
+
+```text
+https://localhost:7156
+http://localhost:5109
+```
+
+## Administration
+
+The admin area starts at:
+
+```text
+http://localhost:5109/Admin
+```
+
+In `Development`, admin pages are accessible without authentication when
+`Admin:Password` is not configured. If an admin password is configured, use the
+login page:
+
+```text
+http://localhost:5109/Admin/Login
+```
+
+For a local password without editing tracked files, use an environment
+variable:
+
+```powershell
+$env:Admin__Password="<local-password>"
+dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
+```
