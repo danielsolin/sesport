@@ -3,17 +3,17 @@ namespace SESport.Core.Tests.Domain;
 public class ImportRunTests
 {
    [Fact]
-   public void ImportRunCanKeepImportedEventsAndIssuesTogether()
+   public void ImportRunCanKeepActivityProposalsAndIssuesTogether()
    {
       var source = new Source(
          new SourceId("source:test-iihf"),
          "Test IIHF source"
       );
-      var importedEvent = CreateImportedEvent(source);
+      var proposal = CreateActivityProposal(source);
       var issue = new ImportIssue(
          ImportIssueKind.UnexpectedSourceShape,
          ImportIssueSeverity.Warning,
-         importedEvent.ExternalId,
+         proposal.ExternalId,
          "Venue was not available in the source payload."
       );
 
@@ -23,13 +23,13 @@ public class ImportRunTests
          ImportRunStatus.Completed,
          new DateTimeOffset(2026, 5, 28, 18, 0, 0, TimeSpan.Zero),
          new DateTimeOffset(2026, 5, 28, 18, 1, 0, TimeSpan.Zero),
-         [importedEvent],
+         [proposal],
          [issue]
       );
 
       Assert.Equal(source, importRun.Source);
       Assert.Equal(ImportRunStatus.Completed, importRun.Status);
-      Assert.Single(importRun.Events);
+      Assert.Single(importRun.Proposals);
       Assert.Single(importRun.Issues);
       Assert.Equal(
          ImportIssueKind.UnexpectedSourceShape,
@@ -41,26 +41,33 @@ public class ImportRunTests
       );
    }
 
-   private static ImportedEvent CreateImportedEvent(Source source)
+   private static ActivityProposal CreateActivityProposal(Source source)
    {
       var iceHockey = new ImportedSport(
          new ExternalEntityId("ice-hockey"),
          "Ice hockey"
       );
-      var competition = new ImportedCompetition(
-         new ExternalEntityId("iihf-world-championship-2026"),
-         "2026 IIHF Ice Hockey World Championship",
-         iceHockey
-      );
-
-      return new ImportedEvent(
+      return new ActivityProposal(
+         new ActivityProposalId("activity-proposal:iihf-2026-sweden-switzerland"),
+         ActivityProposalProducerType.WebImport,
          source,
          new ExternalEntityId("iihf-2026-sweden-switzerland"),
+         "iihf:iihf-2026-sweden-switzerland",
          "Sweden vs Switzerland",
-         competition,
-         new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
          "Quarter-final",
-         []
+         null,
+         ActivityType.Match,
+         iceHockey,
+         "2026 IIHF Ice Hockey World Championship",
+         ActivityTime.ExactStart(
+            new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2))
+         ),
+         [],
+         [],
+         Confidence: 1.0m,
+         ActivityProposalStatus.Pending,
+         null,
+         null
       );
    }
 }

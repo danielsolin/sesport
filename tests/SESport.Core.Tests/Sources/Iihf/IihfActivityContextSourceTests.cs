@@ -2,23 +2,23 @@ using SESport.Sources.Iihf;
 
 namespace SESport.Core.Tests.Sources.Iihf;
 
-public class IihfCompetitionSourceTests
+public class IihfActivityContextSourceTests
 {
    private static readonly Uri ExampleIihfStatsUri =
       new("https://example.test/iihf/stats");
 
    [Fact]
-   public void CompetitionSourceKeepsProviderMappingOutOfCoreDomain()
+   public void ActivityContextSourceKeepsProviderMappingOutOfCoreDomain()
    {
-      var source = new IihfCompetitionSource(
-         new CompetitionId("competition:iihf-world-championship-2026"),
+      var source = new IihfActivityContextSource(
+         "2026 IIHF Ice Hockey World Championship",
          "2026/wm",
          ExampleIihfStatsUri
       );
 
       Assert.Equal(
-         "competition:iihf-world-championship-2026",
-         source.CompetitionId.Value
+         "2026 IIHF Ice Hockey World Championship",
+         source.ActivityContext
       );
 
       Assert.Equal(

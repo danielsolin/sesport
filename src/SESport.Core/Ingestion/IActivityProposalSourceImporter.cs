@@ -1,10 +1,10 @@
 namespace SESport.Core.Ingestion;
 
-public interface IEventSourceImporter
+public interface IActivityProposalSourceImporter
 {
    Source Source { get; }
 
-   Task<ImportRun> ImportEventsAsync(
+   Task<ImportRun> ImportActivityProposalsAsync(
       ImportRequest request,
       CancellationToken cancellationToken
    );
