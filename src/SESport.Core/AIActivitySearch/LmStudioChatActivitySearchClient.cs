@@ -72,8 +72,15 @@ public sealed class LmStudioChatActivitySearchClient
 
    private object CreateRequestPayload(ActivitySearchRequest request)
    {
-      var integrations = request.AllowWebSearch
-         ? new[] { options.PluginId }
+      object[] integrations = request.AllowWebSearch
+         ? [
+            new
+            {
+               type = "plugin",
+               id = options.PluginId,
+               allowed_tools = options.AllowedTools
+            }
+         ]
          : [];
 
       return new

@@ -18,7 +18,8 @@ public class LmStudioChatActivitySearchClientTests
          new LmStudioChatActivitySearchClientOptions(
             new Uri("http://127.0.0.1:1234/api/v1/"),
             "gpt-oss-20b",
-            "altra/web-search"
+            "altra/web-search",
+            ["search"]
          )
       );
 
@@ -32,10 +33,9 @@ public class LmStudioChatActivitySearchClientTests
          handler.RequestUri
       );
       Assert.Contains("\"model\":\"gpt-oss-20b\"", handler.RequestBody);
-      Assert.Contains(
-         "\"integrations\":[\"altra/web-search\"]",
-         handler.RequestBody
-      );
+      Assert.Contains("\"type\":\"plugin\"", handler.RequestBody);
+      Assert.Contains("\"id\":\"altra/web-search\"", handler.RequestBody);
+      Assert.Contains("\"allowed_tools\":[\"search\"]", handler.RequestBody);
       Assert.Single(result.Proposals);
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);
    }
@@ -50,7 +50,8 @@ public class LmStudioChatActivitySearchClientTests
          new LmStudioChatActivitySearchClientOptions(
             new Uri("http://127.0.0.1:1234/api/v1/"),
             "gpt-oss-20b",
-            "altra/web-search"
+            "altra/web-search",
+            ["search"]
          )
       );
 

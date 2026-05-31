@@ -23,6 +23,8 @@ public sealed class ActivitySearchService(
          cancellationToken
       );
       var proposals = modelResult.Proposals
+         .Where(draft => IsWithinDateWindow(request, draft))
+         .Take(request.MaxProposals)
          .Select(draft => ToActivityProposal(request, draft, modelResult))
          .ToList();
 
@@ -32,6 +34,17 @@ public sealed class ActivitySearchService(
          modelResult.RawContent,
          modelResult.RawResponse
       );
+   }
+
+   private static bool IsWithinDateWindow(
+      ActivitySearchRequest request,
+      ActivityProposalDraft draft
+   )
+   {
+      var start = request.SearchDate.AddDays(-request.LookBackDays);
+      var end = request.SearchDate.AddDays(request.LookAheadDays);
+
+      return draft.ActivityDate >= start && draft.ActivityDate <= end;
    }
 
    private static ActivityProposal ToActivityProposal(
