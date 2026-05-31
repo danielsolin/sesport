@@ -60,6 +60,87 @@ public class ActivitySearchServiceTests
       Assert.Equal(0.88m, proposal.Confidence);
    }
 
+   [Fact]
+   public async Task SearchFiltersDraftsOutsideDateWindow()
+   {
+      var client = new StubActivitySearchModelClient(
+         new ActivitySearchModelResult(
+            "{\"proposals\":[]}",
+            "{\"id\":\"response:test\"}",
+            [
+               CreateDraft("Old match", new DateOnly(2026, 5, 30)),
+               CreateDraft("Current match", new DateOnly(2026, 5, 31)),
+               CreateDraft("Future match", new DateOnly(2026, 6, 14)),
+               CreateDraft("Too far ahead", new DateOnly(2026, 7, 1))
+            ]
+         )
+      );
+      var service = new ActivitySearchService(client);
+      var result = await service.SearchAsync(
+         new ActivitySearchRequest(
+            CreateEntity(),
+            new DateOnly(2026, 5, 31),
+            LookAheadDays: 30
+         ),
+         CancellationToken.None
+      );
+
+      Assert.Collection(
+         result.Proposals,
+         proposal => Assert.Equal("Current match", proposal.Title),
+         proposal => Assert.Equal("Future match", proposal.Title)
+      );
+   }
+
+   [Fact]
+   public async Task SearchLimitsDraftsAfterDateFiltering()
+   {
+      var client = new StubActivitySearchModelClient(
+         new ActivitySearchModelResult(
+            "{\"proposals\":[]}",
+            "{\"id\":\"response:test\"}",
+            [
+               CreateDraft("Old match", new DateOnly(2026, 5, 30)),
+               CreateDraft("First match", new DateOnly(2026, 5, 31)),
+               CreateDraft("Second match", new DateOnly(2026, 6, 1))
+            ]
+         )
+      );
+      var service = new ActivitySearchService(client);
+      var result = await service.SearchAsync(
+         new ActivitySearchRequest(
+            CreateEntity(),
+            new DateOnly(2026, 5, 31),
+            MaxProposals: 1
+         ),
+         CancellationToken.None
+      );
+
+      var proposal = Assert.Single(result.Proposals);
+
+      Assert.Equal("First match", proposal.Title);
+   }
+
+   private static ActivityProposalDraft CreateDraft(
+      string title,
+      DateOnly activityDate
+   )
+   {
+      return new ActivityProposalDraft(
+         title,
+         "A scheduled international ice hockey match.",
+         "Match",
+         activityDate,
+         null,
+         "Europe/Stockholm",
+         "International friendly",
+         "CompetesIn",
+         "Tre Kronor is one of the participating teams.",
+         0.88m,
+         []
+      );
+   }
+
    private static ActivitySearchEntity CreateEntity()
    {
       return new ActivitySearchEntity(

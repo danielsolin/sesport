@@ -26,6 +26,18 @@ internal static class ActivitySearchPrompt
       excerpts clearly supports that exact claim. If sources disagree, choose
       the narrower source-backed wording.
 
+      Do not stop after the first source-backed candidate. Continue searching
+      across the likely activity types until you either reach the maximum
+      proposal count or no more source-backed activities can be found in the
+      date range. Prefer distinct activities over duplicate reports about the
+      same activity.
+
+      If the entity is a person and evidence shows they are selected for a
+      national-team or club roster, also search for upcoming matches or
+      competitions for that team in the date range. Only propose those matches
+      when the roster evidence connects the person to the team and schedule
+      evidence confirms the match.
+
       This is a non-interactive batch search. Do not ask the user clarifying
       questions. The entity, sport, country connection, search date, likely
       activity types, and suggested evidence sources are enough context to
@@ -57,6 +69,8 @@ internal static class ActivitySearchPrompt
       Suggested search queries:
       - "{{request.Entity.Name}}" "{{request.Entity.Sport.Name}}" schedule
         {{request.SearchDate:yyyy}}
+      - "{{request.Entity.Name}}" "{{request.Entity.Sport.Name}}" fixtures
+        squad {{request.SearchDate:yyyy}}
       - "{{request.Entity.Name}}" "{{request.Entity.Sport.Name}}" tournament
         {{request.SearchDate:yyyy}}
       - "{{request.Entity.Name}}" "{{request.Entity.Sport.Name}}" results
