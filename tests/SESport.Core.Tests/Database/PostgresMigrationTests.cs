@@ -31,10 +31,6 @@ public class PostgresMigrationTests
       );
       Assert.Contains("create table if not exists sources", migration);
       Assert.Contains(
-         "create table if not exists entity_relationships",
-         migration
-      );
-      Assert.Contains(
          "create table if not exists activity_proposals",
          migration
       );
@@ -66,6 +62,8 @@ public class PostgresMigrationTests
       );
       Assert.Contains("activity_date date not null", migration);
       Assert.DoesNotContain("country_relevance_explanation", migration);
+      Assert.DoesNotContain("entity_evidence", migration);
+      Assert.DoesNotContain("entity_relationships", migration);
       Assert.DoesNotContain("time_description", migration);
       Assert.DoesNotContain("DateRange", migration);
       Assert.DoesNotContain("ToBeDetermined", migration);

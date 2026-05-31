@@ -4,8 +4,8 @@ This folder contains explicit database migration scripts.
 
 The first migration creates the entity-first activity proposal model:
 lookup tables, tracked entities, activity proposals, review grouping,
-canonical activities, entity links, and evidence. Canonical activities always
-belong to one known activity date.
+canonical activities, activity entity links, and activity evidence. Canonical
+activities always belong to one known activity date.
 
 The second migration adds publication metadata for the manual launch site:
 activity publication statuses, public slugs, and listing indexes.

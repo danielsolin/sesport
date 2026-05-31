@@ -118,25 +118,6 @@ set
    label = excluded.label,
    sort_order = excluded.sort_order;
 
-create table if not exists entity_relationship_types
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
-);
-
-insert into entity_relationship_types (id, label, sort_order)
-values
-   ('PlaysFor', 'Plays for', 10),
-   ('CompetesOn', 'Competes on', 20),
-   ('Coaches', 'Coaches', 30),
-   ('OrganizedBy', 'Organized by', 40),
-   ('Other', 'Other', 1000)
-on conflict (id) do update
-set
-   label = excluded.label,
-   sort_order = excluded.sort_order;
-
 create table if not exists activity_entity_link_roles
 (
    id text primary key,
@@ -218,41 +199,6 @@ create table if not exists tracked_entities
    expected_stability_id text not null references entity_stability_kinds(id),
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now()
-);
-
-create table if not exists entity_relationships
-(
-   id uuid primary key,
-   subject_entity_id uuid not null references tracked_entities(id),
-   relationship_type_id text not null references entity_relationship_types(id),
-   target_name text not null,
-   target_kind text not null,
-   valid_from date null,
-   valid_to date null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-
-   constraint entity_relationships_valid_range_check
-      check (valid_to is null or valid_from is null or valid_to >= valid_from)
-);
-
-create table if not exists entity_evidence
-(
-   id uuid primary key,
-   entity_id uuid null references tracked_entities(id),
-   relationship_id uuid null references entity_relationships(id),
-   source_id text not null references sources(id),
-   uri text null,
-   title text null,
-   observed_at timestamptz not null,
-   summary text not null,
-   created_at timestamptz not null default now(),
-
-   constraint entity_evidence_owner_check
-      check (
-         (entity_id is not null and relationship_id is null) or
-         (entity_id is null and relationship_id is not null)
-      )
 );
 
 create table if not exists activities

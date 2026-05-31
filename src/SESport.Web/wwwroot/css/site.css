@@ -276,6 +276,12 @@ h2 {
    font-size: 13px;
 }
 
+.audit-id {
+   color: var(--muted);
+   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+   overflow-wrap: anywhere;
+}
+
 .admin-table tr:last-child td {
    border-bottom: 0;
 }
