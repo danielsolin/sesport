@@ -15,6 +15,17 @@ public class PostgresMigrationTests
       );
 
       Assert.Contains("create table if not exists tracked_entities", migration);
+      Assert.Contains("create table if not exists sports", migration);
+      Assert.Contains("create table if not exists activity_types", migration);
+      Assert.Contains(
+         "create table if not exists activity_time_kinds",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists activity_entity_link_roles",
+         migration
+      );
+      Assert.Contains("create table if not exists sources", migration);
       Assert.Contains(
          "create table if not exists entity_relationships",
          migration
@@ -46,13 +57,13 @@ public class PostgresMigrationTests
       );
       Assert.Contains("'Pending'", migration);
       Assert.Contains(
-         "status = 'Approved' and activity_id is not null",
+         "status_id = 'Approved' and activity_id is not null",
          migration
       );
-      Assert.Contains(
-         "time_kind in ('ExactStart', 'DateRange', 'ToBeDetermined')",
-         migration
-      );
+      Assert.Contains("activity_date date not null", migration);
+      Assert.Contains("('Scheduled', 'Scheduled time', 10)", migration);
+      Assert.DoesNotContain("DateRange", migration);
+      Assert.DoesNotContain("ToBeDetermined", migration);
    }
 
    [Fact]
@@ -67,11 +78,16 @@ public class PostgresMigrationTests
          )
       );
 
-      Assert.Contains("publication_status", migration);
+      Assert.Contains(
+         "create table if not exists activity_publication_statuses",
+         migration
+      );
+      Assert.Contains("publication_status_id", migration);
       Assert.Contains("Published", migration);
       Assert.Contains("slug", migration);
       Assert.Contains("published_at", migration);
       Assert.Contains("activities_slug_unique", migration);
+      Assert.Contains("activity_date", migration);
    }
 
    private static string FindRepositoryRoot()

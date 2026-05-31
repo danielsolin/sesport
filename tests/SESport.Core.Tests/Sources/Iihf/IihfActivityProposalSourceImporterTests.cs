@@ -33,7 +33,9 @@ public class IihfActivityProposalSourceImporterTests
       Assert.Equal(ActivityProposalStatus.Pending, proposal.Status);
       Assert.Equal(ActivityType.Match, proposal.Type);
       Assert.Equal("Sweden vs Switzerland", proposal.Title);
-      Assert.Equal(ActivityTimeKind.ExactStart, proposal.Time.Kind);
+      Assert.Equal(ActivityTimeKind.Scheduled, proposal.Time.Kind);
+      Assert.Equal(new DateOnly(2026, 5, 28), proposal.Time.ActivityDate);
+      Assert.Equal(new TimeOnly(20, 20), proposal.Time.LocalStartTime);
       Assert.Equal(
          new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
          proposal.Time.StartsAt

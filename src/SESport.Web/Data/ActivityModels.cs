@@ -16,6 +16,8 @@ public sealed record ActivityListItem(
 
 public sealed record EntityOption(Guid Id, string Name, string Type);
 
+public sealed record LookupOption(string Id, string Label);
+
 public sealed class ActivityEditModel
 {
    public Guid? Id { get; set; }
@@ -32,13 +34,13 @@ public sealed class ActivityEditModel
 
    public string? Context { get; set; }
 
-   public string TimeKind { get; set; } = "ExactStart";
+   public string TimeKind { get; set; } = "Scheduled";
 
-   public string? StartsAtLocal { get; set; }
+   public DateOnly? ActivityDate { get; set; }
 
-   public DateOnly? StartsOn { get; set; }
+   public TimeOnly? LocalStartTime { get; set; }
 
-   public DateOnly? EndsOn { get; set; }
+   public string TimeZoneId { get; set; } = "Europe/Stockholm";
 
    public string? TimeDescription { get; set; }
 

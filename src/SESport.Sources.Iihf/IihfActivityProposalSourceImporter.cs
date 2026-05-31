@@ -73,7 +73,7 @@ public sealed class IihfActivityProposalSourceImporter(
          ActivityType.Match,
          iceHockey,
          game.CompetitionName,
-         ActivityTime.ExactStart(game.StartsAt),
+         ActivityTime.Scheduled(game.StartsAt),
          entityLinks,
          [
             new ActivityProposalEvidence(

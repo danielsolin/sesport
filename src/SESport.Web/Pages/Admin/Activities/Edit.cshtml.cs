@@ -6,44 +6,20 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class EditModel(ActivityRepository repository) : PageModel
 {
-   public static readonly IReadOnlyList<string> ActivityTypes =
+   public static readonly IReadOnlyList<LookupOption> TimeKinds =
    [
-      "Match",
-      "Race",
-      "Tournament",
-      "Stage",
-      "Championship",
-      "Qualification",
-      "RosterAnnouncement",
-      "Transfer",
-      "Ranking",
-      "CoachingRole",
-      "OtherSportingActivity"
-   ];
-
-   public static readonly IReadOnlyList<string> TimeKinds =
-   [
-      "ExactStart",
-      "DateRange",
-      "ToBeDetermined"
-   ];
-
-   public static readonly IReadOnlyList<string> EntityRoles =
-   [
-      "CompetesIn",
-      "PlaysForContext",
-      "SelectedForRoster",
-      "TransferSubject",
-      "CoachingRole",
-      "RecurringEventEdition",
-      "RelatedOrganization",
-      "Other"
+      new("Scheduled", "Scheduled time"),
+      new("DateOnly", "Date only")
    ];
 
    [BindProperty]
    public ActivityEditModel Activity { get; set; } = new();
 
    public IReadOnlyList<EntityOption> Entities { get; private set; } = [];
+
+   public IReadOnlyList<LookupOption> ActivityTypes { get; private set; } = [];
+
+   public IReadOnlyList<LookupOption> EntityRoles { get; private set; } = [];
 
    public string? LoadError { get; private set; }
 
@@ -94,6 +70,12 @@ public class EditModel(ActivityRepository repository) : PageModel
       try
       {
          Entities = await repository.GetEntityOptionsAsync(cancellationToken);
+         ActivityTypes = await repository.GetActivityTypeOptionsAsync(
+            cancellationToken
+         );
+         EntityRoles = await repository.GetEntityRoleOptionsAsync(
+            cancellationToken
+         );
       }
       catch (Exception exception)
       {
@@ -130,24 +112,23 @@ public class EditModel(ActivityRepository repository) : PageModel
       }
 
       if (
-         Activity.TimeKind == "ExactStart" &&
-         string.IsNullOrWhiteSpace(Activity.StartsAtLocal)
+         Activity.ActivityDate is null
       )
       {
          ModelState.AddModelError(
-            "Activity.StartsAtLocal",
-            "Exact start time is required."
+            "Activity.ActivityDate",
+            "Activity date is required."
          );
       }
 
       if (
-         Activity.TimeKind == "DateRange" &&
-         (Activity.StartsOn is null || Activity.EndsOn is null)
+         Activity.TimeKind == "Scheduled" &&
+         Activity.LocalStartTime is null
       )
       {
          ModelState.AddModelError(
-            "Activity.StartsOn",
-            "Date range start and end are required."
+            "Activity.LocalStartTime",
+            "Start time is required for scheduled activities."
          );
       }
    }
