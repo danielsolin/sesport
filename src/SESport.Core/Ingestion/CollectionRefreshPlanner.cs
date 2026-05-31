@@ -6,29 +6,45 @@ public sealed class CollectionRefreshPlanner(
 {
    public DateTimeOffset? GetNextUsefulRefreshAt(ImportRun importRun)
    {
-      var unresolvedEvents = importRun.Events
+      var unresolvedProposals = importRun.Proposals
          .Where(IsForProfileSport)
-         .Where(IsMissingExpectedParticipants)
+         .Where(IsMissingExpectedEntityLinks)
          .ToList();
 
-      if(unresolvedEvents.Count == 0)
+      if(unresolvedProposals.Count == 0)
       {
          return null;
       }
 
-      return unresolvedEvents
-         .Min(e => e.StartsAt)
-         .Add(profile.ExpectedEventDuration)
+      var startsAt = unresolvedProposals
+         .Select(GetStartsAt)
+         .OfType<DateTimeOffset>()
+         .ToList();
+
+      if (startsAt.Count == 0)
+      {
+         return null;
+      }
+
+      return startsAt
+         .Min()
+         .Add(profile.ExpectedActivityDuration)
          .Add(profile.PublicationBuffer);
    }
 
-   private bool IsForProfileSport(ImportedEvent importedEvent)
+   private bool IsForProfileSport(ActivityProposal proposal)
    {
-      return importedEvent.Competition.Sport.ExternalId == profile.SportExternalId;
+      return proposal.Sport.ExternalId == profile.SportExternalId;
    }
 
-   private bool IsMissingExpectedParticipants(ImportedEvent importedEvent)
+   private bool IsMissingExpectedEntityLinks(ActivityProposal proposal)
    {
-      return importedEvent.Participants.Count < profile.ExpectedParticipantCount;
+      return proposal.EntityLinks.Count < profile.ExpectedEntityLinkCount;
    }
+
+   private static DateTimeOffset? GetStartsAt(ActivityProposal proposal)
+   {
+      return proposal.Time.StartsAt;
+   }
+
 }

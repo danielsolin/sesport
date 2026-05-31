@@ -1,5 +1,5 @@
 namespace SESport.Core.Identifiers;
 
-public sealed record ParticipantId(
+public sealed record ActivityProposalGroupId(
    string Value
 );

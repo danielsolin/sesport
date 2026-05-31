@@ -1,21 +1,21 @@
 namespace SESport.Core.Tests.Ingestion;
 
-public class EventSourceImporterTests
+public class ActivityProposalSourceImporterTests
 {
    [Fact]
-   public async Task EventSourceImporterCanProduceImportRun()
+   public async Task ActivityProposalSourceImporterCanProduceProposalImportRun()
    {
       var source = new Source(
          new SourceId("source:test-iihf"),
          "Test IIHF source"
       );
-      var importer = new FakeEventSourceImporter(source);
+      var importer = new FakeActivityProposalSourceImporter(source);
       var request = new ImportRequest(
          new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.Zero),
          new DateTimeOffset(2026, 5, 29, 0, 0, 0, TimeSpan.Zero)
       );
 
-      var importRun = await importer.ImportEventsAsync(
+      var importRun = await importer.ImportActivityProposalsAsync(
          request,
          CancellationToken.None
       );
@@ -23,16 +23,16 @@ public class EventSourceImporterTests
       Assert.Equal(source, importer.Source);
       Assert.Equal(source, importRun.Source);
       Assert.Equal(ImportRunStatus.Completed, importRun.Status);
-      Assert.Single(importRun.Events);
+      Assert.Single(importRun.Proposals);
    }
 
-   private sealed class FakeEventSourceImporter(
+   private sealed class FakeActivityProposalSourceImporter(
       Source source
-   ) : IEventSourceImporter
+   ) : IActivityProposalSourceImporter
    {
       public Source Source { get; } = source;
 
-      public Task<ImportRun> ImportEventsAsync(
+      public Task<ImportRun> ImportActivityProposalsAsync(
          ImportRequest request,
          CancellationToken cancellationToken
       )
@@ -43,14 +43,14 @@ public class EventSourceImporterTests
             ImportRunStatus.Completed,
             request.StartsAfter,
             request.StartsAfter.AddMinutes(1),
-            [CreateImportedEvent(Source, request.StartsAfter.AddHours(20))],
+            [CreateActivityProposal(Source, request.StartsAfter.AddHours(20))],
             []
          );
 
          return Task.FromResult(importRun);
       }
 
-      private static ImportedEvent CreateImportedEvent(
+      private static ActivityProposal CreateActivityProposal(
          Source source,
          DateTimeOffset startsAt
       )
@@ -59,20 +59,25 @@ public class EventSourceImporterTests
             new ExternalEntityId("ice-hockey"),
             "Ice hockey"
          );
-         var competition = new ImportedCompetition(
-            new ExternalEntityId("iihf-world-championship-2026"),
-            "2026 IIHF Ice Hockey World Championship",
-            iceHockey
-         );
-
-         return new ImportedEvent(
+         return new ActivityProposal(
+            new ActivityProposalId("activity-proposal:test"),
+            ActivityProposalProducerType.WebImport,
             source,
             new ExternalEntityId("iihf-2026-sweden-switzerland"),
+            "test:fingerprint",
             "Sweden vs Switzerland",
-            competition,
-            startsAt,
             "Quarter-final",
-            []
+            null,
+            ActivityType.Match,
+            iceHockey,
+            "2026 IIHF Ice Hockey World Championship",
+            ActivityTime.ExactStart(startsAt),
+            [],
+            [],
+            Confidence: 1.0m,
+            ActivityProposalStatus.Pending,
+            null,
+            null
          );
       }
    }

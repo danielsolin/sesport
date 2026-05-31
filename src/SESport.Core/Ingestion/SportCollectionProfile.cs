@@ -2,7 +2,7 @@ namespace SESport.Core.Ingestion;
 
 public sealed record SportCollectionProfile(
    ExternalEntityId SportExternalId,
-   TimeSpan ExpectedEventDuration,
+   TimeSpan ExpectedActivityDuration,
    TimeSpan PublicationBuffer,
-   int ExpectedParticipantCount
+   int ExpectedEntityLinkCount
 );

@@ -4,5 +4,5 @@ public sealed record IihfTeam(
    string ExternalId,
    string CountryCode,
    string CountryName,
-   string ParticipantName
+   string TeamName
 );

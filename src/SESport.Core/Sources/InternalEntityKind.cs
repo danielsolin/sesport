@@ -2,10 +2,10 @@ namespace SESport.Core.Sources;
 
 public enum InternalEntityKind
 {
-   Competition,
+   Activity,
+   ActivityProposal,
    Country,
-   Event,
-   Participant,
    Person,
-   Sport
+   Sport,
+   TrackedEntity
 }

@@ -3,13 +3,13 @@ namespace SESport.Core.Tests.Ingestion;
 public class CollectionRefreshPlannerTests
 {
    [Fact]
-   public void PlannerReturnsNoRefreshWhenEventsHaveExpectedParticipants()
+   public void PlannerReturnsNoRefreshWhenProposalsHaveExpectedEntityLinks()
    {
       var planner = CreateIceHockeyPlanner();
       var importRun = CreateImportRun(
-         CreateEvent(
+         CreateProposal(
             new DateTimeOffset(2026, 5, 30, 15, 20, 0, TimeSpan.Zero),
-            participantCount: 2
+            entityLinkCount: 2
          )
       );
 
@@ -19,7 +19,7 @@ public class CollectionRefreshPlannerTests
    }
 
    [Fact]
-   public void PlannerReturnsEarliestUsefulRefreshForUnresolvedEvents()
+   public void PlannerReturnsEarliestUsefulRefreshForUnresolvedProposals()
    {
       var planner = CreateIceHockeyPlanner();
       var startsAt = new DateTimeOffset(
@@ -32,7 +32,7 @@ public class CollectionRefreshPlannerTests
          TimeSpan.Zero
       );
       var importRun = CreateImportRun(
-         CreateEvent(startsAt, participantCount: 1)
+         CreateProposal(startsAt, entityLinkCount: 1)
       );
 
       var nextRefreshAt = planner.GetNextUsefulRefreshAt(importRun);
@@ -50,12 +50,12 @@ public class CollectionRefreshPlannerTests
             new ExternalEntityId("ice-hockey"),
             TimeSpan.FromMinutes(150),
             TimeSpan.FromMinutes(15),
-            ExpectedParticipantCount: 2
+            ExpectedEntityLinkCount: 2
          )
       );
    }
 
-   private static ImportRun CreateImportRun(params ImportedEvent[] events)
+   private static ImportRun CreateImportRun(params ActivityProposal[] proposals)
    {
       return new ImportRun(
          new ImportRunId("import-run:test"),
@@ -63,41 +63,49 @@ public class CollectionRefreshPlannerTests
          ImportRunStatus.Completed,
          DateTimeOffset.UtcNow,
          DateTimeOffset.UtcNow,
-         events,
+         proposals,
          []
       );
    }
 
-   private static ImportedEvent CreateEvent(
+   private static ActivityProposal CreateProposal(
       DateTimeOffset startsAt,
-      int participantCount
+      int entityLinkCount
    )
    {
-      var participants = Enumerable
-         .Range(1, participantCount)
-         .Select(index => new ImportedParticipant(
-            new ExternalEntityId($"participant:{index}"),
-            $"Participant {index}",
-            ParticipantKind.NationalTeam,
-            null
+      var entityLinks = Enumerable
+         .Range(1, entityLinkCount)
+         .Select(index => new ActivityProposalEntityLink(
+            EntityId.New(),
+            ActivityEntityRole.CompetesIn,
+            $"Entity {index} is connected to the activity.",
+            $"Entity {index}",
+            Confidence: 1.0m
          ))
          .ToList();
 
-      return new ImportedEvent(
+      return new ActivityProposal(
+         new ActivityProposalId($"activity-proposal:{startsAt:yyyyMMddHHmmss}"),
+         ActivityProposalProducerType.WebImport,
          new Source(new SourceId("source:test"), "Test"),
-         new ExternalEntityId($"event:{startsAt:yyyyMMddHHmmss}"),
-         "Test event",
-         new ImportedCompetition(
-            new ExternalEntityId("competition:test"),
-            "Test competition",
-            new ImportedSport(
-               new ExternalEntityId("ice-hockey"),
-               "Ice hockey"
-            )
+         new ExternalEntityId($"activity:{startsAt:yyyyMMddHHmmss}"),
+         $"test:{startsAt:yyyyMMddHHmmss}",
+         "Test activity",
+         null,
+         null,
+         ActivityType.Match,
+         new ImportedSport(
+            new ExternalEntityId("ice-hockey"),
+            "Ice hockey"
          ),
-         startsAt,
-         "Scheduled",
-         participants
+         "Test context",
+         ActivityTime.ExactStart(startsAt),
+         entityLinks,
+         [],
+         Confidence: 1.0m,
+         ActivityProposalStatus.Pending,
+         null,
+         null
       );
    }
 }

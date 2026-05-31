@@ -2,8 +2,9 @@
 
 This folder contains explicit database migration scripts.
 
-The first migration creates the `competitions` table and seeds the 2026 IIHF
-Ice Hockey World Championship as an ongoing competition.
+The first migration creates the entity-first activity proposal model:
+tracked entities, activity proposals, review grouping, canonical activities,
+entity links, and evidence.
 
 Start PostgreSQL with Docker Compose:
 

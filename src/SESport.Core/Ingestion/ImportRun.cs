@@ -6,6 +6,6 @@ public sealed record ImportRun(
    ImportRunStatus Status,
    DateTimeOffset StartedAt,
    DateTimeOffset? FinishedAt,
-   IReadOnlyCollection<ImportedEvent> Events,
+   IReadOnlyCollection<ActivityProposal> Proposals,
    IReadOnlyCollection<ImportIssue> Issues
 );

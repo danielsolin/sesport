@@ -2,75 +2,74 @@ using SESport.Sources.Iihf;
 
 namespace SESport.Core.Tests.Sources.Iihf;
 
-public class IihfEventSourceImporterTests
+public class IihfActivityProposalSourceImporterTests
 {
-   private static readonly Country Sweden =
-      new(new CountryId("country:se"), "SE", "Sweden");
-
-   private static readonly Country Switzerland =
-      new(new CountryId("country:ch"), "CH", "Switzerland");
-
    private static readonly Uri UnusedStatsUri =
       new("https://example.test/iihf/stats");
 
    [Fact]
-   public async Task IihfImporterCanImportSwedenVsSwitzerland()
+   public async Task IihfImporterProducesActivityProposal()
    {
       var scheduleClient = new InMemoryIihfScheduleClient(
          [CreateSwedenVsSwitzerlandGame()]
       );
-      var importer = new IihfEventSourceImporter(
+      var importer = new IihfActivityProposalSourceImporter(
          scheduleClient,
-         CreateCompetitionSource()
+         CreateActivityContextSource()
       );
       var request = new ImportRequest(
          new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.FromHours(2)),
          new DateTimeOffset(2026, 5, 29, 0, 0, 0, TimeSpan.FromHours(2))
       );
 
-      var importRun = await importer.ImportEventsAsync(
+      var importRun = await importer.ImportActivityProposalsAsync(
          request,
          CancellationToken.None
       );
-      var sportEvent = new EventIngestionService().ImportEvent(
-         importRun.Events.Single(),
-         [Sweden, Switzerland]
-      );
-      var connection = sportEvent.GetCountryConnectionsFor(Sweden).Single();
+      var proposal = importRun.Proposals.Single();
 
       Assert.Equal(ImportRunStatus.Completed, importRun.Status);
-      Assert.Equal("Sweden vs Switzerland", sportEvent.Name);
+      Assert.Equal(ActivityProposalProducerType.WebImport, proposal.ProducerType);
+      Assert.Equal(ActivityProposalStatus.Pending, proposal.Status);
+      Assert.Equal(ActivityType.Match, proposal.Type);
+      Assert.Equal("Sweden vs Switzerland", proposal.Title);
+      Assert.Equal(ActivityTimeKind.ExactStart, proposal.Time.Kind);
       Assert.Equal(
-         "2026 IIHF Ice Hockey World Championship",
-         sportEvent.Competition.Name
+         new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2)),
+         proposal.Time.StartsAt
       );
-      Assert.Equal(
-         "Sweden men's national ice hockey team represents Sweden.",
-         connection.Reason
+      Assert.Equal("Ice hockey", proposal.Sport.Name);
+      Assert.Equal("2026 IIHF Ice Hockey World Championship", proposal.Context);
+      Assert.Equal(2, proposal.EntityLinks.Count);
+      Assert.Contains(
+         proposal.EntityLinks,
+         link => link.ContextName == "Sweden men's national ice hockey team"
       );
+      Assert.Single(proposal.Evidence);
+      Assert.Equal(UnusedStatsUri, proposal.Evidence.Single().Uri);
    }
 
    [Fact]
    public async Task IihfImporterReportsIssueWhenNoEventsAreFound()
    {
       var scheduleClient = new InMemoryIihfScheduleClient([]);
-      var importer = new IihfEventSourceImporter(
+      var importer = new IihfActivityProposalSourceImporter(
          scheduleClient,
-         CreateCompetitionSource()
+         CreateActivityContextSource()
       );
       var request = new ImportRequest(
          new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.FromHours(2)),
          new DateTimeOffset(2026, 5, 29, 0, 0, 0, TimeSpan.FromHours(2))
       );
 
-      var importRun = await importer.ImportEventsAsync(
+      var importRun = await importer.ImportActivityProposalsAsync(
          request,
          CancellationToken.None
       );
 
       var issue = importRun.Issues.Single();
 
-      Assert.Empty(importRun.Events);
+      Assert.Empty(importRun.Proposals);
       Assert.Equal(ImportIssueKind.NoEventsFound, issue.Kind);
       Assert.Equal(ImportIssueSeverity.Warning, issue.Severity);
       Assert.Equal("No IIHF events were found for 2026/wm.", issue.Message);
@@ -99,10 +98,10 @@ public class IihfEventSourceImporterTests
       );
    }
 
-   private static IihfCompetitionSource CreateCompetitionSource()
+   private static IihfActivityContextSource CreateActivityContextSource()
    {
-      return new IihfCompetitionSource(
-         new CompetitionId("competition:iihf-world-championship-2026"),
+      return new IihfActivityContextSource(
+         "2026 IIHF Ice Hockey World Championship",
          "2026/wm",
          UnusedStatsUri
       );

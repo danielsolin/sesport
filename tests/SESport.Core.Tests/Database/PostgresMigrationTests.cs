@@ -3,22 +3,54 @@ namespace SESport.Core.Tests.Database;
 public class PostgresMigrationTests
 {
    [Fact]
-   public void FirstMigrationCreatesAndSeedsCompetitions()
+   public void FirstMigrationCreatesEntityFirstActivityProposalModel()
    {
       var migration = File.ReadAllText(
          Path.Combine(
             FindRepositoryRoot(),
             "database",
             "migrations",
-            "001_create_competitions.sql"
+            "001_create_entity_activity_model.sql"
          )
       );
 
-      Assert.Contains("create table if not exists competitions", migration);
-      Assert.Contains("status text not null", migration);
-      Assert.Contains("'Ongoing'", migration);
+      Assert.Contains("create table if not exists tracked_entities", migration);
       Assert.Contains(
-         "'competition:iihf-world-championship-2026'",
+         "create table if not exists entity_relationships",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists activity_proposals",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists activity_proposal_entity_links",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists activity_proposal_evidence",
+         migration
+      );
+      Assert.Contains("create table if not exists activities", migration);
+      Assert.Contains(
+         "create table if not exists activity_entity_links",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists activity_evidence",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists activity_proposal_groups",
+         migration
+      );
+      Assert.Contains("'Pending'", migration);
+      Assert.Contains(
+         "status = 'Approved' and activity_id is not null",
+         migration
+      );
+      Assert.Contains(
+         "time_kind in ('ExactStart', 'DateRange', 'ToBeDetermined')",
          migration
       );
    }

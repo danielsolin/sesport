@@ -33,7 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "database", "database", "{5E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", "{9A7A1DAD-F8E4-47CE-BBE7-172429F58F1D}"
 	ProjectSection(SolutionItems) = preProject
-		database\migrations\001_create_competitions.sql = database\migrations\001_create_competitions.sql
+		database\migrations\001_create_entity_activity_model.sql = database\migrations\001_create_entity_activity_model.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{084226A2-8533-49C9-82FD-B9F1FE3349AB}"
