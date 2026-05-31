@@ -51,11 +51,7 @@ public class ActivityProposalTests
       var activityId = ActivityId.New();
       var service = new ActivityProposalApprovalService();
 
-      var activity = service.Approve(
-         proposal,
-         activityId,
-         "This activity is relevant to Sweden because Tre Kronor participates."
-      );
+      var activity = service.Approve(proposal, activityId);
       var approvedProposal = service.MarkApproved(proposal, activityId);
 
       Assert.Equal(activityId, activity.Id);
@@ -85,11 +81,7 @@ public class ActivityProposalTests
       var service = new ActivityProposalApprovalService();
       var activityId = ActivityId.New();
 
-      var activity = service.Approve(
-         firstProposal,
-         activityId,
-         "This activity is relevant to Sweden because Tre Kronor participates."
-      );
+      var activity = service.Approve(firstProposal, activityId);
       var mergedActivity = service.MergeEvidence(activity, secondProposal);
 
       Assert.Equal(2, mergedActivity.Evidence.Count);

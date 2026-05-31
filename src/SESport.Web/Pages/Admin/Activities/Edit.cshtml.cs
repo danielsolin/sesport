@@ -6,12 +6,6 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class EditModel(ActivityRepository repository) : PageModel
 {
-   public static readonly IReadOnlyList<LookupOption> TimeKinds =
-   [
-      new("Scheduled", "Scheduled time"),
-      new("DateOnly", "Date only")
-   ];
-
    [BindProperty]
    public ActivityEditModel Activity { get; set; } = new();
 
@@ -19,7 +13,7 @@ public class EditModel(ActivityRepository repository) : PageModel
 
    public IReadOnlyList<LookupOption> ActivityTypes { get; private set; } = [];
 
-   public IReadOnlyList<LookupOption> EntityRoles { get; private set; } = [];
+   public IReadOnlyList<LookupOption> Sports { get; private set; } = [];
 
    public string? LoadError { get; private set; }
 
@@ -73,9 +67,7 @@ public class EditModel(ActivityRepository repository) : PageModel
          ActivityTypes = await repository.GetActivityTypeOptionsAsync(
             cancellationToken
          );
-         EntityRoles = await repository.GetEntityRoleOptionsAsync(
-            cancellationToken
-         );
+         Sports = await repository.GetSportOptionsAsync(cancellationToken);
       }
       catch (Exception exception)
       {
@@ -92,43 +84,25 @@ public class EditModel(ActivityRepository repository) : PageModel
 
       if (string.IsNullOrWhiteSpace(Activity.SportId))
       {
-         ModelState.AddModelError("Activity.SportId", "Sport id is required.");
-      }
-
-      if (string.IsNullOrWhiteSpace(Activity.SportName))
-      {
          ModelState.AddModelError(
-            "Activity.SportName",
-            "Sport name is required."
+            "Activity.SportId",
+            "Sport is required."
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Activity.CountryRelevanceExplanation))
+      if (Activity.EntityId is null)
       {
          ModelState.AddModelError(
-            "Activity.CountryRelevanceExplanation",
-            "Country relevance explanation is required."
+            "Activity.EntityId",
+            "Entity is required."
          );
       }
 
-      if (
-         Activity.ActivityDate is null
-      )
+      if (Activity.ActivityDate is null)
       {
          ModelState.AddModelError(
             "Activity.ActivityDate",
             "Activity date is required."
-         );
-      }
-
-      if (
-         Activity.TimeKind == "Scheduled" &&
-         Activity.LocalStartTime is null
-      )
-      {
-         ModelState.AddModelError(
-            "Activity.LocalStartTime",
-            "Start time is required for scheduled activities."
          );
       }
    }

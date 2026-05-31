@@ -4,8 +4,7 @@ public sealed class ActivityProposalApprovalService
 {
    public Activity Approve(
       ActivityProposal proposal,
-      ActivityId activityId,
-      string countryRelevanceExplanation
+      ActivityId activityId
    )
    {
       return new Activity(
@@ -14,14 +13,12 @@ public sealed class ActivityProposalApprovalService
          proposal.Description,
          proposal.Type,
          ToSport(proposal.Sport),
-         proposal.Context,
          proposal.Time,
          proposal.EntityLinks.Select(ToActivityLink).ToList(),
          proposal.Evidence.Select(evidence => ToActivityEvidence(
             proposal.Id,
             evidence
-         )).ToList(),
-         countryRelevanceExplanation
+         )).ToList()
       );
    }
 
@@ -59,10 +56,7 @@ public sealed class ActivityProposalApprovalService
    )
    {
       return new ActivityEntityLink(
-         proposalLink.EntityId,
-         proposalLink.ProposedRole,
-         proposalLink.Explanation,
-         proposalLink.ContextName
+         proposalLink.EntityId
       );
    }
 

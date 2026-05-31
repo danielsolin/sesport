@@ -39,22 +39,6 @@ set
    label = excluded.label,
    sort_order = excluded.sort_order;
 
-create table if not exists activity_time_kinds
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
-);
-
-insert into activity_time_kinds (id, label, sort_order)
-values
-   ('Scheduled', 'Scheduled time', 10),
-   ('DateOnly', 'Date only', 20)
-on conflict (id) do update
-set
-   label = excluded.label,
-   sort_order = excluded.sort_order;
-
 create table if not exists entity_types
 (
    id text primary key,
@@ -241,29 +225,17 @@ create table if not exists activities
    description text null,
    activity_type_id text not null references activity_types(id),
    sport_id text not null references sports(id),
-   context text null,
-   time_kind_id text not null references activity_time_kinds(id),
    activity_date date not null,
    local_start_time time null,
    starts_at timestamptz null,
    time_zone_id text not null default 'Europe/Stockholm',
-   time_description text null,
-   country_relevance_explanation text not null,
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now(),
 
    constraint activities_time_shape_check
       check (
-         (
-            time_kind_id = 'Scheduled' and
-            local_start_time is not null and
-            starts_at is not null
-         ) or
-         (
-            time_kind_id = 'DateOnly' and
-            local_start_time is null and
-            starts_at is null
-         )
+         (local_start_time is not null and starts_at is not null) or
+         (local_start_time is null and starts_at is null)
       )
 );
 
@@ -289,12 +261,10 @@ create table if not exists activity_proposals
    activity_type_id text not null references activity_types(id),
    sport_id text not null references sports(id),
    context text null,
-   time_kind_id text not null references activity_time_kinds(id),
    activity_date date not null,
    local_start_time time null,
    starts_at timestamptz null,
    time_zone_id text not null default 'Europe/Stockholm',
-   time_description text null,
    confidence numeric(4,3) null,
    status_id text not null references proposal_statuses(id),
    group_id text null references activity_proposal_groups(id),
@@ -307,16 +277,8 @@ create table if not exists activity_proposals
 
    constraint activity_proposals_time_shape_check
       check (
-         (
-            time_kind_id = 'Scheduled' and
-            local_start_time is not null and
-            starts_at is not null
-         ) or
-         (
-            time_kind_id = 'DateOnly' and
-            local_start_time is null and
-            starts_at is null
-         )
+         (local_start_time is not null and starts_at is not null) or
+         (local_start_time is null and starts_at is null)
       ),
 
    constraint activity_proposals_activity_reference_check
@@ -357,10 +319,7 @@ create table if not exists activity_entity_links
 (
    id uuid primary key,
    activity_id uuid not null references activities(id),
-   entity_id uuid not null references tracked_entities(id),
-   role_id text not null references activity_entity_link_roles(id),
-   explanation text not null,
-   context_name text null
+   entity_id uuid not null references tracked_entities(id)
 );
 
 create table if not exists activity_evidence
@@ -372,6 +331,6 @@ create table if not exists activity_evidence
    uri text null,
    title text null,
    observed_at timestamptz not null,
-   summary text not null,
+   comment text null,
    created_at timestamptz not null default now()
 );

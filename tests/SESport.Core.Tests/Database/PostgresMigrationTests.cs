@@ -18,10 +18,6 @@ public class PostgresMigrationTests
       Assert.Contains("create table if not exists sports", migration);
       Assert.Contains("create table if not exists activity_types", migration);
       Assert.Contains(
-         "create table if not exists activity_time_kinds",
-         migration
-      );
-      Assert.Contains(
          "create table if not exists activity_entity_link_roles",
          migration
       );
@@ -61,7 +57,8 @@ public class PostgresMigrationTests
          migration
       );
       Assert.Contains("activity_date date not null", migration);
-      Assert.Contains("('Scheduled', 'Scheduled time', 10)", migration);
+      Assert.DoesNotContain("country_relevance_explanation", migration);
+      Assert.DoesNotContain("time_description", migration);
       Assert.DoesNotContain("DateRange", migration);
       Assert.DoesNotContain("ToBeDetermined", migration);
    }
