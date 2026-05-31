@@ -35,10 +35,9 @@
          <label>
             <span>Activity type</span>
             <select asp-for="Activity.ActivityType">
-               @foreach (var type in
-                  SESport.Web.Pages.Admin.Activities.EditModel.ActivityTypes)
+               @foreach (var type in Model.ActivityTypes)
                {
-                  <option value="@type">@type</option>
+                  <option value="@type.Id">@type.Label</option>
                }
             </select>
          </label>
@@ -74,21 +73,23 @@
                @foreach (var kind in
                   SESport.Web.Pages.Admin.Activities.EditModel.TimeKinds)
                {
-                  <option value="@kind">@kind</option>
+                  <option value="@kind.Id">@kind.Label</option>
                }
             </select>
          </label>
          <label>
-            <span>Exact start</span>
-            <input asp-for="Activity.StartsAtLocal" type="datetime-local" />
+            <span>Activity date</span>
+            <input asp-for="Activity.ActivityDate" type="date" />
+            <span asp-validation-for="Activity.ActivityDate"></span>
          </label>
          <label>
-            <span>Starts on</span>
-            <input asp-for="Activity.StartsOn" type="date" />
+            <span>Start time</span>
+            <input asp-for="Activity.LocalStartTime" type="time" />
+            <span asp-validation-for="Activity.LocalStartTime"></span>
          </label>
          <label>
-            <span>Ends on</span>
-            <input asp-for="Activity.EndsOn" type="date" />
+            <span>Time zone</span>
+            <input asp-for="Activity.TimeZoneId" />
          </label>
       </div>
       <label>
@@ -119,10 +120,9 @@
          <label>
             <span>Entity role</span>
             <select asp-for="Activity.EntityRole">
-               @foreach (var role in
-                  SESport.Web.Pages.Admin.Activities.EditModel.EntityRoles)
+               @foreach (var role in Model.EntityRoles)
                {
-                  <option value="@role">@role</option>
+                  <option value="@role.Id">@role.Label</option>
                }
             </select>
          </label>

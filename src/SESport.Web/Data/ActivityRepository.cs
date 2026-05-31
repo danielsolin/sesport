@@ -12,7 +12,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       return await GetActivityListAsync(
-         "where a.publication_status = 'Published'",
+         "where a.publication_status_id = 'Published'",
          cancellationToken
       );
    }
@@ -29,7 +29,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, canonical_name, entity_type
+         select id, canonical_name, entity_type_id
          from tracked_entities
          order by canonical_name
          """;
@@ -54,6 +54,26 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return entities;
    }
 
+   public async Task<IReadOnlyList<LookupOption>> GetActivityTypeOptionsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return await GetLookupOptionsAsync(
+         "select id, label from activity_types order by sort_order, label",
+         cancellationToken
+      );
+   }
+
+   public async Task<IReadOnlyList<LookupOption>> GetEntityRoleOptionsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return await GetLookupOptionsAsync(
+         "select id, label from activity_entity_link_roles order by sort_order, label",
+         cancellationToken
+      );
+   }
+
    public async Task<ActivityEditModel?> GetForEditAsync(
       Guid id,
       CancellationToken cancellationToken
@@ -64,20 +84,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.id,
             a.title,
             a.description,
-            a.activity_type,
+            a.activity_type_id,
             a.sport_id,
-            a.sport_name,
+            s.name as sport_name,
             a.context,
-            a.time_kind,
-            a.starts_at,
-            a.starts_on,
-            a.ends_on,
+            a.time_kind_id,
+            a.activity_date,
+            a.local_start_time,
+            a.time_zone_id,
             a.time_description,
             a.country_relevance_explanation,
-            a.publication_status,
+            a.publication_status_id,
             a.slug,
             l.entity_id,
-            l.role,
+            l.role_id,
             l.explanation,
             l.context_name,
             e.source_name,
@@ -85,17 +105,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             e.title,
             e.summary
          from activities a
+         join sports s on s.id = a.sport_id
          left join lateral (
-            select entity_id, role, explanation, context_name
+            select entity_id, role_id, explanation, context_name
             from activity_entity_links
             where activity_id = a.id
             order by id
             limit 1
          ) l on true
          left join lateral (
-            select source_name, uri, title, summary
-            from activity_evidence
-            where activity_id = a.id
+            select src.name as source_name, e.uri, e.title, e.summary
+            from activity_evidence e
+            join sources src on src.id = e.source_id
+            where e.activity_id = a.id
             order by created_at desc
             limit 1
          ) e on true
@@ -113,10 +135,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      var startsAt = reader.IsDBNull(8)
-         ? (DateTimeOffset?)null
-         : reader.GetFieldValue<DateTimeOffset>(8);
-
       return new ActivityEditModel
       {
          Id = reader.GetGuid(0),
@@ -127,9 +145,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          SportName = reader.GetString(5),
          Context = ReadString(reader, 6),
          TimeKind = reader.GetString(7),
-         StartsAtLocal = startsAt?.LocalDateTime.ToString("yyyy-MM-ddTHH:mm"),
-         StartsOn = ReadDateOnly(reader, 9),
-         EndsOn = ReadDateOnly(reader, 10),
+         ActivityDate = reader.GetFieldValue<DateOnly>(8),
+         LocalStartTime = ReadTimeOnly(reader, 9),
+         TimeZoneId = reader.GetString(10),
          TimeDescription = ReadString(reader, 11),
          CountryRelevanceExplanation = reader.GetString(12),
          IsPublished = reader.GetString(13) == "Published",
@@ -152,7 +170,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    {
       var id = model.Id ?? Guid.NewGuid();
       var status = model.IsPublished ? "Published" : "Draft";
-      var startsAt = ParseStartsAt(model);
+      var startsAt = GetStartsAt(model);
       var slug = NormalizeSlug(model.Slug, model.Title);
 
       await using var connection = await dataSource.OpenConnectionAsync(
@@ -161,6 +179,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var transaction = await connection.BeginTransactionAsync(
          cancellationToken
       );
+
+      await EnsureSportAsync(connection, transaction, model, cancellationToken);
 
       if (model.Id is null)
       {
@@ -217,25 +237,27 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.id,
             a.title,
             a.description,
-            a.activity_type,
-            a.sport_name,
+            at.label,
+            s.name,
             a.context,
-            a.time_kind,
-            a.starts_at,
-            a.starts_on,
-            a.ends_on,
+            a.time_kind_id,
+            a.activity_date,
+            a.local_start_time,
             a.time_description,
             a.country_relevance_explanation,
-            a.publication_status,
+            a.publication_status_id,
             a.slug,
             coalesce(string_agg(te.canonical_name, ', '), '') as entities
          from activities a
+         join sports s on s.id = a.sport_id
+         join activity_types at on at.id = a.activity_type_id
          left join activity_entity_links l on l.activity_id = a.id
          left join tracked_entities te on te.id = l.entity_id
          {{whereClause}}
-         group by a.id
+         group by a.id, at.label, s.name
          order by
-            coalesce(a.starts_at, a.starts_on::timestamptz, a.created_at),
+            a.activity_date,
+            a.local_start_time nulls last,
             a.title
          """;
 
@@ -256,15 +278,35 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(4),
                ReadString(reader, 5),
                FormatTime(reader),
+               reader.GetString(10),
                reader.GetString(11),
-               reader.GetString(12),
-               ReadString(reader, 13),
-               reader.GetString(14)
+               ReadString(reader, 12),
+               reader.GetString(13)
             )
          );
       }
 
       return activities;
+   }
+
+   private static async Task EnsureSportAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      ActivityEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         insert into sports (id, name)
+         values (@id, @name)
+         on conflict (id) do update
+         set name = excluded.name
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("id", model.SportId.Trim());
+      command.Parameters.AddWithValue("name", model.SportName.Trim());
+      await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
    private static async Task InsertActivityAsync(
@@ -283,17 +325,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             title,
             description,
-            activity_type,
+            activity_type_id,
             sport_id,
-            sport_name,
             context,
-            time_kind,
+            time_kind_id,
+            activity_date,
+            local_start_time,
             starts_at,
-            starts_on,
-            ends_on,
+            time_zone_id,
             time_description,
             country_relevance_explanation,
-            publication_status,
+            publication_status_id,
             slug,
             published_at
          )
@@ -301,19 +343,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @id,
             @title,
             @description,
-            @activity_type,
+            @activity_type_id,
             @sport_id,
-            @sport_name,
             @context,
-            @time_kind,
+            @time_kind_id,
+            @activity_date,
+            @local_start_time,
             @starts_at,
-            @starts_on,
-            @ends_on,
+            @time_zone_id,
             @time_description,
             @country_relevance_explanation,
-            @publication_status,
+            @publication_status_id,
             @slug,
-            case when @publication_status = 'Published' then now() else null end
+            case when @publication_status_id = 'Published' then now() else null end
          )
          """;
 
@@ -338,20 +380,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          set
             title = @title,
             description = @description,
-            activity_type = @activity_type,
+            activity_type_id = @activity_type_id,
             sport_id = @sport_id,
-            sport_name = @sport_name,
             context = @context,
-            time_kind = @time_kind,
+            time_kind_id = @time_kind_id,
+            activity_date = @activity_date,
+            local_start_time = @local_start_time,
             starts_at = @starts_at,
-            starts_on = @starts_on,
-            ends_on = @ends_on,
+            time_zone_id = @time_zone_id,
             time_description = @time_description,
             country_relevance_explanation = @country_relevance_explanation,
-            publication_status = @publication_status,
+            publication_status_id = @publication_status_id,
             slug = @slug,
             published_at = case
-               when @publication_status = 'Published' then coalesce(
+               when @publication_status_id = 'Published' then coalesce(
                   published_at,
                   now()
                )
@@ -392,7 +434,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             activity_id,
             entity_id,
-            role,
+            role_id,
             explanation,
             context_name
          )
@@ -400,7 +442,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @id,
             @activity_id,
             @entity_id,
-            @role,
+            @role_id,
             @explanation,
             @context_name
          )
@@ -410,7 +452,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("entity_id", model.EntityId.Value);
-      command.Parameters.AddWithValue("role", model.EntityRole);
+      command.Parameters.AddWithValue("role_id", model.EntityRole);
       command.Parameters.AddWithValue(
          "explanation",
          BlankToNullable(model.EntityExplanation) ??
@@ -449,7 +491,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             activity_id,
             source_id,
-            source_name,
             uri,
             title,
             observed_at,
@@ -459,7 +500,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @id,
             @activity_id,
             @source_id,
-            @source_name,
             @uri,
             @title,
             now(),
@@ -470,11 +510,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue(
-         "source_id",
-         Slugify(model.EvidenceSourceName)
+      var sourceId = Slugify(model.EvidenceSourceName);
+      await EnsureSourceAsync(
+         connection,
+         transaction,
+         sourceId,
+         model.EvidenceSourceName,
+         cancellationToken
       );
-      command.Parameters.AddWithValue("source_name", model.EvidenceSourceName);
+      command.Parameters.AddWithValue("source_id", sourceId);
       command.Parameters.AddWithValue("uri", BlankToDbNull(model.EvidenceUri));
       command.Parameters.AddWithValue(
          "title",
@@ -484,6 +528,27 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          "summary",
          BlankToNullable(model.EvidenceSummary) ?? model.EvidenceSourceName
       );
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   private static async Task EnsureSourceAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      string sourceId,
+      string sourceName,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         insert into sources (id, name)
+         values (@id, @name)
+         on conflict (id) do update
+         set name = excluded.name
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("id", sourceId);
+      command.Parameters.AddWithValue("name", sourceName.Trim());
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -498,24 +563,24 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    {
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue("title", model.Title.Trim());
-      command.Parameters.AddWithValue("description", BlankToDbNull(model.Description));
-      command.Parameters.AddWithValue("activity_type", model.ActivityType);
+      command.Parameters.AddWithValue(
+         "description",
+         BlankToDbNull(model.Description)
+      );
+      command.Parameters.AddWithValue("activity_type_id", model.ActivityType);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
-      command.Parameters.AddWithValue("sport_name", model.SportName.Trim());
       command.Parameters.AddWithValue("context", BlankToDbNull(model.Context));
-      command.Parameters.AddWithValue("time_kind", model.TimeKind);
+      command.Parameters.AddWithValue("time_kind_id", model.TimeKind);
+      command.Parameters.AddWithValue("activity_date", model.ActivityDate!.Value);
+      command.Parameters.AddWithValue(
+         "local_start_time",
+         model.LocalStartTime ?? (object)DBNull.Value
+      );
       command.Parameters.AddWithValue(
          "starts_at",
          startsAt?.ToUniversalTime() ?? (object)DBNull.Value
       );
-      command.Parameters.AddWithValue(
-         "starts_on",
-         model.StartsOn ?? (object)DBNull.Value
-      );
-      command.Parameters.AddWithValue(
-         "ends_on",
-         model.EndsOn ?? (object)DBNull.Value
-      );
+      command.Parameters.AddWithValue("time_zone_id", model.TimeZoneId.Trim());
       command.Parameters.AddWithValue(
          "time_description",
          BlankToDbNull(model.TimeDescription)
@@ -524,24 +589,45 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          "country_relevance_explanation",
          model.CountryRelevanceExplanation.Trim()
       );
-      command.Parameters.AddWithValue("publication_status", status);
+      command.Parameters.AddWithValue("publication_status_id", status);
       command.Parameters.AddWithValue("slug", slug ?? (object)DBNull.Value);
    }
 
-   private static DateTimeOffset? ParseStartsAt(ActivityEditModel model)
+   private static DateTimeOffset? GetStartsAt(ActivityEditModel model)
    {
-      if (model.TimeKind != "ExactStart")
+      if (model.TimeKind != "Scheduled")
       {
          return null;
       }
 
-      if (string.IsNullOrWhiteSpace(model.StartsAtLocal))
+      if (model.ActivityDate is null || model.LocalStartTime is null)
       {
          return null;
       }
 
-      var local = DateTime.Parse(model.StartsAtLocal);
+      var local = model.ActivityDate.Value.ToDateTime(
+         model.LocalStartTime.Value
+      );
       return new DateTimeOffset(local, TimeZoneInfo.Local.GetUtcOffset(local));
+   }
+
+   private async Task<IReadOnlyList<LookupOption>> GetLookupOptionsAsync(
+      string sql,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<LookupOption>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(new LookupOption(reader.GetString(0), reader.GetString(1)));
+      }
+
+      return options;
    }
 
    private static string? NormalizeSlug(string? slug, string title)
@@ -575,22 +661,18 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private static string FormatTime(NpgsqlDataReader reader)
    {
       var kind = reader.GetString(6);
-      var description = ReadString(reader, 10);
+      var activityDate = reader.GetFieldValue<DateOnly>(7);
+      var localStartTime = ReadTimeOnly(reader, 8);
+      var description = ReadString(reader, 9);
 
-      if (kind == "ExactStart" && !reader.IsDBNull(7))
+      if (kind == "Scheduled" && localStartTime is not null)
       {
-         return reader.GetFieldValue<DateTimeOffset>(7)
-            .LocalDateTime
-            .ToString("yyyy-MM-dd HH:mm");
+         return $"{activityDate:yyyy-MM-dd} {localStartTime:HH:mm}";
       }
 
-      if (kind == "DateRange" && !reader.IsDBNull(8) && !reader.IsDBNull(9))
-      {
-         return $"{reader.GetFieldValue<DateOnly>(8):yyyy-MM-dd} - " +
-            $"{reader.GetFieldValue<DateOnly>(9):yyyy-MM-dd}";
-      }
-
-      return string.IsNullOrWhiteSpace(description) ? "TBD" : description;
+      return string.IsNullOrWhiteSpace(description)
+         ? $"{activityDate:yyyy-MM-dd}"
+         : $"{activityDate:yyyy-MM-dd} · {description}";
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
@@ -598,11 +680,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
    }
 
-   private static DateOnly? ReadDateOnly(NpgsqlDataReader reader, int ordinal)
+   private static TimeOnly? ReadTimeOnly(NpgsqlDataReader reader, int ordinal)
    {
       return reader.IsDBNull(ordinal)
          ? null
-         : reader.GetFieldValue<DateOnly>(ordinal);
+         : reader.GetFieldValue<TimeOnly>(ordinal);
    }
 
    private static object BlankToDbNull(string? value)

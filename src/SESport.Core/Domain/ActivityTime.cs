@@ -2,54 +2,41 @@ namespace SESport.Core.Domain;
 
 public sealed record ActivityTime(
    ActivityTimeKind Kind,
+   DateOnly ActivityDate,
+   TimeOnly? LocalStartTime,
    DateTimeOffset? StartsAt,
-   DateOnly? StartsOn,
-   DateOnly? EndsOn,
+   string TimeZoneId,
    string? Description
 )
 {
-   public static ActivityTime ExactStart(DateTimeOffset startsAt)
-   {
-      return new ActivityTime(
-         ActivityTimeKind.ExactStart,
-         startsAt,
-         null,
-         null,
-         null
-      );
-   }
-
-   public static ActivityTime DateRange(
-      DateOnly startsOn,
-      DateOnly endsOn,
-      string? description = null
+   public static ActivityTime OnDate(
+      DateOnly activityDate,
+      string? description = null,
+      string timeZoneId = "Europe/Stockholm"
    )
    {
-      if (endsOn < startsOn)
-      {
-         throw new ArgumentException(
-            "Activity end date must be on or after the start date.",
-            nameof(endsOn)
-         );
-      }
-
       return new ActivityTime(
-         ActivityTimeKind.DateRange,
+         ActivityTimeKind.DateOnly,
+         activityDate,
          null,
-         startsOn,
-         endsOn,
+         null,
+         timeZoneId,
          description
       );
    }
 
-   public static ActivityTime ToBeDetermined(string? description = null)
+   public static ActivityTime Scheduled(
+      DateTimeOffset startsAt,
+      string timeZoneId = "Europe/Stockholm"
+   )
    {
       return new ActivityTime(
-         ActivityTimeKind.ToBeDetermined,
-         null,
-         null,
-         null,
-         description
+         ActivityTimeKind.Scheduled,
+         DateOnly.FromDateTime(startsAt.DateTime),
+         TimeOnly.FromDateTime(startsAt.DateTime),
+         startsAt,
+         timeZoneId,
+         null
       );
    }
 }

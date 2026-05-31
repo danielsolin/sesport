@@ -71,7 +71,7 @@ public class ActivityProposalSourceImporterTests
             ActivityType.Match,
             iceHockey,
             "2026 IIHF Ice Hockey World Championship",
-            ActivityTime.ExactStart(startsAt),
+            ActivityTime.Scheduled(startsAt),
             [],
             [],
             Confidence: 1.0m,

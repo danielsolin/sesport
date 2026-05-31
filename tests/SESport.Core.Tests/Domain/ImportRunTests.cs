@@ -59,7 +59,7 @@ public class ImportRunTests
          ActivityType.Match,
          iceHockey,
          "2026 IIHF Ice Hockey World Championship",
-         ActivityTime.ExactStart(
+         ActivityTime.Scheduled(
             new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.FromHours(2))
          ),
          [],

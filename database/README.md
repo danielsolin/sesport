@@ -3,11 +3,12 @@
 This folder contains explicit database migration scripts.
 
 The first migration creates the entity-first activity proposal model:
-tracked entities, activity proposals, review grouping, canonical activities,
-entity links, and evidence.
+lookup tables, tracked entities, activity proposals, review grouping,
+canonical activities, entity links, and evidence. Canonical activities always
+belong to one known activity date.
 
 The second migration adds publication metadata for the manual launch site:
-activity draft/published status, public slugs, and listing indexes.
+activity publication statuses, public slugs, and listing indexes.
 
 Start PostgreSQL with Docker Compose:
 
@@ -20,6 +21,9 @@ Run migrations in order from a Linux or WSL shell:
 ```bash
 ./database/run-migrations.sh
 ```
+
+During pre-launch development, incompatible schema rewrites may require
+recreating the local Postgres volume before rerunning migrations.
 
 On Windows, the PowerShell helper can be used instead:
 

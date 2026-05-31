@@ -26,22 +26,22 @@ public class ActivityProposalTests
    }
 
    [Fact]
-   public void ActivityTimeSupportsExactStartDateRangeAndTbd()
+   public void ActivityTimeRequiresKnownActivityDate()
    {
-      var exact = ActivityTime.ExactStart(
+      var scheduled = ActivityTime.Scheduled(
          new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.Zero)
       );
-      var range = ActivityTime.DateRange(
+      var dateOnly = ActivityTime.OnDate(
          new DateOnly(2026, 6, 1),
-         new DateOnly(2026, 6, 7),
-         "Tournament week"
+         "Start time not published."
       );
-      var tbd = ActivityTime.ToBeDetermined("Draw not published.");
 
-      Assert.Equal(ActivityTimeKind.ExactStart, exact.Kind);
-      Assert.Equal(ActivityTimeKind.DateRange, range.Kind);
-      Assert.Equal(ActivityTimeKind.ToBeDetermined, tbd.Kind);
-      Assert.Equal("Draw not published.", tbd.Description);
+      Assert.Equal(ActivityTimeKind.Scheduled, scheduled.Kind);
+      Assert.Equal(new DateOnly(2026, 5, 28), scheduled.ActivityDate);
+      Assert.Equal(new TimeOnly(20, 20), scheduled.LocalStartTime);
+      Assert.Equal(ActivityTimeKind.DateOnly, dateOnly.Kind);
+      Assert.Equal(new DateOnly(2026, 6, 1), dateOnly.ActivityDate);
+      Assert.Null(dateOnly.StartsAt);
    }
 
    [Fact]
@@ -121,7 +121,7 @@ public class ActivityProposalTests
          ActivityType.Match,
          IceHockey,
          "2026 IIHF Ice Hockey World Championship",
-         ActivityTime.ExactStart(
+         ActivityTime.Scheduled(
             new DateTimeOffset(2026, 5, 28, 20, 20, 0, TimeSpan.Zero)
          ),
          [

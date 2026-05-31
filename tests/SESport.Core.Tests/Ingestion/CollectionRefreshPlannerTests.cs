@@ -99,7 +99,7 @@ public class CollectionRefreshPlannerTests
             "Ice hockey"
          ),
          "Test context",
-         ActivityTime.ExactStart(startsAt),
+         ActivityTime.Scheduled(startsAt),
          entityLinks,
          [],
          Confidence: 1.0m,
