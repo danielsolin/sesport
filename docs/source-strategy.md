@@ -12,7 +12,7 @@ Examples:
 - national teams;
 - clubs competing internationally;
 - coaches;
-- sport-related families or groups.
+- sport-related groups.
 
 Entity discovery may be manual, assisted by AI, or automated.
 
