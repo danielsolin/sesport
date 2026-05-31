@@ -35,7 +35,6 @@ try
    await using var connection = await dataSource.OpenConnectionAsync();
    await using var transaction = await connection.BeginTransactionAsync();
 
-   await EnsureSourceAsync(connection, transaction);
    await UpsertSportsAsync(connection, transaction, document.Entities);
 
    var importedCount = 0;
@@ -43,7 +42,6 @@ try
    foreach (var entity in document.Entities)
    {
       await UpsertEntityAsync(connection, transaction, entity);
-      await UpsertEvidenceAsync(connection, transaction, entity);
       importedCount++;
    }
 
@@ -71,13 +69,14 @@ catch (PostgresException exception) when (
 static async Task<EntityWatchlistDocument> LoadDocumentAsync(string dataPath)
 {
    await using var stream = File.OpenRead(dataPath);
-   var document = await JsonSerializer.DeserializeAsync<EntityWatchlistDocument>(
-      stream,
-      new JsonSerializerOptions
-      {
-         PropertyNameCaseInsensitive = true
-      }
-   );
+   var document =
+      await JsonSerializer.DeserializeAsync<EntityWatchlistDocument>(
+         stream,
+         new JsonSerializerOptions
+         {
+            PropertyNameCaseInsensitive = true
+         }
+      );
 
    return document ?? throw new InvalidOperationException(
       "Entity data file was empty."
@@ -163,26 +162,6 @@ static void AddRequiredError(
    {
       errors.Add($"Entity {entityId} is missing {field}.");
    }
-}
-
-static async Task EnsureSourceAsync(
-   NpgsqlConnection connection,
-   NpgsqlTransaction transaction
-)
-{
-   const string sql = """
-      insert into sources (id, name)
-      values (@id, @name)
-      on conflict (id) do update
-      set
-         name = excluded.name,
-         updated_at = now()
-      """;
-
-   await using var command = new NpgsqlCommand(sql, connection, transaction);
-   command.Parameters.AddWithValue("id", SeedLookups.DeepResearchSourceId);
-   command.Parameters.AddWithValue("name", "Deep research report");
-   await command.ExecuteNonQueryAsync();
 }
 
 static async Task UpsertSportsAsync(
@@ -283,55 +262,6 @@ static async Task UpsertEntityAsync(
    await command.ExecuteNonQueryAsync();
 }
 
-static async Task UpsertEvidenceAsync(
-   NpgsqlConnection connection,
-   NpgsqlTransaction transaction,
-   EntitySeed entity
-)
-{
-   const string sql = """
-      insert into entity_evidence (
-         id,
-         entity_id,
-         relationship_id,
-         source_id,
-         uri,
-         title,
-         observed_at,
-         summary
-      )
-      values (
-         @id,
-         @entity_id,
-         null,
-         @source_id,
-         null,
-         @title,
-         now(),
-         @summary
-      )
-      on conflict (id) do update
-      set
-         title = excluded.title,
-         observed_at = excluded.observed_at,
-         summary = excluded.summary
-      """;
-
-   await using var command = new NpgsqlCommand(sql, connection, transaction);
-   command.Parameters.AddWithValue(
-      "id",
-      CreateGuid($"entity-evidence:{entity.Id}:deep-research-report")
-   );
-   command.Parameters.AddWithValue("entity_id", CreateGuid($"entity:{entity.Id}"));
-   command.Parameters.AddWithValue(
-      "source_id",
-      SeedLookups.DeepResearchSourceId
-   );
-   command.Parameters.AddWithValue("title", entity.Name);
-   command.Parameters.AddWithValue("summary", CreateEvidenceSummary(entity));
-   await command.ExecuteNonQueryAsync();
-}
-
 static string GetCountryRelevanceKind(EntitySeed entity)
 {
    if (entity.Type == "national_team")
@@ -368,23 +298,6 @@ static string GetCountryRelevanceKind(EntitySeed entity)
    }
 
    return "Manual";
-}
-
-static string CreateEvidenceSummary(EntitySeed entity)
-{
-   var parts = new List<string>
-   {
-      $"Stable reason: {entity.StableReason}",
-      $"Current status: {entity.CurrentRelationshipOrStatus}",
-      $"Suggested sources: {entity.SuggestedEvidenceSources}"
-   };
-
-   if (!string.IsNullOrWhiteSpace(entity.Notes))
-   {
-      parts.Add($"Notes: {entity.Notes}");
-   }
-
-   return string.Join(" ", parts);
 }
 
 static string NormalizeSportName(string value)
@@ -484,8 +397,6 @@ sealed record SportSeed(string Id, string Name);
 
 static class SeedLookups
 {
-   public const string DeepResearchSourceId = "source:deep-research-report";
-
    public static readonly Dictionary<string, string> EntityTypeMap = new(
       StringComparer.OrdinalIgnoreCase
    )
@@ -513,6 +424,7 @@ static class SeedLookups
    {
       return Environment.GetEnvironmentVariable("ConnectionStrings__SESport") ??
          Environment.GetEnvironmentVariable("SESPORT_CONNECTION_STRING") ??
-         "Host=localhost;Port=5432;Database=sesport;Username=sesport;Password=sesport";
+         "Host=localhost;Port=5432;Database=sesport;Username=sesport;" +
+         "Password=sesport";
    }
 }

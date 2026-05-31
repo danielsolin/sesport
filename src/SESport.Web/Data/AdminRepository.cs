@@ -61,15 +61,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             true,
             false
          ),
-         ["entity-relationship-types"] = new(
-            "entity-relationship-types",
-            "Entity relationship types",
-            "Types for future entity-to-context relationships.",
-            "entity_relationship_types",
-            "label",
-            true,
-            false
-         ),
          ["activity-entity-link-roles"] = new(
             "activity-entity-link-roles",
             "Activity entity link roles",
@@ -126,6 +117,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "Sources",
             "Maintain source names used by evidence records.",
             "/Admin/Sources"
+         ),
+         new AdminArea(
+            "Audit",
+            "Inspect proposal, activity link, and evidence records.",
+            "/Admin/Audit"
          ),
          new AdminArea(
             "Reference data",

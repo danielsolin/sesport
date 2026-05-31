@@ -3,8 +3,8 @@
 ## SESport.ImportEntities
 
 Imports the curated entity watchlist from `data/entity-watchlist.json` into
-PostgreSQL. The import is idempotent: entities, sports, the deep-research
-source, and entity evidence are upserted with stable deterministic ids.
+PostgreSQL. The import is idempotent: entities and sports are upserted with
+stable deterministic ids.
 
 Run from the repository root after database migrations:
 

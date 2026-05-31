@@ -1,0 +1,126 @@
+@page
+@model SESport.Web.Pages.Admin.Audit.ProposalsModel
+@{
+   ViewData["Title"] = "Activity Proposal Audit";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Audit</p>
+      <h1>Activity proposals</h1>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      The activity database is not available right now.
+   </div>
+}
+
+<section class="form-section">
+   <h2>Proposals</h2>
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Activity</th>
+            <th>Producer</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Type</th>
+            <th>Sport</th>
+            <th>Links</th>
+            <th>Evidence</th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var proposal in Model.Proposals)
+         {
+            <tr>
+               <td>
+                  <strong>@proposal.Title</strong>
+                  <span>@proposal.TimeText</span>
+                  <span class="audit-id">@proposal.Id</span>
+               </td>
+               <td>@proposal.ProducerType</td>
+               <td>@proposal.Source</td>
+               <td>@proposal.Status</td>
+               <td>@proposal.ActivityType</td>
+               <td>@proposal.Sport</td>
+               <td>@proposal.EntityLinkCount</td>
+               <td>@proposal.EvidenceCount</td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</section>
+
+<section class="form-section">
+   <h2>Proposal entity links</h2>
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Proposal</th>
+            <th>Entity</th>
+            <th>Role</th>
+            <th>Explanation</th>
+            <th>Context</th>
+            <th>Confidence</th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var link in Model.Links)
+         {
+            <tr>
+               <td>
+                  <strong>@link.ProposalTitle</strong>
+                  <span class="audit-id">@link.ProposalId</span>
+               </td>
+               <td>@link.EntityName</td>
+               <td>@link.Role</td>
+               <td>@link.Explanation</td>
+               <td>@link.ContextName</td>
+               <td>@link.Confidence</td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</section>
+
+<section class="form-section">
+   <h2>Proposal evidence</h2>
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Proposal</th>
+            <th>Source</th>
+            <th>Title</th>
+            <th>URI</th>
+            <th>Summary</th>
+            <th>Observed</th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var evidence in Model.Evidence)
+         {
+            <tr>
+               <td>
+                  <strong>@evidence.ProposalTitle</strong>
+                  <span class="audit-id">@evidence.ProposalId</span>
+               </td>
+               <td>@evidence.Source</td>
+               <td>@evidence.Title</td>
+               <td>
+                  @if (!string.IsNullOrWhiteSpace(evidence.Uri))
+                  {
+                     <a href="@evidence.Uri">@evidence.Uri</a>
+                  }
+               </td>
+               <td>@evidence.Summary</td>
+               <td>@evidence.ObservedAt.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</section>

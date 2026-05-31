@@ -7,6 +7,5 @@ public sealed record TrackedEntity(
    Sport Sport,
    Country Country,
    CountryRelevanceKind CountryRelevanceKind,
-   string CountryRelevanceReason,
-   IReadOnlyCollection<EntityEvidence> Evidence
+   string CountryRelevanceReason
 );
