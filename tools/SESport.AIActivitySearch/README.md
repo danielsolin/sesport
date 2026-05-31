@@ -18,6 +18,14 @@ dotnet run --project tools\SESport.AIActivitySearch `
    -- --entity tre-kronor
 ```
 
+If LM Studio reports that `web_search` is unsupported, use the Docker/MCP tool
+type shown in the LM Studio server logs. For the `altra/web-search` tool:
+
+```powershell
+dotnet run --project tools\SESport.AIActivitySearch `
+   -- --entity tre-kronor --web-tool altra/web-search
+```
+
 Search the first entity in the watchlist:
 
 ```powershell
@@ -48,6 +56,7 @@ Useful options:
 - `--take <count>` searches the first N entities when `--entity` is not set.
 - `--max <count>` controls the maximum proposal count per entity.
 - `--date <yyyy-mm-dd>` sets the search date.
+- `--web-tool <type>` sets the Responses tool type. Default: `web_search`.
 - `--no-web-search` omits the `web_search` tool from the request.
 
 The first version prints proposal drafts only. It does not write to the

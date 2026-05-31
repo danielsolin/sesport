@@ -61,6 +61,55 @@ public class OpenAiResponsesActivitySearchClientTests
       Assert.DoesNotContain("\"type\":\"web_search\"", handler.RequestBody);
    }
 
+   [Fact]
+   public async Task SearchCanUseConfiguredWebSearchToolType()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/v1/"),
+            "gpt-oss-20b",
+            WebSearchToolType: "altra/web-search"
+         )
+      );
+
+      await client.SearchAsync(
+         new ActivitySearchRequest(CreateEntity(), new DateOnly(2026, 5, 31)),
+         CancellationToken.None
+      );
+
+      Assert.Contains("\"type\":\"altra/web-search\"", handler.RequestBody);
+   }
+
+   [Fact]
+   public async Task SearchReturnsEmptyProposalsForNonJsonModelText()
+   {
+      var handler = new RecordingHandler(CreateTextResponseJson(
+         "No reliable activity proposals were found."
+      ));
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/v1/"),
+            "gpt-oss-20b"
+         )
+      );
+
+      var result = await client.SearchAsync(
+         new ActivitySearchRequest(CreateEntity(), new DateOnly(2026, 5, 31)),
+         CancellationToken.None
+      );
+
+      Assert.Empty(result.Proposals);
+      Assert.Equal(
+         "No reliable activity proposals were found.",
+         result.RawContent
+      );
+   }
+
    private static string CreateResponseJson()
    {
       var content = """
@@ -89,6 +138,25 @@ public class OpenAiResponsesActivitySearchClientTests
          ]
       }
       """;
+      var payload = new
+      {
+         output = new[]
+         {
+            new
+            {
+               content = new[]
+               {
+                  new { text = content }
+               }
+            }
+         }
+      };
+
+      return JsonSerializer.Serialize(payload);
+   }
+
+   private static string CreateTextResponseJson(string content)
+   {
       var payload = new
       {
          output = new[]

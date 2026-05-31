@@ -1,13 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
 using SESport.Core.AIActivitySearch;
 using SESport.Core.Ingestion;
 using SESport.Core.Identifiers;
 
 var options = ToolOptions.Parse(args);
 
-if(options.ShowHelp)
+if (options.ShowHelp)
 {
    PrintHelp();
    return 0;
@@ -15,7 +14,7 @@ if(options.ShowHelp)
 
 var dataPath = Path.GetFullPath(options.DataPath);
 
-if(!File.Exists(dataPath))
+if (!File.Exists(dataPath))
 {
    Console.Error.WriteLine($"Entity watchlist not found: {dataPath}");
    return 1;
@@ -24,7 +23,7 @@ if(!File.Exists(dataPath))
 var document = await LoadDocumentAsync(dataPath);
 var selectedEntities = SelectEntities(document, options).ToList();
 
-if(selectedEntities.Count == 0)
+if (selectedEntities.Count == 0)
 {
    Console.Error.WriteLine("No matching entities were found.");
    return 1;
@@ -36,13 +35,14 @@ var modelClient = new OpenAiResponsesActivitySearchClient(
    new OpenAiResponsesActivitySearchClientOptions(
       options.BaseAddress,
       options.Model,
-      options.ApiKey
+      options.ApiKey,
+      options.WebSearchToolType
    )
 );
 var searchService = new ActivitySearchService(modelClient);
 var results = new List<ActivitySearchResult>();
 
-foreach(var entity in selectedEntities)
+foreach (var entity in selectedEntities)
 {
    Console.Error.WriteLine(
       $"Searching {entity.Name} ({entity.WatchlistId.Value})..."
@@ -70,13 +70,14 @@ var output = JsonSerializer.Serialize(
       options.BaseAddress.ToString(),
       options.Model,
       options.AllowWebSearch,
+      options.WebSearchToolType,
       options.SearchDate,
       results
    ),
    JsonOptions.Value
 );
 
-if(options.OutputPath is null)
+if (options.OutputPath is null)
 {
    Console.WriteLine(output);
 }
@@ -84,7 +85,9 @@ else
 {
    var outputPath = Path.GetFullPath(options.OutputPath);
    await File.WriteAllTextAsync(outputPath, output);
-   Console.Error.WriteLine($"Wrote activity search output to {outputPath}.");
+   Console.Error.WriteLine(
+      $"Wrote activity search output to {outputPath}."
+   );
 }
 
 return 0;
@@ -112,7 +115,7 @@ static IEnumerable<ActivitySearchEntity> SelectEntities(
 {
    var entities = document.Entities;
 
-   if(!string.IsNullOrWhiteSpace(options.EntityId))
+   if (!string.IsNullOrWhiteSpace(options.EntityId))
    {
       entities = entities
          .Where(entity => string.Equals(
@@ -168,6 +171,8 @@ static void PrintHelp()
         --model <name>      Model name. Default: gpt-oss-20b.
         --api-key <key>     API key. Falls back to SESPORT_AI_API_KEY and
                             OPENAI_API_KEY.
+        --web-tool <type>   Web search tool type. Default: web_search.
+                            For LM Studio, try altra/web-search.
         --no-web-search     Do not include the web_search tool.
         --data <path>       Entity watchlist path.
         --output <path>     Write JSON output to a file instead of stdout.
@@ -180,6 +185,7 @@ internal sealed record ActivitySearchRunOutput(
    string BaseAddress,
    string Model,
    bool AllowWebSearch,
+   string WebSearchToolType,
    DateOnly SearchDate,
    IReadOnlyCollection<ActivitySearchResult> Results
 );
@@ -216,6 +222,7 @@ internal sealed record ToolOptions(
    string Model,
    string? ApiKey,
    bool AllowWebSearch,
+   string WebSearchToolType,
    string? OutputPath,
    bool ShowHelp
 )
@@ -232,14 +239,17 @@ internal sealed record ToolOptions(
       var apiKey = Environment.GetEnvironmentVariable("SESPORT_AI_API_KEY") ??
          Environment.GetEnvironmentVariable("OPENAI_API_KEY");
       var allowWebSearch = true;
+      var webSearchToolType =
+         Environment.GetEnvironmentVariable("SESPORT_AI_WEB_TOOL") ??
+         "web_search";
       string? outputPath = null;
       var showHelp = false;
 
-      for(var index = 0; index < args.Length; index++)
+      for (var index = 0; index < args.Length; index++)
       {
          var arg = args[index];
 
-         switch(arg)
+         switch (arg)
          {
             case "--entity":
                entityId = ReadValue(args, ref index, arg);
@@ -261,6 +271,9 @@ internal sealed record ToolOptions(
                break;
             case "--api-key":
                apiKey = ReadValue(args, ref index, arg);
+               break;
+            case "--web-tool":
+               webSearchToolType = ReadValue(args, ref index, arg);
                break;
             case "--no-web-search":
                allowWebSearch = false;
@@ -290,6 +303,7 @@ internal sealed record ToolOptions(
          model,
          apiKey,
          allowWebSearch,
+         webSearchToolType,
          outputPath,
          showHelp
       );
@@ -301,7 +315,7 @@ internal sealed record ToolOptions(
       string optionName
    )
    {
-      if(index + 1 >= args.Length)
+      if (index + 1 >= args.Length)
       {
          throw new ArgumentException($"{optionName} requires a value.");
       }

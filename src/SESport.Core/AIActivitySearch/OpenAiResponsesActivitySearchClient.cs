@@ -70,7 +70,7 @@ public sealed class OpenAiResponsesActivitySearchClient
    private object CreateRequestPayload(ActivitySearchRequest request)
    {
       var tools = request.AllowWebSearch
-         ? new object[] { new { type = "web_search" } }
+         ? new object[] { new { type = options.WebSearchToolType } }
          : [];
 
       return new
@@ -190,11 +190,26 @@ public sealed class OpenAiResponsesActivitySearchClient
       string rawContent
    )
    {
-      var content = StripJsonFence(rawContent);
-      var document = JsonSerializer.Deserialize<ActivitySearchResponseDto>(
-         content,
-         JsonOptions
-      );
+      var content = ExtractJsonObject(StripJsonFence(rawContent));
+
+      if (content is null)
+      {
+         return [];
+      }
+
+      ActivitySearchResponseDto? document;
+
+      try
+      {
+         document = JsonSerializer.Deserialize<ActivitySearchResponseDto>(
+            content,
+            JsonOptions
+         );
+      }
+      catch (JsonException)
+      {
+         return [];
+      }
 
       if (document?.Proposals is null)
       {
@@ -270,6 +285,19 @@ public sealed class OpenAiResponsesActivitySearchClient
       }
 
       return trimmed[(firstNewLine + 1)..lastFence].Trim();
+   }
+
+   private static string? ExtractJsonObject(string value)
+   {
+      var start = value.IndexOf('{');
+      var end = value.LastIndexOf('}');
+
+      if (start < 0 || end <= start)
+      {
+         return null;
+      }
+
+      return value[start..(end + 1)];
    }
 
    private sealed record ActivitySearchResponseDto(
