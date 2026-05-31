@@ -39,4 +39,21 @@ public sealed record ActivityTime(
          null
       );
    }
+
+   public static ActivityTime ScheduledLocal(
+      DateOnly activityDate,
+      TimeOnly localStartTime,
+      string timeZoneId,
+      string? description = null
+   )
+   {
+      return new ActivityTime(
+         ActivityTimeKind.Scheduled,
+         activityDate,
+         localStartTime,
+         null,
+         timeZoneId,
+         description
+      );
+   }
 }

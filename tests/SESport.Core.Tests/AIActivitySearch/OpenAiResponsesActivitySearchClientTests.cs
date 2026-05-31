@@ -11,7 +11,9 @@ public class OpenAiResponsesActivitySearchClientTests
    [Fact]
    public async Task SearchPostsResponsesPayloadWithWebSearchTool()
    {
-      var handler = new RecordingHandler(CreateResponseJson());
+      var handler = new RecordingHandler(
+         CreateResponseJson(includeReasoning: true)
+      );
       var httpClient = new HttpClient(handler);
       var client = new OpenAiResponsesActivitySearchClient(
          httpClient,
@@ -110,7 +112,7 @@ public class OpenAiResponsesActivitySearchClientTests
       );
    }
 
-   private static string CreateResponseJson()
+   private static string CreateResponseJson(bool includeReasoning = false)
    {
       var content = """
       {
@@ -138,21 +140,41 @@ public class OpenAiResponsesActivitySearchClientTests
          ]
       }
       """;
-      var payload = new
+      var output = new List<object>();
+
+      if (includeReasoning)
       {
-         output = new[]
+         output.Add(new
+         {
+            type = "reasoning",
+            content = new[]
+            {
+               new
+               {
+                  type = "reasoning_text",
+                  text = "Need recent activity. Return JSON."
+               }
+            }
+         });
+      }
+
+      output.Add(new
+      {
+         type = "message",
+         content = new[]
          {
             new
             {
-               content = new[]
-               {
-                  new { text = content }
-               }
+               type = "output_text",
+               text = content
             }
          }
-      };
+      });
 
-      return JsonSerializer.Serialize(payload);
+      return JsonSerializer.Serialize(new
+      {
+         output
+      });
    }
 
    private static string CreateTextResponseJson(string content)

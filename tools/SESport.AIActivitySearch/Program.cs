@@ -1,8 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SESport.Core.AIActivitySearch;
+using SESport.Core.Domain;
 using SESport.Core.Ingestion;
 using SESport.Core.Identifiers;
+using SESport.Core.Sources;
 
 var options = ToolOptions.Parse(args);
 
@@ -29,23 +31,24 @@ if (selectedEntities.Count == 0)
    return 1;
 }
 
-using var httpClient = new HttpClient();
-var modelClient = new OpenAiResponsesActivitySearchClient(
-   httpClient,
-   new OpenAiResponsesActivitySearchClientOptions(
-      options.BaseAddress,
-      options.Model,
-      options.ApiKey,
-      options.WebSearchToolType
-   )
-);
+using var httpClient = new HttpClient
+{
+   Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds)
+};
+var modelClient = CreateModelClient(httpClient, options);
 var searchService = new ActivitySearchService(modelClient);
 var results = new List<ActivitySearchResult>();
 
 foreach (var entity in selectedEntities)
 {
+   var windowStart = options.SearchDate.AddDays(-options.LookBackDays);
+   var windowEnd = options.SearchDate.AddDays(options.LookAheadDays);
+
    Console.Error.WriteLine(
       $"Searching {entity.Name} ({entity.WatchlistId.Value})..."
+   );
+   Console.Error.WriteLine(
+      $"Date window: {windowStart:yyyy-MM-dd} through {windowEnd:yyyy-MM-dd}."
    );
 
    var result = await searchService.SearchAsync(
@@ -53,7 +56,9 @@ foreach (var entity in selectedEntities)
          entity,
          options.SearchDate,
          options.MaxProposals,
-         options.AllowWebSearch
+         options.AllowWebSearch,
+         options.LookBackDays,
+         options.LookAheadDays
       ),
       CancellationToken.None
    );
@@ -67,12 +72,17 @@ foreach (var entity in selectedEntities)
 
 var output = JsonSerializer.Serialize(
    new ActivitySearchRunOutput(
-      options.BaseAddress.ToString(),
+      options.ClientMode,
+      options.EffectiveBaseAddress.ToString(),
       options.Model,
       options.AllowWebSearch,
       options.WebSearchToolType,
+      options.LmStudioPluginId,
       options.SearchDate,
-      results
+      results.Select(result => ActivitySearchResultOutput.From(
+         result,
+         options.IncludeRaw
+      )).ToList()
    ),
    JsonOptions.Value
 );
@@ -91,6 +101,35 @@ else
 }
 
 return 0;
+
+static IActivitySearchModelClient CreateModelClient(
+   HttpClient httpClient,
+   ToolOptions options
+)
+{
+   if (options.LmStudioPluginId is not null)
+   {
+      return new LmStudioChatActivitySearchClient(
+         httpClient,
+         new LmStudioChatActivitySearchClientOptions(
+            options.LmStudioBaseAddress,
+            options.Model,
+            options.LmStudioPluginId,
+            options.ApiKey
+         )
+      );
+   }
+
+   return new OpenAiResponsesActivitySearchClient(
+      httpClient,
+      new OpenAiResponsesActivitySearchClientOptions(
+         options.BaseAddress,
+         options.Model,
+         options.ApiKey,
+         options.WebSearchToolType
+      )
+   );
+}
 
 static async Task<EntityWatchlistDocument> LoadDocumentAsync(
    string dataPath
@@ -167,28 +206,114 @@ static void PrintHelp()
                             set. Default: 1.
         --max <count>       Maximum proposals per entity. Default: 5.
         --date <yyyy-mm-dd> Search date. Default: today.
+        --look-back <days>  Days before search date to include. Default: 0.
+        --look-ahead <days> Days after search date to include. Default: 30.
+        --timeout <seconds> HTTP timeout. Default: 100, or 300 with
+                            --lmstudio-plugin.
         --base-url <url>    OpenAI-compatible /v1 base URL.
-        --model <name>      Model name. Default: gpt-oss-20b.
+        --lmstudio-url <url> LM Studio native /api/v1 base URL.
+                            Default: http://127.0.0.1:1234/api/v1.
+        --model <name>      Model name. Default: gpt-oss-20b, or
+                            openai/gpt-oss-20b with --lmstudio-plugin.
         --api-key <key>     API key. Falls back to SESPORT_AI_API_KEY and
                             OPENAI_API_KEY.
         --web-tool <type>   Web search tool type. Default: web_search.
                             For LM Studio, try altra/web-search.
+        --lmstudio-plugin <id>
+                            Use LM Studio /api/v1/chat integrations with
+                            this plugin id, for example altra/web-search.
         --no-web-search     Do not include the web_search tool.
         --data <path>       Entity watchlist path.
         --output <path>     Write JSON output to a file instead of stdout.
+        --include-raw       Include raw model content and full raw response.
         --help              Show this help.
       """
    );
 }
 
 internal sealed record ActivitySearchRunOutput(
+   string ClientMode,
    string BaseAddress,
    string Model,
    bool AllowWebSearch,
    string WebSearchToolType,
+   string? LmStudioPluginId,
    DateOnly SearchDate,
-   IReadOnlyCollection<ActivitySearchResult> Results
+   IReadOnlyCollection<ActivitySearchResultOutput> Results
 );
+
+internal sealed record ActivitySearchResultOutput(
+   ActivitySearchEntity Entity,
+   IReadOnlyCollection<ActivityProposalOutput> Proposals,
+   string? RawContent,
+   string? RawResponse
+)
+{
+   public static ActivitySearchResultOutput From(
+      ActivitySearchResult result,
+      bool includeRaw
+   )
+   {
+      return new ActivitySearchResultOutput(
+         result.Entity,
+         result.Proposals.Select(proposal => ActivityProposalOutput.From(
+            proposal,
+            includeRaw
+         )).ToList(),
+         includeRaw ? result.RawContent : null,
+         includeRaw ? result.RawResponse : null
+      );
+   }
+}
+
+internal sealed record ActivityProposalOutput(
+   ActivityProposalId Id,
+   ActivityProposalProducerType ProducerType,
+   Source Source,
+   ExternalEntityId? ExternalId,
+   string Fingerprint,
+   string Title,
+   string? Description,
+   string? RawContent,
+   ActivityType Type,
+   ImportedSport Sport,
+   string? Context,
+   ActivityTime Time,
+   IReadOnlyCollection<ActivityProposalEntityLink> EntityLinks,
+   IReadOnlyCollection<ActivityProposalEvidence> Evidence,
+   decimal? Confidence,
+   ActivityProposalStatus Status,
+   ActivityProposalGroupId? GroupId,
+   ActivityId? ActivityId
+)
+{
+   public static ActivityProposalOutput From(
+      ActivityProposal proposal,
+      bool includeRaw
+   )
+   {
+      return new ActivityProposalOutput(
+         proposal.Id,
+         proposal.ProducerType,
+         proposal.Source,
+         proposal.ExternalId,
+         proposal.Fingerprint,
+         proposal.Title,
+         proposal.Description,
+         includeRaw ? proposal.RawContent : null,
+         proposal.Type,
+         proposal.Sport,
+         proposal.Context,
+         proposal.Time,
+         proposal.EntityLinks,
+         proposal.Evidence,
+         proposal.Confidence,
+         proposal.Status,
+         proposal.GroupId,
+         proposal.ActivityId
+      );
+   }
+}
 
 internal sealed record EntityWatchlistDocument(
    int SchemaVersion,
@@ -218,15 +343,29 @@ internal sealed record ToolOptions(
    int Take,
    int MaxProposals,
    DateOnly SearchDate,
+   int LookBackDays,
+   int LookAheadDays,
    Uri BaseAddress,
+   Uri LmStudioBaseAddress,
    string Model,
    string? ApiKey,
    bool AllowWebSearch,
    string WebSearchToolType,
+   string? LmStudioPluginId,
+   int TimeoutSeconds,
+   bool IncludeRaw,
    string? OutputPath,
    bool ShowHelp
 )
 {
+   public string ClientMode => LmStudioPluginId is null
+      ? "openai-responses"
+      : "lmstudio-chat";
+
+   public Uri EffectiveBaseAddress => LmStudioPluginId is null
+      ? BaseAddress
+      : LmStudioBaseAddress;
+
    public static ToolOptions Parse(string[] args)
    {
       var dataPath = "data/entity-watchlist.json";
@@ -234,15 +373,23 @@ internal sealed record ToolOptions(
       var take = 1;
       var maxProposals = 5;
       var searchDate = DateOnly.FromDateTime(DateTime.Now);
+      var lookBackDays = 0;
+      var lookAheadDays = 30;
+      int? timeoutSeconds = null;
       var baseAddress = new Uri("http://127.0.0.1:1234/v1/");
+      var lmStudioBaseAddress = new Uri("http://127.0.0.1:1234/api/v1/");
       var model = "gpt-oss-20b";
+      var modelWasSet = false;
       var apiKey = Environment.GetEnvironmentVariable("SESPORT_AI_API_KEY") ??
          Environment.GetEnvironmentVariable("OPENAI_API_KEY");
       var allowWebSearch = true;
       var webSearchToolType =
          Environment.GetEnvironmentVariable("SESPORT_AI_WEB_TOOL") ??
          "web_search";
+      string? lmStudioPluginId =
+         Environment.GetEnvironmentVariable("SESPORT_AI_LMSTUDIO_PLUGIN");
       string? outputPath = null;
+      var includeRaw = false;
       var showHelp = false;
 
       for (var index = 0; index < args.Length; index++)
@@ -263,17 +410,33 @@ internal sealed record ToolOptions(
             case "--date":
                searchDate = DateOnly.Parse(ReadValue(args, ref index, arg));
                break;
+            case "--look-back":
+               lookBackDays = int.Parse(ReadValue(args, ref index, arg));
+               break;
+            case "--look-ahead":
+               lookAheadDays = int.Parse(ReadValue(args, ref index, arg));
+               break;
+            case "--timeout":
+               timeoutSeconds = int.Parse(ReadValue(args, ref index, arg));
+               break;
             case "--base-url":
                baseAddress = new Uri(ReadValue(args, ref index, arg));
                break;
+            case "--lmstudio-url":
+               lmStudioBaseAddress = new Uri(ReadValue(args, ref index, arg));
+               break;
             case "--model":
                model = ReadValue(args, ref index, arg);
+               modelWasSet = true;
                break;
             case "--api-key":
                apiKey = ReadValue(args, ref index, arg);
                break;
             case "--web-tool":
                webSearchToolType = ReadValue(args, ref index, arg);
+               break;
+            case "--lmstudio-plugin":
+               lmStudioPluginId = ReadValue(args, ref index, arg);
                break;
             case "--no-web-search":
                allowWebSearch = false;
@@ -284,6 +447,9 @@ internal sealed record ToolOptions(
             case "--output":
                outputPath = ReadValue(args, ref index, arg);
                break;
+            case "--include-raw":
+               includeRaw = true;
+               break;
             case "--help":
             case "-h":
                showHelp = true;
@@ -293,17 +459,30 @@ internal sealed record ToolOptions(
          }
       }
 
+      if (lmStudioPluginId is not null && !modelWasSet)
+      {
+         model = "openai/gpt-oss-20b";
+      }
+
+      timeoutSeconds ??= lmStudioPluginId is null ? 100 : 300;
+
       return new ToolOptions(
          dataPath,
          entityId,
          Math.Max(1, take),
          Math.Max(1, maxProposals),
          searchDate,
+         Math.Max(0, lookBackDays),
+         Math.Max(1, lookAheadDays),
          EnsureTrailingSlash(baseAddress),
+         EnsureTrailingSlash(lmStudioBaseAddress),
          model,
          apiKey,
          allowWebSearch,
          webSearchToolType,
+         lmStudioPluginId,
+         Math.Max(1, timeoutSeconds.Value),
+         includeRaw,
          outputPath,
          showHelp
       );
