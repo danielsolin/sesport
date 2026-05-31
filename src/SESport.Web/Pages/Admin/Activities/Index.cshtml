@@ -1,0 +1,61 @@
+@page
+@model SESport.Web.Pages.Admin.Activities.IndexModel
+@{
+   ViewData["Title"] = "Activities";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Admin</p>
+      <h1>Activities</h1>
+   </div>
+   <a class="button button-primary" asp-page="./Edit">New activity</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      The activity database is not available right now.
+   </div>
+}
+else if (Model.Activities.Count == 0)
+{
+   <div class="notice">
+      No activities have been created yet.
+   </div>
+}
+else
+{
+   <div class="admin-table-wrap">
+      <table class="admin-table">
+         <thead>
+            <tr>
+               <th>Time</th>
+               <th>Activity</th>
+               <th>Entities</th>
+               <th>Status</th>
+               <th></th>
+            </tr>
+         </thead>
+         <tbody>
+            @foreach (var activity in Model.Activities)
+            {
+               <tr>
+                  <td>@activity.TimeText</td>
+                  <td>
+                     <strong>@activity.Title</strong>
+                     <span>@activity.SportName / @activity.ActivityType</span>
+                  </td>
+                  <td>@activity.EntitySummary</td>
+                  <td>
+                     <span class="status-pill">@activity.PublicationStatus</span>
+                  </td>
+                  <td class="table-actions">
+                     <a asp-page="./Edit" asp-route-id="@activity.Id">Edit</a>
+                  </td>
+               </tr>
+            }
+         </tbody>
+      </table>
+   </div>
+}

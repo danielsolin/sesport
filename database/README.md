@@ -6,6 +6,9 @@ The first migration creates the entity-first activity proposal model:
 tracked entities, activity proposals, review grouping, canonical activities,
 entity links, and evidence.
 
+The second migration adds publication metadata for the manual launch site:
+activity draft/published status, public slugs, and listing indexes.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash

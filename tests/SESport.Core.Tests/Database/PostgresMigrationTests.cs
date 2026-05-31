@@ -55,6 +55,25 @@ public class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void SecondMigrationAddsActivityPublicationModel()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "002_add_activity_publication.sql"
+         )
+      );
+
+      Assert.Contains("publication_status", migration);
+      Assert.Contains("Published", migration);
+      Assert.Contains("slug", migration);
+      Assert.Contains("published_at", migration);
+      Assert.Contains("activities_slug_unique", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

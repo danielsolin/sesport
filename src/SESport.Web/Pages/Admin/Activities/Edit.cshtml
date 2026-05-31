@@ -1,0 +1,169 @@
+@page "{id:guid?}"
+@model SESport.Web.Pages.Admin.Activities.EditModel
+@{
+   ViewData["Title"] = Model.Activity.Id is null
+      ? "New Activity"
+      : "Edit Activity";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Admin</p>
+      <h1>@ViewData["Title"]</h1>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      The activity database is not available right now.
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <input asp-for="Activity.Id" type="hidden" />
+
+   <section class="form-section">
+      <h2>Activity</h2>
+      <div class="form-grid">
+         <label>
+            <span>Title</span>
+            <input asp-for="Activity.Title" />
+            <span asp-validation-for="Activity.Title"></span>
+         </label>
+         <label>
+            <span>Activity type</span>
+            <select asp-for="Activity.ActivityType">
+               @foreach (var type in
+                  SESport.Web.Pages.Admin.Activities.EditModel.ActivityTypes)
+               {
+                  <option value="@type">@type</option>
+               }
+            </select>
+         </label>
+         <label>
+            <span>Sport id</span>
+            <input asp-for="Activity.SportId" />
+         </label>
+         <label>
+            <span>Sport name</span>
+            <input asp-for="Activity.SportName" />
+         </label>
+         <label>
+            <span>Context</span>
+            <input asp-for="Activity.Context" />
+         </label>
+         <label>
+            <span>Slug</span>
+            <input asp-for="Activity.Slug" />
+         </label>
+      </div>
+      <label>
+         <span>Description</span>
+         <textarea asp-for="Activity.Description" rows="3"></textarea>
+      </label>
+   </section>
+
+   <section class="form-section">
+      <h2>Time</h2>
+      <div class="form-grid">
+         <label>
+            <span>Time kind</span>
+            <select asp-for="Activity.TimeKind">
+               @foreach (var kind in
+                  SESport.Web.Pages.Admin.Activities.EditModel.TimeKinds)
+               {
+                  <option value="@kind">@kind</option>
+               }
+            </select>
+         </label>
+         <label>
+            <span>Exact start</span>
+            <input asp-for="Activity.StartsAtLocal" type="datetime-local" />
+         </label>
+         <label>
+            <span>Starts on</span>
+            <input asp-for="Activity.StartsOn" type="date" />
+         </label>
+         <label>
+            <span>Ends on</span>
+            <input asp-for="Activity.EndsOn" type="date" />
+         </label>
+      </div>
+      <label>
+         <span>Time description</span>
+         <input asp-for="Activity.TimeDescription" />
+      </label>
+   </section>
+
+   <section class="form-section">
+      <h2>Sweden relevance</h2>
+      <label>
+         <span>Country relevance explanation</span>
+         <textarea
+            asp-for="Activity.CountryRelevanceExplanation"
+            rows="3"></textarea>
+      </label>
+      <div class="form-grid">
+         <label>
+            <span>Tracked entity</span>
+            <select asp-for="Activity.EntityId">
+               <option value="">No entity link</option>
+               @foreach (var entity in Model.Entities)
+               {
+                  <option value="@entity.Id">@entity.Name (@entity.Type)</option>
+               }
+            </select>
+         </label>
+         <label>
+            <span>Entity role</span>
+            <select asp-for="Activity.EntityRole">
+               @foreach (var role in
+                  SESport.Web.Pages.Admin.Activities.EditModel.EntityRoles)
+               {
+                  <option value="@role">@role</option>
+               }
+            </select>
+         </label>
+         <label>
+            <span>Entity context</span>
+            <input asp-for="Activity.EntityContextName" />
+         </label>
+      </div>
+      <label>
+         <span>Entity explanation</span>
+         <input asp-for="Activity.EntityExplanation" />
+      </label>
+   </section>
+
+   <section class="form-section">
+      <h2>Evidence</h2>
+      <div class="form-grid">
+         <label>
+            <span>Source name</span>
+            <input asp-for="Activity.EvidenceSourceName" />
+         </label>
+         <label>
+            <span>Source URL</span>
+            <input asp-for="Activity.EvidenceUri" type="url" />
+         </label>
+         <label>
+            <span>Source title</span>
+            <input asp-for="Activity.EvidenceTitle" />
+         </label>
+      </div>
+      <label>
+         <span>Evidence summary</span>
+         <textarea asp-for="Activity.EvidenceSummary" rows="2"></textarea>
+      </label>
+   </section>
+
+   <section class="form-actions">
+      <label class="check-row">
+         <input asp-for="Activity.IsPublished" type="checkbox" />
+         <span>Published</span>
+      </label>
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>

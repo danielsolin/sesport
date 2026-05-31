@@ -1,0 +1,54 @@
+@page
+@model IndexModel
+@{
+   ViewData["Title"] = "SE Sport";
+}
+
+<section class="page-heading">
+   <p class="eyebrow">Sweden-relevant sport</p>
+   <h1>Upcoming activities</h1>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      The activity database is not available right now.
+   </div>
+}
+else if (Model.Activities.Count == 0)
+{
+   <div class="notice">
+      No published activities yet.
+   </div>
+}
+else
+{
+   <div class="activity-list">
+      @foreach (var activity in Model.Activities)
+      {
+         <article class="activity-row">
+            <div class="activity-time">@activity.TimeText</div>
+            <div class="activity-main">
+               <div class="activity-meta">
+                  <span>@activity.SportName</span>
+                  <span>@activity.ActivityType</span>
+                  @if (!string.IsNullOrWhiteSpace(activity.Context))
+                  {
+                     <span>@activity.Context</span>
+                  }
+               </div>
+               <h2>@activity.Title</h2>
+               @if (!string.IsNullOrWhiteSpace(activity.Description))
+               {
+                  <p>@activity.Description</p>
+               }
+               @if (!string.IsNullOrWhiteSpace(activity.EntitySummary))
+               {
+                  <p class="entity-line">@activity.EntitySummary</p>
+               }
+               <p class="relevance">@activity.CountryRelevanceExplanation</p>
+            </div>
+         </article>
+      }
+   </div>
+}
