@@ -48,7 +48,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{988827A0-5BD8-441F-82CC-72D74B4DFE10}"
 	ProjectSection(SolutionItems) = preProject
 		data\entity-watchlist.json = data\entity-watchlist.json
-		data\lmstudio-enity-news-search.ps1 = data\lmstudio-enity-news-search.ps1
 		data\normalize-entity-watchlist-names.py = data\normalize-entity-watchlist-names.py
 	EndProjectSection
 EndProject
