@@ -53,9 +53,8 @@ public sealed class OpenAiResponsesActivitySearchClient
       if (!response.IsSuccessStatusCode)
       {
          throw new HttpRequestException(
-            $"search failed with {(int)response.StatusCode} " +
-            $"{response.StatusCode} from {options.BaseAddress}: " +
-            $"{ExtractErrorMessage(rawResponse)}",
+            $"search failed with " +
+            $"{(int)response.StatusCode} {response.StatusCode}",
             null,
             response.StatusCode
          );
