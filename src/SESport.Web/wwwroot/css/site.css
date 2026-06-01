@@ -282,6 +282,48 @@ h2 {
    overflow-wrap: anywhere;
 }
 
+.proposal-summary {
+   display: grid;
+   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+   gap: 24px;
+}
+
+.detail-grid {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 12px 18px;
+   margin: 0;
+}
+
+.detail-grid div {
+   min-width: 0;
+}
+
+.detail-grid dt {
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 800;
+   text-transform: uppercase;
+}
+
+.detail-grid dd {
+   margin: 2px 0 0;
+   overflow-wrap: anywhere;
+   font-weight: 700;
+}
+
+.review-actions {
+   display: grid;
+   gap: 18px;
+}
+
+.reject-form {
+   display: grid;
+   gap: 12px;
+   padding-top: 18px;
+   border-top: 1px solid var(--line);
+}
+
 .admin-table tr:last-child td {
    border-bottom: 0;
 }
@@ -404,6 +446,7 @@ textarea {
    .activity-row,
    .admin-card-grid,
    .admin-layout,
+   .proposal-summary,
    .form-grid {
       grid-template-columns: 1fr;
    }

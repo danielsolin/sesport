@@ -354,9 +354,7 @@ internal static class ActivitySearchToolApplication
             DateTimeOffset.UtcNow
          ));
 
-         Console.Error.WriteLine(
-            $"Failed {entity.Name} ({entity.WatchlistId.Value}): {ex.Message}"
-         );
+         Console.Error.WriteLine($"{ex.Message}");
 
          var stopReason = GetStopReason(ex);
 

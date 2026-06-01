@@ -1,0 +1,180 @@
+@page "{id}"
+@model SESport.Web.Pages.Admin.Audit.ProposalModel
+@{
+   ViewData["Title"] = "Activity Proposal";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Activity proposal</p>
+      <h1>@Model.Proposal?.Title</h1>
+   </div>
+   <a class="button" asp-page="./Proposals">Back</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">@Model.LoadError</div>
+}
+
+@if (Model.Proposal is not null)
+{
+   <section class="form-section proposal-summary">
+      <div>
+         <h2>Overview</h2>
+         <p>@Model.Proposal.Description</p>
+         @if (!string.IsNullOrWhiteSpace(Model.Proposal.Context))
+         {
+            <p class="relevance">@Model.Proposal.Context</p>
+         }
+         <span class="audit-id">@Model.Proposal.Id</span>
+      </div>
+      <dl class="detail-grid">
+         <div>
+            <dt>Status</dt>
+            <dd>@Model.Proposal.Status</dd>
+         </div>
+         <div>
+            <dt>Time</dt>
+            <dd>@Model.Proposal.TimeText</dd>
+         </div>
+         <div>
+            <dt>Type</dt>
+            <dd>@Model.Proposal.ActivityType</dd>
+         </div>
+         <div>
+            <dt>Sport</dt>
+            <dd>@Model.Proposal.Sport</dd>
+         </div>
+         <div>
+            <dt>Producer</dt>
+            <dd>@Model.Proposal.ProducerType</dd>
+         </div>
+         <div>
+            <dt>Source</dt>
+            <dd>@Model.Proposal.Source</dd>
+         </div>
+         <div>
+            <dt>Confidence</dt>
+            <dd>@Model.Proposal.Confidence</dd>
+         </div>
+         @if (Model.Proposal.ActivityId is not null)
+         {
+            <div>
+               <dt>Activity</dt>
+               <dd>
+                  <a asp-page="/Admin/Activities/Edit"
+                     asp-route-id="@Model.Proposal.ActivityId">
+                     @Model.Proposal.ActivityId
+                  </a>
+               </dd>
+            </div>
+         }
+         @if (!string.IsNullOrWhiteSpace(Model.Proposal.RejectReason))
+         {
+            <div>
+               <dt>Reject reason</dt>
+               <dd>@Model.Proposal.RejectReason</dd>
+            </div>
+         }
+         @if (!string.IsNullOrWhiteSpace(Model.Proposal.RejectComment))
+         {
+            <div>
+               <dt>Reject comment</dt>
+               <dd>@Model.Proposal.RejectComment</dd>
+            </div>
+         }
+      </dl>
+   </section>
+
+   <section class="form-section">
+      <h2>Entity links</h2>
+      <table class="admin-table">
+         <thead>
+            <tr>
+               <th>Entity</th>
+               <th>Role</th>
+               <th>Explanation</th>
+               <th>Context</th>
+               <th>Confidence</th>
+            </tr>
+         </thead>
+         <tbody>
+            @foreach (var link in Model.Links)
+            {
+               <tr>
+                  <td>@link.EntityName</td>
+                  <td>@link.Role</td>
+                  <td>@link.Explanation</td>
+                  <td>@link.ContextName</td>
+                  <td>@link.Confidence</td>
+               </tr>
+            }
+         </tbody>
+      </table>
+   </section>
+
+   <section class="form-section">
+      <h2>Evidence</h2>
+      <table class="admin-table">
+         <thead>
+            <tr>
+               <th>Source</th>
+               <th>Title</th>
+               <th>URI</th>
+               <th>Summary</th>
+               <th>Observed</th>
+            </tr>
+         </thead>
+         <tbody>
+            @foreach (var evidence in Model.Evidence)
+            {
+               <tr>
+                  <td>@evidence.Source</td>
+                  <td>@evidence.Title</td>
+                  <td>
+                     @if (!string.IsNullOrWhiteSpace(evidence.Uri))
+                     {
+                        <a href="@evidence.Uri">@evidence.Uri</a>
+                     }
+                  </td>
+                  <td>@evidence.Summary</td>
+                  <td>@evidence.ObservedAt.ToString("yyyy-MM-dd HH:mm")</td>
+               </tr>
+            }
+         </tbody>
+      </table>
+   </section>
+
+   <section class="form-section review-actions">
+      <h2>Review</h2>
+      <div class="button-row">
+         <form method="post" asp-page-handler="Accept">
+            <button class="button button-primary" type="submit">
+               Accept
+            </button>
+         </form>
+      </div>
+
+      <form method="post" asp-page-handler="Reject" class="reject-form">
+         <div class="form-grid">
+            <label>
+               <span>Reject reason</span>
+               <select asp-for="RejectReasonId">
+                  <option value="">Select reason</option>
+                  @foreach (var reason in Model.RejectReasons)
+                  {
+                     <option value="@reason.Id">@reason.Label</option>
+                  }
+               </select>
+               <span asp-validation-for="RejectReasonId"></span>
+            </label>
+            <label>
+               <span>Reject comment</span>
+               <textarea asp-for="RejectComment" rows="2"></textarea>
+            </label>
+         </div>
+         <button class="button" type="submit">Reject</button>
+      </form>
+   </section>
+}

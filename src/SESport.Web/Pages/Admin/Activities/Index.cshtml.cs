@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
@@ -20,5 +21,14 @@ public class IndexModel(ActivityRepository repository) : PageModel
       {
          LoadError = exception.Message;
       }
+   }
+
+   public async Task<IActionResult> OnPostDeleteAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      await repository.DeleteAsync(id, cancellationToken);
+      return RedirectToPage("./Index");
    }
 }

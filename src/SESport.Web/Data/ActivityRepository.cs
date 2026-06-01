@@ -203,6 +203,84 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return id;
    }
 
+   public async Task DeleteAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      await using(var proposalCommand = new NpgsqlCommand(
+         """
+         update activity_proposals
+         set
+            status_id = 'Pending',
+            activity_id = null,
+            updated_at = now()
+         where activity_id = @activity_id
+         """,
+         connection,
+         transaction
+      ))
+      {
+         proposalCommand.Parameters.AddWithValue("activity_id", id);
+         await proposalCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await using(var groupCommand = new NpgsqlCommand(
+         """
+         update activity_proposal_groups
+         set
+            activity_id = null,
+            updated_at = now()
+         where activity_id = @activity_id
+         """,
+         connection,
+         transaction
+      ))
+      {
+         groupCommand.Parameters.AddWithValue("activity_id", id);
+         await groupCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await using(var evidenceCommand = new NpgsqlCommand(
+         "delete from activity_evidence where activity_id = @activity_id",
+         connection,
+         transaction
+      ))
+      {
+         evidenceCommand.Parameters.AddWithValue("activity_id", id);
+         await evidenceCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await using(var linkCommand = new NpgsqlCommand(
+         "delete from activity_entity_links where activity_id = @activity_id",
+         connection,
+         transaction
+      ))
+      {
+         linkCommand.Parameters.AddWithValue("activity_id", id);
+         await linkCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await using(var activityCommand = new NpgsqlCommand(
+         "delete from activities where id = @id",
+         connection,
+         transaction
+      ))
+      {
+         activityCommand.Parameters.AddWithValue("id", id);
+         await activityCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await transaction.CommitAsync(cancellationToken);
+   }
+
    private async Task<IReadOnlyList<ActivityListItem>> GetActivityListAsync(
       string whereClause,
       CancellationToken cancellationToken
