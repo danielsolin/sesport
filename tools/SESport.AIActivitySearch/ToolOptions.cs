@@ -18,10 +18,7 @@ internal sealed record ToolOptions(
    string? LmStudioPluginId,
    IReadOnlyCollection<string> LmStudioAllowedTools,
    int TimeoutSeconds,
-   bool Overnight,
-   bool ContinueOnError,
    int DelaySeconds,
-   int StopAfterFailures,
    bool WriteToDatabase,
    string ConnectionString,
    bool IncludeRaw,
@@ -69,7 +66,6 @@ internal sealed record ToolOptions(
       var lookAheadDays = 30;
       int? timeoutSeconds = null;
       int? delaySeconds = null;
-      int? stopAfterFailures = null;
       var baseAddress = new Uri("https://openrouter.ai/api/v1/");
       var lmStudioBaseAddress = new Uri("http://127.0.0.1:1234/api/v1/");
       var model = "openrouter/free";
@@ -89,8 +85,6 @@ internal sealed record ToolOptions(
       string? outputPath = null;
       string? runDirectoryPath = null;
       var includeRaw = false;
-      var overnight = false;
-      var continueOnError = false;
       var showHelp = false;
 
       for(var index = 0; index < args.Length; index++)
@@ -165,19 +159,8 @@ internal sealed record ToolOptions(
             case "--run-dir":
                runDirectoryPath = ReadValue(args, ref index, arg);
                break;
-            case "--overnight":
-               overnight = true;
-               break;
-            case "--continue-on-error":
-               continueOnError = true;
-               break;
             case "--delay":
                delaySeconds = int.Parse(ReadValue(args, ref index, arg));
-               break;
-            case "--stop-after-failures":
-               stopAfterFailures = int.Parse(
-                  ReadValue(args, ref index, arg)
-               );
                break;
             case "--include-raw":
                includeRaw = true;
@@ -191,19 +174,13 @@ internal sealed record ToolOptions(
          }
       }
 
-      if((overnight || allEntities) && entityId is null && !takeWasSet)
+      if(entityId is null && (allEntities || !takeWasSet))
       {
          take = int.MaxValue;
       }
 
-      if(overnight)
-      {
-         continueOnError = true;
-      }
-
       timeoutSeconds ??= lmStudioPluginId is null ? 600 : 1200;
-      delaySeconds ??= overnight ? 5 : 0;
-      stopAfterFailures ??= int.MaxValue;
+      delaySeconds ??= 5;
 
       var resolvedApiKey = ResolveApiKey(
          explicitApiKey,
@@ -229,10 +206,7 @@ internal sealed record ToolOptions(
          lmStudioPluginId,
          lmStudioAllowedTools,
          Math.Max(1, timeoutSeconds.Value),
-         overnight,
-         continueOnError,
          Math.Max(0, delaySeconds.Value),
-         Math.Max(1, stopAfterFailures.Value),
          writeToDatabase,
          connectionString,
          includeRaw,

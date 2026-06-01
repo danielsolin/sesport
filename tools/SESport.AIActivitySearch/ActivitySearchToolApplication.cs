@@ -79,27 +79,16 @@ internal static class ActivitySearchToolApplication
          $"{options.Model}, API key {options.ApiKeyDescription}."
       );
 
-      var exitCode = options.Overnight
-         ? await RunOvernightAsync(
-            searchService,
-            proposalRepository,
-            options,
-            runStartedAt,
-            runDirectory,
-            results,
-            items,
-            selectedEntities
-         )
-         : await RunSinglePassAsync(
-            searchService,
-            proposalRepository,
-            options,
-            runStartedAt,
-            runDirectory,
-            results,
-            items,
-            selectedEntities
-         );
+      var exitCode = await RunPersistentAsync(
+         searchService,
+         proposalRepository,
+         options,
+         runStartedAt,
+         runDirectory,
+         results,
+         items,
+         selectedEntities
+      );
 
       await WriteFinalOutputAsync(
          options,
@@ -112,53 +101,7 @@ internal static class ActivitySearchToolApplication
       return exitCode;
    }
 
-   private static async Task<int> RunSinglePassAsync(
-      ActivitySearchService searchService,
-      ActivityProposalRepository? proposalRepository,
-      ToolOptions options,
-      DateTimeOffset runStartedAt,
-      string? runDirectory,
-      List<ActivitySearchResult> results,
-      List<ActivitySearchRunItemOutput> items,
-      IReadOnlyList<ActivitySearchEntity> selectedEntities
-   )
-   {
-      var consecutiveFailures = 0;
-
-      for(var enIdx = 0; enIdx < selectedEntities.Count; enIdx++)
-      {
-         var searchOutcome = await SearchEntityAsync(
-            searchService,
-            proposalRepository,
-            options,
-            selectedEntities[enIdx],
-            enIdx,
-            runStartedAt,
-            runDirectory,
-            results,
-            items,
-            consecutiveFailures
-         );
-
-         consecutiveFailures = searchOutcome.ConsecutiveFailures;
-
-         if(searchOutcome.StopReason == SearchStopReason.HardStop)
-         {
-            return 2;
-         }
-
-         if(!searchOutcome.ShouldContinue)
-         {
-            break;
-         }
-
-         await DelayBetweenEntitiesAsync(options, enIdx + 1, selectedEntities.Count);
-      }
-
-      return 0;
-   }
-
-   private static async Task<int> RunOvernightAsync(
+   private static async Task<int> RunPersistentAsync(
       ActivitySearchService searchService,
       ActivityProposalRepository? proposalRepository,
       ToolOptions options,
@@ -180,7 +123,7 @@ internal static class ActivitySearchToolApplication
       for(var pass = 1; pass <= maxPasses && remainingEntities.Count > 0; pass++)
       {
          Console.Error.WriteLine(
-            $"Starting overnight pass {pass}/{maxPasses} for " +
+            $"Starting pass {pass}/{maxPasses} for " +
             $"{remainingEntities.Count} entity/entities without proposals."
          );
 
@@ -237,7 +180,7 @@ internal static class ActivitySearchToolApplication
       }
 
       Console.Error.WriteLine(
-         $"Overnight run found proposals for {entitiesWithProposals.Count} " +
+         $"Run found proposals for {entitiesWithProposals.Count} " +
          $"of {selectedEntities.Count} selected entity/entities."
       );
 
@@ -373,28 +316,6 @@ internal static class ActivitySearchToolApplication
                runStartedAt,
                results,
                items
-            );
-
-            return new EntitySearchOutcome(
-               false,
-               consecutiveFailures,
-               0,
-               stopReason
-            );
-         }
-
-         if(!options.ContinueOnError)
-         {
-            throw;
-         }
-
-         if(
-            !options.Overnight &&
-            consecutiveFailures >= options.StopAfterFailures
-         )
-         {
-            Console.Error.WriteLine(
-               $"Stopping after {consecutiveFailures} consecutive failure(s)."
             );
 
             return new EntitySearchOutcome(
@@ -565,7 +486,7 @@ internal static class ActivitySearchToolApplication
          Options:
            --entity <id>       Search one watchlist entity by id.
            --take <count>      Number of entities to search when --entity is not
-                               set. Default: 1.
+                               set. Default: all entities.
            --max <count>       Maximum proposals per entity. Default: 5.
            --date <yyyy-mm-dd> Search date. Default: today.
            --look-back <days>  Days before search date to include. Default: 0.
@@ -596,19 +517,9 @@ internal static class ActivitySearchToolApplication
            --output <path>     Write JSON output to a file instead of stdout.
            --run-dir <path>    Override the structured run directory.
                                Default: data/ai-activity-search-runs/<timestamp>.
-          --overnight         Persistent batch mode. Writes a run directory,
-                              searches all entities unless --entity or --take is
-                              set, retries entities without proposals across up
-                              to three passes, continues after unknown errors,
-                              stops on 401, 402, and 403, and backs off on
-                              transient HTTP statuses.
            --all               Search all entities when --entity is not set.
-           --continue-on-error Continue with the next entity after failures.
-           --delay <seconds>   Delay between entities. Default: 0, or 5 with
-                               --overnight.
-          --stop-after-failures <count>
-                              Stop after this many consecutive failure(s).
-                              Default: unlimited. Ignored by --overnight.
+                               This is already the default unless --take is set.
+           --delay <seconds>   Delay between entities. Default: 5.
            --include-raw       Include raw model content and full raw response.
            --help              Show this help.
          """

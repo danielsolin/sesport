@@ -21,7 +21,6 @@ internal sealed record ActivitySearchRunOutput(
    DateOnly WindowStart,
    DateOnly WindowEnd,
    int MaxProposals,
-   bool ContinueOnError,
    bool WriteToDatabase,
    IReadOnlyCollection<ActivitySearchRunItemOutput> Items,
    IReadOnlyCollection<ActivitySearchResultOutput> Results
@@ -51,7 +50,6 @@ internal sealed record ActivitySearchRunOutput(
          options.SearchDate.AddDays(-options.LookBackDays),
          options.SearchDate.AddDays(options.LookAheadDays),
          options.MaxProposals,
-         options.ContinueOnError,
          options.WriteToDatabase,
          items,
          results.Select(result => ActivitySearchResultOutput.From(

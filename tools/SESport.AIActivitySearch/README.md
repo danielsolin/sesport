@@ -74,23 +74,22 @@ key source. For the default OpenRouter target it only falls back to
 `OPENROUTER_API_KEY`; it will not accidentally send an `OPENAI_API_KEY` to
 OpenRouter.
 
-## Overnight Mode
+## Default Batch Behavior
 
-`--overnight` is intended for long unattended runs. It searches all watchlist
-entities unless `--entity` or `--take` is set, continues after individual
-entity failures, waits five seconds between entities, and tracks which entities
-produced proposals. After the first pass it retries only entities that produced
-no proposals, then does one final retry pass for any entities still without
-proposals.
+Runs are persistent by default. The tool searches all watchlist entities unless
+`--entity` or `--take` is set, continues after individual entity failures, waits
+five seconds between entities, and tracks which entities produced proposals.
+After the first pass it retries only entities that produced no proposals, then
+does one final retry pass for any entities still without proposals.
 
 Unknown per-entity errors are recorded in the run output and do not stop the
-overnight run. HTTP 401, 402, and 403 stop the run because they normally mean
-the provider cannot authorize or bill the request. HTTP 408, 409, 423, 429,
-and 5xx statuses trigger an increasing backoff before the run continues.
+run. HTTP 401, 402, and 403 stop the run because they normally mean the provider
+cannot authorize or bill the request. HTTP 408, 409, 423, 429, and 5xx statuses
+trigger an increasing backoff before the run continues.
 
 ```powershell
 dotnet run --project tools\SESport.AIActivitySearch `
-   -- --overnight --lmstudio-plugin altra/web-search --timeout 3600
+   -- --lmstudio-plugin altra/web-search --timeout 3600
 ```
 
 For richer debugging output, add `--include-raw`. Raw responses can be large,
@@ -111,6 +110,7 @@ Useful options:
 
 - `--entity <id>` searches one watchlist entity.
 - `--take <count>` searches the first N entities when `--entity` is not set.
+  By default, all entities are selected.
 - `--max <count>` controls the maximum proposal count per entity.
 - `--date <yyyy-mm-dd>` sets the search date.
 - `--look-back <days>` includes days before the search date. Default: `0`.
@@ -125,13 +125,9 @@ Useful options:
 - `--web-tool <type>` sets the Responses tool type. Default: `web_search`.
 - `--no-web-search` omits the `web_search` tool from the request.
 - `--run-dir <path>` overrides the structured run directory.
-- `--overnight` enables persistent long-running batch defaults.
-- `--all` searches all entities when `--entity` is not set.
-- `--continue-on-error` records failures and keeps going.
-- `--delay <seconds>` waits between entities. Default: `0`, or `5` with
-  `--overnight`.
-- `--stop-after-failures <count>` stops after repeated consecutive failures.
-  Default: unlimited. Ignored by `--overnight`.
+- `--all` searches all entities when `--entity` is not set. This is already the
+  default unless `--take` is set.
+- `--delay <seconds>` waits between entities. Default: `5`.
 - `--write-to-db` persists generated proposals into `activity_proposals`,
   `activity_proposal_entity_links`, and `activity_proposal_evidence`.
 - `--connection-string <value>` sets the database connection string for
