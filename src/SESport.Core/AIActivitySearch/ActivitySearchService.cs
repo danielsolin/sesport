@@ -5,9 +5,12 @@ using SESport.Core.Ingestion;
 namespace SESport.Core.AIActivitySearch;
 
 public sealed class ActivitySearchService(
-   IActivitySearchModelClient modelClient
+   IActivitySearchModelClient modelClient,
+   string? producer = null
 )
 {
+   private readonly string? producer = producer;
+
    private static readonly Source Source = new(
       new SourceId("source:ai-activity-search"),
       "AI activity search"
@@ -47,7 +50,7 @@ public sealed class ActivitySearchService(
       return draft.ActivityDate >= start && draft.ActivityDate <= end;
    }
 
-   private static ActivityProposal ToActivityProposal(
+   private ActivityProposal ToActivityProposal(
       ActivitySearchRequest request,
       ActivityProposalDraft draft,
       ActivitySearchModelResult modelResult
@@ -87,7 +90,8 @@ public sealed class ActivitySearchService(
          null,
          null,
          null,
-         null
+         null,
+         producer
       );
    }
 

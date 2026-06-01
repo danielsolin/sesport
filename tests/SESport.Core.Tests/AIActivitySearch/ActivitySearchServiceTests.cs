@@ -37,7 +37,7 @@ public class ActivitySearchServiceTests
             ]
          )
       );
-      var service = new ActivitySearchService(client);
+      var service = new ActivitySearchService(client, "openrouter/free");
       var result = await service.SearchAsync(
          new ActivitySearchRequest(CreateEntity(), new DateOnly(2026, 5, 31)),
          CancellationToken.None
@@ -49,6 +49,7 @@ public class ActivitySearchServiceTests
          ActivityProposalProducerType.AiSearch,
          proposal.ProducerType
       );
+      Assert.Equal("openrouter/free", proposal.Producer);
       Assert.Equal(ActivityType.Match, proposal.Type);
       Assert.Equal("Tre Kronor vs Finland", proposal.Title);
       Assert.Equal(ActivityTimeKind.Scheduled, proposal.Time.Kind);

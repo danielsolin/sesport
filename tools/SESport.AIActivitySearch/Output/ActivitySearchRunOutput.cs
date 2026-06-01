@@ -191,6 +191,7 @@ internal sealed record ActivitySearchResultOutput(
 internal sealed record ActivityProposalOutput(
    ActivityProposalId Id,
    ActivityProposalProducerType ProducerType,
+   string? Producer,
    Source Source,
    ExternalEntityId? ExternalId,
    string Fingerprint,
@@ -219,6 +220,7 @@ internal sealed record ActivityProposalOutput(
       return new ActivityProposalOutput(
          proposal.Id,
          proposal.ProducerType,
+         proposal.Producer,
          proposal.Source,
          proposal.ExternalId,
          proposal.Fingerprint,

@@ -51,7 +51,10 @@ internal static class ActivitySearchToolApplication
          options
       );
 
-      var searchService = new ActivitySearchService(modelClient);
+      var searchService = new ActivitySearchService(
+         modelClient,
+         options.Model
+      );
 
       await using var proposalRepository = options.WriteToDatabase
          ? ActivityProposalRepository.Connect(options.ConnectionString)
