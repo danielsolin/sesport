@@ -52,18 +52,10 @@ public sealed class OpenAiResponsesActivitySearchClient
 
       if (!response.IsSuccessStatusCode)
       {
-         var providerHint = options.BaseAddress.Host.Equals(
-            "openrouter.ai",
-            StringComparison.OrdinalIgnoreCase
-         )
-            ? " Check that OPENROUTER_API_KEY is current and belongs to an " +
-              "active OpenRouter account."
-            : "";
-
          throw new HttpRequestException(
-            $"AI activity search failed with {(int)response.StatusCode} " +
+            $"search failed with {(int)response.StatusCode} " +
             $"{response.StatusCode} from {options.BaseAddress}: " +
-            $"{ExtractErrorMessage(rawResponse)}{providerHint}",
+            $"{ExtractErrorMessage(rawResponse)}",
             null,
             response.StatusCode
          );
