@@ -15,13 +15,13 @@
    </div>
 </section>
 
-@if (Model.LoadError is not null)
+@if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
       The entity table is not available right now.
    </div>
 }
-else if (Model.Entities.Count == 0)
+else if(Model.Entities.Count == 0)
 {
    <div class="notice">No entities have been created yet.</div>
 }
@@ -40,16 +40,20 @@ else
             </tr>
          </thead>
          <tbody>
-            @foreach (var entity in Model.Entities)
+            @foreach(var entity in Model.Entities)
             {
                <tr>
-                  <td><strong>@entity.Name</strong></td>
+                  <td>
+                     <a asp-page="./Edit" asp-route-id="@entity.Id">
+                        <strong>@entity.Name</strong>
+                     </a>
+                     
+                  </td>
                   <td>@entity.EntityType</td>
                   <td>@entity.Sport</td>
                   <td>@entity.WatchPriority</td>
                   <td>@entity.Stability</td>
                   <td class="table-actions">
-                     <a asp-page="./Edit" asp-route-id="@entity.Id">Edit</a>
                      <form method="post"
                            asp-page-handler="Delete"
                            asp-route-id="@entity.Id"
