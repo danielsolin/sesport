@@ -135,7 +135,9 @@
                   <td>
                      @if (!string.IsNullOrWhiteSpace(evidence.Uri))
                      {
-                        <a href="@evidence.Uri">@evidence.Uri</a>
+                        <a target="_blank" href="@evidence.Uri">
+                           @evidence.Uri
+                        </a>
                      }
                   </td>
                   <td>@evidence.Summary</td>
@@ -148,14 +150,6 @@
 
    <section class="form-section review-actions">
       <h2>Review</h2>
-      <div class="button-row">
-         <form method="post" asp-page-handler="Accept">
-            <button class="button button-primary" type="submit">
-               Accept
-            </button>
-         </form>
-      </div>
-
       <form method="post" asp-page-handler="Reject" class="reject-form">
          <div class="form-grid">
             <label>
@@ -171,10 +165,17 @@
             </label>
             <label>
                <span>Reject comment</span>
-               <textarea asp-for="RejectComment" rows="2"></textarea>
+               <textarea asp-for="RejectComment" rows="3"></textarea>
             </label>
          </div>
-         <button class="button" type="submit">Reject</button>
+         <button class="button button-cancel" type="submit">Reject</button>
       </form>
+      <div class="button-row">
+         <form method="post" asp-page-handler="Accept" class="ses-expand">
+            <button class="button button-primary" type="submit">
+               Accept
+            </button>
+         </form>
+      </div>
    </section>
 }
