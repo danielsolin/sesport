@@ -342,7 +342,7 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
          command.Parameters.AddWithValue("source_id", pe.Source.Id.Value);
          command.Parameters.AddWithValue(
             "uri",
-            (object?)pe.Uri ?? DBNull.Value
+            (object?)pe.Uri?.ToString() ?? DBNull.Value
          );
          command.Parameters.AddWithValue(
             "title",
