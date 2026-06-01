@@ -1,0 +1,100 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "team-sweden-showjumping-core"
+    },
+    "name": "Svenska hopplandslagets k\u00E4rngrupp",
+    "type": "family_or_group",
+    "sport": {
+      "externalId": {
+        "value": "equestrian"
+      },
+      "name": "equestrian"
+    },
+    "swedenConnection": "Swedish rider group",
+    "currentRelationshipOrStatus": "FEI and FEI media repeatedly present von Eckermann, Fredricson and Baryard-Johnsson together in Swedish team context",
+    "likelyActivityTypes": [
+      "Nations Cup",
+      "championships",
+      "team selection"
+    ],
+    "suggestedEvidenceSources": "FEI media and bios \uE200cite\uE202turn44search16\uE202turn44search0\uE202turn44search1\uE202turn44search2",
+    "notes": "Useful if your data model supports team-selection groups"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:83447da7ac69dbe0c8ebf781"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:83447da7ac69dbe0c8ebf781"
+      },
+      "fingerprint": "ai:83447da7ac69dbe0c8ebf781",
+      "title": "La Baule Nations Cup (Sweden)",
+      "description": "Swedish jump team, including members of the core group (von Eckermann, Fredricson and Hellstr\u00F6m), competes in the Nations Cup at La Baule in France.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "equestrian"
+        },
+        "name": "equestrian"
+      },
+      "context": "Part of the 2026 Nations Cup series, serving as a preparatory competition for the World Championships in Aachen.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-10",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Paris",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f94e03bc-ccdb-3830-8ecf-93b0f36ad80c"
+          },
+          "proposedRole": 0,
+          "explanation": "The core members of the Swedish show\u2011jumping team are listed as part of Sweden\u2019s A\u2011trupp and are expected to ride for Sweden in the La\u202FBaule Nations Cup.",
+          "contextName": "Svenska hopplandslagets k\u00E4rngrupp",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-ridsportf\u00F6rbundet---nyheter"
+            },
+            "name": "Svenska Ridsportf\u00F6rbundet \u2013 Nyheter"
+          },
+          "uri": "https://ridsport.se/nyheter/grenar/hoppning/2026/2026-04-23-sju-ryttare-pa-henrik-ankarcronas-korta-lista-till-vm-i-aachen",
+          "title": "Sju ryttare p\u00E5 Henrik Ankarcronas korta lista till VM i Aachen",
+          "observedAt": "2026-06-01T17:56:53.0866201+00:00",
+          "summary": "The article states that Sweden will ride in five\u2011star Nations Cups in Rom (27\u201131\u202FMay), La\u202FBaule (10\u201114\u202FJune) and Falsterbo (9\u201112\u202FJuly) as part of the build\u2011up to the World Championships.",
+          "rawExcerpt": "I kombination med individuella uppl\u00E4gg kommer Sverige att g\u00F6ra femstj\u00E4rniga nationshoppningar i Rom 27-31 maj, La Baule 10-14 juni och Falsterbo 9-12 juli."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-ridsportf\u00F6rbundet---landslag-hopplandslaget"
+            },
+            "name": "Svenska Ridsportf\u00F6rbundet \u2013 Landslag hopplandslaget"
+          },
+          "uri": "https://ridsport.se/tavling/grenar/hoppning/landslag-hoppning",
+          "title": "Landslag hoppning",
+          "observedAt": "2026-06-01T17:56:53.0866217+00:00",
+          "summary": "The page lists the members of Sweden\u2019s A\u2011trupp, which includes the core riders Henrik von Eckermann, Peder Fredricson and Wilma Hellstr\u00F6m.",
+          "rawExcerpt": "A\u2011trupp \u2026 Henrik von Eckermann \u2026 Peder Fredricson \u2026 Wilma Hellstr\u00F6m."
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

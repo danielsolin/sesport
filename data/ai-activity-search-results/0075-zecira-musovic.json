@@ -1,0 +1,187 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "zecira-musovic"
+    },
+    "name": "Zecira Musovic",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Malm\u00F6 FF",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Club may change; person remains stable root"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:9d01b20e1e6c6b845f7e4902"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:9d01b20e1e6c6b845f7e4902"
+      },
+      "fingerprint": "ai:9d01b20e1e6c6b845f7e4902",
+      "title": "Sweden Women vs Denmark Women \u2013 UEFA Women\u2019s World Cup Qualifier",
+      "description": "Sweden\u2019s women\u2019s national team plays an away qualifier against Denmark as part of the UEFA Women\u2019s World Cup qualifying League A, Group A1.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "UEFA Women\u2019s World Cup Qualification \u2013 League A, Group A1 (spring qualifying campaign).",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "17:15:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b6f2daf9-3c8d-8a35-994f-f257b61007ad"
+          },
+          "proposedRole": 2,
+          "explanation": "Zecira Musovic is listed in the Sweden squad for the qualifier (SVT article shows her name among the goalkeepers).",
+          "contextName": "Zecira Musovic",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svt-sport"
+            },
+            "name": "SVT Sport"
+          },
+          "uri": "https://www.svt.se/sport/fotboll/asllani-och-bjorn-med-som-stod-i-de-avgorande-kvalmatcherna",
+          "title": "Fotboll: Asllani och Bj\u00F6rn med som st\u00F6d i de avg\u00F6rande kvalmatcherna | SVT Sport",
+          "observedAt": "2026-06-01T17:09:43.5685211+00:00",
+          "summary": "Sweden\u2019s squad for the World Cup qualifying matches against Denmark (away, 5 June) and Italy (home, 9 June) includes goalkeeper Zecira Musovic (Malm\u00F6 FF).",
+          "rawExcerpt": "M\u00E5lvakter: Tove Enblom (V\u00E5lerenga IF) Jennifer Falk (Liverpool) Zecira Musovic (Malm\u00F6 FF)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:365score"
+            },
+            "name": "365Score"
+          },
+          "uri": "https://www.365scores.com/sv/football/match/uefa-women-wc-qualifiers-7756/denmark-(w)-sweden-(w)-8466-12933-7756",
+          "title": "Denmark (W) v Sweden (W) \u2013 UEFA Women WC Qualifiers",
+          "observedAt": "2026-06-01T17:09:43.5685216+00:00",
+          "summary": "Match scheduled for Friday 5 June 2026 at 17:15 (Swedish local time) as part of the UEFA Women\u2019s World Cup qualifiers.",
+          "rawExcerpt": "fre, 5:e juni\n17:15\nDenmark (W) vs Sweden (W)"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ed1a747ef084c70c10ed7020"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ed1a747ef084c70c10ed7020"
+      },
+      "fingerprint": "ai:ed1a747ef084c70c10ed7020",
+      "title": "Sweden Women vs Italy Women \u2013 UEFA Women\u2019s World Cup Qualifier",
+      "description": "Sweden\u2019s women\u2019s national team hosts Italy in the final spring qualifying match for the UEFA Women\u2019s World Cup qualification.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "UEFA Women\u2019s World Cup Qualification \u2013 League A, Group A1 (spring qualifying campaign).",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b6f2daf9-3c8d-8a35-994f-f257b61007ad"
+          },
+          "proposedRole": 2,
+          "explanation": "Zecira Musovic appears in the announced squad for the Italy match (SVT article lists her among the goalkeepers).",
+          "contextName": "Zecira Musovic",
+          "confidence": 0.87
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svt-sport"
+            },
+            "name": "SVT Sport"
+          },
+          "uri": "https://www.svt.se/sport/fotboll/asllani-och-bjorn-med-som-stod-i-de-avgorande-kvalmatcherna",
+          "title": "Fotboll: Asllani och Bj\u00F6rn med som st\u00F6d i de avg\u00F6rande kvalmatcherna | SVT Sport",
+          "observedAt": "2026-06-01T17:09:43.5685327+00:00",
+          "summary": "Sweden\u2019s squad for the World Cup qualifying matches includes goalkeeper Zecira Musovic (Malm\u00F6 FF). The Italy match is scheduled for 9 June at home.",
+          "rawExcerpt": "M\u00E5lvakter: Tove Enblom (V\u00E5lerenga IF) Jennifer Falk (Liverpool) Zecira Musovic (Malm\u00F6 FF)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/sv/matches/sweden-vs-italy/17voz8",
+          "title": "Sverige (W) mot Italien (W) - live resultat, f\u00F6rv\u00E4ntad startelva och H2H statistik",
+          "observedAt": "2026-06-01T17:09:43.5685329+00:00",
+          "summary": "Sweden faces Italy on Tue, Jun 9, 2026, at 16:00 UTC (19:00 local) as part of the Women\u2019s World Cup Qualification UEFA League A Group 1.",
+          "rawExcerpt": "Sweden faces Italy at on Tue, Jun 9, 2026, 16:00 UTC. This match is part of the Women\u0027s World Cup Qualification UEFA League A Grp. 1."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:got-event"
+            },
+            "name": "Got Event"
+          },
+          "uri": "https://gotevent.se/en/events/sweden-vs-italy/",
+          "title": "Sweden vs. Italy at Gamla Ullevi in Gothenburg | Got Event",
+          "observedAt": "2026-06-01T17:09:43.5685332+00:00",
+          "summary": "Sweden vs. Italy scheduled for Tuesday 9 June 2026, 19:00 at Gamla Ullevi, Gothenburg, final spring qualifier for the World Cup.",
+          "rawExcerpt": "Tuesday 9 June, 2026, 19:00"
+        }
+      ],
+      "confidence": 0.87,
+      "status": 0
+    }
+  ]
+}

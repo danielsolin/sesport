@@ -1,0 +1,175 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "felix-claar"
+    },
+    "name": "Felix Claar",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Official player page lists SC Magdeburg and national-team stats; 2026 award story confirms current stature",
+    "likelyActivityTypes": [
+      "championships",
+      "awards",
+      "club changes",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Official player page and award story \uE200cite\uE202turn38search11\uE202turn38search3",
+    "notes": "Tier-one men\u2019s handball inclusion"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:de9c8830dd56d01bb1ea1305"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:de9c8830dd56d01bb1ea1305"
+      },
+      "fingerprint": "ai:de9c8830dd56d01bb1ea1305",
+      "title": "SC Magdeburg vs VfL Gummersbach",
+      "description": "SC Magdeburg host VfL Gummersbach in a Handball-Bundesliga match.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "handball"
+        },
+        "name": "handball"
+      },
+      "context": "2025/26 Handball\u2011Bundesliga season, 33rd Spieltag.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-03",
+        "localStartTime": "20:00:00",
+        "timeZoneId": "Europe/Berlin",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "16c470e5-dd8a-9b34-8bd8-aac97b0d6208"
+          },
+          "proposedRole": 1,
+          "explanation": "Felix\u202FClaar is a player for SC\u202FMagdeburg and will be on the roster for this league match.",
+          "contextName": "Felix Claar",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sc-magdeburg-official-season-page"
+            },
+            "name": "SC Magdeburg official season page"
+          },
+          "uri": "https://www.scm-handball.de/saison/saison-2025/26",
+          "title": "Saison 2025/26 - SC Magdeburg Handball",
+          "observedAt": "2026-06-01T17:34:46.4183426+00:00",
+          "summary": "The fixture list shows a match on 03.06.2026 at 20:00: SC\u202FMagdeburg \u2013 VfL Gummersbach (DAIKIN HBL, 33. Spieltag).",
+          "rawExcerpt": "MI, 03.06.2026 | 20:00 | SC Magdeburg - VfL Gummersbach | DAIKIN HBL (33. Spieltag)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:global-sports-archive-player-profile"
+            },
+            "name": "Global Sports Archive player profile"
+          },
+          "uri": "https://globalsportsarchive.com/people/handball/felix-claar/3326256/",
+          "title": "Felix Claar - Handball player profile \u0026 career statistics",
+          "observedAt": "2026-06-01T17:34:46.4183433+00:00",
+          "summary": "Felix\u202FClaar is listed as a member of SC\u202FMagdeburg for the 2025/26 season.",
+          "rawExcerpt": "### DAIKIN HBL 2025/26 \u2026 Felix Claar \u2026 SC Magdeburg"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:65d784b9b32886505c62bd18"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:65d784b9b32886505c62bd18"
+      },
+      "fingerprint": "ai:65d784b9b32886505c62bd18",
+      "title": "HSG Wetzlar vs SC Magdeburg",
+      "description": "HSG\u202FWetzlar travel to GETEC\u202FArena to face SC\u202FMagdeburg.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "handball"
+        },
+        "name": "handball"
+      },
+      "context": "2025/26 Handball\u2011Bundesliga season, 34th Spieltag.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-07",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Berlin",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "16c470e5-dd8a-9b34-8bd8-aac97b0d6208"
+          },
+          "proposedRole": 1,
+          "explanation": "Felix\u202FClaar is a SC\u202FMagdeburg player and will be available for this league match.",
+          "contextName": "Felix Claar",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sc-magdeburg-official-season-page"
+            },
+            "name": "SC Magdeburg official season page"
+          },
+          "uri": "https://www.scm-handball.de/saison/saison-2025/26",
+          "title": "Saison 2025/26 - SC Magdeburg Handball",
+          "observedAt": "2026-06-01T17:34:46.4183707+00:00",
+          "summary": "The schedule lists a match on 07.06.2026 at 15:00: HSG\u202FWetzlar \u2013 SC\u202FMagdeburg (DAIKIN HBL, 34. Spieltag).",
+          "rawExcerpt": "SO, 07.06.2026 | 15:00 | HSG Wetzlar - SC Magdeburg | DAIKIN HBL (34. Spieltag)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:global-sports-archive-player-profile"
+            },
+            "name": "Global Sports Archive player profile"
+          },
+          "uri": "https://globalsportsarchive.com/people/handball/felix-claar/3326256/",
+          "title": "Felix Claar - Handball player profile \u0026 career statistics",
+          "observedAt": "2026-06-01T17:34:46.4183754+00:00",
+          "summary": "Felix\u202FClaar is registered with SC\u202FMagdeburg for the current season.",
+          "rawExcerpt": "### DAIKIN HBL 2025/26 \u2026 Felix Claar \u2026 SC Magdeburg"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    }
+  ]
+}

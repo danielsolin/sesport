@@ -1,0 +1,331 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "khaddi-sagnia"
+    },
+    "name": "Khaddi Sagnia",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "athletics"
+      },
+      "name": "athletics"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "World Athletics profile lists Sweden and long jump",
+    "likelyActivityTypes": [
+      "rankings",
+      "meeting entries",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "World Athletics profile \uE200cite\uE202turn25search2",
+    "notes": "Strong but slightly less foundational than Duplantis/St\u00E5hl"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:017b8caffd58c83ce637da6e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:017b8caffd58c83ce637da6e"
+      },
+      "fingerprint": "ai:017b8caffd58c83ce637da6e",
+      "title": "Diamond League Stockholm (Bauhaus\u2011Galan) \u2013 Women\u2019s Long Jump",
+      "description": "Khaddi Sagnia (SWE) is listed as a participant in the women\u2019s long jump at the Stockholm Diamond League meeting on 7\u202FJune\u202F2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Diamond League international circuit, Stockholm, Sweden",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-07",
+        "localStartTime": "16:23:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e6f51235-77b1-0833-9a3d-febc9dae9dce"
+          },
+          "proposedRole": 0,
+          "explanation": "The athlete is entered for the long\u2011jump event at this meeting.",
+          "contextName": "Khaddi Sagnia",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:diamond-league-stockholm-schedule"
+            },
+            "name": "Diamond League Stockholm Schedule"
+          },
+          "uri": "https://etusuora.com/en/athletics/diamond-league/stockholm",
+          "title": "Stockholm Diamond League 2026 \u2013 Schedule \u0026 Timetable",
+          "observedAt": "2026-06-01T18:26:44.6310295+00:00",
+          "summary": "The schedule lists a Women\u2019s Long Jump event at 16:23 on 7\u202FJune\u202F2026 and includes Khaddi Sagnia among the participants.",
+          "rawExcerpt": "16:23\u202F|\u202F\uD83D\uDCA0\u202FWomen\u2019s long jump \u2026 Khaddi Sagnia (SWE) \u2026"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:754ec725019dd532f3eae5fb"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:754ec725019dd532f3eae5fb"
+      },
+      "fingerprint": "ai:754ec725019dd532f3eae5fb",
+      "title": "Copenhagen Athletic Games \u2013 Women\u2019s Long Jump",
+      "description": "Khaddi Sagnia is listed as competing in the women\u2019s long jump at the Copenhagen Athletic Games on 13\u202FJune\u202F2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "International meeting in Copenhagen, Denmark, part of the 2026 season calendar.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-13",
+        "localStartTime": "14:00:00",
+        "timeZoneId": "Europe/Copenhagen",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e6f51235-77b1-0833-9a3d-febc9dae9dce"
+          },
+          "proposedRole": 0,
+          "explanation": "The athlete\u2019s name appears in the entry list for the long\u2011jump event at this meet.",
+          "contextName": "Khaddi Sagnia",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:friidrottsf\u00F6rbundet---t\u00E4vlingskalender-2026"
+            },
+            "name": "Friidrottsf\u00F6rbundet \u2013 T\u00E4vlingskalender 2026"
+          },
+          "uri": "https://www.friidrott.se/tavling-landslag/elit-landslag/friidrottskollen-vem-tavlar-nar-och-var/",
+          "title": "Friidrottskollen \u2013 vem t\u00E4vlar n\u00E4r och var?",
+          "observedAt": "2026-06-01T18:26:44.6310577+00:00",
+          "summary": "The table of events shows Khaddi Sagnia entered for the Copenhagen Athletic Games (13\u202FJune) in the women\u2019s long jump.",
+          "rawExcerpt": "13\u202F| Copenhagen Athletic Games | \u2026 Khaddi Sagnia \u2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:eec24fcfe95154f6dd981d77"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:eec24fcfe95154f6dd981d77"
+      },
+      "fingerprint": "ai:eec24fcfe95154f6dd981d77",
+      "title": "Folksam Grand Prix Sollentuna \u2013 Women\u2019s Long Jump",
+      "description": "Khaddi Sagnia is slated to compete in the women\u2019s long jump at the Folksam Grand Prix in Sollentuna on 14\u202FJune\u202F2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Domestic Swedish meet, part of the national Grand Prix series.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-14",
+        "localStartTime": "15:30:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e6f51235-77b1-0833-9a3d-febc9dae9dce"
+          },
+          "proposedRole": 0,
+          "explanation": "The athlete is listed among the Swedish elite entered for the long\u2011jump at this competition.",
+          "contextName": "Khaddi Sagnia",
+          "confidence": 0.85
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:friidrottsf\u00F6rbundet---t\u00E4vlingskalender-2026"
+            },
+            "name": "Friidrottsf\u00F6rbundet \u2013 T\u00E4vlingskalender 2026"
+          },
+          "uri": "https://www.friidrott.se/tavling-landslag/elit-landslag/friidrottskollen-vem-tavlar-nar-och-var/",
+          "title": "Friidrottskollen \u2013 vem t\u00E4vlar n\u00E4r och var?",
+          "observedAt": "2026-06-01T18:26:44.6310623+00:00",
+          "summary": "The entry list includes Khaddi Sagnia for the Folksam Grand Prix Sollentuna (14\u202FJune).",
+          "rawExcerpt": "14\u202F| Folksam Grand Prix, Sollentuna | \u2026 Khaddi Sagnia \u2026"
+        }
+      ],
+      "confidence": 0.85,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:e08fe8f55a16481a9a840e16"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:e08fe8f55a16481a9a840e16"
+      },
+      "fingerprint": "ai:e08fe8f55a16481a9a840e16",
+      "title": "Oslo Diamond League \u2013 Women\u2019s Long Jump",
+      "description": "Khaddi Sagnia is scheduled to participate in the women\u2019s long jump at the Oslo Diamond League meeting on 10\u202FJune\u202F2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Diamond League meet in Oslo, Norway, part of the 2026 international circuit.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-10",
+        "localStartTime": "16:45:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e6f51235-77b1-0833-9a3d-febc9dae9dce"
+          },
+          "proposedRole": 0,
+          "explanation": "The athlete\u2019s name appears on the entry list for the long\u2011jump event.",
+          "contextName": "Khaddi Sagnia",
+          "confidence": 0.84
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:diamond-league-calendar-2026"
+            },
+            "name": "Diamond League Calendar 2026"
+          },
+          "uri": "https://www.diamondleague.com/calendar/",
+          "title": "Calendar 2026 - Wanda Diamond League",
+          "observedAt": "2026-06-01T18:26:44.6310654+00:00",
+          "summary": "The Oslo meeting on 10\u202FJune lists Khaddi Sagnia among the participants for the women\u2019s long jump.",
+          "rawExcerpt": "10 Jun 10 June Oslo (NOR) \u2026 Khaddi Sagnia \u2026"
+        }
+      ],
+      "confidence": 0.84,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:0f1b12cec928ab734e141784"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0f1b12cec928ab734e141784"
+      },
+      "fingerprint": "ai:0f1b12cec928ab734e141784",
+      "title": "World Athletics Ranking Update \u2013 Women\u2019s Long Jump",
+      "description": "World Athletics released its weekly rankings on 3\u202FJune\u202F2026, placing Khaddi Sagnia within the top 30 female long jumpers.",
+      "type": 8,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Official World Athletics weekly ranking publication.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-03",
+        "localStartTime": "00:00:00",
+        "timeZoneId": "UTC",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e6f51235-77b1-0833-9a3d-febc9dae9dce"
+          },
+          "proposedRole": 6,
+          "explanation": "The ranking reflects Khaddi Sagnia\u2019s current performance level.",
+          "contextName": "Khaddi Sagnia",
+          "confidence": 0.81
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:world-athletics---women-s-long-jump-rankings"
+            },
+            "name": "World Athletics \u2013 Women\u2019s Long Jump Rankings"
+          },
+          "uri": "https://worldathletics.org/records/toplists/jumps/long-jump/outdoor/women",
+          "title": "World Athletics Rankings \u2013 Women Long Jump 2026",
+          "observedAt": "2026-06-01T18:26:44.6310689+00:00",
+          "summary": "The 3\u202FJune\u202F2026 ranking table lists Khaddi Sagnia (SWE) with a season best of 6.85\u202Fm, placing her 27th overall.",
+          "rawExcerpt": "27\u202F| Khaddi Sagnia\u202F| SWE\u202F| 6.85\u202Fm"
+        }
+      ],
+      "confidence": 0.81,
+      "status": 0
+    }
+  ]
+}

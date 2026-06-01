@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "amanda-ilestedt"
+    },
+    "name": "Amanda Ilestedt",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Eintracht Frankfurt",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Experienced Sweden anchor"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:055d437e9ae915d4889165f3"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:055d437e9ae915d4889165f3"
+      },
+      "fingerprint": "ai:055d437e9ae915d4889165f3",
+      "title": "Sweden vs Denmark \u2013 FIFA Women\u2019s World Cup Qualifier 2027",
+      "description": "Sweden women\u2019s national team play Denmark in Odense as the final qualifying match for the 2027 FIFA Women\u2019s World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2027 FIFA Women\u2019s World Cup UEFA qualification \u2013 League A Group 1, final matchday.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "19:15:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f8f70172-b618-c038-86a4-0223a1361b66"
+          },
+          "proposedRole": 0,
+          "explanation": "Amanda Ilestedt is listed in the Sweden squad for this qualifier.",
+          "contextName": "Amanda Ilestedt",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:expressen---damlandslagets-trupp-till-\u00F6desmatcherna-mot-danmark-och-italien"
+            },
+            "name": "Expressen \u2013 Damlandslagets trupp till \u00F6desmatcherna mot Danmark och Italien"
+          },
+          "uri": "https://www.expressen.se/sport/fotboll/landslaget/sveriges-trupp-till-odesmatcherna-/",
+          "title": "Damlandslagets trupp till \u00F6desmatcherna mot Danmark och Italien",
+          "observedAt": "2026-06-01T17:08:50.0630663+00:00",
+          "summary": "The article lists Sweden\u2019s World Cup qualifying squad and includes Amanda Ilestedt (Eintracht Frankfurt).",
+          "rawExcerpt": "Amanda Ilestedt, Eintracht Frankfurt"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:global-sports-archive---denmark-vs-sweden-match-page"
+            },
+            "name": "Global Sports Archive \u2013 Denmark vs Sweden match page"
+          },
+          "uri": "https://globalsportsarchive.com/en/soccer/match/2026-06-05/denmark-vs-sweden/4071997",
+          "title": "Denmark vs Sweden - June 5, 2026 - FIFA Women\u0027s World Cup Qualifiers 2027 Brazil",
+          "observedAt": "2026-06-01T17:08:50.0630675+00:00",
+          "summary": "Match scheduled for 05.06.26 at 19:15 in Odense (Nature Energy Park).",
+          "rawExcerpt": "05.06.26 / 19:15\nNature Energy Park, Odense"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:a585e00ad2cc09f2c4265e7e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:a585e00ad2cc09f2c4265e7e"
+      },
+      "fingerprint": "ai:a585e00ad2cc09f2c4265e7e",
+      "title": "Sweden vs Italy \u2013 FIFA Women\u2019s World Cup Qualifier 2027",
+      "description": "Sweden host Italy in Gothenburg for the final qualifying fixture of the 2027 FIFA Women\u2019s World Cup UEFA league.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2027 FIFA Women\u2019s World Cup UEFA qualification \u2013 League A Group 1, final matchday.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f8f70172-b618-c038-86a4-0223a1361b66"
+          },
+          "proposedRole": 0,
+          "explanation": "Amanda Ilestedt is named in the Sweden squad for this qualifier.",
+          "contextName": "Amanda Ilestedt",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:expressen---damlandslagets-trupp-till-\u00F6desmatcherna-mot-danmark-och-italien"
+            },
+            "name": "Expressen \u2013 Damlandslagets trupp till \u00F6desmatcherna mot Danmark och Italien"
+          },
+          "uri": "https://www.expressen.se/sport/fotboll/landslaget/sveriges-trupp-till-odesmatcherna-/",
+          "title": "Damlandslagets trupp till \u00F6desmatcherna mot Danmark och Italien",
+          "observedAt": "2026-06-01T17:08:50.06308+00:00",
+          "summary": "The article lists Sweden\u2019s World Cup qualifying squad and includes Amanda Ilestedt (Eintracht Frankfurt).",
+          "rawExcerpt": "Amanda Ilestedt, Eintracht Frankfurt"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa---women-s-european-qualifiers-match-preview"
+            },
+            "name": "UEFA \u2013 Women\u2019s European Qualifiers match preview"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/news/02a5-20b5ba17b23f-57af31d1b97d-1000--women-s-european-qualifiers-for-the-2027-fifa-women-s-worl/",
+          "title": "Women\u0027s European Qualifiers for the 2027 FIFA Women\u0027s World Cup: Matchday 5 and 6 preview",
+          "observedAt": "2026-06-01T17:08:50.0630812+00:00",
+          "summary": "Lists the Sweden vs Italy match on Tuesday 9 June at 19:00.",
+          "rawExcerpt": "Tuesday 9 June ... Sweden vs Italy (19:00)"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    }
+  ]
+}

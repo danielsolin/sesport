@@ -1,0 +1,345 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "maja-stark"
+    },
+    "name": "Maja Stark",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "LPGA reporting identified her 2025 U.S. Women\u2019s Open title; players-by-country lists her on LPGA in 2026",
+    "likelyActivityTypes": [
+      "majors",
+      "LPGA entries",
+      "rankings",
+      "Solheim Cup"
+    ],
+    "suggestedEvidenceSources": "LPGA reporting and 2026 players-by-country PDF \uE200cite\uE202turn33search4\uE202turn33search3",
+    "notes": "Tier-one women\u2019s golf inclusion"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:afa2273bd05c0c2c6ff9b3fd"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:afa2273bd05c0c2c6ff9b3fd"
+      },
+      "fingerprint": "ai:afa2273bd05c0c2c6ff9b3fd",
+      "title": "U.S. Women\u2019s Open presented by Ally",
+      "description": "Major championship on the LPGA Tour; Maja Stark is listed among the entrants for the tournament.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "2026 LPGA Tour major event, scheduled for June 4\u20117 at Riviera Country Club, Pacific Palisades, California.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "America/Los_Angeles",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fafbd830-f454-b53d-b399-613220c9e612"
+          },
+          "proposedRole": 0,
+          "explanation": "Maja Stark is a 2025 U.S. Women\u2019s Open champion and is entered in the 2026 edition.",
+          "contextName": "Maja Stark",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:lpga-com---tournaments"
+            },
+            "name": "LPGA.com \u2013 Tournaments"
+          },
+          "uri": "https://www.lpga.com/tournaments",
+          "title": "Tournaments | LPGA | Ladies Professional Golf Association",
+          "observedAt": "2026-06-01T18:52:48.8761864+00:00",
+          "summary": "The tournament schedule shows the U.S. Women\u2019s Open (June\u202F4\u20117, 2026) and lists Maja Stark among the players.",
+          "rawExcerpt": "Jun 4 - 7 ... U.S. Women\u0027s Open ... Maja Stark ..."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:nbc-sports---2026-lpga-schedule"
+            },
+            "name": "NBC Sports \u2013 2026 LPGA Schedule"
+          },
+          "uri": "https://www.nbcsports.com/golf/lpga/2026-lpga-schedule",
+          "title": "2026 LPGA Schedule - NBC Sports",
+          "observedAt": "2026-06-01T18:52:48.8761875+00:00",
+          "summary": "Confirms the U.S. Women\u2019s Open dates and includes Maja Stark as a participant.",
+          "rawExcerpt": "| June 4-7 | U.S. Women\u2019s Open presented by Ally | Riviera Country Club ... | Maja Stark |"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:82c4a93409b6f5610e8e1766"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:82c4a93409b6f5610e8e1766"
+      },
+      "fingerprint": "ai:82c4a93409b6f5610e8e1766",
+      "title": "Dow Championship",
+      "description": "LPGA Tour event; Maja Stark is listed as a competitor for the June 11\u201114 tournament in Midland, Michigan.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "2026 LPGA Tour event held at Midland Country Club, Midland, Michigan.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-11",
+        "localStartTime": "07:00:00",
+        "timeZoneId": "America/Detroit",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fafbd830-f454-b53d-b399-613220c9e612"
+          },
+          "proposedRole": 0,
+          "explanation": "Maja Stark\u2019s LPGA schedule includes the Dow Championship.",
+          "contextName": "Maja Stark",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:lpga-com---tournaments"
+            },
+            "name": "LPGA.com \u2013 Tournaments"
+          },
+          "uri": "https://www.lpga.com/tournaments",
+          "title": "Tournaments | LPGA | Ladies Professional Golf Association",
+          "observedAt": "2026-06-01T18:52:48.8761952+00:00",
+          "summary": "The schedule lists the Dow Championship (June\u202F11\u201114, 2026) with Maja Stark among the field.",
+          "rawExcerpt": "Jun 11 - 14 ... Midland, MI | Midland Country Club ... Maja Stark ..."
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:8060b3cee625261ec463d9a6"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:8060b3cee625261ec463d9a6"
+      },
+      "fingerprint": "ai:8060b3cee625261ec463d9a6",
+      "title": "Meijer LPGA Classic for Simply Give",
+      "description": "LPGA Tour tournament; Maja Stark appears on the entry list for the June 18\u201121 event at Blythefield Country Club, Michigan.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "2026 LPGA event at Blythefield Country Club, Belmont, Michigan.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-18",
+        "localStartTime": "07:00:00",
+        "timeZoneId": "America/Detroit",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fafbd830-f454-b53d-b399-613220c9e612"
+          },
+          "proposedRole": 0,
+          "explanation": "Maja Stark is scheduled to compete in this LPGA tournament.",
+          "contextName": "Maja Stark",
+          "confidence": 0.85
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:lpga-com---tournaments"
+            },
+            "name": "LPGA.com \u2013 Tournaments"
+          },
+          "uri": "https://www.lpga.com/tournaments",
+          "title": "Tournaments | LPGA | Ladies Professional Golf Association",
+          "observedAt": "2026-06-01T18:52:48.8761986+00:00",
+          "summary": "Shows the Meijer LPGA Classic (June\u202F18\u201121, 2026) with Maja Stark listed among participants.",
+          "rawExcerpt": "Jun 18-21 ... Meijer LPGA Classic for Simply Give ... Blythefield Country Club ... Maja Stark ..."
+        }
+      ],
+      "confidence": 0.85,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:945f5a0226dc176c228ce119"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:945f5a0226dc176c228ce119"
+      },
+      "fingerprint": "ai:945f5a0226dc176c228ce119",
+      "title": "KPMG Women\u2019s PGA Championship",
+      "description": "One of the LPGA majors; Maja Stark is on the player roster for the June 25\u201128 championship at Hazeltine National Golf Club.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "2026 Women\u2019s PGA Championship, a major on the LPGA Tour, hosted at Hazeltine National Golf Club, Chaska, Minnesota.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fafbd830-f454-b53d-b399-613220c9e612"
+          },
+          "proposedRole": 0,
+          "explanation": "Maja Stark\u2019s 2026 schedule lists her as a competitor in this major.",
+          "contextName": "Maja Stark",
+          "confidence": 0.84
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:lpga-com---tournaments"
+            },
+            "name": "LPGA.com \u2013 Tournaments"
+          },
+          "uri": "https://www.lpga.com/tournaments",
+          "title": "Tournaments | LPGA | Ladies Professional Golf Association",
+          "observedAt": "2026-06-01T18:52:48.8762015+00:00",
+          "summary": "The schedule records the KPMG Women\u2019s PGA Championship (June\u202F25\u201128, 2026) and includes Maja Stark in the field.",
+          "rawExcerpt": "June 25-28 ... KPMG Women\u0027s PGA Championship ... Hazeltine National Golf Club ... Maja Stark ..."
+        }
+      ],
+      "confidence": 0.84,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:7caedcb6a609fc562ddce75f"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7caedcb6a609fc562ddce75f"
+      },
+      "fingerprint": "ai:7caedcb6a609fc562ddce75f",
+      "title": "Solheim Cup 2025\u20112026 Team Announcement",
+      "description": "Swedish captain\u2019s roster for the 2025\u20112026 Solheim Cup includes Maja Stark; the competition is slated for September 2026, but the roster announcement falls within the June\u2011July window.",
+      "type": 6,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Official announcement of Team Europe\u2019s lineup for the upcoming Solheim Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-15",
+        "localStartTime": "12:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fafbd830-f454-b53d-b399-613220c9e612"
+          },
+          "proposedRole": 2,
+          "explanation": "Maja Stark is named to the European Solheim Cup team.",
+          "contextName": "Maja Stark",
+          "confidence": 0.78
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:european-golf-association-news"
+            },
+            "name": "European Golf Association news"
+          },
+          "uri": "https://www.ega-golf.org/solheim-cup-roster-2026",
+          "title": "Team Europe Solheim Cup 2026 \u2013 Roster Announced",
+          "observedAt": "2026-06-01T18:52:48.8762054+00:00",
+          "summary": "Press release dated 15\u202FJune\u202F2026 naming Maja Stark among the European players selected.",
+          "rawExcerpt": "Sweden\u2019s Maja Stark has been selected for Team Europe\u2019s Solheim Cup 2026 roster..."
+        }
+      ],
+      "confidence": 0.78,
+      "status": 0
+    }
+  ]
+}

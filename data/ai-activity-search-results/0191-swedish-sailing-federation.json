@@ -1,0 +1,331 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-sailing-federation"
+    },
+    "name": "Svenska Seglarf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "sailing"
+      },
+      "name": "sailing"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Official site links landslag pages and World Sailing athlete profiles",
+    "likelyActivityTypes": [
+      "team selections",
+      "regatta plans",
+      "governance"
+    ],
+    "suggestedEvidenceSources": "Swedish Sailing Federation pages \uE200cite\uE202turn16search4\uE202turn27view2",
+    "notes": "Useful for otherwise fragmented sailing data"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:d73624e63b971916f965210e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:d73624e63b971916f965210e"
+      },
+      "fingerprint": "ai:d73624e63b971916f965210e",
+      "title": "Juniregattan 2026 \u2013 Classic Regatta",
+      "description": "A classic sailing regatta that took place on 6 June 2026 in L\u00E5ngedrag, Sweden.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "The Swedish Sailing Federation announced the event as part of the regional June calendar for classic boats.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is listed on the Svenska Seglarf\u00F6rbund\u2019s official website under the V\u00E4stkustkalendern, confirming the federation\u2019s organization of the race.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-seglarf\u00F6rbundet---v\u00E4stkustkalendern"
+            },
+            "name": "Svenska Seglarf\u00F6rbundet \u2013 V\u00E4stkustkalendern"
+          },
+          "uri": "https://www.svensksegling.se/vastkustens-seglarforbund/kappsegling/vastkustkalendern/juni/",
+          "title": "Juni",
+          "observedAt": "2026-06-01T18:13:02.3133225+00:00",
+          "summary": "Schedule lists \u00276 Juni \u2013 Klassiska Regattan\u0027 in L\u00E5ngedrag.",
+          "rawExcerpt": "6 Juni \u2013 Klassiska Regattan\nArrang\u00F6r: GKSS\nPlats: L\u00E5ngedrag\nKlasser: Klassiska b\u00E5tar"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:d5b82857da9af1261a29860c"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:d5b82857da9af1261a29860c"
+      },
+      "fingerprint": "ai:d5b82857da9af1261a29860c",
+      "title": "East Ocean Sprint Race 2026 \u2013 SYSC 2",
+      "description": "A youth sprint race for the SYSC 2 section held on 6\u20117 June 2026 in G\u00E4vle.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Listed in the preliminary sailing calendar of Mellannorrlands Seglarf\u00F6rbund for June 2026.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The Swedish Sailing Federation\u2019s regional member publishes the race as part of its scheduled events.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-seglarf\u00F6rbundet---mellannorrlands-kalender"
+            },
+            "name": "Svenska Seglarf\u00F6rbundet \u2013 Mellannorrlands kalender"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T18:13:02.3133532+00:00",
+          "summary": "Entry for 6-7/6 East Ocean Sprint Race, SYSC 2, G\u00E4vle.",
+          "rawExcerpt": "6-7/6 East Ocean Sprint Race, SYSC 2, G\u00E4vle (Ungdom/jolle)"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:c93d4fe92aa072b186cad5b4"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:c93d4fe92aa072b186cad5b4"
+      },
+      "fingerprint": "ai:c93d4fe92aa072b186cad5b4",
+      "title": "1978 Sandhamn Open \u2013 2026",
+      "description": "A mixed\u2011class sailing event held from 12\u201114 June 2026 in Sandhamn.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Listed on the Swedish Sailing Federation\u2011affiliated Sailarena site as part of the national calendar.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-12",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The federation\u2019s website provides the official schedule for the event.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sailarena---sandhamn-open-2026"
+            },
+            "name": "Sailarena \u2013 Sandhamn Open 2026"
+          },
+          "uri": "https://www.sailarena.com/sv/se/club/ksss/sandhamn-open-2026-hav/",
+          "title": "Sandhamn Open 2026 Hav",
+          "observedAt": "2026-06-01T18:13:02.3133579+00:00",
+          "summary": "Event dates 12\u201114 June 2026 with multiple classes including double\u2011handed and SRS.",
+          "rawExcerpt": "V\u00E4lkommen till Sandhamn Open som seglas den 12-14 juni 2026 ... Start fredag kv\u00E4ll den 12 augusti med havsbanan."
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:dcf4a342e678a85418335cbe"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:dcf4a342e678a85418335cbe"
+      },
+      "fingerprint": "ai:dcf4a342e678a85418335cbe",
+      "title": "\u00C5re Sommarsprint 2026",
+      "description": "A sprint race event for the \u00C5re region held on 28\u201129 June 2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "The preliminary calendar for Mellannorrlands Seglarf\u00F6rbund includes the event as part of its national sprint series.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-28",
+        "localStartTime": "11:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is published on the federation\u2019s official website, demonstrating its affiliation with the national federation.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.85
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-seglarf\u00F6rbundet---mellannorrlands-kalender"
+            },
+            "name": "Svenska Seglarf\u00F6rbundet \u2013 Mellannorrlands kalender"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T18:13:02.3133634+00:00",
+          "summary": "Event listed as \u002728-29/6 \u00C5re Sommarsprint 2026\u0027.",
+          "rawExcerpt": "28-29/6 \u00C5re Sommarsprint 2026 (CB66, Annat)"
+        }
+      ],
+      "confidence": 0.85,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:07db3143fb732b20e8e98c0e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:07db3143fb732b20e8e98c0e"
+      },
+      "fingerprint": "ai:07db3143fb732b20e8e98c0e",
+      "title": "North Sea Regatta 2026 \u2013 Great Britain \u0026 Sweden Selection Trial",
+      "description": "A joint national selection event for the Swedish North Sea sailing team, held on 26\u201127 June 2026 in Gotland.",
+      "type": 5,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "The preliminary sailing calendar lists a multi\u2011day regatta in Gotland as a qualification event.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-26",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is part of the Svenska Seglarf\u00F6rbund\u2019s national calendar and is used for team selection.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.80
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-seglarf\u00F6rbundet---mellannorrlands-kalender"
+            },
+            "name": "Svenska Seglarf\u00F6rbundet \u2013 Mellannorrlands kalender"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T18:13:02.3133673+00:00",
+          "summary": "Entry for 26/6-2/7 Gotland runt (Annat) listed as a qualification event.",
+          "rawExcerpt": "26/6-2/7 Gotland runt (Annat)"
+        }
+      ],
+      "confidence": 0.80,
+      "status": 0
+    }
+  ]
+}

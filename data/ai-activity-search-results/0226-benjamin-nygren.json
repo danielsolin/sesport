@@ -1,0 +1,248 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "benjamin-nygren"
+    },
+    "name": "Benjamin Nygren",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA squad page lists Celtic FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "goals"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Good tier_2 candidate"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:7d979c6292af6d4adfa9b739"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7d979c6292af6d4adfa9b739"
+      },
+      "fingerprint": "ai:7d979c6292af6d4adfa9b739",
+      "title": "Sweden vs Tunisia \u2013 FIFA World Cup 2026 Group F opening match",
+      "description": "Sweden open their 2026 World Cup campaign against Tunisia in Monterrey, Mexico. Benjamin Nygren is listed in Sweden\u2019s 26\u2011player squad for the tournament.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup 2026 \u2013 Group F match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-14",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "9001e82a-cad3-a53b-ab58-3a703ccf9c40"
+          },
+          "proposedRole": 0,
+          "explanation": "Nygren is named in Sweden\u2019s World Cup squad and therefore is eligible to play in the match.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected - BBC Sport",
+          "observedAt": "2026-06-01T18:33:50.2797489+00:00",
+          "summary": "The article lists Benjamin Nygren (Celtic) as part of Sweden\u2019s final squad and gives the Group F schedule, showing a match against Tunisia on 14 June.",
+          "rawExcerpt": "\u2026as have Newcastle winger Anthony Elanga and Celtic forward Benjamin Nygren\u2026 Sweden are in Group F and play Tunisia in Monterrey, Mexico on 14 June (03:00 BST, 15 June)\u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com"
+            },
+            "name": "Olympics.com"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule",
+          "observedAt": "2026-06-01T18:33:50.2797494+00:00",
+          "summary": "Provides the same schedule with the 14\u202FJune Sweden\u2011Tunisia match and confirms Nygren\u2019s inclusion in the squad.",
+          "rawExcerpt": "- 14 June, 19:00 PDT - Sweden vs Tunisia - Guadalupe, Greater Monterrey (Mexico)\u2026 Forwards: \u2026 Benjamin Nygren (Celtic)\u2026"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:dbd906f26f096c4b4c4e435a"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:dbd906f26f096c4b4c4e435a"
+      },
+      "fingerprint": "ai:dbd906f26f096c4b4c4e435a",
+      "title": "Netherlands vs Sweden \u2013 FIFA World Cup 2026 Group F",
+      "description": "Sweden face the Netherlands in Houston, Texas. Benjamin Nygren remains part of the 26\u2011player World Cup roster.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup 2026 \u2013 Group F match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "9001e82a-cad3-a53b-ab58-3a703ccf9c40"
+          },
+          "proposedRole": 0,
+          "explanation": "Nygren is in Sweden\u2019s World Cup squad, making him a potential participant in the June\u202F20 match.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected - BBC Sport",
+          "observedAt": "2026-06-01T18:33:50.2797587+00:00",
+          "summary": "Lists the World Cup schedule, including the 20\u202FJune match against the Netherlands, and confirms Nygren\u2019s squad inclusion.",
+          "rawExcerpt": "Sweden are in Group F and play \u2026 the Netherlands in Houston on 20 June\u2026 as have \u2026 Celtic forward Benjamin Nygren."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com"
+            },
+            "name": "Olympics.com"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule",
+          "observedAt": "2026-06-01T18:33:50.2797591+00:00",
+          "summary": "Shows the 20\u202FJune Netherlands\u2011Sweden fixture and retains Nygren in the squad list.",
+          "rawExcerpt": "- 20 June, 10:00 PDT - Netherlands vs Sweden - Houston, Texas (USA)\u2026 Forwards: \u2026 Benjamin Nygren (Celtic)."
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:0fd7a8802089e4fca55cd830"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0fd7a8802089e4fca55cd830"
+      },
+      "fingerprint": "ai:0fd7a8802089e4fca55cd830",
+      "title": "Japan vs Sweden \u2013 FIFA World Cup 2026 Group F",
+      "description": "Sweden play Japan in Dallas, Texas. Benjamin Nygren is still listed among Sweden\u2019s 26\u2011player World Cup squad.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup 2026 \u2013 Group F match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "16:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "9001e82a-cad3-a53b-ab58-3a703ccf9c40"
+          },
+          "proposedRole": 0,
+          "explanation": "Nygren\u2019s presence in the official squad links him to the 25\u202FJune World Cup match against Japan.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected - BBC Sport",
+          "observedAt": "2026-06-01T18:33:50.2797626+00:00",
+          "summary": "Provides the Group F schedule, including the 25\u202FJune match versus Japan, and confirms Nygren\u2019s selection.",
+          "rawExcerpt": "\u2026 Sweden \u2026 will play \u2026 Japan in Dallas five days later (00:00 BST, 26 June)\u2026 Celtic forward Benjamin Nygren."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com"
+            },
+            "name": "Olympics.com"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule",
+          "observedAt": "2026-06-01T18:33:50.279763+00:00",
+          "summary": "Lists the 25\u202FJune Japan\u2011Sweden fixture and includes Nygren in the squad roster.",
+          "rawExcerpt": "- 25 June, 16:00 PDT - Japan vs Sweden - Arlington, Texas (USA)\u2026 Forwards: \u2026 Benjamin Nygren (Celtic)."
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    }
+  ]
+}

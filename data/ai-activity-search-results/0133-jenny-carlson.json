@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jenny-carlson"
+    },
+    "name": "Jenny Carlson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Upcoming women\u2019s page lists her at Molde Elite",
+    "likelyActivityTypes": [
+      "championships",
+      "injuries",
+      "club changes"
+    ],
+    "suggestedEvidenceSources": "Upcoming women\u2019s page \uE200cite\uE202turn38search10",
+    "notes": "Useful relation-rich candidate"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:c25e38286ff92ebb84a65554"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:c25e38286ff92ebb84a65554"
+      },
+      "fingerprint": "ai:c25e38286ff92ebb84a65554",
+      "title": "Molde Elite vs Stab\u00E6k (Norwegian REMA 1000-ligaen Women)",
+      "description": "Molde Elite host Stab\u00E6k in a REMA 1000-ligaen women\u2019s league match. Jenny Carlson is listed in the Molde Elite squad for the 2025\u201126 season and is expected to be eligible for the match.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "handball"
+        },
+        "name": "handball"
+      },
+      "context": "2025\u201126 REMA 1000-ligaen (Norway) regular season match.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-13",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5b33a226-1c04-f43c-88d0-e4fbe42132ea"
+          },
+          "proposedRole": 1,
+          "explanation": "Jenny Carlson is a centre back for Molde Elite in the 2025\u201126 season, making her a participant in this club match.",
+          "contextName": "Jenny Carlson",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:molde-fk---women-s-schedule"
+            },
+            "name": "Molde FK \u2013 Women\u2019s schedule"
+          },
+          "uri": "https://www.moldefk.no/lag/kvinner/terminliste",
+          "title": "Terminlisten 2026 / Molde",
+          "observedAt": "2026-06-01T17:38:30.5738164+00:00",
+          "summary": "The schedule lists a match on 13.06.2026 at 15:00 between Stab\u00E6k and Molde at Nye Nadderud stadion as part of the 2026 season.",
+          "rawExcerpt": "| #10 | Stab\u00E6k - Molde | 13.06.2026 15:00 #10 Nye Nadderud stadion | Toppserien - 2026 | Billetter |"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:european-handball-federation---player-profile"
+            },
+            "name": "European Handball Federation \u2013 Player profile"
+          },
+          "uri": "https://www.eurohandball.com/en/player/rgW0kT0G86m95QGX9DTFZw/Jenny-Carlson/",
+          "title": "JENNY CARLSON - Career \u0026 Statistics | EHF",
+          "observedAt": "2026-06-01T17:38:30.5738174+00:00",
+          "summary": "The player profile confirms Jenny Carlson\u2019s 2026 season team as Molde Elite.",
+          "rawExcerpt": "2026 Season Team: - Molde Elite (NOR)"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:5c1574fae98b6b773c403578"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5c1574fae98b6b773c403578"
+      },
+      "fingerprint": "ai:5c1574fae98b6b773c403578",
+      "title": "Molde Elite vs Haugesund (Norwegian REMA 1000-ligaen Women)",
+      "description": "Molde Elite travel to play Haugesund in a REMA 1000-ligaen women\u2019s league match. Jenny Carlson is on the Molde Elite roster for the 2025\u201126 season.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "handball"
+        },
+        "name": "handball"
+      },
+      "context": "2025\u201126 REMA 1000-ligaen (Norway) regular season match.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5b33a226-1c04-f43c-88d0-e4fbe42132ea"
+          },
+          "proposedRole": 1,
+          "explanation": "As a Molde Elite player, Carlson is expected to be part of the squad for this fixture.",
+          "contextName": "Jenny Carlson",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:molde-fk---women-s-schedule"
+            },
+            "name": "Molde FK \u2013 Women\u2019s schedule"
+          },
+          "uri": "https://www.moldefk.no/lag/kvinner/terminliste",
+          "title": "Terminlisten 2026 / Molde",
+          "observedAt": "2026-06-01T17:38:30.5738401+00:00",
+          "summary": "The schedule lists a match on 20.06.2026 at 15:00 between Molde and Haugesund at Aker stadion as part of the 2026 season.",
+          "rawExcerpt": "| #11 | Molde - Haugesund | 20.06.2026 15:00 #11 Aker stadion | Toppserien - 2026 | Billetter |"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:european-handball-federation---player-profile"
+            },
+            "name": "European Handball Federation \u2013 Player profile"
+          },
+          "uri": "https://www.eurohandball.com/en/player/rgW0kT0G86m95QGX9DTFZw/Jenny-Carlson/",
+          "title": "JENNY CARLSON - Career \u0026 Statistics | EHF",
+          "observedAt": "2026-06-01T17:38:30.5738409+00:00",
+          "summary": "The player profile confirms Jenny Carlson\u2019s 2026 season team as Molde Elite.",
+          "rawExcerpt": "2026 Season Team: - Molde Elite (NOR)"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,324 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-football-national-team"
+    },
+    "name": "Herrlandslaget i fotboll",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swedish FA shows 2026 World Cup group status on current team page",
+    "likelyActivityTypes": [
+      "squad calls",
+      "tournament rosters",
+      "qualification",
+      "coaching",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s team page \uE200cite\uE202turn27view0",
+    "notes": "Root entity for Swedish men\u2019s international football"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:872fd8e500a2706c2397ad6f"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:872fd8e500a2706c2397ad6f"
+      },
+      "fingerprint": "ai:872fd8e500a2706c2397ad6f",
+      "title": "Sweden vs Norway (Friendly)",
+      "description": "Sweden men\u0027s national football team will play a friendly match against Norway in Oslo.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly match ahead of the 2026 World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cdb706d2-7c21-fc34-9f27-ca0de8be29bb"
+          },
+          "proposedRole": 0,
+          "explanation": "The match involves the Swedish men\u0027s national football team.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/teams/8520/overview/sweden",
+          "title": "Sweden - fixtures, team info and top players",
+          "observedAt": "2026-06-01T18:03:32.6188971+00:00",
+          "summary": "June 1, 2026: Friendlies \u2013 at Norway.",
+          "rawExcerpt": "June 1, 2026: Friendlies - at Norway"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:kickoff-guide"
+            },
+            "name": "Kickoff Guide"
+          },
+          "uri": "https://kickoff.guide/teams/sweden",
+          "title": "Sweden fixtures and schedule \u2014 National Teams \u2014 Kickoff Calendar",
+          "observedAt": "2026-06-01T18:03:32.618898+00:00",
+          "summary": "MON Jun 1 17:00 Norway vs Sweden \u2013 Friendly International.",
+          "rawExcerpt": "MON**Jun 1** 17:00 NorwayvsSweden IM \u00B7 Friendly International"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:3b72f519f58c3b85b6a6118d"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:3b72f519f58c3b85b6a6118d"
+      },
+      "fingerprint": "ai:3b72f519f58c3b85b6a6118d",
+      "title": "Sweden vs Greece (Friendly)",
+      "description": "Sweden will host Greece in a friendly match at home.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly match ahead of the 2026 World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cdb706d2-7c21-fc34-9f27-ca0de8be29bb"
+          },
+          "proposedRole": 0,
+          "explanation": "The match involves the Swedish men\u0027s national football team.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/teams/8520/overview/sweden",
+          "title": "Sweden - fixtures, team info and top players",
+          "observedAt": "2026-06-01T18:03:32.6189067+00:00",
+          "summary": "June 4, 2026: Friendlies \u2013 vs Greece.",
+          "rawExcerpt": "June 4, 2026: Friendlies - vs Greece"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:kickoff-guide"
+            },
+            "name": "Kickoff Guide"
+          },
+          "uri": "https://kickoff.guide/teams/sweden",
+          "title": "Sweden fixtures and schedule \u2014 National Teams \u2014 Kickoff Calendar",
+          "observedAt": "2026-06-01T18:03:32.618907+00:00",
+          "summary": "THU Jun 4 17:00 Sweden vs Greece \u2013 Friendly International.",
+          "rawExcerpt": "THU**Jun 4** 17:00 SwedenvsGreece IM \u00B7 Friendly International"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:5c4a8cdc2179798698f0ddde"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5c4a8cdc2179798698f0ddde"
+      },
+      "fingerprint": "ai:5c4a8cdc2179798698f0ddde",
+      "title": "Sweden vs Tunisia (World Cup Group Stage)",
+      "description": "Sweden will play Tunisia in the group stage of the 2026 FIFA World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2026 FIFA World Cup \u2013 Group F, Match 1.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-15",
+        "localStartTime": "02:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cdb706d2-7c21-fc34-9f27-ca0de8be29bb"
+          },
+          "proposedRole": 0,
+          "explanation": "Sweden\u0027s men\u2019s national team is a participant in the World Cup.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/teams/8520/overview/sweden",
+          "title": "Sweden - fixtures, team info and top players",
+          "observedAt": "2026-06-01T18:03:32.6189129+00:00",
+          "summary": "June 15, 2026: World Cup Group F \u2013 vs Tunisia.",
+          "rawExcerpt": "June 15, 2026: World Cup Grp. F - vs Tunisia"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:kickoff-guide"
+            },
+            "name": "Kickoff Guide"
+          },
+          "uri": "https://kickoff.guide/teams/sweden",
+          "title": "Sweden fixtures and schedule \u2014 National Teams \u2014 Kickoff Calendar",
+          "observedAt": "2026-06-01T18:03:32.6189132+00:00",
+          "summary": "MON Jun 15 02:00 Sweden vs Tunisia \u2013 WC G Stage - 1.",
+          "rawExcerpt": "MON**Jun 15** 02:00 SwedenvsTunisia WC \u00B7 G Stage - 1"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:86c0fdacba8e6c0c880a9a03"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:86c0fdacba8e6c0c880a9a03"
+      },
+      "fingerprint": "ai:86c0fdacba8e6c0c880a9a03",
+      "title": "Netherlands vs Sweden (World Cup Group Stage)",
+      "description": "Sweden will face the Netherlands in the second group\u2011stage match of the 2026 FIFA World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2026 FIFA World Cup \u2013 Group F, Match 2.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cdb706d2-7c21-fc34-9f27-ca0de8be29bb"
+          },
+          "proposedRole": 0,
+          "explanation": "Sweden\u0027s men\u2019s national team is competing in the World Cup.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.87
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/teams/8520/overview/sweden",
+          "title": "Sweden - fixtures, team info and top players",
+          "observedAt": "2026-06-01T18:03:32.6189158+00:00",
+          "summary": "June 20, 2026: World Cup Group F \u2013 at Netherlands.",
+          "rawExcerpt": "June 20, 2026: World Cup Grp. F - at Netherlands"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:kickoff-guide"
+            },
+            "name": "Kickoff Guide"
+          },
+          "uri": "https://kickoff.guide/teams/sweden",
+          "title": "Sweden fixtures and schedule \u2014 National Teams \u2014 Kickoff Calendar",
+          "observedAt": "2026-06-01T18:03:32.6189161+00:00",
+          "summary": "SAT Jun 20 17:00 Netherlands vs Sweden \u2013 WC G Stage - 2.",
+          "rawExcerpt": "SAT**Jun 20** 17:00 NetherlandsvsSweden WC \u00B7 G Stage - 2"
+        }
+      ],
+      "confidence": 0.87,
+      "status": 0
+    }
+  ]
+}

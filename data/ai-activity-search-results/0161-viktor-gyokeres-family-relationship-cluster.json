@@ -1,0 +1,309 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "viktor-gyokeres-family-relationship-cluster"
+    },
+    "name": "Viktor Gy\u00F6keres relationskluster",
+    "type": "family_or_group",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish-centered person cluster",
+    "currentRelationshipOrStatus": "Current club relationship shown by Swedish FA",
+    "likelyActivityTypes": [
+      "transfer saga",
+      "national-team activity",
+      "sponsor/news clustering"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Optional group abstraction if product supports person-led relationship clusters"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:60d9be9c7c85067d0bfd678f"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:60d9be9c7c85067d0bfd678f"
+      },
+      "fingerprint": "ai:60d9be9c7c85067d0bfd678f",
+      "title": "Sweden vs Tunisia \u2013 FIFA World Cup 2026 Group F Opener",
+      "description": "Sweden\u2019s opening match of the 2026 FIFA World Cup group stage against Tunisia in Monterrey, Mexico.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2026 FIFA World Cup Group F match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-14",
+        "localStartTime": "20:00:00",
+        "timeZoneId": "America/Monterrey",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5e8e8f8f-db28-1231-ad43-f4391114e915"
+          },
+          "proposedRole": 0,
+          "explanation": "Viktor Gy\u00F6keres is listed in Sweden\u2019s World Cup squad and therefore will be part of the team for this match.",
+          "contextName": "Viktor Gy\u00F6keres relationskluster",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected",
+          "observedAt": "2026-06-01T17:54:49.9725562+00:00",
+          "summary": "The article confirms Gy\u00F6keres is in Sweden\u2019s World Cup squad and lists the group\u2011stage fixtures, including Sweden vs Tunisia on 14\u202FJune 2026.",
+          "rawExcerpt": "Sweden are in Group F and play Tunisia in Monterrey, Mexico on 14 June (03:00 BST, 15 June) \u2026 Arsenal striker Viktor Gyokeres \u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fifa-com"
+            },
+            "name": "FIFA.com"
+          },
+          "uri": "https://www.fifa.com/en/articles/match-schedule-fixtures-results-teams-stadiums",
+          "title": "World Cup 2026 | Match schedule, fixtures \u0026 stadiums",
+          "observedAt": "2026-06-01T17:54:49.9725566+00:00",
+          "summary": "Shows the official World Cup schedule with Sweden vs Tunisia on 14\u202FJune 2026.",
+          "rawExcerpt": "Sweden v Tunisia \u2013 Group F \u2013 Estadio Monterrey \u2013 14 June 2026"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ecf6eb9cbb3d09dba9a84437"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ecf6eb9cbb3d09dba9a84437"
+      },
+      "fingerprint": "ai:ecf6eb9cbb3d09dba9a84437",
+      "title": "Netherlands vs Sweden \u2013 FIFA World Cup 2026 Group F",
+      "description": "Sweden\u2019s second group\u2011stage match of the 2026 FIFA World Cup against the Netherlands in Houston, USA.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2026 FIFA World Cup Group F match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "12:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5e8e8f8f-db28-1231-ad43-f4391114e915"
+          },
+          "proposedRole": 0,
+          "explanation": "Gy\u00F6keres is a member of Sweden\u2019s World Cup squad, making him eligible for this match.",
+          "contextName": "Viktor Gy\u00F6keres relationskluster",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected",
+          "observedAt": "2026-06-01T17:54:49.9725819+00:00",
+          "summary": "Lists Sweden\u2019s World Cup fixtures, including the 20\u202FJune match versus the Netherlands.",
+          "rawExcerpt": "Sweden \u2026 play \u2026 the Netherlands in Houston on 20 June"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fifa-com"
+            },
+            "name": "FIFA.com"
+          },
+          "uri": "https://www.fifa.com/en/articles/match-schedule-fixtures-results-teams-stadiums",
+          "title": "World Cup 2026 | Match schedule, fixtures \u0026 stadiums",
+          "observedAt": "2026-06-01T17:54:49.9725822+00:00",
+          "summary": "Official schedule shows Netherlands vs Sweden on 20\u202FJune 2026.",
+          "rawExcerpt": "Netherlands v Sweden \u2013 Group F \u2013 Houston Stadium \u2013 20 June 2026"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:7f537bcda3285d818cd8f329"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7f537bcda3285d818cd8f329"
+      },
+      "fingerprint": "ai:7f537bcda3285d818cd8f329",
+      "title": "Japan vs Sweden \u2013 FIFA World Cup 2026 Group F",
+      "description": "Sweden\u2019s final group\u2011stage game of the 2026 FIFA World Cup against Japan in Dallas, USA.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2026 FIFA World Cup Group F match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "18:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5e8e8f8f-db28-1231-ad43-f4391114e915"
+          },
+          "proposedRole": 0,
+          "explanation": "As a squad member, Gy\u00F6keres is expected to be available for Sweden\u2019s match against Japan.",
+          "contextName": "Viktor Gy\u00F6keres relationskluster",
+          "confidence": 0.89
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected",
+          "observedAt": "2026-06-01T17:54:49.9725859+00:00",
+          "summary": "Notes Sweden\u2019s third group\u2011stage fixture versus Japan on 25\u202FJune 2026.",
+          "rawExcerpt": "\u2026 Japan in Dallas five days later (00:00 BST, 26 June)."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fifa-com"
+            },
+            "name": "FIFA.com"
+          },
+          "uri": "https://www.fifa.com/en/articles/match-schedule-fixtures-results-teams-stadiums",
+          "title": "World Cup 2026 | Match schedule, fixtures \u0026 stadiums",
+          "observedAt": "2026-06-01T17:54:49.9725861+00:00",
+          "summary": "Shows Japan vs Sweden scheduled for 25\u202FJune 2026.",
+          "rawExcerpt": "Japan v Sweden \u2013 Group F \u2013 Dallas Stadium \u2013 25 June 2026"
+        }
+      ],
+      "confidence": 0.89,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:4559a8251d8df33cb0a60a9c"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4559a8251d8df33cb0a60a9c"
+      },
+      "fingerprint": "ai:4559a8251d8df33cb0a60a9c",
+      "title": "Potential transfer rumor: Viktor Gy\u00F6keres linked with a move from Arsenal",
+      "description": "Media reports in June 2026 suggest Gy\u00F6keres may be a transfer target for several European clubs ahead of the next season.",
+      "type": 7,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Transfer speculation during the 2026 summer window",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-12",
+        "localStartTime": "00:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5e8e8f8f-db28-1231-ad43-f4391114e915"
+          },
+          "proposedRole": 3,
+          "explanation": "Gy\u00F6keres is the subject of reported interest from other clubs, indicating possible upcoming transfer activity.",
+          "contextName": "Viktor Gy\u00F6keres relationskluster",
+          "confidence": 0.65
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected",
+          "observedAt": "2026-06-01T17:54:49.9725902+00:00",
+          "summary": "The article notes Gy\u00F6keres\u2019 strong World Cup performances have attracted transfer interest.",
+          "rawExcerpt": "Gy\u00F6keres \u2026 tipped to steal the spotlight at the tournament, sparking speculation about his future club."
+        }
+      ],
+      "confidence": 0.65,
+      "status": 0
+    }
+  ]
+}

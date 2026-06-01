@@ -1,0 +1,272 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "ludvig-aberg"
+    },
+    "name": "Ludvig \u00C5berg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "PGA Tour official profile lists Sweden and PGA status",
+    "likelyActivityTypes": [
+      "majors",
+      "Ryder Cup",
+      "ranking",
+      "injuries",
+      "endorsements"
+    ],
+    "suggestedEvidenceSources": "PGA Tour profile \uE200cite\uE202turn45search0",
+    "notes": "Tier-one golf lock"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:2dd3ab2e0915d5c23787ec95"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:2dd3ab2e0915d5c23787ec95"
+      },
+      "fingerprint": "ai:2dd3ab2e0915d5c23787ec95",
+      "title": "Charles Schwab Challenge",
+      "description": "Ludvig \u00C5berg is listed to compete in the Charles Schwab Challenge at Colonial Country Club in Fort Worth, Texas.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "PGA Tour event, part of \u00C5berg\u0027s preparation for the U.S. Open.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-03",
+        "localStartTime": "07:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "14d93669-d693-5d37-9c30-733c99a84201"
+          },
+          "proposedRole": 0,
+          "explanation": "Swedish golfer Ludvig \u00C5berg is named as a participant in the tournament.",
+          "contextName": "Ludvig \u00C5berg",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-golf---d\u00E5-spelar-ludvig-\u00E5berg-n\u00E4sta-g\u00E5ng"
+            },
+            "name": "Svensk Golf \u2013 D\u00E5 spelar Ludvig \u00C5berg n\u00E4sta g\u00E5ng"
+          },
+          "uri": "https://www.svenskgolf.se/tournytt/da-spelar-ludvig-aberg-nasta-gang/",
+          "title": "D\u00E5 spelar Ludvig \u00C5berg n\u00E4sta g\u00E5ng",
+          "observedAt": "2026-06-01T18:49:21.8830842+00:00",
+          "summary": "The article states that \u00C5berg will play the Charles Schwab Challenge at Colonial Country Club in Fort Worth, Texas the week before the U.S. Open.",
+          "rawExcerpt": "Ludvig \u00C5berg \u2026 v\u00E4ljer Ludvig \u00C5berg nu att spela Charles Schwab Challenge p\u00E5 klassiska Colonial Country Club i Fort Worth, Texas n\u00E4sta vecka."
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:f7bbe1ff6e93ef8cef29ddf3"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:f7bbe1ff6e93ef8cef29ddf3"
+      },
+      "fingerprint": "ai:f7bbe1ff6e93ef8cef29ddf3",
+      "title": "The Memorial Tournament",
+      "description": "\u00C5berg is expected to start in The Memorial Tournament at Muirfield Village, Ohio.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Signature PGA Tour event occurring the week after the Charles Schwab Challenge.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "07:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "14d93669-d693-5d37-9c30-733c99a84201"
+          },
+          "proposedRole": 0,
+          "explanation": "He is listed among the field for the tournament in Swedish media.",
+          "contextName": "Ludvig \u00C5berg",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-golf---d\u00E5-spelar-ludvig-\u00E5berg-n\u00E4sta-g\u00E5ng"
+            },
+            "name": "Svensk Golf \u2013 D\u00E5 spelar Ludvig \u00C5berg n\u00E4sta g\u00E5ng"
+          },
+          "uri": "https://www.svenskgolf.se/tournytt/da-spelar-ludvig-aberg-nasta-gang/",
+          "title": "D\u00E5 spelar Ludvig \u00C5berg n\u00E4sta g\u00E5ng",
+          "observedAt": "2026-06-01T18:49:21.8831061+00:00",
+          "summary": "The article mentions that the week after the Charles Schwab Challenge, \u00C5berg will likely also start at The Memorial Tournament.",
+          "rawExcerpt": "Veckan efter Charles Schwab Challenge spelas The Memorial Tournament p\u00E5 Muirfield Village, en signaturt\u00E4vling d\u00E4r \u00C5berg med st\u00F6rsta sannolikhet ocks\u00E5 startar."
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:a7bf56cc897d039a4f0f0592"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:a7bf56cc897d039a4f0f0592"
+      },
+      "fingerprint": "ai:a7bf56cc897d039a4f0f0592",
+      "title": "U.S. Open 2026",
+      "description": "The major championship U.S. Open at Shinnecock Hills Golf Club, New York, where \u00C5berg is slated to compete.",
+      "type": 10,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "One of golf\u0027s four majors, scheduled for mid\u2011June 2026.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-18",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "14d93669-d693-5d37-9c30-733c99a84201"
+          },
+          "proposedRole": 0,
+          "explanation": "Swedish golfer Ludvig \u00C5berg is among the announced participants for the U.S. Open.",
+          "contextName": "Ludvig \u00C5berg",
+          "confidence": 0.94
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-golf---d\u00E5-spelar-ludvig-\u00E5berg-n\u00E4sta-g\u00E5ng"
+            },
+            "name": "Svensk Golf \u2013 D\u00E5 spelar Ludvig \u00C5berg n\u00E4sta g\u00E5ng"
+          },
+          "uri": "https://www.svenskgolf.se/tournytt/da-spelar-ludvig-aberg-nasta-gang/",
+          "title": "D\u00E5 spelar Ludvig \u00C5berg n\u00E4sta g\u00E5ng",
+          "observedAt": "2026-06-01T18:49:21.8831094+00:00",
+          "summary": "The article notes that \u00C5berg\u2019s next major is the U.S. Open, scheduled for 18\u201121 June at Shinnecock Hills.",
+          "rawExcerpt": "Om en knapp m\u00E5nad, den 18-21 juni \u00E4r det dags f\u00F6r n\u00E4sta major, U.S. Open p\u00E5 Shinnecock Hills utanf\u00F6r New York."
+        }
+      ],
+      "confidence": 0.94,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ae0211e60309fac916f89e57"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ae0211e60309fac916f89e57"
+      },
+      "fingerprint": "ai:ae0211e60309fac916f89e57",
+      "title": "Travelers Championship 2026",
+      "description": "PGA Tour event in Cromwell, Connecticut, held the week after the U.S. Open, with \u00C5berg listed in the field.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Post\u2011U.S. Open PGA Tour stop preceding the Scottish Open.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "07:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "14d93669-d693-5d37-9c30-733c99a84201"
+          },
+          "proposedRole": 0,
+          "explanation": "Swedish player Ludvig \u00C5berg is expected to compete as part of his summer schedule.",
+          "contextName": "Ludvig \u00C5berg",
+          "confidence": 0.81
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:oddsonline---ludvig-\u00E5bergs-spelschema-2026"
+            },
+            "name": "Oddsonline \u2013 Ludvig \u00C5bergs spelschema 2026"
+          },
+          "uri": "https://www.oddsonline.se/nyheter/ludvig-abergs-spelschema-odds-2026/",
+          "title": "Ludvig \u00C5bergs spelschema \u0026 odds 2026",
+          "observedAt": "2026-06-01T18:49:21.8831127+00:00",
+          "summary": "The schedule lists the Travelers Championship (June 25\u201128) as a tournament \u00C5berg will play.",
+          "rawExcerpt": "| 25-28 jun | Travelers Championship | Cromwell, Connecticut |"
+        }
+      ],
+      "confidence": 0.81,
+      "status": 0
+    }
+  ]
+}

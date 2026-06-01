@@ -1,0 +1,331 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swe-sailing-team"
+    },
+    "name": "SWE Sailing Team",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "sailing"
+      },
+      "name": "sailing"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swedish Sailing Federation identifies SWE Sailing Team and linked athlete merit profiles",
+    "likelyActivityTypes": [
+      "team selections",
+      "regatta entries",
+      "Olympic qualification"
+    ],
+    "suggestedEvidenceSources": "Swedish Sailing Federation landslag pages \uE200cite\uE202turn27view2\uE202turn16search14",
+    "notes": "Strong discovery node across multiple boat classes"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:8f89d613be84232c71f5d994"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:8f89d613be84232c71f5d994"
+      },
+      "fingerprint": "ai:8f89d613be84232c71f5d994",
+      "title": "Sandhamn Open \u2013 Open Class \u0026 Double Handed (Hav)",
+      "description": "International regatta held in Sandhamn with Open crew and Double Handed (Havskappsegling) classes.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Part of the Swedish sailing summer circuit; clubs and national team sailors compete.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-12",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c0c37730-3e3d-9c3b-9d8b-62a3d18ae654"
+          },
+          "proposedRole": 0,
+          "explanation": "The SWE Sailing Team is listed as a participating national team in Swedish regattas.",
+          "contextName": "SWE Sailing Team",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sailarena---sandhamn-open-2026-hav"
+            },
+            "name": "Sailarena \u2013 Sandhamn Open 2026 Hav"
+          },
+          "uri": "https://www.sailarena.com/sv/se/club/ksss/sandhamn-open-2026-hav/",
+          "title": "Sandhamn Open 2026 Hav - Sailarena",
+          "observedAt": "2026-06-01T18:08:50.3394284+00:00",
+          "summary": "The event runs 12\u201114 June 2026 with Open crew and Double Handed (Havskappsegling) classes, organised by the Royal Swedish Yacht Club.",
+          "rawExcerpt": "Sandhamn Open\u2026 12\u201114 juni 2026 med klasserna: Ordinare bes\u00E4ttning och DoubleHanded, Havskappsegling SRS."
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:3397116da0fef90af1fe41f0"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:3397116da0fef90af1fe41f0"
+      },
+      "fingerprint": "ai:3397116da0fef90af1fe41f0",
+      "title": "Allsvenskan Segling \u2013 L\u00E5ngedrag Round",
+      "description": "Second round of the 2026 Allsvenskan sailing league held in L\u00E5ngedrag.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Allsvenskan is the top domestic sailing league in Sweden; the SWE Sailing Team often fields development sailors.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-13",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c0c37730-3e3d-9c3b-9d8b-62a3d18ae654"
+          },
+          "proposedRole": 0,
+          "explanation": "The national team is mentioned in the league announcement as a key participant and role model.",
+          "contextName": "SWE Sailing Team",
+          "confidence": 0.84
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:tt-pressmeddelande---nu-startar-allsvenskan-segling-2026"
+            },
+            "name": "TT Pressmeddelande \u2013 Nu startar Allsvenskan Segling 2026"
+          },
+          "uri": "https://via.tt.se/pressmeddelande/4370774/nu-startar-allsvenskan-segling-2026?lang=sv\u0026publisherId=3236589",
+          "title": "Nu startar Allsvenskan Segling 2026 | Svenska Seglarf\u00F6rbundet",
+          "observedAt": "2026-06-01T18:08:50.3394534+00:00",
+          "summary": "Program Allsvenskan 2026 includes 13\u201314\u202Fjun in L\u00E5ngedrag; the press release highlights the SWE Sailing Team with 37 Olympic medals.",
+          "rawExcerpt": "13\u201314 juni i L\u00E5ngedrag \u2026 V\u00E5rt starka landslag SWE Sailing Team med 37 OS\u2011medaljer har gjort oss till en av de mest framg\u00E5ngsrika \u2026"
+        }
+      ],
+      "confidence": 0.84,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:4feb5b6b3e9ba4fd4284b5d4"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4feb5b6b3e9ba4fd4284b5d4"
+      },
+      "fingerprint": "ai:4feb5b6b3e9ba4fd4284b5d4",
+      "title": "Sailarena Regatta \u2013 12\u201114 Jun 2026 (Regatta 12)",
+      "description": "A regional regatta listed on Sailarena\u2019s calendar for 12\u201114\u202FJune 2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Sailarena aggregates Swedish sailing events; the SWE Sailing Team typically competes at these fixtures.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-12",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c0c37730-3e3d-9c3b-9d8b-62a3d18ae654"
+          },
+          "proposedRole": 0,
+          "explanation": "The event appears in the official Swedish Sailing Federation\u2011linked Sailarena schedule where the national team is a regular participant.",
+          "contextName": "SWE Sailing Team",
+          "confidence": 0.80
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sailarena---events-overview"
+            },
+            "name": "Sailarena \u2013 Events Overview"
+          },
+          "uri": "https://www.sailarena.com/en/se/events/",
+          "title": "Sweden - Sailarena",
+          "observedAt": "2026-06-01T18:08:50.3394576+00:00",
+          "summary": "The calendar lists Regatta12 occurring 12\u201114\u202FJun\u202F2026.",
+          "rawExcerpt": "Regatta12 - 14Jun 2026"
+        }
+      ],
+      "confidence": 0.80,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:49ea98daec12fd73cce9e7fd"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:49ea98daec12fd73cce9e7fd"
+      },
+      "fingerprint": "ai:49ea98daec12fd73cce9e7fd",
+      "title": "Sailarena Regatta \u2013 25\u201128 Jun 2026 (Regatta 25)",
+      "description": "A multi\u2011day regatta scheduled for late June 2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Part of the summer sailing programme; national team sailors often take part to gain race experience.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c0c37730-3e3d-9c3b-9d8b-62a3d18ae654"
+          },
+          "proposedRole": 0,
+          "explanation": "Listed in the Sailarena schedule, which is used by the Swedish Sailing Federation for national team event planning.",
+          "contextName": "SWE Sailing Team",
+          "confidence": 0.78
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sailarena---events-overview"
+            },
+            "name": "Sailarena \u2013 Events Overview"
+          },
+          "uri": "https://www.sailarena.com/en/se/events/",
+          "title": "Sweden - Sailarena",
+          "observedAt": "2026-06-01T18:08:50.3394618+00:00",
+          "summary": "The calendar shows Regatta25 scheduled 25\u201128\u202FJun\u202F2026.",
+          "rawExcerpt": "Regatta25 - 28Jun 2026"
+        }
+      ],
+      "confidence": 0.78,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:a909334191af3144dd1310a2"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:a909334191af3144dd1310a2"
+      },
+      "fingerprint": "ai:a909334191af3144dd1310a2",
+      "title": "Open 2026 Offshore \u2013 Royal Swedish Yacht Club",
+      "description": "Offshore sailing competition organized by the Royal Swedish Yacht Club, taking place in early June 2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Offshore events are key fixtures for the national team\u2019s Olympic class sailors.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-12",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c0c37730-3e3d-9c3b-9d8b-62a3d18ae654"
+          },
+          "proposedRole": 0,
+          "explanation": "The event is listed on Sailarena, which aggregates competitions the SWE Sailing Team attends.",
+          "contextName": "SWE Sailing Team",
+          "confidence": 0.77
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sailarena---events-overview"
+            },
+            "name": "Sailarena \u2013 Events Overview"
+          },
+          "uri": "https://www.sailarena.com/en/se/events/",
+          "title": "Sweden - Sailarena",
+          "observedAt": "2026-06-01T18:08:50.339465+00:00",
+          "summary": "The schedule includes an Open 2026 Offshore event on 12\u201114\u202FJun\u202F2026.",
+          "rawExcerpt": "Open 2026 Offshore Royal Swedish Yacht Club \u2026 Regatta12 - 14Jun 2026"
+        }
+      ],
+      "confidence": 0.77,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-women-s-floorball-national-team"
+    },
+    "name": "Damlandslaget i innebandy",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "floorball"
+      },
+      "name": "floorball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "IFF identified Sweden as defending women\u2019s world champions entering 2025 WFC",
+    "likelyActivityTypes": [
+      "squad calls",
+      "WFC",
+      "rankings"
+    ],
+    "suggestedEvidenceSources": "IFF women\u2019s WFC preview pages \uE200cite\uE202turn41search14\uE202turn41search1",
+    "notes": "Very high Sweden relevance even if medal outcomes fluctuate"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:747064eb35dc3deee5c514c4"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:747064eb35dc3deee5c514c4"
+      },
+      "fingerprint": "ai:747064eb35dc3deee5c514c4",
+      "title": "Sweden vs Czech Republic (Euro Floorball Tour)",
+      "description": "Sweden women\u0027s national floorball team plays against the Czech Republic in Nokia, Finland as part of the Euro Floorball Tour.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "floorball"
+        },
+        "name": "floorball"
+      },
+      "context": "Euro Floorball Tour \u2013 Finnish leg",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a8c6ed27-b554-ee30-bfa6-0262570b5f4f"
+          },
+          "proposedRole": 0,
+          "explanation": "The Damlandslaget i innebandy is the Swedish women\u0027s national floorball team and is scheduled to play this match.",
+          "contextName": "Damlandslaget i innebandy",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-innebandyf\u00F6rbundet---landskamper"
+            },
+            "name": "Svenska Innebandyf\u00F6rbundet \u2013 Landskamper"
+          },
+          "uri": "https://www.innebandy.se/landslag/landskamper",
+          "title": "Landskamper - Svenska IBF",
+          "observedAt": "2026-06-01T16:34:12.1725208+00:00",
+          "summary": "The schedule lists for the women\u0027s national team: 5\u20118\u202FJune, Euro Floorball Tour in Nokia, Finland \u2013\u202F6\u202FJune 15:00 Sweden\u2011Czech Republic, 7\u202FJune 12:00 Sweden\u2011Switzerland, 8\u202FJune 12:00 Sweden\u2011Finland.",
+          "rawExcerpt": "5-8 juni, Euro Floorball Tour i Nokia, Finland6 juni 15.00 (16.00 lokal tid), Sverige-Tjeckien7 juni 12.00 (13.00 lokal tid), Sverige-Schweiz8 juni 12.00 (13.00 lokal tid), Sverige-Finland"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ab030cbe33b7f9515a4799a7"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ab030cbe33b7f9515a4799a7"
+      },
+      "fingerprint": "ai:ab030cbe33b7f9515a4799a7",
+      "title": "Sweden vs Switzerland (Euro Floorball Tour)",
+      "description": "Sweden women\u0027s national floorball team plays against Switzerland in Nokia, Finland as part of the Euro Floorball Tour.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "floorball"
+        },
+        "name": "floorball"
+      },
+      "context": "Euro Floorball Tour \u2013 Finnish leg",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-07",
+        "localStartTime": "12:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a8c6ed27-b554-ee30-bfa6-0262570b5f4f"
+          },
+          "proposedRole": 0,
+          "explanation": "The Damlandslaget i innebandy is scheduled to face Switzerland on this date.",
+          "contextName": "Damlandslaget i innebandy",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-innebandyf\u00F6rbundet---landskamper"
+            },
+            "name": "Svenska Innebandyf\u00F6rbundet \u2013 Landskamper"
+          },
+          "uri": "https://www.innebandy.se/landslag/landskamper",
+          "title": "Landskamper - Svenska IBF",
+          "observedAt": "2026-06-01T16:34:12.1725443+00:00",
+          "summary": "The schedule lists a match on 7\u202FJune at 12:00 (13:00 local Finnish time) Sweden\u2011Switzerland.",
+          "rawExcerpt": "7 juni 12.00 (13.00 lokal tid), Sverige-Schweiz"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:4037c660015e1a7cc846594b"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4037c660015e1a7cc846594b"
+      },
+      "fingerprint": "ai:4037c660015e1a7cc846594b",
+      "title": "Sweden vs Finland (Euro Floorball Tour)",
+      "description": "Sweden women\u0027s national floorball team plays against Finland in Nokia, Finland as part of the Euro Floorball Tour.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "floorball"
+        },
+        "name": "floorball"
+      },
+      "context": "Euro Floorball Tour \u2013 Finnish leg",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-08",
+        "localStartTime": "12:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a8c6ed27-b554-ee30-bfa6-0262570b5f4f"
+          },
+          "proposedRole": 0,
+          "explanation": "The Damlandslaget i innebandy is scheduled to face Finland on this date.",
+          "contextName": "Damlandslaget i innebandy",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-innebandyf\u00F6rbundet---landskamper"
+            },
+            "name": "Svenska Innebandyf\u00F6rbundet \u2013 Landskamper"
+          },
+          "uri": "https://www.innebandy.se/landslag/landskamper",
+          "title": "Landskamper - Svenska IBF",
+          "observedAt": "2026-06-01T16:34:12.172551+00:00",
+          "summary": "The schedule lists a match on 8\u202FJune at 12:00 (13:00 local Finnish time) Sweden\u2011Finland.",
+          "rawExcerpt": "8 juni 12.00 (13.00 lokal tid), Sverige-Finland"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:be8a0249d715ef7f394c6fdb"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:be8a0249d715ef7f394c6fdb"
+      },
+      "fingerprint": "ai:be8a0249d715ef7f394c6fdb",
+      "title": "Euro Floorball Tour \u2013 Finland leg (Sweden squad participation)",
+      "description": "The Swedish women\u0027s national floorball team participates in the Euro Floorball Tour in Nokia, Finland, playing three matches against Czech Republic, Switzerland and Finland.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "floorball"
+        },
+        "name": "floorball"
+      },
+      "context": "Euro Floorball Tour, a set of friendly international fixtures.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a8c6ed27-b554-ee30-bfa6-0262570b5f4f"
+          },
+          "proposedRole": 0,
+          "explanation": "Damlandslaget i innebandy is the Swedish women\u0027s national floorball team taking part in the tour.",
+          "contextName": "Damlandslaget i innebandy",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-innebandyf\u00F6rbundet---landskamper"
+            },
+            "name": "Svenska Innebandyf\u00F6rbundet \u2013 Landskamper"
+          },
+          "uri": "https://www.innebandy.se/landslag/landskamper",
+          "title": "Landskamper - Svenska IBF",
+          "observedAt": "2026-06-01T16:34:12.172562+00:00",
+          "summary": "The schedule confirms three matches for the women\u2019s national team from 5\u20118\u202FJune in Nokia, Finland as part of the Euro Floorball Tour.",
+          "rawExcerpt": "5-8 juni, Euro Floorball Tour i Nokia, Finland6 juni 15.00 (16.00 lokal tid), Sverige-Tjeckien7 juni 12.00 (13.00 lokal tid), Sverige-Schweiz8 juni 12.00 (13.00 lokal tid), Sverige-Finland"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "fridolina-rolfo"
+    },
+    "name": "Fridolina Rolf\u00F6",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Manchester United FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Foreign club is relationship context"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:7b8d8482bcde6f6c892eb00d"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7b8d8482bcde6f6c892eb00d"
+      },
+      "fingerprint": "ai:7b8d8482bcde6f6c892eb00d",
+      "title": "Sweden (W) vs Italy (W) \u2013 UEFA Women\u2019s World Cup Qualifier",
+      "description": "Sweden\u2019s women\u2019s national team will host Italy in a UEFA Women\u2019s World Cup qualifying match.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "UEFA Women\u2019s World Cup Qualifiers \u2013 League A, round 6",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a60e7079-c6e8-de38-979c-1fcd31df2a55"
+          },
+          "proposedRole": 0,
+          "explanation": "Fridolina Rolf\u00F6 is listed on the Sweden women\u2019s national team roster and is therefore expected to play in the match.",
+          "contextName": "Fridolina Rolf\u00F6",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:365scores---sweden-vs-italy-match-page"
+            },
+            "name": "365Scores \u2013 Sweden vs Italy match page"
+          },
+          "uri": "https://www.365scores.com/en-us/football/match/uefa-women-wc-qualifiers-7756/italy-(w)-sweden-(w)-8466-12939-7756",
+          "title": "Sweden (W) vs Italy (W): Scores, Results Lineups, H2H \u0026 Odds",
+          "observedAt": "2026-06-01T17:05:32.2478882+00:00",
+          "summary": "The page states that Sweden (W) will take on Italy (W) on Tuesday, June\u202F9,\u202F2026 at Gamla\u202FUllevi as part of League\u202FA in the UEFA Women\u2019s World Cup Qualifiers, with a kickoff time of 17:00.",
+          "rawExcerpt": "Sweden (W) will take on Italy (W) on Tuesday, June 9, 2026 at Gamla Ullevi\u2026 Time: 17:00"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa---player-profile-for-fridolina-rolf\u00F6"
+            },
+            "name": "UEFA \u2013 Player profile for Fridolina Rolf\u00F6"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/teams/players/250012105--fridolina-rolfo/",
+          "title": "Fridolina Rolf\u00F6 | Sweden | Women\u2019s European Qualifiers | UEFA.com",
+          "observedAt": "2026-06-01T17:05:32.2478907+00:00",
+          "summary": "The UEFA player page lists Fridolina Rolf\u00F6 as a member of the Sweden women\u2019s national team and includes a match on 5\u202FJun\u202F2026 (Denmark vs Sweden) in the same qualifying campaign, confirming her inclusion in the squad for the qualifiers.",
+          "rawExcerpt": "Club position Forward \u2026 National Team position Defender \u2026 National Team number 18"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:7bd63932ba4da8c54cbc6e17"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7bd63932ba4da8c54cbc6e17"
+      },
+      "fingerprint": "ai:7bd63932ba4da8c54cbc6e17",
+      "title": "Sweden (W) vs Norway (W) \u2013 International Friendly",
+      "description": "Sweden\u2019s women\u2019s national team will face Norway in a friendly match in Oslo.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly scheduled ahead of the World Cup qualifying campaign.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a60e7079-c6e8-de38-979c-1fcd31df2a55"
+          },
+          "proposedRole": 0,
+          "explanation": "Fridolina Rolf\u00F6 is a senior Sweden international; her presence in the squad for the June\u202F1 friendly is implied by the current national\u2011team roster.",
+          "contextName": "Fridolina Rolf\u00F6",
+          "confidence": 0.80
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob---norway-vs-sweden-match-page"
+            },
+            "name": "FotMob \u2013 Norway vs Sweden match page"
+          },
+          "uri": "https://www.fotmob.com/matches/norway-vs-sweden/2e5vii",
+          "title": "Norway vs Sweden - live score, predicted lineups and H2H stats",
+          "observedAt": "2026-06-01T17:05:32.2479458+00:00",
+          "summary": "The match is listed for Monday, June\u202F1,\u202F2026 at 17:00\u202FUTC (19:00 local time in Oslo) and is classified as a friendly. The page includes a note that several Swedish players are unavailable, but does not list Rolf\u00F6 as absent, implying she is available for selection.",
+          "rawExcerpt": "Norway faces Sweden at Ullevaal Stadion on Mon, Jun 1, 2026, 17:00 UTC. This match is part of the Friendlies."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa---player-profile-for-fridolina-rolf\u00F6"
+            },
+            "name": "UEFA \u2013 Player profile for Fridolina Rolf\u00F6"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/teams/players/250012105--fridolina-rolfo/",
+          "title": "Fridolina Rolf\u00F6 | Sweden | Women\u2019s European Qualifiers | UEFA.com",
+          "observedAt": "2026-06-01T17:05:32.2479475+00:00",
+          "summary": "The UEFA profile confirms Rolf\u00F6\u2019s status as an active Sweden senior international during the 2026 qualifying period.",
+          "rawExcerpt": "Club position Forward \u2026 National Team position Defender \u2026 National Team number 18"
+        }
+      ],
+      "confidence": 0.80,
+      "status": 0
+    }
+  ]
+}

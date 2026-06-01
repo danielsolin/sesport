@@ -1,0 +1,100 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "linda-bergstrom"
+    },
+    "name": "Linda Bergstr\u00F6m",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "table-tennis"
+      },
+      "name": "table tennis"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "WTT women\u2019s rankings/event pages include her",
+    "likelyActivityTypes": [
+      "WTT entries",
+      "rankings",
+      "team events"
+    ],
+    "suggestedEvidenceSources": "WTT ranking/event pages \uE200cite\uE202turn23search10\uE202turn23search3",
+    "notes": "Important women\u2019s table-tennis entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:0ef1ecfd98e710508485deba"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0ef1ecfd98e710508485deba"
+      },
+      "fingerprint": "ai:0ef1ecfd98e710508485deba",
+      "title": "WTT Contender Skopje 2026 \u2013 Women\u2019s Singles",
+      "description": "Linda Bergstr\u00F6m competes in the women\u2019s singles event at the WTT Contender tournament in Skopje, North Macedonia.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "table-tennis"
+        },
+        "name": "table tennis"
+      },
+      "context": "WTT Contender is a tier of the World Table Tennis (WTT) series offering ranking points and prize money. The Skopje edition runs from 1\u202FJune to 7\u202FJune\u202F2026.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Skopje",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "a52cd57a-1ebb-8e34-95ee-0681202127fc"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish Table Tennis Federation confirms that Linda Bergstr\u00F6m is part of the Swedish squad entered for the Skopje Contender.",
+          "contextName": "Linda Bergstr\u00F6m",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-bordtennisf\u00F6rbundet---fem-svenskar-i-wtt-contender-skopje"
+            },
+            "name": "Svenska Bordtennisf\u00F6rbundet \u2013 Fem svenskar i WTT Contender Skopje"
+          },
+          "uri": "https://sbtf.se/landslag/fem-svenskar-i-wtt-contender-skopje/",
+          "title": "Fem svenskar i WTT Contender Skopje",
+          "observedAt": "2026-06-01T18:56:00.885823+00:00",
+          "summary": "The article lists the Swedish roster for the Skopje Contender, naming Linda Bergstr\u00F6m among the players who will compete in singles (and doubles).",
+          "rawExcerpt": "Den svenska truppen i Skopje best\u00E5r av Kristian Karlsson, Elias Ranefur, Linda Bergstr\u00F6m, Stina K\u00E4llberg och Filippa Bergand..."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:allsportdb---2026-world-table-tennis-series---contender"
+            },
+            "name": "AllSportDB \u2013 2026 World Table Tennis Series \u2013 Contender"
+          },
+          "uri": "https://allsportdb.com/Events/2026-World-Table-Tennis-Series-Contender-18967",
+          "title": "2026 World Table Tennis Series - Contender",
+          "observedAt": "2026-06-01T18:56:00.8858244+00:00",
+          "summary": "The event page shows the dates of the Contender tournament in Skopje: 1\u202FJune\u202F2026 \u2013 7\u202FJune\u202F2026.",
+          "rawExcerpt": "Date From | 1 June 2026 | Date To | 7 June 2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

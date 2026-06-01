@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "felix-rosenqvist"
+    },
+    "name": "Felix Rosenqvist",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "motor-racing"
+      },
+      "name": "motor racing"
+    },
+    "swedenConnection": "Swedish driver",
+    "currentRelationshipOrStatus": "INDYCAR official profile lists him with Meyer Shank Racing in 2026 and notes Indy 500 win",
+    "likelyActivityTypes": [
+      "race entries",
+      "wins",
+      "team changes"
+    ],
+    "suggestedEvidenceSources": "INDYCAR driver/team pages \uE200cite\uE202turn43search1\uE202turn43search19",
+    "notes": "Track Rosenqvist; team is relationship target only"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:5b93be395bc949a67438b09b"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5b93be395bc949a67438b09b"
+      },
+      "fingerprint": "ai:5b93be395bc949a67438b09b",
+      "title": "Bommarito Automotive Group 500 \u2013 World Wide Technology Raceway",
+      "description": "Felix Rosenqvist, driving for Meyer Shank Racing, competed in the over\u2011the\u2011counter IndyCar race at World Wide Technology Raceway on 7 June 2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "motor-racing"
+        },
+        "name": "motor racing"
+      },
+      "context": "A night\u2011time oval event in the 2026 IndyCar season and part of the Bommarito Automotive Group 500 race.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-07",
+        "localStartTime": "17:30:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "8ebf71e7-cba9-e335-bd3c-644409e8c358"
+          },
+          "proposedRole": 0,
+          "explanation": "Rosenqvist is listed as a driver for Meyer Shank Racing on the official IndyCar website for the 2026 season, and the schedule entry shows a race on 7\u202FJune with that team.",
+          "contextName": "Felix Rosenqvist",
+          "confidence": 0.99
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:meyer-shank-racing-2026-indycar-schedule"
+            },
+            "name": "Meyer Shank Racing 2026 IndyCar Schedule"
+          },
+          "uri": "https://meyershankracing.com/pages/2026-indycar-schedule",
+          "title": "2026 INDYCAR Schedule \u2013 Meyer Shank Racing",
+          "observedAt": "2026-06-01T17:41:51.0089518+00:00",
+          "summary": "Lists the Bommarito Automotive Group 500 race on 7 June 2026 at World Wide Technology Raceway.",
+          "rawExcerpt": "June\u202F7,\u202F2026\u00A09pm\u202FET\u00A0\u2013\u00A0Bommarito Automotive Group 500, World Wide Technology Raceway"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:official-indycar-2026-schedule"
+            },
+            "name": "Official IndyCar 2026 Schedule"
+          },
+          "uri": "https://www.indycar.com/Schedule?year=2026",
+          "title": "NTT INDYCAR SERIES Race Schedule, Results, Dates, Times",
+          "observedAt": "2026-06-01T17:41:51.0089525+00:00",
+          "summary": "Shows a race on 7 June 2026 at World Wide Technology Raceway aligned with the Bommarito Automotive Group 500.",
+          "rawExcerpt": "Jun\u00A07 \u2013\u00A09:00\u00A0PM\u00A0ET\u00A0\u2013\u00A0Bommarito Automotive Group 500, World Wide Technology Raceway"
+        }
+      ],
+      "confidence": 0.99,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:36387764c6b42ec32d8c8f98"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:36387764c6b42ec32d8c8f98"
+      },
+      "fingerprint": "ai:36387764c6b42ec32d8c8f98",
+      "title": "XPEL Grand Prix at Road America \u2013 Road America",
+      "description": "Felix Rosenqvist competed in the IndyCar race at Road America on 21 June 2026, representing Meyer Shank Racing.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "motor-racing"
+        },
+        "name": "motor racing"
+      },
+      "context": "A road\u2011course event in the 2026 IndyCar season, part of the XPEL Grand Prix at Road America.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-21",
+        "localStartTime": "12:30:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "8ebf71e7-cba9-e335-bd3c-644409e8c358"
+          },
+          "proposedRole": 0,
+          "explanation": "Rosenqvist\u2019s role as Meyer Shank Racing driver is confirmed by the IndyCar schedule for 2026, listing a race on 21\u202FJune at Road America.",
+          "contextName": "Felix Rosenqvist",
+          "confidence": 0.98
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:meyer-shank-racing-2026-indycar-schedule"
+            },
+            "name": "Meyer Shank Racing 2026 IndyCar Schedule"
+          },
+          "uri": "https://meyershankracing.com/pages/2026-indycar-schedule",
+          "title": "2026 INDYCAR Schedule \u2013 Meyer Shank Racing",
+          "observedAt": "2026-06-01T17:41:51.0089784+00:00",
+          "summary": "Shows the XPEL Grand Prix at Road America on 21 June 2026.",
+          "rawExcerpt": "June\u202F21,\u202F2026\u00A02pm\u202FET\u00A0\u2013\u00A0XPEL Grand Prix at Road America"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:official-indycar-2026-schedule"
+            },
+            "name": "Official IndyCar 2026 Schedule"
+          },
+          "uri": "https://www.indycar.com/Schedule?year=2026",
+          "title": "NTT INDYCAR SERIES Race Schedule, Results, Dates, Times",
+          "observedAt": "2026-06-01T17:41:51.0089789+00:00",
+          "summary": "Lists a race on 21 June 2026 at Road America.",
+          "rawExcerpt": "Jun\u00A021 \u2013\u00A02:00\u00A0PM\u00A0ET\u00A0\u2013\u00A0XPEL Grand Prix at Road America"
+        }
+      ],
+      "confidence": 0.98,
+      "status": 0
+    }
+  ]
+}

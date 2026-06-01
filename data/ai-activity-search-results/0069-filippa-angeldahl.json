@@ -1,0 +1,236 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "filippa-angeldahl"
+    },
+    "name": "Filippa Angeldahl",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Real Madrid",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "goals",
+      "transfers",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Track Angeldahl; Real Madrid is relationship context"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:33f23f71e8f2c8fc6bcbabdb"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:33f23f71e8f2c8fc6bcbabdb"
+      },
+      "fingerprint": "ai:33f23f71e8f2c8fc6bcbabdb",
+      "title": "Denmark vs Sweden \u2013 Women\u0027s World Cup Qualification (UEFA League Phase)",
+      "description": "Sweden women\u2019s national team play Denmark in a 2027 FIFA Women\u2019s World Cup qualification match. Midfielder Filippa\u202FAngeldahl (Real Madrid) is listed in the squad.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2027 FIFA Women\u2019s World Cup qualification \u2013 UEFA League Phase, matchday five",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "18:15:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fb614ebe-2666-fb3a-975f-e8599e3356ad"
+          },
+          "proposedRole": 0,
+          "explanation": "Filippa Angeldahl is named in the Sweden squad for this qualifier.",
+          "contextName": "Filippa Angeldahl",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:footballtoday"
+            },
+            "name": "FootballToday"
+          },
+          "uri": "https://www.footballtoday.net/team/sweden-1",
+          "title": "Sweden Female Score Today and Fixtures",
+          "observedAt": "2026-06-01T17:04:09.6455693+00:00",
+          "summary": "Lists the Denmark vs Sweden match on 5\u202FJune\u202F2026 at 18:15 and includes Filippa Angeldahl among the midfielders.",
+          "rawExcerpt": "The next match is Denmark vs Sweden and kicks-off at 18:15 on the Friday 05 June 2026 ... Midfielders: ... Ingrid Filippa Angeldahl ..."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:espn"
+            },
+            "name": "ESPN"
+          },
+          "uri": "https://www.espn.com/soccer/match/_/gameId/761240/sweden-denmark",
+          "title": "Denmark vs. Sweden (Jun 5, 2026) Live Score - ESPN",
+          "observedAt": "2026-06-01T17:04:09.6455697+00:00",
+          "summary": "Match identified as a 2027 FIFA Women\u2019s World Cup qualifying fixture; includes Filippa Angeldahl in the lineup.",
+          "rawExcerpt": "# Denmark v Sweden \u2026 2027 FIFA Women\u0027s World Cup Qualifying - UEFA \u2026 F. Angeldahl"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:64d73a24a1b6db9229267595"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:64d73a24a1b6db9229267595"
+      },
+      "fingerprint": "ai:64d73a24a1b6db9229267595",
+      "title": "Sweden vs Italy \u2013 Women\u0027s World Cup Qualification (UEFA League Phase)",
+      "description": "Sweden host Italy in a 2027 FIFA Women\u2019s World Cup qualification match. Filippa\u202FAngeldahl (Real Madrid) is included in the squad.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2027 FIFA Women\u2019s World Cup qualification \u2013 UEFA League Phase, matchday six",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "18:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fb614ebe-2666-fb3a-975f-e8599e3356ad"
+          },
+          "proposedRole": 0,
+          "explanation": "Filippa Angeldahl appears in the announced roster for the Sweden\u2011Italy qualifier.",
+          "contextName": "Filippa Angeldahl",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:footballtoday"
+            },
+            "name": "FootballToday"
+          },
+          "uri": "https://www.footballtoday.net/team/sweden-1",
+          "title": "Sweden Female Score Today and Fixtures",
+          "observedAt": "2026-06-01T17:04:09.6455882+00:00",
+          "summary": "Notes the Sweden vs Italy match on 9\u202FJune\u202F2026 at 18:00 and lists Filippa Angeldahl among the midfielders.",
+          "rawExcerpt": "Sweden vs Italy on Tuesday 09 June 2026. ... Ingrid Filippa Angeldahl ..."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/sv/matches/sweden-vs-italy/17voz8",
+          "title": "Sverige (W) mot Italien (W) - live resultat, f\u00F6rv\u00E4ntad startelva och H2H statistik",
+          "observedAt": "2026-06-01T17:04:09.6455885+00:00",
+          "summary": "Confirms the match date and time (Tue, Jun 9, 2026, 16:00\u202FUTC) as part of the Women\u0027s World Cup Qualification UEFA League A Group 1.",
+          "rawExcerpt": "Sweden faces Italy at on Tue, Jun 9, 2026, 16:00 UTC. This match is part of the Women\u0027s World Cup Qualification UEFA League A Grp. 1."
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:04603cd0703b8acd175a67f3"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:04603cd0703b8acd175a67f3"
+      },
+      "fingerprint": "ai:04603cd0703b8acd175a67f3",
+      "title": "Sweden Women\u2019s Squad Announcement for June 2026 Qualifiers",
+      "description": "The Swedish Football Association announces the roster for the World Cup qualification matches against Denmark (5\u202FJune) and Italy (9\u202FJune), naming Filippa\u202FAngeldahl (Real Madrid) as a midfielder.",
+      "type": 6,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Official squad list for the June 2026 UEFA qualification fixtures.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-02",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "fb614ebe-2666-fb3a-975f-e8599e3356ad"
+          },
+          "proposedRole": 2,
+          "explanation": "Filippa Angeldahl is listed in the announced squad for the upcoming qualifiers.",
+          "contextName": "Filippa Angeldahl",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svt-sport"
+            },
+            "name": "SVT Sport"
+          },
+          "uri": "https://www.svt.se/sport/fotboll/asllani-och-bjorn-med-som-stod-i-de-avgorande-kvalmatcherna",
+          "title": "Fotboll: Asllani och Bj\u00F6rn med som st\u00F6d i de avg\u00F6rande kvalmatcherna | SVT Sport",
+          "observedAt": "2026-06-01T17:04:09.645593+00:00",
+          "summary": "Provides the Sweden squad for the qualifiers, including Filippa Angeldahl (Real Madrid).",
+          "rawExcerpt": "Truppen till VM\u2011kvalmatcherna mot Danmark (borta 5 juni) och Italien (hemma den 9 juni): \u2026 Mittf\u00E4ltare/anfallare: Filippa Angeldahl (Real Madrid) \u2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

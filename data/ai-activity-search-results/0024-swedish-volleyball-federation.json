@@ -1,0 +1,270 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-volleyball-federation"
+    },
+    "name": "Svenska Volleybollf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "volleyball-beach-volleyball"
+      },
+      "name": "volleyball / beach volleyball"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Official site hosts men\u2019s beach national-team page",
+    "likelyActivityTypes": [
+      "pair selection",
+      "event entries",
+      "governance"
+    ],
+    "suggestedEvidenceSources": "Swedish Volleyball federation pages \uE200cite\uE202turn26view3",
+    "notes": "Important because Sweden\u2019s strongest current volleyball edge is beach"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:2ec137d5590250ad1628f3d8"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:2ec137d5590250ad1628f3d8"
+      },
+      "fingerprint": "ai:2ec137d5590250ad1628f3d8",
+      "title": "Swedish Beach Tour \u2013 V\u00E4xj\u00F6 (5\u2011star) ",
+      "description": "Swedish Beach Tour event held in V\u00E4xj\u00F6, part of the national beach\u2011volleyball tour organized by the Swedish Volleyball Federation.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "volleyball-beach-volleyball"
+        },
+        "name": "volleyball / beach volleyball"
+      },
+      "context": "Swedish Beach Tour (SBT) \u2013 a series of 5\u2011star beach\u2011volleyball tournaments across Sweden in the 2026 season.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f43cc1f6-310c-7835-88a6-df5f58d099a9"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is organised by Svenska Volleybollf\u00F6rbundet, the governing body for volleyball in Sweden.",
+          "contextName": "Svenska Volleybollf\u00F6rbundet",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-volleybollf\u00F6rbundet---swedish-beach-tour-announcement"
+            },
+            "name": "Svenska Volleybollf\u00F6rbundet \u2013 Swedish Beach Tour announcement"
+          },
+          "uri": "https://volleyboll.se/beachvolley/nyheter/swedishbeachtour/2026-02-24-uppsala-blir-vardstad-for-tourfinalen---sommarens-turne-spikad",
+          "title": "Uppsala blir v\u00E4rdstad f\u00F6r tourfinalen \u2013 sommarens turn\u00E9 spikad",
+          "observedAt": "2026-06-01T16:41:57.2590355+00:00",
+          "summary": "The 2026 Swedish Beach Tour schedule lists a 5\u2011star tournament in V\u00E4xj\u00F6 on 6\u20117\u202FJune at Kampa\u00E4ngen.",
+          "rawExcerpt": "6-7 juni, SBT V\u00E4xj\u00F6 5-star\u00A0Spelplats: Kampa\u00E4ngen"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:5c6a05af2eaff8be3805d390"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5c6a05af2eaff8be3805d390"
+      },
+      "fingerprint": "ai:5c6a05af2eaff8be3805d390",
+      "title": "Swedish Beach Tour \u2013 G\u00F6teborg (5\u2011star) ",
+      "description": "Swedish Beach Tour event held in G\u00F6teborg, organized by the Swedish Volleyball Federation.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "volleyball-beach-volleyball"
+        },
+        "name": "volleyball / beach volleyball"
+      },
+      "context": "Swedish Beach Tour (SBT) \u2013 a series of 5\u2011star beach\u2011volleyball tournaments across Sweden in the 2026 season.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-13",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f43cc1f6-310c-7835-88a6-df5f58d099a9"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is part of the Swedish Volleyball Federation\u2019s official beach\u2011volleyball calendar.",
+          "contextName": "Svenska Volleybollf\u00F6rbundet",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-volleybollf\u00F6rbundet---swedish-beach-tour-announcement"
+            },
+            "name": "Svenska Volleybollf\u00F6rbundet \u2013 Swedish Beach Tour announcement"
+          },
+          "uri": "https://volleyboll.se/beachvolley/nyheter/swedishbeachtour/2026-02-24-uppsala-blir-vardstad-for-tourfinalen---sommarens-turne-spikad",
+          "title": "Uppsala blir v\u00E4rdstad f\u00F6r tourfinalen \u2013 sommarens turn\u00E9 spikad",
+          "observedAt": "2026-06-01T16:41:57.2590591+00:00",
+          "summary": "The 2026 Swedish Beach Tour schedule lists a 5\u2011star tournament in G\u00F6teborg on 13\u201114\u202FJune at Beach Center.",
+          "rawExcerpt": "13-14 juni, SBT G\u00F6teborg 5-star\u00A0Spelplats: Beach Center"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:a2508fea617b269325715ee2"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:a2508fea617b269325715ee2"
+      },
+      "fingerprint": "ai:a2508fea617b269325715ee2",
+      "title": "Swedish Beach Tour \u2013 V\u00E4xj\u00F6 (5\u2011star) \u2013 Qualifying rounds",
+      "description": "Qualifying matches for the Swedish Beach Tour event in V\u00E4xj\u00F6, held on 6\u202FJune.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "volleyball-beach-volleyball"
+        },
+        "name": "volleyball / beach volleyball"
+      },
+      "context": "Opening matches of the Swedish Beach Tour 5\u2011star tournament in V\u00E4xj\u00F6.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f43cc1f6-310c-7835-88a6-df5f58d099a9"
+          },
+          "proposedRole": 6,
+          "explanation": "Organised by Svenska Volleybollf\u00F6rbundet as part of its national beach\u2011volleyball series.",
+          "contextName": "Svenska Volleybollf\u00F6rbundet",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-volleybollf\u00F6rbundet---swedish-beach-tour-schedule"
+            },
+            "name": "Svenska Volleybollf\u00F6rbundet \u2013 Swedish Beach Tour schedule"
+          },
+          "uri": "https://volleyboll.se/beachvolley/nyheter/swedishbeachtour/2026-02-24-uppsala-blir-vardstad-for-tourfinalen---sommarens-turne-spikad",
+          "title": "Uppsala blir v\u00E4rdstad f\u00F6r tourfinalen \u2013 sommarens turn\u00E9 spikad",
+          "observedAt": "2026-06-01T16:41:57.2590777+00:00",
+          "summary": "The schedule lists the V\u00E4xj\u00F6 5\u2011star tournament on 6\u20117\u202FJune, implying matches start on the first day.",
+          "rawExcerpt": "6-7 juni, SBT V\u00E4xj\u00F6 5-star\u00A0Spelplats: Kampa\u00E4ngen"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:56084db49fc32f4728f70aef"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:56084db49fc32f4728f70aef"
+      },
+      "fingerprint": "ai:56084db49fc32f4728f70aef",
+      "title": "Klubbm\u00E4sterskap i Beachvolley \u2013 Karlstad (SM\u2011klubb) ",
+      "description": "Club championship (SM) in beach volleyball held in Karlstad, part of the Swedish national championships week.",
+      "type": 4,
+      "sport": {
+        "externalId": {
+          "value": "volleyball-beach-volleyball"
+        },
+        "name": "volleyball / beach volleyball"
+      },
+      "context": "Club\u2011team beach\u2011volleyball Swedish Championship (Klubb\u2011SM) during the SM\u2011week, organised by the federation.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-26",
+        "localStartTime": "13:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f43cc1f6-310c-7835-88a6-df5f58d099a9"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is listed on the Swedish Volleyball Federation\u2019s website as a national championship under its remit.",
+          "contextName": "Svenska Volleybollf\u00F6rbundet",
+          "confidence": 0.89
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-volleybollf\u00F6rbundet---upplev-svenska-beachvolleysommaren-2026"
+            },
+            "name": "Svenska Volleybollf\u00F6rbundet \u2013 upplev svenska beachvolleysommaren 2026"
+          },
+          "uri": "https://volleyboll.se/beachvolley/nyheter/beachvolley/2026-04-21-upplev-svenska-beachvolleysommaren-2026",
+          "title": "Upplev svenska beachvolleysommaren 2026!",
+          "observedAt": "2026-06-01T16:41:57.2590878+00:00",
+          "summary": "The announcement states that the club\u2011team SM will be held 26\u201128\u202FJune at Karlstad Beach Arena.",
+          "rawExcerpt": "SM\u2011t\u00E4vling: 26-28 juni, Karlstad Beach Arena"
+        }
+      ],
+      "confidence": 0.89,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jesper-karlstrom"
+    },
+    "name": "Jesper Karlstr\u00F6m",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA squad page lists Udinese Calcio",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Good secondary men\u2019s-team node"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:037c795af6bbd76ca5af0d9d"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:037c795af6bbd76ca5af0d9d"
+      },
+      "fingerprint": "ai:037c795af6bbd76ca5af0d9d",
+      "title": "Sweden vs Norway",
+      "description": "Friendly international football match between Sweden and Norway.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly in preparation for the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "d803f53c-63fb-3e37-a233-35481a7d8492"
+          },
+          "proposedRole": 0,
+          "explanation": "Jesper Karlstr\u00F6m is listed on the Swedish national team roster for the friendly against Norway.",
+          "contextName": "Jesper Karlstr\u00F6m",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/matches/norway-vs-sweden/2e5vii",
+          "title": "Norway vs Sweden - live score, predicted lineups and H2H stats",
+          "observedAt": "2026-06-01T18:34:20.6263432+00:00",
+          "summary": "The match is scheduled for Mon, 1 Jun 2026, 17:00 UTC and lists missing Swedish players with Karlstr\u00F6m not among them, implying inclusion.",
+          "rawExcerpt": "Mon, June 1, 5:00 PM\nNorway faces Sweden at Ullevaal Stadion on Mon, Jun 1 2026, 17:00 UTC. ..."
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:f6b7791c22e97d31e1e30d63"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:f6b7791c22e97d31e1e30d63"
+      },
+      "fingerprint": "ai:f6b7791c22e97d31e1e30d63",
+      "title": "Sweden vs Greece",
+      "description": "Friendly international football match between Sweden and Greece.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly in preparation for the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "d803f53c-63fb-3e37-a233-35481a7d8492"
+          },
+          "proposedRole": 0,
+          "explanation": "Jesper Karlstr\u00F6m is named on the Swedish national team roster for the friendly against Greece.",
+          "contextName": "Jesper Karlstr\u00F6m",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:hooligan-soccer"
+            },
+            "name": "Hooligan Soccer"
+          },
+          "uri": "https://hooligan-soccer.com/jesper-karlstrom-opens-up-to-hooligan-soccer/",
+          "title": "Jesper Karlstr\u00F6m Opens Up to Hooligan Soccer",
+          "observedAt": "2026-06-01T18:34:20.6263839+00:00",
+          "summary": "Article notes that Karlstr\u00F6m will immediately transition to international duty and help Sweden compete in friendlies vs. Norway and Greece before the World Cup.",
+          "rawExcerpt": "he\u2019ll be immediately transitioning to international duty and helping his Sweden team compete in friendlies vs. Norway and Greece"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    }
+  ]
+}

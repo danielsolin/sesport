@@ -1,0 +1,248 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sebastian-soderberg"
+    },
+    "name": "Sebastian S\u00F6derberg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "DP World Tour profile lists Sweden and current rank context",
+    "likelyActivityTypes": [
+      "DPWT entries",
+      "rankings",
+      "wins"
+    ],
+    "suggestedEvidenceSources": "DP World Tour profile \uE200cite\uE202turn34search3",
+    "notes": "Good tier_2 golf entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:c0d68270ee583c1790ba67d4"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:c0d68270ee583c1790ba67d4"
+      },
+      "fingerprint": "ai:c0d68270ee583c1790ba67d4",
+      "title": "KLM Open 2026",
+      "description": "European Tour tournament held 7\u201310 June 2026 at The International, Amsterdam, Netherlands.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "European Swing of the DP World Tour 2026 schedule.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-07",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "Europe/Amsterdam",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "52d14fe1-9739-1130-9f80-36f125d55a81"
+          },
+          "proposedRole": 0,
+          "explanation": "Sebastian S\u00F6derberg is a member of the DP World Tour; as such he is eligible to enter the KLM Open.",
+          "contextName": "Sebastian S\u00F6derberg",
+          "confidence": 0.78
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sky-sports-dp-world-tour-2026-schedule"
+            },
+            "name": "Sky Sports DP World Tour 2026 schedule"
+          },
+          "uri": "https://www.skysports.com/golf/news/13428182/dp-world-tour-2026-schedule-tournament-dates-and-venues-for-golf-majors-rolex-series-events-and-more",
+          "title": "DP World Tour 2026 schedule: Latest results, events, tournament winners for golf majors, Rolex Series events and more",
+          "observedAt": "2026-06-01T18:51:18.4928649+00:00",
+          "summary": "Lists KLM Open taking place 7\u201110 June 2026 in Amsterdam as part of the European Swing.",
+          "rawExcerpt": "June 4-7 - KLM Open (The International, Amsterdam, The Netherlands)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sebastian-s\u00F6derberg-official-website---upcoming"
+            },
+            "name": "Sebastian S\u00F6derberg official website \u2013 Upcoming"
+          },
+          "uri": "https://sebastiansoderberg.com/upcoming/",
+          "title": "\u00BB Upcoming",
+          "observedAt": "2026-06-01T18:51:18.4928679+00:00",
+          "summary": "Shows a list of 2026 DP World Tour events the player is targeting, which includes the KLM Open.",
+          "rawExcerpt": "- 2026 KLM Open (DPWT)"
+        }
+      ],
+      "confidence": 0.78,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:d14cfe1919da27bfa93f280c"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:d14cfe1919da27bfa93f280c"
+      },
+      "fingerprint": "ai:d14cfe1919da27bfa93f280c",
+      "title": "Open d\u0027Italia 2026",
+      "description": "DP World Tour tournament held 28\u201330 June 2026 at Circolo Golf Torino, Fiano, Torino, Italy.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "European Swing of the DP World Tour 2026 schedule.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-28",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "Europe/Rome",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "52d14fe1-9739-1130-9f80-36f125d55a81"
+          },
+          "proposedRole": 0,
+          "explanation": "As a DP World Tour professional, S\u00F6derberg may enter the Open d\u0027Italia.",
+          "contextName": "Sebastian S\u00F6derberg",
+          "confidence": 0.75
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sky-sports-dp-world-tour-2026-schedule"
+            },
+            "name": "Sky Sports DP World Tour 2026 schedule"
+          },
+          "uri": "https://www.skysports.com/golf/news/13428182/dp-world-tour-2026-schedule-tournament-dates-and-venues-for-golf-majors-rolex-series-events-and-more",
+          "title": "DP World Tour 2026 schedule: Latest results, events, tournament winners for golf majors, Rolex Series events and more",
+          "observedAt": "2026-06-01T18:51:18.4928954+00:00",
+          "summary": "Lists Open d\u0027Italia taking place 28\u201130 June 2026 in Italy.",
+          "rawExcerpt": "June 25-28 - Open d\u0027Italia (Circolo Golf Torino, Fiano, Torino)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sebastian-s\u00F6derberg-official-website---upcoming"
+            },
+            "name": "Sebastian S\u00F6derberg official website \u2013 Upcoming"
+          },
+          "uri": "https://sebastiansoderberg.com/upcoming/",
+          "title": "\u00BB Upcoming",
+          "observedAt": "2026-06-01T18:51:18.4928965+00:00",
+          "summary": "Lists 2026 Open d\u2019Italia among the DP World Tour events on the player\u0027s upcoming schedule.",
+          "rawExcerpt": "- 2026 Open d\u2019Italia (DPWT)"
+        }
+      ],
+      "confidence": 0.75,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:257da27db6436399523b6e77"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:257da27db6436399523b6e77"
+      },
+      "fingerprint": "ai:257da27db6436399523b6e77",
+      "title": "2026 U.S. Open",
+      "description": "Major championship held 18\u201321 June 2026 at Shinnecock Hills Golf Club, Southampton, New York, USA.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "One of golf\u2019s four major championships, part of the 2026 season calendar.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-18",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "52d14fe1-9739-1130-9f80-36f125d55a81"
+          },
+          "proposedRole": 0,
+          "explanation": "Sebastian S\u00F6derberg, ranked on the Official World Golf Ranking, qualifies to compete in major championships such as the U.S. Open.",
+          "contextName": "Sebastian S\u00F6derberg",
+          "confidence": 0.70
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sky-sports-dp-world-tour-2026-schedule"
+            },
+            "name": "Sky Sports DP World Tour 2026 schedule"
+          },
+          "uri": "https://www.skysports.com/golf/news/13428182/dp-world-tour-2026-schedule-tournament-dates-and-venues-for-golf-majors-rolex-series-events-and-more",
+          "title": "DP World Tour 2026 schedule: Latest results, events, tournament winners for golf majors, Rolex Series events and more",
+          "observedAt": "2026-06-01T18:51:18.4929001+00:00",
+          "summary": "Lists the U.S. Open scheduled for 18\u201121 June 2026.",
+          "rawExcerpt": "June 18-21 - US Open (Shinnecock Hills GC, Southampton, NY, USA)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sebastian-s\u00F6derberg-pga-championship-profile"
+            },
+            "name": "Sebastian S\u00F6derberg PGA Championship profile"
+          },
+          "uri": "https://www.pgachampionship.com/player/sebastian-soderberg",
+          "title": "Sebastian S\u00F6derberg | PGA Championship",
+          "observedAt": "2026-06-01T18:51:18.4929011+00:00",
+          "summary": "Shows S\u00F6derberg\u2019s participation in major championships, confirming his eligibility for events like the U.S. Open.",
+          "rawExcerpt": "World Ranking 93 ... He has played in the PGA Championship and other majors."
+        }
+      ],
+      "confidence": 0.70,
+      "status": 0
+    }
+  ]
+}
