@@ -112,6 +112,35 @@ public class OpenAiResponsesActivitySearchClientTests
       );
    }
 
+   [Fact]
+   public async Task SearchExceptionKeepsHttpStatusCode()
+   {
+      var handler = new RecordingHandler(
+         """{"error":{"message":"Rate limit exceeded."}}""",
+         HttpStatusCode.TooManyRequests
+      );
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/v1/"),
+            "gpt-oss-20b"
+         )
+      );
+
+      var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
+         client.SearchAsync(
+            new ActivitySearchRequest(
+               CreateEntity(),
+               new DateOnly(2026, 5, 31)
+            ),
+            CancellationToken.None
+         )
+      );
+
+      Assert.Equal(HttpStatusCode.TooManyRequests, exception.StatusCode);
+   }
+
    private static string CreateResponseJson(bool includeReasoning = false)
    {
       var content = """
@@ -211,7 +240,10 @@ public class OpenAiResponsesActivitySearchClientTests
       );
    }
 
-   private sealed class RecordingHandler(string responseJson)
+   private sealed class RecordingHandler(
+      string responseJson,
+      HttpStatusCode statusCode = HttpStatusCode.OK
+   )
       : HttpMessageHandler
    {
       public Uri? RequestUri { get; private set; }
@@ -228,7 +260,7 @@ public class OpenAiResponsesActivitySearchClientTests
             ? ""
             : await request.Content.ReadAsStringAsync(cancellationToken);
 
-         return new HttpResponseMessage(HttpStatusCode.OK)
+         return new HttpResponseMessage(statusCode)
          {
             Content = new StringContent(
                responseJson,

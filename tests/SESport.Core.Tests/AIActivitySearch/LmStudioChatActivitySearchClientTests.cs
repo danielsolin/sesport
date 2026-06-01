@@ -67,6 +67,37 @@ public class LmStudioChatActivitySearchClientTests
       Assert.Contains("\"integrations\":[]", handler.RequestBody);
    }
 
+   [Fact]
+   public async Task SearchExceptionKeepsHttpStatusCode()
+   {
+      var handler = new RecordingHandler(
+         "Provider credits are exhausted.",
+         HttpStatusCode.PaymentRequired
+      );
+      var httpClient = new HttpClient(handler);
+      var client = new LmStudioChatActivitySearchClient(
+         httpClient,
+         new LmStudioChatActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/api/v1/"),
+            "gpt-oss-20b",
+            "altra/web-search",
+            ["search"]
+         )
+      );
+
+      var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
+         client.SearchAsync(
+            new ActivitySearchRequest(
+               CreateEntity(),
+               new DateOnly(2026, 5, 31)
+            ),
+            CancellationToken.None
+         )
+      );
+
+      Assert.Equal(HttpStatusCode.PaymentRequired, exception.StatusCode);
+   }
+
    private static string CreateChatResponseJson()
    {
       var content = """
@@ -131,7 +162,10 @@ public class LmStudioChatActivitySearchClientTests
       );
    }
 
-   private sealed class RecordingHandler(string responseJson)
+   private sealed class RecordingHandler(
+      string responseJson,
+      HttpStatusCode statusCode = HttpStatusCode.OK
+   )
       : HttpMessageHandler
    {
       public Uri? RequestUri { get; private set; }
@@ -148,7 +182,7 @@ public class LmStudioChatActivitySearchClientTests
             ? ""
             : await request.Content.ReadAsStringAsync(cancellationToken);
 
-         return new HttpResponseMessage(HttpStatusCode.OK)
+         return new HttpResponseMessage(statusCode)
          {
             Content = new StringContent(
                responseJson,
