@@ -16,6 +16,15 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             false,
             false
          ),
+         ["sources"] = new(
+            "sources",
+            "Sources",
+            "Source names used by proposals and evidence records.",
+            "sources",
+            "name",
+            false,
+            false
+         ),
          ["activity-types"] = new(
             "activity-types",
             "Activity types",
@@ -121,11 +130,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "Entities",
             "Maintain the curated entity watchlist.",
             "/Admin/Entities"
-         ),
-         new AdminArea(
-            "Sources",
-            "Maintain source names used by evidence records.",
-            "/Admin/Sources"
          ),
          new AdminArea(
             "Audit",
