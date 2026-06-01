@@ -222,7 +222,7 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
       );
       cmd.Parameters.AddWithValue(
          "starts_at",
-         (object?)GetStartsAt(ap.Time) ?? DBNull.Value
+         (object?)ToUtc(GetStartsAt(ap.Time)) ?? DBNull.Value
       );
       cmd.Parameters.AddWithValue("time_zone_id", ap.Time.TimeZoneId);
       cmd.Parameters.AddWithValue(
@@ -348,7 +348,10 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
             "title",
             (object?)pe.Title ?? DBNull.Value
          );
-         command.Parameters.AddWithValue("observed_at", pe.ObservedAt);
+         command.Parameters.AddWithValue(
+            "observed_at",
+            pe.ObservedAt.ToUniversalTime()
+         );
          command.Parameters.AddWithValue("summary", pe.Summary);
          command.Parameters.AddWithValue(
             "raw_excerpt",
@@ -378,6 +381,11 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
       var timeZone = ResolveTimeZone(time.TimeZoneId);
       var offset = timeZone.GetUtcOffset(localDateTime);
       return new DateTimeOffset(localDateTime, offset);
+   }
+
+   private static DateTimeOffset? ToUtc(DateTimeOffset? value)
+   {
+      return value?.ToUniversalTime();
    }
 
    private static TimeZoneInfo ResolveTimeZone(string timeZoneId)
