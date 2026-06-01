@@ -44,7 +44,7 @@ internal sealed record ToolOptions(
 
    public string? GetRunDirectory(DateTimeOffset startedAt)
    {
-      if (RunDirectoryPath is not null)
+      if(RunDirectoryPath is not null)
       {
          return Path.GetFullPath(RunDirectoryPath);
       }
@@ -72,7 +72,7 @@ internal sealed record ToolOptions(
       int? stopAfterFailures = null;
       var baseAddress = new Uri("https://openrouter.ai/api/v1/");
       var lmStudioBaseAddress = new Uri("http://127.0.0.1:1234/api/v1/");
-      var model = "openai/gpt-oss-20b";
+      var model = "openrouter/free";
       var modelWasSet = false;
       string? explicitApiKey = null;
       var allowWebSearch = true;
@@ -94,11 +94,11 @@ internal sealed record ToolOptions(
       var continueOnError = false;
       var showHelp = false;
 
-      for (var index = 0; index < args.Length; index++)
+      for(var index = 0; index < args.Length; index++)
       {
          var arg = args[index];
 
-         switch (arg)
+         switch(arg)
          {
             case "--entity":
                entityId = ReadValue(args, ref index, arg);
@@ -193,19 +193,14 @@ internal sealed record ToolOptions(
          }
       }
 
-      if ((overnight || allEntities) && entityId is null && !takeWasSet)
+      if((overnight || allEntities) && entityId is null && !takeWasSet)
       {
          take = int.MaxValue;
       }
 
-      if (overnight)
+      if(overnight)
       {
          continueOnError = true;
-      }
-
-      if (lmStudioPluginId is not null && !modelWasSet)
-      {
-         model = "openai/gpt-oss-20b";
       }
 
       timeoutSeconds ??= lmStudioPluginId is null ? 100 : 300;
@@ -255,7 +250,7 @@ internal sealed record ToolOptions(
       string optionName
    )
    {
-      if (index + 1 >= args.Length)
+      if(index + 1 >= args.Length)
       {
          throw new ArgumentException($"{optionName} requires a value.");
       }
@@ -294,17 +289,17 @@ internal sealed record ToolOptions(
       Uri baseAddress
    )
    {
-      if (!string.IsNullOrWhiteSpace(explicitApiKey))
+      if(!string.IsNullOrWhiteSpace(explicitApiKey))
       {
          return (explicitApiKey.Trim(), "--api-key");
       }
 
-      if (useLmStudio)
+      if(useLmStudio)
       {
          return ReadEnvironmentKey("LMSTUDIO_API_KEY");
       }
 
-      if (IsOpenRouterBaseAddress(baseAddress))
+      if(IsOpenRouterBaseAddress(baseAddress))
       {
          return ReadEnvironmentKey("OPENROUTER_API_KEY");
       }
@@ -333,7 +328,7 @@ internal sealed record ToolOptions(
 
    private static string MaskSecret(string secret)
    {
-      if (secret.Length <= 12)
+      if(secret.Length <= 12)
       {
          return "***";
       }

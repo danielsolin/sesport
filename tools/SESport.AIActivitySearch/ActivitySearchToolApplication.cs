@@ -312,7 +312,7 @@ internal static class ActivitySearchToolApplication
          Runs AI activity search for entities in data/entity-watchlist.json.
 
          Defaults target OpenRouter at https://openrouter.ai/api/v1 with
-         openai/gpt-oss-20b.
+         openrouter/free.
 
          Options:
            --entity <id>       Search one watchlist entity by id.
@@ -328,7 +328,7 @@ internal static class ActivitySearchToolApplication
                                Default: https://openrouter.ai/api/v1.
            --lmstudio-url <url> LM Studio native /api/v1 base URL.
                                Default: http://127.0.0.1:1234/api/v1.
-           --model <name>      Model name. Default: openai/gpt-oss-20b.
+           --model <name>      Model name. Default: openrouter/free.
            --api-key <key>     API key. Falls back to OPENROUTER_API_KEY for
                                OpenRouter,
                                OPENAI_API_KEY for OpenAI-compatible targets, or

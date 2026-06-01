@@ -4,7 +4,7 @@ Runs an OpenAI Responses-compatible AI activity search for entities in
 `data/entity-watchlist.json`.
 
 The default target is OpenRouter at `https://openrouter.ai/api/v1` with the
-`openai/gpt-oss-20b` model.
+`openrouter/free` model.
 When `--lmstudio-plugin` is used, the base URL switches to
 `http://127.0.0.1:1234/api/v1`.
 
