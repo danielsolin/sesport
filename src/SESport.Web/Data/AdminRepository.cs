@@ -7,6 +7,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    private static readonly IReadOnlyDictionary<string, ReferenceTable> Tables =
       new Dictionary<string, ReferenceTable>(StringComparer.OrdinalIgnoreCase)
       {
+         ["activity-audit"] = new(
+            "activity-audit",
+            "Activity audit",
+            "Inspect canonical activity entity links and evidence.",
+            ReferenceTableKind.ActivityAudit
+         ),
          ["sports"] = new(
             "sports",
             "Sports",
@@ -114,6 +120,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "label",
             true,
             false
+         ),
+         ["proposal-groups"] = new(
+            "proposal-groups",
+            "Proposal groups",
+            "Inspect dedupe groups that can connect proposals to activities.",
+            ReferenceTableKind.ProposalGroups
          )
       };
 
@@ -132,9 +144,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "/Admin/Entities"
          ),
          new AdminArea(
-            "Audit",
-            "Inspect proposal, activity link, and evidence records.",
-            "/Admin/Audit"
+            "Activity proposals",
+            "Review imported and AI-produced activity proposals.",
+            "/Admin/Audit/Proposals"
          ),
          new AdminArea(
             "Reference data",
@@ -144,6 +156,16 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       ];
    }
 
+   public IReadOnlyList<ReferenceNavigationItem> GetReferenceNavigationItems()
+   {
+      return GetReferenceTables()
+         .Select(table => new ReferenceNavigationItem(
+            table.Title,
+            $"/Admin/ReferenceData/{table.Id}"
+         ))
+         .ToList();
+   }
+
    public IReadOnlyList<ReferenceTableInfo> GetReferenceTables()
    {
       return Tables.Values
@@ -151,7 +173,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          .Select(table => new ReferenceTableInfo(
             table.Key,
             table.Title,
-            table.Description
+            table.Description,
+            table.Kind
          ))
          .ToList();
    }
@@ -163,7 +186,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    {
       await Task.CompletedTask.WaitAsync(cancellationToken);
       return TryGetTable(tableKey, out var table)
-         ? new ReferenceTableInfo(table.Key, table.Title, table.Description)
+         ? new ReferenceTableInfo(
+            table.Key,
+            table.Title,
+            table.Description,
+            table.Kind
+         )
          : null;
    }
 
@@ -173,6 +201,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       var table = GetTable(tableKey);
+      EnsureLookupTable(table);
+
       var sortSelect = table.HasSortOrder ? "sort_order" : "null";
       var activeSelect = table.HasIsActive ? "is_active" : "null";
       var orderBy = table.HasSortOrder
@@ -212,6 +242,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       var table = GetTable(tableKey);
+      EnsureLookupTable(table);
+
       var sortSelect = table.HasSortOrder ? "sort_order" : "null";
       var activeSelect = table.HasIsActive ? "is_active" : "null";
       var sql = $"""
@@ -248,6 +280,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       var table = GetTable(tableKey);
+      EnsureLookupTable(table);
+
       var isNew = string.IsNullOrWhiteSpace(model.OriginalId);
       var id = NormalizeId(model.Id);
       var label = model.Label.Trim();
@@ -314,6 +348,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       var table = GetTable(tableKey);
+      EnsureLookupTable(table);
+
       var sql = $"delete from {table.TableName} where id = @id";
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
@@ -630,6 +666,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return Tables.TryGetValue(tableKey, out table!);
    }
 
+   private static void EnsureLookupTable(ReferenceTable table)
+   {
+      if (table.Kind != ReferenceTableKind.Lookup)
+      {
+         throw new InvalidOperationException("Reference view is not editable.");
+      }
+   }
+
    private static string NormalizeId(string value)
    {
       return value.Trim();
@@ -642,6 +686,17 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       string TableName,
       string LabelColumn,
       bool HasSortOrder,
-      bool HasIsActive
-   );
+      bool HasIsActive,
+      ReferenceTableKind Kind = ReferenceTableKind.Lookup
+   )
+   {
+      public ReferenceTable(
+         string key,
+         string title,
+         string description,
+         ReferenceTableKind kind
+      ) : this(key, title, description, "", "", false, false, kind)
+      {
+      }
+   }
 }
