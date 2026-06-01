@@ -1,6 +1,9 @@
 using System.Text.Json;
 
+using Npgsql;
+
 using SESport.Core.AIActivitySearch;
+using SESport.Core.Identifiers;
 using SESport.Core.Ingestion;
 using SESport.Data.Ingestion;
 
@@ -34,9 +37,10 @@ internal static class ActivitySearchImportApplication
       var skippedFileCount = 0;
       var importedProposalCount = 0;
 
-      await using var repository = ActivityProposalRepository.Connect(
+      await using var dataSource = NpgsqlDataSource.Create(
          options.ConnectionString
       );
+      await using var repository = new ActivityProposalRepository(dataSource);
 
       foreach(var file in files)
       {
@@ -56,8 +60,16 @@ internal static class ActivitySearchImportApplication
             continue;
          }
 
+         var proposals = RemapPrimaryEntityLinks(result);
+         await EnsureLinkedEntitiesExistAsync(
+            dataSource,
+            file,
+            proposals,
+            CancellationToken.None
+         );
+
          var savedCount = await repository.SaveAsync(
-            result.Proposals,
+            proposals,
             CancellationToken.None
          );
 
@@ -75,6 +87,88 @@ internal static class ActivitySearchImportApplication
       );
 
       return 0;
+   }
+
+   private static IReadOnlyCollection<ActivityProposal> RemapPrimaryEntityLinks(
+      ActivitySearchResult result
+   )
+   {
+      var currentEntityId = ToEntityId(result.Entity.WatchlistId.Value);
+
+      return result.Proposals.Select(proposal => proposal with
+      {
+         EntityLinks = proposal.EntityLinks
+            .Select(link => ShouldRemapLink(result, link)
+               ? link with { EntityId = currentEntityId }
+               : link)
+            .ToList()
+      }).ToList();
+   }
+
+   private static bool ShouldRemapLink(
+      ActivitySearchResult result,
+      ActivityProposalEntityLink link
+   )
+   {
+      return string.IsNullOrWhiteSpace(link.ContextName) ||
+         link.ContextName.Equals(
+            result.Entity.Name,
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
+   private static async Task EnsureLinkedEntitiesExistAsync(
+      NpgsqlDataSource dataSource,
+      string file,
+      IReadOnlyCollection<ActivityProposal> proposals,
+      CancellationToken cancellationToken
+   )
+   {
+      var entityIds = proposals
+         .SelectMany(proposal => proposal.EntityLinks)
+         .Select(link => link.EntityId.Value)
+         .Distinct()
+         .ToList();
+
+      if(entityIds.Count == 0)
+      {
+         return;
+      }
+
+      const string sql = """
+         select id
+         from tracked_entities
+         where id = any(@ids)
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("ids", entityIds);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      var foundIds = new HashSet<Guid>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         foundIds.Add(reader.GetGuid(0));
+      }
+
+      var missingIds = entityIds
+         .Where(id => !foundIds.Contains(id))
+         .ToList();
+
+      if(missingIds.Count == 0)
+      {
+         return;
+      }
+
+      throw new InvalidOperationException(
+         $"Cannot import {file} because {missingIds.Count} linked " +
+         "tracked entity/entities are missing from PostgreSQL. Run " +
+         "`dotnet run --project tools/SESport.ImportEntities` first. " +
+         $"Missing entity IDs: {string.Join(", ", missingIds)}"
+      );
    }
 
    private static IReadOnlyList<string> ResolveInputFiles(
@@ -150,6 +244,11 @@ internal static class ActivitySearchImportApplication
       }
 
       return Path.GetFullPath(Path.Combine(FindRepositoryRoot(), path));
+   }
+
+   private static EntityId ToEntityId(string stableKey)
+   {
+      return new EntityId(DeterministicGuid.Create($"entity:{stableKey}"));
    }
 
    private static string FindRepositoryRoot()
