@@ -1,0 +1,101 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-basketball-national-team"
+    },
+    "name": "Herrlandslaget i basket",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "basketball"
+      },
+      "name": "basketball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "FIBA EuroBasket 2025 team page shows leaders and roster",
+    "likelyActivityTypes": [
+      "squad calls",
+      "qualification",
+      "player availability",
+      "tournaments"
+    ],
+    "suggestedEvidenceSources": "FIBA Sweden team page \uE200cite\uE202turn39search4",
+    "notes": "Useful especially because of NBA/NCAA export pathway"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:8d0eb0f2a1fdefecbbbcde05"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:8d0eb0f2a1fdefecbbbcde05"
+      },
+      "fingerprint": "ai:8d0eb0f2a1fdefecbbbcde05",
+      "title": "Sweden vs Greece \u2013 Friendly Match",
+      "description": "The Sweden men\u2019s national basketball team hosts the Greek men\u2019s national team for a friendly match on 4\u202FJune\u202F2026.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "basketball"
+        },
+        "name": "basketball"
+      },
+      "context": "Preparation for the 2027 FIBA World Cup qualification and international match calendar. The game is played at Strawberry Arena in Stockholm.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "1a178b52-6928-0536-8614-19f613c50be0"
+          },
+          "proposedRole": 0,
+          "explanation": "The Sweden men\u2019s national basketball team is represented by the Swedish Basketball Federation and is the team in question.",
+          "contextName": "Herrlandslaget i basket",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:strawberry-arena---sweden-vs-greece"
+            },
+            "name": "Strawberry Arena \u2013 Sweden vs Greece"
+          },
+          "uri": "https://strawberryarena.se/en/events/sport/sweden-vs-greece/",
+          "title": "Sweden \u2013 Greece - Strawberry Arena",
+          "observedAt": "2026-06-01T16:09:00.6323976+00:00",
+          "summary": "The Swedish men\u0027s national team will host the Greek men\u0027s national team for a friendly match on 4\u202FJune 2026 at Strawberry Arena.",
+          "rawExcerpt": "The Swedish men\u0027s national team will host the Greek men\u0027s national team for a friendly match on 4\u202FJune 2026 at Strawberry Arena."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob---sweden-vs-greece"
+            },
+            "name": "FotMob \u2013 Sweden vs Greece"
+          },
+          "uri": "https://www.fotmob.com/matches/greece-vs-sweden/1u4ito",
+          "title": "Sweden vs Greece \u2013 live score, predicted lineups and H2H stats",
+          "observedAt": "2026-06-01T16:09:00.6324028+00:00",
+          "summary": "Sweden faces Greece at Strawberry Arena on Thu, Jun\u202F4\u202F2026, 17:00\u202FUTC (19:00\u202FCET/CEST).",
+          "rawExcerpt": "Sweden faces Greece at Strawberry Arena on Thu, Jun 4, 2026, 17:00 UTC."
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    }
+  ]
+}

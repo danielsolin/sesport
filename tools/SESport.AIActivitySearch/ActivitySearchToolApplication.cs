@@ -259,7 +259,7 @@ internal static class ActivitySearchToolApplication
       var windowEnd = options.SearchDate.AddDays(options.LookAheadDays);
       var itemStartedAt = DateTimeOffset.UtcNow;
 
-      Console.Error.WriteLine(
+      Console.Error.Write(
          $"Searching '{entity.Name}': " +
          $"{windowStart:yyyy-MM-dd}->{windowEnd:yyyy-MM-dd}" +
          $"..."
