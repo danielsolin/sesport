@@ -36,6 +36,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             pt.label,
             s.name,
             ps.label,
+            prr.label,
+            p.reject_comment,
             at.label,
             sp.name,
             p.activity_date,
@@ -49,11 +51,12 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          join producer_types pt on pt.id = p.producer_type_id
          join sources s on s.id = p.source_id
          join proposal_statuses ps on ps.id = p.status_id
+         left join proposal_reject_reasons prr on prr.id = p.reject_reason_id
          join activity_types at on at.id = p.activity_type_id
          join sports sp on sp.id = p.sport_id
          left join activity_proposal_entity_links l on l.proposal_id = p.id
          left join activity_proposal_evidence e on e.proposal_id = p.id
-         group by p.id, pt.label, s.name, ps.label, at.label, sp.name
+         group by p.id, pt.label, s.name, ps.label, prr.label, at.label, sp.name
          order by p.activity_date, p.local_start_time nulls last, p.title
          """;
 
@@ -72,14 +75,16 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetString(5),
-               reader.GetString(6),
-               FormatTime(reader, 7, 8),
-               ReadDecimal(reader, 9),
-               ReadString(reader, 10),
-               ReadGuid(reader, 11),
-               reader.GetInt32(12),
-               reader.GetInt32(13)
+               ReadString(reader, 5),
+               ReadString(reader, 6),
+               reader.GetString(7),
+               reader.GetString(8),
+               FormatTime(reader, 9, 10),
+               ReadDecimal(reader, 11),
+               ReadString(reader, 12),
+               ReadGuid(reader, 13),
+               reader.GetInt32(14),
+               reader.GetInt32(15)
             )
          );
       }

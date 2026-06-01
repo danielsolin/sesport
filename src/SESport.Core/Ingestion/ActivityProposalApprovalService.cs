@@ -47,7 +47,26 @@ public sealed class ActivityProposalApprovalService
       {
          Status = ActivityProposalStatus.Approved,
          ActivityId = activityId,
+         RejectReason = null,
+         RejectComment = null,
          GroupId = groupId ?? proposal.GroupId
+      };
+   }
+
+   public ActivityProposal Reject(
+      ActivityProposal proposal,
+      ActivityProposalRejectReason reason,
+      string? comment = null
+   )
+   {
+      return proposal with
+      {
+         Status = ActivityProposalStatus.Rejected,
+         RejectReason = reason,
+         RejectComment = string.IsNullOrWhiteSpace(comment)
+            ? null
+            : comment.Trim(),
+         ActivityId = null
       };
    }
 

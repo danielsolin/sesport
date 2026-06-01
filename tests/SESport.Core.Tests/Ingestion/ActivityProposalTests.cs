@@ -65,6 +65,30 @@ public class ActivityProposalTests
    }
 
    [Fact]
+   public void RejectStoresReasonAndOptionalComment()
+   {
+      var proposal = CreateProposal(ActivityProposalProducerType.AiSearch);
+      var service = new ActivityProposalApprovalService();
+
+      var rejectedProposal = service.Reject(
+         proposal,
+         ActivityProposalRejectReason.Hallucination,
+         "  Source does not confirm the event.  "
+      );
+
+      Assert.Equal(ActivityProposalStatus.Rejected, rejectedProposal.Status);
+      Assert.Equal(
+         ActivityProposalRejectReason.Hallucination,
+         rejectedProposal.RejectReason
+      );
+      Assert.Equal(
+         "Source does not confirm the event.",
+         rejectedProposal.RejectComment
+      );
+      Assert.Null(rejectedProposal.ActivityId);
+   }
+
+   [Fact]
    public void MultipleProposalsCanSupportTheSameCanonicalActivity()
    {
       var groupId = new ActivityProposalGroupId("activity-proposal-group:test");
@@ -137,6 +161,8 @@ public class ActivityProposalTests
          ],
          Confidence: 0.95m,
          ActivityProposalStatus.Pending,
+         null,
+         null,
          groupId,
          null
       );

@@ -105,6 +105,8 @@ public class CollectionRefreshPlannerTests
          Confidence: 1.0m,
          ActivityProposalStatus.Pending,
          null,
+         null,
+         null,
          null
       );
    }

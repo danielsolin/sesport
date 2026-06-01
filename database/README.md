@@ -10,6 +10,9 @@ activities always belong to one known activity date.
 The second migration adds publication metadata for the manual launch site:
 activity publication statuses, public slugs, and listing indexes.
 
+The third migration adds controlled reject reasons and optional reject comments
+for activity proposal review.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash

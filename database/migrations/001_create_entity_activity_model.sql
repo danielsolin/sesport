@@ -176,6 +176,23 @@ set
    label = excluded.label,
    sort_order = excluded.sort_order;
 
+create table if not exists proposal_reject_reasons
+(
+   id text primary key,
+   label text not null,
+   sort_order integer not null
+);
+
+insert into proposal_reject_reasons (id, label, sort_order)
+values
+   ('Hallucination', 'Hallucination', 10),
+   ('Duplicate', 'Duplicate', 20),
+   ('OutOfScope', 'Out of scope', 30)
+on conflict (id) do update
+set
+   label = excluded.label,
+   sort_order = excluded.sort_order;
+
 create table if not exists sources
 (
    id text primary key,
@@ -250,6 +267,8 @@ create table if not exists activity_proposals
    time_zone_id text not null default 'Europe/Stockholm',
    confidence numeric(4,3) null,
    status_id text not null references proposal_statuses(id),
+   reject_reason_id text null references proposal_reject_reasons(id),
+   reject_comment text null,
    group_id text null references activity_proposal_groups(id),
    activity_id uuid null references activities(id),
    created_at timestamptz not null default now(),
@@ -268,6 +287,12 @@ create table if not exists activity_proposals
       check (
          (status_id = 'Approved' and activity_id is not null) or
          (status_id <> 'Approved')
+      ),
+
+   constraint activity_proposals_reject_reason_status_check
+      check (
+         (status_id = 'Rejected') or
+         (reject_reason_id is null and reject_comment is null)
       )
 );
 

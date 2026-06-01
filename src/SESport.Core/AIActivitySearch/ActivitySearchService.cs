@@ -85,6 +85,8 @@ public sealed class ActivitySearchService(
          draft.Confidence,
          ActivityProposalStatus.Pending,
          null,
+         null,
+         null,
          null
       );
    }

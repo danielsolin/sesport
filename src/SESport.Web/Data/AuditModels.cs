@@ -8,6 +8,8 @@ public sealed record ActivityProposalAuditItem(
    string ProducerType,
    string Source,
    string Status,
+   string? RejectReason,
+   string? RejectComment,
    string ActivityType,
    string Sport,
    string TimeText,

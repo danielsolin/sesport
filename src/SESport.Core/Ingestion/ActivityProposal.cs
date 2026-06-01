@@ -17,6 +17,8 @@ public sealed record ActivityProposal(
    IReadOnlyCollection<ActivityProposalEvidence> Evidence,
    decimal? Confidence,
    ActivityProposalStatus Status,
+   ActivityProposalRejectReason? RejectReason,
+   string? RejectComment,
    ActivityProposalGroupId? GroupId,
    ActivityId? ActivityId
 );
