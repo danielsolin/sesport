@@ -1,0 +1,101 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "alex-noren"
+    },
+    "name": "Alex Nor\u00E9n",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "PGA Tour and DP World Tour profiles list him as Swedish top-tour player",
+    "likelyActivityTypes": [
+      "majors",
+      "Ryder Cup",
+      "rankings",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "PGA Tour and DPWT profiles \uE200cite\uE202turn35search0\uE202turn35search1",
+    "notes": "Important veteran Swedish golf entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:c76d444dc56df31e23598ce4"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:c76d444dc56df31e23598ce4"
+      },
+      "fingerprint": "ai:c76d444dc56df31e23598ce4",
+      "title": "2026 Memorial Tournament",
+      "description": "PGA Tour FedEx Cup event at Muirfield Village Golf Club, Dublin, Ohio (June\u202F4\u20117,\u202F2026). Alex\u202FNoren is listed in the official field for the tournament.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Signature PGA Tour event, part of the 2025/2026 FedEx Cup calendar.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "07:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "9ad7d1db-71cf-e930-a983-28c99ab49e6e"
+          },
+          "proposedRole": 0,
+          "explanation": "Alex\u202FNoren appears in the official 2026 Memorial Tournament field, confirming his participation.",
+          "contextName": "Alex Nor\u00E9n",
+          "confidence": 0.94
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:golf-news-net---memorial-tournament-field"
+            },
+            "name": "Golf News Net \u2013 Memorial Tournament Field"
+          },
+          "uri": "https://thegolfnewsnet.com/golfnewsnetteam/2026/05/31/2026-the-memorial-tournament-field-pga-tour-players-rankings-143078/",
+          "title": "2026 the Memorial Tournament field: PGA Tour players, rankings",
+          "observedAt": "2026-06-01T14:36:26.7459841+00:00",
+          "summary": "The article lists the full 2026 Memorial Tournament field and includes \u002221 | Alex Noren\u0022 among the entrants.",
+          "rawExcerpt": "\u2026\n| 20 | Hideki Matsuyama |\n| 21 | Alex Noren |\n| 22 | Harris English |\n\u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:pga-tour---memorial-tournament-2026-field"
+            },
+            "name": "PGA Tour \u2013 Memorial Tournament 2026 Field"
+          },
+          "uri": "https://www.pgatour.com/tournaments/2026/the-memorial-tournament-presented-by-workday/R2026023/field",
+          "title": "the Memorial Tournament presented by Workday 2026 Golf Leaderboard - PGA TOUR - Leaderboard Field",
+          "observedAt": "2026-06-01T14:36:26.7459852+00:00",
+          "summary": "Official PGA Tour tournament page showing the event dates (June\u202F4\u20117,\u202F2026) and the full player field, which includes Alex\u202FNoren.",
+          "rawExcerpt": "Jun 4 - 7, 2026\n\u2026\nAlex Noren\n\u2026"
+        }
+      ],
+      "confidence": 0.94,
+      "status": 0
+    }
+  ]
+}

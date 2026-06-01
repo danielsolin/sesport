@@ -1,0 +1,148 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "ifk-goteborg"
+    },
+    "name": "IFK G\u00F6teborg",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "UEFA club page active in Swedish top flight",
+    "likelyActivityTypes": [
+      "transfers",
+      "European qualification pushes",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "UEFA club page \uE200cite\uE202turn12search8",
+    "notes": "Slightly weaker than top Sweden clubs for immediate international activity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:271f27379c68e35b58373542"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:271f27379c68e35b58373542"
+      },
+      "fingerprint": "ai:271f27379c68e35b58373542",
+      "title": "IFK G\u00F6teborg \u2013 V\u00E5lerenga (Tr\u00E4ningsmatch)",
+      "description": "IFK G\u00F6teborg will play a friendly match against Norwegian side V\u00E5lerenga at Hj\u00E4llbovallen.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Summer training period during the Allsvenskan break; organized as a friendly to keep match fitness.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-18",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "2a6f9325-a3aa-9b34-8fbe-5b4800322a30"
+          },
+          "proposedRole": 0,
+          "explanation": "IFK G\u00F6teborg is listed as a participant and co\u2011organiser of the match on the club\u2019s official June training\u2011match page.",
+          "contextName": "IFK G\u00F6teborg",
+          "confidence": 0.94
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:ifk-g\u00F6teborg---tr\u00E4ningsmatcher-i-juni"
+            },
+            "name": "IFK G\u00F6teborg \u2013 Tr\u00E4ningsmatcher i juni"
+          },
+          "uri": "https://ifkgoteborg.se/nyheter/nyheter/2026/traningsmatcher-i-juni/",
+          "title": "Tr\u00E4ningsmatcher i juni | IFK G\u00F6teborg \u2013 Hela stadens lag",
+          "observedAt": "2026-06-01T15:05:22.4488691+00:00",
+          "summary": "The page states that on 18\u202FJune IFK G\u00F6teborg will face V\u00E5lerenga at Hj\u00E4llbovallen, with a kick\u2011off at 17:00.",
+          "rawExcerpt": "18 juni IFK G\u00F6teborg \u2013 V\u00E5lerenga Hj\u00E4llbovallen, klockan 17.00"
+        }
+      ],
+      "confidence": 0.94,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:25e4cb8b35e880feda81f4bc"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:25e4cb8b35e880feda81f4bc"
+      },
+      "fingerprint": "ai:25e4cb8b35e880feda81f4bc",
+      "title": "IFK G\u00F6teborg \u2013 Hamkam (Tr\u00E4ningsmatch)",
+      "description": "IFK G\u00F6teborg will play a friendly match against Norwegian side Hamkam at Torslandavallen.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Second summer friendly arranged during the Allsvenskan break; part of the club\u2019s preparation for the second half of the league season.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-27",
+        "localStartTime": "16:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "2a6f9325-a3aa-9b34-8fbe-5b4800322a30"
+          },
+          "proposedRole": 0,
+          "explanation": "IFK G\u00F6teborg is listed as a participant and co\u2011organiser of the match on the club\u2019s official June training\u2011match page.",
+          "contextName": "IFK G\u00F6teborg",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:ifk-g\u00F6teborg---tr\u00E4ningsmatcher-i-juni"
+            },
+            "name": "IFK G\u00F6teborg \u2013 Tr\u00E4ningsmatcher i juni"
+          },
+          "uri": "https://ifkgoteborg.se/nyheter/nyheter/2026/traningsmatcher-i-juni/",
+          "title": "Tr\u00E4ningsmatcher i juni | IFK G\u00F6teborg \u2013 Hela stadens lag",
+          "observedAt": "2026-06-01T15:05:22.4488976+00:00",
+          "summary": "The page states that on 27\u202FJune IFK G\u00F6teborg will face Hamkam at Torslandavallen, with a kick\u2011off at 16:00.",
+          "rawExcerpt": "27 juni IFK G\u00F6teborg \u2013 Hamkam Torslandavallen, klockan 16.00"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    }
+  ]
+}

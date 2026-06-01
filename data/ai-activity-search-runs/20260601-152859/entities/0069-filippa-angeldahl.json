@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "filippa-angeldahl"
+    },
+    "name": "Filippa Angeldahl",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Real Madrid",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "goals",
+      "transfers",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Track Angeldahl; Real Madrid is relationship context"
+  },
+  "proposals": []
+}

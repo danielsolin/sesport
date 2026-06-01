@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jesper-tjader"
+    },
+    "name": "Jesper Tj\u00E4der",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "freeski"
+      },
+      "name": "freeski"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "SSF freeski A-team page lists him and his prior Olympic bronze",
+    "likelyActivityTypes": [
+      "World Cup",
+      "X Games",
+      "championships",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "SSF freeski A-team page \uE200cite\uE202turn31view1",
+    "notes": "Strong but event format can vary"
+  },
+  "proposals": []
+}

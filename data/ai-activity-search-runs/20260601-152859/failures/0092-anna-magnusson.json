@@ -1,0 +1,30 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "anna-magnusson"
+    },
+    "name": "Anna Magnusson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "biathlon"
+      },
+      "name": "biathlon"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Biathlon Federation A-team lists her",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "relays"
+    ],
+    "suggestedEvidenceSources": "Biathlon A-team page \uE200cite\uE202turn26view1",
+    "notes": "Useful depth candidate"
+  },
+  "errorType": "System.Net.Http.HttpRequestException",
+  "errorMessage": "AI activity search failed with 500 InternalServerError from https://openrouter.ai/api/v1/: Internal Server Error Check that OPENROUTER_API_KEY is current and belongs to an active OpenRouter account.",
+  "stackTrace": "System.Net.Http.HttpRequestException: AI activity search failed with 500 InternalServerError from https://openrouter.ai/api/v1/: Internal Server Error Check that OPENROUTER_API_KEY is current and belongs to an active OpenRouter account.\r\n   at SESport.Core.AIActivitySearch.OpenAiResponsesActivitySearchClient.SearchAsync(ActivitySearchRequest request, CancellationToken cancellationToken) in C:\\Users\\daniel\\source\\sesport\\src\\SESport.Core\\AIActivitySearch\\OpenAiResponsesActivitySearchClient.cs:line 63\r\n   at SESport.Core.AIActivitySearch.ActivitySearchService.SearchAsync(ActivitySearchRequest request, CancellationToken cancellationToken) in C:\\Users\\daniel\\source\\sesport\\src\\SESport.Core\\AIActivitySearch\\ActivitySearchService.cs:line 21\r\n   at SESport.Tools.AIActivitySearch.ActivitySearchToolApplication.SearchEntityAsync(ActivitySearchService searchService, ActivityProposalRepository proposalRepository, ToolOptions options, ActivitySearchEntity entity, Int32 entityIndex, DateTimeOffset runStartedAt, String runDirectory, List\u00601 results, List\u00601 items, Int32 consecutiveFailures) in C:\\Users\\daniel\\source\\sesport\\tools\\SESport.AIActivitySearch\\ActivitySearchToolApplication.cs:line 147",
+  "startedAt": "2026-06-01T14:29:37.3120113+00:00",
+  "completedAt": "2026-06-01T14:29:41.6093029+00:00",
+  "durationSeconds": 4.297
+}

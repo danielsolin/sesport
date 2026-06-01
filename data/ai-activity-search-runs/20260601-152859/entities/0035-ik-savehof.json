@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "ik-savehof"
+    },
+    "name": "IK S\u00E4vehof",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "EHF club page details European history and current roster info",
+    "likelyActivityTypes": [
+      "European qualification",
+      "transfers",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "EHF club page \uE200cite\uE202turn14search0",
+    "notes": "One of Sweden\u2019s clearest club handball entities"
+  },
+  "proposals": []
+}

@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "johanna-rytting-kaneryd"
+    },
+    "name": "Johanna Rytting Kaneryd",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Chelsea FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Strong woman\u2019s-team watch entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:03ef6bce37cd49742e19bc2c"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:03ef6bce37cd49742e19bc2c"
+      },
+      "fingerprint": "ai:03ef6bce37cd49742e19bc2c",
+      "title": "Denmark vs Sweden \u2013 FIFA Women\u2019s World Cup Qualification",
+      "description": "Sweden women travel to Odense to face Denmark in a UEFA League A qualification match for the 2027 FIFA Women\u2019s World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2027 FIFA Women\u2019s World Cup UEFA qualification, League A Group 1, Matchday 5",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "19:15:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b07d0df5-8a78-3e37-a247-4317c705e9bc"
+          },
+          "proposedRole": 0,
+          "explanation": "Johanna Rytting\u202FKaneryd is listed in the Swedish FA squad for the qualifier and therefore will be eligible to play for Sweden in this match.",
+          "contextName": "Johanna Rytting Kaneryd",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-fotboll---gustavssons-trupp-till-vm-kvalet"
+            },
+            "name": "Svensk Fotboll \u2013 Gustavssons trupp till VM\u2011kvalet"
+          },
+          "uri": "https://www.svenskfotboll.se/nyheter/landslag/2026/05/gustavssons-trupp-till-vm-kvalet/",
+          "title": "Gustavssons trupp till VM\u2011kvalet - Svensk fotboll",
+          "observedAt": "2026-06-01T14:21:25.8652284+00:00",
+          "summary": "The official Swedish FA announcement of the squad for the World Cup qualification matches includes Johanna Rytting\u202FKaneryd (Chelsea FC).",
+          "rawExcerpt": "... 68 8 Johanna Rytting Kaneryd Chelsea FC ..."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob---denmark--w--vs-sweden--w-"
+            },
+            "name": "FotMob \u2013 Denmark (W) vs Sweden (W)"
+          },
+          "uri": "https://www.fotmob.com/matches/sweden-vs-denmark/14a9de",
+          "title": "Denmark (W) vs Sweden (W) - live score, predicted lineups and H2H stats",
+          "observedAt": "2026-06-01T14:21:25.8652295+00:00",
+          "summary": "The match is scheduled for Friday 5\u202FJune\u202F2026 at 17:15\u202FUTC (19:15\u202FCET) in Odense, Denmark, as part of the Women\u0027s World Cup qualification UEFA League A Group\u202F1.",
+          "rawExcerpt": "Denmark faces Sweden at Nature Energy Park on Fri, Jun 5, 2026, 17:15 UTC. This match is part of the Women\u2019s World Cup Qualification UEFA League A Grp. 1."
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ce6e53b88f09d6f1ecd0febb"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ce6e53b88f09d6f1ecd0febb"
+      },
+      "fingerprint": "ai:ce6e53b88f09d6f1ecd0febb",
+      "title": "Sweden vs Italy \u2013 FIFA Women\u2019s World Cup Qualification",
+      "description": "Sweden host Italy in a UEFA League A qualification match for the 2027 FIFA Women\u2019s World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "2027 FIFA Women\u2019s World Cup UEFA qualification, League A Group 1, Matchday 6",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b07d0df5-8a78-3e37-a247-4317c705e9bc"
+          },
+          "proposedRole": 0,
+          "explanation": "Johanna Rytting\u202FKaneryd is part of the Swedish national team squad announced for the qualification period and therefore is eligible for the home match against Italy.",
+          "contextName": "Johanna Rytting Kaneryd",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-fotboll---gustavssons-trupp-till-vm-kvalet"
+            },
+            "name": "Svensk Fotboll \u2013 Gustavssons trupp till VM\u2011kvalet"
+          },
+          "uri": "https://www.svenskfotboll.se/nyheter/landslag/2026/05/gustavssons-trupp-till-vm-kvalet/",
+          "title": "Gustavssons trupp till VM\u2011kvalet - Svensk fotboll",
+          "observedAt": "2026-06-01T14:21:25.8652412+00:00",
+          "summary": "The Swedish FA squad list for the qualification matches includes Johanna Rytting\u202FKaneryd (Chelsea FC).",
+          "rawExcerpt": "... 68 8 Johanna Rytting Kaneryd Chelsea FC ..."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa---women-s-european-qualifiers-preview"
+            },
+            "name": "UEFA \u2013 Women\u2019s European Qualifiers preview"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/news/02a5-20b5ba17b23f-57af31d1b97d-1000--women-s-european-qualifiers-for-the-2027-fifa-women-s-worl/",
+          "title": "Women\u0027s European Qualifiers for the 2027 FIFA Women\u0027s World Cup: Matchday 5 and 6 preview",
+          "observedAt": "2026-06-01T14:21:25.8652422+00:00",
+          "summary": "The schedule lists Sweden vs Italy on Tuesday 9\u202FJune\u202F2026 at 19:00 CET as part of the qualification campaign.",
+          "rawExcerpt": "Tuesday 9 June Sweden vs Italy(19:00)"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

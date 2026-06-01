@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "perseus-karlstrom"
+    },
+    "name": "Perseus Karlstr\u00F6m",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "athletics"
+      },
+      "name": "athletics"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "World Athletics athlete-by-country records show him in Sweden with world-class event marks",
+    "likelyActivityTypes": [
+      "rankings",
+      "race entries",
+      "records",
+      "medals"
+    ],
+    "suggestedEvidenceSources": "World Athletics athletes-by-country listing \uE200cite\uE202turn24search2",
+    "notes": "Keep despite more specialized sport profile"
+  },
+  "proposals": []
+}

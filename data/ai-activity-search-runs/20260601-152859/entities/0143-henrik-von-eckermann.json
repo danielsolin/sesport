@@ -1,0 +1,101 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "henrik-von-eckermann"
+    },
+    "name": "Henrik von Eckermann",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "equestrian"
+      },
+      "name": "equestrian"
+    },
+    "swedenConnection": "Swedish rider",
+    "currentRelationshipOrStatus": "FEI bio lists Sweden and jumping registration; FEI media highlights Swedish success",
+    "likelyActivityTypes": [
+      "FEI rankings",
+      "horse changes",
+      "Nations Cup",
+      "majors"
+    ],
+    "suggestedEvidenceSources": "FEI bio and FEI media pages \uE200cite\uE202turn44search0\uE202turn44search16",
+    "notes": "Tier-one equestrian entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:7b014d30cfb6076573a16a50"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7b014d30cfb6076573a16a50"
+      },
+      "fingerprint": "ai:7b014d30cfb6076573a16a50",
+      "title": "La Baule Nations Cup \u2013 Sweden vs. International Teams",
+      "description": "Henrik von Eckermann is named on Sweden\u2019s short list for the 2026 World Championship. The Swedish team will compete in the Nations Cup series at La Baule, France, scheduled for 10\u201114\u202FJune\u202F2026.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "equestrian"
+        },
+        "name": "equestrian"
+      },
+      "context": "FEI Nations Cup Jumping series, La\u202FBaule, France (part of the 2026 World Championship lead\u2011up circuit).",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-10",
+        "localStartTime": "13:30:00",
+        "timeZoneId": "Europe/Paris",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b015bb95-f964-0039-befe-4f8aaf6b7219"
+          },
+          "proposedRole": 0,
+          "explanation": "Henrik von Eckermann is listed on Sweden\u2019s short list for the 2026 World Championship and thus is selected for the Swedish Nations Cup squad that will ride at La\u202FBaule in June.",
+          "contextName": "Henrik von Eckermann",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-ridsportf\u00F6rbundet---pressmeddelande"
+            },
+            "name": "Svenska Ridsportf\u00F6rbundet \u2013 Pressmeddelande"
+          },
+          "uri": "https://via.tt.se/pressmeddelande/4346651/sju-ryttare-pa-henrik-ankarcronas-korta-lista-till-vm-i-aachen?lang=sv\u0026publisherId=3236996",
+          "title": "Sju ryttare p\u00E5 Henrik Ankarcronas korta lista till VM i Aachen",
+          "observedAt": "2026-06-01T14:54:42.7558496+00:00",
+          "summary": "The article states that Sweden\u2019s short list for the 2026 World Championship includes Henrik von Eckermann and mentions upcoming five\u2011star Nations Cup events in Rom (27\u201131\u202FMay), La\u202FBaule (10\u201114\u202FJune) and Falsterbo (9\u201112\u202FJuly).",
+          "rawExcerpt": "\u2026Henrik von Eckermann \u2026 femstj\u00E4rniga nationshoppningar i Rom 27\u201131 maj, La Baule 10\u201114 juni och Falsterbo 9\u201112 juli."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:equestrianwords---f\u00F6rbundskaptenens-korta-lista-inf\u00F6r-vm"
+            },
+            "name": "Equestrianwords \u2013 F\u00F6rbundskaptenens korta lista inf\u00F6r VM"
+          },
+          "uri": "https://equestrianwords.se/2026/04/23/forbundskaptenens-korta-lista-infor-vm/",
+          "title": "F\u00F6rbundskaptenens korta lista inf\u00F6r VM",
+          "observedAt": "2026-06-01T14:54:42.755851+00:00",
+          "summary": "Confirms Henrik von Eckermann\u2019s inclusion on the Swedish short list and repeats the schedule of Nations Cup events, including La\u202FBaule 10\u201114\u202FJune 2026.",
+          "rawExcerpt": "Henrik von Eckermann \u2026 femstj\u00E4rniga nationshoppningar i Rom \u2026 La Baule 10\u201114 juni \u2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

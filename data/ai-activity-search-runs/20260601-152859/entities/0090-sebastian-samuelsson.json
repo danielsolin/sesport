@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sebastian-samuelsson"
+    },
+    "name": "Sebastian Samuelsson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "biathlon"
+      },
+      "name": "biathlon"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Biathlon Federation A-team lists him",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "Olympic selection"
+    ],
+    "suggestedEvidenceSources": "Biathlon A-team page \uE200cite\uE202turn26view1",
+    "notes": "Tier-one winter entity"
+  },
+  "proposals": []
+}

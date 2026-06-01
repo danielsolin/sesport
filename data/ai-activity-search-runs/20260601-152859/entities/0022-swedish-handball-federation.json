@@ -1,0 +1,88 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-handball-federation"
+    },
+    "name": "Svenska Handbollf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Official federation details listed by EHF",
+    "likelyActivityTypes": [
+      "governance",
+      "squads",
+      "qualification",
+      "discipline"
+    ],
+    "suggestedEvidenceSources": "EHF federation page; Handbollslandslaget site \uE200cite\uE202turn14search9\uE202turn38search12",
+    "notes": "Important source for both men and women"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:0ba0f4a531594a26636ea9a0"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0ba0f4a531594a26636ea9a0"
+      },
+      "fingerprint": "ai:0ba0f4a531594a26636ea9a0",
+      "title": "Sweden vs Greece \u2013 Men\u2019s Friendly International Handball",
+      "description": "Sweden men\u0027s national handball team will play a friendly international match against Greece at Strawberry Arena in Solna.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "handball"
+        },
+        "name": "handball"
+      },
+      "context": "Friendly international (non\u2011competitive) match for the senior men\u2019s national team.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c6244843-14f7-f73b-92e4-1216323343c3"
+          },
+          "proposedRole": 0,
+          "explanation": "Svenska Handbollf\u00F6rbundet is the governing body for Swedish handball and organises the senior men\u2019s national team, which will compete in this match.",
+          "contextName": "Svenska Handbollf\u00F6rbundet",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:matchen-nu---sweden-vs-greece-2026"
+            },
+            "name": "matchen.nu \u2013 Sweden vs Greece 2026"
+          },
+          "uri": "https://matchen.nu/ligor/friendlies/2026/sweden-greece",
+          "title": "Sverige vs Grekland \u2013 V\u00E4nskapsmatcher landslag 2026, Friendly International",
+          "observedAt": "2026-06-01T13:51:34.8768433+00:00",
+          "summary": "The page lists a friendly match between Sweden and Greece on Thursday 4 June 2026 at 19:00, held at Strawberry Arena, Solna.",
+          "rawExcerpt": "torsdag 4 juni 2026 kl. 19:00 ... Arena: Strawberry Arena, Solna ... Sverige vs Grekland \u2013 V\u00E4nskapsmatcher landslag 2026"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "amanda-ilestedt"
+    },
+    "name": "Amanda Ilestedt",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Eintracht Frankfurt",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Experienced Sweden anchor"
+  },
+  "proposals": []
+}

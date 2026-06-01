@@ -77,6 +77,8 @@ public class ActivityProposalSourceImporterTests
             Confidence: 1.0m,
             ActivityProposalStatus.Pending,
             null,
+            null,
+            null,
             null
          );
       }

@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-cross-country-skiing-team"
+    },
+    "name": "L\u00E4ngdlandslaget",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "cross-country-skiing"
+      },
+      "name": "cross-country skiing"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swedish Ski Association published 2025/26 A-team",
+    "likelyActivityTypes": [
+      "squad updates",
+      "World Cup",
+      "championships",
+      "Olympic selection"
+    ],
+    "suggestedEvidenceSources": "Swedish Ski Association A-team roster \uE200cite\uE202turn28view1\uE202turn28view2",
+    "notes": "Key winter watchlist cluster"
+  },
+  "proposals": []
+}

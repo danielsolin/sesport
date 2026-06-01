@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "felix-claar"
+    },
+    "name": "Felix Claar",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Official player page lists SC Magdeburg and national-team stats; 2026 award story confirms current stature",
+    "likelyActivityTypes": [
+      "championships",
+      "awards",
+      "club changes",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Official player page and award story \uE200cite\uE202turn38search11\uE202turn38search3",
+    "notes": "Tier-one men\u2019s handball inclusion"
+  },
+  "proposals": []
+}

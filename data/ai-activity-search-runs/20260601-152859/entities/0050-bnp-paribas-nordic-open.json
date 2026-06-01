@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "bnp-paribas-nordic-open"
+    },
+    "name": "BNP Paribas Nordic Open",
+    "type": "recurring_event",
+    "sport": {
+      "externalId": {
+        "value": "tennis"
+      },
+      "name": "tennis"
+    },
+    "swedenConnection": "Sweden-based",
+    "currentRelationshipOrStatus": "Official site identifies ATP-featured event",
+    "likelyActivityTypes": [
+      "player field",
+      "wildcards",
+      "draws",
+      "sponsor changes"
+    ],
+    "suggestedEvidenceSources": "Stockholm Open official site \uE200cite\uE202turn10search0",
+    "notes": "Stable tennis-event root"
+  },
+  "proposals": []
+}

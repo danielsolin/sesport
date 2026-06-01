@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jesper-svensson"
+    },
+    "name": "Jesper Svensson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Official PGA Tour/DPWT profiles list Sweden and current tour status",
+    "likelyActivityTypes": [
+      "DPWT/PGA entries",
+      "rankings",
+      "wins"
+    ],
+    "suggestedEvidenceSources": "PGA Tour / DPWT profiles \uE200cite\uE202turn34search1\uE202turn34search5",
+    "notes": "Good tier_2 golf entity"
+  },
+  "proposals": []
+}

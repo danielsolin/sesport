@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-floorball-national-team"
+    },
+    "name": "Herrlandslaget i innebandy",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "floorball"
+      },
+      "name": "floorball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "IFF confirms Sweden qualified for 2026 Men\u2019s WFC",
+    "likelyActivityTypes": [
+      "squad calls",
+      "WFC",
+      "rankings",
+      "captaincy"
+    ],
+    "suggestedEvidenceSources": "IFF qualification and WFC group pages \uE200cite\uE202turn8search4\uE202turn8search1",
+    "notes": "Strong Sweden-specific sport identity"
+  },
+  "proposals": []
+}

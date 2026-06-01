@@ -205,6 +205,8 @@ internal sealed record ActivityProposalOutput(
    IReadOnlyCollection<ActivityProposalEvidence> Evidence,
    decimal? Confidence,
    ActivityProposalStatus Status,
+   ActivityProposalRejectReason? RejectReason,
+   string? RejectComment,
    ActivityProposalGroupId? GroupId,
    ActivityId? ActivityId
 )
@@ -231,6 +233,8 @@ internal sealed record ActivityProposalOutput(
          proposal.Evidence,
          proposal.Confidence,
          proposal.Status,
+         proposal.RejectReason,
+         proposal.RejectComment,
          proposal.GroupId,
          proposal.ActivityId
       );

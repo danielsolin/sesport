@@ -1,0 +1,24 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "linnea-mobarg"
+    },
+    "name": "Linnea Mob\u00E4rg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "skicross"
+      },
+      "name": "skicross"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "SSF skicross roster lists her",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships"
+    ],
+    "suggestedEvidenceSources": "SSF skicross roster page \uE200cite\uE202turn32view3",
+    "notes": "Good women\u2019s skicross node"
+  },
+  "proposals": []
+}

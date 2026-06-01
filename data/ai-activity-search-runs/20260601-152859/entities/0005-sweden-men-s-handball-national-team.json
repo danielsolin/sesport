@@ -1,0 +1,27 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-handball-national-team"
+    },
+    "name": "Herrlandslaget i handboll",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Official current men\u2019s squad page lists active internationals",
+    "likelyActivityTypes": [
+      "squad calls",
+      "tournament rosters",
+      "captaincy",
+      "injuries",
+      "medals"
+    ],
+    "suggestedEvidenceSources": "Handbollslandslaget men\u2019s page \uE200cite\uE202turn38search5",
+    "notes": "High public-interest Team Sweden entity"
+  },
+  "proposals": []
+}

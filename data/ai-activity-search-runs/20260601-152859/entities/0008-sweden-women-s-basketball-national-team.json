@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-women-s-basketball-national-team"
+    },
+    "name": "Damlandslaget i basket",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "basketball"
+      },
+      "name": "basketball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "FIBA Women\u2019s EuroBasket qualifier team page available",
+    "likelyActivityTypes": [
+      "squad calls",
+      "qualification",
+      "tournaments"
+    ],
+    "suggestedEvidenceSources": "FIBA women\u2019s Sweden team page \uE200cite\uE202turn40search0",
+    "notes": "Coverage value rises around EuroBasket cycles"
+  },
+  "proposals": []
+}

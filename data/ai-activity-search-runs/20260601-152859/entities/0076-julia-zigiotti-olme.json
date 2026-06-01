@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "julia-zigiotti-olme"
+    },
+    "name": "Julia Zigiotti Olme",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Manchester United FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Useful tier_2"
+  },
+  "proposals": []
+}

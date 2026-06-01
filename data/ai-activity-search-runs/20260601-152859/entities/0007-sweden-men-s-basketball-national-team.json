@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-basketball-national-team"
+    },
+    "name": "Herrlandslaget i basket",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "basketball"
+      },
+      "name": "basketball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "FIBA EuroBasket 2025 team page shows leaders and roster",
+    "likelyActivityTypes": [
+      "squad calls",
+      "qualification",
+      "player availability",
+      "tournaments"
+    ],
+    "suggestedEvidenceSources": "FIBA Sweden team page \uE200cite\uE202turn39search4",
+    "notes": "Useful especially because of NBA/NCAA export pathway"
+  },
+  "proposals": []
+}

@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "lulea-hockey"
+    },
+    "name": "Lule\u00E5 Hockey",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "ice-hockey"
+      },
+      "name": "ice hockey"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "CHL content references Lule\u00E5 as reigning European champion in quarter-final context",
+    "likelyActivityTypes": [
+      "CHL qualification",
+      "exports",
+      "coach changes"
+    ],
+    "suggestedEvidenceSources": "CHL quarter-final article \uE200cite\uE202turn42search9",
+    "notes": "Worth keeping despite more seasonal international footprint"
+  },
+  "proposals": []
+}

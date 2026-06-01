@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "h65-hoor"
+    },
+    "name": "H65 H\u00F6\u00F6r",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "EHF club page shows title/final history",
+    "likelyActivityTypes": [
+      "European qualification",
+      "transfers",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "EHF club pages \uE200cite\uE202turn14search2\uE202turn14search6",
+    "notes": "Good women\u2019s club-handball candidate"
+  },
+  "proposals": []
+}

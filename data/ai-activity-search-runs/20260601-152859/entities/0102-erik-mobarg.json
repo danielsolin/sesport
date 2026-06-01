@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "erik-mobarg"
+    },
+    "name": "Erik Mob\u00E4rg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "skicross"
+      },
+      "name": "skicross"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "SSF article notes early Olympic berth",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "Olympic selection"
+    ],
+    "suggestedEvidenceSources": "SSF skicross pages \uE200cite\uE202turn32view3",
+    "notes": "High-value sibling cluster with David"
+  },
+  "proposals": []
+}

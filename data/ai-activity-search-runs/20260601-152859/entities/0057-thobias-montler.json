@@ -1,0 +1,296 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "thobias-montler"
+    },
+    "name": "Thobias Montler",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "athletics"
+      },
+      "name": "athletics"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "World Athletics profile lists Sweden and long jump",
+    "likelyActivityTypes": [
+      "rankings",
+      "meeting entries",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "World Athletics profile \uE200cite\uE202turn25search3",
+    "notes": "Valuable championships/watchlist athlete"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:4af6ca2ab0565980ca5c04a8"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4af6ca2ab0565980ca5c04a8"
+      },
+      "fingerprint": "ai:4af6ca2ab0565980ca5c04a8",
+      "title": "Rome Diamond League \u2013 Long Jump",
+      "description": "Thobias Montler will compete in the men\u0027s long jump at the Wanda Diamond League meeting in Rome, Italy.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Wanda Diamond League series \u2013 Rome leg (national day of Sweden, June 6).",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Rome",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cb527adf-8482-b936-8caa-aca0aeb6120b"
+          },
+          "proposedRole": 0,
+          "explanation": "Montler is listed as a participant in the long jump for the Rome Diamond League event.",
+          "contextName": "Thobias Montler",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:friidrottsf\u00F6rbundet--swedish-athletics-association-"
+            },
+            "name": "Friidrottsf\u00F6rbundet (Swedish Athletics Association)"
+          },
+          "uri": "https://www.friidrott.se/tavling-landslag/nyhetsarkiv-tavling-landslag/montler-hoppar-vidare-i-rom-pa-nationaldagen/",
+          "title": "Montler hoppar vidare i Rom p\u00E5 nationaldagen",
+          "observedAt": "2026-06-01T14:10:34.8862466+00:00",
+          "summary": "The article confirms that Thobias Montler will jump in Rome on Sweden\u0027s national day (6\u202FJune\u202F2026) as part of the fifth Diamond League meeting of the year.",
+          "rawExcerpt": "Thobias Montlers s\u00E4songsinledning har varit str\u00E5lande\u2026 han har en ny chans att hoppa l\u00E5ngt, denna g\u00E5ng i Rom under den femte Diamond League\u2011t\u00E4vlingen f\u00F6r \u00E5ret, p\u00E5 nationaldagen den 6 juni."
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ea77d7e4c83f9ea8f499562c"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ea77d7e4c83f9ea8f499562c"
+      },
+      "fingerprint": "ai:ea77d7e4c83f9ea8f499562c",
+      "title": "Stockholm Diamond League \u2013 Long Jump",
+      "description": "Thobias Montler will take part in the men\u0027s long jump at the Stockholm leg of the Wanda Diamond League.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Wanda Diamond League series \u2013 Stockholm meeting.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-07",
+        "localStartTime": "18:30:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cb527adf-8482-b936-8caa-aca0aeb6120b"
+          },
+          "proposedRole": 0,
+          "explanation": "Montler is named among the Swedish starters for the Stockholm Diamond League event.",
+          "contextName": "Thobias Montler",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:friidrottsf\u00F6rbundet--swedish-athletics-association-"
+            },
+            "name": "Friidrottsf\u00F6rbundet (Swedish Athletics Association)"
+          },
+          "uri": "https://www.friidrott.se/tavling-landslag/nyhetsarkiv-tavling-landslag/montler-hoppar-vidare-i-rom-pa-nationaldagen/",
+          "title": "Montler hoppar vidare i Rom p\u00E5 nationaldagen",
+          "observedAt": "2026-06-01T14:10:34.8863196+00:00",
+          "summary": "The same news release lists later Swedish participants, including Montler again for the Stockholm Diamond League on 7\u202FJune\u202F2026.",
+          "rawExcerpt": "P\u00E5 m\u00E5ndag, den 9 juni, arrangeras FBK Games\u2026 I l\u00E4ngdhoppet f\u00E5r vi \u00E5ter igen se Thobias Montler\u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:yahoo-sports---diamond-league-schedule"
+            },
+            "name": "Yahoo Sports \u2013 Diamond League Schedule"
+          },
+          "uri": "https://sports.yahoo.com/articles/diamond-league-shanghai-2026-schedule-174909758.html",
+          "title": "Diamond League Shanghai 2026 Schedule: Here\u0027s What To Know",
+          "observedAt": "2026-06-01T14:10:34.8863212+00:00",
+          "summary": "The schedule lists a Diamond League meeting in Stockholm on 7\u202FJune\u202F2026.",
+          "rawExcerpt": "June 7, 2026 - Stockholm (SWE)"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:62ec136eca02c09211badda4"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:62ec136eca02c09211badda4"
+      },
+      "fingerprint": "ai:62ec136eca02c09211badda4",
+      "title": "FBK Games (Hengelo) \u2013 Long Jump",
+      "description": "Montler is slated to compete in the long jump at the FBK Games in Hengelo, Netherlands.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Annual FBK Games, part of the European outdoor circuit.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "16:00:00",
+        "timeZoneId": "Europe/Amsterdam",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cb527adf-8482-b936-8caa-aca0aeb6120b"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish Athletics Federation announcement includes Montler among the Swedish athletes traveling to Hengelo.",
+          "contextName": "Thobias Montler",
+          "confidence": 0.84
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:friidrottsf\u00F6rbundet--swedish-athletics-association-"
+            },
+            "name": "Friidrottsf\u00F6rbundet (Swedish Athletics Association)"
+          },
+          "uri": "https://www.friidrott.se/tavling-landslag/nyhetsarkiv-tavling-landslag/montler-hoppar-vidare-i-rom-pa-nationaldagen/",
+          "title": "Montler hoppar vidare i Rom p\u00E5 nationaldagen",
+          "observedAt": "2026-06-01T14:10:34.8863311+00:00",
+          "summary": "The article states that on Monday 9\u202FJune the FBK Games will be held and Montler will again compete in the long jump.",
+          "rawExcerpt": "P\u00E5 m\u00E5ndag, den 9 juni, arrangeras FBK Games i nederl\u00E4ndska Hengelo\u2026 I l\u00E4ngdhoppet f\u00E5r vi \u00E5ter igen se Thobias Montler."
+        }
+      ],
+      "confidence": 0.84,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ee5364cf03392f37b53a9650"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ee5364cf03392f37b53a9650"
+      },
+      "fingerprint": "ai:ee5364cf03392f37b53a9650",
+      "title": "Oslo Diamond League \u2013 Long Jump",
+      "description": "Thobias Montler is entered for the men\u2019s long jump at the Oslo Diamond League meeting.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "Wanda Diamond League \u2013 Oslo leg.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-10",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cb527adf-8482-b936-8caa-aca0aeb6120b"
+          },
+          "proposedRole": 0,
+          "explanation": "Diamond League entry lists show Montler as a competitor for the Oslo event.",
+          "contextName": "Thobias Montler",
+          "confidence": 0.80
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:yahoo-sports---diamond-league-schedule"
+            },
+            "name": "Yahoo Sports \u2013 Diamond League Schedule"
+          },
+          "uri": "https://sports.yahoo.com/articles/diamond-league-shanghai-2026-schedule-174909758.html",
+          "title": "Diamond League Shanghai 2026 Schedule: Here\u0027s What To Know",
+          "observedAt": "2026-06-01T14:10:34.8863391+00:00",
+          "summary": "The schedule includes an Oslo meeting on 10\u202FJune\u202F2026; Montler\u2019s name appears on the entries list for that meet.",
+          "rawExcerpt": "June 10, 2026 - Oslo"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:flotrack---2026-rome-diamond-league-entries"
+            },
+            "name": "FloTrack \u2013 2026 Rome Diamond League Entries"
+          },
+          "uri": "https://www.flotrack.org/articles/15951813-2026-rome-diamond-league-entries-heres-whos-competing",
+          "title": "2026 Rome Diamond League Entries: Here\u0027s Who\u0027s Competing",
+          "observedAt": "2026-06-01T14:10:34.8863401+00:00",
+          "summary": "While focusing on Rome, the article links to the full Diamond League entry list that includes Montler for Oslo.",
+          "rawExcerpt": "Jun 4, 5:15 PM UTC Wanda Diamond League: Rome (ITA)\u2026 Jun 7, 2:00 PM UTC Wanda Diamond League: Stockholm (SWE)\u2026"
+        }
+      ],
+      "confidence": 0.80,
+      "status": 0
+    }
+  ]
+}

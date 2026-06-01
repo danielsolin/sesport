@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "henrik-harlaut"
+    },
+    "name": "Henrik Harlaut",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "freeski"
+      },
+      "name": "freeski"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "SSF freeski A-team page lists him and Olympic/X Games achievements",
+    "likelyActivityTypes": [
+      "World Cup",
+      "X Games",
+      "invitational events"
+    ],
+    "suggestedEvidenceSources": "SSF freeski A-team page \uE200cite\uE202turn31view1",
+    "notes": "Strong watchlist fit despite sport volatility"
+  },
+  "proposals": []
+}

@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "walter-wallberg"
+    },
+    "name": "Walter Wallberg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "moguls"
+      },
+      "name": "moguls"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "SSF moguls A-team roster lists him",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "Olympic selection"
+    ],
+    "suggestedEvidenceSources": "SSF moguls roster page \uE200cite\uE202turn30view3",
+    "notes": "Strong moguls anchor"
+  },
+  "proposals": []
+}

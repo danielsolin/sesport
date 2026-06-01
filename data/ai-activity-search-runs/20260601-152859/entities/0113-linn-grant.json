@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "linn-grant"
+    },
+    "name": "Linn Grant",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "LPGA official profile lists Sweden and LPGA status",
+    "likelyActivityTypes": [
+      "LPGA/major entries",
+      "rankings",
+      "Solheim Cup"
+    ],
+    "suggestedEvidenceSources": "LPGA profile \uE200cite\uE202turn45search1\uE202turn45search5",
+    "notes": "Tier-one women\u2019s golf inclusion"
+  },
+  "proposals": []
+}

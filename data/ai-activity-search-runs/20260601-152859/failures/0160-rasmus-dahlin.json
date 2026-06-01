@@ -1,0 +1,30 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "rasmus-dahlin"
+    },
+    "name": "Rasmus Dahlin",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "ice-hockey"
+      },
+      "name": "ice hockey"
+    },
+    "swedenConnection": "Swedish player",
+    "currentRelationshipOrStatus": "NHL projected-lines reporting pairs him as key Sweden defender",
+    "likelyActivityTypes": [
+      "NHL performance",
+      "Tre Kronor role",
+      "captaincy"
+    ],
+    "suggestedEvidenceSources": "NHL projected-lines report \uE200cite\uE202turn42search4",
+    "notes": "Long-run Swedish hockey entity"
+  },
+  "errorType": "System.Net.Http.HttpRequestException",
+  "errorMessage": "AI activity search failed with 500 InternalServerError from https://openrouter.ai/api/v1/: Internal Server Error Check that OPENROUTER_API_KEY is current and belongs to an active OpenRouter account.",
+  "stackTrace": "System.Net.Http.HttpRequestException: AI activity search failed with 500 InternalServerError from https://openrouter.ai/api/v1/: Internal Server Error Check that OPENROUTER_API_KEY is current and belongs to an active OpenRouter account.\r\n   at SESport.Core.AIActivitySearch.OpenAiResponsesActivitySearchClient.SearchAsync(ActivitySearchRequest request, CancellationToken cancellationToken) in C:\\Users\\daniel\\source\\sesport\\src\\SESport.Core\\AIActivitySearch\\OpenAiResponsesActivitySearchClient.cs:line 63\r\n   at SESport.Core.AIActivitySearch.ActivitySearchService.SearchAsync(ActivitySearchRequest request, CancellationToken cancellationToken) in C:\\Users\\daniel\\source\\sesport\\src\\SESport.Core\\AIActivitySearch\\ActivitySearchService.cs:line 21\r\n   at SESport.Tools.AIActivitySearch.ActivitySearchToolApplication.SearchEntityAsync(ActivitySearchService searchService, ActivityProposalRepository proposalRepository, ToolOptions options, ActivitySearchEntity entity, Int32 entityIndex, DateTimeOffset runStartedAt, String runDirectory, List\u00601 results, List\u00601 items, Int32 consecutiveFailures) in C:\\Users\\daniel\\source\\sesport\\tools\\SESport.AIActivitySearch\\ActivitySearchToolApplication.cs:line 147",
+  "startedAt": "2026-06-01T15:03:13.437695+00:00",
+  "completedAt": "2026-06-01T15:03:21.5977484+00:00",
+  "durationSeconds": 8.16
+}

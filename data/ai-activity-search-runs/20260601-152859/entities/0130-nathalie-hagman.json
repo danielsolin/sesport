@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "nathalie-hagman"
+    },
+    "name": "Nathalie Hagman",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Official player page lists Gy\u00F6ri Audi ETO KC (2025\u2013) and national-team totals",
+    "likelyActivityTypes": [
+      "milestones",
+      "championships",
+      "injuries",
+      "retirement watch"
+    ],
+    "suggestedEvidenceSources": "Official player page and 2026 story \uE200cite\uE202turn38search2\uE202turn38search13",
+    "notes": "High-value even late-career"
+  },
+  "proposals": []
+}

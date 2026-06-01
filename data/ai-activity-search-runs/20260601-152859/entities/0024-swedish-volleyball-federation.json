@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-volleyball-federation"
+    },
+    "name": "Svenska Volleybollf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "volleyball-beach-volleyball"
+      },
+      "name": "volleyball / beach volleyball"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Official site hosts men\u2019s beach national-team page",
+    "likelyActivityTypes": [
+      "pair selection",
+      "event entries",
+      "governance"
+    ],
+    "suggestedEvidenceSources": "Swedish Volleyball federation pages \uE200cite\uE202turn26view3",
+    "notes": "Important because Sweden\u2019s strongest current volleyball edge is beach"
+  },
+  "proposals": []
+}

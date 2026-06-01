@@ -1,0 +1,331 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-sailing-federation"
+    },
+    "name": "Svenska Seglarf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "sailing"
+      },
+      "name": "sailing"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Official site links landslag pages and World Sailing athlete profiles",
+    "likelyActivityTypes": [
+      "team selections",
+      "regatta plans",
+      "governance"
+    ],
+    "suggestedEvidenceSources": "Swedish Sailing Federation pages \uE200cite\uE202turn16search4\uE202turn27view2",
+    "notes": "Useful for otherwise fragmented sailing data"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:5900c7911a2672da440afe7f"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5900c7911a2672da440afe7f"
+      },
+      "fingerprint": "ai:5900c7911a2672da440afe7f",
+      "title": "Juniregattan \u2013 Classic Boats",
+      "description": "Classic boat regatta organized by GKSS, held on 6\u202FJune\u202F2026 at L\u00E5ngedrag.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Part of the West Coast sailing calendar managed by the Swedish Sailing Federation.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The event is listed on the Swedish Sailing Federation\u2019s West Coast calendar, showing the federation\u2019s role in coordinating the regatta.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.93
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:swedish-sailing-federation---west-coast-calendar-june"
+            },
+            "name": "Swedish Sailing Federation \u2013 West Coast Calendar June"
+          },
+          "uri": "https://www.svensksegling.se/vastkustens-seglarforbund/kappsegling/vastkustkalendern/juni/",
+          "title": "Juni",
+          "observedAt": "2026-06-01T13:54:21.620482+00:00",
+          "summary": "6 Juni \u2013 Juniregattan; Arrang\u00F6r: GKSS; Plats: L\u00E5ngedrag; Klasser: Klassiska b\u00E5tar.",
+          "rawExcerpt": "6 Juni \u2013 Juniregattan \u2026 Arrang\u00F6r: GKSS Plats: L\u00E5ngedrag Klasser: Klassiska b\u00E5tar"
+        }
+      ],
+      "confidence": 0.93,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:140c6c01e870357b42306390"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:140c6c01e870357b42306390"
+      },
+      "fingerprint": "ai:140c6c01e870357b42306390",
+      "title": "SM (Swedish Championships) \u2013 F18",
+      "description": "Swedish national championship for the F18 class, held 6\u20117\u202FJune\u202F2026 at Sandhamn.",
+      "type": 4,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Listed in the Swedish Sailing Federation\u2019s preliminary competition calendar for the West Coast district.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The federation publishes the schedule, indicating its oversight of the national championship.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:swedish-sailing-federation---preliminary-calendar--mellannorrlands--2026"
+            },
+            "name": "Swedish Sailing Federation \u2013 Preliminary Calendar (Mellannorrlands) 2026"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T13:54:21.6204981+00:00",
+          "summary": "\u26AA 6-7/6 SM (F18, Annat), Sandhamn \u2013 Swedish Championship for the F18 class.",
+          "rawExcerpt": "\u26AA 6-7/6 SM (F18, Annat), Sandhamn"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:be9244ea7d791f002b6f8f38"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:be9244ea7d791f002b6f8f38"
+      },
+      "fingerprint": "ai:be9244ea7d791f002b6f8f38",
+      "title": "Aln\u00F6n Runt (SRS) \u2013 Sailarena",
+      "description": "A short\u2011handed race series (SRS) around Aln\u00F6n, scheduled for 13\u202FJune\u202F2026.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Featured in the Swedish Sailing Federation\u2019s West Coast competition calendar for June.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-13",
+        "localStartTime": "09:30:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "Published by the federation as part of its official event schedule.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:swedish-sailing-federation---preliminary-calendar--mellannorrlands--2026"
+            },
+            "name": "Swedish Sailing Federation \u2013 Preliminary Calendar (Mellannorrlands) 2026"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T13:54:21.6205043+00:00",
+          "summary": "\uD83D\uDD34 13/6 Aln\u00F6n runt (SRS) [Sailarena].",
+          "rawExcerpt": "\uD83D\uDD34 13/6 Aln\u00F6n runt (SRS) [Sailarena]"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:0a3d10103c9cc6ae4a02feef"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0a3d10103c9cc6ae4a02feef"
+      },
+      "fingerprint": "ai:0a3d10103c9cc6ae4a02feef",
+      "title": "Allsvenskan #2 \u2013 L\u00E5ngedrag",
+      "description": "Second round of the Allsvenskan league for classic boats, held 13\u201114\u202FJune\u202F2026 at L\u00E5ngedrag.",
+      "type": 3,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Part of the Allsvenskan series listed in the federation\u2019s 2026 competition calendar.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-13",
+        "localStartTime": "11:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The federation\u2019s calendar includes the Allsvenskan series, showing its organisational role.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.87
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:swedish-sailing-federation---preliminary-calendar--mellannorrlands--2026"
+            },
+            "name": "Swedish Sailing Federation \u2013 Preliminary Calendar (Mellannorrlands) 2026"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T13:54:21.6205113+00:00",
+          "summary": "\u26AA 13-14/6 Allsvenskan #2, L\u00E5ngedrag (Annat).",
+          "rawExcerpt": "\u26AA 13-14/6 Allsvenskan #2, L\u00E5ngedrag (Annat)"
+        }
+      ],
+      "confidence": 0.87,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:17c421cac507255dada55756"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:17c421cac507255dada55756"
+      },
+      "fingerprint": "ai:17c421cac507255dada55756",
+      "title": "Gotland Runt \u2013 Annat",
+      "description": "A week\u2011long classic\u2011boat race around Gotland, taking place 26\u202FJune\u202F\u2013\u202F2\u202FJuly\u202F2026.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Listed in the federation\u2019s preliminary calendar as a multi\u2011day event organized by Sailarena.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-26",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "cfa65534-e0eb-5a33-b9a5-a7e05071977e"
+          },
+          "proposedRole": 6,
+          "explanation": "The Swedish Sailing Federation\u2019s calendar lists the event, indicating federation endorsement and publication.",
+          "contextName": "Svenska Seglarf\u00F6rbundet",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:swedish-sailing-federation---preliminary-calendar--mellannorrlands--2026"
+            },
+            "name": "Swedish Sailing Federation \u2013 Preliminary Calendar (Mellannorrlands) 2026"
+          },
+          "uri": "https://www.svensksegling.se/mellannorrlands-seglarforbund/kappsegling/kappseglingskalender/preliminar-kappseglingskalender-2026/",
+          "title": "Prelimin\u00E4r kappseglingskalender Mellannorrlands seglarf\u00F6rbund 2026",
+          "observedAt": "2026-06-01T13:54:21.6205167+00:00",
+          "summary": "\u26AA 26/6-2/7 Gotland runt (Annat) [Sailarena].",
+          "rawExcerpt": "\u26AA 26/6-2/7 Gotland runt (Annat) [Sailarena]"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    }
+  ]
+}

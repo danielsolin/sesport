@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "ibf-falun"
+    },
+    "name": "IBF Falun",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "floorball"
+      },
+      "name": "floorball"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "IFF says Falun reached 2026 Champions Cup final",
+    "likelyActivityTypes": [
+      "Champions Cup",
+      "transfers",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "IFF Champions Cup reporting \uE200cite\uE202turn41search7\uE202turn41search11",
+    "notes": "Strong stable club choice"
+  },
+  "proposals": []
+}

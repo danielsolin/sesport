@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jesper-nelin"
+    },
+    "name": "Jesper Nelin",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "biathlon"
+      },
+      "name": "biathlon"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Biathlon Federation A-team lists him",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "relays"
+    ],
+    "suggestedEvidenceSources": "Biathlon A-team page \uE200cite\uE202turn26view1",
+    "notes": "Good supporting entity"
+  },
+  "proposals": []
+}

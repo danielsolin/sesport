@@ -1,0 +1,162 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-beach-volleyball-national-team"
+    },
+    "name": "Herrlandslaget i beachvolley",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "volleyball-beach-volleyball"
+      },
+      "name": "volleyball / beach volleyball"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Official men\u2019s beach national-team page centers \u00C5hman/Hellvig plus reserve pair",
+    "likelyActivityTypes": [
+      "pair selection",
+      "tour entries",
+      "medals",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish Volleyball beach men page; SOK Paris 2024 medals page \uE200cite\uE202turn26view3\uE202turn22search7",
+    "notes": "Excellent entity family for future activity collection"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:c7de4d18b90c38020a2efadb"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:c7de4d18b90c38020a2efadb"
+      },
+      "fingerprint": "ai:c7de4d18b90c38020a2efadb",
+      "title": "Sweden vs. Other Nations \u2013 Beach Pro Tour Malm\u00F6 2026 (Opening Day)",
+      "description": "The Swedish men\u2019s beach volleyball national team (pairs \u00C5hman/Hellvig, H\u00F6lting Nilsson/Andersson and one reserve pair) compete as part of the Beach Pro Tour event held at Ribersborgsstranden in Malm\u00F6 on 9\u202FJune\u202F2026.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "volleyball-beach-volleyball"
+        },
+        "name": "volleyball / beach volleyball"
+      },
+      "context": "Beach Pro Tour is the world tour of beach volleyball and the Malm\u00F6 stop is scheduled for 9\u201112\u202FJune 2026. The event is part of the national team\u2019s bid to qualify for the 2026 Olympics.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "4755cbc5-7d39-223a-8e13-5339c7c8cd01"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish men\u2019s beach volleyball national team is listed as one of the participating squads on the official Swedish Volleyball Federation page for the 2026 beach volleyball season.",
+          "contextName": "Herrlandslaget i beachvolley",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-volleyboll---herr-landslag-2026"
+            },
+            "name": "Svensk volleyboll \u2013 Herr landslag 2026"
+          },
+          "uri": "https://volleyboll.se/beachvolley/landslag/herr",
+          "title": "Herr | Svensk volleyboll",
+          "observedAt": "2026-06-01T13:40:50.7925519+00:00",
+          "summary": "The page lists the 2026 season and mentions the Beach Pro Tour in Malm\u00F6 as an upcoming event for the national team.",
+          "rawExcerpt": "\u0022H\u00E4r uppdateras l\u00F6pande de t\u00E4vlingar som Sveriges beachvolleylandslag kommer att delta i under kommande beachvolley\u00E5ret 2026.\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-volleyboll---beach-pro-tour-malm\u00F6-2026"
+            },
+            "name": "Svensk volleyboll \u2013 Beach Pro Tour Malm\u00F6 2026"
+          },
+          "uri": "https://www.skanevolley.se/beachvolley/nyheter/beachvolley/2026-04-21-upplev-svenska-beachvolleysommaren-2026",
+          "title": "Upplev svenska beachvolley-sommaren 2026!",
+          "observedAt": "2026-06-01T13:40:50.7926965+00:00",
+          "summary": "Describes the Beach Pro Tour event at Ribersborgsstranden, Malm\u00F6 from 9\u201112\u202FJune\u202F2026, including the Swedish national team.",
+          "rawExcerpt": "\u00229-12 juni kommer Beach Pro Tour, beachvolleyns v\u00E4rldstour, till Malm\u00F6 tillsammans med guldhj\u00E4ltarna David \u00C5hman och Jonatan Hellvig, \u201DIcemen\u201D Jacob H\u00F6lting Nilsson och Elmer Andersson\u2026\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:9c3215af68fed8a850dbb6db"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:9c3215af68fed8a850dbb6db"
+      },
+      "fingerprint": "ai:9c3215af68fed8a850dbb6db",
+      "title": "NEVZA Tour \u2013 Oddanesand (Norge) 2026",
+      "description": "The Swedish men\u2019s beach volleyball national team enters the NEVZA tournament in Oddanesand, Norway, held from 16\u201118\u202FJune\u202F2026 as part of the Nordeuropea beach volleytour.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "volleyball-beach-volleyball"
+        },
+        "name": "volleyball / beach volleyball"
+      },
+      "context": "NEVZA hosts a bi\u2011weekly tournament in Oddanesand and Bridlington. Swedish teams register through the Swedish Volleyball Federation.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-16",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "4755cbc5-7d39-223a-8e13-5339c7c8cd01"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish Volleyball Federation announces that Swedish teams may enter NEVZA competitions, implying the national team is a participant.",
+          "contextName": "Herrlandslaget i beachvolley",
+          "confidence": 0.85
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-volleyboll---nevza-beach-tour"
+            },
+            "name": "Svensk volleyboll \u2013 NEVZA Beach Tour"
+          },
+          "uri": "https://volleyboll.se/beachvolley/nyheter/beachvolley/2026-05-07-nevza-beach-tour-dubbla-tavlingar-i-juni---deadline-for-anmalan-narmar-sig",
+          "title": "Nevza Beach Tour: Dubbla t\u00E4vlingar i juni \u2013 deadline f\u00F6r anm\u00E4lan n\u00E4rmar sig",
+          "observedAt": "2026-06-01T13:40:50.7946232+00:00",
+          "summary": "Mentions the NEVZA\u00A0Oddanesand tournament, 16\u201118\u00A0June, and indicates that Swedish teams submit their entries via the national federation.",
+          "rawExcerpt": "\u002216\u201118 juni st\u00E5r en NEVZA\u2011turnering p\u00E5 klassiska Oddanesand i Norge \u2013 och redan 21\u201123 juni avg\u00F6rs sedan n\u00E4sta tourt\u00E4vling i Bridlington, England.\u0022"
+        }
+      ],
+      "confidence": 0.85,
+      "status": 0
+    }
+  ]
+}

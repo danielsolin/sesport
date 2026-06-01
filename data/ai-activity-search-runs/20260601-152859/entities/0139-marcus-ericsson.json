@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "marcus-ericsson"
+    },
+    "name": "Marcus Ericsson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "motorsport"
+      },
+      "name": "motorsport"
+    },
+    "swedenConnection": "motor racing",
+    "currentRelationshipOrStatus": "INDYCAR official profile lists him with Andretti Global in 2026",
+    "likelyActivityTypes": [
+      "race entries",
+      "results",
+      "team changes",
+      "Indy 500"
+    ],
+    "suggestedEvidenceSources": "INDYCAR driver/team pages \uE200cite\uE202turn43search0\uE202turn43search16",
+    "notes": "Track Ericsson; Andretti is relationship target only"
+  },
+  "proposals": []
+}

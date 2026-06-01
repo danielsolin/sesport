@@ -1,0 +1,283 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "vincent-norrman"
+    },
+    "name": "Vincent Norrman",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "PGA Tour official profile lists Sweden",
+    "likelyActivityTypes": [
+      "PGA/DPWT entries",
+      "rankings",
+      "wins"
+    ],
+    "suggestedEvidenceSources": "PGA Tour profile \uE200cite\uE202turn34search2",
+    "notes": "Relationship-rich golfer"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:4412eed390d88cc641f86d16"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4412eed390d88cc641f86d16"
+      },
+      "fingerprint": "ai:4412eed390d88cc641f86d16",
+      "title": "RBC Canadian Open",
+      "description": "Vincent Norrman will compete in the RBC Canadian Open held in Ontario, Canada from 8\u202FJune to 14\u202FJune\u202F2026.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "PGA Tour tournament held at McLaughlin Golf Club, Royal Canadian Golf Club, Hamilton.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-08",
+        "localStartTime": "02:00:00",
+        "timeZoneId": "America/Toronto",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f3bac92e-dcf3-9238-a63c-ae155687bbc8"
+          },
+          "proposedRole": 0,
+          "explanation": "Vincent Norrman is listed as a participant in the tournament schedule on the PGA Tour Media Guide for 2026.",
+          "contextName": "Vincent Norrman",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:pga-tour-media-guide-2026"
+            },
+            "name": "PGA Tour Media Guide 2026"
+          },
+          "uri": "https://pgatourmedia.pgatourhq.com/static-assets/page/files/mediaguides/2026%20Media%20Guide_04.28.pdf",
+          "title": "PGA TOUR MEDIA GUIDE 2026",
+          "observedAt": "2026-06-01T14:37:41.2048498+00:00",
+          "summary": "Schedule lists RBC Canadian Open 8\u201114\u202FJune at Caledon, Ontario.",
+          "rawExcerpt": "June 8-14 RBC Canadian Open Caledon, Ontario, Canada TPC Toronto at Osprey Valley (North)"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:pgatour-com-player-profile---vincent-norrman"
+            },
+            "name": "PGATour.com player profile \u2013 Vincent Norrman"
+          },
+          "uri": "https://www.pgatour.com/player/51070/vincent-norrman/career",
+          "title": "Vincent Norrman PGA TOUR Player Profile, Stats, Bio, Career",
+          "observedAt": "2026-06-01T14:37:41.2048526+00:00",
+          "summary": "Shows Vincent Norrman\u0027s entry in the 2026 season schedule.",
+          "rawExcerpt": "events: RBC Canadian Open, U.S. Open, Travelers Championship, John Deere Classic"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:70654aab99069ee73582083f"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:70654aab99069ee73582083f"
+      },
+      "fingerprint": "ai:70654aab99069ee73582083f",
+      "title": "U.S. Open",
+      "description": "Vincent Norrman will play in the U.S. Open, scheduled from 15\u202FJune to 21\u202FJune\u202F2026 in New\u00A0York, United States.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Major championship played at Shinnecock Hills Golf Club, Southampton.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-15",
+        "localStartTime": "02:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f3bac92e-dcf3-9238-a63c-ae155687bbc8"
+          },
+          "proposedRole": 0,
+          "explanation": "The 2026 PGA Tour schedule lists Vincent Norrman as a player in the U.S.\u00A0Open.",
+          "contextName": "Vincent Norrman",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:pga-tour-media-guide-2026"
+            },
+            "name": "PGA Tour Media Guide 2026"
+          },
+          "uri": "https://pgatourmedia.pgatourhq.com/static-assets/page/files/mediaguides/2026%20Media%20Guide_04.28.pdf",
+          "title": "PGA TOUR MEDIA GUIDE 2026",
+          "observedAt": "2026-06-01T14:37:41.2048756+00:00",
+          "summary": "Lists U.S. Open 15\u201121\u202FJune held in New\u00A0York.",
+          "rawExcerpt": "June 15-21 U .S . Open Southampton, New York Shinnecock Hills Golf Club"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:e204d7afb3c77398b6c03d95"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:e204d7afb3c77398b6c03d95"
+      },
+      "fingerprint": "ai:e204d7afb3c77398b6c03d95",
+      "title": "Travelers Championship",
+      "description": "Vincent Norrman is scheduled to compete in the Travelers Championship from 22\u202FJune to 28\u202FJune\u202F2026 in Connecticut, United States.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "PGATour event at TPC River Highlands, Cromwell, Connecticut.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-22",
+        "localStartTime": "02:00:00",
+        "timeZoneId": "America/New_York",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f3bac92e-dcf3-9238-a63c-ae155687bbc8"
+          },
+          "proposedRole": 0,
+          "explanation": "He is listed in the PGA Tour schedule for that week.",
+          "contextName": "Vincent Norrman",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:pga-tour-media-guide-2026"
+            },
+            "name": "PGA Tour Media Guide 2026"
+          },
+          "uri": "https://pgatourmedia.pgatourhq.com/static-assets/page/files/mediaguides/2026%20Media%20Guide_04.28.pdf",
+          "title": "PGA TOUR MEDIA GUIDE 2026",
+          "observedAt": "2026-06-01T14:37:41.2048807+00:00",
+          "summary": "Shows Travelers Championship 22\u201128\u202FJune.",
+          "rawExcerpt": "June 22-28 Travelers Championship Cromwell, Connecticut TPC River Highlands"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:914c214d696896b94c8d0ee7"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:914c214d696896b94c8d0ee7"
+      },
+      "fingerprint": "ai:914c214d696896b94c8d0ee7",
+      "title": "John Deere Classic",
+      "description": "Vincent Norrman will participate in the John Deere Classic held from 29\u202FJune to 5\u202FJuly\u202F2026 in Illinois, United States.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Held at TPC Deere Run, Silvis, Illinois.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-29",
+        "localStartTime": "02:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "f3bac92e-dcf3-9238-a63c-ae155687bbc8"
+          },
+          "proposedRole": 0,
+          "explanation": "The event appears in the 2026 PGA Tour schedule with Vincent Norrman listed as a player.",
+          "contextName": "Vincent Norrman",
+          "confidence": 0.86
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:pga-tour-media-guide-2026"
+            },
+            "name": "PGA Tour Media Guide 2026"
+          },
+          "uri": "https://pgatourmedia.pgatourhq.com/static-assets/page/files/mediaguides/2026%20Media%20Guide_04.28.pdf",
+          "title": "PGA TOUR MEDIA GUIDE 2026",
+          "observedAt": "2026-06-01T14:37:41.2048842+00:00",
+          "summary": "Shows John Deere Classic 29\u202FJune\u20115\u202FJuly.",
+          "rawExcerpt": "June 29-July 5 John Deere Classic Silvis, Illinois TPC Deere Run"
+        }
+      ],
+      "confidence": 0.86,
+      "status": 0
+    }
+  ]
+}

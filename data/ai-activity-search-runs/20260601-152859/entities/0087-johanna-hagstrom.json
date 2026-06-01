@@ -1,0 +1,24 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "johanna-hagstrom"
+    },
+    "name": "Johanna Hagstr\u00F6m",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "cross-country-skiing"
+      },
+      "name": "cross-country skiing"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Ski Association A-team roster lists her",
+    "likelyActivityTypes": [
+      "World Cup",
+      "sprint team selection"
+    ],
+    "suggestedEvidenceSources": "SSF cross-country A-team roster \uE200cite\uE202turn28view1",
+    "notes": "Useful depth candidate"
+  },
+  "proposals": []
+}

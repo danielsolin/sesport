@@ -88,6 +88,15 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             true,
             false
          ),
+         ["proposal-reject-reasons"] = new(
+            "proposal-reject-reasons",
+            "Proposal reject reasons",
+            "Controlled reasons for rejected activity proposals.",
+            "proposal_reject_reasons",
+            "label",
+            true,
+            false
+         ),
          ["activity-publication-statuses"] = new(
             "activity-publication-statuses",
             "Activity publication statuses",

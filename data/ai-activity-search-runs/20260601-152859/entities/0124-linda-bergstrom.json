@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "linda-bergstrom"
+    },
+    "name": "Linda Bergstr\u00F6m",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "table-tennis"
+      },
+      "name": "table tennis"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "WTT women\u2019s rankings/event pages include her",
+    "likelyActivityTypes": [
+      "WTT entries",
+      "rankings",
+      "team events"
+    ],
+    "suggestedEvidenceSources": "WTT ranking/event pages \uE200cite\uE202turn23search10\uE202turn23search3",
+    "notes": "Important women\u2019s table-tennis entity"
+  },
+  "proposals": []
+}

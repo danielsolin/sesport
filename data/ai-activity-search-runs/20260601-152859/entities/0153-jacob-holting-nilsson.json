@@ -1,0 +1,24 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jacob-holting-nilsson"
+    },
+    "name": "Jacob H\u00F6lting Nilsson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "beach-volleyball"
+      },
+      "name": "beach volleyball"
+    },
+    "swedenConnection": "beach volleyball",
+    "currentRelationshipOrStatus": "Official men\u2019s beach roster includes him; page notes Malm\u00F6 2025 win for reserve pair",
+    "likelyActivityTypes": [
+      "Beach Pro Tour entries",
+      "pair changes"
+    ],
+    "suggestedEvidenceSources": "Swedish Volleyball page \uE200cite\uE202turn26view3",
+    "notes": "Strong developing entity"
+  },
+  "proposals": []
+}

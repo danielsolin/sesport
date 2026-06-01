@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "farjestad-bk"
+    },
+    "name": "F\u00E4rjestad BK",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "ice-hockey"
+      },
+      "name": "ice hockey"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "Official CHL club page available",
+    "likelyActivityTypes": [
+      "CHL qualification",
+      "exports",
+      "coach changes"
+    ],
+    "suggestedEvidenceSources": "CHL club page \uE200cite\uE202turn42search5",
+    "notes": "Good club watchlist candidate"
+  },
+  "proposals": []
+}

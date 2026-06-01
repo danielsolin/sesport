@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "frida-karlsson"
+    },
+    "name": "Frida Karlsson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "cross-country-skiing"
+      },
+      "name": "cross-country skiing"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Ski Association A-team roster lists her",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "Olympic selection",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "SSF cross-country A-team roster \uE200cite\uE202turn28view1",
+    "notes": "Tier-one winter entity"
+  },
+  "proposals": []
+}

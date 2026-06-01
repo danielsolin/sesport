@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jim-gottfridsson"
+    },
+    "name": "Jim Gottfridsson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Official player page and current squad page confirm active national-team role",
+    "likelyActivityTypes": [
+      "championships",
+      "captaincy",
+      "injuries",
+      "milestones"
+    ],
+    "suggestedEvidenceSources": "Official player and squad pages \uE200cite\uE202turn38search7\uE202turn38search5",
+    "notes": "Tier-one handball entity"
+  },
+  "proposals": []
+}

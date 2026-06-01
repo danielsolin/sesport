@@ -93,6 +93,29 @@ public class PostgresMigrationTests
       Assert.Contains("activity_date", migration);
    }
 
+   [Fact]
+   public void ThirdMigrationAddsActivityProposalRejectReasonModel()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "003_add_activity_proposal_reject_reason.sql"
+         )
+      );
+
+      Assert.Contains(
+         "create table if not exists proposal_reject_reasons",
+         migration
+      );
+      Assert.Contains("reject_reason_id", migration);
+      Assert.Contains("reject_comment", migration);
+      Assert.Contains("Hallucination", migration);
+      Assert.Contains("Duplicate", migration);
+      Assert.Contains("OutOfScope", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

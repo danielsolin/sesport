@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "tre-kronor-dam"
+    },
+    "name": "Tre Kronor dam",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "ice-hockey"
+      },
+      "name": "ice hockey"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swehockey lists 2025/26 program including Olympic preparation",
+    "likelyActivityTypes": [
+      "roster announcements",
+      "championships",
+      "Olympic prep",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "Swehockey Tre Kronor dam page \uE200cite\uE202turn42search0",
+    "notes": "Sometimes also referred to as Damkronorna in media usage"
+  },
+  "proposals": []
+}

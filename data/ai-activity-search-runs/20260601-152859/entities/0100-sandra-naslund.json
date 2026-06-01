@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sandra-naslund"
+    },
+    "name": "Sandra N\u00E4slund",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "skicross"
+      },
+      "name": "skicross"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Ski Association skicross roster highlights her as a core profile",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "Olympic selection",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "SSF skicross roster page \uE200cite\uE202turn32view3",
+    "notes": "Tier-one extreme/winter entity"
+  },
+  "proposals": []
+}

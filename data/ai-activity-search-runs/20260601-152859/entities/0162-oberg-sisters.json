@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "oberg-sisters"
+    },
+    "name": "Systrarna \u00D6berg",
+    "type": "family_or_group",
+    "sport": {
+      "externalId": {
+        "value": "biathlon"
+      },
+      "name": "biathlon"
+    },
+    "swedenConnection": "Swedish athlete group",
+    "currentRelationshipOrStatus": "Both are on 2026/27 Swedish biathlon A-team",
+    "likelyActivityTypes": [
+      "media clusters",
+      "relay selection",
+      "joint camp/news"
+    ],
+    "suggestedEvidenceSources": "Swedish Biathlon A-team page \uE200cite\uE202turn26view1",
+    "notes": "Good derived cluster entity if family/group nodes are allowed"
+  },
+  "proposals": []
+}

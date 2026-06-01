@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "storvreta-ibk"
+    },
+    "name": "Storvreta IBK",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "floorball"
+      },
+      "name": "floorball"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "IFF says Storvreta reached 2026 Champions Cup final and won 2026 title",
+    "likelyActivityTypes": [
+      "Champions Cup",
+      "transfers",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "IFF Champions Cup reporting \uE200cite\uE202turn41search11\uE202turn41search9",
+    "notes": "One of the strongest Swedish floorball club entities"
+  },
+  "proposals": []
+}

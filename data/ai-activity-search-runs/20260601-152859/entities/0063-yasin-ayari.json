@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "yasin-ayari"
+    },
+    "name": "Yasin Ayari",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA squad page lists Brighton \u0026 Hove Albion",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Foreign club is relationship context"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:06041bf60744a770459794b1"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:06041bf60744a770459794b1"
+      },
+      "fingerprint": "ai:06041bf60744a770459794b1",
+      "title": "Sweden vs Greece (Friendly)",
+      "description": "Swedish men\u0027s national football team will host Greece in a friendly match at Strawberry Arena.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly match ahead of the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e1cb1ffd-e0db-a73c-9cc6-37441df1802e"
+          },
+          "proposedRole": 0,
+          "explanation": "Yasin Ayari is listed in Sweden\u0027s World Cup 2026 squad, making him eligible for the friendly.",
+          "contextName": "Yasin Ayari",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:strawberry-arena-event-page"
+            },
+            "name": "Strawberry Arena Event Page"
+          },
+          "uri": "https://strawberryarena.se/en/events/sport/sweden-vs-poland/",
+          "title": "Sweden \u2013 Greece - Strawberry Arena",
+          "observedAt": "2026-06-01T14:14:43.3562202+00:00",
+          "summary": "The Swedish men\u0027s national team will host the Greek men\u0027s national team for a friendly match on 4\u202FJune\u202F2026 at Strawberry Arena.",
+          "rawExcerpt": "4 June 2026 \u2026 Sweden \u2013 Greece meet in a friendly match at Strawberry Arena!"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport---sweden-world-cup-squad-2026"
+            },
+            "name": "BBC Sport \u2013 Sweden World Cup squad 2026"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected",
+          "observedAt": "2026-06-01T14:14:43.3562235+00:00",
+          "summary": "Midfielders Yasin Ayari (Brighton) and Lucas Bergvall are named in Sweden\u2019s final World Cup 2026 squad.",
+          "rawExcerpt": "Midfielders Yasin Ayari and Lucas Bergvall, who play for Brighton and Tottenham respectively have also been named\u2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:fc9cbbd125afdc68277a7b5e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:fc9cbbd125afdc68277a7b5e"
+      },
+      "fingerprint": "ai:fc9cbbd125afdc68277a7b5e",
+      "title": "Sweden vs Norway (Friendly)",
+      "description": "Swedish men\u0027s national football team will play an international friendly against Norway.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly match as part of preparation for the 2026 World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e1cb1ffd-e0db-a73c-9cc6-37441df1802e"
+          },
+          "proposedRole": 0,
+          "explanation": "Ayari is part of the announced Sweden squad for 2026, so he is eligible for this match.",
+          "contextName": "Yasin Ayari",
+          "confidence": 0.84
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:transfermarkt---sweden-schedule-2026"
+            },
+            "name": "Transfermarkt \u2013 Sweden Schedule 2026"
+          },
+          "uri": "https://www.transfermarkt.com/schweden/spielplan/verein/3557/saison_id/2026",
+          "title": "Sweden - Schedule 2027 | Transfermarkt",
+          "observedAt": "2026-06-01T14:14:43.3562512+00:00",
+          "summary": "Lists a friendly match on Monday 1\u202FJune\u202F2026 at 19:00 (local) against Norway.",
+          "rawExcerpt": "Mon 01/06/2026 | 7:00\u202FPM | Norway"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport---sweden-world-cup-squad-2026"
+            },
+            "name": "BBC Sport \u2013 Sweden World Cup squad 2026"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected",
+          "observedAt": "2026-06-01T14:14:43.3562519+00:00",
+          "summary": "Yasin Ayari is included in Sweden\u2019s final 2026 World Cup squad.",
+          "rawExcerpt": "Midfielders Yasin Ayari \u2026 have also been named\u2026"
+        }
+      ],
+      "confidence": 0.84,
+      "status": 0
+    }
+  ]
+}

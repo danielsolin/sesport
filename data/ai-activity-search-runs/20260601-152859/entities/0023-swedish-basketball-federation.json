@@ -1,0 +1,88 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-basketball-federation"
+    },
+    "name": "Svenska Basketbollf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "basketball"
+      },
+      "name": "basketball"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Federation homepage highlights national teams",
+    "likelyActivityTypes": [
+      "squads",
+      "governance",
+      "youth pathways",
+      "qualification"
+    ],
+    "suggestedEvidenceSources": "Swedish Basketball Federation homepage \uE200cite\uE202turn39search0",
+    "notes": "Valuable especially for rising-player discovery"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:0d1b05a59c926e2cfc9bc27b"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0d1b05a59c926e2cfc9bc27b"
+      },
+      "fingerprint": "ai:0d1b05a59c926e2cfc9bc27b",
+      "title": "Sweden vs Czech Republic \u2013 FIBA World Cup 2027 European Qualifier",
+      "description": "Swedish men\u2019s national basketball team plays a qualification match against the Czech Republic at Avicii Arena in Stockholm.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "basketball"
+        },
+        "name": "basketball"
+      },
+      "context": "European qualification window for the 2027 FIBA Basketball World Cup",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "99951208-be2d-f934-bf55-489738a35dc2"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish Basketball Federation (Svenska Basketbollf\u00F6rbundet) manages the Sweden men\u2019s national team, which is scheduled for this fixture.",
+          "contextName": "Svenska Basketbollf\u00F6rbundet",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:biletwise-com---sweden-national-basketball-team-tickets"
+            },
+            "name": "biletwise.com \u2013 Sweden National Basketball Team Tickets"
+          },
+          "uri": "https://www.biletwise.com/en/sweden-national-basketball-team-tickets",
+          "title": "Sweden National Basketball Team Tickets, Dates, Prices",
+          "observedAt": "2026-06-01T13:52:22.1102596+00:00",
+          "summary": "Lists an upcoming Sweden vs Czech Republic World Cup qualifier on June 6, 2026 at 19:00 in Avicii Arena, Stockholm.",
+          "rawExcerpt": "Saturday, June 6, 2026, 19:00 \u2026 Sweden vs Czech Republic Basketball World Cup 2027 European Qualifiers"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "william-poromaa"
+    },
+    "name": "William Poromaa",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "cross-country-skiing"
+      },
+      "name": "cross-country skiing"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Ski Association A-team roster lists him",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "Olympic selection"
+    ],
+    "suggestedEvidenceSources": "SSF cross-country A-team roster \uE200cite\uE202turn28view2",
+    "notes": "Core men\u2019s winter watch name"
+  },
+  "proposals": []
+}

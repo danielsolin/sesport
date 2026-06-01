@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "maja-dahlqvist"
+    },
+    "name": "Maja Dahlqvist",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "cross-country-skiing"
+      },
+      "name": "cross-country skiing"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Swedish Ski Association A-team roster lists her",
+    "likelyActivityTypes": [
+      "World Cup",
+      "championships",
+      "relays"
+    ],
+    "suggestedEvidenceSources": "SSF cross-country A-team roster \uE200cite\uE202turn28view1",
+    "notes": "Good tier_2 winter entity"
+  },
+  "proposals": []
+}

@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "katrin-norling"
+    },
+    "name": "Katrin Norling",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "equestrian"
+      },
+      "name": "equestrian"
+    },
+    "swedenConnection": "Swedish rider",
+    "currentRelationshipOrStatus": "Swedish Equestrian Federation reports her as a Swedish national-team rider on international podium",
+    "likelyActivityTypes": [
+      "eventing entries",
+      "Nations Cup",
+      "championships"
+    ],
+    "suggestedEvidenceSources": "Swedish Equestrian Federation eventing coverage \uE200cite\uE202turn44search3",
+    "notes": "Good eventing discovery candidate"
+  },
+  "proposals": []
+}

@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-ice-hockey-association"
+    },
+    "name": "Svenska Ishockeyf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "ice-hockey"
+      },
+      "name": "ice hockey"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Operates Swehockey national-team pages and official stats",
+    "likelyActivityTypes": [
+      "rosters",
+      "governance",
+      "statistics",
+      "events"
+    ],
+    "suggestedEvidenceSources": "Swehockey homepage and stats pages \uE200cite\uE202turn42search3\uE202turn42search6",
+    "notes": "High-value operational evidence source"
+  },
+  "proposals": []
+}

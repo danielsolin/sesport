@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-football-association"
+    },
+    "name": "Svenska Fotbollf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Operates current men/women national-team pages",
+    "likelyActivityTypes": [
+      "squads",
+      "discipline",
+      "governance",
+      "coaching"
+    ],
+    "suggestedEvidenceSources": "SvFF national-team pages \uE200cite\uE202turn27view0\uE202turn27view3",
+    "notes": "Core source registry candidate"
+  },
+  "proposals": []
+}

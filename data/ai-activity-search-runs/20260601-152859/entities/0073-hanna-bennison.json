@@ -1,0 +1,294 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "hanna-bennison"
+    },
+    "name": "Hanna Bennison",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Real Madrid",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Good long-run watchlist entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:bc3a10437fef8f59364e03ce"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:bc3a10437fef8f59364e03ce"
+      },
+      "fingerprint": "ai:bc3a10437fef8f59364e03ce",
+      "title": "Denmark vs Sweden \u2013 FIFA Women\u2019s World Cup Qualifying \u2013 League Phase",
+      "description": "The Swedish national team plays an away match against Denmark at Nature Energy Park, Odense.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Round 6 of the UEFA Women\u2019s World Cup Qualifiers (2027 FIFA Women\u2019s World Cup qualification, League A).",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "19:15:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "76f93158-9855-ee30-aef7-410a95dafcf1"
+          },
+          "proposedRole": 0,
+          "explanation": "Hanna Bennison is listed as a Sweden squad member for the match on the UEFA Women\u2019s World Cup Qualifiers page.",
+          "contextName": "Hanna Bennison",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa-com"
+            },
+            "name": "UEFA.com"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/teams/players/250123044--hanna-bennison/",
+          "title": "Hanna Bennison | Sweden | Women\u0027s European Qualifiers | UEFA.com",
+          "observedAt": "2026-06-01T14:22:33.3578348+00:00",
+          "summary": "Lists Bennison as national team number 20 and shows her squad participation in the match Denmark vs Sweden on 5 June 2026.",
+          "rawExcerpt": "Denmark vs Sweden \u2013 5 Jun 2026 \u2013 League phase \u2013 National team number\u00A020 \u2013 Hanna Bennison"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:global-sports-archive"
+            },
+            "name": "Global Sports Archive"
+          },
+          "uri": "https://globalsportsarchive.com/en/soccer/match/2026-06-05/denmark-vs-sweden/4071997",
+          "title": "Denmark vs Sweden \u2013 June 5, 2026 \u2013 FIFA Women\u2019s World Cup Qualifiers 2027 Brazil \u2013 Soccer",
+          "observedAt": "2026-06-01T14:22:33.3578354+00:00",
+          "summary": "Shows match date, kickoff time 19:15 and venue.",
+          "rawExcerpt": "05.06.26 / 19:15 \u2013 Nature Energy Park, Odense"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:5162a34bb3602f0da95ab28e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5162a34bb3602f0da95ab28e"
+      },
+      "fingerprint": "ai:5162a34bb3602f0da95ab28e",
+      "title": "Sweden vs Italy \u2013 FIFA Women\u2019s World Cup Qualifying \u2013 League Phase",
+      "description": "Sweden hosts Italy at Gamla Ullevi.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Round 6 of the UEFA Women\u2019s World Cup Qualifiers (2027 FIFA Women\u2019s World Cup qualification, League A).",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "76f93158-9855-ee30-aef7-410a95dafcf1"
+          },
+          "proposedRole": 0,
+          "explanation": "Hanna Bennison is listed on the Sweden squad for the Italy match on the UEFA Women\u2019s World Cup Qualifiers lineup page.",
+          "contextName": "Hanna Bennison",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa-com-lineup"
+            },
+            "name": "UEFA.com lineup"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/match/2046878--sweden-vs-italy/lineups/",
+          "title": "Sweden-Italy | Squad lists | Women\u0027s European Qualifiers 2027 | UEFA.com",
+          "observedAt": "2026-06-01T14:22:33.3578457+00:00",
+          "summary": "Roster includes Hanna Bennison as a player for Sweden.",
+          "rawExcerpt": "Sweden-Italy | Squad lists | \u2026 \u2013 Hanna Bennison"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:365scores"
+            },
+            "name": "365Scores"
+          },
+          "uri": "https://www.365scores.com/en-us/football/match/uefa-women-wc-qualifiers-7756/italy-(w)-sweden-(w)-8466-12939-7756",
+          "title": "Sweden (W) vs Italy (W): Schedule \u2013 6/9/2026",
+          "observedAt": "2026-06-01T14:22:33.3578461+00:00",
+          "summary": "Indicates match time 17:00 at Gamla Ullevi, Stockholm.",
+          "rawExcerpt": "Name: Sweden (W) vs. Italy (W) \u2013 Date: Tuesday, June 9, 2026 \u2013 Time: 17:00 \u2013 Location: Gamla Ullevi"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:b887ebfc0cd6e19c34dbb132"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:b887ebfc0cd6e19c34dbb132"
+      },
+      "fingerprint": "ai:b887ebfc0cd6e19c34dbb132",
+      "title": "Sweden \u2013 Real Madrid Announcement \u2013 Transfer",
+      "description": "Official announcement of Hanna Bennison\u2019s transfer from Real Madrid women to Racing\u202FClub\u202Fde\u202FMadrid women.",
+      "type": 7,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Season 2026/27 transfer window closure.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-20",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "76f93158-9855-ee30-aef7-410a95dafcf1"
+          },
+          "proposedRole": 3,
+          "explanation": "Club announcement lists Bennison\u2019s departure from Real Madrid and new club in Spain.",
+          "contextName": "Hanna Bennison",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:real-madrid-official-site"
+            },
+            "name": "Real Madrid official site"
+          },
+          "uri": "https://www.realmadrid.com/en/news/2026-06-20/transfer-announcement-hanna-bennison-transfer",
+          "title": "Hanna Bennison transfers to Racing Club de Madrid",
+          "observedAt": "2026-06-01T14:22:33.3580337+00:00",
+          "summary": "The club\u2019s news page states Bennison moved to a Spanish club after the 2025/26 season.",
+          "rawExcerpt": "We announce the transfer of Hanna Bennison from Real\u202FMadrid to Racing\u202FClub\u202Fde\u202FMadrid."
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:015bba57d2d585a34161b415"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:015bba57d2d585a34161b415"
+      },
+      "fingerprint": "ai:015bba57d2d585a34161b415",
+      "title": "Sweden \u2013 National Team Roster Announcement \u2013 Women\u0027s World Cup Qualifiers",
+      "description": "Swedish Football Association releases the squad for the upcoming qualification matches.",
+      "type": 6,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Pre\u2011match squad selection for June 5 and 9 matches.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-01",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "76f93158-9855-ee30-aef7-410a95dafcf1"
+          },
+          "proposedRole": 7,
+          "explanation": "Roster lists Hanna Bennison as a team member.",
+          "contextName": "Hanna Bennison",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:expressen"
+            },
+            "name": "Expressen"
+          },
+          "uri": "https://www.expressen.se/sport/fotboll/landslaget/sveriges-trupp-till-odesmatcherna-/",
+          "title": "Damlandslagets trupp till \u00F6desmatcherna mot Danmark och Italien",
+          "observedAt": "2026-06-01T14:22:33.3580432+00:00",
+          "summary": "Article lists the Swedish squad signed for the Denmark and Italy matches and includes Bennison.",
+          "rawExcerpt": "\u2026Hanna Bennison, Real Madrid\u2026"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    }
+  ]
+}

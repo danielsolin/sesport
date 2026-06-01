@@ -1,0 +1,24 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "rebecca-peterson-return-watch"
+    },
+    "name": "Rebecca Peterson comebackbevakning",
+    "type": "other",
+    "sport": {
+      "externalId": {
+        "value": "tennis"
+      },
+      "name": "tennis"
+    },
+    "swedenConnection": "Sweden-based athlete-state wrapper",
+    "currentRelationshipOrStatus": "WTA marks her present profile as inactive",
+    "likelyActivityTypes": [
+      "return-to-play",
+      "retirement confirmation"
+    ],
+    "suggestedEvidenceSources": "WTA match page \uE200cite\uE202turn37search2",
+    "notes": "Probably better represented as status on Rebecca Peterson, not a separate entity"
+  },
+  "proposals": []
+}

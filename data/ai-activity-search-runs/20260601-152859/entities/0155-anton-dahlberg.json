@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "anton-dahlberg"
+    },
+    "name": "Anton Dahlberg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "sailing"
+      },
+      "name": "sailing"
+    },
+    "swedenConnection": "sailing",
+    "currentRelationshipOrStatus": "SWE Sailing Team / OS 2024 pages list him in medal-winning Swedish 470 team",
+    "likelyActivityTypes": [
+      "class events",
+      "pair changes",
+      "Olympic qualification"
+    ],
+    "suggestedEvidenceSources": "Swedish Sailing pages \uE200cite\uE202turn27view2\uE202turn16search14",
+    "notes": "Good long-run sailing entity"
+  },
+  "proposals": []
+}

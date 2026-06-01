@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-alpine-ski-team"
+    },
+    "name": "Alpina landslaget",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "alpine-skiing"
+      },
+      "name": "alpine skiing"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swedish Ski Association published 2025/26 alpine roster",
+    "likelyActivityTypes": [
+      "roster updates",
+      "World Cup",
+      "championships",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish Ski Association alpine roster \uE200cite\uE202turn30view0",
+    "notes": "Seasonal but stable"
+  },
+  "proposals": []
+}

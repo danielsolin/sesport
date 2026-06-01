@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "rusul-rosa-kafaji"
+    },
+    "name": "Rusul Rosa Kafaji",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Brighton \u0026 Hove Albion",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "goals"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Relationship-target club only"
+  },
+  "proposals": []
+}

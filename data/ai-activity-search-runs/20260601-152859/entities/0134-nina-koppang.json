@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "nina-koppang"
+    },
+    "name": "Nina Koppang",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "handball"
+      },
+      "name": "handball"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Current women\u2019s squad page lists her",
+    "likelyActivityTypes": [
+      "championships",
+      "injuries",
+      "club changes"
+    ],
+    "suggestedEvidenceSources": "Current women\u2019s squad page \uE200cite\uE202turn38search4",
+    "notes": "Future-oriented watch"
+  },
+  "proposals": []
+}

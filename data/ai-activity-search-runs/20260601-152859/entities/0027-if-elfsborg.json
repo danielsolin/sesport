@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "if-elfsborg"
+    },
+    "name": "IF Elfsborg",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "UEFA team page active in Swedish top flight",
+    "likelyActivityTypes": [
+      "European qualification",
+      "transfers",
+      "coach changes"
+    ],
+    "suggestedEvidenceSources": "UEFA club page \uE200cite\uE202turn12search4",
+    "notes": "Good club-level activity generator"
+  },
+  "proposals": []
+}

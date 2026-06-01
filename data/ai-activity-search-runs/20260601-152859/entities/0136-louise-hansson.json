@@ -1,0 +1,113 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "louise-hansson"
+    },
+    "name": "Louise Hansson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "swimming"
+      },
+      "name": "swimming"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "World Aquatics profile lists SWE and medal history",
+    "likelyActivityTypes": [
+      "championships",
+      "relay selection",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "World Aquatics profile \uE200cite\uE202turn21search1\uE202turn21search7",
+    "notes": "Strong secondary swimming entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:62b8572c2ed5a8e8c2ff1b44"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:62b8572c2ed5a8e8c2ff1b44"
+      },
+      "fingerprint": "ai:62b8572c2ed5a8e8c2ff1b44",
+      "title": "2026 Swedish Championships (SM) \u2013 Long Course (50\u202Fm) in Bor\u00E5s",
+      "description": "The Swedish National Championships (SM/Para\u2011SM/U21\u2011SM) are scheduled for 24\u202F\u2013\u202F28\u202FJune\u202F2026 at Alidebergsbadet, Bor\u00E5s. The meet includes all senior events and is the main domestic competition where Swedish elite swimmers such as Louise Hansson are entered.",
+      "type": 4,
+      "sport": {
+        "externalId": {
+          "value": "swimming"
+        },
+        "name": "swimming"
+      },
+      "context": "National championship organized by Svensk Simidrott; serves as a selection meet for upcoming international competitions.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-24",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "e2bd94b3-74b9-ed36-922c-550bfc443565"
+          },
+          "proposedRole": 0,
+          "explanation": "Louise Hansson is a senior Swedish swimmer and, as a member of the Swedish national team, is entered in the Swedish Championships.",
+          "contextName": "Louise Hansson",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:mynewsdesk---svensk-simidrott-press-release"
+            },
+            "name": "MyNewsDesk \u2013 Svensk Simidrott press release"
+          },
+          "uri": "https://www.mynewsdesk.com/se/svenska_simforbundet/pressreleases/haer-aer-maesterskapsorterna-foer-simning-under-2026-3408117",
+          "title": "H\u00E4r \u00E4r m\u00E4sterskapsorterna f\u00F6r simning under 2026",
+          "observedAt": "2026-06-01T14:50:35.9796291+00:00",
+          "summary": "The press release lists the Swedish Championships (SM/Para\u2011SM/U21\u2011SM) long\u2011course dates as 24\u202F\u2013\u202F28\u202FJune\u202F2026 in Bor\u00E5s.",
+          "rawExcerpt": "SM/Para\u2011SM/U21\u2011SM l\u00E5ngbana, 24\u201328 juni, Bor\u00E5s"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:evently---svenska-m\u00E4sterskapen-i-simning-2026"
+            },
+            "name": "Evently \u2013 Svenska M\u00E4sterskapen i Simning 2026"
+          },
+          "uri": "https://evently.se/events/wt7Sa4lS/svenska-masterskapen-i-simning-2026/260624-0900",
+          "title": "Svenska M\u00E4sterskapen i Simning 2026",
+          "observedAt": "2026-06-01T14:50:35.9796309+00:00",
+          "summary": "Event listing confirming the competition runs 24\u202FJune\u202F2026\u202F09:00 to 28\u202FJune\u202F2026\u202F19:00 at Alidebergsbadet, Bor\u00E5s.",
+          "rawExcerpt": "V\u00E4lkomna till simfest i Bor\u00E5s! Upplev SM, Para\u2011SM och U21\u2011SM 24-28 juni 2026 p\u00E5 Alidebergsbadet."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:world-aquatics---athlete-profile"
+            },
+            "name": "World Aquatics \u2013 Athlete Profile"
+          },
+          "uri": "https://www.worldaquatics.com/athletes/1000668/louise-hansson",
+          "title": "Louise HANSSON | Results | World Aquatics Official",
+          "observedAt": "2026-06-01T14:50:35.9796316+00:00",
+          "summary": "Louise Hansson is listed as a Swedish senior swimmer; her profile is linked to national competition entries, implying participation in events such as the Swedish Championships.",
+          "rawExcerpt": "Louise HANSSON \u2026 Sweden \u2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

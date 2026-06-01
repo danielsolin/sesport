@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swe-sailing-team"
+    },
+    "name": "SWE Sailing Team",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "sailing"
+      },
+      "name": "sailing"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swedish Sailing Federation identifies SWE Sailing Team and linked athlete merit profiles",
+    "likelyActivityTypes": [
+      "team selections",
+      "regatta entries",
+      "Olympic qualification"
+    ],
+    "suggestedEvidenceSources": "Swedish Sailing Federation landslag pages \uE200cite\uE202turn27view2\uE202turn16search14",
+    "notes": "Strong discovery node across multiple boat classes"
+  },
+  "proposals": []
+}

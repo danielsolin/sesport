@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "bk-hacken"
+    },
+    "name": "BK H\u00E4cken",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "UEFA pages active for Swedish top flights; women won 2026 Women\u2019s Europa Cup",
+    "likelyActivityTypes": [
+      "European qualification",
+      "transfers",
+      "coach changes",
+      "continental ties"
+    ],
+    "suggestedEvidenceSources": "UEFA club pages and Women\u2019s Europa Cup final report \uE200cite\uE202turn12search5\uE202turn13search1",
+    "notes": "Useful across both men\u2019s and women\u2019s football"
+  },
+  "proposals": []
+}

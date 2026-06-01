@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sebastian-soderberg"
+    },
+    "name": "Sebastian S\u00F6derberg",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "DP World Tour profile lists Sweden and current rank context",
+    "likelyActivityTypes": [
+      "DPWT entries",
+      "rankings",
+      "wins"
+    ],
+    "suggestedEvidenceSources": "DP World Tour profile \uE200cite\uE202turn34search3",
+    "notes": "Good tier_2 golf entity"
+  },
+  "proposals": []
+}
