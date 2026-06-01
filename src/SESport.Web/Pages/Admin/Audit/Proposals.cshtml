@@ -26,14 +26,9 @@
          <tr>
             <th>Activity</th>
             <th>Producer</th>
-            <th>Source</th>
             <th>Status</th>
-            <th>Reject reason</th>
-            <th>Reject comment</th>
             <th>Type</th>
             <th>Sport</th>
-            <th>Links</th>
-            <th>Evidence</th>
             <th></th>
          </tr>
       </thead>
@@ -44,17 +39,11 @@
                <td>
                   <strong>@proposal.Title</strong>
                   <span>@proposal.TimeText</span>
-                  <span class="audit-id">@proposal.Id</span>
                </td>
                <td>@proposal.Producer</td>
-               <td>@proposal.Source</td>
                <td>@proposal.Status</td>
-               <td>@proposal.RejectReason</td>
-               <td>@proposal.RejectComment</td>
                <td>@proposal.ActivityType</td>
                <td>@proposal.Sport</td>
-               <td>@proposal.EntityLinkCount</td>
-               <td>@proposal.EvidenceCount</td>
                <td class="table-actions">
                   <a asp-page="./Proposal" asp-route-id="@proposal.Id">
                      Review

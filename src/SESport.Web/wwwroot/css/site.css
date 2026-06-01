@@ -182,6 +182,11 @@ h2 {
    color: #ffffff;
 }
 
+.button-cancel {
+   background: var(--muted);
+   color: #ffffff;
+}
+
 .button-row {
    display: flex;
    flex-wrap: wrap;
@@ -370,6 +375,7 @@ h2 {
    border: 1px solid var(--line);
    border-radius: 8px;
    background: var(--surface);
+   margin: 10px;
 }
 
 .form-section h2,
@@ -454,4 +460,13 @@ textarea {
    h1 {
       font-size: 28px;
    }
+}
+
+.ses-expand {
+   width: 100% !important;
+   text-align: center !important;
+}
+
+.ses-expand > button {
+   width: 100% !important;
 }
