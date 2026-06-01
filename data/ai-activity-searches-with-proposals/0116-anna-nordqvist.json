@@ -1,0 +1,147 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "anna-nordqvist"
+    },
+    "name": "Anna Nordqvist",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "LPGA profile lists long LPGA career; Reuters reported 2026 Solheim captain appointment",
+    "likelyActivityTypes": [
+      "majors",
+      "Solheim Cup",
+      "captaincy",
+      "rankings"
+    ],
+    "suggestedEvidenceSources": "LPGA profile; Reuters report \uE200cite\uE202turn35search2\uE202turn35news39",
+    "notes": "Still highly relevant beyond playing results"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:9dc788adef178f4f93f002aa"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:9dc788adef178f4f93f002aa"
+      },
+      "fingerprint": "ai:9dc788adef178f4f93f002aa",
+      "title": "U.S. Women\u0027s Open Presented by Ally",
+      "description": "Anna Nordqvist will compete in the U.S. Women\u0027s Open held at The Riviera Country Club from 4\u20137\u202FJune\u202F2026.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Major championship on the LPGA Tour; part of the 2026 season.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-04",
+        "timeZoneId": "America/Los_Angeles",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b4162a62-2b6f-9e36-ba48-4075c60d3eee"
+          },
+          "proposedRole": 0,
+          "explanation": "Nordqvist is listed as a participant on the tournament\u2019s official player page, confirming her entry for the event.",
+          "contextName": "Anna Nordqvist",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:us-women-s-open---official-site"
+            },
+            "name": "US Women\u2019s Open \u2013 Official Site"
+          },
+          "uri": "https://www.uswomensopen.com/players/64489.html",
+          "title": "Anna Nordqvist",
+          "observedAt": "2026-06-01T14:41:42.5818213+00:00",
+          "summary": "Shows event dates June\u202F4\u20137, 2026 and lists Nordqvist as a player.",
+          "rawExcerpt": "The Riviera Country Club \u2022 Pacific Palisades, Calif. \u2022 June 4-7, 2026 \u2026 Anna Nordqvist"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:b175bd0f62df2d86ba97224e"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:b175bd0f62df2d86ba97224e"
+      },
+      "fingerprint": "ai:b175bd0f62df2d86ba97224e",
+      "title": "KPMG Women\u2019s PGA Championship",
+      "description": "Nordqvist will play in the KPMG Women\u2019s PGA Championship at Hazeltine National Golf Club from 25\u201328\u202FJune\u202F2026.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "Major championship on the LPGA Tour; part of the 2026 season.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-25",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "b4162a62-2b6f-9e36-ba48-4075c60d3eee"
+          },
+          "proposedRole": 0,
+          "explanation": "Nordqvist\u2019s LPGA profile lists the event dates and confirms her participation.",
+          "contextName": "Anna Nordqvist",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:kpmg-women-s-pga-championship---official-site"
+            },
+            "name": "KPMG Women\u2019s PGA Championship \u2013 Official Site"
+          },
+          "uri": "https://www.kpmgwomenspgachampionship.com/player/anna-nordqvist",
+          "title": "Anna Nordqvist",
+          "observedAt": "2026-06-01T14:41:42.5818326+00:00",
+          "summary": "Shows event dates June\u202F25\u201328, 2026 and her name in the player roster.",
+          "rawExcerpt": "June 25 - 28, 2026 \u2026 Hazeltine National Golf Club, Chaska, MN \u2026 Anna Nordqvist"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

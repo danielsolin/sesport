@@ -1,0 +1,88 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "malmo-ff"
+    },
+    "name": "Malm\u00F6 FF",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "UEFA team page active in Swedish top flight",
+    "likelyActivityTypes": [
+      "European qualification",
+      "transfers",
+      "coach changes",
+      "continental matches"
+    ],
+    "suggestedEvidenceSources": "UEFA club page \uE200cite\uE202turn12search2",
+    "notes": "One of Sweden\u2019s clearest club watchlist anchors"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:afe89c267cfe86723fb02fa9"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:afe89c267cfe86723fb02fa9"
+      },
+      "fingerprint": "ai:afe89c267cfe86723fb02fa9",
+      "title": "Malm\u00F6 FF vs FC Midtjylland \u2013 Club Friendly",
+      "description": "A pre\u2011season friendly match played by Malm\u00F6 FF against Danish side FC\u202FMidtjylland.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Club friendly scheduled during the summer break before the Allsvenskan season starts.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-26",
+        "localStartTime": "12:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "457c0cae-d0ba-d432-2761-1e80c502f4b2"
+          },
+          "proposedRole": 0,
+          "explanation": "Malm\u00F6 FF is listed as one of the competing teams in the fixture.",
+          "contextName": "Malm\u00F6 FF",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:goal-com---malm\u00F6-ff-fixtures---results-2026-season"
+            },
+            "name": "Goal.com \u2013 Malm\u00F6 FF Fixtures \u0026 Results 2026 Season"
+          },
+          "uri": "https://www.goal.com/en/team/malmoe-ff/fixtures-results/93ohqui2qgqm8408viwmm1ken",
+          "title": "Malmoe FF Fixtures \u0026 Results 2026 Season | Goal.com",
+          "observedAt": "2026-05-31T23:35:13.5789679+00:00",
+          "summary": "Shows a club friendly on 26\u202FJune 2026 where Malm\u00F6 FF plays FC Midtjylland at 12:00.",
+          "rawExcerpt": "\u002226 Jun Club Friendlies Malmoe FF MAL FC Midtjylland MID 12:00\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    }
+  ]
+}

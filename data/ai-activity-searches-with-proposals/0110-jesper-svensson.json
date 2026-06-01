@@ -1,0 +1,86 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jesper-svensson"
+    },
+    "name": "Jesper Svensson",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "Official PGA Tour/DPWT profiles list Sweden and current tour status",
+    "likelyActivityTypes": [
+      "DPWT/PGA entries",
+      "rankings",
+      "wins"
+    ],
+    "suggestedEvidenceSources": "PGA Tour / DPWT profiles \uE200cite\uE202turn34search1\uE202turn34search5",
+    "notes": "Good tier_2 golf entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:9c6b4e4dd94b490fcb7c1a36"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:9c6b4e4dd94b490fcb7c1a36"
+      },
+      "fingerprint": "ai:9c6b4e4dd94b490fcb7c1a36",
+      "title": "U.S. Open",
+      "description": "Jesper Svensson is scheduled to play in the 2026 U.S. Open.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "The U.S. Open is a major championship held at Pebble Beach Golf Links, California.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-18",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "2e3cec69-52f1-2df1-f43a-98a209660e97"
+          },
+          "proposedRole": 0,
+          "explanation": "Svensson\u2019s name appears in the upcoming schedule for the 2026 U.S. Open.",
+          "contextName": "Jesper Svensson",
+          "confidence": 0.82
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:whensport-com"
+            },
+            "name": "whensport.com"
+          },
+          "uri": "https://whensport.com/events/golf-majors-2026/player/jesper-svensson",
+          "title": "Jesper Svensson \u2014 player schedule and results | whensport.com",
+          "observedAt": "2026-06-01T06:24:41.4630625+00:00",
+          "summary": "The page lists upcoming majors, including the U.S. Open on 18 June 2026.",
+          "rawExcerpt": "\u0022Upcoming 2026-06-18 U.S. Open\u0022"
+        }
+      ],
+      "confidence": 0.82,
+      "status": 0
+    }
+  ]
+}

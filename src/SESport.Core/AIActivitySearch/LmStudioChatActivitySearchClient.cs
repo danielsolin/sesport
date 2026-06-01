@@ -53,7 +53,9 @@ public sealed class LmStudioChatActivitySearchClient
       {
          throw new HttpRequestException(
             $"LM Studio activity search failed with " +
-            $"{(int)response.StatusCode}: {rawResponse}"
+            $"{(int)response.StatusCode}: {rawResponse}",
+            null,
+            response.StatusCode
          );
       }
 

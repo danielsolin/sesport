@@ -203,7 +203,7 @@ internal sealed record ToolOptions(
 
       timeoutSeconds ??= lmStudioPluginId is null ? 100 : 300;
       delaySeconds ??= overnight ? 5 : 0;
-      stopAfterFailures ??= overnight ? 5 : int.MaxValue;
+      stopAfterFailures ??= int.MaxValue;
 
       var resolvedApiKey = ResolveApiKey(
          explicitApiKey,

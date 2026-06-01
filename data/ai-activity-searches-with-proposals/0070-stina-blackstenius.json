@@ -1,0 +1,100 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "stina-blackstenius"
+    },
+    "name": "Stina Blackstenius",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Arsenal FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "goals",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "High-value watchlist entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:9f9fc2393596aa1162baeeb5"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:9f9fc2393596aa1162baeeb5"
+      },
+      "fingerprint": "ai:9f9fc2393596aa1162baeeb5",
+      "title": "Sweden vs Denmark",
+      "description": "The Swedish women\u0027s national team will play a UEFA Women\u2019s World Cup qualifying match against Denmark on 5\u202FJune\u202F2026.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "UEFA Women\u2019s World Cup 2027 qualification \u2013 Group stage match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "17:15:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "303376e0-4016-bb4f-1f4a-9d1e43978ec3"
+          },
+          "proposedRole": 0,
+          "explanation": "Stina Blackstenius is a member of the Swedish national squad and will be eligible to play in this fixture.",
+          "contextName": "Stina Blackstenius",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sofascore"
+            },
+            "name": "Sofascore"
+          },
+          "uri": "https://www.sofascore.com/football/team/sweden/7423",
+          "title": "Sweden live score, schedule \u0026 player stats | Sofascore",
+          "observedAt": "2026-06-01T02:55:26.099293+00:00",
+          "summary": "Shows the next match for Sweden as a 5\u202FJune 2026 game against Denmark at 17:15 UTC.",
+          "rawExcerpt": "\u0022Sweden will play the next match against Denmark on Jun 5, 2026 , 5:15:00 PM UTC\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:uefa-com"
+            },
+            "name": "UEFA.com"
+          },
+          "uri": "https://www.uefa.com/womenseuropeanqualifiers/teams/500127--sweden/matches/",
+          "title": "Sweden | Matches | Women\u2019s European Qualifiers | UEFA.com",
+          "observedAt": "2026-06-01T02:55:26.0992935+00:00",
+          "summary": "Lists Sweden\u2019s upcoming qualifying fixtures, including the 5\u202FJune 2026 match vs Denmark.",
+          "rawExcerpt": ""
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

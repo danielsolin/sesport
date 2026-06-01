@@ -1,0 +1,101 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "hammarby-if"
+    },
+    "name": "Hammarby IF",
+    "type": "club",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish club",
+    "currentRelationshipOrStatus": "UEFA page active; women reached 2026 Women\u2019s Europa Cup final",
+    "likelyActivityTypes": [
+      "European qualification",
+      "transfers",
+      "coach changes",
+      "continental ties"
+    ],
+    "suggestedEvidenceSources": "UEFA club page; Women\u2019s Europa Cup final guide \uE200cite\uE202turn12search7\uE202turn13search0",
+    "notes": "High Swedish public-interest signal"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:e5c1b0f03b4c4a39ec11ddc0"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:e5c1b0f03b4c4a39ec11ddc0"
+      },
+      "fingerprint": "ai:e5c1b0f03b4c4a39ec11ddc0",
+      "title": "Hammarby IF \u2013 BK\u202FH\u00E4cken (men) \u2013 Allsvenskan match",
+      "description": "A regular league fixture in Sweden\u2019s top division, Allsvenskan.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Allsvenskan 2026 season \u2013 first round of matches",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-05-31",
+        "localStartTime": "14:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "917c3b08-ea18-4a81-d5e1-094ba1962778"
+          },
+          "proposedRole": 0,
+          "explanation": "Hammarby IF is scheduled to play BK H\u00E4cken in the opening round.",
+          "contextName": "Hammarby IF",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sporten-nu---spelschema-hammarby-if-allsvenskan-2026"
+            },
+            "name": "Sporten.nu \u2013 Spelschema Hammarby IF Allsvenskan 2026"
+          },
+          "uri": "https://sporten.nu/spelschema-hammarby-if-allsvenskan-2026/",
+          "title": "Spelschema Hammarby IF Allsvenskan 2026 - matcher och resultat",
+          "observedAt": "2026-05-31T23:57:24.3284531+00:00",
+          "summary": "Shows a match on 31\u202FMay\u202F2026 at 14:00 against BK H\u00E4cken.",
+          "rawExcerpt": "\u0022BK H\u00E4cken Hammarby IF 2026-05-31 14:00 Bravida Arena G\u00F6teborg\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:hammarby-fotboll---match-schedule"
+            },
+            "name": "Hammarby Fotboll \u2013 Match schedule"
+          },
+          "uri": "https://www.hammarbyfotboll.se/nyheter/allsvenska-spelordningen-klar-hemmapremiaer-mot-mjaellby-startar-serien/",
+          "title": "Allsvenska spelordningen klar - hemmapremi\u00E4r mot Mj\u00E4llby startar serien",
+          "observedAt": "2026-05-31T23:57:24.3284619+00:00",
+          "summary": "Mentions the first round of matches, including 31\u202FMay vs BK H\u00E4cken.",
+          "rawExcerpt": "\u0022BK H\u00E4cken Hammarby IF 2026-05-31 14:00 Bravida Arena G\u00F6teborg\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

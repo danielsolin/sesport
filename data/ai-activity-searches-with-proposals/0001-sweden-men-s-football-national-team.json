@@ -1,0 +1,333 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "sweden-men-s-football-national-team"
+    },
+    "name": "Herrlandslaget i fotboll",
+    "type": "national_team",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Represents Sweden",
+    "currentRelationshipOrStatus": "Swedish FA shows 2026 World Cup group status on current team page",
+    "likelyActivityTypes": [
+      "squad calls",
+      "tournament rosters",
+      "qualification",
+      "coaching",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s team page \uE200cite\uE202turn27view0",
+    "notes": "Root entity for Swedish men\u2019s international football"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:f55b8259ec76b6bc2954af77"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:f55b8259ec76b6bc2954af77"
+      },
+      "fingerprint": "ai:f55b8259ec76b6bc2954af77",
+      "title": "Sweden vs Norway",
+      "description": "The Swedish men\u2019s national football team plays a friendly match against Norway on 1\u202FJune\u202F2026 at Ullev\u00E5l Stadion in Oslo.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Friendly match preceding the 2026 FIFA World Cup group stage.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "bcccca1d-a325-6754-36f9-202e90deb064"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish national team is scheduled to compete in this fixture as part of its preparation for the World Cup.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-fotboll---landskamper-herr"
+            },
+            "name": "Svensk Fotboll \u2013 Landskamper Herr"
+          },
+          "uri": "https://www.svenskfotboll.se/landslag/herr/landskamper-herr/",
+          "title": "Landskamper 2026 \u2013 Svensk fotboll",
+          "observedAt": "2026-05-31T21:20:20.9807025+00:00",
+          "summary": "Lists the friendly match against Norway on 1\u202FJune at 19:00.",
+          "rawExcerpt": "\u0022Norge Sverige 19:00, 1 juni 2026 Ullev\u00E5\u00ADl Stadion\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:7f45245dfcd495419557f0bd"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7f45245dfcd495419557f0bd"
+      },
+      "fingerprint": "ai:7f45245dfcd495419557f0bd",
+      "title": "Sweden vs Greece",
+      "description": "The Swedish men\u2019s national football team plays a friendly match against Greece on 4\u202FJune\u202F2026 at the Nationalarenan in Stockholm.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Friendly match preceding the 2026 FIFA World Cup group stage.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "bcccca1d-a325-6754-36f9-202e90deb064"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish national team is scheduled to compete in this fixture as part of its preparation for the World Cup.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svensk-fotboll---landskamper-herr"
+            },
+            "name": "Svensk Fotboll \u2013 Landskamper Herr"
+          },
+          "uri": "https://www.svenskfotboll.se/landslag/herr/landskamper-herr/",
+          "title": "Landskamper 2026 \u2013 Svensk fotboll",
+          "observedAt": "2026-05-31T21:20:20.9842487+00:00",
+          "summary": "Lists the friendly match against Greece on 4\u202FJune at 19:00.",
+          "rawExcerpt": "\u0022Sverige Grekland 19:00, 4 juni 2026 Nationalarenan\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:58f80ad5c9fe71545327b434"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:58f80ad5c9fe71545327b434"
+      },
+      "fingerprint": "ai:58f80ad5c9fe71545327b434",
+      "title": "Sweden vs Tunisia",
+      "description": "The Swedish men\u2019s national football team plays its first group match of the 2026 FIFA World Cup against Tunisia on 15\u202FJune\u202F2026 at Estadio BBVA in Guadalupe, Mexico.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Group F match of the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-15",
+        "localStartTime": "04:00:00",
+        "timeZoneId": "America/Mexico_City",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "bcccca1d-a325-6754-36f9-202e90deb064"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish national team is a participant in the World Cup group stage.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:vm-fotboll---spelschema"
+            },
+            "name": "VM\u2011Fotboll \u2013 Spelschema"
+          },
+          "uri": "https://www.vm-fotboll.se/spelschema/",
+          "title": "Spelschema f\u00F6r Fotbolls\u2011VM 2026",
+          "observedAt": "2026-05-31T21:20:20.9842965+00:00",
+          "summary": "Shows the match Sweden vs Tunisia scheduled for 15\u202FJune at 04:00.",
+          "rawExcerpt": "\u0022Sverige \u2013 Tunisien 04:00, 15 juni 2026 Estadio BBVA\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:e2d56185bfc1cb37c608888d"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:e2d56185bfc1cb37c608888d"
+      },
+      "fingerprint": "ai:e2d56185bfc1cb37c608888d",
+      "title": "Sweden vs Netherlands",
+      "description": "The Swedish men\u2019s national football team plays its second group match of the 2026 FIFA World Cup against the Netherlands on 20\u202FJune\u202F2026 at NRG Stadium in Houston, Texas.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Group F match of the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "bcccca1d-a325-6754-36f9-202e90deb064"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish national team is a participant in the World Cup group stage.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:vm-fotboll---spelschema"
+            },
+            "name": "VM\u2011Fotboll \u2013 Spelschema"
+          },
+          "uri": "https://www.vm-fotboll.se/spelschema/",
+          "title": "Spelschema f\u00F6r Fotbolls\u2011VM 2026",
+          "observedAt": "2026-05-31T21:20:20.9843069+00:00",
+          "summary": "Shows the match Netherlands vs Sweden scheduled for 20\u202FJune at 19:00.",
+          "rawExcerpt": "\u0022Nederl\u00E4nderna \u2013 Sverige 19:00, 20 juni 2026 NRG Stadium\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:4300bd13500008f2d25f837f"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4300bd13500008f2d25f837f"
+      },
+      "fingerprint": "ai:4300bd13500008f2d25f837f",
+      "title": "Sweden vs Japan",
+      "description": "The Swedish men\u2019s national football team plays its third group match of the 2026 FIFA World Cup against Japan on 26\u202FJune\u202F2026 at AT\u0026T Stadium in Arlington, Texas.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Group F match of the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-26",
+        "localStartTime": "01:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "bcccca1d-a325-6754-36f9-202e90deb064"
+          },
+          "proposedRole": 0,
+          "explanation": "The Swedish national team is a participant in the World Cup group stage.",
+          "contextName": "Herrlandslaget i fotboll",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:vm-fotboll---spelschema"
+            },
+            "name": "VM\u2011Fotboll \u2013 Spelschema"
+          },
+          "uri": "https://www.vm-fotboll.se/spelschema/",
+          "title": "Spelschema f\u00F6r Fotbolls\u2011VM 2026",
+          "observedAt": "2026-05-31T21:20:20.9843144+00:00",
+          "summary": "Shows the match Japan vs Sweden scheduled for 26\u202FJune at 01:00.",
+          "rawExcerpt": "\u0022Japan \u2013 Sverige 01:00, 26 juni 2026 AT\u0026T Stadium\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

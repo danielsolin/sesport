@@ -1,0 +1,270 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "benjamin-nygren"
+    },
+    "name": "Benjamin Nygren",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA squad page lists Celtic FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "goals"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Good tier_2 candidate"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:1ef8b9db39757bc3030cb47a"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:1ef8b9db39757bc3030cb47a"
+      },
+      "fingerprint": "ai:1ef8b9db39757bc3030cb47a",
+      "title": "Norway vs Sweden (Friendly)",
+      "description": "A friendly international match between Norway and Sweden played on 1\u202FJune\u202F2026 at Ullevaal Stadion, Oslo.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "International friendly",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-01",
+        "localStartTime": "17:00:00",
+        "timeZoneId": "Europe/Oslo",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5a97fda3-d2c1-57bb-2973-57ae424277bd"
+          },
+          "proposedRole": 0,
+          "explanation": "Benjamin Nygren is listed in the Sweden squad for this match.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fotmob"
+            },
+            "name": "FotMob"
+          },
+          "uri": "https://www.fotmob.com/matches/norway-vs-sweden/2e5vii",
+          "title": "Norway vs Sweden - live score, predicted lineups and H2H stats",
+          "observedAt": "2026-06-01T02:36:14.1763002+00:00",
+          "summary": "Shows the match date, time and lineup including Benjamin Nygren for Sweden.",
+          "rawExcerpt": "\u0022Sweden (3-4-2-1) : ... Benjamin Nygren , Anthony Elanga\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:7348f0f3d19252a4d67d11cd"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:7348f0f3d19252a4d67d11cd"
+      },
+      "fingerprint": "ai:7348f0f3d19252a4d67d11cd",
+      "title": "Sweden vs Tunisia (World Cup Group F)",
+      "description": "First group\u2011stage match of Sweden at the 2026 FIFA World Cup, played on 14\u202FJune\u202F2026 in Guadalupe, Mexico.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup 2026 Group F",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-14",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "America/Mexico_City",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5a97fda3-d2c1-57bb-2973-57ae424277bd"
+          },
+          "proposedRole": 0,
+          "explanation": "Benjamin Nygren is named in Sweden\u2019s squad for the tournament.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com"
+            },
+            "name": "Olympics.com"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule",
+          "observedAt": "2026-06-01T02:36:14.1763106+00:00",
+          "summary": "Lists Benjamin Nygren as a Sweden squad member and provides the match schedule.",
+          "rawExcerpt": "\u0022Benjamin Nygren (Celtic)\u0022 \u2026 \u002214 June, 19:00 CST - Sweden vs Tunisia\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:eea56fe5d72b470685a947fc"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:eea56fe5d72b470685a947fc"
+      },
+      "fingerprint": "ai:eea56fe5d72b470685a947fc",
+      "title": "Sweden vs Netherlands (World Cup Group F)",
+      "description": "Second group\u2011stage match of Sweden at the 2026 FIFA World Cup, played on 20\u202FJune\u202F2026 in Houston, USA.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup 2026 Group F",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "12:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5a97fda3-d2c1-57bb-2973-57ae424277bd"
+          },
+          "proposedRole": 0,
+          "explanation": "Benjamin Nygren is part of Sweden\u2019s squad for the tournament.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com"
+            },
+            "name": "Olympics.com"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule",
+          "observedAt": "2026-06-01T02:36:14.1763149+00:00",
+          "summary": "Provides the match schedule including Sweden vs Netherlands.",
+          "rawExcerpt": "\u002220 June, 12:00 CDT - Netherlands vs Sweden\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:0efad82f2db3d9f3795f28cd"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0efad82f2db3d9f3795f28cd"
+      },
+      "fingerprint": "ai:0efad82f2db3d9f3795f28cd",
+      "title": "Sweden vs Japan (World Cup Group F)",
+      "description": "Third group\u2011stage match of Sweden at the 2026 FIFA World Cup, played on 25\u202FJune\u202F2026 in Arlington, Texas, USA.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup 2026 Group F",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "16:00:00",
+        "timeZoneId": "America/Chicago",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5a97fda3-d2c1-57bb-2973-57ae424277bd"
+          },
+          "proposedRole": 0,
+          "explanation": "Benjamin Nygren is listed in Sweden\u2019s squad for the tournament.",
+          "contextName": "Benjamin Nygren",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com"
+            },
+            "name": "Olympics.com"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule",
+          "observedAt": "2026-06-01T02:36:14.1763775+00:00",
+          "summary": "Shows the match schedule including Sweden vs Japan.",
+          "rawExcerpt": "\u002225 June, 16:00 CDT - Japan vs Sweden\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

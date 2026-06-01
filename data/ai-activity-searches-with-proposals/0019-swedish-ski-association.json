@@ -1,0 +1,101 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-ski-association"
+    },
+    "name": "Svenska Skidf\u00F6rbundet",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "skiing"
+      },
+      "name": "skiing"
+    },
+    "swedenConnection": "Governing body in Sweden",
+    "currentRelationshipOrStatus": "Published multiple 2025/26 national-team rosters",
+    "likelyActivityTypes": [
+      "roster changes",
+      "funding",
+      "World Cup entries",
+      "governance"
+    ],
+    "suggestedEvidenceSources": "Skidor.com roster pages \uE200cite\uE202turn28view1\uE202turn30view0\uE202turn32view3\uE202turn30view3",
+    "notes": "One of the most productive discovery hubs"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:5c48ee853a61b320bcfb8403"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5c48ee853a61b320bcfb8403"
+      },
+      "fingerprint": "ai:5c48ee853a61b320bcfb8403",
+      "title": "SM\u2011veckan sommar 2026 \u2013 Karlstad",
+      "description": "The Swedish national championships for winter sports will be held in Karlstad from 23 to 28\u202FJune\u202F2026, organised by the Svenska Skidf\u00F6rbundet.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "skiing"
+        },
+        "name": "skiing"
+      },
+      "context": "The event will feature 30 different sports, including alpine skiing, cross\u2011country skiing, ski jumping and others.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-23",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "66cfc2a8-52b9-3df8-d392-6750570e859a"
+          },
+          "proposedRole": 6,
+          "explanation": "Svenska Skidf\u00F6rbundet is the governing body that organizes the national championships.",
+          "contextName": "Svenska Skidf\u00F6rbundet",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svt-sport"
+            },
+            "name": "SVT Sport"
+          },
+          "uri": "https://www.svt.se/sport/artikel/sm-veckan-vinter-2026-tv-tider-och-tavlingsprogram",
+          "title": "Guide: SM\u2011veckan vinter 2026 | SVT Sport",
+          "observedAt": "2026-05-31T22:53:06.4367688+00:00",
+          "summary": "The article states that the summer edition of SM\u2011veckan will be held in Karlstad from 23 to 28\u202FJune\u202F2026.",
+          "rawExcerpt": "\u0022Det kommer att delas ut SM\u2011guld i 30 olika sporter d\u00E4r. Det \u00E4r f\u00F6rsta g\u00E5ngen som staden st\u00E5r som arrang\u00F6r f\u00F6r SM\u2011veckan, ett av Sveriges st\u00F6rsta idrottsevenemang.\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:svenska-skidf\u00F6rbundet"
+            },
+            "name": "Svenska Skidf\u00F6rbundet"
+          },
+          "uri": "https://www.skidor.com/",
+          "title": "Svenska Skidf\u00F6rbundet \u2013 Official website",
+          "observedAt": "2026-05-31T22:53:06.4367715+00:00",
+          "summary": "The site lists the national championships and confirms Karlstad as host for the summer 2026 edition.",
+          "rawExcerpt": "\u0022SM\u2011veckan sommar 2026. Karlstad arrangerar SM\u2011veckans sommarupplaga 23 juni \u2013 28 juni 2026.\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "bauhaus-galan"
+    },
+    "name": "BAUHAUS-galan",
+    "type": "recurring_event",
+    "sport": {
+      "externalId": {
+        "value": "athletics"
+      },
+      "name": "athletics"
+    },
+    "swedenConnection": "Sweden-based",
+    "currentRelationshipOrStatus": "Official Diamond League/BAUHAUS pages describe annual Stockholm meeting",
+    "likelyActivityTypes": [
+      "entry lists",
+      "elite field",
+      "records",
+      "meeting status"
+    ],
+    "suggestedEvidenceSources": "Stockholm Diamond League / BAUHAUS pages \uE200cite\uE202turn11search0\uE202turn11search12",
+    "notes": "Must-track Swedish athletics event"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:1db344aa7d8eb4517664ee91"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:1db344aa7d8eb4517664ee91"
+      },
+      "fingerprint": "ai:1db344aa7d8eb4517664ee91",
+      "title": "BAUHAUS\u2011galan Stockholm \u2013 Diamond League Meeting",
+      "description": "The annual BAUHAUS\u2011galan, part of the Diamond League series, is scheduled to take place in Stockholm on 7\u202FJune\u202F2026.",
+      "type": 10,
+      "sport": {
+        "externalId": {
+          "value": "athletics"
+        },
+        "name": "athletics"
+      },
+      "context": "The meeting is the fifth round of the 2026 Wanda Diamond League season and will feature elite track\u2011and\u2011field events.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-07",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "1d2005ef-7de3-2eb9-155a-f484d06d7af5"
+          },
+          "proposedRole": 5,
+          "explanation": "BAUHAUS\u2011galan is a recurring athletics event held annually in Stockholm, Sweden.",
+          "contextName": "BAUHAUS-galan",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:running-lookout"
+            },
+            "name": "Running Lookout"
+          },
+          "uri": "https://runninglookout.com/news/stockholm-diamond-league-2026-bauhaus-galan-june-7-jefferson-wooden-hodgkinson/",
+          "title": "Stockholm Diamond League 2026 preview: Jefferson\u2011Wooden\u0027s Stockholm debut and Hodgkinson 800m headline BAUHAUS\u2011galan on June\u00A07",
+          "observedAt": "2026-06-01T01:18:36.4774108+00:00",
+          "summary": "The article states that the 2026 BAUHAUS\u2011galan in Stockholm is scheduled for 7\u202FJune.",
+          "rawExcerpt": "\u0022The 2026 BAUHAUS\u2011galan in Stockholm published its full entry list on Friday for the meeting on 7 June, the fifth round of the Wanda Diamond League season\u2026\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:newsbreak--flosports-"
+            },
+            "name": "NewsBreak (FloSports)"
+          },
+          "uri": "https://www.newsbreak.com/flosports-331807745/4281192703068-2026-2027-diamond-league-schedules-released",
+          "title": "2026 \u0026 2027 Diamond League Schedules Released - NewsBreak",
+          "observedAt": "2026-06-01T01:18:36.4774129+00:00",
+          "summary": "The schedule lists BAUHAUS\u2011Galan, Stockholm on June\u00A07,\u202F2026.",
+          "rawExcerpt": "\u0022June\u00A07,\u00A02026 \u2013 BAUHAUS\u2011Galan, Stockholm (Sweden)\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    }
+  ]
+}

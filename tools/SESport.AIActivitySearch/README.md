@@ -76,10 +76,17 @@ OpenRouter.
 
 ## Overnight Mode
 
-`--overnight` is intended for long unattended LM Studio runs. It searches all
-watchlist entities unless `--entity` or `--take` is set, continues after
-individual entity failures, waits five seconds between entities, and stops
-after five consecutive failures.
+`--overnight` is intended for long unattended runs. It searches all watchlist
+entities unless `--entity` or `--take` is set, continues after individual
+entity failures, waits five seconds between entities, and tracks which entities
+produced proposals. After the first pass it retries only entities that produced
+no proposals, then does one final retry pass for any entities still without
+proposals.
+
+Unknown per-entity errors are recorded in the run output and do not stop the
+overnight run. HTTP 401, 402, and 403 stop the run because they normally mean
+the provider cannot authorize or bill the request. HTTP 408, 409, 423, 429,
+and 5xx statuses trigger an increasing backoff before the run continues.
 
 ```powershell
 dotnet run --project tools\SESport.AIActivitySearch `
@@ -118,13 +125,13 @@ Useful options:
 - `--web-tool <type>` sets the Responses tool type. Default: `web_search`.
 - `--no-web-search` omits the `web_search` tool from the request.
 - `--run-dir <path>` overrides the structured run directory.
-- `--overnight` enables safe long-running batch defaults.
+- `--overnight` enables persistent long-running batch defaults.
 - `--all` searches all entities when `--entity` is not set.
 - `--continue-on-error` records failures and keeps going.
 - `--delay <seconds>` waits between entities. Default: `0`, or `5` with
   `--overnight`.
 - `--stop-after-failures <count>` stops after repeated consecutive failures.
-  Default: unlimited, or `5` with `--overnight`.
+  Default: unlimited. Ignored by `--overnight`.
 - `--write-to-db` persists generated proposals into `activity_proposals`,
   `activity_proposal_entity_links`, and `activity_proposal_evidence`.
 - `--connection-string <value>` sets the database connection string for

@@ -1,0 +1,174 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "fredrik-lindgren"
+    },
+    "name": "Fredrik Lindgren",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "speedway"
+      },
+      "name": "speedway"
+    },
+    "swedenConnection": "motorsport",
+    "currentRelationshipOrStatus": "FIM Speedway reporting still frames him as Sweden\u2019s leading active title challenger/reference point",
+    "likelyActivityTypes": [
+      "GP entries",
+      "standings",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "FIM Speedway reporting \uE200cite\uE202turn43search3",
+    "notes": "Worth keeping although speedway sourcing is more fragmented"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:0eec1dfda4efd4fc3ec555e1"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0eec1dfda4efd4fc3ec555e1"
+      },
+      "fingerprint": "ai:0eec1dfda4efd4fc3ec555e1",
+      "title": "ATPI FIM Speedway GP of Great Britain \u2013 Manchester R3",
+      "description": "Fredrik Lindgren competes as a rider in the third round of the 2026 Speedway Grand Prix series held at Manchester\u2019s National Speedway Stadium.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "speedway"
+        },
+        "name": "speedway"
+      },
+      "context": "Second round of the Manchester double\u2011header, part of the 10\u2011round 2026 Speedway GP season.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/London",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "4d8a5262-6e0e-cf33-a8f1-43af13d6febb"
+          },
+          "proposedRole": 0,
+          "explanation": "Fredrik Lindgren is listed as a rider in the official 2026 SGP schedule, confirming his participation.",
+          "contextName": "Fredrik Lindgren",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fim-speedway-calendar-2026"
+            },
+            "name": "FIM Speedway Calendar 2026"
+          },
+          "uri": "https://fimspeedway.com/news/2026-fim-speedway-calendar-revealed-1",
+          "title": "2026 FIM SPEEDWAY CALENDAR REVEALED",
+          "observedAt": "2026-06-01T14:53:41.943367+00:00",
+          "summary": "The schedule lists the Manchester GP double\u2011header on 5\u20136 June, with the third and fourth rounds at Manchester\u2019s National Speedway Stadium.",
+          "rawExcerpt": "ATPI FIM Speedway GP of Great Britain \u2013 Manchester R3 \u2013 June 5\u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:debear-sports---speedway-gp-riders"
+            },
+            "name": "DeBear Sports \u2013 Speedway GP Riders"
+          },
+          "uri": "https://sports.debear.uk/sgp/riders/fredrik-lindgren-9/2026",
+          "title": "Fredrik Lindgren \u2013 2026",
+          "observedAt": "2026-06-01T14:53:41.9434202+00:00",
+          "summary": "The rider\u2019s profile includes his participation in the Grand Prix season.",
+          "rawExcerpt": "Fredrik Lindgren \u2013 2026: Grand Prix Appearances: 10"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:ada17dc247ee60ec48e823ba"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:ada17dc247ee60ec48e823ba"
+      },
+      "fingerprint": "ai:ada17dc247ee60ec48e823ba",
+      "title": "ATPI FIM Speedway GP of Great Britain \u2013 Manchester R4",
+      "description": "Fredrik Lindgren competes in the fourth round of the 2026 Speedway Grand Prix series held the following day at Manchester\u2019s National Speedway Stadium.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "speedway"
+        },
+        "name": "speedway"
+      },
+      "context": "Continuation of the Manchester double\u2011header, part of the 10\u2011round 2026 Speedway GP season.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-06",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/London",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "4d8a5262-6e0e-cf33-a8f1-43af13d6febb"
+          },
+          "proposedRole": 0,
+          "explanation": "Fredrik Lindgren is a confirmed entrant for the 2026 SGP season and rides in both Manchester rounds.",
+          "contextName": "Fredrik Lindgren",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:fim-speedway-calendar-2026"
+            },
+            "name": "FIM Speedway Calendar 2026"
+          },
+          "uri": "https://fimspeedway.com/news/2026-fim-speedway-calendar-revealed-1",
+          "title": "2026 FIM SPEEDWAY CALENDAR REVEALED",
+          "observedAt": "2026-06-01T14:53:41.9434457+00:00",
+          "summary": "The schedule lists the Manchester GP double\u2011header on 5\u20136 June, with the third and fourth rounds at Manchester\u2019s National Speedway Stadium.",
+          "rawExcerpt": "ATPI FIM Speedway GP of Great Britain \u2013 Manchester R4 \u2013 June 6\u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:debear-sports---speedway-gp-meetings"
+            },
+            "name": "DeBear Sports \u2013 Speedway GP Meetings"
+          },
+          "uri": "https://sports.debear.uk/sgp/meetings",
+          "title": "Speedway Grand Prix \u2013 Meetings \u2013 2026",
+          "observedAt": "2026-06-01T14:53:41.9434467+00:00",
+          "summary": "Highlights the Manchester GP II meeting starting Saturday 6 June at 19:00.",
+          "rawExcerpt": "Manchester Grand Prix II \u2013 starts: Saturday 6th June, 19:00 (Local)"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    }
+  ]
+}

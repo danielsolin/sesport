@@ -1,0 +1,148 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "johanna-rytting-kaneryd"
+    },
+    "name": "Johanna Rytting Kaneryd",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA women\u2019s squad page lists Chelsea FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA women\u2019s squad page \uE200cite\uE202turn27view3",
+    "notes": "Strong woman\u2019s-team watch entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:59aff367c9aaaf6b251b7121"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:59aff367c9aaaf6b251b7121"
+      },
+      "fingerprint": "ai:59aff367c9aaaf6b251b7121",
+      "title": "Sweden vs Denmark \u2013 World Cup Qualifier",
+      "description": "The Swedish women\u0027s national football team will play a UEFA Women\u2019s Euro 2027 qualifying match against Denmark in Gothenburg.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "UEFA Women\u2019s Euro 2027 qualifying Group A1 match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-05",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "dc880464-1e17-9f66-6373-26a913ebd18c"
+          },
+          "proposedRole": 2,
+          "explanation": "Johanna Rytting Kaneryd is listed on the Swedish FA women\u2019s squad page and was present at the national team gathering for this qualifier.",
+          "contextName": "Johanna Rytting Kaneryd",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sweden-herald"
+            },
+            "name": "Sweden Herald"
+          },
+          "uri": "https://swedenherald.com/article/chelsea-star-johanna-rytting-kaneryd-could-miss-world-cup-qualifiers",
+          "title": "Chelsea star Johanna Rytting Kaneryd could miss Sweden\u2019s World Cup qualifiers",
+          "observedAt": "2026-06-01T03:06:43.910991+00:00",
+          "summary": "The article states that the national team will face Denmark in Gothenburg on Tuesday (June 5) and lists Johanna Rytting Kaneryd as part of the squad gathering.",
+          "rawExcerpt": "\u0022Sweden plays in Group A1\u2026 Remaining Swedish qualifying matches: June\u00A05: Denmark (home).\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:e59fbec7b750e07240a7a62b"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:e59fbec7b750e07240a7a62b"
+      },
+      "fingerprint": "ai:e59fbec7b750e07240a7a62b",
+      "title": "Sweden vs Italy \u2013 World Cup Qualifier",
+      "description": "The Swedish women\u0027s national football team will play a UEFA Women\u2019s Euro 2027 qualifying match against Italy in Stockholm.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "UEFA Women\u2019s Euro 2027 qualifying Group A1 match",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-09",
+        "localStartTime": "15:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "dc880464-1e17-9f66-6373-26a913ebd18c"
+          },
+          "proposedRole": 2,
+          "explanation": "Johanna Rytting Kaneryd is listed on the Swedish FA women\u2019s squad page and was present at the national team gathering for this qualifier.",
+          "contextName": "Johanna Rytting Kaneryd",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sweden-herald"
+            },
+            "name": "Sweden Herald"
+          },
+          "uri": "https://swedenherald.com/article/chelsea-star-johanna-rytting-kaneryd-could-miss-world-cup-qualifiers",
+          "title": "Chelsea star Johanna Rytting Kaneryd could miss Sweden\u2019s World Cup qualifiers",
+          "observedAt": "2026-06-01T03:06:43.9110835+00:00",
+          "summary": "The article lists the remaining qualifying matches, including June\u00A09 against Italy.",
+          "rawExcerpt": "\u0022Remaining Swedish qualifying matches: June\u00A09: Italy (home).\u0022"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    }
+  ]
+}

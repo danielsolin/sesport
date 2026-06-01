@@ -1,0 +1,87 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "alex-noren"
+    },
+    "name": "Alex Nor\u00E9n",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "golf"
+      },
+      "name": "golf"
+    },
+    "swedenConnection": "Swedish athlete",
+    "currentRelationshipOrStatus": "PGA Tour and DP World Tour profiles list him as Swedish top-tour player",
+    "likelyActivityTypes": [
+      "majors",
+      "Ryder Cup",
+      "rankings",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "PGA Tour and DPWT profiles \uE200cite\uE202turn35search0\uE202turn35search1",
+    "notes": "Important veteran Swedish golf entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:38d24f8faa6947991dc451d9"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:38d24f8faa6947991dc451d9"
+      },
+      "fingerprint": "ai:38d24f8faa6947991dc451d9",
+      "title": "U.S. Open \u2013 2026",
+      "description": "Alex Nor\u00E9n will compete at the U.S. Open golf championship held on 18\u202FJune\u202F2026.",
+      "type": 2,
+      "sport": {
+        "externalId": {
+          "value": "golf"
+        },
+        "name": "golf"
+      },
+      "context": "The U.S. Open is one of the four major championships in professional golf.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-18",
+        "timeZoneId": "",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "c9eb0968-713d-7469-56a6-3e6e9d2631c1"
+          },
+          "proposedRole": 0,
+          "explanation": "Alex Nor\u00E9n\u2019s PGA Tour profile lists him as a participant in the 2026 U.S. Open.",
+          "contextName": "Alex Nor\u00E9n",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:whensport-com---alex-noren-player-schedule-and-results"
+            },
+            "name": "whensport.com \u2013 Alex Noren player schedule and results"
+          },
+          "uri": "https://whensport.com/events/golf-majors-2026/player/alex-noren",
+          "title": "Alex Noren \u2014 player schedule and results | whensport.com",
+          "observedAt": "2026-06-01T06:19:56.5024156+00:00",
+          "summary": "The page lists upcoming majors for 2026, including the U.S. Open on 2026\u201106\u201118.",
+          "rawExcerpt": "\u0022Upcoming 2026-06-18 U.S. Open\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    }
+  ]
+}

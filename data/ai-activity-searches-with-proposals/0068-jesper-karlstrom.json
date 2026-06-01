@@ -1,0 +1,248 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "jesper-karlstrom"
+    },
+    "name": "Jesper Karlstr\u00F6m",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA squad page lists Udinese Calcio",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "transfers",
+      "injuries"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Good secondary men\u2019s-team node"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:8bb5ef1ec73ddf3ed35b3aba"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:8bb5ef1ec73ddf3ed35b3aba"
+      },
+      "fingerprint": "ai:8bb5ef1ec73ddf3ed35b3aba",
+      "title": "Sweden vs Tunisia \u2013 FIFA World Cup 2026 Group F",
+      "description": "First group\u2011stage match of Sweden at the 2026 FIFA World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Group F, first match of Sweden in the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-15",
+        "localStartTime": "04:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "05b5795e-04a8-21f1-7f9c-a08837737c89"
+          },
+          "proposedRole": 0,
+          "explanation": "Jesper Karlstr\u00F6m is listed as a squad member for Sweden at the 2026 FIFA World Cup.",
+          "contextName": "Jesper Karlstr\u00F6m",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:soccergraph---sweden-fifa-world-cup-2026-squad"
+            },
+            "name": "Soccergraph \u2013 Sweden FIFA World Cup 2026 Squad"
+          },
+          "uri": "https://www.soccergraph.com/2026/05/sweden-fifa-world-cup-2026-squad-full-26-player-list.html",
+          "title": "Sweden FIFA World Cup 2026 Squad: Full 26 Player List, Roster, Key Players \u2013 Soccergraph",
+          "observedAt": "2026-06-01T02:44:31.3338141+00:00",
+          "summary": "Lists Jesper Karlstr\u00F6m among the midfielders in Sweden\u2019s 26\u2011man squad for the 2026 World Cup.",
+          "rawExcerpt": "\u0022Midfielders: Lucas Bergvall Jesper Karlstr\u00F6m Yasin Ayari\u2026\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com---sweden-at-fifa-world-cup-2026"
+            },
+            "name": "Olympics.com \u2013 Sweden at FIFA World Cup 2026"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule \u2013 Olympics.com",
+          "observedAt": "2026-06-01T02:44:31.3338152+00:00",
+          "summary": "Confirms Jesper Karlstr\u00F6m as a squad member and lists the first group\u2011stage match against Tunisia on 15 June.",
+          "rawExcerpt": "\u0022FIFA World Cup 2026 \u2013 Sweden\u2019s full squad \u2026 Midfielders: Jesper Kalstr\u00F6m (Udinese)\u2026\u0022"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:8cbb00a86c5842313d8c0fcd"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:8cbb00a86c5842313d8c0fcd"
+      },
+      "fingerprint": "ai:8cbb00a86c5842313d8c0fcd",
+      "title": "Netherlands vs Sweden \u2013 FIFA World Cup 2026 Group F",
+      "description": "Second group\u2011stage match of Sweden at the 2026 FIFA World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Group F, second match of Sweden in the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-21",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "05b5795e-04a8-21f1-7f9c-a08837737c89"
+          },
+          "proposedRole": 0,
+          "explanation": "Jesper Karlstr\u00F6m is listed as a squad member for Sweden at the 2026 FIFA World Cup.",
+          "contextName": "Jesper Karlstr\u00F6m",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:soccergraph---sweden-fifa-world-cup-2026-squad"
+            },
+            "name": "Soccergraph \u2013 Sweden FIFA World Cup 2026 Squad"
+          },
+          "uri": "https://www.soccergraph.com/2026/05/sweden-fifa-world-cup-2026-squad-full-26-player-list.html",
+          "title": "Sweden FIFA World Cup 2026 Squad: Full 26 Player List, Roster, Key Players \u2013 Soccergraph",
+          "observedAt": "2026-06-01T02:44:31.3338254+00:00",
+          "summary": "Lists Jesper Karlstr\u00F6m among the midfielders in Sweden\u2019s 26\u2011man squad for the 2026 World Cup.",
+          "rawExcerpt": "\u0022Midfielders: Lucas Bergvall Jesper Karlstr\u00F6m Yasin Ayari\u2026\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com---sweden-at-fifa-world-cup-2026"
+            },
+            "name": "Olympics.com \u2013 Sweden at FIFA World Cup 2026"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule \u2013 Olympics.com",
+          "observedAt": "2026-06-01T02:44:31.3338262+00:00",
+          "summary": "Lists the second group\u2011stage match against Netherlands on 21 June.",
+          "rawExcerpt": "\u0022Group stage schedule \u2026 20 June, 12:00 CDT - Netherlands vs Sweden - Houston, Texas (USA)\u0022"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:0488e8392089ba21a99999d1"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:0488e8392089ba21a99999d1"
+      },
+      "fingerprint": "ai:0488e8392089ba21a99999d1",
+      "title": "Japan vs Sweden \u2013 FIFA World Cup 2026 Group F",
+      "description": "Third group\u2011stage match of Sweden at the 2026 FIFA World Cup.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Group F, third match of Sweden in the 2026 FIFA World Cup.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "16:00:00",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "05b5795e-04a8-21f1-7f9c-a08837737c89"
+          },
+          "proposedRole": 0,
+          "explanation": "Jesper Karlstr\u00F6m is listed as a squad member for Sweden at the 2026 FIFA World Cup.",
+          "contextName": "Jesper Karlstr\u00F6m",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:soccergraph---sweden-fifa-world-cup-2026-squad"
+            },
+            "name": "Soccergraph \u2013 Sweden FIFA World Cup 2026 Squad"
+          },
+          "uri": "https://www.soccergraph.com/2026/05/sweden-fifa-world-cup-2026-squad-full-26-player-list.html",
+          "title": "Sweden FIFA World Cup 2026 Squad: Full 26 Player List, Roster, Key Players \u2013 Soccergraph",
+          "observedAt": "2026-06-01T02:44:31.3338319+00:00",
+          "summary": "Lists Jesper Karlstr\u00F6m among the midfielders in Sweden\u2019s 26\u2011man squad for the 2026 World Cup.",
+          "rawExcerpt": "\u0022Midfielders: Lucas Bergvall Jesper Karlstr\u00F6m Yasin Ayari\u2026\u0022"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:olympics-com---sweden-at-fifa-world-cup-2026"
+            },
+            "name": "Olympics.com \u2013 Sweden at FIFA World Cup 2026"
+          },
+          "uri": "https://www.olympics.com/en/news/fifa-world-cup-2026-sweden-great-escape-graham-potter-all-players-full-squad-list-key-stats-schedule",
+          "title": "Sweden at FIFA World Cup 2026: All players, full squad list, key stats and schedule \u2013 Olympics.com",
+          "observedAt": "2026-06-01T02:44:31.3338327+00:00",
+          "summary": "Confirms Jesper Karlstr\u00F6m as a squad member for Sweden at the 2026 FIFA World Cup and lists the match against Japan on 25 June.",
+          "rawExcerpt": "\u0022FIFA World Cup 2026 \u2013 Sweden\u2019s group stage schedule All times in local time 14 June, 19:00 CST - Sweden vs Tunisia\u2026\u0022"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    }
+  ]
+}

@@ -63,7 +63,9 @@ public sealed class OpenAiResponsesActivitySearchClient
          throw new HttpRequestException(
             $"AI activity search failed with {(int)response.StatusCode} " +
             $"{response.StatusCode} from {options.BaseAddress}: " +
-            $"{ExtractErrorMessage(rawResponse)}{providerHint}"
+            $"{ExtractErrorMessage(rawResponse)}{providerHint}",
+            null,
+            response.StatusCode
          );
       }
 

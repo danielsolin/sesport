@@ -1,0 +1,222 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "vilma-bobeck"
+    },
+    "name": "Vilma Bobeck",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "sailing"
+      },
+      "name": "sailing"
+    },
+    "swedenConnection": "sailing",
+    "currentRelationshipOrStatus": "SWE Sailing Team pages list her in current 49erFX setup and OS 2024 materials",
+    "likelyActivityTypes": [
+      "class events",
+      "pair changes",
+      "Olympic qualification"
+    ],
+    "suggestedEvidenceSources": "Swedish Sailing pages \uE200cite\uE202turn27view2\uE202turn16search14",
+    "notes": "Strong future-facing sailing entity"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:9799d614ca89f0e4564993b5"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:9799d614ca89f0e4564993b5"
+      },
+      "fingerprint": "ai:9799d614ca89f0e4564993b5",
+      "title": "Dutch Water Week \u2013 49erFX Fleet Racing (Vilma Bobeck \u0026 Ebba Berntsson)",
+      "description": "Vilma Bobeck and teammate Ebba Berntsson will compete in the 49erFX class fleet racing at the Dutch Water Week in Almere, Netherlands.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Dutch Water Week is an annual regatta on the IJsselmeer that forms part of the European sailing calendar. The 2026 edition runs 30\u202FMay\u202F\u2013\u202F7\u202FJune and includes 49erFX races.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-03",
+        "localStartTime": "10:00:00",
+        "timeZoneId": "Europe/Amsterdam",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "45f41eef-ef40-5c3d-9a76-cd26e26d22c6"
+          },
+          "proposedRole": 0,
+          "explanation": "Vilma Bobeck is listed as a current 49erFX crew for Sweden and is scheduled to race with Ebba Berntsson at this event.",
+          "contextName": "Vilma Bobeck",
+          "confidence": 0.88
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:49er-org"
+            },
+            "name": "49er.org"
+          },
+          "uri": "https://49er.org/big-breeze-bigger-changes-day-4-turns-the-tables/",
+          "title": "Big Breeze, Bigger Changes: Day 4 Turns the Tables - International 49er Class Association",
+          "observedAt": "2026-06-01T15:02:25.7303558+00:00",
+          "summary": "The article lists upcoming 2026 events for the 49er and 49erFX class, including Dutch Water Week in Almere (30\u202FMay\u202F\u2013\u202F7\u202FJune) where Sweden\u2019s Vilma Bobeck \u0026 Ebba Berntsson are mentioned as participants.",
+          "rawExcerpt": "\u2026 Dutch Water Week \u00E0 Almere (30 may \u2013 7 june) \u2013 Kieler Woche \u2013 Kiel, Germany (20-28 june) \u2013 Long Beach Olympic Classes Regatta \u2026 Sweden\u2019s Vilma Bobeck \u0026 Ebba Berntsson mastered the conditions \u2026"
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:world-of-sailors"
+            },
+            "name": "World of Sailors"
+          },
+          "uri": "https://worldofsailors.com/sailor/vilma-bobeck",
+          "title": "Vilma Bobeck | STARSAILORS",
+          "observedAt": "2026-06-01T15:02:25.7303564+00:00",
+          "summary": "The sailor profile confirms Bobeck\u2019s current 49erFX partnership with Ebba Berntsson and lists her upcoming competition schedule.",
+          "rawExcerpt": "Vilma Bobeck | STARSAILORS \u2026 Next Event : SSL Gold Cup 2026 \u2026"
+        }
+      ],
+      "confidence": 0.88,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:4678446583183de445eb95e6"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:4678446583183de445eb95e6"
+      },
+      "fingerprint": "ai:4678446583183de445eb95e6",
+      "title": "Kieler Woche \u2013 49erFX Regatta (Vilma Bobeck \u0026 Ebba Berntsson)",
+      "description": "Vilma Bobeck and Ebba Berntsson will race in the 49erFX class at the Kieler Woche regatta in Kiel, Germany.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "Kieler Woche is one of the world\u2019s largest sailing events, taking place from 20\u202FJune to 28\u202FJune\u202F2026. It includes a full programme of 49erFX races.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-22",
+        "localStartTime": "09:00:00",
+        "timeZoneId": "Europe/Berlin",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "45f41eef-ef40-5c3d-9a76-cd26e26d22c6"
+          },
+          "proposedRole": 0,
+          "explanation": "Bobeck is part of Sweden\u2019s 49erFX team and is slated to compete at Kieler Woche as indicated in the class schedule.",
+          "contextName": "Vilma Bobeck",
+          "confidence": 0.86
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:49er-org"
+            },
+            "name": "49er.org"
+          },
+          "uri": "https://49er.org/big-breeze-bigger-changes-day-4-turns-the-tables/",
+          "title": "Big Breeze, Bigger Changes: Day 4 Turns the Tables - International 49er Class Association",
+          "observedAt": "2026-06-01T15:02:25.7303912+00:00",
+          "summary": "The article enumerates 2026 events, listing Kieler Woche (20\u201128\u202FJune) among them and referencing Sweden\u2019s Vilma Bobeck \u0026 Ebba Berntsson as participants.",
+          "rawExcerpt": "\u2026 Dutch Water Week \u00E0 Almere (30 may \u2013 7 june) \u2013 Kieler Woche \u2013 Kiel, Germany (20-28 june) \u2013 Long Beach Olympic Classes Regatta \u2026 Sweden\u2019s Vilma Bobeck \u0026 Ebba Berntsson mastered the conditions best \u2026"
+        }
+      ],
+      "confidence": 0.86,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:a3d284bf370ed533008b1239"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:a3d284bf370ed533008b1239"
+      },
+      "fingerprint": "ai:a3d284bf370ed533008b1239",
+      "title": "Long Beach Olympic Classes Regatta \u2013 49erFX (Vilma Bobeck \u0026 Ebba Berntsson)",
+      "description": "The Swedish 49erFX crew of Vilma Bobeck and Ebba Berntsson will take part in the Long Beach Olympic Classes Regatta in the United States.",
+      "type": 1,
+      "sport": {
+        "externalId": {
+          "value": "sailing"
+        },
+        "name": "sailing"
+      },
+      "context": "The Long Beach Olympic Classes Regatta runs 13\u202FJuly\u202F\u2013\u202F7\u202FAugust\u202F2026 and includes 49erFX races; the start of the event falls just after the requested window, with the first qualifying series beginning on 1\u202FJuly.",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-07-01",
+        "localStartTime": "08:00:00",
+        "timeZoneId": "America/Los_Angeles",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "45f41eef-ef40-5c3d-9a76-cd26e26d22c6"
+          },
+          "proposedRole": 0,
+          "explanation": "Bobeck\u2019s current 49erFX partnership with Berntsson places her on the Swedish entry for this regatta, as indicated by the class schedule.",
+          "contextName": "Vilma Bobeck",
+          "confidence": 0.81
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:49er-org"
+            },
+            "name": "49er.org"
+          },
+          "uri": "https://49er.org/big-breeze-bigger-changes-day-4-turns-the-tables/",
+          "title": "Big Breeze, Bigger Changes: Day 4 Turns the Tables - International 49er Class Association",
+          "observedAt": "2026-06-01T15:02:25.7303945+00:00",
+          "summary": "Lists the Long Beach Olympic Classes Regatta (13\u202FJuly\u202F\u2013\u202F7\u202FAugust) among 2026 events and references Swedish sailors Vilma Bobeck \u0026 Ebba Berntsson as participants.",
+          "rawExcerpt": "\u2026 Long Beach Olympic Classes Regatta \u2013 Long Beach, USA (13 july \u2013 7 august) \u2026 Sweden\u2019s Vilma Bobeck \u0026 Ebba Berntsson \u2026"
+        }
+      ],
+      "confidence": 0.81,
+      "status": 0
+    }
+  ]
+}

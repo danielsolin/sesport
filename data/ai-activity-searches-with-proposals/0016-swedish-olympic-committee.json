@@ -1,0 +1,86 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "swedish-olympic-committee"
+    },
+    "name": "Svenska Olympiska Kommitt\u00E9n",
+    "type": "organization",
+    "sport": {
+      "externalId": {
+        "value": "multi-sport"
+      },
+      "name": "multi-sport"
+    },
+    "swedenConnection": "Swedish national Olympic body",
+    "currentRelationshipOrStatus": "Publishes athlete pages and Olympic result summaries",
+    "likelyActivityTypes": [
+      "selections",
+      "support programs",
+      "Olympic qualifications"
+    ],
+    "suggestedEvidenceSources": "SOK athlete and medal pages \uE200cite\uE202turn22search1\uE202turn22search7",
+    "notes": "Important evidence hub across sports"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:5cc952d30a4336853575f76a"
+      },
+      "producerType": 1,
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:5cc952d30a4336853575f76a"
+      },
+      "fingerprint": "ai:5cc952d30a4336853575f76a",
+      "title": "Olympiadagarna \u2013 Malm\u00F6",
+      "description": "The Swedish Olympic Committee\u2019s Olympiadagarna event in Malm\u00F6, featuring school days and an open day for children to experience sports and meet athletes.",
+      "type": 10,
+      "sport": {
+        "externalId": {
+          "value": "multi-sport"
+        },
+        "name": "multi-sport"
+      },
+      "context": "Olympiadagarna is a series of events held in various Swedish cities to promote Olympic values among young people.",
+      "time": {
+        "kind": 0,
+        "activityDate": "2026-06-04",
+        "timeZoneId": "Europe/Stockholm",
+        "description": "AI search did not provide a start time."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "219ed4b2-8e80-d71c-a92e-13fe80626385"
+          },
+          "proposedRole": 6,
+          "explanation": "Svenska Olympiska Kommitt\u00E9n organizes the event.",
+          "contextName": "Svenska Olympiska Kommitt\u00E9n",
+          "confidence": 0.9
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:sok---olympiadagarna-malm\u00F6-article"
+            },
+            "name": "SOK \u2013 Olympiadagarna Malm\u00F6 article"
+          },
+          "uri": "https://sok.se/arkiv-for-artiklar/2026-03-10-olympiadagarna-----hit-kommer-2026.html",
+          "title": "Olympiadagarna \u2013 hit kommer vi 2026",
+          "observedAt": "2026-05-31T22:36:35.8474531+00:00",
+          "summary": "The article states that Olympiadagarna in Malm\u00F6 takes place from 4\u20136 June, with school days and an open day.",
+          "rawExcerpt": "\u0022Den 4\u20136 juni intar Olympiadagarna Ribersborgsstranden f\u00F6r tv\u00E5 skoldagar och en \u00F6ppen dag.\u0022"
+        }
+      ],
+      "confidence": 0.9,
+      "status": 0
+    }
+  ]
+}
