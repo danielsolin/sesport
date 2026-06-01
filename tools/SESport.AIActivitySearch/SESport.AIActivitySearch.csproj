@@ -9,6 +9,7 @@
 
    <ItemGroup>
       <ProjectReference Include="..\..\src\SESport.Core\SESport.Core.csproj" />
+      <ProjectReference Include="..\..\src\SESport.Data\SESport.Data.csproj" />
    </ItemGroup>
 
 </Project>

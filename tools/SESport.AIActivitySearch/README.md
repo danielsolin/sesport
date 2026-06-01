@@ -3,12 +3,30 @@
 Runs an OpenAI Responses-compatible AI activity search for entities in
 `data/entity-watchlist.json`.
 
-The default target is LM Studio running locally at
-`http://127.0.0.1:1234/v1` with the `gpt-oss-20b` model.
-When `--lmstudio-plugin` is used, the default model becomes
-`openai/gpt-oss-20b`, which matches LM Studio's native model identifier.
+The default target is OpenRouter at `https://openrouter.ai/api/v1` with the
+`openai/gpt-oss-20b` model.
+When `--lmstudio-plugin` is used, the base URL switches to
+`http://127.0.0.1:1234/api/v1`.
 
-## Run Locally
+## Run With OpenRouter
+
+Set an OpenRouter key and run the tool directly. This is the default path.
+Each run writes a timestamped structured directory under
+`data\ai-activity-search-runs`.
+
+```powershell
+$env:OPENROUTER_API_KEY="<api-key>"
+dotnet run --project tools\SESport.AIActivitySearch
+```
+
+Search one entity in the watchlist:
+
+```powershell
+dotnet run --project tools\SESport.AIActivitySearch `
+   -- --entity tre-kronor
+```
+
+## Run With LM Studio
 
 Start LM Studio's local API server, load `gpt-oss-20b`, and make sure the
 model has access to the `web-search` tool if you want live search.
@@ -20,18 +38,11 @@ dotnet run --project tools\SESport.AIActivitySearch `
    -- --entity tre-kronor --lmstudio-plugin altra/web-search
 ```
 
-The default path uses the OpenAI Responses API shape. This is useful for
-OpenAI compatibility, but LM Studio may ignore OpenAI built-in tool types:
+The OpenAI-compatible path can still be pointed elsewhere with `--base-url`:
 
 ```powershell
 dotnet run --project tools\SESport.AIActivitySearch `
-   -- --entity tre-kronor
-```
-
-Search the first entity in the watchlist:
-
-```powershell
-dotnet run --project tools\SESport.AIActivitySearch
+   -- --base-url http://127.0.0.1:1234/v1 --model gpt-oss-20b
 ```
 
 Write the JSON result to a file:
@@ -41,7 +52,7 @@ dotnet run --project tools\SESport.AIActivitySearch `
    -- --entity tre-kronor --output ai-activity-search.json
 ```
 
-Write a structured run directory:
+Override the structured run directory:
 
 ```powershell
 dotnet run --project tools\SESport.AIActivitySearch `
@@ -55,13 +66,17 @@ The run directory contains:
 - `entities/*.json` with one result file per completed entity.
 - `failures/*.json` with one error file per failed entity, including duration.
 
-When `--run-dir` is set, the tool writes results to disk and does not print
-the full JSON document to stdout unless `--output` is also set.
+The tool writes structured results to disk by default and does not print the
+full JSON document to stdout unless `--output` is also set.
+
+At startup the tool logs the selected client, base URL, model, and a masked API
+key source. For the default OpenRouter target it only falls back to
+`OPENROUTER_API_KEY`; it will not accidentally send an `OPENAI_API_KEY` to
+OpenRouter.
 
 ## Overnight Mode
 
-`--overnight` is intended for long unattended LM Studio runs. It writes a
-timestamped run directory under `data\ai-activity-search-runs`, searches all
+`--overnight` is intended for long unattended LM Studio runs. It searches all
 watchlist entities unless `--entity` or `--take` is set, continues after
 individual entity failures, waits five seconds between entities, and stops
 after five consecutive failures.
@@ -96,12 +111,13 @@ Useful options:
 - `--timeout <seconds>` sets HTTP timeout. Default: `100`, or `300` when
   `--lmstudio-plugin` is used.
 - `--model <name>` overrides the model for either client mode.
+- `--api-key <key>` overrides environment-based API key selection.
 - `--lmstudio-plugin <id>` uses LM Studio `/api/v1/chat` integrations.
 - `--lmstudio-url <url>` sets the LM Studio `/api/v1` base URL.
 - `--lmstudio-tools <list>` sets allowed plugin tools. Default: `search`.
 - `--web-tool <type>` sets the Responses tool type. Default: `web_search`.
 - `--no-web-search` omits the `web_search` tool from the request.
-- `--run-dir <path>` writes a structured run directory.
+- `--run-dir <path>` overrides the structured run directory.
 - `--overnight` enables safe long-running batch defaults.
 - `--all` searches all entities when `--entity` is not set.
 - `--continue-on-error` records failures and keeps going.
@@ -109,7 +125,8 @@ Useful options:
   `--overnight`.
 - `--stop-after-failures <count>` stops after repeated consecutive failures.
   Default: unlimited, or `5` with `--overnight`.
+- `--write-to-db` persists generated proposals into `activity_proposals`,
+  `activity_proposal_entity_links`, and `activity_proposal_evidence`.
+- `--connection-string <value>` sets the database connection string for
+  `--write-to-db`.
 - `--include-raw` includes raw model content and the full raw response.
-
-The first version prints proposal drafts only. It does not write to the
-database; that keeps model calibration separate from persistence.
