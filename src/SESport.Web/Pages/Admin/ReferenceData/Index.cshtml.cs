@@ -4,13 +4,42 @@ using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.ReferenceData;
 
-public class IndexModel(AdminRepository repository) : PageModel
+public class IndexModel(
+   AdminRepository repository,
+   AuditRepository auditRepository
+) : PageModel
 {
+   public IReadOnlyList<ReferenceNavigationItem> NavigationItems
+   {
+      get;
+      private set;
+   } = [];
+
    public IReadOnlyList<ReferenceTableInfo> Tables { get; private set; } = [];
 
    public ReferenceTableInfo? CurrentTable { get; private set; }
 
+   public string? CurrentSpecialView { get; private set; }
+
    public IReadOnlyList<ReferenceRow> Rows { get; private set; } = [];
+
+   public IReadOnlyList<ActivityLinkAuditItem> ActivityLinks
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<ActivityEvidenceAuditItem> ActivityEvidence
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<ProposalGroupAuditItem> ProposalGroups
+   {
+      get;
+      private set;
+   } = [];
 
    public string? LoadError { get; private set; }
 
@@ -19,6 +48,7 @@ public class IndexModel(AdminRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
+      NavigationItems = repository.GetReferenceNavigationItems();
       Tables = repository.GetReferenceTables();
 
       if (string.IsNullOrWhiteSpace(table))
@@ -36,6 +66,27 @@ public class IndexModel(AdminRepository repository) : PageModel
          if (CurrentTable is null)
          {
             return NotFound();
+         }
+
+         if (CurrentTable.Kind == ReferenceTableKind.ActivityAudit)
+         {
+            CurrentSpecialView = CurrentTable.Id;
+            ActivityLinks = await auditRepository.GetActivityLinksAsync(
+               cancellationToken
+            );
+            ActivityEvidence = await auditRepository.GetActivityEvidenceAsync(
+               cancellationToken
+            );
+            return Page();
+         }
+
+         if (CurrentTable.Kind == ReferenceTableKind.ProposalGroups)
+         {
+            CurrentSpecialView = CurrentTable.Id;
+            ProposalGroups = await auditRepository.GetProposalGroupsAsync(
+               cancellationToken
+            );
+            return Page();
          }
 
          Rows = await repository.GetReferenceRowsAsync(

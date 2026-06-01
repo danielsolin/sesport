@@ -2,10 +2,23 @@ namespace SESport.Web.Data;
 
 public sealed record AdminArea(string Title, string Description, string Href);
 
+public enum ReferenceTableKind
+{
+   Lookup,
+   ActivityAudit,
+   ProposalGroups
+}
+
 public sealed record ReferenceTableInfo(
    string Id,
    string Title,
-   string Description
+   string Description,
+   ReferenceTableKind Kind = ReferenceTableKind.Lookup
+);
+
+public sealed record ReferenceNavigationItem(
+   string Title,
+   string Href
 );
 
 public sealed record ReferenceRow(
