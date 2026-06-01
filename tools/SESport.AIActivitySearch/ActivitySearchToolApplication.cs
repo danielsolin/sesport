@@ -210,9 +210,8 @@ internal static class ActivitySearchToolApplication
             {
                rateLimitBackoff = IncreaseRateLimitBackoff(rateLimitBackoff);
                Console.Error.WriteLine(
-                  $"Provider asked us to slow down. Waiting " +
-                  $"{rateLimitBackoff.TotalSeconds:0} second(s) before " +
-                  "continuing."
+                  $"Waiting {rateLimitBackoff.TotalSeconds:0} second(s) " +
+                  $"before continuing."
                );
                await Task.Delay(rateLimitBackoff);
             }
