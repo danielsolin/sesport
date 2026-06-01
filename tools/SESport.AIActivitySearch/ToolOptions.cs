@@ -73,7 +73,6 @@ internal sealed record ToolOptions(
       var baseAddress = new Uri("https://openrouter.ai/api/v1/");
       var lmStudioBaseAddress = new Uri("http://127.0.0.1:1234/api/v1/");
       var model = "openrouter/free";
-      var modelWasSet = false;
       string? explicitApiKey = null;
       var allowWebSearch = true;
       var writeToDatabase = false;
@@ -133,7 +132,6 @@ internal sealed record ToolOptions(
                break;
             case "--model":
                model = ReadValue(args, ref index, arg);
-               modelWasSet = true;
                break;
             case "--api-key":
                explicitApiKey = ReadValue(args, ref index, arg);
