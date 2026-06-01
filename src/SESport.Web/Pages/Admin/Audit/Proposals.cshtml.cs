@@ -11,18 +11,6 @@ public class ProposalsModel(AuditRepository repository) : PageModel
       private set;
    } = [];
 
-   public IReadOnlyList<ActivityProposalLinkAuditItem> Links
-   {
-      get;
-      private set;
-   } = [];
-
-   public IReadOnlyList<ActivityProposalEvidenceAuditItem> Evidence
-   {
-      get;
-      private set;
-   } = [];
-
    public string? LoadError { get; private set; }
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
@@ -30,10 +18,6 @@ public class ProposalsModel(AuditRepository repository) : PageModel
       try
       {
          Proposals = await repository.GetProposalsAsync(cancellationToken);
-         Links = await repository.GetProposalLinksAsync(cancellationToken);
-         Evidence = await repository.GetProposalEvidenceAsync(
-            cancellationToken
-         );
       }
       catch (Exception exception)
       {

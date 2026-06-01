@@ -41,6 +41,31 @@ public sealed record ActivityProposalEvidenceAuditItem(
    string? RawExcerpt
 );
 
+public sealed record ActivityProposalDetail(
+   string Id,
+   string Title,
+   string? Description,
+   string? Context,
+   string ProducerType,
+   string Source,
+   string Status,
+   string? RejectReason,
+   string? RejectComment,
+   string ActivityType,
+   string ActivityTypeId,
+   string Sport,
+   string SportId,
+   string TimeText,
+   DateOnly ActivityDate,
+   TimeOnly? LocalStartTime,
+   string TimeZoneId,
+   decimal? Confidence,
+   string? GroupId,
+   Guid? ActivityId
+);
+
+public sealed record RejectReasonOption(string Id, string Label);
+
 public sealed record ActivityLinkAuditItem(
    Guid ActivityId,
    string ActivityTitle,
