@@ -184,10 +184,7 @@ public sealed class ActivitySearchService(
 
    private static EntityId ToEntityId(string stableKey)
    {
-      var bytes = Encoding.UTF8.GetBytes(stableKey);
-      var hash = MD5.HashData(bytes);
-
-      return new EntityId(new Guid(hash));
+      return new EntityId(DeterministicGuid.Create($"entity:{stableKey}"));
    }
 
    private static string CreateSourceId(string? sourceName)

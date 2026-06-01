@@ -38,9 +38,10 @@ public sealed class OpenAiResponsesActivitySearchClient
       CancellationToken cancellationToken
    )
    {
+      var requestPayload = CreateRequestPayload(request);
       var response = await httpClient.PostAsJsonAsync(
          new Uri(options.BaseAddress, "responses"),
-         CreateRequestPayload(request),
+         requestPayload,
          JsonOptions,
          cancellationToken
       );
@@ -51,9 +52,18 @@ public sealed class OpenAiResponsesActivitySearchClient
 
       if (!response.IsSuccessStatusCode)
       {
+         var providerHint = options.BaseAddress.Host.Equals(
+            "openrouter.ai",
+            StringComparison.OrdinalIgnoreCase
+         )
+            ? " Check that OPENROUTER_API_KEY is current and belongs to an " +
+              "active OpenRouter account."
+            : "";
+
          throw new HttpRequestException(
-            $"AI activity search failed with {(int)response.StatusCode}: " +
-            rawResponse
+            $"AI activity search failed with {(int)response.StatusCode} " +
+            $"{response.StatusCode} from {options.BaseAddress}: " +
+            $"{ExtractErrorMessage(rawResponse)}{providerHint}"
          );
       }
 
@@ -140,6 +150,30 @@ public sealed class OpenAiResponsesActivitySearchClient
       return string.IsNullOrWhiteSpace(fallbackText)
          ? rawResponse
          : fallbackText;
+   }
+
+   private static string ExtractErrorMessage(string rawResponse)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponse);
+         var root = document.RootElement;
+
+         if (
+            root.TryGetProperty("error", out var error) &&
+            error.TryGetProperty("message", out var message) &&
+            message.ValueKind == JsonValueKind.String
+         )
+         {
+            return message.GetString() ?? rawResponse;
+         }
+      }
+      catch(JsonException)
+      {
+         return rawResponse;
+      }
+
+      return rawResponse;
    }
 
 }
