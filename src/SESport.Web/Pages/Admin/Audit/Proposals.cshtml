@@ -12,7 +12,7 @@
    <a class="button" asp-page="/Admin/Index">Back</a>
 </section>
 
-@if (Model.LoadError is not null)
+@if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
       @Model.LoadError
@@ -24,6 +24,7 @@
    <table class="admin-table">
       <thead>
          <tr>
+            <th>Time</th>
             <th>Activity</th>
             <th>Producer</th>
             <th>Status</th>
@@ -33,12 +34,14 @@
          </tr>
       </thead>
       <tbody>
-         @foreach (var proposal in Model.Proposals)
+         @foreach(var proposal in Model.Proposals)
          {
             <tr>
+               <td>@proposal.TimeText</td>
                <td>
-                  <strong>@proposal.Title</strong>
-                  <span>@proposal.TimeText</span>
+                  <a asp-page="./Proposal" asp-route-id="@proposal.Id">
+                     <strong>@proposal.Title</strong>
+                  </a>
                </td>
                <td>@proposal.Producer</td>
                <td>@proposal.Status</td>
