@@ -307,8 +307,9 @@ internal static class ActivitySearchToolApplication
          ));
 
          Console.Error.WriteLine(
-            $"Found {result.Proposals.Count} proposal(s) for {entity.Name}."
+            $" {result.Proposals.Count} proposal(s)."
          );
+
          if(options.WriteToDatabase)
          {
             Console.Error.WriteLine(
