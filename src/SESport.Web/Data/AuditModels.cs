@@ -5,7 +5,7 @@ public sealed record AuditArea(string Title, string Description, string Href);
 public sealed record ActivityProposalAuditItem(
    string Id,
    string Title,
-   string ProducerType,
+   string Producer,
    string Source,
    string Status,
    string? RejectReason,
@@ -46,7 +46,7 @@ public sealed record ActivityProposalDetail(
    string Title,
    string? Description,
    string? Context,
-   string ProducerType,
+   string Producer,
    string Source,
    string Status,
    string? RejectReason,

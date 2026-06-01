@@ -30,13 +30,16 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
    }
 
    public async Task<IReadOnlyList<ActivityProposalAuditItem>>
-      GetProposalsAsync(CancellationToken cancellationToken)
+      GetProposalsAsync(
+         CancellationToken cancellationToken,
+         string proposalStatus = "Pending"
+      )
    {
-      const string sql = """
+      string sql = $$"""
          select
             p.id,
             p.title,
-            pt.label,
+            coalesce(nullif(p.producer, ''), pt.label),
             s.name,
             ps.label,
             prr.label,
@@ -59,6 +62,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          join sports sp on sp.id = p.sport_id
          left join activity_proposal_entity_links l on l.proposal_id = p.id
          left join activity_proposal_evidence e on e.proposal_id = p.id
+         where ps.id = '{{proposalStatus}}'
          group by p.id, pt.label, s.name, ps.label, prr.label, at.label, sp.name
          order by p.activity_date, p.local_start_time nulls last, p.title
          """;
@@ -149,7 +153,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.title,
             p.description,
             p.context,
-            pt.label,
+            coalesce(nullif(p.producer, ''), pt.label),
             s.name,
             ps.label,
             prr.label,
@@ -157,7 +161,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             at.label,
             p.activity_type_id,
             sp.name,
-            p.sport_id,
+             p.sport_id,
             p.activity_date,
             p.local_start_time,
             p.time_zone_id,

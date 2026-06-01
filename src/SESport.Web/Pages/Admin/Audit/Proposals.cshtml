@@ -15,7 +15,7 @@
 @if (Model.LoadError is not null)
 {
    <div class="notice notice-warning">
-      The activity database is not available right now.
+      @Model.LoadError
    </div>
 }
 
@@ -46,7 +46,7 @@
                   <span>@proposal.TimeText</span>
                   <span class="audit-id">@proposal.Id</span>
                </td>
-               <td>@proposal.ProducerType</td>
+               <td>@proposal.Producer</td>
                <td>@proposal.Source</td>
                <td>@proposal.Status</td>
                <td>@proposal.RejectReason</td>

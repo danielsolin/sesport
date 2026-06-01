@@ -139,21 +139,24 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
    {
       const string sql = """
          insert into activity_proposals (
-            id, producer_type_id, source_id, external_id, fingerprint, title,
-            description, raw_content, activity_type_id, sport_id, context,
-            activity_date, local_start_time, starts_at, time_zone_id, confidence,
-            status_id, reject_reason_id, reject_comment, group_id, activity_id
+            id, producer_type_id, producer, source_id, external_id,
+            fingerprint, title, description, raw_content, activity_type_id,
+            sport_id, context, activity_date, local_start_time, starts_at,
+            time_zone_id, confidence, status_id, reject_reason_id,
+            reject_comment, group_id, activity_id
          )
          values (
-            @id, @producer_type_id, @source_id, @external_id, @fingerprint,
-            @title, @description, @raw_content, @activity_type_id, @sport_id,
-            @context, @activity_date, @local_start_time, @starts_at,
-            @time_zone_id, @confidence, @status_id, @reject_reason_id,
-            @reject_comment, @group_id, @activity_id
+            @id, @producer_type_id, @producer, @source_id, @external_id,
+            @fingerprint, @title, @description, @raw_content,
+            @activity_type_id, @sport_id, @context, @activity_date,
+            @local_start_time, @starts_at, @time_zone_id, @confidence,
+            @status_id, @reject_reason_id, @reject_comment, @group_id,
+            @activity_id
          )
          on conflict (id) do update
          set
             producer_type_id = excluded.producer_type_id,
+            producer = excluded.producer,
             source_id = excluded.source_id,
             external_id = excluded.external_id,
             fingerprint = excluded.fingerprint,
@@ -190,6 +193,10 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
       cmd.Parameters.AddWithValue(
          "producer_type_id",
          ap.ProducerType.ToString()
+      );
+      cmd.Parameters.AddWithValue(
+         "producer",
+         (object?)ap.Producer ?? DBNull.Value
       );
       cmd.Parameters.AddWithValue("source_id", ap.Source.Id.Value);
       cmd.Parameters.AddWithValue(

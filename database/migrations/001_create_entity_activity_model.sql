@@ -252,6 +252,7 @@ create table if not exists activity_proposals
 (
    id text primary key,
    producer_type_id text not null references producer_types(id),
+   producer text null,
    source_id text not null references sources(id),
    external_id text null,
    fingerprint text not null,
