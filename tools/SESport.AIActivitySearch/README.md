@@ -115,7 +115,7 @@ Useful options:
 - `--date <yyyy-mm-dd>` sets the search date.
 - `--look-back <days>` includes days before the search date. Default: `0`.
 - `--look-ahead <days>` includes days after the search date. Default: `30`.
-- `--timeout <seconds>` sets HTTP timeout. Default: `100`, or `300` when
+- `--timeout <seconds>` sets HTTP timeout. Default: `600`, or `1200` when
   `--lmstudio-plugin` is used.
 - `--model <name>` overrides the model for either client mode.
 - `--api-key <key>` overrides environment-based API key selection.

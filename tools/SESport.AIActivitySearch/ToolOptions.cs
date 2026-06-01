@@ -201,7 +201,7 @@ internal sealed record ToolOptions(
          continueOnError = true;
       }
 
-      timeoutSeconds ??= lmStudioPluginId is null ? 100 : 300;
+      timeoutSeconds ??= lmStudioPluginId is null ? 600 : 1200;
       delaySeconds ??= overnight ? 5 : 0;
       stopAfterFailures ??= int.MaxValue;
 

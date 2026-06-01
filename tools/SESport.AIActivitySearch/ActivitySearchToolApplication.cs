@@ -569,7 +569,7 @@ internal static class ActivitySearchToolApplication
            --date <yyyy-mm-dd> Search date. Default: today.
            --look-back <days>  Days before search date to include. Default: 0.
            --look-ahead <days> Days after search date to include. Default: 30.
-           --timeout <seconds> HTTP timeout. Default: 100, or 300 with
+           --timeout <seconds> HTTP timeout. Default: 600, or 1200 with
                                --lmstudio-plugin.
            --base-url <url>    OpenAI-compatible /v1 base URL.
                                Default: https://openrouter.ai/api/v1.
