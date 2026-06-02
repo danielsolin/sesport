@@ -155,6 +155,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.title,
             p.description,
             p.context,
+            p.producer_type_id,
             coalesce(nullif(p.producer, ''), pt.label),
             s.name,
             ps.label,
@@ -169,7 +170,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.time_zone_id,
             p.confidence,
             p.group_id,
-            p.activity_id
+            p.activity_id,
+            p.prompt
          from activity_proposals p
          join producer_types pt on pt.id = p.producer_type_id
          join sources s on s.id = p.source_id
@@ -191,8 +193,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      var activityDate = reader.GetFieldValue<DateOnly>(13);
-      var localStartTime = ReadTimeOnly(reader, 14);
+      var activityDate = reader.GetFieldValue<DateOnly>(14);
+      var localStartTime = ReadTimeOnly(reader, 15);
 
       return new ActivityProposalDetail(
          reader.GetString(0),
@@ -202,19 +204,21 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          reader.GetString(4),
          reader.GetString(5),
          reader.GetString(6),
-         ReadString(reader, 7),
+         reader.GetString(7),
          ReadString(reader, 8),
-         reader.GetString(9),
+         ReadString(reader, 9),
          reader.GetString(10),
          reader.GetString(11),
          reader.GetString(12),
+         reader.GetString(13),
          FormatTime(activityDate, localStartTime),
          activityDate,
          localStartTime,
-         reader.GetString(15),
-         ReadDecimal(reader, 16),
-         ReadString(reader, 17),
-         ReadGuid(reader, 18)
+         reader.GetString(16),
+         ReadDecimal(reader, 17),
+         ReadString(reader, 18),
+         ReadGuid(reader, 19),
+         ReadString(reader, 20)
       );
    }
 

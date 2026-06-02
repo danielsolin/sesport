@@ -46,7 +46,8 @@ public sealed class OpenAiResponsesActivitySearchClient
       CancellationToken cancellationToken
    )
    {
-      var requestPayload = CreateRequestPayload(request);
+      var prompt = ActivitySearchPrompt.Create(request);
+      var requestPayload = CreateRequestPayload(request, prompt);
       var response = await httpClient.PostAsJsonAsync(
          new Uri(options.BaseAddress, "responses"),
          requestPayload,
@@ -78,11 +79,15 @@ public sealed class OpenAiResponsesActivitySearchClient
          rawContent,
          rawResponse,
          proposals,
-         ExtractProducer(rawResponse)
+         ExtractProducer(rawResponse),
+         prompt
       );
    }
 
-   private object CreateRequestPayload(ActivitySearchRequest request)
+   private object CreateRequestPayload(
+      ActivitySearchRequest request,
+      string prompt
+   )
    {
       var tools = request.AllowWebSearch
          ? new object[] { new { type = options.WebSearchToolType } }
@@ -91,7 +96,7 @@ public sealed class OpenAiResponsesActivitySearchClient
       var obj = new
       {
          model = options.Model,
-         input = ActivitySearchPrompt.Create(request),
+         input = prompt,
          tools,
          tool_choice = request.AllowWebSearch ? "auto" : null
       };

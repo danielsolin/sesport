@@ -70,6 +70,7 @@ public sealed record ActivityProposalDetail(
    string Title,
    string? Description,
    string? Context,
+   string ProducerTypeId,
    string Producer,
    string Source,
    string Status,
@@ -85,9 +86,13 @@ public sealed record ActivityProposalDetail(
    string TimeZoneId,
    decimal? Confidence,
    string? GroupId,
-   Guid? ActivityId
+   Guid? ActivityId,
+   string? Prompt
 )
 {
+   public bool HasAiPrompt =>
+      ProducerTypeId == "AiSearch" && !string.IsNullOrWhiteSpace(Prompt);
+
    public string ConfidencePercentString =>
          Confidence.HasValue
             ? Math.Floor(Confidence.Value * 100).ToString()

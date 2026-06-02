@@ -39,6 +39,8 @@ public class LmStudioChatActivitySearchClientTests
       Assert.Single(result.Proposals);
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);
       Assert.Equal("lmstudio/gpt-oss-20b", result.Producer);
+      Assert.Contains("Tre Kronor", result.Prompt);
+      Assert.Contains("Tre Kronor", handler.RequestBody);
    }
 
    [Fact]

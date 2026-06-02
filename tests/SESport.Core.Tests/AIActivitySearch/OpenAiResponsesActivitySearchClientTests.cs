@@ -36,6 +36,8 @@ public class OpenAiResponsesActivitySearchClientTests
       Assert.Contains("\"type\":\"web_search\"", handler.RequestBody);
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);
       Assert.Equal("gpt-oss-20b", result.Producer);
+      Assert.Contains("Tre Kronor", result.Prompt);
+      Assert.Contains("Tre Kronor", handler.RequestBody);
       Assert.Single(result.Proposals);
    }
 

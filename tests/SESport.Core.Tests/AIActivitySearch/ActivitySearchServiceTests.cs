@@ -37,7 +37,8 @@ public class ActivitySearchServiceTests
             ]
          )
          {
-            Producer = "openrouter/openai/gpt-oss-20b"
+            Producer = "openrouter/openai/gpt-oss-20b",
+            Prompt = "Find planned activities for Tre Kronor."
          }
       );
       var service = new ActivitySearchService(client, "openrouter/free");
@@ -53,6 +54,7 @@ public class ActivitySearchServiceTests
          proposal.ProducerType
       );
       Assert.Equal("openrouter/openai/gpt-oss-20b", proposal.Producer);
+      Assert.Equal("Find planned activities for Tre Kronor.", proposal.Prompt);
       Assert.Equal(ActivityType.Match, proposal.Type);
       Assert.Equal("Tre Kronor vs Finland", proposal.Title);
       Assert.Equal(ActivityTimeKind.Scheduled, proposal.Time.Kind);

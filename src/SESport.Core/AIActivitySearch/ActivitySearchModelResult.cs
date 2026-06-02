@@ -4,5 +4,6 @@ public sealed record ActivitySearchModelResult(
    string RawContent,
    string RawResponse,
    IReadOnlyCollection<ActivityProposalDraft> Proposals,
-   string? Producer = null
+   string? Producer = null,
+   string? Prompt = null
 );

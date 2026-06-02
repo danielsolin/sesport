@@ -154,7 +154,26 @@ public class PostgresMigrationTests
       );
       Assert.Contains("requested_model", migration);
       Assert.Contains("persisted_proposal_count", migration);
-      Assert.Contains("entity_id uuid null references tracked_entities", migration);
+      Assert.Contains(
+         "entity_id uuid null references tracked_entities",
+         migration
+      );
+   }
+
+   [Fact]
+   public void SixthMigrationAddsActivityProposalPrompt()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "006_add_activity_proposal_prompt.sql"
+         )
+      );
+
+      Assert.Contains("alter table activity_proposals", migration);
+      Assert.Contains("prompt text", migration);
    }
 
    private static string FindRepositoryRoot()

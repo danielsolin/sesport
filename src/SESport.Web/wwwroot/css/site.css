@@ -287,6 +287,30 @@ h2 {
    overflow-wrap: anywhere;
 }
 
+.prompt-details {
+   margin: 16px 0;
+}
+
+.prompt-details summary {
+   cursor: pointer;
+   color: var(--accent-strong);
+   font-weight: 800;
+}
+
+.prompt-details pre {
+   max-height: 360px;
+   margin: 12px 0 0;
+   overflow: auto;
+   white-space: pre-wrap;
+   overflow-wrap: anywhere;
+   padding: 14px;
+   border: 1px solid var(--line);
+   border-radius: 8px;
+   background: #f7faf9;
+   color: var(--ink);
+   font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
 .proposal-summary {
    display: grid;
    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);

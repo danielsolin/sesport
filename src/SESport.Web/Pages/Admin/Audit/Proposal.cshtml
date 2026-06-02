@@ -27,6 +27,13 @@
          {
             <p class="relevance">@Model.Proposal.Context</p>
          }
+         @if (Model.Proposal.HasAiPrompt)
+         {
+            <details class="prompt-details">
+               <summary>View prompt</summary>
+               <pre>@Model.Proposal.Prompt</pre>
+            </details>
+         }
          <span class="audit-id">@Model.Proposal.Id</span>
       </div>
       <dl class="detail-grid">

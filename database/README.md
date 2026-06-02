@@ -20,6 +20,9 @@ The fifth migration adds AI activity search run logging tables for run settings,
 per-entity status, proposal counts, persistence counts, durations, and error
 messages.
 
+The sixth migration adds the submitted AI prompt to activity proposals for
+AI-generated proposal review.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash

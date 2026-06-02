@@ -38,9 +38,10 @@ public sealed class LmStudioChatActivitySearchClient
       CancellationToken cancellationToken
    )
    {
+      var prompt = ActivitySearchPrompt.Create(request);
       var response = await httpClient.PostAsJsonAsync(
          new Uri(options.BaseAddress, "chat"),
-         CreateRequestPayload(request),
+         CreateRequestPayload(request, prompt),
          JsonOptions,
          cancellationToken
       );
@@ -69,11 +70,15 @@ public sealed class LmStudioChatActivitySearchClient
          rawContent,
          rawResponse,
          proposals,
-         PrefixProducer("lmstudio", options.Model)
+         PrefixProducer("lmstudio", options.Model),
+         prompt
       );
    }
 
-   private object CreateRequestPayload(ActivitySearchRequest request)
+   private object CreateRequestPayload(
+      ActivitySearchRequest request,
+      string prompt
+   )
    {
       object[] integrations = request.AllowWebSearch
          ? [
@@ -89,7 +94,7 @@ public sealed class LmStudioChatActivitySearchClient
       return new
       {
          model = options.Model,
-         input = ActivitySearchPrompt.Create(request),
+         input = prompt,
          integrations,
          temperature = 0.1,
          store = true

@@ -21,5 +21,6 @@ public sealed record ActivityProposal(
    string? RejectComment,
    ActivityProposalGroupId? GroupId,
    ActivityId? ActivityId,
-   string? Producer = null
+   string? Producer = null,
+   string? Prompt = null
 );

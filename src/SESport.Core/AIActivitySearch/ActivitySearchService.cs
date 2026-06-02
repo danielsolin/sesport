@@ -91,7 +91,8 @@ public sealed class ActivitySearchService(
          null,
          null,
          null,
-         modelResult.Producer ?? producer
+         modelResult.Producer ?? producer,
+         modelResult.Prompt
       );
    }
 
