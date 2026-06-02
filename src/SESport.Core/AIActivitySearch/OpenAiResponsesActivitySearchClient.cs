@@ -79,13 +79,17 @@ public sealed class OpenAiResponsesActivitySearchClient
          ? new object[] { new { type = options.WebSearchToolType } }
          : [];
 
-      return new
+      var obj = new
       {
          model = options.Model,
          input = ActivitySearchPrompt.Create(request),
          tools,
          tool_choice = request.AllowWebSearch ? "auto" : null
       };
+
+      //throw new Exception(obj.ToString());
+
+      return obj;
    }
 
    private static string ExtractOutputText(string rawResponse)

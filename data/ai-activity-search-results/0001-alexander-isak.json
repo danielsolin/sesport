@@ -1,0 +1,314 @@
+{
+  "entity": {
+    "watchlistId": {
+      "value": "alexander-isak"
+    },
+    "name": "Alexander Isak",
+    "type": "person",
+    "sport": {
+      "externalId": {
+        "value": "football"
+      },
+      "name": "football"
+    },
+    "swedenConnection": "Swedish footballer",
+    "currentRelationshipOrStatus": "Swedish FA June 2026 squad page lists him at Liverpool FC",
+    "likelyActivityTypes": [
+      "national-team calls",
+      "goals",
+      "injuries",
+      "transfers"
+    ],
+    "suggestedEvidenceSources": "Swedish FA men\u2019s squad page \uE200cite\uE202turn27view0",
+    "notes": "Track Isak; Liverpool is a relationship target only"
+  },
+  "proposals": [
+    {
+      "id": {
+        "value": "activity-proposal:ai:55606a71437bca8a5b99dc17"
+      },
+      "producerType": 1,
+      "producer": "openrouter/free",
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:55606a71437bca8a5b99dc17"
+      },
+      "fingerprint": "ai:55606a71437bca8a5b99dc17",
+      "title": "Sweden vs Tunisia \u2013 FIFA World Cup 2026 Group F (Sweden home)",
+      "description": "Sweden face Tunisia in the opening match of their FIFA World Cup 2026 Group F campaign.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup Group Stage \u2013 Sweden vs Tunisia at Estadio Monterrey, Mexico",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-15",
+        "localStartTime": "20:00:00",
+        "timeZoneId": "CST",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5cda9e2d-858f-7c3e-a973-a32daa01fcab"
+          },
+          "proposedRole": 2,
+          "explanation": "Alexander Isak was selected in Sweden\u2019s 26\u2011man World Cup squad and will be available for all group matches.",
+          "contextName": "Alexander Isak",
+          "confidence": 0.92
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected - BBC Sport",
+          "observedAt": "2026-06-02T09:21:45.4727737+00:00",
+          "summary": "BBC confirms Isak in Sweden\u2019s World Cup squad and lists the group schedule.",
+          "rawExcerpt": "Sweden are in Group\u202FF and play Tunisia in Monterrey\u2026 on 14\u202FJune (03:00\u202FBST, 15\u202FJune)."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:flashscore"
+            },
+            "name": "Flashscore"
+          },
+          "uri": "https://www.flashscore.com/news/soccer-fifa-world-cup-sweden-full-schedule-opponents/8YRfxZvI/",
+          "title": "Sweden at the World Cup 2026: Schedule \u0026 match times | Flashscore.com",
+          "observedAt": "2026-06-02T09:21:45.4729138+00:00",
+          "summary": "Flashscore lists the Sweden\u2011Tunisia match kickoff as 20:00\u202FCST on 14\u202FJune.",
+          "rawExcerpt": "Sunday, 14th June: Sweden - Tunisia(20:00\u202FCST local time, 04:00\u202FCEST on Monday 15th June)"
+        }
+      ],
+      "confidence": 0.92,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:01ec73145fc5916a95a7b234"
+      },
+      "producerType": 1,
+      "producer": "openrouter/free",
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:01ec73145fc5916a95a7b234"
+      },
+      "fingerprint": "ai:01ec73145fc5916a95a7b234",
+      "title": "Sweden vs Netherlands \u2013 FIFA World Cup 2026 Group F",
+      "description": "Sweden play the Netherlands in the second group match of their World Cup 2026 campaign.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup Group Stage \u2013 Sweden vs Netherlands at NRG Stadium, Houston, USA",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-20",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "CST",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5cda9e2d-858f-7c3e-a973-a32daa01fcab"
+          },
+          "proposedRole": 2,
+          "explanation": "Isak is part of the Swedish squad for all group matches.",
+          "contextName": "Alexander Isak",
+          "confidence": 0.91
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected - BBC Sport",
+          "observedAt": "2026-06-02T09:21:45.4752777+00:00",
+          "summary": "BBC lists the match schedule including the Netherlands game on 20\u202FJune.",
+          "rawExcerpt": "Sweden\u2026 play Netherlands in Houston on 20\u202FJune."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:matchtimes"
+            },
+            "name": "Matchtimes"
+          },
+          "uri": "https://matchtimes.app/country/sweden",
+          "title": "Sweden National Team Squad, Lineup \u0026 Fixtures | FIFA World Cup 2026",
+          "observedAt": "2026-06-02T09:21:45.4752785+00:00",
+          "summary": "Match schedule shows Sweden vs Netherlands on 20\u202FJune at 17:00\u202Flocal time.",
+          "rawExcerpt": "NetherlandsVSSwedenSat, Jun 20 \u00B7 17:00\u25CF Prime timeNRG Stadium, Houston"
+        }
+      ],
+      "confidence": 0.91,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:2b70bcee8ee065f7c76f9ce3"
+      },
+      "producerType": 1,
+      "producer": "openrouter/free",
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:2b70bcee8ee065f7c76f9ce3"
+      },
+      "fingerprint": "ai:2b70bcee8ee065f7c76f9ce3",
+      "title": "Sweden vs Japan \u2013 FIFA World Cup 2026 Group F",
+      "description": "Sweden face Japan in the third group match of their World Cup 2026 campaign.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "FIFA World Cup Group Stage \u2013 Sweden vs Japan at AT\u0026T Stadium, Dallas, USA",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-25",
+        "localStartTime": "23:00:00",
+        "timeZoneId": "CST",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5cda9e2d-858f-7c3e-a973-a32daa01fcab"
+          },
+          "proposedRole": 2,
+          "explanation": "Isak is on the roster for all Sweden matches in the tournament.",
+          "contextName": "Alexander Isak",
+          "confidence": 0.90
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:bbc-sport"
+            },
+            "name": "BBC Sport"
+          },
+          "uri": "https://www.bbc.com/sport/football/articles/c3r29z5yz79o",
+          "title": "Sweden World Cup squad: Alexander Isak and Viktor Gyokeres among those selected - BBC Sport",
+          "observedAt": "2026-06-02T09:21:45.4752958+00:00",
+          "summary": "BBC lists the Japan game on 26\u202FJune.",
+          "rawExcerpt": "Sweden\u2026 play Japan in Dallas five days later (00:00\u202FBST, 26\u202FJune)."
+        },
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:flashscore"
+            },
+            "name": "Flashscore"
+          },
+          "uri": "https://www.flashscore.com/news/soccer-fifa-world-cup-sweden-full-schedule-opponents/8YRfxZvI/",
+          "title": "Sweden at the World Cup 2026: Schedule \u0026 match times | Flashscore.com",
+          "observedAt": "2026-06-02T09:21:45.4753032+00:00",
+          "summary": "Flashscore lists the Sweden\u2011Japan match kickoff as 18:00\u202FCST on 25\u202FJune.",
+          "rawExcerpt": "Thursday, 25th June: Japan - Sweden(18:00 PM CST local time, 01:00 CEST on Friday, June 26th)"
+        }
+      ],
+      "confidence": 0.90,
+      "status": 0
+    },
+    {
+      "id": {
+        "value": "activity-proposal:ai:883092a0c1d36b78d46c78da"
+      },
+      "producerType": 1,
+      "producer": "openrouter/free",
+      "source": {
+        "id": {
+          "value": "source:ai-activity-search"
+        },
+        "name": "AI activity search"
+      },
+      "externalId": {
+        "value": "ai:883092a0c1d36b78d46c78da"
+      },
+      "fingerprint": "ai:883092a0c1d36b78d46c78da",
+      "title": "Sweden vs Greece \u2013 Friendly Match (European Tour 2026)",
+      "description": "Sweden play a pre\u2011World Cup friendly against Greece on 4\u202FJune 2026.",
+      "type": 0,
+      "sport": {
+        "externalId": {
+          "value": "football"
+        },
+        "name": "football"
+      },
+      "context": "Friendly \u2013 Sweden vs Greece at Stadium, Solna, Sweden",
+      "time": {
+        "kind": 1,
+        "activityDate": "2026-06-04",
+        "localStartTime": "19:00:00",
+        "timeZoneId": "CET",
+        "description": "AI search provided a local start time without an offset."
+      },
+      "entityLinks": [
+        {
+          "entityId": {
+            "value": "5cda9e2d-858f-7c3e-a973-a32daa01fcab"
+          },
+          "proposedRole": 2,
+          "explanation": "Isak is in the squad for the friendly.",
+          "contextName": "Alexander Isak",
+          "confidence": 0.87
+        }
+      ],
+      "evidence": [
+        {
+          "source": {
+            "id": {
+              "value": "source:ai:transfermarkt"
+            },
+            "name": "Transfermarkt"
+          },
+          "uri": "https://www.transfermarkt.com/schweden/spielplan/verein/3557/saison_id/2026",
+          "title": "Sweden - Schedule 2027 | Transfermarkt",
+          "observedAt": "2026-06-02T09:21:45.4753129+00:00",
+          "summary": "Transfermarkt lists the friendly match Sweden \u2013 Greece on 4\u202FJune 2026.",
+          "rawExcerpt": "Thu 04/06/2026 | 7:00 PM | H | Greece"
+        }
+      ],
+      "confidence": 0.87,
+      "status": 0
+    }
+  ]
+}
