@@ -31,11 +31,31 @@ else
       <table class="admin-table">
          <thead>
             <tr>
-               <th>Name</th>
-               <th>Type</th>
-               <th>Sport</th>
-               <th>Watch</th>
-               <th>Stability</th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="Name"
+                     asp-route-sortAsc='@Model.GetNextSortAsc("Name")'>Name @Model.GetSortIndicator("Name")</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="Type"
+                     asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>Type @Model.GetSortIndicator("Type")</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="Sport"
+                     asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>Sport @Model.GetSortIndicator("Sport")</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="Watch"
+                     asp-route-sortAsc='@Model.GetNextSortAsc("Watch")'>Watch @Model.GetSortIndicator("Watch")</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="Stability"
+                     asp-route-sortAsc='@Model.GetNextSortAsc("Stability")'>Stability @Model.GetSortIndicator("Stability")</a>
+               </th>
                <th></th>
             </tr>
          </thead>
@@ -57,7 +77,7 @@ else
                      <form method="post"
                            asp-page-handler="Delete"
                            asp-route-id="@entity.Id"
-                           onsubmit="return confirm('Are you sure?');">
+                           onsubmit='return confirm("Are you sure?");'>
                         <button type="submit">Delete</button>
                      </form>
                   </td>
