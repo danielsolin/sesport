@@ -33,28 +33,28 @@ else
             <tr>
                <th>
                   <a asp-page="./Index"
-                     asp-route-sortColumn="@IndexModel.NameSortColumn"
-                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.NameSortColumn)">Name @Model.GetSortIndicator(IndexModel.NameSortColumn)</a>
+                     asp-route-sortColumn="Name"
+                     asp-route-sortAsc="@Model.GetNextSortAsc("Name")">Name @Model.GetSortIndicator("Name")</a>
                </th>
                <th>
                   <a asp-page="./Index"
-                     asp-route-sortColumn="@IndexModel.TypeSortColumn"
-                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.TypeSortColumn)">Type @Model.GetSortIndicator(IndexModel.TypeSortColumn)</a>
+                     asp-route-sortColumn="Type"
+                     asp-route-sortAsc="@Model.GetNextSortAsc("Type")">Type @Model.GetSortIndicator("Type")</a>
                </th>
                <th>
                   <a asp-page="./Index"
-                     asp-route-sortColumn="@IndexModel.SportSortColumn"
-                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.SportSortColumn)">Sport @Model.GetSortIndicator(IndexModel.SportSortColumn)</a>
+                     asp-route-sortColumn="Sport"
+                     asp-route-sortAsc="@Model.GetNextSortAsc("Sport")">Sport @Model.GetSortIndicator("Sport")</a>
                </th>
                <th>
                   <a asp-page="./Index"
-                     asp-route-sortColumn="@IndexModel.WatchSortColumn"
-                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.WatchSortColumn)">Watch @Model.GetSortIndicator(IndexModel.WatchSortColumn)</a>
+                     asp-route-sortColumn="Watch"
+                     asp-route-sortAsc="@Model.GetNextSortAsc("Watch")">Watch @Model.GetSortIndicator("Watch")</a>
                </th>
                <th>
                   <a asp-page="./Index"
-                     asp-route-sortColumn="@IndexModel.StabilitySortColumn"
-                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.StabilitySortColumn)">Stability @Model.GetSortIndicator(IndexModel.StabilitySortColumn)</a>
+                     asp-route-sortColumn="Stability"
+                     asp-route-sortAsc="@Model.GetNextSortAsc("Stability")">Stability @Model.GetSortIndicator("Stability")</a>
                </th>
                <th></th>
             </tr>
