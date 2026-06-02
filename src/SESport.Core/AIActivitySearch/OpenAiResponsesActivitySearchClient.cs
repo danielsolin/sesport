@@ -87,7 +87,12 @@ public sealed class OpenAiResponsesActivitySearchClient
          tool_choice = request.AllowWebSearch ? "auto" : null
       };
 
-      //throw new Exception(obj.ToString());
+      //throw new Exception(
+      //   $"\n\nMODEL: {obj.model}\n" +
+      //   $"TOOLS: {obj.tools}\n" +
+      //   $"TOOL_CHOICE: {obj.tool_choice}\n\n" +
+      //   $"PROMPT:\n{obj.input}"
+      //);
 
       return obj;
    }
