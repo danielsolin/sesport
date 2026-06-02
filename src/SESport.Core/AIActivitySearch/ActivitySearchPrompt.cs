@@ -14,8 +14,8 @@ internal static class ActivitySearchPrompt
       This date range is confirmed. Do not ask which dates, season, month, or
       period to focus on.
 
-      Search for concrete upcoming or very recent sport-related activities
-      connected to this Sweden-relevant tracked entity. Prefer official
+      Search for concrete sport-related activities connected to this Sweden-
+      relevant tracked entity in the time frame provided. Prefer official
       schedules, federation pages, competition pages, team pages, and reliable
       news sources. Do not invent events. If evidence is weak, return an empty
       proposals array.
