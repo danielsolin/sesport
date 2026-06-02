@@ -24,6 +24,7 @@
    <table class="admin-table">
       <thead>
          <tr>
+            <th>Created</th>
             <th>Time</th>
             <th>Activity</th>
             <th>Producer</th>
@@ -37,6 +38,7 @@
          @foreach(var proposal in Model.Proposals)
          {
             <tr>
+               <td>@proposal.CreatedOn</td>
                <td>@proposal.TimeText</td>
                <td>
                   <a asp-page="./Proposal" asp-route-id="@proposal.Id">

@@ -52,7 +52,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.group_id,
             p.activity_id,
             count(distinct l.id) as entity_link_count,
-            count(distinct e.id) as evidence_count
+            count(distinct e.id) as evidence_count,
+            p.created_at
          from activity_proposals p
          join producer_types pt on pt.id = p.producer_type_id
          join sources s on s.id = p.source_id
@@ -91,7 +92,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                ReadString(reader, 12),
                ReadGuid(reader, 13),
                reader.GetInt32(14),
-               reader.GetInt32(15)
+               reader.GetInt32(15),
+               reader.GetDateTime(16)
             )
          );
       }
