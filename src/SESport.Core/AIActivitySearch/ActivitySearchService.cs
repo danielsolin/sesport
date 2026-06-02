@@ -190,6 +190,11 @@ public sealed class ActivitySearchService(
 
    private static EntityId ToEntityId(string stableKey)
    {
+      if(Guid.TryParse(stableKey, out var id))
+      {
+         return new EntityId(id);
+      }
+
       return new EntityId(DeterministicGuid.Create($"entity:{stableKey}"));
    }
 

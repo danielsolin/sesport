@@ -13,6 +13,13 @@ activity publication statuses, public slugs, and listing indexes.
 The third migration adds controlled reject reasons and optional reject comments
 for activity proposal review.
 
+The fourth migration adds the AI model/provider producer label to activity
+proposals.
+
+The fifth migration adds AI activity search run logging tables for run settings,
+per-entity status, proposal counts, persistence counts, durations, and error
+messages.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash

@@ -116,6 +116,47 @@ public class PostgresMigrationTests
       Assert.Contains("OutOfScope", migration);
    }
 
+   [Fact]
+   public void FourthMigrationAddsActivityProposalProducer()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "004_add_activity_proposal_producer.sql"
+         )
+      );
+
+      Assert.Contains("alter table activity_proposals", migration);
+      Assert.Contains("producer text", migration);
+   }
+
+   [Fact]
+   public void FifthMigrationAddsAiActivitySearchRunLog()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "005_add_ai_activity_search_runs.sql"
+         )
+      );
+
+      Assert.Contains(
+         "create table if not exists ai_activity_search_runs",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists ai_activity_search_run_items",
+         migration
+      );
+      Assert.Contains("requested_model", migration);
+      Assert.Contains("persisted_proposal_count", migration);
+      Assert.Contains("entity_id uuid null references tracked_entities", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);
