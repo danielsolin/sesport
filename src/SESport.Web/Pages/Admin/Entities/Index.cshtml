@@ -31,11 +31,31 @@ else
       <table class="admin-table">
          <thead>
             <tr>
-               <th>Name</th>
-               <th>Type</th>
-               <th>Sport</th>
-               <th>Watch</th>
-               <th>Stability</th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="@IndexModel.NameSortColumn"
+                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.NameSortColumn)">Name @Model.GetSortIndicator(IndexModel.NameSortColumn)</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="@IndexModel.TypeSortColumn"
+                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.TypeSortColumn)">Type @Model.GetSortIndicator(IndexModel.TypeSortColumn)</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="@IndexModel.SportSortColumn"
+                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.SportSortColumn)">Sport @Model.GetSortIndicator(IndexModel.SportSortColumn)</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="@IndexModel.WatchSortColumn"
+                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.WatchSortColumn)">Watch @Model.GetSortIndicator(IndexModel.WatchSortColumn)</a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-route-sortColumn="@IndexModel.StabilitySortColumn"
+                     asp-route-sortAsc="@Model.GetNextSortAsc(IndexModel.StabilitySortColumn)">Stability @Model.GetSortIndicator(IndexModel.StabilitySortColumn)</a>
+               </th>
                <th></th>
             </tr>
          </thead>
@@ -56,8 +76,7 @@ else
                   <td class="table-actions">
                      <form method="post"
                            asp-page-handler="Delete"
-                           asp-route-id="@entity.Id"
-                           onsubmit="return confirm('Are you sure?');">
+                           asp-route-id="@entity.Id">
                         <button type="submit">Delete</button>
                      </form>
                   </td>
