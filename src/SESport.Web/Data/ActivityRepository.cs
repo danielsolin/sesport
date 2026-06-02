@@ -17,7 +17,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   public async Task<IReadOnlyList<ActivityListItem>> GetAdminListAsync(
+   public async Task<IReadOnlyList<ActivityListItem>> GetDraftsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return await GetActivityListAsync(
+         "where a.publication_status_id = 'Draft'",
+         cancellationToken
+      );
+   }
+
+   public async Task<IReadOnlyList<ActivityListItem>> GetAllAsync(
       CancellationToken cancellationToken
    )
    {
