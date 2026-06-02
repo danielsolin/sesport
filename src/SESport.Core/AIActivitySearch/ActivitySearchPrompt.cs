@@ -31,8 +31,7 @@ internal static class ActivitySearchPrompt
       - sport: {{request.Entity.Sport.Name}}
       - notes: {{request.Entity.Notes}}
 
-      Time frame:
-      {{request.SearchDate.AddDays(-request.LookBackDays):yyyy-MM-dd}} to {{request.SearchDate.AddDays(request.LookAheadDays):yyyy-MM-dd}}
+      Time frame: {{request.SearchDate.AddDays(-request.LookBackDays):yyyy-MM-dd}} to {{request.SearchDate.AddDays(request.LookAheadDays):yyyy-MM-dd}}
       
       Maximum proposals: {{request.MaxProposals}}
 
