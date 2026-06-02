@@ -24,12 +24,41 @@
    <table class="admin-table">
       <thead>
          <tr>
-            <th>Time</th>
-            <th>Activity</th>
-            <th>Producer</th>
-            <th>Status</th>
-            <th>Type</th>
-            <th>Sport</th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Created"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Created")'>Created @Model.GetSortIndicator("Created")</a>
+            </th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Time"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Time")'>Time @Model.GetSortIndicator("Time")</a>
+            </th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Activity"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Activity")'>Activity @Model.GetSortIndicator("Activity")</a>
+            </th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Producer"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Producer")'>Producer @Model.GetSortIndicator("Producer")</a>
+            </th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Status"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Status")'>Status @Model.GetSortIndicator("Status")</a>
+            </th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Type"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>Type @Model.GetSortIndicator("Type")</a>
+            </th>
+            <th>
+               <a asp-page="./Proposals"
+                  asp-route-sortColumn="Sport"
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>Sport @Model.GetSortIndicator("Sport")</a>
+            </th>
             <th></th>
          </tr>
       </thead>
@@ -37,6 +66,7 @@
          @foreach(var proposal in Model.Proposals)
          {
             <tr>
+               <td>@proposal.CreatedOn</td>
                <td>@proposal.TimeText</td>
                <td>
                   <a asp-page="./Proposal" asp-route-id="@proposal.Id">
