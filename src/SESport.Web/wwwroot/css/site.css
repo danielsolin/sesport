@@ -470,3 +470,31 @@ textarea {
 .ses-expand > button {
    width: 100% !important;
 }
+
+.ses-icon-search {
+   display: inline-block;
+   width: 0.85em;
+   height: 0.85em;
+   border: 0.14em solid currentColor;
+   border-radius: 50%;
+   position: relative;
+   box-sizing: border-box;
+}
+
+   .ses-icon-search::after {
+      content: "";
+      position: absolute;
+      width: 0.45em;
+      height: 0.14em;
+      background: currentColor;
+      right: -0.34em;
+      bottom: -0.12em;
+      transform: rotate(45deg);
+   }
+
+.ses-entity-search-link {
+   display: inline-flex;
+   align-items: center;
+   margin-left: 0.45rem;
+   line-height: 1;
+}

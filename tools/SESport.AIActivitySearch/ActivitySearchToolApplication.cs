@@ -116,19 +116,19 @@ internal static class ActivitySearchToolApplication
       var entitiesWithProposals = new HashSet<string>(
          StringComparer.OrdinalIgnoreCase
       );
-      var remainingEntities = selectedEntities.ToList();
+      var todoEntities = selectedEntities.ToList();
       var itemIndex = 0;
       var rateLimitBackoff = TimeSpan.FromSeconds(options.DelaySeconds);
 
-      for(var pass = 1; pass <= maxPasses && remainingEntities.Count > 0; pass++)
+      for(var pass = 1; pass <= maxPasses && todoEntities.Count > 0; pass++)
       {
          Console.Error.WriteLine(
             $"Starting pass {pass}/{maxPasses} for " +
-            $"{remainingEntities.Count} entity/entities without proposals."
+            $"{todoEntities.Count} entity/entities without proposals."
          );
 
-         var passEntities = remainingEntities;
-         remainingEntities = [];
+         var passEntities = todoEntities;
+         todoEntities = [];
 
          for(var index = 0; index < passEntities.Count; index++)
          {
@@ -172,7 +172,7 @@ internal static class ActivitySearchToolApplication
             }
             else if(pass < maxPasses)
             {
-               remainingEntities.Add(entity);
+               todoEntities.Add(entity);
             }
 
             await DelayBetweenEntitiesAsync(options, index + 1, passEntities.Count);

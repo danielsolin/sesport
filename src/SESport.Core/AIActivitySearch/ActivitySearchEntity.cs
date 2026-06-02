@@ -11,5 +11,6 @@ public sealed record ActivitySearchEntity(
    string? CurrentRelationshipOrStatus,
    IReadOnlyCollection<string> LikelyActivityTypes,
    string? SuggestedEvidenceSources,
-   string? Notes
+   string? Notes,
+   string Country = "Sweden"
 );
