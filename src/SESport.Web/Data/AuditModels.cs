@@ -46,7 +46,24 @@ public sealed record ActivityProposalEvidenceAuditItem(
    DateTimeOffset ObservedAt,
    string Summary,
    string? RawExcerpt
-);
+)
+{
+   public string UrlShort
+   {
+      get
+      {
+         var shortUrl = Uri != null ? Uri : string.Empty;
+
+         shortUrl = shortUrl.Replace("https://", "");
+         shortUrl = shortUrl.Replace("http://", "");
+         shortUrl = shortUrl.Replace("www.", "");
+         shortUrl = shortUrl.Substring(0, shortUrl.IndexOf('/'));
+         shortUrl += "↗";
+
+         return shortUrl;
+      }
+   }
+};
 
 public sealed record ActivityProposalDetail(
    string Id,
