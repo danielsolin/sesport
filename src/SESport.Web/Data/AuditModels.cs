@@ -17,7 +17,8 @@ public sealed record ActivityProposalAuditItem(
    string? GroupId,
    Guid? ActivityId,
    int EntityLinkCount,
-   int EvidenceCount
+   int EvidenceCount,
+   DateTime CreatedOn
 );
 
 public sealed record ActivityProposalLinkAuditItem(
