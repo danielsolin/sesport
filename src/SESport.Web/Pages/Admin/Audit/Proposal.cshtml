@@ -56,7 +56,7 @@
          </div>
          <div>
             <dt>Confidence</dt>
-            <dd>@Model.Proposal.Confidence</dd>
+            <dd>@Model.Proposal.ConfidencePercentString%</dd>
          </div>
          @if (Model.Proposal.ActivityId is not null)
          {
@@ -107,7 +107,9 @@
                   <td>@link.Role</td>
                   <td>@link.Explanation</td>
                   <td>@link.ContextName</td>
-                  <td>@link.Confidence</td>
+                  <td>
+                     @link.ConfidencePercentString%
+                  </td>
                </tr>
             }
          </tbody>
