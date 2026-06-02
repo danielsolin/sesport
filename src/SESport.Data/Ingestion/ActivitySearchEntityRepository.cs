@@ -92,8 +92,11 @@ public sealed class ActivitySearchEntityRepository : IAsyncDisposable
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         var notes = $"Watch priority: {reader.GetString(7)}. " +
-            $"Expected stability: {reader.GetString(8)}.";
+         var relevanceReason = reader.GetString(6).Trim();
+         var notes = string.IsNullOrWhiteSpace(relevanceReason)
+            ? $"Watch priority: {reader.GetString(7)}. " +
+               $"Expected stability: {reader.GetString(8)}."
+            : relevanceReason;
 
          entities.Add(new ActivitySearchEntity(
             new ExternalEntityId(reader.GetString(0)),
@@ -103,7 +106,7 @@ public sealed class ActivitySearchEntityRepository : IAsyncDisposable
                new ExternalEntityId(reader.GetString(3)),
                reader.GetString(4)
             ),
-            reader.GetString(6),
+            relevanceReason,
             null,
             [],
             null,
