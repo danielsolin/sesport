@@ -31,6 +31,14 @@ public sealed class OpenAiResponsesActivitySearchClient
          httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", options.ApiKey);
       }
+
+      if (IsOpenRouterBaseAddress())
+      {
+         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+            "X-OpenRouter-Experimental-Metadata",
+            "enabled"
+         );
+      }
    }
 
    public async Task<ActivitySearchModelResult> SearchAsync(
@@ -69,7 +77,8 @@ public sealed class OpenAiResponsesActivitySearchClient
       return new ActivitySearchModelResult(
          rawContent,
          rawResponse,
-         proposals
+         proposals,
+         ExtractProducer(rawResponse)
       );
    }
 
@@ -152,6 +161,174 @@ public sealed class OpenAiResponsesActivitySearchClient
       return string.IsNullOrWhiteSpace(fallbackText)
          ? rawResponse
          : fallbackText;
+   }
+
+   private string? ExtractProducer(string rawResponse)
+   {
+      var model = IsOpenRouterBaseAddress()
+         ? ExtractOpenRouterModel(rawResponse)
+         : ExtractRootModel(rawResponse);
+
+      if (string.IsNullOrWhiteSpace(model))
+      {
+         model = options.Model;
+      }
+
+      return IsOpenRouterBaseAddress()
+         ? PrefixProducer("openrouter", model)
+         : model;
+   }
+
+   private static string? ExtractOpenRouterModel(string rawResponse)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponse);
+         var root = document.RootElement;
+
+         if (
+            root.TryGetProperty("openrouter_metadata", out var metadata) &&
+            TryGetSelectedEndpointModel(metadata, out var endpointModel)
+         )
+         {
+            return endpointModel;
+         }
+
+         if (
+            root.TryGetProperty("openrouter_metadata", out metadata) &&
+            TryGetSuccessfulAttemptModel(metadata, out var attemptModel)
+         )
+         {
+            return attemptModel;
+         }
+
+         return TryGetStringProperty(root, "model", out var rootModel)
+            ? rootModel
+            : null;
+      }
+      catch(JsonException)
+      {
+         return null;
+      }
+   }
+
+   private static string? ExtractRootModel(string rawResponse)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponse);
+         var root = document.RootElement;
+
+         return TryGetStringProperty(root, "model", out var model)
+            ? model
+            : null;
+      }
+      catch(JsonException)
+      {
+         return null;
+      }
+   }
+
+   private static bool TryGetSelectedEndpointModel(
+      JsonElement metadata,
+      out string? model
+   )
+   {
+      model = null;
+
+      if (
+         metadata.ValueKind != JsonValueKind.Object ||
+         !metadata.TryGetProperty("endpoints", out var endpoints) ||
+         !endpoints.TryGetProperty("available", out var available) ||
+         available.ValueKind != JsonValueKind.Array
+      )
+      {
+         return false;
+      }
+
+      foreach (var endpoint in available.EnumerateArray())
+      {
+         if (
+            endpoint.TryGetProperty("selected", out var selected) &&
+            selected.ValueKind == JsonValueKind.True &&
+            TryGetStringProperty(endpoint, "model", out model)
+         )
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool TryGetSuccessfulAttemptModel(
+      JsonElement metadata,
+      out string? model
+   )
+   {
+      model = null;
+
+      if (
+         metadata.ValueKind != JsonValueKind.Object ||
+         !metadata.TryGetProperty("attempts", out var attempts) ||
+         attempts.ValueKind != JsonValueKind.Array
+      )
+      {
+         return false;
+      }
+
+      foreach (var attempt in attempts.EnumerateArray())
+      {
+         if (
+            attempt.TryGetProperty("status", out var status) &&
+            status.ValueKind == JsonValueKind.Number &&
+            status.GetInt32() >= 200 &&
+            status.GetInt32() < 300 &&
+            TryGetStringProperty(attempt, "model", out model)
+         )
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool TryGetStringProperty(
+      JsonElement element,
+      string propertyName,
+      out string? value
+   )
+   {
+      value = null;
+
+      if (
+         element.ValueKind == JsonValueKind.Object &&
+         element.TryGetProperty(propertyName, out var property) &&
+         property.ValueKind == JsonValueKind.String
+      )
+      {
+         value = property.GetString();
+
+         return !string.IsNullOrWhiteSpace(value);
+      }
+
+      return false;
+   }
+
+   private bool IsOpenRouterBaseAddress()
+   {
+      return options.BaseAddress.Host.Equals(
+         "openrouter.ai",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static string PrefixProducer(string prefix, string model)
+   {
+      return model.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase)
+         ? model
+         : $"{prefix}/{model}";
    }
 
    private static string ExtractErrorMessage(string rawResponse)

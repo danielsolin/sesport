@@ -36,6 +36,9 @@ public class ActivitySearchServiceTests
                )
             ]
          )
+         {
+            Producer = "openrouter/openai/gpt-oss-20b"
+         }
       );
       var service = new ActivitySearchService(client, "openrouter/free");
       var result = await service.SearchAsync(
@@ -49,7 +52,7 @@ public class ActivitySearchServiceTests
          ActivityProposalProducerType.AiSearch,
          proposal.ProducerType
       );
-      Assert.Equal("openrouter/free", proposal.Producer);
+      Assert.Equal("openrouter/openai/gpt-oss-20b", proposal.Producer);
       Assert.Equal(ActivityType.Match, proposal.Type);
       Assert.Equal("Tre Kronor vs Finland", proposal.Title);
       Assert.Equal(ActivityTimeKind.Scheduled, proposal.Time.Kind);

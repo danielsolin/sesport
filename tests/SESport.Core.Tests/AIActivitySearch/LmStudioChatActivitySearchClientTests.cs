@@ -38,6 +38,7 @@ public class LmStudioChatActivitySearchClientTests
       Assert.Contains("\"allowed_tools\":[\"search\"]", handler.RequestBody);
       Assert.Single(result.Proposals);
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);
+      Assert.Equal("lmstudio/gpt-oss-20b", result.Producer);
    }
 
    [Fact]

@@ -35,7 +35,35 @@ public class OpenAiResponsesActivitySearchClientTests
       Assert.Contains("\"model\":\"gpt-oss-20b\"", handler.RequestBody);
       Assert.Contains("\"type\":\"web_search\"", handler.RequestBody);
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);
+      Assert.Equal("gpt-oss-20b", result.Producer);
       Assert.Single(result.Proposals);
+   }
+
+   [Fact]
+   public async Task SearchPrefixesActualOpenRouterModelAsProducer()
+   {
+      var handler = new RecordingHandler(
+         CreateResponseJson(
+            model: "openrouter/free",
+            openRouterSelectedModel: "openai/gpt-oss-20b"
+         )
+      );
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("https://openrouter.ai/api/v1/"),
+            "openrouter/free"
+         )
+      );
+
+      var result = await client.SearchAsync(
+         new ActivitySearchRequest(CreateEntity(), new DateOnly(2026, 5, 31)),
+         CancellationToken.None
+      );
+
+      Assert.Equal("enabled", handler.OpenRouterMetadataHeader);
+      Assert.Equal("openrouter/openai/gpt-oss-20b", result.Producer);
    }
 
    [Fact]
@@ -141,7 +169,11 @@ public class OpenAiResponsesActivitySearchClientTests
       Assert.Equal(HttpStatusCode.TooManyRequests, exception.StatusCode);
    }
 
-   private static string CreateResponseJson(bool includeReasoning = false)
+   private static string CreateResponseJson(
+      bool includeReasoning = false,
+      string? model = null,
+      string? openRouterSelectedModel = null
+   )
    {
       var content = """
       {
@@ -200,8 +232,30 @@ public class OpenAiResponsesActivitySearchClientTests
          }
       });
 
+      object? openRouterMetadata = openRouterSelectedModel is null
+         ? null
+         : new
+         {
+            requested = model,
+            strategy = "free",
+            endpoints = new
+            {
+               available = new[]
+               {
+                  new
+                  {
+                     provider = "OpenAI",
+                     model = openRouterSelectedModel,
+                     selected = true
+                  }
+               }
+            }
+         };
+
       return JsonSerializer.Serialize(new
       {
+         model,
+         openrouter_metadata = openRouterMetadata,
          output
       });
    }
@@ -250,6 +304,8 @@ public class OpenAiResponsesActivitySearchClientTests
 
       public string RequestBody { get; private set; } = "";
 
+      public string? OpenRouterMetadataHeader { get; private set; }
+
       protected override async Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
@@ -259,6 +315,12 @@ public class OpenAiResponsesActivitySearchClientTests
          RequestBody = request.Content is null
             ? ""
             : await request.Content.ReadAsStringAsync(cancellationToken);
+         OpenRouterMetadataHeader = request.Headers.TryGetValues(
+            "X-OpenRouter-Experimental-Metadata",
+            out var values
+         )
+            ? values.SingleOrDefault()
+            : null;
 
          return new HttpResponseMessage(statusCode)
          {

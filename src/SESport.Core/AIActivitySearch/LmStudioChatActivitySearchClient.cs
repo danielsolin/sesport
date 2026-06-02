@@ -68,7 +68,8 @@ public sealed class LmStudioChatActivitySearchClient
       return new ActivitySearchModelResult(
          rawContent,
          rawResponse,
-         proposals
+         proposals,
+         PrefixProducer("lmstudio", options.Model)
       );
    }
 
@@ -170,5 +171,12 @@ public sealed class LmStudioChatActivitySearchClient
       }
 
       return false;
+   }
+
+   private static string PrefixProducer(string prefix, string model)
+   {
+      return model.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase)
+         ? model
+         : $"{prefix}/{model}";
    }
 }

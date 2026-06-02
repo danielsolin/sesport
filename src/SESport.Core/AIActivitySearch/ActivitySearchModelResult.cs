@@ -3,5 +3,6 @@ namespace SESport.Core.AIActivitySearch;
 public sealed record ActivitySearchModelResult(
    string RawContent,
    string RawResponse,
-   IReadOnlyCollection<ActivityProposalDraft> Proposals
+   IReadOnlyCollection<ActivityProposalDraft> Proposals,
+   string? Producer = null
 );
