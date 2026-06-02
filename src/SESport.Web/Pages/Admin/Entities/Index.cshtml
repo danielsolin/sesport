@@ -76,7 +76,8 @@ else
                   <td class="table-actions">
                      <form method="post"
                            asp-page-handler="Delete"
-                           asp-route-id="@entity.Id">
+                           asp-route-id="@entity.Id"
+                           onsubmit='return confirm("Are you sure?");'>
                         <button type="submit">Delete</button>
                      </form>
                   </td>
