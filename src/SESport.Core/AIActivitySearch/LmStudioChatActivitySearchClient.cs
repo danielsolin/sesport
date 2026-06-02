@@ -90,7 +90,6 @@ public sealed class LmStudioChatActivitySearchClient
          model = options.Model,
          input = ActivitySearchPrompt.Create(request),
          integrations,
-         context_length = 8000,
          temperature = 0.1,
          store = true
       };
