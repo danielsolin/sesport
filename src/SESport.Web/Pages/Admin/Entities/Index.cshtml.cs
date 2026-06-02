@@ -12,6 +12,8 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string WatchSortColumn = "Watch";
    public const string StabilitySortColumn = "Stability";
 
+   public string SearchUrl = "https://www.google.com/search?q=";
+
    public IReadOnlyList<EntityListItem> Entities { get; private set; } = [];
 
    public string SortColumn { get; private set; } = NameSortColumn;
