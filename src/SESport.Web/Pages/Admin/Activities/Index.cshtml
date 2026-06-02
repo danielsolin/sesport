@@ -12,11 +12,13 @@
    <a class="button button-primary" asp-page="./Edit">New activity</a>
 </section>
 
-<select id="activity_status" class="">
-   <option value="Draft">Drafts</option>
-   <option value="Published">Published</option>
-   <option value="">All</option>
-</select>
+<form method="get">
+   <select id="activity_status" name="status" onchange="this.form.submit();">
+      <option value="Draft" selected="@(Model.Status == "Draft")">Drafts</option>
+      <option value="Published" selected="@(Model.Status == "Published")">Published</option>
+      <option value="" selected="@(string.IsNullOrEmpty(Model.Status))">All</option>
+   </select>
+</form>
 
 @if(Model.LoadError is not null)
 {
@@ -61,6 +63,7 @@ else
                      <form method="post"
                            asp-page-handler="Delete"
                            asp-route-id="@activity.Id"
+                           asp-route-status="@Model.Status"
                            onsubmit="return confirm('Are you sure?');">
                         <button type="submit">Delete</button>
                      </form>
