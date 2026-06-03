@@ -30,26 +30,14 @@
          <span>Dölj repriser</span>
       </label>
       <div class="filter-sports">
-         <span>Sporter</span>
-         <div class="filter-sport-options">
-            <label class="check-row">
-               <input type="checkbox"
-                      checked="@(Model.SelectedSports.Count == 0)"
-                      onchange="if(this.checked){ const form = this.form; form.querySelectorAll('input[name=&quot;sports&quot;]').forEach(input => input.checked = false); form.submit(); }" />
-               <span>Alla</span>
-            </label>
-            @foreach(var sport in Model.SportOptions)
-            {
-               <label class="check-row">
-                  <input type="checkbox"
-                         name="sports"
-                         value="@sport.Name"
-                         checked="@sport.IsSelected"
-                         onchange="this.form.submit();" />
-                  <span>@sport.Name</span>
-               </label>
-            }
-         </div>
+         <label asp-for="SelectedSports">
+            <span>Sporter</span>
+            <select asp-for="SelectedSports"
+                    asp-items="Model.SportOptions"
+                    multiple
+                    size="6">
+            </select>
+         </label>
       </div>
       <button class="button button-primary" type="submit">Filter</button>
    </form>

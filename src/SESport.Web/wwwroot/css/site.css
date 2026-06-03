@@ -216,14 +216,12 @@ h2 {
    font-weight: 800;
 }
 
-.filter-sport-options {
-   display: flex;
-   flex-wrap: wrap;
-   gap: 8px 14px;
+.filter-sports label {
+   margin-bottom: 0;
 }
 
-.filter-sport-options .check-row {
-   min-width: auto;
+.filter-sports select {
+   min-height: 142px;
 }
 
 .admin-card-grid {

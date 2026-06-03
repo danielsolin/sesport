@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.TvSport;
@@ -12,7 +13,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
    [BindProperty(SupportsGet = true, Name = "hideReplays")]
    public bool HideReplays { get; set; }
 
-   [BindProperty(SupportsGet = true, Name = "sports")]
+   [BindProperty(SupportsGet = true)]
    public List<string> SelectedSports { get; set; } = [];
 
    public string DateText => SelectedDate.ToString("yyyy-MM-dd");
@@ -25,7 +26,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
       private set;
    } = [];
 
-   public IReadOnlyList<TvSportCategoryOption> SportOptions
+   public IReadOnlyList<SelectListItem> SportOptions
    {
       get;
       private set;
@@ -40,18 +41,32 @@ public class IndexModel(TvSportRepository repository) : PageModel
       try
       {
          var normalizedSports = NormalizeSelectedSports(SelectedSports);
-         SelectedSports = normalizedSports;
+         SelectedSports = normalizedSports.Count == 0
+            ? [string.Empty]
+            : normalizedSports;
          var categories = await repository.GetCategoriesForDateAsync(
             SelectedDate,
             HideReplays,
             cancellationToken
          );
-         SportOptions = categories
+         SportOptions =
+         [
+            new SelectListItem(
+               "Alla",
+               string.Empty,
+               normalizedSports.Count == 0
+            ),
+            .. categories
             .Select(category => new TvSportCategoryOption(
                category,
                normalizedSports.Contains(category)
             ))
-            .ToList();
+            .Select(option => new SelectListItem(
+               option.Name,
+               option.Name,
+               option.IsSelected
+            ))
+         ];
          Broadcasts = await repository.GetByDateAsync(
             SelectedDate,
             HideReplays,
