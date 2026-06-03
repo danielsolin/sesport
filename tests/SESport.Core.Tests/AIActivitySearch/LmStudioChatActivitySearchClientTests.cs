@@ -44,33 +44,6 @@ public class LmStudioChatActivitySearchClientTests
    }
 
    [Fact]
-   public async Task SearchCanOmitPluginIntegration()
-   {
-      var handler = new RecordingHandler(CreateChatResponseJson());
-      var httpClient = new HttpClient(handler);
-      var client = new LmStudioChatActivitySearchClient(
-         httpClient,
-         new LmStudioChatActivitySearchClientOptions(
-            new Uri("http://127.0.0.1:1234/api/v1/"),
-            "gpt-oss-20b",
-            "altra/web-search",
-            ["search"]
-         )
-      );
-
-      await client.SearchAsync(
-         new ActivitySearchRequest(
-            CreateEntity(),
-            new DateOnly(2026, 5, 31),
-            AllowWebSearch: false
-         ),
-         CancellationToken.None
-      );
-
-      Assert.Contains("\"integrations\":[]", handler.RequestBody);
-   }
-
-   [Fact]
    public async Task SearchExceptionKeepsHttpStatusCode()
    {
       var handler = new RecordingHandler(

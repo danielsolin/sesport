@@ -80,16 +80,15 @@ public sealed class LmStudioChatActivitySearchClient
       string prompt
    )
    {
-      object[] integrations = request.AllowWebSearch
-         ? [
+      object[] integrations =
+      [
             new
             {
                type = "plugin",
                id = options.PluginId,
                allowed_tools = options.AllowedTools
             }
-         ]
-         : [];
+      ];
 
       return new
       {

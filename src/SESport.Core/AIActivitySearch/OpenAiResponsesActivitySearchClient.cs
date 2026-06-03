@@ -117,16 +117,12 @@ public sealed class OpenAiResponsesActivitySearchClient
       string prompt
    )
    {
-      var tools = request.AllowWebSearch
-         ? new object[] { new { type = options.WebSearchToolType } }
-         : [];
-
       var obj = new
       {
          model = options.Model,
          input = prompt,
-         tools,
-         tool_choice = request.AllowWebSearch ? "auto" : null
+         tools = new object[] { new { type = options.WebSearchToolType } },
+         tool_choice = "auto"
       };
 
       return obj;

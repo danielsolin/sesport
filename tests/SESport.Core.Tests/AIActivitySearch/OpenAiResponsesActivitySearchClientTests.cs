@@ -69,31 +69,6 @@ public class OpenAiResponsesActivitySearchClientTests
    }
 
    [Fact]
-   public async Task SearchCanOmitWebSearchTool()
-   {
-      var handler = new RecordingHandler(CreateResponseJson());
-      var httpClient = new HttpClient(handler);
-      var client = new OpenAiResponsesActivitySearchClient(
-         httpClient,
-         new OpenAiResponsesActivitySearchClientOptions(
-            new Uri("http://127.0.0.1:1234/v1/"),
-            "gpt-oss-20b"
-         )
-      );
-
-      await client.SearchAsync(
-         new ActivitySearchRequest(
-            CreateEntity(),
-            new DateOnly(2026, 5, 31),
-            AllowWebSearch: false
-         ),
-         CancellationToken.None
-      );
-
-      Assert.DoesNotContain("\"type\":\"web_search\"", handler.RequestBody);
-   }
-
-   [Fact]
    public async Task SearchCanUseConfiguredWebSearchToolType()
    {
       var handler = new RecordingHandler(CreateResponseJson());
