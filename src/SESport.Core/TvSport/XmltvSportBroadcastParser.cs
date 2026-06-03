@@ -142,6 +142,12 @@ public sealed partial class XmltvSportBroadcastParser
       }
 
       var description = GetFirstElementValue(programme, "desc");
+
+      if(ShouldSkipDescription(description))
+      {
+         return null;
+      }
+
       var replayMetadata = ParseReplayMetadata(description);
       var externalId = CreateExternalId(channelId, startsAt, title);
       var fingerprint = CreateFingerprint(
@@ -204,6 +210,20 @@ public sealed partial class XmltvSportBroadcastParser
             "Klubba och Bollspel",
             StringComparison.OrdinalIgnoreCase
          );
+   }
+
+   private static bool ShouldSkipDescription(string? description)
+   {
+      if(string.IsNullOrWhiteSpace(description))
+      {
+         return false;
+      }
+
+      return description.Contains(
+         "höjdpunkter",
+         StringComparison.OrdinalIgnoreCase
+      ) ||
+         description.Contains("highlights", StringComparison.OrdinalIgnoreCase);
    }
 
    private static (bool IsReplay, DateOnly? OriginalAirDate) ParseReplayMetadata(

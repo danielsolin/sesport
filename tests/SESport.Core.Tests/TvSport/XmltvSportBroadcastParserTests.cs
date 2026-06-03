@@ -260,4 +260,50 @@ public class XmltvSportBroadcastParserTests
 
       Assert.Empty(broadcasts);
    }
+
+   [Fact]
+   public async Task ParseAsyncSkipsProgrammesWithHighlightsInDescription()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603180000 +0000" stop="20260603190000 +0000" channel="Eurosport1.se">
+             <title lang="sv">Tennis Grand Slam Roland-Garros</title>
+             <desc lang="sv">Höjdpunkter från dagens matcher.</desc>
+             <category lang="sv">Tennis</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+
+      Assert.Empty(broadcasts);
+   }
+
+   [Fact]
+   public async Task ParseAsyncSkipsProgrammesWithEnglishHighlightsInDescription()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603180000 +0000" stop="20260603190000 +0000" channel="Eurosport1.se">
+             <title lang="sv">Tennis Grand Slam Roland-Garros</title>
+             <desc lang="sv">Match highlights from Roland-Garros.</desc>
+             <category lang="sv">Tennis</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+
+      Assert.Empty(broadcasts);
+   }
 }
