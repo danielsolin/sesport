@@ -108,6 +108,11 @@ public sealed partial class XmltvSportBroadcastParser
          .Distinct(StringComparer.OrdinalIgnoreCase)
          .ToList();
 
+      if(storedCategories.Count == 0)
+      {
+         return null;
+      }
+
       var channelId = programme.Attribute("channel")?.Value;
       var startValue = programme.Attribute("start")?.Value;
       var stopValue = programme.Attribute("stop")?.Value;

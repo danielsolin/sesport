@@ -115,4 +115,26 @@ public class XmltvSportBroadcastParserTests
 
       Assert.Empty(broadcasts);
    }
+
+   [Fact]
+   public async Task ParseAsyncSkipsProgrammesWithoutSpecificSportCategory()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603180000 +0000" stop="20260603190000 +0000" channel="TV4Sportkanalen.se">
+             <title lang="sv">Sändningsuppehåll</title>
+             <category lang="sv">Sport</category>
+             <category>Sports</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+
+      Assert.Empty(broadcasts);
+   }
 }
