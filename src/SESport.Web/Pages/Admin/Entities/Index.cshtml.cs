@@ -11,6 +11,7 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string SportSortColumn = "Sport";
    public const string WatchSortColumn = "Watch";
    public const string StabilitySortColumn = "Stability";
+   public const string LinksSortColumn = "Links";
 
    public string SearchUrl = "https://www.google.com/search?q=";
 
@@ -73,6 +74,7 @@ public class IndexModel(AdminRepository repository) : PageModel
          SportSortColumn => SportSortColumn,
          WatchSortColumn => WatchSortColumn,
          StabilitySortColumn => StabilitySortColumn,
+         LinksSortColumn => LinksSortColumn,
          _ => NameSortColumn
       };
 
@@ -88,6 +90,7 @@ public class IndexModel(AdminRepository repository) : PageModel
          SportSortColumn => OrderByDirection(entities, entity => entity.Sport, sortAsc),
          WatchSortColumn => OrderByDirection(entities, entity => entity.WatchPriority, sortAsc),
          StabilitySortColumn => OrderByDirection(entities, entity => entity.Stability, sortAsc),
+         LinksSortColumn => OrderByDirection(entities, entity => entity.LinkedEntityCount, sortAsc),
          _ => OrderByDirection(entities, entity => entity.Name, sortAsc)
       };
    }
@@ -101,6 +104,19 @@ public class IndexModel(AdminRepository repository) : PageModel
       var sortedEntities = sortAsc
          ? entities.OrderBy(keySelector, StringComparer.OrdinalIgnoreCase)
          : entities.OrderByDescending(keySelector, StringComparer.OrdinalIgnoreCase);
+
+      return sortedEntities.ThenBy(entity => entity.Name, StringComparer.OrdinalIgnoreCase).ToList();
+   }
+
+   private static IReadOnlyList<EntityListItem> OrderByDirection(
+      IEnumerable<EntityListItem> entities,
+      Func<EntityListItem, int> keySelector,
+      bool sortAsc
+   )
+   {
+      var sortedEntities = sortAsc
+         ? entities.OrderBy(keySelector)
+         : entities.OrderByDescending(keySelector);
 
       return sortedEntities.ThenBy(entity => entity.Name, StringComparer.OrdinalIgnoreCase).ToList();
    }

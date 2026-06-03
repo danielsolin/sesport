@@ -464,12 +464,15 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             et.label,
             s.name,
             p.label,
-            sk.label
+            sk.label,
+            count(l.id)::int
          from tracked_entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          join entity_watch_priorities p on p.id = e.watch_priority_id
          join entity_stability_kinds sk on sk.id = e.expected_stability_id
+         left join entity_to_entity_links l on l.source_entity_id = e.id
+         group by e.id, e.canonical_name, et.label, s.name, p.label, sk.label
          order by e.canonical_name
          """;
 
@@ -488,7 +491,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetString(5)
+               reader.GetString(5),
+               reader.GetInt32(6)
             )
          );
       }
@@ -501,7 +505,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      const string entitySql = """
          select
             id,
             canonical_name,
@@ -518,7 +522,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          where id = @id
          """;
 
-      await using var command = dataSource.CreateCommand(sql);
+      await using var command = dataSource.CreateCommand(entitySql);
       command.Parameters.AddWithValue("id", id);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -529,7 +533,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      return new EntityEditModel
+      var model = new EntityEditModel
       {
          Id = reader.GetGuid(0),
          CanonicalName = reader.GetString(1),
@@ -543,6 +547,85 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          WatchPriorityId = reader.GetString(9),
          ExpectedStabilityId = reader.GetString(10)
       };
+
+      await reader.DisposeAsync();
+
+      const string linkSql = """
+         select target_entity_id
+         from entity_to_entity_links
+         where source_entity_id = @id
+         order by target_entity_id
+         """;
+
+      await using var linkCommand = dataSource.CreateCommand(linkSql);
+      linkCommand.Parameters.AddWithValue("id", id);
+      await using var linkReader = await linkCommand.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      while (await linkReader.ReadAsync(cancellationToken))
+      {
+         model.LinkedEntityIds.Add(linkReader.GetGuid(0));
+      }
+
+      return model;
+   }
+
+   public async Task<IReadOnlyList<EntityLinkOption>> GetEntityLinkOptionsAsync(
+      Guid? excludeEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      var sql = excludeEntityId is null
+         ? """
+            select
+               e.id,
+               e.canonical_name,
+               et.label,
+               s.name
+            from tracked_entities e
+            join entity_types et on et.id = e.entity_type_id
+            join sports s on s.id = e.sport_id
+            order by e.canonical_name
+            """
+         : """
+            select
+               e.id,
+               e.canonical_name,
+               et.label,
+               s.name
+            from tracked_entities e
+            join entity_types et on et.id = e.entity_type_id
+            join sports s on s.id = e.sport_id
+            where e.id <> @exclude_entity_id
+            order by e.canonical_name
+            """;
+
+      await using var command = dataSource.CreateCommand(sql);
+
+      if (excludeEntityId is not null)
+      {
+         command.Parameters.AddWithValue("exclude_entity_id", excludeEntityId);
+      }
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityLinkOption>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityLinkOption(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3)
+            )
+         );
+      }
+
+      return options;
    }
 
    public async Task SaveEntityAsync(
@@ -598,10 +681,28 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             where id = @id
             """;
 
-      await using var command = dataSource.CreateCommand(sql);
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", id);
       AddEntityParameters(command, model);
       await command.ExecuteNonQueryAsync(cancellationToken);
+
+      await SaveEntityLinksAsync(
+         connection,
+         transaction,
+         id,
+         model.LinkedEntityIds,
+         cancellationToken
+      );
+
+      await transaction.CommitAsync(cancellationToken);
+      model.Id = id;
    }
 
    public async Task DeleteEntityAsync(
@@ -648,6 +749,71 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          "expected_stability_id",
          model.ExpectedStabilityId
       );
+   }
+
+   private static async Task SaveEntityLinksAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid sourceEntityId,
+      IEnumerable<Guid>? targetEntityIds,
+      CancellationToken cancellationToken
+   )
+   {
+      const string deleteSql = """
+         delete from entity_to_entity_links
+         where source_entity_id = @source_entity_id
+         """;
+
+      await using (var deleteCommand = new NpgsqlCommand(
+         deleteSql,
+         connection,
+         transaction
+      ))
+      {
+         deleteCommand.Parameters.AddWithValue(
+            "source_entity_id",
+            sourceEntityId
+         );
+         await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      const string insertSql = """
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         values (
+            md5(@source_entity_id::text || @target_entity_id::text)::uuid,
+            @source_entity_id,
+            @target_entity_id
+         )
+         on conflict (source_entity_id, target_entity_id) do update
+         set updated_at = now()
+         """;
+
+      foreach (var targetEntityId in (targetEntityIds ?? []).Distinct())
+      {
+         if (targetEntityId == sourceEntityId)
+         {
+            continue;
+         }
+
+         await using var insertCommand = new NpgsqlCommand(
+            insertSql,
+            connection,
+            transaction
+         );
+         insertCommand.Parameters.AddWithValue(
+            "source_entity_id",
+            sourceEntityId
+         );
+         insertCommand.Parameters.AddWithValue(
+            "target_entity_id",
+            targetEntityId
+         );
+         await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
    }
 
    private static ReferenceTable GetTable(string tableKey)

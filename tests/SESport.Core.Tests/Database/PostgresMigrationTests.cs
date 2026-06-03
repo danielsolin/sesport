@@ -245,6 +245,34 @@ public class PostgresMigrationTests
       Assert.Contains("where hidden_at is null", migration);
    }
 
+   [Fact]
+   public void TenthMigrationAddsEntityToEntityLinks()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "010_add_entity_to_entity_links.sql"
+         )
+      );
+
+      Assert.Contains(
+         "create table if not exists entity_to_entity_links",
+         migration
+      );
+      Assert.Contains(
+         "source_entity_id uuid not null references tracked_entities(id)",
+         migration
+      );
+      Assert.Contains(
+         "target_entity_id uuid not null references tracked_entities(id)",
+         migration
+      );
+      Assert.Contains("check (source_entity_id <> target_entity_id)", migration);
+      Assert.Contains("unique (source_entity_id, target_entity_id)", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -61,7 +61,15 @@ public sealed record EntityListItem(
    string EntityType,
    string Sport,
    string WatchPriority,
-   string Stability
+   string Stability,
+   int LinkedEntityCount
+);
+
+public sealed record EntityLinkOption(
+   Guid Id,
+   string Name,
+   string EntityType,
+   string Sport
 );
 
 public sealed class EntityEditModel
@@ -88,4 +96,6 @@ public sealed class EntityEditModel
    public string WatchPriorityId { get; set; } = "review";
 
    public string ExpectedStabilityId { get; set; } = "medium_term";
+
+   public List<Guid> LinkedEntityIds { get; set; } = [];
 }

@@ -27,6 +27,9 @@ The seventh through ninth migrations add imported TV sport broadcasts,
 import-run tracking, replay metadata parsed from Swedish EPG descriptions, and
 manual row hiding for the admin review list.
 
+The tenth migration adds many-to-many links between tracked entities, used for
+connections such as a player linked to a club team and a national team.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.Entities;
@@ -27,6 +28,12 @@ public class EditModel(AdminRepository repository) : PageModel
 
    public IReadOnlyList<ReferenceRow> StabilityKinds { get; private set; } = [];
 
+   public IReadOnlyList<SelectListItem> EntityLinkOptions
+   {
+      get;
+      private set;
+   } = [];
+
    public string? LoadError { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -34,10 +41,9 @@ public class EditModel(AdminRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
-      await LoadOptionsAsync(cancellationToken);
-
       if (id is null)
       {
+         await LoadOptionsAsync(null, cancellationToken);
          return Page();
       }
 
@@ -45,6 +51,8 @@ public class EditModel(AdminRepository repository) : PageModel
          id.Value,
          cancellationToken
       ) ?? new EntityEditModel();
+
+      await LoadOptionsAsync(Entity.Id, cancellationToken);
 
       return Entity.Id is null ? NotFound() : Page();
    }
@@ -57,7 +65,7 @@ public class EditModel(AdminRepository repository) : PageModel
 
       if (!ModelState.IsValid)
       {
-         await LoadOptionsAsync(cancellationToken);
+         await LoadOptionsAsync(Entity.Id, cancellationToken);
          return Page();
       }
 
@@ -68,14 +76,17 @@ public class EditModel(AdminRepository repository) : PageModel
       catch (Exception exception)
       {
          LoadError = exception.Message;
-         await LoadOptionsAsync(cancellationToken);
+         await LoadOptionsAsync(Entity.Id, cancellationToken);
          return Page();
       }
 
       return RedirectToPage("./Index");
    }
 
-   private async Task LoadOptionsAsync(CancellationToken cancellationToken)
+   private async Task LoadOptionsAsync(
+      Guid? entityId,
+      CancellationToken cancellationToken
+   )
    {
       try
       {
@@ -99,6 +110,16 @@ public class EditModel(AdminRepository repository) : PageModel
             "entity-stability-kinds",
             cancellationToken
          );
+         var entityLinkOptions = await repository.GetEntityLinkOptionsAsync(
+            entityId,
+            cancellationToken
+         );
+         EntityLinkOptions = entityLinkOptions
+            .Select(entity => new SelectListItem(
+               $"{entity.Name} ({entity.EntityType}, {entity.Sport})",
+               entity.Id.ToString()
+            ))
+            .ToList();
       }
       catch (Exception exception)
       {

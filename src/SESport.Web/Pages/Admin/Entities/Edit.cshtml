@@ -99,6 +99,19 @@
       </label>
    </section>
 
+   <section class="form-section">
+      <h2>Linked entities</h2>
+      <label>
+         <span>Connections</span>
+         <select asp-for="Entity.LinkedEntityIds"
+                 asp-items="Model.EntityLinkOptions"
+                 multiple
+                 size="8"
+                 class="ses-multiselect">
+         </select>
+      </label>
+   </section>
+
    <section class="form-actions">
       <button class="button button-primary" type="submit">Save</button>
    </section>

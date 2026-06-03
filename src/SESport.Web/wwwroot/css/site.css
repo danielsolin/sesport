@@ -472,6 +472,10 @@ textarea {
    resize: vertical;
 }
 
+.ses-multiselect {
+   height: auto;
+}
+
 .form-actions {
    display: flex;
    align-items: center;
