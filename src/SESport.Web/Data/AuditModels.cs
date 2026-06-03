@@ -1,3 +1,5 @@
+using SESport.Web.Formatting;
+
 namespace SESport.Web.Data;
 
 public sealed record AuditArea(string Title, string Description, string Href);
@@ -14,7 +16,6 @@ public sealed record ActivityProposalAuditItem(
    string Sport,
    string TimeText,
    decimal? Confidence,
-   string? GroupId,
    Guid? ActivityId,
    int EntityLinkCount,
    int EvidenceCount,
@@ -52,15 +53,7 @@ public sealed record ActivityProposalEvidenceAuditItem(
    {
       get
       {
-         var shortUrl = Uri ?? string.Empty;
-
-         shortUrl = shortUrl.Replace("https://", "");
-         shortUrl = shortUrl.Replace("http://", "");
-         shortUrl = shortUrl.Replace("www.", "");
-         shortUrl = shortUrl[..shortUrl.IndexOf('/')];
-         shortUrl += "↗";
-
-         return shortUrl;
+         return UrlDisplayFormatter.ToShortDisplayUrl(Uri);
       }
    }
 };
@@ -85,7 +78,6 @@ public sealed record ActivityProposalDetail(
    TimeOnly? LocalStartTime,
    string TimeZoneId,
    decimal? Confidence,
-   string? GroupId,
    Guid? ActivityId,
    string? Prompt
 )
@@ -125,28 +117,7 @@ public sealed record ActivityEvidenceAuditItem(
    {
       get
       {
-         return BuildUrlShort(Uri);
+         return UrlDisplayFormatter.ToShortDisplayUrl(Uri);
       }
    }
-
-   private static string BuildUrlShort(string? uri)
-   {
-      var shortUrl = uri ?? string.Empty;
-
-      shortUrl = shortUrl.Replace("https://", "");
-      shortUrl = shortUrl.Replace("http://", "");
-      shortUrl = shortUrl.Replace("www.", "");
-      shortUrl = shortUrl[..shortUrl.IndexOf('/')];
-      shortUrl += "↗";
-
-      return shortUrl;
-   }
 };
-
-public sealed record ProposalGroupAuditItem(
-   string Id,
-   string Fingerprint,
-   Guid? ActivityId,
-   int ProposalCount,
-   DateTimeOffset UpdatedAt
-);
