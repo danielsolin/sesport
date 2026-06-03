@@ -26,13 +26,13 @@ public sealed class OpenAiResponsesActivitySearchClient
       this.httpClient = httpClient;
       this.options = options;
 
-      if (!string.IsNullOrWhiteSpace(options.ApiKey))
+      if(!string.IsNullOrWhiteSpace(options.ApiKey))
       {
          httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", options.ApiKey);
       }
 
-      if (IsOpenRouterBaseAddress())
+      if(IsOpenRouterBaseAddress())
       {
          httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
             "X-OpenRouter-Experimental-Metadata",
@@ -46,8 +46,7 @@ public sealed class OpenAiResponsesActivitySearchClient
       CancellationToken cancellationToken
    )
    {
-      var prompt = ActivitySearchPrompt.Create(request);
-      var requestPayload = CreateRequestPayload(request, prompt);
+      var requestPayload = CreateRequestPayload(request);
       var response = await httpClient.PostAsJsonAsync(
          new Uri(options.BaseAddress, "responses"),
          requestPayload,
@@ -59,7 +58,7 @@ public sealed class OpenAiResponsesActivitySearchClient
          cancellationToken
       );
 
-      if (!response.IsSuccessStatusCode)
+      if(!response.IsSuccessStatusCode)
       {
          throw new HttpRequestException(
             $"search failed with " +
@@ -79,15 +78,11 @@ public sealed class OpenAiResponsesActivitySearchClient
          rawContent,
          rawResponse,
          proposals,
-         ExtractProducer(rawResponse),
-         prompt
+         ExtractProducer(rawResponse)
       );
    }
 
-   private object CreateRequestPayload(
-      ActivitySearchRequest request,
-      string prompt
-   )
+   private object CreateRequestPayload(ActivitySearchRequest request)
    {
       var tools = request.AllowWebSearch
          ? new object[] { new { type = options.WebSearchToolType } }
@@ -96,7 +91,7 @@ public sealed class OpenAiResponsesActivitySearchClient
       var obj = new
       {
          model = options.Model,
-         input = prompt,
+         input = ActivitySearchPrompt.Create(request),
          tools,
          tool_choice = request.AllowWebSearch ? "auto" : null
       };
@@ -109,7 +104,7 @@ public sealed class OpenAiResponsesActivitySearchClient
       using var document = JsonDocument.Parse(rawResponse);
       var root = document.RootElement;
 
-      if (
+      if(
          root.TryGetProperty("output_text", out var outputText) &&
          outputText.ValueKind == JsonValueKind.String
       )
@@ -117,23 +112,23 @@ public sealed class OpenAiResponsesActivitySearchClient
          return outputText.GetString() ?? "";
       }
 
-      if (!root.TryGetProperty("output", out var output))
+      if(!root.TryGetProperty("output", out var output))
       {
          return rawResponse;
       }
 
       var fallbackText = "";
 
-      foreach (var item in output.EnumerateArray())
+      foreach(var item in output.EnumerateArray())
       {
-         if (!item.TryGetProperty("content", out var content))
+         if(!item.TryGetProperty("content", out var content))
          {
             continue;
          }
 
-         foreach (var contentItem in content.EnumerateArray())
+         foreach(var contentItem in content.EnumerateArray())
          {
-            if (
+            if(
                item.TryGetProperty("type", out var itemType) &&
                itemType.GetString() == "message" &&
                contentItem.TryGetProperty("type", out var contentType) &&
@@ -145,7 +140,7 @@ public sealed class OpenAiResponsesActivitySearchClient
                return text.GetString() ?? "";
             }
 
-            if (
+            if(
                string.IsNullOrWhiteSpace(fallbackText) &&
                contentItem.TryGetProperty("text", out var fallback) &&
                fallback.ValueKind == JsonValueKind.String
@@ -167,7 +162,7 @@ public sealed class OpenAiResponsesActivitySearchClient
          ? ExtractOpenRouterModel(rawResponse)
          : ExtractRootModel(rawResponse);
 
-      if (string.IsNullOrWhiteSpace(model))
+      if(string.IsNullOrWhiteSpace(model))
       {
          model = options.Model;
       }
@@ -184,7 +179,7 @@ public sealed class OpenAiResponsesActivitySearchClient
          using var document = JsonDocument.Parse(rawResponse);
          var root = document.RootElement;
 
-         if (
+         if(
             root.TryGetProperty("openrouter_metadata", out var metadata) &&
             TryGetSelectedEndpointModel(metadata, out var endpointModel)
          )
@@ -192,7 +187,7 @@ public sealed class OpenAiResponsesActivitySearchClient
             return endpointModel;
          }
 
-         if (
+         if(
             root.TryGetProperty("openrouter_metadata", out metadata) &&
             TryGetSuccessfulAttemptModel(metadata, out var attemptModel)
          )
@@ -234,7 +229,7 @@ public sealed class OpenAiResponsesActivitySearchClient
    {
       model = null;
 
-      if (
+      if(
          metadata.ValueKind != JsonValueKind.Object ||
          !metadata.TryGetProperty("endpoints", out var endpoints) ||
          !endpoints.TryGetProperty("available", out var available) ||
@@ -244,9 +239,9 @@ public sealed class OpenAiResponsesActivitySearchClient
          return false;
       }
 
-      foreach (var endpoint in available.EnumerateArray())
+      foreach(var endpoint in available.EnumerateArray())
       {
-         if (
+         if(
             endpoint.TryGetProperty("selected", out var selected) &&
             selected.ValueKind == JsonValueKind.True &&
             TryGetStringProperty(endpoint, "model", out model)
@@ -266,7 +261,7 @@ public sealed class OpenAiResponsesActivitySearchClient
    {
       model = null;
 
-      if (
+      if(
          metadata.ValueKind != JsonValueKind.Object ||
          !metadata.TryGetProperty("attempts", out var attempts) ||
          attempts.ValueKind != JsonValueKind.Array
@@ -275,9 +270,9 @@ public sealed class OpenAiResponsesActivitySearchClient
          return false;
       }
 
-      foreach (var attempt in attempts.EnumerateArray())
+      foreach(var attempt in attempts.EnumerateArray())
       {
-         if (
+         if(
             attempt.TryGetProperty("status", out var status) &&
             status.ValueKind == JsonValueKind.Number &&
             status.GetInt32() >= 200 &&
@@ -300,7 +295,7 @@ public sealed class OpenAiResponsesActivitySearchClient
    {
       value = null;
 
-      if (
+      if(
          element.ValueKind == JsonValueKind.Object &&
          element.TryGetProperty(propertyName, out var property) &&
          property.ValueKind == JsonValueKind.String
@@ -336,7 +331,7 @@ public sealed class OpenAiResponsesActivitySearchClient
          using var document = JsonDocument.Parse(rawResponse);
          var root = document.RootElement;
 
-         if (
+         if(
             root.TryGetProperty("error", out var error) &&
             error.TryGetProperty("message", out var message) &&
             message.ValueKind == JsonValueKind.String
