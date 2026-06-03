@@ -30,6 +30,13 @@ public class EntityWatchlistDataTests
             entity.GetProperty("sport").GetProperty("id").GetString() ==
                "ice-hockey"
       );
+      Assert.DoesNotContain(
+         entities.EnumerateArray(),
+         entity =>
+            entity.GetProperty("sport").GetProperty("id").GetString() is
+               "motor-racing" or "motorsport-rally" or "rally" or
+               "volleyball-beach-volleyball"
+      );
    }
 
    private static string FindRepositoryRoot()
