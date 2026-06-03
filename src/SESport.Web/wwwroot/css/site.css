@@ -193,6 +193,39 @@ h2 {
    gap: 10px;
 }
 
+.filter-form {
+   display: flex;
+   align-items: end;
+   flex-wrap: wrap;
+   gap: 12px;
+}
+
+.filter-form label {
+   min-width: 220px;
+   margin-bottom: 0;
+}
+
+.filter-checkbox {
+   min-width: auto !important;
+}
+
+.filter-sports {
+   display: grid;
+   gap: 6px;
+   min-width: min(100%, 520px);
+   font-weight: 800;
+}
+
+.filter-sport-options {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px 14px;
+}
+
+.filter-sport-options .check-row {
+   min-width: auto;
+}
+
 .admin-card-grid {
    display: grid;
    grid-template-columns: repeat(2, minmax(0, 1fr));

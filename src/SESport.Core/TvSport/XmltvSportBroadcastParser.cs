@@ -102,6 +102,12 @@ public sealed partial class XmltvSportBroadcastParser
          return null;
       }
 
+      var storedCategories = categories
+         .Select(NormalizeCategory)
+         .Where(value => !ShouldSkipStoredCategory(value))
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList();
+
       var channelId = programme.Attribute("channel")?.Value;
       var startValue = programme.Attribute("start")?.Value;
       var stopValue = programme.Attribute("stop")?.Value;
@@ -126,6 +132,8 @@ public sealed partial class XmltvSportBroadcastParser
       }
 
       var description = GetFirstElementValue(programme, "desc");
+      var originalAirDate = TryParseOriginalAirDate(description);
+      var isReplay = originalAirDate is not null;
       var externalId = CreateExternalId(channelId, startsAt, title);
       var fingerprint = CreateFingerprint(
          DefaultSourceKey,
@@ -145,7 +153,9 @@ public sealed partial class XmltvSportBroadcastParser
          channelName,
          title,
          description,
-         categories,
+         storedCategories,
+         isReplay,
+         originalAirDate,
          startsAt,
          endsAt,
          TimeZoneId,
@@ -160,6 +170,50 @@ public sealed partial class XmltvSportBroadcastParser
       return categories.Any(category =>
          category.Equals("Sport", StringComparison.OrdinalIgnoreCase) ||
          category.Equals("Sports", StringComparison.OrdinalIgnoreCase));
+   }
+
+   private static string NormalizeCategory(string category)
+   {
+      return category.Equals("Motor sport", StringComparison.OrdinalIgnoreCase)
+         ? "Motorsport"
+         : category;
+   }
+
+   private static bool ShouldSkipStoredCategory(string category)
+   {
+      return category.Equals("Sport", StringComparison.OrdinalIgnoreCase) ||
+         category.Equals("Sports", StringComparison.OrdinalIgnoreCase) ||
+         category.Equals(
+            "Klubba och Bollspel",
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
+   private static DateOnly? TryParseOriginalAirDate(string? description)
+   {
+      if(string.IsNullOrWhiteSpace(description))
+      {
+         return null;
+      }
+
+      var match = OriginalAirDateRegex().Match(description);
+
+      if(!match.Success)
+      {
+         return null;
+      }
+
+      var day = int.Parse(match.Groups["day"].Value, CultureInfo.InvariantCulture);
+      var month = int.Parse(
+         match.Groups["month"].Value,
+         CultureInfo.InvariantCulture
+      );
+      var year = 2000 + int.Parse(
+         match.Groups["year"].Value,
+         CultureInfo.InvariantCulture
+      );
+
+      return new DateOnly(year, month, day);
    }
 
    private static string? GetFirstElementValue(
@@ -232,4 +286,7 @@ public sealed partial class XmltvSportBroadcastParser
 
    [GeneratedRegex(@"\s+")]
    private static partial Regex WhitespaceRegex();
+
+   [GeneratedRegex(@"\((?:\d{1,2}-)?(?<day>\d{1,2})/(?<month>\d{1,2})-(?<year>\d{2})\)\.?$")]
+   private static partial Regex OriginalAirDateRegex();
 }

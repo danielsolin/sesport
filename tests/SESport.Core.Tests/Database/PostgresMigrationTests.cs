@@ -196,6 +196,8 @@ public class PostgresMigrationTests
       );
       Assert.Contains("categories text[] not null", migration);
       Assert.Contains("description text null", migration);
+      Assert.Contains("is_replay boolean not null", migration);
+      Assert.Contains("original_air_date date null", migration);
       Assert.Contains("raw_programme_xml text null", migration);
       Assert.Contains("unique (fingerprint)", migration);
    }

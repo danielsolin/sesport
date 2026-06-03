@@ -1,0 +1,108 @@
+@page
+@model SESport.Web.Pages.Admin.TvSport.IndexModel
+@{
+   ViewData["Title"] = "TV Sport Broadcasts";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Admin</p>
+      <h1>TV sport broadcasts</h1>
+   </div>
+   <a class="button" asp-page="/Admin/Index">Back</a>
+</section>
+
+<section class="form-section">
+   <form method="get" class="filter-form">
+      <label>
+         <span>Date</span>
+         <input type="date"
+                name="date"
+                value="@Model.DateText"
+                onchange="this.form.submit();" />
+      </label>
+      <label class="check-row filter-checkbox">
+         <input type="checkbox"
+                name="hideReplays"
+                value="true"
+                checked="@Model.HideReplays"
+                onchange="this.form.submit();" />
+         <span>Dölj repriser</span>
+      </label>
+      <div class="filter-sports">
+         <span>Sporter</span>
+         <div class="filter-sport-options">
+            <label class="check-row">
+               <input type="checkbox"
+                      checked="@(Model.SelectedSports.Count == 0)"
+                      onchange="if(this.checked){ const form = this.form; form.querySelectorAll('input[name=&quot;sports&quot;]').forEach(input => input.checked = false); form.submit(); }" />
+               <span>Alla</span>
+            </label>
+            @foreach(var sport in Model.SportOptions)
+            {
+               <label class="check-row">
+                  <input type="checkbox"
+                         name="sports"
+                         value="@sport.Name"
+                         checked="@sport.IsSelected"
+                         onchange="this.form.submit();" />
+                  <span>@sport.Name</span>
+               </label>
+            }
+         </div>
+      </div>
+      <button class="button button-primary" type="submit">Filter</button>
+   </form>
+</section>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      The TV sport broadcast database is not available right now.
+   </div>
+}
+else if(Model.Broadcasts.Count == 0)
+{
+   <div class="notice">
+      No TV sport broadcasts for @Model.DateText.
+   </div>
+}
+else
+{
+   <section class="form-section">
+      <h2>@Model.Broadcasts.Count broadcasts for @Model.DateText</h2>
+      <div class="admin-table-wrap">
+         <table class="admin-table">
+            <thead>
+               <tr>
+                  <th>Time</th>
+                  <th>Channel</th>
+                  <th>Broadcast</th>
+                  <th>Categories</th>
+               </tr>
+            </thead>
+            <tbody>
+               @foreach(var broadcast in Model.Broadcasts)
+               {
+                  <tr>
+                     <td>@broadcast.TimeText</td>
+                     <td>@broadcast.ChannelName</td>
+                     <td>
+                        <strong>@broadcast.Title</strong>
+                        @if(!string.IsNullOrWhiteSpace(broadcast.Description))
+                        {
+                           <span>@broadcast.Description</span>
+                        }
+                        @if(broadcast.IsReplay && broadcast.OriginalAirDate is not null)
+                        {
+                           <span>Repris från @broadcast.OriginalAirDate.Value.ToString("yyyy-MM-dd")</span>
+                        }
+                     </td>
+                     <td>@broadcast.Categories</td>
+                  </tr>
+               }
+            </tbody>
+         </table>
+      </div>
+   </section>
+}

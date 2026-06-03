@@ -22,6 +22,8 @@ create table if not exists tv_sport_broadcasts
    title text not null,
    description text null,
    categories text[] not null,
+   is_replay boolean not null default false,
+   original_air_date date null,
    starts_at timestamptz not null,
    ends_at timestamptz not null,
    time_zone_id text not null default 'Europe/Stockholm',

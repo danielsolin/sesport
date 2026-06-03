@@ -10,6 +10,8 @@ public sealed record TvSportBroadcast(
    string Title,
    string? Description,
    IReadOnlyCollection<string> Categories,
+   bool IsReplay,
+   DateOnly? OriginalAirDate,
    DateTimeOffset StartsAt,
    DateTimeOffset EndsAt,
    string TimeZoneId,

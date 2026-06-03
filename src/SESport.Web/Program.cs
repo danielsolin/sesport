@@ -16,6 +16,7 @@ builder.Services.AddSingleton(
 builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
+builder.Services.AddScoped<TvSportRepository>();
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
    .AddCookie(

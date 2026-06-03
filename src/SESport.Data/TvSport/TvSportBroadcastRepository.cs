@@ -136,12 +136,14 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
          insert into tv_sport_broadcasts (
             id, import_run_id, source_key, external_id, fingerprint,
             channel_id, channel_name, title, description, categories,
-            starts_at, ends_at, time_zone_id, raw_programme_xml
+            is_replay, original_air_date, starts_at, ends_at, time_zone_id,
+            raw_programme_xml
          )
          values (
             @id, @import_run_id, @source_key, @external_id, @fingerprint,
             @channel_id, @channel_name, @title, @description, @categories,
-            @starts_at, @ends_at, @time_zone_id, @raw_programme_xml
+            @is_replay, @original_air_date, @starts_at, @ends_at,
+            @time_zone_id, @raw_programme_xml
          )
          on conflict (fingerprint) do update
          set
@@ -153,6 +155,8 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
             title = excluded.title,
             description = excluded.description,
             categories = excluded.categories,
+            is_replay = excluded.is_replay,
+            original_air_date = excluded.original_air_date,
             starts_at = excluded.starts_at,
             ends_at = excluded.ends_at,
             time_zone_id = excluded.time_zone_id,
@@ -179,6 +183,11 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       command.Parameters.AddWithValue(
          "categories",
          broadcast.Categories.ToArray()
+      );
+      command.Parameters.AddWithValue("is_replay", broadcast.IsReplay);
+      command.Parameters.AddWithValue(
+         "original_air_date",
+         (object?)broadcast.OriginalAirDate ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "starts_at",

@@ -143,6 +143,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "/Admin/Audit/Proposals"
          ),
          new AdminArea(
+            "TV sport broadcasts",
+            "Inspect imported sport broadcasts from Swedish EPG data.",
+            "/Admin/TvSport"
+         ),
+         new AdminArea(
             "Reference data",
             "Maintain low-change lookup tables.",
             "/Admin/ReferenceData"
