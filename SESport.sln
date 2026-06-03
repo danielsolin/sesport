@@ -50,7 +50,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{988827A0-5
 	ProjectSection(SolutionItems) = preProject
 		data\entity-watchlist.json = data\entity-watchlist.json
 		data\normalize-entity-watchlist-names.py = data\normalize-entity-watchlist-names.py
-		data\xmltv.xml = data\xmltv.xml
+		data\nxt-epg.xml = data\nxt-epg.xml
+		data\nxt-playlist.m3u = data\nxt-playlist.m3u
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.AIActivitySearch", "tools\SESport.AIActivitySearch\SESport.AIActivitySearch.csproj", "{B7980648-9AFB-46A9-90B0-53C0EFE095B2}"
