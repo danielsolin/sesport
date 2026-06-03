@@ -174,6 +174,32 @@ public class PostgresMigrationTests
       Assert.Contains("prompt text", migration);
    }
 
+   [Fact]
+   public void SeventhMigrationAddsTvSportBroadcasts()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "007_add_tv_sport_broadcasts.sql"
+         )
+      );
+
+      Assert.Contains(
+         "create table if not exists tv_sport_import_runs",
+         migration
+      );
+      Assert.Contains(
+         "create table if not exists tv_sport_broadcasts",
+         migration
+      );
+      Assert.Contains("categories text[] not null", migration);
+      Assert.Contains("description text null", migration);
+      Assert.Contains("raw_programme_xml text null", migration);
+      Assert.Contains("unique (fingerprint)", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);
