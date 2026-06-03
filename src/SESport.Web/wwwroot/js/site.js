@@ -4,7 +4,8 @@
    document.addEventListener("submit", async event => {
       const form = event.target;
 
-      if(!(form instanceof HTMLFormElement) || !form.matches(enhancedFormSelector))
+      if (!(form instanceof HTMLFormElement)
+         || !form.matches(enhancedFormSelector))
       {
          return;
       }
