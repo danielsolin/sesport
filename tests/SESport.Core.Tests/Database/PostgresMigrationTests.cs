@@ -273,6 +273,27 @@ public class PostgresMigrationTests
       Assert.Contains("unique (source_entity_id, target_entity_id)", migration);
    }
 
+   [Fact]
+   public void EleventhMigrationMakesEntityLinksUndirected()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "011_make_entity_links_undirected.sql"
+         )
+      );
+
+      Assert.Contains("delete from entity_to_entity_links duplicate", migration);
+      Assert.Contains(
+         "create unique index if not exists entity_to_entity_links_entity_pair_unique",
+         migration
+      );
+      Assert.Contains("least(source_entity_id, target_entity_id)", migration);
+      Assert.Contains("greatest(source_entity_id, target_entity_id)", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

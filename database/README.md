@@ -30,6 +30,9 @@ manual row hiding for the admin review list.
 The tenth migration adds many-to-many links between tracked entities, used for
 connections such as a player linked to a club team and a national team.
 
+The eleventh migration makes those entity links behave as undirected
+connections and prevents reversed duplicate pairs.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash

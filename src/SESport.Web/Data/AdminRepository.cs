@@ -465,13 +465,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             s.name,
             p.label,
             sk.label,
-            count(l.id)::int
+            count(distinct l.id)::int
          from tracked_entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          join entity_watch_priorities p on p.id = e.watch_priority_id
          join entity_stability_kinds sk on sk.id = e.expected_stability_id
-         left join entity_to_entity_links l on l.source_entity_id = e.id
+         left join entity_to_entity_links l
+            on l.source_entity_id = e.id or l.target_entity_id = e.id
          group by e.id, e.canonical_name, et.label, s.name, p.label, sk.label
          order by e.canonical_name
          """;
@@ -551,10 +552,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await reader.DisposeAsync();
 
       const string linkSql = """
-         select target_entity_id
+         select
+            case
+               when source_entity_id = @id then target_entity_id
+               else source_entity_id
+            end as linked_entity_id
          from entity_to_entity_links
-         where source_entity_id = @id
-         order by target_entity_id
+         where source_entity_id = @id or target_entity_id = @id
+         order by linked_entity_id
          """;
 
       await using var linkCommand = dataSource.CreateCommand(linkSql);
@@ -762,6 +767,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       const string deleteSql = """
          delete from entity_to_entity_links
          where source_entity_id = @source_entity_id
+            or target_entity_id = @source_entity_id
          """;
 
       await using (var deleteCommand = new NpgsqlCommand(
@@ -788,8 +794,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             @source_entity_id,
             @target_entity_id
          )
-         on conflict (source_entity_id, target_entity_id) do update
-         set updated_at = now()
+         on conflict do nothing
          """;
 
       foreach (var targetEntityId in (targetEntityIds ?? []).Distinct())
