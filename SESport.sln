@@ -36,6 +36,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", 
 	ProjectSection(SolutionItems) = preProject
 		database\migrations\001_create_entity_activity_model.sql = database\migrations\001_create_entity_activity_model.sql
 		database\migrations\002_add_activity_publication.sql = database\migrations\002_add_activity_publication.sql
+		database\migrations\003_add_activity_proposal_reject_reason.sql = database\migrations\003_add_activity_proposal_reject_reason.sql
+		database\migrations\004_add_activity_proposal_producer.sql = database\migrations\004_add_activity_proposal_producer.sql
+		database\migrations\005_add_ai_activity_search_runs.sql = database\migrations\005_add_ai_activity_search_runs.sql
+		database\migrations\006_add_activity_proposal_prompt.sql = database\migrations\006_add_activity_proposal_prompt.sql
+		database\migrations\007_add_tv_sport_broadcasts.sql = database\migrations\007_add_tv_sport_broadcasts.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{084226A2-8533-49C9-82FD-B9F1FE3349AB}"
