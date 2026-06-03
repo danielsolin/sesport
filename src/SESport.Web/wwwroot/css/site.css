@@ -430,7 +430,7 @@ h2 {
    border: 1px solid var(--line);
    border-radius: 8px;
    background: var(--surface);
-   margin: 10px;
+   margin: 0px;
 }
 
 .form-section h2,
@@ -470,10 +470,6 @@ textarea {
 
 textarea {
    resize: vertical;
-}
-
-.ses-multiselect {
-   height: auto;
 }
 
 .form-actions {

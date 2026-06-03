@@ -68,6 +68,23 @@
    </section>
 
    <section class="form-section">
+      <h2>Linked entities</h2>
+      <label>
+         <span>Connections</span>
+         <select asp-for="Entity.LinkedEntityIds"
+                 asp-items="Model.EntityLinkOptions"
+                 multiple
+                 size="8"
+                 class="ses-multiselect"
+                 data-multi-select
+                 data-placeholder="Select linked entities"
+                 data-select-all="false"
+                 data-dropdown-height="320px">
+         </select>
+      </label>
+   </section>
+
+   <section class="form-section">
       <h2>Country relevance</h2>
       <div class="form-grid">
          <label>
@@ -96,19 +113,6 @@
          <span>Relevance reason</span>
          <textarea asp-for="Entity.CountryRelevanceReason" rows="3"></textarea>
          <span asp-validation-for="Entity.CountryRelevanceReason"></span>
-      </label>
-   </section>
-
-   <section class="form-section">
-      <h2>Linked entities</h2>
-      <label>
-         <span>Connections</span>
-         <select asp-for="Entity.LinkedEntityIds"
-                 asp-items="Model.EntityLinkOptions"
-                 multiple
-                 size="8"
-                 class="ses-multiselect">
-         </select>
       </label>
    </section>
 

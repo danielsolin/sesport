@@ -5,6 +5,7 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <title>@ViewData["Title"] - SE Sport</title>
    <script type="importmap"></script>
+   <link rel="stylesheet" href="~/vendor/multi-select-dropdown-js/MultiSelect.min.css" asp-append-version="true" />
    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -21,6 +22,7 @@
    </main>
 
    @await RenderSectionAsync("Scripts", required: false)
+   <script src="~/vendor/multi-select-dropdown-js/MultiSelect.min.js" asp-append-version="true"></script>
    <script src="~/js/site.js" asp-append-version="true"></script>
 </body>
 </html>
