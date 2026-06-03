@@ -46,6 +46,11 @@ public class IndexModel(TvSportRepository repository) : PageModel
    {
       await repository.HideAsync(id, cancellationToken);
 
+      if(WantsJsonResponse())
+      {
+         return new JsonResult(new { hidden = true });
+      }
+
       var selectedDate = Date ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1));
       var routeValues = new Dictionary<string, object?>
       {
@@ -65,6 +70,14 @@ public class IndexModel(TvSportRepository repository) : PageModel
       }
 
       return RedirectToPage(routeValues);
+   }
+
+   private bool WantsJsonResponse()
+   {
+      return Request.Headers.Accept.Any(value =>
+         value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) ==
+         true
+      );
    }
 
    private async Task LoadAsync(CancellationToken cancellationToken)

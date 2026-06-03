@@ -563,3 +563,7 @@ textarea {
 .ses-nowrap {
    text-wrap: nowrap;
 }
+
+.ses-button-small {
+   font-size: small !important;
+}
