@@ -102,6 +102,11 @@ public sealed partial class XmltvSportBroadcastParser
          return null;
       }
 
+      if(ShouldSkipProgramme(categories))
+      {
+         return null;
+      }
+
       var storedCategories = categories
          .Select(NormalizeCategory)
          .Where(value => !ShouldSkipStoredCategory(value))
@@ -175,6 +180,14 @@ public sealed partial class XmltvSportBroadcastParser
       return categories.Any(category =>
          category.Equals("Sport", StringComparison.OrdinalIgnoreCase) ||
          category.Equals("Sports", StringComparison.OrdinalIgnoreCase));
+   }
+
+   private static bool ShouldSkipProgramme(
+      IReadOnlyCollection<string> categories
+   )
+   {
+      return categories.Any(category =>
+         category.Equals("Sportmagasin", StringComparison.OrdinalIgnoreCase));
    }
 
    private static string NormalizeCategory(string category)

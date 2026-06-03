@@ -137,4 +137,27 @@ public class XmltvSportBroadcastParserTests
 
       Assert.Empty(broadcasts);
    }
+
+   [Fact]
+   public async Task ParseAsyncSkipsSportMagazineProgrammes()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603180000 +0000" stop="20260603190000 +0000" channel="Eurosport1.se">
+             <title lang="sv">Tennis Magasin</title>
+             <category lang="sv">Tennis</category>
+             <category lang="sv">Sportmagasin</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+
+      Assert.Empty(broadcasts);
+   }
 }
