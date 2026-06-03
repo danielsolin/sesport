@@ -21,6 +21,16 @@
                 value="@Model.DateText"
                 onchange="this.form.submit();" />
       </label>
+      <div class="filter-sports">
+         <label asp-for="SelectedSports">
+            <span>Sporter</span>
+            <select asp-for="SelectedSports"
+                    asp-items="Model.SportOptions"
+                    multiple="multiple"
+                    size="1">
+            </select>
+         </label>
+      </div>
       <label class="check-row filter-checkbox">
          <input type="checkbox"
                 name="hideReplays"
@@ -29,16 +39,6 @@
                 onchange="this.form.submit();" />
          <span>Dölj repriser</span>
       </label>
-      <div class="filter-sports">
-         <label asp-for="SelectedSports">
-            <span>Sporter</span>
-            <select asp-for="SelectedSports"
-                    asp-items="Model.SportOptions"
-                    multiple
-                    size="6">
-            </select>
-         </label>
-      </div>
       <button class="button button-primary" type="submit">Filter</button>
    </form>
 </section>
@@ -72,8 +72,15 @@ else
             <tbody>
                @foreach(var broadcast in Model.Broadcasts)
                {
+                  DateOnly? airDate = null;
+                  if(broadcast.IsReplay && broadcast.OriginalAirDate != null)
+                  {
+                     airDate = broadcast.OriginalAirDate.Value;
+                  }
                   <tr>
-                     <td>@broadcast.TimeText</td>
+                     <td>
+                        <strong>@broadcast.TimeText</strong>
+                     </td>
                      <td>@broadcast.ChannelName</td>
                      <td>
                         <strong>@broadcast.Title</strong>
@@ -81,9 +88,11 @@ else
                         {
                            <span>@broadcast.Description</span>
                         }
-                        @if(broadcast.IsReplay && broadcast.OriginalAirDate is not null)
+                        @if(airDate != null)
                         {
-                           <span>Repris från @broadcast.OriginalAirDate.Value.ToString("yyyy-MM-dd")</span>
+                           <span>
+                              Repris från @airDate
+                           </span>
                         }
                      </td>
                      <td>@broadcast.Categories</td>
