@@ -142,8 +142,7 @@ public sealed partial class XmltvSportBroadcastParser
       }
 
       var description = GetFirstElementValue(programme, "desc");
-      var originalAirDate = TryParseOriginalAirDate(description);
-      var isReplay = originalAirDate is not null;
+      var replayMetadata = ParseReplayMetadata(description);
       var externalId = CreateExternalId(channelId, startsAt, title);
       var fingerprint = CreateFingerprint(
          DefaultSourceKey,
@@ -164,8 +163,8 @@ public sealed partial class XmltvSportBroadcastParser
          title,
          description,
          storedCategories,
-         isReplay,
-         originalAirDate,
+         replayMetadata.IsReplay,
+         replayMetadata.OriginalAirDate,
          startsAt,
          endsAt,
          TimeZoneId,
@@ -207,18 +206,20 @@ public sealed partial class XmltvSportBroadcastParser
          );
    }
 
-   private static DateOnly? TryParseOriginalAirDate(string? description)
+   private static (bool IsReplay, DateOnly? OriginalAirDate) ParseReplayMetadata(
+      string? description
+   )
    {
       if(string.IsNullOrWhiteSpace(description))
       {
-         return null;
+         return (false, null);
       }
 
       var match = OriginalAirDateRegex().Match(description);
 
       if(!match.Success)
       {
-         return null;
+         return (ProducedYearRegex().IsMatch(description), null);
       }
 
       var day = int.Parse(match.Groups["day"].Value, CultureInfo.InvariantCulture);
@@ -231,7 +232,7 @@ public sealed partial class XmltvSportBroadcastParser
          CultureInfo.InvariantCulture
       );
 
-      return new DateOnly(year, month, day);
+      return (true, new DateOnly(year, month, day));
    }
 
    private static string? GetFirstElementValue(
@@ -305,6 +306,9 @@ public sealed partial class XmltvSportBroadcastParser
    [GeneratedRegex(@"\s+")]
    private static partial Regex WhitespaceRegex();
 
-   [GeneratedRegex(@"\((?:\d{1,2}-)?(?<day>\d{1,2})/(?<month>\d{1,2})-(?<year>\d{2})\)\.?$")]
+   [GeneratedRegex(@"\((?:\d{1,2}-)?(?<day>\d{1,2})/(?<month>\d{1,2})-(?<year>\d{2})\)")]
    private static partial Regex OriginalAirDateRegex();
+
+   [GeneratedRegex(@"Producerat år", RegexOptions.IgnoreCase)]
+   private static partial Regex ProducedYearRegex();
 }

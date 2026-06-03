@@ -96,6 +96,106 @@ public class XmltvSportBroadcastParserTests
    }
 
    [Fact]
+   public async Task ParseAsyncParsesOriginalAirDateAtStartOfNewSentence()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603143000 +0000" stop="20260603163000 +0000" channel="ViaplaySport3.se">
+             <title lang="sv">Fotboll: Landskamp</title>
+             <desc lang="sv">Viaplay Sport 3/6 16:30. Norge - Sverige. Kommentatorer: Anders Bjuhr &amp; Fredrik Ljungberg. (1/6-26) Producerat år 2026.</desc>
+             <category lang="sv">Fotboll</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.True(broadcast.IsReplay);
+      Assert.Equal(new DateOnly(2026, 6, 1), broadcast.OriginalAirDate);
+   }
+
+   [Fact]
+   public async Task ParseAsyncParsesOriginalAirDateInMiddleOfSentence()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603143000 +0000" stop="20260603163000 +0000" channel="ViaplaySport3.se">
+             <title lang="sv">Fotboll: Landskamp</title>
+             <desc lang="sv">Norge - Sverige (1/6-26) med svensk kommentering.</desc>
+             <category lang="sv">Fotboll</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.True(broadcast.IsReplay);
+      Assert.Equal(new DateOnly(2026, 6, 1), broadcast.OriginalAirDate);
+   }
+
+   [Fact]
+   public async Task ParseAsyncParsesOriginalAirDateAtStartOfDescription()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603143000 +0000" stop="20260603163000 +0000" channel="ViaplaySport3.se">
+             <title lang="sv">Fotboll: Landskamp</title>
+             <desc lang="sv">(1/6-26). Norge - Sverige.</desc>
+             <category lang="sv">Fotboll</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.True(broadcast.IsReplay);
+      Assert.Equal(new DateOnly(2026, 6, 1), broadcast.OriginalAirDate);
+   }
+
+   [Fact]
+   public async Task ParseAsyncMarksProducedYearDescriptionsAsReplay()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <programme start="20260603143000 +0000" stop="20260603163000 +0000" channel="ViaplaySport3.se">
+             <title lang="sv">Fotboll: Landskamp</title>
+             <desc lang="sv">Norge - Sverige. Producerat år 2026.</desc>
+             <category lang="sv">Fotboll</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.True(broadcast.IsReplay);
+      Assert.Null(broadcast.OriginalAirDate);
+   }
+
+   [Fact]
    public async Task ParseAsyncSkipsNonSportProgrammes()
    {
       const string xml = """

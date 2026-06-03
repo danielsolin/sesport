@@ -9,7 +9,19 @@ public sealed record TvSportBroadcastListItem(
    string Categories,
    bool IsReplay,
    DateOnly? OriginalAirDate
-);
+)
+{
+   public string TimeOnlyText
+   {
+      get
+      {
+         if(TimeText.Contains(" "))
+            return TimeText.Split(' ')[1];
+
+         return TimeText;
+      }
+   }
+};
 
 public sealed record TvSportCategoryOption(
    string Name,

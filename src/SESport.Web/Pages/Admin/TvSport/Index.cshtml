@@ -63,8 +63,8 @@ else
          <table class="admin-table">
             <thead>
                <tr>
-                  <th>Time</th>
                   <th>Channel</th>
+                  <th>Time</th>
                   <th>Broadcast</th>
                   <th>Categories</th>
                </tr>
@@ -79,9 +79,15 @@ else
                   }
                   <tr>
                      <td>
-                        <strong>@broadcast.TimeText</strong>
+                        <div class="ses-nowrap">
+                           <small>@broadcast.ChannelName</small>
+                        </div>
                      </td>
-                     <td>@broadcast.ChannelName</td>
+                     <td>
+                        <div class="ses-timetext ses-nowrap">
+                           @broadcast.TimeOnlyText
+                        </div>
+                     </td>
                      <td>
                         <strong>@broadcast.Title</strong>
                         @if(!string.IsNullOrWhiteSpace(broadcast.Description))
@@ -95,7 +101,9 @@ else
                            </span>
                         }
                      </td>
-                     <td>@broadcast.Categories</td>
+                     <td>
+                        <small>@broadcast.Categories</small>
+                     </td>
                   </tr>
                }
             </tbody>

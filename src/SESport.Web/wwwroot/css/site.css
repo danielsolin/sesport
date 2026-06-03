@@ -554,3 +554,12 @@ textarea {
    margin-left: 0.45rem;
    line-height: 1;
 }
+
+.ses-timetext {
+   font-weight: bold;
+   font-size: smaller;
+}
+
+.ses-nowrap {
+   text-wrap: nowrap;
+}
