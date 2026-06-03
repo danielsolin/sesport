@@ -93,7 +93,7 @@ public class ProposalModel(AuditRepository repository) : PageModel
             cancellationToken
          );
 
-         return RedirectToPage("./Proposal", new { id });
+         return RedirectToPage("./Proposals");
       }
       catch(Exception exception)
       {
