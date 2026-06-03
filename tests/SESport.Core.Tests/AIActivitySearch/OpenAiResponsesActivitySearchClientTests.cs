@@ -171,6 +171,30 @@ public class OpenAiResponsesActivitySearchClientTests
       Assert.Equal(HttpStatusCode.TooManyRequests, exception.StatusCode);
    }
 
+   [Fact]
+   public async Task SearchRetriesMalformedSuccessfulResponseEnvelope()
+   {
+      var handler = new RecordingHandler(
+         ["\n\n", CreateResponseJson()]
+      );
+      var httpClient = new HttpClient(handler);
+      var client = new OpenAiResponsesActivitySearchClient(
+         httpClient,
+         new OpenAiResponsesActivitySearchClientOptions(
+            new Uri("http://127.0.0.1:1234/v1/"),
+            "gpt-oss-20b"
+         )
+      );
+
+      var result = await client.SearchAsync(
+         new ActivitySearchRequest(CreateEntity(), new DateOnly(2026, 5, 31)),
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Single(result.Proposals);
+   }
+
    private static string CreateResponseJson(
       bool includeReasoning = false,
       string? model = null,
@@ -296,23 +320,42 @@ public class OpenAiResponsesActivitySearchClientTests
       );
    }
 
-   private sealed class RecordingHandler(
-      string responseJson,
-      HttpStatusCode statusCode = HttpStatusCode.OK
-   )
-      : HttpMessageHandler
+   private sealed class RecordingHandler : HttpMessageHandler
    {
+      private readonly Queue<string> responseJsons;
+      private readonly HttpStatusCode statusCode;
+
+      public RecordingHandler(
+         string responseJson,
+         HttpStatusCode statusCode = HttpStatusCode.OK
+      )
+         : this([responseJson], statusCode)
+      {
+      }
+
+      public RecordingHandler(
+         IEnumerable<string> responseJsons,
+         HttpStatusCode statusCode = HttpStatusCode.OK
+      )
+      {
+         this.responseJsons = new Queue<string>(responseJsons);
+         this.statusCode = statusCode;
+      }
+
       public Uri? RequestUri { get; private set; }
 
       public string RequestBody { get; private set; } = "";
 
       public string? OpenRouterMetadataHeader { get; private set; }
 
+      public int RequestCount { get; private set; }
+
       protected override async Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
       )
       {
+         RequestCount++;
          RequestUri = request.RequestUri;
          RequestBody = request.Content is null
             ? ""
@@ -323,6 +366,9 @@ public class OpenAiResponsesActivitySearchClientTests
          )
             ? values.SingleOrDefault()
             : null;
+         var responseJson = responseJsons.Count > 1
+            ? responseJsons.Dequeue()
+            : responseJsons.Peek();
 
          return new HttpResponseMessage(statusCode)
          {

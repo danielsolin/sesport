@@ -8,6 +8,8 @@ namespace SESport.Core.AIActivitySearch;
 public sealed class OpenAiResponsesActivitySearchClient
    : IActivitySearchModelClient
 {
+   private const int MaxMalformedResponseAttempts = 3;
+
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -46,43 +48,74 @@ public sealed class OpenAiResponsesActivitySearchClient
       CancellationToken cancellationToken
    )
    {
-      var requestPayload = CreateRequestPayload(request);
-      var response = await httpClient.PostAsJsonAsync(
-         new Uri(options.BaseAddress, "responses"),
-         requestPayload,
-         JsonOptions,
-         cancellationToken
-      );
+      var prompt = ActivitySearchPrompt.Create(request);
+      var requestPayload = CreateRequestPayload(request, prompt);
 
-      var rawResponse = await response.Content.ReadAsStringAsync(
-         cancellationToken
-      );
-
-      if(!response.IsSuccessStatusCode)
+      for(var attempt = 1; attempt <= MaxMalformedResponseAttempts; attempt++)
       {
-         throw new HttpRequestException(
-            $"search failed with " +
-            $"{(int)response.StatusCode} {response.StatusCode}",
-            null,
-            response.StatusCode
+         var response = await httpClient.PostAsJsonAsync(
+            new Uri(options.BaseAddress, "responses"),
+            requestPayload,
+            JsonOptions,
+            cancellationToken
          );
+
+         var rawResponse = await response.Content.ReadAsStringAsync(
+            cancellationToken
+         );
+
+         if(!response.IsSuccessStatusCode)
+         {
+            throw new HttpRequestException(
+               $"search failed with " +
+               $"{(int)response.StatusCode} {response.StatusCode}",
+               null,
+               response.StatusCode
+            );
+         }
+
+         try
+         {
+            var rawContent = ExtractOutputText(rawResponse);
+            var proposals = ActivitySearchResponseParser.ParseProposals(
+               rawContent,
+               JsonOptions
+            );
+
+            return new ActivitySearchModelResult(
+               rawContent,
+               rawResponse,
+               proposals,
+               ExtractProducer(rawResponse),
+               prompt
+            );
+         }
+         catch(JsonException exception)
+         {
+            if(attempt == MaxMalformedResponseAttempts)
+            {
+               throw CreateMalformedResponseException(
+                  response,
+                  rawResponse,
+                  attempt,
+                  exception
+               );
+            }
+
+            await Task.Delay(
+               TimeSpan.FromSeconds(attempt),
+               cancellationToken
+            );
+         }
       }
 
-      var rawContent = ExtractOutputText(rawResponse);
-      var proposals = ActivitySearchResponseParser.ParseProposals(
-         rawContent,
-         JsonOptions
-      );
-
-      return new ActivitySearchModelResult(
-         rawContent,
-         rawResponse,
-         proposals,
-         ExtractProducer(rawResponse)
-      );
+      throw new InvalidOperationException("AI search request was not sent.");
    }
 
-   private object CreateRequestPayload(ActivitySearchRequest request)
+   private object CreateRequestPayload(
+      ActivitySearchRequest request,
+      string prompt
+   )
    {
       var tools = request.AllowWebSearch
          ? new object[] { new { type = options.WebSearchToolType } }
@@ -91,7 +124,7 @@ public sealed class OpenAiResponsesActivitySearchClient
       var obj = new
       {
          model = options.Model,
-         input = ActivitySearchPrompt.Create(request),
+         input = prompt,
          tools,
          tool_choice = request.AllowWebSearch ? "auto" : null
       };
@@ -346,6 +379,42 @@ public sealed class OpenAiResponsesActivitySearchClient
       }
 
       return rawResponse;
+   }
+
+   private static HttpRequestException CreateMalformedResponseException(
+      HttpResponseMessage response,
+      string rawResponse,
+      int attempt,
+      JsonException exception
+   )
+   {
+      var contentType = response.Content.Headers.ContentType?.ToString() ??
+         "unknown";
+      var snippet = CreateResponseSnippet(rawResponse);
+
+      return new HttpRequestException(
+         "search failed with malformed JSON response envelope " +
+         $"after {attempt} attempt(s): status " +
+         $"{(int)response.StatusCode} {response.StatusCode}, " +
+         $"content-type {contentType}, length {rawResponse.Length}, " +
+         $"snippet '{snippet}'",
+         exception,
+         response.StatusCode
+      );
+   }
+
+   private static string CreateResponseSnippet(string rawResponse)
+   {
+      var snippet = rawResponse.Trim();
+
+      if(snippet.Length > 200)
+      {
+         snippet = snippet[..200];
+      }
+
+      return snippet
+         .Replace("\r", "\\r")
+         .Replace("\n", "\\n");
    }
 
 }
