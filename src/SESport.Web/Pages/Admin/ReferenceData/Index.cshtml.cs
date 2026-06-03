@@ -35,12 +35,6 @@ public class IndexModel(
       private set;
    } = [];
 
-   public IReadOnlyList<ProposalGroupAuditItem> ProposalGroups
-   {
-      get;
-      private set;
-   } = [];
-
    public string? LoadError { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -75,15 +69,6 @@ public class IndexModel(
                cancellationToken
             );
             ActivityEvidence = await auditRepository.GetActivityEvidenceAsync(
-               cancellationToken
-            );
-            return Page();
-         }
-
-         if (CurrentTable.Kind == ReferenceTableKind.ProposalGroups)
-         {
-            CurrentSpecialView = CurrentTable.Id;
-            ProposalGroups = await auditRepository.GetProposalGroupsAsync(
                cancellationToken
             );
             return Page();

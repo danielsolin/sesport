@@ -51,10 +51,8 @@ public class PostgresMigrationTests
          "create table if not exists activity_evidence",
          migration
       );
-      Assert.Contains(
-         "create table if not exists activity_proposal_groups",
-         migration
-      );
+      Assert.DoesNotContain("activity_proposal_groups", migration);
+      Assert.DoesNotContain("group_id", migration);
       Assert.Contains("'Pending'", migration);
       Assert.Contains(
          "status_id = 'Approved' and activity_id is not null",

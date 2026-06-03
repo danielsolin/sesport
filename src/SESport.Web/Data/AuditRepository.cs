@@ -20,11 +20,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             "Activity audit",
             "Inspect canonical activity entity links and evidence.",
             "/Admin/Audit/Activities"
-         ),
-         new AuditArea(
-            "Proposal groups",
-            "Inspect dedupe groups that can connect proposals to activities.",
-            "/Admin/Audit/Groups"
          )
       ];
    }
@@ -49,7 +44,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.activity_date,
             p.local_start_time,
             p.confidence,
-            p.group_id,
             p.activity_id,
             count(distinct l.id) as entity_link_count,
             count(distinct e.id) as evidence_count,
@@ -89,11 +83,10 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                reader.GetString(8),
                FormatTime(reader, 9, 10),
                ReadDecimal(reader, 11),
-               ReadString(reader, 12),
-               ReadGuid(reader, 13),
+               ReadGuid(reader, 12),
+               reader.GetInt32(13),
                reader.GetInt32(14),
-               reader.GetInt32(15),
-               reader.GetDateTime(16)
+               reader.GetDateTime(15)
             )
          );
       }
@@ -169,7 +162,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.local_start_time,
             p.time_zone_id,
             p.confidence,
-            p.group_id,
             p.activity_id,
             p.prompt
          from activity_proposals p
@@ -216,9 +208,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          localStartTime,
          reader.GetString(16),
          ReadDecimal(reader, 17),
-         ReadString(reader, 18),
-         ReadGuid(reader, 19),
-         ReadString(reader, 20)
+         ReadGuid(reader, 18),
+         ReadString(reader, 19)
       );
    }
 
@@ -731,44 +722,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
       }
 
       return evidence;
-   }
-
-   public async Task<IReadOnlyList<ProposalGroupAuditItem>>
-      GetProposalGroupsAsync(CancellationToken cancellationToken)
-   {
-      const string sql = """
-         select
-            g.id,
-            g.fingerprint,
-            g.activity_id,
-            count(p.id) as proposal_count,
-            g.updated_at
-         from activity_proposal_groups g
-         left join activity_proposals p on p.group_id = g.id
-         group by g.id
-         order by g.updated_at desc, g.id
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var groups = new List<ProposalGroupAuditItem>();
-
-      while (await reader.ReadAsync(cancellationToken))
-      {
-         groups.Add(
-            new ProposalGroupAuditItem(
-               reader.GetString(0),
-               reader.GetString(1),
-               ReadGuid(reader, 2),
-               reader.GetInt32(3),
-               reader.GetFieldValue<DateTimeOffset>(4)
-            )
-         );
-      }
-
-      return groups;
    }
 
    private static string FormatTime(

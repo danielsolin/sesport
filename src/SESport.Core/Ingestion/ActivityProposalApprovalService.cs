@@ -39,8 +39,7 @@ public sealed class ActivityProposalApprovalService
 
    public ActivityProposal MarkApproved(
       ActivityProposal proposal,
-      ActivityId activityId,
-      ActivityProposalGroupId? groupId = null
+      ActivityId activityId
    )
    {
       return proposal with
@@ -48,8 +47,7 @@ public sealed class ActivityProposalApprovalService
          Status = ActivityProposalStatus.Approved,
          ActivityId = activityId,
          RejectReason = null,
-         RejectComment = null,
-         GroupId = groupId ?? proposal.GroupId
+         RejectComment = null
       };
    }
 

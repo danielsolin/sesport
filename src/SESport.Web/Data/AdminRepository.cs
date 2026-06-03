@@ -120,12 +120,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "label",
             true,
             false
-         ),
-         ["proposal-groups"] = new(
-            "proposal-groups",
-            "Proposal groups",
-            "Inspect dedupe groups that can connect proposals to activities.",
-            ReferenceTableKind.ProposalGroups
          )
       };
 

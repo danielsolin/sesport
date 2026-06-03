@@ -52,12 +52,12 @@ public sealed record ActivityProposalEvidenceAuditItem(
    {
       get
       {
-         var shortUrl = Uri != null ? Uri : string.Empty;
+         var shortUrl = Uri ?? string.Empty;
 
          shortUrl = shortUrl.Replace("https://", "");
          shortUrl = shortUrl.Replace("http://", "");
          shortUrl = shortUrl.Replace("www.", "");
-         shortUrl = shortUrl.Substring(0, shortUrl.IndexOf('/'));
+         shortUrl = shortUrl[..shortUrl.IndexOf('/')];
          shortUrl += "↗";
 
          return shortUrl;
@@ -119,7 +119,29 @@ public sealed record ActivityEvidenceAuditItem(
    DateTimeOffset ObservedAt,
    string? Comment,
    string? ProposalId
-);
+)
+{
+   public string UrlShort
+   {
+      get
+      {
+         return BuildUrlShort(Uri);
+      }
+   }
+
+   private static string BuildUrlShort(string? uri)
+   {
+      var shortUrl = uri ?? string.Empty;
+
+      shortUrl = shortUrl.Replace("https://", "");
+      shortUrl = shortUrl.Replace("http://", "");
+      shortUrl = shortUrl.Replace("www.", "");
+      shortUrl = shortUrl[..shortUrl.IndexOf('/')];
+      shortUrl += "↗";
+
+      return shortUrl;
+   }
+};
 
 public sealed record ProposalGroupAuditItem(
    string Id,

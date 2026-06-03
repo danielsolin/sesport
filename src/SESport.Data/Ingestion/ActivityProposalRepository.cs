@@ -143,15 +143,15 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
             fingerprint, title, description, raw_content, activity_type_id,
             sport_id, context, activity_date, local_start_time, starts_at,
             time_zone_id, confidence, status_id, reject_reason_id,
-            reject_comment, group_id, activity_id, prompt
+            reject_comment, activity_id, prompt
          )
          values (
             @id, @producer_type_id, @producer, @source_id, @external_id,
             @fingerprint, @title, @description, @raw_content,
             @activity_type_id, @sport_id, @context, @activity_date,
             @local_start_time, @starts_at, @time_zone_id, @confidence,
-            @status_id, @reject_reason_id, @reject_comment, @group_id,
-            @activity_id, @prompt
+            @status_id, @reject_reason_id, @reject_comment, @activity_id,
+            @prompt
          )
          on conflict (id) do update
          set
@@ -174,7 +174,6 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
             status_id = excluded.status_id,
             reject_reason_id = excluded.reject_reason_id,
             reject_comment = excluded.reject_comment,
-            group_id = excluded.group_id,
             activity_id = excluded.activity_id,
             prompt = excluded.prompt,
             updated_at = now()
@@ -245,10 +244,6 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
       cmd.Parameters.AddWithValue(
          "reject_comment",
          (object?)ap.RejectComment ?? DBNull.Value
-      );
-      cmd.Parameters.AddWithValue(
-         "group_id",
-         (object?)ap.GroupId?.Value ?? DBNull.Value
       );
       cmd.Parameters.AddWithValue(
          "activity_id",

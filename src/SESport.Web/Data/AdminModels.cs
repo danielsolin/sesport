@@ -5,8 +5,7 @@ public sealed record AdminArea(string Title, string Description, string Href);
 public enum ReferenceTableKind
 {
    Lookup,
-   ActivityAudit,
-   ProposalGroups
+   ActivityAudit
 }
 
 public sealed record ReferenceTableInfo(

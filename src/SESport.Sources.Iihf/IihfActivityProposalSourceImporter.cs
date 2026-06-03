@@ -86,12 +86,11 @@ public sealed class IihfActivityProposalSourceImporter(
             )
          ],
          Confidence: 1.0m,
-         ActivityProposalStatus.Pending,
-         null,
-         null,
-         null,
-         null
-      );
+          ActivityProposalStatus.Pending,
+          null,
+          null,
+          null
+       );
    }
 
    private static string CreateEventName(IihfGame game)

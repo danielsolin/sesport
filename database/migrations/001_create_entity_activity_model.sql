@@ -239,15 +239,6 @@ create table if not exists activities
       )
 );
 
-create table if not exists activity_proposal_groups
-(
-   id text primary key,
-   fingerprint text not null,
-   activity_id uuid null references activities(id),
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
-);
-
 create table if not exists activity_proposals
 (
    id text primary key,
@@ -270,7 +261,6 @@ create table if not exists activity_proposals
    status_id text not null references proposal_statuses(id),
    reject_reason_id text null references proposal_reject_reasons(id),
    reject_comment text null,
-   group_id text null references activity_proposal_groups(id),
    activity_id uuid null references activities(id),
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now(),

@@ -91,16 +91,13 @@ public class ActivityProposalTests
    [Fact]
    public void MultipleProposalsCanSupportTheSameCanonicalActivity()
    {
-      var groupId = new ActivityProposalGroupId("activity-proposal-group:test");
       var firstProposal = CreateProposal(
          ActivityProposalProducerType.WebImport,
-         new ActivityProposalId("activity-proposal:first"),
-         groupId
+         new ActivityProposalId("activity-proposal:first")
       );
       var secondProposal = CreateProposal(
          ActivityProposalProducerType.Manual,
-         new ActivityProposalId("activity-proposal:second"),
-         groupId
+         new ActivityProposalId("activity-proposal:second")
       );
       var service = new ActivityProposalApprovalService();
       var activityId = ActivityId.New();
@@ -121,8 +118,7 @@ public class ActivityProposalTests
 
    private static ActivityProposal CreateProposal(
       ActivityProposalProducerType producerType,
-      ActivityProposalId? id = null,
-      ActivityProposalGroupId? groupId = null
+      ActivityProposalId? id = null
    )
    {
       return new ActivityProposal(
@@ -160,11 +156,10 @@ public class ActivityProposalTests
             )
          ],
          Confidence: 0.95m,
-         ActivityProposalStatus.Pending,
-         null,
-         null,
-         groupId,
-         null
-      );
+          ActivityProposalStatus.Pending,
+          null,
+          null,
+          null
+       );
    }
 }

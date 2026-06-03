@@ -19,7 +19,6 @@ public sealed record ActivityProposal(
    ActivityProposalStatus Status,
    ActivityProposalRejectReason? RejectReason,
    string? RejectComment,
-   ActivityProposalGroupId? GroupId,
    ActivityId? ActivityId,
    string? Producer = null,
    string? Prompt = null

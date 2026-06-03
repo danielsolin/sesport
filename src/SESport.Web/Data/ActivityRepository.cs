@@ -242,22 +242,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          await proposalCommand.ExecuteNonQueryAsync(cancellationToken);
       }
 
-      await using(var groupCommand = new NpgsqlCommand(
-         """
-         update activity_proposal_groups
-         set
-            activity_id = null,
-            updated_at = now()
-         where activity_id = @activity_id
-         """,
-         connection,
-         transaction
-      ))
-      {
-         groupCommand.Parameters.AddWithValue("activity_id", id);
-         await groupCommand.ExecuteNonQueryAsync(cancellationToken);
-      }
-
       await using(var evidenceCommand = new NpgsqlCommand(
          "delete from activity_evidence where activity_id = @activity_id",
          connection,
