@@ -67,6 +67,7 @@ else
                   <th>Time</th>
                   <th>Broadcast</th>
                   <th>Categories</th>
+                  <th>Actions</th>
                </tr>
             </thead>
             <tbody>
@@ -103,6 +104,22 @@ else
                      </td>
                      <td>
                         <small>@broadcast.Categories</small>
+                     </td>
+                     <td class="table-actions">
+                        <form method="post"
+                              asp-page-handler="Hide"
+                              asp-route-id="@broadcast.Id">
+                           <input type="hidden" name="date" value="@Model.DateText" />
+                           @if(Model.HideReplays)
+                           {
+                              <input type="hidden" name="hideReplays" value="true" />
+                           }
+                           @foreach(var sport in Model.SelectedSports.Where(value => !string.IsNullOrWhiteSpace(value)))
+                           {
+                              <input type="hidden" name="SelectedSports" value="@sport" />
+                           }
+                           <button type="submit">Hide</button>
+                        </form>
                      </td>
                   </tr>
                }

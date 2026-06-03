@@ -225,6 +225,26 @@ public class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void NinthMigrationAddsTvSportBroadcastHiddenAt()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "009_add_tv_sport_broadcast_hidden_at.sql"
+         )
+      );
+
+      Assert.Contains("alter table tv_sport_broadcasts", migration);
+      Assert.Contains(
+         "add column if not exists hidden_at timestamptz null",
+         migration
+      );
+      Assert.Contains("where hidden_at is null", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

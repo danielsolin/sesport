@@ -36,6 +36,39 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
+      await LoadAsync(cancellationToken);
+   }
+
+   public async Task<IActionResult> OnPostHideAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      await repository.HideAsync(id, cancellationToken);
+
+      var selectedDate = Date ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1));
+      var routeValues = new Dictionary<string, object?>
+      {
+         ["date"] = selectedDate.ToString("yyyy-MM-dd")
+      };
+
+      if(HideReplays)
+      {
+         routeValues["hideReplays"] = "true";
+      }
+
+      var normalizedSports = NormalizeSelectedSports(SelectedSports);
+
+      for(var index = 0; index < normalizedSports.Count; index++)
+      {
+         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
+      }
+
+      return RedirectToPage(routeValues);
+   }
+
+   private async Task LoadAsync(CancellationToken cancellationToken)
+   {
       SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1));
 
       try

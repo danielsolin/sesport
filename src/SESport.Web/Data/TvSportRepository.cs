@@ -30,6 +30,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
             ends_at
          from tv_sport_broadcasts
          where starts_at >= @start and starts_at < @end
+            and hidden_at is null
             and (@hide_replays = false or is_replay = false)
             and (@category_count = 0 or categories && @categories)
          order by starts_at, channel_name nulls last, channel_id, title
@@ -84,6 +85,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
          select distinct unnest(categories) as category
          from tv_sport_broadcasts
          where starts_at >= @start and starts_at < @end
+            and hidden_at is null
             and (@hide_replays = false or is_replay = false)
          order by category
          """;
@@ -104,6 +106,21 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       }
 
       return categories;
+   }
+
+   public async Task HideAsync(Guid id, CancellationToken cancellationToken)
+   {
+      const string sql = """
+         update tv_sport_broadcasts
+         set hidden_at = coalesce(hidden_at, now()),
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)

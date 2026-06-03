@@ -23,8 +23,9 @@ messages.
 The sixth migration adds the submitted AI prompt to activity proposals for
 AI-generated proposal review.
 
-The seventh and eighth migrations add imported TV sport broadcasts, import-run
-tracking, and replay metadata parsed from Swedish EPG descriptions.
+The seventh through ninth migrations add imported TV sport broadcasts,
+import-run tracking, replay metadata parsed from Swedish EPG descriptions, and
+manual row hiding for the admin review list.
 
 Start PostgreSQL with Docker Compose:
 
