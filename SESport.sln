@@ -41,6 +41,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", 
 		database\migrations\005_add_ai_activity_search_runs.sql = database\migrations\005_add_ai_activity_search_runs.sql
 		database\migrations\006_add_activity_proposal_prompt.sql = database\migrations\006_add_activity_proposal_prompt.sql
 		database\migrations\007_add_tv_sport_broadcasts.sql = database\migrations\007_add_tv_sport_broadcasts.sql
+		database\migrations\008_add_tv_sport_broadcast_replay_fields.sql = database\migrations\008_add_tv_sport_broadcast_replay_fields.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{084226A2-8533-49C9-82FD-B9F1FE3349AB}"

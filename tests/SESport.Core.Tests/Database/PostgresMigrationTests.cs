@@ -202,6 +202,29 @@ public class PostgresMigrationTests
       Assert.Contains("unique (fingerprint)", migration);
    }
 
+   [Fact]
+   public void EighthMigrationAddsTvSportBroadcastReplayFields()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "008_add_tv_sport_broadcast_replay_fields.sql"
+         )
+      );
+
+      Assert.Contains("alter table tv_sport_broadcasts", migration);
+      Assert.Contains(
+         "add column if not exists is_replay boolean not null default false",
+         migration
+      );
+      Assert.Contains(
+         "add column if not exists original_air_date date null",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);
