@@ -324,7 +324,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   else el.source_entity_id
                end
             where al.activity_id = a.id
-               and entity.entity_type_id != null
+               and entity.entity_type_id is not null
          ) re on true
          {{whereClause}}
          group by a.id, at.label, s.name, re.related_entities
