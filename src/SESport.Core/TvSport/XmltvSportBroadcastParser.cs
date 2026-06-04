@@ -76,7 +76,7 @@ public sealed partial class XmltvSportBroadcastParser
 
       var displayName = channel
          .Elements("display-name")
-         .Select(element => NormalizeText(element.Value))
+         .Select(element => NormalizeChannelName(element.Value))
          .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 
       if(!string.IsNullOrWhiteSpace(displayName))
@@ -333,6 +333,19 @@ public sealed partial class XmltvSportBroadcastParser
    private static string NormalizeText(string value)
    {
       return WhitespaceRegex().Replace(value.Trim(), " ");
+   }
+
+   private static string NormalizeChannelName(string value)
+   {
+      const string swedishPrefix = "SE - ";
+      var channelName = NormalizeText(value);
+
+      return channelName.StartsWith(
+         swedishPrefix,
+         StringComparison.OrdinalIgnoreCase
+      )
+         ? channelName[swedishPrefix.Length..]
+         : channelName;
    }
 
    [GeneratedRegex(@"\s+")]

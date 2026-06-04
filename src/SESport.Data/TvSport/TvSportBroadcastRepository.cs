@@ -136,7 +136,11 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       const string sql = """
          delete from tv_sport_broadcasts
          where source_key = @source_key
-           and channel_name = any(@channel_names)
+           and (
+              channel_name = any(@channel_names)
+              or regexp_replace(channel_name, '^SE - ', '') =
+                 any(@channel_names)
+           )
          """;
 
       await using var connection = await dataSource.OpenConnectionAsync(

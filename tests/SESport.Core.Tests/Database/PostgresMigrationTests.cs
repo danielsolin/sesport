@@ -323,7 +323,8 @@ public class PostgresMigrationTests
       Assert.Contains("is_active boolean not null default true", migration);
       Assert.Contains("unique nulls not distinct", migration);
       Assert.Contains("'channel_name'", migration);
-      Assert.Contains("'SE - Horse & Country TV'", migration);
+      Assert.Contains("'Horse & Country TV'", migration);
+      Assert.Contains("'GINX eSports TV'", migration);
    }
 
    private static string FindRepositoryRoot()

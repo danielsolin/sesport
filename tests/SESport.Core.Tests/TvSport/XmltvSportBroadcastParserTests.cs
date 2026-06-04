@@ -36,7 +36,7 @@ public class XmltvSportBroadcastParserTests
       var broadcast = Assert.Single(broadcasts);
 
       Assert.Equal("Eurosport1.se", broadcast.ChannelId);
-      Assert.Equal("SE - Eurosport 1", broadcast.ChannelName);
+      Assert.Equal("Eurosport 1", broadcast.ChannelName);
       Assert.Equal("Tennis Grand Slam Roland-Garros", broadcast.Title);
       Assert.Equal(
          "Kvartsfinal från Roland-Garros. (1/6-26).",
@@ -80,6 +80,35 @@ public class XmltvSportBroadcastParserTests
 
       Assert.Contains("Motorsport", broadcast.Categories);
       Assert.DoesNotContain("Motor sport", broadcast.Categories);
+   }
+
+   [Fact]
+   public async Task ParseAsyncRemovesSwedishChannelPrefix()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <channel id="GINXeSportsTV.se">
+             <display-name>SE - GINX eSports TV</display-name>
+           </channel>
+           <programme
+             start="20260603180000 +0000"
+             stop="20260603190000 +0000"
+             channel="GINXeSportsTV.se">
+             <title lang="sv">Esport</title>
+             <category lang="sv">E-sport</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.Equal("GINX eSports TV", broadcast.ChannelName);
    }
 
    [Fact]

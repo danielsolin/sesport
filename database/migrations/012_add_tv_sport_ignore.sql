@@ -24,7 +24,7 @@ insert into tv_sport_ignore (
 values (
    '5ed80f1d-0d57-4f6b-a261-3c9b4b64df64',
    'channel_name',
-   'SE - Horse & Country TV',
+   'Horse & Country TV',
    'iptv-epg-se',
    'Horse racing channel is outside the target sports scope.'
 ),
