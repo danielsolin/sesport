@@ -74,6 +74,81 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       return broadcasts.Count;
    }
 
+   public async Task<
+      IReadOnlyCollection<TvSportIgnoreRule>
+   > GetIgnoreRulesAsync(
+      string sourceKey,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select kind, value, source_key
+         from tv_sport_ignore
+         where is_active = true
+           and (source_key is null or source_key = @source_key)
+         order by kind, value
+         """;
+
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var command = new NpgsqlCommand(sql, connection);
+      command.Parameters.AddWithValue("source_key", sourceKey);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var rules = new List<TvSportIgnoreRule>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         rules.Add(
+            new TvSportIgnoreRule(
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.IsDBNull(2) ? null : reader.GetString(2)
+            )
+         );
+      }
+
+      return rules;
+   }
+
+   public async Task<int> DeleteIgnoredBroadcastsAsync(
+      string sourceKey,
+      IReadOnlyCollection<TvSportIgnoreRule> ignoreRules,
+      CancellationToken cancellationToken
+   )
+   {
+      var ignoredChannelNames = ignoreRules
+         .Where(rule => rule.Kind.Equals(
+            "channel_name",
+            StringComparison.OrdinalIgnoreCase
+         ))
+         .Select(rule => rule.Value)
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray();
+
+      if(ignoredChannelNames.Length == 0)
+      {
+         return 0;
+      }
+
+      const string sql = """
+         delete from tv_sport_broadcasts
+         where source_key = @source_key
+           and channel_name = any(@channel_names)
+         """;
+
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var command = new NpgsqlCommand(sql, connection);
+      command.Parameters.AddWithValue("source_key", sourceKey);
+      command.Parameters.AddWithValue("channel_names", ignoredChannelNames);
+
+      return await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    private static async Task UpsertImportRunAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
@@ -206,3 +281,9 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 }
+
+public sealed record TvSportIgnoreRule(
+   string Kind,
+   string Value,
+   string? SourceKey
+);

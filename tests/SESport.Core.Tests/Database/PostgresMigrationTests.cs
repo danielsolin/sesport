@@ -269,7 +269,10 @@ public class PostgresMigrationTests
          "target_entity_id uuid not null references tracked_entities(id)",
          migration
       );
-      Assert.Contains("check (source_entity_id <> target_entity_id)", migration);
+      Assert.Contains(
+         "check (source_entity_id <> target_entity_id)",
+         migration
+      );
       Assert.Contains("unique (source_entity_id, target_entity_id)", migration);
    }
 
@@ -285,13 +288,42 @@ public class PostgresMigrationTests
          )
       );
 
-      Assert.Contains("delete from entity_to_entity_links duplicate", migration);
       Assert.Contains(
-         "create unique index if not exists entity_to_entity_links_entity_pair_unique",
+         "delete from entity_to_entity_links duplicate",
+         migration
+      );
+      Assert.Contains(
+         "create unique index if not exists " +
+            "entity_to_entity_links_entity_pair_unique",
          migration
       );
       Assert.Contains("least(source_entity_id, target_entity_id)", migration);
-      Assert.Contains("greatest(source_entity_id, target_entity_id)", migration);
+      Assert.Contains(
+         "greatest(source_entity_id, target_entity_id)",
+         migration
+      );
+   }
+
+   [Fact]
+   public void TwelfthMigrationAddsTvSportIgnoreRules()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "012_add_tv_sport_ignore.sql"
+         )
+      );
+
+      Assert.Contains("create table if not exists tv_sport_ignore", migration);
+      Assert.Contains("kind text not null", migration);
+      Assert.Contains("value text not null", migration);
+      Assert.Contains("source_key text null", migration);
+      Assert.Contains("is_active boolean not null default true", migration);
+      Assert.Contains("unique nulls not distinct", migration);
+      Assert.Contains("'channel_name'", migration);
+      Assert.Contains("'SE - Horse & Country TV'", migration);
    }
 
    private static string FindRepositoryRoot()

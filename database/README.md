@@ -33,6 +33,9 @@ connections such as a player linked to a club team and a national team.
 The eleventh migration makes those entity links behave as undirected
 connections and prevents reversed duplicate pairs.
 
+The twelfth migration adds a generic TV sport ignore table for import-time
+rules such as ignored channel names.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash
