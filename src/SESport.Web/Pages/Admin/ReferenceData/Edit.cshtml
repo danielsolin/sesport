@@ -1,7 +1,12 @@
 @page "{table}/{id?}"
 @model SESport.Web.Pages.Admin.ReferenceData.EditModel
 @{
-   ViewData["Title"] = Model.Row.OriginalId is null
+   var isCountries = Model.CurrentTable?.Kind == ReferenceTableKind.Countries;
+   ViewData["Title"] = isCountries
+      ? Model.Country.OriginalId is null
+         ? "New Country"
+         : "Edit Country"
+      : Model.Row.OriginalId is null
       ? "New Reference Row"
       : "Edit Reference Row";
 }
@@ -24,32 +29,61 @@
 }
 
 <form method="post" class="edit-form">
-   <input asp-for="Row.OriginalId" type="hidden" />
+   @if(isCountries)
+   {
+      <input asp-for="Country.OriginalId" type="hidden" />
 
-   <section class="form-section">
-      <h2>@Model.CurrentTable?.Title</h2>
-      <div class="form-grid">
-         <label>
-            <span>ID</span>
-            <input asp-for="Row.Id"
-                   readonly="@(Model.Row.OriginalId is not null)" />
-            <span asp-validation-for="Row.Id"></span>
-         </label>
-         <label>
-            <span>Label</span>
-            <input asp-for="Row.Label" />
-            <span asp-validation-for="Row.Label"></span>
-         </label>
-         <label>
-            <span>Sort order</span>
-            <input asp-for="Row.SortOrder" type="number" />
-         </label>
-         <label class="check-row">
-            <input asp-for="Row.IsActive" type="checkbox" />
-            <span>Active</span>
-         </label>
-      </div>
-   </section>
+      <section class="form-section">
+         <h2>@Model.CurrentTable?.Title</h2>
+         <div class="form-grid">
+            <label>
+               <span>ID</span>
+               <input asp-for="Country.Id"
+                      readonly="@(Model.Country.OriginalId is not null)" />
+               <span asp-validation-for="Country.Id"></span>
+            </label>
+            <label>
+               <span>Code</span>
+               <input asp-for="Country.Code" />
+               <span asp-validation-for="Country.Code"></span>
+            </label>
+            <label>
+               <span>Name</span>
+               <input asp-for="Country.Name" />
+               <span asp-validation-for="Country.Name"></span>
+            </label>
+         </div>
+      </section>
+   }
+   else
+   {
+      <input asp-for="Row.OriginalId" type="hidden" />
+
+      <section class="form-section">
+         <h2>@Model.CurrentTable?.Title</h2>
+         <div class="form-grid">
+            <label>
+               <span>ID</span>
+               <input asp-for="Row.Id"
+                      readonly="@(Model.Row.OriginalId is not null)" />
+               <span asp-validation-for="Row.Id"></span>
+            </label>
+            <label>
+               <span>Label</span>
+               <input asp-for="Row.Label" />
+               <span asp-validation-for="Row.Label"></span>
+            </label>
+            <label>
+               <span>Sort order</span>
+               <input asp-for="Row.SortOrder" type="number" />
+            </label>
+            <label class="check-row">
+               <input asp-for="Row.IsActive" type="checkbox" />
+               <span>Active</span>
+            </label>
+         </div>
+      </section>
+   }
 
    <section class="form-actions">
       <button class="button button-primary" type="submit">Save</button>

@@ -5,7 +5,8 @@ public sealed record AdminArea(string Title, string Description, string Href);
 public enum ReferenceTableKind
 {
    Lookup,
-   ActivityAudit
+   ActivityAudit,
+   Countries
 }
 
 public sealed record ReferenceTableInfo(
@@ -40,6 +41,23 @@ public sealed class ReferenceEditModel
    public bool IsActive { get; set; } = true;
 }
 
+public sealed record CountryReferenceRow(
+   string Id,
+   string Code,
+   string Name
+);
+
+public sealed class CountryReferenceEditModel
+{
+   public string? OriginalId { get; set; }
+
+   public string Id { get; set; } = string.Empty;
+
+   public string Code { get; set; } = string.Empty;
+
+   public string Name { get; set; } = string.Empty;
+}
+
 public sealed record SourceListItem(
    string Id,
    string Name,
@@ -61,7 +79,7 @@ public sealed record EntityListItem(
    string EntityType,
    string Sport,
    string WatchPriority,
-   string Stability,
+   string Country,
    int LinkedEntityCount
 );
 

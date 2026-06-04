@@ -56,9 +56,9 @@ else
                   </a>
                </th> *@
                <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Stability"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Stability")'>
-                     Stability @Model.GetSortIndicator("Stability")
+                  <a asp-page="./Index" asp-route-sortColumn="Country"
+                     asp-route-sortAsc='@Model.GetNextSortAsc("Country")'>
+                     Country @Model.GetSortIndicator("Country")
                   </a>
                </th>
                <th>
@@ -87,7 +87,7 @@ else
                   <td>@entity.EntityType</td>
                   <td>@entity.Sport</td>
                   @* <td>@entity.WatchPriority</td> *@
-                  <td>@entity.Stability</td>
+                  <td>@entity.Country</td>
                   <td>@entity.LinkedEntityCount</td>
                   <td class="table-actions">
                      <form method="post"

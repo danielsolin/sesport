@@ -10,7 +10,7 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string TypeSortColumn = "Type";
    public const string SportSortColumn = "Sport";
    public const string WatchSortColumn = "Watch";
-   public const string StabilitySortColumn = "Stability";
+   public const string CountrySortColumn = "Country";
    public const string LinksSortColumn = "Links";
 
    public string SearchUrl = "https://www.google.com/search?q=";
@@ -73,7 +73,7 @@ public class IndexModel(AdminRepository repository) : PageModel
          TypeSortColumn => TypeSortColumn,
          SportSortColumn => SportSortColumn,
          WatchSortColumn => WatchSortColumn,
-         StabilitySortColumn => StabilitySortColumn,
+         CountrySortColumn => CountrySortColumn,
          LinksSortColumn => LinksSortColumn,
          _ => NameSortColumn
       };
@@ -86,11 +86,31 @@ public class IndexModel(AdminRepository repository) : PageModel
    {
       return sortColumn switch
       {
-         TypeSortColumn => OrderByDirection(entities, entity => entity.EntityType, sortAsc),
-         SportSortColumn => OrderByDirection(entities, entity => entity.Sport, sortAsc),
-         WatchSortColumn => OrderByDirection(entities, entity => entity.WatchPriority, sortAsc),
-         StabilitySortColumn => OrderByDirection(entities, entity => entity.Stability, sortAsc),
-         LinksSortColumn => OrderByDirection(entities, entity => entity.LinkedEntityCount, sortAsc),
+         TypeSortColumn => OrderByDirection(
+            entities,
+            entity => entity.EntityType,
+            sortAsc
+         ),
+         SportSortColumn => OrderByDirection(
+            entities,
+            entity => entity.Sport,
+            sortAsc
+         ),
+         WatchSortColumn => OrderByDirection(
+            entities,
+            entity => entity.WatchPriority,
+            sortAsc
+         ),
+         CountrySortColumn => OrderByDirection(
+            entities,
+            entity => entity.Country,
+            sortAsc
+         ),
+         LinksSortColumn => OrderByDirection(
+            entities,
+            entity => entity.LinkedEntityCount,
+            sortAsc
+         ),
          _ => OrderByDirection(entities, entity => entity.Name, sortAsc)
       };
    }
@@ -103,9 +123,14 @@ public class IndexModel(AdminRepository repository) : PageModel
    {
       var sortedEntities = sortAsc
          ? entities.OrderBy(keySelector, StringComparer.OrdinalIgnoreCase)
-         : entities.OrderByDescending(keySelector, StringComparer.OrdinalIgnoreCase);
+         : entities.OrderByDescending(
+            keySelector,
+            StringComparer.OrdinalIgnoreCase
+         );
 
-      return sortedEntities.ThenBy(entity => entity.Name, StringComparer.OrdinalIgnoreCase).ToList();
+      return sortedEntities
+         .ThenBy(entity => entity.Name, StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 
    private static IReadOnlyList<EntityListItem> OrderByDirection(
@@ -118,6 +143,8 @@ public class IndexModel(AdminRepository repository) : PageModel
          ? entities.OrderBy(keySelector)
          : entities.OrderByDescending(keySelector);
 
-      return sortedEntities.ThenBy(entity => entity.Name, StringComparer.OrdinalIgnoreCase).ToList();
+      return sortedEntities
+         .ThenBy(entity => entity.Name, StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 }

@@ -117,6 +117,45 @@
                </table>
             </section>
          }
+         else if(Model.CurrentTable.Kind == ReferenceTableKind.Countries)
+         {
+            <div class="admin-table-wrap">
+               <table class="admin-table">
+                  <thead>
+                     <tr>
+                        <th>ID</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th></th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     @foreach(var row in Model.CountryRows)
+                     {
+                        <tr>
+                           <td><code>@row.Id</code></td>
+                           <td><code>@row.Code</code></td>
+                           <td>@row.Name</td>
+                           <td class="table-actions">
+                              <a asp-page="./Edit"
+                                 asp-route-table="@Model.CurrentTable.Id"
+                                 asp-route-id="@row.Id">
+                                 Edit
+                              </a>
+                              <form method="post"
+                                    asp-page-handler="Delete"
+                                    asp-route-table="@Model.CurrentTable.Id"
+                                    asp-route-id="@row.Id"
+                                    onsubmit="return confirm('Sure?');">
+                                 <button type="submit">Delete</button>
+                              </form>
+                           </td>
+                        </tr>
+                     }
+                  </tbody>
+               </table>
+            </div>
+         }
          else
          {
             <div class="admin-table-wrap">

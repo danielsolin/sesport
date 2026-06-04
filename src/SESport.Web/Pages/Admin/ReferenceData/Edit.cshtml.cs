@@ -9,6 +9,9 @@ public class EditModel(AdminRepository repository) : PageModel
    [BindProperty]
    public ReferenceEditModel Row { get; set; } = new();
 
+   [BindProperty]
+   public CountryReferenceEditModel Country { get; set; } = new();
+
    public ReferenceTableInfo? CurrentTable { get; private set; }
 
    public string? LoadError { get; private set; }
@@ -34,6 +37,16 @@ public class EditModel(AdminRepository repository) : PageModel
          return Page();
       }
 
+      if(CurrentTable.Kind == ReferenceTableKind.Countries)
+      {
+         Country = await repository.GetCountryForEditAsync(
+            id,
+            cancellationToken
+         ) ?? new CountryReferenceEditModel();
+
+         return Country.OriginalId is null ? NotFound() : Page();
+      }
+
       Row = await repository.GetReferenceForEditAsync(
          table,
          id,
@@ -56,6 +69,28 @@ public class EditModel(AdminRepository repository) : PageModel
       if (CurrentTable is null)
       {
          return NotFound();
+      }
+
+      if(CurrentTable.Kind == ReferenceTableKind.Countries)
+      {
+         ValidateCountry();
+
+         if(!ModelState.IsValid)
+         {
+            return Page();
+         }
+
+         try
+         {
+            await repository.SaveCountryAsync(Country, cancellationToken);
+         }
+         catch(Exception exception)
+         {
+            LoadError = exception.Message;
+            return Page();
+         }
+
+         return RedirectToPage("./Index", new { table });
       }
 
       ValidateRow();
@@ -92,6 +127,24 @@ public class EditModel(AdminRepository repository) : PageModel
       if (string.IsNullOrWhiteSpace(Row.Label))
       {
          ModelState.AddModelError("Row.Label", "Label is required.");
+      }
+   }
+
+   private void ValidateCountry()
+   {
+      if(string.IsNullOrWhiteSpace(Country.Id))
+      {
+         ModelState.AddModelError("Country.Id", "ID is required.");
+      }
+
+      if(string.IsNullOrWhiteSpace(Country.Code))
+      {
+         ModelState.AddModelError("Country.Code", "Code is required.");
+      }
+
+      if(string.IsNullOrWhiteSpace(Country.Name))
+      {
+         ModelState.AddModelError("Country.Name", "Name is required.");
       }
    }
 }

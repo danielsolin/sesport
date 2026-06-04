@@ -58,6 +58,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             true,
             false
          ),
+         ["countries"] = new(
+            "countries",
+            "Countries",
+            "Countries used by entities and country relevance.",
+            ReferenceTableKind.Countries
+         ),
          ["entity-watch-priorities"] = new(
             "entity-watch-priorities",
             "Entity watch priorities",
@@ -234,6 +240,35 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return rows;
    }
 
+   public async Task<IReadOnlyList<CountryReferenceRow>>
+      GetCountryReferenceRowsAsync(CancellationToken cancellationToken)
+   {
+      const string sql = """
+         select id, code, name
+         from countries
+         order by name, code
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var rows = new List<CountryReferenceRow>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         rows.Add(
+            new CountryReferenceRow(
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.GetString(2)
+            )
+         );
+      }
+
+      return rows;
+   }
+
    public async Task<ReferenceEditModel?> GetReferenceForEditAsync(
       string tableKey,
       string id,
@@ -269,6 +304,37 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          Label = reader.GetString(1),
          SortOrder = reader.IsDBNull(2) ? null : reader.GetInt32(2),
          IsActive = reader.IsDBNull(3) || reader.GetBoolean(3)
+      };
+   }
+
+   public async Task<CountryReferenceEditModel?> GetCountryForEditAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id, code, name
+         from countries
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new CountryReferenceEditModel
+      {
+         OriginalId = reader.GetString(0),
+         Id = reader.GetString(0),
+         Code = reader.GetString(1),
+         Name = reader.GetString(2)
       };
    }
 
@@ -340,6 +406,42 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task SaveCountryAsync(
+      CountryReferenceEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      var isNew = string.IsNullOrWhiteSpace(model.OriginalId);
+      var id = model.Id.Trim().ToLowerInvariant();
+      var code = model.Code.Trim().ToUpperInvariant();
+      var name = model.Name.Trim();
+
+      var sql = isNew
+         ? """
+            insert into countries (id, code, name)
+            values (@id, @code, @name)
+            """
+         : """
+            update countries
+            set
+               id = @id,
+               code = @code,
+               name = @name,
+               updated_at = now()
+            where id = @original_id
+            """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("code", code);
+      command.Parameters.AddWithValue("name", name);
+      command.Parameters.AddWithValue(
+         "original_id",
+         model.OriginalId ?? string.Empty
+      );
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task DeleteReferenceAsync(
       string tableKey,
       string id,
@@ -350,6 +452,17 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       EnsureLookupTable(table);
 
       var sql = $"delete from {table.TableName} where id = @id";
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task DeleteCountryAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = "delete from countries where id = @id";
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
@@ -464,16 +577,23 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             et.label,
             s.name,
             p.label,
-            sk.label,
+            coalesce(c.name, e.country_id, ''),
             count(distinct l.id)::int
          from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          join entity_watch_priorities p on p.id = e.watch_priority_id
-         join entity_stability_kinds sk on sk.id = e.expected_stability_id
+         left join countries c on c.id = e.country_id
          left join entity_to_entity_links l
             on l.source_entity_id = e.id or l.target_entity_id = e.id
-         group by e.id, e.canonical_name, et.label, s.name, p.label, sk.label
+         group by
+            e.id,
+            e.canonical_name,
+            et.label,
+            s.name,
+            p.label,
+            c.name,
+            e.country_id
          order by e.canonical_name
          """;
 

@@ -23,6 +23,12 @@ public class IndexModel(
 
    public IReadOnlyList<ReferenceRow> Rows { get; private set; } = [];
 
+   public IReadOnlyList<CountryReferenceRow> CountryRows
+   {
+      get;
+      private set;
+   } = [];
+
    public IReadOnlyList<ActivityLinkAuditItem> ActivityLinks
    {
       get;
@@ -74,6 +80,14 @@ public class IndexModel(
             return Page();
          }
 
+         if(CurrentTable.Kind == ReferenceTableKind.Countries)
+         {
+            CountryRows = await repository.GetCountryReferenceRowsAsync(
+               cancellationToken
+            );
+            return Page();
+         }
+
          Rows = await repository.GetReferenceRowsAsync(
             table,
             cancellationToken
@@ -93,6 +107,17 @@ public class IndexModel(
       CancellationToken cancellationToken
    )
    {
+      var tableInfo = await repository.GetReferenceTableInfoAsync(
+         table,
+         cancellationToken
+      );
+
+      if(tableInfo?.Kind == ReferenceTableKind.Countries)
+      {
+         await repository.DeleteCountryAsync(id, cancellationToken);
+         return RedirectToPage("./Index", new { table });
+      }
+
       await repository.DeleteReferenceAsync(table, id, cancellationToken);
       return RedirectToPage("./Index", new { table });
    }
