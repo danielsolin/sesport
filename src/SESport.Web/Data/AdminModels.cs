@@ -84,10 +84,6 @@ public sealed class EntityEditModel
 
    public string CountryId { get; set; } = "se";
 
-   public string CountryCode { get; set; } = "SE";
-
-   public string CountryName { get; set; } = "Sweden";
-
    public string CountryRelevanceKindId { get; set; } =
       "NationalityOrSportingIdentity";
 

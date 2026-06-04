@@ -327,6 +327,27 @@ public class PostgresMigrationTests
       Assert.Contains("'GINX eSports TV'", migration);
    }
 
+   [Fact]
+   public void ThirteenthMigrationAddsCountries()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "013_add_countries.sql"
+         )
+      );
+
+      Assert.Contains("create table if not exists countries", migration);
+      Assert.Contains("constraint countries_code_unique", migration);
+      Assert.Contains("'se', 'SE', 'Sweden'", migration);
+      Assert.Contains("tracked_entities_country_id_fk", migration);
+      Assert.Contains("foreign key (country_id)", migration);
+      Assert.Contains("drop column if exists country_code", migration);
+      Assert.Contains("drop column if exists country_name", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

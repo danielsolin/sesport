@@ -54,12 +54,13 @@ public sealed class ActivitySearchEntityRepository : IAsyncDisposable
             e.entity_type_id,
             e.sport_id,
             s.name,
-            e.country_name,
+            c.name,
             e.country_relevance_reason,
             e.watch_priority_id,
             e.expected_stability_id
          from tracked_entities e
          join sports s on s.id = e.sport_id
+         join countries c on c.id = e.country_id
          where
             @entity_id_or_name is null or
             e.id::text = @entity_id_or_name or

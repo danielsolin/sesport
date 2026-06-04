@@ -20,6 +20,8 @@ public class EditModel(AdminRepository repository) : PageModel
       private set;
    } = [];
 
+   public IReadOnlyList<LookupOption> Countries { get; private set; } = [];
+
    public IReadOnlyList<ReferenceRow> WatchPriorities
    {
       get;
@@ -102,6 +104,9 @@ public class EditModel(AdminRepository repository) : PageModel
             "country-relevance-kinds",
             cancellationToken
          );
+         Countries = await repository.GetCountryOptionsAsync(
+            cancellationToken
+         );
          WatchPriorities = await repository.GetReferenceRowsAsync(
             "entity-watch-priorities",
             cancellationToken
@@ -134,6 +139,14 @@ public class EditModel(AdminRepository repository) : PageModel
          ModelState.AddModelError(
             "Entity.CanonicalName",
             "Canonical name is required."
+         );
+      }
+
+      if (string.IsNullOrWhiteSpace(Entity.CountryId))
+      {
+         ModelState.AddModelError(
+            "Entity.CountryId",
+            "Country is required."
          );
       }
 

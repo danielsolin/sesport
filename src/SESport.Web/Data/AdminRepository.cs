@@ -128,14 +128,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return
       [
          new AdminArea(
-            "Activities",
-            "Create and publish activities for the public site.",
-            "/Admin/Activities"
-         ),
-         new AdminArea(
-            "Entities",
-            "Maintain the curated entity watchlist.",
-            "/Admin/Entities"
+            "TV broadcasts",
+            "Inspect imported sport broadcasts from EPG data.",
+            "/Admin/TvSport"
          ),
          new AdminArea(
             "Activity proposals",
@@ -143,14 +138,19 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "/Admin/Audit/Proposals"
          ),
          new AdminArea(
-            "TV sport broadcasts",
-            "Inspect imported sport broadcasts from Swedish EPG data.",
-            "/Admin/TvSport"
+            "Activities",
+            "Create and publish activities for the public site.",
+            "/Admin/Activities"
          ),
          new AdminArea(
             "Reference data",
             "Maintain low-change lookup tables.",
             "/Admin/ReferenceData"
+         ),
+         new AdminArea(
+            "Entities",
+            "Maintain the curated entity watchlist.",
+            "/Admin/Entities"
          )
       ];
    }
@@ -513,8 +513,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             entity_type_id,
             sport_id,
             country_id,
-            country_code,
-            country_name,
             country_relevance_kind_id,
             country_relevance_reason,
             watch_priority_id,
@@ -541,12 +539,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          EntityTypeId = reader.GetString(2),
          SportId = reader.GetString(3),
          CountryId = reader.GetString(4),
-         CountryCode = reader.GetString(5),
-         CountryName = reader.GetString(6),
-         CountryRelevanceKindId = reader.GetString(7),
-         CountryRelevanceReason = reader.GetString(8),
-         WatchPriorityId = reader.GetString(9),
-         ExpectedStabilityId = reader.GetString(10)
+         CountryRelevanceKindId = reader.GetString(5),
+         CountryRelevanceReason = reader.GetString(6),
+         WatchPriorityId = reader.GetString(7),
+         ExpectedStabilityId = reader.GetString(8)
       };
 
       await reader.DisposeAsync();
@@ -633,6 +629,32 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
+   public async Task<IReadOnlyList<LookupOption>> GetCountryOptionsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id, name
+         from countries
+         order by name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<LookupOption>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new LookupOption(reader.GetString(0), reader.GetString(1))
+         );
+      }
+
+      return options;
+   }
+
    public async Task SaveEntityAsync(
       EntityEditModel model,
       CancellationToken cancellationToken
@@ -648,8 +670,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                entity_type_id,
                sport_id,
                country_id,
-               country_code,
-               country_name,
                country_relevance_kind_id,
                country_relevance_reason,
                watch_priority_id,
@@ -661,8 +681,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @entity_type_id,
                @sport_id,
                @country_id,
-               @country_code,
-               @country_name,
                @country_relevance_kind_id,
                @country_relevance_reason,
                @watch_priority_id,
@@ -676,8 +694,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                entity_type_id = @entity_type_id,
                sport_id = @sport_id,
                country_id = @country_id,
-               country_code = @country_code,
-               country_name = @country_name,
                country_relevance_kind_id = @country_relevance_kind_id,
                country_relevance_reason = @country_relevance_reason,
                watch_priority_id = @watch_priority_id,
@@ -733,11 +749,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("entity_type_id", model.EntityTypeId);
       command.Parameters.AddWithValue("sport_id", model.SportId);
       command.Parameters.AddWithValue("country_id", model.CountryId.Trim());
-      command.Parameters.AddWithValue(
-         "country_code",
-         model.CountryCode.Trim().ToUpperInvariant()
-      );
-      command.Parameters.AddWithValue("country_name", model.CountryName.Trim());
       command.Parameters.AddWithValue(
          "country_relevance_kind_id",
          model.CountryRelevanceKindId

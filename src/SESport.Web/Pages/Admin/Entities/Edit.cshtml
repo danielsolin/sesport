@@ -87,16 +87,14 @@
       <h2>Country relevance</h2>
       <div class="form-grid">
          <label>
-            <span>Country ID</span>
-            <input asp-for="Entity.CountryId" />
-         </label>
-         <label>
-            <span>Country code</span>
-            <input asp-for="Entity.CountryCode" />
-         </label>
-         <label>
-            <span>Country name</span>
-            <input asp-for="Entity.CountryName" />
+            <span>Country</span>
+            <select asp-for="Entity.CountryId">
+               @foreach (var country in Model.Countries)
+               {
+                  <option value="@country.Id">@country.Label</option>
+               }
+            </select>
+            <span asp-validation-for="Entity.CountryId"></span>
          </label>
          <label>
             <span>Relevance kind</span>

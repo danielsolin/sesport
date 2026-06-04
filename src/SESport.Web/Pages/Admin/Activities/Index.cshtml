@@ -13,10 +13,23 @@
 </section>
 
 <form method="get">
-   <select id="activity_status" name="status" onchange="this.form.submit();">
-      <option value="Draft" selected="@(Model.Status == "Draft")">Drafts</option>
-      <option value="Published" selected="@(Model.Status == "Published")">Published</option>
-      <option value="" selected="@(string.IsNullOrEmpty(Model.Status))">All</option>
+   <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+   <input type="hidden" name="sortAsc" value="@Model.SortAsc" />
+   <select id="activity_status"
+           name="status"
+           onchange="this.form.submit();">
+      <option value="Draft"
+              selected="@(Model.Status == "Draft")">
+         Drafts
+      </option>
+      <option value="Published"
+              selected="@(Model.Status == "Published")">
+         Published
+      </option>
+      <option value="All"
+              selected="@(Model.Status == "All")">
+         All
+      </option>
    </select>
 </form>
 
@@ -38,10 +51,32 @@ else
       <table class="admin-table">
          <thead>
             <tr>
-               <th>Time</th>
-               <th>Activity</th>
-               <th>Entities</th>
-               <th>Status</th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-all-route-data='@Model.GetSortRouteValues("Time")'>
+                     Time @Model.GetSortIndicator("Time")
+                  </a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-all-route-data=
+                        '@Model.GetSortRouteValues("Activity")'>
+                     Activity @Model.GetSortIndicator("Activity")
+                  </a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-all-route-data=
+                        '@Model.GetSortRouteValues("Entities")'>
+                     Entities @Model.GetSortIndicator("Entities")
+                  </a>
+               </th>
+               <th>
+                  <a asp-page="./Index"
+                     asp-all-route-data='@Model.GetSortRouteValues("Status")'>
+                     Status @Model.GetSortIndicator("Status")
+                  </a>
+               </th>
                <th></th>
             </tr>
          </thead>
@@ -56,7 +91,9 @@ else
                   </td>
                   <td>@activity.EntitySummary</td>
                   <td>
-                     <span class="status-pill">@activity.PublicationStatus</span>
+                     <span class="status-pill">
+                        @activity.PublicationStatus
+                     </span>
                   </td>
                   <td class="table-actions">
                      <a asp-page="./Edit" asp-route-id="@activity.Id">Edit</a>
@@ -64,6 +101,8 @@ else
                            asp-page-handler="Delete"
                            asp-route-id="@activity.Id"
                            asp-route-status="@Model.Status"
+                           asp-route-sortColumn="@Model.SortColumn"
+                           asp-route-sortAsc="@Model.SortAsc"
                            onsubmit="return confirm('Sure?');">
                         <button type="submit">Delete</button>
                      </form>
