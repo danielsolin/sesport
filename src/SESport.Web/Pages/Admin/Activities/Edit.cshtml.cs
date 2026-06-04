@@ -12,6 +12,9 @@ public class EditModel(
    [BindProperty]
    public ActivityEditModel Activity { get; set; } = new();
 
+   [BindProperty]
+   public string? ReturnUrl { get; set; }
+
    public IReadOnlyList<EntityOption> Entities { get; private set; } = [];
 
    public IReadOnlyList<LookupOption> ActivityTypes { get; private set; } = [];
@@ -23,9 +26,11 @@ public class EditModel(
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
       List<Guid>? tvSportBroadcastIds,
+      string? returnUrl,
       CancellationToken cancellationToken
    )
    {
+      ReturnUrl = GetLocalReturnUrl(returnUrl);
       await LoadEntitiesAsync(cancellationToken);
 
       if (id is null)
@@ -69,6 +74,12 @@ public class EditModel(
          cancellationToken
       );
 
+      if(ReturnUrl is not null
+         && Activity.TvSportBroadcastIds.Count > 0)
+      {
+         return LocalRedirect(ReturnUrl);
+      }
+
       return RedirectToPage("./Edit", new { id });
    }
 
@@ -86,6 +97,17 @@ public class EditModel(
       {
          LoadError = exception.Message;
       }
+   }
+
+   private string? GetLocalReturnUrl(string? returnUrl)
+   {
+      if(string.IsNullOrWhiteSpace(returnUrl)
+         || !Url.IsLocalUrl(returnUrl))
+      {
+         return null;
+      }
+
+      return returnUrl;
    }
 
    private void ValidateActivity()
@@ -148,7 +170,7 @@ public class EditModel(
       Activity.TvSportBroadcastIds = broadcasts
          .Select(broadcast => broadcast.Id)
          .ToList();
-      Activity.Title = CreatePrefillTitle(firstBroadcast);
+      Activity.Title = firstBroadcast.Title;
       Activity.Description = CreatePrefillDescription(broadcasts);
       Activity.ActivityType = "Match";
       Activity.SportId = GetSportId(broadcasts);
@@ -169,50 +191,6 @@ public class EditModel(
          .Where(id => id != Guid.Empty)
          .Distinct()
          .ToList();
-   }
-
-   private static string CreatePrefillTitle(
-      TvSportBroadcastActivitySource broadcast
-   )
-   {
-      var descriptionTitle = ExtractDescriptionTitle(broadcast.Description);
-
-      if(!string.IsNullOrWhiteSpace(descriptionTitle))
-      {
-         return descriptionTitle;
-      }
-
-      return broadcast.Title;
-   }
-
-   private static string? ExtractDescriptionTitle(string? description)
-   {
-      if(string.IsNullOrWhiteSpace(description))
-      {
-         return null;
-      }
-
-      var text = description.Trim();
-      var stopPhrases = new[]
-      {
-         " Direkt ",
-         " direkt ",
-         " Från ",
-         " från ",
-         ". "
-      };
-
-      foreach(var stopPhrase in stopPhrases)
-      {
-         var index = text.IndexOf(stopPhrase, StringComparison.Ordinal);
-
-         if(index > 0)
-         {
-            return text[..index].Trim(' ', '.', ',');
-         }
-      }
-
-      return text.Length <= 80 ? text : null;
    }
 
    private static string? CreatePrefillDescription(

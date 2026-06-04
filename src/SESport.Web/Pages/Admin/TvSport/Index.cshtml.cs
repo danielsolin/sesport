@@ -114,6 +114,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    public async Task<IActionResult> OnPostGenerateActivityAsync(
       List<Guid> tvSportBroadcastIds,
+      string? returnUrl,
       CancellationToken cancellationToken
    )
    {
@@ -133,6 +134,11 @@ public class IndexModel(TvSportRepository repository) : PageModel
       {
          routeValues[$"tvSportBroadcastIds[{index}]"] =
             broadcastIds[index];
+      }
+
+      if(Url.IsLocalUrl(returnUrl))
+      {
+         routeValues["returnUrl"] = returnUrl;
       }
 
       return RedirectToPage("/Admin/Activities/Edit", routeValues);

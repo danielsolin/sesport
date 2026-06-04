@@ -1,3 +1,46 @@
+@{
+   var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
+   var isAdmin = requestPath.StartsWith(
+      "/Admin",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isBroadcasts = requestPath.StartsWith(
+      "/Admin/TvSport",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isActivities = requestPath.StartsWith(
+      "/Admin/Activities",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isEntities = requestPath.StartsWith(
+      "/Admin/Entities",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isProposals = requestPath.StartsWith(
+      "/Admin/Audit/Proposal",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isReferenceData = requestPath.StartsWith(
+      "/Admin/ReferenceData",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var adminMenuLink = "admin-top-menu-link";
+   var broadcastsClass = isBroadcasts
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+   var activitiesClass = isActivities
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+   var entitiesClass = isEntities
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+   var proposalsClass = isProposals
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+   var referenceDataClass = isReferenceData
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,13 +48,42 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <title>@ViewData["Title"] - SE Sport</title>
    <script type="importmap"></script>
-   <link rel="stylesheet" href="~/vendor/multi-select-dropdown-js/MultiSelect.min.css" asp-append-version="true" />
+   <link rel="stylesheet"
+         href="~/vendor/multi-select-dropdown-js/MultiSelect.min.css"
+         asp-append-version="true" />
    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
    <header class="site-header">
-      <a class="brand" asp-page="/Index">SE Sport</a>
-      <nav>
+      <div class="site-header-main">
+         <a class="brand" asp-page="/Index">SE Sport</a>
+         @if(isAdmin)
+         {
+            <nav class="admin-top-menu" aria-label="Admin sections">
+               <a class="@broadcastsClass"
+                  asp-page="/Admin/TvSport/Index">
+                  Broadcasts
+               </a>
+               <a class="@activitiesClass"
+                  asp-page="/Admin/Activities/Index">
+                  Activities
+               </a>
+               <a class="@entitiesClass"
+                  asp-page="/Admin/Entities/Index">
+                  Entities
+               </a>
+               <a class="@proposalsClass"
+                  asp-page="/Admin/Audit/Proposals">
+                  Activity Proposals
+               </a>
+               <a class="@referenceDataClass"
+                  asp-page="/Admin/ReferenceData/Index">
+                  Reference Data
+               </a>
+            </nav>
+         }
+      </div>
+      <nav class="site-nav">
          <a asp-page="/Index">Public</a>
          <a asp-page="/Admin/Index">Admin</a>
       </nav>
@@ -22,7 +94,8 @@
    </main>
 
    @await RenderSectionAsync("Scripts", required: false)
-   <script src="~/vendor/multi-select-dropdown-js/MultiSelect.min.js" asp-append-version="true"></script>
+   <script src="~/vendor/multi-select-dropdown-js/MultiSelect.min.js"
+           asp-append-version="true"></script>
    <script src="~/js/site.js" asp-append-version="true"></script>
 </body>
 </html>

@@ -42,23 +42,63 @@ a:hover {
    display: flex;
    align-items: center;
    justify-content: space-between;
-   gap: 24px;
-   padding: 16px 32px;
+   gap: 16px;
+   padding: 10px 32px;
    border-bottom: 1px solid var(--line);
    background: var(--surface);
 }
 
+.site-header-main {
+   display: flex;
+   align-items: center;
+   min-width: 0;
+   gap: 14px;
+}
+
 .brand {
+   flex: 0 0 auto;
    color: var(--text);
    font-size: 18px;
    font-weight: 800;
 }
 
-.site-header nav {
+.site-nav {
    display: flex;
+   flex: 0 0 auto;
    gap: 18px;
    font-size: 14px;
    font-weight: 700;
+}
+
+.admin-top-menu {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   min-width: 0;
+   overflow-x: auto;
+}
+
+.admin-top-menu-link {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   min-height: 26px;
+   padding: 0 8px;
+   border: 1px solid var(--line);
+   border-radius: 3px;
+   background: var(--background);
+   color: var(--text);
+   font-size: 12px;
+   font-weight: 800;
+   line-height: 1.2;
+   white-space: nowrap;
+}
+
+.admin-top-menu-link:hover,
+.admin-top-menu-link.is-active {
+   border-color: var(--accent);
+   background: var(--accent);
+   color: #ffffff;
 }
 
 .page-shell {
@@ -551,11 +591,22 @@ textarea {
 }
 
 @media (max-width: 720px) {
-   .site-header,
    .page-heading-row,
    .form-actions {
       align-items: flex-start;
       flex-direction: column;
+   }
+
+   .site-header {
+      align-items: stretch;
+      flex-direction: column;
+      padding: 10px 16px;
+   }
+
+   .site-header-main {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
    }
 
    .activity-row,

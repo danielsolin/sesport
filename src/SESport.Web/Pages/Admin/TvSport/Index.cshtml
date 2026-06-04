@@ -7,7 +7,7 @@
 <section class="page-heading page-heading-row">
    <div>
       <p class="eyebrow">Admin</p>
-      <h1>TV sport broadcasts</h1>
+      <h1>Broadcasts</h1>
    </div>
    <a class="button" asp-page="/Admin/Index">Back</a>
 </section>
@@ -17,7 +17,9 @@
          class="filter-form"
          data-ajax-replace-target="[data-tv-sport-results]">
       <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
-      <input type="hidden" name="sortAsc" value="@Model.SortAsc" />
+      <input type="hidden"
+             name="sortAsc"
+             value="@Model.SortAsc.ToString()" />
       <label>
          <span>Date</span>
          <input type="date"
@@ -71,7 +73,12 @@
             <input type="hidden"
                    name="sortColumn"
                    value="@Model.SortColumn" />
-            <input type="hidden" name="sortAsc" value="@Model.SortAsc" />
+            <input type="hidden"
+                   name="sortAsc"
+                   value="@Model.SortAsc.ToString()" />
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@(Request.Path + Request.QueryString)" />
             @if(Model.HideReplays)
             {
                <input type="hidden" name="hideReplays" value="true" />
@@ -198,7 +205,7 @@
                                      value="@Model.SortColumn" />
                               <input type="hidden"
                                      name="sortAsc"
-                                     value="@Model.SortAsc" />
+                                     value="@Model.SortAsc.ToString()" />
                               @if(Model.HideReplays)
                               {
                                  <input type="hidden"
