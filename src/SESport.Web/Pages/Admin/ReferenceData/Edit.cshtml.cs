@@ -12,6 +12,9 @@ public class EditModel(AdminRepository repository) : PageModel
    [BindProperty]
    public CountryReferenceEditModel Country { get; set; } = new();
 
+   [BindProperty]
+   public SportReferenceEditModel Sport { get; set; } = new();
+
    public ReferenceTableInfo? CurrentTable { get; private set; }
 
    public string? LoadError { get; private set; }
@@ -45,6 +48,16 @@ public class EditModel(AdminRepository repository) : PageModel
          ) ?? new CountryReferenceEditModel();
 
          return Country.OriginalId is null ? NotFound() : Page();
+      }
+
+      if (CurrentTable.Kind == ReferenceTableKind.Sports)
+      {
+         Sport = await repository.GetSportForEditAsync(
+            id,
+            cancellationToken
+         ) ?? new SportReferenceEditModel();
+
+         return Sport.OriginalId is null ? NotFound() : Page();
       }
 
       Row = await repository.GetReferenceForEditAsync(
@@ -85,6 +98,28 @@ public class EditModel(AdminRepository repository) : PageModel
             await repository.SaveCountryAsync(Country, cancellationToken);
          }
          catch(Exception exception)
+         {
+            LoadError = exception.Message;
+            return Page();
+         }
+
+         return RedirectToPage("./Index", new { table });
+      }
+
+      if (CurrentTable.Kind == ReferenceTableKind.Sports)
+      {
+         ValidateSport();
+
+         if (!ModelState.IsValid)
+         {
+            return Page();
+         }
+
+         try
+         {
+            await repository.SaveSportAsync(Sport, cancellationToken);
+         }
+         catch (Exception exception)
          {
             LoadError = exception.Message;
             return Page();
@@ -145,6 +180,19 @@ public class EditModel(AdminRepository repository) : PageModel
       if(string.IsNullOrWhiteSpace(Country.Name))
       {
          ModelState.AddModelError("Country.Name", "Name is required.");
+      }
+   }
+
+   private void ValidateSport()
+   {
+      if (string.IsNullOrWhiteSpace(Sport.Id))
+      {
+         ModelState.AddModelError("Sport.Id", "ID is required.");
+      }
+
+      if (string.IsNullOrWhiteSpace(Sport.Name))
+      {
+         ModelState.AddModelError("Sport.Name", "Name is required.");
       }
    }
 }

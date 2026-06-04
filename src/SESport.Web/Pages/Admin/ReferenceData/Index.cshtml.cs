@@ -29,6 +29,12 @@ public class IndexModel(
       private set;
    } = [];
 
+   public IReadOnlyList<SportReferenceRow> SportRows
+   {
+      get;
+      private set;
+   } = [];
+
    public IReadOnlyList<ActivityLinkAuditItem> ActivityLinks
    {
       get;
@@ -88,6 +94,14 @@ public class IndexModel(
             return Page();
          }
 
+         if (CurrentTable.Kind == ReferenceTableKind.Sports)
+         {
+            SportRows = await repository.GetSportReferenceRowsAsync(
+               cancellationToken
+            );
+            return Page();
+         }
+
          Rows = await repository.GetReferenceRowsAsync(
             table,
             cancellationToken
@@ -115,6 +129,12 @@ public class IndexModel(
       if(tableInfo?.Kind == ReferenceTableKind.Countries)
       {
          await repository.DeleteCountryAsync(id, cancellationToken);
+         return RedirectToPage("./Index", new { table });
+      }
+
+      if (tableInfo?.Kind == ReferenceTableKind.Sports)
+      {
+         await repository.DeleteSportAsync(id, cancellationToken);
          return RedirectToPage("./Index", new { table });
       }
 

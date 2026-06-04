@@ -369,6 +369,24 @@ public class PostgresMigrationTests
       Assert.Contains("to entities_country_id_fk", migration);
    }
 
+   [Fact]
+   public void FifteenthMigrationAddsSportIcons()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "015_add_sport_icons.sql"
+         )
+      );
+
+      Assert.Contains("alter table sports", migration);
+      Assert.Contains("add column if not exists icon_id text null", migration);
+      Assert.Contains("'mdi:soccer'", migration);
+      Assert.Contains("'mdi:hockey-puck'", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

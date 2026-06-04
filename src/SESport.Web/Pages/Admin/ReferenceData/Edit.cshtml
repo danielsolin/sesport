@@ -2,10 +2,15 @@
 @model SESport.Web.Pages.Admin.ReferenceData.EditModel
 @{
    var isCountries = Model.CurrentTable?.Kind == ReferenceTableKind.Countries;
+   var isSports = Model.CurrentTable?.Kind == ReferenceTableKind.Sports;
    ViewData["Title"] = isCountries
       ? Model.Country.OriginalId is null
          ? "New Country"
          : "Edit Country"
+      : isSports
+      ? Model.Sport.OriginalId is null
+         ? "New Sport"
+         : "Edit Sport"
       : Model.Row.OriginalId is null
       ? "New Reference Row"
       : "Edit Reference Row";
@@ -51,6 +56,32 @@
                <span>Name</span>
                <input asp-for="Country.Name" />
                <span asp-validation-for="Country.Name"></span>
+            </label>
+         </div>
+      </section>
+   }
+   else if (isSports)
+   {
+      <input asp-for="Sport.OriginalId" type="hidden" />
+
+      <section class="form-section">
+         <h2>@Model.CurrentTable?.Title</h2>
+         <div class="form-grid">
+            <label>
+               <span>ID</span>
+               <input asp-for="Sport.Id"
+                      readonly="@(Model.Sport.OriginalId is not null)" />
+               <span asp-validation-for="Sport.Id"></span>
+            </label>
+            <label>
+               <span>Name</span>
+               <input asp-for="Sport.Name" />
+               <span asp-validation-for="Sport.Name"></span>
+            </label>
+            <label>
+               <span>Iconify icon ID</span>
+               <input asp-for="Sport.IconId" placeholder="mdi:golf" />
+               <span asp-validation-for="Sport.IconId"></span>
             </label>
          </div>
       </section>

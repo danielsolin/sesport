@@ -36,5 +36,7 @@ import:
   Host=localhost;Port=5432;Database=sesport;Username=sesport;Password=sesport
 - The web app uses Npgsql for PostgreSQL data access
 - Ensure PostgreSQL is running and migrated before running the web app or
-  import tools (PostgreSQL must be started via Docker in WSL if Docker is only available there)
-- Hard rule: No lines in any file should exceed 80 characters wide
+  import tools (PostgreSQL must be started via Docker in WSL if Docker is only
+  available there)
+- Hard rule: No lines in any file should exceed 80 characters wide unless it's
+  required for the file to work.

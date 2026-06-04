@@ -6,7 +6,8 @@ public enum ReferenceTableKind
 {
    Lookup,
    ActivityAudit,
-   Countries
+   Countries,
+   Sports
 }
 
 public sealed record ReferenceTableInfo(
@@ -47,6 +48,12 @@ public sealed record CountryReferenceRow(
    string Name
 );
 
+public sealed record SportReferenceRow(
+   string Id,
+   string Name,
+   string? IconId
+);
+
 public sealed class CountryReferenceEditModel
 {
    public string? OriginalId { get; set; }
@@ -56,6 +63,17 @@ public sealed class CountryReferenceEditModel
    public string Code { get; set; } = string.Empty;
 
    public string Name { get; set; } = string.Empty;
+}
+
+public sealed class SportReferenceEditModel
+{
+   public string? OriginalId { get; set; }
+
+   public string Id { get; set; } = string.Empty;
+
+   public string Name { get; set; } = string.Empty;
+
+   public string IconId { get; set; } = string.Empty;
 }
 
 public sealed record SourceListItem(

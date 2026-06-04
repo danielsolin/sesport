@@ -17,10 +17,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "sports",
             "Sports",
             "Sports available when creating activities and entities.",
-            "sports",
-            "name",
-            false,
-            false
+            ReferenceTableKind.Sports
          ),
          ["sources"] = new(
             "sources",
@@ -206,6 +203,19 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       var table = GetTable(tableKey);
+
+      if (table.Kind == ReferenceTableKind.Sports)
+      {
+         return (await GetSportReferenceRowsAsync(cancellationToken))
+            .Select(row => new ReferenceRow(
+               row.Id,
+               row.Name,
+               null,
+               null
+            ))
+            .ToList();
+      }
+
       EnsureLookupTable(table);
 
       var sortSelect = table.HasSortOrder ? "sort_order" : "null";
@@ -255,13 +265,42 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var rows = new List<CountryReferenceRow>();
 
-      while(await reader.ReadAsync(cancellationToken))
+      while (await reader.ReadAsync(cancellationToken))
       {
          rows.Add(
             new CountryReferenceRow(
                reader.GetString(0),
                reader.GetString(1),
                reader.GetString(2)
+            )
+         );
+      }
+
+      return rows;
+   }
+
+   public async Task<IReadOnlyList<SportReferenceRow>>
+      GetSportReferenceRowsAsync(CancellationToken cancellationToken)
+   {
+      const string sql = """
+         select id, name, icon_id
+         from sports
+         order by name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var rows = new List<SportReferenceRow>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         rows.Add(
+            new SportReferenceRow(
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.IsDBNull(2) ? null : reader.GetString(2)
             )
          );
       }
@@ -324,7 +363,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if(!await reader.ReadAsync(cancellationToken))
+      if (!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -335,6 +374,37 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          Id = reader.GetString(0),
          Code = reader.GetString(1),
          Name = reader.GetString(2)
+      };
+   }
+
+   public async Task<SportReferenceEditModel?> GetSportForEditAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id, name, icon_id
+         from sports
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new SportReferenceEditModel
+      {
+         OriginalId = reader.GetString(0),
+         Id = reader.GetString(0),
+         Name = reader.GetString(1),
+         IconId = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
       };
    }
 
@@ -442,6 +512,47 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task SaveSportAsync(
+      SportReferenceEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      var isNew = string.IsNullOrWhiteSpace(model.OriginalId);
+      var id = model.Id.Trim();
+      var name = model.Name.Trim();
+      var iconId = string.IsNullOrWhiteSpace(model.IconId)
+         ? null
+         : model.IconId.Trim();
+
+      var sql = isNew
+         ? """
+            insert into sports (id, name, icon_id)
+            values (@id, @name, @icon_id)
+            """
+         : """
+            update sports
+            set
+               id = @id,
+               name = @name,
+               icon_id = @icon_id,
+               updated_at = now()
+            where id = @original_id
+            """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("name", name);
+      command.Parameters.AddWithValue(
+         "icon_id",
+         (object?)iconId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "original_id",
+         model.OriginalId ?? string.Empty
+      );
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task DeleteReferenceAsync(
       string tableKey,
       string id,
@@ -463,6 +574,17 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = "delete from countries where id = @id";
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task DeleteSportAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = "delete from sports where id = @id";
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);

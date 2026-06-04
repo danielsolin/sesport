@@ -33,21 +33,18 @@ else
                   <span>@activity.SportName</span>
                   <span>@activity.ActivityType</span>
                </div>
-               <h2>@activity.Title</h2>
-               @if (!string.IsNullOrWhiteSpace(activity.Description))
-               {
-                  <p>@activity.Description</p>
-               }
-               @if (!string.IsNullOrWhiteSpace(activity.EntitySummary))
-               {
-                  <p class="entity-line">@activity.EntitySummary</p>
-               }
+               <h2>@activity.EntitySummary</h2>
+               <p class="entity-line">@activity.Title</p>
                @if (!string.IsNullOrWhiteSpace(
                   activity.RelatedEntitiesSummary))
                {
                   <p class="related-entity-line">
                      @activity.RelatedEntitiesSummary
                   </p>
+               }
+               @if(!string.IsNullOrWhiteSpace(activity.Description))
+               {
+                  <p>@activity.Description</p>
                }
             </div>
          </article>
