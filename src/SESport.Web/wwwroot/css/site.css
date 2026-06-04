@@ -565,5 +565,18 @@ textarea {
 }
 
 .ses-button-small {
-   font-size: small !important;
+   height: 16px;
+   font-size: 12px;
+   padding: 0px 7px 0px 7px;
+   min-height: 26px;
+   text-wrap: nowrap
+}
+
+.ses-checkbox {
+   width: 16px;
+   height: 16px;
+}
+
+.ses-center {
+   text-align: center !important;
 }

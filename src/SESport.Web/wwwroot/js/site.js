@@ -1,5 +1,13 @@
 (() => {
    const enhancedFormSelector = "form[data-ajax-success]";
+   const replacementFormSelector = "form[data-ajax-replace-target]";
+   const checkboxToggleSelector = "[data-checkbox-toggle]";
+   const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
+   const exclusiveEmptySelectStates = new WeakMap();
+
+   window.submitFilterForm = submitFilterForm;
+   initializeExclusiveEmptySelects();
+   initializeCheckboxToggles();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -60,6 +68,19 @@
       }
    });
 
+   document.addEventListener("submit", async event => {
+      const form = event.target;
+
+      if(!(form instanceof HTMLFormElement)
+         || !form.matches(replacementFormSelector))
+      {
+         return;
+      }
+
+      event.preventDefault();
+      await replaceFromFormAsync(form);
+   });
+
    function decrementCounter(selector)
    {
       if(!selector)
@@ -76,5 +97,216 @@
       }
 
       counter.textContent = Math.max(0, currentValue - 1).toString();
+   }
+
+   function initializeCheckboxToggles(root = document)
+   {
+      root.querySelectorAll(checkboxToggleSelector).forEach(toggle => {
+         if(!(toggle instanceof HTMLButtonElement))
+         {
+            return;
+         }
+
+         if(toggle.dataset.checkboxToggleInitialized === "true")
+         {
+            return;
+         }
+
+         toggle.dataset.checkboxToggleInitialized = "true";
+         updateCheckboxToggle(toggle);
+
+         toggle.addEventListener("click", () => {
+            const checkboxes = getCheckboxGroup(toggle);
+            const shouldSelect = checkboxes.some(checkbox => !checkbox.checked);
+
+            checkboxes.forEach(checkbox => {
+               if(checkbox.checked === shouldSelect)
+               {
+                  return;
+               }
+
+               checkbox.checked = shouldSelect;
+               checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+
+            updateCheckboxToggle(toggle);
+         });
+
+         getCheckboxGroup(toggle).forEach(checkbox => {
+            checkbox.addEventListener("change", () => {
+               updateCheckboxToggle(toggle);
+            });
+         });
+      });
+   }
+
+   function getCheckboxGroup(toggle)
+   {
+      const groupName = toggle.dataset.checkboxToggle;
+
+      if(!groupName)
+      {
+         return [];
+      }
+
+      return Array
+         .from(document.querySelectorAll("[data-checkbox-group]"))
+         .filter(checkbox => checkbox instanceof HTMLInputElement)
+         .filter(checkbox => checkbox.type === "checkbox")
+         .filter(checkbox => checkbox.dataset.checkboxGroup === groupName)
+         .filter(checkbox => !checkbox.disabled);
+   }
+
+   function updateCheckboxToggle(toggle)
+   {
+      const checkboxes = getCheckboxGroup(toggle);
+      const allSelected = checkboxes.length > 0
+         && checkboxes.every(checkbox => checkbox.checked);
+      const label = allSelected
+         ? toggle.dataset.unselectLabel
+         : toggle.dataset.selectLabel;
+
+      toggle.textContent = label
+         || (allSelected ? "Unselect all" : "Select all");
+      toggle.disabled = checkboxes.length === 0;
+   }
+
+   function submitFilterForm(field)
+   {
+      normalizeExclusiveEmptyOption(field);
+      field.form?.requestSubmit();
+   }
+
+   async function replaceFromFormAsync(form)
+   {
+      const targetSelector = form.dataset.ajaxReplaceTarget;
+
+      if(!targetSelector)
+      {
+         HTMLFormElement.prototype.submit.call(form);
+         return;
+      }
+
+      const target = document.querySelector(targetSelector);
+
+      if(!target)
+      {
+         HTMLFormElement.prototype.submit.call(form);
+         return;
+      }
+
+      try
+      {
+         const url = getFormUrl(form);
+         const response = await fetch(url, {
+            headers: {
+               Accept: "text/html"
+            }
+         });
+
+         if(!response.ok)
+         {
+            throw new Error(`Request failed with status ${response.status}`);
+         }
+
+         const documentText = await response.text();
+         const parser = new DOMParser();
+         const nextDocument = parser.parseFromString(
+            documentText,
+            "text/html"
+         );
+         const nextTarget = nextDocument.querySelector(targetSelector);
+
+         if(!nextTarget)
+         {
+            throw new Error("Replacement target was not found.");
+         }
+
+         target.replaceWith(nextTarget);
+         initializeCheckboxToggles(nextTarget);
+         history.replaceState(null, "", url);
+      }
+      catch
+      {
+         HTMLFormElement.prototype.submit.call(form);
+      }
+   }
+
+   function getFormUrl(form)
+   {
+      const url = new URL(form.action || window.location.href);
+
+      if((form.method || "get").toLowerCase() !== "get")
+      {
+         return url;
+      }
+
+      url.search = new URLSearchParams(new FormData(form)).toString();
+      return url;
+   }
+
+   function initializeExclusiveEmptySelects(root = document)
+   {
+      root
+         .querySelectorAll(exclusiveEmptySelectSelector)
+         .forEach(field => {
+            if(field instanceof HTMLSelectElement)
+            {
+               rememberExclusiveEmptySelection(field);
+            }
+         });
+   }
+
+   function normalizeExclusiveEmptyOption(field)
+   {
+      if(!(field instanceof HTMLSelectElement)
+         || field.dataset.emptyOption !== "exclusive")
+      {
+         return;
+      }
+
+      const options = Array.from(field.options);
+      const emptyOption = options.find(option => option.value === "");
+
+      if(!emptyOption)
+      {
+         return;
+      }
+
+      const previousSelection = exclusiveEmptySelectStates.get(field) ?? [];
+      const hadEmptySelection = previousSelection.includes("");
+      const specificOptions = options.filter(option => option.value !== "");
+      const selectedSpecificOptions = specificOptions.filter(option =>
+         option.selected
+      );
+
+      if(emptyOption.selected
+         && selectedSpecificOptions.length > 0
+         && !hadEmptySelection)
+      {
+         selectedSpecificOptions.forEach(option => {
+            option.selected = false;
+         });
+      }
+      else if(selectedSpecificOptions.length > 0)
+      {
+         emptyOption.selected = false;
+      }
+      else
+      {
+         emptyOption.selected = true;
+      }
+
+      rememberExclusiveEmptySelection(field);
+   }
+
+   function rememberExclusiveEmptySelection(field)
+   {
+      exclusiveEmptySelectStates.set(
+         field,
+         Array
+            .from(field.selectedOptions)
+            .map(option => option.value)
+      );
    }
 })();
