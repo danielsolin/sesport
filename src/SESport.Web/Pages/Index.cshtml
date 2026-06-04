@@ -30,7 +30,15 @@ else
             <div class="activity-time">@activity.TimeOnlyText</div>
             <div class="activity-main">
                <div class="activity-meta">
-                  <span>@activity.SportName</span>
+                  <span class="activity-sport">
+                     @if (activity.SportIconPath is not null)
+                     {
+                        <img class="activity-sport-icon"
+                             src="@activity.SportIconPath"
+                             alt="" />
+                     }
+                     @activity.SportName
+                  </span>
                   <span>@activity.ActivityType</span>
                </div>
                <h2>@activity.EntitySummary</h2>

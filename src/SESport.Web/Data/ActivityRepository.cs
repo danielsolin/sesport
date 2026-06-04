@@ -297,7 +297,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.title,
             a.description,
             at.label,
+            s.id,
             s.name,
+            s.icon_id,
             a.activity_date,
             a.local_start_time,
             a.publication_status_id,
@@ -327,7 +329,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and entity.entity_type_id is not null
          ) re on true
          {{whereClause}}
-         group by a.id, at.label, s.name, re.related_entities
+         group by a.id, at.label, s.id, s.name, s.icon_id, re.related_entities
          order by
             a.activity_date,
             a.local_start_time nulls last,
@@ -349,10 +351,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ReadString(reader, 2),
                reader.GetString(3),
                reader.GetString(4),
+               reader.GetString(5),
+               GetSportIconPath(ReadString(reader, 6)),
                FormatTime(reader),
-               reader.GetString(7),
-               reader.GetString(8),
-               reader.GetString(9)
+               reader.GetString(9),
+               reader.GetString(10),
+               reader.GetString(11)
             )
          );
       }
@@ -690,8 +694,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static string FormatTime(NpgsqlDataReader reader)
    {
-      var activityDate = reader.GetFieldValue<DateOnly>(5);
-      var localStartTime = ReadTimeOnly(reader, 6);
+      var activityDate = reader.GetFieldValue<DateOnly>(7);
+      var localStartTime = ReadTimeOnly(reader, 8);
 
       return localStartTime is null
          ? $"{activityDate:yyyy-MM-dd}"
@@ -713,5 +717,22 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private static object BlankToDbNull(string? value)
    {
       return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
+   }
+
+   private static string? GetSportIconPath(string? iconId)
+   {
+      if (string.IsNullOrWhiteSpace(iconId))
+      {
+         return null;
+      }
+
+      var fileName = Regex.Replace(
+            iconId.Trim().ToLowerInvariant(),
+            "[^a-z0-9_-]+",
+            "-"
+         )
+         .Trim('-');
+
+      return $"/icons/sports/{fileName}.svg";
    }
 }

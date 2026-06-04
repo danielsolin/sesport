@@ -1,9 +1,0 @@
-{
-  "name": "sesport",
-  "version": "1.0.0",
-  "private": true,
-  "description": "SE Sport frontend asset dependencies.",
-  "devDependencies": {
-    "@iconify/json": "^2.2.483"
-  }
-}

@@ -171,6 +171,7 @@ h2 {
 .activity-meta {
    display: flex;
    flex-wrap: wrap;
+   align-items: center;
    gap: 6px;
    margin-bottom: 3px;
    color: var(--muted);
@@ -178,6 +179,18 @@ h2 {
    font-weight: 700;
    line-height: 1.2;
    text-transform: uppercase;
+}
+
+.activity-sport {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+}
+
+.activity-sport-icon {
+   width: 1.05em;
+   height: 1.05em;
+   object-fit: contain;
 }
 
 .activity-main h2 {
