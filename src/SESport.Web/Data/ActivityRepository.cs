@@ -302,7 +302,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.local_start_time,
             a.publication_status_id,
             coalesce(string_agg(te.canonical_name, ', '), '') as entities,
-            coalesce(rp.related_persons, '') as related_persons
+            coalesce(re.related_entities, '') as related_entities
          from activities a
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
@@ -310,24 +310,24 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          left join entities te on te.id = l.entity_id
          left join lateral (
             select string_agg(
-               distinct person.canonical_name,
-               ', ' order by person.canonical_name
-            ) as related_persons
+               distinct entity.canonical_name,
+               ', ' order by entity.canonical_name
+            ) as related_entities
             from activity_entity_links al
             join entity_to_entity_links el
                on el.source_entity_id = al.entity_id
                or el.target_entity_id = al.entity_id
-            join entities person
-               on person.id = case
+            join entities entity
+               on entity.id = case
                   when el.source_entity_id = al.entity_id
                      then el.target_entity_id
                   else el.source_entity_id
                end
             where al.activity_id = a.id
-               and person.entity_type_id = 'Person'
-         ) rp on true
+               and entity.entity_type_id != null
+         ) re on true
          {{whereClause}}
-         group by a.id, at.label, s.name, rp.related_persons
+         group by a.id, at.label, s.name, re.related_entities
          order by
             a.activity_date,
             a.local_start_time nulls last,

@@ -9,7 +9,7 @@ public sealed record ActivityListItem(
    string TimeText,
    string PublicationStatus,
    string EntitySummary,
-   string RelatedPersonSummary
+   string RelatedEntitiesSummary
 )
 {
    public string TimeOnlyText
