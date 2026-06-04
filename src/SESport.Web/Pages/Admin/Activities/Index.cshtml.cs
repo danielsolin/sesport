@@ -6,6 +6,7 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class IndexModel(ActivityRepository repository) : PageModel
 {
+   public const string TodayStatus = "Today";
    public const string AllStatus = "All";
    public const string DraftStatus = "Draft";
    public const string PublishedStatus = "Published";
@@ -41,6 +42,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
       {
          var activities = Status switch
          {
+            TodayStatus => await repository.GetTodaysAsync(cancellationToken),
             DraftStatus => await repository.GetDraftsAsync(cancellationToken),
             PublishedStatus => await repository.GetPublishedAsync(
                cancellationToken
@@ -127,6 +129,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
    {
       return status switch
       {
+         TodayStatus => TodayStatus,
          DraftStatus => DraftStatus,
          PublishedStatus => PublishedStatus,
          AllStatus or "" => AllStatus,

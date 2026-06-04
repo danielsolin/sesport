@@ -18,6 +18,10 @@
    <select id="activity_status"
            name="status"
            onchange="this.form.submit();">
+      <option value="Today"
+         selected="@(Model.Status == "Today")">
+         Today
+      </option>
       <option value="Draft"
               selected="@(Model.Status == "Draft")">
          Drafts
@@ -59,15 +63,13 @@ else
                </th>
                <th>
                   <a asp-page="./Index"
-                     asp-all-route-data=
-                        '@Model.GetSortRouteValues("Activity")'>
+                     asp-all-route-data='@Model.GetSortRouteValues("Activity")'>
                      Activity @Model.GetSortIndicator("Activity")
                   </a>
                </th>
                <th>
                   <a asp-page="./Index"
-                     asp-all-route-data=
-                        '@Model.GetSortRouteValues("Entities")'>
+                     asp-all-route-data='@Model.GetSortRouteValues("Entities")'>
                      Entities @Model.GetSortIndicator("Entities")
                   </a>
                </th>
