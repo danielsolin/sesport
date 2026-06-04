@@ -189,6 +189,10 @@ h2 {
    color: #ffffff;
 }
 
+.button-80-px {
+   width: 80px !important;
+}
+
 .button-row {
    display: flex;
    flex-wrap: wrap;
