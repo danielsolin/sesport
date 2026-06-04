@@ -67,6 +67,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.AIActivitySearchImp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportEpg", "tools\SESport.ImportEpg\SESport.ImportEpg.csproj", "{47FCF823-18F6-4ECE-A937-F3F66991AEAE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "artifacts", "artifacts", "{7ABDBB22-CF10-42CE-B438-9EAD84B0EF88}"
+	ProjectSection(SolutionItems) = preProject
+		artifacts\db-backups\sesport-20260603-075348.dump = artifacts\db-backups\sesport-20260603-075348.dump
+		artifacts\db-backups\sesport-20260604-070052.dump = artifacts\db-backups\sesport-20260604-070052.dump
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
