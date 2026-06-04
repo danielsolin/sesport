@@ -45,6 +45,8 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    public string? LoadError { get; private set; }
 
+   public string? GenerateActivityError { get; private set; }
+
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       SortColumn = NormalizeSortColumn(SortColumn);
@@ -110,6 +112,34 @@ public class IndexModel(TvSportRepository repository) : PageModel
       }
 
       return RedirectToPage(routeValues);
+   }
+
+   public async Task<IActionResult> OnPostGenerateActivityAsync(
+      List<Guid> tvSportBroadcastIds,
+      CancellationToken cancellationToken
+   )
+   {
+      var broadcastIds = NormalizeBroadcastIds(tvSportBroadcastIds);
+
+      if(broadcastIds.Count == 0)
+      {
+         SortColumn = NormalizeSortColumn(SortColumn);
+         GenerateActivityError =
+            "Select at least one broadcast to generate an activity.";
+         await LoadAsync(cancellationToken);
+
+         return Page();
+      }
+
+      var routeValues = new Dictionary<string, object?>();
+
+      for(var index = 0; index < broadcastIds.Count; index++)
+      {
+         routeValues[$"tvSportBroadcastIds[{index}]"] =
+            broadcastIds[index];
+      }
+
+      return RedirectToPage("/Admin/Activities/Edit", routeValues);
    }
 
    private bool WantsJsonResponse()
@@ -260,6 +290,14 @@ public class IndexModel(TvSportRepository repository) : PageModel
          .Select(value => value.Trim())
          .Distinct(StringComparer.OrdinalIgnoreCase)
          .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+         .ToList();
+   }
+
+   private static List<Guid> NormalizeBroadcastIds(IEnumerable<Guid> ids)
+   {
+      return ids
+         .Where(id => id != Guid.Empty)
+         .Distinct()
          .ToList();
    }
 }

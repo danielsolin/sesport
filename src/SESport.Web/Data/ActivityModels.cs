@@ -42,4 +42,6 @@ public sealed class ActivityEditModel
    public string? EvidenceTitle { get; set; }
 
    public string? EvidenceComment { get; set; }
+
+   public List<Guid> TvSportBroadcastIds { get; set; } = [];
 }

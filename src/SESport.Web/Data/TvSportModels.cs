@@ -27,3 +27,13 @@ public sealed record TvSportCategoryOption(
    string Name,
    bool IsSelected
 );
+
+public sealed record TvSportBroadcastActivitySource(
+   Guid Id,
+   string ChannelName,
+   string Title,
+   string? Description,
+   IReadOnlyList<string> Categories,
+   DateTimeOffset StartsAt,
+   DateTimeOffset EndsAt
+);

@@ -23,6 +23,12 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Activity.Id" type="hidden" />
+   @foreach (var broadcastId in Model.Activity.TvSportBroadcastIds)
+   {
+      <input type="hidden"
+             name="Activity.TvSportBroadcastIds"
+             value="@broadcastId" />
+   }
 
    <section class="form-section">
       <h2>Entity</h2>

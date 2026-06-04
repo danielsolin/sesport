@@ -108,6 +108,61 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       return categories;
    }
 
+   public async Task<IReadOnlyList<TvSportBroadcastActivitySource>>
+      GetActivitySourcesAsync(
+         IReadOnlyCollection<Guid> ids,
+         CancellationToken cancellationToken
+      )
+   {
+      if(ids.Count == 0)
+      {
+         return [];
+      }
+
+      const string sql = """
+         select
+            id,
+            channel_id,
+            channel_name,
+            title,
+            description,
+            categories,
+            starts_at,
+            ends_at
+         from tv_sport_broadcasts
+         where id = any(@ids)
+         order by starts_at, channel_name nulls last, channel_id, title
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("ids", ids.ToArray());
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var broadcasts = new List<TvSportBroadcastActivitySource>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         var channelId = reader.GetString(1);
+         var channelName = ReadString(reader, 2) ?? channelId;
+
+         broadcasts.Add(
+            new TvSportBroadcastActivitySource(
+               reader.GetGuid(0),
+               channelName,
+               reader.GetString(3),
+               ReadString(reader, 4),
+               reader.GetFieldValue<string[]>(5),
+               reader.GetFieldValue<DateTimeOffset>(6),
+               reader.GetFieldValue<DateTimeOffset>(7)
+            )
+         );
+      }
+
+      return broadcasts;
+   }
+
    public async Task HideAsync(Guid id, CancellationToken cancellationToken)
    {
       const string sql = """
@@ -121,6 +176,36 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", id);
 
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task HideAsync(
+      IReadOnlyCollection<Guid> ids,
+      CancellationToken cancellationToken
+   )
+   {
+      if(ids.Count == 0)
+      {
+         return;
+      }
+
+      const string sql = """
+         update tv_sport_broadcasts
+         set hidden_at = coalesce(hidden_at, now()),
+            updated_at = now()
+         where id = any(@ids)
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("ids", ids.ToArray());
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public static DateTimeOffset ToLocal(DateTimeOffset value)
+   {
+      var timeZone = ResolveTimeZone();
+
+      return TimeZoneInfo.ConvertTime(value, timeZone);
    }
 
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)

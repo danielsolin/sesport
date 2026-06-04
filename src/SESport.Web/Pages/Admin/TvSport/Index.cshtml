@@ -64,6 +64,26 @@
    else
    {
       <section class="form-section">
+         <form id="generate-activity-form"
+               method="post"
+               asp-page-handler="GenerateActivity">
+            <input type="hidden" name="date" value="@Model.DateText" />
+            <input type="hidden"
+                   name="sortColumn"
+                   value="@Model.SortColumn" />
+            <input type="hidden" name="sortAsc" value="@Model.SortAsc" />
+            @if(Model.HideReplays)
+            {
+               <input type="hidden" name="hideReplays" value="true" />
+            }
+            @foreach(var sport in Model.SelectedSports
+               .Where(value => !string.IsNullOrWhiteSpace(value)))
+            {
+               <input type="hidden"
+                      name="SelectedSports"
+                      value="@sport" />
+            }
+         </form>
          <div class="ses-table-header">
             <div>
                <span data-tv-sport-broadcast-count>
@@ -71,7 +91,18 @@
                </span>
                broadcasts
             </div>
+            <button type="submit"
+                    class="button button-primary"
+                    form="generate-activity-form">
+               Generate Activity
+            </button>
          </div>
+         @if(Model.GenerateActivityError is not null)
+         {
+            <div class="notice notice-warning">
+               @Model.GenerateActivityError
+            </div>
+         }
          <div class="admin-table-wrap">
             <table class="admin-table">
                <thead>
@@ -129,7 +160,9 @@
                         <td class="table-select">
                            <input
                               type="checkbox"
+                              name="tvSportBroadcastIds"
                               value="@broadcast.Id"
+                              form="generate-activity-form"
                               data-checkbox-group="tv-sport-broadcasts"
                            />
                         </td>
