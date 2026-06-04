@@ -105,41 +105,62 @@ h2 {
 
 .activity-list {
    display: grid;
-   gap: 12px;
+   gap: 0;
+   border: 1px solid var(--line);
+   border-bottom: 0;
+   background: var(--surface);
 }
 
 .activity-row {
    display: grid;
-   grid-template-columns: 170px minmax(0, 1fr);
-   gap: 20px;
-   padding: 20px;
-   border: 1px solid var(--line);
-   border-radius: 8px;
-   background: var(--surface);
+   grid-template-columns: 145px minmax(0, 1fr);
+   gap: 12px;
+   padding: 9px 10px;
+   border-bottom: 1px solid var(--line);
+   background: #ffffff;
+   font-size: 13px;
+   line-height: 1.35;
 }
 
 .activity-time {
    color: var(--accent-strong);
-   font-weight: 800;
+   font-weight: 700;
+   white-space: nowrap;
 }
 
 .activity-meta {
    display: flex;
    flex-wrap: wrap;
-   gap: 8px;
-   margin-bottom: 8px;
+   gap: 6px;
+   margin-bottom: 3px;
    color: var(--muted);
-   font-size: 13px;
+   font-size: 11px;
    font-weight: 700;
+   line-height: 1.2;
+   text-transform: uppercase;
 }
 
 .activity-main h2 {
-   margin-bottom: 8px;
+   margin-bottom: 3px;
+   font-size: 14px;
+   line-height: 1.25;
+}
+
+.activity-main p {
+   margin-bottom: 4px;
+   color: var(--text);
 }
 
 .entity-line {
-   margin-bottom: 8px;
+   margin-bottom: 0;
    color: var(--accent-strong);
+   font-weight: 700;
+}
+
+.related-entity-line {
+   margin-bottom: 0;
+   color: var(--muted);
+   font-size: 12px;
    font-weight: 700;
 }
 
@@ -543,6 +564,11 @@ textarea {
    .proposal-summary,
    .form-grid {
       grid-template-columns: 1fr;
+   }
+
+   .activity-row {
+      gap: 4px;
+      padding: 8px;
    }
 
    h1 {
