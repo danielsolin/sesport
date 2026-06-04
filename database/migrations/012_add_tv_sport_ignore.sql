@@ -56,7 +56,10 @@ values (
    'iptv-epg-se',
    'Channel is outside the target sports scope.'
 )
-on conflict (kind, value, source_key) do update
+on conflict (id) do update
 set
+   kind = excluded.kind,
+   value = excluded.value,
+   source_key = excluded.source_key,
    reason = excluded.reason,
    is_active = true;
