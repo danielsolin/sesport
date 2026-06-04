@@ -2,12 +2,14 @@
    const enhancedFormSelector = "form[data-ajax-success]";
    const replacementFormSelector = "form[data-ajax-replace-target]";
    const checkboxToggleSelector = "[data-checkbox-toggle]";
+   const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const exclusiveEmptySelectStates = new WeakMap();
 
    window.submitFilterForm = submitFilterForm;
    initializeExclusiveEmptySelects();
    initializeCheckboxToggles();
+   initializeCheckboxVisibility();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -54,6 +56,7 @@
          }
 
          decrementCounter(form.dataset.ajaxDecrementTarget);
+         refreshCheckboxControls();
       }
       catch
       {
@@ -140,10 +143,46 @@
       });
    }
 
+   function initializeCheckboxVisibility(root = document)
+   {
+      root.querySelectorAll(checkboxVisibilitySelector).forEach(target => {
+         if(target.dataset.checkboxVisibilityInitialized === "true")
+         {
+            return;
+         }
+
+         target.dataset.checkboxVisibilityInitialized = "true";
+         updateCheckboxVisibility(target);
+
+         getCheckboxesForGroup(
+            target.dataset.visibleWhenCheckboxGroup
+         ).forEach(checkbox => {
+            checkbox.addEventListener("change", () => {
+               updateCheckboxVisibility(target);
+            });
+         });
+      });
+   }
+
+   function updateCheckboxVisibility(target)
+   {
+      const checkboxes = getCheckboxesForGroup(
+         target.dataset.visibleWhenCheckboxGroup
+      );
+      const hasSelection = checkboxes.some(checkbox => checkbox.checked);
+
+      target.hidden = !hasSelection;
+   }
+
    function getCheckboxGroup(toggle)
    {
       const groupName = toggle.dataset.checkboxToggle;
 
+      return getCheckboxesForGroup(groupName);
+   }
+
+   function getCheckboxesForGroup(groupName)
+   {
       if(!groupName)
       {
          return [];
@@ -169,6 +208,17 @@
       toggle.textContent = label
          || (allSelected ? "Unselect all" : "Select all");
       toggle.disabled = checkboxes.length === 0;
+   }
+
+   function refreshCheckboxControls(root = document)
+   {
+      root.querySelectorAll(checkboxToggleSelector).forEach(toggle => {
+         updateCheckboxToggle(toggle);
+      });
+
+      root.querySelectorAll(checkboxVisibilitySelector).forEach(target => {
+         updateCheckboxVisibility(target);
+      });
    }
 
    function submitFilterForm(field)
@@ -224,6 +274,7 @@
 
          target.replaceWith(nextTarget);
          initializeCheckboxToggles(nextTarget);
+         initializeCheckboxVisibility(nextTarget);
          history.replaceState(null, "", url);
       }
       catch

@@ -45,8 +45,6 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    public string? LoadError { get; private set; }
 
-   public string? GenerateActivityError { get; private set; }
-
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       SortColumn = NormalizeSortColumn(SortColumn);
@@ -124,8 +122,6 @@ public class IndexModel(TvSportRepository repository) : PageModel
       if(broadcastIds.Count == 0)
       {
          SortColumn = NormalizeSortColumn(SortColumn);
-         GenerateActivityError =
-            "Select at least one broadcast to generate an activity.";
          await LoadAsync(cancellationToken);
 
          return Page();

@@ -91,18 +91,7 @@
                </span>
                broadcasts
             </div>
-            <button type="submit"
-                    class="button button-primary"
-                    form="generate-activity-form">
-               Generate Activity
-            </button>
          </div>
-         @if(Model.GenerateActivityError is not null)
-         {
-            <div class="notice notice-warning">
-               @Model.GenerateActivityError
-            </div>
-         }
          <div class="admin-table-wrap">
             <table class="admin-table">
                <thead>
@@ -230,6 +219,19 @@
                      </tr>
                   }
                </tbody>
+               <tfoot hidden
+                      data-visible-when-checkbox-group="tv-sport-broadcasts">
+                  <tr>
+                     <td colspan="6">
+                        <button type="submit"
+                                class="button button-primary"
+                                form="generate-activity-form"
+                                id="generate-activity-button">
+                           Generate Activity
+                        </button>
+                     </td>
+                  </tr>
+               </tfoot>
             </table>
          </div>
       </section>
