@@ -343,6 +343,7 @@ public class PostgresMigrationTests
       Assert.Contains("constraint countries_code_unique", migration);
       Assert.Contains("'se', 'SE', 'Sweden'", migration);
       Assert.Contains("tracked_entities_country_id_fk", migration);
+      Assert.Contains("where c.code = upper(trim(e.country_code))", migration);
       Assert.Contains("foreign key (country_id)", migration);
       Assert.Contains("drop column if exists country_code", migration);
       Assert.Contains("drop column if exists country_name", migration);
