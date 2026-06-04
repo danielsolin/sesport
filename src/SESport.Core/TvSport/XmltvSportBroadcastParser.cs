@@ -148,7 +148,13 @@ public sealed partial class XmltvSportBroadcastParser
          return null;
       }
 
-      var replayMetadata = ParseReplayMetadata(description);
+      // Disabled for now: the current description heuristics mark too many
+      // real live broadcasts as replays.
+      var replayMetadata = (
+         IsReplay: false,
+         OriginalAirDate: (DateOnly?)null
+      );
+      // var replayMetadata = ParseReplayMetadata(description);
       var externalId = CreateExternalId(channelId, startsAt, title);
       var fingerprint = CreateFingerprint(
          DefaultSourceKey,
@@ -226,7 +232,10 @@ public sealed partial class XmltvSportBroadcastParser
          description.Contains("highlights", StringComparison.OrdinalIgnoreCase);
    }
 
-   private static (bool IsReplay, DateOnly? OriginalAirDate) ParseReplayMetadata(
+   private static (
+      bool IsReplay,
+      DateOnly? OriginalAirDate
+   ) ParseReplayMetadata(
       string? description
    )
    {
@@ -242,7 +251,10 @@ public sealed partial class XmltvSportBroadcastParser
          return (ProducedYearRegex().IsMatch(description), null);
       }
 
-      var day = int.Parse(match.Groups["day"].Value, CultureInfo.InvariantCulture);
+      var day = int.Parse(
+         match.Groups["day"].Value,
+         CultureInfo.InvariantCulture
+      );
       var month = int.Parse(
          match.Groups["month"].Value,
          CultureInfo.InvariantCulture
@@ -326,7 +338,11 @@ public sealed partial class XmltvSportBroadcastParser
    [GeneratedRegex(@"\s+")]
    private static partial Regex WhitespaceRegex();
 
-   [GeneratedRegex(@"\((?:\d{1,2}-)?(?<day>\d{1,2})/(?<month>\d{1,2})-(?<year>\d{2})\)")]
+   private const string OriginalAirDatePattern =
+      @"\((?:\d{1,2}-)?(?<day>\d{1,2})/"
+      + @"(?<month>\d{1,2})-(?<year>\d{2})\)";
+
+   [GeneratedRegex(OriginalAirDatePattern)]
    private static partial Regex OriginalAirDateRegex();
 
    [GeneratedRegex(@"Producerat år", RegexOptions.IgnoreCase)]
