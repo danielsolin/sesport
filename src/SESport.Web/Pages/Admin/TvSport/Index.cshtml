@@ -78,7 +78,7 @@
                   <tr>
                      <th>
                         <button type="button"
-                                class="button button-primary ses-button-small"
+                                class="button button-primary"
                                 data-checkbox-toggle="tv-sport-broadcasts"
                                 data-select-label="Select all"
                                 data-unselect-label="Unselect all">
@@ -126,23 +126,22 @@
                         airDate = broadcast.OriginalAirDate.Value;
                      }
                      <tr>
-                        <td class="ses-center">
+                        <td class="table-select">
                            <input
                               type="checkbox"
                               value="@broadcast.Id"
-                              class="ses-checkbox"
                               data-checkbox-group="tv-sport-broadcasts"
                            />
                         </td>
                         <td>
                            <div class="ses-nowrap">
-                              <small>@broadcast.ChannelName</small>
+                              @broadcast.ChannelName
                            </div>
                         </td>
                         <td>
-                           <div class="ses-timetext ses-nowrap">
+                           <strong class="ses-nowrap">
                               @broadcast.TimeOnlyText
-                           </div>
+                           </strong>
                         </td>
                         <td>
                            <strong>@broadcast.Title</strong>
@@ -159,7 +158,7 @@
                            }
                         </td>
                         <td>
-                           <small>@broadcast.Categories</small>
+                           @broadcast.Categories
                         </td>
                         <td class="table-actions">
                            <form method="post"
@@ -192,9 +191,7 @@
                                         name="SelectedSports"
                                         value="@sport" />
                               }
-                              <button type="submit" class="ses-button-small">
-                                 Hide
-                              </button>
+                              <button type="submit">Hide</button>
                            </form>
                         </td>
                      </tr>
