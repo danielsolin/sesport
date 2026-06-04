@@ -58,7 +58,7 @@ public sealed class ActivitySearchEntityRepository : IAsyncDisposable
             e.country_relevance_reason,
             e.watch_priority_id,
             e.expected_stability_id
-         from tracked_entities e
+         from entities e
          join sports s on s.id = e.sport_id
          join countries c on c.id = e.country_id
          where

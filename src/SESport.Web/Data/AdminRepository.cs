@@ -466,7 +466,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             p.label,
             sk.label,
             count(distinct l.id)::int
-         from tracked_entities e
+         from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          join entity_watch_priorities p on p.id = e.watch_priority_id
@@ -517,7 +517,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             country_relevance_reason,
             watch_priority_id,
             expected_stability_id
-         from tracked_entities
+         from entities
          where id = @id
          """;
 
@@ -584,7 +584,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                e.canonical_name,
                et.label,
                s.name
-            from tracked_entities e
+            from entities e
             join entity_types et on et.id = e.entity_type_id
             join sports s on s.id = e.sport_id
             order by e.canonical_name
@@ -595,7 +595,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                e.canonical_name,
                et.label,
                s.name
-            from tracked_entities e
+            from entities e
             join entity_types et on et.id = e.entity_type_id
             join sports s on s.id = e.sport_id
             where e.id <> @exclude_entity_id
@@ -664,7 +664,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       var id = model.Id ?? Guid.NewGuid();
       var sql = isNew
          ? """
-            insert into tracked_entities (
+            insert into entities (
                id,
                canonical_name,
                entity_type_id,
@@ -688,7 +688,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             )
             """
          : """
-            update tracked_entities
+            update entities
             set
                canonical_name = @canonical_name,
                entity_type_id = @entity_type_id,
@@ -731,7 +731,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = "delete from tracked_entities where id = @id";
+      const string sql = "delete from entities where id = @id";
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);

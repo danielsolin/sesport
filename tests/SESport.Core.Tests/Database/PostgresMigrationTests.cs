@@ -349,6 +349,26 @@ public class PostgresMigrationTests
       Assert.Contains("drop column if exists country_name", migration);
    }
 
+   [Fact]
+   public void FourteenthMigrationRenamesTrackedEntities()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "014_rename_tracked_entities_to_entities.sql"
+         )
+      );
+
+      Assert.Contains("alter table tracked_entities", migration);
+      Assert.Contains("rename to entities", migration);
+      Assert.Contains("rename constraint tracked_entities_pkey", migration);
+      Assert.Contains("to entities_pkey", migration);
+      Assert.Contains("tracked_entities_country_id_fk", migration);
+      Assert.Contains("to entities_country_id_fk", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

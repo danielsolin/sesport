@@ -40,7 +40,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          select id, canonical_name, entity_type_id
-         from tracked_entities
+         from entities
          order by canonical_name
          """;
 
@@ -295,7 +295,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
          left join activity_entity_links l on l.activity_id = a.id
-         left join tracked_entities te on te.id = l.entity_id
+         left join entities te on te.id = l.entity_id
          {{whereClause}}
          group by a.id, at.label, s.name
          order by
@@ -367,7 +367,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @time_zone_id,
             @publication_status_id,
             @slug,
-            case when @publication_status_id = 'Published' then now() else null end
+            case
+               when @publication_status_id = 'Published' then now()
+               else null
+            end
          )
          """;
 
@@ -558,7 +561,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue("activity_type_id", model.ActivityType);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
-      command.Parameters.AddWithValue("activity_date", model.ActivityDate!.Value);
+      command.Parameters.AddWithValue(
+         "activity_date",
+         model.ActivityDate!.Value
+      );
       command.Parameters.AddWithValue(
          "local_start_time",
          model.LocalStartTime ?? (object)DBNull.Value
@@ -598,7 +604,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       while (await reader.ReadAsync(cancellationToken))
       {
-         options.Add(new LookupOption(reader.GetString(0), reader.GetString(1)));
+         options.Add(
+            new LookupOption(reader.GetString(0), reader.GetString(1))
+         );
       }
 
       return options;
@@ -639,7 +647,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
 
       return Regex.Replace(
-            builder.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant(),
+            builder
+               .ToString()
+               .Normalize(NormalizationForm.FormC)
+               .ToLowerInvariant(),
             "[^a-z0-9]+",
             "-"
          )

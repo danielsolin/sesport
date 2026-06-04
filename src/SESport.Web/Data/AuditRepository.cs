@@ -108,7 +108,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             l.confidence
          from activity_proposal_entity_links l
          join activity_proposals p on p.id = l.proposal_id
-         join tracked_entities te on te.id = l.entity_id
+         join entities te on te.id = l.entity_id
          join activity_entity_link_roles r on r.id = l.proposed_role_id
          order by p.activity_date, p.title, te.canonical_name
          """;
@@ -230,7 +230,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             l.confidence
          from activity_proposal_entity_links l
          join activity_proposals p on p.id = l.proposal_id
-         join tracked_entities te on te.id = l.entity_id
+         join entities te on te.id = l.entity_id
          join activity_entity_link_roles r on r.id = l.proposed_role_id
          where p.id = @proposal_id
          order by te.canonical_name
@@ -605,7 +605,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   private static async Task<ProposalActivitySeed> ReadProposalActivitySeedAsync(
+   private static async Task<ProposalActivitySeed>
+      ReadProposalActivitySeedAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       string proposalId,
@@ -650,7 +651,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             et.label
          from activity_entity_links l
          join activities a on a.id = l.activity_id
-         join tracked_entities te on te.id = l.entity_id
+         join entities te on te.id = l.entity_id
          join entity_types et on et.id = te.entity_type_id
          order by a.activity_date, a.title, te.canonical_name
          """;
