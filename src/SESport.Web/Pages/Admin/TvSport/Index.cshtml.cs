@@ -7,6 +7,11 @@ namespace SESport.Web.Pages.Admin.TvSport;
 
 public class IndexModel(TvSportRepository repository) : PageModel
 {
+   public const string ChannelSortColumn = "Channel";
+   public const string TimeSortColumn = "Time";
+   public const string BroadcastSortColumn = "Broadcast";
+   public const string CategoriesSortColumn = "Categories";
+
    [BindProperty(SupportsGet = true, Name = "date")]
    public DateOnly? Date { get; set; }
 
@@ -15,6 +20,12 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    [BindProperty(SupportsGet = true)]
    public List<string> SelectedSports { get; set; } = [];
+
+   [BindProperty(SupportsGet = true)]
+   public string SortColumn { get; set; } = TimeSortColumn;
+
+   [BindProperty(SupportsGet = true)]
+   public bool SortAsc { get; set; } = true;
 
    public string DateText => SelectedDate.ToString("yyyy-MM-dd");
 
@@ -36,7 +47,32 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
+      SortColumn = NormalizeSortColumn(SortColumn);
       await LoadAsync(cancellationToken);
+   }
+
+   public bool GetNextSortAsc(string sortColumn) =>
+      string.Equals(SortColumn, sortColumn, StringComparison.Ordinal)
+         ? !SortAsc
+         : true;
+
+   public string GetSortIndicator(string sortColumn)
+   {
+      if(!string.Equals(SortColumn, sortColumn, StringComparison.Ordinal))
+      {
+         return string.Empty;
+      }
+
+      return SortAsc ? "▲" : "▼";
+   }
+
+   public Dictionary<string, string?> GetSortRouteValues(string sortColumn)
+   {
+      var routeValues = GetCurrentRouteValues();
+      routeValues["sortColumn"] = sortColumn;
+      routeValues["sortAsc"] = GetNextSortAsc(sortColumn).ToString();
+
+      return routeValues;
    }
 
    public async Task<IActionResult> OnPostHideAsync(
@@ -45,6 +81,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
    )
    {
       await repository.HideAsync(id, cancellationToken);
+      SortColumn = NormalizeSortColumn(SortColumn);
 
       if(WantsJsonResponse())
       {
@@ -62,6 +99,9 @@ public class IndexModel(TvSportRepository repository) : PageModel
          routeValues["hideReplays"] = "true";
       }
 
+      routeValues["sortColumn"] = SortColumn;
+      routeValues["sortAsc"] = SortAsc;
+
       var normalizedSports = NormalizeSelectedSports(SelectedSports);
 
       for(var index = 0; index < normalizedSports.Count; index++)
@@ -75,8 +115,10 @@ public class IndexModel(TvSportRepository repository) : PageModel
    private bool WantsJsonResponse()
    {
       return Request.Headers.Accept.Any(value =>
-         value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) ==
-         true
+         value?.Contains(
+            "application/json",
+            StringComparison.OrdinalIgnoreCase
+         ) == true
       );
    }
 
@@ -119,11 +161,94 @@ public class IndexModel(TvSportRepository repository) : PageModel
             normalizedSports,
             cancellationToken
          );
+         Broadcasts = SortBroadcasts(Broadcasts, SortColumn, SortAsc);
       }
       catch(Exception exception)
       {
          LoadError = exception.Message;
       }
+   }
+
+   private Dictionary<string, string?> GetCurrentRouteValues()
+   {
+      var routeValues = new Dictionary<string, string?>
+      {
+         ["date"] = DateText
+      };
+
+      if(HideReplays)
+      {
+         routeValues["hideReplays"] = "true";
+      }
+
+      var normalizedSports = NormalizeSelectedSports(SelectedSports);
+
+      for(var index = 0; index < normalizedSports.Count; index++)
+      {
+         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
+      }
+
+      return routeValues;
+   }
+
+   private static string NormalizeSortColumn(string? sortColumn) =>
+      sortColumn switch
+      {
+         ChannelSortColumn => ChannelSortColumn,
+         BroadcastSortColumn => BroadcastSortColumn,
+         CategoriesSortColumn => CategoriesSortColumn,
+         _ => TimeSortColumn
+      };
+
+   private static IReadOnlyList<TvSportBroadcastListItem> SortBroadcasts(
+      IEnumerable<TvSportBroadcastListItem> broadcasts,
+      string sortColumn,
+      bool sortAsc
+   )
+   {
+      return sortColumn switch
+      {
+         ChannelSortColumn => OrderByDirection(
+            broadcasts,
+            broadcast => broadcast.ChannelName,
+            sortAsc
+         ),
+         BroadcastSortColumn => OrderByDirection(
+            broadcasts,
+            broadcast => broadcast.Title,
+            sortAsc
+         ),
+         CategoriesSortColumn => OrderByDirection(
+            broadcasts,
+            broadcast => broadcast.Categories,
+            sortAsc
+         ),
+         _ => OrderByDirection(
+            broadcasts,
+            broadcast => broadcast.TimeText,
+            sortAsc
+         )
+      };
+   }
+
+   private static IReadOnlyList<TvSportBroadcastListItem> OrderByDirection(
+      IEnumerable<TvSportBroadcastListItem> broadcasts,
+      Func<TvSportBroadcastListItem, string> keySelector,
+      bool sortAsc
+   )
+   {
+      var sortedBroadcasts = sortAsc
+         ? broadcasts.OrderBy(keySelector, StringComparer.OrdinalIgnoreCase)
+         : broadcasts.OrderByDescending(
+            keySelector,
+            StringComparer.OrdinalIgnoreCase
+         );
+
+      return sortedBroadcasts
+         .ThenBy(broadcast => broadcast.TimeText, StringComparer.Ordinal)
+         .ThenBy(broadcast => broadcast.ChannelName)
+         .ThenBy(broadcast => broadcast.Title)
+         .ToList();
    }
 
    private static List<string> NormalizeSelectedSports(

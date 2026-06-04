@@ -16,6 +16,8 @@
    <form method="get"
          class="filter-form"
          data-ajax-replace-target="[data-tv-sport-results]">
+      <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+      <input type="hidden" name="sortAsc" value="@Model.SortAsc" />
       <label>
          <span>Date</span>
          <input type="date"
@@ -35,14 +37,14 @@
             </select>
          </label>
       </div>
-      <label class="check-row filter-checkbox">
+      @* <label class="check-row filter-checkbox">
          <input type="checkbox"
                 name="hideReplays"
                 value="true"
                 checked="@Model.HideReplays"
                 onchange="this.form.submit();" />
-         @* <span>Hide reruns (broken)</span> *@
-      </label>
+         <span>Hide reruns (broken)</span>
+      </label> *@
    </form>
 </section>
 
@@ -83,10 +85,34 @@
                            Select all
                         </button>
                      </th>
-                     <th>Channel</th>
-                     <th>Time</th>
-                     <th>Broadcast</th>
-                     <th>Categories</th>
+                     <th>
+                        <a asp-page="./Index"
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Channel")'>
+                           Channel @Model.GetSortIndicator("Channel")
+                        </a>
+                     </th>
+                     <th>
+                        <a asp-page="./Index"
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Time")'>
+                           Time @Model.GetSortIndicator("Time")
+                        </a>
+                     </th>
+                     <th>
+                        <a asp-page="./Index"
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Broadcast")'>
+                           Broadcast @Model.GetSortIndicator("Broadcast")
+                        </a>
+                     </th>
+                     <th>
+                        <a asp-page="./Index"
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Categories")'>
+                           Categories @Model.GetSortIndicator("Categories")
+                        </a>
+                     </th>
                      <th>Actions</th>
                   </tr>
                </thead>
@@ -146,6 +172,12 @@
                               <input type="hidden"
                                      name="date"
                                      value="@Model.DateText" />
+                              <input type="hidden"
+                                     name="sortColumn"
+                                     value="@Model.SortColumn" />
+                              <input type="hidden"
+                                     name="sortAsc"
+                                     value="@Model.SortAsc" />
                               @if(Model.HideReplays)
                               {
                                  <input type="hidden"
