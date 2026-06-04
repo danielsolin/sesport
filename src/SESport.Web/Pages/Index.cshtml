@@ -9,13 +9,13 @@
    <h1>Dagens Svenskar</h1>
 </section>
 
-@if (Model.LoadError is not null)
+@if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
       The activity database is not available right now.
    </div>
 }
-else if (Model.Activities.Count == 0)
+else if(Model.Activities.Count == 0)
 {
    <div class="notice">
       No published activities yet.
@@ -24,26 +24,28 @@ else if (Model.Activities.Count == 0)
 else
 {
    <div class="activity-list">
-      @foreach (var activity in Model.Activities)
+      @foreach(var activity in Model.Activities)
       {
          <article class="activity-row">
-            <div class="activity-time">@activity.TimeOnlyText</div>
+            <div class="activity-time">
+               @if(activity.SportIconPath is not null)
+               {
+                  <img class="activity-sport-icon"
+                       src="@activity.SportIconPath"
+                       alt="" />
+               }
+               @activity.TimeOnlyText
+            </div>
             <div class="activity-main">
                <div class="activity-meta">
                   <span class="activity-sport">
-                     @if (activity.SportIconPath is not null)
-                     {
-                        <img class="activity-sport-icon"
-                             src="@activity.SportIconPath"
-                             alt="" />
-                     }
                      @activity.SportName
                   </span>
                   <span>@activity.ActivityType</span>
                </div>
                <h2>@activity.EntitySummary</h2>
                <p class="entity-line">@activity.Title</p>
-               @if (!string.IsNullOrWhiteSpace(
+               @if(!string.IsNullOrWhiteSpace(
                   activity.RelatedEntitiesSummary))
                {
                   <p class="related-entity-line">
