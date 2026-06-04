@@ -1,5 +1,6 @@
 (() => {
-   const enhancedFormSelector = "form[data-ajax-success]";
+   const enhancedFormSelector =
+      "form[data-ajax-success]:not([data-ajax-success=''])";
    const replacementFormSelector = "form[data-ajax-replace-target]";
    const checkboxToggleSelector = "[data-checkbox-toggle]";
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";

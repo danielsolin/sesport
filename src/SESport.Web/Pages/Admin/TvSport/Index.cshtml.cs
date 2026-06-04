@@ -18,6 +18,9 @@ public class IndexModel(TvSportRepository repository) : PageModel
    [BindProperty(SupportsGet = true, Name = "hideReplays")]
    public bool HideReplays { get; set; }
 
+   [BindProperty(SupportsGet = true, Name = "showHidden")]
+   public bool ShowHidden { get; set; }
+
    [BindProperty(SupportsGet = true)]
    public List<string> SelectedSports { get; set; } = [];
 
@@ -77,15 +80,24 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    public async Task<IActionResult> OnPostHideAsync(
       Guid id,
+      bool isHidden,
       CancellationToken cancellationToken
    )
    {
-      await repository.HideAsync(id, cancellationToken);
+      if(isHidden)
+      {
+         await repository.ShowAsync(id, cancellationToken);
+      }
+      else
+      {
+         await repository.HideAsync(id, cancellationToken);
+      }
+
       SortColumn = NormalizeSortColumn(SortColumn);
 
       if(WantsJsonResponse())
       {
-         return new JsonResult(new { hidden = true });
+         return new JsonResult(new { hidden = !isHidden });
       }
 
       var selectedDate = Date ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1));
@@ -97,6 +109,11 @@ public class IndexModel(TvSportRepository repository) : PageModel
       if(HideReplays)
       {
          routeValues["hideReplays"] = "true";
+      }
+
+      if(ShowHidden)
+      {
+         routeValues["showHidden"] = "true";
       }
 
       routeValues["sortColumn"] = SortColumn;
@@ -167,6 +184,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
          var categories = await repository.GetCategoriesForDateAsync(
             SelectedDate,
             HideReplays,
+            ShowHidden,
             cancellationToken
          );
          SportOptions =
@@ -190,6 +208,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
          Broadcasts = await repository.GetByDateAsync(
             SelectedDate,
             HideReplays,
+            ShowHidden,
             normalizedSports,
             cancellationToken
          );
@@ -211,6 +230,11 @@ public class IndexModel(TvSportRepository repository) : PageModel
       if(HideReplays)
       {
          routeValues["hideReplays"] = "true";
+      }
+
+      if(ShowHidden)
+      {
+         routeValues["showHidden"] = "true";
       }
 
       var normalizedSports = NormalizeSelectedSports(SelectedSports);

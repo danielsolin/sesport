@@ -8,7 +8,8 @@ public sealed record TvSportBroadcastListItem(
    string? Description,
    string Categories,
    bool IsReplay,
-   DateOnly? OriginalAirDate
+   DateOnly? OriginalAirDate,
+   bool isHidden
 )
 {
    public string TimeOnlyText

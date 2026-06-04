@@ -47,6 +47,14 @@
                 onchange="this.form.submit();" />
          <span>Hide reruns (broken)</span>
       </label> *@
+      <label class="check-row filter-checkbox">
+         <input type="checkbox"
+                name="showHidden"
+                value="true"
+                checked="@Model.ShowHidden"
+                onchange="this.form.submit();" />
+         <span>Show hidden</span>
+      </label>
    </form>
 </section>
 
@@ -193,13 +201,22 @@
                            <form method="post"
                                  asp-page-handler="Hide"
                                  asp-route-id="@broadcast.Id"
-                                 data-ajax-success="remove"
-                                 data-ajax-remove-target="tr"
+                                 data-ajax-success=
+                                    "@(broadcast.isHidden ? null : "remove")"
+                                 data-ajax-remove-target=
+                                    "@(broadcast.isHidden ? null : "tr")"
                                  data-ajax-decrement-target=
-                                    "[data-tv-sport-broadcast-count]">
+                                    "@(
+                                       broadcast.isHidden
+                                          ? null
+                                          : "[data-tv-sport-broadcast-count]"
+                                    )">
                               <input type="hidden"
                                      name="date"
                                      value="@Model.DateText" />
+                              <input type="hidden"
+                                     name="isHidden"
+                                     value="@broadcast.isHidden.ToString()" />
                               <input type="hidden"
                                      name="sortColumn"
                                      value="@Model.SortColumn" />
@@ -220,7 +237,9 @@
                                         name="SelectedSports"
                                         value="@sport" />
                               }
-                              <button type="submit">Hide</button>
+                              <button type="submit">
+                                 @(broadcast.isHidden ? "Show" : "Hide")
+                              </button>
                            </form>
                         </td>
                      </tr>
