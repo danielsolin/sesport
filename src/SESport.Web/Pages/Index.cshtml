@@ -6,7 +6,7 @@
 
 <section class="page-heading">
    <p class="eyebrow">Sweden-relevant sport</p>
-   <h1>Upcoming activities</h1>
+   <h1>Dagens Svenskar</h1>
 </section>
 
 @if (Model.LoadError is not null)
@@ -27,7 +27,7 @@ else
       @foreach (var activity in Model.Activities)
       {
          <article class="activity-row">
-            <div class="activity-time">@activity.TimeText</div>
+            <div class="activity-time">@activity.TimeOnlyText</div>
             <div class="activity-main">
                <div class="activity-meta">
                   <span>@activity.SportName</span>
@@ -41,6 +41,13 @@ else
                @if (!string.IsNullOrWhiteSpace(activity.EntitySummary))
                {
                   <p class="entity-line">@activity.EntitySummary</p>
+               }
+               @if (!string.IsNullOrWhiteSpace(
+                  activity.RelatedPersonSummary))
+               {
+                  <p class="related-entity-line">
+                     @activity.RelatedPersonSummary
+                  </p>
                }
             </div>
          </article>

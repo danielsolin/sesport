@@ -8,8 +8,21 @@ public sealed record ActivityListItem(
    string SportName,
    string TimeText,
    string PublicationStatus,
-   string EntitySummary
-);
+   string EntitySummary,
+   string RelatedPersonSummary
+)
+{
+   public string TimeOnlyText
+   {
+      get
+      {
+         if(TimeText.Contains(" "))
+            return TimeText.Split(' ')[1];
+
+         return TimeText;
+      }
+   }
+};
 
 public sealed record EntityOption(Guid Id, string Name, string Type);
 

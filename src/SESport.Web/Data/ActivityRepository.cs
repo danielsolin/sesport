@@ -17,6 +17,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<IReadOnlyList<ActivityListItem>> GetTodaysAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return await GetActivityListAsync(
+         "where a.publication_status_id = 'Published' " +
+         "and a.activity_date ='" + DateTime.Now.ToString("yyyy-MM-dd") + "'",
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<ActivityListItem>> GetDraftsAsync(
       CancellationToken cancellationToken
    )
@@ -290,14 +301,33 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.activity_date,
             a.local_start_time,
             a.publication_status_id,
-            coalesce(string_agg(te.canonical_name, ', '), '') as entities
+            coalesce(string_agg(te.canonical_name, ', '), '') as entities,
+            coalesce(rp.related_persons, '') as related_persons
          from activities a
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
          left join activity_entity_links l on l.activity_id = a.id
          left join entities te on te.id = l.entity_id
+         left join lateral (
+            select string_agg(
+               distinct person.canonical_name,
+               ', ' order by person.canonical_name
+            ) as related_persons
+            from activity_entity_links al
+            join entity_to_entity_links el
+               on el.source_entity_id = al.entity_id
+               or el.target_entity_id = al.entity_id
+            join entities person
+               on person.id = case
+                  when el.source_entity_id = al.entity_id
+                     then el.target_entity_id
+                  else el.source_entity_id
+               end
+            where al.activity_id = a.id
+               and person.entity_type_id = 'Person'
+         ) rp on true
          {{whereClause}}
-         group by a.id, at.label, s.name
+         group by a.id, at.label, s.name, rp.related_persons
          order by
             a.activity_date,
             a.local_start_time nulls last,
@@ -321,7 +351,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(4),
                FormatTime(reader),
                reader.GetString(7),
-               reader.GetString(8)
+               reader.GetString(8),
+               reader.GetString(9)
             )
          );
       }

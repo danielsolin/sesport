@@ -14,7 +14,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
    {
       try
       {
-         Activities = await repository.GetPublishedAsync(cancellationToken);
+         Activities = await repository.GetTodaysAsync(cancellationToken);
       }
       catch (Exception exception)
       {
