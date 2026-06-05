@@ -9,6 +9,12 @@ public class DetailsModel(AiRepository repository) : PageModel
 {
    public AiRunDetail? Run { get; private set; }
 
+   [BindProperty(SupportsGet = true)]
+   public string? JobId { get; set; }
+
+   [BindProperty(SupportsGet = true)]
+   public string? StatusId { get; set; }
+
    public async Task<IActionResult> OnGetAsync(
       Guid id,
       CancellationToken cancellationToken

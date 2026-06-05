@@ -11,6 +11,37 @@
    </div>
 </section>
 
+<form method="get" class="edit-form">
+   <section class="form-section">
+      <h2>Filters</h2>
+      <div class="form-grid">
+         <label>
+            <span>Job</span>
+            <select asp-for="JobId">
+               <option value="">All jobs</option>
+               @foreach (var job in Model.Jobs)
+               {
+                  <option value="@job.Id">@job.Label</option>
+               }
+            </select>
+         </label>
+         <label>
+            <span>Status</span>
+            <select asp-for="StatusId">
+               @foreach (var status in Model.StatusOptions)
+               {
+                  <option value="@status.Value">@status.Text</option>
+               }
+            </select>
+         </label>
+      </div>
+      <div class="form-actions">
+         <button class="button button-primary" type="submit">Apply</button>
+         <a class="button" asp-page="./Index">Reset</a>
+      </div>
+   </section>
+</form>
+
 @if (Model.LoadError is not null)
 {
    <div class="notice notice-warning">
@@ -44,7 +75,12 @@
                </td>
                <td>@run.ErrorMessage</td>
                <td class="table-actions">
-                  <a asp-page="./Details" asp-route-id="@run.Id">View</a>
+                  <a asp-page="./Details"
+                     asp-route-id="@run.Id"
+                     asp-route-jobId="@Model.JobId"
+                     asp-route-statusId="@Model.StatusId">
+                     View
+                  </a>
                </td>
             </tr>
          }

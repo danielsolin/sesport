@@ -526,6 +526,26 @@ h2 {
    font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
+.prompt-details-pre {
+   max-height: 360px;
+   margin: 0;
+   overflow: auto;
+   white-space: pre-wrap;
+   overflow-wrap: anywhere;
+   word-break: break-word;
+   padding: 14px;
+   border: 1px solid var(--line);
+   border-radius: 8px;
+   background: #f7faf9;
+   color: var(--ink);
+   font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.tall-textarea {
+   min-height: 200px;
+   height: 200px;
+}
+
 .proposal-summary {
    display: grid;
    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
@@ -665,6 +685,11 @@ textarea {
    height: 38px;
    resize: vertical;
    overflow: auto;
+}
+
+.edit-form textarea.tall-textarea {
+   min-height: 200px;
+   height: 200px;
 }
 
 .form-actions {

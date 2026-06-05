@@ -9,7 +9,12 @@
       <p class="eyebrow">Config</p>
       <h1>AI run</h1>
    </div>
-   <a class="button" asp-page="./Index">Back</a>
+   <a class="button"
+      asp-page="./Index"
+      asp-route-jobId="@Model.JobId"
+      asp-route-statusId="@Model.StatusId">
+      Back
+   </a>
 </section>
 
 @if (Model.Run is not null)
@@ -70,24 +75,24 @@
 
    <section class="form-section">
       <h2>Input payload</h2>
-      <pre>@Model.Run.InputPayloadJson</pre>
+      <pre class="prompt-details-pre">@Model.Run.InputPayloadJson</pre>
    </section>
 
    <section class="form-section">
       <h2>Rendered prompt</h2>
-      <pre>@Model.Run.RenderedPrompt</pre>
+      <pre class="prompt-details-pre">@Model.Run.RenderedPrompt</pre>
    </section>
 
    <section class="form-section">
       <h2>Output</h2>
-      <pre>@(Model.Run.OutputText ?? string.Empty)</pre>
+      <pre class="prompt-details-pre">@((Model.Run.OutputText ?? string.Empty).Trim())</pre>
    </section>
 
    @if (!string.IsNullOrWhiteSpace(Model.Run.RawResponseJson))
    {
       <section class="form-section">
          <h2>Raw response</h2>
-         <pre>@Model.Run.RawResponseJson</pre>
+         <pre class="prompt-details-pre">@Model.Run.RawResponseJson</pre>
       </section>
    }
 
@@ -95,7 +100,7 @@
    {
       <section class="form-section">
          <h2>Error</h2>
-         <pre>@Model.Run.ErrorMessage</pre>
+         <pre class="prompt-details-pre">@Model.Run.ErrorMessage</pre>
       </section>
    }
 }

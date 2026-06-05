@@ -57,17 +57,23 @@
       </div>
       <label>
          <span>System prompt</span>
-         <textarea asp-for="Prompt.SystemPrompt" rows="6"></textarea>
+         <textarea asp-for="Prompt.SystemPrompt"
+                   rows="10"
+                   class="tall-textarea"></textarea>
          <span asp-validation-for="Prompt.SystemPrompt"></span>
       </label>
       <label>
          <span>User prompt template</span>
-         <textarea asp-for="Prompt.UserPromptTemplate" rows="8"></textarea>
+         <textarea asp-for="Prompt.UserPromptTemplate"
+                   rows="10"
+                   class="tall-textarea"></textarea>
          <span asp-validation-for="Prompt.UserPromptTemplate"></span>
       </label>
       <label>
          <span>Output schema JSON</span>
-         <textarea asp-for="Prompt.OutputSchemaJson" rows="5"></textarea>
+         <textarea asp-for="Prompt.OutputSchemaJson"
+                   rows="10"
+                   class="tall-textarea"></textarea>
          <span asp-validation-for="Prompt.OutputSchemaJson"></span>
       </label>
       <label class="check-row">

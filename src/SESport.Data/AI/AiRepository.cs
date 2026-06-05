@@ -1,3 +1,4 @@
+using System.Text;
 using Npgsql;
 using NpgsqlTypes;
 using SESport.Core.AI.Abstractions;
@@ -9,26 +10,55 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository
 {
    public async Task<IReadOnlyList<AiRunListItem>> GetRunsAsync(
+      string? jobId,
+      string? statusId,
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
-         select
-            r.id,
-            j.label,
-            p.label,
-            r.status_id,
-            r.started_at,
-            r.duration_seconds,
-            r.error_message
-         from ai_job_runs r
-         join ai_jobs j on j.id = r.job_id
-         join ai_providers p on p.id = r.provider_id
-         order by r.started_at desc
-         limit 200
-         """;
+      var where = new List<string>();
 
-      await using var command = dataSource.CreateCommand(sql);
+      if(!string.IsNullOrWhiteSpace(jobId))
+      {
+         where.Add("r.job_id = @job_id");
+      }
+
+      if(!string.IsNullOrWhiteSpace(statusId))
+      {
+         where.Add("r.status_id = @status_id");
+      }
+
+      var sql = new StringBuilder()
+         .AppendLine("select")
+         .AppendLine("   r.id,")
+         .AppendLine("   j.label,")
+         .AppendLine("   p.label,")
+         .AppendLine("   r.status_id,")
+         .AppendLine("   r.started_at,")
+         .AppendLine("   r.duration_seconds,")
+         .AppendLine("   r.error_message")
+         .AppendLine("from ai_job_runs r")
+         .AppendLine("join ai_jobs j on j.id = r.job_id")
+         .AppendLine("join ai_providers p on p.id = r.provider_id");
+
+      if(where.Count > 0)
+      {
+         sql.AppendLine("where " + string.Join(" and ", where));
+      }
+
+      sql.AppendLine("order by r.started_at desc")
+         .AppendLine("limit 200");
+
+      await using var command = dataSource.CreateCommand(sql.ToString());
+      if(!string.IsNullOrWhiteSpace(jobId))
+      {
+         command.Parameters.AddWithValue("job_id", jobId);
+      }
+
+      if(!string.IsNullOrWhiteSpace(statusId))
+      {
+         command.Parameters.AddWithValue("status_id", statusId);
+      }
+
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
