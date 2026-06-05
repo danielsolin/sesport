@@ -19,7 +19,7 @@
            name="status"
            onchange="this.form.submit();">
       <option value="Today"
-         selected="@(Model.Status == "Today")">
+              selected="@(Model.Status == "Today")">
          Today
       </option>
       <option value="Draft"
@@ -88,7 +88,9 @@ else
                <tr>
                   <td>@activity.TimeText</td>
                   <td>
-                     <strong>@activity.Title</strong>
+                     <a asp-page="./Edit" asp-route-id="@activity.Id">
+                        <strong>@activity.Title</strong>
+                     </a>
                      <span>@activity.SportName / @activity.ActivityType</span>
                   </td>
                   <td>@activity.EntitySummary</td>
@@ -98,7 +100,6 @@ else
                      </span>
                   </td>
                   <td class="table-actions">
-                     <a asp-page="./Edit" asp-route-id="@activity.Id">Edit</a>
                      <form method="post"
                            asp-page-handler="Delete"
                            asp-route-id="@activity.Id"
