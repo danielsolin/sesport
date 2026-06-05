@@ -50,9 +50,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, canonical_name, entity_type_id
-         from entities
-         order by canonical_name
+         select
+            e.id,
+            e.canonical_name,
+            et.label,
+            s.name
+         from entities e
+         join entity_types et on et.id = e.entity_type_id
+         join sports s on s.id = e.sport_id
+         order by e.canonical_name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -67,7 +73,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             new EntityOption(
                reader.GetGuid(0),
                reader.GetString(1),
-               reader.GetString(2)
+               reader.GetString(2),
+               reader.GetString(3)
             )
          );
       }

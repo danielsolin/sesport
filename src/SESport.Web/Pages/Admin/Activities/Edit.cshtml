@@ -39,7 +39,9 @@
             <option value="">Select entity</option>
             @foreach (var entity in Model.Entities)
             {
-               <option value="@entity.Id">@entity.Name (@entity.Type)</option>
+               <option value="@entity.Id">
+                  @($"{entity.Name} ({entity.Type}/{entity.Sport})")
+               </option>
             }
          </select>
          <span asp-validation-for="Activity.EntityId"></span>

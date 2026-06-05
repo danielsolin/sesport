@@ -26,7 +26,12 @@ public sealed record ActivityListItem(
    }
 };
 
-public sealed record EntityOption(Guid Id, string Name, string Type);
+public sealed record EntityOption(
+   Guid Id,
+   string Name,
+   string Type,
+   string Sport
+);
 
 public sealed record LookupOption(string Id, string Label);
 
