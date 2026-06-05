@@ -4,6 +4,11 @@
    ViewData["Title"] = Model.Activity.Id is null
       ? "New Activity"
       : "Edit Activity";
+   var generateTeaserUrl = Url.Page(
+      "./Edit",
+      "GenerateTeaser",
+      new { id = Model.Activity.Id }
+   );
 }
 
 <section class="page-heading page-heading-row">
@@ -17,7 +22,7 @@
 @if (Model.LoadError is not null)
 {
    <div class="notice notice-warning">
-      The activity database is not available right now.
+      @Model.LoadError
    </div>
 }
 
@@ -81,8 +86,19 @@
       </label>
       <label>
          <span>Teaser</span>
-         <textarea asp-for="Activity.Teaser" rows="2"></textarea>
+         <textarea asp-for="Activity.Teaser"
+                   rows="2"
+                   data-teaser-output></textarea>
       </label>
+      <div class="button-row">
+         <button class="button"
+                 type="button"
+                 data-generate-teaser
+                 data-teaser-url="@generateTeaserUrl">
+            Generate Teaser
+         </button>
+         <span class="form-status" data-teaser-status></span>
+      </div>
    </section>
 
    <section class="form-section">
@@ -128,6 +144,10 @@
          <input asp-for="Activity.IsPublished" type="checkbox" />
          <span>Published</span>
       </label>
-      <button class="button button-primary" type="submit">Save</button>
+      <button class="button button-primary"
+              type="submit"
+              asp-page-handler="Save">
+         Save
+      </button>
    </section>
 </form>

@@ -1,11 +1,19 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
+using SESport.Core.AIActivityTeasers;
 using SESport.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 var adminPassword = builder.Configuration["Admin:Password"];
 var defaultConnectionString =
-   "Host=localhost;Port=5432;Database=sesport;Username=sesport;Password=sesport";
+   "Host=localhost;Port=5432;Database=sesport;" +
+   "Username=sesport;Password=sesport";
+var teaserBaseAddress = builder.Configuration["AI:Teaser:BaseAddress"] ??
+   "https://openrouter.ai/api/v1/";
+var teaserModel = builder.Configuration["AI:Teaser:Model"] ??
+   "openrouter/free";
+var teaserApiKey = builder.Configuration["AI:Teaser:ApiKey"] ??
+   Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
 
 builder.Services.AddSingleton(
    _ => NpgsqlDataSource.Create(
@@ -13,6 +21,17 @@ builder.Services.AddSingleton(
       defaultConnectionString
    )
 );
+builder.Services.AddSingleton(
+   new ActivityTeaserGeneratorOptions(
+      new Uri(teaserBaseAddress),
+      teaserModel,
+      teaserApiKey
+   )
+);
+builder.Services.AddHttpClient<
+   IActivityTeaserGenerator,
+   OpenAiResponsesActivityTeaserGenerator
+>();
 builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();

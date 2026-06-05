@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SESport.Core.AIActivityTeasers;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
 
 public class EditModel(
    ActivityRepository repository,
-   TvSportRepository tvSportRepository
+   TvSportRepository tvSportRepository,
+   IActivityTeaserGenerator teaserGenerator
 ) : PageModel
 {
    [BindProperty]
@@ -65,6 +67,20 @@ public class EditModel(
       CancellationToken cancellationToken
    )
    {
+      return await SaveAsync(cancellationToken);
+   }
+
+   public async Task<IActionResult> OnPostSaveAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return await SaveAsync(cancellationToken);
+   }
+
+   private async Task<IActionResult> SaveAsync(
+      CancellationToken cancellationToken
+   )
+   {
       ValidateActivity();
 
       if (!ModelState.IsValid)
@@ -89,6 +105,46 @@ public class EditModel(
       }
 
       return RedirectToPage("./Index");
+   }
+
+   public async Task<IActionResult> OnPostGenerateTeaserAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      if (string.IsNullOrWhiteSpace(Activity.Title))
+      {
+         return BadRequest(new
+         {
+            error = "Title is required before generating a teaser."
+         });
+      }
+
+      try
+      {
+         var teaser = await teaserGenerator.GenerateAsync(
+            await CreateTeaserRequestAsync(cancellationToken),
+            cancellationToken
+         );
+         var validationError = ValidateGeneratedTeaser(teaser);
+
+         if(validationError is not null)
+         {
+            var teaserPreview = CreateTeaserPreview(teaser);
+
+            return BadRequest(new
+            {
+               error = $"{validationError} Preview: \"{teaserPreview}\"",
+               teaser,
+               teaserPreview
+            });
+         }
+
+         return new JsonResult(new { teaser });
+      }
+      catch (Exception exception)
+      {
+         return BadRequest(new { error = exception.Message });
+      }
    }
 
    private async Task LoadEntitiesAsync(
@@ -121,6 +177,93 @@ public class EditModel(
       {
          LoadError = exception.Message;
       }
+   }
+
+   private async Task<ActivityTeaserRequest> CreateTeaserRequestAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      var selectedIds = (Activity.LinkedEntityIds ?? []).ToHashSet();
+      var entityNames = (await repository.GetEntityOptionsAsync(
+         cancellationToken
+      ))
+         .Where(entity => selectedIds.Contains(entity.Id))
+         .Select(entity => entity.Name)
+         .ToList();
+      var sportName = (await repository.GetSportOptionsAsync(
+         cancellationToken
+      ))
+         .FirstOrDefault(sport => sport.Id == Activity.SportId)
+         ?.Label ?? Activity.SportId;
+
+      return new ActivityTeaserRequest(
+         Activity.Title,
+         Activity.Description,
+         Activity.ActivityType,
+         sportName,
+         Activity.ActivityDate,
+         Activity.LocalStartTime,
+         Activity.TimeZoneId,
+         entityNames,
+         []
+      );
+   }
+
+   private static string? ValidateGeneratedTeaser(string teaser)
+   {
+      var wordCount = teaser
+         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+         .Length;
+
+      if(string.IsNullOrWhiteSpace(teaser))
+      {
+         return "The model returned an empty teaser.";
+      }
+
+      if(wordCount < 15 || wordCount > 25)
+      {
+         return
+            $"The model returned {wordCount} words, but the teaser must " +
+            "be 15 to 25 words.";
+      }
+
+      var promptMarkers = new[]
+      {
+         "Requirements:",
+         "Activity:",
+         "The user wants",
+         "Okay,",
+         "Let's tackle this",
+         "Need to",
+         "Let me check"
+      };
+
+      var marker = promptMarkers.FirstOrDefault(value =>
+         teaser.Contains(value, StringComparison.OrdinalIgnoreCase)
+      );
+
+      if(marker is not null)
+      {
+         return
+            $"The model returned prompt/instruction text instead of a " +
+            $"teaser. Matched marker: \"{marker}\".";
+      }
+
+      return null;
+   }
+
+   private static string CreateTeaserPreview(string teaser)
+   {
+      var preview = teaser
+         .ReplaceLineEndings(" ")
+         .Trim();
+
+      if(preview.Length <= 180)
+      {
+         return preview;
+      }
+
+      return preview[..180] + "...";
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)

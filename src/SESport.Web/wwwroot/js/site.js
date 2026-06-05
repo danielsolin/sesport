@@ -5,6 +5,7 @@
    const checkboxToggleSelector = "[data-checkbox-toggle]";
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
    const entityNameFilterSelector = "[data-entity-name-filter]";
+   const generateTeaserSelector = "[data-generate-teaser]";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const exclusiveEmptySelectStates = new WeakMap();
 
@@ -13,6 +14,7 @@
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
    initializeEntityNameFilters();
+   initializeTeaserGeneration();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -217,6 +219,81 @@
       });
    }
 
+   function initializeTeaserGeneration(root = document)
+   {
+      root.querySelectorAll(generateTeaserSelector).forEach(button => {
+         if(!(button instanceof HTMLButtonElement)
+            || button.dataset.generateTeaserInitialized === "true")
+         {
+            return;
+         }
+
+         button.dataset.generateTeaserInitialized = "true";
+         button.addEventListener("click", async () => {
+            await generateTeaserAsync(button);
+         });
+      });
+   }
+
+   async function generateTeaserAsync(button)
+   {
+      const form = button.form;
+      const url = button.dataset.teaserUrl;
+      const output = form?.querySelector("[data-teaser-output]");
+      const status = form?.querySelector("[data-teaser-status]");
+
+      if(!form || !url || !(output instanceof HTMLTextAreaElement))
+      {
+         return;
+      }
+
+      setTeaserStatus(status, "Generating teaser...");
+      button.disabled = true;
+
+      try
+      {
+         const response = await fetch(url, {
+            method: "post",
+            body: new FormData(form),
+            headers: {
+               Accept: "application/json"
+            }
+         });
+         const payload = await response.json();
+
+         if(!response.ok)
+         {
+            throw new Error(payload.error || "Teaser generation failed.");
+         }
+
+         output.value = payload.teaser || "";
+         setTeaserStatus(status, "Teaser generated.");
+      }
+      catch(error)
+      {
+         const message = error instanceof Error
+            ? error.message
+            : "Teaser generation failed.";
+
+         setTeaserStatus(status, message, true);
+      }
+      finally
+      {
+         button.disabled = false;
+      }
+   }
+
+   function setTeaserStatus(status, message, isError = false)
+   {
+      if(!(status instanceof HTMLElement))
+      {
+         return;
+      }
+
+      status.textContent = message;
+      status.classList.toggle("form-status-error", isError);
+   }
+
    function updateCheckboxVisibility(target)
    {
       const checkboxes = getCheckboxesForGroup(
@@ -328,6 +405,7 @@
          target.replaceWith(nextTarget);
          initializeCheckboxToggles(nextTarget);
          initializeCheckboxVisibility(nextTarget);
+         initializeTeaserGeneration(nextTarget);
          history.replaceState(null, "", url);
       }
       catch

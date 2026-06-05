@@ -311,6 +311,19 @@ h2 {
    gap: 8px;
 }
 
+.form-status {
+   display: inline-flex;
+   align-items: center;
+   min-height: 32px;
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 700;
+}
+
+.form-status-error {
+   color: var(--warning);
+}
+
 .filter-form {
    display: flex;
    align-items: end;
