@@ -17,7 +17,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
    public const string StatusSortColumn = "Status";
 
    [BindProperty(SupportsGet = true, Name = "status")]
-   public string? Status { get; set; } = "Draft";
+   public string? Status { get; set; } = "Today";
 
    public string SortColumn { get; private set; } = TimeSortColumn;
 
