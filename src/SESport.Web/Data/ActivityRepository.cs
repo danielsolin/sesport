@@ -323,7 +323,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.activity_date,
             a.local_start_time,
             a.publication_status_id,
-            coalesce(string_agg(te.canonical_name, ', '), '') as entities,
+            coalesce(
+               string_agg(
+                  te.canonical_name,
+                  ', ' order by te.canonical_name
+               ),
+               ''
+            ) as entities,
             coalesce(re.related_entities, '') as related_entities
          from activities a
          join sports s on s.id = a.sport_id
