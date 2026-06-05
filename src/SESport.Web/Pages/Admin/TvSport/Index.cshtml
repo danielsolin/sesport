@@ -182,6 +182,11 @@
                         </td>
                         <td>
                            <strong>@broadcast.Title</strong>
+                           <a class="ses-entity-search-link"
+                              href="@ViewData["SearchUrl"]@broadcast.Title"
+                              target="_blank">
+                              <span class="ses-icon-search"></span>
+                           </a>
                            @if(!string.IsNullOrWhiteSpace(
                               broadcast.Description))
                            {
