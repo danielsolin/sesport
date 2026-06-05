@@ -63,6 +63,39 @@ public sealed record AiPromptListItem(
    bool Enabled
 );
 
+public sealed record AiRunListItem(
+   Guid Id,
+   string JobLabel,
+   string ProviderLabel,
+   string StatusId,
+   DateTimeOffset StartedAt,
+   decimal? DurationSeconds,
+   string? ErrorMessage
+);
+
+public sealed record AiRunDetail(
+   Guid Id,
+   string JobId,
+   string JobLabel,
+   Guid PromptId,
+   int PromptVersion,
+   string ProviderId,
+   string ProviderLabel,
+   string StatusId,
+   string? CorrelationId,
+   string InputPayloadJson,
+   string RenderedPrompt,
+   string? RawResponseJson,
+   string? OutputText,
+   string? ErrorMessage,
+   DateTimeOffset StartedAt,
+   DateTimeOffset? CompletedAt,
+   decimal? DurationSeconds,
+   int? InputTokens,
+   int? OutputTokens,
+   int? ReasoningTokens
+);
+
 public sealed class AiPromptEditModel
 {
    public string? OriginalId { get; set; }

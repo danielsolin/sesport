@@ -8,6 +8,119 @@ namespace SESport.Data.AI;
 public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository
 {
+   public async Task<IReadOnlyList<AiRunListItem>> GetRunsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select
+            r.id,
+            j.label,
+            p.label,
+            r.status_id,
+            r.started_at,
+            r.duration_seconds,
+            r.error_message
+         from ai_job_runs r
+         join ai_jobs j on j.id = r.job_id
+         join ai_providers p on p.id = r.provider_id
+         order by r.started_at desc
+         limit 200
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var runs = new List<AiRunListItem>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         runs.Add(
+            new AiRunListItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3),
+               reader.GetFieldValue<DateTimeOffset>(4),
+               ReadNullableDecimal(reader, 5),
+               ReadNullableString(reader, 6)
+            )
+         );
+      }
+
+      return runs;
+   }
+
+   public async Task<AiRunDetail?> GetRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select
+            r.id,
+            r.job_id,
+            j.label,
+            r.prompt_id,
+            pr.version,
+            r.provider_id,
+            p.label,
+            r.status_id,
+            r.correlation_id,
+            r.input_payload::text,
+            r.rendered_prompt,
+            r.raw_response::text,
+            r.output_text,
+            r.error_message,
+            r.started_at,
+            r.completed_at,
+            r.duration_seconds,
+            r.input_tokens,
+            r.output_tokens,
+            r.reasoning_tokens
+         from ai_job_runs r
+         join ai_jobs j on j.id = r.job_id
+         join ai_providers p on p.id = r.provider_id
+         join ai_job_prompts pr on pr.id = r.prompt_id
+         where r.id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new AiRunDetail(
+         reader.GetGuid(0),
+         reader.GetString(1),
+         reader.GetString(2),
+         reader.GetGuid(3),
+         reader.GetInt32(4),
+         reader.GetString(5),
+         reader.GetString(6),
+         reader.GetString(7),
+         ReadNullableString(reader, 8),
+         reader.GetString(9),
+         reader.GetString(10),
+         ReadNullableString(reader, 11),
+         ReadNullableString(reader, 12),
+         ReadNullableString(reader, 13),
+         reader.GetFieldValue<DateTimeOffset>(14),
+         ReadNullableDateTimeOffset(reader, 15),
+         ReadNullableDecimal(reader, 16),
+         ReadNullableInt32(reader, 17),
+         ReadNullableInt32(reader, 18),
+         ReadNullableInt32(reader, 19)
+      );
+   }
+
    public async Task<AiJobDefinition?> GetJobAsync(
       string jobId,
       CancellationToken cancellationToken
@@ -310,6 +423,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    )
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
+   }
+
+   private static DateTimeOffset? ReadNullableDateTimeOffset(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? null
+         : reader.GetFieldValue<DateTimeOffset>(ordinal);
    }
 
    private static int? ReadNullableInt32(

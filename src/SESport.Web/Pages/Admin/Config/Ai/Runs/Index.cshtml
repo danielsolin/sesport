@@ -1,0 +1,53 @@
+@page
+@model SESport.Web.Pages.Admin.Config.Ai.Runs.IndexModel
+@{
+   ViewData["Title"] = "AI runs";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>AI runs</h1>
+   </div>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Started</th>
+            <th>Job</th>
+            <th>Provider</th>
+            <th>Status</th>
+            <th>Duration</th>
+            <th>Error</th>
+            <th></th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var run in Model.Runs)
+         {
+            <tr>
+               <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+               <td>@run.JobLabel</td>
+               <td>@run.ProviderLabel</td>
+               <td><code>@run.StatusId</code></td>
+               <td>
+                  @(run.DurationSeconds?.ToString("0.000") ?? "")
+               </td>
+               <td>@run.ErrorMessage</td>
+               <td class="table-actions">
+                  <a asp-page="./Details" asp-route-id="@run.Id">View</a>
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

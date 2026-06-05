@@ -1,0 +1,101 @@
+@page "{id:guid}"
+@model SESport.Web.Pages.Admin.Config.Ai.Runs.DetailsModel
+@{
+   ViewData["Title"] = "AI run";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>AI run</h1>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</section>
+
+@if (Model.Run is not null)
+{
+   <section class="form-section">
+      <h2>Summary</h2>
+      <dl class="detail-grid">
+         <div>
+            <dt>Run ID</dt>
+            <dd><code>@Model.Run.Id</code></dd>
+         </div>
+         <div>
+            <dt>Status</dt>
+            <dd><code>@Model.Run.StatusId</code></dd>
+         </div>
+         <div>
+            <dt>Job</dt>
+            <dd>@Model.Run.JobLabel</dd>
+         </div>
+         <div>
+            <dt>Provider</dt>
+            <dd>@Model.Run.ProviderLabel</dd>
+         </div>
+         <div>
+            <dt>Started</dt>
+            <dd>@Model.Run.StartedAt.ToString("yyyy-MM-dd HH:mm:ss")</dd>
+         </div>
+         <div>
+            <dt>Completed</dt>
+            <dd>
+               @(Model.Run.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "")
+            </dd>
+         </div>
+         <div>
+            <dt>Duration</dt>
+            <dd>
+               @(Model.Run.DurationSeconds?.ToString("0.000") ?? "")
+            </dd>
+         </div>
+         <div>
+            <dt>Correlation</dt>
+            <dd>@Model.Run.CorrelationId</dd>
+         </div>
+         <div>
+            <dt>Input tokens</dt>
+            <dd>@Model.Run.InputTokens</dd>
+         </div>
+         <div>
+            <dt>Output tokens</dt>
+            <dd>@Model.Run.OutputTokens</dd>
+         </div>
+         <div>
+            <dt>Reasoning tokens</dt>
+            <dd>@Model.Run.ReasoningTokens</dd>
+         </div>
+      </dl>
+   </section>
+
+   <section class="form-section">
+      <h2>Input payload</h2>
+      <pre>@Model.Run.InputPayloadJson</pre>
+   </section>
+
+   <section class="form-section">
+      <h2>Rendered prompt</h2>
+      <pre>@Model.Run.RenderedPrompt</pre>
+   </section>
+
+   <section class="form-section">
+      <h2>Output</h2>
+      <pre>@(Model.Run.OutputText ?? string.Empty)</pre>
+   </section>
+
+   @if (!string.IsNullOrWhiteSpace(Model.Run.RawResponseJson))
+   {
+      <section class="form-section">
+         <h2>Raw response</h2>
+         <pre>@Model.Run.RawResponseJson</pre>
+      </section>
+   }
+
+   @if (!string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
+   {
+      <section class="form-section">
+         <h2>Error</h2>
+         <pre>@Model.Run.ErrorMessage</pre>
+      </section>
+   }
+}
