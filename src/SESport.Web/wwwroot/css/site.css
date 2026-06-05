@@ -390,15 +390,46 @@ h2 {
    background: var(--surface);
 }
 
-.admin-sidebar a {
-   padding: 12px 14px;
+.admin-sidebar-group {
+   display: grid;
+   gap: 2px;
+   padding: 12px 0;
    border-bottom: 1px solid var(--line);
+}
+
+.admin-sidebar-group:last-child {
+   border-bottom: 0;
+}
+
+.admin-sidebar-group h2 {
+   margin: 0;
+   padding: 0 14px 6px;
+   color: var(--muted);
+   font-size: 11px;
+   font-weight: 800;
+   line-height: 1.2;
+   text-transform: uppercase;
+   letter-spacing: 0.04em;
+}
+
+.admin-sidebar a {
+   display: block;
+   padding: 8px 14px;
    color: var(--text);
    font-weight: 800;
 }
 
-.admin-sidebar a:last-child {
-   border-bottom: 0;
+.admin-sidebar a.is-active {
+   background: rgba(0, 108, 103, 0.08);
+   color: var(--accent-strong);
+}
+
+.admin-sidebar-group a {
+   font-weight: 700;
+}
+
+.admin-sidebar-group a:hover {
+   background: rgba(0, 108, 103, 0.06);
 }
 
 .compact-heading {

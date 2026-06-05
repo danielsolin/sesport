@@ -3,7 +3,7 @@ using NpgsqlTypes;
 using SESport.Core.AI.Abstractions;
 using SESport.Core.AI.Models;
 
-namespace SESport.Web.Data;
+namespace SESport.Data.AI;
 
 public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository
@@ -190,10 +190,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("job_id", run.JobId);
       command.Parameters.AddWithValue("prompt_id", run.PromptId);
       command.Parameters.AddWithValue("provider_id", run.ProviderId);
-      command.Parameters.AddWithValue(
-         "status_id",
-         ToStatusId(run.Status)
-      );
+      command.Parameters.AddWithValue("status_id", ToStatusId(run.Status));
       command.Parameters.AddWithValue(
          "correlation_id",
          (object?)run.CorrelationId ?? DBNull.Value
@@ -238,10 +235,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    )
    {
       command.Parameters.AddWithValue("id", run.Id);
-      command.Parameters.AddWithValue(
-         "status_id",
-         ToStatusId(run.Status)
-      );
+      command.Parameters.AddWithValue("status_id", ToStatusId(run.Status));
       command.Parameters.AddWithValue(
          "correlation_id",
          (object?)run.CorrelationId ?? DBNull.Value
@@ -280,20 +274,26 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private static void AddJsonbParameter(
       NpgsqlCommand command,
       string name,
-      string? json
+      string? value
    )
    {
       command.Parameters.Add(
          new NpgsqlParameter(name, NpgsqlDbType.Jsonb)
          {
-            Value = (object?)json ?? DBNull.Value
+            Value = (object?)value ?? DBNull.Value
          }
       );
    }
 
    private static string ToStatusId(AiJobRunStatus status)
    {
-      return status.ToString().ToLowerInvariant();
+      return status switch
+      {
+         AiJobRunStatus.Running => "running",
+         AiJobRunStatus.Completed => "completed",
+         AiJobRunStatus.Failed => "failed",
+         _ => "pending"
+      };
    }
 
    private static string? ReadNullableString(
@@ -301,9 +301,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       int ordinal
    )
    {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetString(ordinal);
+      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
    }
 
    private static decimal? ReadNullableDecimal(
@@ -311,9 +309,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       int ordinal
    )
    {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetDecimal(ordinal);
+      return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
    }
 
    private static int? ReadNullableInt32(
@@ -321,8 +317,6 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       int ordinal
    )
    {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetInt32(ordinal);
+      return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
    }
 }

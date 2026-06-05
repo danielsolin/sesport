@@ -1,0 +1,71 @@
+@page "{id?}"
+@model SESport.Web.Pages.Admin.Config.Ai.Jobs.EditModel
+@{
+   ViewData["Title"] = Model.Job.OriginalId is null
+      ? "New AI job"
+      : "Edit AI job";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>@ViewData["Title"]</h1>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <section class="form-section">
+      <h2>Job</h2>
+      <div class="form-grid">
+         <label>
+            <span>ID</span>
+            <input asp-for="Job.Id" />
+            <span asp-validation-for="Job.Id"></span>
+         </label>
+         <label>
+            <span>Label</span>
+            <input asp-for="Job.Label" />
+            <span asp-validation-for="Job.Label"></span>
+         </label>
+         <label>
+            <span>Provider</span>
+            <select asp-for="Job.ProviderId">
+               <option value="">Select provider</option>
+               @foreach (var provider in Model.Providers)
+               {
+                  <option value="@provider.Id">@provider.Label</option>
+               }
+            </select>
+            <span asp-validation-for="Job.ProviderId"></span>
+         </label>
+         <label>
+            <span>Output mode</span>
+            <select asp-for="Job.OutputMode">
+               <option value="text">text</option>
+               <option value="json_object">json_object</option>
+            </select>
+            <span asp-validation-for="Job.OutputMode"></span>
+         </label>
+      </div>
+      <label>
+         <span>Description</span>
+         <textarea asp-for="Job.Description" rows="3"></textarea>
+      </label>
+      <label class="check-row">
+         <input asp-for="Job.Enabled" type="checkbox" />
+         <span>Enabled</span>
+      </label>
+   </section>
+
+   <section class="form-actions">
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>

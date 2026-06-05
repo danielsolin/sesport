@@ -1,0 +1,46 @@
+@page
+@model SESport.Web.Pages.Admin.Config.Ai.Prompts.IndexModel
+@{
+   ViewData["Title"] = "AI prompts";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>AI prompts</h1>
+   </div>
+   <a class="button button-primary" asp-page="./Edit">New prompt</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Job</th>
+            <th>Version</th>
+            <th>Enabled</th>
+            <th></th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var prompt in Model.Prompts)
+         {
+            <tr>
+               <td>@prompt.JobLabel</td>
+               <td>@prompt.Version</td>
+               <td>@prompt.Enabled</td>
+               <td class="table-actions">
+                  <a asp-page="./Edit" asp-route-id="@prompt.Id">Edit</a>
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

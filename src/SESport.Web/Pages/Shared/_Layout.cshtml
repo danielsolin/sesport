@@ -20,8 +20,8 @@
       "/Admin/Audit/Proposal",
       StringComparison.OrdinalIgnoreCase
    );
-   var isReferenceData = requestPath.StartsWith(
-      "/Admin/ReferenceData",
+   var isConfig = requestPath.StartsWith(
+      "/Admin/Config",
       StringComparison.OrdinalIgnoreCase
    );
    var adminMenuLink = "admin-top-menu-link";
@@ -37,7 +37,7 @@
    var proposalsClass = isProposals
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
-   var referenceDataClass = isReferenceData
+   var configClass = isConfig
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
 }
@@ -76,9 +76,9 @@
                   asp-page="/Admin/Audit/Proposals">
                   Activity Proposals
                </a>
-               <a class="@referenceDataClass"
-                  asp-page="/Admin/ReferenceData/Index">
-                  Reference Data
+               <a class="@configClass"
+                  asp-page="/Admin/Config/Index">
+                  Config
                </a>
             </nav>
          }

@@ -1,0 +1,82 @@
+@page "{id?}"
+@model SESport.Web.Pages.Admin.Config.Ai.Prompts.EditModel
+@{
+   ViewData["Title"] = Model.Prompt.OriginalId is null
+      ? "New AI prompt"
+      : "Edit AI prompt";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>@ViewData["Title"]</h1>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <section class="form-section">
+      <h2>Prompt</h2>
+      <div class="form-grid">
+         <label>
+            <span>ID</span>
+            <input asp-for="Prompt.Id" />
+            <span asp-validation-for="Prompt.Id"></span>
+         </label>
+         <label>
+            <span>Job</span>
+            <select asp-for="Prompt.JobId">
+               <option value="">Select job</option>
+               @foreach (var job in Model.Jobs)
+               {
+                  <option value="@job.Id">@job.Label</option>
+               }
+            </select>
+            <span asp-validation-for="Prompt.JobId"></span>
+         </label>
+         <label>
+            <span>Version</span>
+            <input asp-for="Prompt.Version" type="number" min="1" />
+            <span asp-validation-for="Prompt.Version"></span>
+         </label>
+         <label>
+            <span>Temperature</span>
+            <input asp-for="Prompt.Temperature" type="number" step="0.01" />
+         </label>
+         <label>
+            <span>Max output tokens</span>
+            <input asp-for="Prompt.MaxOutputTokens" type="number" min="1" />
+         </label>
+      </div>
+      <label>
+         <span>System prompt</span>
+         <textarea asp-for="Prompt.SystemPrompt" rows="6"></textarea>
+         <span asp-validation-for="Prompt.SystemPrompt"></span>
+      </label>
+      <label>
+         <span>User prompt template</span>
+         <textarea asp-for="Prompt.UserPromptTemplate" rows="8"></textarea>
+         <span asp-validation-for="Prompt.UserPromptTemplate"></span>
+      </label>
+      <label>
+         <span>Output schema JSON</span>
+         <textarea asp-for="Prompt.OutputSchemaJson" rows="5"></textarea>
+         <span asp-validation-for="Prompt.OutputSchemaJson"></span>
+      </label>
+      <label class="check-row">
+         <input asp-for="Prompt.Enabled" type="checkbox" />
+         <span>Enabled</span>
+      </label>
+   </section>
+
+   <section class="form-actions">
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>

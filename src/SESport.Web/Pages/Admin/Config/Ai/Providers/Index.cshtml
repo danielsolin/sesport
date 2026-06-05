@@ -1,0 +1,50 @@
+@page
+@model SESport.Web.Pages.Admin.Config.Ai.Providers.IndexModel
+@{
+   ViewData["Title"] = "AI providers";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>AI providers</h1>
+   </div>
+   <a class="button button-primary" asp-page="./Edit">New provider</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>ID</th>
+            <th>Label</th>
+            <th>Kind</th>
+            <th>Model</th>
+            <th>Enabled</th>
+            <th></th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var provider in Model.Providers)
+         {
+            <tr>
+               <td><code>@provider.Id</code></td>
+               <td>@provider.Label</td>
+               <td>@provider.Kind</td>
+               <td>@provider.Model</td>
+               <td>@provider.Enabled</td>
+               <td class="table-actions">
+                  <a asp-page="./Edit" asp-route-id="@provider.Id">Edit</a>
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

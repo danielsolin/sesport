@@ -76,10 +76,8 @@ Stores each execution.
 - repositories for jobs and prompt versions
 - repositories for execution history
 
-In the current implementation the repositories live in
-`src/SESport.Web/Data` to match the existing repository pattern in the web
-project. They can be moved to `SESport.Data` later if we want to consolidate
-data access there.
+The AI repositories now live in `src/SESport.Data/AI`, and the web project
+consumes them through a project reference to `SESport.Data`.
 
 ### `src/SESport.Web/Pages/Admin/AI`
 

@@ -1,0 +1,70 @@
+@page "{id?}"
+@model SESport.Web.Pages.Admin.Config.Ai.Providers.EditModel
+@{
+   ViewData["Title"] = Model.Provider.OriginalId is null
+      ? "New AI provider"
+      : "Edit AI provider";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>@ViewData["Title"]</h1>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <section class="form-section">
+      <h2>Provider</h2>
+      <div class="form-grid">
+         <label>
+            <span>ID</span>
+            <input asp-for="Provider.Id" />
+            <span asp-validation-for="Provider.Id"></span>
+         </label>
+         <label>
+            <span>Label</span>
+            <input asp-for="Provider.Label" />
+            <span asp-validation-for="Provider.Label"></span>
+         </label>
+         <label>
+            <span>Kind</span>
+            <input asp-for="Provider.Kind" />
+            <span asp-validation-for="Provider.Kind"></span>
+         </label>
+         <label>
+            <span>Model</span>
+            <input asp-for="Provider.Model" />
+         </label>
+         <label>
+            <span>Base address</span>
+            <input asp-for="Provider.BaseAddress" type="url" />
+         </label>
+         <label>
+            <span>API key source</span>
+            <input asp-for="Provider.ApiKeySource" />
+         </label>
+      </div>
+      <label>
+         <span>Request options JSON</span>
+         <textarea asp-for="Provider.RequestOptionsJson" rows="4"></textarea>
+         <span asp-validation-for="Provider.RequestOptionsJson"></span>
+      </label>
+      <label class="check-row">
+         <input asp-for="Provider.Enabled" type="checkbox" />
+         <span>Enabled</span>
+      </label>
+   </section>
+
+   <section class="form-actions">
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>

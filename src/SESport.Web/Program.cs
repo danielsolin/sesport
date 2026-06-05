@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
-using SESport.Core.AI;
-using SESport.Core.AI.Abstractions;
-using SESport.Core.AI.Providers;
-using SESport.Core.AI.Rendering;
+using SESport.Web.Extensions;
 using SESport.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,19 +14,7 @@ builder.Services.AddSingleton(
       defaultConnectionString
    )
 );
-builder.Services.AddScoped<AiRepository>();
-builder.Services.AddScoped<IAiJobDefinitionRepository>(
-   sp => sp.GetRequiredService<AiRepository>()
-);
-builder.Services.AddScoped<IAiJobRunRepository>(
-   sp => sp.GetRequiredService<AiRepository>()
-);
-builder.Services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
-builder.Services.AddScoped<IAiJobRunner, AiJobRunner>();
-builder.Services.AddHttpClient<
-   IAiProviderClient,
-   OpenRouterResponsesAiProviderClient
->();
+builder.Services.AddAiPlatform();
 builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();

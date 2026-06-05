@@ -1,0 +1,85 @@
+@using SESport.Web.Data
+@inject AdminRepository AdminRepository
+@{
+   Layout = "/Pages/Shared/_Layout.cshtml";
+   var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
+   var isReferenceTables = requestPath.StartsWith(
+      "/Admin/Config/",
+      StringComparison.OrdinalIgnoreCase
+   ) && !requestPath.StartsWith(
+      "/Admin/Config/Ai",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isAiProviders = requestPath.StartsWith(
+      "/Admin/Config/Ai/Providers",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isAiJobs = requestPath.StartsWith(
+      "/Admin/Config/Ai/Jobs",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isAiPrompts = requestPath.StartsWith(
+      "/Admin/Config/Ai/Prompts",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var adminMenuLink = "admin-sidebar-link";
+   var referenceItems = AdminRepository.GetReferenceNavigationItems();
+   var aiItems = new[]
+   {
+      new AdminArea(
+         "AI providers",
+         "Configure AI endpoints and credentials.",
+         "/Admin/Config/Ai/Providers"
+      ),
+      new AdminArea(
+         "AI jobs",
+         "Configure reusable AI jobs.",
+         "/Admin/Config/Ai/Jobs"
+      ),
+      new AdminArea(
+         "AI prompts",
+         "Configure prompt versions for AI jobs.",
+         "/Admin/Config/Ai/Prompts"
+      )
+   };
+}
+
+<div class="admin-layout">
+   <aside class="admin-sidebar">
+      <div class="admin-sidebar-group">
+         <h2>Reference tables</h2>
+         @foreach (var item in referenceItems)
+         {
+            var isActive = isReferenceTables
+               && string.Equals(
+                  item.Href,
+                  ViewContext.HttpContext.Request.Path.Value,
+                  StringComparison.OrdinalIgnoreCase
+               );
+            <a class="@(isActive ? $"{adminMenuLink} is-active" : adminMenuLink)"
+               href="@item.Href">
+               @item.Title
+            </a>
+         }
+      </div>
+      <div class="admin-sidebar-group">
+         <h2>AI</h2>
+         @foreach (var item in aiItems)
+         {
+            var isActive = string.Equals(
+               item.Href,
+               ViewContext.HttpContext.Request.Path.Value,
+               StringComparison.OrdinalIgnoreCase
+            );
+            <a class="@(isActive ? $"{adminMenuLink} is-active" : adminMenuLink)"
+               href="@item.Href">
+               @item.Title
+            </a>
+         }
+      </div>
+   </aside>
+
+   <section>
+      @RenderBody()
+   </section>
+</div>

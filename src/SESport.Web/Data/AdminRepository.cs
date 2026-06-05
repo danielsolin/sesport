@@ -146,9 +146,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "/Admin/Activities"
          ),
          new AdminArea(
-            "Reference data",
-            "Maintain low-change lookup tables.",
-            "/Admin/ReferenceData"
+            "Config",
+            "Manage lookup tables and AI configuration.",
+            "/Admin/Config"
          ),
          new AdminArea(
             "Entities",
@@ -163,7 +163,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return GetReferenceTables()
          .Select(table => new ReferenceNavigationItem(
             table.Title,
-            $"/Admin/ReferenceData/{table.Id}"
+            $"/Admin/Config/{table.Id}"
          ))
          .ToList();
    }
