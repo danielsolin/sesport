@@ -616,6 +616,13 @@ textarea {
    resize: vertical;
 }
 
+.edit-form textarea {
+   min-height: 38px;
+   height: 38px;
+   resize: vertical;
+   overflow: auto;
+}
+
 .form-actions {
    display: flex;
    align-items: center;

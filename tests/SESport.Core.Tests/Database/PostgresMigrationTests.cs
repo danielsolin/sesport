@@ -387,6 +387,22 @@ public class PostgresMigrationTests
       Assert.Contains("'mdi:hockey-puck'", migration);
    }
 
+   [Fact]
+   public void SixteenthMigrationAddsActivityTeaser()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "016_add_activity_teaser.sql"
+         )
+      );
+
+      Assert.Contains("alter table activities", migration);
+      Assert.Contains("add column if not exists teaser text null", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

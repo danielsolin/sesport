@@ -112,6 +112,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.id,
             a.title,
             a.description,
+            a.teaser,
             a.activity_type_id,
             a.sport_id,
             a.activity_date,
@@ -148,15 +149,16 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          Id = reader.GetGuid(0),
          Title = reader.GetString(1),
          Description = ReadString(reader, 2),
-         ActivityType = reader.GetString(3),
-         SportId = reader.GetString(4),
-         ActivityDate = reader.GetFieldValue<DateOnly>(5),
-         LocalStartTime = ReadTimeOnly(reader, 6),
-         TimeZoneId = reader.GetString(7),
-         IsPublished = reader.GetString(8) == "Published",
-         EvidenceUri = ReadString(reader, 9),
-         EvidenceTitle = ReadString(reader, 10),
-         EvidenceComment = ReadString(reader, 11)
+         Teaser = ReadString(reader, 3),
+         ActivityType = reader.GetString(4),
+         SportId = reader.GetString(5),
+         ActivityDate = reader.GetFieldValue<DateOnly>(6),
+         LocalStartTime = ReadTimeOnly(reader, 7),
+         TimeZoneId = reader.GetString(8),
+         IsPublished = reader.GetString(9) == "Published",
+         EvidenceUri = ReadString(reader, 10),
+         EvidenceTitle = ReadString(reader, 11),
+         EvidenceComment = ReadString(reader, 12)
       };
 
       await reader.DisposeAsync();
@@ -406,6 +408,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             title,
             description,
+            teaser,
             activity_type_id,
             sport_id,
             activity_date,
@@ -420,6 +423,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @id,
             @title,
             @description,
+            @teaser,
             @activity_type_id,
             @sport_id,
             @activity_date,
@@ -456,6 +460,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          set
             title = @title,
             description = @description,
+            teaser = @teaser,
             activity_type_id = @activity_type_id,
             sport_id = @sport_id,
             activity_date = @activity_date,
@@ -631,6 +636,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "description",
          BlankToDbNull(model.Description)
+      );
+      command.Parameters.AddWithValue(
+         "teaser",
+         BlankToDbNull(model.Teaser)
       );
       command.Parameters.AddWithValue("activity_type_id", model.ActivityType);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
