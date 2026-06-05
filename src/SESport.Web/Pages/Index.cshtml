@@ -28,13 +28,36 @@ else
       {
          <article class="activity-row">
             <div class="activity-time">
-               @if(activity.SportIconPath is not null)
+               <div class="activity-time-row">
+                  @if(activity.SportIconPath is not null)
+                  {
+                     <img class="activity-sport-icon"
+                          src="@activity.SportIconPath"
+                          alt="" />
+                  }
+                  @activity.TimeOnlyText
+               </div>
+               @if(!string.IsNullOrWhiteSpace(activity.EntitySummary))
                {
-                  <img class="activity-sport-icon"
-                       src="@activity.SportIconPath"
-                       alt="" />
+                  <div class="activity-entity-summary">
+                     @{
+                        var entitySummary = activity.EntitySummary
+                           .Split(
+                              ", ",
+                              StringSplitOptions.RemoveEmptyEntries
+                           );
+                     }
+                     @for(var i = 0; i < entitySummary.Length; i++)
+                     {
+                        <span>@entitySummary[i]</span>
+
+                        @if(i < entitySummary.Length - 1)
+                        {
+                           <br />
+                        }
+                     }
+                  </div>
                }
-               @activity.TimeOnlyText
             </div>
             <div class="activity-main">
                <div class="activity-meta">
@@ -43,13 +66,27 @@ else
                   </span>
                   <span>@activity.ActivityType</span>
                </div>
-               <h2>@activity.EntitySummary</h2>
-               <p class="entity-line">@activity.Title</p>
+               <h2>@activity.Title</h2>
                @if(!string.IsNullOrWhiteSpace(
                   activity.RelatedEntitiesSummary))
                {
                   <p class="related-entity-line">
-                     @activity.RelatedEntitiesSummary
+                     @{
+                        var relatedEntities = activity.RelatedEntitiesSummary
+                           .Split(
+                              ", ",
+                              StringSplitOptions.RemoveEmptyEntries
+                           );
+                     }
+                     @for(var i = 0; i < relatedEntities.Length; i++)
+                     {
+                        <span>@relatedEntities[i]</span>
+
+                        @if(i < relatedEntities.Length - 1)
+                        {
+                           <br />
+                        }
+                     }
                   </p>
                }
                @if(!string.IsNullOrWhiteSpace(activity.Description))
