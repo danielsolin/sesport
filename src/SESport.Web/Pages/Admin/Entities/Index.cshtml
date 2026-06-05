@@ -85,16 +85,16 @@ else
                @foreach(var entity in Model.Entities)
                {
                   <tr data-entity-row-name="@entity.Name">
-                     <td>
-                        <a asp-page="./Edit" asp-route-id="@entity.Id">
-                           <strong>@entity.Name</strong>
-                        </a>
-                        <a class="ses-entity-search-link"
-                           href="@Model.SearchUrl@entity.Name @entity.Sport"
-                           target="_blank">
-                           <span class="ses-icon-search"></span>
-                        </a>
-                     </td>
+                  <td>
+                     <a asp-page="./Edit" asp-route-id="@entity.Id">
+                        <strong>@entity.Name</strong>
+                     </a>
+                     <a class="ses-entity-search-link"
+                        href="@ViewData["SearchUrl"]@entity.Name @entity.Sport"
+                        target="_blank">
+                        <span class="ses-icon-search"></span>
+                     </a>
+                  </td>
                      <td>@entity.EntityType</td>
                      <td>@entity.Sport</td>
                      @* <td>@entity.WatchPriority</td> *@

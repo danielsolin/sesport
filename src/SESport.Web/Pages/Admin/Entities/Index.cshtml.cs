@@ -13,8 +13,6 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string CountrySortColumn = "Country";
    public const string LinksSortColumn = "Links";
 
-   public string SearchUrl = "https://www.google.com/search?q=";
-
    public IReadOnlyList<EntityListItem> Entities { get; private set; } = [];
 
    public string SortColumn { get; private set; } = NameSortColumn;
