@@ -80,7 +80,7 @@ public class EditModel(
          return LocalRedirect(ReturnUrl);
       }
 
-      return RedirectToPage("./Edit", new { id });
+      return RedirectToPage("./");
    }
 
    private async Task LoadEntitiesAsync(CancellationToken cancellationToken)
