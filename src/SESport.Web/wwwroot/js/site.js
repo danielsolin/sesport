@@ -4,6 +4,7 @@
    const replacementFormSelector = "form[data-ajax-replace-target]";
    const checkboxToggleSelector = "[data-checkbox-toggle]";
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
+   const entityNameFilterSelector = "[data-entity-name-filter]";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const exclusiveEmptySelectStates = new WeakMap();
 
@@ -11,6 +12,7 @@
    initializeExclusiveEmptySelects();
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
+   initializeEntityNameFilters();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -162,6 +164,54 @@
                updateCheckboxVisibility(target);
             });
          });
+      });
+   }
+
+   function initializeEntityNameFilters(root = document)
+   {
+      root.querySelectorAll(entityNameFilterSelector).forEach(field => {
+         if(!(field instanceof HTMLInputElement)
+            || field.dataset.entityNameFilterInitialized === "true")
+         {
+            return;
+         }
+
+         field.dataset.entityNameFilterInitialized = "true";
+
+         const container = field.closest("[data-entity-list-container]");
+         const rows = container?.querySelectorAll("[data-entity-row-name]");
+         const emptyState = container?.querySelector(
+            "[data-entity-empty-state]"
+         );
+
+         const update = () => {
+            const query = field.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            rows?.forEach(row => {
+               const rowName = (
+                  row instanceof HTMLElement
+                     ? row.dataset.entityRowName ?? ""
+                     : ""
+               ).toLowerCase();
+               const matches = query === "" || rowName.includes(query);
+
+               row.hidden = !matches;
+
+               if(matches)
+               {
+                  visibleCount++;
+               }
+            });
+
+            if(emptyState instanceof HTMLElement)
+            {
+               emptyState.hidden = visibleCount > 0;
+            }
+         };
+
+         field.addEventListener("input", update);
+         update();
       });
    }
 

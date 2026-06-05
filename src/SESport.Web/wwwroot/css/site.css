@@ -125,6 +125,18 @@ a:hover {
    gap: 18px;
 }
 
+.page-heading-title-row {
+   display: flex;
+   align-items: center;
+   flex-wrap: wrap;
+   gap: 12px;
+}
+
+.entity-name-filter {
+   width: 220px;
+   max-width: 100%;
+}
+
 .eyebrow {
    margin: 0 0 4px;
    color: var(--muted);

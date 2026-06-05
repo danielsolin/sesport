@@ -7,7 +7,14 @@
 <section class="page-heading page-heading-row">
    <div>
       <p class="eyebrow">Admin</p>
-      <h1>Entities</h1>
+      <div class="page-heading-title-row">
+         <h1>Entities</h1>
+         <input type="text"
+                class="entity-name-filter"
+                placeholder="name"
+                aria-label="Filter entities by name"
+                data-entity-name-filter />
+      </div>
    </div>
    <div class="button-row">
       <a class="button" asp-page="/Admin/Index">Back</a>
@@ -27,79 +34,84 @@ else if(Model.Entities.Count == 0)
 }
 else
 {
-   <div class="admin-table-wrap">
-      <table class="admin-table">
-         <thead>
-            <tr>
-               <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Name"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Name")'>
-                     Name @Model.GetSortIndicator("Name")
-                  </a>
-               </th>
-               <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Type"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>
-                     Type @Model.GetSortIndicator("Type")
-                  </a>
-               </th>
-               <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Sport"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>
-                     Sport @Model.GetSortIndicator("Sport")
-                  </a>
-               </th>
-               @* <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Watch"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Watch")'>
-                     Watch @Model.GetSortIndicator("Watch")
-                  </a>
-               </th> *@
-               <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Country"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Country")'>
-                     Country @Model.GetSortIndicator("Country")
-                  </a>
-               </th>
-               <th>
-                  <a asp-page="./Index" asp-route-sortColumn="Links"
-                     asp-route-sortAsc='@Model.GetNextSortAsc("Links")'>
-                     Links @Model.GetSortIndicator("Links")
-                  </a>
-               </th>
-               <th></th>
-            </tr>
-         </thead>
-         <tbody>
-            @foreach(var entity in Model.Entities)
-            {
+   <div data-entity-list-container>
+      <div class="notice" data-entity-empty-state hidden>
+         No matching entities.
+      </div>
+      <div class="admin-table-wrap">
+         <table class="admin-table">
+            <thead>
                <tr>
-                  <td>
-                     <a asp-page="./Edit" asp-route-id="@entity.Id">
-                        <strong>@entity.Name</strong>
+                  <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Name"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Name")'>
+                        Name @Model.GetSortIndicator("Name")
                      </a>
-                     <a class="ses-entity-search-link"
-                        href="@Model.SearchUrl@entity.Name @entity.Sport"
-                        target="_blank">
-                        <span class="ses-icon-search"></span>
+                  </th>
+                  <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Type"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>
+                        Type @Model.GetSortIndicator("Type")
                      </a>
-                  </td>
-                  <td>@entity.EntityType</td>
-                  <td>@entity.Sport</td>
-                  @* <td>@entity.WatchPriority</td> *@
-                  <td>@entity.Country</td>
-                  <td>@entity.LinkedEntityCount</td>
-                  <td class="table-actions">
-                     <form method="post"
-                           asp-page-handler="Delete"
-                           asp-route-id="@entity.Id"
-                           onsubmit='return confirm("Sure?");'>
-                        <button type="submit">Delete</button>
-                     </form>
-                  </td>
+                  </th>
+                  <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Sport"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>
+                        Sport @Model.GetSortIndicator("Sport")
+                     </a>
+                  </th>
+                  @* <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Watch"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Watch")'>
+                        Watch @Model.GetSortIndicator("Watch")
+                     </a>
+                  </th> *@
+                  <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Country"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Country")'>
+                        Country @Model.GetSortIndicator("Country")
+                     </a>
+                  </th>
+                  <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Links"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Links")'>
+                        Links @Model.GetSortIndicator("Links")
+                     </a>
+                  </th>
+                  <th></th>
                </tr>
-            }
-         </tbody>
-      </table>
+            </thead>
+            <tbody>
+               @foreach(var entity in Model.Entities)
+               {
+                  <tr data-entity-row-name="@entity.Name">
+                     <td>
+                        <a asp-page="./Edit" asp-route-id="@entity.Id">
+                           <strong>@entity.Name</strong>
+                        </a>
+                        <a class="ses-entity-search-link"
+                           href="@Model.SearchUrl@entity.Name @entity.Sport"
+                           target="_blank">
+                           <span class="ses-icon-search"></span>
+                        </a>
+                     </td>
+                     <td>@entity.EntityType</td>
+                     <td>@entity.Sport</td>
+                     @* <td>@entity.WatchPriority</td> *@
+                     <td>@entity.Country</td>
+                     <td>@entity.LinkedEntityCount</td>
+                     <td class="table-actions">
+                        <form method="post"
+                              asp-page-handler="Delete"
+                              asp-route-id="@entity.Id"
+                              onsubmit='return confirm("Sure?");'>
+                           <button type="submit">Delete</button>
+                        </form>
+                     </td>
+                  </tr>
+               }
+            </tbody>
+         </table>
+      </div>
    </div>
 }
