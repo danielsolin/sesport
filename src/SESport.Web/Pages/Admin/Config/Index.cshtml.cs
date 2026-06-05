@@ -9,16 +9,6 @@ public class IndexModel(
    AuditRepository auditRepository
 ) : PageModel
 {
-   public IReadOnlyList<ReferenceNavigationItem> NavigationItems
-   {
-      get;
-      private set;
-   } = [];
-
-   public IReadOnlyList<ReferenceTableInfo> Tables { get; private set; } = [];
-
-   public IReadOnlyList<AdminArea> AiAreas { get; private set; } = [];
-
    public ReferenceTableInfo? CurrentTable { get; private set; }
 
    public string? CurrentSpecialView { get; private set; }
@@ -56,27 +46,6 @@ public class IndexModel(
       CancellationToken cancellationToken
    )
    {
-      NavigationItems = repository.GetReferenceNavigationItems();
-      Tables = repository.GetReferenceTables();
-      AiAreas =
-      [
-         new AdminArea(
-            "AI providers",
-            "Configure AI endpoints and credentials.",
-            "/Admin/Config/Ai/Providers"
-         ),
-         new AdminArea(
-            "AI jobs",
-            "Configure reusable AI jobs.",
-            "/Admin/Config/Ai/Jobs"
-         ),
-         new AdminArea(
-            "AI prompts",
-            "Configure prompt versions for AI jobs.",
-            "/Admin/Config/Ai/Prompts"
-         )
-      ];
-
       if (string.IsNullOrWhiteSpace(table))
       {
          return Page();

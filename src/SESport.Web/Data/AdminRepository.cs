@@ -168,6 +168,27 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          .ToList();
    }
 
+   public IReadOnlyList<AdminNavGroup> GetConfigNavigationGroups()
+   {
+      return
+      [
+         new AdminNavGroup(
+            "Reference tables",
+            GetReferenceNavigationItems()
+               .Select(item => new AdminNavItem(item.Title, item.Href))
+               .ToList()
+         ),
+         new AdminNavGroup(
+            "AI",
+            [
+               new AdminNavItem("AI providers", "/Admin/Config/Ai/Providers"),
+               new AdminNavItem("AI jobs", "/Admin/Config/Ai/Jobs"),
+               new AdminNavItem("AI prompts", "/Admin/Config/Ai/Prompts")
+            ]
+         )
+      ];
+   }
+
    public IReadOnlyList<ReferenceTableInfo> GetReferenceTables()
    {
       return Tables.Values

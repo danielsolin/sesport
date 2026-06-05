@@ -2,6 +2,13 @@ namespace SESport.Web.Data;
 
 public sealed record AdminArea(string Title, string Description, string Href);
 
+public sealed record AdminNavItem(string Title, string Href);
+
+public sealed record AdminNavGroup(
+   string Title,
+   IReadOnlyList<AdminNavItem> Items
+);
+
 public enum ReferenceTableKind
 {
    Lookup,
