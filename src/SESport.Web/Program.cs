@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
-using SESport.Core.AIActivityTeasers;
+using SESport.Core.AI;
+using SESport.Core.AI.Abstractions;
+using SESport.Core.AI.Providers;
+using SESport.Core.AI.Rendering;
 using SESport.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,29 +11,24 @@ var adminPassword = builder.Configuration["Admin:Password"];
 var defaultConnectionString =
    "Host=localhost;Port=5432;Database=sesport;" +
    "Username=sesport;Password=sesport";
-var teaserBaseAddress = builder.Configuration["AI:Teaser:BaseAddress"] ??
-   "https://openrouter.ai/api/v1/";
-var teaserModel = builder.Configuration["AI:Teaser:Model"] ??
-   "openrouter/free";
-var teaserApiKey = builder.Configuration["AI:Teaser:ApiKey"] ??
-   Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
-
 builder.Services.AddSingleton(
    _ => NpgsqlDataSource.Create(
       builder.Configuration.GetConnectionString("Default") ??
       defaultConnectionString
    )
 );
-builder.Services.AddSingleton(
-   new ActivityTeaserGeneratorOptions(
-      new Uri(teaserBaseAddress),
-      teaserModel,
-      teaserApiKey
-   )
+builder.Services.AddScoped<AiRepository>();
+builder.Services.AddScoped<IAiJobDefinitionRepository>(
+   sp => sp.GetRequiredService<AiRepository>()
 );
+builder.Services.AddScoped<IAiJobRunRepository>(
+   sp => sp.GetRequiredService<AiRepository>()
+);
+builder.Services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
+builder.Services.AddScoped<IAiJobRunner, AiJobRunner>();
 builder.Services.AddHttpClient<
-   IActivityTeaserGenerator,
-   OpenAiResponsesActivityTeaserGenerator
+   IAiProviderClient,
+   OpenRouterResponsesAiProviderClient
 >();
 builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<AdminRepository>();

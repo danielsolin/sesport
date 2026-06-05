@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using SESport.Core.AIActivityTeasers;
+using System.Text.Json;
+using SESport.Core.AI;
+using SESport.Core.AI.Abstractions;
+using SESport.Core.AI.Models;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
@@ -9,7 +12,7 @@ namespace SESport.Web.Pages.Admin.Activities;
 public class EditModel(
    ActivityRepository repository,
    TvSportRepository tvSportRepository,
-   IActivityTeaserGenerator teaserGenerator
+   IAiJobRunner aiJobRunner
 ) : PageModel
 {
    [BindProperty]
@@ -119,41 +122,44 @@ public class EditModel(
          });
       }
 
-      try
-      {
-         var result = await teaserGenerator.GenerateAsync(
-            await CreateTeaserRequestAsync(cancellationToken),
-            cancellationToken
-         );
-         var validationError = ValidateGeneratedTeaser(result.Teaser);
+      var result = await aiJobRunner.RunAsync(
+         new AiJobRequest(
+            "generate-activity-teaser",
+            await CreateTeaserInputJsonAsync(cancellationToken),
+            Activity.Id?.ToString()
+         ),
+         cancellationToken
+      );
 
-         if(validationError is not null)
-         {
-            var teaserPreview = CreateTeaserPreview(result.Teaser);
-
-            return BadRequest(new
-            {
-               error = $"{validationError} Preview: \"{teaserPreview}\"",
-               prompt = result.Prompt,
-               teaser = result.Teaser,
-               teaserPreview
-            });
-         }
-
-         return new JsonResult(new
-         {
-            prompt = result.Prompt,
-            teaser = result.Teaser
-         });
-      }
-      catch (Exception exception)
+      if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
       {
          return BadRequest(new
          {
-            error = exception.Message,
-            prompt = await CreatePromptAsync(cancellationToken)
+            error = result.ErrorMessage,
+            prompt = result.Prompt
          });
       }
+
+      var validationError = ValidateGeneratedTeaser(result.OutputText);
+
+      if(validationError is not null)
+      {
+         var teaserPreview = CreateTeaserPreview(result.OutputText);
+
+         return BadRequest(new
+         {
+            error = $"{validationError} Preview: \"{teaserPreview}\"",
+            prompt = result.Prompt,
+            teaser = result.OutputText,
+            teaserPreview
+         });
+      }
+
+      return new JsonResult(new
+      {
+         prompt = result.Prompt,
+         teaser = result.OutputText
+      });
    }
 
    private async Task LoadEntitiesAsync(
@@ -186,45 +192,6 @@ public class EditModel(
       {
          LoadError = exception.Message;
       }
-   }
-
-   private async Task<ActivityTeaserRequest> CreateTeaserRequestAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      var selectedIds = (Activity.LinkedEntityIds ?? []).ToHashSet();
-      var entityNames = (await repository.GetEntityOptionsAsync(
-         cancellationToken
-      ))
-         .Where(entity => selectedIds.Contains(entity.Id))
-         .Select(entity => entity.Name)
-         .ToList();
-      var sportName = (await repository.GetSportOptionsAsync(
-         cancellationToken
-      ))
-         .FirstOrDefault(sport => sport.Id == Activity.SportId)
-         ?.Label ?? Activity.SportId;
-
-      return new ActivityTeaserRequest(
-         Activity.Title,
-         Activity.Description,
-         Activity.ActivityType,
-         sportName,
-         Activity.ActivityDate,
-         Activity.LocalStartTime,
-         Activity.TimeZoneId,
-         entityNames,
-         []
-      );
-   }
-
-   private async Task<string> CreatePromptAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      return ActivityTeaserPrompt.Create(
-         await CreateTeaserRequestAsync(cancellationToken)
-      );
    }
 
    private static string? ValidateGeneratedTeaser(string teaser)
@@ -282,6 +249,40 @@ public class EditModel(
       }
 
       return preview[..180] + "...";
+   }
+
+   private async Task<string> CreateTeaserInputJsonAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      var selectedIds = (Activity.LinkedEntityIds ?? []).ToHashSet();
+      var entityNames = (await repository.GetEntityOptionsAsync(
+         cancellationToken
+      ))
+         .Where(entity => selectedIds.Contains(entity.Id))
+         .Select(entity => entity.Name)
+         .ToList();
+
+      var sportName = (await repository.GetSportOptionsAsync(
+         cancellationToken
+      ))
+         .FirstOrDefault(sport => sport.Id == Activity.SportId)
+         ?.Label ?? Activity.SportId;
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            title = Activity.Title,
+            description = Activity.Description,
+            activity_type = Activity.ActivityType,
+            sport = sportName,
+            activity_date = Activity.ActivityDate?.ToString("yyyy-MM-dd"),
+            local_start_time = Activity.LocalStartTime?.ToString("HH:mm"),
+            time_zone_id = Activity.TimeZoneId,
+            entities = entityNames,
+            related_entities = Array.Empty<string>()
+         }
+      );
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)

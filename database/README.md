@@ -36,6 +36,10 @@ connections and prevents reversed duplicate pairs.
 The twelfth migration adds a generic TV sport ignore table for import-time
 rules such as ignored channel names.
 
+The seventeenth migration adds a generic AI platform with providers, jobs,
+versioned prompts, and run history. The first seeded job is the activity
+teaser generator.
+
 Start PostgreSQL with Docker Compose:
 
 ```bash
