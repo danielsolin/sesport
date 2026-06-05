@@ -121,29 +121,38 @@ public class EditModel(
 
       try
       {
-         var teaser = await teaserGenerator.GenerateAsync(
+         var result = await teaserGenerator.GenerateAsync(
             await CreateTeaserRequestAsync(cancellationToken),
             cancellationToken
          );
-         var validationError = ValidateGeneratedTeaser(teaser);
+         var validationError = ValidateGeneratedTeaser(result.Teaser);
 
          if(validationError is not null)
          {
-            var teaserPreview = CreateTeaserPreview(teaser);
+            var teaserPreview = CreateTeaserPreview(result.Teaser);
 
             return BadRequest(new
             {
                error = $"{validationError} Preview: \"{teaserPreview}\"",
-               teaser,
+               prompt = result.Prompt,
+               teaser = result.Teaser,
                teaserPreview
             });
          }
 
-         return new JsonResult(new { teaser });
+         return new JsonResult(new
+         {
+            prompt = result.Prompt,
+            teaser = result.Teaser
+         });
       }
       catch (Exception exception)
       {
-         return BadRequest(new { error = exception.Message });
+         return BadRequest(new
+         {
+            error = exception.Message,
+            prompt = await CreatePromptAsync(cancellationToken)
+         });
       }
    }
 
@@ -209,6 +218,15 @@ public class EditModel(
       );
    }
 
+   private async Task<string> CreatePromptAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return ActivityTeaserPrompt.Create(
+         await CreateTeaserRequestAsync(cancellationToken)
+      );
+   }
+
    private static string? ValidateGeneratedTeaser(string teaser)
    {
       var wordCount = teaser
@@ -220,11 +238,11 @@ public class EditModel(
          return "The model returned an empty teaser.";
       }
 
-      if(wordCount < 15 || wordCount > 25)
+      if(wordCount < 10 || wordCount > 35)
       {
          return
             $"The model returned {wordCount} words, but the teaser must " +
-            "be 15 to 25 words.";
+            "be 10 to 35 words.";
       }
 
       var promptMarkers = new[]

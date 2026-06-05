@@ -41,7 +41,7 @@ public sealed class OpenAiResponsesActivityTeaserGenerator
       }
    }
 
-   public async Task<string> GenerateAsync(
+   public async Task<ActivityTeaserGenerationResult> GenerateAsync(
       ActivityTeaserRequest request,
       CancellationToken cancellationToken
    )
@@ -60,7 +60,16 @@ public sealed class OpenAiResponsesActivityTeaserGenerator
          new
          {
             model = options.Model,
-            input = prompt
+            input = prompt,
+            response_format = new
+            {
+               type = "json_object"
+            },
+            reasoning = new
+            {
+               effort = "none",
+               exclude = true
+            }
          },
          JsonOptions,
          cancellationToken
@@ -79,15 +88,112 @@ public sealed class OpenAiResponsesActivityTeaserGenerator
          );
       }
 
-      return NormalizeTeaser(ExtractOutputText(rawResponse));
+      return new ActivityTeaserGenerationResult(
+         prompt,
+         NormalizeTeaser(ExtractOutputText(rawResponse))
+      );
    }
 
    private static string NormalizeTeaser(string value)
    {
-      return value
+      var teaser = ExtractTeaser(value) ?? value;
+
+      return teaser
          .Trim()
          .Trim('"', '\'')
          .ReplaceLineEndings(" ");
+   }
+
+   private static string? ExtractTeaser(string value)
+   {
+      foreach(var candidate in GetTeaserCandidates(value))
+      {
+         var teaser = ExtractTeaserFromJson(candidate);
+
+         if(teaser is not null)
+         {
+            return teaser;
+         }
+      }
+
+      return null;
+   }
+
+   private static IEnumerable<string> GetTeaserCandidates(string value)
+   {
+      yield return value;
+
+      var codeFenceContent = ExtractCodeFenceContent(value);
+
+      if(!string.IsNullOrWhiteSpace(codeFenceContent) &&
+         !string.Equals(codeFenceContent, value, StringComparison.Ordinal))
+      {
+         yield return codeFenceContent;
+      }
+   }
+
+   private static string? ExtractTeaserFromJson(string value)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(value);
+         var root = document.RootElement;
+
+         if(root.ValueKind != JsonValueKind.Object)
+         {
+            return null;
+         }
+
+         if(root.TryGetProperty("teaser", out var teaser) &&
+            teaser.ValueKind == JsonValueKind.String)
+         {
+            return teaser.GetString();
+         }
+      }
+      catch (JsonException)
+      {
+      }
+
+      return null;
+   }
+
+   private static string? ExtractCodeFenceContent(string value)
+   {
+      var trimmed = value.Trim();
+
+      if(!trimmed.StartsWith("```", StringComparison.Ordinal))
+      {
+         return null;
+      }
+
+      var openingFenceEnd = trimmed.IndexOf('\n');
+
+      if(openingFenceEnd < 0)
+      {
+         return null;
+      }
+
+      var closingFenceStart = trimmed.LastIndexOf(
+         "```",
+         StringComparison.Ordinal
+      );
+
+      if(closingFenceStart <= openingFenceEnd)
+      {
+         return null;
+      }
+
+      var content = trimmed.Substring(
+         openingFenceEnd + 1,
+         closingFenceStart - openingFenceEnd - 1
+      ).Trim();
+
+      if(content.StartsWith("json", StringComparison.OrdinalIgnoreCase))
+      {
+         content = content[4..].TrimStart();
+      }
+
+      return content;
    }
 
    private static string ExtractOutputText(string rawResponse)

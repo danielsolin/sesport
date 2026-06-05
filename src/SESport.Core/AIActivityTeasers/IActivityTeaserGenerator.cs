@@ -2,7 +2,7 @@ namespace SESport.Core.AIActivityTeasers;
 
 public interface IActivityTeaserGenerator
 {
-   Task<string> GenerateAsync(
+   Task<ActivityTeaserGenerationResult> GenerateAsync(
       ActivityTeaserRequest request,
       CancellationToken cancellationToken
    );
