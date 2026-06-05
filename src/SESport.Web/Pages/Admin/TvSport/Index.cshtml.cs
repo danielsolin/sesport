@@ -173,7 +173,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    private async Task LoadAsync(CancellationToken cancellationToken)
    {
-      SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1));
+      SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.Now.AddDays(0));
 
       try
       {
