@@ -55,7 +55,7 @@ public sealed class ActivityEditModel
 
    public bool IsPublished { get; set; }
 
-   public Guid? EntityId { get; set; }
+   public List<Guid> LinkedEntityIds { get; set; } = [];
 
    public string? EvidenceUri { get; set; }
 

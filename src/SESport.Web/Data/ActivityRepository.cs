@@ -118,18 +118,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.local_start_time,
             a.time_zone_id,
             a.publication_status_id,
-            l.entity_id,
             e.uri,
             e.title,
             e.comment
          from activities a
-         left join lateral (
-            select entity_id
-            from activity_entity_links
-            where activity_id = a.id
-            order by id
-            limit 1
-         ) l on true
          left join lateral (
             select uri, title, comment
             from activity_evidence
@@ -151,7 +143,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      return new ActivityEditModel
+      var model = new ActivityEditModel
       {
          Id = reader.GetGuid(0),
          Title = reader.GetString(1),
@@ -162,11 +154,32 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          LocalStartTime = ReadTimeOnly(reader, 6),
          TimeZoneId = reader.GetString(7),
          IsPublished = reader.GetString(8) == "Published",
-         EntityId = reader.IsDBNull(9) ? null : reader.GetGuid(9),
-         EvidenceUri = ReadString(reader, 10),
-         EvidenceTitle = ReadString(reader, 11),
-         EvidenceComment = ReadString(reader, 12)
+         EvidenceUri = ReadString(reader, 9),
+         EvidenceTitle = ReadString(reader, 10),
+         EvidenceComment = ReadString(reader, 11)
       };
+
+      await reader.DisposeAsync();
+
+      const string linkSql = """
+         select entity_id
+         from activity_entity_links
+         where activity_id = @id
+         order by id
+         """;
+
+      await using var linkCommand = dataSource.CreateCommand(linkSql);
+      linkCommand.Parameters.AddWithValue("id", id);
+      await using var linkReader = await linkCommand.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      while (await linkReader.ReadAsync(cancellationToken))
+      {
+         model.LinkedEntityIds.Add(linkReader.GetGuid(0));
+      }
+
+      return model;
    }
 
    public async Task<Guid> SaveAsync(
@@ -217,7 +230,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          connection,
          transaction,
          id,
-         model.EntityId,
+         model.LinkedEntityIds,
          cancellationToken
       );
       await ReplaceEvidenceAsync(
@@ -465,7 +478,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid activityId,
-      Guid? entityId,
+      IEnumerable<Guid> entityIds,
       CancellationToken cancellationToken
    )
    {
@@ -477,7 +490,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       deleteCommand.Parameters.AddWithValue("activity_id", activityId);
       await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-      if (entityId is null)
+      var distinctEntityIds = entityIds
+         .Where(entityId => entityId != Guid.Empty)
+         .Distinct()
+         .ToList();
+
+      if (distinctEntityIds.Count == 0)
       {
          return;
       }
@@ -487,11 +505,18 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          values (@id, @activity_id, @entity_id)
          """;
 
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("id", Guid.NewGuid());
-      command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue("entity_id", entityId.Value);
-      await command.ExecuteNonQueryAsync(cancellationToken);
+      foreach (var entityId in distinctEntityIds)
+      {
+         await using var command = new NpgsqlCommand(
+            sql,
+            connection,
+            transaction
+         );
+         command.Parameters.AddWithValue("id", Guid.NewGuid());
+         command.Parameters.AddWithValue("activity_id", activityId);
+         command.Parameters.AddWithValue("entity_id", entityId);
+         await command.ExecuteNonQueryAsync(cancellationToken);
+      }
    }
 
    private static async Task ReplaceEvidenceAsync(

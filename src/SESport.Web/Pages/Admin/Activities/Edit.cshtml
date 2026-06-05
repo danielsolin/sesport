@@ -32,19 +32,19 @@
    }
 
    <section class="form-section">
-      <h2>Entity</h2>
+      <h2>Entities</h2>
       <label>
-         <span>Entity</span>
-         <select asp-for="Activity.EntityId">
-            <option value="">Select entity</option>
-            @foreach (var entity in Model.Entities)
-            {
-               <option value="@entity.Id">
-                  @($"{entity.Name} ({entity.Type}/{entity.Sport})")
-               </option>
-            }
+         <span>Entities</span>
+         <select asp-for="Activity.LinkedEntityIds"
+                 asp-items="Model.Entities"
+                 multiple
+                 class="ses-multiselect"
+                 data-multi-select
+                 data-placeholder="Select entities"
+                 data-select-all="false"
+                 data-dropdown-height="320px">
          </select>
-         <span asp-validation-for="Activity.EntityId"></span>
+         <span asp-validation-for="Activity.LinkedEntityIds"></span>
       </label>
    </section>
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
@@ -15,7 +16,7 @@ public class EditModel(
    [BindProperty]
    public string? ReturnUrl { get; set; }
 
-   public IReadOnlyList<EntityOption> Entities { get; private set; } = [];
+   public IReadOnlyList<SelectListItem> Entities { get; private set; } = [];
 
    public IReadOnlyList<LookupOption> ActivityTypes { get; private set; } = [];
 
@@ -31,10 +32,10 @@ public class EditModel(
    )
    {
       ReturnUrl = GetLocalReturnUrl(returnUrl);
-      await LoadEntitiesAsync(cancellationToken);
 
       if (id is null)
       {
+         await LoadEntitiesAsync([], cancellationToken);
          await PrefillFromTvSportBroadcastsAsync(
             tvSportBroadcastIds ?? [],
             cancellationToken
@@ -53,6 +54,10 @@ public class EditModel(
       }
 
       Activity = activity;
+      await LoadEntitiesAsync(
+         Activity.LinkedEntityIds ?? [],
+         cancellationToken
+      );
       return Page();
    }
 
@@ -64,7 +69,10 @@ public class EditModel(
 
       if (!ModelState.IsValid)
       {
-         await LoadEntitiesAsync(cancellationToken);
+         await LoadEntitiesAsync(
+            Activity.LinkedEntityIds ?? [],
+            cancellationToken
+         );
          return Page();
       }
 
@@ -83,11 +91,27 @@ public class EditModel(
       return RedirectToPage("./Index");
    }
 
-   private async Task LoadEntitiesAsync(CancellationToken cancellationToken)
+   private async Task LoadEntitiesAsync(
+      IEnumerable<Guid> selectedEntityIds,
+      CancellationToken cancellationToken
+   )
    {
       try
       {
-         Entities = await repository.GetEntityOptionsAsync(cancellationToken);
+         var selectedIds = selectedEntityIds.ToHashSet();
+         var entities = await repository.GetEntityOptionsAsync(
+            cancellationToken
+         );
+
+         Entities = entities
+            .Select(entity => new SelectListItem
+            {
+               Value = entity.Id.ToString(),
+               Text = $"{entity.Name} ({entity.Type}/{entity.Sport})",
+               Selected = selectedIds.Contains(entity.Id)
+            })
+            .ToList();
+
          ActivityTypes = await repository.GetActivityTypeOptionsAsync(
             cancellationToken
          );
@@ -125,11 +149,12 @@ public class EditModel(
          );
       }
 
-      if (Activity.EntityId is null)
+      if (Activity.LinkedEntityIds is null ||
+         Activity.LinkedEntityIds.Count == 0)
       {
          ModelState.AddModelError(
-            "Activity.EntityId",
-            "Entity is required."
+            "Activity.LinkedEntityIds",
+            "At least one entity is required."
          );
       }
 
