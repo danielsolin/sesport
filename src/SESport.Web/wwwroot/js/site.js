@@ -178,7 +178,9 @@
 
          field.dataset.entityNameFilterInitialized = "true";
 
-         const container = field.closest("[data-entity-list-container]");
+         const container = document.querySelector(
+            "[data-entity-list-container]"
+         );
          const rows = container?.querySelectorAll("[data-entity-row-name]");
          const emptyState = container?.querySelector(
             "[data-entity-empty-state]"
