@@ -262,6 +262,7 @@ h2 {
 
 .notice {
    padding: 14px 16px;
+   margin-bottom: 12px;
    border: 1px solid var(--line);
    border-radius: 8px;
    background: var(--surface);

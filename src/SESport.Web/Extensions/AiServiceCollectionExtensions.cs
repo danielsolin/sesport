@@ -23,6 +23,10 @@ public static class AiServiceCollectionExtensions
          IAiProviderClient,
          OpenRouterResponsesAiProviderClient
       >();
+      services.AddHttpClient<
+         IAiProviderClient,
+         LmStudioResponsesAiProviderClient
+      >();
 
       return services;
    }
