@@ -1,7 +1,6 @@
 .vs/
 bin/
 obj/
-/artifacts/screenshots/
 **/bin/
 **/obj/
 /data/ai-activity-search-runs/
