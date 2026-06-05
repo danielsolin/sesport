@@ -40,3 +40,6 @@ import:
   available there)
 - Hard rule: No lines in any file should exceed 80 characters wide unless it's
   required for the file to work.
+- Hard rule: All conversations/chats in Swedish, but everything produced for
+  the project in English. If the user starts speaking English, respond in
+  Swedish and remind them of this rule.
