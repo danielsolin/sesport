@@ -1,4 +1,5 @@
 using Npgsql;
+using SESport.Core.Domain;
 
 namespace SESport.Web.Data;
 
@@ -14,8 +15,9 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var start = ToUtc(date, TimeOnly.MinValue);
-      var end = ToUtc(date.AddDays(1), TimeOnly.MinValue);
+      var window = SportDay.ForDate(date);
+      var start = ToUtc(window.StartDate, window.Cutoff);
+      var end = ToUtc(window.EndDateExclusive, window.Cutoff);
 
       var hiddenFilterSql = showHidden
          ? ""
@@ -86,8 +88,9 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var start = ToUtc(date, TimeOnly.MinValue);
-      var end = ToUtc(date.AddDays(1), TimeOnly.MinValue);
+      var window = SportDay.ForDate(date);
+      var start = ToUtc(window.StartDate, window.Cutoff);
+      var end = ToUtc(window.EndDateExclusive, window.Cutoff);
 
       var hiddenFilterSql = showHidden
          ? ""

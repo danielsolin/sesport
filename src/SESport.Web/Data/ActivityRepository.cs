@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using SESport.Core.Domain;
 using Npgsql;
 
 namespace SESport.Web.Data;
@@ -21,9 +22,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      return await GetActivityListAsync(
-         "where a.publication_status_id = 'Published' " +
-         "and a.activity_date ='" + DateTime.Now.ToString("yyyy-MM-dd") + "'",
+      return await GetPublishedActivitiesAsync(
+         SportDay.Today(DateTimeOffset.UtcNow),
          cancellationToken
       );
    }
@@ -32,11 +32,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      return await GetActivityListAsync(
-         "where a.publication_status_id = 'Published' " +
-         "and a.activity_date ='" +
-         DateTime.Now.AddDays(1).ToString("yyyy-MM-dd") +
-         "'",
+      return await GetPublishedActivitiesAsync(
+         SportDay.Tomorrow(DateTimeOffset.UtcNow),
          cancellationToken
       );
    }
@@ -56,6 +53,102 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       return await GetActivityListAsync(string.Empty, cancellationToken);
+   }
+
+   private async Task<IReadOnlyList<ActivityListItem>>
+      GetPublishedActivitiesAsync(
+         SportDayWindow window,
+         CancellationToken cancellationToken
+      )
+   {
+      var sql = $$"""
+         select
+            a.id,
+            a.title,
+            a.description,
+            at.label,
+            s.id,
+            s.name,
+            s.icon_id,
+            a.activity_date,
+            a.local_start_time,
+            a.publication_status_id,
+            coalesce(
+               string_agg(
+                  te.canonical_name,
+                  ', ' order by te.canonical_name
+               ),
+               ''
+            ) as entities,
+            coalesce(re.related_entities, '') as related_entities
+         from activities a
+         join sports s on s.id = a.sport_id
+         join activity_types at on at.id = a.activity_type_id
+         left join activity_entity_links l on l.activity_id = a.id
+         left join entities te on te.id = l.entity_id
+         left join lateral (
+            select string_agg(
+               distinct entity.canonical_name,
+               ', ' order by entity.canonical_name
+            ) as related_entities
+            from activity_entity_links al
+            join entity_to_entity_links el
+               on el.source_entity_id = al.entity_id
+               or el.target_entity_id = al.entity_id
+            join entities entity
+               on entity.id = case
+                  when el.source_entity_id = al.entity_id
+                     then el.target_entity_id
+                  else el.source_entity_id
+               end
+            where al.activity_id = a.id
+               and entity.entity_type_id is not null
+         ) re on true
+         where a.publication_status_id = 'Published'
+            and a.starts_at >= @start
+            and a.starts_at < @end
+         group by a.id, at.label, s.id, s.name, s.icon_id, re.related_entities
+         order by
+            a.activity_date,
+            a.local_start_time nulls last,
+            a.title
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "start",
+         ToUtc(window.StartDate, window.Cutoff)
+      );
+      command.Parameters.AddWithValue(
+         "end",
+         ToUtc(window.EndDateExclusive, window.Cutoff)
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var activities = new List<ActivityListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         activities.Add(
+            new ActivityListItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               ReadString(reader, 2),
+               reader.GetString(3),
+               reader.GetString(4),
+               reader.GetString(5),
+               GetSportIconPath(ReadString(reader, 6)),
+               FormatTime(reader),
+               reader.GetString(9),
+               reader.GetString(10),
+               reader.GetString(11)
+            )
+         );
+      }
+
+      return activities;
    }
 
    public async Task<IReadOnlyList<EntityOption>> GetEntityOptionsAsync(
@@ -832,6 +925,30 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .Trim('-');
    }
 
+   private static string BuildPublishedDayWhereClause(SportDayWindow window)
+   {
+      var startDate = window.StartDate.ToString(
+         "yyyy-MM-dd",
+         CultureInfo.InvariantCulture
+      );
+      var nextDate = window.EndDateExclusive.ToString(
+         "yyyy-MM-dd",
+         CultureInfo.InvariantCulture
+      );
+      var cutoff = window.Cutoff.ToString(
+         "HH:mm",
+         CultureInfo.InvariantCulture
+      );
+
+      return
+         "where a.publication_status_id = 'Published' " +
+         "and (a.activity_date = '" + startDate + "' " +
+         "or (a.activity_date = '" + nextDate + "' " +
+         "and coalesce(a.local_start_time, time '00:00') < time '" +
+         cutoff +
+         "'))";
+   }
+
    private static string FormatTime(NpgsqlDataReader reader)
    {
       var activityDate = reader.GetFieldValue<DateOnly>(7);
@@ -857,6 +974,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private static object BlankToDbNull(string? value)
    {
       return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
+   }
+
+   private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
+   {
+      var local = date.ToDateTime(time);
+      return new DateTimeOffset(
+         local,
+         TimeZoneInfo.Local.GetUtcOffset(local)
+      ).ToUniversalTime();
    }
 
    private static string? GetSportIconPath(string? iconId)
