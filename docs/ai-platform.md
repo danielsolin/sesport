@@ -1,7 +1,6 @@
 # AI Platform
 
-This project will use a generic AI platform instead of feature-specific
-adapters such as the old activity teaser implementation.
+This project use a generic AI platform that is not overly abstracted.
 
 ## Database Model
 
