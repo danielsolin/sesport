@@ -4,6 +4,7 @@ public sealed record ActivityListItem(
    Guid Id,
    string Title,
    string? Description,
+   string? Teaser,
    string ActivityType,
    string SportId,
    string SportName,

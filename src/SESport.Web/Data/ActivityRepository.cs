@@ -66,6 +66,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.id,
             a.title,
             a.description,
+            a.teaser,
             at.label,
             s.id,
             s.name,
@@ -136,14 +137,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1),
                ReadString(reader, 2),
-               reader.GetString(3),
+               ReadString(reader, 3),
                reader.GetString(4),
                reader.GetString(5),
-               GetSportIconPath(ReadString(reader, 6)),
+               reader.GetString(6),
+               GetSportIconPath(ReadString(reader, 7)),
                FormatTime(reader),
-               reader.GetString(9),
                reader.GetString(10),
-               reader.GetString(11)
+               reader.GetString(11),
+               reader.GetString(12)
             )
          );
       }
@@ -447,6 +449,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.id,
             a.title,
             a.description,
+            a.teaser,
             at.label,
             s.id,
             s.name,
@@ -506,14 +509,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1),
                ReadString(reader, 2),
-               reader.GetString(3),
+               ReadString(reader, 3),
                reader.GetString(4),
                reader.GetString(5),
-               GetSportIconPath(ReadString(reader, 6)),
+               reader.GetString(6),
+               GetSportIconPath(ReadString(reader, 7)),
                FormatTime(reader),
-               reader.GetString(9),
                reader.GetString(10),
-               reader.GetString(11)
+               reader.GetString(11),
+               reader.GetString(12)
             )
          );
       }
@@ -951,8 +955,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static string FormatTime(NpgsqlDataReader reader)
    {
-      var activityDate = reader.GetFieldValue<DateOnly>(7);
-      var localStartTime = ReadTimeOnly(reader, 8);
+      var activityDate = reader.GetFieldValue<DateOnly>(8);
+      var localStartTime = ReadTimeOnly(reader, 9);
 
       return localStartTime is null
          ? $"{activityDate:yyyy-MM-dd}"

@@ -113,6 +113,12 @@ else
                {
                   <p>@activity.Description</p>
                }
+               @if(!string.IsNullOrWhiteSpace(activity.Teaser))
+               {
+                  <p class="activity-teaser">
+                     @activity.Teaser
+                  </p>
+               }
             </div>
          </article>
       }
