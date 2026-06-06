@@ -385,8 +385,8 @@ h2 {
 
 .admin-layout {
    display: grid;
-   grid-template-columns: 260px minmax(0, 1fr);
-   gap: 20px;
+   grid-template-columns: 220px minmax(0, 1fr);
+   gap: 16px;
 }
 
 .admin-sidebar {
@@ -394,14 +394,14 @@ h2 {
    align-content: start;
    overflow: hidden;
    border: 1px solid var(--line);
-   border-radius: 8px;
+   border-radius: 6px;
    background: var(--surface);
 }
 
 .admin-sidebar-group {
    display: grid;
-   gap: 2px;
-   padding: 12px 0;
+   gap: 1px;
+   padding: 8px 0;
    border-bottom: 1px solid var(--line);
 }
 
@@ -411,20 +411,22 @@ h2 {
 
 .admin-sidebar-group h2 {
    margin: 0;
-   padding: 0 14px 6px;
+   padding: 0 12px 4px;
    color: var(--muted);
-   font-size: 11px;
+   font-size: 10px;
    font-weight: 800;
    line-height: 1.2;
    text-transform: uppercase;
-   letter-spacing: 0.04em;
+   letter-spacing: 0.03em;
 }
 
 .admin-sidebar a {
    display: block;
-   padding: 8px 14px;
+   padding: 5px 12px;
    color: var(--text);
-   font-weight: 800;
+   font-size: 13px;
+   font-weight: 700;
+   line-height: 1.25;
 }
 
 .admin-sidebar a.is-active {

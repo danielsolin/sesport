@@ -7,18 +7,6 @@ namespace SESport.Web.Data;
 
 public sealed class AuditRepository(NpgsqlDataSource dataSource)
 {
-   public IReadOnlyList<AuditArea> GetAuditAreas()
-   {
-      return
-      [
-         new AuditArea(
-            "Activity audit",
-            "Inspect canonical activity entity links and evidence.",
-            "/Admin/Audit/Activities"
-         )
-      ];
-   }
-
    public async Task<IReadOnlyList<ActivityProposalAuditItem>>
       GetProposalsAsync(
          CancellationToken cancellationToken,

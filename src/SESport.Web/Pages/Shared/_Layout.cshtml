@@ -27,10 +27,6 @@
       "/Admin/Config",
       StringComparison.OrdinalIgnoreCase
    );
-   var isAudit = requestPath.StartsWith(
-      "/Admin/Audit",
-      StringComparison.OrdinalIgnoreCase
-   );
    var adminMenuLink = "admin-top-menu-link";
    var broadcastsClass = isBroadcasts
       ? $"{adminMenuLink} is-active"
@@ -42,9 +38,6 @@
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
    var activityProposalsClass = isActivityProposals
-      ? $"{adminMenuLink} is-active"
-      : adminMenuLink;
-   var auditClass = isAudit
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
    var configClass = isConfig
@@ -89,10 +82,6 @@
                <a class="@configClass"
                   asp-page="/Admin/Config/Index">
                   Config
-               </a>
-               <a class="@auditClass"
-                  asp-page="/Admin/Audit/Index">
-                  Audit
                </a>
             </nav>
          }
