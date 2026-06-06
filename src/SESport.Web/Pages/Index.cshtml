@@ -68,7 +68,6 @@ else
                         continue;
                      }
 
-                     var relatedOrganization = activity.RelatedOrganization;
                      var entitySummary = activity.RelatedPersonEntities
                         .Split(
                            ", ",
@@ -76,13 +75,6 @@ else
                         );
 
                      <div class="activity-time-summary">
-                        <div class="activity-time-summary-primary">
-                           @if(!string.IsNullOrWhiteSpace(
-                              relatedOrganization))
-                           {
-                              @relatedOrganization
-                           }
-                        </div>
                         <div class="activity-time-summary-entities">
                            @for(var i = 0; i < entitySummary.Length; i++)
                            {
@@ -97,13 +89,6 @@ else
                      </div>
                   }
                </div>
-               @if(!string.IsNullOrWhiteSpace(
-                  agendaSection.RelatedOrganization))
-               {
-                  <div class="activity-time-related">
-                     @agendaSection.RelatedOrganization
-                  </div>
-               }
             </div>
             <div class="activity-agenda-items">
                @foreach(var activity in agendaSection.Activities)
@@ -115,7 +100,7 @@ else
                         </span>
                         <span>@activity.ActivityType</span>
                      </div>
-                     <h2>@activity.Title</h2>
+                     <h2>@activity.RelatedOrganization - @activity.Title</h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
                         <p>@activity.Description</p>

@@ -230,6 +230,7 @@ h2 {
    font-size: 12px;
    font-weight: 600;
    line-height: 1.25;
+   text-wrap: nowrap;
 }
 
 .activity-time-related {
