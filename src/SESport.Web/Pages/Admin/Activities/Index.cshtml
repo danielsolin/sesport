@@ -77,6 +77,7 @@ else
                      Entities @Model.GetSortIndicator("Entities")
                   </a>
                </th>
+               <th>Teaser</th>
                <th>
                   <a asp-page="./Index"
                      asp-all-route-data='@Model.GetSortRouteValues("Status")'>
@@ -93,11 +94,12 @@ else
                   <td>@activity.TimeText</td>
                   <td>
                      <a asp-page="./Edit" asp-route-id="@activity.Id">
-                        <strong>@activity.Title</strong>
+                        <strong>@activity.RelatedEntitiesSummary - @activity.Title</strong>
                      </a>
                      <span>@activity.SportName / @activity.ActivityType</span>
                   </td>
                   <td>@activity.EntitySummary</td>
+                  <td>@activity.Teaser</td>
                   <td>
                      <span class="status-pill">
                         @activity.PublicationStatus
