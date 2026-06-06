@@ -21,6 +21,7 @@ csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
 dotnet_diagnostic.IDE0005.severity = warning
 dotnet_diagnostic.IDE0055.severity = warning
+csharp_space_after_keywords_in_control_flow_statements = false
 
 [*.md]
 trim_trailing_whitespace = false
