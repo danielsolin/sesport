@@ -370,6 +370,7 @@ public class EditModel(
       Activity.Title = firstBroadcast.Title;
       Activity.Description = CreatePrefillDescription(broadcasts);
       Activity.ActivityType = "Match";
+      Activity.IsPublished = true;
       var sportId = GetSportId(broadcasts);
       if(!string.IsNullOrWhiteSpace(sportId))
       {
