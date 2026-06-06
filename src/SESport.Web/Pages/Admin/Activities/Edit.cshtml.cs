@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using SESport.Core.AI;
 using SESport.Core.AI.Abstractions;
 using SESport.Core.AI.Models;
 using SESport.Web.Data;
@@ -40,7 +39,7 @@ public class EditModel(
    {
       ReturnUrl = GetLocalReturnUrl(returnUrl);
 
-      if (id is null)
+      if(id is null)
       {
          await LoadEntitiesAsync([], cancellationToken);
          await PrefillFromTvSportBroadcastsAsync(
@@ -55,7 +54,7 @@ public class EditModel(
          cancellationToken
       );
 
-      if (activity is null)
+      if(activity is null)
       {
          return NotFound();
       }
@@ -88,7 +87,7 @@ public class EditModel(
    {
       ValidateActivity();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          await LoadEntitiesAsync(
             Activity.LinkedEntityIds ?? [],
@@ -115,7 +114,7 @@ public class EditModel(
       CancellationToken cancellationToken
    )
    {
-      if (string.IsNullOrWhiteSpace(Activity.Title))
+      if(string.IsNullOrWhiteSpace(Activity.Title))
       {
          return BadRequest(new
          {
@@ -202,7 +201,7 @@ public class EditModel(
          );
          Sports = await repository.GetSportOptionsAsync(cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }
@@ -212,7 +211,7 @@ public class EditModel(
    {
       if(string.IsNullOrWhiteSpace(teaser))
       {
-        return "The model returned an empty teaser.";
+         return "The model returned an empty teaser.";
       }
 
       return null;
@@ -233,7 +232,7 @@ public class EditModel(
             return teaser.GetString();
          }
       }
-      catch (JsonException)
+      catch(JsonException)
       {
       }
 
@@ -301,12 +300,12 @@ public class EditModel(
 
    private void ValidateActivity()
    {
-      if (string.IsNullOrWhiteSpace(Activity.Title))
+      if(string.IsNullOrWhiteSpace(Activity.Title))
       {
          ModelState.AddModelError("Activity.Title", "Title is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Activity.ActivityType))
+      if(string.IsNullOrWhiteSpace(Activity.ActivityType))
       {
          ModelState.AddModelError(
             "Activity.ActivityType",
@@ -314,7 +313,7 @@ public class EditModel(
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Activity.SportId))
+      if(string.IsNullOrWhiteSpace(Activity.SportId))
       {
          ModelState.AddModelError(
             "Activity.SportId",
@@ -322,7 +321,7 @@ public class EditModel(
          );
       }
 
-      if (Activity.LinkedEntityIds is null ||
+      if(Activity.LinkedEntityIds is null ||
          Activity.LinkedEntityIds.Count == 0)
       {
          ModelState.AddModelError(
@@ -331,7 +330,7 @@ public class EditModel(
          );
       }
 
-      if (Activity.ActivityDate is null)
+      if(Activity.ActivityDate is null)
       {
          ModelState.AddModelError(
             "Activity.ActivityDate",
