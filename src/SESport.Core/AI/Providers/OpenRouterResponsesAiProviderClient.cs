@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using SESport.Core.AI.Abstractions;
 using SESport.Core.AI.Models;
+using SESport.Core.AI.Validation;
 
 namespace SESport.Core.AI.Providers;
 
@@ -69,12 +70,16 @@ public sealed class OpenRouterResponsesAiProviderClient
          );
       }
 
+      var outputText = NormalizeOutput(
+         ResponsesOutputValidator.ExtractFinalText(rawResponse)
+      );
+
       return new AiJobResult(
          Guid.NewGuid(),
          job.Id,
          provider.Id,
          renderedPrompt,
-         NormalizeOutput(ExtractOutputText(rawResponse)),
+         outputText,
          rawResponse,
          null
       );
@@ -206,46 +211,6 @@ public sealed class OpenRouterResponsesAiProviderClient
          .Trim()
          .Trim('"', '\'')
          .ReplaceLineEndings(" ");
-   }
-
-   private static string ExtractOutputText(string rawResponse)
-   {
-      using var document = JsonDocument.Parse(rawResponse);
-      var root = document.RootElement;
-
-      if(
-         root.TryGetProperty("output_text", out var outputText) &&
-         outputText.ValueKind == JsonValueKind.String
-      )
-      {
-         return outputText.GetString() ?? "";
-      }
-
-      if(!root.TryGetProperty("output", out var output))
-      {
-         return rawResponse;
-      }
-
-      foreach(var item in output.EnumerateArray())
-      {
-         if(!item.TryGetProperty("content", out var content))
-         {
-            continue;
-         }
-
-         foreach(var contentItem in content.EnumerateArray())
-         {
-            if(
-               contentItem.TryGetProperty("text", out var text) &&
-               text.ValueKind == JsonValueKind.String
-            )
-            {
-               return text.GetString() ?? "";
-            }
-         }
-      }
-
-      return rawResponse;
    }
 
    private static string CreateFailureMessage(

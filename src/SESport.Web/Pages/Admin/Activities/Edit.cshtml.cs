@@ -142,17 +142,30 @@ public class EditModel(
          });
       }
 
-      var validationError = ValidateGeneratedTeaser(result.OutputText);
+      var teaser = ExtractGeneratedTeaser(result.OutputText);
+
+      if(teaser is null)
+      {
+         return BadRequest(new
+         {
+            error = "The model returned invalid teaser JSON.",
+            prompt = result.Prompt,
+            teaser = result.OutputText,
+            teaserPreview = CreateTeaserPreview(result.OutputText)
+         });
+      }
+
+      var validationError = ValidateGeneratedTeaser(teaser);
 
       if(validationError is not null)
       {
-         var teaserPreview = CreateTeaserPreview(result.OutputText);
+         var teaserPreview = CreateTeaserPreview(teaser);
 
          return BadRequest(new
          {
             error = $"{validationError} Preview: \"{teaserPreview}\"",
             prompt = result.Prompt,
-            teaser = result.OutputText,
+            teaser,
             teaserPreview
          });
       }
@@ -160,7 +173,7 @@ public class EditModel(
       return new JsonResult(new
       {
          prompt = result.Prompt,
-         teaser = result.OutputText
+         teaser
       });
    }
 
@@ -198,45 +211,34 @@ public class EditModel(
 
    private static string? ValidateGeneratedTeaser(string teaser)
    {
-      var wordCount = teaser
-         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-         .Length;
-
       if(string.IsNullOrWhiteSpace(teaser))
       {
-         return "The model returned an empty teaser.";
-      }
-
-      if(wordCount < 10 || wordCount > 35)
-      {
-         return
-            $"The model returned {wordCount} words, but the teaser must " +
-            "be 10 to 35 words.";
-      }
-
-      var promptMarkers = new[]
-      {
-         "Requirements:",
-         "Activity:",
-         "The user wants",
-         "Okay,",
-         "Let's tackle this",
-         "Need to",
-         "Let me check"
-      };
-
-      var marker = promptMarkers.FirstOrDefault(value =>
-         teaser.Contains(value, StringComparison.OrdinalIgnoreCase)
-      );
-
-      if(marker is not null)
-      {
-         return
-            $"The model returned prompt/instruction text instead of a " +
-            $"teaser. Matched marker: \"{marker}\".";
+        return "The model returned an empty teaser.";
       }
 
       return null;
+   }
+
+   private static string? ExtractGeneratedTeaser(string outputText)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         var root = document.RootElement;
+
+         if(
+            root.TryGetProperty("teaser", out var teaser) &&
+            teaser.ValueKind == JsonValueKind.String
+         )
+         {
+            return teaser.GetString();
+         }
+      }
+      catch (JsonException)
+      {
+      }
+
+      return outputText;
    }
 
    private static string CreateTeaserPreview(string teaser)

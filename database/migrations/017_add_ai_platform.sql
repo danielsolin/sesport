@@ -173,7 +173,7 @@ $$,
       "additionalProperties": false
    }$$::jsonb,
    null,
-   256
+   null
 )
 on conflict (job_id, version) do update
 set
