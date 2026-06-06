@@ -2,6 +2,7 @@
 @model SESport.Web.Pages.Admin.Activities.IndexModel
 @{
    ViewData["Title"] = "Activities";
+   var returnUrl = Model.GetReturnUrl();
 }
 
 <section class="page-heading page-heading-row">
@@ -9,7 +10,11 @@
       <p class="eyebrow">Admin</p>
       <h1>Activities</h1>
    </div>
-   <a class="button button-primary" asp-page="./Edit">New activity</a>
+   <a class="button button-primary"
+      asp-page="./Edit"
+      asp-route-returnUrl="@returnUrl">
+      New activity
+   </a>
 </section>
 
 <form method="get">
@@ -93,7 +98,9 @@ else
                <tr>
                   <td>@activity.TimeText</td>
                   <td>
-                     <a asp-page="./Edit" asp-route-id="@activity.Id">
+                     <a asp-page="./Edit"
+                        asp-route-id="@activity.Id"
+                        asp-route-returnUrl="@returnUrl">
                         <strong>@activity.RelatedEntitiesSummary - @activity.Title</strong>
                      </a>
                      <span>@activity.SportName / @activity.ActivityType</span>

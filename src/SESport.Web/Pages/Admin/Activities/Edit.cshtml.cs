@@ -103,8 +103,7 @@ public class EditModel(
          cancellationToken
       );
 
-      if(ReturnUrl is not null
-         && Activity.TvSportBroadcastIds.Count > 0)
+      if(ReturnUrl is not null)
       {
          return LocalRedirect(ReturnUrl);
       }

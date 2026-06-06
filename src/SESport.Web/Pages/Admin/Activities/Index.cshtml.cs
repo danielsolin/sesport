@@ -89,6 +89,19 @@ public class IndexModel(ActivityRepository repository) : PageModel
       return routeValues;
    }
 
+   public string GetReturnUrl()
+   {
+      return Url.Page(
+         "./Index",
+         new
+         {
+            status = Status ?? DraftStatus,
+            sortColumn = SortColumn,
+            sortAsc = SortAsc
+         }
+      ) ?? "/Admin/Activities";
+   }
+
    public async Task<IActionResult> OnPostDeleteAsync(
       Guid id,
       string? status,
