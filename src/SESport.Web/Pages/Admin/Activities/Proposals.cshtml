@@ -1,7 +1,7 @@
 @page
-@model SESport.Web.Pages.Admin.Audit.ProposalsModel
+@model SESport.Web.Pages.Admin.Activities.ProposalsModel
 @{
-   ViewData["Title"] = "Activity Proposal Audit";
+   ViewData["Title"] = "Activity Proposals";
 }
 
 <section class="page-heading page-heading-row">
@@ -9,7 +9,7 @@
       <p class="eyebrow">Admin</p>
       <h1>Activity proposals</h1>
    </div>
-   <a class="button" asp-page="/Admin/Index">Back</a>
+   <a class="button" asp-page="/Admin/Activities/Index">Back</a>
 </section>
 
 @if(Model.LoadError is not null)
@@ -27,37 +27,51 @@
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Created"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Created")'>Created @Model.GetSortIndicator("Created")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Created")'>
+                  Created @Model.GetSortIndicator("Created")
+               </a>
             </th>
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Time"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Time")'>Time @Model.GetSortIndicator("Time")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Time")'>
+                  Time @Model.GetSortIndicator("Time")
+               </a>
             </th>
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Activity"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Activity")'>Activity @Model.GetSortIndicator("Activity")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Activity")'>
+                  Activity @Model.GetSortIndicator("Activity")
+               </a>
             </th>
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Producer"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Producer")'>Producer @Model.GetSortIndicator("Producer")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Producer")'>
+                  Producer @Model.GetSortIndicator("Producer")
+               </a>
             </th>
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Status"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Status")'>Status @Model.GetSortIndicator("Status")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Status")'>
+                  Status @Model.GetSortIndicator("Status")
+               </a>
             </th>
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Type"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>Type @Model.GetSortIndicator("Type")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>
+                  Type @Model.GetSortIndicator("Type")
+               </a>
             </th>
             <th>
                <a asp-page="./Proposals"
                   asp-route-sortColumn="Sport"
-                  asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>Sport @Model.GetSortIndicator("Sport")</a>
+                  asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>
+                  Sport @Model.GetSortIndicator("Sport")
+               </a>
             </th>
             <th></th>
          </tr>

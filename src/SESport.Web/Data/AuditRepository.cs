@@ -12,11 +12,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
       return
       [
          new AuditArea(
-            "Activity proposals",
-            "Review imported or manually produced proposal records.",
-            "/Admin/Audit/Proposals"
-         ),
-         new AuditArea(
             "Activity audit",
             "Inspect canonical activity entity links and evidence.",
             "/Admin/Audit/Activities"

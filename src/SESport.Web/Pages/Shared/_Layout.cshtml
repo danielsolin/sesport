@@ -11,17 +11,24 @@
    var isActivities = requestPath.StartsWith(
       "/Admin/Activities",
       StringComparison.OrdinalIgnoreCase
+   ) && !requestPath.StartsWith(
+      "/Admin/Activities/Proposal",
+      StringComparison.OrdinalIgnoreCase
    );
    var isEntities = requestPath.StartsWith(
       "/Admin/Entities",
       StringComparison.OrdinalIgnoreCase
    );
-   var isProposals = requestPath.StartsWith(
-      "/Admin/Audit/Proposal",
+   var isActivityProposals = requestPath.StartsWith(
+      "/Admin/Activities/Proposal",
       StringComparison.OrdinalIgnoreCase
    );
    var isConfig = requestPath.StartsWith(
       "/Admin/Config",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isAudit = requestPath.StartsWith(
+      "/Admin/Audit",
       StringComparison.OrdinalIgnoreCase
    );
    var adminMenuLink = "admin-top-menu-link";
@@ -34,7 +41,10 @@
    var entitiesClass = isEntities
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
-   var proposalsClass = isProposals
+   var activityProposalsClass = isActivityProposals
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+   var auditClass = isAudit
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
    var configClass = isConfig
@@ -72,13 +82,17 @@
                   asp-page="/Admin/Entities/Index">
                   Entities
                </a>
-               <a class="@proposalsClass"
-                  asp-page="/Admin/Audit/Proposals">
+               <a class="@activityProposalsClass"
+                  asp-page="/Admin/Activities/Proposals">
                   Activity Proposals
                </a>
                <a class="@configClass"
                   asp-page="/Admin/Config/Index">
                   Config
+               </a>
+               <a class="@auditClass"
+                  asp-page="/Admin/Audit/Index">
+                  Audit
                </a>
             </nav>
          }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Web.Data;
 
-namespace SESport.Web.Pages.Admin.Audit;
+namespace SESport.Web.Pages.Admin.Activities;
 
 public class ProposalsModel(AuditRepository repository) : PageModel
 {
@@ -39,7 +39,7 @@ public class ProposalsModel(AuditRepository repository) : PageModel
          var proposals = await repository.GetProposalsAsync(cancellationToken);
          Proposals = SortProposals(proposals, SortColumn, SortAsc);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }
@@ -52,7 +52,7 @@ public class ProposalsModel(AuditRepository repository) : PageModel
 
    public string GetSortIndicator(string sortColumn)
    {
-      if (!string.Equals(SortColumn, sortColumn, StringComparison.Ordinal))
+      if(!string.Equals(SortColumn, sortColumn, StringComparison.Ordinal))
       {
          return string.Empty;
       }
@@ -83,12 +83,36 @@ public class ProposalsModel(AuditRepository repository) : PageModel
    {
       return sortColumn switch
       {
-         TimeSortColumn => OrderByDirection(proposals, proposal => proposal.TimeText, sortAsc),
-         ActivitySortColumn => OrderByDirection(proposals, proposal => proposal.Title, sortAsc),
-         ProducerSortColumn => OrderByDirection(proposals, proposal => proposal.Producer, sortAsc),
-         StatusSortColumn => OrderByDirection(proposals, proposal => proposal.Status, sortAsc),
-         TypeSortColumn => OrderByDirection(proposals, proposal => proposal.ActivityType, sortAsc),
-         SportSortColumn => OrderByDirection(proposals, proposal => proposal.Sport, sortAsc),
+         TimeSortColumn => OrderByDirection(
+            proposals,
+            proposal => proposal.TimeText,
+            sortAsc
+         ),
+         ActivitySortColumn => OrderByDirection(
+            proposals,
+            proposal => proposal.Title,
+            sortAsc
+         ),
+         ProducerSortColumn => OrderByDirection(
+            proposals,
+            proposal => proposal.Producer,
+            sortAsc
+         ),
+         StatusSortColumn => OrderByDirection(
+            proposals,
+            proposal => proposal.Status,
+            sortAsc
+         ),
+         TypeSortColumn => OrderByDirection(
+            proposals,
+            proposal => proposal.ActivityType,
+            sortAsc
+         ),
+         SportSortColumn => OrderByDirection(
+            proposals,
+            proposal => proposal.Sport,
+            sortAsc
+         ),
          _ => OrderByDirection(proposals, proposal => proposal.CreatedOn, sortAsc)
       };
    }
@@ -101,9 +125,13 @@ public class ProposalsModel(AuditRepository repository) : PageModel
    {
       var sortedProposals = sortAsc
          ? proposals.OrderBy(keySelector, StringComparer.OrdinalIgnoreCase)
-         : proposals.OrderByDescending(keySelector, StringComparer.OrdinalIgnoreCase);
+         : proposals.OrderByDescending(
+            keySelector,
+            StringComparer.OrdinalIgnoreCase
+         );
 
-      return sortedProposals.ThenByDescending(proposal => proposal.CreatedOn).ToList();
+      return sortedProposals.ThenByDescending(proposal => proposal.CreatedOn)
+         .ToList();
    }
 
    private static IReadOnlyList<ActivityProposalAuditItem> OrderByDirection(
@@ -116,6 +144,10 @@ public class ProposalsModel(AuditRepository repository) : PageModel
          ? proposals.OrderBy(keySelector)
          : proposals.OrderByDescending(keySelector);
 
-      return sortedProposals.ThenBy(proposal => proposal.Title, StringComparer.OrdinalIgnoreCase).ToList();
+      return sortedProposals.ThenBy(
+            proposal => proposal.Title,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .ToList();
    }
 }

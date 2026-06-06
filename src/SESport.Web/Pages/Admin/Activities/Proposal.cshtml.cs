@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Web.Data;
 
-namespace SESport.Web.Pages.Admin.Audit;
+namespace SESport.Web.Pages.Admin.Activities;
 
 public class ProposalModel(AuditRepository repository) : PageModel
 {
