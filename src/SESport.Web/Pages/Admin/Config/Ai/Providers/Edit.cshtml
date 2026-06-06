@@ -51,7 +51,11 @@
          </label>
          <label>
             <span>API key source</span>
-            <input asp-for="Provider.ApiKeySource" />
+            <input asp-for="Provider.ApiKeySource"
+                   placeholder="environment:LMSTUDIO_API_KEY or key:..." />
+            <span class="field-hint">
+               Use `environment:NAME` or `key:YOUR_API_KEY`.
+            </span>
          </label>
       </div>
       <label>

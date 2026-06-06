@@ -147,7 +147,7 @@ public sealed class OpenRouterResponsesAiProviderClient
          options: JsonOptions
       );
 
-      var apiKey = ResolveApiKey(provider.ApiKeySource);
+      var apiKey = ApiKeySourceResolver.Resolve(provider.ApiKeySource);
 
       if(!string.IsNullOrWhiteSpace(apiKey))
       {
@@ -164,27 +164,6 @@ public sealed class OpenRouterResponsesAiProviderClient
       }
 
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
-   }
-
-   private static string? ResolveApiKey(string? apiKeySource)
-   {
-      if(string.IsNullOrWhiteSpace(apiKeySource))
-      {
-         return null;
-      }
-
-      var prefix = "environment:";
-
-      if(!apiKeySource.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-      {
-         return null;
-      }
-
-      var envVar = apiKeySource[prefix.Length..].Trim();
-
-      return string.IsNullOrWhiteSpace(envVar)
-         ? null
-         : Environment.GetEnvironmentVariable(envVar);
    }
 
    private static void MergeProviderOptions(
