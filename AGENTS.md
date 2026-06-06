@@ -15,7 +15,7 @@ available there)
 
 ## Running the Web Application
 - After setup, run: `dotnet run --project src/SESport.Web`
-- The web app will be available at http://localhost:5009
+- The web app will be available at http://localhost:5109
 
 ## Running Tests
 - Run all tests: `dotnet test`
@@ -24,8 +24,8 @@ available there)
 ## Import Tools
 Several console applications are available in the `tools` directory for data
 import:
-- `SESport.ImportEntities`: Imports entities from JSON/EPG data
-- `SESport.ImportEpg`: Imports TV broadcast data
+- `SESport.ImportEntities`: Imports entities from (AI-)curated JSON data
+- `SESport.ImportEpg`: Imports TV broadcast data from iptv-epg.org
 - `SESport.AIActivitySearch`: Performs AI-assisted activity search
 - `SESport.ImportSmokeTest`: Verifies import functionality
 - Run with: `dotnet run --project <tool-project-path>`
