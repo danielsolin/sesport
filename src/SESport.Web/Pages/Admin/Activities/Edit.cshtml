@@ -63,15 +63,18 @@
          <label>
             <span>Activity type</span>
             <select asp-for="Activity.ActivityType">
+               <option value="">Select activity type</option>
                @foreach (var type in Model.ActivityTypes)
                {
                   <option value="@type.Id">@type.Label</option>
                }
             </select>
+            <span asp-validation-for="Activity.ActivityType"></span>
          </label>
          <label>
             <span>Sport</span>
             <select asp-for="Activity.SportId">
+               <option value="">Select sport</option>
                @foreach (var sport in Model.Sports)
                {
                   <option value="@sport.Id">@sport.Label</option>

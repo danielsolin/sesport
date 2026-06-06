@@ -28,6 +28,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<IReadOnlyList<ActivityListItem>> GetTomorrowsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return await GetActivityListAsync(
+         "where a.publication_status_id = 'Published' " +
+         "and a.activity_date ='" +
+         DateTime.Now.AddDays(1).ToString("yyyy-MM-dd") +
+         "'",
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<ActivityListItem>> GetDraftsAsync(
       CancellationToken cancellationToken
    )
@@ -54,10 +67,25 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             e.id,
             e.canonical_name,
             et.label,
-            s.name
+            s.name,
+            coalesce(org.organization_names, '')
          from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
+         left join lateral (
+            select string_agg(
+               distinct linked.canonical_name,
+               ', ' order by linked.canonical_name
+            ) as organization_names
+            from entity_to_entity_links l
+            join entities linked on linked.id = case
+               when l.source_entity_id = e.id then l.target_entity_id
+               else l.source_entity_id
+            end
+            where (l.source_entity_id = e.id or l.target_entity_id = e.id)
+               and e.entity_type_id = 'Person'
+               and linked.entity_type_id = 'Organization'
+         ) org on true
          order by e.canonical_name
          """;
 
@@ -74,7 +102,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1),
                reader.GetString(2),
-               reader.GetString(3)
+               reader.GetString(3),
+               reader.GetString(4)
             )
          );
       }
@@ -192,12 +221,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       var id = model.Id ?? Guid.NewGuid();
       var status = model.IsPublished ? "Published" : "Draft";
       var startsAt = GetStartsAt(model);
-      var slug = NormalizeSlug(model.Title, model.ActivityDate);
 
       await using var connection = await dataSource.OpenConnectionAsync(
          cancellationToken
       );
       await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      var slug = await CreateSlugAsync(
+         connection,
+         transaction,
+         model,
+         id,
          cancellationToken
       );
 
@@ -708,10 +744,67 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return ("source:manual", "Manual");
    }
 
-   private static string NormalizeSlug(string title, DateOnly? activityDate)
+   private static async Task<string> CreateSlugAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      ActivityEditModel model,
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      var baseSlug = NormalizeSlug(
+         model.Title,
+         model.ActivityDate,
+         model.ActivityType
+      );
+
+      var existingSlugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      const string sql = """
+         select slug
+         from activities
+         where id <> @id
+            and slug is not null
+            and (slug = @base_slug or slug like @prefix)
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("base_slug", baseSlug);
+      command.Parameters.AddWithValue("prefix", baseSlug + "-%");
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         existingSlugs.Add(reader.GetString(0));
+      }
+
+      if(!existingSlugs.Contains(baseSlug))
+      {
+         return baseSlug;
+      }
+
+      for(var suffix = 2;; suffix++)
+      {
+         var candidate = $"{baseSlug}-{suffix}";
+         if(!existingSlugs.Contains(candidate))
+         {
+            return candidate;
+         }
+      }
+   }
+
+   private static string NormalizeSlug(
+      string title,
+      DateOnly? activityDate,
+      string activityType
+   )
    {
       var datePart = activityDate?.ToString("yyyy-MM-dd") ?? "undated";
-      return Slugify($"{datePart}-{title}");
+      var slug = Slugify($"{datePart}-{title}-{activityType}");
+      return string.IsNullOrWhiteSpace(slug) ? "activity" : slug;
    }
 
    private static string Slugify(string value)

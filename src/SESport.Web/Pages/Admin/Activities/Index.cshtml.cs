@@ -7,6 +7,7 @@ namespace SESport.Web.Pages.Admin.Activities;
 public class IndexModel(ActivityRepository repository) : PageModel
 {
    public const string TodayStatus = "Today";
+   public const string TomorrowStatus = "Tomorrow";
    public const string AllStatus = "All";
    public const string DraftStatus = "Draft";
    public const string PublishedStatus = "Published";
@@ -34,19 +35,26 @@ public class IndexModel(ActivityRepository repository) : PageModel
       CancellationToken cancellationToken = default
    )
    {
-      Status = NormalizeStatus(Status) ?? DraftStatus;
-      SortColumn = NormalizeSortColumn(sortColumn);
-      SortAsc = sortAsc;
+         Status = NormalizeStatus(Status) ?? DraftStatus;
+         SortColumn = NormalizeSortColumn(sortColumn);
+         SortAsc = sortAsc;
 
-      try
-      {
-         var activities = Status switch
+         try
          {
-            TodayStatus => await repository.GetTodaysAsync(cancellationToken),
-            DraftStatus => await repository.GetDraftsAsync(cancellationToken),
-            PublishedStatus => await repository.GetPublishedAsync(
-               cancellationToken
-            ),
+            var activities = Status switch
+            {
+               TodayStatus => await repository.GetTodaysAsync(
+                  cancellationToken
+               ),
+               TomorrowStatus => await repository.GetTomorrowsAsync(
+                  cancellationToken
+               ),
+               DraftStatus => await repository.GetDraftsAsync(
+                  cancellationToken
+               ),
+               PublishedStatus => await repository.GetPublishedAsync(
+                  cancellationToken
+               ),
             _ => await repository.GetAllAsync(cancellationToken)
          };
          Activities = SortActivities(activities, SortColumn, SortAsc);
@@ -130,6 +138,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
       return status switch
       {
          TodayStatus => TodayStatus,
+         TomorrowStatus => TomorrowStatus,
          DraftStatus => DraftStatus,
          PublishedStatus => PublishedStatus,
          AllStatus or "" => AllStatus,

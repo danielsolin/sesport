@@ -31,38 +31,46 @@
          <label>
             <span>Entity type</span>
             <select asp-for="Entity.EntityTypeId">
+               <option value="">Select entity type</option>
                @foreach (var type in Model.EntityTypes)
                {
                   <option value="@type.Id">@type.Label</option>
                }
             </select>
+            <span asp-validation-for="Entity.EntityTypeId"></span>
          </label>
          <label>
             <span>Sport</span>
             <select asp-for="Entity.SportId">
+               <option value="">Select sport</option>
                @foreach (var sport in Model.Sports)
                {
                   <option value="@sport.Id">@sport.Label</option>
                }
             </select>
+            <span asp-validation-for="Entity.SportId"></span>
          </label>
          <label>
             <span>Watch priority</span>
             <select asp-for="Entity.WatchPriorityId">
+               <option value="">Select watch priority</option>
                @foreach (var priority in Model.WatchPriorities)
                {
                   <option value="@priority.Id">@priority.Label</option>
                }
             </select>
+            <span asp-validation-for="Entity.WatchPriorityId"></span>
          </label>
          <label>
             <span>Expected stability</span>
             <select asp-for="Entity.ExpectedStabilityId">
+               <option value="">Select stability</option>
                @foreach (var stability in Model.StabilityKinds)
                {
                   <option value="@stability.Id">@stability.Label</option>
                }
             </select>
+            <span asp-validation-for="Entity.ExpectedStabilityId"></span>
          </label>
       </div>
    </section>
@@ -89,6 +97,7 @@
          <label>
             <span>Country</span>
             <select asp-for="Entity.CountryId">
+               <option value="">Select country</option>
                @foreach (var country in Model.Countries)
                {
                   <option value="@country.Id">@country.Label</option>
@@ -99,11 +108,13 @@
          <label>
             <span>Relevance kind</span>
             <select asp-for="Entity.CountryRelevanceKindId">
+               <option value="">Select relevance kind</option>
                @foreach (var kind in Model.CountryRelevanceKinds)
                {
                   <option value="@kind.Id">@kind.Label</option>
                }
             </select>
+            <span asp-validation-for="Entity.CountryRelevanceKindId"></span>
          </label>
       </div>
       <label>

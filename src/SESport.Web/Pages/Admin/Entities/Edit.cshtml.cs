@@ -142,11 +142,48 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
+      if (string.IsNullOrWhiteSpace(Entity.EntityTypeId))
+      {
+         ModelState.AddModelError(
+            "Entity.EntityTypeId",
+            "Entity type is required."
+         );
+      }
+
+      if (string.IsNullOrWhiteSpace(Entity.SportId))
+      {
+         ModelState.AddModelError("Entity.SportId", "Sport is required.");
+      }
+
+      if (string.IsNullOrWhiteSpace(Entity.WatchPriorityId))
+      {
+         ModelState.AddModelError(
+            "Entity.WatchPriorityId",
+            "Watch priority is required."
+         );
+      }
+
+      if (string.IsNullOrWhiteSpace(Entity.ExpectedStabilityId))
+      {
+         ModelState.AddModelError(
+            "Entity.ExpectedStabilityId",
+            "Expected stability is required."
+         );
+      }
+
       if (string.IsNullOrWhiteSpace(Entity.CountryId))
       {
          ModelState.AddModelError(
             "Entity.CountryId",
             "Country is required."
+         );
+      }
+
+      if (string.IsNullOrWhiteSpace(Entity.CountryRelevanceKindId))
+      {
+         ModelState.AddModelError(
+            "Entity.CountryRelevanceKindId",
+            "Relevance kind is required."
          );
       }
 

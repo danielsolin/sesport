@@ -30,7 +30,8 @@ public sealed record EntityOption(
    Guid Id,
    string Name,
    string Type,
-   string Sport
+   string Sport,
+   string Organization
 );
 
 public sealed record LookupOption(string Id, string Label);
@@ -45,9 +46,9 @@ public sealed class ActivityEditModel
 
    public string? Teaser { get; set; }
 
-   public string ActivityType { get; set; } = "Match";
+   public string ActivityType { get; set; } = string.Empty;
 
-   public string SportId { get; set; } = "football";
+   public string SportId { get; set; } = string.Empty;
 
    public DateOnly? ActivityDate { get; set; }
 

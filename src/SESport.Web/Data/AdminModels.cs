@@ -121,20 +121,19 @@ public sealed class EntityEditModel
 
    public string CanonicalName { get; set; } = string.Empty;
 
-   public string EntityTypeId { get; set; } = "Person";
+   public string EntityTypeId { get; set; } = string.Empty;
 
-   public string SportId { get; set; } = "football";
+   public string SportId { get; set; } = string.Empty;
 
-   public string CountryId { get; set; } = "se";
+   public string CountryId { get; set; } = string.Empty;
 
-   public string CountryRelevanceKindId { get; set; } =
-      "NationalityOrSportingIdentity";
+   public string CountryRelevanceKindId { get; set; } = string.Empty;
 
    public string CountryRelevanceReason { get; set; } = string.Empty;
 
-   public string WatchPriorityId { get; set; } = "review";
+   public string WatchPriorityId { get; set; } = string.Empty;
 
-   public string ExpectedStabilityId { get; set; } = "medium_term";
+   public string ExpectedStabilityId { get; set; } = string.Empty;
 
    public List<Guid> LinkedEntityIds { get; set; } = [];
 }

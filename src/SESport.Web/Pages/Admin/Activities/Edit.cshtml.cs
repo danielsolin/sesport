@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using SESport.Core.AI;
 using SESport.Core.AI.Abstractions;
@@ -178,7 +180,7 @@ public class EditModel(
             .Select(entity => new SelectListItem
             {
                Value = entity.Id.ToString(),
-               Text = $"{entity.Name} ({entity.Type}/{entity.Sport})",
+               Text = FormatEntityLabel(entity),
                Selected = selectedIds.Contains(entity.Id)
             })
             .ToList();
@@ -303,6 +305,14 @@ public class EditModel(
          ModelState.AddModelError("Activity.Title", "Title is required.");
       }
 
+      if (string.IsNullOrWhiteSpace(Activity.ActivityType))
+      {
+         ModelState.AddModelError(
+            "Activity.ActivityType",
+            "Activity type is required."
+         );
+      }
+
       if (string.IsNullOrWhiteSpace(Activity.SportId))
       {
          ModelState.AddModelError(
@@ -360,7 +370,11 @@ public class EditModel(
       Activity.Title = firstBroadcast.Title;
       Activity.Description = CreatePrefillDescription(broadcasts);
       Activity.ActivityType = "Match";
-      Activity.SportId = GetSportId(broadcasts);
+      var sportId = GetSportId(broadcasts);
+      if(!string.IsNullOrWhiteSpace(sportId))
+      {
+         Activity.SportId = sportId;
+      }
       Activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       Activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
       Activity.TimeZoneId = "Europe/Stockholm";
@@ -391,22 +405,154 @@ public class EditModel(
          );
    }
 
-   private static string GetSportId(
+   private static string? GetSportId(
       IReadOnlyList<TvSportBroadcastActivitySource> broadcasts
    )
    {
       var categories = broadcasts
          .SelectMany(broadcast => broadcast.Categories)
+         .Select(NormalizeCategoryKey)
+         .Where(category => !string.IsNullOrWhiteSpace(category))
+         .Distinct(StringComparer.OrdinalIgnoreCase)
          .ToList();
 
-      if(categories.Any(category =>
-         string.Equals(category, "Fotboll", StringComparison.OrdinalIgnoreCase)
-      ))
+      foreach(var category in categories)
       {
-         return "football";
+         if(TryGetSpecificSportId(category, out var sportId))
+         {
+            return sportId;
+         }
       }
 
-      return "football";
+      foreach(var category in categories)
+      {
+         if(TryGetGenericSportId(category, out var sportId))
+         {
+            return sportId;
+         }
+      }
+
+      return null;
+   }
+
+   private static bool TryGetSpecificSportId(
+      string category,
+      out string sportId
+   )
+   {
+      switch(category)
+      {
+         case "golf":
+            sportId = "golf";
+            return true;
+         case "fotboll":
+            sportId = "football";
+            return true;
+         case "ishockey":
+         case "ishockeyvm":
+            sportId = "ice-hockey";
+            return true;
+         case "basket":
+            sportId = "basketball";
+            return true;
+         case "dart":
+            sportId = "darts";
+            return true;
+         case "friidrott":
+            sportId = "athletics";
+            return true;
+         case "maraton":
+         case "terranglopning":
+            sportId = "athletics-road-running";
+            return true;
+         case "handboll":
+            sportId = "handball";
+            return true;
+         case "segling":
+            sportId = "sailing";
+            return true;
+         case "speedway":
+            sportId = "speedway";
+            return true;
+         case "tennis":
+            sportId = "tennis";
+            return true;
+         case "volleyball":
+            sportId = "volleyball";
+            return true;
+         case "formel1":
+         case "formele":
+         case "motocross":
+         case "motorcykel":
+         case "motorsport":
+            sportId = "motorsport";
+            return true;
+         case "djursport":
+         case "galoppsport":
+         case "hoppning":
+         case "ridsport":
+            sportId = "equestrian";
+            return true;
+      }
+
+      sportId = string.Empty;
+      return false;
+   }
+
+   private static bool TryGetGenericSportId(
+      string category,
+      out string sportId
+   )
+   {
+      switch(category)
+      {
+         case "baseball":
+         case "bollsport":
+         case "cykling":
+         case "extremsport":
+         case "faktning":
+         case "fysisksport":
+         case "fysisksporter":
+         case "kampsport":
+         case "klattring":
+         case "livesport":
+         case "malsport":
+         case "mountainbike":
+         case "multisportlopp":
+         case "racketsport":
+         case "sporttavlingar":
+         case "triathlon":
+         case "tyngdlyftning":
+         case "varldscupen":
+         case "vattensport":
+            sportId = "multi-sport";
+            return true;
+      }
+
+      sportId = string.Empty;
+      return false;
+   }
+
+   private static string NormalizeCategoryKey(string value)
+   {
+      var normalized = value.Normalize(NormalizationForm.FormD);
+      var builder = new StringBuilder(normalized.Length);
+
+      foreach(var character in normalized)
+      {
+         if(CharUnicodeInfo.GetUnicodeCategory(character) ==
+            UnicodeCategory.NonSpacingMark)
+         {
+            continue;
+         }
+
+         if(char.IsLetterOrDigit(character))
+         {
+            builder.Append(char.ToLowerInvariant(character));
+         }
+      }
+
+      return builder.ToString();
    }
 
    private static string CreateEvidenceComment(
@@ -430,5 +576,17 @@ public class EditModel(
       });
 
       return string.Join(Environment.NewLine, rows);
+   }
+
+   private static string FormatEntityLabel(EntityOption entity)
+   {
+      if(entity.Type != "Person" ||
+         string.IsNullOrWhiteSpace(entity.Organization))
+      {
+         return $"{entity.Name} ({entity.Type}/{entity.Sport})";
+      }
+
+      return $"{entity.Name} ({entity.Type}/{entity.Sport}/" +
+         $"{entity.Organization})";
    }
 }
