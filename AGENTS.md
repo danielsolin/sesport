@@ -27,7 +27,6 @@ import:
 - `SESport.ImportEntities`: Imports entities from (AI-)curated JSON data
 - `SESport.ImportEpg`: Imports TV broadcast data from iptv-epg.org
 - `SESport.AIActivitySearch`: Performs AI-assisted activity search
-- `SESport.ImportSmokeTest`: Verifies import functionality
 - Run with: `dotnet run --project <tool-project-path>`
 
 ## Notes

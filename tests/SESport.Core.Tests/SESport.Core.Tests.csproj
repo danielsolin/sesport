@@ -20,8 +20,6 @@
 
    <ItemGroup>
       <ProjectReference Include="..\..\src\SESport.Core\SESport.Core.csproj" />
-      <ProjectReference
-         Include="..\..\src\SESport.Sources.Iihf\SESport.Sources.Iihf.csproj" />
    </ItemGroup>
 
 </Project>
