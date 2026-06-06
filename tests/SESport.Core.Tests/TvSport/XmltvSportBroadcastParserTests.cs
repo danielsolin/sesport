@@ -112,6 +112,34 @@ public class XmltvSportBroadcastParserTests
    }
 
    [Fact]
+   public async Task ParseAsyncUnescapesUnicodeAmpersandsInChannelNames()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <channel id="Horse\u0026CountryTV.se">
+             <display-name>SE - Horse \u0026 Country TV</display-name>
+           </channel>
+           <programme
+             start="20260606113000 +0000"
+             stop="20260606120000 +0000"
+             channel="Horse\u0026CountryTV.se">
+             <title lang="sv">The Slam Show</title>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new XmltvSportBroadcastParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.Equal("Horse & Country TV", broadcast.ChannelName);
+   }
+
+   [Fact]
    public async Task ParseAsyncDoesNotMarkDateRangeAsReplay()
    {
       const string xml = """

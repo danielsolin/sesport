@@ -138,8 +138,12 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
          where source_key = @source_key
            and (
               channel_name = any(@channel_names)
-              or regexp_replace(channel_name, '^SE - ', '') =
-                 any(@channel_names)
+              or replace(channel_name, '\u0026', '&') = any(@channel_names)
+              or regexp_replace(
+                 replace(channel_name, '\u0026', '&'),
+                 '^SE - ',
+                 ''
+              ) = any(@channel_names)
            )
          """;
 

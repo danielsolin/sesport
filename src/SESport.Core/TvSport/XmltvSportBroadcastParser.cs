@@ -332,7 +332,9 @@ public sealed partial class XmltvSportBroadcastParser
 
    private static string NormalizeText(string value)
    {
-      return WhitespaceRegex().Replace(value.Trim(), " ");
+      var unescapedValue = value.Replace("\\u0026", "&");
+
+      return WhitespaceRegex().Replace(unescapedValue.Trim(), " ");
    }
 
    private static string NormalizeChannelName(string value)
