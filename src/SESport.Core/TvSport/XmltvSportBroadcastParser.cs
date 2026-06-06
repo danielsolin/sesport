@@ -198,7 +198,8 @@ public sealed partial class XmltvSportBroadcastParser
    )
    {
       return categories.Any(category =>
-         category.Equals("Sportmagasin", StringComparison.OrdinalIgnoreCase));
+         category.Equals("Sportmagasin", StringComparison.OrdinalIgnoreCase) ||
+         category.Equals("Dokumentär", StringComparison.OrdinalIgnoreCase));
    }
 
    private static string NormalizeCategory(string category)
