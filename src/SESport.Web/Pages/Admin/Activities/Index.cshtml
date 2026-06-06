@@ -124,13 +124,13 @@
                            asp-route-id="@activity.Id"
                            asp-route-returnUrl="@returnUrl">
                            <strong>
-                              @activity.RelatedEntitiesSummary -
+                              @activity.RelatedOrganization -
                               @activity.Title
                            </strong>
                         </a>
                         <span>@activity.SportName / @activity.ActivityType</span>
                      </td>
-                     <td>@activity.EntitySummary</td>
+                     <td>@activity.RelatedPersonEntities</td>
                      <td>@activity.Teaser</td>
                      <td>
                         <span class="status-pill">

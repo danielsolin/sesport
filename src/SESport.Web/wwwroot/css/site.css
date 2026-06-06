@@ -162,40 +162,103 @@ h2 {
    line-height: 1.25;
 }
 
-.activity-list {
+.activity-agenda {
    display: grid;
-   gap: 0;
-   border: 1px solid var(--line);
-   border-bottom: 0;
-   background: var(--surface);
+   gap: 14px;
 }
 
-.activity-row {
+.activity-agenda-section {
    display: grid;
-   grid-template-columns: 145px minmax(0, 1fr);
-   gap: 12px;
-   padding: 9px 10px;
-   border-bottom: 1px solid var(--line);
-   background: #ffffff;
-   font-size: 13px;
-   line-height: 1.35;
+   grid-template-columns: 110px minmax(0, 1fr);
+   gap: 14px;
+   align-items: start;
 }
 
-.activity-time {
+.activity-agenda-time {
    display: flex;
    flex-direction: column;
    align-items: flex-start;
-   gap: 4px;
-   color: var(--accent-strong);
+   gap: 6px;
+   padding-top: 4px;
+}
+
+.activity-time-badge {
+   display: inline-flex;
+   align-items: center;
+   min-height: 30px;
+   padding: 0 12px;
+   border-radius: 999px;
+   background: var(--accent);
+   color: #ffffff;
+   font-size: 12px;
+   font-weight: 800;
+   letter-spacing: 0.02em;
+   white-space: nowrap;
+}
+
+.activity-time-badge-muted {
+   background: #e8ece7;
+   color: var(--muted);
+}
+
+.activity-time-count {
+   padding-left: 4px;
+   color: var(--muted);
+   font-size: 12px;
    font-weight: 700;
 }
 
-.activity-time-row {
-   display: inline-flex;
-   align-items: center;
+.activity-time-summary-list {
+   display: grid;
    gap: 6px;
-   white-space: nowrap;
-   font-size: 16px;
+   margin-top: 4px;
+}
+
+.activity-time-summary {
+   padding-left: 4px;
+}
+
+.activity-time-summary-primary {
+   color: var(--accent-strong);
+   font-size: 12px;
+   font-weight: 800;
+   line-height: 1.25;
+}
+
+.activity-time-summary-entities {
+   color: var(--text);
+   font-size: 12px;
+   font-weight: 600;
+   line-height: 1.25;
+}
+
+.activity-time-related {
+   padding-left: 4px;
+   color: var(--accent-strong);
+   font-size: 12px;
+   font-weight: 700;
+   line-height: 1.25;
+}
+
+.activity-agenda-items {
+   display: grid;
+   gap: 10px;
+   padding-left: 14px;
+   border-left: 2px solid var(--line);
+}
+
+.activity-agenda-section-untimed .activity-agenda-items {
+   border-left-style: dashed;
+}
+
+.activity-entry {
+   padding: 12px 14px;
+   border: 1px solid var(--line);
+   border-radius: 12px;
+   background: var(--surface);
+   box-shadow: 0 1px 0 rgba(20, 22, 20, 0.02);
+   font-size: 13px;
+   line-height: 1.35;
 }
 
 .activity-meta {
@@ -247,6 +310,13 @@ h2 {
    font-weight: 700;
    line-height: 1.25;
    white-space: normal;
+}
+
+.activity-entity-summary-compact {
+   margin-bottom: 8px;
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 600;
 }
 
 .entity-line {
@@ -746,7 +816,6 @@ textarea {
       gap: 8px;
    }
 
-   .activity-row,
    .admin-card-grid,
    .admin-layout,
    .proposal-summary,
@@ -754,9 +823,14 @@ textarea {
       grid-template-columns: 1fr;
    }
 
-   .activity-row {
-      gap: 4px;
-      padding: 8px;
+   .activity-agenda-section {
+      grid-template-columns: 1fr;
+      gap: 8px;
+   }
+
+   .activity-agenda-items {
+      padding-left: 0;
+      border-left: 0;
    }
 
    h1 {

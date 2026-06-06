@@ -269,7 +269,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
          ),
          EntitiesSortColumn => OrderByDirection(
             activities,
-            activity => activity.EntitySummary,
+            activity => activity.RelatedPersonEntities,
             sortAsc
          ),
          StatusSortColumn => OrderByDirection(

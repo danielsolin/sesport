@@ -12,6 +12,14 @@ public class IndexModel(ActivityRepository repository) : PageModel
    public IReadOnlyList<ActivityListItem> Activities { get; private set; } =
       [];
 
+   public IReadOnlyList<ActivityAgendaSection> AgendaSections
+   {
+      get; private set;
+   } = [];
+
+   public IReadOnlyList<ActivityListItem> UntimedActivities { get; private set; }
+      = [];
+
    [BindProperty(SupportsGet = true, Name = "day")]
    public string? Day { get; set; } = TodayDay;
 
@@ -33,6 +41,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
             ),
             _ => await repository.GetTodaysAsync(cancellationToken)
          };
+         BuildAgendaSections();
       }
       catch (Exception exception)
       {
@@ -51,4 +60,58 @@ public class IndexModel(ActivityRepository repository) : PageModel
          _ => null
       };
    }
+
+   private void BuildAgendaSections()
+   {
+      var timedActivities = new List<ActivityListItem>();
+      var untimedActivities = new List<ActivityListItem>();
+
+      foreach(var activity in Activities)
+      {
+         if(HasLocalStartTime(activity))
+         {
+            timedActivities.Add(activity);
+         }
+         else
+         {
+            untimedActivities.Add(activity);
+         }
+      }
+
+      var agendaSections = new List<ActivityAgendaSection>();
+
+      foreach(
+         var group in timedActivities.GroupBy(activity => activity.TimeOnlyText)
+      )
+      {
+         var relatedOrganization = string.Join(
+            ", ",
+            group.Select(activity => activity.RelatedOrganization)
+               .Where(summary => !string.IsNullOrWhiteSpace(summary))
+               .Distinct(StringComparer.Ordinal)
+         );
+
+         agendaSections.Add(
+            new ActivityAgendaSection(
+               group.Key,
+               group.ToList(),
+               relatedOrganization
+            )
+         );
+      }
+
+      AgendaSections = agendaSections;
+      UntimedActivities = untimedActivities;
+   }
+
+   private static bool HasLocalStartTime(ActivityListItem activity)
+   {
+      return activity.TimeText.Contains(' ');
+   }
 }
+
+public sealed record ActivityAgendaSection(
+   string TimeLabel,
+   IReadOnlyList<ActivityListItem> Activities,
+   string RelatedOrganization
+);

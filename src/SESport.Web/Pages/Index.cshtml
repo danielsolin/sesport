@@ -43,84 +43,134 @@ else if(Model.Activities.Count == 0)
 }
 else
 {
-   <div class="activity-list">
-      @foreach(var activity in Model.Activities)
+   <div class="activity-agenda">
+      @foreach(var agendaSection in Model.AgendaSections)
       {
-         <article class="activity-row">
-            <div class="activity-time">
-               <div class="activity-time-row">
-                  @if(activity.SportIconPath is not null)
-                  {
-                     <img class="activity-sport-icon"
-                          src="@activity.SportIconPath"
-                          alt="" />
-                  }
-                  @activity.TimeOnlyText
+         <section class="activity-agenda-section">
+            <div class="activity-agenda-time">
+               <div class="activity-time-badge">
+                  @agendaSection.TimeLabel
                </div>
-               @if(!string.IsNullOrWhiteSpace(activity.EntitySummary))
+               @if(agendaSection.Activities.Count > 1)
                {
-                  <div class="activity-entity-summary">
-                     @{
-                        var entitySummary = activity.EntitySummary
-                           .Split(
-                              ", ",
-                              StringSplitOptions.RemoveEmptyEntries
-                           );
-                     }
-                     @for(var i = 0; i < entitySummary.Length; i++)
+                  <div class="activity-time-count">
+                     @agendaSection.Activities.Count st
+                  </div>
+               }
+               <div class="activity-time-summary-list">
+                  @foreach(var activity in agendaSection.Activities)
+                  {
+                     if(string.IsNullOrWhiteSpace(
+                        activity.RelatedOrganization) &&
+                        string.IsNullOrWhiteSpace(
+                           activity.RelatedPersonEntities))
                      {
-                        <span>@entitySummary[i]</span>
-
-                        @if(i < entitySummary.Length - 1)
-                        {
-                           <br />
-                        }
+                        continue;
                      }
+
+                     var relatedOrganization = activity.RelatedOrganization;
+                     var entitySummary = activity.RelatedPersonEntities
+                        .Split(
+                           ", ",
+                           StringSplitOptions.RemoveEmptyEntries
+                        );
+
+                     <div class="activity-time-summary">
+                        <div class="activity-time-summary-primary">
+                           @if(!string.IsNullOrWhiteSpace(
+                              relatedOrganization))
+                           {
+                              @relatedOrganization
+                           }
+                        </div>
+                        <div class="activity-time-summary-entities">
+                           @for(var i = 0; i < entitySummary.Length; i++)
+                           {
+                              <span>@entitySummary[i]</span>
+
+                              @if(i < entitySummary.Length - 1)
+                              {
+                                 <br />
+                              }
+                           }
+                        </div>
+                     </div>
+                  }
+               </div>
+               @if(!string.IsNullOrWhiteSpace(
+                  agendaSection.RelatedOrganization))
+               {
+                  <div class="activity-time-related">
+                     @agendaSection.RelatedOrganization
                   </div>
                }
             </div>
-            <div class="activity-main">
-               <div class="activity-meta">
-                  <span class="activity-sport">
-                     @activity.SportName
-                  </span>
-                  <span>@activity.ActivityType</span>
-               </div>
-               <h2>@activity.Title</h2>
-               @if(!string.IsNullOrWhiteSpace(
-                  activity.RelatedEntitiesSummary))
+            <div class="activity-agenda-items">
+               @foreach(var activity in agendaSection.Activities)
                {
-                  <p class="related-entity-line">
-                     @{
-                        var relatedEntities = activity.RelatedEntitiesSummary
-                           .Split(
-                              ", ",
-                              StringSplitOptions.RemoveEmptyEntries
-                           );
-                     }
-                     @for(var i = 0; i < relatedEntities.Length; i++)
+                  <article class="activity-entry">
+                     <div class="activity-meta">
+                        <span class="activity-sport">
+                           @activity.SportName
+                        </span>
+                        <span>@activity.ActivityType</span>
+                     </div>
+                     <h2>@activity.Title</h2>
+                     @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
-                        <span>@relatedEntities[i]</span>
-
-                        @if(i < relatedEntities.Length - 1)
-                        {
-                           <br />
-                        }
+                        <p>@activity.Description</p>
                      }
-                  </p>
-               }
-               @if(!string.IsNullOrWhiteSpace(activity.Description))
-               {
-                  <p>@activity.Description</p>
-               }
-               @if(!string.IsNullOrWhiteSpace(activity.Teaser))
-               {
-                  <p class="activity-teaser">
-                     @activity.Teaser
-                  </p>
+                     @if(!string.IsNullOrWhiteSpace(activity.Teaser))
+                     {
+                        <p class="activity-teaser">
+                           @activity.Teaser
+                        </p>
+                     }
+                  </article>
                }
             </div>
-         </article>
+         </section>
+      }
+
+      @if(Model.UntimedActivities.Count > 0)
+      {
+         <section class="activity-agenda-section activity-agenda-section-untimed">
+            <div class="activity-agenda-time">
+               <div class="activity-time-badge activity-time-badge-muted">
+                  Utan tid
+               </div>
+               @if(Model.UntimedActivities.Count > 1)
+               {
+                  <div class="activity-time-count">
+                     @Model.UntimedActivities.Count st
+                  </div>
+               }
+            </div>
+            <div class="activity-agenda-items">
+               @foreach(var activity in Model.UntimedActivities)
+               {
+                  <article class="activity-entry">
+                     <div class="activity-meta">
+                        <span class="activity-sport">
+                           @activity.SportName
+                        </span>
+                        <span>@activity.ActivityType</span>
+                     </div>
+                     <h2>@activity.Title</h2>
+                     @if(!string.IsNullOrWhiteSpace(activity.Description))
+                     {
+                        <p>@activity.Description</p>
+                     }
+                     @if(!string.IsNullOrWhiteSpace(activity.Teaser))
+                     {
+                        <p class="activity-teaser">
+                           @activity.Teaser
+                        </p>
+                     }
+                  </article>
+               }
+            </div>
+         </section>
       }
    </div>
 }

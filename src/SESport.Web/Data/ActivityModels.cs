@@ -11,8 +11,8 @@ public sealed record ActivityListItem(
    string? SportIconPath,
    string TimeText,
    string PublicationStatus,
-   string EntitySummary,
-   string RelatedEntitiesSummary
+   string RelatedPersonEntities,
+   string RelatedOrganization
 )
 {
    public string TimeOnlyText
