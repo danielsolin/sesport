@@ -8,6 +8,93 @@ namespace SESport.Web.Data;
 
 public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 {
+   public async Task<IReadOnlyList<ActivityListItem>> GetActivitiesAsync(
+      DateOnly date,
+      string? status,
+      IReadOnlyCollection<string> sportIds,
+      CancellationToken cancellationToken
+   )
+   {
+      var normalizedSports = NormalizeSelectedSports(sportIds);
+      var sql = new StringBuilder()
+         .AppendLine("select")
+         .AppendLine("   a.id,")
+         .AppendLine("   a.title,")
+         .AppendLine("   a.description,")
+         .AppendLine("   a.teaser,")
+         .AppendLine("   at.label,")
+         .AppendLine("   s.id,")
+         .AppendLine("   s.name,")
+         .AppendLine("   s.icon_id,")
+         .AppendLine("   a.activity_date,")
+         .AppendLine("   a.local_start_time,")
+         .AppendLine("   a.publication_status_id,")
+         .AppendLine("   coalesce(")
+         .AppendLine("      string_agg(")
+         .AppendLine("         te.canonical_name,")
+         .AppendLine("         ', ' order by te.canonical_name")
+         .AppendLine("      ),")
+         .AppendLine("      ''")
+         .AppendLine("   ) as entities,")
+         .AppendLine("   coalesce(re.related_entities, '') as related_entities")
+         .AppendLine("from activities a")
+         .AppendLine("join sports s on s.id = a.sport_id")
+         .AppendLine("join activity_types at on at.id = a.activity_type_id")
+         .AppendLine("left join activity_entity_links l on l.activity_id = a.id")
+         .AppendLine("left join entities te on te.id = l.entity_id")
+         .AppendLine("left join lateral (")
+         .AppendLine("   select string_agg(")
+         .AppendLine("      distinct entity.canonical_name,")
+         .AppendLine("      ', ' order by entity.canonical_name")
+         .AppendLine("   ) as related_entities")
+         .AppendLine("   from activity_entity_links al")
+         .AppendLine("   join entity_to_entity_links el")
+         .AppendLine("      on el.source_entity_id = al.entity_id")
+         .AppendLine("      or el.target_entity_id = al.entity_id")
+         .AppendLine("   join entities entity")
+         .AppendLine("      on entity.id = case")
+         .AppendLine("         when el.source_entity_id = al.entity_id")
+         .AppendLine("            then el.target_entity_id")
+         .AppendLine("         else el.source_entity_id")
+         .AppendLine("      end")
+         .AppendLine("   where al.activity_id = a.id")
+         .AppendLine("      and entity.entity_type_id is not null")
+         .AppendLine(") re on true")
+         .AppendLine("where a.activity_date = @date");
+
+      if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
+      {
+         sql.AppendLine("   and a.publication_status_id = @status");
+      }
+
+      if(normalizedSports.Count > 0)
+      {
+         sql.AppendLine("   and a.sport_id = any(@sport_ids)");
+      }
+
+      sql.AppendLine("group by a.id, at.label, s.id, s.name, s.icon_id,")
+         .AppendLine("         re.related_entities")
+         .AppendLine("order by")
+         .AppendLine("   a.activity_date,")
+         .AppendLine("   a.local_start_time nulls last,")
+         .AppendLine("   a.title");
+
+      await using var command = dataSource.CreateCommand(sql.ToString());
+      command.Parameters.AddWithValue("date", date);
+
+      if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
+      {
+         command.Parameters.AddWithValue("status", status ?? "All");
+      }
+
+      if(normalizedSports.Count > 0)
+      {
+         command.Parameters.AddWithValue("sport_ids", normalizedSports.ToArray());
+      }
+
+      return await ReadActivityListAsync(command, cancellationToken);
+   }
+
    public async Task<IReadOnlyList<ActivityListItem>> GetPublishedAsync(
       CancellationToken cancellationToken
    )
@@ -497,32 +584,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          """;
 
       await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var activities = new List<ActivityListItem>();
-
-      while (await reader.ReadAsync(cancellationToken))
-      {
-         activities.Add(
-            new ActivityListItem(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               ReadString(reader, 2),
-               ReadString(reader, 3),
-               reader.GetString(4),
-               reader.GetString(5),
-               reader.GetString(6),
-               GetSportIconPath(ReadString(reader, 7)),
-               FormatTime(reader),
-               reader.GetString(10),
-               reader.GetString(11),
-               reader.GetString(12)
-            )
-         );
-      }
-
-      return activities;
+      return await ReadActivityListAsync(command, cancellationToken);
    }
 
    private static async Task InsertActivityAsync(
@@ -968,11 +1030,57 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
    }
 
+   private static async Task<IReadOnlyList<ActivityListItem>>
+      ReadActivityListAsync(
+         NpgsqlCommand command,
+         CancellationToken cancellationToken
+      )
+   {
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var activities = new List<ActivityListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         activities.Add(
+            new ActivityListItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               ReadString(reader, 2),
+               ReadString(reader, 3),
+               reader.GetString(4),
+               reader.GetString(5),
+               reader.GetString(6),
+               GetSportIconPath(ReadString(reader, 7)),
+               FormatTime(reader),
+               reader.GetString(10),
+               reader.GetString(11),
+               reader.GetString(12)
+            )
+         );
+      }
+
+      return activities;
+   }
+
    private static TimeOnly? ReadTimeOnly(NpgsqlDataReader reader, int ordinal)
    {
       return reader.IsDBNull(ordinal)
          ? null
          : reader.GetFieldValue<TimeOnly>(ordinal);
+   }
+
+   private static List<string> NormalizeSelectedSports(
+      IEnumerable<string> values
+   )
+   {
+      return values
+         .Where(value => !string.IsNullOrWhiteSpace(value))
+         .Select(value => value.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 
    private static object BlankToDbNull(string? value)

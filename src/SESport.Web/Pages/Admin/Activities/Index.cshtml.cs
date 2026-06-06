@@ -1,13 +1,16 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using SESport.Core.Domain;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
 
 public class IndexModel(ActivityRepository repository) : PageModel
 {
-   public const string TodayStatus = "Today";
-   public const string TomorrowStatus = "Tomorrow";
+   public const string LegacyTodayStatus = "Today";
+   public const string LegacyTomorrowStatus = "Tomorrow";
    public const string AllStatus = "All";
    public const string DraftStatus = "Draft";
    public const string PublishedStatus = "Published";
@@ -17,52 +20,38 @@ public class IndexModel(ActivityRepository repository) : PageModel
    public const string EntitiesSortColumn = "Entities";
    public const string StatusSortColumn = "Status";
 
+   [BindProperty(SupportsGet = true, Name = "date")]
+   public DateOnly? Date { get; set; }
+
    [BindProperty(SupportsGet = true, Name = "status")]
-   public string? Status { get; set; } = "Today";
+   public string? Status { get; set; } = AllStatus;
 
-   public string SortColumn { get; private set; } = TimeSortColumn;
+   [BindProperty(SupportsGet = true)]
+   public List<string> SelectedSports { get; set; } = [];
 
-   public bool SortAsc { get; private set; } = true;
+   [BindProperty(SupportsGet = true)]
+   public string SortColumn { get; set; } = TimeSortColumn;
+
+   [BindProperty(SupportsGet = true)]
+   public bool SortAsc { get; set; } = true;
+
+   public string DateText => SelectedDate.ToString("yyyy-MM-dd");
+
+   public DateOnly SelectedDate { get; private set; }
 
    public IReadOnlyList<ActivityListItem> Activities { get; private set; } =
       [];
 
+   public IReadOnlyList<SelectListItem> SportOptions { get; private set; } =
+      [];
+
    public string? LoadError { get; private set; }
 
-   public async Task OnGetAsync(
-      string? sortColumn,
-      bool sortAsc = true,
-      CancellationToken cancellationToken = default
-   )
+   public async Task OnGetAsync(CancellationToken cancellationToken)
    {
-         Status = NormalizeStatus(Status) ?? DraftStatus;
-         SortColumn = NormalizeSortColumn(sortColumn);
-         SortAsc = sortAsc;
-
-         try
-         {
-            var activities = Status switch
-            {
-               TodayStatus => await repository.GetTodaysAsync(
-                  cancellationToken
-               ),
-               TomorrowStatus => await repository.GetTomorrowsAsync(
-                  cancellationToken
-               ),
-               DraftStatus => await repository.GetDraftsAsync(
-                  cancellationToken
-               ),
-               PublishedStatus => await repository.GetPublishedAsync(
-                  cancellationToken
-               ),
-            _ => await repository.GetAllAsync(cancellationToken)
-         };
-         Activities = SortActivities(activities, SortColumn, SortAsc);
-      }
-      catch (Exception exception)
-      {
-         LoadError = exception.Message;
-      }
+      SortColumn = NormalizeSortColumn(SortColumn);
+      NormalizeFilters();
+      await LoadAsync(cancellationToken);
    }
 
    public bool GetNextSortAsc(string sortColumn) =>
@@ -91,70 +80,167 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    public string GetReturnUrl()
    {
-      return Url.Page(
-         "./Index",
-         new
-         {
-            status = Status ?? DraftStatus,
-            sortColumn = SortColumn,
-            sortAsc = SortAsc
-         }
-      ) ?? "/Admin/Activities";
+      var routeValues = GetCurrentRouteValues();
+      routeValues["sortColumn"] = SortColumn;
+      routeValues["sortAsc"] = SortAsc.ToString();
+
+      return Url.Page("./Index", routeValues) ?? "/Admin/Activities";
    }
 
    public async Task<IActionResult> OnPostDeleteAsync(
       Guid id,
+      DateOnly? date,
       string? status,
       string? sortColumn,
       bool? sortAsc,
+      List<string>? selectedSports,
       CancellationToken cancellationToken
    )
    {
       await repository.DeleteAsync(id, cancellationToken);
+
       var routeValues = GetRedirectRouteValues(
+         date,
          status,
          sortColumn,
-         sortAsc ?? true
+         sortAsc,
+         selectedSports ?? SelectedSports
       );
 
       return RedirectToPage("./Index", routeValues);
    }
 
-   private static Dictionary<string, object?> GetRedirectRouteValues(
-      string? status,
-      string? sortColumn,
-      bool sortAsc
-   )
+   private async Task LoadAsync(CancellationToken cancellationToken)
    {
-      var routeValues = new Dictionary<string, object?>
-      {
-         ["status"] = NormalizeStatus(status) ?? DraftStatus,
-         ["sortColumn"] = NormalizeSortColumn(sortColumn),
-         ["sortAsc"] = sortAsc
-      };
+      SelectedDate = Date ?? SportDay.Today(DateTimeOffset.UtcNow).StartDate;
 
-      return routeValues;
+      try
+      {
+         var normalizedSports = NormalizeSelectedSports(SelectedSports);
+         SelectedSports = normalizedSports.Count == 0
+            ? [string.Empty]
+            : normalizedSports;
+
+         var sports = await repository.GetSportOptionsAsync(cancellationToken);
+         SportOptions =
+         [
+            new SelectListItem(
+               "Alla",
+               string.Empty,
+               normalizedSports.Count == 0
+            ),
+            .. sports.Select(sport => new SelectListItem(
+               sport.Label,
+               sport.Id,
+               normalizedSports.Contains(sport.Id)
+            ))
+         ];
+
+         Activities = await repository.GetActivitiesAsync(
+            SelectedDate,
+            Status,
+            normalizedSports,
+            cancellationToken
+         );
+         Activities = SortActivities(Activities, SortColumn, SortAsc);
+      }
+      catch(Exception exception)
+      {
+         LoadError = exception.Message;
+      }
+   }
+
+   private void NormalizeFilters()
+   {
+      if(Date is null)
+      {
+         Date = Status switch
+         {
+            LegacyTodayStatus =>
+               SportDay.Today(DateTimeOffset.UtcNow).StartDate,
+            LegacyTomorrowStatus =>
+               SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate,
+            _ => Date
+         };
+      }
+
+      Status = NormalizeStatus(Status) ?? AllStatus;
+
+      var normalizedSports = NormalizeSelectedSports(SelectedSports);
+      SelectedSports = normalizedSports.Count == 0
+         ? [string.Empty]
+         : normalizedSports;
    }
 
    private Dictionary<string, string?> GetCurrentRouteValues()
    {
       var routeValues = new Dictionary<string, string?>
       {
-         ["status"] = Status ?? DraftStatus
+         ["date"] = DateText,
+         ["status"] = Status ?? AllStatus
       };
 
+      var normalizedSports = NormalizeSelectedSports(SelectedSports);
+
+      for(var index = 0; index < normalizedSports.Count; index++)
+      {
+         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
+      }
+
       return routeValues;
+   }
+
+   private static Dictionary<string, object?> GetRedirectRouteValues(
+      DateOnly? date,
+      string? status,
+      string? sortColumn,
+      bool? sortAsc,
+      IEnumerable<string> selectedSports
+   )
+   {
+      var routeValues = new Dictionary<string, object?>
+      {
+         ["date"] = GetRouteDate(date, status).ToString(
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture
+         ),
+         ["status"] = NormalizeStatus(status) ?? AllStatus,
+         ["sortColumn"] = NormalizeSortColumn(sortColumn),
+         ["sortAsc"] = sortAsc ?? true
+      };
+
+      var normalizedSports = NormalizeSelectedSports(selectedSports);
+
+      for(var index = 0; index < normalizedSports.Count; index++)
+      {
+         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
+      }
+
+      return routeValues;
+   }
+
+   private static DateOnly GetRouteDate(DateOnly? date, string? status)
+   {
+      if(date is not null)
+      {
+         return date.Value;
+      }
+
+      return status switch
+      {
+         LegacyTomorrowStatus =>
+            SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate,
+         _ => SportDay.Today(DateTimeOffset.UtcNow).StartDate
+      };
    }
 
    private static string? NormalizeStatus(string? status)
    {
       return status switch
       {
-         TodayStatus => TodayStatus,
-         TomorrowStatus => TomorrowStatus,
          DraftStatus => DraftStatus,
          PublishedStatus => PublishedStatus,
-         AllStatus or "" => AllStatus,
+         AllStatus or "" or null => AllStatus,
          _ => null
       };
    }
@@ -215,6 +301,18 @@ public class IndexModel(ActivityRepository repository) : PageModel
       return sortedActivities
          .ThenBy(activity => activity.TimeText, StringComparer.Ordinal)
          .ThenBy(activity => activity.Title, StringComparer.OrdinalIgnoreCase)
+         .ToList();
+   }
+
+   private static List<string> NormalizeSelectedSports(
+      IEnumerable<string> values
+   )
+   {
+      return values
+         .Where(value => !string.IsNullOrWhiteSpace(value))
+         .Select(value => value.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
          .ToList();
    }
 }

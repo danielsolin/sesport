@@ -17,115 +17,158 @@
    </a>
 </section>
 
-<form method="get">
-   <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
-   <input type="hidden" name="sortAsc" value="@Model.SortAsc" />
-   <select id="activity_status"
-           name="status"
-           onchange="this.form.submit();">
-      <option value="Today"
-              selected="@(Model.Status == "Today")">
-         Today
-      </option>
-      <option value="Tomorrow"
-              selected="@(Model.Status == "Tomorrow")">
-         Tomorrow
-      </option>
-      <option value="Draft"
-              selected="@(Model.Status == "Draft")">
-         Drafts
-      </option>
-      <option value="Published"
-              selected="@(Model.Status == "Published")">
-         Published
-      </option>
-      <option value="All"
-              selected="@(Model.Status == "All")">
-         All
-      </option>
-   </select>
-</form>
+<section class="form-section">
+   <form method="get"
+         class="filter-form"
+         data-ajax-replace-target="[data-activity-results]">
+      <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+      <input type="hidden"
+             name="sortAsc"
+             value="@Model.SortAsc.ToString()" />
+      <label>
+         <span>Date</span>
+         <input type="date"
+                name="date"
+                value="@Model.DateText"
+                onchange="this.form.submit();" />
+      </label>
+      <div class="filter-sports">
+         <label asp-for="SelectedSports">
+            <span>Sporter</span>
+            <select asp-for="SelectedSports"
+                    asp-items="Model.SportOptions"
+                    multiple="multiple"
+                    size="1"
+                    data-empty-option="exclusive"
+                    onchange="submitFilterForm(this);">
+            </select>
+         </label>
+      </div>
+         <label>
+            <span>Status</span>
+            <select name="status" onchange="this.form.submit();">
+            <option value="All"
+                    selected="@(Model.Status == "All")">
+               All
+            </option>
+            <option value="Draft"
+                    selected="@(Model.Status == "Draft")">
+               Draft
+            </option>
+            <option value="Published"
+                    selected="@(Model.Status == "Published")">
+               Published
+            </option>
+         </select>
+      </label>
+   </form>
+</section>
 
-@if(Model.LoadError is not null)
-{
-   <div class="notice notice-warning">
-      The activity database is not available right now.
-   </div>
-}
-else if(Model.Activities.Count == 0)
-{
-   <div class="notice">
-      No activities to show.
-   </div>
-}
-else
-{
-   <div class="admin-table-wrap">
-      <table class="admin-table">
-         <thead>
-            <tr>
-               <th>
-                  <a asp-page="./Index"
-                     asp-all-route-data='@Model.GetSortRouteValues("Time")'>
-                     Time @Model.GetSortIndicator("Time")
-                  </a>
-               </th>
-               <th>
-                  <a asp-page="./Index"
-                     asp-all-route-data='@Model.GetSortRouteValues("Activity")'>
-                     Activity @Model.GetSortIndicator("Activity")
-                  </a>
-               </th>
-               <th>
-                  <a asp-page="./Index"
-                     asp-all-route-data='@Model.GetSortRouteValues("Entities")'>
-                     Entities @Model.GetSortIndicator("Entities")
-                  </a>
-               </th>
-               <th>Teaser</th>
-               <th>
-                  <a asp-page="./Index"
-                     asp-all-route-data='@Model.GetSortRouteValues("Status")'>
-                     Status @Model.GetSortIndicator("Status")
-                  </a>
-               </th>
-               <th></th>
-            </tr>
-         </thead>
-         <tbody>
-            @foreach(var activity in Model.Activities)
-            {
+<div data-activity-results>
+   @if(Model.LoadError is not null)
+   {
+      <div class="notice notice-warning">
+         The activity database is not available right now.
+      </div>
+   }
+   else if(Model.Activities.Count == 0)
+   {
+      <div class="notice">
+         No activities to show.
+      </div>
+   }
+   else
+   {
+      <div class="admin-table-wrap">
+         <table class="admin-table">
+            <thead>
                <tr>
-                  <td>@activity.TimeText</td>
-                  <td>
-                     <a asp-page="./Edit"
-                        asp-route-id="@activity.Id"
-                        asp-route-returnUrl="@returnUrl">
-                        <strong>@activity.RelatedEntitiesSummary - @activity.Title</strong>
+                  <th>
+                     <a asp-page="./Index"
+                        asp-all-route-data='@Model.GetSortRouteValues("Time")'>
+                        Time @Model.GetSortIndicator("Time")
                      </a>
-                     <span>@activity.SportName / @activity.ActivityType</span>
-                  </td>
-                  <td>@activity.EntitySummary</td>
-                  <td>@activity.Teaser</td>
-                  <td>
-                     <span class="status-pill">
-                        @activity.PublicationStatus
-                     </span>
-                  </td>
-                  <td class="table-actions">
-                     <form method="post"
-                           asp-page-handler="Delete"
-                           asp-route-id="@activity.Id"
-                           asp-route-status="@Model.Status"
-                           asp-route-sortColumn="@Model.SortColumn"
-                           asp-route-sortAsc="@Model.SortAsc"
-                           onsubmit="return confirm('Sure?');">
-                        <button type="submit">Delete</button>
-                     </form>
-                  </td>
+                  </th>
+                  <th>
+                     <a asp-page="./Index"
+                        asp-all-route-data=
+                           '@Model.GetSortRouteValues("Activity")'>
+                        Activity @Model.GetSortIndicator("Activity")
+                     </a>
+                  </th>
+                  <th>
+                     <a asp-page="./Index"
+                        asp-all-route-data=
+                           '@Model.GetSortRouteValues("Entities")'>
+                        Entities @Model.GetSortIndicator("Entities")
+                     </a>
+                  </th>
+                  <th>Teaser</th>
+                  <th>
+                     <a asp-page="./Index"
+                        asp-all-route-data=
+                           '@Model.GetSortRouteValues("Status")'>
+                        Status @Model.GetSortIndicator("Status")
+                     </a>
+                  </th>
+                  <th></th>
                </tr>
-            }
-         </tbody>
-      </table>
-   </div>
-}
+            </thead>
+            <tbody>
+               @foreach(var activity in Model.Activities)
+               {
+                  <tr>
+                     <td>@activity.TimeText</td>
+                     <td>
+                        <a asp-page="./Edit"
+                           asp-route-id="@activity.Id"
+                           asp-route-returnUrl="@returnUrl">
+                           <strong>
+                              @activity.RelatedEntitiesSummary -
+                              @activity.Title
+                           </strong>
+                        </a>
+                        <span>@activity.SportName / @activity.ActivityType</span>
+                     </td>
+                     <td>@activity.EntitySummary</td>
+                     <td>@activity.Teaser</td>
+                     <td>
+                        <span class="status-pill">
+                           @activity.PublicationStatus
+                        </span>
+                     </td>
+                     <td class="table-actions">
+                        <form method="post"
+                              asp-page-handler="Delete"
+                              asp-route-id="@activity.Id"
+                              onsubmit="return confirm('Sure?');">
+                           <input type="hidden"
+                                  name="date"
+                                  value="@Model.DateText" />
+                           <input type="hidden"
+                                  name="status"
+                                  value="@Model.Status" />
+                           <input type="hidden"
+                                  name="sortColumn"
+                                  value="@Model.SortColumn" />
+                           <input type="hidden"
+                                  name="sortAsc"
+                                  value="@Model.SortAsc.ToString()" />
+                           @foreach(var sport in Model.SelectedSports
+                              .Where(value =>
+                                 !string.IsNullOrWhiteSpace(value)))
+                           {
+                              <input type="hidden"
+                                     name="SelectedSports"
+                                     value="@sport" />
+                           }
+                           <button type="submit">Delete</button>
+                        </form>
+                     </td>
+                  </tr>
+               }
+            </tbody>
+         </table>
+      </div>
+   }
+</div>
