@@ -2,8 +2,6 @@ using SESport.Web.Formatting;
 
 namespace SESport.Web.Data;
 
-public sealed record AuditArea(string Title, string Description, string Href);
-
 public sealed record ActivityProposalAuditItem(
    string Id,
    string Title,
@@ -92,32 +90,3 @@ public sealed record ActivityProposalDetail(
 };
 
 public sealed record RejectReasonOption(string Id, string Label);
-
-public sealed record ActivityLinkAuditItem(
-   Guid ActivityId,
-   string ActivityTitle,
-   string TimeText,
-   string EntityName,
-   string EntityType
-);
-
-public sealed record ActivityEvidenceAuditItem(
-   Guid ActivityId,
-   string ActivityTitle,
-   string TimeText,
-   string Source,
-   string? Uri,
-   string? Title,
-   DateTimeOffset ObservedAt,
-   string? Comment,
-   string? ProposalId
-)
-{
-   public string UrlShort
-   {
-      get
-      {
-         return UrlDisplayFormatter.ToShortDisplayUrl(Uri);
-      }
-   }
-};

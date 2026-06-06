@@ -22,93 +22,20 @@ else if (Model.LoadError is not null)
       The reference data table is not available right now.
    </div>
 }
-else
-{
-   <div class="page-heading page-heading-row compact-heading">
-      <div>
-         <h2>@Model.CurrentTable.Title</h2>
-         <p>@Model.CurrentTable.Description</p>
-      </div>
-      @if (Model.CurrentSpecialView is null)
-      {
+   else
+   {
+      <div class="page-heading page-heading-row compact-heading">
+         <div>
+            <h2>@Model.CurrentTable.Title</h2>
+            <p>@Model.CurrentTable.Description</p>
+         </div>
          <a class="button button-primary"
             asp-page="./Edit"
             asp-route-table="@Model.CurrentTable.Id">
             New row
          </a>
-      }
-   </div>
-
-   @if (Model.CurrentSpecialView == "activity-audit")
-   {
-      <section class="form-section">
-         <h2>Activity entity links</h2>
-         <table class="admin-table">
-            <thead>
-               <tr>
-                  <th>Activity</th>
-                  <th>Entity</th>
-                  <th>Entity type</th>
-               </tr>
-            </thead>
-            <tbody>
-               @foreach (var link in Model.ActivityLinks)
-               {
-                  <tr>
-                     <td>
-                        <strong>@link.ActivityTitle</strong>
-                        <span>@link.TimeText</span>
-                        <span class="audit-id">@link.ActivityId</span>
-                     </td>
-                     <td>@link.EntityName</td>
-                     <td>@link.EntityType</td>
-                  </tr>
-               }
-            </tbody>
-         </table>
-      </section>
-
-      <section class="form-section">
-         <h2>Activity evidence</h2>
-         <table class="admin-table">
-            <thead>
-               <tr>
-                  <th>Activity</th>
-                  <th>Title</th>
-                  <th>URI</th>
-                  <th>Comment</th>
-                  <th>Observed</th>
-               </tr>
-            </thead>
-            <tbody>
-               @foreach (var evidence in Model.ActivityEvidence)
-               {
-                  <tr>
-                     <td>
-                        <strong>@evidence.ActivityTitle</strong>
-                        <span>@evidence.TimeText</span>
-                        <span class="audit-id">
-                           @evidence.ActivityId
-                        </span>
-                     </td>
-                     <td>@evidence.Title</td>
-                     <td>
-                        @if (!string.IsNullOrWhiteSpace(evidence.Uri))
-                        {
-                           <a href="@evidence.Uri">@evidence.UrlShort</a>
-                        }
-                     </td>
-                     <td>@evidence.Comment</td>
-                     <td>
-                        @evidence.ObservedAt.ToString("yyyy-MM-dd HH:mm")
-                     </td>
-                  </tr>
-               }
-            </tbody>
-         </table>
-      </section>
-   }
-   else if(Model.CurrentTable.Kind == ReferenceTableKind.Countries)
+      </div>
+      if(Model.CurrentTable.Kind == ReferenceTableKind.Countries)
    {
       <div class="admin-table-wrap">
          <table class="admin-table">

@@ -5,8 +5,7 @@ using SESport.Web.Data;
 namespace SESport.Web.Pages.Admin.ReferenceData;
 
 public class IndexModel(
-   AdminRepository repository,
-   AuditRepository auditRepository
+   AdminRepository repository
 ) : PageModel
 {
    public IReadOnlyList<ReferenceNavigationItem> NavigationItems
@@ -19,8 +18,6 @@ public class IndexModel(
 
    public ReferenceTableInfo? CurrentTable { get; private set; }
 
-   public string? CurrentSpecialView { get; private set; }
-
    public IReadOnlyList<ReferenceRow> Rows { get; private set; } = [];
 
    public IReadOnlyList<CountryReferenceRow> CountryRows
@@ -30,18 +27,6 @@ public class IndexModel(
    } = [];
 
    public IReadOnlyList<SportReferenceRow> SportRows
-   {
-      get;
-      private set;
-   } = [];
-
-   public IReadOnlyList<ActivityLinkAuditItem> ActivityLinks
-   {
-      get;
-      private set;
-   } = [];
-
-   public IReadOnlyList<ActivityEvidenceAuditItem> ActivityEvidence
    {
       get;
       private set;
@@ -72,18 +57,6 @@ public class IndexModel(
          if (CurrentTable is null)
          {
             return NotFound();
-         }
-
-         if (CurrentTable.Kind == ReferenceTableKind.ActivityAudit)
-         {
-            CurrentSpecialView = CurrentTable.Id;
-            ActivityLinks = await auditRepository.GetActivityLinksAsync(
-               cancellationToken
-            );
-            ActivityEvidence = await auditRepository.GetActivityEvidenceAsync(
-               cancellationToken
-            );
-            return Page();
          }
 
          if(CurrentTable.Kind == ReferenceTableKind.Countries)

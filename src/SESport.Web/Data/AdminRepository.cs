@@ -7,12 +7,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    private static readonly IReadOnlyDictionary<string, ReferenceTable> Tables =
       new Dictionary<string, ReferenceTable>(StringComparer.OrdinalIgnoreCase)
       {
-         ["activity-audit"] = new(
-            "activity-audit",
-            "Activity audit",
-            "Inspect canonical activity entity links and evidence.",
-            ReferenceTableKind.ActivityAudit
-         ),
          ["sports"] = new(
             "sports",
             "Sports",
@@ -184,19 +178,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          new AdminNavGroup(
             "Reference tables",
             GetReferenceNavigationItems()
-               .Where(item =>
-                  !string.Equals(
-                     item.Href,
-                     "/Admin/Config/activity-audit",
-                     StringComparison.OrdinalIgnoreCase
-                  )
-               )
                .Select(item => new AdminNavItem(item.Title, item.Href))
                .ToList()
-         ),
-         new AdminNavGroup(
-            "Audit",
-            [new AdminNavItem("Activity audit", "/Admin/Config/activity-audit")]
          )
       ];
    }
