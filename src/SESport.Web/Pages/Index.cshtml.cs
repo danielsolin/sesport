@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Domain;
 using SESport.Web.Data;
+using System.Globalization;
 
 namespace SESport.Web.Pages;
 
@@ -18,8 +19,13 @@ public class IndexModel(ActivityRepository repository) : PageModel
       get; private set;
    } = [];
 
-   public IReadOnlyList<ActivityListItem> UntimedActivities { get; private set; }
-      = [];
+   public IReadOnlyList<ActivityListItem> UntimedActivities
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<DateOption> DateOptions { get; private set; } = [];
 
    [BindProperty(SupportsGet = true, Name = "day")]
    public string? Day { get; set; } = TodayDay;
@@ -34,7 +40,9 @@ public class IndexModel(ActivityRepository repository) : PageModel
    {
       Day = NormalizeDay(Day) ?? TodayDay;
       var now = DateTimeOffset.UtcNow;
+      var todayDate = DateOnly.FromDateTime(now.UtcDateTime);
       SelectedDate = GetSelectedDate(now);
+      DateOptions = BuildDateOptions(todayDate, SelectedDate);
 
       try
       {
@@ -121,6 +129,32 @@ public class IndexModel(ActivityRepository repository) : PageModel
       UntimedActivities = untimedActivities;
    }
 
+   private static IReadOnlyList<DateOption> BuildDateOptions(
+      DateOnly todayDate,
+      DateOnly selectedDate
+   )
+   {
+      var dateOptions = new List<DateOption>();
+
+      for(var offset = 0; offset <= 7; offset++)
+      {
+         var date = todayDate.AddDays(offset);
+         var dayLabel = date == todayDate
+            ? "Today"
+            : date.ToString("ddd", CultureInfo.InvariantCulture);
+
+         dateOptions.Add(
+            new DateOption(
+               date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+               $"{dayLabel} - {date:yyyy-MM-dd}",
+               date == selectedDate
+            )
+         );
+      }
+
+      return dateOptions;
+   }
+
    private static bool HasLocalStartTime(ActivityListItem activity)
    {
       return activity.TimeText.Contains(' ');
@@ -131,4 +165,10 @@ public sealed record ActivityAgendaSection(
    string TimeLabel,
    IReadOnlyList<ActivityListItem> Activities,
    string RelatedOrganization
+);
+
+public sealed record DateOption(
+   string Value,
+   string Label,
+   bool IsSelected
 );

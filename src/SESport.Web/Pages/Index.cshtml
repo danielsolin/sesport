@@ -13,19 +13,42 @@
       : "button";
 }
 
-<section class="page-heading page-heading-row">
-   <div>
-      <div class="date-select">@Model.DateText</div>
+<section class="page-heading index-heading">
+   <div class="index-heading-left">
+      <div class="date-select">
+         <label class="date-select-label" for="date-select-input">
+            Date
+         </label>
+         <div class="date-select-control">
+            <select
+               id="date-select-input"
+               class="date-select-input"
+               aria-label="Date"
+            >
+               @foreach(var dateOption in Model.DateOptions)
+               {
+                  <option
+                     value="@dateOption.Value"
+                     selected="@(dateOption.IsSelected ? "selected" : null)"
+                  >
+                     @dateOption.Label
+                  </option>
+               }
+            </select>
+         </div>
+      </div>
    </div>
-   <div class="button-row">
-      <a class="@todayButtonClass" asp-page="./Index" asp-route-day="Today">
-         Idag
-      </a>
-      <a class="@tomorrowButtonClass"
-         asp-page="./Index"
-         asp-route-day="Tomorrow">
-         Imorgon
-      </a>
+   <div class="index-heading-actions">
+      <div class="button-row">
+         <a class="@todayButtonClass" asp-page="./Index" asp-route-day="Today">
+            Idag
+         </a>
+         <a class="@tomorrowButtonClass"
+            asp-page="./Index"
+            asp-route-day="Tomorrow">
+            Imorgon
+         </a>
+      </div>
    </div>
 </section>
 
@@ -119,7 +142,10 @@ else
 
       @if(Model.UntimedActivities.Count > 0)
       {
-         <section class="activity-agenda-section activity-agenda-section-untimed">
+         <section
+            class="activity-agenda-section
+                   activity-agenda-section-untimed"
+         >
             <div class="activity-agenda-time">
                <div class="activity-time-badge activity-time-badge-muted">
                   Utan tid
