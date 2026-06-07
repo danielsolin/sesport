@@ -3,10 +3,13 @@ set -euo pipefail
 
 database="${SESPORT_POSTGRES_DB:-sesport}"
 user="${SESPORT_POSTGRES_USER:-sesport}"
+
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
+
 default_backup_dir="$repo_root/artifacts/db-backups"
 backup_dir="${1:-$default_backup_dir}"
+
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_file="$database-$timestamp.dump"
 backup_path="$backup_dir/$backup_file"
@@ -31,4 +34,10 @@ docker compose exec -T postgres \
 
 docker compose cp "postgres:$container_backup_path" "$backup_path"
 
-echo "Backup written to $backup_path"
+if [[ ! -s "$backup_path" ]]; then
+   echo "Backup failed: file is missing or empty: $backup_path" >&2
+   exit 1
+fi
+
+size="$(du -h "$backup_path" | cut -f1)"
+echo "Backup written to $backup_path ($size)"
