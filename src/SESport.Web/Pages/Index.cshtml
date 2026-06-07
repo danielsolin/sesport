@@ -15,7 +15,7 @@
 
 <section class="page-heading page-heading-row">
    <div>
-      <div class="brand">@Model.DateText</div>
+      <div class="date-select">@Model.DateText</div>
    </div>
    <div class="button-row">
       <a class="@todayButtonClass" asp-page="./Index" asp-route-day="Today">
@@ -100,7 +100,7 @@ else
                         </span>
                         <span>@activity.ActivityType</span>
                      </div>
-                     <h2>@activity.RelatedOrganization - @activity.Title</h2>
+                     <h2>@activity.Title - @activity.RelatedOrganization</h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
                         <p>@activity.Description</p>

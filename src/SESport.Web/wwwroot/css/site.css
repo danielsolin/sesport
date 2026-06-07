@@ -125,6 +125,23 @@ a:hover {
    gap: 18px;
 }
 
+.date-select {
+   display: inline-flex;
+   align-items: center;
+   min-height: 44px;
+   padding: 10px 16px;
+   border: 1px solid rgba(0, 108, 103, 0.16);
+   border-radius: 999px;
+   background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 1));
+   box-shadow: 0 10px 24px rgba(20, 22, 20, 0.08);
+   color: var(--accent-strong);
+   font-size: 18px;
+   font-weight: 800;
+   letter-spacing: 0.02em;
+   line-height: 1;
+}
+
 .page-heading-title-row {
    display: flex;
    align-items: center;
@@ -805,6 +822,12 @@ textarea {
    .form-actions {
       align-items: flex-start;
       flex-direction: column;
+   }
+
+   .date-select {
+      min-height: 40px;
+      padding: 8px 14px;
+      font-size: 16px;
    }
 
    .site-header {
