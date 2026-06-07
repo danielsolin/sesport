@@ -1,5 +1,3 @@
-using SESport.Core.Ingestion;
-
 namespace SESport.AI.ActivitySearch;
 
 public sealed record ActivitySearchEntity(

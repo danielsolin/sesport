@@ -1,4 +1,3 @@
-using System.Text.Json;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 

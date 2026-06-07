@@ -1,10 +1,5 @@
 using Npgsql;
 
-using SESport.Core.Domain;
-using SESport.Core.Identifiers;
-using SESport.Core.Ingestion;
-using SESport.Core.Sources;
-
 namespace SESport.AI.Persistence;
 
 public sealed class ActivityProposalRepository : IAsyncDisposable

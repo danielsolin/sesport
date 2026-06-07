@@ -1,8 +1,6 @@
 using Npgsql;
 
 using SESport.AI.ActivitySearch;
-using SESport.Core.Identifiers;
-using SESport.Core.Ingestion;
 
 namespace SESport.AI.Persistence;
 

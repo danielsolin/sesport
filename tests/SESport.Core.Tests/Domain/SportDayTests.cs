@@ -1,5 +1,4 @@
 using System.Globalization;
-using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.Domain;
 

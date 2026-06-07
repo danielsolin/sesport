@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using SESport.Core.Ingestion;
 
 namespace SESport.AI.ActivitySearch;
 
