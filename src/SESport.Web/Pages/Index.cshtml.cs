@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Core.Domain;
 using SESport.Web.Data;
 
 namespace SESport.Web.Pages;
@@ -23,11 +24,17 @@ public class IndexModel(ActivityRepository repository) : PageModel
    [BindProperty(SupportsGet = true, Name = "day")]
    public string? Day { get; set; } = TodayDay;
 
+   public string DateText => SelectedDate.ToString("yyyy-MM-dd");
+
+   public DateOnly SelectedDate { get; private set; }
+
    public string? LoadError { get; private set; }
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       Day = NormalizeDay(Day) ?? TodayDay;
+      var now = DateTimeOffset.UtcNow;
+      SelectedDate = GetSelectedDate(now);
 
       try
       {
@@ -47,6 +54,16 @@ public class IndexModel(ActivityRepository repository) : PageModel
       {
          LoadError = exception.Message;
       }
+   }
+
+   private DateOnly GetSelectedDate(DateTimeOffset now)
+   {
+      return Day switch
+      {
+         TodayDay => SportDay.Today(now).StartDate,
+         TomorrowDay => SportDay.Tomorrow(now).StartDate,
+         _ => SportDay.Today(now).StartDate
+      };
    }
 
    private static string? NormalizeDay(string? day)
