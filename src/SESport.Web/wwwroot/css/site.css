@@ -346,6 +346,11 @@ h2 {
    gap: 4px;
 }
 
+.activity-tv-channel {
+   color: var(--accent-strong);
+   text-transform: none;
+}
+
 .activity-sport-icon {
    width: 1.55em;
    height: 1.55em;
