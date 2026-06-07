@@ -92,15 +92,7 @@ values (
    'environment:OPENROUTER_API_KEY',
    '{}'::jsonb
 )
-on conflict (id) do update
-set
-   label = excluded.label,
-   kind = excluded.kind,
-   base_address = excluded.base_address,
-   model = excluded.model,
-   api_key_source = excluded.api_key_source,
-   request_options = excluded.request_options,
-   updated_at = now();
+on conflict (id) do nothing;
 
 insert into ai_jobs (
    id,
@@ -116,13 +108,7 @@ values (
    'openrouter-free',
    'json_object'
 )
-on conflict (id) do update
-set
-   label = excluded.label,
-   description = excluded.description,
-   provider_id = excluded.provider_id,
-   output_mode = excluded.output_mode,
-   updated_at = now();
+on conflict (id) do nothing;
 
 insert into ai_job_prompts (
    id,
@@ -175,11 +161,4 @@ $$,
    null,
    null
 )
-on conflict (job_id, version) do update
-set
-   system_prompt = excluded.system_prompt,
-   user_prompt_template = excluded.user_prompt_template,
-   output_schema = excluded.output_schema,
-   temperature = excluded.temperature,
-   max_output_tokens = excluded.max_output_tokens,
-   updated_at = now();
+on conflict (job_id, version) do nothing;
