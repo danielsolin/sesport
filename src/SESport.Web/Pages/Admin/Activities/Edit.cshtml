@@ -13,13 +13,8 @@
 
 <section class="page-heading page-heading-row">
    <div>
-      <p class="eyebrow">Admin</p>
       <h1>@ViewData["Title"]</h1>
    </div>
-   <a class="button"
-      href="@(Model.ReturnUrl ?? Url.Page("./Index"))">
-      Back
-   </a>
 </section>
 
 @if (Model.LoadError is not null)
