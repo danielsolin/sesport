@@ -23,7 +23,7 @@ public sealed class AiJobRunner(
       if(job is null || !job.Enabled)
       {
          throw new InvalidOperationException(
-            $"AI job '{request.JobId}' is not configured."
+            $"AI job '{request.JobId}' does not exist."
          );
       }
 
@@ -47,7 +47,7 @@ public sealed class AiJobRunner(
       if(provider is null || !provider.Enabled)
       {
          throw new InvalidOperationException(
-            $"AI provider '{job.ProviderId}' is not configured."
+            $"AI provider '{job.ProviderId}' does not exist."
          );
       }
 
