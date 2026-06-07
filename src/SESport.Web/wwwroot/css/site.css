@@ -123,6 +123,7 @@ a:hover {
    align-items: flex-start;
    justify-content: flex-start;
    gap: 18px;
+   width: min(974px, 100%);
    margin-bottom: 28px;
 }
 
@@ -133,23 +134,8 @@ a:hover {
    gap: 14px;
 }
 
-.index-heading-actions {
-   padding-top: 28px;
-   margin-top: 7px;
-}
-
 .date-select {
    width: min(320px, 100%);
-}
-
-.date-select-label {
-   display: block;
-   margin: 0 0 8px;
-   color: var(--muted);
-   font-size: 12px;
-   font-weight: 800;
-   letter-spacing: 0.08em;
-   text-transform: uppercase;
 }
 
 .date-select-control {
@@ -888,11 +874,6 @@ textarea {
       flex-direction: column;
    }
 
-   .index-heading-actions {
-      padding-top: 0;
-      margin-left: 0;
-   }
-
    .date-select {
       width: 100%;
       max-width: 360px;
@@ -918,8 +899,8 @@ textarea {
    }
 
    .activity-agenda-section {
-      grid-template-columns: 88px minmax(0, 1fr);
-      gap: 10px;
+      grid-template-columns: 125px minmax(0, 1fr);
+      gap: 8px;
       align-items: start;
    }
 
