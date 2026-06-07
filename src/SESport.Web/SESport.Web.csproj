@@ -9,6 +9,7 @@
 
    <ItemGroup>
       <ProjectReference Include="..\SESport.Data\SESport.Data.csproj" />
+      <ProjectReference Include="..\SESport.AI\SESport.AI.csproj" />
    </ItemGroup>
 
    <ItemGroup>

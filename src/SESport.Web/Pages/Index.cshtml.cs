@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Domain;
-using SESport.Web.Data;
+using SESport.Data;
 using System.Globalization;
 
 namespace SESport.Web.Pages;

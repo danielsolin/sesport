@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using SESport.Core.AI.Abstractions;
-using SESport.Core.AI.Models;
-using SESport.Web.Data;
+using SESport.AI.Abstractions;
+using SESport.AI.Models;
+using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
 

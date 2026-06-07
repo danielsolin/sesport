@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
 using SESport.Web.Extensions;
-using SESport.Web.Data;
+using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 var adminPassword = builder.Configuration["Admin:Password"];

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SESport.Core.AI.Models;
-using SESport.Data.AI;
+using SESport.AI.Models;
+using SESport.AI.Persistence;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Jobs;
 

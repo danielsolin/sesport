@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using SESport.Core.AI.Abstractions;
-using SESport.Core.AI.Models;
-using SESport.Core.AI.Providers;
+using SESport.AI.Abstractions;
+using SESport.AI.Models;
+using SESport.AI.Providers;
 
 namespace SESport.Core.Tests.AI;
 

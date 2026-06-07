@@ -1,4 +1,4 @@
-using SESport.Core.AIActivitySearch;
+using SESport.AI.ActivitySearch;
 using SESport.Core.Ingestion;
 
 namespace SESport.Core.Tests.AIActivitySearch;

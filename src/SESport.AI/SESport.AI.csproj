@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+   <PropertyGroup>
+      <TargetFramework>net10.0</TargetFramework>
+      <ImplicitUsings>enable</ImplicitUsings>
+      <Nullable>enable</Nullable>
+      <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+   </PropertyGroup>
+
+   <ItemGroup>
+      <ProjectReference Include="..\SESport.Core\SESport.Core.csproj" />
+   </ItemGroup>
+
+   <ItemGroup>
+      <PackageReference Include="Npgsql" Version="9.0.3" />
+   </ItemGroup>
+
+   <ItemGroup>
+      <Compile Include="Abstractions\*.cs" />
+      <Compile Include="ActivitySearch\*.cs" />
+      <Compile Include="Models\*.cs" />
+      <Compile Include="Persistence\*.cs" />
+      <Compile Include="Providers\*.cs" />
+      <Compile Include="Rendering\*.cs" />
+      <Compile Include="Validation\*.cs" />
+      <Compile Include="AiJobRunner.cs" />
+      <Compile Include="GlobalUsings.cs" />
+   </ItemGroup>
+
+</Project>

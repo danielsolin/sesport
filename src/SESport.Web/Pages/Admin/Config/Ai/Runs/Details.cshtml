@@ -40,12 +40,18 @@
          </div>
          <div>
             <dt>Started</dt>
-            <dd>@Model.Run.StartedAt.ToString("yyyy-MM-dd HH:mm:ss")</dd>
+            <dd>@TimeDisplay.FormatLocalTimestamp(Model.Run.StartedAt)</dd>
          </div>
          <div>
             <dt>Completed</dt>
             <dd>
-               @(Model.Run.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "")
+               @(
+                  Model.Run.CompletedAt is null
+                     ? ""
+                     : TimeDisplay.FormatLocalTimestamp(
+                        Model.Run.CompletedAt.Value
+                     )
+               )
             </dd>
          </div>
          <div>

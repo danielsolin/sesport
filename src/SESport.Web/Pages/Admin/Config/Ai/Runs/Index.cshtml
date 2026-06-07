@@ -66,7 +66,7 @@
          @foreach (var run in Model.Runs)
          {
             <tr>
-               <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+               <td>@TimeDisplay.FormatLocalTimestamp(run.StartedAt)</td>
                <td>@run.JobLabel</td>
                <td>@run.ProviderLabel</td>
                <td><code>@run.StatusId</code></td>

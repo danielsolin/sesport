@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SESport.Web.Data;
+using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
 

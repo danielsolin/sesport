@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Core.Domain;
-using SESport.Web.Data;
+using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.TvSport;
 
