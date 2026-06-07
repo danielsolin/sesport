@@ -6,14 +6,16 @@
 }
 
 <section class="page-heading page-heading-row">
-   <div>
+   <div class="page-heading-title-row">
       <h1>Activities</h1>
    </div>
-   <a class="button button-primary"
-      asp-page="./Edit"
-      asp-route-returnUrl="@returnUrl">
-      New activity
-   </a>
+   <div class="button-row">
+      <a class="button button-primary"
+         asp-page="./Edit"
+         asp-route-returnUrl="@returnUrl">
+         New activity
+      </a>
+   </div>
 </section>
 
 <section class="form-section">

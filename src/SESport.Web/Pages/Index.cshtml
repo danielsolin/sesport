@@ -51,8 +51,17 @@ else
       {
          <section class="activity-agenda-section">
             <div class="activity-agenda-time">
-               <div class="activity-time-badge">
-                  @agendaSection.TimeLabel
+               <div class="activity-time-row">
+                  <div class="activity-time-badge">
+                     @agendaSection.TimeLabel
+                  </div>
+                  @if(!string.IsNullOrWhiteSpace(
+                     agendaSection.Activities.First().TvChannelName))
+                  {
+                     <span class="activity-time-channel">
+                        @agendaSection.Activities.First().TvChannelName
+                     </span>
+                  }
                </div>
                @if(agendaSection.Activities.Count > 1)
                {
@@ -102,12 +111,6 @@ else
                            @activity.SportName
                         </span>
                         <span>@activity.ActivityType</span>
-                        @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
-                        {
-                           <span class="activity-tv-channel">
-                              @activity.TvChannelName
-                           </span>
-                        }
                      </div>
                      <h2>@activity.Title - @activity.RelatedOrganization</h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
@@ -133,8 +136,10 @@ else
                    activity-agenda-section-untimed"
          >
             <div class="activity-agenda-time">
-               <div class="activity-time-badge activity-time-badge-muted">
-                  Utan tid
+               <div class="activity-time-row">
+                  <div class="activity-time-badge activity-time-badge-muted">
+                     Utan tid
+                  </div>
                </div>
                @if(Model.UntimedActivities.Count > 1)
                {
@@ -152,12 +157,6 @@ else
                            @activity.SportName
                         </span>
                         <span>@activity.ActivityType</span>
-                        @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
-                        {
-                           <span class="activity-tv-channel">
-                              @activity.TvChannelName
-                           </span>
-                        }
                      </div>
                      <h2>@activity.Title</h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))

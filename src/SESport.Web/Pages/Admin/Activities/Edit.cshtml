@@ -33,7 +33,6 @@
              name="Activity.TvSportBroadcastIds"
              value="@broadcastId" />
    }
-   <input asp-for="Activity.TvChannelName" type="hidden" />
    <section class="form-section">
       <h2>Entities</h2>
       <label>
@@ -80,6 +79,11 @@
                }
             </select>
             <span asp-validation-for="Activity.SportId"></span>
+         </label>
+         <label>
+            <span>TV channel</span>
+            <input asp-for="Activity.TvChannelName" />
+            <span asp-validation-for="Activity.TvChannelName"></span>
          </label>
       </div>
       <label>

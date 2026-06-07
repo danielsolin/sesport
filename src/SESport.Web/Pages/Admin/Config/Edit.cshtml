@@ -6,12 +6,8 @@
 
 <section class="page-heading page-heading-row">
    <div>
-      <p class="eyebrow">Admin</p>
       <h1>@ViewData["Title"]</h1>
    </div>
-   <a class="button" asp-page="./Index" asp-route-table="@Model.CurrentTable?.Id">
-      Back
-   </a>
 </section>
 
 @if (Model.LoadError is not null)
