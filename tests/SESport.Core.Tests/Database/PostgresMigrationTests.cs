@@ -403,6 +403,25 @@ public class PostgresMigrationTests
       Assert.Contains("add column if not exists teaser text null", migration);
    }
 
+   [Fact]
+   public void EighteenthMigrationAddsActivityTvChannelName()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "018_add_activity_tv_channel_name.sql"
+         )
+      );
+
+      Assert.Contains("alter table activities", migration);
+      Assert.Contains(
+         "add column if not exists tv_channel_name text null",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

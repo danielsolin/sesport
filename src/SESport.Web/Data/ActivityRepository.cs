@@ -29,6 +29,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   a.activity_date,")
          .AppendLine("   a.local_start_time,")
          .AppendLine("   a.publication_status_id,")
+         .AppendLine("   a.tv_channel_name,")
          .AppendLine("   coalesce(")
          .AppendLine("      string_agg(")
          .AppendLine("         te.canonical_name,")
@@ -40,7 +41,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("from activities a")
          .AppendLine("join sports s on s.id = a.sport_id")
          .AppendLine("join activity_types at on at.id = a.activity_type_id")
-         .AppendLine("left join activity_entity_links l on l.activity_id = a.id")
+         .AppendLine(
+            "left join activity_entity_links l on l.activity_id = a.id"
+         )
          .AppendLine("left join entities te on te.id = l.entity_id")
          .AppendLine("left join lateral (")
          .AppendLine("   select string_agg(")
@@ -73,7 +76,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
 
       sql.AppendLine("group by a.id, at.label, s.id, s.name, s.icon_id,")
-         .AppendLine("         re.related_entities")
+         .AppendLine("         a.tv_channel_name, re.related_entities")
          .AppendLine("order by")
          .AppendLine("   a.activity_date,")
          .AppendLine("   a.local_start_time nulls last,")
@@ -89,7 +92,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       if(normalizedSports.Count > 0)
       {
-         command.Parameters.AddWithValue("sport_ids", normalizedSports.ToArray());
+         command.Parameters.AddWithValue(
+            "sport_ids",
+            normalizedSports.ToArray()
+         );
       }
 
       return await ReadActivityListAsync(command, cancellationToken);
@@ -172,6 +178,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.activity_date,
             a.local_start_time,
             a.publication_status_id,
+            a.tv_channel_name,
             coalesce(
                string_agg(
                   te.canonical_name,
@@ -206,7 +213,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          where a.publication_status_id = 'Published'
             and a.starts_at >= @start
             and a.starts_at < @end
-         group by a.id, at.label, s.id, s.name, s.icon_id, re.related_entities
+         group by a.id, at.label, s.id, s.name, s.icon_id,
+                  a.tv_channel_name, re.related_entities
          order by
             a.activity_date,
             a.local_start_time nulls last,
@@ -241,9 +249,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(6),
                GetSportIconPath(ReadString(reader, 7)),
                FormatTime(reader),
+               ReadString(reader, 11),
                reader.GetString(10),
-               reader.GetString(11),
-               reader.GetString(12)
+               reader.GetString(12),
+               reader.GetString(13)
             )
          );
       }
@@ -341,6 +350,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.local_start_time,
             a.time_zone_id,
             a.publication_status_id,
+            a.tv_channel_name,
             e.uri,
             e.title,
             e.comment
@@ -378,9 +388,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          LocalStartTime = ReadTimeOnly(reader, 7),
          TimeZoneId = reader.GetString(8),
          IsPublished = reader.GetString(9) == "Published",
-         EvidenceUri = ReadString(reader, 10),
-         EvidenceTitle = ReadString(reader, 11),
-         EvidenceComment = ReadString(reader, 12)
+         TvChannelName = ReadString(reader, 10),
+         EvidenceUri = ReadString(reader, 11),
+         EvidenceTitle = ReadString(reader, 12),
+         EvidenceComment = ReadString(reader, 13)
       };
 
       await reader.DisposeAsync();
@@ -555,6 +566,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.activity_date,
             a.local_start_time,
             a.publication_status_id,
+            a.tv_channel_name,
             coalesce(
                string_agg(
                   te.canonical_name,
@@ -587,7 +599,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and entity.entity_type_id is not null
          ) re on true
          {{whereClause}}
-         group by a.id, at.label, s.id, s.name, s.icon_id, re.related_entities
+         group by a.id, at.label, s.id, s.name, s.icon_id,
+                  a.tv_channel_name, re.related_entities
          order by
             a.activity_date,
             a.local_start_time nulls last,
@@ -622,6 +635,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             starts_at,
             time_zone_id,
             publication_status_id,
+            tv_channel_name,
             slug,
             published_at
          )
@@ -637,6 +651,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @starts_at,
             @time_zone_id,
             @publication_status_id,
+            @tv_channel_name,
             @slug,
             case
                when @publication_status_id = 'Published' then now()
@@ -674,6 +689,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             starts_at = @starts_at,
             time_zone_id = @time_zone_id,
             publication_status_id = @publication_status_id,
+            tv_channel_name = @tv_channel_name,
             slug = @slug,
             published_at = case
                when @publication_status_id = 'Published' then coalesce(
@@ -863,6 +879,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue("time_zone_id", model.TimeZoneId.Trim());
       command.Parameters.AddWithValue("publication_status_id", status);
+      command.Parameters.AddWithValue(
+         "tv_channel_name",
+         BlankToDbNull(model.TvChannelName)
+      );
       command.Parameters.AddWithValue("slug", slug);
    }
 
@@ -1065,9 +1085,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(6),
                GetSportIconPath(ReadString(reader, 7)),
                FormatTime(reader),
+               ReadString(reader, 11),
                reader.GetString(10),
-               reader.GetString(11),
-               reader.GetString(12)
+               reader.GetString(12),
+               reader.GetString(13)
             )
          );
       }

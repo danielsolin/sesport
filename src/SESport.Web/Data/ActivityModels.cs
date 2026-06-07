@@ -10,6 +10,7 @@ public sealed record ActivityListItem(
    string SportName,
    string? SportIconPath,
    string TimeText,
+   string? TvChannelName,
    string PublicationStatus,
    string RelatedPersonEntities,
    string RelatedOrganization
@@ -68,4 +69,6 @@ public sealed class ActivityEditModel
    public string? EvidenceComment { get; set; }
 
    public List<Guid> TvSportBroadcastIds { get; set; } = [];
+
+   public string? TvChannelName { get; set; }
 }

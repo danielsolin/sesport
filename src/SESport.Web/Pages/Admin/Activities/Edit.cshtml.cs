@@ -367,6 +367,7 @@ public class EditModel(
       Activity.TvSportBroadcastIds = broadcasts
          .Select(broadcast => broadcast.Id)
          .ToList();
+      Activity.TvChannelName = firstBroadcast.ChannelName;
       Activity.Title = firstBroadcast.Title;
       Activity.Description = CreatePrefillDescription(broadcasts);
       Activity.ActivityType = "Match";

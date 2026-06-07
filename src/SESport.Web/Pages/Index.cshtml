@@ -102,6 +102,12 @@ else
                            @activity.SportName
                         </span>
                         <span>@activity.ActivityType</span>
+                        @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
+                        {
+                           <span class="activity-tv-channel">
+                              @activity.TvChannelName
+                           </span>
+                        }
                      </div>
                      <h2>@activity.Title - @activity.RelatedOrganization</h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
@@ -146,6 +152,12 @@ else
                            @activity.SportName
                         </span>
                         <span>@activity.ActivityType</span>
+                        @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
+                        {
+                           <span class="activity-tv-channel">
+                              @activity.TvChannelName
+                           </span>
+                        }
                      </div>
                      <h2>@activity.Title</h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
