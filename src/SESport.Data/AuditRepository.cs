@@ -2,6 +2,7 @@ using Npgsql;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 
@@ -643,8 +644,8 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
    )
    {
       return localStartTime is null
-         ? $"{activityDate:yyyy-MM-dd}"
-         : $"{activityDate:yyyy-MM-dd} {localStartTime:HH:mm}";
+         ? DateDisplay.Format(activityDate)
+         : $"{DateDisplay.Format(activityDate)} {localStartTime:HH:mm}";
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
@@ -690,7 +691,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          SHA256.HashData(Encoding.UTF8.GetBytes(proposalId))
       )[..8].ToLowerInvariant();
 
-      return $"{activityDate:yyyy-MM-dd}-{normalized}-{suffix}";
+      return $"{DateDisplay.Format(activityDate)}-{normalized}-{suffix}";
    }
 
    private sealed record ProposalActivitySeed(

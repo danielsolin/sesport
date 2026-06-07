@@ -148,13 +148,6 @@ public sealed partial class XmltvSportBroadcastParser
          return null;
       }
 
-      // Disabled for now: the current description heuristics mark too many
-      // real live broadcasts as replays.
-      var replayMetadata = (
-         IsReplay: false,
-         OriginalAirDate: (DateOnly?)null
-      );
-      // var replayMetadata = ParseReplayMetadata(description);
       var externalId = CreateExternalId(channelId, startsAt, title);
       var fingerprint = CreateFingerprint(
          DefaultSourceKey,
@@ -175,8 +168,8 @@ public sealed partial class XmltvSportBroadcastParser
          title,
          description,
          storedCategories,
-         replayMetadata.IsReplay,
-         replayMetadata.OriginalAirDate,
+         false,
+         null,
          startsAt,
          endsAt,
          TimeZoneId,
@@ -231,41 +224,6 @@ public sealed partial class XmltvSportBroadcastParser
          StringComparison.OrdinalIgnoreCase
       ) ||
          description.Contains("highlights", StringComparison.OrdinalIgnoreCase);
-   }
-
-   private static (
-      bool IsReplay,
-      DateOnly? OriginalAirDate
-   ) ParseReplayMetadata(
-      string? description
-   )
-   {
-      if(string.IsNullOrWhiteSpace(description))
-      {
-         return (false, null);
-      }
-
-      var match = OriginalAirDateRegex().Match(description);
-
-      if(!match.Success)
-      {
-         return (ProducedYearRegex().IsMatch(description), null);
-      }
-
-      var day = int.Parse(
-         match.Groups["day"].Value,
-         CultureInfo.InvariantCulture
-      );
-      var month = int.Parse(
-         match.Groups["month"].Value,
-         CultureInfo.InvariantCulture
-      );
-      var year = 2000 + int.Parse(
-         match.Groups["year"].Value,
-         CultureInfo.InvariantCulture
-      );
-
-      return (true, new DateOnly(year, month, day));
    }
 
    private static string? GetFirstElementValue(
@@ -354,13 +312,4 @@ public sealed partial class XmltvSportBroadcastParser
    [GeneratedRegex(@"\s+")]
    private static partial Regex WhitespaceRegex();
 
-   private const string OriginalAirDatePattern =
-      @"\((?:\d{1,2}-)?(?<day>\d{1,2})/"
-      + @"(?<month>\d{1,2})-(?<year>\d{2})\)";
-
-   [GeneratedRegex(OriginalAirDatePattern)]
-   private static partial Regex OriginalAirDateRegex();
-
-   [GeneratedRegex(@"Producerat år", RegexOptions.IgnoreCase)]
-   private static partial Regex ProducedYearRegex();
 }

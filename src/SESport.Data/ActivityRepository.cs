@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using Npgsql;
 
 namespace SESport.Data;
@@ -992,7 +993,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       string activityType
    )
    {
-      var datePart = activityDate?.ToString("yyyy-MM-dd") ?? "undated";
+      var datePart = DateDisplay.Format(activityDate) ?? "undated";
       var slug = Slugify($"{datePart}-{title}-{activityType}");
       return string.IsNullOrWhiteSpace(slug) ? "activity" : slug;
    }
@@ -1022,38 +1023,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .Trim('-');
    }
 
-   private static string BuildPublishedDayWhereClause(SportDayWindow window)
-   {
-      var startDate = window.StartDate.ToString(
-         "yyyy-MM-dd",
-         CultureInfo.InvariantCulture
-      );
-      var nextDate = window.EndDateExclusive.ToString(
-         "yyyy-MM-dd",
-         CultureInfo.InvariantCulture
-      );
-      var cutoff = window.Cutoff.ToString(
-         "HH:mm",
-         CultureInfo.InvariantCulture
-      );
-
-      return
-         "where a.publication_status_id = 'Published' " +
-         "and (a.activity_date = '" + startDate + "' " +
-         "or (a.activity_date = '" + nextDate + "' " +
-         "and coalesce(a.local_start_time, time '00:00') < time '" +
-         cutoff +
-         "'))";
-   }
-
    private static string FormatTime(NpgsqlDataReader reader)
    {
       var activityDate = reader.GetFieldValue<DateOnly>(8);
       var localStartTime = ReadTimeOnly(reader, 9);
 
       return localStartTime is null
-         ? $"{activityDate:yyyy-MM-dd}"
-         : $"{activityDate:yyyy-MM-dd} {localStartTime:HH:mm}";
+         ? DateDisplay.Format(activityDate)
+         : $"{DateDisplay.Format(activityDate)} {localStartTime:HH:mm}";
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using SESport.Core.Formatting;
 
 namespace SESport.AI.ActivitySearch;
 
@@ -179,7 +180,7 @@ public sealed class ActivitySearchService(
       var parts = string.Join(
          "|",
          request.Entity.WatchlistId.Value,
-         draft.ActivityDate.ToString("yyyy-MM-dd"),
+         DateDisplay.Format(draft.ActivityDate),
          draft.Title.Trim().ToUpperInvariant()
       );
       var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(parts));

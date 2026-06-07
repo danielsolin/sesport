@@ -1,8 +1,8 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
@@ -35,7 +35,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
    [BindProperty(SupportsGet = true)]
    public bool SortAsc { get; set; } = true;
 
-   public string DateText => SelectedDate.ToString("yyyy-MM-dd");
+   public string DateText => DateDisplay.Format(SelectedDate);
 
    public DateOnly SelectedDate { get; private set; }
 
@@ -200,10 +200,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
    {
       var routeValues = new Dictionary<string, object?>
       {
-         ["date"] = GetRouteDate(date, status).ToString(
-            "yyyy-MM-dd",
-            CultureInfo.InvariantCulture
-         ),
+         ["date"] = DateDisplay.Format(GetRouteDate(date, status)),
          ["status"] = NormalizeStatus(status) ?? AllStatus,
          ["sortColumn"] = NormalizeSortColumn(sortColumn),
          ["sortAsc"] = sortAsc ?? true

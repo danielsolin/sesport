@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.TvSport;
@@ -31,7 +32,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
    [BindProperty(SupportsGet = true)]
    public bool SortAsc { get; set; } = true;
 
-   public string DateText => SelectedDate.ToString("yyyy-MM-dd");
+   public string DateText => DateDisplay.Format(SelectedDate);
 
    public DateOnly SelectedDate { get; private set; }
 
@@ -105,7 +106,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
          SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate;
       var routeValues = new Dictionary<string, object?>
       {
-         ["date"] = selectedDate.ToString("yyyy-MM-dd")
+         ["date"] = DateDisplay.Format(selectedDate)
       };
 
       if(HideReplays)

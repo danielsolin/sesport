@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data;
 using System.Globalization;
 
@@ -56,7 +57,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
    {
       return DateOnly.TryParseExact(
          date,
-         "yyyy-MM-dd",
+         DateDisplay.DateOnlyFormat,
          CultureInfo.InvariantCulture,
          DateTimeStyles.None,
          out var parsedDate
@@ -129,8 +130,8 @@ public class IndexModel(ActivityRepository repository) : PageModel
          .OrderBy(date => date)
          .Select(date =>
             new DateOption(
-               date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-               date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+               DateDisplay.Format(date),
+               DateDisplay.Format(date),
                date == selectedDate
             )
          )

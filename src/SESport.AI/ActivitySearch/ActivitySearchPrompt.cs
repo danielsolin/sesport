@@ -1,9 +1,18 @@
+using SESport.Core.Formatting;
+
 namespace SESport.AI.ActivitySearch;
 
 internal static class ActivitySearchPrompt
 {
    public static string Create(ActivitySearchRequest request)
    {
+      var timeFrameStart = DateDisplay.Format(
+         request.SearchDate.AddDays(-request.LookBackDays)
+      );
+      var timeFrameEnd = DateDisplay.Format(
+         request.SearchDate.AddDays(request.LookAheadDays)
+      );
+
       return $$"""
       You job is to find planned sports activites for a given entity.
 
@@ -31,7 +40,7 @@ internal static class ActivitySearchPrompt
       - sport: {{request.Entity.Sport.Name}}
       - notes: {{request.Entity.Notes}}
 
-      Time frame: {{request.SearchDate.AddDays(-request.LookBackDays):yyyy-MM-dd}} to {{request.SearchDate.AddDays(request.LookAheadDays):yyyy-MM-dd}}
+      Time frame: {{timeFrameStart}} to {{timeFrameEnd}}
       
       Maximum proposals: {{request.MaxProposals}}
 
