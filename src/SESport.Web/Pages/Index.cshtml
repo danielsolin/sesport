@@ -4,50 +4,30 @@
    ViewData["Title"] = "SE Sport";
 }
 
-@{
-   var todayButtonClass = Model.Day == IndexModel.TodayDay
-      ? "button button-primary"
-      : "button";
-   var tomorrowButtonClass = Model.Day == IndexModel.TomorrowDay
-      ? "button button-primary"
-      : "button";
-}
-
 <section class="page-heading index-heading">
    <div class="index-heading-left">
       <div class="date-select">
-         <label class="date-select-label" for="date-select-input">
-            Date
-         </label>
          <div class="date-select-control">
-            <select
-               id="date-select-input"
-               class="date-select-input"
-               aria-label="Date"
-            >
-               @foreach(var dateOption in Model.DateOptions)
-               {
-                  <option
-                     value="@dateOption.Value"
-                     selected="@(dateOption.IsSelected ? "selected" : null)"
-                  >
-                     @dateOption.Label
-                  </option>
-               }
-            </select>
+            <form method="get">
+               <select
+                  id="date-select-input"
+                  class="date-select-input"
+                  name="date"
+                  aria-label="Date"
+                  onchange="this.form.submit();"
+               >
+                  @foreach(var dateOption in Model.DateOptions)
+                  {
+                     <option
+                        value="@dateOption.Value"
+                        selected="@(dateOption.IsSelected ? "selected" : null)"
+                     >
+                        @dateOption.Label
+                     </option>
+                  }
+               </select>
+            </form>
          </div>
-      </div>
-   </div>
-   <div class="index-heading-actions">
-      <div class="button-row">
-         <a class="@todayButtonClass" asp-page="./Index" asp-route-day="Today">
-            Idag
-         </a>
-         <a class="@tomorrowButtonClass"
-            asp-page="./Index"
-            asp-route-day="Tomorrow">
-            Imorgon
-         </a>
       </div>
    </div>
 </section>

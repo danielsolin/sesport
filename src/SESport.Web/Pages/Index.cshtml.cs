@@ -8,9 +8,6 @@ namespace SESport.Web.Pages;
 
 public class IndexModel(ActivityRepository repository) : PageModel
 {
-   public const string TodayDay = "Today";
-   public const string TomorrowDay = "Tomorrow";
-
    public IReadOnlyList<ActivityListItem> Activities { get; private set; } =
       [];
 
@@ -27,10 +24,8 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    public IReadOnlyList<DateOption> DateOptions { get; private set; } = [];
 
-   [BindProperty(SupportsGet = true, Name = "day")]
-   public string? Day { get; set; } = TodayDay;
-
-   public string DateText => SelectedDate.ToString("yyyy-MM-dd");
+   [BindProperty(SupportsGet = true, Name = "date")]
+   public string? Date { get; set; }
 
    public DateOnly SelectedDate { get; private set; }
 
@@ -38,24 +33,17 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
-      Day = NormalizeDay(Day) ?? TodayDay;
       var now = DateTimeOffset.UtcNow;
-      var todayDate = DateOnly.FromDateTime(now.UtcDateTime);
-      SelectedDate = GetSelectedDate(now);
-      DateOptions = BuildDateOptions(todayDate, SelectedDate);
+      var sportToday = SportDay.Today(now).StartDate;
+      SelectedDate = ParseDate(Date) ?? sportToday;
+      DateOptions = BuildDateOptions(sportToday, SelectedDate);
 
       try
       {
-         Activities = Day switch
-         {
-            TodayDay => await repository.GetTodaysAsync(
-               cancellationToken
-            ),
-            TomorrowDay => await repository.GetTomorrowsAsync(
-               cancellationToken
-            ),
-            _ => await repository.GetTodaysAsync(cancellationToken)
-         };
+         Activities = await repository.GetPublishedForDateAsync(
+            SelectedDate,
+            cancellationToken
+         );
          BuildAgendaSections();
       }
       catch (Exception exception)
@@ -64,26 +52,17 @@ public class IndexModel(ActivityRepository repository) : PageModel
       }
    }
 
-   private DateOnly GetSelectedDate(DateTimeOffset now)
+   private static DateOnly? ParseDate(string? date)
    {
-      return Day switch
-      {
-         TodayDay => SportDay.Today(now).StartDate,
-         TomorrowDay => SportDay.Tomorrow(now).StartDate,
-         _ => SportDay.Today(now).StartDate
-      };
-   }
-
-   private static string? NormalizeDay(string? day)
-   {
-      return day switch
-      {
-         TodayDay => TodayDay,
-         TomorrowDay => TomorrowDay,
-         "" => TodayDay,
-         null => TodayDay,
-         _ => null
-      };
+      return DateOnly.TryParseExact(
+         date,
+         "yyyy-MM-dd",
+         CultureInfo.InvariantCulture,
+         DateTimeStyles.None,
+         out var parsedDate
+      )
+         ? parsedDate
+         : null;
    }
 
    private void BuildAgendaSections()
@@ -134,25 +113,28 @@ public class IndexModel(ActivityRepository repository) : PageModel
       DateOnly selectedDate
    )
    {
-      var dateOptions = new List<DateOption>();
+      var dates = new List<DateOnly>();
 
       for(var offset = 0; offset <= 7; offset++)
       {
-         var date = todayDate.AddDays(offset);
-         var dayLabel = date == todayDate
-            ? "Today"
-            : date.ToString("ddd", CultureInfo.InvariantCulture);
-
-         dateOptions.Add(
-            new DateOption(
-               date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-               $"{dayLabel} - {date:yyyy-MM-dd}",
-               date == selectedDate
-            )
-         );
+         dates.Add(todayDate.AddDays(offset));
       }
 
-      return dateOptions;
+      if(!dates.Contains(selectedDate))
+      {
+         dates.Add(selectedDate);
+      }
+
+      return dates
+         .OrderBy(date => date)
+         .Select(date =>
+            new DateOption(
+               date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+               date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+               date == selectedDate
+            )
+         )
+         .ToList();
    }
 
    private static bool HasLocalStartTime(ActivityListItem activity)

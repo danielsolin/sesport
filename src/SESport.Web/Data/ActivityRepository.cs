@@ -105,6 +105,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<IReadOnlyList<ActivityListItem>> GetPublishedForDateAsync(
+      DateOnly date,
+      CancellationToken cancellationToken
+   )
+   {
+      return await GetPublishedActivitiesAsync(
+         SportDay.ForDate(date),
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<ActivityListItem>> GetTodaysAsync(
       CancellationToken cancellationToken
    )
