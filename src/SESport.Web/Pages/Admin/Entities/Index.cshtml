@@ -13,6 +13,19 @@
    </div>
 </section>
 
+<section class="form-section">
+   <label>
+      <span>Filter</span>
+   </label>
+   <input type="text"
+      class="entity-name-filter"
+      placeholder="name"
+      autofocus
+      aria-label="Filter entities by name"
+      data-entity-name-filter
+   />
+</section>
+
 @if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
@@ -29,12 +42,6 @@ else
       <div class="notice" data-entity-empty-state hidden>
          No matching entities.
       </div>
-         <input type="text"
-                class="entity-name-filter"
-                placeholder="name"
-                autofocus
-                aria-label="Filter entities by name"
-                data-entity-name-filter />
       <div class="admin-table-wrap">
          <table class="admin-table">
             <thead>
