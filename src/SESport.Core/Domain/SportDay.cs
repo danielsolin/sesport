@@ -10,7 +10,7 @@ public static class SportDay
 {
    public const string TimeZoneId = "Europe/Stockholm";
 
-   public static readonly TimeOnly Cutoff = new(4, 0);
+   public static readonly TimeOnly Cutoff = new(4, 1);
 
    public static DateOnly GetLocalDate(DateTimeOffset instant)
    {
