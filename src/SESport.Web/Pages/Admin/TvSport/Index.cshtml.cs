@@ -4,10 +4,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.TvSport;
 
-public class IndexModel(TvSportRepository repository) : PageModel
+public class IndexModel(
+   TvSportRepository repository,
+   AdminDatePreferenceStore datePreferenceStore
+) : PageModel
 {
    public const string ChannelSortColumn = "Channel";
    public const string TimeSortColumn = "Time";
@@ -176,7 +180,7 @@ public class IndexModel(TvSportRepository repository) : PageModel
 
    private async Task LoadAsync(CancellationToken cancellationToken)
    {
-      SelectedDate = Date ?? SportDay.Today(DateTimeOffset.UtcNow).StartDate;
+      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
 
       try
       {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
 using SESport.Web.Extensions;
+using SESport.Web.Services;
 using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddSingleton(
    )
 );
 builder.Services.AddAiPlatform();
+builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();

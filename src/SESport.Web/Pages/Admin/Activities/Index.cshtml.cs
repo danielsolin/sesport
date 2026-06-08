@@ -4,10 +4,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Activities;
 
-public class IndexModel(ActivityRepository repository) : PageModel
+public class IndexModel(
+   ActivityRepository repository,
+   AdminDatePreferenceStore datePreferenceStore
+) : PageModel
 {
    public const string LegacyTodayStatus = "Today";
    public const string LegacyTomorrowStatus = "Tomorrow";
@@ -112,7 +116,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    private async Task LoadAsync(CancellationToken cancellationToken)
    {
-      SelectedDate = Date ?? SportDay.Today(DateTimeOffset.UtcNow).StartDate;
+      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
 
       try
       {
