@@ -82,7 +82,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   where al.activity_id = a.id")
          .AppendLine("      and p.entity_type_id = 'Person'")
          .AppendLine(
-            "      and entity.entity_type_id in ('Organization', 'Tour', 'League')"
+            "      and entity.entity_type_id in ('Organization', 'Tour', 'League', 'Championship')"
          )
          .AppendLine(") ro on true")
          .AppendLine("where a.activity_date = @date");
@@ -247,7 +247,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                end
             where al.activity_id = a.id
                and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')
-               and entity.entity_type_id in ('Organization', 'Tour', 'League')
+               and entity.entity_type_id in ('Organization', 'Tour', 'League', 'Championship')
          ) ro on true
          where a.publication_status_id = 'Published'
             and a.starts_at >= @start
@@ -326,7 +326,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             end
             where (l.source_entity_id = e.id or l.target_entity_id = e.id)
                and e.entity_type_id = 'Person'
-               and linked.entity_type_id = 'Organization'
+               and linked.entity_type_id in
+                  ('Team', 'Tour', 'League', 'Championship')
          ) org on true
          order by e.canonical_name
          """;
@@ -650,7 +651,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                end
             where al.activity_id = a.id
                and p.entity_type_id = 'Person'
-               and entity.entity_type_id in ('Organization', 'Tour', 'League')
+               and entity.entity_type_id in ('Organization', 'Tour', 'League', 'Championship')
          ) ro on true
          {{whereClause}}
          group by a.id, at.label, s.id, s.name, s.icon_id,
