@@ -38,7 +38,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("      ),")
          .AppendLine("      ''")
          .AppendLine("   ) as entities,")
-         .AppendLine("   coalesce(re.related_entities, '') as related_entities")
+         .AppendLine(
+            "   coalesce(rp.related_person_entities, '') as related_person_entities,"
+         )
+         .AppendLine(
+            "   coalesce(ro.related_organization_entities, '') as related_organization_entities"
+         )
          .AppendLine("from activities a")
          .AppendLine("join sports s on s.id = a.sport_id")
          .AppendLine("join activity_types at on at.id = a.activity_type_id")
@@ -48,22 +53,36 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("left join entities te on te.id = l.entity_id")
          .AppendLine("left join lateral (")
          .AppendLine("   select string_agg(")
+         .AppendLine("      distinct p.canonical_name,")
+         .AppendLine("      ', ' order by p.canonical_name")
+         .AppendLine("   ) as related_person_entities")
+         .AppendLine("   from activity_entity_links al")
+         .AppendLine("   join entities p on p.id = al.entity_id")
+         .AppendLine("   where al.activity_id = a.id")
+         .AppendLine("      and p.entity_type_id = 'Person'")
+         .AppendLine(") rp on true")
+         .AppendLine("left join lateral (")
+         .AppendLine("   select string_agg(")
          .AppendLine("      distinct entity.canonical_name,")
          .AppendLine("      ', ' order by entity.canonical_name")
-         .AppendLine("   ) as related_entities")
+         .AppendLine("   ) as related_organization_entities")
          .AppendLine("   from activity_entity_links al")
+         .AppendLine("   join entities p on p.id = al.entity_id")
          .AppendLine("   join entity_to_entity_links el")
-         .AppendLine("      on el.source_entity_id = al.entity_id")
-         .AppendLine("      or el.target_entity_id = al.entity_id")
+         .AppendLine("      on el.source_entity_id = p.id")
+         .AppendLine("      or el.target_entity_id = p.id")
          .AppendLine("   join entities entity")
          .AppendLine("      on entity.id = case")
-         .AppendLine("         when el.source_entity_id = al.entity_id")
+         .AppendLine("         when el.source_entity_id = p.id")
          .AppendLine("            then el.target_entity_id")
          .AppendLine("         else el.source_entity_id")
          .AppendLine("      end")
          .AppendLine("   where al.activity_id = a.id")
-         .AppendLine("      and entity.entity_type_id is not null")
-         .AppendLine(") re on true")
+         .AppendLine("      and p.entity_type_id = 'Person'")
+         .AppendLine(
+            "      and entity.entity_type_id in ('Organization', 'Tour', 'League')"
+         )
+         .AppendLine(") ro on true")
          .AppendLine("where a.activity_date = @date");
 
       if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
@@ -77,7 +96,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
 
       sql.AppendLine("group by a.id, at.label, s.id, s.name, s.icon_id,")
-         .AppendLine("         a.tv_channel_name, re.related_entities")
+         .AppendLine(
+            "         a.tv_channel_name, rp.related_person_entities,"
+         )
+         .AppendLine("         ro.related_organization_entities")
          .AppendLine("order by")
          .AppendLine("   a.activity_date,")
          .AppendLine("   a.local_start_time nulls last,")
@@ -187,7 +209,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ),
                ''
             ) as entities,
-            coalesce(re.related_entities, '') as related_entities
+            coalesce(rp.related_person_entities, '') as related_person_entities,
+            coalesce(ro.related_organization_entities, '')
+               as related_organization_entities
          from activities a
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
@@ -195,27 +219,40 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          left join entities te on te.id = l.entity_id
          left join lateral (
             select string_agg(
+               distinct p.canonical_name,
+               ', ' order by p.canonical_name
+            ) as related_person_entities
+            from activity_entity_links al
+            join entities p on p.id = al.entity_id
+            where al.activity_id = a.id
+               and p.entity_type_id = 'Person'
+         ) rp on true
+         left join lateral (
+            select string_agg(
                distinct entity.canonical_name,
                ', ' order by entity.canonical_name
-            ) as related_entities
+            ) as related_organization_entities
             from activity_entity_links al
+            join entities p on p.id = al.entity_id
             join entity_to_entity_links el
-               on el.source_entity_id = al.entity_id
-               or el.target_entity_id = al.entity_id
+               on el.source_entity_id = p.id
+               or el.target_entity_id = p.id
             join entities entity
                on entity.id = case
-                  when el.source_entity_id = al.entity_id
+                  when el.source_entity_id = p.id
                      then el.target_entity_id
                   else el.source_entity_id
                end
             where al.activity_id = a.id
-               and entity.entity_type_id is not null
-         ) re on true
+               and p.entity_type_id = 'Person'
+               and entity.entity_type_id in ('Organization', 'Tour', 'League')
+         ) ro on true
          where a.publication_status_id = 'Published'
             and a.starts_at >= @start
             and a.starts_at < @end
          group by a.id, at.label, s.id, s.name, s.icon_id,
-                  a.tv_channel_name, re.related_entities
+                  a.tv_channel_name, rp.related_person_entities,
+                  ro.related_organization_entities
          order by
             a.activity_date,
             a.local_start_time nulls last,
@@ -252,8 +289,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                FormatTime(reader),
                ReadString(reader, 11),
                reader.GetString(10),
-               reader.GetString(12),
-               reader.GetString(13)
+               reader.GetString(13),
+               reader.GetString(14)
             )
          );
       }
@@ -575,7 +612,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ),
                ''
             ) as entities,
-            coalesce(re.related_entities, '') as related_entities
+            coalesce(rp.related_person_entities, '') as related_person_entities,
+            coalesce(ro.related_organization_entities, '')
+               as related_organization_entities
          from activities a
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
@@ -583,25 +622,38 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          left join entities te on te.id = l.entity_id
          left join lateral (
             select string_agg(
+               distinct p.canonical_name,
+               ', ' order by p.canonical_name
+            ) as related_person_entities
+            from activity_entity_links al
+            join entities p on p.id = al.entity_id
+            where al.activity_id = a.id
+               and p.entity_type_id = 'Person'
+         ) rp on true
+         left join lateral (
+            select string_agg(
                distinct entity.canonical_name,
                ', ' order by entity.canonical_name
-            ) as related_entities
+            ) as related_organization_entities
             from activity_entity_links al
+            join entities p on p.id = al.entity_id
             join entity_to_entity_links el
-               on el.source_entity_id = al.entity_id
-               or el.target_entity_id = al.entity_id
+               on el.source_entity_id = p.id
+               or el.target_entity_id = p.id
             join entities entity
                on entity.id = case
-                  when el.source_entity_id = al.entity_id
+                  when el.source_entity_id = p.id
                      then el.target_entity_id
                   else el.source_entity_id
                end
             where al.activity_id = a.id
-               and entity.entity_type_id is not null
-         ) re on true
+               and p.entity_type_id = 'Person'
+               and entity.entity_type_id in ('Organization', 'Tour', 'League')
+         ) ro on true
          {{whereClause}}
          group by a.id, at.label, s.id, s.name, s.icon_id,
-                  a.tv_channel_name, re.related_entities
+                  a.tv_channel_name, rp.related_person_entities,
+                  ro.related_organization_entities
          order by
             a.activity_date,
             a.local_start_time nulls last,
@@ -1064,8 +1116,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                FormatTime(reader),
                ReadString(reader, 11),
                reader.GetString(10),
-               reader.GetString(12),
-               reader.GetString(13)
+               reader.GetString(13),
+               reader.GetString(14)
             )
          );
       }
