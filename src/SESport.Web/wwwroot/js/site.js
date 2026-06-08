@@ -198,7 +198,15 @@
                      ? row.dataset.entityRowName ?? ""
                      : ""
                ).toLowerCase();
-               const matches = query === "" || rowName.includes(query);
+               const rowRelated = (
+                  row instanceof HTMLElement
+                     ? row.dataset.entityRowRelated ?? ""
+                     : ""
+               ).toLowerCase();
+               const matches =
+                  query === "" ||
+                  rowName.includes(query) ||
+                  rowRelated.includes(query);
 
                row.hidden = !matches;
 

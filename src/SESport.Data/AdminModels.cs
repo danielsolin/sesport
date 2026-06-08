@@ -105,7 +105,7 @@ public sealed record EntityListItem(
    string Sport,
    string WatchPriority,
    string Country,
-   int LinkedEntityCount
+   string RelatedEntityNames
 );
 
 public sealed record EntityLinkOption(

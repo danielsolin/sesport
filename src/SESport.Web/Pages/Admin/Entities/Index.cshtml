@@ -53,6 +53,12 @@ else
                      </a>
                   </th>
                   <th>
+                     <a asp-page="./Index" asp-route-sortColumn="Related"
+                        asp-route-sortAsc='@Model.GetNextSortAsc("Related")'>
+                        RELATED @Model.GetSortIndicator("Related")
+                     </a>
+                  </th>
+                  <th>
                      <a asp-page="./Index" asp-route-sortColumn="Type"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>
                         Type @Model.GetSortIndicator("Type")
@@ -76,34 +82,31 @@ else
                         Country @Model.GetSortIndicator("Country")
                      </a>
                   </th>
-                  <th>
-                     <a asp-page="./Index" asp-route-sortColumn="Links"
-                        asp-route-sortAsc='@Model.GetNextSortAsc("Links")'>
-                        Links @Model.GetSortIndicator("Links")
-                     </a>
-                  </th>
                   <th></th>
                </tr>
             </thead>
             <tbody>
                @foreach(var entity in Model.Entities)
                {
-                  <tr data-entity-row-name="@entity.Name">
-                  <td>
-                     <a asp-page="./Edit" asp-route-id="@entity.Id">
-                        <strong>@entity.Name</strong>
-                     </a>
-                     <a class="ses-entity-search-link"
-                        href="@ViewData["SearchUrl"]@entity.Name @entity.Sport"
-                        target="_blank">
-                        <span class="ses-icon-search"></span>
-                     </a>
-                  </td>
+                  <tr data-entity-row-name="@entity.Name"
+                      data-entity-row-related=
+                         "@entity.RelatedEntityNames">
+                     <td>
+                        <a asp-page="./Edit" asp-route-id="@entity.Id">
+                           <strong>@entity.Name</strong>
+                        </a>
+                        <a class="ses-entity-search-link"
+                           href=
+                              "@ViewData["SearchUrl"]@entity.Name @entity.Sport"
+                           target="_blank">
+                           <span class="ses-icon-search"></span>
+                        </a>
+                     </td>
+                     <td>@entity.RelatedEntityNames</td>
                      <td>@entity.EntityType</td>
                      <td>@entity.Sport</td>
                      @* <td>@entity.WatchPriority</td> *@
                      <td>@entity.Country</td>
-                     <td>@entity.LinkedEntityCount</td>
                      <td class="table-actions">
                         <form method="post"
                               asp-page-handler="Delete"

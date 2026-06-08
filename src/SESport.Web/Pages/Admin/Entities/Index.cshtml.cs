@@ -11,7 +11,7 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string SportSortColumn = "Sport";
    public const string WatchSortColumn = "Watch";
    public const string CountrySortColumn = "Country";
-   public const string LinksSortColumn = "Links";
+   public const string RelatedSortColumn = "Related";
 
    public IReadOnlyList<EntityListItem> Entities { get; private set; } = [];
 
@@ -72,7 +72,7 @@ public class IndexModel(AdminRepository repository) : PageModel
          SportSortColumn => SportSortColumn,
          WatchSortColumn => WatchSortColumn,
          CountrySortColumn => CountrySortColumn,
-         LinksSortColumn => LinksSortColumn,
+         RelatedSortColumn => RelatedSortColumn,
          _ => NameSortColumn
       };
 
@@ -104,9 +104,9 @@ public class IndexModel(AdminRepository repository) : PageModel
             entity => entity.Country,
             sortAsc
          ),
-         LinksSortColumn => OrderByDirection(
+         RelatedSortColumn => OrderByDirection(
             entities,
-            entity => entity.LinkedEntityCount,
+            entity => entity.RelatedEntityNames,
             sortAsc
          ),
          _ => OrderByDirection(entities, entity => entity.Name, sortAsc)
