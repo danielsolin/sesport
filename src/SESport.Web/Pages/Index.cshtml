@@ -112,7 +112,11 @@ else
                         </span>
                         <span>@activity.ActivityType</span>
                      </div>
-                     <h2>@activity.Title - @activity.RelatedOrganization</h2>
+                     <h2>
+                        @activity.Title
+                        @(string.IsNullOrEmpty(activity.RelatedOrganization)
+                        ? string.Empty : $"- {activity.RelatedOrganization}")
+                     </h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
                         <p>@activity.Description</p>
