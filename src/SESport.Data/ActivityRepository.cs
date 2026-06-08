@@ -59,7 +59,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   from activity_entity_links al")
          .AppendLine("   join entities p on p.id = al.entity_id")
          .AppendLine("   where al.activity_id = a.id")
-         .AppendLine("      and p.entity_type_id = 'Person'")
+         .AppendLine(
+            "      and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')"
+         )
          .AppendLine(") rp on true")
          .AppendLine("left join lateral (")
          .AppendLine("   select string_agg(")
@@ -225,7 +227,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             from activity_entity_links al
             join entities p on p.id = al.entity_id
             where al.activity_id = a.id
-               and p.entity_type_id = 'Person'
+               and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')
          ) rp on true
          left join lateral (
             select string_agg(
@@ -244,7 +246,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   else el.source_entity_id
                end
             where al.activity_id = a.id
-               and p.entity_type_id = 'Person'
+               and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')
                and entity.entity_type_id in ('Organization', 'Tour', 'League')
          ) ro on true
          where a.publication_status_id = 'Published'
