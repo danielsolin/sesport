@@ -13,50 +13,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Core.Tests", "tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportTvNuSport.Tests", "tests\SESport.ImportTvNuSport.Tests\SESport.ImportTvNuSport.Tests.csproj", "{1224ECCA-9DE5-4A3A-BD57-23BE1A0E4594}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{FF5E4F5A-4E3D-47E4-82DB-1AC8E67DDDAC}"
-	ProjectSection(SolutionItems) = preProject
-		AGENTS.md = AGENTS.md
-		docs\ai-strategy.md = docs\ai-strategy.md
-		docs\deep-research-report.md = docs\deep-research-report.md
-		docs\entity-activity-model.md = docs\entity-activity-model.md
-		docs\product-goal.md = docs\product-goal.md
-		README.md = README.md
-		docs\slogans.md = docs\slogans.md
-		docs\source-strategy.md = docs\source-strategy.md
-		docs\use-cases.md = docs\use-cases.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "database", "database", "{5E54E42B-A5A1-4D3E-AD95-F2D0392FC0F2}"
-	ProjectSection(SolutionItems) = preProject
-		database\README.md = database\README.md
-		database\run-migrations.ps1 = database\run-migrations.ps1
-		database\run-migrations.sh = database\run-migrations.sh
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", "{9A7A1DAD-F8E4-47CE-BBE7-172429F58F1D}"
-	ProjectSection(SolutionItems) = preProject
-		database\migrations\001_create_entity_activity_model.sql = database\migrations\001_create_entity_activity_model.sql
-		database\migrations\002_add_activity_publication.sql = database\migrations\002_add_activity_publication.sql
-		database\migrations\003_add_activity_proposal_reject_reason.sql = database\migrations\003_add_activity_proposal_reject_reason.sql
-		database\migrations\004_add_activity_proposal_producer.sql = database\migrations\004_add_activity_proposal_producer.sql
-		database\migrations\005_add_ai_activity_search_runs.sql = database\migrations\005_add_ai_activity_search_runs.sql
-		database\migrations\006_add_activity_proposal_prompt.sql = database\migrations\006_add_activity_proposal_prompt.sql
-		database\migrations\007_add_tv_sport_broadcasts.sql = database\migrations\007_add_tv_sport_broadcasts.sql
-		database\migrations\008_add_tv_sport_broadcast_replay_fields.sql = database\migrations\008_add_tv_sport_broadcast_replay_fields.sql
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{084226A2-8533-49C9-82FD-B9F1FE3349AB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Web", "src\SESport.Web\SESport.Web.csproj", "{2D85E13E-22B7-4790-B71E-CE5009381AB4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportEntities", "tools\SESport.ImportEntities\SESport.ImportEntities.csproj", "{ACBAA820-3A29-423C-9729-D957AFBE4E0E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{988827A0-5BD8-441F-82CC-72D74B4DFE10}"
-	ProjectSection(SolutionItems) = preProject
-		data\entity-watchlist.json = data\entity-watchlist.json
-		data\epg-se.xml = data\epg-se.xml
-		data\normalize-entity-watchlist-names.py = data\normalize-entity-watchlist-names.py
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.AIActivitySearch", "tools\SESport.AIActivitySearch\SESport.AIActivitySearch.csproj", "{B7980648-9AFB-46A9-90B0-53C0EFE095B2}"
 EndProject
@@ -67,12 +28,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportEpg", "tools\SESport.ImportEpg\SESport.ImportEpg.csproj", "{47FCF823-18F6-4ECE-A937-F3F66991AEAE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.WebAutomation", "tools\SESport.WebAutomation\SESport.WebAutomation.csproj", "{DE5B5BE9-6E2D-4FA6-9117-E7ED5BC43B3D}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "artifacts", "artifacts", "{7ABDBB22-CF10-42CE-B438-9EAD84B0EF88}"
-	ProjectSection(SolutionItems) = preProject
-		artifacts\db-backups\sesport-20260603-075348.dump = artifacts\db-backups\sesport-20260603-075348.dump
-		artifacts\db-backups\sesport-20260604-070052.dump = artifacts\db-backups\sesport-20260604-070052.dump
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.AI", "src\SESport.AI\SESport.AI.csproj", "{A71FEF04-04F3-4333-AB42-3BA838AF0E6A}"
 EndProject
@@ -240,7 +195,6 @@ Global
 		{F906B288-C7C9-4DDA-A8C8-0AACC2B0AE5E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{25C8B4DF-8175-4AFF-B83E-F5FA397E05E8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{1224ECCA-9DE5-4A3A-BD57-23BE1A0E4594} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{9A7A1DAD-F8E4-47CE-BBE7-172429F58F1D} = {5E54E42B-A5A1-4D3E-AD95-F2D0392FC0F2}
 		{2D85E13E-22B7-4790-B71E-CE5009381AB4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{ACBAA820-3A29-423C-9729-D957AFBE4E0E} = {084226A2-8533-49C9-82FD-B9F1FE3349AB}
 		{B7980648-9AFB-46A9-90B0-53C0EFE095B2} = {084226A2-8533-49C9-82FD-B9F1FE3349AB}
