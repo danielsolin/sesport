@@ -12,6 +12,7 @@ public class EntityWatchlistDataTests
             Path.Combine(
                FindRepositoryRoot(),
                "data",
+               "deepresearch-watchlist",
                "entity-watchlist.json"
             )
          )

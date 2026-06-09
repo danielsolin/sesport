@@ -45,7 +45,7 @@ public sealed class SportDayTests
       Assert.Equal(new DateOnly(2026, 6, 6), today.EndDateExclusive);
       Assert.Equal(new DateOnly(2026, 6, 6), tomorrow.StartDate);
       Assert.Equal(new DateOnly(2026, 6, 7), tomorrow.EndDateExclusive);
-      Assert.Equal(new TimeOnly(4, 0), today.Cutoff);
+      Assert.Equal(new TimeOnly(4, 1), today.Cutoff);
       Assert.Equal(today.Cutoff, tomorrow.Cutoff);
    }
 
@@ -56,6 +56,6 @@ public sealed class SportDayTests
 
       Assert.Equal(new DateOnly(2026, 6, 7), window.StartDate);
       Assert.Equal(new DateOnly(2026, 6, 8), window.EndDateExclusive);
-      Assert.Equal(new TimeOnly(4, 0), window.Cutoff);
+      Assert.Equal(new TimeOnly(4, 1), window.Cutoff);
    }
 }
