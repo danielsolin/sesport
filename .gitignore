@@ -4,3 +4,4 @@
 /data/ai-activity-search-runs/
 *.swp
 docs/TODO.md
+artifacts/publish-dev/
