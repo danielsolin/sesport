@@ -7,7 +7,7 @@ user="${SESPORT_POSTGRES_USER:-sesport}"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
 
-default_backup_dir="$repo_root/artifacts/db-backups"
+default_backup_dir="$repo_root/data/db-backups"
 backup_dir="${1:-$default_backup_dir}"
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
