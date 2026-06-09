@@ -42,9 +42,8 @@ The admin area starts at:
 http://localhost:5109/Admin
 ```
 
-In `Development`, admin pages are accessible without authentication when
-`Admin:Password` is not configured. If an admin password is configured, use the
-login page:
+Admin pages always require authentication. Set `Admin:Password` in every
+environment, including local development, and then use the login page:
 
 ```text
 http://localhost:5109/Admin/Login

@@ -37,15 +37,6 @@ builder.Services.AddAuthorization(
          "Admin",
          policy =>
          {
-            if (
-               builder.Environment.IsDevelopment() &&
-               string.IsNullOrWhiteSpace(adminPassword)
-            )
-            {
-               policy.RequireAssertion(_ => true);
-               return;
-            }
-
             policy.RequireAuthenticatedUser();
          }
       );
