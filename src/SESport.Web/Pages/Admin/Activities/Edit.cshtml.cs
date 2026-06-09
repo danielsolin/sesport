@@ -183,9 +183,7 @@ public class EditModel(
       try
       {
          var selectedIds = selectedEntityIds.ToHashSet();
-         var entities = await repository.GetEntityOptionsAsync(
-            cancellationToken
-         );
+         var entities = await GetPersonEntitiesAsync(cancellationToken);
 
          Entities = entities
             .Select(entity => new SelectListItem
@@ -258,9 +256,9 @@ public class EditModel(
    )
    {
       var selectedIds = (Activity.LinkedEntityIds ?? []).ToHashSet();
-      var entityNames = (await repository.GetEntityOptionsAsync(
-         cancellationToken
-      ))
+      var entityNames = await GetPersonEntitiesAsync(cancellationToken);
+
+      var selectedEntityNames = entityNames
          .Where(entity => selectedIds.Contains(entity.Id))
          .Select(entity => entity.Name)
          .ToList();
@@ -281,10 +279,19 @@ public class EditModel(
             activity_date = DateDisplay.Format(Activity.ActivityDate),
             local_start_time = Activity.LocalStartTime?.ToString("HH:mm"),
             time_zone_id = Activity.TimeZoneId,
-            entities = entityNames,
+            entities = selectedEntityNames,
             related_entities = Array.Empty<string>()
          }
       );
+   }
+
+   private async Task<IReadOnlyList<EntityOption>> GetPersonEntitiesAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      var entities = await repository.GetEntityOptionsAsync(cancellationToken);
+
+      return ActivityEntityFilter.FilterPersonEntities(entities);
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)
