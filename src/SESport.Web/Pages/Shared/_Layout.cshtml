@@ -86,10 +86,13 @@
             </nav>
          }
       </div>
-      <nav class="site-nav">
-         <a asp-page="/Index">Public</a>
-         <a asp-page="/Admin/Index">Admin</a>
-      </nav>
+      @if(isAdmin)
+      {
+         <nav class="site-nav">
+            <a asp-page="/Index">Public</a>
+            <a asp-page="/Admin/Index">Admin</a>
+         </nav> 
+      }
    </header>
 
    <main class="page-shell">
