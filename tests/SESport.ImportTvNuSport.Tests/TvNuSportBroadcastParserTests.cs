@@ -12,9 +12,7 @@ public class TvNuSportBroadcastParserTests
       var fixturePath = Path.GetFullPath(
          Path.Combine(
             AppContext.BaseDirectory,
-            "../../../../..",
-            "data",
-            "tv-nu-sport",
+            "Fixtures",
             "2026-06-07.html"
          )
       );

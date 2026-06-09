@@ -26,6 +26,9 @@
          Include="..\..\tools\SESport.ImportTvNuSport\TvNuSportBroadcastParser.cs"
          Link="TvNuSportBroadcastParser.cs"
       />
+      <Content Include="Fixtures\2026-06-07.html">
+         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
    </ItemGroup>
 
 </Project>
