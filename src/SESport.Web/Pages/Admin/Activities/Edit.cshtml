@@ -37,15 +37,22 @@
       <h2>Entities</h2>
       <label>
          <span>Entities</span>
-         <select asp-for="Activity.LinkedEntityIds"
-                 asp-items="Model.Entities"
-                 multiple
-                 class="ses-multiselect"
-                 data-multi-select
-                 data-placeholder="Select entities"
-                 data-select-all="false"
-                 data-dropdown-height="140px">
-         </select>
+         <div class="multi-select-row">
+            <select asp-for="Activity.LinkedEntityIds"
+                    asp-items="Model.Entities"
+                    multiple
+                    class="ses-multiselect"
+                    data-multi-select
+                    data-placeholder="Select entities"
+                    data-select-all="false"
+                    data-dropdown-height="140px">
+            </select>
+            <button type="button"
+                    class="multi-select-clear"
+                    data-multi-select-clear>
+               Clear
+            </button>
+         </div>
          <span asp-validation-for="Activity.LinkedEntityIds"></span>
       </label>
    </section>

@@ -77,15 +77,22 @@
       <h2>Linked entities</h2>
       <label>
          <span>Connections</span>
-         <select asp-for="Entity.LinkedEntityIds"
-                 asp-items="Model.EntityLinkOptions"
-                 multiple
-                 class="ses-multiselect"
-                 data-multi-select
-                 data-placeholder="Select linked entities"
-                 data-select-all="false"
-                 data-dropdown-height="140px">
-         </select>
+         <div class="multi-select-row">
+            <select asp-for="Entity.LinkedEntityIds"
+                    asp-items="Model.EntityLinkOptions"
+                    multiple
+                    class="ses-multiselect"
+                    data-multi-select
+                    data-placeholder="Select linked entities"
+                    data-select-all="false"
+                    data-dropdown-height="140px">
+            </select>
+            <button type="button"
+                    class="multi-select-clear"
+                    data-multi-select-clear>
+               Clear
+            </button>
+         </div>
       </label>
    </section>
 

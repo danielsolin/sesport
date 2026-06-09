@@ -811,6 +811,43 @@ textarea {
    height: 200px;
 }
 
+.multi-select-row {
+   display: flex;
+   align-items: flex-start;
+   gap: 8px;
+}
+
+.multi-select-row .multi-select {
+   flex: 1 1 auto;
+   min-width: 0;
+}
+
+.multi-select-clear {
+   flex: 0 0 auto;
+   min-height: 32px;
+   padding: 5px 12px;
+   border: 1px solid var(--line);
+   border-radius: 3px;
+   background: #ffffff;
+   color: var(--text);
+   font: inherit;
+   font-size: 13px;
+   font-weight: 700;
+   line-height: 1.25;
+   cursor: pointer;
+}
+
+.multi-select-clear:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+}
+
+.multi-select-clear:not(:disabled):hover,
+.multi-select-clear:not(:disabled):focus-visible {
+   border-color: var(--accent);
+   outline: none;
+}
+
 .form-actions {
    display: flex;
    align-items: center;

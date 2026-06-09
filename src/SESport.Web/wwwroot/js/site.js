@@ -11,6 +11,7 @@
 
    window.submitFilterForm = submitFilterForm;
    initializeExclusiveEmptySelects();
+   initializeMultiSelectClearButtons();
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
    initializeEntityNameFilters();
@@ -498,5 +499,38 @@
             .from(field.selectedOptions)
             .map(option => option.value)
       );
+   }
+
+   function initializeMultiSelectClearButtons(root = document)
+   {
+      root.querySelectorAll("[data-multi-select-clear]").forEach(button => {
+         if(!(button instanceof HTMLButtonElement)
+            || button.dataset.multiSelectClearInitialized === "true")
+         {
+            return;
+         }
+
+         const container = button.closest("label, .multi-select-row");
+         const select = container?.querySelector("select[data-multi-select]");
+
+         if(!(select instanceof HTMLSelectElement))
+         {
+            return;
+         }
+
+         button.dataset.multiSelectClearInitialized = "true";
+
+         const update = () => {
+            button.disabled = select.selectedOptions.length === 0;
+         };
+
+         button.addEventListener("click", () => {
+            select._multiSelect?.deselectAll();
+            update();
+         });
+
+         select.addEventListener("change", update);
+         update();
+      });
    }
 })();
