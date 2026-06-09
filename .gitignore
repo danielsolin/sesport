@@ -1,6 +1,4 @@
 .vs/
-bin/
-obj/
 **/bin/
 **/obj/
 /data/ai-activity-search-runs/
