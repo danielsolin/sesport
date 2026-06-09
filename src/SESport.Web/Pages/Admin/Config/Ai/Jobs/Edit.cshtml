@@ -23,6 +23,7 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Job.OriginalId" type="hidden" />
+   <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
    <section class="form-section">
       <h2>Job</h2>
       <div class="form-grid">

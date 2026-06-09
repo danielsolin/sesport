@@ -160,6 +160,7 @@
    <section class="form-section review-actions">
       <h2>Review</h2>
       <form method="post" asp-page-handler="Reject" class="reject-form">
+         <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
          <div class="form-grid">
             <label>
                <span>Reject reason</span>

@@ -17,6 +17,7 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Entity.Id" type="hidden" />
+   <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
 
    <section class="form-section">
       <h2>Entity</h2>

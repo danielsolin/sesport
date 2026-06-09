@@ -34,6 +34,7 @@
 }
 
 <form method="post" class="edit-form">
+   <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
    @if(isCountries)
    {
       <input asp-for="Country.OriginalId" type="hidden" />
