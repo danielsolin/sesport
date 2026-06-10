@@ -39,10 +39,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("      ''")
          .AppendLine("   ) as entities,")
          .AppendLine(
-            "   coalesce(rp.related_person_entities, '') as related_person_entities,"
+            "   coalesce(rp.related_person_entities, '') as " +
+            "related_person_entities,"
          )
          .AppendLine(
-            "   coalesce(ro.related_organization_entities, '') as related_organization_entities"
+            "   coalesce(ro.related_organization_entities, '') " +
+            "as related_organization_entities"
          )
          .AppendLine("from activities a")
          .AppendLine("join sports s on s.id = a.sport_id")
@@ -82,7 +84,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   where al.activity_id = a.id")
          .AppendLine("      and p.entity_type_id = 'Person'")
          .AppendLine(
-            "      and entity.entity_type_id in ('Organization', 'Tour', 'League', 'Championship')"
+            "      and entity.entity_type_id in (" +
+            "'Organization', 'Tour', 'League', 'Championship')"
          )
          .AppendLine(") ro on true")
          .AppendLine("where a.activity_date = @date");
@@ -190,76 +193,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      var sql = $$"""
-         select
-            a.id,
-            a.title,
-            a.description,
-            a.teaser,
-            at.label,
-            s.id,
-            s.name,
-            s.icon_id,
-            a.activity_date,
-            a.local_start_time,
-            a.publication_status_id,
-            a.tv_channel_name,
-            coalesce(
-               string_agg(
-                  te.canonical_name,
-                  ', ' order by te.canonical_name
-               ),
-               ''
-            ) as entities,
-            coalesce(rp.related_person_entities, '') as related_person_entities,
-            coalesce(ro.related_organization_entities, '')
-               as related_organization_entities
-         from activities a
-         join sports s on s.id = a.sport_id
-         join activity_types at on at.id = a.activity_type_id
-         left join activity_entity_links l on l.activity_id = a.id
-         left join entities te on te.id = l.entity_id
-         left join lateral (
-            select string_agg(
-               distinct p.canonical_name,
-               ', ' order by p.canonical_name
-            ) as related_person_entities
-            from activity_entity_links al
-            join entities p on p.id = al.entity_id
-            where al.activity_id = a.id
-               and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')
-         ) rp on true
-         left join lateral (
-            select string_agg(
-               distinct entity.canonical_name,
-               ', ' order by entity.canonical_name
-            ) as related_organization_entities
-            from activity_entity_links al
-            join entities p on p.id = al.entity_id
-            join entity_to_entity_links el
-               on el.source_entity_id = p.id
-               or el.target_entity_id = p.id
-            join entities entity
-               on entity.id = case
-                  when el.source_entity_id = p.id
-                     then el.target_entity_id
-                  else el.source_entity_id
-               end
-            where al.activity_id = a.id
-               and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')
-               and entity.entity_type_id in ('Organization', 'Tour', 'League', 'Championship')
-         ) ro on true
+      var sql = CreateActivityListSql("""
          where a.publication_status_id = 'Published'
             and a.starts_at >= @start
             and a.starts_at < @end
-         group by a.id, at.label, s.id, s.name, s.icon_id,
-                  a.tv_channel_name, rp.related_person_entities,
-                  ro.related_organization_entities
-         order by
-            a.activity_date,
-            a.local_start_time nulls last,
-            a.title
-         """;
+         """);
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue(
@@ -594,7 +532,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var sql = $$"""
+      var sql = CreateActivityListSql(whereClause);
+
+      await using var command = dataSource.CreateCommand(sql);
+      return await ReadActivityListAsync(command, cancellationToken);
+   }
+
+   private static string CreateActivityListSql(string whereClause)
+   {
+      return $$"""
          select
             a.id,
             a.title,
@@ -651,7 +597,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                end
             where al.activity_id = a.id
                and p.entity_type_id = 'Person'
-               and entity.entity_type_id in ('Organization', 'Tour', 'League', 'Championship')
+               and entity.entity_type_id in (
+                  'Organization', 'Tour', 'League', 'Championship'
+               )
          ) ro on true
          {{whereClause}}
          group by a.id, at.label, s.id, s.name, s.icon_id,
@@ -662,9 +610,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.local_start_time nulls last,
             a.title
          """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      return await ReadActivityListAsync(command, cancellationToken);
    }
 
    private static async Task InsertActivityAsync(
@@ -949,10 +894,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      var local = model.ActivityDate.Value.ToDateTime(
-         model.LocalStartTime.Value
+      return TimeZoneHelper.ToUtc(
+         model.ActivityDate.Value,
+         model.LocalStartTime.Value,
+         model.TimeZoneId
       );
-      return new DateTimeOffset(local, TimeZoneInfo.Local.GetUtcOffset(local));
    }
 
    private async Task<IReadOnlyList<LookupOption>> GetLookupOptionsAsync(
@@ -1154,11 +1100,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
    {
-      var local = date.ToDateTime(time);
-      return new DateTimeOffset(
-         local,
-         TimeZoneInfo.Local.GetUtcOffset(local)
-      ).ToUniversalTime();
+      return TimeZoneHelper.ToUtc(date, time, SportDay.TimeZoneId);
    }
 
    private static string? GetSportIconPath(string? iconId)

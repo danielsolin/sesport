@@ -1,5 +1,6 @@
 using Npgsql;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 
@@ -233,18 +234,12 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
 
    public static DateTimeOffset ToLocal(DateTimeOffset value)
    {
-      var timeZone = ResolveTimeZone();
-
-      return TimeZoneInfo.ConvertTime(value, timeZone);
+      return TimeZoneHelper.ToLocal(value, TimeZoneId);
    }
 
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
    {
-      var local = date.ToDateTime(time);
-      var timeZone = ResolveTimeZone();
-      var offset = timeZone.GetUtcOffset(local);
-
-      return new DateTimeOffset(local, offset).ToUniversalTime();
+      return TimeZoneHelper.ToUtc(date, time, TimeZoneId);
    }
 
    private static string FormatTime(
@@ -252,33 +247,10 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       DateTimeOffset endsAt
    )
    {
-      var timeZone = ResolveTimeZone();
-      var localStart = TimeZoneInfo.ConvertTime(startsAt, timeZone);
-      var localEnd = TimeZoneInfo.ConvertTime(endsAt, timeZone);
+      var localStart = TimeZoneHelper.ToLocal(startsAt, TimeZoneId);
+      var localEnd = TimeZoneHelper.ToLocal(endsAt, TimeZoneId);
 
       return $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}";
-   }
-
-   private static TimeZoneInfo ResolveTimeZone()
-   {
-      try
-      {
-         return TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
-      }
-      catch(TimeZoneNotFoundException)
-      {
-         if(
-            TimeZoneInfo.TryConvertIanaIdToWindowsId(
-               TimeZoneId,
-               out var windowsId
-            )
-         )
-         {
-            return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
-         }
-
-         return TimeZoneInfo.Utc;
-      }
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)

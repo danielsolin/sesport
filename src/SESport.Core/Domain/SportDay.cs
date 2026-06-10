@@ -1,3 +1,5 @@
+using SESport.Core.Formatting;
+
 namespace SESport.Core.Domain;
 
 public sealed record SportDayWindow(
@@ -14,15 +16,19 @@ public static class SportDay
 
    public static DateOnly GetLocalDate(DateTimeOffset instant)
    {
-      var timeZone = ResolveTimeZone(TimeZoneId);
-      var local = TimeZoneInfo.ConvertTime(instant, timeZone);
+      var local = TimeZoneInfo.ConvertTime(
+         instant,
+         TimeZoneHelper.Resolve(TimeZoneId)
+      );
       return DateOnly.FromDateTime(local.DateTime);
    }
 
    public static DateOnly GetSportDate(DateTimeOffset instant)
    {
-      var timeZone = ResolveTimeZone(TimeZoneId);
-      var local = TimeZoneInfo.ConvertTime(instant, timeZone);
+      var local = TimeZoneInfo.ConvertTime(
+         instant,
+         TimeZoneHelper.Resolve(TimeZoneId)
+      );
       var localDate = DateOnly.FromDateTime(local.DateTime);
       var localTime = TimeOnly.FromDateTime(local.DateTime);
 
@@ -51,30 +57,5 @@ public static class SportDay
    {
       var startDate = GetSportDate(instant).AddDays(dayOffset);
       return new SportDayWindow(startDate, startDate.AddDays(1), Cutoff);
-   }
-
-   private static TimeZoneInfo ResolveTimeZone(string timeZoneId)
-   {
-      try
-      {
-         return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-      }
-      catch (TimeZoneNotFoundException)
-      {
-         if(OperatingSystem.IsWindows() &&
-            TimeZoneInfo.TryConvertIanaIdToWindowsId(
-               timeZoneId,
-               out var windowsTimeZoneId
-            ))
-         {
-            return TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
-         }
-
-         return TimeZoneInfo.Utc;
-      }
-      catch(InvalidTimeZoneException)
-      {
-         return TimeZoneInfo.Utc;
-      }
    }
 }

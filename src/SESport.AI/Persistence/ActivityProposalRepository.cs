@@ -1,4 +1,5 @@
 using Npgsql;
+using SESport.Core.Formatting;
 
 namespace SESport.AI.Persistence;
 
@@ -378,40 +379,16 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
          return null;
       }
 
-      var localDateTime = time.ActivityDate.ToDateTime(
+      return TimeZoneHelper.ToUtc(
+         time.ActivityDate,
          time.LocalStartTime.Value,
-         DateTimeKind.Unspecified
+         time.TimeZoneId
       );
-      var timeZone = ResolveTimeZone(time.TimeZoneId);
-      var offset = timeZone.GetUtcOffset(localDateTime);
-      return new DateTimeOffset(localDateTime, offset);
    }
 
    private static DateTimeOffset? ToUtc(DateTimeOffset? value)
    {
       return value?.ToUniversalTime();
-   }
-
-   private static TimeZoneInfo ResolveTimeZone(string timeZoneId)
-   {
-      try
-      {
-         return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-      }
-      catch(TimeZoneNotFoundException)
-      {
-         if(
-            TimeZoneInfo.TryConvertIanaIdToWindowsId(
-               timeZoneId,
-               out var windowsId
-            )
-         )
-         {
-            return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
-         }
-
-         return TimeZoneInfo.Utc;
-      }
    }
 
    private static Guid CreateGuid(string value)

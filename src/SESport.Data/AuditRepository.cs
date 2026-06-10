@@ -14,7 +14,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          string proposalStatus = "Pending"
       )
    {
-      string sql = $$"""
+      const string sql = """
          select
             p.id,
             p.title,
@@ -41,12 +41,13 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          join sports sp on sp.id = p.sport_id
          left join activity_proposal_entity_links l on l.proposal_id = p.id
          left join activity_proposal_evidence e on e.proposal_id = p.id
-         where ps.id = '{{proposalStatus}}'
+         where ps.id = @proposal_status
          group by p.id, pt.label, s.name, ps.label, prr.label, at.label, sp.name
          order by p.activity_date, p.local_start_time nulls last, p.title
          """;
 
       await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("proposal_status", proposalStatus);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
