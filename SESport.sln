@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Core.Tests", "tests\SESport.Core.Tests\SESport.Core.Tests.csproj", "{25C8B4DF-8175-4AFF-B83E-F5FA397E05E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportTvNuSport.Tests", "tests\SESport.ImportTvNuSport.Tests\SESport.ImportTvNuSport.Tests.csproj", "{1224ECCA-9DE5-4A3A-BD57-23BE1A0E4594}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.BroadcastImporter.Tests", "tests\SESport.BroadcastImporter.Tests\SESport.BroadcastImporter.Tests.csproj", "{1224ECCA-9DE5-4A3A-BD57-23BE1A0E4594}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{084226A2-8533-49C9-82FD-B9F1FE3349AB}"
 EndProject
@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.WebAutomation", "to
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.AI", "src\SESport.AI\SESport.AI.csproj", "{A71FEF04-04F3-4333-AB42-3BA838AF0E6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.ImportTvNuSport", "tools\SESport.ImportTvNuSport\SESport.ImportTvNuSport.csproj", "{7CBA519B-4A19-4A10-9699-BAAF86DD0996}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.BroadcastImporter", "tools\SESport.BroadcastImporter\SESport.BroadcastImporter.csproj", "{7CBA519B-4A19-4A10-9699-BAAF86DD0996}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
