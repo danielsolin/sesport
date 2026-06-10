@@ -31,6 +31,19 @@ public sealed class SportDayTests
    }
 
    [Fact]
+   public void GetSportDateKeepsFourOClockOnPreviousDay()
+   {
+      var instant = DateTimeOffset.Parse(
+         "2026-06-11T02:00:00+00:00",
+         CultureInfo.InvariantCulture
+      );
+
+      var sportDate = SportDay.GetSportDate(instant);
+
+      Assert.Equal(new DateOnly(2026, 6, 10), sportDate);
+   }
+
+   [Fact]
    public void TodayAndTomorrowWindowsOverlapAtCutoff()
    {
       var instant = DateTimeOffset.Parse(

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SESport.Core.Domain;
 using System.Text.Json;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;

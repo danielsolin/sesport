@@ -34,3 +34,10 @@ Examples of Swedish entities:
 An activity can be a match, race, tournament, stage, championship,
 qualification event, or another international sport-related occurrence that
 could be of interest for a Swedish sports fan.
+
+## Date Semantics
+
+- `activity_date` and `starts_at` always store the real calendar date and
+  time when something happens.
+- `SportDay` is a presentation and grouping concept only.
+- Do not use `SportDay` to rewrite persisted activity dates in the database.

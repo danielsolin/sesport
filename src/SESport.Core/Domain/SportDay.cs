@@ -12,6 +12,8 @@ public static class SportDay
 {
    public const string TimeZoneId = "Europe/Stockholm";
 
+   // SportDay is a presentation concept.
+   // Persisted activity dates and times still use the real calendar moment.
    public static readonly TimeOnly Cutoff = new(4, 1);
 
    public static DateOnly GetLocalDate(DateTimeOffset instant)

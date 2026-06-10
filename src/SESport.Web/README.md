@@ -56,3 +56,11 @@ variable:
 $env:Admin__Password="<local-password>"
 dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 ```
+
+## Sport Date Rule
+
+- Persisted activity dates and times always represent the real calendar
+  moment when an activity happens.
+- `SportDay` is only used for presentation and grouping, such as public
+  page buckets and admin date views.
+- Do not use `SportDay` to rewrite database dates during import or editing.
