@@ -49,7 +49,7 @@ docker compose up -d postgres
 Run migrations in order from a Linux or WSL shell:
 
 ```bash
-./database/run-migrations.sh
+./bin/db-run-migrations.sh
 ```
 
 Import the curated entity watchlist after migrations:
@@ -61,11 +61,7 @@ dotnet run --project tools/SESport.ImportEntities/SESport.ImportEntities.csproj
 During pre-launch development, incompatible schema rewrites may require
 recreating the local Postgres volume before rerunning migrations.
 
-On Windows, the PowerShell helper can be used instead:
-
-```powershell
-.\database\run-migrations.ps1
-```
+On Windows, run the bash script from WSL if Docker is only available there.
 
 The database schema is intentionally small while the ingestion model is still
 forming. Prefer simple, auditable SQL until the persistence layer needs a

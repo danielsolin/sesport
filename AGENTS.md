@@ -5,9 +5,7 @@
 2. Start PostgreSQL: `docker compose up -d` (run in WSL if Docker is only
 available there)
 3. Run database migrations:
-   - PowerShell: `.\database\run-migrations.ps1` (run in WSL if Docker is only
-     available there)
-   - Bash: `./database/run-migrations.sh` (run in WSL if Docker is only
+   - Bash: `./bin/db-run-migrations.sh` (run in WSL if Docker is only
      available there)
 
 ## Building

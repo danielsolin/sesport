@@ -85,6 +85,7 @@ public sealed record AiRunDetail(
    string? CorrelationId,
    string InputPayloadJson,
    string RenderedPrompt,
+   string? RawRequestJson,
    string? RawResponseJson,
    string? OutputText,
    string? ErrorMessage,

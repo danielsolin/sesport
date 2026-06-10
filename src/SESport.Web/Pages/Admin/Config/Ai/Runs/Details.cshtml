@@ -80,6 +80,15 @@
    </section>
 
    <section class="form-section">
+      <details class="run-data-details">
+         <summary>Raw request</summary>
+         <pre class="prompt-details-pre">
+@((Model.Run.RawRequestJson ?? string.Empty).Trim())
+         </pre>
+      </details>
+   </section>
+
+   <section class="form-section">
       <h2>Input payload</h2>
       <pre class="prompt-details-pre">@Model.Run.InputPayloadJson</pre>
    </section>
@@ -91,14 +100,18 @@
 
    <section class="form-section">
       <h2>Output</h2>
-      <pre class="prompt-details-pre">@((Model.Run.OutputText ?? string.Empty).Trim())</pre>
+      <pre class="prompt-details-pre">
+@((Model.Run.OutputText ?? string.Empty).Trim())
+      </pre>
    </section>
 
    @if (!string.IsNullOrWhiteSpace(Model.Run.RawResponseJson))
    {
       <section class="form-section">
-         <h2>Raw response</h2>
-         <pre class="prompt-details-pre">@Model.Run.RawResponseJson</pre>
+         <details class="run-data-details">
+            <summary>Raw response</summary>
+            <pre class="prompt-details-pre">@Model.Run.RawResponseJson</pre>
+         </details>
       </section>
    }
 

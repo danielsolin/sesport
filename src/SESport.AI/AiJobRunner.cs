@@ -1,5 +1,6 @@
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
+using SESport.AI.Providers;
 
 namespace SESport.AI;
 
@@ -66,6 +67,14 @@ public sealed class AiJobRunner(
          prompt,
          request.InputPayloadJson
       );
+      var rawRequestJson = ResponsesRequestBuilder.SerializeRequest(
+         ResponsesRequestBuilder.CreateRequestPayload(
+            provider,
+            job,
+            prompt,
+            renderedPrompt
+         )
+      );
       var run = new AiJobRun(
          Guid.NewGuid(),
          job.Id,
@@ -75,6 +84,7 @@ public sealed class AiJobRunner(
          request.CorrelationId,
          request.InputPayloadJson,
          renderedPrompt,
+         rawRequestJson,
          null,
          null,
          null,
@@ -117,6 +127,7 @@ public sealed class AiJobRunner(
             run.JobId,
             run.ProviderId,
             run.RenderedPrompt,
+            run.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
             null
@@ -141,6 +152,7 @@ public sealed class AiJobRunner(
             run.JobId,
             run.ProviderId,
             run.RenderedPrompt,
+            run.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
             exception.Message

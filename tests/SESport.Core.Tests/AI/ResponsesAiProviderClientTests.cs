@@ -39,6 +39,46 @@ public class ResponsesAiProviderClientTests
       );
    }
 
+   [Theory]
+   [MemberData(nameof(ProviderClients))]
+   public async Task GenerateAsyncUsesOpenRouterJsonSchemaEnvelope(
+      Func<HttpClient, IAiProviderClient> clientFactory
+   )
+   {
+      var handler = new RecordingHandler(
+         CreateReasoningResponseJson("{\"ok\":true}")
+      );
+      var client = clientFactory(new HttpClient(handler));
+
+      var result = await client.GenerateAsync(
+         CreateProvider(),
+         CreateJob("json_schema"),
+         CreatePrompt(),
+         "Prompt text",
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal("{\"ok\":true}", result.OutputText);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBody
+      );
+      Assert.Contains(
+         "\"json_schema\":{\"name\":\"prompt_"
+            + "11111111111111111111111111111111\"",
+         handler.RequestBody
+      );
+      Assert.Contains(
+         "\"strict\":true",
+         handler.RequestBody
+      );
+      Assert.Contains(
+         "\"schema\":{\"type\":\"object\"}",
+         handler.RequestBody
+      );
+   }
+
    public static IEnumerable<object[]> ProviderClients()
    {
       yield return
@@ -68,14 +108,16 @@ public class ResponsesAiProviderClientTests
       );
    }
 
-   private static AiJobDefinition CreateJob()
+   private static AiJobDefinition CreateJob(
+      string outputMode = "json_object"
+   )
    {
       return new AiJobDefinition(
          "job",
          "Job",
          null,
          "provider",
-         "json_object",
+         outputMode,
          true
       );
    }
@@ -83,7 +125,7 @@ public class ResponsesAiProviderClientTests
    private static AiPromptDefinition CreatePrompt()
    {
       return new AiPromptDefinition(
-         Guid.NewGuid(),
+         Guid.Parse("11111111-1111-1111-1111-111111111111"),
          "job",
          1,
          "System",

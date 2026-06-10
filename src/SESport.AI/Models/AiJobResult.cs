@@ -5,6 +5,7 @@ public sealed record AiJobResult(
    string JobId,
    string ProviderId,
    string Prompt,
+   string RawRequestJson,
    string OutputText,
    string? RawResponseJson,
    string? ErrorMessage

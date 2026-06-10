@@ -442,6 +442,26 @@ public class PostgresMigrationTests
       Assert.Contains("openrouter:web_search", migration);
    }
 
+   [Fact]
+   public void TwentiethMigrationAddsAiJobRunRawRequest()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "020_add_ai_job_run_raw_request.sql"
+         )
+      );
+
+      Assert.Contains("alter table if exists ai_job_runs", migration);
+      Assert.Contains(
+         "add column if not exists raw_request jsonb null",
+         migration
+      );
+      Assert.Contains("update ai_job_runs r", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);
