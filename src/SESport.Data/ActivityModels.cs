@@ -13,7 +13,7 @@ public sealed record ActivityListItem(
    string? TvChannelName,
    string PublicationStatus,
    string RelatedPersonEntities,
-   string RelatedOrganization
+   string RelatedOrganizationEntities
 )
 {
    public string TimeOnlyText

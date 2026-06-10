@@ -205,12 +205,12 @@
                                  asp-page-handler="Hide"
                                  asp-route-id="@broadcast.Id"
                                  data-ajax-success=
-                                    "@(broadcast.isHidden ? null : "remove")"
+                                    "@(broadcast.IsHidden ? null : "remove")"
                                  data-ajax-remove-target=
-                                    "@(broadcast.isHidden ? null : "tr")"
+                                    "@(broadcast.IsHidden ? null : "tr")"
                                  data-ajax-decrement-target=
                                     "@(
-                                       broadcast.isHidden
+                                       broadcast.IsHidden
                                           ? null
                                           : "[data-tv-sport-broadcast-count]"
                                     )">
@@ -219,7 +219,7 @@
                                      value="@Model.DateText" />
                               <input type="hidden"
                                      name="isHidden"
-                                     value="@broadcast.isHidden.ToString()" />
+                                     value="@broadcast.IsHidden.ToString()" />
                               <input type="hidden"
                                      name="sortColumn"
                                      value="@Model.SortColumn" />
@@ -241,7 +241,7 @@
                                         value="@sport" />
                               }
                               <button type="submit">
-                                 @(broadcast.isHidden ? "Show" : "Hide")
+                                 @(broadcast.IsHidden ? "Show" : "Hide")
                               </button>
                            </form>
                         </td>

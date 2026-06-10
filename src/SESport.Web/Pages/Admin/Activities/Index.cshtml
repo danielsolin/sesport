@@ -126,10 +126,12 @@
                            asp-route-returnUrl="@returnUrl">
                            <strong>
                               @activity.Title -
-                              @activity.RelatedOrganization
+                              @activity.RelatedOrganizationEntities
                            </strong>
                         </a>
-                        <span>@activity.SportName / @activity.ActivityType</span>
+                        <span>
+                           @activity.SportName / @activity.ActivityType
+                        </span>
                      </td>
                      <td>@activity.RelatedPersonEntities</td>
                      <td>@activity.Teaser</td>

@@ -91,7 +91,8 @@ public class IndexModel(ActivityRepository repository) : PageModel
       {
          var relatedOrganization = string.Join(
             ", ",
-            group.Select(activity => activity.RelatedOrganization)
+            group.Select(activity =>
+               activity.RelatedOrganizationEntities)
                .Where(summary => !string.IsNullOrWhiteSpace(summary))
                .Distinct(StringComparer.Ordinal)
          );
@@ -147,7 +148,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
 public sealed record ActivityAgendaSection(
    string TimeLabel,
    IReadOnlyList<ActivityListItem> Activities,
-   string RelatedOrganization
+   string RelatedOrganizationEntities
 );
 
 public sealed record DateOption(

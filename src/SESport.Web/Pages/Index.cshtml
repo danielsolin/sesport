@@ -73,7 +73,7 @@ else
                   @foreach(var activity in agendaSection.Activities)
                   {
                      if(string.IsNullOrWhiteSpace(
-                        activity.RelatedOrganization) &&
+                        activity.RelatedOrganizationEntities) &&
                         string.IsNullOrWhiteSpace(
                            activity.RelatedPersonEntities))
                      {
@@ -114,8 +114,10 @@ else
                      </div>
                      <h2>
                         @activity.Title
-                        @(string.IsNullOrEmpty(activity.RelatedOrganization)
-                        ? string.Empty : $"- {activity.RelatedOrganization}")
+                        @(string.IsNullOrEmpty(
+                        activity.RelatedOrganizationEntities)
+                        ? string.Empty
+                        : $"- {activity.RelatedOrganizationEntities}")
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
