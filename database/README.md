@@ -1,44 +1,14 @@
 # Database
 
-This folder contains explicit database migration scripts.
+This folder contains the database baseline schema plus future migration
+scripts.
 
-The first migration creates the entity-first activity proposal model:
-lookup tables, tracked entities, activity proposals, review grouping,
-canonical activities, activity entity links, and activity evidence. Canonical
-activities always belong to one known activity date.
+`001_baseline.sql` defines the current schema from scratch, including the
+lookup tables, entity model, activity model, TV sport imports, AI jobs, and
+the reference rows needed by the application.
 
-The second migration adds publication metadata for the manual launch site:
-activity publication statuses, public slugs, and listing indexes.
-
-The third migration adds controlled reject reasons and optional reject comments
-for activity proposal review.
-
-The fourth migration adds the AI model/provider producer label to activity
-proposals.
-
-The fifth migration adds AI activity search run logging tables for run settings,
-per-entity status, proposal counts, persistence counts, durations, and error
-messages.
-
-The sixth migration adds the submitted AI prompt to activity proposals for
-AI-generated proposal review.
-
-The seventh through ninth migrations add imported TV sport broadcasts,
-import-run tracking, replay metadata parsed from Swedish EPG descriptions, and
-manual row hiding for the admin review list.
-
-The tenth migration adds many-to-many links between tracked entities, used for
-connections such as a player linked to a club team and a national team.
-
-The eleventh migration makes those entity links behave as undirected
-connections and prevents reversed duplicate pairs.
-
-The twelfth migration adds a generic TV sport ignore table for import-time
-rules such as ignored channel names.
-
-The seventeenth migration adds a generic AI platform with providers, jobs,
-versioned prompts, and run history. The first seeded job is the activity
-teaser generator.
+Future schema changes should be added as new numbered SQL files after the
+baseline.
 
 Start PostgreSQL with Docker Compose:
 
@@ -46,10 +16,18 @@ Start PostgreSQL with Docker Compose:
 docker compose up -d postgres
 ```
 
-Run migrations in order from a Linux or WSL shell:
+Run migrations from a Linux or WSL shell:
 
 ```bash
 ./bin/db-run-migrations.sh
+```
+
+If you already have a local database with the current schema and want to
+start using the new migration history without changing the schema, mark the
+baseline as applied:
+
+```bash
+./bin/db-mark-baseline-applied.sh
 ```
 
 Import the curated entity watchlist after migrations:
@@ -58,8 +36,8 @@ Import the curated entity watchlist after migrations:
 dotnet run --project tools/SESport.ImportEntities/SESport.ImportEntities.csproj
 ```
 
-During pre-launch development, incompatible schema rewrites may require
-recreating the local Postgres volume before rerunning migrations.
+If the local database drifted from the baseline, recreate the local Postgres
+volume before rerunning migrations.
 
 On Windows, run the bash script from WSL if Docker is only available there.
 
