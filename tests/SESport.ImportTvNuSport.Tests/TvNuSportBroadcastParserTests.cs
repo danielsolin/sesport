@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 using SESport.Tools.ImportTvNuSport;
 
@@ -20,7 +21,11 @@ public class TvNuSportBroadcastParserTests
       await using var stream = File.OpenRead(fixturePath);
 
       var parser = new TvNuSportBroadcastParser();
-      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var parseResult = await parser.ParseAsync(
+         stream,
+         CancellationToken.None
+      );
+      var broadcasts = parseResult.Broadcasts;
 
       Assert.Equal(73, broadcasts.Count);
 
@@ -78,5 +83,53 @@ public class TvNuSportBroadcastParserTests
 
       Assert.Equal("stream", streamBroadcast.ExternalId.Split(':')[1]);
       Assert.Equal("Viaplay", streamBroadcast.ChannelName);
+   }
+
+   [Fact]
+   public async Task ParseAsyncReportsDuplicateBroadcasts()
+   {
+      var html = """
+         <html>
+            <body>
+               <li class="_37xCg nSLmX">
+                  <a href="https://www.tv.nu/program/test">
+                     <span aria-label="Link - 20:15, Example Match">
+                        Example Match
+                     </span>
+                  </a>
+                  <time datetime="2026-06-07 20:15"></time>
+                  <span class="Oz76s"></span></div>Viaplay</div>
+                  <div class="_2ZygK"><div class="_2HFK6"></div>Motorsport
+                     <span class="ss5Ll"></span>
+                  </div>
+               </li>
+               <li class="_37xCg nSLmX">
+                  <a href="https://www.tv.nu/program/test">
+                     <span aria-label="Link - 20:15, Example Match">
+                        Example Match
+                     </span>
+                  </a>
+                  <time datetime="2026-06-07 20:15"></time>
+                  <span class="Oz76s"></span></div>Viaplay</div>
+                  <div class="_2ZygK"><div class="_2HFK6"></div>Motorsport
+                     <span class="ss5Ll"></span>
+                  </div>
+               </li>
+            </body>
+         </html>
+         """;
+
+      await using var stream = new MemoryStream(
+         Encoding.UTF8.GetBytes(html)
+      );
+
+      var parser = new TvNuSportBroadcastParser();
+      var parseResult = await parser.ParseAsync(
+         stream,
+         CancellationToken.None
+      );
+
+      Assert.Single(parseResult.Broadcasts);
+      Assert.Equal(1, parseResult.DuplicateBroadcastCount);
    }
 }

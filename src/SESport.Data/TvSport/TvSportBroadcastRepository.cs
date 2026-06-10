@@ -39,7 +39,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       }
    }
 
-   public async Task<int> SaveAsync(
+   public async Task<TvSportBroadcastSaveResult> SaveAsync(
       TvSportImportRun importRun,
       IReadOnlyCollection<TvSportBroadcast> broadcasts,
       CancellationToken cancellationToken
@@ -59,19 +59,34 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
          cancellationToken
       );
 
+      var insertedCount = 0;
+      var updatedCount = 0;
+
       foreach(var broadcast in broadcasts)
       {
-         await UpsertBroadcastAsync(
+         var inserted = await UpsertBroadcastAsync(
             connection,
             transaction,
             importRun.Id,
             broadcast,
             cancellationToken
          );
+
+         if(inserted)
+         {
+            insertedCount++;
+            continue;
+         }
+
+         updatedCount++;
       }
 
       await transaction.CommitAsync(cancellationToken);
-      return broadcasts.Count;
+      return new TvSportBroadcastSaveResult(
+         broadcasts.Count,
+         insertedCount,
+         updatedCount
+      );
    }
 
    public async Task<
@@ -207,7 +222,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   private static async Task UpsertBroadcastAsync(
+   private static async Task<bool> UpsertBroadcastAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid importRunId,
@@ -216,35 +231,66 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
    )
    {
       const string sql = """
-         insert into tv_sport_broadcasts (
+         merge into tv_sport_broadcasts as target
+         using (
+            values (
+               @id::uuid,
+               @import_run_id::uuid,
+               @source_key::text,
+               @external_id::text,
+               @fingerprint::text,
+               @channel_id::text,
+               @channel_name::text,
+               @title::text,
+               @description::text,
+               @categories::text[],
+               @is_replay::boolean,
+               @original_air_date::date,
+               @starts_at::timestamptz,
+               @ends_at::timestamptz,
+               @time_zone_id::text,
+               @raw_programme_xml::text
+            )
+         ) as source (
             id, import_run_id, source_key, external_id, fingerprint,
             channel_id, channel_name, title, description, categories,
             is_replay, original_air_date, starts_at, ends_at, time_zone_id,
             raw_programme_xml
          )
-         values (
-            @id, @import_run_id, @source_key, @external_id, @fingerprint,
-            @channel_id, @channel_name, @title, @description, @categories,
-            @is_replay, @original_air_date, @starts_at, @ends_at,
-            @time_zone_id, @raw_programme_xml
-         )
-         on conflict (fingerprint) do update
-         set
-            import_run_id = excluded.import_run_id,
-            source_key = excluded.source_key,
-            external_id = excluded.external_id,
-            channel_id = excluded.channel_id,
-            channel_name = excluded.channel_name,
-            title = excluded.title,
-            description = excluded.description,
-            categories = excluded.categories,
-            is_replay = excluded.is_replay,
-            original_air_date = excluded.original_air_date,
-            starts_at = excluded.starts_at,
-            ends_at = excluded.ends_at,
-            time_zone_id = excluded.time_zone_id,
-            raw_programme_xml = excluded.raw_programme_xml,
-            updated_at = now()
+         on target.fingerprint = source.fingerprint
+         when matched then
+            update set
+               import_run_id = source.import_run_id,
+               source_key = source.source_key,
+               external_id = source.external_id,
+               channel_id = source.channel_id,
+               channel_name = source.channel_name,
+               title = source.title,
+               description = source.description,
+               categories = source.categories,
+               is_replay = source.is_replay,
+               original_air_date = source.original_air_date,
+               starts_at = source.starts_at,
+               ends_at = source.ends_at,
+               time_zone_id = source.time_zone_id,
+               raw_programme_xml = source.raw_programme_xml,
+               updated_at = now()
+         when not matched then
+            insert (
+               id, import_run_id, source_key, external_id, fingerprint,
+               channel_id, channel_name, title, description, categories,
+               is_replay, original_air_date, starts_at, ends_at, time_zone_id,
+               raw_programme_xml
+            )
+            values (
+               source.id, source.import_run_id, source.source_key,
+               source.external_id, source.fingerprint, source.channel_id,
+               source.channel_name, source.title, source.description,
+               source.categories, source.is_replay, source.original_air_date,
+               source.starts_at, source.ends_at, source.time_zone_id,
+               source.raw_programme_xml
+            )
+         returning merge_action()
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
@@ -286,7 +332,10 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
          (object?)broadcast.RawProgrammeXml ?? DBNull.Value
       );
 
-      await command.ExecuteNonQueryAsync(cancellationToken);
+      var action = (string)(await command.ExecuteScalarAsync(
+         cancellationToken
+      ))!;
+      return action.Equals("INSERT", StringComparison.OrdinalIgnoreCase);
    }
 }
 
@@ -294,4 +343,10 @@ public sealed record TvSportIgnoreRule(
    string Kind,
    string Value,
    string? SourceKey
+);
+
+public sealed record TvSportBroadcastSaveResult(
+   int SavedCount,
+   int InsertedCount,
+   int UpdatedCount
 );
