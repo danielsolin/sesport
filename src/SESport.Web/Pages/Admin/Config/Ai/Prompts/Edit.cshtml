@@ -78,6 +78,13 @@
                    class="tall-textarea"></textarea>
          <span asp-validation-for="Prompt.OutputSchemaJson"></span>
       </label>
+      <label>
+         <span>Request options JSON</span>
+         <textarea asp-for="Prompt.RequestOptionsJson"
+                   rows="10"
+                   class="tall-textarea"></textarea>
+         <span asp-validation-for="Prompt.RequestOptionsJson"></span>
+      </label>
       <label class="check-row">
          <input asp-for="Prompt.Enabled" type="checkbox" />
          <span>Enabled</span>

@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Text.Json;
+using SESport.AI.Abstractions;
+using SESport.AI.Models;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -10,7 +13,8 @@ namespace SESport.Web.Pages.Admin.TvSport;
 
 public class IndexModel(
    TvSportRepository repository,
-   AdminDatePreferenceStore datePreferenceStore
+   AdminDatePreferenceStore datePreferenceStore,
+   IAiJobRunner aiJobRunner
 ) : PageModel
 {
    public const string ChannelSortColumn = "Channel";
@@ -155,6 +159,97 @@ public class IndexModel(
       return RedirectToPage("/Admin/Activities/Edit", routeValues);
    }
 
+   public async Task<IActionResult> OnPostCheckSwedishParticipationAsync(
+      List<Guid> tvSportBroadcastIds,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         var broadcastIds = NormalizeBroadcastIds(tvSportBroadcastIds);
+
+         if(broadcastIds.Count == 0)
+         {
+            return BadRequest(new
+            {
+               error = "Select at least one broadcast."
+            });
+         }
+
+         var broadcasts = await repository.GetActivitySourcesAsync(
+            broadcastIds,
+            cancellationToken
+         );
+         var results = new List<object>();
+
+         foreach(var broadcast in broadcasts)
+         {
+            var result = await aiJobRunner.RunAsync(
+               new AiJobRequest(
+                  "decide-swedish-participation",
+                  CreateParticipationInputJson(broadcast),
+                  broadcast.Id.ToString()
+               ),
+               cancellationToken
+            );
+
+            if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
+            {
+               results.Add(
+                  CreateParticipationCheckResult(
+                     broadcast,
+                     result.ErrorMessage,
+                     null,
+                     []
+                  )
+               );
+
+               continue;
+            }
+
+            var parsed = ParseParticipationResult(result.OutputText);
+
+            if(parsed is null)
+            {
+               results.Add(
+                  CreateParticipationCheckResult(
+                     broadcast,
+                     "The model returned invalid JSON.",
+                     null,
+                     []
+                  )
+               );
+
+               continue;
+            }
+
+            results.Add(
+               CreateParticipationCheckResult(
+                  broadcast,
+                  null,
+                  parsed.SwedishParticipation,
+                  parsed.SwedishParticipants
+               )
+            );
+         }
+
+         return new JsonResult(new
+         {
+            results
+         });
+      }
+      catch(Exception exception)
+      {
+         return new JsonResult(new
+         {
+            error = exception.Message
+         })
+         {
+            StatusCode = StatusCodes.Status500InternalServerError
+         };
+      }
+   }
+
    private bool WantsJsonResponse()
    {
       return Request.Headers.Accept.Any(value =>
@@ -293,4 +388,106 @@ public class IndexModel(
          .Distinct()
          .ToList();
    }
+
+   private static string CreateParticipationInputJson(
+      TvSportBroadcastActivitySource broadcast
+   )
+   {
+      var localStart = TvSportRepository.ToLocal(broadcast.StartsAt);
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            sport = broadcast.Categories,
+            event_name = broadcast.Title,
+            date_time = $"{localStart:yyyy-MM-dd HH:mm}"
+         }
+      );
+   }
+
+   private static object CreateParticipationCheckResult(
+      TvSportBroadcastActivitySource broadcast,
+      string? error,
+      string? swedishParticipation,
+      IReadOnlyList<string> swedishParticipants
+   )
+   {
+      return new
+      {
+         id = broadcast.Id,
+         channelName = broadcast.ChannelName,
+         title = broadcast.Title,
+         error,
+         swedishParticipation,
+         swedishParticipants
+      };
+   }
+
+   private static SwedishParticipationResult? ParseParticipationResult(
+      string outputText
+   )
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         var root = document.RootElement;
+
+         if(root.ValueKind != JsonValueKind.Object)
+         {
+            return null;
+         }
+
+         if(
+            !root.TryGetProperty(
+               "SwedishParticipation",
+               out var participation
+            ) ||
+            participation.ValueKind != JsonValueKind.String
+         )
+         {
+            return null;
+         }
+
+         var participants = new List<string>();
+
+         if(
+            root.TryGetProperty(
+               "SwedishParticipants",
+               out var participantsElement
+            ) &&
+            participantsElement.ValueKind == JsonValueKind.Array
+         )
+         {
+            foreach(var participant in participantsElement.EnumerateArray())
+            {
+               if(participant.ValueKind != JsonValueKind.String)
+               {
+                  continue;
+               }
+
+               var name = participant.GetString();
+
+               if(!string.IsNullOrWhiteSpace(name))
+               {
+                  participants.Add(name);
+               }
+            }
+         }
+
+         return new SwedishParticipationResult(
+            participation.GetString() ?? string.Empty,
+            participants
+         );
+      }
+      catch(JsonException)
+      {
+         return null;
+      }
+   }
+
+   private sealed record SwedishParticipationResult(
+      string SwedishParticipation,
+      IReadOnlyList<string> SwedishParticipants
+   );
+
 }

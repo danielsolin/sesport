@@ -100,6 +100,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       }
 
       ValidateJson("Prompt.OutputSchemaJson", Prompt.OutputSchemaJson);
+      ValidateJson("Prompt.RequestOptionsJson", Prompt.RequestOptionsJson);
    }
 
    private void ValidateJson(string fieldName, string? json)

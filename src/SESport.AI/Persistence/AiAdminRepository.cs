@@ -292,6 +292,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             system_prompt,
             user_prompt_template,
             output_schema::text,
+            request_options::text,
             temperature,
             max_output_tokens,
             enabled
@@ -319,9 +320,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          SystemPrompt = reader.GetString(3),
          UserPromptTemplate = reader.GetString(4),
          OutputSchemaJson = ReadNullableString(reader, 5),
-         Temperature = ReadNullableDecimal(reader, 6),
-         MaxOutputTokens = ReadNullableInt32(reader, 7),
-         Enabled = reader.GetBoolean(8)
+         RequestOptionsJson = ReadNullableString(reader, 6) ?? "{}",
+         Temperature = ReadNullableDecimal(reader, 7),
+         MaxOutputTokens = ReadNullableInt32(reader, 8),
+         Enabled = reader.GetBoolean(9)
       };
    }
 
@@ -340,12 +342,13 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          const string insertSql = """
             insert into ai_job_prompts (
                id, job_id, version, system_prompt, user_prompt_template,
-               output_schema, temperature, max_output_tokens, enabled
+               output_schema, request_options, temperature,
+               max_output_tokens, enabled
             )
             values (
                @id, @job_id, @version, @system_prompt,
-               @user_prompt_template, @output_schema, @temperature,
-               @max_output_tokens, @enabled
+               @user_prompt_template, @output_schema, @request_options,
+               @temperature, @max_output_tokens, @enabled
             )
             """;
 
@@ -364,6 +367,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             system_prompt = @system_prompt,
             user_prompt_template = @user_prompt_template,
             output_schema = @output_schema,
+            request_options = @request_options,
             temperature = @temperature,
             max_output_tokens = @max_output_tokens,
             enabled = @enabled,
@@ -373,7 +377,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 
       await using var updateCommand = dataSource.CreateCommand(updateSql);
       AddPromptParameters(updateCommand, id, model);
-      updateCommand.Parameters.AddWithValue("original_id", Guid.Parse(originalId));
+      updateCommand.Parameters.AddWithValue(
+         "original_id",
+         Guid.Parse(originalId)
+      );
       await updateCommand.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -444,6 +451,11 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          command,
          "output_schema",
          model.OutputSchemaJson
+      );
+      AddJsonbParameter(
+         command,
+         "request_options",
+         model.RequestOptionsJson
       );
       command.Parameters.AddWithValue(
          "temperature",

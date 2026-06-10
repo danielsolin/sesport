@@ -7,6 +7,7 @@ public sealed record AiPromptDefinition(
    string SystemPrompt,
    string UserPromptTemplate,
    string? OutputSchemaJson,
+   string RequestOptionsJson,
    decimal? Temperature,
    int? MaxOutputTokens,
    bool Enabled

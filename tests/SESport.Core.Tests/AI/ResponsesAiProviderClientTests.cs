@@ -89,6 +89,7 @@ public class ResponsesAiProviderClientTests
          "System",
          "User",
          """{"type":"object"}""",
+         "{}",
          null,
          null,
          true

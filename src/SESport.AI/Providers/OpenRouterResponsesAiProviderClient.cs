@@ -132,7 +132,8 @@ public sealed class OpenRouterResponsesAiProviderClient
          };
       }
 
-      MergeProviderOptions(payload, provider.RequestOptionsJson);
+      MergeRequestOptions(payload, provider.RequestOptionsJson);
+      MergeRequestOptions(payload, prompt.RequestOptionsJson);
       return payload;
    }
 
@@ -171,7 +172,7 @@ public sealed class OpenRouterResponsesAiProviderClient
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
    }
 
-   private static void MergeProviderOptions(
+   private static void MergeRequestOptions(
       JsonObject payload,
       string requestOptionsJson
    )

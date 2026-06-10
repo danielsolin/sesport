@@ -112,6 +112,8 @@ public sealed class AiPromptEditModel
 
    public string? OutputSchemaJson { get; set; }
 
+   public string RequestOptionsJson { get; set; } = "{}";
+
    public decimal? Temperature { get; set; }
 
    public int? MaxOutputTokens { get; set; }

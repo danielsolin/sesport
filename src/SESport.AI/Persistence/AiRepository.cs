@@ -196,6 +196,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             system_prompt,
             user_prompt_template,
             output_schema::text,
+            request_options::text,
             temperature,
             max_output_tokens,
             enabled
@@ -224,9 +225,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          reader.GetString(3),
          reader.GetString(4),
          ReadNullableString(reader, 5),
-         ReadNullableDecimal(reader, 6),
-         ReadNullableInt32(reader, 7),
-         reader.GetBoolean(8)
+         ReadNullableString(reader, 6) ?? "{}",
+         ReadNullableDecimal(reader, 7),
+         ReadNullableInt32(reader, 8),
+         reader.GetBoolean(9)
       );
    }
 

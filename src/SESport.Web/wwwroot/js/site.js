@@ -6,7 +6,11 @@
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
    const entityNameFilterSelector = "[data-entity-name-filter]";
    const generateTeaserSelector = "[data-generate-teaser]";
+   const checkParticipationSelector =
+      "[data-check-swedish-participation]";
+   const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
+   const dateSelectSelector = "#date-select-input";
    const exclusiveEmptySelectStates = new WeakMap();
 
    window.submitFilterForm = submitFilterForm;
@@ -15,7 +19,10 @@
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
    initializeEntityNameFilters();
+   initializeGetFormRestoration();
+   initializeDateSelect();
    initializeTeaserGeneration();
+   initializeBroadcastParticipationChecks();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -228,6 +235,47 @@
       });
    }
 
+   function initializeDateSelect(root = document)
+   {
+      const select = root.querySelector(dateSelectSelector);
+
+      if(!(select instanceof HTMLSelectElement)
+         || select.dataset.dateSelectInitialized === "true")
+      {
+         return;
+      }
+
+      select.dataset.dateSelectInitialized = "true";
+
+      const sync = () => {
+         const url = new URL(window.location.href);
+         const selectedDate = url.searchParams.get("date");
+
+         if(selectedDate && select.value !== selectedDate)
+         {
+            select.value = selectedDate;
+         }
+      };
+
+      window.addEventListener("pageshow", sync);
+      sync();
+   }
+
+   function initializeGetFormRestoration()
+   {
+      const restore = () => {
+         document.querySelectorAll(getFormSelector).forEach(form => {
+            if(form instanceof HTMLFormElement)
+            {
+               form.reset();
+            }
+         });
+      };
+
+      window.addEventListener("pageshow", restore);
+      restore();
+   }
+
    function initializeTeaserGeneration(root = document)
    {
       root.querySelectorAll(generateTeaserSelector).forEach(button => {
@@ -242,6 +290,205 @@
             await generateTeaserAsync(button);
          });
       });
+   }
+
+   function initializeBroadcastParticipationChecks(root = document)
+   {
+      root.querySelectorAll(checkParticipationSelector).forEach(button => {
+         if(!(button instanceof HTMLButtonElement)
+            || button.dataset.checkParticipationInitialized === "true")
+         {
+            return;
+         }
+
+         button.dataset.checkParticipationInitialized = "true";
+         button.addEventListener("click", async () => {
+            await checkParticipationAsync(button);
+         });
+      });
+   }
+
+   async function checkParticipationAsync(button)
+   {
+      const url = button.dataset.checkSwedishParticipationUrl;
+      const form = document.getElementById("generate-activity-form");
+      const status = document.querySelector(
+         "[data-check-swedish-participation-status]"
+      );
+
+      if(!url || !(form instanceof HTMLFormElement))
+      {
+         return;
+      }
+
+      const formData = new FormData(form);
+      const selectedIds = formData
+         .getAll("tvSportBroadcastIds")
+         .map(value => String(value))
+         .filter(value => value.trim() !== "");
+
+      if(selectedIds.length === 0)
+      {
+         setParticipationStatus(
+            status,
+            "Select at least one broadcast.",
+            true
+         );
+         return;
+      }
+
+      setParticipationStatus(status, "Checking Swedish participation...");
+      button.disabled = true;
+
+      try
+      {
+         const response = await fetch(url, {
+            method: "post",
+            body: new URLSearchParams(formData),
+            headers: {
+               Accept: "application/json"
+            }
+         });
+         const responseText = await response.text();
+         const trimmedResponseText = responseText.trim();
+         let payload = null;
+
+         if(trimmedResponseText !== "")
+         {
+            try
+            {
+               payload = JSON.parse(trimmedResponseText);
+            }
+            catch
+            {
+               payload = null;
+            }
+         }
+
+         if(!response.ok)
+         {
+            throw new Error(createParticipationErrorMessage(
+               response.status,
+               payload?.error,
+               trimmedResponseText
+            ));
+         }
+
+         const lines = Array.isArray(payload.results)
+            ? payload.results.map(formatParticipationResult).filter(Boolean)
+            : [];
+
+         setParticipationStatus(
+            status,
+            lines.length > 0
+               ? lines.join("\n")
+               : "No participation results returned."
+         );
+      }
+      catch(error)
+      {
+         const message = error instanceof Error
+            ? error.message
+            : "Participation check failed.";
+
+         setParticipationStatus(status, message, true);
+      }
+      finally
+      {
+         button.disabled = false;
+      }
+   }
+
+   function formatParticipationResult(result)
+   {
+      if(!result || typeof result !== "object")
+      {
+         return "";
+      }
+
+      const label = [
+         result.channelName,
+         result.title
+      ].filter(part => typeof part === "string" && part.trim() !== "")
+         .join(" - ") || "Broadcast";
+
+      if(typeof result.error === "string"
+         && result.error.trim() !== "")
+      {
+         return `${label}: ${result.error}`;
+      }
+
+      const participation = typeof result.swedishParticipation === "string"
+         && result.swedishParticipation.trim() !== ""
+         ? result.swedishParticipation
+         : "Unknown";
+      const participants = Array.isArray(result.swedishParticipants)
+         ? result.swedishParticipants
+            .filter(participant =>
+               typeof participant === "string" && participant.trim() !== "")
+         : [];
+
+      if(participation === "Yes" && participants.length > 0)
+      {
+         return `${label}: Yes (${participants.join(", ")})`;
+      }
+
+      return `${label}: ${participation}`;
+   }
+
+   function createParticipationErrorMessage(
+      statusCode,
+      payloadError,
+      responseText
+   )
+   {
+      const parts = [
+         `Participation check failed (HTTP ${statusCode}).`
+      ];
+
+      if(typeof payloadError === "string" && payloadError.trim() !== "")
+      {
+         parts.push(payloadError.trim());
+      }
+
+      const preview = createResponsePreview(responseText);
+
+      if(preview !== "")
+      {
+         parts.push(`Response: ${preview}`);
+      }
+
+      return parts.join(" ");
+   }
+
+   function createResponsePreview(responseText)
+   {
+      const preview = responseText
+         .replace(/\s+/g, " ")
+         .trim();
+
+      if(preview === "")
+      {
+         return "";
+      }
+
+      if(preview.length <= 220)
+      {
+         return preview;
+      }
+
+      return `${preview.slice(0, 220)}...`;
+   }
+
+   function setParticipationStatus(status, message, isError = false)
+   {
+      if(!(status instanceof HTMLElement))
+      {
+         return;
+      }
+
+      status.textContent = message;
+      status.classList.toggle("form-status-error", isError);
    }
 
    async function generateTeaserAsync(button)

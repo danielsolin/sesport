@@ -422,6 +422,26 @@ public class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void NineteenthMigrationAddsPromptRequestOptions()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "019_add_ai_prompt_request_options.sql"
+         )
+      );
+
+      Assert.Contains("alter table if exists ai_job_prompts", migration);
+      Assert.Contains(
+         "add column if not exists request_options jsonb not null",
+         migration
+      );
+      Assert.Contains("openrouter:web_search", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

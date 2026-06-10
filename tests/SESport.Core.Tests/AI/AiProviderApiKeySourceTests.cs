@@ -100,6 +100,7 @@ public class AiProviderApiKeySourceTests
          "System",
          "User",
          null,
+         "{}",
          null,
          null,
          true

@@ -443,6 +443,12 @@ h2 {
    font-weight: 700;
 }
 
+.broadcast-check-status {
+   display: block;
+   margin-top: 8px;
+   white-space: pre-wrap;
+}
+
 .form-status-error {
    color: var(--warning);
 }
