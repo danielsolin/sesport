@@ -28,7 +28,7 @@
       else if (Model.LoadError is not null)
       {
          <div class="notice notice-warning">
-            The reference data table is not available right now.
+            @Model.LoadError
          </div>
       }
       else

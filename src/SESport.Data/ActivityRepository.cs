@@ -279,7 +279,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             where (l.source_entity_id = e.id or l.target_entity_id = e.id)
                and e.entity_type_id = 'Person'
                and linked.entity_type_id in
-                  ('Team', 'Tour', 'League', 'Championship')
+                  ('Team', 'Series', 'Tour', 'League', 'Championship')
          ) org on true
          order by e.canonical_name
          """;
@@ -612,7 +612,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             where al.activity_id = a.id
                and p.entity_type_id = 'Person'
                and entity.entity_type_id in (
-                  'Organization', 'Tour', 'League', 'Championship'
+                  'Organization', 'Series', 'Tour',
+                  'League', 'Championship'
                )
          ) ro on true
          {{whereClause}}

@@ -69,7 +69,7 @@
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
-         The activity database is not available right now.
+         @Model.LoadError
       </div>
    }
    else if(Model.Activities.Count == 0)
@@ -125,8 +125,9 @@
                            asp-route-id="@activity.Id"
                            asp-route-returnUrl="@returnUrl">
                            <strong>
-                              @activity.Title -
                               @activity.RelatedOrganizationEntities
+                               -
+                              @activity.Title
                            </strong>
                         </a>
                         <span>

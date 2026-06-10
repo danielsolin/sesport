@@ -32,6 +32,13 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    public string? LoadError { get; private set; }
 
+   public bool ShowLoadErrorDetails =>
+      string.Equals(
+         HttpContext.Request.Host.Host,
+         "dev.sesport.se",
+         StringComparison.OrdinalIgnoreCase
+      );
+
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       var now = DateTimeOffset.UtcNow;

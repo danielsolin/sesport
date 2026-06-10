@@ -35,7 +35,9 @@
 @if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
-      The activity database is not available right now.
+      @(Model.ShowLoadErrorDetails
+         ? Model.LoadError
+         : "The activity database is not available right now.")
    </div>
 }
 else if(Model.Activities.Count == 0)
@@ -113,11 +115,11 @@ else
                         <span>@activity.ActivityType</span>
                      </div>
                      <h2>
-                        @activity.Title
                         @(string.IsNullOrEmpty(
                         activity.RelatedOrganizationEntities)
                         ? string.Empty
-                        : $"- {activity.RelatedOrganizationEntities}")
+                        : $"{activity.RelatedOrganizationEntities} - ")
+                        @activity.Title
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {

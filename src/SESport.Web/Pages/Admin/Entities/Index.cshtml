@@ -29,7 +29,7 @@
 @if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
-      The entity table is not available right now.
+      @Model.LoadError
    </div>
 }
 else if(Model.Entities.Count == 0)

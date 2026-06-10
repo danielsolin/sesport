@@ -18,7 +18,7 @@
 @if (Model.LoadError is not null)
 {
    <div class="notice notice-warning">
-      The source table is not available right now.
+      @Model.LoadError
    </div>
 }
 else if (Model.Sources.Count == 0)

@@ -8,12 +8,12 @@
 {
    <div class="notice">Select a reference table to edit.</div>
 }
-else if (Model.LoadError is not null)
-{
-   <div class="notice notice-warning">
-      The reference data table is not available right now.
-   </div>
-}
+   else if (Model.LoadError is not null)
+   {
+      <div class="notice notice-warning">
+         @Model.LoadError
+      </div>
+   }
    else
    {
       <div class="page-heading page-heading-row compact-heading">

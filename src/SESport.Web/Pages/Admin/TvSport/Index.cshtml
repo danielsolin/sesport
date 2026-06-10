@@ -60,7 +60,7 @@
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
-         The TV sport broadcast database is not available right now.
+         @Model.LoadError
       </div>
    }
    else if(Model.Broadcasts.Count == 0)
