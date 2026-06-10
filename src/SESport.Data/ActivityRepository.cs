@@ -17,6 +17,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       var normalizedSports = NormalizeSelectedSports(sportIds);
+      // Timed rows follow sport day; untimed rows keep their stored date.
+      var window = SportDay.ForDate(date);
+      var start = ToUtc(window.StartDate, window.Cutoff);
+      var end = ToUtc(window.EndDateExclusive, window.Cutoff);
       var sql = new StringBuilder()
          .AppendLine("select")
          .AppendLine("   a.id,")
@@ -88,7 +92,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "'Organization', 'Tour', 'League', 'Championship')"
          )
          .AppendLine(") ro on true")
-         .AppendLine("where a.activity_date = @date");
+         .AppendLine("where (")
+         .AppendLine("   (a.starts_at >= @start")
+         .AppendLine("      and a.starts_at < @end)")
+         .AppendLine("   or (")
+         .AppendLine("      a.starts_at is null")
+         .AppendLine("      and a.activity_date = @date")
+         .AppendLine("   )")
+         .AppendLine(")");
 
       if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
       {
@@ -106,11 +117,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine("         ro.related_organization_entities")
          .AppendLine("order by")
+         .AppendLine("   a.starts_at nulls last,")
          .AppendLine("   a.activity_date,")
          .AppendLine("   a.local_start_time nulls last,")
          .AppendLine("   a.title");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
+      command.Parameters.AddWithValue("start", start);
+      command.Parameters.AddWithValue("end", end);
       command.Parameters.AddWithValue("date", date);
 
       if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
