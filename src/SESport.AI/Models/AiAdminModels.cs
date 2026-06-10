@@ -67,10 +67,10 @@ public sealed record AiRunListItem(
    Guid Id,
    string JobLabel,
    string ProviderLabel,
+   string? ProviderModel,
    string StatusId,
    DateTimeOffset StartedAt,
-   decimal? DurationSeconds,
-   string? ErrorMessage
+   decimal? DurationSeconds
 );
 
 public sealed record AiRunDetail(
@@ -81,6 +81,7 @@ public sealed record AiRunDetail(
    int PromptVersion,
    string ProviderId,
    string ProviderLabel,
+   string? ProviderModel,
    string StatusId,
    string? CorrelationId,
    string InputPayloadJson,

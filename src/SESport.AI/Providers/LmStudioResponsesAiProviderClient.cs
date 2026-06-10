@@ -78,6 +78,7 @@ public sealed class LmStudioResponsesAiProviderClient : IAiProviderClient
          Guid.NewGuid(),
          job.Id,
          provider.Id,
+         provider.Model,
          renderedPrompt,
          ResponsesRequestBuilder.SerializeRequest(request),
          outputText,

@@ -50,15 +50,24 @@
 }
 
 <div class="admin-table-wrap">
-   <table class="admin-table">
+   <table class="admin-table admin-table-hover ai-runs-table">
+      <colgroup>
+         <col class="ai-runs-col-started" />
+         <col class="ai-runs-col-job" />
+         <col class="ai-runs-col-provider" />
+         <col class="ai-runs-col-model" />
+         <col class="ai-runs-col-status" />
+         <col class="ai-runs-col-duration" />
+         <col class="ai-runs-col-actions" />
+      </colgroup>
       <thead>
          <tr>
             <th>Started</th>
             <th>Job</th>
             <th>Provider</th>
+            <th>Model</th>
             <th>Status</th>
             <th>Duration</th>
-            <th>Error</th>
             <th></th>
          </tr>
       </thead>
@@ -69,11 +78,13 @@
                <td>@TimeDisplay.FormatLocalTimestamp(run.StartedAt)</td>
                <td>@run.JobLabel</td>
                <td>@run.ProviderLabel</td>
+               <td class="ai-runs-model" title="@run.ProviderModel">
+                  @run.ProviderModel
+               </td>
                <td><code>@run.StatusId</code></td>
                <td>
                   @(run.DurationSeconds?.ToString("0.000") ?? "")
                </td>
-               <td>@run.ErrorMessage</td>
                <td class="table-actions">
                   <a asp-page="./Details"
                      asp-route-id="@run.Id"

@@ -624,6 +624,62 @@ h2 {
    font-size: 12px;
 }
 
+.ai-runs-table {
+   table-layout: fixed;
+   min-width: 0;
+}
+
+.ai-runs-col-started {
+   width: 135px;
+}
+
+.ai-runs-col-job {
+   width: 160px;
+}
+
+.ai-runs-col-provider {
+   width: 150px;
+}
+
+.ai-runs-col-model {
+   width: 150px;
+}
+
+.ai-runs-col-status {
+   width: 82px;
+}
+
+.ai-runs-col-duration {
+   width: 82px;
+}
+
+.ai-runs-col-actions {
+   width: 56px;
+}
+
+.ai-runs-model {
+   white-space: normal;
+   overflow-wrap: anywhere;
+   word-break: break-word;
+}
+
+.ai-runs-table th,
+.ai-runs-table td {
+   padding: 6px 8px;
+   line-height: 1.2;
+}
+
+.ai-runs-table .table-actions {
+   padding-left: 4px;
+   padding-right: 4px;
+}
+
+.ai-runs-table .table-actions a {
+   display: inline-block;
+   white-space: nowrap;
+   font-size: 12px;
+}
+
 .admin-table input[type="checkbox"] {
    width: 16px;
    height: 16px;

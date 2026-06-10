@@ -34,7 +34,11 @@ public class ResponsesAiProviderClientTests
          result.OutputText
       );
       Assert.Contains(
-         "\"response_format\":{\"type\":\"json_object\"}",
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBody
+      );
+      Assert.Contains(
+         "\"schema\":{\"type\":\"object\"}",
          handler.RequestBody
       );
    }
@@ -71,6 +75,37 @@ public class ResponsesAiProviderClientTests
       );
       Assert.Contains(
          "\"strict\":true",
+         handler.RequestBody
+      );
+      Assert.Contains(
+         "\"schema\":{\"type\":\"object\"}",
+         handler.RequestBody
+      );
+   }
+
+   [Theory]
+   [MemberData(nameof(ProviderClients))]
+   public async Task GenerateAsyncUsesSchemaEvenForJsonObjectMode(
+      Func<HttpClient, IAiProviderClient> clientFactory
+   )
+   {
+      var handler = new RecordingHandler(
+         CreateReasoningResponseJson("{\"ok\":true}")
+      );
+      var client = clientFactory(new HttpClient(handler));
+
+      var result = await client.GenerateAsync(
+         CreateProvider(),
+         CreateJob("json_object"),
+         CreatePrompt(),
+         "Prompt text",
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal("{\"ok\":true}", result.OutputText);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody
       );
       Assert.Contains(

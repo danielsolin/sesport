@@ -49,6 +49,12 @@ public static class ResponsesOutputValidator
       string? outputSchemaJson
    )
    {
+      if(!string.IsNullOrWhiteSpace(outputSchemaJson))
+      {
+         EnsureSchemaConformity(outputText, outputSchemaJson);
+         return outputText;
+      }
+
       if(string.Equals(
          outputMode,
          "json_object",
@@ -56,17 +62,6 @@ public static class ResponsesOutputValidator
       ))
       {
          EnsureJsonObject(outputText, "json_object");
-         return outputText;
-      }
-
-      if(string.Equals(
-         outputMode,
-         "json_schema",
-         StringComparison.OrdinalIgnoreCase
-      ))
-      {
-         EnsureSchemaConformity(outputText, outputSchemaJson);
-         return outputText;
       }
 
       return outputText;

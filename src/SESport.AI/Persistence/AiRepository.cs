@@ -32,10 +32,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.id,")
          .AppendLine("   j.label,")
          .AppendLine("   p.label,")
+         .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
          .AppendLine("   r.started_at,")
-         .AppendLine("   r.duration_seconds,")
-         .AppendLine("   r.error_message")
+         .AppendLine("   r.duration_seconds")
          .AppendLine("from ai_job_runs r")
          .AppendLine("join ai_jobs j on j.id = r.job_id")
          .AppendLine("join ai_providers p on p.id = r.provider_id");
@@ -71,10 +71,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1),
                reader.GetString(2),
-               reader.GetString(3),
-               reader.GetFieldValue<DateTimeOffset>(4),
-               ReadNullableDecimal(reader, 5),
-               ReadNullableString(reader, 6)
+               ReadNullableString(reader, 3),
+               reader.GetString(4),
+               reader.GetFieldValue<DateTimeOffset>(5),
+               ReadNullableDecimal(reader, 6)
             )
          );
       }
@@ -96,6 +96,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             pr.version,
             r.provider_id,
             p.label,
+            r.provider_model,
             r.status_id,
             r.correlation_id,
             r.input_payload::text,
@@ -136,20 +137,21 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          reader.GetInt32(4),
          reader.GetString(5),
          reader.GetString(6),
-         reader.GetString(7),
-         ReadNullableString(reader, 8),
-         reader.GetString(9),
+         ReadNullableString(reader, 7),
+         reader.GetString(8),
+         ReadNullableString(reader, 9),
          reader.GetString(10),
-         ReadNullableString(reader, 11),
+         reader.GetString(11),
          ReadNullableString(reader, 12),
          ReadNullableString(reader, 13),
          ReadNullableString(reader, 14),
-         reader.GetFieldValue<DateTimeOffset>(15),
-         ReadNullableDateTimeOffset(reader, 16),
-         ReadNullableDecimal(reader, 17),
-         ReadNullableInt32(reader, 18),
+         ReadNullableString(reader, 15),
+         reader.GetFieldValue<DateTimeOffset>(16),
+         ReadNullableDateTimeOffset(reader, 17),
+         ReadNullableDecimal(reader, 18),
          ReadNullableInt32(reader, 19),
-         ReadNullableInt32(reader, 20)
+         ReadNullableInt32(reader, 20),
+         ReadNullableInt32(reader, 21)
       );
    }
 
@@ -284,16 +286,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       const string sql = """
          insert into ai_job_runs (
             id, job_id, prompt_id, provider_id, status_id, correlation_id,
-            input_payload, rendered_prompt, raw_request, raw_response,
-            output_text, error_message, started_at, completed_at,
-            duration_seconds, input_tokens, output_tokens, reasoning_tokens
+            provider_model, input_payload, rendered_prompt, raw_request,
+            raw_response, output_text, error_message, started_at,
+            completed_at, duration_seconds, input_tokens, output_tokens,
+            reasoning_tokens
          )
          values (
             @id, @job_id, @prompt_id, @provider_id, @status_id,
-            @correlation_id, @input_payload, @rendered_prompt,
-            @raw_request, @raw_response, @output_text, @error_message,
-            @started_at, @completed_at, @duration_seconds, @input_tokens,
-            @output_tokens, @reasoning_tokens
+            @correlation_id, @provider_model, @input_payload,
+            @rendered_prompt, @raw_request, @raw_response, @output_text,
+            @error_message, @started_at, @completed_at, @duration_seconds,
+            @input_tokens, @output_tokens, @reasoning_tokens
          )
          """;
 
@@ -338,6 +341,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("job_id", run.JobId);
       command.Parameters.AddWithValue("prompt_id", run.PromptId);
       command.Parameters.AddWithValue("provider_id", run.ProviderId);
+      AddNullableStringParameter(command, "provider_model", run.ProviderModel);
       command.Parameters.AddWithValue("status_id", ToStatusId(run.Status));
       command.Parameters.AddWithValue(
          "correlation_id",
@@ -432,6 +436,18 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          {
             Value = (object?)value ?? DBNull.Value
          }
+      );
+   }
+
+   private static void AddNullableStringParameter(
+      NpgsqlCommand command,
+      string name,
+      string? value
+   )
+   {
+      command.Parameters.AddWithValue(
+         name,
+         (object?)value ?? DBNull.Value
       );
    }
 

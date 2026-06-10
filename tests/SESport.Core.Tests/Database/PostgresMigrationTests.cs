@@ -462,6 +462,25 @@ public class PostgresMigrationTests
       Assert.Contains("update ai_job_runs r", migration);
    }
 
+   [Fact]
+   public void TwentyFirstMigrationAddsAiJobRunProviderModel()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "021_add_ai_job_run_provider_model.sql"
+         )
+      );
+
+      Assert.Contains("alter table if exists ai_job_runs", migration);
+      Assert.Contains(
+         "add column if not exists provider_model text null",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

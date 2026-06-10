@@ -5,6 +5,7 @@ public sealed record AiJobRun(
    string JobId,
    Guid PromptId,
    string ProviderId,
+   string? ProviderModel,
    AiJobRunStatus Status,
    string? CorrelationId,
    string InputPayloadJson,

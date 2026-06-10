@@ -83,6 +83,7 @@ public sealed class OpenRouterResponsesAiProviderClient
          Guid.NewGuid(),
          job.Id,
          provider.Id,
+         provider.Model,
          renderedPrompt,
          ResponsesRequestBuilder.SerializeRequest(request),
          outputText,

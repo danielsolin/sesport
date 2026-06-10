@@ -11,45 +11,39 @@ internal static class ResponsesRequestFormat
       string schemaName
    )
    {
-      if(string.Equals(
-         outputMode,
-         "json_object",
-         StringComparison.OrdinalIgnoreCase
-      ))
+      if(!string.IsNullOrWhiteSpace(outputSchemaJson))
       {
-         payload["response_format"] = new JsonObject
-         {
-            ["type"] = "json_object"
-         };
+         var schema = JsonNode.Parse(outputSchemaJson) as JsonObject;
 
-         return;
+         if(schema is not null)
+         {
+            payload["response_format"] = new JsonObject
+            {
+               ["type"] = "json_schema",
+               ["json_schema"] = new JsonObject
+               {
+                  ["name"] = schemaName,
+                  ["strict"] = true,
+                  ["schema"] = schema
+               }
+            };
+
+            return;
+         }
       }
 
       if(!string.Equals(
          outputMode,
-         "json_schema",
+         "json_object",
          StringComparison.OrdinalIgnoreCase
-      ) || string.IsNullOrWhiteSpace(outputSchemaJson))
-      {
-         return;
-      }
-
-      var schema = JsonNode.Parse(outputSchemaJson) as JsonObject;
-
-      if(schema is null)
+      ))
       {
          return;
       }
 
       payload["response_format"] = new JsonObject
       {
-         ["type"] = "json_schema",
-         ["json_schema"] = new JsonObject
-         {
-            ["name"] = schemaName,
-            ["strict"] = true,
-            ["schema"] = schema
-         }
+         ["type"] = "json_object"
       };
    }
 }
