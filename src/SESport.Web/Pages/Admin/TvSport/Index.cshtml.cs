@@ -77,9 +77,12 @@ public class IndexModel(
 
    public Dictionary<string, string?> GetSortRouteValues(string sortColumn)
    {
-      var routeValues = GetCurrentRouteValues();
+      var routeValues = AdminRouteValueBuilder.CreateSortRouteValues(
+         SelectedDate,
+         GetNextSortAsc(sortColumn),
+         SelectedSports
+      );
       routeValues["sortColumn"] = sortColumn;
-      routeValues["sortAsc"] = GetNextSortAsc(sortColumn).ToString();
 
       return routeValues;
    }
@@ -108,30 +111,14 @@ public class IndexModel(
 
       var selectedDate = Date ??
          SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate;
-      var routeValues = new Dictionary<string, object?>
-      {
-         ["date"] = DateDisplay.Format(selectedDate)
-      };
-
-      if(HideReplays)
-      {
-         routeValues["hideReplays"] = "true";
-      }
-
-      if(ShowHidden)
-      {
-         routeValues["showHidden"] = "true";
-      }
-
+      var routeValues = AdminRouteValueBuilder.CreateSortRouteValues(
+         selectedDate,
+         HideReplays,
+         ShowHidden,
+         SortAsc,
+         SelectedSports
+      );
       routeValues["sortColumn"] = SortColumn;
-      routeValues["sortAsc"] = SortAsc;
-
-      var normalizedSports = NormalizeSelectedSports(SelectedSports);
-
-      for(var index = 0; index < normalizedSports.Count; index++)
-      {
-         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
-      }
 
       return RedirectToPage(routeValues);
    }
@@ -225,33 +212,6 @@ public class IndexModel(
       {
          LoadError = exception.Message;
       }
-   }
-
-   private Dictionary<string, string?> GetCurrentRouteValues()
-   {
-      var routeValues = new Dictionary<string, string?>
-      {
-         ["date"] = DateText
-      };
-
-      if(HideReplays)
-      {
-         routeValues["hideReplays"] = "true";
-      }
-
-      if(ShowHidden)
-      {
-         routeValues["showHidden"] = "true";
-      }
-
-      var normalizedSports = NormalizeSelectedSports(SelectedSports);
-
-      for(var index = 0; index < normalizedSports.Count; index++)
-      {
-         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
-      }
-
-      return routeValues;
    }
 
    private static string NormalizeSortColumn(string? sortColumn) =>

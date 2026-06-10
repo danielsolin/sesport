@@ -75,18 +75,26 @@ public class IndexModel(
 
    public Dictionary<string, string?> GetSortRouteValues(string sortColumn)
    {
-      var routeValues = GetCurrentRouteValues();
+      var routeValues = AdminRouteValueBuilder.CreateSortRouteValues(
+         SelectedDate,
+         GetNextSortAsc(sortColumn),
+         SelectedSports
+      );
+      routeValues["status"] = Status ?? AllStatus;
       routeValues["sortColumn"] = sortColumn;
-      routeValues["sortAsc"] = GetNextSortAsc(sortColumn).ToString();
 
       return routeValues;
    }
 
    public string GetReturnUrl()
    {
-      var routeValues = GetCurrentRouteValues();
+      var routeValues = AdminRouteValueBuilder.CreateSortRouteValues(
+         SelectedDate,
+         SortAsc,
+         SelectedSports
+      );
+      routeValues["status"] = Status ?? AllStatus;
       routeValues["sortColumn"] = SortColumn;
-      routeValues["sortAsc"] = SortAsc.ToString();
 
       return Url.Page("./Index", routeValues) ?? "/Admin/Activities";
    }
@@ -103,13 +111,14 @@ public class IndexModel(
    {
       await repository.DeleteAsync(id, cancellationToken);
 
-      var routeValues = GetRedirectRouteValues(
-         date,
-         status,
-         sortColumn,
-         sortAsc,
-         selectedSports ?? SelectedSports
-      );
+      var routeValues = AdminRouteValueBuilder
+         .CreateActivityRedirectRouteValues(
+            GetRouteDate(date, status),
+            NormalizeStatus(status) ?? AllStatus,
+            NormalizeSortColumn(sortColumn),
+            sortAsc ?? true,
+            selectedSports ?? SelectedSports
+         );
 
       return RedirectToPage("./Index", routeValues);
    }
@@ -176,50 +185,6 @@ public class IndexModel(
          : normalizedSports;
    }
 
-   private Dictionary<string, string?> GetCurrentRouteValues()
-   {
-      var routeValues = new Dictionary<string, string?>
-      {
-         ["date"] = DateText,
-         ["status"] = Status ?? AllStatus
-      };
-
-      var normalizedSports = NormalizeSelectedSports(SelectedSports);
-
-      for(var index = 0; index < normalizedSports.Count; index++)
-      {
-         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
-      }
-
-      return routeValues;
-   }
-
-   private static Dictionary<string, object?> GetRedirectRouteValues(
-      DateOnly? date,
-      string? status,
-      string? sortColumn,
-      bool? sortAsc,
-      IEnumerable<string> selectedSports
-   )
-   {
-      var routeValues = new Dictionary<string, object?>
-      {
-         ["date"] = DateDisplay.Format(GetRouteDate(date, status)),
-         ["status"] = NormalizeStatus(status) ?? AllStatus,
-         ["sortColumn"] = NormalizeSortColumn(sortColumn),
-         ["sortAsc"] = sortAsc ?? true
-      };
-
-      var normalizedSports = NormalizeSelectedSports(selectedSports);
-
-      for(var index = 0; index < normalizedSports.Count; index++)
-      {
-         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
-      }
-
-      return routeValues;
-   }
-
    private static DateOnly GetRouteDate(DateOnly? date, string? status)
    {
       if(date is not null)
@@ -254,6 +219,18 @@ public class IndexModel(
          StatusSortColumn => StatusSortColumn,
          _ => TimeSortColumn
       };
+
+   private static List<string> NormalizeSelectedSports(
+      IEnumerable<string> values
+   )
+   {
+      return values
+         .Where(value => !string.IsNullOrWhiteSpace(value))
+         .Select(value => value.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+         .ToList();
+   }
 
    private static IReadOnlyList<ActivityListItem> SortActivities(
       IEnumerable<ActivityListItem> activities,
@@ -305,15 +282,4 @@ public class IndexModel(
          .ToList();
    }
 
-   private static List<string> NormalizeSelectedSports(
-      IEnumerable<string> values
-   )
-   {
-      return values
-         .Where(value => !string.IsNullOrWhiteSpace(value))
-         .Select(value => value.Trim())
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-         .ToList();
-   }
 }
