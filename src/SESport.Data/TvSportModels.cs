@@ -1,3 +1,5 @@
+using SESport.Core.TvSport;
+
 namespace SESport.Data;
 
 public sealed record TvSportBroadcastListItem(
@@ -12,6 +14,8 @@ public sealed record TvSportBroadcastListItem(
    bool IsHidden
 )
 {
+   public TvSportParticipationCheck? ParticipationCheck { get; init; }
+
    public string TimeOnlyText
    {
       get

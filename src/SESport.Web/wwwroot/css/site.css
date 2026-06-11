@@ -831,6 +831,52 @@ h2 {
    font-weight: 800;
 }
 
+.status-pill-positive {
+   background: #e4f4ea;
+   color: #15603b !important;
+}
+
+.status-pill-neutral {
+   background: #eef4f2;
+   color: var(--accent-strong) !important;
+}
+
+.status-pill-warning {
+   background: var(--warning-bg);
+   color: var(--warning) !important;
+}
+
+.tv-sport-ai-check {
+   display: grid;
+   gap: 4px;
+}
+
+.tv-sport-ai-check-line {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 8px;
+}
+
+.tv-sport-ai-check-participants {
+   color: var(--muted);
+   overflow-wrap: anywhere;
+}
+
+.tv-sport-ai-check-empty {
+   color: var(--muted);
+}
+
+.tv-sport-ai-check-pending {
+   color: var(--muted);
+   font-style: italic;
+}
+
+.tv-sport-ai-check-error {
+   color: var(--warning);
+   overflow-wrap: anywhere;
+}
+
 .table-actions {
    text-align: right !important;
    white-space: nowrap;

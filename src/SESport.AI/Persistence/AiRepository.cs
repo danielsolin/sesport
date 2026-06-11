@@ -1,8 +1,10 @@
 using System.Text;
+using System.Text.Json;
 using Npgsql;
 using NpgsqlTypes;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
+using SESport.Core.TvSport;
 
 namespace SESport.AI.Persistence;
 
@@ -153,6 +155,70 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableInt32(reader, 20),
          ReadNullableInt32(reader, 21)
       );
+   }
+
+   public async Task<IReadOnlyDictionary<Guid, TvSportParticipationCheck>>
+      GetParticipationChecksAsync(
+         IReadOnlyCollection<Guid> broadcastIds,
+         CancellationToken cancellationToken
+      )
+   {
+      if(broadcastIds.Count == 0)
+      {
+         return new Dictionary<Guid, TvSportParticipationCheck>();
+      }
+
+      const string sql = """
+         select distinct on (r.correlation_id)
+            r.correlation_id,
+            r.id,
+            r.status_id,
+            r.output_text,
+            r.error_message
+         from ai_job_runs r
+         where r.job_id = @job_id
+            and r.correlation_id = any(@correlation_ids)
+         order by r.correlation_id, r.started_at desc
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "job_id",
+         "decide-swedish-participation"
+      );
+      command.Parameters.AddWithValue(
+         "correlation_ids",
+         broadcastIds.Select(id => id.ToString()).ToArray()
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var checks = new Dictionary<Guid, TvSportParticipationCheck>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         var correlationId = ReadNullableString(reader, 0);
+
+         if(!Guid.TryParse(correlationId, out var broadcastId))
+         {
+            continue;
+         }
+
+         var runId = reader.GetGuid(1);
+         var statusId = reader.GetString(2);
+         var outputText = ReadNullableString(reader, 3);
+         var errorMessage = ReadNullableString(reader, 4);
+
+         checks[broadcastId] = ParseParticipationCheck(
+            runId,
+            statusId,
+            outputText,
+            errorMessage
+         );
+      }
+
+      return checks;
    }
 
    public async Task<AiJobDefinition?> GetJobAsync(
@@ -449,6 +515,93 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          name,
          (object?)value ?? DBNull.Value
       );
+   }
+
+   private static TvSportParticipationCheck ParseParticipationCheck(
+      Guid runId,
+      string statusId,
+      string? outputText,
+      string? errorMessage
+   )
+   {
+      if(string.IsNullOrWhiteSpace(outputText))
+      {
+         return new TvSportParticipationCheck(
+            runId,
+            statusId,
+            null,
+            [],
+            errorMessage
+         );
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         var root = document.RootElement;
+
+         if(root.ValueKind != JsonValueKind.Object)
+         {
+            throw new JsonException("Expected a JSON object.");
+         }
+
+         if(
+            !root.TryGetProperty(
+               "SwedishParticipation",
+               out var participation
+            ) ||
+            participation.ValueKind != JsonValueKind.String
+         )
+         {
+            throw new JsonException(
+               "Missing SwedishParticipation property."
+            );
+         }
+
+         var participants = new List<string>();
+
+         if(
+            root.TryGetProperty(
+               "SwedishParticipants",
+               out var participantsElement
+            ) &&
+            participantsElement.ValueKind == JsonValueKind.Array
+         )
+         {
+            foreach(var participant in participantsElement.EnumerateArray())
+            {
+               if(participant.ValueKind != JsonValueKind.String)
+               {
+                  continue;
+               }
+
+               var name = participant.GetString();
+
+               if(!string.IsNullOrWhiteSpace(name))
+               {
+                  participants.Add(name);
+               }
+            }
+         }
+
+         return new TvSportParticipationCheck(
+            runId,
+            statusId,
+            participation.GetString(),
+            participants,
+            errorMessage
+         );
+      }
+      catch(JsonException)
+      {
+         return new TvSportParticipationCheck(
+            runId,
+            statusId,
+            null,
+            [],
+            errorMessage ?? "The model returned invalid JSON."
+         );
+      }
    }
 
    private static string ToStatusId(AiJobRunStatus status)

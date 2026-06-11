@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text.Json;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
+using SESport.AI.Persistence;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -13,6 +14,7 @@ namespace SESport.Web.Pages.Admin.TvSport;
 
 public class IndexModel(
    TvSportRepository repository,
+   AiRepository aiRepository,
    AdminDatePreferenceStore datePreferenceStore,
    IAiJobRunner aiJobRunner
 ) : PageModel
@@ -197,6 +199,7 @@ public class IndexModel(
             {
                results.Add(
                   CreateParticipationCheckResult(
+                     result.RunId,
                      broadcast,
                      result.ErrorMessage,
                      null,
@@ -213,6 +216,7 @@ public class IndexModel(
             {
                results.Add(
                   CreateParticipationCheckResult(
+                     result.RunId,
                      broadcast,
                      "The model returned invalid JSON.",
                      null,
@@ -225,6 +229,7 @@ public class IndexModel(
 
             results.Add(
                CreateParticipationCheckResult(
+                  result.RunId,
                   broadcast,
                   null,
                   parsed.SwedishParticipation,
@@ -302,6 +307,10 @@ public class IndexModel(
             cancellationToken
          );
          Broadcasts = SortBroadcasts(Broadcasts, SortColumn, SortAsc);
+         Broadcasts = await ApplyParticipationChecksAsync(
+            Broadcasts,
+            cancellationToken
+         );
       }
       catch(Exception exception)
       {
@@ -389,6 +398,31 @@ public class IndexModel(
          .ToList();
    }
 
+   private async Task<IReadOnlyList<TvSportBroadcastListItem>>
+      ApplyParticipationChecksAsync(
+         IReadOnlyList<TvSportBroadcastListItem> broadcasts,
+         CancellationToken cancellationToken
+      )
+   {
+      var broadcastIds = broadcasts.Select(broadcast => broadcast.Id).ToArray();
+      var checks = await aiRepository.GetParticipationChecksAsync(
+         broadcastIds,
+         cancellationToken
+      );
+
+      return broadcasts
+         .Select(broadcast =>
+         {
+            checks.TryGetValue(broadcast.Id, out var participationCheck);
+
+            return broadcast with
+            {
+               ParticipationCheck = participationCheck
+            };
+         })
+         .ToList();
+   }
+
    private static string CreateParticipationInputJson(
       TvSportBroadcastActivitySource broadcast
    )
@@ -406,6 +440,7 @@ public class IndexModel(
    }
 
    private static object CreateParticipationCheckResult(
+      Guid runId,
       TvSportBroadcastActivitySource broadcast,
       string? error,
       string? swedishParticipation,
@@ -415,6 +450,7 @@ public class IndexModel(
       return new
       {
          id = broadcast.Id,
+         runId,
          channelName = broadcast.ChannelName,
          title = broadcast.Title,
          error,

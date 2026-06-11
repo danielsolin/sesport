@@ -8,6 +8,10 @@
    const generateTeaserSelector = "[data-generate-teaser]";
    const checkParticipationSelector =
       "[data-check-swedish-participation]";
+   const checkParticipationRowSelector =
+      "[data-check-swedish-participation-row]";
+   const participationCellSelector = "[data-swedish-participation-cell]";
+   const pendingParticipationIds = new Set();
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
@@ -23,6 +27,7 @@
    initializeDateSelect();
    initializeTeaserGeneration();
    initializeBroadcastParticipationChecks();
+   initializeBroadcastParticipationRowChecks();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -308,6 +313,82 @@
       });
    }
 
+   function initializeBroadcastParticipationRowChecks(root = document)
+   {
+      root.querySelectorAll(checkParticipationRowSelector).forEach(button => {
+         if(!(button instanceof HTMLButtonElement)
+            || button.dataset.checkParticipationRowInitialized === "true")
+         {
+            return;
+         }
+
+         button.dataset.checkParticipationRowInitialized = "true";
+         button.addEventListener("click", async () => {
+            await checkParticipationRowAsync(button);
+         });
+      });
+   }
+
+   async function checkParticipationRowAsync(button)
+   {
+      const url = button.dataset.checkSwedishParticipationUrl;
+      const broadcastId = button.dataset.broadcastId;
+      const cell = button.closest(participationCellSelector);
+
+      if(!url || !broadcastId || !(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      if(pendingParticipationIds.has(broadcastId))
+      {
+         return;
+      }
+
+      pendingParticipationIds.add(broadcastId);
+      const originalLabel = button.textContent ?? "Check";
+      button.disabled = true;
+      button.textContent = "Checking...";
+      setPendingParticipationCell(cell);
+
+      try
+      {
+         const payload = await postParticipationCheckAsync(
+            url,
+            [broadcastId]
+         );
+         const result = Array.isArray(payload.results)
+            ? payload.results[0]
+            : null;
+
+         if(!result)
+         {
+            throw new Error("No participation result returned.");
+         }
+
+         updateParticipationCell(cell, result);
+      }
+      catch(error)
+      {
+         const message = error instanceof Error
+            ? error.message
+            : "Participation check failed.";
+
+         updateParticipationCell(cell, {
+            error: message,
+            runId: null,
+            swedishParticipation: null,
+            swedishParticipants: []
+         });
+      }
+      finally
+      {
+         pendingParticipationIds.delete(broadcastId);
+         button.disabled = false;
+         button.textContent = originalLabel;
+      }
+   }
+
    async function checkParticipationAsync(button)
    {
       const url = button.dataset.checkSwedishParticipationUrl;
@@ -325,13 +406,22 @@
       const selectedIds = formData
          .getAll("tvSportBroadcastIds")
          .map(value => String(value))
-         .filter(value => value.trim() !== "");
+         .filter(value => value.trim() !== "")
+         .filter(value => !pendingParticipationIds.has(value));
 
       if(selectedIds.length === 0)
       {
+         const pendingCount = formData
+            .getAll("tvSportBroadcastIds")
+            .map(value => String(value))
+            .filter(value => value.trim() !== "")
+            .filter(value => pendingParticipationIds.has(value)).length;
+
          setParticipationStatus(
             status,
-            "Select at least one broadcast.",
+            pendingCount > 0
+               ? "Selected broadcasts are already checking."
+               : "Select at least one broadcast.",
             true
          );
          return;
@@ -342,41 +432,21 @@
 
       try
       {
-         const response = await fetch(url, {
-            method: "post",
-            body: new URLSearchParams(formData),
-            headers: {
-               Accept: "application/json"
-            }
-         });
-         const responseText = await response.text();
-         const trimmedResponseText = responseText.trim();
-         let payload = null;
-
-         if(trimmedResponseText !== "")
-         {
-            try
-            {
-               payload = JSON.parse(trimmedResponseText);
-            }
-            catch
-            {
-               payload = null;
-            }
-         }
-
-         if(!response.ok)
-         {
-            throw new Error(createParticipationErrorMessage(
-               response.status,
-               payload?.error,
-               trimmedResponseText
-            ));
-         }
-
-         const lines = Array.isArray(payload.results)
-            ? payload.results.map(formatParticipationResult).filter(Boolean)
+         const payload = await postParticipationCheckAsync(
+            url,
+            selectedIds
+         );
+         const results = Array.isArray(payload.results)
+            ? payload.results
             : [];
+
+         results.forEach(result => {
+            updateParticipationCellByResult(result);
+         });
+
+         const lines = results
+            .map(formatParticipationResult)
+            .filter(Boolean);
 
          setParticipationStatus(
             status,
@@ -397,6 +467,69 @@
       {
          button.disabled = false;
       }
+   }
+
+   async function postParticipationCheckAsync(url, selectedIds)
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      selectedIds.forEach(id => {
+         formData.append("tvSportBroadcastIds", id);
+      });
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(createParticipationErrorMessage(
+            response.status,
+            payload?.error,
+            trimmedResponseText
+         ));
+      }
+
+      return payload ?? {};
+   }
+
+   function getAntiForgeryToken()
+   {
+      const tokenField = document.querySelector(
+         "input[name='__RequestVerificationToken']"
+      );
+
+      if(tokenField instanceof HTMLInputElement)
+      {
+         return tokenField.value;
+      }
+
+      return "";
    }
 
    function formatParticipationResult(result)
@@ -434,6 +567,188 @@
       }
 
       return `${label}: ${participation}`;
+   }
+
+   function updateParticipationCellByResult(result)
+   {
+      if(!result || typeof result !== "object")
+      {
+         return;
+      }
+
+      const broadcastId = typeof result.id === "string"
+         ? result.id
+         : "";
+
+      if(broadcastId === "")
+      {
+         return;
+      }
+
+      const cell = document.querySelector(
+         `${participationCellSelector}[data-broadcast-id='${broadcastId}']`
+      );
+
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      updateParticipationCell(cell, result);
+   }
+
+   function updateParticipationCell(cell, result)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      cell.replaceChildren();
+
+      if(!result || typeof result !== "object")
+      {
+         const fallback = document.createElement("span");
+         fallback.className = "tv-sport-ai-check-empty";
+         fallback.textContent = "Not checked yet";
+         cell.append(fallback);
+         return;
+      }
+
+      if(typeof result.error === "string" && result.error.trim() !== "")
+      {
+         cell.append(
+            createParticipationErrorBlock(
+               result.error,
+               result.runId
+            )
+         );
+         return;
+      }
+
+      const participation = typeof result.swedishParticipation === "string"
+         && result.swedishParticipation.trim() !== ""
+         ? result.swedishParticipation.trim()
+         : "";
+      const participants = Array.isArray(result.swedishParticipants)
+         ? result.swedishParticipants
+            .filter(participant =>
+               typeof participant === "string" && participant.trim() !== "")
+         : [];
+
+      if(participation === "")
+      {
+         const fallback = document.createElement("span");
+         fallback.className = "tv-sport-ai-check-empty";
+         fallback.textContent = "Not checked yet";
+         cell.append(fallback);
+         return;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "tv-sport-ai-check";
+      wrapper.append(createParticipationSummaryLine(result));
+
+      if(participants.length > 0)
+      {
+         const names = document.createElement("div");
+         names.className = "tv-sport-ai-check-participants";
+         names.textContent = participants.join(", ");
+         wrapper.append(names);
+      }
+
+      cell.append(wrapper);
+   }
+
+   function setPendingParticipationCell(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      cell.replaceChildren();
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "tv-sport-ai-check";
+
+      const pending = document.createElement("span");
+      pending.className = "tv-sport-ai-check-pending";
+      pending.textContent = "Checking...";
+      wrapper.append(pending);
+
+      cell.append(wrapper);
+   }
+
+   function createParticipationSummaryLine(result)
+   {
+      const line = document.createElement("div");
+      line.className = "tv-sport-ai-check-line";
+
+      const participation = typeof result.swedishParticipation === "string"
+         && result.swedishParticipation.trim() !== ""
+         ? result.swedishParticipation.trim()
+         : "Unknown";
+      const pill = document.createElement("span");
+      const isPositive = participation.toLowerCase() === "yes";
+
+      pill.className = [
+         "status-pill",
+         isPositive ? "status-pill-positive" : "status-pill-neutral"
+      ].join(" ");
+      pill.textContent = participation;
+      line.append(pill);
+
+      const runLink = createParticipationRunLink(result.runId);
+
+      if(runLink)
+      {
+         line.append(runLink);
+      }
+
+      return line;
+   }
+
+   function createParticipationErrorBlock(errorMessage, runId)
+   {
+      const wrapper = document.createElement("div");
+      wrapper.className = "tv-sport-ai-check";
+
+      const line = document.createElement("div");
+      line.className = "tv-sport-ai-check-line";
+
+      const pill = document.createElement("span");
+      pill.className = "status-pill status-pill-warning";
+      pill.textContent = "Error";
+      line.append(pill);
+
+      const runLink = createParticipationRunLink(runId);
+
+      if(runLink)
+      {
+         line.append(runLink);
+      }
+
+      const error = document.createElement("span");
+      error.className = "tv-sport-ai-check-error";
+      error.textContent = errorMessage;
+
+      wrapper.append(line, error);
+      return wrapper;
+   }
+
+   function createParticipationRunLink(runId)
+   {
+      if(typeof runId !== "string" || runId.trim() === "")
+      {
+         return null;
+      }
+
+      const link = document.createElement("a");
+      link.href =
+         `/Admin/Config/Ai/Runs/Details/${encodeURIComponent(runId)}`;
+      link.textContent = "View run";
+      return link;
    }
 
    function createParticipationErrorMessage(

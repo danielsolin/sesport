@@ -166,6 +166,7 @@
                            Categories @Model.GetSortIndicator("Categories")
                         </a>
                      </th>
+                     <th>AI check</th>
                      <th>Actions</th>
                   </tr>
                </thead>
@@ -219,6 +220,73 @@
                         </td>
                         <td>
                            @broadcast.Categories
+                        </td>
+                        <td data-swedish-participation-cell
+                            data-broadcast-id="@broadcast.Id">
+                           @{
+                              var participationCheck =
+                                 broadcast.ParticipationCheck;
+                           }
+                           @if(participationCheck is null)
+                           {
+                              <button class="button button-primary"
+                                      type="button"
+                                      data-check-swedish-participation-row
+                                      data-check-swedish-participation-url=
+                                         "@checkSwedishParticipationUrl"
+                                      data-broadcast-id="@broadcast.Id">
+                                 Check
+                              </button>
+                           }
+                           else if(!string.IsNullOrWhiteSpace(
+                              participationCheck.ErrorMessage))
+                           {
+                              <div class="tv-sport-ai-check">
+                                 <div class="tv-sport-ai-check-line">
+                                    <span class="status-pill
+                                       status-pill-warning">
+                                       Error
+                                    </span>
+                                    <a asp-page="/Admin/Config/Ai/Runs/Details"
+                                       asp-route-id=
+                                          "@participationCheck.RunId"
+                                       asp-route-jobId=
+                                          "decide-swedish-participation">
+                                       View run
+                                    </a>
+                                 </div>
+                                 <span class="tv-sport-ai-check-error">
+                                    @participationCheck.ErrorMessage
+                                 </span>
+                              </div>
+                           }
+                           else
+                           {
+                              <div class="tv-sport-ai-check">
+                                 <div class="tv-sport-ai-check-line">
+                                    <span class="status-pill
+                                       @(participationCheck.IsPositive
+                                          ? "status-pill-positive"
+                                          : "status-pill-neutral")">
+                                       @participationCheck.BadgeText
+                                    </span>
+                                    <a asp-page="/Admin/Config/Ai/Runs/Details"
+                                       asp-route-id=
+                                          "@participationCheck.RunId"
+                                       asp-route-jobId=
+                                          "decide-swedish-participation">
+                                       View run
+                                    </a>
+                                 </div>
+                                 @if(!string.IsNullOrWhiteSpace(
+                                    participationCheck.ParticipantsPreview))
+                                 {
+                                    <div class="tv-sport-ai-check-participants">
+                                       @participationCheck.ParticipantsPreview
+                                    </div>
+                                 }
+                              </div>
+                           }
                         </td>
                         <td class="table-actions">
                            <form method="post"
