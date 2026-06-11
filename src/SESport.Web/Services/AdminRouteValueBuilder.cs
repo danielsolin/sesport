@@ -20,7 +20,7 @@ internal static class AdminRouteValueBuilder
       return routeValues;
    }
 
-   public static Dictionary<string, object?> CreateSortRouteValues(
+   public static Dictionary<string, string?> CreateSortRouteValues(
       DateOnly date,
       bool hideReplays,
       bool showHidden,
@@ -28,15 +28,15 @@ internal static class AdminRouteValueBuilder
       IEnumerable<string> selectedSports
    )
    {
-      var routeValues = new Dictionary<string, object?>
+      var routeValues = new Dictionary<string, string?>
       {
          ["date"] = DateDisplay.Format(date),
-         ["sortAsc"] = sortAsc
+         ["sortAsc"] = sortAsc.ToString()
       };
 
       if(hideReplays)
       {
-         routeValues["hideReplays"] = "true";
+        routeValues["hideReplays"] = "true";
       }
 
       if(showHidden)

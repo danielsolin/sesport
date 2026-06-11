@@ -85,6 +85,8 @@ public class IndexModel(
    {
       var routeValues = AdminRouteValueBuilder.CreateSortRouteValues(
          SelectedDate,
+         HideReplays,
+         ShowHidden,
          GetNextSortAsc(sortColumn),
          SelectedSports
       );
