@@ -28,6 +28,55 @@ public sealed class OpenRouterResponsesAiProviderClient
 
    private HttpClient HttpClient { get; }
 
+   public JsonObject CreateRequestPayload(
+      AiProviderDefinition provider,
+      AiJobDefinition job,
+      AiPromptDefinition prompt,
+      string renderedPrompt
+   )
+   {
+      var payload = new JsonObject
+      {
+         ["model"] = provider.Model,
+         ["messages"] = new JsonArray
+         {
+            new JsonObject
+            {
+               ["role"] = "user",
+               ["content"] = renderedPrompt
+            }
+         },
+         ["plugins"] = new JsonArray
+         {
+            new JsonObject
+            {
+               ["id"] = "web"
+            }
+         }
+      };
+
+      if(prompt.MaxOutputTokens is not null)
+      {
+         payload["max_output_tokens"] = prompt.MaxOutputTokens.Value;
+      }
+
+      if(prompt.Temperature is not null)
+      {
+         payload["temperature"] = prompt.Temperature.Value;
+      }
+
+      ResponsesRequestFormat.Apply(
+         payload,
+         job.OutputMode,
+         prompt.OutputSchemaJson,
+         $"prompt_{prompt.Id:N}"
+      );
+
+      MergeRequestOptions(payload, provider.RequestOptionsJson);
+      MergeRequestOptions(payload, prompt.RequestOptionsJson);
+      return payload;
+   }
+
    public async Task<AiJobResult> GenerateAsync(
       AiProviderDefinition provider,
       AiJobDefinition job,
@@ -51,12 +100,7 @@ public sealed class OpenRouterResponsesAiProviderClient
          );
       }
 
-      var request = ResponsesRequestBuilder.CreateRequestPayload(
-         provider,
-         job,
-         prompt,
-         renderedPrompt
-      );
+      var request = CreateRequestPayload(provider, job, prompt, renderedPrompt);
       var response = await SendAsync(
          provider,
          request,
@@ -76,7 +120,7 @@ public sealed class OpenRouterResponsesAiProviderClient
       }
 
       var outputText = NormalizeOutput(
-         ResponsesOutputValidator.ExtractFinalText(rawResponse)
+         ExtractFinalText(rawResponse)
       );
 
       return new AiJobResult(
@@ -85,7 +129,7 @@ public sealed class OpenRouterResponsesAiProviderClient
          provider.Id,
          provider.Model,
          renderedPrompt,
-         ResponsesRequestBuilder.SerializeRequest(request),
+         AiRequestJsonSerializer.Serialize(request),
          outputText,
          rawResponse,
          null
@@ -100,7 +144,7 @@ public sealed class OpenRouterResponsesAiProviderClient
    {
       var requestMessage = new HttpRequestMessage(
          HttpMethod.Post,
-         new Uri(new Uri(provider.BaseAddress!), "responses")
+         new Uri(new Uri(provider.BaseAddress!), "chat/completions")
       );
 
       requestMessage.Content = JsonContent.Create(
@@ -152,5 +196,103 @@ public sealed class OpenRouterResponsesAiProviderClient
       return
          $"ai request failed with {(int)statusCode} {statusCode}. " +
          $"Response: {preview}";
+   }
+
+   private static string ExtractFinalText(string rawResponse)
+   {
+      using var document = JsonDocument.Parse(rawResponse);
+      var root = document.RootElement;
+
+      if(!root.TryGetProperty("choices", out var choices))
+      {
+         return rawResponse;
+      }
+
+      foreach(var choice in choices.EnumerateArray())
+      {
+         if(!choice.TryGetProperty("message", out var message))
+         {
+            continue;
+         }
+
+         var content = ExtractMessageContent(message);
+
+         if(!string.IsNullOrWhiteSpace(content))
+         {
+            return content;
+         }
+      }
+
+      return rawResponse;
+   }
+
+   private static string ExtractMessageContent(JsonElement message)
+   {
+      if(
+         !message.TryGetProperty("content", out var content) ||
+         content.ValueKind == JsonValueKind.Null
+      )
+      {
+         return "";
+      }
+
+      if(content.ValueKind == JsonValueKind.String)
+      {
+         return content.GetString() ?? "";
+      }
+
+      if(content.ValueKind != JsonValueKind.Array)
+      {
+         return "";
+      }
+
+      var builder = new System.Text.StringBuilder();
+
+      foreach(var contentItem in content.EnumerateArray())
+      {
+         if(
+            contentItem.TryGetProperty("text", out var text) &&
+            text.ValueKind == JsonValueKind.String
+         )
+         {
+            builder.Append(text.GetString());
+         }
+      }
+
+      return builder.ToString();
+   }
+
+   private static void MergeRequestOptions(
+      JsonObject payload,
+      string requestOptionsJson
+   )
+   {
+      if(string.IsNullOrWhiteSpace(requestOptionsJson))
+      {
+         return;
+      }
+
+      try
+      {
+         var requestOptions = JsonNode.Parse(requestOptionsJson) as JsonObject;
+
+         if(requestOptions is null)
+         {
+            return;
+         }
+
+         foreach(var property in requestOptions)
+         {
+            if(payload.ContainsKey(property.Key))
+            {
+               continue;
+            }
+
+            payload[property.Key] = property.Value?.DeepClone();
+         }
+      }
+      catch (JsonException)
+      {
+      }
    }
 }

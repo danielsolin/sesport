@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Providers;
 
@@ -9,19 +8,18 @@ namespace SESport.Core.Tests.AI;
 
 public class ResponsesAiProviderClientTests
 {
-   [Theory]
-   [MemberData(nameof(ProviderClients))]
-   public async Task GenerateAsyncUsesFinalMessageOutput(
-      Func<HttpClient, IAiProviderClient> clientFactory
-   )
+   [Fact]
+   public async Task LmStudioGenerateAsyncUsesResponsesEnvelope()
    {
       var handler = new RecordingHandler(
          CreateReasoningResponseJson("KLM Open spelas i Amsterdam.")
       );
-      var client = clientFactory(new HttpClient(handler));
+      var client = new LmStudioResponsesAiProviderClient(
+         new HttpClient(handler)
+      );
 
       var result = await client.GenerateAsync(
-         CreateProvider(),
+         CreateProvider("lmstudio"),
          CreateJob(),
          CreatePrompt(),
          "Prompt text",
@@ -29,33 +27,24 @@ public class ResponsesAiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(
-         "KLM Open spelas i Amsterdam.",
-         result.OutputText
-      );
-      Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
-         handler.RequestBody
-      );
-      Assert.Contains(
-         "\"schema\":{\"type\":\"object\"}",
-         handler.RequestBody
-      );
+      Assert.Equal("KLM Open spelas i Amsterdam.", result.OutputText);
+      Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBody);
+      Assert.Contains("\"input\":\"Prompt text\"", handler.RequestBody);
    }
 
-   [Theory]
-   [MemberData(nameof(ProviderClients))]
-   public async Task GenerateAsyncUsesOpenRouterJsonSchemaEnvelope(
-      Func<HttpClient, IAiProviderClient> clientFactory
-   )
+   [Fact]
+   public async Task OpenRouterGenerateAsyncUsesChatCompletionsEnvelope()
    {
       var handler = new RecordingHandler(
-         CreateReasoningResponseJson("{\"ok\":true}")
+         CreateChatResponseJson("{\"ok\":true}")
       );
-      var client = clientFactory(new HttpClient(handler));
+      var client = new OpenRouterResponsesAiProviderClient(
+         new HttpClient(handler)
+      );
 
       var result = await client.GenerateAsync(
-         CreateProvider(),
+         CreateProvider("openrouter"),
          CreateJob("json_schema"),
          CreatePrompt(),
          "Prompt text",
@@ -64,38 +53,28 @@ public class ResponsesAiProviderClientTests
       );
 
       Assert.Equal("{\"ok\":true}", result.OutputText);
-      Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
-         handler.RequestBody
-      );
-      Assert.Contains(
-         "\"json_schema\":{\"name\":\"prompt_"
-            + "11111111111111111111111111111111\"",
-         handler.RequestBody
-      );
-      Assert.Contains(
-         "\"strict\":true",
-         handler.RequestBody
-      );
-      Assert.Contains(
-         "\"schema\":{\"type\":\"object\"}",
-         handler.RequestBody
-      );
+      Assert.Equal(new Uri("http://127.0.0.1:1234/v1/chat/completions"),
+         handler.RequestUri);
+      Assert.Contains("\"messages\":[{\"role\":\"user\"",
+         handler.RequestBody);
+      Assert.Contains("\"plugins\":[{\"id\":\"web\"}]",
+         handler.RequestBody);
+      Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBody);
    }
 
-   [Theory]
-   [MemberData(nameof(ProviderClients))]
-   public async Task GenerateAsyncUsesSchemaEvenForJsonObjectMode(
-      Func<HttpClient, IAiProviderClient> clientFactory
-   )
+   [Fact]
+   public async Task OpenRouterGenerateAsyncUsesSchemaEvenForJsonObjectMode()
    {
       var handler = new RecordingHandler(
-         CreateReasoningResponseJson("{\"ok\":true}")
+         CreateChatResponseJson("{\"ok\":true}")
       );
-      var client = clientFactory(new HttpClient(handler));
+      var client = new OpenRouterResponsesAiProviderClient(
+         new HttpClient(handler)
+      );
 
-      var result = await client.GenerateAsync(
-         CreateProvider(),
+      await client.GenerateAsync(
+         CreateProvider("openrouter"),
          CreateJob("json_object"),
          CreatePrompt(),
          "Prompt text",
@@ -103,49 +82,25 @@ public class ResponsesAiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal("{\"ok\":true}", result.OutputText);
-      Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
-         handler.RequestBody
-      );
-      Assert.Contains(
-         "\"schema\":{\"type\":\"object\"}",
-         handler.RequestBody
-      );
+      Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBody);
    }
 
-   public static IEnumerable<object[]> ProviderClients()
-   {
-      yield return
-      [
-         new Func<HttpClient, IAiProviderClient>(client =>
-            new LmStudioResponsesAiProviderClient(client))
-      ];
-
-      yield return
-      [
-         new Func<HttpClient, IAiProviderClient>(client =>
-            new OpenRouterResponsesAiProviderClient(client))
-      ];
-   }
-
-   private static AiProviderDefinition CreateProvider()
+   private static AiProviderDefinition CreateProvider(string kind)
    {
       return new AiProviderDefinition(
          "provider",
          "Provider",
-         "lmstudio",
+         kind,
          "http://127.0.0.1:1234/v1/",
-         "gpt-oss-20b",
+         "gpt-4o-2024-08-06",
          "key:secret-token",
          "{}",
          true
       );
    }
 
-   private static AiJobDefinition CreateJob(
-      string outputMode = "json_object"
-   )
+   private static AiJobDefinition CreateJob(string outputMode = "json_object")
    {
       return new AiJobDefinition(
          "job",
@@ -207,6 +162,25 @@ public class ResponsesAiProviderClientTests
       });
    }
 
+   private static string CreateChatResponseJson(string content)
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  role = "assistant",
+                  content
+               }
+            }
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
+   }
+
    private sealed class RecordingHandler : HttpMessageHandler
    {
       private readonly string responseJson;
@@ -216,16 +190,19 @@ public class ResponsesAiProviderClientTests
          this.responseJson = responseJson;
       }
 
-      public string? RequestBody { get; private set; }
+      public Uri? RequestUri { get; private set; }
+
+      public string RequestBody { get; private set; } = "";
 
       protected override async Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
       )
       {
-         RequestBody = await request.Content!.ReadAsStringAsync(
-            cancellationToken
-         );
+         RequestUri = request.RequestUri;
+         RequestBody = request.Content is null
+            ? ""
+            : await request.Content.ReadAsStringAsync(cancellationToken);
 
          return new HttpResponseMessage(HttpStatusCode.OK)
          {

@@ -27,6 +27,21 @@ public sealed class LmStudioResponsesAiProviderClient : IAiProviderClient
 
    private HttpClient HttpClient { get; }
 
+   public JsonObject CreateRequestPayload(
+      AiProviderDefinition provider,
+      AiJobDefinition job,
+      AiPromptDefinition prompt,
+      string renderedPrompt
+   )
+   {
+      return ResponsesRequestBuilder.CreateRequestPayload(
+         provider,
+         job,
+         prompt,
+         renderedPrompt
+      );
+   }
+
    public async Task<AiJobResult> GenerateAsync(
       AiProviderDefinition provider,
       AiJobDefinition job,
@@ -50,12 +65,7 @@ public sealed class LmStudioResponsesAiProviderClient : IAiProviderClient
          );
       }
 
-      var request = ResponsesRequestBuilder.CreateRequestPayload(
-         provider,
-         job,
-         prompt,
-         renderedPrompt
-      );
+      var request = CreateRequestPayload(provider, job, prompt, renderedPrompt);
       var response = await SendAsync(provider, request, cancellationToken);
       var rawResponse = await response.Content.ReadAsStringAsync(
          cancellationToken
@@ -80,7 +90,7 @@ public sealed class LmStudioResponsesAiProviderClient : IAiProviderClient
          provider.Id,
          provider.Model,
          renderedPrompt,
-         ResponsesRequestBuilder.SerializeRequest(request),
+         AiRequestJsonSerializer.Serialize(request),
          outputText,
          rawResponse,
          null

@@ -67,14 +67,13 @@ public sealed class AiJobRunner(
          prompt,
          request.InputPayloadJson
       );
-      var rawRequestJson = ResponsesRequestBuilder.SerializeRequest(
-         ResponsesRequestBuilder.CreateRequestPayload(
-            provider,
-            job,
-            prompt,
-            renderedPrompt
-         )
+      var requestPayload = providerClient.CreateRequestPayload(
+         provider,
+         job,
+         prompt,
+         renderedPrompt
       );
+      var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
       var run = new AiJobRun(
          Guid.NewGuid(),
          job.Id,
