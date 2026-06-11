@@ -610,14 +610,19 @@ h2 {
    width: 92px;
 }
 
+.broadcasts-table th:nth-child(4),
+.broadcasts-table td:nth-child(4) {
+   width: 140px;
+}
+
 .broadcasts-table th:nth-child(5),
 .broadcasts-table td:nth-child(5) {
-   width: 220px;
+   width: 224px;
 }
 
 .broadcasts-table th:nth-child(6),
 .broadcasts-table td:nth-child(6) {
-   width: 112px;
+   width: 56px;
 }
 
 .admin-table th,
