@@ -598,6 +598,7 @@ h2 {
 
 .broadcasts-table {
    table-layout: fixed;
+   min-width: 0;
 }
 
 .broadcasts-table th:nth-child(1),
@@ -622,7 +623,7 @@ h2 {
 
 .broadcasts-table th:nth-child(6),
 .broadcasts-table td:nth-child(6) {
-   width: 56px;
+   width: 64px;
 }
 
 .admin-table th,
@@ -1029,7 +1030,7 @@ h2 {
 .table-actions a.broadcast-activity-link {
    display: inline-block;
    color: var(--accent-strong);
-   font-size: 12px;
+   font-size: 11px;
    font-weight: 800;
    line-height: 1.2;
 }
@@ -1050,7 +1051,7 @@ h2 {
    background: transparent;
    color: var(--warning);
    font: inherit;
-   font-size: 12px;
+   font-size: 11px;
    font-weight: 800;
    line-height: 1.2;
    cursor: pointer;
