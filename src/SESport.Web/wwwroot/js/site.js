@@ -619,10 +619,12 @@
       {
          cell.append(
             createParticipationErrorBlock(
+               cell,
                result.error,
                result.runId
             )
          );
+         initializeBroadcastParticipationRowChecks(cell);
          return;
       }
 
@@ -642,6 +644,7 @@
          fallback.className = "tv-sport-ai-check-empty";
          fallback.textContent = "Not checked yet";
          cell.append(fallback);
+         initializeBroadcastParticipationRowChecks(cell);
          return;
       }
 
@@ -658,6 +661,7 @@
       }
 
       cell.append(wrapper);
+      initializeBroadcastParticipationRowChecks(cell);
    }
 
    function setPendingParticipationCell(cell)
@@ -709,7 +713,7 @@
       return line;
    }
 
-   function createParticipationErrorBlock(errorMessage, runId)
+   function createParticipationErrorBlock(cell, errorMessage, runId)
    {
       const wrapper = document.createElement("div");
       wrapper.className = "tv-sport-ai-check";
@@ -729,12 +733,45 @@
          line.append(runLink);
       }
 
+      const retryButton = createParticipationRetryButton(cell);
+
+      if(retryButton)
+      {
+         line.append(retryButton);
+      }
+
       const error = document.createElement("span");
       error.className = "tv-sport-ai-check-error";
       error.textContent = errorMessage;
 
       wrapper.append(line, error);
       return wrapper;
+   }
+
+   function createParticipationRetryButton(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const url = cell.dataset.checkSwedishParticipationUrl;
+      const broadcastId = cell.dataset.broadcastId;
+
+      if(!url || !broadcastId)
+      {
+         return null;
+      }
+
+      const button = document.createElement("button");
+      button.className = "button button-primary tv-sport-ai-check-retry";
+      button.type = "button";
+      button.textContent = "Retry";
+      button.dataset.checkSwedishParticipationRow = "true";
+      button.dataset.checkSwedishParticipationUrl = url;
+      button.dataset.broadcastId = broadcastId;
+
+      return button;
    }
 
    function createParticipationRunLink(runId)

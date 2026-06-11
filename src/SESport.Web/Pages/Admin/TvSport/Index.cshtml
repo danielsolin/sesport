@@ -222,7 +222,9 @@
                            @broadcast.Categories
                         </td>
                         <td data-swedish-participation-cell
-                            data-broadcast-id="@broadcast.Id">
+                            data-broadcast-id="@broadcast.Id"
+                            data-check-swedish-participation-url=
+                               "@checkSwedishParticipationUrl">
                            @{
                               var participationCheck =
                                  broadcast.ParticipationCheck;
@@ -254,6 +256,15 @@
                                           "decide-swedish-participation">
                                        View run
                                     </a>
+                                    <button class="button button-primary
+                                       tv-sport-ai-check-retry"
+                                            type="button"
+                                            data-check-swedish-participation-row
+                                            data-check-swedish-participation-url=
+                                               "@checkSwedishParticipationUrl"
+                                            data-broadcast-id="@broadcast.Id">
+                                       Retry
+                                    </button>
                                  </div>
                                  <span class="tv-sport-ai-check-error">
                                     @participationCheck.ErrorMessage

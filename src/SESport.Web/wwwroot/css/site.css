@@ -877,6 +877,11 @@ h2 {
    overflow-wrap: anywhere;
 }
 
+.tv-sport-ai-check-retry {
+   min-height: 28px;
+   font-size: 12px;
+}
+
 .table-actions {
    text-align: right !important;
    white-space: nowrap;
