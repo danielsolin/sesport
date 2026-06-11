@@ -215,7 +215,7 @@
                            }
                            @if(participationCheck is null)
                            {
-                              <button class="button button-primary"
+                              <button class="button broadcast-ai-check-action"
                                       type="button"
                                       data-check-swedish-participation-row
                                       data-check-swedish-participation-url=
@@ -240,7 +240,8 @@
                                           "decide-swedish-participation">
                                        View run
                                     </a>
-                                    <button class="button button-primary
+                                    <button class="button
+                                       broadcast-ai-check-action
                                        broadcast-ai-check-retry"
                                             type="button"
                                             data-check-swedish-participation-row
@@ -272,6 +273,16 @@
                                           "decide-swedish-participation">
                                        View run
                                     </a>
+                                    <button class="button
+                                       broadcast-ai-check-action
+                                       broadcast-ai-check-retry"
+                                            type="button"
+                                            data-check-swedish-participation-row
+                                            data-check-swedish-participation-url=
+                                               "@checkSwedishParticipationUrl"
+                                            data-broadcast-id="@broadcast.Id">
+                                       Retry
+                                    </button>
                                  </div>
                                  @if(!string.IsNullOrWhiteSpace(
                                     participationCheck.ParticipantsPreview))

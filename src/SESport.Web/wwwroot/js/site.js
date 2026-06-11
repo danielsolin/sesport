@@ -514,7 +514,7 @@
 
       const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check";
-      wrapper.append(createParticipationSummaryLine(result));
+      wrapper.append(createParticipationSummaryLine(cell, result));
 
       if(participants.length > 0)
       {
@@ -548,7 +548,7 @@
       cell.append(wrapper);
    }
 
-   function createParticipationSummaryLine(result)
+   function createParticipationSummaryLine(cell, result)
    {
       const line = document.createElement("div");
       line.className = "broadcast-ai-check-line";
@@ -572,6 +572,13 @@
       if(runLink)
       {
          line.append(runLink);
+      }
+
+      const retryButton = createParticipationRetryButton(cell);
+
+      if(retryButton)
+      {
+         line.append(retryButton);
       }
 
       return line;
@@ -628,7 +635,8 @@
       }
 
       const button = document.createElement("button");
-      button.className = "button button-primary broadcast-ai-check-retry";
+      button.className =
+         "button broadcast-ai-check-action broadcast-ai-check-retry";
       button.type = "button";
       button.textContent = "Retry";
       button.dataset.checkSwedishParticipationRow = "true";

@@ -428,6 +428,21 @@ h2 {
    color: #ffffff;
 }
 
+.broadcast-ai-check-action {
+   min-height: 28px;
+   padding: 0 8px;
+   border-color: rgba(0, 108, 103, 0.18);
+   background: #ffffff;
+   color: var(--accent-strong);
+   font-size: 12px;
+}
+
+.broadcast-ai-check-action:hover {
+   border-color: rgba(0, 108, 103, 0.32);
+   background: rgba(0, 108, 103, 0.06);
+   color: var(--accent-strong);
+}
+
 .button-row {
    display: flex;
    flex-wrap: wrap;

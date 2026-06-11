@@ -21,7 +21,10 @@ public static class AiServiceCollectionExtensions
       services.AddHttpClient<
          IAiProviderClient,
          OpenRouterResponsesAiProviderClient
-      >();
+      >(client =>
+      {
+         client.Timeout = TimeSpan.FromSeconds(300);
+      });
       services.AddHttpClient<
          IAiProviderClient,
          LmStudioResponsesAiProviderClient
