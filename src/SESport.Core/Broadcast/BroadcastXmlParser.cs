@@ -5,14 +5,14 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace SESport.Core.TvSport;
+namespace SESport.Core.Broadcast;
 
-public sealed partial class XmltvSportBroadcastParser
+public sealed partial class BroadcastXmlParser
 {
    private const string DefaultSourceKey = "iptv-epg-se";
    private const string TimeZoneId = "Europe/Stockholm";
 
-   public async Task<IReadOnlyCollection<TvSportBroadcast>> ParseAsync(
+   public async Task<IReadOnlyCollection<Broadcast>> ParseAsync(
       Stream stream,
       CancellationToken cancellationToken
    )
@@ -27,7 +27,7 @@ public sealed partial class XmltvSportBroadcastParser
       var channels = new Dictionary<string, string>(
          StringComparer.OrdinalIgnoreCase
       );
-      var broadcasts = new List<TvSportBroadcast>();
+      var broadcasts = new List<Broadcast>();
 
       while(await reader.ReadAsync())
       {
@@ -85,7 +85,7 @@ public sealed partial class XmltvSportBroadcastParser
       }
    }
 
-   private static TvSportBroadcast? TryCreateBroadcast(
+   private static Broadcast? TryCreateBroadcast(
       IReadOnlyDictionary<string, string> channels,
       XElement programme
    )
@@ -158,8 +158,8 @@ public sealed partial class XmltvSportBroadcastParser
 
       channels.TryGetValue(channelId, out var channelName);
 
-      return new TvSportBroadcast(
-         DeterministicGuid.Create($"tv-sport-broadcast:{fingerprint}"),
+      return new Broadcast(
+         DeterministicGuid.Create($"broadcast:{fingerprint}"),
          DefaultSourceKey,
          externalId,
          fingerprint,

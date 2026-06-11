@@ -381,7 +381,7 @@
       }
 
       selectedIds.forEach(id => {
-         formData.append("tvSportBroadcastIds", id);
+         formData.append("broadcastIds", id);
       });
 
       const response = await fetch(url, {
@@ -473,7 +473,7 @@
       if(!result || typeof result !== "object")
       {
          const fallback = document.createElement("span");
-         fallback.className = "tv-sport-ai-check-empty";
+         fallback.className = "broadcast-ai-check-empty";
          fallback.textContent = "Not checked yet";
          cell.append(fallback);
          return;
@@ -505,7 +505,7 @@
       if(participation === "")
       {
          const fallback = document.createElement("span");
-         fallback.className = "tv-sport-ai-check-empty";
+         fallback.className = "broadcast-ai-check-empty";
          fallback.textContent = "Not checked yet";
          cell.append(fallback);
          initializeBroadcastParticipationRowChecks(cell);
@@ -513,13 +513,13 @@
       }
 
       const wrapper = document.createElement("div");
-      wrapper.className = "tv-sport-ai-check";
+      wrapper.className = "broadcast-ai-check";
       wrapper.append(createParticipationSummaryLine(result));
 
       if(participants.length > 0)
       {
          const names = document.createElement("div");
-         names.className = "tv-sport-ai-check-participants";
+         names.className = "broadcast-ai-check-participants";
          names.textContent = participants.join(", ");
          wrapper.append(names);
       }
@@ -538,10 +538,10 @@
       cell.replaceChildren();
 
       const wrapper = document.createElement("div");
-      wrapper.className = "tv-sport-ai-check";
+      wrapper.className = "broadcast-ai-check";
 
       const pending = document.createElement("span");
-      pending.className = "tv-sport-ai-check-pending";
+      pending.className = "broadcast-ai-check-pending";
       pending.textContent = "Checking...";
       wrapper.append(pending);
 
@@ -551,7 +551,7 @@
    function createParticipationSummaryLine(result)
    {
       const line = document.createElement("div");
-      line.className = "tv-sport-ai-check-line";
+      line.className = "broadcast-ai-check-line";
 
       const participation = typeof result.swedishParticipation === "string"
          && result.swedishParticipation.trim() !== ""
@@ -580,10 +580,10 @@
    function createParticipationErrorBlock(cell, errorMessage, runId)
    {
       const wrapper = document.createElement("div");
-      wrapper.className = "tv-sport-ai-check";
+      wrapper.className = "broadcast-ai-check";
 
       const line = document.createElement("div");
-      line.className = "tv-sport-ai-check-line";
+      line.className = "broadcast-ai-check-line";
 
       const pill = document.createElement("span");
       pill.className = "status-pill status-pill-warning";
@@ -605,7 +605,7 @@
       }
 
       const error = document.createElement("span");
-      error.className = "tv-sport-ai-check-error";
+      error.className = "broadcast-ai-check-error";
       error.textContent = errorMessage;
 
       wrapper.append(line, error);
@@ -628,7 +628,7 @@
       }
 
       const button = document.createElement("button");
-      button.className = "button button-primary tv-sport-ai-check-retry";
+      button.className = "button button-primary broadcast-ai-check-retry";
       button.type = "button";
       button.textContent = "Retry";
       button.dataset.checkSwedishParticipationRow = "true";

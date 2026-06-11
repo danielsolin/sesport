@@ -4,10 +4,10 @@ using SESport.Data;
 
 namespace SESport.Web.Formatting;
 
-public static class TvSportCategorySportIdResolver
+public static class BroadcastCategorySportIdResolver
 {
    public static string? ResolveSportId(
-      IReadOnlyList<TvSportBroadcastActivitySource> broadcasts
+      IReadOnlyList<BroadcastActivitySource> broadcasts
    )
    {
       var categories = broadcasts

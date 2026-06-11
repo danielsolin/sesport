@@ -68,7 +68,7 @@ public sealed class ActivityEditModel
 
    public string? EvidenceComment { get; set; }
 
-   public List<Guid> TvSportBroadcastIds { get; set; } = [];
+   public List<Guid> BroadcastIds { get; set; } = [];
 
    public string? TvChannelName { get; set; }
 }

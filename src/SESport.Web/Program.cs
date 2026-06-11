@@ -20,7 +20,7 @@ builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
-builder.Services.AddScoped<TvSportRepository>();
+builder.Services.AddScoped<BroadcastRepository>();
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
    .AddCookie(

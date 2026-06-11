@@ -1,20 +1,21 @@
 using Npgsql;
 
-using SESport.Core.TvSport;
+using CoreBroadcast = SESport.Core.Broadcast.Broadcast;
+using SESport.Core.Broadcast;
 
-namespace SESport.Data.TvSport;
+namespace SESport.Data.Broadcast;
 
-public sealed class TvSportBroadcastRepository : IAsyncDisposable
+public sealed class BroadcastRepository : IAsyncDisposable
 {
    private readonly NpgsqlDataSource dataSource;
    private readonly bool ownsDataSource;
 
-   public TvSportBroadcastRepository(NpgsqlDataSource dataSource)
+   public BroadcastRepository(NpgsqlDataSource dataSource)
    {
       this.dataSource = dataSource;
    }
 
-   private TvSportBroadcastRepository(
+   private BroadcastRepository(
       NpgsqlDataSource dataSource,
       bool ownsDataSource
    )
@@ -23,9 +24,9 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       this.ownsDataSource = ownsDataSource;
    }
 
-   public static TvSportBroadcastRepository Connect(string connectionString)
+   public static BroadcastRepository Connect(string connectionString)
    {
-      return new TvSportBroadcastRepository(
+      return new BroadcastRepository(
          NpgsqlDataSource.Create(connectionString),
          ownsDataSource: true
       );
@@ -39,9 +40,9 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       }
    }
 
-   public async Task<TvSportBroadcastSaveResult> SaveAsync(
-      TvSportImportRun importRun,
-      IReadOnlyCollection<TvSportBroadcast> broadcasts,
+   public async Task<BroadcastSaveResult> SaveAsync(
+      BroadcastImportRun importRun,
+      IReadOnlyCollection<CoreBroadcast> broadcasts,
       CancellationToken cancellationToken
    )
    {
@@ -82,7 +83,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       }
 
       await transaction.CommitAsync(cancellationToken);
-      return new TvSportBroadcastSaveResult(
+      return new BroadcastSaveResult(
          broadcasts.Count,
          insertedCount,
          updatedCount
@@ -90,7 +91,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
    }
 
    public async Task<
-      IReadOnlyCollection<TvSportIgnoreRule>
+      IReadOnlyCollection<BroadcastIgnoreRule>
    > GetIgnoreRulesAsync(
       string sourceKey,
       CancellationToken cancellationToken
@@ -98,7 +99,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
    {
       const string sql = """
          select kind, value, source_key
-         from tv_sport_ignore
+         from broadcast_ignore
          where is_active = true
            and (source_key is null or source_key = @source_key)
          order by kind, value
@@ -112,12 +113,12 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var rules = new List<TvSportIgnoreRule>();
+      var rules = new List<BroadcastIgnoreRule>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
          rules.Add(
-            new TvSportIgnoreRule(
+            new BroadcastIgnoreRule(
                reader.GetString(0),
                reader.GetString(1),
                reader.IsDBNull(2) ? null : reader.GetString(2)
@@ -130,7 +131,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
 
    public async Task<int> DeleteIgnoredBroadcastsAsync(
       string sourceKey,
-      IReadOnlyCollection<TvSportIgnoreRule> ignoreRules,
+      IReadOnlyCollection<BroadcastIgnoreRule> ignoreRules,
       CancellationToken cancellationToken
    )
    {
@@ -149,7 +150,7 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       }
 
       const string sql = """
-         delete from tv_sport_broadcasts
+         delete from broadcasts
          where source_key = @source_key
            and (
               channel_name = any(@channel_names)
@@ -175,12 +176,12 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
    private static async Task UpsertImportRunAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
-      TvSportImportRun importRun,
+      BroadcastImportRun importRun,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
-         insert into tv_sport_import_runs (
+         insert into broadcast_import_runs (
             id, source_key, source_uri, started_at, finished_at, status,
             broadcast_count
          )
@@ -226,12 +227,12 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid importRunId,
-      TvSportBroadcast broadcast,
+      CoreBroadcast broadcast,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
-         merge into tv_sport_broadcasts as target
+         merge into broadcasts as target
          using (
             values (
                @id::uuid,
@@ -339,13 +340,13 @@ public sealed class TvSportBroadcastRepository : IAsyncDisposable
    }
 }
 
-public sealed record TvSportIgnoreRule(
+public sealed record BroadcastIgnoreRule(
    string Kind,
    string Value,
    string? SourceKey
 );
 
-public sealed record TvSportBroadcastSaveResult(
+public sealed record BroadcastSaveResult(
    int SavedCount,
    int InsertedCount,
    int UpdatedCount

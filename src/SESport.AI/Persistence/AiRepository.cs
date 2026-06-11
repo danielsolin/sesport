@@ -4,7 +4,7 @@ using Npgsql;
 using NpgsqlTypes;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
-using SESport.Core.TvSport;
+using SESport.Core.Broadcast;
 
 namespace SESport.AI.Persistence;
 
@@ -157,7 +157,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   public async Task<IReadOnlyDictionary<Guid, TvSportParticipationCheck>>
+   public async Task<IReadOnlyDictionary<Guid, BroadcastParticipationCheck>>
       GetParticipationChecksAsync(
          IReadOnlyCollection<Guid> broadcastIds,
          CancellationToken cancellationToken
@@ -165,7 +165,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       if(broadcastIds.Count == 0)
       {
-         return new Dictionary<Guid, TvSportParticipationCheck>();
+         return new Dictionary<Guid, BroadcastParticipationCheck>();
       }
 
       const string sql = """
@@ -194,7 +194,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var checks = new Dictionary<Guid, TvSportParticipationCheck>();
+      var checks = new Dictionary<Guid, BroadcastParticipationCheck>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
@@ -517,7 +517,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   private static TvSportParticipationCheck ParseParticipationCheck(
+   private static BroadcastParticipationCheck ParseParticipationCheck(
       Guid runId,
       string statusId,
       string? outputText,
@@ -526,7 +526,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       if(string.IsNullOrWhiteSpace(outputText))
       {
-         return new TvSportParticipationCheck(
+         return new BroadcastParticipationCheck(
             runId,
             statusId,
             null,
@@ -584,7 +584,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             }
          }
 
-         return new TvSportParticipationCheck(
+         return new BroadcastParticipationCheck(
             runId,
             statusId,
             participation.GetString(),
@@ -594,7 +594,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       }
       catch(JsonException)
       {
-         return new TvSportParticipationCheck(
+         return new BroadcastParticipationCheck(
             runId,
             statusId,
             null,

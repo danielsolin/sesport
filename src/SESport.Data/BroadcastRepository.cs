@@ -4,11 +4,11 @@ using SESport.Core.Formatting;
 
 namespace SESport.Data;
 
-public sealed class TvSportRepository(NpgsqlDataSource dataSource)
+public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 {
    private const string TimeZoneId = "Europe/Stockholm";
 
-   public async Task<IReadOnlyList<TvSportBroadcastListItem>> GetByDateAsync(
+   public async Task<IReadOnlyList<BroadcastListItem>> GetByDateAsync(
       DateOnly date,
       bool hideReplays,
       bool showHidden,
@@ -37,7 +37,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
             starts_at,
             ends_at,
             hidden_at
-         from tv_sport_broadcasts
+         from broadcasts
          where starts_at >= @start and starts_at < @end
             {{hiddenFilterSql}}
             and (@hide_replays = false or is_replay = false)
@@ -55,7 +55,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var broadcasts = new List<TvSportBroadcastListItem>();
+      var broadcasts = new List<BroadcastListItem>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
@@ -65,7 +65,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
          var endsAt = reader.GetFieldValue<DateTimeOffset>(9);
 
          broadcasts.Add(
-            new TvSportBroadcastListItem(
+            new BroadcastListItem(
                reader.GetGuid(0),
                FormatTime(startsAt, endsAt),
                channelName,
@@ -99,7 +99,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
 
       string sql = $$"""
          select distinct unnest(categories) as category
-         from tv_sport_broadcasts
+         from broadcasts
          where starts_at >= @start and starts_at < @end
             {{hiddenFilterSql}}
             and (@hide_replays = false or is_replay = false)
@@ -124,7 +124,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       return categories;
    }
 
-   public async Task<IReadOnlyList<TvSportBroadcastActivitySource>>
+   public async Task<IReadOnlyList<BroadcastActivitySource>>
       GetActivitySourcesAsync(
          IReadOnlyCollection<Guid> ids,
          CancellationToken cancellationToken
@@ -145,7 +145,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
             categories,
             starts_at,
             ends_at
-         from tv_sport_broadcasts
+         from broadcasts
          where id = any(@ids)
          order by starts_at, channel_name nulls last, channel_id, title
          """;
@@ -156,7 +156,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var broadcasts = new List<TvSportBroadcastActivitySource>();
+      var broadcasts = new List<BroadcastActivitySource>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
@@ -164,7 +164,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
          var channelName = ReadString(reader, 2) ?? channelId;
 
          broadcasts.Add(
-            new TvSportBroadcastActivitySource(
+            new BroadcastActivitySource(
                reader.GetGuid(0),
                channelName,
                reader.GetString(3),
@@ -182,7 +182,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
    public async Task HideAsync(Guid id, CancellationToken cancellationToken)
    {
       const string sql = """
-         update tv_sport_broadcasts
+         update broadcasts
          set hidden_at = coalesce(hidden_at, now()),
             updated_at = now()
          where id = @id
@@ -197,7 +197,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
    public async Task ShowAsync(Guid id, CancellationToken cancellationToken)
    {
       const string sql = """
-         update tv_sport_broadcasts
+         update broadcasts
          set hidden_at = null,
             updated_at = now()
          where id = @id
@@ -220,7 +220,7 @@ public sealed class TvSportRepository(NpgsqlDataSource dataSource)
       }
 
       const string sql = """
-         update tv_sport_broadcasts
+         update broadcasts
          set hidden_at = coalesce(hidden_at, now()),
             updated_at = now()
          where id = any(@ids)

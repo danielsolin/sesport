@@ -125,9 +125,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return
       [
          new AdminArea(
-            "TV broadcasts",
+            "Broadcasts",
             "Inspect imported sport broadcasts from EPG data.",
-            "/Admin/TvSport"
+            "/Admin/Broadcasts"
          ),
          new AdminArea(
             "Activity proposals",

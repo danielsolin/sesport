@@ -1,6 +1,6 @@
-namespace SESport.Core.TvSport;
+namespace SESport.Core.Broadcast;
 
-public sealed record TvSportBroadcast(
+public sealed record Broadcast(
    Guid Id,
    string SourceKey,
    string ExternalId,

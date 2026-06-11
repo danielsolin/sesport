@@ -840,38 +840,38 @@ h2 {
    color: var(--warning) !important;
 }
 
-.tv-sport-ai-check {
+.broadcast-ai-check {
    display: grid;
    gap: 4px;
 }
 
-.tv-sport-ai-check-line {
+.broadcast-ai-check-line {
    display: flex;
    flex-wrap: wrap;
    align-items: center;
    gap: 8px;
 }
 
-.tv-sport-ai-check-participants {
+.broadcast-ai-check-participants {
    color: var(--muted);
    overflow-wrap: anywhere;
 }
 
-.tv-sport-ai-check-empty {
+.broadcast-ai-check-empty {
    color: var(--muted);
 }
 
-.tv-sport-ai-check-pending {
+.broadcast-ai-check-pending {
    color: var(--muted);
    font-style: italic;
 }
 
-.tv-sport-ai-check-error {
+.broadcast-ai-check-error {
    color: var(--warning);
    overflow-wrap: anywhere;
 }
 
-.tv-sport-ai-check-retry {
+.broadcast-ai-check-retry {
    min-height: 28px;
    font-size: 12px;
 }

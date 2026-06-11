@@ -1,8 +1,8 @@
-using SESport.Core.TvSport;
+using SESport.Core.Broadcast;
 
 namespace SESport.Data;
 
-public sealed record TvSportBroadcastListItem(
+public sealed record BroadcastListItem(
    Guid Id,
    string TimeText,
    string ChannelName,
@@ -14,7 +14,7 @@ public sealed record TvSportBroadcastListItem(
    bool IsHidden
 )
 {
-   public TvSportParticipationCheck? ParticipationCheck { get; init; }
+   public BroadcastParticipationCheck? ParticipationCheck { get; init; }
 
    public string TimeOnlyText
    {
@@ -28,12 +28,12 @@ public sealed record TvSportBroadcastListItem(
    }
 };
 
-public sealed record TvSportCategoryOption(
+public sealed record BroadcastCategoryOption(
    string Name,
    bool IsSelected
 );
 
-public sealed record TvSportBroadcastActivitySource(
+public sealed record BroadcastActivitySource(
    Guid Id,
    string ChannelName,
    string Title,

@@ -13,7 +13,7 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class EditModel(
    ActivityRepository repository,
-   TvSportRepository tvSportRepository,
+   BroadcastRepository broadcastRepository,
    IAiJobRunner aiJobRunner
 ) : PageModel
 {
@@ -33,7 +33,7 @@ public class EditModel(
 
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
-      List<Guid>? tvSportBroadcastIds,
+      List<Guid>? broadcastIds,
       string? returnUrl,
       CancellationToken cancellationToken
    )
@@ -43,8 +43,8 @@ public class EditModel(
       if(id is null)
       {
          await LoadEntitiesAsync([], cancellationToken);
-         await PrefillFromTvSportBroadcastsAsync(
-            tvSportBroadcastIds ?? [],
+         await PrefillFromBroadcastsAsync(
+            broadcastIds ?? [],
             cancellationToken
          );
          return Page();
@@ -98,8 +98,8 @@ public class EditModel(
       }
 
       _ = await repository.SaveAsync(Activity, cancellationToken);
-      await tvSportRepository.HideAsync(
-         NormalizeBroadcastIds(Activity.TvSportBroadcastIds),
+      await broadcastRepository.HideAsync(
+         NormalizeBroadcastIds(Activity.BroadcastIds),
          cancellationToken
       );
 
@@ -347,7 +347,7 @@ public class EditModel(
       }
    }
 
-   private async Task PrefillFromTvSportBroadcastsAsync(
+   private async Task PrefillFromBroadcastsAsync(
       IReadOnlyCollection<Guid> ids,
       CancellationToken cancellationToken
    )
@@ -359,7 +359,7 @@ public class EditModel(
          return;
       }
 
-      var broadcasts = await tvSportRepository.GetActivitySourcesAsync(
+      var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
          normalizedIds,
          cancellationToken
       );
@@ -370,9 +370,9 @@ public class EditModel(
       }
 
       var firstBroadcast = broadcasts.First();
-      var localStart = TvSportRepository.ToLocal(firstBroadcast.StartsAt);
+      var localStart = BroadcastRepository.ToLocal(firstBroadcast.StartsAt);
 
-      Activity.TvSportBroadcastIds = broadcasts
+      Activity.BroadcastIds = broadcasts
          .Select(broadcast => broadcast.Id)
          .ToList();
       Activity.TvChannelName = firstBroadcast.ChannelName;
@@ -380,7 +380,7 @@ public class EditModel(
       Activity.Description = CreatePrefillDescription(broadcasts);
       Activity.ActivityType = "Match";
       Activity.IsPublished = true;
-      var sportId = TvSportCategorySportIdResolver.ResolveSportId(
+      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
          broadcasts
       );
       if(!string.IsNullOrWhiteSpace(sportId))
@@ -392,7 +392,7 @@ public class EditModel(
       Activity.TimeZoneId = "Europe/Stockholm";
       Activity.EvidenceTitle = broadcasts.Count == 1
          ? firstBroadcast.Title
-         : $"{broadcasts.Count} TV broadcasts";
+         : $"{broadcasts.Count} broadcasts";
       Activity.EvidenceComment = CreateEvidenceComment(broadcasts);
    }
 
@@ -407,7 +407,7 @@ public class EditModel(
    }
 
    private static string? CreatePrefillDescription(
-      IReadOnlyList<TvSportBroadcastActivitySource> broadcasts
+      IReadOnlyList<BroadcastActivitySource> broadcasts
    )
    {
       return broadcasts
@@ -418,13 +418,13 @@ public class EditModel(
    }
 
    private static string CreateEvidenceComment(
-      IReadOnlyList<TvSportBroadcastActivitySource> broadcasts
+      IReadOnlyList<BroadcastActivitySource> broadcasts
    )
    {
       var rows = broadcasts.Select(broadcast =>
       {
-         var localStart = TvSportRepository.ToLocal(broadcast.StartsAt);
-         var localEnd = TvSportRepository.ToLocal(broadcast.EndsAt);
+         var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
+         var localEnd = BroadcastRepository.ToLocal(broadcast.EndsAt);
 
          return string.Join(
             " ",

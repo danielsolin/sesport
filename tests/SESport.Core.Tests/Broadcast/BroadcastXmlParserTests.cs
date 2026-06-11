@@ -1,10 +1,10 @@
 using System.Text;
 
-using SESport.Core.TvSport;
+using SESport.Core.Broadcast;
 
-namespace SESport.Core.Tests.TvSport;
+namespace SESport.Core.Tests.Broadcast;
 
-public class XmltvSportBroadcastParserTests
+public class BroadcastXmlParserTests
 {
    [Fact]
    public async Task ParseAsyncImportsSportProgramme()
@@ -29,7 +29,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -72,7 +72,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -102,7 +102,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -131,7 +131,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -160,7 +160,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -192,7 +192,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -222,7 +222,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -250,7 +250,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -278,7 +278,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -304,7 +304,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -329,7 +329,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -355,7 +355,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -381,7 +381,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -407,7 +407,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
@@ -433,7 +433,7 @@ public class XmltvSportBroadcastParserTests
          </tv>
          """;
 
-      var parser = new XmltvSportBroadcastParser();
+      var parser = new BroadcastXmlParser();
       using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
       var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);

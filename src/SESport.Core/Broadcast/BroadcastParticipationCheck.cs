@@ -1,6 +1,6 @@
-namespace SESport.Core.TvSport;
+namespace SESport.Core.Broadcast;
 
-public sealed record TvSportParticipationCheck(
+public sealed record BroadcastParticipationCheck(
    Guid RunId,
    string StatusId,
    string? SwedishParticipation,

@@ -1,7 +1,7 @@
 @page
-@model SESport.Web.Pages.Admin.TvSport.IndexModel
+@model SESport.Web.Pages.Admin.Broadcasts.IndexModel
 @{
-   ViewData["Title"] = "TV Sport Broadcasts";
+   ViewData["Title"] = "Broadcasts";
    var checkSwedishParticipationUrl = Url.Page(
       "./Index",
       "CheckSwedishParticipation"
@@ -15,9 +15,9 @@
 </section>
 
 <section class="form-section">
-   <form method="get"
+      <form method="get"
          class="filter-form"
-         data-ajax-replace-target="[data-tv-sport-results]">
+         data-ajax-replace-target="[data-broadcast-results]">
       <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
       <input type="hidden"
              name="sortAsc"
@@ -60,7 +60,7 @@
    </form>
 </section>
 
-<div data-tv-sport-results>
+<div data-broadcast-results>
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
@@ -70,7 +70,7 @@
    else if(Model.Broadcasts.Count == 0)
    {
       <div class="notice">
-         No TV sport broadcasts for @Model.DateText.
+         No broadcasts for @Model.DateText.
       </div>
    }
    else
@@ -103,7 +103,7 @@
          </form>
          <div class="ses-table-header">
             <div>
-               <span data-tv-sport-broadcast-count>
+               <span data-broadcast-count>
                   @Model.Broadcasts.Count
                </span>
                broadcasts
@@ -116,7 +116,7 @@
                      <th>
                         @* <button type="button"
                                 class="button button-primary"
-                                data-checkbox-toggle="tv-sport-broadcasts"
+                                data-checkbox-toggle="broadcasts"
                                 data-select-label="Select all"
                                 data-unselect-label="Unselect all">
                            Select all
@@ -167,10 +167,10 @@
                         <td class="table-select">
                            <input
                               type="checkbox"
-                              name="tvSportBroadcastIds"
+                              name="broadcastIds"
                               value="@broadcast.Id"
                               form="generate-activity-form"
-                              data-checkbox-group="tv-sport-broadcasts"
+                              data-checkbox-group="broadcasts"
                            />
                         </td>
                         <td>
@@ -227,8 +227,8 @@
                            else if(!string.IsNullOrWhiteSpace(
                               participationCheck.ErrorMessage))
                            {
-                              <div class="tv-sport-ai-check">
-                                 <div class="tv-sport-ai-check-line">
+                              <div class="broadcast-ai-check">
+                                 <div class="broadcast-ai-check-line">
                                     <span class="status-pill
                                        status-pill-warning">
                                        Error
@@ -241,7 +241,7 @@
                                        View run
                                     </a>
                                     <button class="button button-primary
-                                       tv-sport-ai-check-retry"
+                                       broadcast-ai-check-retry"
                                             type="button"
                                             data-check-swedish-participation-row
                                             data-check-swedish-participation-url=
@@ -250,15 +250,15 @@
                                        Retry
                                     </button>
                                  </div>
-                                 <span class="tv-sport-ai-check-error">
+                                 <span class="broadcast-ai-check-error">
                                     @participationCheck.ErrorMessage
                                  </span>
                               </div>
                            }
                            else
                            {
-                              <div class="tv-sport-ai-check">
-                                 <div class="tv-sport-ai-check-line">
+                              <div class="broadcast-ai-check">
+                                 <div class="broadcast-ai-check-line">
                                     <span class="status-pill
                                        @(participationCheck.IsPositive
                                           ? "status-pill-positive"
@@ -276,7 +276,7 @@
                                  @if(!string.IsNullOrWhiteSpace(
                                     participationCheck.ParticipantsPreview))
                                  {
-                                    <div class="tv-sport-ai-check-participants">
+                                    <div class="broadcast-ai-check-participants">
                                        @participationCheck.ParticipantsPreview
                                     </div>
                                  }
@@ -295,7 +295,7 @@
                                     "@(
                                        broadcast.IsHidden
                                           ? null
-                                          : "[data-tv-sport-broadcast-count]"
+                                          : "[data-broadcast-count]"
                                     )">
                               <input type="hidden"
                                      name="date"
@@ -332,7 +332,7 @@
                   }
                </tbody>
                <tfoot hidden
-                      data-visible-when-checkbox-group="tv-sport-broadcasts">
+                      data-visible-when-checkbox-group="broadcasts">
                   <tr>
                      <td colspan="6">
                         <button type="submit"

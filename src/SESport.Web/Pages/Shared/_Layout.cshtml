@@ -5,7 +5,7 @@
       StringComparison.OrdinalIgnoreCase
    );
    var isBroadcasts = requestPath.StartsWith(
-      "/Admin/TvSport",
+      "/Admin/Broadcasts",
       StringComparison.OrdinalIgnoreCase
    );
    var isActivities = requestPath.StartsWith(
@@ -64,7 +64,7 @@
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
                <a class="@broadcastsClass"
-                  asp-page="/Admin/TvSport/Index">
+                  asp-page="/Admin/Broadcasts/Index">
                   Broadcasts
                </a>
                <a class="@activitiesClass"

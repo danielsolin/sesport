@@ -10,10 +10,10 @@ using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
 
-namespace SESport.Web.Pages.Admin.TvSport;
+namespace SESport.Web.Pages.Admin.Broadcasts;
 
 public class IndexModel(
-   TvSportRepository repository,
+   BroadcastRepository repository,
    AiRepository aiRepository,
    AdminDatePreferenceStore datePreferenceStore,
    IAiJobRunner aiJobRunner
@@ -46,7 +46,7 @@ public class IndexModel(
 
    public DateOnly SelectedDate { get; private set; }
 
-   public IReadOnlyList<TvSportBroadcastListItem> Broadcasts
+   public IReadOnlyList<BroadcastListItem> Broadcasts
    {
       get;
       private set;
@@ -130,14 +130,14 @@ public class IndexModel(
    }
 
    public async Task<IActionResult> OnPostGenerateActivityAsync(
-      List<Guid> tvSportBroadcastIds,
+      List<Guid> broadcastIds,
       string? returnUrl,
       CancellationToken cancellationToken
    )
    {
-      var broadcastIds = NormalizeBroadcastIds(tvSportBroadcastIds);
+      var normalizedBroadcastIds = NormalizeBroadcastIds(broadcastIds);
 
-      if(broadcastIds.Count == 0)
+      if(normalizedBroadcastIds.Count == 0)
       {
          SortColumn = NormalizeSortColumn(SortColumn);
          await LoadAsync(cancellationToken);
@@ -147,10 +147,10 @@ public class IndexModel(
 
       var routeValues = new Dictionary<string, object?>();
 
-      for(var index = 0; index < broadcastIds.Count; index++)
+      for(var index = 0; index < normalizedBroadcastIds.Count; index++)
       {
-         routeValues[$"tvSportBroadcastIds[{index}]"] =
-            broadcastIds[index];
+         routeValues[$"broadcastIds[{index}]"] =
+            normalizedBroadcastIds[index];
       }
 
       if(Url.IsLocalUrl(returnUrl))
@@ -162,15 +162,15 @@ public class IndexModel(
    }
 
    public async Task<IActionResult> OnPostCheckSwedishParticipationAsync(
-      List<Guid> tvSportBroadcastIds,
+      List<Guid> broadcastIds,
       CancellationToken cancellationToken
    )
    {
       try
       {
-         var broadcastIds = NormalizeBroadcastIds(tvSportBroadcastIds);
+         var normalizedBroadcastIds = NormalizeBroadcastIds(broadcastIds);
 
-         if(broadcastIds.Count == 0)
+         if(normalizedBroadcastIds.Count == 0)
          {
             return BadRequest(new
             {
@@ -179,7 +179,7 @@ public class IndexModel(
          }
 
          var broadcasts = await repository.GetActivitySourcesAsync(
-            broadcastIds,
+            normalizedBroadcastIds,
             cancellationToken
          );
          var results = new List<object>();
@@ -289,7 +289,7 @@ public class IndexModel(
                normalizedSports.Count == 0
             ),
             .. categories
-            .Select(category => new TvSportCategoryOption(
+            .Select(category => new BroadcastCategoryOption(
                category,
                normalizedSports.Contains(category)
             ))
@@ -327,8 +327,8 @@ public class IndexModel(
          _ => TimeSortColumn
       };
 
-   private static IReadOnlyList<TvSportBroadcastListItem> SortBroadcasts(
-      IEnumerable<TvSportBroadcastListItem> broadcasts,
+   private static IReadOnlyList<BroadcastListItem> SortBroadcasts(
+      IEnumerable<BroadcastListItem> broadcasts,
       string sortColumn,
       bool sortAsc
    )
@@ -358,9 +358,9 @@ public class IndexModel(
       };
    }
 
-   private static IReadOnlyList<TvSportBroadcastListItem> OrderByDirection(
-      IEnumerable<TvSportBroadcastListItem> broadcasts,
-      Func<TvSportBroadcastListItem, string> keySelector,
+   private static IReadOnlyList<BroadcastListItem> OrderByDirection(
+      IEnumerable<BroadcastListItem> broadcasts,
+      Func<BroadcastListItem, string> keySelector,
       bool sortAsc
    )
    {
@@ -398,9 +398,9 @@ public class IndexModel(
          .ToList();
    }
 
-   private async Task<IReadOnlyList<TvSportBroadcastListItem>>
+   private async Task<IReadOnlyList<BroadcastListItem>>
       ApplyParticipationChecksAsync(
-         IReadOnlyList<TvSportBroadcastListItem> broadcasts,
+         IReadOnlyList<BroadcastListItem> broadcasts,
          CancellationToken cancellationToken
       )
    {
@@ -424,10 +424,10 @@ public class IndexModel(
    }
 
    private static string CreateParticipationInputJson(
-      TvSportBroadcastActivitySource broadcast
+      BroadcastActivitySource broadcast
    )
    {
-      var localStart = TvSportRepository.ToLocal(broadcast.StartsAt);
+      var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
 
       return JsonSerializer.Serialize(
          new
@@ -441,7 +441,7 @@ public class IndexModel(
 
    private static object CreateParticipationCheckResult(
       Guid runId,
-      TvSportBroadcastActivitySource broadcast,
+      BroadcastActivitySource broadcast,
       string? error,
       string? swedishParticipation,
       IReadOnlyList<string> swedishParticipants

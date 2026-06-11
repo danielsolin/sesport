@@ -1,11 +1,11 @@
-namespace SESport.Core.TvSport;
+namespace SESport.Core.Broadcast;
 
-public sealed record TvSportImportRun(
+public sealed record BroadcastImportRun(
    Guid Id,
    string SourceKey,
    Uri? SourceUri,
    DateTimeOffset StartedAt,
    DateTimeOffset? FinishedAt,
-   TvSportImportRunStatus Status,
+   BroadcastImportRunStatus Status,
    int BroadcastCount
 );

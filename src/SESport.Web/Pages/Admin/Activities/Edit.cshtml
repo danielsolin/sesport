@@ -28,10 +28,10 @@
    <input asp-for="Activity.Id" type="hidden" />
    <input asp-for="ReturnUrl" type="hidden" />
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
-   @foreach (var broadcastId in Model.Activity.TvSportBroadcastIds)
+   @foreach (var broadcastId in Model.Activity.BroadcastIds)
    {
       <input type="hidden"
-             name="Activity.TvSportBroadcastIds"
+             name="Activity.BroadcastIds"
              value="@broadcastId" />
    }
    <section class="form-section">
