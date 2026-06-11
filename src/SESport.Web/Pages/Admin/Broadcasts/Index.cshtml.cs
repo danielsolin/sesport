@@ -95,6 +95,17 @@ public class IndexModel(
       return routeValues;
    }
 
+   public Dictionary<string, string?> GetActivityRouteValues(
+      Guid broadcastId
+   )
+   {
+      return new Dictionary<string, string?>
+      {
+         ["broadcastIds[0]"] = broadcastId.ToString(),
+         ["returnUrl"] = Request.Path + Request.QueryString
+      };
+   }
+
    public async Task<IActionResult> OnPostHideAsync(
       Guid id,
       bool isHidden,
@@ -196,6 +207,9 @@ public class IndexModel(
                ),
                cancellationToken
             );
+            var sourceUrls = ParticipationSourceUrlExtractor.Extract(
+               result.RawResponseJson
+            );
 
             if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
             {
@@ -205,7 +219,8 @@ public class IndexModel(
                      broadcast,
                      result.ErrorMessage,
                      null,
-                     []
+                     [],
+                     sourceUrls
                   )
                );
 
@@ -222,7 +237,8 @@ public class IndexModel(
                      broadcast,
                      "The model returned invalid JSON.",
                      null,
-                     []
+                     [],
+                     sourceUrls
                   )
                );
 
@@ -235,7 +251,8 @@ public class IndexModel(
                   broadcast,
                   null,
                   parsed.SwedishParticipation,
-                  parsed.SwedishParticipants
+                  parsed.SwedishParticipants,
+                  sourceUrls
                )
             );
          }
@@ -446,7 +463,8 @@ public class IndexModel(
       BroadcastActivitySource broadcast,
       string? error,
       string? swedishParticipation,
-      IReadOnlyList<string> swedishParticipants
+      IReadOnlyList<string> swedishParticipants,
+      IReadOnlyList<string> sourceUrls
    )
    {
       return new
@@ -457,7 +475,8 @@ public class IndexModel(
          title = broadcast.Title,
          error,
          swedishParticipation,
-         swedishParticipants
+         swedishParticipants,
+         sourceUrls
       };
    }
 

@@ -5,6 +5,7 @@ public sealed record BroadcastParticipationCheck(
    string StatusId,
    string? SwedishParticipation,
    IReadOnlyList<string> SwedishParticipants,
+   IReadOnlyList<string> SourceUrls,
    string? ErrorMessage
 )
 {
@@ -41,6 +42,23 @@ public sealed record BroadcastParticipationCheck(
          return $"{preview} +{moreCount} more";
       }
    }
+
+   public string ParticipantsPreviewNames
+   {
+      get
+      {
+         if(SwedishParticipants.Count <= 3)
+         {
+            return string.Join(", ", SwedishParticipants);
+         }
+
+         return string.Join(", ", SwedishParticipants.Take(3));
+      }
+   }
+
+   public int MoreParticipantsCount => Math.Max(0, SwedishParticipants.Count - 3);
+
+   public bool HasMoreParticipants => MoreParticipantsCount > 0;
 
    public string SummaryText =>
       !string.IsNullOrWhiteSpace(ErrorMessage)

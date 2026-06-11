@@ -24,6 +24,8 @@
    initializeGetFormRestoration();
    initializeDateSelect();
    initializeTeaserGeneration();
+   initializeParticipationMoreButtons();
+   initializeParticipationSources();
    initializeBroadcastParticipationRowChecks();
 
    document.addEventListener("submit", async event => {
@@ -359,7 +361,8 @@
             error: message,
             runId: null,
             swedishParticipation: null,
-            swedishParticipants: []
+            swedishParticipants: [],
+            sourceUrls: []
          });
       }
       finally
@@ -485,7 +488,8 @@
             createParticipationErrorBlock(
                cell,
                result.error,
-               result.runId
+               result.runId,
+               result.sourceUrls
             )
          );
          initializeBroadcastParticipationRowChecks(cell);
@@ -500,6 +504,10 @@
          ? result.swedishParticipants
             .filter(participant =>
                typeof participant === "string" && participant.trim() !== "")
+         : [];
+      const sourceUrls = Array.isArray(result.sourceUrls)
+         ? result.sourceUrls
+            .filter(url => typeof url === "string" && url.trim() !== "")
          : [];
 
       if(participation === "")
@@ -518,10 +526,16 @@
 
       if(participants.length > 0)
       {
-         const names = document.createElement("div");
-         names.className = "broadcast-ai-check-participants";
-         names.textContent = participants.join(", ");
-         wrapper.append(names);
+         wrapper.append(
+            createParticipationParticipantsBlock(participants)
+         );
+      }
+
+      const sources = createParticipationSourcesBlock(sourceUrls, result.runId);
+
+      if(sources)
+      {
+         wrapper.append(sources);
       }
 
       cell.append(wrapper);
@@ -584,7 +598,117 @@
       return line;
    }
 
-   function createParticipationErrorBlock(cell, errorMessage, runId)
+   function createParticipationSourcesBlock(sourceUrls, runId)
+   {
+      if(!Array.isArray(sourceUrls))
+      {
+         return null;
+      }
+
+      const urls = [];
+      const seen = new Set();
+
+      sourceUrls.forEach(url => {
+         if(typeof url !== "string")
+         {
+            return;
+         }
+
+         const trimmed = url.trim();
+
+         if(trimmed === "" || seen.has(trimmed))
+         {
+            return;
+         }
+
+         seen.add(trimmed);
+         urls.push(trimmed);
+      });
+
+      if(urls.length === 0)
+      {
+         return null;
+      }
+
+      const wrapper = document.createElement("details");
+      wrapper.className = "broadcast-ai-check-sources";
+
+      const summary = document.createElement("summary");
+      summary.textContent = `Show sources (${urls.length})`;
+      wrapper.append(summary);
+
+      const list = document.createElement("div");
+      list.className = "broadcast-ai-check-sources-list";
+
+      urls.forEach(url => {
+         const link = document.createElement("a");
+         link.href = url;
+         link.target = "_blank";
+         link.rel = "noreferrer noopener";
+         link.title = url;
+         link.textContent = url;
+         list.append(link);
+      });
+
+      const runLink = createParticipationRunLink(runId);
+
+      if(runLink)
+      {
+         runLink.dataset.runLink = "true";
+         list.append(runLink);
+      }
+
+      wrapper.append(list);
+      initializeParticipationSources(wrapper);
+
+      return wrapper;
+   }
+
+   function createParticipationParticipantsBlock(participants)
+   {
+      if(!Array.isArray(participants) || participants.length === 0)
+      {
+         return null;
+      }
+
+      const names = participants
+         .filter(participant =>
+            typeof participant === "string" && participant.trim() !== "")
+         .map(participant => participant.trim());
+
+      if(names.length === 0)
+      {
+         return null;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "broadcast-ai-check-participants";
+      wrapper.dataset.participantsJson = JSON.stringify(names);
+
+      const preview = document.createElement("div");
+      preview.className = "broadcast-ai-check-participants-preview";
+      preview.textContent = names.slice(0, 3).join(", ");
+      wrapper.append(preview);
+
+      if(names.length > 3)
+      {
+         const moreButton = document.createElement("button");
+         moreButton.type = "button";
+         moreButton.className = "broadcast-ai-check-participants-more";
+         moreButton.textContent = `+${names.length - 3} more`;
+         wrapper.append(moreButton);
+      }
+
+      initializeParticipationMoreButtons(wrapper);
+      return wrapper;
+   }
+
+   function createParticipationErrorBlock(
+      cell,
+      errorMessage,
+      runId,
+      sourceUrls
+   )
    {
       const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check";
@@ -616,6 +740,14 @@
       error.textContent = errorMessage;
 
       wrapper.append(line, error);
+
+      const sources = createParticipationSourcesBlock(sourceUrls, runId);
+
+      if(sources)
+      {
+         wrapper.append(sources);
+      }
+
       return wrapper;
    }
 
@@ -656,6 +788,8 @@
       const link = document.createElement("a");
       link.href =
          `/Admin/Config/Ai/Runs/Details/${encodeURIComponent(runId)}`;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
       link.textContent = "View run";
       return link;
    }
@@ -685,6 +819,80 @@
       return parts.join(" ");
    }
 
+   function initializeParticipationMoreButtons(root = document)
+   {
+      root.querySelectorAll(".broadcast-ai-check-participants-more")
+         .forEach(button => {
+            if(!(button instanceof HTMLButtonElement)
+               || button.dataset.participantsMoreInitialized === "true")
+            {
+               return;
+            }
+
+            button.dataset.participantsMoreInitialized = "true";
+            button.addEventListener("click", () => {
+               expandParticipationMore(button);
+            });
+         });
+   }
+
+   function expandParticipationMore(button)
+   {
+      if(!(button instanceof HTMLButtonElement))
+      {
+         return;
+      }
+
+      const block = button.closest(".broadcast-ai-check-participants");
+
+      if(!(block instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const preview = block.querySelector(
+         ".broadcast-ai-check-participants-preview"
+      );
+
+      if(!(preview instanceof HTMLElement))
+      {
+         return;
+      }
+
+      let names = [];
+
+      try
+      {
+         const parsed = JSON.parse(block.dataset.participantsJson ?? "[]");
+
+         if(Array.isArray(parsed))
+         {
+            names = parsed
+               .filter(name =>
+                  typeof name === "string" && name.trim() !== "")
+               .map(name => name.trim());
+         }
+      }
+      catch
+      {
+         return;
+      }
+
+      if(names.length === 0)
+      {
+         return;
+      }
+
+      preview.replaceChildren();
+
+      names.forEach(name => {
+         const line = document.createElement("div");
+         line.textContent = name;
+         preview.append(line);
+      });
+      button.remove();
+   }
+
    function createResponsePreview(responseText)
    {
       const preview = responseText
@@ -702,6 +910,71 @@
       }
 
       return `${preview.slice(0, 220)}...`;
+   }
+
+   function initializeParticipationSources(root = document)
+   {
+      const blocks = [];
+
+      if(root instanceof HTMLDetailsElement
+         && root.matches(".broadcast-ai-check-sources"))
+      {
+         blocks.push(root);
+      }
+
+      root.querySelectorAll(".broadcast-ai-check-sources").forEach(block => {
+         blocks.push(block);
+      });
+
+      blocks.forEach(block => {
+         if(!(block instanceof HTMLDetailsElement)
+            || block.dataset.sourceToggleInitialized === "true")
+         {
+            return;
+         }
+
+         block.dataset.sourceToggleInitialized = "true";
+
+         const update = () => {
+            updateParticipationSourcesLabel(block);
+         };
+
+         update();
+         block.addEventListener("toggle", update);
+      });
+   }
+
+   function updateParticipationSourcesLabel(block)
+   {
+      if(!(block instanceof HTMLDetailsElement))
+      {
+         return;
+      }
+
+      const summary = block.querySelector("summary");
+
+      if(!(summary instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const count = getParticipationSourceCount(block);
+
+      summary.textContent =
+         `Sources (${count}) ${block.open ? "-" : "+"}`;
+   }
+
+   function getParticipationSourceCount(block)
+   {
+      if(!(block instanceof HTMLElement))
+      {
+         return 0;
+      }
+
+      return block
+         .querySelectorAll(
+            ".broadcast-ai-check-sources-list a:not([data-run-link='true'])"
+         ).length;
    }
 
    async function generateTeaserAsync(button)

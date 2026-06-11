@@ -174,6 +174,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.id,
             r.status_id,
             r.output_text,
+            r.raw_response::text,
             r.error_message
          from ai_job_runs r
          where r.job_id = @job_id
@@ -208,12 +209,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          var runId = reader.GetGuid(1);
          var statusId = reader.GetString(2);
          var outputText = ReadNullableString(reader, 3);
-         var errorMessage = ReadNullableString(reader, 4);
+         var rawResponseText = ReadNullableString(reader, 4);
+         var errorMessage = ReadNullableString(reader, 5);
 
          checks[broadcastId] = ParseParticipationCheck(
             runId,
             statusId,
             outputText,
+            rawResponseText,
             errorMessage
          );
       }
@@ -521,9 +524,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       Guid runId,
       string statusId,
       string? outputText,
+      string? rawResponseText,
       string? errorMessage
    )
    {
+      var sourceUrls = ParticipationSourceUrlExtractor.Extract(
+         rawResponseText
+      );
+
       if(string.IsNullOrWhiteSpace(outputText))
       {
          return new BroadcastParticipationCheck(
@@ -531,6 +539,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             statusId,
             null,
             [],
+            sourceUrls,
             errorMessage
          );
       }
@@ -589,6 +598,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             statusId,
             participation.GetString(),
             participants,
+            sourceUrls,
             errorMessage
          );
       }
@@ -599,6 +609,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             statusId,
             null,
             [],
+            sourceUrls,
             errorMessage ?? "The model returned invalid JSON."
          );
       }

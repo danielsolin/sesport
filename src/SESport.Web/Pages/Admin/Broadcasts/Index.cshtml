@@ -76,31 +76,6 @@
    else
    {
       <section class="form-section">
-         <form id="generate-activity-form"
-               method="post"
-               asp-page-handler="GenerateActivity">
-            <input type="hidden" name="date" value="@Model.DateText" />
-            <input type="hidden"
-                   name="sortColumn"
-                   value="@Model.SortColumn" />
-            <input type="hidden"
-                   name="sortAsc"
-                   value="@Model.SortAsc.ToString()" />
-            <input type="hidden"
-                   name="returnUrl"
-                   value="@(Request.Path + Request.QueryString)" />
-            @if(Model.HideReplays)
-            {
-               <input type="hidden" name="hideReplays" value="true" />
-            }
-            @foreach(var sport in Model.SelectedSports
-               .Where(value => !string.IsNullOrWhiteSpace(value)))
-            {
-               <input type="hidden"
-                      name="SelectedSports"
-                      value="@sport" />
-            }
-         </form>
          <div class="ses-table-header">
             <div>
                <span data-broadcast-count>
@@ -110,18 +85,9 @@
             </div>
          </div>
          <div class="admin-table-wrap">
-            <table class="admin-table admin-table-hover">
+            <table class="admin-table admin-table-hover broadcasts-table">
                <thead>
                   <tr>
-                     <th>
-                        @* <button type="button"
-                                class="button button-primary"
-                                data-checkbox-toggle="broadcasts"
-                                data-select-label="Select all"
-                                data-unselect-label="Unselect all">
-                           Select all
-                        </button> *@
-                     </th>
                      <th>
                         <a asp-page="./Index"
                            asp-all-route-data=
@@ -156,7 +122,7 @@
                </thead>
                <tbody>
                   @foreach(var broadcast in Model.Broadcasts)
-                  {
+                     {
                      DateOnly? airDate = null;
                      if(broadcast.IsReplay
                         && broadcast.OriginalAirDate != null)
@@ -164,15 +130,6 @@
                         airDate = broadcast.OriginalAirDate.Value;
                      }
                      <tr>
-                        <td class="table-select">
-                           <input
-                              type="checkbox"
-                              name="broadcastIds"
-                              value="@broadcast.Id"
-                              form="generate-activity-form"
-                              data-checkbox-group="broadcasts"
-                           />
-                        </td>
                         <td>
                            <div class="ses-nowrap">
                               @broadcast.ChannelName
@@ -203,7 +160,17 @@
                            }
                         </td>
                         <td>
-                           @broadcast.Categories
+                           <div class="broadcast-categories-list">
+                              @foreach(var category in broadcast.Categories
+                                 .Split(
+                                    ',',
+                                    StringSplitOptions.RemoveEmptyEntries
+                                    | StringSplitOptions.TrimEntries
+                                 ))
+                              {
+                                 <span>@category</span>
+                              }
+                           </div>
                         </td>
                         <td data-swedish-participation-cell
                             data-broadcast-id="@broadcast.Id"
@@ -233,13 +200,6 @@
                                        status-pill-warning">
                                        Error
                                     </span>
-                                    <a asp-page="/Admin/Config/Ai/Runs/Details"
-                                       asp-route-id=
-                                          "@participationCheck.RunId"
-                                       asp-route-jobId=
-                                          "decide-swedish-participation">
-                                       View run
-                                    </a>
                                     <button class="button
                                        broadcast-ai-check-action
                                        broadcast-ai-check-retry"
@@ -254,6 +214,45 @@
                                  <span class="broadcast-ai-check-error">
                                     @participationCheck.ErrorMessage
                                  </span>
+                                 @if(participationCheck.SourceUrls.Count > 0)
+                                 {
+                                    <details class="broadcast-ai-check-sources"
+                                       data-source-count=
+                                          "@participationCheck.SourceUrls.Count">
+                                       <summary>
+                                          <button type="button"
+                                                  class="broadcast-ai-check-participants-more"
+                                                  data-sources-toggle="true">
+                                             Sources (@(
+                                                participationCheck.SourceUrls.Count
+                                             ))
+                                          </button>
+                                       </summary>
+                                       <div class="broadcast-ai-check-sources-list">
+                                          @foreach(
+                                             var sourceUrl in participationCheck.SourceUrls
+                                          )
+                                          {
+                                             <a href="@sourceUrl"
+                                                target="_blank"
+                                                rel="noreferrer noopener"
+                                                title="@sourceUrl">
+                                                @sourceUrl
+                                             </a>
+                                          }
+                                          <a asp-page="/Admin/Config/Ai/Runs/Details"
+                                             asp-route-id=
+                                                "@participationCheck.RunId"
+                                             asp-route-jobId=
+                                                "decide-swedish-participation"
+                                             target="_blank"
+                                             rel="noreferrer noopener"
+                                             data-run-link="true">
+                                             View run
+                                          </a>
+                                       </div>
+                                    </details>
+                                 }
                               </div>
                            }
                            else
@@ -266,13 +265,6 @@
                                           : "status-pill-neutral")">
                                        @participationCheck.BadgeText
                                     </span>
-                                    <a asp-page="/Admin/Config/Ai/Runs/Details"
-                                       asp-route-id=
-                                          "@participationCheck.RunId"
-                                       asp-route-jobId=
-                                          "decide-swedish-participation">
-                                       View run
-                                    </a>
                                     <button class="button
                                        broadcast-ai-check-action
                                        broadcast-ai-check-retry"
@@ -287,74 +279,127 @@
                                  @if(!string.IsNullOrWhiteSpace(
                                     participationCheck.ParticipantsPreview))
                                  {
-                                    <div class="broadcast-ai-check-participants">
-                                       @participationCheck.ParticipantsPreview
-                                    </div>
+                                    @if(participationCheck.HasMoreParticipants)
+                                    {
+                                       <div class="broadcast-ai-check-participants"
+                                            data-participants-json=
+                                               "@System.Text.Json.JsonSerializer.Serialize(
+                                                  participationCheck.SwedishParticipants
+                                               )">
+                                          <span class="broadcast-ai-check-participants-preview">
+                                             @participationCheck.ParticipantsPreviewNames
+                                          </span>
+                                          <button type="button"
+                                                  class="broadcast-ai-check-participants-more">
+                                             +@participationCheck.MoreParticipantsCount more
+                                          </button>
+                                       </div>
+                                    }
+                                    else
+                                    {
+                                       <div class="broadcast-ai-check-participants">
+                                          @participationCheck.ParticipantsPreview
+                                       </div>
+                                    }
+                                 }
+                                 @if(participationCheck.SourceUrls.Count > 0)
+                                 {
+                                    <details class="broadcast-ai-check-sources">
+                                       <summary>
+                                          <button type="button"
+                                                  class="broadcast-ai-check-participants-more"
+                                                  data-sources-toggle="true">
+                                             Sources (@(
+                                                participationCheck.SourceUrls.Count
+                                             ))
+                                          </button>
+                                       </summary>
+                                       <div class="broadcast-ai-check-sources-list">
+                                          @foreach(
+                                             var sourceUrl in participationCheck.SourceUrls
+                                          )
+                                          {
+                                             <a href="@sourceUrl"
+                                                target="_blank"
+                                                rel="noreferrer noopener"
+                                                title="@sourceUrl">
+                                                @sourceUrl
+                                             </a>
+                                          }
+                                          <a asp-page="/Admin/Config/Ai/Runs/Details"
+                                             asp-route-id=
+                                                "@participationCheck.RunId"
+                                             asp-route-jobId=
+                                                "decide-swedish-participation"
+                                             target="_blank"
+                                             rel="noreferrer noopener"
+                                             data-run-link="true">
+                                             View run
+                                          </a>
+                                       </div>
+                                    </details>
                                  }
                               </div>
                            }
                         </td>
                         <td class="table-actions">
-                           <form method="post"
-                                 asp-page-handler="Hide"
-                                 asp-route-id="@broadcast.Id"
-                                 data-ajax-success=
-                                    "@(broadcast.IsHidden ? null : "remove")"
-                                 data-ajax-remove-target=
-                                    "@(broadcast.IsHidden ? null : "tr")"
-                                 data-ajax-decrement-target=
-                                    "@(
-                                       broadcast.IsHidden
-                                          ? null
-                                          : "[data-broadcast-count]"
+                           <div class="table-actions-stack">
+                              <a class="broadcast-activity-link"
+                                 asp-page="/Admin/Activities/Edit"
+                                 asp-all-route-data=
+                                    "@Model.GetActivityRouteValues(
+                                       broadcast.Id
                                     )">
-                              <input type="hidden"
-                                     name="date"
-                                     value="@Model.DateText" />
-                              <input type="hidden"
-                                     name="isHidden"
-                                     value="@broadcast.IsHidden.ToString()" />
-                              <input type="hidden"
-                                     name="sortColumn"
-                                     value="@Model.SortColumn" />
-                              <input type="hidden"
-                                     name="sortAsc"
-                                     value="@Model.SortAsc.ToString()" />
-                              @if(Model.HideReplays)
-                              {
+                                 Activity
+                              </a>
+                              <form method="post"
+                                    asp-page-handler="Hide"
+                                    asp-route-id="@broadcast.Id"
+                                    data-ajax-success=
+                                       "@(broadcast.IsHidden ? null : "remove")"
+                                    data-ajax-remove-target=
+                                       "@(broadcast.IsHidden ? null : "tr")"
+                                    data-ajax-decrement-target=
+                                       "@(
+                                          broadcast.IsHidden
+                                             ? null
+                                             : "[data-broadcast-count]"
+                                       )">
                                  <input type="hidden"
-                                        name="hideReplays"
-                                        value="true" />
-                              }
-                              @foreach(var sport in Model.SelectedSports
-                                 .Where(value =>
-                                    !string.IsNullOrWhiteSpace(value)))
-                              {
+                                        name="date"
+                                        value="@Model.DateText" />
                                  <input type="hidden"
-                                        name="SelectedSports"
-                                        value="@sport" />
-                              }
-                              <button type="submit">
-                                 @(broadcast.IsHidden ? "Show" : "Hide")
-                              </button>
-                           </form>
+                                        name="isHidden"
+                                        value="@broadcast.IsHidden.ToString()" />
+                                 <input type="hidden"
+                                        name="sortColumn"
+                                        value="@Model.SortColumn" />
+                                 <input type="hidden"
+                                        name="sortAsc"
+                                        value="@Model.SortAsc.ToString()" />
+                                 @if(Model.HideReplays)
+                                 {
+                                    <input type="hidden"
+                                           name="hideReplays"
+                                           value="true" />
+                                 }
+                                 @foreach(var sport in Model.SelectedSports
+                                    .Where(value =>
+                                       !string.IsNullOrWhiteSpace(value)))
+                                 {
+                                    <input type="hidden"
+                                           name="SelectedSports"
+                                           value="@sport" />
+                                 }
+                                 <button type="submit">
+                                    @(broadcast.IsHidden ? "Show" : "Hide")
+                                 </button>
+                              </form>
+                           </div>
                         </td>
                      </tr>
                   }
                </tbody>
-               <tfoot hidden
-                      data-visible-when-checkbox-group="broadcasts">
-                  <tr>
-                     <td colspan="6">
-                        <button type="submit"
-                                class="button button-primary"
-                                form="generate-activity-form"
-                                id="generate-activity-button">
-                           Generate Activity
-                        </button>
-                     </td>
-                  </tr>
-               </tfoot>
             </table>
          </div>
       </section>
