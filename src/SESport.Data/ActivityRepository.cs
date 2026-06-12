@@ -9,6 +9,21 @@ namespace SESport.Data;
 
 public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 {
+   private const string TimedOrderClause = """
+      order by
+         a.starts_at nulls last,
+         a.activity_date,
+         a.local_start_time nulls last,
+         a.title
+      """;
+
+   private const string DefaultOrderClause = """
+      order by
+         a.activity_date,
+         a.local_start_time nulls last,
+         a.title
+      """;
+
    public async Task<IReadOnlyList<ActivityListItem>> GetActivitiesAsync(
       DateOnly date,
       string? status,
@@ -21,93 +36,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       var window = SportDay.ForDate(date);
       var start = ToUtc(window.StartDate, window.Cutoff);
       var end = ToUtc(window.EndDateExclusive, window.Cutoff);
-      var sql = new StringBuilder()
-         .AppendLine("select")
-         .AppendLine("   a.id,")
-         .AppendLine("   a.title,")
-         .AppendLine("   a.description,")
-         .AppendLine("   a.teaser,")
-         .AppendLine("   at.label,")
-         .AppendLine("   s.id,")
-         .AppendLine("   s.name,")
-         .AppendLine("   s.icon_id,")
-         .AppendLine("   a.activity_date,")
-         .AppendLine("   a.local_start_time,")
-         .AppendLine("   a.starts_at,")
-         .AppendLine("   a.publication_status_id,")
-         .AppendLine("   a.tv_channel_name,")
-         .AppendLine("   coalesce(")
-         .AppendLine("      string_agg(")
-         .AppendLine("         te.canonical_name,")
-         .AppendLine("         ', ' order by te.canonical_name")
-         .AppendLine("      ),")
-         .AppendLine("      ''")
-         .AppendLine("   ) as entities,")
-         .AppendLine(
-            "   coalesce(rp.related_person_entities, '') as " +
-            "related_person_entities,"
-         )
-         .AppendLine(
-            "   coalesce(ro.related_organization_entities, '') " +
-            "as related_organization_entities"
-         )
-         .AppendLine("from activities a")
-         .AppendLine("join sports s on s.id = a.sport_id")
-         .AppendLine("join activity_types at on at.id = a.activity_type_id")
-         .AppendLine(
-            "left join activity_entity_links l on l.activity_id = a.id"
-         )
-         .AppendLine("left join entities te on te.id = l.entity_id")
-         .AppendLine("left join lateral (")
-         .AppendLine("   select string_agg(")
-         .AppendLine("      distinct p.canonical_name,")
-         .AppendLine("      ', ' order by p.canonical_name")
-         .AppendLine("   ) as related_person_entities")
-         .AppendLine("   from activity_entity_links al")
-         .AppendLine("   join entities p on p.id = al.entity_id")
-         .AppendLine("   where al.activity_id = a.id")
-         .AppendLine(
-            $$"""
-               and p.entity_type_id in (
-                  '{{TrackedEntityTypeIds.Person}}',
-                  '{{TrackedEntityTypeIds.NationalTeam}}',
-                  '{{TrackedEntityTypeIds.Pair}}'
-               )
-            """
-         )
-         .AppendLine(") rp on true")
-         .AppendLine("left join lateral (")
-         .AppendLine("   select string_agg(")
-         .AppendLine("      distinct entity.canonical_name,")
-         .AppendLine("      ', ' order by entity.canonical_name")
-         .AppendLine("   ) as related_organization_entities")
-         .AppendLine("   from activity_entity_links al")
-         .AppendLine("   join entities p on p.id = al.entity_id")
-         .AppendLine("   join entity_to_entity_links el")
-         .AppendLine("      on el.source_entity_id = p.id")
-         .AppendLine("      or el.target_entity_id = p.id")
-         .AppendLine("   join entities entity")
-         .AppendLine("      on entity.id = case")
-         .AppendLine("         when el.source_entity_id = p.id")
-         .AppendLine("            then el.target_entity_id")
-         .AppendLine("         else el.source_entity_id")
-         .AppendLine("      end")
-         .AppendLine("   where al.activity_id = a.id")
-         .AppendLine(
-            $$"""
-               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-            """
-         )
-         .AppendLine(
-            "      and entity.entity_type_id in (" +
-            $"'{TrackedEntityTypeIds.Organization}', " +
-            $"'{TrackedEntityTypeIds.NationalTeam}', " +
-            $"'{TrackedEntityTypeIds.Series}', " +
-            $"'{TrackedEntityTypeIds.Tour}', " +
-            $"'{TrackedEntityTypeIds.League}', " +
-            $"'{TrackedEntityTypeIds.Championship}')"
-         )
-         .AppendLine(") ro on true")
+      var whereClause = new StringBuilder()
          .AppendLine("where (")
          .AppendLine("   (a.starts_at >= @start")
          .AppendLine("      and a.starts_at < @end)")
@@ -123,49 +52,45 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          StringComparison.OrdinalIgnoreCase
       ))
       {
-         sql.AppendLine("   and a.publication_status_id = @status");
+         whereClause.AppendLine("   and a.publication_status_id = @status");
       }
 
       if(normalizedSports.Count > 0)
       {
-         sql.AppendLine("   and a.sport_id = any(@sport_ids)");
+         whereClause.AppendLine("   and a.sport_id = any(@sport_ids)");
       }
 
-      sql.AppendLine("group by a.id, at.label, s.id, s.name, s.icon_id,")
-         .AppendLine(
-            "         a.tv_channel_name, rp.related_person_entities,"
-         )
-         .AppendLine("         ro.related_organization_entities")
-         .AppendLine("order by")
-         .AppendLine("   a.starts_at nulls last,")
-         .AppendLine("   a.activity_date,")
-         .AppendLine("   a.local_start_time nulls last,")
-         .AppendLine("   a.title");
+      return await QueryActivityListAsync(
+         whereClause.ToString(),
+         TimedOrderClause,
+         command =>
+         {
+            command.Parameters.AddWithValue("start", start);
+            command.Parameters.AddWithValue("end", end);
+            command.Parameters.AddWithValue("date", date);
 
-      await using var command = dataSource.CreateCommand(sql.ToString());
-      command.Parameters.AddWithValue("start", start);
-      command.Parameters.AddWithValue("end", end);
-      command.Parameters.AddWithValue("date", date);
+            if(!string.Equals(
+               status,
+               ActivityListStatusIds.All,
+               StringComparison.OrdinalIgnoreCase
+            ))
+            {
+               command.Parameters.AddWithValue(
+                  "status",
+                  status ?? ActivityListStatusIds.All
+               );
+            }
 
-      if(!string.Equals(
-         status,
-         ActivityListStatusIds.All,
-         StringComparison.OrdinalIgnoreCase
-      ))
-      {
-         command.Parameters.AddWithValue("status", status
-            ?? ActivityListStatusIds.All);
-      }
-
-      if(normalizedSports.Count > 0)
-      {
-         command.Parameters.AddWithValue(
-            "sport_ids",
-            normalizedSports.ToArray()
-         );
-      }
-
-      return await ReadActivityListAsync(command, cancellationToken);
+            if(normalizedSports.Count > 0)
+            {
+               command.Parameters.AddWithValue(
+                  "sport_ids",
+                  normalizedSports.ToArray()
+               );
+            }
+         },
+         cancellationToken
+      );
    }
 
    public async Task<IReadOnlyList<ActivityListItem>> GetPublishedAsync(
@@ -234,51 +159,27 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      var sql = CreateActivityListSql($$"""
-         where a.publication_status_id =
-            '{{ActivityPublicationStatusIds.Published}}'
-            and a.starts_at >= @start
-            and a.starts_at < @end
-         """);
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue(
-         "start",
-         ToUtc(window.StartDate, window.Cutoff)
-      );
-      command.Parameters.AddWithValue(
-         "end",
-         ToUtc(window.EndDateExclusive, window.Cutoff)
-      );
-
-      await using var reader = await command.ExecuteReaderAsync(
+      return await QueryActivityListAsync(
+         $$"""
+            where a.publication_status_id =
+               '{{ActivityPublicationStatusIds.Published}}'
+               and a.starts_at >= @start
+               and a.starts_at < @end
+         """,
+         DefaultOrderClause,
+         command =>
+         {
+            command.Parameters.AddWithValue(
+               "start",
+               ToUtc(window.StartDate, window.Cutoff)
+            );
+            command.Parameters.AddWithValue(
+               "end",
+               ToUtc(window.EndDateExclusive, window.Cutoff)
+            );
+         },
          cancellationToken
       );
-      var activities = new List<ActivityListItem>();
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         activities.Add(
-            new ActivityListItem(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               ReadString(reader, 2),
-               ReadString(reader, 3),
-               reader.GetString(4),
-               reader.GetString(5),
-               reader.GetString(6),
-               GetSportIconPath(ReadString(reader, 7)),
-               FormatTime(reader),
-               ReadDateTimeOffset(reader, 10),
-               ReadString(reader, 12),
-               reader.GetString(11),
-               reader.GetString(14),
-               reader.GetString(15)
-            )
-         );
-      }
-
-      return activities;
    }
 
    public async Task<IReadOnlyList<EntityOption>> GetEntityOptionsAsync(
@@ -586,90 +487,131 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var sql = CreateActivityListSql(whereClause);
+      return await QueryActivityListAsync(
+         whereClause,
+         DefaultOrderClause,
+         null,
+         cancellationToken
+      );
+   }
+
+   private async Task<IReadOnlyList<ActivityListItem>> QueryActivityListAsync(
+      string whereClause,
+      string orderClause,
+      Action<NpgsqlCommand>? configureCommand,
+      CancellationToken cancellationToken
+   )
+   {
+      var sql = CreateActivityListSql(whereClause, orderClause);
 
       await using var command = dataSource.CreateCommand(sql);
+      configureCommand?.Invoke(command);
       return await ReadActivityListAsync(command, cancellationToken);
    }
 
-   private static string CreateActivityListSql(string whereClause)
+   private static string CreateActivityListSql(
+      string whereClause,
+      string orderClause
+   )
    {
-      return $$"""
-         select
-            a.id,
-            a.title,
-            a.description,
-            a.teaser,
-            at.label,
-            s.id,
-            s.name,
-            s.icon_id,
-            a.activity_date,
-            a.local_start_time,
-            a.starts_at,
-            a.publication_status_id,
-            a.tv_channel_name,
-            coalesce(
-               string_agg(
-                  te.canonical_name,
-                  ', ' order by te.canonical_name
-               ),
-               ''
-            ) as entities,
-            coalesce(rp.related_person_entities, '') as related_person_entities,
-            coalesce(ro.related_organization_entities, '')
-               as related_organization_entities
-         from activities a
-         join sports s on s.id = a.sport_id
-         join activity_types at on at.id = a.activity_type_id
-         left join activity_entity_links l on l.activity_id = a.id
-         left join entities te on te.id = l.entity_id
-         left join lateral (
-            select string_agg(
-               distinct p.canonical_name,
-               ', ' order by p.canonical_name
-            ) as related_person_entities
-            from activity_entity_links al
-            join entities p on p.id = al.entity_id
-            where al.activity_id = a.id
-               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-         ) rp on true
-         left join lateral (
-            select string_agg(
-               distinct entity.canonical_name,
-               ', ' order by entity.canonical_name
-            ) as related_organization_entities
-            from activity_entity_links al
-            join entities p on p.id = al.entity_id
-            join entity_to_entity_links el
-               on el.source_entity_id = p.id
-               or el.target_entity_id = p.id
-            join entities entity
-               on entity.id = case
-                  when el.source_entity_id = p.id
-                     then el.target_entity_id
-                  else el.source_entity_id
-               end
-            where al.activity_id = a.id
-               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-               and entity.entity_type_id in (
-                  '{{TrackedEntityTypeIds.Organization}}',
+      var builder = new StringBuilder()
+         .AppendLine("select")
+         .AppendLine("   a.id,")
+         .AppendLine("   a.title,")
+         .AppendLine("   a.description,")
+         .AppendLine("   a.teaser,")
+         .AppendLine("   at.label,")
+         .AppendLine("   s.id,")
+         .AppendLine("   s.name,")
+         .AppendLine("   s.icon_id,")
+         .AppendLine("   a.activity_date,")
+         .AppendLine("   a.local_start_time,")
+         .AppendLine("   a.starts_at,")
+         .AppendLine("   a.publication_status_id,")
+         .AppendLine("   a.tv_channel_name,")
+         .AppendLine("   coalesce(")
+         .AppendLine("      string_agg(")
+         .AppendLine("         te.canonical_name,")
+         .AppendLine("         ', ' order by te.canonical_name")
+         .AppendLine("      ),")
+         .AppendLine("      ''")
+         .AppendLine("   ) as entities,")
+         .AppendLine(
+            "   coalesce(rp.related_person_entities, '') as " +
+            "related_person_entities,"
+         )
+         .AppendLine(
+            "   coalesce(ro.related_organization_entities, '') " +
+            "as related_organization_entities"
+         )
+         .AppendLine("from activities a")
+         .AppendLine("join sports s on s.id = a.sport_id")
+         .AppendLine("join activity_types at on at.id = a.activity_type_id")
+         .AppendLine(
+            "left join activity_entity_links l on l.activity_id = a.id"
+         )
+         .AppendLine("left join entities te on te.id = l.entity_id")
+         .AppendLine("left join lateral (")
+         .AppendLine("   select string_agg(")
+         .AppendLine("      distinct p.canonical_name,")
+         .AppendLine("      ', ' order by p.canonical_name")
+         .AppendLine("   ) as related_person_entities")
+         .AppendLine("   from activity_entity_links al")
+         .AppendLine("   join entities p on p.id = al.entity_id")
+         .AppendLine("   where al.activity_id = a.id")
+         .AppendLine(
+            $$"""
+               and p.entity_type_id in (
+                  '{{TrackedEntityTypeIds.Person}}',
                   '{{TrackedEntityTypeIds.NationalTeam}}',
-                  '{{TrackedEntityTypeIds.Series}}',
-                  '{{TrackedEntityTypeIds.Tour}}',
-                  '{{TrackedEntityTypeIds.League}}',
-                  '{{TrackedEntityTypeIds.Championship}}'
+                  '{{TrackedEntityTypeIds.Pair}}'
                )
-         ) ro on true
-         {{whereClause}}
-         group by a.id, at.label, s.id, s.name, s.icon_id,
-                  a.tv_channel_name, rp.related_person_entities,
-                  ro.related_organization_entities
-         order by
-            a.activity_date,
-            a.local_start_time nulls last,
-            a.title
-         """;
+            """
+         )
+         .AppendLine(") rp on true")
+         .AppendLine("left join lateral (")
+         .AppendLine("   select string_agg(")
+         .AppendLine("      distinct entity.canonical_name,")
+         .AppendLine("      ', ' order by entity.canonical_name")
+         .AppendLine("   ) as related_organization_entities")
+         .AppendLine("   from activity_entity_links al")
+         .AppendLine("   join entities p on p.id = al.entity_id")
+         .AppendLine("   join entity_to_entity_links el")
+         .AppendLine("      on el.source_entity_id = p.id")
+         .AppendLine("      or el.target_entity_id = p.id")
+         .AppendLine("   join entities entity")
+         .AppendLine("      on entity.id = case")
+         .AppendLine("         when el.source_entity_id = p.id")
+         .AppendLine("            then el.target_entity_id")
+         .AppendLine("         else el.source_entity_id")
+         .AppendLine("      end")
+         .AppendLine("   where al.activity_id = a.id")
+         .AppendLine(
+            $$"""
+               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            """
+         )
+         .AppendLine(
+            "      and entity.entity_type_id in (" +
+            $"'{TrackedEntityTypeIds.Organization}', " +
+            $"'{TrackedEntityTypeIds.NationalTeam}', " +
+            $"'{TrackedEntityTypeIds.Series}', " +
+            $"'{TrackedEntityTypeIds.Tour}', " +
+            $"'{TrackedEntityTypeIds.League}', " +
+            $"'{TrackedEntityTypeIds.Championship}')"
+         )
+         .AppendLine(") ro on true")
+         .AppendLine(whereClause)
+         .AppendLine(
+            "group by a.id, at.label, s.id, s.name, s.icon_id,"
+         )
+         .AppendLine(
+            "         a.tv_channel_name, rp.related_person_entities,"
+         )
+         .AppendLine("         ro.related_organization_entities")
+         .AppendLine(orderClause);
+
+      return builder.ToString();
    }
 
    private static async Task InsertActivityAsync(
