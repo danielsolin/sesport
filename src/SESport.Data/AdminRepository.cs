@@ -165,6 +165,34 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
    public IReadOnlyList<AdminNavGroup> GetConfigNavigationGroups()
    {
+      var referenceItems = GetReferenceNavigationItems()
+         .Select(item => new AdminNavItem(item.Title, item.Href))
+         .ToList();
+      var activityTypesIndex = referenceItems.FindIndex(item =>
+         string.Equals(
+            item.Title,
+            "Activity types",
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+
+      var broadcastIgnoreRulesItem = new AdminNavItem(
+         "Broadcast Ignore Rules",
+         "/Admin/Config/BroadcastIgnoreRules"
+      );
+
+      if(activityTypesIndex >= 0)
+      {
+         referenceItems.Insert(
+            activityTypesIndex + 1,
+            broadcastIgnoreRulesItem
+         );
+      }
+      else
+      {
+         referenceItems.Add(broadcastIgnoreRulesItem);
+      }
+
       return
       [
          new AdminNavGroup(
@@ -178,9 +206,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          ),
          new AdminNavGroup(
             "Reference tables",
-            GetReferenceNavigationItems()
-               .Select(item => new AdminNavItem(item.Title, item.Href))
-               .ToList()
+            referenceItems
          )
       ];
    }
@@ -265,6 +291,39 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       }
 
       return rows;
+   }
+
+   public async Task<IReadOnlyList<BroadcastIgnoreRuleListItem>>
+      GetBroadcastIgnoreRulesAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select kind, value, source_key, reason, is_active
+         from broadcast_ignore
+         order by kind, value, source_key nulls first
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var rules = new List<BroadcastIgnoreRuleListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         rules.Add(
+            new BroadcastIgnoreRuleListItem(
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.IsDBNull(2) ? null : reader.GetString(2),
+               reader.IsDBNull(3) ? null : reader.GetString(3),
+               reader.GetBoolean(4)
+            )
+         );
+      }
+
+      return rules;
    }
 
    public async Task<IReadOnlyList<CountryReferenceRow>>
@@ -425,6 +484,51 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       };
    }
 
+   public async Task<BroadcastIgnoreRuleEditModel?>
+      GetBroadcastIgnoreRuleForEditAsync(
+         string kind,
+         string value,
+         string? sourceKey,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select kind, value, source_key, reason, is_active
+         from broadcast_ignore
+         where kind = @kind
+            and value = @value
+            and source_key is not distinct from @source_key
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("kind", kind);
+      command.Parameters.AddWithValue("value", value);
+      command.Parameters.AddWithValue(
+         "source_key",
+         (object?)NormalizeNullable(sourceKey) ?? DBNull.Value
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new BroadcastIgnoreRuleEditModel
+      {
+         OriginalKind = reader.GetString(0),
+         OriginalValue = reader.GetString(1),
+         OriginalSourceKey = reader.IsDBNull(2) ? null : reader.GetString(2),
+         Kind = reader.GetString(0),
+         Value = reader.GetString(1),
+         SourceKey = reader.IsDBNull(2) ? null : reader.GetString(2),
+         Reason = reader.IsDBNull(3) ? null : reader.GetString(3),
+         IsActive = reader.GetBoolean(4)
+      };
+   }
+
    public async Task SaveReferenceAsync(
       string tableKey,
       ReferenceEditModel model,
@@ -570,6 +674,70 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task SaveBroadcastIgnoreRuleAsync(
+      BroadcastIgnoreRuleEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      var isNew = string.IsNullOrWhiteSpace(model.OriginalKind);
+      var kind = model.Kind.Trim();
+      var value = model.Value.Trim();
+      var sourceKey = NormalizeNullable(model.SourceKey);
+      var reason = NormalizeNullable(model.Reason);
+
+      var sql = isNew
+         ? """
+            insert into broadcast_ignore (
+               id, kind, value, source_key, reason, is_active
+            )
+            values (
+               @id, @kind, @value, @source_key, @reason, @is_active
+            )
+            """
+         : """
+            update broadcast_ignore
+            set
+               kind = @kind,
+               value = @value,
+               source_key = @source_key,
+               reason = @reason,
+               is_active = @is_active
+            where kind = @original_kind
+               and value = @original_value
+               and source_key is not distinct from @original_source_key
+            """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      if(isNew)
+      {
+         command.Parameters.AddWithValue("id", Guid.NewGuid());
+      }
+      command.Parameters.AddWithValue("kind", kind);
+      command.Parameters.AddWithValue("value", value);
+      command.Parameters.AddWithValue(
+         "source_key",
+         (object?)sourceKey ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "reason",
+         (object?)reason ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue("is_active", model.IsActive);
+      command.Parameters.AddWithValue(
+         "original_kind",
+         model.OriginalKind ?? string.Empty
+      );
+      command.Parameters.AddWithValue(
+         "original_value",
+         model.OriginalValue ?? string.Empty
+      );
+      command.Parameters.AddWithValue(
+         "original_source_key",
+         (object?)NormalizeNullable(model.OriginalSourceKey) ?? DBNull.Value
+      );
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task DeleteReferenceAsync(
       string tableKey,
       string id,
@@ -605,6 +773,35 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task DeleteBroadcastIgnoreRuleAsync(
+      string kind,
+      string value,
+      string? sourceKey,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from broadcast_ignore
+         where kind = @kind
+            and value = @value
+            and source_key is not distinct from @source_key
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("kind", kind);
+      command.Parameters.AddWithValue("value", value);
+      command.Parameters.AddWithValue(
+         "source_key",
+         (object?)NormalizeNullable(sourceKey) ?? DBNull.Value
+      );
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   private static string? NormalizeNullable(string? value)
+   {
+      return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
    }
 
    public async Task<IReadOnlyList<SourceListItem>> GetSourcesAsync(

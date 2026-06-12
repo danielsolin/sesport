@@ -36,6 +36,14 @@ public sealed record ReferenceRow(
    bool? IsActive
 );
 
+public sealed record BroadcastIgnoreRuleListItem(
+   string Kind,
+   string Value,
+   string? SourceKey,
+   string? Reason,
+   bool IsActive
+);
+
 public sealed class ReferenceEditModel
 {
    public string? OriginalId { get; set; }
@@ -45,6 +53,25 @@ public sealed class ReferenceEditModel
    public string Label { get; set; } = string.Empty;
 
    public int? SortOrder { get; set; }
+
+   public bool IsActive { get; set; } = true;
+}
+
+public sealed class BroadcastIgnoreRuleEditModel
+{
+   public string? OriginalKind { get; set; }
+
+   public string? OriginalValue { get; set; }
+
+   public string? OriginalSourceKey { get; set; }
+
+   public string Kind { get; set; } = string.Empty;
+
+   public string Value { get; set; } = string.Empty;
+
+   public string? SourceKey { get; set; }
+
+   public string? Reason { get; set; }
 
    public bool IsActive { get; set; } = true;
 }

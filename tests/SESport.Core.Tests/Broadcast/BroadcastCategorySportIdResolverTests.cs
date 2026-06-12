@@ -15,6 +15,26 @@ public sealed class BroadcastCategorySportIdResolverTests
    }
 
    [Fact]
+   public void ResolveSportIdReturnsFootballForEnglishCategory()
+   {
+      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
+         ["Football"]
+      );
+
+      Assert.Equal("football", sportId);
+   }
+
+   [Fact]
+   public void ResolveSportIdSplitsCombinedCategories()
+   {
+      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
+         ["Fotboll, Fotbolls-VM 2026, Grupp F"]
+      );
+
+      Assert.Equal("football", sportId);
+   }
+
+   [Fact]
    public void ResolveSportIdReturnsMultiSportForCyclingCategory()
    {
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(

@@ -1,0 +1,69 @@
+@page
+@model SESport.Web.Pages.Admin.Config.BroadcastIgnoreRules.EditModel
+@{
+   ViewData["Title"] = "Broadcast Ignore Rule";
+}
+
+<div class="page-heading page-heading-row compact-heading">
+   <div>
+      <h2>Broadcast Ignore Rule</h2>
+      <p>Create or update an ignore rule.</p>
+   </div>
+</div>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <input asp-for="Rule.OriginalKind" type="hidden" />
+   <input asp-for="Rule.OriginalValue" type="hidden" />
+   <input asp-for="Rule.OriginalSourceKey" type="hidden" />
+
+   <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
+
+   <section class="form-section">
+      <h2>Rule</h2>
+      <div class="form-grid">
+         <label>
+            <span>Kind</span>
+            <input asp-for="Rule.Kind" />
+            <span asp-validation-for="Rule.Kind"></span>
+         </label>
+         <label>
+            <span>Value</span>
+            <input asp-for="Rule.Value" />
+            <span asp-validation-for="Rule.Value"></span>
+         </label>
+         <label>
+            <span>Source key</span>
+            <input asp-for="Rule.SourceKey" />
+         </label>
+         <label>
+            <span>Reason</span>
+            <textarea asp-for="Rule.Reason" rows="3"></textarea>
+         </label>
+      </div>
+   </section>
+
+   <section class="form-section">
+      <label class="check-row">
+         <input asp-for="Rule.IsActive" type="checkbox" />
+         <span>Active</span>
+      </label>
+   </section>
+
+   <section class="form-actions">
+      <a class="button"
+         asp-page="./Index">
+         Cancel
+      </a>
+      <button class="button button-primary"
+              type="submit">
+         Save
+      </button>
+   </section>
+</form>

@@ -10,6 +10,7 @@ public static class BroadcastCategorySportIdResolver
    )
    {
       var normalizedCategories = categories
+         .SelectMany(SplitCategories)
          .Select(NormalizeCategoryKey)
          .Where(category => !string.IsNullOrWhiteSpace(category))
          .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -44,6 +45,7 @@ public static class BroadcastCategorySportIdResolver
          case "golf":
             sportId = "golf";
             return true;
+         case "football":
          case "fotboll":
             sportId = "football";
             return true;
@@ -96,6 +98,14 @@ public static class BroadcastCategorySportIdResolver
 
       sportId = string.Empty;
       return false;
+   }
+
+   private static IEnumerable<string> SplitCategories(string value)
+   {
+      return value.Split(
+         ',',
+         StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
+      );
    }
 
    private static bool TryGetGenericSportId(

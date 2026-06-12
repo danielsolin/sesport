@@ -1,0 +1,66 @@
+@page
+@model SESport.Web.Pages.Admin.Config.BroadcastIgnoreRules.IndexModel
+@{
+   ViewData["Title"] = "Broadcast Ignore Rules";
+}
+
+<div class="page-heading page-heading-row compact-heading">
+   <div>
+      <h2>Broadcast Ignore Rules</h2>
+      <p>Rules that remove imported broadcasts before save.</p>
+   </div>
+   <a class="button button-primary"
+      asp-page="./Edit">
+      New rule
+   </a>
+</div>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Kind</th>
+            <th>Value</th>
+            <th>Source key</th>
+            <th>Active</th>
+            <th>Reason</th>
+            <th></th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach(var rule in Model.Rules)
+         {
+            <tr>
+               <td><code>@rule.Kind</code></td>
+               <td>@rule.Value</td>
+               <td><code>@(rule.SourceKey ?? "")</code></td>
+               <td>@rule.IsActive</td>
+               <td>@(rule.Reason ?? "")</td>
+               <td class="table-actions">
+                  <a asp-page="./Edit"
+                     asp-route-kind="@rule.Kind"
+                     asp-route-value="@rule.Value"
+                     asp-route-sourceKey="@rule.SourceKey">
+                     Edit
+                  </a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-kind="@rule.Kind"
+                        asp-route-value="@rule.Value"
+                        asp-route-sourceKey="@rule.SourceKey"
+                        onsubmit="return confirm('Sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

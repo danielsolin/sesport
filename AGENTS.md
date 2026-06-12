@@ -35,6 +35,11 @@ import:
 - Ensure PostgreSQL is running and migrated before running the web app or
   import tools (PostgreSQL must be started via Docker in WSL if Docker is only
   available there)
+- Known build issue: `dotnet build SESport.sln` can fail in this
+  environment during restore with missing workload SDK resolvers,
+  including `Microsoft.NET.SDK.WorkloadAutoImportPropsLocator`.
+  When that happens, verify with project tests or per-project builds
+  instead of re-investigating the same restore failure.
 - Hard rule: No lines in any file should exceed 80 characters wide unless it's
   required for the file to work.
 - Hard rule: All conversations/chats in Swedish, but everything produced for

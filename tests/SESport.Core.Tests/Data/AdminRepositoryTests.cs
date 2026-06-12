@@ -85,6 +85,71 @@ public sealed class AdminRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task SaveBroadcastIgnoreRuleAsyncPersistsRule()
+   {
+      var ruleKind = "channel_name";
+      var ruleValue = $"Test Ignore {Guid.NewGuid():N}";
+      var sourceKey = "iptv-epg-se";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      var model = new BroadcastIgnoreRuleEditModel
+      {
+         Kind = ruleKind,
+         Value = ruleValue,
+         SourceKey = sourceKey,
+         Reason = "Test coverage",
+         IsActive = true
+      };
+
+      try
+      {
+         await repository.SaveBroadcastIgnoreRuleAsync(
+            model,
+            CancellationToken.None
+         );
+
+         var rules = await repository.GetBroadcastIgnoreRulesAsync(
+            CancellationToken.None
+         );
+
+         Assert.Contains(
+            rules,
+            rule =>
+               rule.Kind == ruleKind &&
+               rule.Value == ruleValue &&
+               rule.SourceKey == sourceKey &&
+               rule.Reason == "Test coverage" &&
+               rule.IsActive
+         );
+
+         var loaded = await repository.GetBroadcastIgnoreRuleForEditAsync(
+            ruleKind,
+            ruleValue,
+            sourceKey,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(loaded);
+         Assert.Equal(ruleKind, loaded!.Kind);
+         Assert.Equal(ruleValue, loaded.Value);
+         Assert.Equal(sourceKey, loaded.SourceKey);
+         Assert.Equal("Test coverage", loaded.Reason);
+         Assert.True(loaded.IsActive);
+      }
+      finally
+      {
+         await repository.DeleteBroadcastIgnoreRuleAsync(
+            ruleKind,
+            ruleValue,
+            sourceKey,
+            CancellationToken.None
+         );
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString =
