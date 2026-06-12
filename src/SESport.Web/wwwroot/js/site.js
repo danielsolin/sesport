@@ -10,6 +10,7 @@
       "[data-check-swedish-participation-row]";
    const participationCellSelector = "[data-swedish-participation-cell]";
    const participantCreateUrlSelector = "[data-create-participant-url]";
+   const currentMarkerSelector = "#activity-now-marker";
    const pendingParticipationIds = new Set();
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
@@ -27,6 +28,7 @@
    initializeParticipationMoreButtons();
    initializeParticipationSources();
    initializeBroadcastParticipationRowChecks();
+   initializeCurrentMarkerScroll();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -314,6 +316,35 @@
          button.addEventListener("click", async () => {
             await checkParticipationRowAsync(button);
          });
+      });
+   }
+
+   function initializeCurrentMarkerScroll()
+   {
+      const marker = document.querySelector(currentMarkerSelector);
+
+      if(!(marker instanceof HTMLElement)
+         || marker.dataset.currentMarkerScrollInitialized === "true")
+      {
+         return;
+      }
+
+      marker.dataset.currentMarkerScrollInitialized = "true";
+
+      const scroll = () => {
+         marker.scrollIntoView({
+            behavior: window.matchMedia(
+               "(prefers-reduced-motion: reduce)"
+            ).matches
+               ? "auto"
+               : "smooth",
+            block: "start",
+            inline: "nearest"
+         });
+      };
+
+      window.requestAnimationFrame(() => {
+         window.requestAnimationFrame(scroll);
       });
    }
 

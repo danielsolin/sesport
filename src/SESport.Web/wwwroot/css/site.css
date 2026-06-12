@@ -246,6 +246,7 @@ h2 {
    align-items: center;
    gap: 12px;
    margin: 4px 0 2px;
+   scroll-margin-top: 24px;
 }
 
 .activity-now-marker-line {
