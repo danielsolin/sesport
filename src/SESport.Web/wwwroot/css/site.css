@@ -131,6 +131,8 @@ a:hover {
    justify-content: flex-start;
    gap: 18px;
    width: min(974px, 100%);
+   margin-left: auto;
+   margin-right: auto;
    margin-bottom: 28px;
 }
 
@@ -234,6 +236,9 @@ h2 {
 .activity-agenda {
    display: grid;
    gap: 14px;
+   width: min(974px, 100%);
+   margin-left: auto;
+   margin-right: auto;
 }
 
 .activity-now-marker {
