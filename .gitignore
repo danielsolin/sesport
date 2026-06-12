@@ -5,3 +5,4 @@
 *.swp
 docs/TODO.md
 artifacts/publish-dev/
+.worktale/
