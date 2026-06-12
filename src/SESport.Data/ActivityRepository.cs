@@ -100,8 +100,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "      and entity.entity_type_id in (" +
-            "'Organization', 'NationalTeam', 'Tour', " +
-            "'League', 'Championship')"
+            $"'{TrackedEntityTypeIds.Organization}', " +
+            $"'{TrackedEntityTypeIds.NationalTeam}', " +
+            $"'{TrackedEntityTypeIds.Series}', " +
+            $"'{TrackedEntityTypeIds.Tour}', " +
+            $"'{TrackedEntityTypeIds.League}', " +
+            $"'{TrackedEntityTypeIds.Championship}')"
          )
          .AppendLine(") ro on true")
          .AppendLine("where (")
@@ -306,12 +310,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and linked.entity_type_id in
                   (
-                     'Team',
-                     'NationalTeam',
-                     'Series',
-                     'Tour',
-                     'League',
-                     'Championship'
+                     '{{TrackedEntityTypeIds.Team}}',
+                     '{{TrackedEntityTypeIds.NationalTeam}}',
+                     '{{TrackedEntityTypeIds.Series}}',
+                     '{{TrackedEntityTypeIds.Tour}}',
+                     '{{TrackedEntityTypeIds.League}}',
+                     '{{TrackedEntityTypeIds.Championship}}'
                   )
          ) org on true
          order by e.canonical_name
@@ -651,10 +655,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and entity.entity_type_id in (
                   '{{TrackedEntityTypeIds.Organization}}',
                   '{{TrackedEntityTypeIds.NationalTeam}}',
-                  'Series',
-                  'Tour',
-                  'League',
-                  'Championship'
+                  '{{TrackedEntityTypeIds.Series}}',
+                  '{{TrackedEntityTypeIds.Tour}}',
+                  '{{TrackedEntityTypeIds.League}}',
+                  '{{TrackedEntityTypeIds.Championship}}'
                )
          ) ro on true
          {{whereClause}}

@@ -40,6 +40,8 @@ import:
   including `Microsoft.NET.SDK.WorkloadAutoImportPropsLocator`.
   When that happens, verify with project tests or per-project builds
   instead of re-investigating the same restore failure.
+- Hard rule: Avoid magic strings where practical. Prefer shared constants,
+  enums, or helpers such as `TrackedEntityTypeIds`.
 - Hard rule: No lines in any file should exceed 80 characters wide unless it's
   required for the file to work.
 - Hard rule: All conversations/chats in Swedish, but everything produced for
