@@ -9,7 +9,7 @@ using SESport.AI.Validation;
 
 namespace SESport.AI.Providers;
 
-public sealed class LmStudioResponsesAiProviderClient : IAiProviderClient
+public sealed class LmStudioClient : IAiProviderClient
 {
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
@@ -20,7 +20,7 @@ public sealed class LmStudioResponsesAiProviderClient : IAiProviderClient
 
    public string Kind => "lmstudio";
 
-   public LmStudioResponsesAiProviderClient(HttpClient httpClient)
+   public LmStudioClient(HttpClient httpClient)
    {
       HttpClient = httpClient;
    }

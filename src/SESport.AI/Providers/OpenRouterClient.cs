@@ -8,8 +8,7 @@ using SESport.AI.Models;
 
 namespace SESport.AI.Providers;
 
-public sealed class OpenRouterResponsesAiProviderClient
-   : IAiProviderClient
+public sealed class OpenRouterClient : IAiProviderClient
 {
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
@@ -20,7 +19,7 @@ public sealed class OpenRouterResponsesAiProviderClient
 
    public string Kind => "openrouter";
 
-   public OpenRouterResponsesAiProviderClient(HttpClient httpClient)
+   public OpenRouterClient(HttpClient httpClient)
    {
       HttpClient = httpClient;
    }

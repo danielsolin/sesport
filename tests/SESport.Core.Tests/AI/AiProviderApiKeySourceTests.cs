@@ -11,9 +11,7 @@ public class AiProviderApiKeySourceTests
    public async Task LmStudioUsesInlineApiKeySource()
    {
       var handler = new RecordingHandler();
-      var client = new LmStudioResponsesAiProviderClient(new HttpClient(
-         handler
-      ));
+      var client = new LmStudioClient(new HttpClient(handler));
       var provider = CreateProvider("key:secret-token");
 
       await client.GenerateAsync(
@@ -37,9 +35,7 @@ public class AiProviderApiKeySourceTests
       try
       {
          var handler = new RecordingHandler();
-         var client = new OpenRouterResponsesAiProviderClient(
-            new HttpClient(handler)
-         );
+         var client = new OpenRouterClient(new HttpClient(handler));
          var provider = CreateProvider(
             "environment:LMSTUDIO_API_KEY",
             "openrouter"

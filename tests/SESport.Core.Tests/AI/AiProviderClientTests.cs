@@ -6,7 +6,7 @@ using SESport.AI.Providers;
 
 namespace SESport.Core.Tests.AI;
 
-public class ResponsesAiProviderClientTests
+public class AiProviderClientTests
 {
    [Fact]
    public async Task LmStudioGenerateAsyncUsesResponsesEnvelope()
@@ -14,9 +14,7 @@ public class ResponsesAiProviderClientTests
       var handler = new RecordingHandler(
          CreateReasoningResponseJson("KLM Open spelas i Amsterdam.")
       );
-      var client = new LmStudioResponsesAiProviderClient(
-         new HttpClient(handler)
-      );
+      var client = new LmStudioClient(new HttpClient(handler));
 
       var result = await client.GenerateAsync(
          CreateProvider("lmstudio"),
@@ -39,9 +37,7 @@ public class ResponsesAiProviderClientTests
       var handler = new RecordingHandler(
          CreateChatResponseJson("{\"ok\":true}")
       );
-      var client = new OpenRouterResponsesAiProviderClient(
-         new HttpClient(handler)
-      );
+      var client = new OpenRouterClient(new HttpClient(handler));
 
       var result = await client.GenerateAsync(
          CreateProvider("openrouter"),
@@ -69,9 +65,7 @@ public class ResponsesAiProviderClientTests
       var handler = new RecordingHandler(
          CreateChatResponseJson("{\"ok\":true}")
       );
-      var client = new OpenRouterResponsesAiProviderClient(
-         new HttpClient(handler)
-      );
+      var client = new OpenRouterClient(new HttpClient(handler));
 
       await client.GenerateAsync(
          CreateProvider("openrouter"),

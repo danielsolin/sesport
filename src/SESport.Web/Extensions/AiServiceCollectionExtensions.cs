@@ -20,14 +20,14 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<IAiJobRunner, AiJobRunner>();
       services.AddHttpClient<
          IAiProviderClient,
-         OpenRouterResponsesAiProviderClient
+         OpenRouterClient
       >(client =>
       {
          client.Timeout = TimeSpan.FromSeconds(300);
       });
       services.AddHttpClient<
          IAiProviderClient,
-         LmStudioResponsesAiProviderClient
+         LmStudioClient
       >();
 
       return services;
