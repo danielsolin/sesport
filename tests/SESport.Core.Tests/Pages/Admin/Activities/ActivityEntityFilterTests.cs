@@ -1,6 +1,5 @@
-using SESport.Data;
 using SESport.Core.Domain;
-using SESport.Web.Pages.Admin.Activities;
+using SESport.Core.Broadcast;
 
 namespace SESport.Core.Tests.Pages.Admin.Activities;
 
@@ -11,28 +10,28 @@ public sealed class ActivityEntityFilterTests
    {
       var entities = new[]
       {
-         new EntityOption(
+         new BroadcastEntityOption(
             Guid.NewGuid(),
             "Alice",
             TrackedEntityTypeIds.Person,
             "Tennis",
             "Team A"
          ),
-         new EntityOption(
+         new BroadcastEntityOption(
             Guid.NewGuid(),
             "Sweden",
             TrackedEntityTypeIds.NationalTeam,
             "Tennis",
             ""
          ),
-         new EntityOption(
+         new BroadcastEntityOption(
             Guid.NewGuid(),
             "Club",
             "Organization",
             "Tennis",
             ""
          ),
-         new EntityOption(
+         new BroadcastEntityOption(
             Guid.NewGuid(),
             "Bob",
             TrackedEntityTypeIds.Person,
@@ -41,7 +40,7 @@ public sealed class ActivityEntityFilterTests
          )
       };
 
-      var filtered = ActivityEntityFilter.FilterSelectableEntities(entities);
+      var filtered = BroadcastEntityFilter.FilterSelectableEntities(entities);
 
       Assert.Equal(3, filtered.Count);
       Assert.All(
@@ -62,7 +61,7 @@ public sealed class ActivityEntityFilterTests
       var linneaId = Guid.NewGuid();
       var entities = new[]
       {
-         new EntityOption(
+         new BroadcastEntityOption(
             linneaId,
             "Linnea Ström",
             TrackedEntityTypeIds.Person,
@@ -71,7 +70,7 @@ public sealed class ActivityEntityFilterTests
          )
       };
 
-      var matched = ActivityEntityFilter.MatchPersonEntityIds(
+      var matched = BroadcastEntityFilter.MatchPersonEntityIds(
          entities,
          ["Linnea Strom"]
       );

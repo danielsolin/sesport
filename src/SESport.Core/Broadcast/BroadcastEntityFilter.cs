@@ -1,14 +1,13 @@
 using System.Globalization;
 using System.Text;
-using SESport.Data;
 using SESport.Core.Domain;
 
-namespace SESport.Web.Pages.Admin.Activities;
+namespace SESport.Core.Broadcast;
 
-internal static class ActivityEntityFilter
+public static class BroadcastEntityFilter
 {
-   internal static IReadOnlyList<EntityOption> FilterSelectableEntities(
-      IEnumerable<EntityOption> entities
+   public static IReadOnlyList<BroadcastEntityOption> FilterSelectableEntities(
+      IEnumerable<BroadcastEntityOption> entities
    )
    {
       return entities
@@ -18,8 +17,8 @@ internal static class ActivityEntityFilter
          .ToList();
    }
 
-   internal static IReadOnlyList<Guid> MatchPersonEntityIds(
-      IEnumerable<EntityOption> entities,
+   public static IReadOnlyList<Guid> MatchPersonEntityIds(
+      IEnumerable<BroadcastEntityOption> entities,
       IReadOnlyCollection<string> participantNames
    )
    {

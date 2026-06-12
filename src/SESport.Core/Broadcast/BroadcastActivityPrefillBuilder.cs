@@ -1,14 +1,14 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using SESport.Core.Broadcast;
-using SESport.Data;
+using SESport.Core.Domain;
+using SESport.Core.Formatting;
 
-namespace SESport.Web.Pages.Admin.Activities;
+namespace SESport.Core.Broadcast;
 
-internal static class ActivityBroadcastPrefillBuilder
+public static class BroadcastActivityPrefillBuilder
 {
-   internal static IReadOnlyList<Guid> NormalizeBroadcastIds(
+   public static IReadOnlyList<Guid> NormalizeBroadcastIds(
       IEnumerable<Guid> ids
    )
    {
@@ -19,8 +19,8 @@ internal static class ActivityBroadcastPrefillBuilder
          .ToList();
    }
 
-   internal static IReadOnlyList<Guid> SelectLinkedEntityIds(
-      IReadOnlyList<EntityOption> entities,
+   public static IReadOnlyList<Guid> SelectLinkedEntityIds(
+      IReadOnlyList<BroadcastEntityOption> entities,
       BroadcastParticipationCheck? participationCheck
    )
    {
@@ -30,15 +30,15 @@ internal static class ActivityBroadcastPrefillBuilder
          return [];
       }
 
-      return ActivityEntityFilter.MatchPersonEntityIds(
+      return BroadcastEntityFilter.MatchPersonEntityIds(
          entities,
          participationCheck.SwedishParticipants
       );
    }
 
-   internal static string CreateActivityTitle(
+   public static string CreateActivityTitle(
       BroadcastActivitySource broadcast,
-      IReadOnlyList<EntityOption> entities,
+      IReadOnlyList<BroadcastEntityOption> entities,
       BroadcastParticipationCheck? participationCheck
    )
    {
@@ -47,22 +47,22 @@ internal static class ActivityBroadcastPrefillBuilder
          participationCheck
       );
 
-      if(organizationNames.Count == 0)
+      var cleanedTitle = organizationNames.Count == 0
+         ? broadcast.Title.Trim()
+         : RemoveRedundantOrganizationNames(
+            broadcast.Title,
+            organizationNames
+         );
+
+      if(string.IsNullOrWhiteSpace(cleanedTitle))
       {
-         return broadcast.Title.Trim();
+         cleanedTitle = broadcast.Title.Trim();
       }
 
-      var cleanedTitle = RemoveRedundantOrganizationNames(
-         broadcast.Title,
-         organizationNames
-      );
-
-      return string.IsNullOrWhiteSpace(cleanedTitle)
-         ? broadcast.Title.Trim()
-         : cleanedTitle;
+      return NormalizeShoutedTitle(cleanedTitle);
    }
 
-   internal static string CreateEvidenceComment(
+   public static string CreateEvidenceComment(
       BroadcastActivitySource broadcast,
       BroadcastParticipationCheck? participationCheck
    )
@@ -99,7 +99,7 @@ internal static class ActivityBroadcastPrefillBuilder
    }
 
    private static IReadOnlyList<string> GetSelectedOrganizationNames(
-      IReadOnlyList<EntityOption> entities,
+      IReadOnlyList<BroadcastEntityOption> entities,
       BroadcastParticipationCheck? participationCheck
    )
    {
@@ -109,7 +109,7 @@ internal static class ActivityBroadcastPrefillBuilder
          return [];
       }
 
-      var matchedEntityIds = ActivityEntityFilter.MatchPersonEntityIds(
+      var matchedEntityIds = BroadcastEntityFilter.MatchPersonEntityIds(
          entities,
          participationCheck.SwedishParticipants
       );
@@ -279,6 +279,82 @@ internal static class ActivityBroadcastPrefillBuilder
       return cleaned.Trim();
    }
 
+   private static string NormalizeShoutedTitle(string value)
+   {
+      var trimmed = CleanTitle(value);
+
+      if(!LooksShouted(trimmed))
+      {
+         return trimmed;
+      }
+
+      var lowered = trimmed.ToLowerInvariant();
+      var words = Regex.Replace(
+         lowered,
+         @"\b[\p{L}\p{Nd}]+\b",
+         match => FormatShoutedWord(match.Value)
+      );
+
+      return CleanTitle(words);
+   }
+
+   private static bool LooksShouted(string value)
+   {
+      var letterCount = 0;
+      var uppercaseCount = 0;
+
+      foreach(var character in value)
+      {
+         if(!char.IsLetter(character))
+         {
+            continue;
+         }
+
+         letterCount++;
+
+         if(char.IsUpper(character))
+         {
+            uppercaseCount++;
+         }
+      }
+
+      return letterCount >= 4 && uppercaseCount >= letterCount * 3 / 4;
+   }
+
+   private static string FormatShoutedWord(string value)
+   {
+      var upper = value.ToUpperInvariant();
+
+      if(KnownAcronyms.Contains(upper))
+      {
+         return upper;
+      }
+
+      return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(value);
+   }
+
+   private static readonly ISet<string> KnownAcronyms =
+      new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+      {
+         "ATP",
+         "DTM",
+         "F1",
+         "F2",
+         "F3",
+         "GT",
+         "IMSA",
+         "LPGA",
+         "NBA",
+         "NFL",
+         "NHL",
+         "PGA",
+         "UCI",
+         "UFC",
+         "WEC",
+         "WRC",
+         "WTA"
+      };
+
    private static NormalizedText NormalizeTextWithMap(string value)
    {
       var builder = new StringBuilder(value.Length);
@@ -338,8 +414,14 @@ internal static class ActivityBroadcastPrefillBuilder
 
    private static string CreateBroadcastSummary(BroadcastActivitySource broadcast)
    {
-      var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
-      var localEnd = BroadcastRepository.ToLocal(broadcast.EndsAt);
+      var localStart = TimeZoneHelper.ToLocal(
+         broadcast.StartsAt,
+         SportDay.TimeZoneId
+      );
+      var localEnd = TimeZoneHelper.ToLocal(
+         broadcast.EndsAt,
+         SportDay.TimeZoneId
+      );
 
       return string.Join(
          " ",

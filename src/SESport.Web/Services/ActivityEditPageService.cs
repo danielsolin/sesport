@@ -7,8 +7,6 @@ using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
-using SESport.Web.Formatting;
-using SESport.Web.Pages.Admin.Activities;
 
 namespace SESport.Web.Services;
 
@@ -114,7 +112,7 @@ public sealed class ActivityEditPageService(
 
       activity.BroadcastIds = [firstBroadcast.Id];
       activity.TvChannelName = firstBroadcast.ChannelName;
-      activity.Title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+      activity.Title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
          firstBroadcast,
          selectableEntities,
          participationCheck
@@ -127,11 +125,11 @@ public sealed class ActivityEditPageService(
             firstBroadcast.Categories
          )?.ToString() ?? ActivityType.Match.ToString();
       activity.IsPublished = true;
-      activity.EvidenceComment = ActivityBroadcastPrefillBuilder
+      activity.EvidenceComment = BroadcastActivityPrefillBuilder
          .CreateEvidenceComment(firstBroadcast, participationCheck);
 
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
-         broadcasts
+         broadcasts.SelectMany(broadcast => broadcast.Categories)
       );
 
       if(!string.IsNullOrWhiteSpace(sportId))
@@ -147,7 +145,7 @@ public sealed class ActivityEditPageService(
       if(participationCheck is not null)
       {
          activity.LinkedEntityIds =
-            ActivityBroadcastPrefillBuilder.SelectLinkedEntityIds(
+            BroadcastActivityPrefillBuilder.SelectLinkedEntityIds(
                selectableEntities,
                participationCheck
             ).ToList();
@@ -208,13 +206,17 @@ public sealed class ActivityEditPageService(
       return new ActivityTeaserResult(result.Prompt, teaser, null, null, null);
    }
 
-   private async Task<IReadOnlyList<EntityOption>> GetSelectableEntitiesAsync(
+   private async Task<
+      IReadOnlyList<BroadcastEntityOption>
+   > GetSelectableEntitiesAsync(
       CancellationToken cancellationToken
    )
    {
       var entities = await repository.GetEntityOptionsAsync(cancellationToken);
 
-      return ActivityEntityFilter.FilterSelectableEntities(entities);
+      return BroadcastEntityFilter.FilterSelectableEntities(
+         entities.Select(ToBroadcastEntityOption)
+      );
    }
 
    private async Task<string> CreateTeaserInputJsonAsync(
@@ -304,11 +306,11 @@ public sealed class ActivityEditPageService(
       IEnumerable<Guid> ids
    )
    {
-      return ActivityBroadcastPrefillBuilder.NormalizeBroadcastIds(ids)
+      return BroadcastActivityPrefillBuilder.NormalizeBroadcastIds(ids)
          .ToList();
    }
 
-   private static string FormatEntityLabel(EntityOption entity)
+   private static string FormatEntityLabel(BroadcastEntityOption entity)
    {
       if(entity.Type == TrackedEntityTypeIds.Person &&
          !string.IsNullOrWhiteSpace(entity.Organization))
@@ -330,6 +332,19 @@ public sealed class ActivityEditPageService(
          TrackedEntityTypeIds.Organization => "Organization",
          _ => entityTypeId
       };
+   }
+
+   private static BroadcastEntityOption ToBroadcastEntityOption(
+      EntityOption entity
+   )
+   {
+      return new BroadcastEntityOption(
+         entity.Id,
+         entity.Name,
+         entity.Type,
+         entity.Sport,
+         entity.Organization
+      );
    }
 }
 

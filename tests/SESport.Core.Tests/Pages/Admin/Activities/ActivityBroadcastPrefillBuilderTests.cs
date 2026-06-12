@@ -1,7 +1,5 @@
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
-using SESport.Data;
-using SESport.Web.Pages.Admin.Activities;
 
 namespace SESport.Core.Tests.Pages.Admin.Activities;
 
@@ -13,7 +11,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var first = Guid.NewGuid();
       var second = Guid.NewGuid();
 
-      var normalized = ActivityBroadcastPrefillBuilder.NormalizeBroadcastIds(
+      var normalized = BroadcastActivityPrefillBuilder.NormalizeBroadcastIds(
          [Guid.Empty, first, second, first]
       );
 
@@ -28,25 +26,25 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var entities =
          new[]
          {
-            new EntityOption(
-               aliceId,
-               " Alice ",
-               TrackedEntityTypeIds.Person,
-               "Tennis",
-               ""
-            ),
-            new EntityOption(
-               Guid.NewGuid(),
-               "Alice",
-               "Organization",
-               "Tennis",
-               ""
-            ),
-            new EntityOption(
-               bobId,
-               "Bob",
-               TrackedEntityTypeIds.Person,
-               "Hockey",
+         new BroadcastEntityOption(
+            aliceId,
+            " Alice ",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            ""
+         ),
+         new BroadcastEntityOption(
+            Guid.NewGuid(),
+            "Alice",
+            "Organization",
+            "Tennis",
+            ""
+         ),
+         new BroadcastEntityOption(
+            bobId,
+            "Bob",
+            TrackedEntityTypeIds.Person,
+            "Hockey",
                ""
             )
          };
@@ -59,7 +57,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
          null
       );
 
-      var matched = ActivityBroadcastPrefillBuilder.SelectLinkedEntityIds(
+      var matched = BroadcastActivityPrefillBuilder.SelectLinkedEntityIds(
          entities,
          participationCheck
       );
@@ -88,7 +86,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
          null
       );
 
-      var comment = ActivityBroadcastPrefillBuilder.CreateEvidenceComment(
+      var comment = BroadcastActivityPrefillBuilder.CreateEvidenceComment(
          broadcast,
          participationCheck
       );
@@ -123,16 +121,16 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var entities =
          new[]
          {
-            new EntityOption(
-               Guid.NewGuid(),
-               "Hampus Ericsson",
-               TrackedEntityTypeIds.Person,
-               "Motorsport",
-               "GT World Challenge"
-            )
-         };
+         new BroadcastEntityOption(
+            Guid.NewGuid(),
+            "Hampus Ericsson",
+            TrackedEntityTypeIds.Person,
+            "Motorsport",
+            "GT World Challenge"
+         )
+      };
 
-      var title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
          broadcast,
          entities,
          participationCheck
@@ -164,16 +162,16 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var entities =
          new[]
          {
-            new EntityOption(
-               Guid.NewGuid(),
-               "Hampus Ericsson",
-               TrackedEntityTypeIds.Person,
-               "Golf",
+         new BroadcastEntityOption(
+            Guid.NewGuid(),
+            "Hampus Ericsson",
+            TrackedEntityTypeIds.Person,
+            "Golf",
                "LPGA Tour"
             )
          };
 
-      var title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
          broadcast,
          entities,
          participationCheck
@@ -205,21 +203,65 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var entities =
          new[]
          {
-            new EntityOption(
-               Guid.NewGuid(),
-               "Hampus Ericsson",
-               TrackedEntityTypeIds.Person,
-               "Motorsport",
+         new BroadcastEntityOption(
+            Guid.NewGuid(),
+            "Hampus Ericsson",
+            TrackedEntityTypeIds.Person,
+            "Motorsport",
                "IndyCar Series"
             )
          };
 
-      var title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
          broadcast,
          entities,
          participationCheck
       );
 
       Assert.Equal("Race 1", title);
+   }
+
+   [Fact]
+   public void CreateActivityTitleNormalizesShoutedTitles()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "CANADIAN OPEN",
+         null,
+         ["golf"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         [],
+         null
+      );
+
+      Assert.Equal("Canadian Open", title);
+   }
+
+   [Fact]
+   public void CreateActivityTitleKeepsKnownAcronyms()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "GT WORLD CHALLENGE",
+         null,
+         ["motorsport"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         [],
+         null
+      );
+
+      Assert.Equal("GT World Challenge", title);
    }
 }

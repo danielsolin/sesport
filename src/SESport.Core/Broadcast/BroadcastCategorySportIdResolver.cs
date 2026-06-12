@@ -1,23 +1,21 @@
 using System.Globalization;
 using System.Text;
-using SESport.Data;
 
-namespace SESport.Web.Formatting;
+namespace SESport.Core.Broadcast;
 
 public static class BroadcastCategorySportIdResolver
 {
    public static string? ResolveSportId(
-      IReadOnlyList<BroadcastActivitySource> broadcasts
+      IEnumerable<string> categories
    )
    {
-      var categories = broadcasts
-         .SelectMany(broadcast => broadcast.Categories)
+      var normalizedCategories = categories
          .Select(NormalizeCategoryKey)
          .Where(category => !string.IsNullOrWhiteSpace(category))
          .Distinct(StringComparer.OrdinalIgnoreCase)
          .ToList();
 
-      foreach(var category in categories)
+      foreach(var category in normalizedCategories)
       {
          if(TryGetSpecificSportId(category, out var sportId))
          {
@@ -25,7 +23,7 @@ public static class BroadcastCategorySportIdResolver
          }
       }
 
-      foreach(var category in categories)
+      foreach(var category in normalizedCategories)
       {
          if(TryGetGenericSportId(category, out var sportId))
          {
@@ -109,6 +107,7 @@ public static class BroadcastCategorySportIdResolver
       {
          case "baseball":
          case "bollsport":
+         case "cycling":
          case "cykling":
          case "extremsport":
          case "faktning":
