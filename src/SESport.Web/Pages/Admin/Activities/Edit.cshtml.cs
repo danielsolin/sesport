@@ -1,21 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using SESport.Core.Domain;
-using System.Text.Json;
-using SESport.AI.Abstractions;
-using SESport.AI.Models;
-using SESport.Core.Formatting;
 using SESport.Data;
-using SESport.Web.Formatting;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Activities;
 
-public class EditModel(
-   ActivityRepository repository,
-   BroadcastRepository broadcastRepository,
-   IAiJobRunner aiJobRunner
-) : PageModel
+public class EditModel(ActivityEditPageService editService) : PageModel
 {
    [BindProperty]
    public ActivityEditModel Activity { get; set; } = new();
@@ -43,28 +34,29 @@ public class EditModel(
       if(id is null)
       {
          await LoadEntitiesAsync([], cancellationToken);
-         await PrefillFromBroadcastsAsync(
+         await editService.PrefillFromBroadcastsAsync(
+            Activity,
             broadcastIds ?? [],
             cancellationToken
          );
          return Page();
       }
 
-      var activity = await repository.GetForEditAsync(
+      Activity = await editService.LoadActivityAsync(
          id.Value,
          cancellationToken
-      );
+      ) ?? new ActivityEditModel();
 
-      if(activity is null)
+      if(Activity.Id is null)
       {
          return NotFound();
       }
 
-      Activity = activity;
       await LoadEntitiesAsync(
          Activity.LinkedEntityIds ?? [],
          cancellationToken
       );
+
       return Page();
    }
 
@@ -82,6 +74,70 @@ public class EditModel(
       return await SaveAsync(cancellationToken);
    }
 
+   public async Task<IActionResult> OnPostGenerateTeaserAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      if(string.IsNullOrWhiteSpace(Activity.Title))
+      {
+         return BadRequest(new
+         {
+            error = "Title is required before generating a teaser."
+         });
+      }
+
+      var result = await editService.GenerateTeaserAsync(
+         Activity,
+         cancellationToken
+      );
+
+      if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
+      {
+         if(string.Equals(
+            result.ErrorMessage,
+            "The model returned invalid teaser JSON.",
+            StringComparison.Ordinal
+         ))
+         {
+            return BadRequest(new
+            {
+               error = result.ErrorMessage,
+               prompt = result.Prompt,
+               teaser = result.RawOutputText,
+               teaserPreview = result.TeaserPreview
+            });
+         }
+
+         return BadRequest(new
+         {
+            error = result.ErrorMessage,
+            prompt = result.Prompt
+         });
+      }
+
+      return new JsonResult(new
+      {
+         prompt = result.Prompt,
+         teaser = result.Teaser
+      });
+   }
+
+   private async Task LoadEntitiesAsync(
+      IEnumerable<Guid> selectedEntityIds,
+      CancellationToken cancellationToken
+   )
+   {
+      var options = await editService.LoadOptionsAsync(
+         selectedEntityIds,
+         cancellationToken
+      );
+
+      Entities = options.Entities;
+      ActivityTypes = options.ActivityTypes;
+      Sports = options.Sports;
+      LoadError = options.LoadError;
+   }
+
    private async Task<IActionResult> SaveAsync(
       CancellationToken cancellationToken
    )
@@ -97,11 +153,7 @@ public class EditModel(
          return Page();
       }
 
-      _ = await repository.SaveAsync(Activity, cancellationToken);
-      await broadcastRepository.HideAsync(
-         NormalizeBroadcastIds(Activity.BroadcastIds),
-         cancellationToken
-      );
+      await editService.SaveAsync(Activity, cancellationToken);
 
       if(ReturnUrl is not null)
       {
@@ -109,190 +161,6 @@ public class EditModel(
       }
 
       return RedirectToPage("./Index");
-   }
-
-   public async Task<IActionResult> OnPostGenerateTeaserAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      if(string.IsNullOrWhiteSpace(Activity.Title))
-      {
-         return BadRequest(new
-         {
-            error = "Title is required before generating a teaser."
-         });
-      }
-
-      var result = await aiJobRunner.RunAsync(
-         new AiJobRequest(
-            "generate-activity-teaser",
-            await CreateTeaserInputJsonAsync(cancellationToken),
-            Activity.Id?.ToString()
-         ),
-         cancellationToken
-      );
-
-      if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
-      {
-         return BadRequest(new
-         {
-            error = result.ErrorMessage,
-            prompt = result.Prompt
-         });
-      }
-
-      var teaser = ExtractGeneratedTeaser(result.OutputText);
-
-      if(teaser is null)
-      {
-         return BadRequest(new
-         {
-            error = "The model returned invalid teaser JSON.",
-            prompt = result.Prompt,
-            teaser = result.OutputText,
-            teaserPreview = CreateTeaserPreview(result.OutputText)
-         });
-      }
-
-      var validationError = ValidateGeneratedTeaser(teaser);
-
-      if(validationError is not null)
-      {
-         var teaserPreview = CreateTeaserPreview(teaser);
-
-         return BadRequest(new
-         {
-            error = $"{validationError} Preview: \"{teaserPreview}\"",
-            prompt = result.Prompt,
-            teaser,
-            teaserPreview
-         });
-      }
-
-      return new JsonResult(new
-      {
-         prompt = result.Prompt,
-         teaser
-      });
-   }
-
-   private async Task LoadEntitiesAsync(
-      IEnumerable<Guid> selectedEntityIds,
-      CancellationToken cancellationToken
-   )
-   {
-      try
-      {
-         var selectedIds = selectedEntityIds.ToHashSet();
-         var entities = await GetPersonEntitiesAsync(cancellationToken);
-
-         Entities = entities
-            .Select(entity => new SelectListItem
-            {
-               Value = entity.Id.ToString(),
-               Text = FormatEntityLabel(entity),
-               Selected = selectedIds.Contains(entity.Id)
-            })
-            .ToList();
-
-         ActivityTypes = await repository.GetActivityTypeOptionsAsync(
-            cancellationToken
-         );
-         Sports = await repository.GetSportOptionsAsync(cancellationToken);
-      }
-      catch(Exception exception)
-      {
-         LoadError = exception.Message;
-      }
-   }
-
-   private static string? ValidateGeneratedTeaser(string teaser)
-   {
-      if(string.IsNullOrWhiteSpace(teaser))
-      {
-         return "The model returned an empty teaser.";
-      }
-
-      return null;
-   }
-
-   private static string? ExtractGeneratedTeaser(string outputText)
-   {
-      try
-      {
-         using var document = JsonDocument.Parse(outputText);
-         var root = document.RootElement;
-
-         if(
-            root.TryGetProperty("teaser", out var teaser) &&
-            teaser.ValueKind == JsonValueKind.String
-         )
-         {
-            return teaser.GetString();
-         }
-      }
-      catch(JsonException)
-      {
-      }
-
-      return outputText;
-   }
-
-   private static string CreateTeaserPreview(string teaser)
-   {
-      var preview = teaser
-         .ReplaceLineEndings(" ")
-         .Trim();
-
-      if(preview.Length <= 180)
-      {
-         return preview;
-      }
-
-      return preview[..180] + "...";
-   }
-
-   private async Task<string> CreateTeaserInputJsonAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      var selectedIds = (Activity.LinkedEntityIds ?? []).ToHashSet();
-      var entityNames = await GetPersonEntitiesAsync(cancellationToken);
-
-      var selectedEntityNames = entityNames
-         .Where(entity => selectedIds.Contains(entity.Id))
-         .Select(entity => entity.Name)
-         .ToList();
-
-      var sportName = (await repository.GetSportOptionsAsync(
-         cancellationToken
-      ))
-         .FirstOrDefault(sport => sport.Id == Activity.SportId)
-         ?.Label ?? Activity.SportId;
-
-      return JsonSerializer.Serialize(
-         new
-         {
-            title = Activity.Title,
-            description = Activity.Description,
-            activity_type = Activity.ActivityType,
-            sport = sportName,
-            activity_date = DateDisplay.Format(Activity.ActivityDate),
-            local_start_time = Activity.LocalStartTime?.ToString("HH:mm"),
-            time_zone_id = Activity.TimeZoneId,
-            entities = selectedEntityNames,
-            related_entities = Array.Empty<string>()
-         }
-      );
-   }
-
-   private async Task<IReadOnlyList<EntityOption>> GetPersonEntitiesAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      var entities = await repository.GetEntityOptionsAsync(cancellationToken);
-
-      return ActivityEntityFilter.FilterPersonEntities(entities);
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)
@@ -345,110 +213,5 @@ public class EditModel(
             "Activity date is required."
          );
       }
-   }
-
-   private async Task PrefillFromBroadcastsAsync(
-      IReadOnlyCollection<Guid> ids,
-      CancellationToken cancellationToken
-   )
-   {
-      var normalizedIds = NormalizeBroadcastIds(ids);
-
-      if(normalizedIds.Count == 0)
-      {
-         return;
-      }
-
-      var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
-         normalizedIds,
-         cancellationToken
-      );
-
-      if(broadcasts.Count == 0)
-      {
-         return;
-      }
-
-      var firstBroadcast = broadcasts.First();
-      var localStart = BroadcastRepository.ToLocal(firstBroadcast.StartsAt);
-
-      Activity.BroadcastIds = broadcasts
-         .Select(broadcast => broadcast.Id)
-         .ToList();
-      Activity.TvChannelName = firstBroadcast.ChannelName;
-      Activity.Title = firstBroadcast.Title;
-      Activity.Description = CreatePrefillDescription(broadcasts);
-      Activity.ActivityType = "Match";
-      Activity.IsPublished = true;
-      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
-         broadcasts
-      );
-      if(!string.IsNullOrWhiteSpace(sportId))
-      {
-         Activity.SportId = sportId;
-      }
-      Activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
-      Activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
-      Activity.TimeZoneId = "Europe/Stockholm";
-      Activity.EvidenceTitle = broadcasts.Count == 1
-         ? firstBroadcast.Title
-         : $"{broadcasts.Count} broadcasts";
-      Activity.EvidenceComment = CreateEvidenceComment(broadcasts);
-   }
-
-   private static List<Guid> NormalizeBroadcastIds(
-      IEnumerable<Guid> ids
-   )
-   {
-      return ids
-         .Where(id => id != Guid.Empty)
-         .Distinct()
-         .ToList();
-   }
-
-   private static string? CreatePrefillDescription(
-      IReadOnlyList<BroadcastActivitySource> broadcasts
-   )
-   {
-      return broadcasts
-         .Select(broadcast => broadcast.Description)
-         .FirstOrDefault(description =>
-            !string.IsNullOrWhiteSpace(description)
-         );
-   }
-
-   private static string CreateEvidenceComment(
-      IReadOnlyList<BroadcastActivitySource> broadcasts
-   )
-   {
-      var rows = broadcasts.Select(broadcast =>
-      {
-         var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
-         var localEnd = BroadcastRepository.ToLocal(broadcast.EndsAt);
-
-         return string.Join(
-            " ",
-            [
-               $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}",
-               broadcast.ChannelName,
-               broadcast.Title,
-               broadcast.Description ?? string.Empty
-            ]
-         ).Trim();
-      });
-
-      return string.Join(Environment.NewLine, rows);
-   }
-
-   private static string FormatEntityLabel(EntityOption entity)
-   {
-      if(entity.Type != "Person" ||
-         string.IsNullOrWhiteSpace(entity.Organization))
-      {
-         return $"{entity.Name} ({entity.Type}/{entity.Sport})";
-      }
-
-      return $"{entity.Name} ({entity.Type}/{entity.Sport}/" +
-         $"{entity.Organization})";
    }
 }

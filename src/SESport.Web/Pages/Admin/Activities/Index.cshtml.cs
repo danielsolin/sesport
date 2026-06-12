@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
@@ -10,31 +9,20 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class IndexModel(
    ActivityRepository repository,
-   AdminDatePreferenceStore datePreferenceStore
+   ActivityIndexPageService indexService
 ) : PageModel
 {
-   public const string LegacyTodayStatus = "Today";
-   public const string LegacyTomorrowStatus = "Tomorrow";
-   public const string AllStatus = "All";
-   public const string DraftStatus = "Draft";
-   public const string PublishedStatus = "Published";
-
-   public const string TimeSortColumn = "Time";
-   public const string ActivitySortColumn = "Activity";
-   public const string EntitiesSortColumn = "Entities";
-   public const string StatusSortColumn = "Status";
-
    [BindProperty(SupportsGet = true, Name = "date")]
    public DateOnly? Date { get; set; }
 
    [BindProperty(SupportsGet = true, Name = "status")]
-   public string? Status { get; set; } = AllStatus;
+   public string? Status { get; set; } = "All";
 
    [BindProperty(SupportsGet = true)]
    public List<string> SelectedSports { get; set; } = [];
 
    [BindProperty(SupportsGet = true)]
-   public string SortColumn { get; set; } = TimeSortColumn;
+   public string SortColumn { get; set; } = "Time";
 
    [BindProperty(SupportsGet = true)]
    public bool SortAsc { get; set; } = true;
@@ -53,9 +41,17 @@ public class IndexModel(
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
-      SortColumn = NormalizeSortColumn(SortColumn);
-      NormalizeFilters();
-      await LoadAsync(cancellationToken);
+      var viewModel = await indexService.BuildAsync(
+         HttpContext,
+         Date,
+         Status,
+         SelectedSports,
+         SortColumn,
+         SortAsc,
+         cancellationToken
+      );
+
+      ApplyViewModel(viewModel);
    }
 
    public bool GetNextSortAsc(string sortColumn) =>
@@ -80,7 +76,7 @@ public class IndexModel(
          GetNextSortAsc(sortColumn),
          SelectedSports
       );
-      routeValues["status"] = Status ?? AllStatus;
+      routeValues["status"] = Status ?? "All";
       routeValues["sortColumn"] = sortColumn;
 
       return routeValues;
@@ -93,7 +89,7 @@ public class IndexModel(
          SortAsc,
          SelectedSports
       );
-      routeValues["status"] = Status ?? AllStatus;
+      routeValues["status"] = Status ?? "All";
       routeValues["sortColumn"] = SortColumn;
 
       return Url.Page("./Index", routeValues) ?? "/Admin/Activities";
@@ -113,9 +109,9 @@ public class IndexModel(
 
       var routeValues = AdminRouteValueBuilder
          .CreateActivityRedirectRouteValues(
-            GetRouteDate(date, status),
-            NormalizeStatus(status) ?? AllStatus,
-            NormalizeSortColumn(sortColumn),
+            indexService.GetRouteDate(date, status),
+            indexService.NormalizeStatusOrDefault(status),
+            indexService.NormalizeSortColumnOrDefault(sortColumn),
             sortAsc ?? true,
             selectedSports ?? SelectedSports
          );
@@ -123,163 +119,15 @@ public class IndexModel(
       return RedirectToPage("./Index", routeValues);
    }
 
-   private async Task LoadAsync(CancellationToken cancellationToken)
+   private void ApplyViewModel(ActivityIndexViewModel viewModel)
    {
-      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
-
-      try
-      {
-         var normalizedSports = NormalizeSelectedSports(SelectedSports);
-         SelectedSports = normalizedSports.Count == 0
-            ? [string.Empty]
-            : normalizedSports;
-
-         var sports = await repository.GetSportOptionsAsync(cancellationToken);
-         SportOptions =
-         [
-            new SelectListItem(
-               "Alla",
-               string.Empty,
-               normalizedSports.Count == 0
-            ),
-            .. sports.Select(sport => new SelectListItem(
-               sport.Label,
-               sport.Id,
-               normalizedSports.Contains(sport.Id)
-            ))
-         ];
-
-         Activities = await repository.GetActivitiesAsync(
-            SelectedDate,
-            Status,
-            normalizedSports,
-            cancellationToken
-         );
-         Activities = SortActivities(Activities, SortColumn, SortAsc);
-      }
-      catch(Exception exception)
-      {
-         LoadError = exception.Message;
-      }
+      SelectedDate = viewModel.SelectedDate;
+      Status = viewModel.Status;
+      SortColumn = viewModel.SortColumn;
+      SortAsc = viewModel.SortAsc;
+      SelectedSports = viewModel.SelectedSports.ToList();
+      Activities = viewModel.Activities;
+      SportOptions = viewModel.SportOptions;
+      LoadError = viewModel.LoadError;
    }
-
-   private void NormalizeFilters()
-   {
-      if(Date is null)
-      {
-         Date = Status switch
-         {
-            LegacyTodayStatus =>
-               SportDay.Today(DateTimeOffset.UtcNow).StartDate,
-            LegacyTomorrowStatus =>
-               SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate,
-            _ => Date
-         };
-      }
-
-      Status = NormalizeStatus(Status) ?? AllStatus;
-
-      var normalizedSports = NormalizeSelectedSports(SelectedSports);
-      SelectedSports = normalizedSports.Count == 0
-         ? [string.Empty]
-         : normalizedSports;
-   }
-
-   private static DateOnly GetRouteDate(DateOnly? date, string? status)
-   {
-      if(date is not null)
-      {
-         return date.Value;
-      }
-
-      return status switch
-      {
-         LegacyTomorrowStatus =>
-            SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate,
-         _ => SportDay.Today(DateTimeOffset.UtcNow).StartDate
-      };
-   }
-
-   private static string? NormalizeStatus(string? status)
-   {
-      return status switch
-      {
-         DraftStatus => DraftStatus,
-         PublishedStatus => PublishedStatus,
-         AllStatus or "" or null => AllStatus,
-         _ => null
-      };
-   }
-
-   private static string NormalizeSortColumn(string? sortColumn) =>
-      sortColumn switch
-      {
-         ActivitySortColumn => ActivitySortColumn,
-         EntitiesSortColumn => EntitiesSortColumn,
-         StatusSortColumn => StatusSortColumn,
-         _ => TimeSortColumn
-      };
-
-   private static List<string> NormalizeSelectedSports(
-      IEnumerable<string> values
-   )
-   {
-      return values
-         .Where(value => !string.IsNullOrWhiteSpace(value))
-         .Select(value => value.Trim())
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-         .ToList();
-   }
-
-   private static IReadOnlyList<ActivityListItem> SortActivities(
-      IEnumerable<ActivityListItem> activities,
-      string sortColumn,
-      bool sortAsc
-   )
-   {
-      return sortColumn switch
-      {
-         ActivitySortColumn => OrderByDirection(
-            activities,
-            activity => activity.Title,
-            sortAsc
-         ),
-         EntitiesSortColumn => OrderByDirection(
-            activities,
-            activity => activity.RelatedPersonEntities,
-            sortAsc
-         ),
-         StatusSortColumn => OrderByDirection(
-            activities,
-            activity => activity.PublicationStatus,
-            sortAsc
-         ),
-         _ => OrderByDirection(
-            activities,
-            activity => activity.TimeText,
-            sortAsc
-         )
-      };
-   }
-
-   private static IReadOnlyList<ActivityListItem> OrderByDirection(
-      IEnumerable<ActivityListItem> activities,
-      Func<ActivityListItem, string> keySelector,
-      bool sortAsc
-   )
-   {
-      var sortedActivities = sortAsc
-         ? activities.OrderBy(keySelector, StringComparer.OrdinalIgnoreCase)
-         : activities.OrderByDescending(
-            keySelector,
-            StringComparer.OrdinalIgnoreCase
-         );
-
-      return sortedActivities
-         .ThenBy(activity => activity.TimeText, StringComparer.Ordinal)
-         .ThenBy(activity => activity.Title, StringComparer.OrdinalIgnoreCase)
-         .ToList();
-   }
-
 }

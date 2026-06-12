@@ -1,10 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Text.Json;
-using SESport.AI.Abstractions;
-using SESport.AI.Models;
-using SESport.AI.Persistence;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -14,9 +10,8 @@ namespace SESport.Web.Pages.Admin.Broadcasts;
 
 public class IndexModel(
    BroadcastRepository repository,
-   AiRepository aiRepository,
    AdminDatePreferenceStore datePreferenceStore,
-   IAiJobRunner aiJobRunner
+   BroadcastParticipationService participationService
 ) : PageModel
 {
    public const string ChannelSortColumn = "Channel";
@@ -191,71 +186,11 @@ public class IndexModel(
             });
          }
 
-         var broadcasts = await repository.GetActivitySourcesAsync(
-            normalizedBroadcastIds,
-            cancellationToken
-         );
-         var results = new List<object>();
-
-         foreach(var broadcast in broadcasts)
-         {
-            var result = await aiJobRunner.RunAsync(
-               new AiJobRequest(
-                  "decide-swedish-participation",
-                  CreateParticipationInputJson(broadcast),
-                  broadcast.Id.ToString()
-               ),
+         var results =
+            await participationService.CheckSwedishParticipationAsync(
+               normalizedBroadcastIds,
                cancellationToken
             );
-            var sourceUrls = ParticipationSourceUrlExtractor.Extract(
-               result.RawResponseJson
-            );
-
-            if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
-            {
-               results.Add(
-                  CreateParticipationCheckResult(
-                     result.RunId,
-                     broadcast,
-                     result.ErrorMessage,
-                     null,
-                     [],
-                     sourceUrls
-                  )
-               );
-
-               continue;
-            }
-
-            var parsed = ParseParticipationResult(result.OutputText);
-
-            if(parsed is null)
-            {
-               results.Add(
-                  CreateParticipationCheckResult(
-                     result.RunId,
-                     broadcast,
-                     "The model returned invalid JSON.",
-                     null,
-                     [],
-                     sourceUrls
-                  )
-               );
-
-               continue;
-            }
-
-            results.Add(
-               CreateParticipationCheckResult(
-                  result.RunId,
-                  broadcast,
-                  null,
-                  parsed.SwedishParticipation,
-                  parsed.SwedishParticipants,
-                  sourceUrls
-               )
-            );
-         }
 
          return new JsonResult(new
          {
@@ -326,7 +261,7 @@ public class IndexModel(
             cancellationToken
          );
          Broadcasts = SortBroadcasts(Broadcasts, SortColumn, SortAsc);
-         Broadcasts = await ApplyParticipationChecksAsync(
+         Broadcasts = await participationService.ApplyParticipationChecksAsync(
             Broadcasts,
             cancellationToken
          );
@@ -416,135 +351,5 @@ public class IndexModel(
          .Distinct()
          .ToList();
    }
-
-   private async Task<IReadOnlyList<BroadcastListItem>>
-      ApplyParticipationChecksAsync(
-         IReadOnlyList<BroadcastListItem> broadcasts,
-         CancellationToken cancellationToken
-      )
-   {
-      var broadcastIds = broadcasts.Select(broadcast => broadcast.Id).ToArray();
-      var checks = await aiRepository.GetParticipationChecksAsync(
-         broadcastIds,
-         cancellationToken
-      );
-
-      return broadcasts
-         .Select(broadcast =>
-         {
-            checks.TryGetValue(broadcast.Id, out var participationCheck);
-
-            return broadcast with
-            {
-               ParticipationCheck = participationCheck
-            };
-         })
-         .ToList();
-   }
-
-   private static string CreateParticipationInputJson(
-      BroadcastActivitySource broadcast
-   )
-   {
-      var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
-
-      return JsonSerializer.Serialize(
-         new
-         {
-            sport = broadcast.Categories,
-            event_name = broadcast.Title,
-            date_time = $"{localStart:yyyy-MM-dd HH:mm}"
-         }
-      );
-   }
-
-   private static object CreateParticipationCheckResult(
-      Guid runId,
-      BroadcastActivitySource broadcast,
-      string? error,
-      string? swedishParticipation,
-      IReadOnlyList<string> swedishParticipants,
-      IReadOnlyList<string> sourceUrls
-   )
-   {
-      return new
-      {
-         id = broadcast.Id,
-         runId,
-         channelName = broadcast.ChannelName,
-         title = broadcast.Title,
-         error,
-         swedishParticipation,
-         swedishParticipants,
-         sourceUrls
-      };
-   }
-
-   private static SwedishParticipationResult? ParseParticipationResult(
-      string outputText
-   )
-   {
-      try
-      {
-         using var document = JsonDocument.Parse(outputText);
-         var root = document.RootElement;
-
-         if(root.ValueKind != JsonValueKind.Object)
-         {
-            return null;
-         }
-
-         if(
-            !root.TryGetProperty(
-               "SwedishParticipation",
-               out var participation
-            ) ||
-            participation.ValueKind != JsonValueKind.String
-         )
-         {
-            return null;
-         }
-
-         var participants = new List<string>();
-
-         if(
-            root.TryGetProperty(
-               "SwedishParticipants",
-               out var participantsElement
-            ) &&
-            participantsElement.ValueKind == JsonValueKind.Array
-         )
-         {
-            foreach(var participant in participantsElement.EnumerateArray())
-            {
-               if(participant.ValueKind != JsonValueKind.String)
-               {
-                  continue;
-               }
-
-               var name = participant.GetString();
-
-               if(!string.IsNullOrWhiteSpace(name))
-               {
-                  participants.Add(name);
-               }
-            }
-         }
-
-         return new SwedishParticipationResult(
-            participation.GetString() ?? string.Empty,
-            participants
-         );
-      }
-      catch(JsonException)
-      {
-         return null;
-      }
-   }
-
-   private sealed record SwedishParticipationResult(
-      string SwedishParticipation,
-      IReadOnlyList<string> SwedishParticipants
-   );
 
 }
