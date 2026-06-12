@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
-using SESport.AI.Persistence;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;

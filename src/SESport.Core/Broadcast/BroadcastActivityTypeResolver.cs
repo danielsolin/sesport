@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using SESport.Core.Domain;
 
 namespace SESport.Core.Broadcast;
 

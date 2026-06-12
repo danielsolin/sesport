@@ -1,4 +1,3 @@
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
 namespace SESport.AI.ActivitySearch;

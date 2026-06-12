@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using SESport.Core.Domain;
 
 namespace SESport.Core.Broadcast;
 

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using SESport.Core.Domain;
 
 namespace SESport.AI.ActivitySearch;
 

@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
 namespace SESport.Core.Broadcast;

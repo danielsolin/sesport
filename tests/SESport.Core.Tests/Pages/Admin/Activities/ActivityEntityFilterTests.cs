@@ -1,4 +1,3 @@
-using SESport.Core.Domain;
 using SESport.Core.Broadcast;
 
 namespace SESport.Core.Tests.Pages.Admin.Activities;
