@@ -12,6 +12,7 @@ public static class BroadcastActivityTypeResolver
       IReadOnlyCollection<string> categories
    )
    {
+      var normalizedTitle = NormalizeText(title);
       var normalizedCategories = categories
          .Select(NormalizeToken)
          .Where(token => !string.IsNullOrWhiteSpace(token))
@@ -19,6 +20,27 @@ public static class BroadcastActivityTypeResolver
          .ToList();
 
       var normalizedText = NormalizeText($"{title} {description}");
+
+      if(ContainsTitleToken(normalizedTitle, ["qualification", "kval"]))
+      {
+         return ActivityType.Qualification;
+      }
+
+      if(ContainsTitleToken(normalizedTitle, ["practice", "träning", "traning"]))
+      {
+         return ActivityType.Practice;
+      }
+
+      if(
+         ContainsAny(
+            normalizedCategories,
+            normalizedText,
+            ["motorsport", "cycling"]
+         )
+      )
+      {
+         return ActivityType.Race;
+      }
 
       if(ContainsAny(normalizedCategories, normalizedText, ["golf"]))
       {
@@ -59,6 +81,16 @@ public static class BroadcastActivityTypeResolver
       }
 
       return null;
+   }
+
+   private static bool ContainsTitleToken(
+      string normalizedTitle,
+      IReadOnlyCollection<string> tokens
+   )
+   {
+      return tokens.Any(token =>
+         ContainsTextToken(normalizedTitle, token)
+      );
    }
 
    private static bool ContainsAny(

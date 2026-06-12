@@ -28,4 +28,52 @@ public sealed class BroadcastActivityTypeResolverTests
 
       Assert.Equal(ActivityType.Qualification, activityType);
    }
+
+   [Fact]
+   public void ResolveActivityTypeReturnsQualificationForTitle()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "World Championship qualification",
+         null,
+         ["football"]
+      );
+
+      Assert.Equal(ActivityType.Qualification, activityType);
+   }
+
+   [Fact]
+   public void ResolveActivityTypeReturnsPracticeForTitle()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Practice session",
+         null,
+         ["golf"]
+      );
+
+      Assert.Equal(ActivityType.Practice, activityType);
+   }
+
+   [Fact]
+   public void ResolveActivityTypeReturnsRaceForMotorsport()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Grand Prix",
+         null,
+         ["Motorsport"]
+      );
+
+      Assert.Equal(ActivityType.Race, activityType);
+   }
+
+   [Fact]
+   public void ResolveActivityTypeReturnsRaceForCycling()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Tour de France",
+         null,
+         ["Cycling"]
+      );
+
+      Assert.Equal(ActivityType.Race, activityType);
+   }
 }

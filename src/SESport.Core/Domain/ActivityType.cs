@@ -4,6 +4,7 @@ public enum ActivityType
 {
    Match,
    Race,
+   Practice,
    Tournament,
    Stage,
    Championship,
