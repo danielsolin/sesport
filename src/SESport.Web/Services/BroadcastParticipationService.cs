@@ -3,11 +3,13 @@ using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
 using SESport.Data;
 
 namespace SESport.Web.Services;
 
 public sealed class BroadcastParticipationService(
+   AdminRepository adminRepository,
    AiRepository aiRepository,
    BroadcastRepository broadcastRepository,
    IAiJobRunner aiJobRunner
@@ -101,6 +103,7 @@ public sealed class BroadcastParticipationService(
                   result.ErrorMessage,
                   null,
                   [],
+                  [],
                   sourceUrls
                )
             );
@@ -121,12 +124,18 @@ public sealed class BroadcastParticipationService(
                   "The model returned invalid JSON.",
                   null,
                   [],
+                  [],
                   sourceUrls
                )
             );
 
             continue;
          }
+
+         var participantItems = await ResolveParticipantItemsAsync(
+            parsed.SwedishParticipants,
+            cancellationToken
+         );
 
          results.Add(
             new BroadcastParticipationCheckResult(
@@ -137,6 +146,7 @@ public sealed class BroadcastParticipationService(
                null,
                parsed.SwedishParticipation,
                parsed.SwedishParticipants,
+               participantItems,
                sourceUrls
             )
          );
@@ -233,6 +243,51 @@ public sealed class BroadcastParticipationService(
       }
    }
 
+   private async Task<IReadOnlyList<BroadcastParticipantDisplayItem>>
+      ResolveParticipantItemsAsync(
+         IReadOnlyList<string> participantNames,
+         CancellationToken cancellationToken
+      )
+   {
+      if(participantNames.Count == 0)
+      {
+         return [];
+      }
+
+      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
+         cancellationToken
+      );
+      var entityByName = entityOptions
+         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
+         .GroupBy(entity =>
+            BroadcastEntityFilter.NormalizeName(entity.Name))
+         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+         .ToDictionary(group => group.Key, group => group.First().Id);
+      var items = new List<BroadcastParticipantDisplayItem>();
+
+      foreach(var name in participantNames)
+      {
+         var normalizedName = BroadcastEntityFilter.NormalizeName(name);
+
+         if(!string.IsNullOrWhiteSpace(normalizedName) &&
+            entityByName.TryGetValue(normalizedName, out var entityId))
+         {
+            items.Add(
+               new BroadcastParticipantDisplayItem(
+                  name,
+                  $"/Admin/Entities/Edit/{entityId}"
+               )
+            );
+         }
+         else
+         {
+            items.Add(new BroadcastParticipantDisplayItem(name, null));
+         }
+      }
+
+      return items;
+   }
+
    private sealed record SwedishParticipationResult(
       string SwedishParticipation,
       IReadOnlyList<string> SwedishParticipants
@@ -247,5 +302,11 @@ public sealed record BroadcastParticipationCheckResult(
    string? Error,
    string? SwedishParticipation,
    IReadOnlyList<string> SwedishParticipants,
+   IReadOnlyList<BroadcastParticipantDisplayItem> SwedishParticipantItems,
    IReadOnlyList<string> SourceUrls
+);
+
+public sealed record BroadcastParticipantDisplayItem(
+   string Name,
+   string? EditUrl
 );

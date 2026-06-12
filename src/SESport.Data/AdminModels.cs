@@ -115,6 +115,11 @@ public sealed record EntityLinkOption(
    string Sport
 );
 
+public sealed record EntityNameOption(
+   Guid Id,
+   string Name
+);
+
 public sealed class EntityEditModel
 {
    public Guid? Id { get; set; }

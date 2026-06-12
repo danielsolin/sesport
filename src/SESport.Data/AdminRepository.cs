@@ -1,4 +1,5 @@
 using Npgsql;
+using SESport.Core.Domain;
 
 namespace SESport.Data;
 
@@ -886,6 +887,39 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(1),
                reader.GetString(2),
                reader.GetString(3)
+            )
+         );
+      }
+
+      return options;
+   }
+
+   public async Task<IReadOnlyList<EntityNameOption>>
+      GetPersonEntityNameOptionsAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = $$"""
+         select
+            e.id,
+            e.canonical_name
+         from entities e
+         where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+         order by e.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityNameOption>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityNameOption(
+               reader.GetGuid(0),
+               reader.GetString(1)
             )
          );
       }

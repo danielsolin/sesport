@@ -925,6 +925,15 @@ h2 {
    gap: 2px;
 }
 
+.broadcast-ai-check-participant-link {
+   color: var(--accent);
+   text-decoration: underline;
+}
+
+.broadcast-ai-check-participant-link:hover {
+   text-decoration: underline;
+}
+
 .broadcast-ai-check-participants-more {
    display: inline-flex;
    align-items: center;

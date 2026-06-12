@@ -60,7 +60,10 @@
    </form>
 </section>
 
-<div data-broadcast-results>
+<div data-broadcast-results
+     data-participant-entity-ids-json='@System.Text.Json.JsonSerializer.Serialize(
+        Model.ParticipantEntityIdsByName
+     )'>
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
@@ -279,15 +282,50 @@
                                  @if(!string.IsNullOrWhiteSpace(
                                     participationCheck.ParticipantsPreview))
                                  {
-                                    @if(participationCheck.HasMoreParticipants)
+                                    var participantNames =
+                                       participationCheck.SwedishParticipants;
+                                    var participantItems =
+                                       Model.GetParticipantDisplayItems(
+                                          participantNames
+                                       );
+                                    var previewItems = participantItems
+                                       .Take(3)
+                                       .ToList();
+                                    if(participationCheck.HasMoreParticipants)
                                     {
                                        <div class="broadcast-ai-check-participants"
                                             data-participants-json=
                                                "@System.Text.Json.JsonSerializer.Serialize(
-                                                  participationCheck.SwedishParticipants
+                                                  participantItems
                                                )">
                                           <span class="broadcast-ai-check-participants-preview">
-                                             @participationCheck.ParticipantsPreviewNames
+                                             @for(
+                                                var index = 0;
+                                                index < previewItems.Count;
+                                                index++
+                                             )
+                                             {
+                                                if(index > 0)
+                                                {
+                                                   <text>, </text>
+                                                }
+
+                                                var participant =
+                                                   previewItems[index];
+
+                                                if(participant.EditUrl is not null)
+                                                {
+                                                   <a class="broadcast-ai-check-participant-link"
+                                                      href="@participant.EditUrl"
+                                                      title="Edit entity">
+                                                      @participant.Name
+                                                   </a>
+                                                }
+                                                else
+                                                {
+                                                   @participant.Name
+                                                }
+                                             }
                                           </span>
                                           <button type="button"
                                                   class="broadcast-ai-check-participants-more">
@@ -297,8 +335,38 @@
                                     }
                                     else
                                     {
-                                       <div class="broadcast-ai-check-participants">
-                                          @participationCheck.ParticipantsPreview
+                                       <div class="broadcast-ai-check-participants"
+                                            data-participants-json=
+                                               "@System.Text.Json.JsonSerializer.Serialize(
+                                                  participantItems
+                                               )">
+                                          @for(
+                                             var index = 0;
+                                             index < participantItems.Count;
+                                             index++
+                                          )
+                                          {
+                                             if(index > 0)
+                                             {
+                                                <text>, </text>
+                                             }
+
+                                             var participant =
+                                                participantItems[index];
+
+                                             if(participant.EditUrl is not null)
+                                             {
+                                                <a class="broadcast-ai-check-participant-link"
+                                                   href="@participant.EditUrl"
+                                                   title="Edit entity">
+                                                   @participant.Name
+                                                </a>
+                                             }
+                                             else
+                                             {
+                                                @participant.Name
+                                             }
+                                          }
                                        </div>
                                     }
                                  }

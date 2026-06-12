@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -10,6 +11,7 @@ namespace SESport.Web.Pages.Admin.Broadcasts;
 
 public class IndexModel(
    BroadcastRepository repository,
+   AdminRepository adminRepository,
    AdminDatePreferenceStore datePreferenceStore,
    BroadcastParticipationService participationService
 ) : PageModel
@@ -52,6 +54,12 @@ public class IndexModel(
       get;
       private set;
    } = [];
+
+   public IReadOnlyDictionary<string, Guid> ParticipantEntityIdsByName
+   {
+      get;
+      private set;
+   } = new Dictionary<string, Guid>();
 
    public string? LoadError { get; private set; }
 
@@ -99,6 +107,37 @@ public class IndexModel(
          [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
          [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
       };
+   }
+
+   public string? GetParticipantEntityEditUrl(string participantName)
+   {
+      var normalizedName = BroadcastEntityFilter.NormalizeName(participantName);
+
+      if(string.IsNullOrWhiteSpace(normalizedName))
+      {
+         return null;
+      }
+
+      if(!ParticipantEntityIdsByName.TryGetValue(normalizedName, out var id))
+      {
+         return null;
+      }
+
+      return Url.Page("/Admin/Entities/Edit", new { id });
+   }
+
+   public IReadOnlyList<BroadcastParticipantDisplayItem>
+      GetParticipantDisplayItems(
+         IReadOnlyList<string> participantNames
+      )
+   {
+      return participantNames
+         .Select(name =>
+            new BroadcastParticipantDisplayItem(
+               name,
+               GetParticipantEntityEditUrl(name)
+            ))
+         .ToList();
    }
 
    public async Task<IActionResult> OnPostHideAsync(
@@ -262,6 +301,9 @@ public class IndexModel(
             Broadcasts,
             cancellationToken
          );
+         ParticipantEntityIdsByName = await LoadParticipantEntityIdsAsync(
+            cancellationToken
+         );
       }
       catch(Exception exception)
       {
@@ -347,6 +389,22 @@ public class IndexModel(
          .Where(id => id != Guid.Empty)
          .Distinct()
          .ToList();
+   }
+
+   private async Task<IReadOnlyDictionary<string, Guid>>
+      LoadParticipantEntityIdsAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
+         cancellationToken
+      );
+
+      return entityOptions
+         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
+         .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
+         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+         .ToDictionary(group => group.Key, group => group.First().Id);
    }
 
 }

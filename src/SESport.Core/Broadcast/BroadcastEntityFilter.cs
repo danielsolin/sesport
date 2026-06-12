@@ -53,7 +53,7 @@ public static class BroadcastEntityFilter
       return matchedEntityIds;
    }
 
-   private static string NormalizeName(string value)
+   public static string NormalizeName(string value)
    {
       var normalized = value.Normalize(NormalizationForm.FormD);
       var builder = new StringBuilder(normalized.Length);

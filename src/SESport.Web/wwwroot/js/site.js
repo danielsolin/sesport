@@ -14,6 +14,7 @@
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
    const exclusiveEmptySelectStates = new WeakMap();
+   let participantEntityIdsByName = null;
 
    window.submitFilterForm = submitFilterForm;
    initializeExclusiveEmptySelects();
@@ -500,11 +501,15 @@
          && result.swedishParticipation.trim() !== ""
          ? result.swedishParticipation.trim()
          : "";
-      const participants = Array.isArray(result.swedishParticipants)
-         ? result.swedishParticipants
-            .filter(participant =>
-               typeof participant === "string" && participant.trim() !== "")
-         : [];
+      const participants = Array.isArray(result.swedishParticipantItems)
+         ? result.swedishParticipantItems
+            .filter(participant => isValidParticipantItem(participant))
+         : Array.isArray(result.swedishParticipants)
+            ? result.swedishParticipants
+               .filter(participant =>
+                  typeof participant === "string"
+                     && participant.trim() !== "")
+            : [];
       const sourceUrls = Array.isArray(result.sourceUrls)
          ? result.sourceUrls
             .filter(url => typeof url === "string" && url.trim() !== "")
@@ -672,9 +677,11 @@
       }
 
       const names = participants
-         .filter(participant =>
-            typeof participant === "string" && participant.trim() !== "")
-         .map(participant => participant.trim());
+         .map(participant =>
+            typeof participant === "string"
+               ? { name: participant.trim(), editUrl: null }
+               : normalizeParticipantItem(participant))
+         .filter(participant => participant !== null);
 
       if(names.length === 0)
       {
@@ -687,7 +694,14 @@
 
       const preview = document.createElement("div");
       preview.className = "broadcast-ai-check-participants-preview";
-      preview.textContent = names.slice(0, 3).join(", ");
+      names.slice(0, 3).forEach((participant, index) => {
+         if(index > 0)
+         {
+            preview.append(document.createTextNode(", "));
+         }
+
+         preview.append(createParticipantNode(participant));
+      });
       wrapper.append(preview);
 
       if(names.length > 3)
@@ -868,9 +882,11 @@
          if(Array.isArray(parsed))
          {
             names = parsed
-               .filter(name =>
-                  typeof name === "string" && name.trim() !== "")
-               .map(name => name.trim());
+               .map(participant =>
+                  typeof participant === "string"
+                     ? { name: participant.trim(), editUrl: null }
+                     : normalizeParticipantItem(participant))
+               .filter(participant => participant !== null);
          }
       }
       catch
@@ -885,12 +901,144 @@
 
       preview.replaceChildren();
 
-      names.forEach(name => {
+      names.forEach(participant => {
          const line = document.createElement("div");
-         line.textContent = name;
+         line.append(createParticipantNode(participant));
          preview.append(line);
       });
       button.remove();
+   }
+
+   function createParticipantNode(participant)
+   {
+      const link = typeof participant === "string"
+         ? getParticipantEntityEditUrl(participant)
+         : normalizeParticipantItem(participant)?.editUrl ?? null;
+      const name = typeof participant === "string"
+         ? participant
+         : normalizeParticipantItem(participant)?.name ?? "";
+
+      if(link === null)
+      {
+         const span = document.createElement("span");
+         span.textContent = name;
+         return span;
+      }
+
+      const anchor = document.createElement("a");
+      anchor.href = link;
+      anchor.textContent = name;
+      anchor.className = "broadcast-ai-check-participant-link";
+      return anchor;
+   }
+
+   function normalizeParticipantItem(participant)
+   {
+      if(!(participant && typeof participant === "object"))
+      {
+         return null;
+      }
+
+      const name = typeof participant.Name === "string"
+         ? participant.Name.trim()
+         : typeof participant.name === "string"
+            ? participant.name.trim()
+            : "";
+      const editUrl = typeof participant.EditUrl === "string"
+         && participant.EditUrl.trim() !== ""
+         ? participant.EditUrl.trim()
+         : typeof participant.editUrl === "string"
+            && participant.editUrl.trim() !== ""
+            ? participant.editUrl.trim()
+            : null;
+
+      return name === ""
+         ? null
+         : { name, editUrl };
+   }
+
+   function isValidParticipantItem(participant)
+   {
+      return normalizeParticipantItem(participant) !== null;
+   }
+
+   function getParticipantEntityEditUrl(name)
+   {
+      const entityId = getParticipantEntityId(name);
+
+      if(entityId === null)
+      {
+         return null;
+      }
+
+      return `/Admin/Entities/Edit/${entityId}`;
+   }
+
+   function getParticipantEntityId(name)
+   {
+      if(typeof name !== "string" || name.trim() === "")
+      {
+         return null;
+      }
+
+      const lookup = getParticipantEntityIdsByName();
+      const normalizedName = normalizeParticipantName(name);
+
+      if(normalizedName === "")
+      {
+         return null;
+      }
+
+      const entityId = lookup[normalizedName];
+
+      return typeof entityId === "string" && entityId.trim() !== ""
+         ? entityId.trim()
+         : null;
+   }
+
+   function getParticipantEntityIdsByName()
+   {
+      if(participantEntityIdsByName !== null)
+      {
+         return participantEntityIdsByName;
+      }
+
+      const root = document.querySelector("[data-broadcast-results]");
+      const json = root instanceof HTMLElement
+         ? root.dataset.participantEntityIdsJson ?? "{}"
+         : "{}";
+
+      try
+      {
+         const parsed = JSON.parse(json);
+
+         participantEntityIdsByName =
+            parsed !== null && typeof parsed === "object"
+               ? parsed
+               : {};
+      }
+      catch
+      {
+         participantEntityIdsByName = {};
+      }
+
+      return participantEntityIdsByName;
+   }
+
+   function normalizeParticipantName(value)
+   {
+      if(typeof value !== "string")
+      {
+         return "";
+      }
+
+      return value
+         .normalize("NFD")
+         .replace(/[\u0300-\u036f]/g, "")
+         .replace(/[^A-Za-z0-9]+/g, " ")
+         .trim()
+         .replace(/\s+/g, " ")
+         .toUpperCase();
    }
 
    function createResponsePreview(responseText)
