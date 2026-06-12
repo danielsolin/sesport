@@ -129,37 +129,47 @@ public sealed class BroadcastRepository : IAsyncDisposable
       return rules;
    }
 
-   public async Task<int> DeleteIgnoredBroadcastsAsync(
+   public async Task<int> HideIgnoredBroadcastsAsync(
       string sourceKey,
-      IReadOnlyCollection<BroadcastIgnoreRule> ignoreRules,
       CancellationToken cancellationToken
    )
    {
-      var ignoredChannelNames = ignoreRules
-         .Where(rule => rule.Kind.Equals(
-            "channel_name",
-            StringComparison.OrdinalIgnoreCase
-         ))
-         .Select(rule => rule.Value)
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .ToArray();
-
-      if(ignoredChannelNames.Length == 0)
-      {
-         return 0;
-      }
-
       const string sql = """
-         delete from broadcasts
-         where source_key = @source_key
-           and (
-              channel_name = any(@channel_names)
-              or replace(channel_name, '\u0026', '&') = any(@channel_names)
-              or regexp_replace(
-                 replace(channel_name, '\u0026', '&'),
-                 '^SE - ',
-                 ''
-              ) = any(@channel_names)
+         update broadcasts as broadcast
+         set hidden_at = coalesce(hidden_at, now()),
+            updated_at = now()
+         where hidden_at is null
+           and exists (
+              select 1
+              from broadcast_ignore as rule
+              where rule.is_active = true
+                and (rule.source_key is null or rule.source_key = @source_key)
+                and (
+                   (
+                      rule.kind = 'channel_name'
+                      and (
+                         broadcast.channel_name = rule.value
+                         or replace(
+                            broadcast.channel_name,
+                            '\u0026',
+                            '&'
+                         ) = rule.value
+                         or regexp_replace(
+                            replace(broadcast.channel_name, '\u0026', '&'),
+                            '^SE - ',
+                            ''
+                         ) = rule.value
+                      )
+                   )
+                   or (
+                      rule.kind = 'category_contains'
+                      and exists (
+                         select 1
+                         from unnest(broadcast.categories) as category
+                         where category ilike '%' || rule.value || '%'
+                      )
+                   )
+                )
            )
          """;
 
@@ -168,7 +178,6 @@ public sealed class BroadcastRepository : IAsyncDisposable
       );
       await using var command = new NpgsqlCommand(sql, connection);
       command.Parameters.AddWithValue("source_key", sourceKey);
-      command.Parameters.AddWithValue("channel_names", ignoredChannelNames);
 
       return await command.ExecuteNonQueryAsync(cancellationToken);
    }
@@ -338,6 +347,7 @@ public sealed class BroadcastRepository : IAsyncDisposable
       ))!;
       return action.Equals("INSERT", StringComparison.OrdinalIgnoreCase);
    }
+
 }
 
 public sealed record BroadcastIgnoreRule(
