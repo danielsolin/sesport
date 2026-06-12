@@ -1,0 +1,37 @@
+name: CI
+
+on:
+   push:
+   pull_request:
+
+jobs:
+   build:
+      runs-on: ubuntu-latest
+
+      env:
+         ContinuousIntegrationBuild: true
+
+      steps:
+         - name: Checkout
+           uses: actions/checkout@v4
+
+         - name: Setup .NET
+           uses: actions/setup-dotnet@v4
+           with:
+              dotnet-version: 10.0.x
+
+         - name: Restore
+           run: dotnet restore SESport.sln
+
+         - name: Format
+           run: >
+              dotnet format SESport.sln style
+              --diagnostics IDE0005
+              --no-restore
+              --verify-no-changes
+
+         - name: Build
+           run: dotnet build SESport.sln --no-restore
+
+         - name: Test
+           run: dotnet test SESport.sln --no-restore

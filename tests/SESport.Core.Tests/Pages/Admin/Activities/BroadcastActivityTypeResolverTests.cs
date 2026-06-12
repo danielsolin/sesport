@@ -1,6 +1,5 @@
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
-using SESport.Data;
 
 namespace SESport.Core.Tests.Pages.Admin.Activities;
 
