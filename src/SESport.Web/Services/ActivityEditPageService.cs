@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
+using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -112,7 +113,12 @@ public sealed class ActivityEditPageService(
       activity.TvChannelName = firstBroadcast.ChannelName;
       activity.Title = firstBroadcast.Title;
       activity.Description = firstBroadcast.Description;
-      activity.ActivityType = ActivityType.Match.ToString();
+      activity.ActivityType =
+         BroadcastActivityTypeResolver.ResolveActivityType(
+            firstBroadcast.Title,
+            firstBroadcast.Description,
+            firstBroadcast.Categories
+         )?.ToString() ?? ActivityType.Match.ToString();
       activity.IsPublished = true;
       activity.EvidenceComment = ActivityBroadcastPrefillBuilder
          .CreateEvidenceComment(firstBroadcast, participationCheck);
