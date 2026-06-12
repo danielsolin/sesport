@@ -19,13 +19,12 @@ available there)
 - Run all tests: `dotnet test`
 - To run tests for a specific project: `dotnet test tests/SESport.Core.Tests`
 
-## Import Tools
-Several console applications are available in the `tools` directory for data
-import:
+## Legacy Tools
+Several console applications live in `tools/legacy/` for occasional use:
 - `SESport.ImportEntities`: Imports entities from (AI-)curated JSON data
 - `SESport.ImportEpg`: Imports TV broadcast data from iptv-epg.org
 - `SESport.AIActivitySearch`: Performs AI-assisted activity search
-- Run with: `dotnet run --project <tool-project-path>`
+- Run with: `dotnet run --project tools/legacy/<tool-folder>`
 
 ## Notes
 - The solution targets .NET 10.0 SDK

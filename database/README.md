@@ -33,7 +33,7 @@ baseline as applied:
 Import the curated entity watchlist after migrations:
 
 ```bash
-dotnet run --project tools/SESport.ImportEntities/SESport.ImportEntities.csproj
+dotnet run --project tools/legacy/SESport.ImportEntities
 ```
 
 If the local database drifted from the baseline, recreate the local Postgres
