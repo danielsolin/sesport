@@ -14,6 +14,7 @@ namespace SESport.Web.Services;
 public sealed class ActivityEditPageService(
    ActivityRepository repository,
    BroadcastRepository broadcastRepository,
+   BroadcastParticipationService participationService,
    IAiJobRunner aiJobRunner
 )
 {
@@ -27,7 +28,7 @@ public sealed class ActivityEditPageService(
       try
       {
          var selectedIds = selectedEntityIds.ToHashSet();
-         var entities = await GetPersonEntitiesAsync(cancellationToken);
+         var entities = await GetSelectableEntitiesAsync(cancellationToken);
 
          var entityOptions = entities
             .Select(entity => new SelectListItem
@@ -99,17 +100,22 @@ public sealed class ActivityEditPageService(
          return;
       }
 
-      var firstBroadcast = broadcasts.First();
+      var firstBroadcast = broadcasts[0];
       var localStart = BroadcastRepository.ToLocal(firstBroadcast.StartsAt);
+      var participationCheck =
+         await participationService.GetParticipationCheckAsync(
+            firstBroadcast.Id,
+            cancellationToken
+         );
 
-      activity.BroadcastIds = broadcasts
-         .Select(broadcast => broadcast.Id)
-         .ToList();
+      activity.BroadcastIds = [firstBroadcast.Id];
       activity.TvChannelName = firstBroadcast.ChannelName;
       activity.Title = firstBroadcast.Title;
-      activity.Description = CreatePrefillDescription(broadcasts);
+      activity.Description = firstBroadcast.Description;
       activity.ActivityType = ActivityType.Match.ToString();
       activity.IsPublished = true;
+      activity.EvidenceComment = ActivityBroadcastPrefillBuilder
+         .CreateEvidenceComment(firstBroadcast, participationCheck);
 
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
          broadcasts
@@ -123,10 +129,20 @@ public sealed class ActivityEditPageService(
       activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
       activity.TimeZoneId = SportDay.TimeZoneId;
-      activity.EvidenceTitle = broadcasts.Count == 1
-         ? firstBroadcast.Title
-         : $"{broadcasts.Count} broadcasts";
-      activity.EvidenceComment = CreateEvidenceComment(broadcasts);
+      activity.EvidenceTitle = firstBroadcast.Title;
+
+      if(participationCheck is not null)
+      {
+         var personEntities = await GetSelectableEntitiesAsync(
+            cancellationToken
+         );
+
+         activity.LinkedEntityIds =
+            ActivityBroadcastPrefillBuilder.SelectLinkedEntityIds(
+               personEntities,
+               participationCheck
+            ).ToList();
+      }
    }
 
    public async Task<ActivityTeaserResult> GenerateTeaserAsync(
@@ -183,13 +199,13 @@ public sealed class ActivityEditPageService(
       return new ActivityTeaserResult(result.Prompt, teaser, null, null, null);
    }
 
-   private async Task<IReadOnlyList<EntityOption>> GetPersonEntitiesAsync(
+   private async Task<IReadOnlyList<EntityOption>> GetSelectableEntitiesAsync(
       CancellationToken cancellationToken
    )
    {
       var entities = await repository.GetEntityOptionsAsync(cancellationToken);
 
-      return ActivityEntityFilter.FilterPersonEntities(entities);
+      return ActivityEntityFilter.FilterSelectableEntities(entities);
    }
 
    private async Task<string> CreateTeaserInputJsonAsync(
@@ -198,7 +214,9 @@ public sealed class ActivityEditPageService(
    )
    {
       var selectedIds = (activity.LinkedEntityIds ?? []).ToHashSet();
-      var entityNames = await GetPersonEntitiesAsync(cancellationToken);
+      var entityNames = await GetSelectableEntitiesAsync(
+         cancellationToken
+      );
 
       var selectedEntityNames = entityNames
          .Where(entity => selectedIds.Contains(entity.Id))
@@ -277,56 +295,32 @@ public sealed class ActivityEditPageService(
       IEnumerable<Guid> ids
    )
    {
-      return ids
-         .Where(id => id != Guid.Empty)
-         .Distinct()
+      return ActivityBroadcastPrefillBuilder.NormalizeBroadcastIds(ids)
          .ToList();
-   }
-
-   private static string? CreatePrefillDescription(
-      IReadOnlyList<BroadcastActivitySource> broadcasts
-   )
-   {
-      return broadcasts
-         .Select(broadcast => broadcast.Description)
-         .FirstOrDefault(description =>
-            !string.IsNullOrWhiteSpace(description)
-         );
-   }
-
-   private static string CreateEvidenceComment(
-      IReadOnlyList<BroadcastActivitySource> broadcasts
-   )
-   {
-      var rows = broadcasts.Select(broadcast =>
-      {
-         var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
-         var localEnd = BroadcastRepository.ToLocal(broadcast.EndsAt);
-
-         return string.Join(
-            " ",
-            [
-               $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}",
-               broadcast.ChannelName,
-               broadcast.Title,
-               broadcast.Description ?? string.Empty
-            ]
-         ).Trim();
-      });
-
-      return string.Join(Environment.NewLine, rows);
    }
 
    private static string FormatEntityLabel(EntityOption entity)
    {
-      if(entity.Type != TrackedEntityTypeIds.Person ||
-         string.IsNullOrWhiteSpace(entity.Organization))
+      if(entity.Type == TrackedEntityTypeIds.Person &&
+         !string.IsNullOrWhiteSpace(entity.Organization))
       {
-         return $"{entity.Name} ({entity.Type}/{entity.Sport})";
+         return $"{entity.Name} ({FormatEntityTypeLabel(entity.Type)}/" +
+            $"{entity.Sport}/{entity.Organization})";
       }
 
-      return $"{entity.Name} ({entity.Type}/{entity.Sport}/" +
-         $"{entity.Organization})";
+      return $"{entity.Name} ({FormatEntityTypeLabel(entity.Type)}/" +
+         $"{entity.Sport})";
+   }
+
+   private static string FormatEntityTypeLabel(string entityTypeId)
+   {
+      return entityTypeId switch
+      {
+         TrackedEntityTypeIds.Person => "Person",
+         TrackedEntityTypeIds.NationalTeam => "National team",
+         TrackedEntityTypeIds.Organization => "Organization",
+         _ => entityTypeId
+      };
    }
 }
 

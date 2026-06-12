@@ -33,10 +33,13 @@ public class EditModel(ActivityEditPageService editService) : PageModel
 
       if(id is null)
       {
-         await LoadEntitiesAsync([], cancellationToken);
          await editService.PrefillFromBroadcastsAsync(
             Activity,
             broadcastIds ?? [],
+            cancellationToken
+         );
+         await LoadEntitiesAsync(
+            Activity.LinkedEntityIds ?? [],
             cancellationToken
          );
          return Page();

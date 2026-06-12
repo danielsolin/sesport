@@ -153,13 +153,10 @@ public class IndexModel(
          return Page();
       }
 
-      var routeValues = new Dictionary<string, object?>();
-
-      for(var index = 0; index < normalizedBroadcastIds.Count; index++)
+      var routeValues = new Dictionary<string, object?>
       {
-         routeValues[$"{RouteKeys.BroadcastIds}[{index}]"] =
-            normalizedBroadcastIds[index];
-      }
+         [$"{RouteKeys.BroadcastIds}[0]"] = normalizedBroadcastIds[0]
+      };
 
       if(Url.IsLocalUrl(returnUrl))
       {

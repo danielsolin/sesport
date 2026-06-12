@@ -2,6 +2,7 @@ using System.Text.Json;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
+using SESport.Core.Broadcast;
 using SESport.Data;
 
 namespace SESport.Web.Services;
@@ -14,6 +15,22 @@ public sealed class BroadcastParticipationService(
 {
    private const string ParticipationJobId =
       "decide-swedish-participation";
+
+   public async Task<BroadcastParticipationCheck?>
+      GetParticipationCheckAsync(
+         Guid broadcastId,
+         CancellationToken cancellationToken
+      )
+   {
+      var checks = await aiRepository.GetParticipationChecksAsync(
+         [broadcastId],
+         cancellationToken
+      );
+
+      return checks.TryGetValue(broadcastId, out var participationCheck)
+         ? participationCheck
+         : null;
+   }
 
    public async Task<IReadOnlyList<BroadcastListItem>>
       ApplyParticipationChecksAsync(
