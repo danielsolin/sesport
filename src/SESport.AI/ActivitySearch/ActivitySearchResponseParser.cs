@@ -1,4 +1,5 @@
 using System.Text.Json;
+using SESport.Core.Domain;
 
 namespace SESport.AI.ActivitySearch;
 
@@ -57,12 +58,12 @@ internal static class ActivitySearchResponseParser
       return new ActivityProposalDraft(
          dto.Title,
          dto.Description,
-         dto.ActivityType ?? "OtherSportingActivity",
+         dto.ActivityType ?? ActivityType.OtherSportingActivity.ToString(),
          date,
          localStartTime,
-         dto.TimeZoneId ?? "Europe/Stockholm",
+         dto.TimeZoneId ?? SportDay.TimeZoneId,
          dto.Context,
-         dto.EntityRole ?? "Other",
+         dto.EntityRole ?? ActivityEntityRole.Other.ToString(),
          dto.EntityExplanation ?? "AI search connected this activity.",
          dto.Confidence,
          evidence

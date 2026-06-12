@@ -66,7 +66,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   join entities p on p.id = al.entity_id")
          .AppendLine("   where al.activity_id = a.id")
          .AppendLine(
-            "      and p.entity_type_id in ('Person', 'NationalTeam', 'Pair')"
+            $$"""
+               and p.entity_type_id in (
+                  '{{TrackedEntityTypeIds.Person}}',
+                  '{{TrackedEntityTypeIds.NationalTeam}}',
+                  '{{TrackedEntityTypeIds.Pair}}'
+               )
+            """
          )
          .AppendLine(") rp on true")
          .AppendLine("left join lateral (")
@@ -86,7 +92,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("         else el.source_entity_id")
          .AppendLine("      end")
          .AppendLine("   where al.activity_id = a.id")
-         .AppendLine("      and p.entity_type_id = 'Person'")
+         .AppendLine(
+            $$"""
+               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            """
+         )
          .AppendLine(
             "      and entity.entity_type_id in (" +
             "'Organization', 'Tour', 'League', 'Championship')"
@@ -101,7 +111,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   )")
          .AppendLine(")");
 
-      if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
+      if(!string.Equals(
+         status,
+         ActivityListStatusIds.All,
+         StringComparison.OrdinalIgnoreCase
+      ))
       {
          sql.AppendLine("   and a.publication_status_id = @status");
       }
@@ -127,9 +141,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("end", end);
       command.Parameters.AddWithValue("date", date);
 
-      if(!string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
+      if(!string.Equals(
+         status,
+         ActivityListStatusIds.All,
+         StringComparison.OrdinalIgnoreCase
+      ))
       {
-         command.Parameters.AddWithValue("status", status ?? "All");
+         command.Parameters.AddWithValue("status", status
+            ?? ActivityListStatusIds.All);
       }
 
       if(normalizedSports.Count > 0)
@@ -148,7 +167,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       return await GetActivityListAsync(
-         "where a.publication_status_id = 'Published'",
+         $"where a.publication_status_id = " +
+         $"'{ActivityPublicationStatusIds.Published}'",
          cancellationToken
       );
    }
@@ -189,7 +209,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       return await GetActivityListAsync(
-         "where a.publication_status_id = 'Draft'",
+         $"where a.publication_status_id = " +
+         $"'{ActivityPublicationStatusIds.Draft}'",
          cancellationToken
       );
    }
@@ -207,8 +228,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      var sql = CreateActivityListSql("""
-         where a.publication_status_id = 'Published'
+      var sql = CreateActivityListSql($$"""
+         where a.publication_status_id =
+            '{{ActivityPublicationStatusIds.Published}}'
             and a.starts_at >= @start
             and a.starts_at < @end
          """);
@@ -256,7 +278,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      const string sql = $$"""
          select
             e.id,
             e.canonical_name,
@@ -277,9 +299,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                else l.source_entity_id
             end
             where (l.source_entity_id = e.id or l.target_entity_id = e.id)
-               and e.entity_type_id = 'Person'
+               and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and linked.entity_type_id in
-                  ('Team', 'Series', 'Tour', 'League', 'Championship')
+                  (
+                     'Team',
+                     'Series',
+                     'Tour',
+                     'League',
+                     'Championship'
+                  )
          ) org on true
          order by e.canonical_name
          """;
@@ -380,7 +408,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          ActivityDate = reader.GetFieldValue<DateOnly>(6),
          LocalStartTime = ReadTimeOnly(reader, 7),
          TimeZoneId = reader.GetString(8),
-         IsPublished = reader.GetString(9) == "Published",
+         IsPublished =
+            reader.GetString(9) == ActivityPublicationStatusIds.Published,
          TvChannelName = ReadString(reader, 10),
          EvidenceUri = ReadString(reader, 11),
          EvidenceTitle = ReadString(reader, 12),
@@ -416,7 +445,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       var id = model.Id ?? Guid.NewGuid();
-      var status = model.IsPublished ? "Published" : "Draft";
+      var status = model.IsPublished
+         ? ActivityPublicationStatusIds.Published
+         : ActivityPublicationStatusIds.Draft;
       var startsAt = GetStartsAt(model);
 
       await using var connection = await dataSource.OpenConnectionAsync(
@@ -591,7 +622,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             from activity_entity_links al
             join entities p on p.id = al.entity_id
             where al.activity_id = a.id
-               and p.entity_type_id = 'Person'
+               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
          ) rp on true
          left join lateral (
             select string_agg(
@@ -610,9 +641,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   else el.source_entity_id
                end
             where al.activity_id = a.id
-               and p.entity_type_id = 'Person'
+               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and entity.entity_type_id in (
-                  'Organization', 'Series', 'Tour',
+                  '{{TrackedEntityTypeIds.Organization}}', 'Series', 'Tour',
                   'League', 'Championship'
                )
          ) ro on true
@@ -638,7 +669,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      const string sql = $$"""
          insert into activities (
             id,
             title,
@@ -670,7 +701,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @tv_channel_name,
             @slug,
             case
-               when @publication_status_id = 'Published' then now()
+               when @publication_status_id =
+                  '{{ActivityPublicationStatusIds.Published}}' then now()
                else null
             end
          )
@@ -692,7 +724,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      const string sql = $$"""
          update activities
          set
             title = @title,
@@ -708,7 +740,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             tv_channel_name = @tv_channel_name,
             slug = @slug,
             published_at = case
-               when @publication_status_id = 'Published' then coalesce(
+               when @publication_status_id =
+                  '{{ActivityPublicationStatusIds.Published}}' then coalesce(
                   published_at,
                   now()
                )

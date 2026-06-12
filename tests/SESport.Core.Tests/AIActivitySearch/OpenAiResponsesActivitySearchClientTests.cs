@@ -175,7 +175,7 @@ public class OpenAiResponsesActivitySearchClientTests
       string? openRouterSelectedModel = null
    )
    {
-      var content = """
+      var content = $$"""
       {
          "proposals": [
             {
@@ -184,7 +184,7 @@ public class OpenAiResponsesActivitySearchClientTests
                "activityType": "Match",
                "activityDate": "2026-06-01",
                "localStartTime": "19:00",
-               "timeZoneId": "Europe/Stockholm",
+               "timeZoneId": "{{SportDay.TimeZoneId}}",
                "context": "International friendly",
                "entityRole": "CompetesIn",
                "entityExplanation": "Tre Kronor participates.",

@@ -6,8 +6,6 @@ namespace SESport.Data;
 
 public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 {
-   private const string TimeZoneId = "Europe/Stockholm";
-
    public async Task<IReadOnlyList<BroadcastListItem>> GetByDateAsync(
       DateOnly date,
       bool hideReplays,
@@ -234,12 +232,12 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 
    public static DateTimeOffset ToLocal(DateTimeOffset value)
    {
-      return TimeZoneHelper.ToLocal(value, TimeZoneId);
+      return TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
    }
 
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
    {
-      return TimeZoneHelper.ToUtc(date, time, TimeZoneId);
+      return TimeZoneHelper.ToUtc(date, time, SportDay.TimeZoneId);
    }
 
    private static string FormatTime(
@@ -247,8 +245,8 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
       DateTimeOffset endsAt
    )
    {
-      var localStart = TimeZoneHelper.ToLocal(startsAt, TimeZoneId);
-      var localEnd = TimeZoneHelper.ToLocal(endsAt, TimeZoneId);
+      var localStart = TimeZoneHelper.ToLocal(startsAt, SportDay.TimeZoneId);
+      var localEnd = TimeZoneHelper.ToLocal(endsAt, SportDay.TimeZoneId);
 
       return $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}";
    }

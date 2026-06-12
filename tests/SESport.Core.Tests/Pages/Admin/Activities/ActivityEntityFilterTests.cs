@@ -1,4 +1,5 @@
 using SESport.Data;
+using SESport.Core.Domain;
 using SESport.Web.Pages.Admin.Activities;
 
 namespace SESport.Core.Tests.Pages.Admin.Activities;
@@ -13,7 +14,7 @@ public sealed class ActivityEntityFilterTests
          new EntityOption(
             Guid.NewGuid(),
             "Alice",
-            "Person",
+            TrackedEntityTypeIds.Person,
             "Tennis",
             "Team A"
          ),
@@ -27,7 +28,7 @@ public sealed class ActivityEntityFilterTests
          new EntityOption(
             Guid.NewGuid(),
             "Bob",
-            "Person",
+            TrackedEntityTypeIds.Person,
             "Hockey",
             ""
          )
@@ -36,7 +37,10 @@ public sealed class ActivityEntityFilterTests
       var filtered = ActivityEntityFilter.FilterPersonEntities(entities);
 
       Assert.Equal(2, filtered.Count);
-      Assert.All(filtered, entity => Assert.Equal("Person", entity.Type));
+      Assert.All(
+         filtered,
+         entity => Assert.Equal(TrackedEntityTypeIds.Person, entity.Type)
+      );
       Assert.Equal("Alice", filtered[0].Name);
       Assert.Equal("Bob", filtered[1].Name);
    }

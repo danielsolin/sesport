@@ -19,19 +19,19 @@ public class IndexModel(
    public const string BroadcastSortColumn = "Broadcast";
    public const string CategoriesSortColumn = "Categories";
 
-   [BindProperty(SupportsGet = true, Name = "date")]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
 
-   [BindProperty(SupportsGet = true, Name = "hideReplays")]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.HideReplays)]
    public bool HideReplays { get; set; }
 
-   [BindProperty(SupportsGet = true, Name = "showHidden")]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.ShowHidden)]
    public bool ShowHidden { get; set; }
 
    [BindProperty(SupportsGet = true)]
    public List<string> SelectedSports { get; set; } = [];
 
-   [BindProperty(SupportsGet = true)]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.SortColumn)]
    public string SortColumn { get; set; } = TimeSortColumn;
 
    [BindProperty(SupportsGet = true)]
@@ -85,7 +85,7 @@ public class IndexModel(
          GetNextSortAsc(sortColumn),
          SelectedSports
       );
-      routeValues["sortColumn"] = sortColumn;
+      routeValues[RouteKeys.SortColumn] = sortColumn;
 
       return routeValues;
    }
@@ -96,8 +96,8 @@ public class IndexModel(
    {
       return new Dictionary<string, string?>
       {
-         ["broadcastIds[0]"] = broadcastId.ToString(),
-         ["returnUrl"] = Request.Path + Request.QueryString
+         [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
+         [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
       };
    }
 
@@ -132,7 +132,7 @@ public class IndexModel(
          SortAsc,
          SelectedSports
       );
-      routeValues["sortColumn"] = SortColumn;
+      routeValues[RouteKeys.SortColumn] = SortColumn;
 
       return RedirectToPage(routeValues);
    }
@@ -157,13 +157,13 @@ public class IndexModel(
 
       for(var index = 0; index < normalizedBroadcastIds.Count; index++)
       {
-         routeValues[$"broadcastIds[{index}]"] =
+         routeValues[$"{RouteKeys.BroadcastIds}[{index}]"] =
             normalizedBroadcastIds[index];
       }
 
       if(Url.IsLocalUrl(returnUrl))
       {
-         routeValues["returnUrl"] = returnUrl;
+         routeValues[RouteKeys.ReturnUrl] = returnUrl;
       }
 
       return RedirectToPage("/Admin/Activities/Edit", routeValues);

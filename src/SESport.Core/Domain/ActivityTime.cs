@@ -12,7 +12,7 @@ public sealed record ActivityTime(
    public static ActivityTime OnDate(
       DateOnly activityDate,
       string? description = null,
-      string timeZoneId = "Europe/Stockholm"
+      string timeZoneId = SportDay.TimeZoneId
    )
    {
       return new ActivityTime(
@@ -27,7 +27,7 @@ public sealed record ActivityTime(
 
    public static ActivityTime Scheduled(
       DateTimeOffset startsAt,
-      string timeZoneId = "Europe/Stockholm"
+      string timeZoneId = SportDay.TimeZoneId
    )
    {
       return new ActivityTime(

@@ -22,14 +22,16 @@
    <form method="get"
          class="filter-form"
          data-ajax-replace-target="[data-activity-results]">
-      <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
       <input type="hidden"
-             name="sortAsc"
+             name="@RouteKeys.SortColumn"
+             value="@Model.SortColumn" />
+      <input type="hidden"
+             name="@RouteKeys.SortAsc"
              value="@Model.SortAsc.ToString()" />
       <label>
          <span>Date</span>
          <input type="date"
-                name="date"
+                name="@RouteKeys.Date"
                 value="@Model.DateText"
                 onchange="this.form.submit();" />
       </label>
@@ -47,17 +49,20 @@
       </div>
          <label>
             <span>Status</span>
-            <select name="status" onchange="this.form.submit();">
-            <option value="All"
-                    selected="@(Model.Status == "All")">
+            <select name="@RouteKeys.Status"
+                    onchange="this.form.submit();">
+            <option value="@ActivityListStatusIds.All"
+                    selected="@(Model.Status == ActivityListStatusIds.All)">
                All
             </option>
-            <option value="Draft"
-                    selected="@(Model.Status == "Draft")">
+            <option value="@ActivityPublicationStatusIds.Draft"
+                    selected="@(Model.Status ==
+                       ActivityPublicationStatusIds.Draft)">
                Draft
             </option>
-            <option value="Published"
-                    selected="@(Model.Status == "Published")">
+            <option value="@ActivityPublicationStatusIds.Published"
+                    selected="@(Model.Status ==
+                       ActivityPublicationStatusIds.Published)">
                Published
             </option>
          </select>
@@ -85,30 +90,31 @@
             <thead>
                <tr>
                   <th>
-                     <a asp-page="./Index"
-                        asp-all-route-data='@Model.GetSortRouteValues("Time")'>
+                        <a asp-page="./Index"
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Time")'>
                         Time @Model.GetSortIndicator("Time")
                      </a>
                   </th>
                   <th>
                      <a asp-page="./Index"
-                        asp-all-route-data=
-                           '@Model.GetSortRouteValues("Activity")'>
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Activity")'>
                         Activity @Model.GetSortIndicator("Activity")
                      </a>
                   </th>
                   <th>
                      <a asp-page="./Index"
-                        asp-all-route-data=
-                           '@Model.GetSortRouteValues("Entities")'>
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Entities")'>
                         Entities @Model.GetSortIndicator("Entities")
                      </a>
                   </th>
                   <th>Teaser</th>
                   <th>
                      <a asp-page="./Index"
-                        asp-all-route-data=
-                           '@Model.GetSortRouteValues("Status")'>
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Status")'>
                         Status @Model.GetSortIndicator("Status")
                      </a>
                   </th>
@@ -147,23 +153,23 @@
                               asp-route-id="@activity.Id"
                               onsubmit="return confirm('Sure?');">
                            <input type="hidden"
-                                  name="date"
+                                  name="@RouteKeys.Date"
                                   value="@Model.DateText" />
                            <input type="hidden"
-                                  name="status"
+                                  name="@RouteKeys.Status"
                                   value="@Model.Status" />
                            <input type="hidden"
-                                  name="sortColumn"
+                                  name="@RouteKeys.SortColumn"
                                   value="@Model.SortColumn" />
                            <input type="hidden"
-                                  name="sortAsc"
+                                  name="@RouteKeys.SortAsc"
                                   value="@Model.SortAsc.ToString()" />
                            @foreach(var sport in Model.SelectedSports
                               .Where(value =>
                                  !string.IsNullOrWhiteSpace(value)))
                            {
                               <input type="hidden"
-                                     name="SelectedSports"
+                                     name="@RouteKeys.SelectedSports"
                                      value="@sport" />
                            }
                            <button type="submit">Delete</button>

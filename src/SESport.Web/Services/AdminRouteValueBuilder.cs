@@ -12,8 +12,8 @@ internal static class AdminRouteValueBuilder
    {
       var routeValues = new Dictionary<string, string?>
       {
-         ["date"] = DateDisplay.Format(date),
-         ["sortAsc"] = sortAsc.ToString()
+         [RouteKeys.Date] = DateDisplay.Format(date),
+         [RouteKeys.SortAsc] = sortAsc.ToString()
       };
 
       AddSelectedSports(routeValues, selectedSports);
@@ -30,18 +30,18 @@ internal static class AdminRouteValueBuilder
    {
       var routeValues = new Dictionary<string, string?>
       {
-         ["date"] = DateDisplay.Format(date),
-         ["sortAsc"] = sortAsc.ToString()
+         [RouteKeys.Date] = DateDisplay.Format(date),
+         [RouteKeys.SortAsc] = sortAsc.ToString()
       };
 
       if(hideReplays)
       {
-        routeValues["hideReplays"] = "true";
+         routeValues[RouteKeys.HideReplays] = "true";
       }
 
       if(showHidden)
       {
-         routeValues["showHidden"] = "true";
+         routeValues[RouteKeys.ShowHidden] = "true";
       }
 
       AddSelectedSports(routeValues, selectedSports);
@@ -58,10 +58,10 @@ internal static class AdminRouteValueBuilder
    {
       var routeValues = new Dictionary<string, object?>
       {
-         ["date"] = DateDisplay.Format(date),
-         ["status"] = status,
-         ["sortColumn"] = sortColumn,
-         ["sortAsc"] = sortAsc
+         [RouteKeys.Date] = DateDisplay.Format(date),
+         [RouteKeys.Status] = status,
+         [RouteKeys.SortColumn] = sortColumn,
+         [RouteKeys.SortAsc] = sortAsc
       };
 
       AddSelectedSports(routeValues, selectedSports);
@@ -77,7 +77,8 @@ internal static class AdminRouteValueBuilder
 
       for(var index = 0; index < normalizedSports.Count; index++)
       {
-         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
+         routeValues[$"{RouteKeys.SelectedSports}[{index}]"] =
+            normalizedSports[index];
       }
    }
 
@@ -90,7 +91,8 @@ internal static class AdminRouteValueBuilder
 
       for(var index = 0; index < normalizedSports.Count; index++)
       {
-         routeValues[$"SelectedSports[{index}]"] = normalizedSports[index];
+         routeValues[$"{RouteKeys.SelectedSports}[{index}]"] =
+            normalizedSports[index];
       }
    }
 

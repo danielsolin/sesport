@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
@@ -12,11 +13,11 @@ public class IndexModel(
    ActivityIndexPageService indexService
 ) : PageModel
 {
-   [BindProperty(SupportsGet = true, Name = "date")]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
 
-   [BindProperty(SupportsGet = true, Name = "status")]
-   public string? Status { get; set; } = "All";
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Status)]
+   public string? Status { get; set; } = ActivityListStatusIds.All;
 
    [BindProperty(SupportsGet = true)]
    public List<string> SelectedSports { get; set; } = [];
@@ -76,8 +77,8 @@ public class IndexModel(
          GetNextSortAsc(sortColumn),
          SelectedSports
       );
-      routeValues["status"] = Status ?? "All";
-      routeValues["sortColumn"] = sortColumn;
+      routeValues[RouteKeys.Status] = Status ?? ActivityListStatusIds.All;
+      routeValues[RouteKeys.SortColumn] = sortColumn;
 
       return routeValues;
    }
@@ -89,8 +90,8 @@ public class IndexModel(
          SortAsc,
          SelectedSports
       );
-      routeValues["status"] = Status ?? "All";
-      routeValues["sortColumn"] = SortColumn;
+      routeValues[RouteKeys.Status] = Status ?? ActivityListStatusIds.All;
+      routeValues[RouteKeys.SortColumn] = SortColumn;
 
       return Url.Page("./Index", routeValues) ?? "/Admin/Activities";
    }

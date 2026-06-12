@@ -1,4 +1,5 @@
 using SESport.Data;
+using SESport.Core.Domain;
 
 namespace SESport.Web.Pages.Admin.Activities;
 
@@ -9,7 +10,7 @@ internal static class ActivityEntityFilter
    )
    {
       return entities
-         .Where(entity => entity.Type == "Person")
+         .Where(entity => entity.Type == TrackedEntityTypeIds.Person)
          .ToList();
    }
 }

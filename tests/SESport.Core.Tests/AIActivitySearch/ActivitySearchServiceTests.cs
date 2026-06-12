@@ -15,10 +15,10 @@ public class ActivitySearchServiceTests
                new ActivityProposalDraft(
                   "Tre Kronor vs Finland",
                   "A scheduled international ice hockey match.",
-                  "Match",
+                  ActivityType.Match.ToString(),
                   new DateOnly(2026, 6, 1),
                   new TimeOnly(19, 0),
-                  "Europe/Stockholm",
+                  SportDay.TimeZoneId,
                   "International friendly",
                   "CompetesIn",
                   "Tre Kronor is one of the participating teams.",
@@ -59,7 +59,7 @@ public class ActivitySearchServiceTests
       Assert.Equal(ActivityTimeKind.Scheduled, proposal.Time.Kind);
       Assert.Equal(new TimeOnly(19, 0), proposal.Time.LocalStartTime);
       Assert.Null(proposal.Time.StartsAt);
-      Assert.Equal("Europe/Stockholm", proposal.Time.TimeZoneId);
+      Assert.Equal(SportDay.TimeZoneId, proposal.Time.TimeZoneId);
       Assert.Single(proposal.EntityLinks);
       Assert.Single(proposal.Evidence);
       Assert.Equal(0.88m, proposal.Confidence);
@@ -134,10 +134,10 @@ public class ActivitySearchServiceTests
       return new ActivityProposalDraft(
          title,
          "A scheduled international ice hockey match.",
-         "Match",
+         ActivityType.Match.ToString(),
          activityDate,
          null,
-         "Europe/Stockholm",
+         SportDay.TimeZoneId,
          "International friendly",
          "CompetesIn",
          "Tre Kronor is one of the participating teams.",

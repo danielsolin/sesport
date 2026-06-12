@@ -108,7 +108,7 @@ public sealed class ActivityEditPageService(
       activity.TvChannelName = firstBroadcast.ChannelName;
       activity.Title = firstBroadcast.Title;
       activity.Description = CreatePrefillDescription(broadcasts);
-      activity.ActivityType = "Match";
+      activity.ActivityType = ActivityType.Match.ToString();
       activity.IsPublished = true;
 
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
@@ -122,7 +122,7 @@ public sealed class ActivityEditPageService(
 
       activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
-      activity.TimeZoneId = "Europe/Stockholm";
+      activity.TimeZoneId = SportDay.TimeZoneId;
       activity.EvidenceTitle = broadcasts.Count == 1
          ? firstBroadcast.Title
          : $"{broadcasts.Count} broadcasts";
@@ -319,7 +319,7 @@ public sealed class ActivityEditPageService(
 
    private static string FormatEntityLabel(EntityOption entity)
    {
-      if(entity.Type != "Person" ||
+      if(entity.Type != TrackedEntityTypeIds.Person ||
          string.IsNullOrWhiteSpace(entity.Organization))
       {
          return $"{entity.Name} ({entity.Type}/{entity.Sport})";

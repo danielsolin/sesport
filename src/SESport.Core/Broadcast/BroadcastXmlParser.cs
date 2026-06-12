@@ -4,13 +4,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Broadcast;
 
 public sealed partial class BroadcastXmlParser
 {
    private const string DefaultSourceKey = "iptv-epg-se";
-   private const string TimeZoneId = "Europe/Stockholm";
 
    public async Task<IReadOnlyCollection<Broadcast>> ParseAsync(
       Stream stream,
@@ -172,7 +172,7 @@ public sealed partial class BroadcastXmlParser
          null,
          startsAt,
          endsAt,
-         TimeZoneId,
+         SportDay.TimeZoneId,
          programme.ToString(SaveOptions.DisableFormatting)
       );
    }

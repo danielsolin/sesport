@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
+using SESport.Web.Services;
 using System.Globalization;
 
 namespace SESport.Web.Pages;
@@ -25,7 +26,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    public IReadOnlyList<DateOption> DateOptions { get; private set; } = [];
 
-   [BindProperty(SupportsGet = true, Name = "date")]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public string? Date { get; set; }
 
    public DateOnly SelectedDate { get; private set; }

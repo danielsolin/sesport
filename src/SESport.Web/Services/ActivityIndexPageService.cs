@@ -9,12 +9,6 @@ public sealed class ActivityIndexPageService(
    AdminDatePreferenceStore datePreferenceStore
 )
 {
-   private const string LegacyTodayStatus = "Today";
-   private const string LegacyTomorrowStatus = "Tomorrow";
-   private const string AllStatus = "All";
-   private const string DraftStatus = "Draft";
-   private const string PublishedStatus = "Published";
-
    private const string TimeSortColumn = "Time";
    private const string ActivitySortColumn = "Activity";
    private const string EntitiesSortColumn = "Entities";
@@ -31,7 +25,8 @@ public sealed class ActivityIndexPageService(
    )
    {
       var normalizedSortColumn = NormalizeSortColumn(sortColumn);
-      var normalizedStatus = NormalizeStatus(status) ?? AllStatus;
+      var normalizedStatus = NormalizeStatus(status)
+         ?? ActivityListStatusIds.All;
       var selectedDate = ResolveSelectedDate(httpContext, date, status);
       var normalizedSports = NormalizeSelectedSports(selectedSports);
 
@@ -98,7 +93,7 @@ public sealed class ActivityIndexPageService(
 
       return status switch
       {
-         LegacyTomorrowStatus =>
+         ActivityListStatusIds.Tomorrow =>
             SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate,
          _ => SportDay.Today(DateTimeOffset.UtcNow).StartDate
       };
@@ -106,7 +101,7 @@ public sealed class ActivityIndexPageService(
 
    public string NormalizeStatusOrDefault(string? status)
    {
-      return NormalizeStatus(status) ?? AllStatus;
+      return NormalizeStatus(status) ?? ActivityListStatusIds.All;
    }
 
    public string NormalizeSortColumnOrDefault(string? sortColumn)
@@ -133,12 +128,12 @@ public sealed class ActivityIndexPageService(
          return date.Value;
       }
 
-      if(status == LegacyTodayStatus)
+      if(status == ActivityListStatusIds.Today)
       {
          return SportDay.Today(DateTimeOffset.UtcNow).StartDate;
       }
 
-      if(status == LegacyTomorrowStatus)
+      if(status == ActivityListStatusIds.Tomorrow)
       {
          return SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate;
       }
@@ -150,9 +145,11 @@ public sealed class ActivityIndexPageService(
    {
       return status switch
       {
-         DraftStatus => DraftStatus,
-         PublishedStatus => PublishedStatus,
-         AllStatus or "" or null => AllStatus,
+         ActivityPublicationStatusIds.Draft => ActivityPublicationStatusIds.Draft,
+         ActivityPublicationStatusIds.Published =>
+            ActivityPublicationStatusIds.Published,
+         ActivityListStatusIds.All or "" or null =>
+            ActivityListStatusIds.All,
          _ => null
       };
    }

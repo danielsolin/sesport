@@ -18,14 +18,14 @@
       <form method="get"
          class="filter-form"
          data-ajax-replace-target="[data-broadcast-results]">
-      <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+      <input type="hidden" name="@RouteKeys.SortColumn" value="@Model.SortColumn" />
       <input type="hidden"
-             name="sortAsc"
+             name="@RouteKeys.SortAsc"
              value="@Model.SortAsc.ToString()" />
       <label>
          <span>Date</span>
          <input type="date"
-                name="date"
+                name="@RouteKeys.Date"
                 value="@Model.DateText"
                 onchange="this.form.submit();" />
       </label>
@@ -42,16 +42,16 @@
          </label>
       </div>
       @* <label class="check-row filter-checkbox">
-         <input type="checkbox"
-                name="hideReplays"
+            <input type="checkbox"
+                name="@RouteKeys.HideReplays"
                 value="true"
                 checked="@Model.HideReplays"
                 onchange="this.form.submit();" />
          <span>Hide reruns (broken)</span>
       </label> *@
       <label class="check-row filter-checkbox">
-         <input type="checkbox"
-                name="showHidden"
+            <input type="checkbox"
+                name="@RouteKeys.ShowHidden"
                 value="true"
                 checked="@Model.ShowHidden"
                 onchange="this.form.submit();" />
@@ -366,21 +366,21 @@
                                              : "[data-broadcast-count]"
                                        )">
                                  <input type="hidden"
-                                        name="date"
+                                        name="@RouteKeys.Date"
                                         value="@Model.DateText" />
                                  <input type="hidden"
                                         name="isHidden"
                                         value="@broadcast.IsHidden.ToString()" />
                                  <input type="hidden"
-                                        name="sortColumn"
+                                        name="@RouteKeys.SortColumn"
                                         value="@Model.SortColumn" />
                                  <input type="hidden"
-                                        name="sortAsc"
+                                        name="@RouteKeys.SortAsc"
                                         value="@Model.SortAsc.ToString()" />
                                  @if(Model.HideReplays)
                                  {
                                     <input type="hidden"
-                                           name="hideReplays"
+                                           name="@RouteKeys.HideReplays"
                                            value="true" />
                                  }
                                  @foreach(var sport in Model.SelectedSports

@@ -1,3 +1,4 @@
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
 namespace SESport.AI.ActivitySearch;
@@ -12,6 +13,8 @@ internal static class ActivitySearchPrompt
       var timeFrameEnd = DateDisplay.Format(
          request.SearchDate.AddDays(request.LookAheadDays)
       );
+      var activityTypes = string.Join(", ", Enum.GetNames<ActivityType>());
+      var entityRoles = string.Join(", ", Enum.GetNames<ActivityEntityRole>());
 
       return $$"""
       You job is to find planned sports activites for a given entity.
@@ -50,12 +53,12 @@ internal static class ActivitySearchPrompt
           {
             "title": "Sweden vs Finland",
             "description": "Short factual explanation.",
-            "activityType": "Match",
+            "activityType": "{{ActivityType.Match}}",
             "activityDate": "2026-06-01",
             "localStartTime": "19:00",
-            "timeZoneId": "Europe/Stockholm",
+            "timeZoneId": "{{SportDay.TimeZoneId}}",
             "context": "Competition or surrounding context",
-            "entityRole": "CompetesIn",
+            "entityRole": "{{ActivityEntityRole.CompetesIn}}",
             "entityExplanation": "Why this entity is connected.",
             "confidence": 0.85,
             "evidence": [
@@ -72,13 +75,10 @@ internal static class ActivitySearchPrompt
       }
 
       Use only these activityType values:
-      Match, Race, Tournament, Stage, Championship, Qualification,
-      RosterAnnouncement, Transfer, Ranking, CoachingRole,
-      OtherSportingActivity.
+      {{activityTypes}}.
 
       Use only these entityRole values:
-      CompetesIn, PlaysForContext, SelectedForRoster, TransferSubject,
-      CoachingRole, RecurringEventEdition, RelatedOrganization, Other.
+      {{entityRoles}}.
       """;
    }
 }

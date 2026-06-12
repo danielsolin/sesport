@@ -1,3 +1,5 @@
+using SESport.Core.Domain;
+
 namespace SESport.Data;
 
 public sealed record ActivityListItem(
@@ -56,7 +58,7 @@ public sealed class ActivityEditModel
 
    public TimeOnly? LocalStartTime { get; set; }
 
-   public string TimeZoneId { get; set; } = "Europe/Stockholm";
+   public string TimeZoneId { get; set; } = SportDay.TimeZoneId;
 
    public bool IsPublished { get; set; }
 
