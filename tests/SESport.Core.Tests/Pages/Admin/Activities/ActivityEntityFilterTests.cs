@@ -5,7 +5,7 @@ namespace SESport.Core.Tests.Pages.Admin.Activities;
 public sealed class ActivityEntityFilterTests
 {
    [Fact]
-   public void FilterSelectableEntitiesReturnsPersonAndNationalTeamRows()
+   public void FilterSelectableEntitiesReturnsOnlyPersonRows()
    {
       var entities = new[]
       {
@@ -41,17 +41,13 @@ public sealed class ActivityEntityFilterTests
 
       var filtered = BroadcastEntityFilter.FilterSelectableEntities(entities);
 
-      Assert.Equal(3, filtered.Count);
+      Assert.Equal(2, filtered.Count);
       Assert.All(
          filtered,
-         entity => Assert.True(
-            entity.Type == TrackedEntityTypeIds.Person ||
-               entity.Type == TrackedEntityTypeIds.NationalTeam
-         )
+         entity => Assert.Equal(TrackedEntityTypeIds.Person, entity.Type)
       );
       Assert.Equal("Alice", filtered[0].Name);
-      Assert.Equal("Sweden", filtered[1].Name);
-      Assert.Equal("Bob", filtered[2].Name);
+      Assert.Equal("Bob", filtered[1].Name);
    }
 
    [Fact]

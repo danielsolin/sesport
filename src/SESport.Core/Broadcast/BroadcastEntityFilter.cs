@@ -11,8 +11,7 @@ public static class BroadcastEntityFilter
    {
       return entities
          .Where(entity =>
-            entity.Type == TrackedEntityTypeIds.Person ||
-            entity.Type == TrackedEntityTypeIds.NationalTeam)
+            entity.Type == TrackedEntityTypeIds.Person)
          .ToList();
    }
 

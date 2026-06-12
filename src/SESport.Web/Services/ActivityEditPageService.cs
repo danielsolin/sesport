@@ -213,9 +213,7 @@ public sealed class ActivityEditPageService(
    {
       var entities = await repository.GetEntityOptionsAsync(cancellationToken);
 
-      return BroadcastEntityFilter.FilterSelectableEntities(
-         entities.Select(ToBroadcastEntityOption)
-      );
+      return entities.Select(ToBroadcastEntityOption).ToList();
    }
 
    private async Task<string> CreateTeaserInputJsonAsync(

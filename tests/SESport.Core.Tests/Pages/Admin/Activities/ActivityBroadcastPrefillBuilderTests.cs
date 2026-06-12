@@ -139,6 +139,47 @@ public sealed class ActivityBroadcastPrefillBuilderTests
    }
 
    [Fact]
+   public void CreateActivityTitleRemovesNationalTeamNames()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "Sweden National Team, Final",
+         null,
+         ["football"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+      var participationCheck = new BroadcastParticipationCheck(
+         Guid.NewGuid(),
+         "completed",
+         "Yes",
+         ["Hampus Ericsson"],
+         [],
+         null
+      );
+      var entities =
+         new[]
+         {
+         new BroadcastEntityOption(
+            Guid.NewGuid(),
+            "Hampus Ericsson",
+            TrackedEntityTypeIds.Person,
+            "Football",
+            "Sweden National Team"
+         )
+      };
+
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         entities,
+         participationCheck
+      );
+
+      Assert.Equal("Final", title);
+   }
+
+   [Fact]
    public void CreateActivityTitleTreatsTourenAsTour()
    {
       var broadcast = new BroadcastActivitySource(

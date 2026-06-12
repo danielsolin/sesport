@@ -99,7 +99,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "      and entity.entity_type_id in (" +
-            "'Organization', 'Tour', 'League', 'Championship')"
+            "'Organization', 'NationalTeam', 'Tour', " +
+            "'League', 'Championship')"
          )
          .AppendLine(") ro on true")
          .AppendLine("where (")
@@ -282,12 +283,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          select
             e.id,
             e.canonical_name,
-            et.label,
+            e.entity_type_id,
             s.name,
             coalesce(org.organization_names, '')
          from entities e
-         join entity_types et on et.id = e.entity_type_id
-         join sports s on s.id = e.sport_id
+         join sports s
+            on s.id = e.sport_id
+            and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
          left join lateral (
             select string_agg(
                distinct linked.canonical_name,
@@ -303,6 +305,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and linked.entity_type_id in
                   (
                      'Team',
+                     'NationalTeam',
                      'Series',
                      'Tour',
                      'League',
@@ -643,8 +646,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             where al.activity_id = a.id
                and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and entity.entity_type_id in (
-                  '{{TrackedEntityTypeIds.Organization}}', 'Series', 'Tour',
-                  'League', 'Championship'
+                  '{{TrackedEntityTypeIds.Organization}}',
+                  '{{TrackedEntityTypeIds.NationalTeam}}',
+                  'Series',
+                  'Tour',
+                  'League',
+                  'Championship'
                )
          ) ro on true
          {{whereClause}}
