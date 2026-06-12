@@ -40,101 +40,119 @@
          : "The activity database is not available right now.")
    </div>
 }
-else if(Model.Activities.Count == 0)
+else if(Model.TimelineEntries.Count == 0 &&
+   Model.UntimedActivities.Count == 0)
 {
    <div class="notice">
-      No published activities yet.
+      @(Model.IsSportToday
+         ? "No upcoming activities yet."
+         : "No published activities yet.")
    </div>
 }
 else
 {
    <div class="activity-agenda">
-      @foreach(var agendaSection in Model.AgendaSections)
+      @foreach(var timelineEntry in Model.TimelineEntries)
       {
-         <section class="activity-agenda-section">
-            <div class="activity-agenda-time">
-               <div class="activity-time-row">
-                  <div class="activity-time-badge">
-                     @agendaSection.TimeLabel
+         @if(timelineEntry.IsCurrentMarker)
+         {
+            <div class="activity-now-marker">
+               <span class="activity-now-marker-line"></span>
+               <span class="activity-now-marker-badge">
+                  @timelineEntry.CurrentMarkerLabel
+               </span>
+               <span class="activity-now-marker-line"></span>
+            </div>
+         }
+         else if(timelineEntry.Section is not null)
+         {
+            var agendaSection = timelineEntry.Section;
+
+            <section class="activity-agenda-section">
+               <div class="activity-agenda-time">
+                  <div class="activity-time-row">
+                     <div class="activity-time-badge">
+                        @agendaSection.TimeLabel
+                     </div>
+                     @if(!string.IsNullOrWhiteSpace(
+                        agendaSection.Activities.First().TvChannelName))
+                     {
+                        <span class="activity-time-channel">
+                           @agendaSection.Activities.First().TvChannelName
+                        </span>
+                     }
                   </div>
-                  @if(!string.IsNullOrWhiteSpace(
-                     agendaSection.Activities.First().TvChannelName))
+                  @if(agendaSection.Activities.Count > 1)
                   {
-                     <span class="activity-time-channel">
-                        @agendaSection.Activities.First().TvChannelName
-                     </span>
+                     <div class="activity-time-count">
+                        @agendaSection.Activities.Count st
+                     </div>
                   }
-               </div>
-               @if(agendaSection.Activities.Count > 1)
-               {
-                  <div class="activity-time-count">
-                     @agendaSection.Activities.Count st
+                  <div class="activity-time-summary-list">
+                     @foreach(var activity in agendaSection.Activities)
+                     {
+                        if(string.IsNullOrWhiteSpace(
+                           activity.RelatedOrganizationEntities) &&
+                           string.IsNullOrWhiteSpace(
+                              activity.RelatedPersonEntities))
+                        {
+                           continue;
+                        }
+
+                        var entitySummary = activity.RelatedPersonEntities
+                           .Split(
+                              ", ",
+                              StringSplitOptions.RemoveEmptyEntries
+                           );
+
+                        <div class="activity-time-summary">
+                           <div class="activity-time-summary-entities">
+                              @for(var i = 0; i < entitySummary.Length; i++)
+                              {
+                                 <span>@entitySummary[i]</span>
+
+                                 @if(i < entitySummary.Length - 1)
+                                 {
+                                    <br />
+                                 }
+                              }
+                           </div>
+                        </div>
+                     }
                   </div>
-               }
-               <div class="activity-time-summary-list">
+               </div>
+               <div class="activity-agenda-items">
                   @foreach(var activity in agendaSection.Activities)
                   {
-                     if(string.IsNullOrWhiteSpace(
-                        activity.RelatedOrganizationEntities) &&
-                        string.IsNullOrWhiteSpace(
-                           activity.RelatedPersonEntities))
-                     {
-                        continue;
-                     }
-
-                     var entitySummary = activity.RelatedPersonEntities
-                        .Split(
-                           ", ",
-                           StringSplitOptions.RemoveEmptyEntries
-                        );
-
-                     <div class="activity-time-summary">
-                        <div class="activity-time-summary-entities">
-                           @for(var i = 0; i < entitySummary.Length; i++)
-                           {
-                              <span>@entitySummary[i]</span>
-
-                              @if(i < entitySummary.Length - 1)
-                              {
-                                 <br />
-                              }
-                           }
+                     <article class="activity-entry">
+                        <div class="activity-meta">
+                           <span class="activity-sport">
+                              @activity.SportName
+                           </span>
+                           <span>@activity.ActivityType</span>
                         </div>
-                     </div>
+                        <h2>
+                           @(string.IsNullOrEmpty(
+                           activity.RelatedOrganizationEntities)
+                           ? string.Empty
+                           : $"{activity.RelatedOrganizationEntities} - ")
+                           @activity.Title
+                        </h2>
+                        @if(!string.IsNullOrWhiteSpace(activity.Description))
+                        {
+                           <p>@activity.Description</p>
+                        }
+                        @if(!string.IsNullOrWhiteSpace(activity.Teaser))
+                        {
+                           <p class="activity-teaser">
+                              @activity.Teaser
+                           </p>
+                        }
+                     </article>
                   }
                </div>
-            </div>
-            <div class="activity-agenda-items">
-               @foreach(var activity in agendaSection.Activities)
-               {
-                  <article class="activity-entry">
-                     <div class="activity-meta">
-                        <span class="activity-sport">
-                           @activity.SportName
-                        </span>
-                        <span>@activity.ActivityType</span>
-                     </div>
-                     <h2>
-                        @(string.IsNullOrEmpty(
-                        activity.RelatedOrganizationEntities)
-                        ? string.Empty
-                        : $"{activity.RelatedOrganizationEntities} - ")
-                        @activity.Title
-                     </h2>
-                     @if(!string.IsNullOrWhiteSpace(activity.Description))
-                     {
-                        <p>@activity.Description</p>
-                     }
-                     @if(!string.IsNullOrWhiteSpace(activity.Teaser))
-                     {
-                        <p class="activity-teaser">
-                           @activity.Teaser
-                        </p>
-                     }
-                  </article>
-               }
-            </div>
-         </section>
+            </section>
+         }
       }
 
       @if(Model.UntimedActivities.Count > 0)

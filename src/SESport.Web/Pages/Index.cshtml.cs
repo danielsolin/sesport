@@ -8,12 +8,12 @@ using System.Globalization;
 
 namespace SESport.Web.Pages;
 
-public class IndexModel(ActivityRepository repository) : PageModel
+public class IndexModel(
+   ActivityRepository repository,
+   PublicActivityTimelineBuilder timelineBuilder
+) : PageModel
 {
-   public IReadOnlyList<ActivityListItem> Activities { get; private set; } =
-      [];
-
-   public IReadOnlyList<ActivityAgendaSection> AgendaSections
+   public IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries
    {
       get; private set;
    } = [];
@@ -31,6 +31,8 @@ public class IndexModel(ActivityRepository repository) : PageModel
 
    public DateOnly SelectedDate { get; private set; }
 
+   public bool IsSportToday { get; private set; }
+
    public string? LoadError { get; private set; }
 
    public bool ShowLoadErrorDetails =>
@@ -45,15 +47,22 @@ public class IndexModel(ActivityRepository repository) : PageModel
       var now = DateTimeOffset.UtcNow;
       var sportToday = SportDay.Today(now).StartDate;
       SelectedDate = ParseDate(Date) ?? sportToday;
+      IsSportToday = SelectedDate == sportToday;
       DateOptions = BuildDateOptions(sportToday, SelectedDate);
 
       try
       {
-         Activities = await repository.GetPublishedForDateAsync(
+         var activities = await repository.GetPublishedForDateAsync(
             SelectedDate,
             cancellationToken
          );
-         BuildAgendaSections();
+         var timeline = timelineBuilder.Build(
+            activities,
+            SelectedDate,
+            now
+         );
+         TimelineEntries = timeline.TimelineEntries;
+         UntimedActivities = timeline.UntimedActivities;
       }
       catch (Exception exception)
       {
@@ -74,51 +83,7 @@ public class IndexModel(ActivityRepository repository) : PageModel
          : null;
    }
 
-   private void BuildAgendaSections()
-   {
-      var timedActivities = new List<ActivityListItem>();
-      var untimedActivities = new List<ActivityListItem>();
-
-      foreach(var activity in Activities)
-      {
-         if(HasLocalStartTime(activity))
-         {
-            timedActivities.Add(activity);
-         }
-         else
-         {
-            untimedActivities.Add(activity);
-         }
-      }
-
-      var agendaSections = new List<ActivityAgendaSection>();
-
-      foreach(
-         var group in timedActivities.GroupBy(activity => activity.TimeOnlyText)
-      )
-      {
-         var relatedOrganization = string.Join(
-            ", ",
-            group.Select(activity =>
-               activity.RelatedOrganizationEntities)
-               .Where(summary => !string.IsNullOrWhiteSpace(summary))
-               .Distinct(StringComparer.Ordinal)
-         );
-
-         agendaSections.Add(
-            new ActivityAgendaSection(
-               group.Key,
-               group.ToList(),
-               relatedOrganization
-            )
-         );
-      }
-
-      AgendaSections = agendaSections;
-      UntimedActivities = untimedActivities;
-   }
-
-   private static IReadOnlyList<DateOption> BuildDateOptions(
+  private static IReadOnlyList<DateOption> BuildDateOptions(
       DateOnly todayDate,
       DateOnly selectedDate
    )
@@ -147,10 +112,6 @@ public class IndexModel(ActivityRepository repository) : PageModel
          .ToList();
    }
 
-   private static bool HasLocalStartTime(ActivityListItem activity)
-   {
-      return activity.TimeText.Contains(' ');
-   }
 }
 
 public sealed record ActivityAgendaSection(

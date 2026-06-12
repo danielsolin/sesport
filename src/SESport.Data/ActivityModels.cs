@@ -12,6 +12,7 @@ public sealed record ActivityListItem(
    string SportName,
    string? SportIconPath,
    string TimeText,
+   DateTimeOffset? StartsAt,
    string? TvChannelName,
    string PublicationStatus,
    string RelatedPersonEntities,

@@ -20,6 +20,7 @@ builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();
 builder.Services.AddScoped<ActivityRepository>();
+builder.Services.AddScoped<PublicActivityTimelineBuilder>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
 builder.Services.AddScoped<BroadcastRepository>();

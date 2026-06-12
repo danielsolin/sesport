@@ -33,6 +33,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   s.icon_id,")
          .AppendLine("   a.activity_date,")
          .AppendLine("   a.local_start_time,")
+         .AppendLine("   a.starts_at,")
          .AppendLine("   a.publication_status_id,")
          .AppendLine("   a.tv_channel_name,")
          .AppendLine("   coalesce(")
@@ -264,10 +265,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(6),
                GetSportIconPath(ReadString(reader, 7)),
                FormatTime(reader),
-               ReadString(reader, 11),
-               reader.GetString(10),
-               reader.GetString(13),
-               reader.GetString(14)
+               ReadDateTimeOffset(reader, 10),
+               ReadString(reader, 12),
+               reader.GetString(11),
+               reader.GetString(14),
+               reader.GetString(15)
             )
          );
       }
@@ -600,6 +602,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             s.icon_id,
             a.activity_date,
             a.local_start_time,
+            a.starts_at,
             a.publication_status_id,
             a.tv_channel_name,
             coalesce(
@@ -1118,10 +1121,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(6),
                GetSportIconPath(ReadString(reader, 7)),
                FormatTime(reader),
-               ReadString(reader, 11),
-               reader.GetString(10),
-               reader.GetString(13),
-               reader.GetString(14)
+               ReadDateTimeOffset(reader, 10),
+               ReadString(reader, 12),
+               reader.GetString(11),
+               reader.GetString(14),
+               reader.GetString(15)
             )
          );
       }
@@ -1134,6 +1138,16 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal)
          ? null
          : reader.GetFieldValue<TimeOnly>(ordinal);
+   }
+
+   private static DateTimeOffset? ReadDateTimeOffset(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? null
+         : reader.GetFieldValue<DateTimeOffset>(ordinal);
    }
 
    private static List<string> NormalizeSelectedSports(
