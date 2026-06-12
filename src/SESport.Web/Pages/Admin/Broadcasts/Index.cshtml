@@ -1,12 +1,19 @@
 @page
 @model SESport.Web.Pages.Admin.Broadcasts.IndexModel
-@{
+@{ 
    ViewData["Title"] = "Broadcasts";
    var checkSwedishParticipationUrl = Url.Page(
       "./Index",
       "CheckSwedishParticipation"
    );
+   var createParticipantEntityUrl = Url.Page(
+      "./Index",
+      "CreateParticipantEntity",
+      Model.GetCurrentRouteValues()
+   );
 }
+
+@Html.AntiForgeryToken()
 
 <section class="page-heading page-heading-row">
    <div>
@@ -61,9 +68,7 @@
 </section>
 
 <div data-broadcast-results
-     data-participant-entity-ids-json='@System.Text.Json.JsonSerializer.Serialize(
-        Model.ParticipantEntityIdsByName
-     )'>
+     data-create-participant-url="@createParticipantEntityUrl">
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
@@ -298,35 +303,47 @@
                                                "@System.Text.Json.JsonSerializer.Serialize(
                                                   participantItems
                                                )">
-                                          <span class="broadcast-ai-check-participants-preview">
-                                             @for(
-                                                var index = 0;
-                                                index < previewItems.Count;
-                                                index++
-                                             )
+                                          <div class="broadcast-ai-check-participants-preview">
+                                             @foreach(var participant in previewItems)
                                              {
-                                                if(index > 0)
-                                                {
-                                                   <text>, </text>
-                                                }
+                                                <div class="broadcast-ai-check-participant-row">
+                                                   @if(participant.EditUrl is not null)
+                                                   {
+                                                      <a class="broadcast-ai-check-participant-link"
+                                                         href="@participant.EditUrl"
+                                                         title="Edit entity">
+                                                         @participant.Name
+                                                      </a>
+                                                   }
+                                                   else
+                                                   {
+                                                      <span>@participant.Name</span>
+                                                   }
 
-                                                var participant =
-                                                   previewItems[index];
-
-                                                if(participant.EditUrl is not null)
-                                                {
-                                                   <a class="broadcast-ai-check-participant-link"
-                                                      href="@participant.EditUrl"
-                                                      title="Edit entity">
-                                                      @participant.Name
-                                                   </a>
-                                                }
-                                                else
-                                                {
-                                                   @participant.Name
-                                                }
+                                                  @if(participant.TemplateEntityId is not null)
+                                                  {
+                                                     <form method="post"
+                                                           action="@createParticipantEntityUrl"
+                                                         class="broadcast-ai-check-participant-create-form"
+                                                         data-ajax-success="reload">
+                                                         @Html.AntiForgeryToken()
+                                                      <input type="hidden"
+                                                             name="participantName"
+                                                             value="@participant.Name" />
+                                                         <input type="hidden"
+                                                                name="templateEntityId"
+                                                                value="@participant.TemplateEntityId" />
+                                                         <button type="submit"
+                                                                 class="broadcast-ai-check-participant-create-button"
+                                                                 title="Create entity"
+                                                                 aria-label="Create entity for @participant.Name">
+                                                            +
+                                                         </button>
+                                                      </form>
+                                                   }
+                                                </div>
                                              }
-                                          </span>
+                                          </div>
                                           <button type="button"
                                                   class="broadcast-ai-check-participants-more">
                                              +@participationCheck.MoreParticipantsCount more
@@ -340,32 +357,44 @@
                                                "@System.Text.Json.JsonSerializer.Serialize(
                                                   participantItems
                                                )">
-                                          @for(
-                                             var index = 0;
-                                             index < participantItems.Count;
-                                             index++
-                                          )
+                                          @foreach(var participant in participantItems)
                                           {
-                                             if(index > 0)
-                                             {
-                                                <text>, </text>
-                                             }
+                                             <div class="broadcast-ai-check-participant-row">
+                                                @if(participant.EditUrl is not null)
+                                                {
+                                                   <a class="broadcast-ai-check-participant-link"
+                                                      href="@participant.EditUrl"
+                                                      title="Edit entity">
+                                                      @participant.Name
+                                                   </a>
+                                                }
+                                                else
+                                                {
+                                                   <span>@participant.Name</span>
+                                                }
 
-                                             var participant =
-                                                participantItems[index];
-
-                                             if(participant.EditUrl is not null)
-                                             {
-                                                <a class="broadcast-ai-check-participant-link"
-                                                   href="@participant.EditUrl"
-                                                   title="Edit entity">
-                                                   @participant.Name
-                                                </a>
-                                             }
-                                             else
-                                             {
-                                                @participant.Name
-                                             }
+                                                @if(participant.TemplateEntityId is not null)
+                                                {
+                                                   <form method="post"
+                                                         action="@createParticipantEntityUrl"
+                                                         class="broadcast-ai-check-participant-create-form"
+                                                         data-ajax-success="reload">
+                                                      @Html.AntiForgeryToken()
+                                                      <input type="hidden"
+                                                             name="participantName"
+                                                             value="@participant.Name" />
+                                                      <input type="hidden"
+                                                             name="templateEntityId"
+                                                             value="@participant.TemplateEntityId" />
+                                                      <button type="submit"
+                                                              class="broadcast-ai-check-participant-create-button"
+                                                              title="Create entity"
+                                                              aria-label="Create entity for @participant.Name">
+                                                         +
+                                                      </button>
+                                                   </form>
+                                                }
+                                             </div>
                                           }
                                        </div>
                                     }

@@ -9,13 +9,12 @@
    const checkParticipationRowSelector =
       "[data-check-swedish-participation-row]";
    const participationCellSelector = "[data-swedish-participation-cell]";
+   const participantCreateUrlSelector = "[data-create-participant-url]";
    const pendingParticipationIds = new Set();
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
    const exclusiveEmptySelectStates = new WeakMap();
-   let participantEntityIdsByName = null;
-
    window.submitFilterForm = submitFilterForm;
    initializeExclusiveEmptySelects();
    initializeMultiSelectClearButtons();
@@ -71,6 +70,11 @@
             {
                target.remove();
             }
+         }
+         else if(form.dataset.ajaxSuccess === "reload")
+         {
+            window.location.reload();
+            return;
          }
 
          decrementCounter(form.dataset.ajaxDecrementTarget);
@@ -679,7 +683,11 @@
       const names = participants
          .map(participant =>
             typeof participant === "string"
-               ? { name: participant.trim(), editUrl: null }
+               ? {
+                  name: participant.trim(),
+                  editUrl: null,
+                  templateEntityId: null
+               }
                : normalizeParticipantItem(participant))
          .filter(participant => participant !== null);
 
@@ -692,25 +700,26 @@
       wrapper.className = "broadcast-ai-check-participants";
       wrapper.dataset.participantsJson = JSON.stringify(names);
 
-      const preview = document.createElement("div");
-      preview.className = "broadcast-ai-check-participants-preview";
-      names.slice(0, 3).forEach((participant, index) => {
-         if(index > 0)
-         {
-            preview.append(document.createTextNode(", "));
-         }
-
-         preview.append(createParticipantNode(participant));
-      });
-      wrapper.append(preview);
-
       if(names.length > 3)
       {
+         const preview = document.createElement("div");
+         preview.className = "broadcast-ai-check-participants-preview";
+         names.slice(0, 3).forEach(participant => {
+            preview.append(createParticipantRow(participant));
+         });
+         wrapper.append(preview);
+
          const moreButton = document.createElement("button");
          moreButton.type = "button";
          moreButton.className = "broadcast-ai-check-participants-more";
          moreButton.textContent = `+${names.length - 3} more`;
          wrapper.append(moreButton);
+      }
+      else
+      {
+         names.forEach(participant => {
+            wrapper.append(createParticipantRow(participant));
+         });
       }
 
       initializeParticipationMoreButtons(wrapper);
@@ -902,34 +911,105 @@
       preview.replaceChildren();
 
       names.forEach(participant => {
-         const line = document.createElement("div");
-         line.append(createParticipantNode(participant));
-         preview.append(line);
+         preview.append(createParticipantRow(participant));
       });
       button.remove();
    }
 
-   function createParticipantNode(participant)
+   function createParticipantRow(participant)
    {
-      const link = typeof participant === "string"
-         ? getParticipantEntityEditUrl(participant)
-         : normalizeParticipantItem(participant)?.editUrl ?? null;
-      const name = typeof participant === "string"
-         ? participant
-         : normalizeParticipantItem(participant)?.name ?? "";
+      const item = normalizeParticipantItem(participant);
 
-      if(link === null)
+      if(item === null)
+      {
+         return document.createElement("div");
+      }
+
+      const row = document.createElement("div");
+      row.className = "broadcast-ai-check-participant-row";
+      row.append(createParticipantInlineNode(item));
+
+      const createForm = createParticipantCreateForm(item);
+
+      if(createForm)
+      {
+         row.append(createForm);
+      }
+
+      return row;
+   }
+
+   function createParticipantInlineNode(participant)
+   {
+      const item = normalizeParticipantItem(participant);
+
+      if(item === null)
       {
          const span = document.createElement("span");
-         span.textContent = name;
+         span.textContent = "";
          return span;
       }
 
-      const anchor = document.createElement("a");
-      anchor.href = link;
-      anchor.textContent = name;
-      anchor.className = "broadcast-ai-check-participant-link";
-      return anchor;
+      if(item.editUrl !== null)
+      {
+         const anchor = document.createElement("a");
+         anchor.href = item.editUrl;
+         anchor.textContent = item.name;
+         anchor.className = "broadcast-ai-check-participant-link";
+         anchor.title = "Edit entity";
+         return anchor;
+      }
+
+      const span = document.createElement("span");
+      span.textContent = item.name;
+      return span;
+   }
+
+   function createParticipantCreateForm(participant)
+   {
+      const item = normalizeParticipantItem(participant);
+
+      if(item === null || item.editUrl !== null || item.templateEntityId === null)
+      {
+         return null;
+      }
+
+      const form = document.createElement("form");
+      form.method = "post";
+      form.action = getParticipantCreateUrl();
+      form.dataset.ajaxSuccess = "reload";
+      form.className = "broadcast-ai-check-participant-create-form";
+
+      const token = getAntiForgeryToken();
+
+      if(token !== "")
+      {
+         const tokenInput = document.createElement("input");
+         tokenInput.type = "hidden";
+         tokenInput.name = "__RequestVerificationToken";
+         tokenInput.value = token;
+         form.append(tokenInput);
+      }
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "hidden";
+      nameInput.name = "participantName";
+      nameInput.value = item.name;
+
+      const templateInput = document.createElement("input");
+      templateInput.type = "hidden";
+      templateInput.name = "templateEntityId";
+      templateInput.value = item.templateEntityId;
+
+      const button = document.createElement("button");
+      button.type = "submit";
+      button.className = "broadcast-ai-check-participant-create-button";
+      button.textContent = "+";
+      button.title = "Create entity";
+      button.setAttribute("aria-label", `Create entity for ${item.name}`);
+
+      form.append(nameInput, templateInput, button);
+      return form;
    }
 
    function normalizeParticipantItem(participant)
@@ -951,10 +1031,17 @@
             && participant.editUrl.trim() !== ""
             ? participant.editUrl.trim()
             : null;
+      const templateEntityId = typeof participant.TemplateEntityId === "string"
+         && participant.TemplateEntityId.trim() !== ""
+         ? participant.TemplateEntityId.trim()
+         : typeof participant.templateEntityId === "string"
+            && participant.templateEntityId.trim() !== ""
+            ? participant.templateEntityId.trim()
+            : null;
 
       return name === ""
          ? null
-         : { name, editUrl };
+         : { name, editUrl, templateEntityId };
    }
 
    function isValidParticipantItem(participant)
@@ -962,83 +1049,22 @@
       return normalizeParticipantItem(participant) !== null;
    }
 
-   function getParticipantEntityEditUrl(name)
+   function getParticipantCreateUrl()
    {
-      const entityId = getParticipantEntityId(name);
+      const container = document.querySelector(
+         participantCreateUrlSelector
+      );
 
-      if(entityId === null)
+      if(!(container instanceof HTMLElement))
       {
-         return null;
+         return window.location.href;
       }
 
-      return `/Admin/Entities/Edit/${entityId}`;
-   }
+      const url = container.dataset.createParticipantUrl;
 
-   function getParticipantEntityId(name)
-   {
-      if(typeof name !== "string" || name.trim() === "")
-      {
-         return null;
-      }
-
-      const lookup = getParticipantEntityIdsByName();
-      const normalizedName = normalizeParticipantName(name);
-
-      if(normalizedName === "")
-      {
-         return null;
-      }
-
-      const entityId = lookup[normalizedName];
-
-      return typeof entityId === "string" && entityId.trim() !== ""
-         ? entityId.trim()
-         : null;
-   }
-
-   function getParticipantEntityIdsByName()
-   {
-      if(participantEntityIdsByName !== null)
-      {
-         return participantEntityIdsByName;
-      }
-
-      const root = document.querySelector("[data-broadcast-results]");
-      const json = root instanceof HTMLElement
-         ? root.dataset.participantEntityIdsJson ?? "{}"
-         : "{}";
-
-      try
-      {
-         const parsed = JSON.parse(json);
-
-         participantEntityIdsByName =
-            parsed !== null && typeof parsed === "object"
-               ? parsed
-               : {};
-      }
-      catch
-      {
-         participantEntityIdsByName = {};
-      }
-
-      return participantEntityIdsByName;
-   }
-
-   function normalizeParticipantName(value)
-   {
-      if(typeof value !== "string")
-      {
-         return "";
-      }
-
-      return value
-         .normalize("NFD")
-         .replace(/[\u0300-\u036f]/g, "")
-         .replace(/[^A-Za-z0-9]+/g, " ")
-         .trim()
-         .replace(/\s+/g, " ")
-         .toUpperCase();
+      return typeof url === "string" && url.trim() !== ""
+         ? url.trim()
+         : window.location.href;
    }
 
    function createResponsePreview(responseText)

@@ -1,4 +1,5 @@
 using Npgsql;
+using SESport.Core.Domain;
 using SESport.Data;
 
 namespace SESport.Core.Tests.Data;
@@ -32,6 +33,55 @@ public sealed class AdminRepositoryTests
       finally
       {
          await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
+   public async Task GetEntityCloneTemplateAsyncKeepsOnlyNationalTeams()
+   {
+      var templateId = Guid.NewGuid();
+      var nationalTeamId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var templateName = $"Template Person {templateId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, templateId, templateName);
+      await InsertRelatedEntityAsync(
+         dataSource,
+         nationalTeamId,
+         "National Team",
+         TrackedEntityTypeIds.NationalTeam,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         "Organization",
+         "Organization",
+         "football"
+      );
+      await InsertLinkAsync(dataSource, templateId, nationalTeamId);
+      await InsertLinkAsync(dataSource, templateId, organizationId);
+
+      try
+      {
+         var template = await repository.GetEntityCloneTemplateAsync(
+            templateId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(template);
+         Assert.Equal(TrackedEntityTypeIds.Person, template!.EntityTypeId);
+         Assert.Equal([nationalTeamId], template.LinkedEntityIds);
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, templateId);
+         await DeleteEntityAsync(dataSource, organizationId);
+         await DeleteEntityAsync(dataSource, nationalTeamId);
+         await DeleteEntityAsync(dataSource, templateId);
       }
    }
 
@@ -83,6 +133,75 @@ public sealed class AdminRepositoryTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task InsertRelatedEntityAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId,
+      string entityName,
+      string entityTypeId,
+      string sportId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into entities (
+            id,
+            canonical_name,
+            entity_type_id,
+            sport_id,
+            country_id,
+            country_relevance_kind_id,
+            country_relevance_reason,
+            watch_priority_id,
+            expected_stability_id
+         )
+         values (
+            @id,
+            @canonical_name,
+            @entity_type_id,
+            @sport_id,
+            'se',
+            'NationalityOrSportingIdentity',
+            'Test coverage',
+            'review',
+            'short_term'
+         )
+         """;
+      command.Parameters.AddWithValue("id", entityId);
+      command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("entity_type_id", entityTypeId);
+      command.Parameters.AddWithValue("sport_id", sportId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertLinkAsync(
+      NpgsqlDataSource dataSource,
+      Guid sourceEntityId,
+      Guid targetEntityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         values (
+            @id,
+            @source_entity_id,
+            @target_entity_id
+         )
+         """;
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
+      command.Parameters.AddWithValue("source_entity_id", sourceEntityId);
+      command.Parameters.AddWithValue("target_entity_id", targetEntityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
    private static async Task DeleteEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId
@@ -93,6 +212,23 @@ public sealed class AdminRepositoryTests
       command.CommandText = """
          delete from entities
          where id = @id
+         """;
+      command.Parameters.AddWithValue("id", entityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteLinksAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from entity_to_entity_links
+         where source_entity_id = @id
+            or target_entity_id = @id
          """;
       command.Parameters.AddWithValue("id", entityId);
 

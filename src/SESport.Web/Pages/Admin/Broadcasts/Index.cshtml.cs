@@ -109,21 +109,18 @@ public class IndexModel(
       };
    }
 
-   public string? GetParticipantEntityEditUrl(string participantName)
+   public Dictionary<string, string?> GetCurrentRouteValues()
    {
-      var normalizedName = BroadcastEntityFilter.NormalizeName(participantName);
+      var routeValues = AdminRouteValueBuilder.CreateSortRouteValues(
+         SelectedDate,
+         HideReplays,
+         ShowHidden,
+         SortAsc,
+         SelectedSports
+      );
+      routeValues[RouteKeys.SortColumn] = SortColumn;
 
-      if(string.IsNullOrWhiteSpace(normalizedName))
-      {
-         return null;
-      }
-
-      if(!ParticipantEntityIdsByName.TryGetValue(normalizedName, out var id))
-      {
-         return null;
-      }
-
-      return Url.Page("/Admin/Entities/Edit", new { id });
+      return routeValues;
    }
 
    public IReadOnlyList<BroadcastParticipantDisplayItem>
@@ -131,12 +128,46 @@ public class IndexModel(
          IReadOnlyList<string> participantNames
       )
    {
+      Guid? templateEntityId = null;
+
+      foreach(var participantName in participantNames)
+      {
+         var normalizedName =
+            BroadcastEntityFilter.NormalizeName(participantName);
+
+         if(ParticipantEntityIdsByName.TryGetValue(
+            normalizedName,
+            out var entityId
+         ))
+         {
+            templateEntityId = entityId;
+            break;
+         }
+      }
+
       return participantNames
          .Select(name =>
-            new BroadcastParticipantDisplayItem(
-               name,
-               GetParticipantEntityEditUrl(name)
+         {
+            var normalizedName = BroadcastEntityFilter.NormalizeName(name);
+
+            if(ParticipantEntityIdsByName.TryGetValue(
+               normalizedName,
+               out var entityId
             ))
+            {
+               return new BroadcastParticipantDisplayItem(
+                  name,
+                  Url.Page("/Admin/Entities/Edit", new { id = entityId }),
+                  null
+               );
+            }
+
+            return new BroadcastParticipantDisplayItem(
+               name,
+               null,
+               templateEntityId
+            );
+         })
          .ToList();
    }
 
@@ -243,6 +274,76 @@ public class IndexModel(
             StatusCode = StatusCodes.Status500InternalServerError
          };
       }
+   }
+
+   public async Task<IActionResult> OnPostCreateParticipantEntityAsync(
+      string participantName,
+      Guid templateEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      participantName = participantName?.Trim() ?? string.Empty;
+
+      if(string.IsNullOrWhiteSpace(participantName) ||
+         templateEntityId == Guid.Empty)
+      {
+         return BadRequest(new
+         {
+            error = "Select a participant and a template entity."
+         });
+      }
+
+      var template = await adminRepository.GetEntityCloneTemplateAsync(
+         templateEntityId,
+         cancellationToken
+      );
+
+      if(template is null)
+      {
+         return NotFound(new
+         {
+            error = "Template entity not found."
+         });
+      }
+
+      template.CanonicalName = participantName;
+
+      try
+      {
+         await adminRepository.SaveEntityAsync(template, cancellationToken);
+      }
+      catch(Exception exception)
+      {
+         return new JsonResult(new
+         {
+            error = exception.Message
+         })
+         {
+            StatusCode = StatusCodes.Status500InternalServerError
+         };
+      }
+
+      if(WantsJsonResponse())
+      {
+         return new JsonResult(new
+         {
+            created = true,
+            entityId = template.Id,
+            canonicalName = template.CanonicalName,
+            editUrl = Url.Page("/Admin/Entities/Edit", new { id = template.Id })
+         });
+      }
+
+      return RedirectToPage(
+         "./Index",
+         new
+         {
+            date = DateDisplay.Format(Date),
+            sortColumn = SortColumn,
+            sortAsc = SortAsc,
+            SelectedSports
+         }
+      );
    }
 
    private bool WantsJsonResponse()

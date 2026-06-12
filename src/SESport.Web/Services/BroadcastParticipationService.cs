@@ -263,6 +263,20 @@ public sealed class BroadcastParticipationService(
             BroadcastEntityFilter.NormalizeName(entity.Name))
          .Where(group => !string.IsNullOrWhiteSpace(group.Key))
          .ToDictionary(group => group.Key, group => group.First().Id);
+      Guid? templateEntityId = null;
+
+      foreach(var name in participantNames)
+      {
+         var normalizedName = BroadcastEntityFilter.NormalizeName(name);
+
+         if(!string.IsNullOrWhiteSpace(normalizedName) &&
+            entityByName.TryGetValue(normalizedName, out var entityId))
+         {
+            templateEntityId = entityId;
+            break;
+         }
+      }
+
       var items = new List<BroadcastParticipantDisplayItem>();
 
       foreach(var name in participantNames)
@@ -275,13 +289,20 @@ public sealed class BroadcastParticipationService(
             items.Add(
                new BroadcastParticipantDisplayItem(
                   name,
-                  $"/Admin/Entities/Edit/{entityId}"
+                  $"/Admin/Entities/Edit/{entityId}",
+                  null
                )
             );
          }
          else
          {
-            items.Add(new BroadcastParticipantDisplayItem(name, null));
+            items.Add(
+               new BroadcastParticipantDisplayItem(
+                  name,
+                  null,
+                  templateEntityId
+               )
+            );
          }
       }
 
@@ -308,5 +329,6 @@ public sealed record BroadcastParticipationCheckResult(
 
 public sealed record BroadcastParticipantDisplayItem(
    string Name,
-   string? EditUrl
+   string? EditUrl,
+   Guid? TemplateEntityId
 );

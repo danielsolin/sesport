@@ -812,7 +812,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       await reader.DisposeAsync();
 
-      const string linkSql = """
+      const string linkSql = $$"""
          select
             case
                when source_entity_id = @id then target_entity_id
@@ -822,6 +822,86 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          where source_entity_id = @id or target_entity_id = @id
          order by linked_entity_id
          """;
+
+      await using var linkCommand = dataSource.CreateCommand(linkSql);
+      linkCommand.Parameters.AddWithValue("id", id);
+      await using var linkReader = await linkCommand.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      while (await linkReader.ReadAsync(cancellationToken))
+      {
+         model.LinkedEntityIds.Add(linkReader.GetGuid(0));
+      }
+
+      return model;
+   }
+
+   public async Task<EntityEditModel?> GetEntityCloneTemplateAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string entitySql = """
+         select
+            id,
+            canonical_name,
+            entity_type_id,
+            sport_id,
+            country_id,
+            country_relevance_kind_id,
+            country_relevance_reason,
+            watch_priority_id,
+            expected_stability_id
+         from entities
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(entitySql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if (!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      var model = new EntityEditModel
+      {
+         Id = null,
+         CanonicalName = reader.GetString(1),
+         EntityTypeId = TrackedEntityTypeIds.Person,
+         SportId = reader.GetString(3),
+         CountryId = reader.GetString(4),
+         CountryRelevanceKindId = reader.GetString(5),
+         CountryRelevanceReason = reader.GetString(6),
+         WatchPriorityId = reader.GetString(7),
+         ExpectedStabilityId = reader.GetString(8)
+      };
+
+      await reader.DisposeAsync();
+
+      var linkSql = $@"
+         select
+            case
+               when source_entity_id = @id then target_entity_id
+               else source_entity_id
+            end as linked_entity_id
+         from entity_to_entity_links l
+         join entities linked
+            on linked.id = case
+               when source_entity_id = @id then target_entity_id
+               else source_entity_id
+            end
+            where (
+               source_entity_id = @id
+               or target_entity_id = @id
+            )
+            and linked.entity_type_id = '{TrackedEntityTypeIds.NationalTeam}'
+         order by linked_entity_id
+         ";
 
       await using var linkCommand = dataSource.CreateCommand(linkSql);
       linkCommand.Parameters.AddWithValue("id", id);
