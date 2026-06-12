@@ -108,10 +108,17 @@ public sealed class ActivityEditPageService(
             firstBroadcast.Id,
             cancellationToken
          );
+      var selectableEntities = participationCheck is null
+         ? []
+         : await GetSelectableEntitiesAsync(cancellationToken);
 
       activity.BroadcastIds = [firstBroadcast.Id];
       activity.TvChannelName = firstBroadcast.ChannelName;
-      activity.Title = firstBroadcast.Title;
+      activity.Title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+         firstBroadcast,
+         selectableEntities,
+         participationCheck
+      );
       activity.Description = firstBroadcast.Description;
       activity.ActivityType =
          BroadcastActivityTypeResolver.ResolveActivityType(
@@ -139,13 +146,9 @@ public sealed class ActivityEditPageService(
 
       if(participationCheck is not null)
       {
-         var personEntities = await GetSelectableEntitiesAsync(
-            cancellationToken
-         );
-
          activity.LinkedEntityIds =
             ActivityBroadcastPrefillBuilder.SelectLinkedEntityIds(
-               personEntities,
+               selectableEntities,
                participationCheck
             ).ToList();
       }

@@ -99,4 +99,127 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       Assert.Contains("AI participants: Alice, Bob", comment);
       Assert.Contains("- https://example.test/a", comment);
    }
+
+   [Fact]
+   public void CreateActivityTitleRemovesRedundantOrganizationName()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "GT World Challenge, GT World Challenge America",
+         null,
+         ["motorsport"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+      var participationCheck = new BroadcastParticipationCheck(
+         Guid.NewGuid(),
+         "completed",
+         "Yes",
+         ["Hampus Ericsson"],
+         [],
+         null
+      );
+      var entities =
+         new[]
+         {
+            new EntityOption(
+               Guid.NewGuid(),
+               "Hampus Ericsson",
+               TrackedEntityTypeIds.Person,
+               "Motorsport",
+               "GT World Challenge"
+            )
+         };
+
+      var title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         entities,
+         participationCheck
+      );
+
+      Assert.Equal("America", title);
+   }
+
+   [Fact]
+   public void CreateActivityTitleTreatsTourenAsTour()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "LPGA Touren, Final",
+         null,
+         ["golf"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+      var participationCheck = new BroadcastParticipationCheck(
+         Guid.NewGuid(),
+         "completed",
+         "Yes",
+         ["Hampus Ericsson"],
+         [],
+         null
+      );
+      var entities =
+         new[]
+         {
+            new EntityOption(
+               Guid.NewGuid(),
+               "Hampus Ericsson",
+               TrackedEntityTypeIds.Person,
+               "Golf",
+               "LPGA Tour"
+            )
+         };
+
+      var title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         entities,
+         participationCheck
+      );
+
+      Assert.Equal("Final", title);
+   }
+
+   [Fact]
+   public void CreateActivityTitleTreatsSerienAsSeries()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "IndyCar Serien, Race 1",
+         null,
+         ["motorsport"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+      var participationCheck = new BroadcastParticipationCheck(
+         Guid.NewGuid(),
+         "completed",
+         "Yes",
+         ["Hampus Ericsson"],
+         [],
+         null
+      );
+      var entities =
+         new[]
+         {
+            new EntityOption(
+               Guid.NewGuid(),
+               "Hampus Ericsson",
+               TrackedEntityTypeIds.Person,
+               "Motorsport",
+               "IndyCar Series"
+            )
+         };
+
+      var title = ActivityBroadcastPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         entities,
+         participationCheck
+      );
+
+      Assert.Equal("Race 1", title);
+   }
 }
