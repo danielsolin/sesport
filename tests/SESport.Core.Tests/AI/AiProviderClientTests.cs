@@ -32,6 +32,41 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncUsesToolLoop()
+   {
+      var handler = new RecordingHandler(
+         CreateToolCallResponseJson(),
+         CreateChatResponseJson("{\"ok\":true}")
+      );
+      var webSearchClient = new RecordingWebSearchClient();
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(),
+         CreatePrompt(),
+         "Prompt text",
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal("{\"ok\":true}", result.OutputText);
+      Assert.Equal(
+         new Uri("http://127.0.0.1:1234/v1/chat/completions"),
+         handler.RequestUri
+      );
+      Assert.Contains("\"tools\":[{\"type\":\"function\"",
+         handler.RequestBody);
+      Assert.Contains("\"name\":\"web_search\"",
+         handler.RequestBody);
+      Assert.Single(webSearchClient.Queries);
+      Assert.Equal("Tre Kronor Swedish roster", webSearchClient.Queries[0]);
+   }
+
+   [Fact]
    public async Task OpenRouterGenerateAsyncUsesChatCompletionsEnvelope()
    {
       var handler = new RecordingHandler(
@@ -156,6 +191,38 @@ public class AiProviderClientTests
       });
    }
 
+   private static string CreateToolCallResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  role = "assistant",
+                  content = (string?)null,
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_1",
+                        type = "function",
+                        function = new
+                        {
+                           name = "web_search",
+                           arguments =
+                              "{\"query\":\"Tre Kronor Swedish roster\"}"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      });
+   }
+
    private static string CreateChatResponseJson(string content)
    {
       return JsonSerializer.Serialize(new
@@ -175,13 +242,37 @@ public class AiProviderClientTests
       });
    }
 
+   private sealed class RecordingWebSearchClient : IWebSearchClient
+   {
+      public List<string> Queries { get; } = [];
+
+      public Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+         string query,
+         int maxResults,
+         CancellationToken cancellationToken
+      )
+      {
+         Queries.Add(query);
+
+         return Task.FromResult<IReadOnlyList<WebSearchResult>>(
+            [
+               new WebSearchResult(
+                  "Tre Kronor roster",
+                  "https://example.test/roster",
+                  "A Swedish roster result."
+               )
+            ]
+         );
+      }
+   }
+
    private sealed class RecordingHandler : HttpMessageHandler
    {
-      private readonly string responseJson;
+      private readonly Queue<string> responseJson;
 
-      public RecordingHandler(string responseJson)
+      public RecordingHandler(params string[] responseJson)
       {
-         this.responseJson = responseJson;
+         this.responseJson = new Queue<string>(responseJson);
       }
 
       public Uri? RequestUri { get; private set; }
@@ -198,10 +289,14 @@ public class AiProviderClientTests
             ? ""
             : await request.Content.ReadAsStringAsync(cancellationToken);
 
+         var response = responseJson.Count == 0
+            ? "{}"
+            : responseJson.Dequeue();
+
          return new HttpResponseMessage(HttpStatusCode.OK)
          {
             Content = JsonContent.Create(
-               JsonSerializer.Deserialize<JsonElement>(responseJson)
+               JsonSerializer.Deserialize<JsonElement>(response)
             )
          };
       }
