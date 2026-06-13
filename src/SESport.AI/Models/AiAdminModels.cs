@@ -90,6 +90,7 @@ public sealed record AiRunDetail(
    string RenderedPrompt,
    string? RawRequestJson,
    string? RawResponseJson,
+   string? ToolTraceJson,
    string? OutputText,
    string? ErrorMessage,
    DateTimeOffset StartedAt,

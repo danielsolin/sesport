@@ -123,6 +123,7 @@ public sealed class OpenRouterClient : IAiProviderClient
          AiRequestJsonSerializer.Serialize(request),
          outputText,
          rawResponse,
+         null,
          null
       );
    }

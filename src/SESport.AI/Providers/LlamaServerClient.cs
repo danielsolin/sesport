@@ -90,6 +90,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var messages = (JsonArray)request["messages"]!;
       JsonObject? responseJson = null;
       var rawResponse = "";
+      var toolTrace = new JsonArray();
       var turn = 0;
 
       while(true)
@@ -124,9 +125,15 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          if(!TryGetToolCalls(responseJson, out var toolCalls))
          {
+            toolTrace.Add(
+               CreateAssistantTraceEntry(turn, responseJson, [])
+            );
             break;
          }
 
+         toolTrace.Add(
+            CreateAssistantTraceEntry(turn, responseJson, toolCalls)
+         );
          AppendAssistantMessage(messages, responseJson);
 
          foreach(var toolCall in toolCalls)
@@ -136,6 +143,10 @@ public sealed class LlamaServerClient : IAiProviderClient
             var toolResult = await ExecuteToolCallAsync(
                toolCall,
                cancellationToken
+            );
+
+            toolTrace.Add(
+               CreateToolTraceEntry(turn, toolCall, toolResult)
             );
 
             messages.Add(
@@ -162,6 +173,9 @@ public sealed class LlamaServerClient : IAiProviderClient
          job.OutputMode,
          prompt.OutputSchemaJson
       );
+      var toolTraceJson = toolTrace.Count == 0
+         ? null
+         : JsonSerializer.Serialize(toolTrace, JsonOptions);
 
       return new AiJobResult(
          Guid.NewGuid(),
@@ -172,6 +186,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          AiRequestJsonSerializer.Serialize(request),
          finalOutputText,
          rawResponse,
+         toolTraceJson,
          null
       );
    }
@@ -229,6 +244,48 @@ public sealed class LlamaServerClient : IAiProviderClient
          toolCalls.Length == 0 ? "[]" : string.Join(",", toolCalls),
          TruncateForLog(content, 800)
       );
+   }
+
+   private static JsonObject CreateAssistantTraceEntry(
+      int turn,
+      JsonObject response,
+      IReadOnlyList<ToolCall> toolCalls
+   )
+   {
+      return new JsonObject
+      {
+         ["kind"] = "assistant",
+         ["turn"] = turn,
+         ["finish_reason"] = GetFinishReason(response),
+         ["content"] = NormalizeOutput(ExtractFinalText(response)),
+         ["tool_calls"] = JsonSerializer.SerializeToNode(
+            toolCalls.Select(toolCall => new
+            {
+               id = toolCall.Id,
+               name = toolCall.Name,
+               arguments = toolCall.Arguments
+            }).ToArray(),
+            JsonOptions
+         )
+      };
+   }
+
+   private static JsonObject CreateToolTraceEntry(
+      int turn,
+      ToolCall toolCall,
+      string toolResult
+   )
+   {
+      return new JsonObject
+      {
+         ["kind"] = "tool",
+         ["turn"] = turn,
+         ["tool_call_id"] = toolCall.Id,
+         ["name"] = toolCall.Name,
+         ["query"] = ExtractQuery(toolCall.Arguments),
+         ["max_results"] = ExtractMaxResults(toolCall.Arguments),
+         ["result"] = toolResult
+      };
    }
 
    private static string? GetFinishReason(JsonObject response)

@@ -9,5 +9,6 @@ public sealed record AiJobResult(
    string RawRequestJson,
    string OutputText,
    string? RawResponseJson,
+   string? ToolTraceJson,
    string? ErrorMessage
 );

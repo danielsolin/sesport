@@ -75,6 +75,9 @@ public class AiProviderClientTests
          "{\"SwedishParticipation\":\"Yes\",\"SwedishParticipants\":[\"Dino Beganovic\"],\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
+      Assert.Contains("\"kind\":\"assistant\"", result.ToolTraceJson);
+      Assert.Contains("\"kind\":\"tool\"", result.ToolTraceJson);
+      Assert.Contains("Article Title", result.ToolTraceJson);
       Assert.DoesNotContain("\"sources\"", result.RawResponseJson);
       Assert.Equal(2, handler.RequestBodies.Count);
       Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);

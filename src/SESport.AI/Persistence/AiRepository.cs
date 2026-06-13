@@ -105,6 +105,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.rendered_prompt,
             r.raw_request::text,
             r.raw_response::text,
+            r.tool_trace::text,
             r.output_text,
             r.error_message,
             r.started_at,
@@ -148,12 +149,13 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(reader, 13),
          ReadNullableString(reader, 14),
          ReadNullableString(reader, 15),
-         reader.GetFieldValue<DateTimeOffset>(16),
-         ReadNullableDateTimeOffset(reader, 17),
-         ReadNullableDecimal(reader, 18),
-         ReadNullableInt32(reader, 19),
+         ReadNullableString(reader, 16),
+         reader.GetFieldValue<DateTimeOffset>(17),
+         ReadNullableDateTimeOffset(reader, 18),
+         ReadNullableDecimal(reader, 19),
          ReadNullableInt32(reader, 20),
-         ReadNullableInt32(reader, 21)
+         ReadNullableInt32(reader, 21),
+         ReadNullableInt32(reader, 22)
       );
    }
 
@@ -364,16 +366,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          insert into ai_job_runs (
             id, job_id, prompt_id, provider_id, status_id, correlation_id,
             provider_model, input_payload, rendered_prompt, raw_request,
-            raw_response, output_text, error_message, started_at,
+            raw_response, tool_trace, output_text, error_message, started_at,
             completed_at, duration_seconds, input_tokens, output_tokens,
             reasoning_tokens
          )
          values (
             @id, @job_id, @prompt_id, @provider_id, @status_id,
             @correlation_id, @provider_model, @input_payload,
-            @rendered_prompt, @raw_request, @raw_response, @output_text,
-            @error_message, @started_at, @completed_at, @duration_seconds,
-            @input_tokens, @output_tokens, @reasoning_tokens
+            @rendered_prompt, @raw_request, @raw_response, @tool_trace,
+            @output_text, @error_message, @started_at, @completed_at,
+            @duration_seconds, @input_tokens, @output_tokens,
+            @reasoning_tokens
          )
          """;
 
@@ -394,6 +397,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             correlation_id = @correlation_id,
             raw_request = @raw_request,
             raw_response = @raw_response,
+            tool_trace = @tool_trace,
             output_text = @output_text,
             error_message = @error_message,
             completed_at = @completed_at,
@@ -428,6 +432,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("rendered_prompt", run.RenderedPrompt);
       AddJsonbParameter(command, "raw_request", run.RawRequestJson);
       AddJsonbParameter(command, "raw_response", run.RawResponseJson);
+      AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);
       command.Parameters.AddWithValue(
          "output_text",
          (object?)run.OutputText ?? DBNull.Value
@@ -472,6 +477,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
       AddJsonbParameter(command, "raw_request", run.RawRequestJson);
       AddJsonbParameter(command, "raw_response", run.RawResponseJson);
+      AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);
       command.Parameters.AddWithValue(
          "output_text",
          (object?)run.OutputText ?? DBNull.Value

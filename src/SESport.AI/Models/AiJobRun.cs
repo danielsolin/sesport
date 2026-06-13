@@ -12,6 +12,7 @@ public sealed record AiJobRun(
    string RenderedPrompt,
    string RawRequestJson,
    string? RawResponseJson,
+   string? ToolTraceJson,
    string? OutputText,
    string? ErrorMessage,
    DateTimeOffset StartedAt,

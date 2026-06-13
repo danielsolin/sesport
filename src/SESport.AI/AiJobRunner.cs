@@ -89,6 +89,7 @@ public sealed class AiJobRunner(
          null,
          null,
          null,
+         null,
          DateTimeOffset.UtcNow,
          null,
          null,
@@ -115,6 +116,7 @@ public sealed class AiJobRunner(
             Status = AiJobRunStatus.Completed,
             RawRequestJson = providerResult.RawRequestJson,
             RawResponseJson = providerResult.RawResponseJson,
+            ToolTraceJson = providerResult.ToolTraceJson,
             OutputText = providerResult.OutputText,
             CompletedAt = DateTimeOffset.UtcNow,
             DurationSeconds = (decimal)(
@@ -133,6 +135,7 @@ public sealed class AiJobRunner(
             providerResult.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
+            run.ToolTraceJson,
             null
          );
       }
@@ -159,6 +162,7 @@ public sealed class AiJobRunner(
             run.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
+            run.ToolTraceJson,
             exception.Message
          );
       }

@@ -119,6 +119,16 @@
       </section>
    }
 
+   @if (!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
+   {
+      <section class="form-section">
+         <details class="run-data-details">
+            <summary>Tool trace</summary>
+            <pre class="prompt-details-pre">@Model.Run.ToolTraceJson</pre>
+         </details>
+      </section>
+   }
+
    @if (!string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
    {
       <section class="form-section">

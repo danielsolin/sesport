@@ -93,6 +93,7 @@ public sealed class LmStudioClient : IAiProviderClient
          AiRequestJsonSerializer.Serialize(request),
          outputText,
          rawResponse,
+         null,
          null
       );
    }
