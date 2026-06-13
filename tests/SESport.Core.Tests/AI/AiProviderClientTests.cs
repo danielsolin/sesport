@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Providers;
 
@@ -42,7 +43,8 @@ public class AiProviderClientTests
       var webSearchClient = new RecordingWebSearchClient();
       var client = new LlamaServerClient(
          new HttpClient(handler),
-         webSearchClient
+         webSearchClient,
+         NullLogger<LlamaServerClient>.Instance
       );
 
       var result = await client.GenerateAsync(

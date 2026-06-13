@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Validation;
@@ -24,16 +25,20 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    public LlamaServerClient(
       HttpClient httpClient,
-      IWebSearchClient webSearchClient
+      IWebSearchClient webSearchClient,
+      ILogger<LlamaServerClient> logger
    )
    {
       HttpClient = httpClient;
       WebSearchClient = webSearchClient;
+      Logger = logger;
    }
 
    private HttpClient HttpClient { get; }
 
    private IWebSearchClient WebSearchClient { get; }
+
+   private ILogger<LlamaServerClient> Logger { get; }
 
    public JsonObject CreateRequestPayload(
       AiProviderDefinition provider,
@@ -105,6 +110,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
          }
 
+         LogResponse("tool", toolCallIndex, parsedResponse);
+
          if(!TryGetToolCalls(parsedResponse, out var toolCalls))
          {
             AppendAssistantMessage(messages, parsedResponse);
@@ -170,6 +177,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
+      LogResponse("final", null, finalResponseJson);
+
       var finalOutputText = NormalizeOutput(
          ExtractFinalText(finalResponseJson)
       );
@@ -217,6 +226,91 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
+   }
+
+   private void LogResponse(
+      string stage,
+      int? step,
+      JsonObject response
+   )
+   {
+      if(!Logger.IsEnabled(LogLevel.Debug))
+      {
+         return;
+      }
+
+      var finishReason = GetFinishReason(response);
+      var reasoningContent = ExtractReasoningContent(response);
+      var content = NormalizeOutput(ExtractFinalText(response));
+      var toolCalls = ExtractToolCallNames(response);
+      var stepLabel = step is null ? stage : $"{stage}:{step}";
+
+      Logger.LogDebug(
+         "llama-server {Stage} finish_reason={FinishReason} " +
+         "reasoning={HasReasoning} tool_calls={ToolCalls} content={Content}",
+         stepLabel,
+         string.IsNullOrWhiteSpace(finishReason) ? "null" : finishReason,
+         string.IsNullOrWhiteSpace(reasoningContent) ? "false" : "true",
+         toolCalls.Length == 0 ? "[]" : string.Join(",", toolCalls),
+         TruncateForLog(content, 800)
+      );
+   }
+
+   private static string? GetFinishReason(JsonObject response)
+   {
+      if(!response.TryGetPropertyValue("choices", out var choicesNode) ||
+         choicesNode is not JsonArray choices ||
+         choices.Count == 0 ||
+         choices[0] is not JsonObject choice ||
+         !choice.TryGetPropertyValue("finish_reason", out var finishReasonNode))
+      {
+         return null;
+      }
+
+      return finishReasonNode is JsonValue value &&
+         value.TryGetValue<string>(out var finishReason)
+         ? finishReason
+         : finishReasonNode.ToJsonString() ?? "";
+   }
+
+   private static string ExtractReasoningContent(JsonObject response)
+   {
+      if(!response.TryGetPropertyValue("choices", out var choicesNode) ||
+         choicesNode is not JsonArray choices ||
+         choices.Count == 0 ||
+         choices[0] is not JsonObject choice ||
+         !choice.TryGetPropertyValue("message", out var messageNode) ||
+         messageNode is not JsonObject message ||
+         !message.TryGetPropertyValue("reasoning_content",
+            out var reasoningNode))
+      {
+         return "";
+      }
+
+      return reasoningNode is JsonValue value &&
+         value.TryGetValue<string>(out var reasoningContent)
+         ? reasoningContent
+         : reasoningNode.ToJsonString() ?? "";
+   }
+
+   private static string[] ExtractToolCallNames(JsonObject response)
+   {
+      if(!TryGetToolCalls(response, out var toolCalls))
+      {
+         return [];
+      }
+
+      return toolCalls.Select(toolCall => toolCall.Name).ToArray();
+   }
+
+   private static string TruncateForLog(string value, int maxLength)
+   {
+      if(value.Length <= maxLength)
+      {
+         return value;
+      }
+
+      return value[..maxLength] + "...";
    }
 
    private JsonObject CreateToolLoopRequestPayload(
