@@ -6,9 +6,8 @@ namespace SESport.AI.Providers;
 
 public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
 {
-   private static readonly Regex LinkRegex = new(
-      @"<a[^>]*class=""result__a""[^>]*href=""(?<href>[^""]+)""[^>]*>" +
-      @"(?<text>.*?)</a>",
+   private static readonly Regex AnchorRegex = new(
+      @"<a\b(?<attrs>[^>]*)>(?<text>.*?)</a>",
       RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline
    );
 
@@ -116,15 +115,24 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
 
    private static IEnumerable<WebSearchResult> ParseResults(string html)
    {
-      foreach(Match linkMatch in LinkRegex.Matches(html))
+      foreach(Match anchorMatch in AnchorRegex.Matches(html))
       {
-         var title = CleanHtml(linkMatch.Groups["text"].Value);
-         var url = NormalizeUrl(linkMatch.Groups["href"].Value);
+         var attrs = anchorMatch.Groups["attrs"].Value;
+         var href = ExtractAttribute(attrs, "href");
+
+         if(string.IsNullOrWhiteSpace(href) ||
+            !IsResultAnchor(attrs, href))
+         {
+            continue;
+         }
+
+         var title = CleanHtml(anchorMatch.Groups["text"].Value);
+         var url = NormalizeUrl(href);
          var snippet = string.Empty;
 
          var snippetWindow = html.Substring(
-            linkMatch.Index,
-            Math.Min(1000, html.Length - linkMatch.Index)
+            anchorMatch.Index,
+            Math.Min(1000, html.Length - anchorMatch.Index)
          );
          var snippetMatch = SnippetRegex.Match(snippetWindow);
 
@@ -144,6 +152,34 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
             string.IsNullOrWhiteSpace(snippet) ? null : snippet
          );
       }
+   }
+
+   private static bool IsResultAnchor(string attrs, string href)
+   {
+      if(href.Contains("uddg=", StringComparison.OrdinalIgnoreCase))
+      {
+         return true;
+      }
+
+      var className = ExtractAttribute(attrs, "class");
+
+      return className.Contains("result__a", StringComparison.OrdinalIgnoreCase) ||
+         className.Contains("result-link", StringComparison.OrdinalIgnoreCase) ||
+         className.Contains("result__title-link", StringComparison.OrdinalIgnoreCase);
+   }
+
+   private static string ExtractAttribute(
+      string attrs,
+      string attributeName
+   )
+   {
+      var match = Regex.Match(
+         attrs,
+         $@"\b{Regex.Escape(attributeName)}=""(?<value>[^""]*)""",
+         RegexOptions.IgnoreCase
+      );
+
+      return match.Success ? match.Groups["value"].Value : "";
    }
 
    private static string NormalizeUrl(string href)

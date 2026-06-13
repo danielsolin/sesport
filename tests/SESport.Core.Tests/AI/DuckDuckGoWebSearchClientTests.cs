@@ -45,10 +45,11 @@ public class DuckDuckGoWebSearchClientTests
             "   <body>",
             "      <div class=\"result results_links\">",
             "         <div>",
-            "            <a class=\"result__a\" href=\"" +
+            "            <a href=\"" +
                "//duckduckgo.com/l/?uddg=" +
-               encodedUrl + "\">",
-            "               Tre Kronor roster",
+               encodedUrl +
+               "\" class=\"result__a result-link\">",
+            "               <span>Tre Kronor roster</span>",
             "            </a>",
             "            <a class=\"result__snippet\">",
             "               Sweden lineup info.",
