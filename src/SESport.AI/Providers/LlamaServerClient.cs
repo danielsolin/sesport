@@ -91,6 +91,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       JsonObject? responseJson = null;
       var rawResponse = "";
       var toolTrace = new JsonArray();
+      var searchResultsById = new Dictionary<string, WebSearchResult>(
+         StringComparer.OrdinalIgnoreCase
+      );
+      var toolState = new ToolLoopState();
       var turn = 0;
 
       while(true)
@@ -142,6 +146,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
             var toolResult = await ExecuteToolCallAsync(
                toolCall,
+               searchResultsById,
+               toolState,
                cancellationToken
             );
 
@@ -276,14 +282,36 @@ public sealed class LlamaServerClient : IAiProviderClient
       string toolResult
    )
    {
+      var isSearchTool = string.Equals(
+         toolCall.Name,
+         "web_search",
+         StringComparison.Ordinal
+      ) || string.Equals(
+         toolCall.Name,
+         "altra/web-search",
+         StringComparison.Ordinal
+      ) || string.Equals(
+         toolCall.Name,
+         "altra_web_search",
+         StringComparison.Ordinal
+      );
+
+      var isGetPageTool = string.Equals(
+         toolCall.Name,
+         "web_get_page",
+         StringComparison.Ordinal
+      );
+
       return new JsonObject
       {
          ["kind"] = "tool",
          ["turn"] = turn,
          ["tool_call_id"] = toolCall.Id,
          ["name"] = toolCall.Name,
-         ["query"] = ExtractQuery(toolCall.Arguments),
-         ["max_results"] = ExtractMaxResults(toolCall.Arguments),
+         ["arguments"] = toolCall.Arguments,
+         ["query"] = isSearchTool ? ExtractQuery(toolCall.Arguments) : null,
+         ["limit"] = isSearchTool ? ExtractLimit(toolCall.Arguments) : null,
+         ["id"] = isGetPageTool ? ExtractId(toolCall.Arguments) : null,
          ["result"] = toolResult
       };
    }
@@ -360,21 +388,23 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       var query = ExtractQuery(toolCall.Arguments);
-      var maxResults = ExtractMaxResults(toolCall.Arguments);
+      var limit = ExtractLimit(toolCall.Arguments);
+      var id = ExtractId(toolCall.Arguments);
 
       Logger.LogDebug(
          "llama-server tool:{Step} name={Name} query={Query} " +
-         "max_results={MaxResults}",
+         "limit={Limit} id={Id}",
          step,
          toolCall.Name,
          TruncateForLog(query, 240),
-         maxResults
+         limit,
+         TruncateForLog(id, 120)
       );
    }
 
    private void LogSearchResults(
       string query,
-      int maxResults,
+      int limit,
       IReadOnlyList<WebSearchResult> searchResults
    )
    {
@@ -388,10 +418,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          : $"{searchResults[0].Title} | {searchResults[0].Url}";
 
       Logger.LogDebug(
-         "llama-server search query={Query} max_results={MaxResults} " +
+         "llama-server search query={Query} limit={Limit} " +
          "results={ResultCount} first_result={FirstResult}",
          TruncateForLog(query, 240),
-         maxResults,
+         limit,
          searchResults.Count,
          TruncateForLog(firstResult, 240)
       );
@@ -428,7 +458,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                         {
                            ["type"] = "string"
                         },
-                        ["max_results"] = new JsonObject
+                        ["limit"] = new JsonObject
                         {
                            ["type"] = "integer",
                            ["minimum"] = 1,
@@ -436,6 +466,30 @@ public sealed class LlamaServerClient : IAiProviderClient
                         }
                      },
                      ["required"] = new JsonArray { "query" },
+                     ["additionalProperties"] = false
+                  }
+               }
+            },
+            new JsonObject
+            {
+               ["type"] = "function",
+               ["function"] = new JsonObject
+               {
+                  ["name"] = "web_get_page",
+                  ["description"] =
+                     "Open a previously returned search result by id " +
+                     "and extract the full page text.",
+                  ["parameters"] = new JsonObject
+                  {
+                     ["type"] = "object",
+                     ["properties"] = new JsonObject
+                     {
+                        ["id"] = new JsonObject
+                        {
+                           ["type"] = "string"
+                        }
+                     },
+                     ["required"] = new JsonArray { "id" },
                      ["additionalProperties"] = false
                   }
                }
@@ -505,29 +559,49 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private async Task<string> ExecuteToolCallAsync(
       ToolCall toolCall,
+      IDictionary<string, WebSearchResult> searchResultsById,
+      ToolLoopState toolState,
       CancellationToken cancellationToken
    )
    {
-      if(!IsWebSearchTool(toolCall.Name))
+      if(
+         string.Equals(toolCall.Name, "web_search", StringComparison.Ordinal) ||
+         string.Equals(toolCall.Name, "altra/web-search",
+            StringComparison.Ordinal) ||
+         string.Equals(toolCall.Name, "altra_web_search",
+            StringComparison.Ordinal)
+      )
       {
-         throw new InvalidOperationException(
-            $"Unsupported tool call '{toolCall.Name}'."
+         var query = ExtractQuery(toolCall.Arguments);
+         var limit = ExtractLimit(toolCall.Arguments);
+         var searchResults = await WebSearchClient.SearchAsync(
+            query,
+            limit,
+            cancellationToken
+         );
+
+         LogSearchResults(query, limit, searchResults);
+
+         toolState.SearchSequence++;
+         return FormatSearchResults(
+            searchResults,
+            toolState.SearchSequence,
+            searchResultsById
          );
       }
 
-      var query = ExtractQuery(toolCall.Arguments);
-      var maxResults = ExtractMaxResults(toolCall.Arguments);
-      var searchResults = await WebSearchClient.SearchAsync(
-         query,
-         maxResults,
-         cancellationToken
-      );
+      if(string.Equals(toolCall.Name, "web_get_page", StringComparison.Ordinal))
+      {
+         var id = ExtractId(toolCall.Arguments);
+         return await FormatPageContentAsync(
+            id,
+            searchResultsById,
+            cancellationToken
+         );
+      }
 
-      LogSearchResults(query, maxResults, searchResults);
-
-      return await FormatSearchResultsAsync(
-         searchResults,
-         cancellationToken
+      throw new InvalidOperationException(
+         $"Unsupported tool call '{toolCall.Name}'."
       );
    }
 
@@ -776,11 +850,11 @@ public sealed class LlamaServerClient : IAiProviderClient
       return arguments.Trim();
    }
 
-   private static int ExtractMaxResults(string arguments)
+   private static int ExtractLimit(string arguments)
    {
       if(string.IsNullOrWhiteSpace(arguments))
       {
-         return 5;
+         return 10;
       }
 
       try
@@ -789,7 +863,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          var root = document.RootElement;
 
          if(
-            root.TryGetProperty("max_results", out var maxResultsNode) &&
+            root.TryGetProperty("limit", out var maxResultsNode) &&
             maxResultsNode.ValueKind == JsonValueKind.Number &&
             maxResultsNode.TryGetInt32(out var maxResults)
          )
@@ -801,7 +875,34 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
       }
 
-      return 5;
+      return 10;
+   }
+
+   private static string ExtractId(string arguments)
+   {
+      if(string.IsNullOrWhiteSpace(arguments))
+      {
+         return "";
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(arguments);
+         var root = document.RootElement;
+
+         if(
+            TryGetStringProperty(root, "id", out var id) &&
+            !string.IsNullOrWhiteSpace(id)
+         )
+         {
+            return id;
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return arguments.Trim();
    }
 
    private static bool TryGetStringProperty(
@@ -824,9 +925,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       return !string.IsNullOrWhiteSpace(value);
    }
 
-   private async Task<string> FormatSearchResultsAsync(
+   private static string FormatSearchResults(
       IReadOnlyList<WebSearchResult> searchResults,
-      CancellationToken cancellationToken
+      int searchSequence,
+      IDictionary<string, WebSearchResult> searchResultsById
    )
    {
       if(searchResults.Count == 0)
@@ -834,32 +936,84 @@ public sealed class LlamaServerClient : IAiProviderClient
          return "[]";
       }
 
-      var firstResult = searchResults[0];
-      var pageContent = await WebPageContentClient.FetchAsync(
-         firstResult.Url,
-         cancellationToken
-      );
-      var output = new object[]
-      {
-         new
+      var output = searchResults
+         .Select((searchResult, index) =>
          {
-            Title = pageContent?.Title ?? firstResult.Title,
-            Url = firstResult.Url,
-            PublishedAt = pageContent?.PublishedAt?.ToString("O"),
-            MainText = pageContent?.MainText
-               ?? firstResult.Snippet
-               ?? string.Empty
-         }
-      };
+            var id = $"s{searchSequence}_{index + 1}";
+            searchResultsById[id] = searchResult;
+
+            return new
+            {
+               id,
+               title = searchResult.Title,
+               url = searchResult.Url,
+               snippet = searchResult.Snippet,
+               published_at = searchResult.PublishedAt?.ToString("O")
+            };
+         })
+         .ToArray();
 
       return JsonSerializer.Serialize(output, JsonOptions);
    }
 
-   private static bool IsWebSearchTool(string name)
+   private async Task<string> FormatPageContentAsync(
+      string id,
+      IDictionary<string, WebSearchResult> searchResultsById,
+      CancellationToken cancellationToken
+   )
    {
-      return string.Equals(name, "web_search", StringComparison.Ordinal) ||
-         string.Equals(name, "altra/web-search", StringComparison.Ordinal) ||
-         string.Equals(name, "altra_web_search", StringComparison.Ordinal);
+      if(string.IsNullOrWhiteSpace(id))
+      {
+         return JsonSerializer.Serialize(
+            new
+            {
+               error = "Missing search result id."
+            },
+            JsonOptions
+         );
+      }
+
+      if(!searchResultsById.TryGetValue(id, out var searchResult))
+      {
+         return JsonSerializer.Serialize(
+            new
+            {
+               error = "Unknown search result id.",
+               id
+            },
+            JsonOptions
+         );
+      }
+
+      var pageContent = await WebPageContentClient.FetchAsync(
+         searchResult.Url,
+         cancellationToken
+      );
+
+      if(pageContent is null)
+      {
+         return JsonSerializer.Serialize(
+            new
+            {
+               id,
+               title = searchResult.Title,
+               url = searchResult.Url,
+               error = "Unable to fetch page content."
+            },
+            JsonOptions
+         );
+      }
+
+      var output = new
+      {
+         id,
+         title = pageContent.Title,
+         url = pageContent.Url,
+         published_at = pageContent.PublishedAt?.ToString("O"),
+         main_text = pageContent.MainText
+      };
+
+      return JsonSerializer.Serialize(output, JsonOptions);
    }
 
    private static string CreateFailureMessage(
@@ -920,5 +1074,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       string Name,
       string Arguments
    );
+
+   private sealed class ToolLoopState
+   {
+      public int SearchSequence { get; set; }
+   }
 
 }

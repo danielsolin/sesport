@@ -38,6 +38,7 @@ public class AiProviderClientTests
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(),
          CreateLlamaFinalResponseJson()
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -79,20 +80,26 @@ public class AiProviderClientTests
       Assert.Contains("\"kind\":\"tool\"", result.ToolTraceJson);
       Assert.Contains("Article Title", result.ToolTraceJson);
       Assert.DoesNotContain("\"sources\"", result.RawResponseJson);
-      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);
       Assert.Contains("\"role\":\"user\"", handler.RequestBodies[0]);
       Assert.Contains("\"tools\":[{\"type\":\"function\"",
          handler.RequestBodies[0]);
       Assert.Contains("\"tool_choice\":\"auto\"",
          handler.RequestBodies[0]);
+      Assert.Contains("\"name\":\"web_get_page\"",
+         handler.RequestBodies[0]);
       Assert.Contains("\"role\":\"tool\"",
          handler.RequestBodies[1]);
-      Assert.Contains("Article Title", handler.RequestBodies[1]);
-      Assert.Contains("Full article content.", handler.RequestBodies[1]);
+      Assert.Contains("s1_1", handler.RequestBodies[1]);
+      Assert.Contains("Tre Kronor roster", handler.RequestBodies[1]);
+      Assert.Contains("\"role\":\"tool\"",
+         handler.RequestBodies[2]);
+      Assert.Contains("Article Title", handler.RequestBodies[2]);
+      Assert.Contains("Full article content.", handler.RequestBodies[2]);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
-      Assert.Equal(3, webSearchClient.Queries[0].MaxResults);
+      Assert.Equal(10, webSearchClient.Queries[0].MaxResults);
       Assert.Single(webPageContentClient.Urls);
       Assert.Equal(
          "https://example.test/roster",
@@ -281,7 +288,35 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "web_search",
-                    "arguments": "{\"query\":\"Tre Kronor\",\"max_results\":3}"
+                    "arguments": "{\"query\":\"Tre Kronor\",\"limit\":10}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
+   private static string CreateLlamaPageCallResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_2",
+                  "type": "function",
+                  "function": {
+                    "name": "web_get_page",
+                    "arguments": "{\"id\":\"s1_1\"}"
                   }
                 }
               ]

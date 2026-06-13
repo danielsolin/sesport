@@ -118,6 +118,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          var title = ReadString(result, "title");
          var url = ReadString(result, "url");
          var snippet = ReadString(result, "content");
+         var publishedAt = ReadPublishedAt(result);
 
          if(string.IsNullOrWhiteSpace(title) ||
             string.IsNullOrWhiteSpace(url))
@@ -134,7 +135,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             new WebSearchResult(
                title,
                NormalizeUrl(url),
-               string.IsNullOrWhiteSpace(snippet) ? null : snippet
+               string.IsNullOrWhiteSpace(snippet) ? null : snippet,
+               publishedAt
             )
          );
 
@@ -145,6 +147,28 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       }
 
       return items;
+   }
+
+   private static DateTimeOffset? ReadPublishedAt(JsonElement element)
+   {
+      var candidates = new[]
+      {
+         ReadString(element, "publishedDate"),
+         ReadString(element, "published_date"),
+         ReadString(element, "publishedAt"),
+         ReadString(element, "published_at"),
+         ReadString(element, "date")
+      };
+
+      foreach(var candidate in candidates)
+      {
+         if(DateTimeOffset.TryParse(candidate, out var publishedAt))
+         {
+            return publishedAt;
+         }
+      }
+
+      return null;
    }
 
    private static bool IsDeniedDomain(string url)
