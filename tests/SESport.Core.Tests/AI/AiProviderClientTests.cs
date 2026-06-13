@@ -82,6 +82,8 @@ public class AiProviderClientTests
          handler.RequestBodies[2]);
       Assert.Contains("\"thinking_budget_tokens\":0",
          handler.RequestBodies[2]);
+      Assert.Contains("\"reasoning_format\":\"none\"",
+         handler.RequestBodies[2]);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor Swedish roster", webSearchClient.Queries[0]);
    }

@@ -441,6 +441,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       payload["messages"] = finalMessages;
       payload["thinking_budget_tokens"] = FinalThinkingBudgetTokens;
+      payload["reasoning_format"] = "none";
       payload["chat_template_kwargs"] = new JsonObject
       {
          ["enable_thinking"] = false
