@@ -112,6 +112,7 @@ public sealed class AiJobRunner(
          run = run with
          {
             Status = AiJobRunStatus.Completed,
+            RawRequestJson = providerResult.RawRequestJson,
             RawResponseJson = providerResult.RawResponseJson,
             OutputText = providerResult.OutputText,
             CompletedAt = DateTimeOffset.UtcNow,
@@ -128,7 +129,7 @@ public sealed class AiJobRunner(
             run.ProviderId,
             run.ProviderModel,
             run.RenderedPrompt,
-            run.RawRequestJson,
+            providerResult.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
             null

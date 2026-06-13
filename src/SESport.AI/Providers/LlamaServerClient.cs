@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
+using SESport.AI.Validation;
 
 namespace SESport.AI.Providers;
 
@@ -41,72 +42,11 @@ public sealed class LlamaServerClient : IAiProviderClient
       string renderedPrompt
    )
    {
-      var payload = new JsonObject
-      {
-         ["model"] = provider.Model,
-         ["messages"] = new JsonArray
-         {
-            new JsonObject
-            {
-               ["role"] = "user",
-               ["content"] = renderedPrompt
-            }
-         },
-         ["tools"] = new JsonArray
-         {
-            new JsonObject
-            {
-               ["type"] = "function",
-               ["function"] = new JsonObject
-               {
-                  ["name"] = "web_search",
-                  ["description"] =
-                     "Search the web for current or factual information.",
-                  ["parameters"] = new JsonObject
-                  {
-                     ["type"] = "object",
-                     ["properties"] = new JsonObject
-                     {
-                        ["query"] = new JsonObject
-                        {
-                           ["type"] = "string"
-                        },
-                        ["max_results"] = new JsonObject
-                        {
-                           ["type"] = "integer",
-                           ["minimum"] = 1,
-                           ["maximum"] = 10
-                        }
-                     },
-                     ["required"] = new JsonArray { "query" },
-                     ["additionalProperties"] = false
-                  }
-               }
-            }
-         },
-         ["tool_choice"] = "auto"
-      };
-
-      if(prompt.MaxOutputTokens is not null)
-      {
-         payload["max_tokens"] = prompt.MaxOutputTokens.Value;
-      }
-
-      if(prompt.Temperature is not null)
-      {
-         payload["temperature"] = prompt.Temperature.Value;
-      }
-
-      ResponsesRequestFormat.Apply(
-         payload,
-         job.OutputMode,
-         prompt.OutputSchemaJson,
-         $"prompt_{prompt.Id:N}"
+      return CreateToolLoopRequestPayload(
+         provider,
+         prompt,
+         renderedPrompt
       );
-
-      MergeRequestOptions(payload, provider.RequestOptionsJson);
-      MergeRequestOptions(payload, prompt.RequestOptionsJson);
-      return payload;
    }
 
    public async Task<AiJobResult> GenerateAsync(
@@ -132,9 +72,12 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
-      var request = CreateRequestPayload(provider, job, prompt, renderedPrompt);
+      var request = CreateToolLoopRequestPayload(
+         provider,
+         prompt,
+         renderedPrompt
+      );
       var messages = (JsonArray)request["messages"]!;
-      JsonObject? lastResponse = null;
 
       for(var toolCallIndex = 1; toolCallIndex <= MaxToolCalls; toolCallIndex++)
       {
@@ -152,34 +95,23 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
          }
 
-         lastResponse = JsonDocument.Parse(rawResponse).RootElement
+         var parsedResponse = JsonDocument.Parse(rawResponse).RootElement
             .Deserialize<JsonObject>(JsonOptions);
 
-         if(lastResponse is null)
+         if(parsedResponse is null)
          {
             throw new InvalidOperationException(
                "llama-server returned an empty response."
             );
          }
 
-         if(!TryGetToolCalls(lastResponse, out var toolCalls))
+         if(!TryGetToolCalls(parsedResponse, out var toolCalls))
          {
-            var outputText = NormalizeOutput(ExtractFinalText(lastResponse));
-
-            return new AiJobResult(
-               Guid.NewGuid(),
-               job.Id,
-               provider.Id,
-               provider.Model,
-               renderedPrompt,
-               AiRequestJsonSerializer.Serialize(request),
-               outputText,
-               rawResponse,
-               null
-            );
+            AppendAssistantMessage(messages, parsedResponse);
+            break;
          }
 
-         AppendAssistantMessage(messages, lastResponse);
+         AppendAssistantMessage(messages, parsedResponse);
 
          foreach(var toolCall in toolCalls)
          {
@@ -201,8 +133,62 @@ public sealed class LlamaServerClient : IAiProviderClient
          request["messages"] = messages;
       }
 
-      throw new InvalidOperationException(
-         $"Provider '{provider.Id}' exceeded the maximum tool calls."
+      var finalRequest = CreateFinalRequestPayload(
+         provider,
+         job,
+         prompt,
+         messages
+      );
+      var finalResponse = await SendAsync(
+         provider,
+         finalRequest,
+         cancellationToken
+      );
+      var finalRawResponse = await finalResponse.Content.ReadAsStringAsync(
+         cancellationToken
+      );
+
+      if(!finalResponse.IsSuccessStatusCode)
+      {
+         throw new HttpRequestException(
+            CreateFailureMessage(
+               finalResponse.StatusCode,
+               finalRawResponse
+            ),
+            null,
+            finalResponse.StatusCode
+         );
+      }
+
+      var finalResponseJson = JsonDocument.Parse(finalRawResponse).RootElement
+         .Deserialize<JsonObject>(JsonOptions);
+
+      if(finalResponseJson is null)
+      {
+         throw new InvalidOperationException(
+            "llama-server returned an empty final response."
+         );
+      }
+
+      var finalOutputText = NormalizeOutput(
+         ExtractFinalText(finalResponseJson)
+      );
+      finalOutputText = ResponsesOutputValidator.ValidateStructuredOutput(
+         finalOutputText,
+         job.OutputMode,
+         prompt.OutputSchemaJson
+      );
+
+      return new AiJobResult(
+         Guid.NewGuid(),
+         job.Id,
+         provider.Id,
+         provider.Model,
+         renderedPrompt,
+         AiRequestJsonSerializer.Serialize(finalRequest),
+         finalOutputText,
+         finalRawResponse,
+         null
       );
    }
 
@@ -231,6 +217,107 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
+   }
+
+   private JsonObject CreateToolLoopRequestPayload(
+      AiProviderDefinition provider,
+      AiPromptDefinition prompt,
+      string renderedPrompt
+   )
+   {
+      var payload = CreateBaseRequestPayload(provider, prompt, renderedPrompt);
+      payload["tools"] = new JsonArray
+      {
+         new JsonObject
+         {
+            ["type"] = "function",
+            ["function"] = new JsonObject
+            {
+               ["name"] = "web_search",
+               ["description"] =
+                  "Search the web for current or factual information.",
+               ["parameters"] = new JsonObject
+               {
+                  ["type"] = "object",
+                  ["properties"] = new JsonObject
+                  {
+                     ["query"] = new JsonObject
+                     {
+                        ["type"] = "string"
+                     },
+                     ["max_results"] = new JsonObject
+                     {
+                        ["type"] = "integer",
+                        ["minimum"] = 1,
+                        ["maximum"] = 10
+                     }
+                  },
+                  ["required"] = new JsonArray { "query" },
+                  ["additionalProperties"] = false
+               }
+            }
+         }
+      };
+      payload["tool_choice"] = "auto";
+      MergeRequestOptions(payload, provider.RequestOptionsJson);
+      MergeRequestOptions(payload, prompt.RequestOptionsJson);
+      return payload;
+   }
+
+   private JsonObject CreateFinalRequestPayload(
+      AiProviderDefinition provider,
+      AiJobDefinition job,
+      AiPromptDefinition prompt,
+      JsonArray messages
+   )
+   {
+      var payload = CreateBaseRequestPayload(provider, prompt, null);
+      payload["messages"] = messages.DeepClone();
+      ResponsesRequestFormat.Apply(
+         payload,
+         job.OutputMode,
+         prompt.OutputSchemaJson,
+         $"prompt_{prompt.Id:N}"
+      );
+      MergeRequestOptions(payload, provider.RequestOptionsJson);
+      MergeRequestOptions(payload, prompt.RequestOptionsJson);
+      return payload;
+   }
+
+   private JsonObject CreateBaseRequestPayload(
+      AiProviderDefinition provider,
+      AiPromptDefinition prompt,
+      string? renderedPrompt
+   )
+   {
+      var payload = new JsonObject
+      {
+         ["model"] = provider.Model
+      };
+
+      if(renderedPrompt is not null)
+      {
+         payload["messages"] = new JsonArray
+         {
+            new JsonObject
+            {
+               ["role"] = "user",
+               ["content"] = renderedPrompt
+            }
+         };
+      }
+
+      if(prompt.MaxOutputTokens is not null)
+      {
+         payload["max_tokens"] = prompt.MaxOutputTokens.Value;
+      }
+
+      if(prompt.Temperature is not null)
+      {
+         payload["temperature"] = prompt.Temperature.Value;
+      }
+
+      return payload;
    }
 
    private async Task<string> ExecuteToolCallAsync(

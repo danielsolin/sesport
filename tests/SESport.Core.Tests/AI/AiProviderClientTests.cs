@@ -36,6 +36,7 @@ public class AiProviderClientTests
    {
       var handler = new RecordingHandler(
          CreateToolCallResponseJson(),
+         CreateChatResponseJson("Working through the results."),
          CreateChatResponseJson("{\"ok\":true}")
       );
       var webSearchClient = new RecordingWebSearchClient();
@@ -54,14 +55,29 @@ public class AiProviderClientTests
       );
 
       Assert.Equal("{\"ok\":true}", result.OutputText);
+      Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Equal(
          new Uri("http://127.0.0.1:1234/v1/chat/completions"),
          handler.RequestUri
       );
       Assert.Contains("\"tools\":[{\"type\":\"function\"",
-         handler.RequestBody);
+         handler.RequestBodies[0]);
+      Assert.DoesNotContain(
+         "\"response_format\"",
+         handler.RequestBodies[0]
+      );
       Assert.Contains("\"name\":\"web_search\"",
-         handler.RequestBody);
+         handler.RequestBodies[0]);
+      Assert.Contains("\"tools\":[{\"type\":\"function\"",
+         handler.RequestBodies[1]);
+      Assert.DoesNotContain(
+         "\"response_format\"",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[2]);
+      Assert.DoesNotContain("\"tools\"",
+         handler.RequestBodies[2]);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor Swedish roster", webSearchClient.Queries[0]);
    }
@@ -277,7 +293,10 @@ public class AiProviderClientTests
 
       public Uri? RequestUri { get; private set; }
 
-      public string RequestBody { get; private set; } = "";
+      public List<string> RequestBodies { get; } = [];
+
+      public string RequestBody =>
+         RequestBodies.Count == 0 ? "" : RequestBodies[^1];
 
       protected override async Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
@@ -285,9 +304,10 @@ public class AiProviderClientTests
       )
       {
          RequestUri = request.RequestUri;
-         RequestBody = request.Content is null
+         var requestBody = request.Content is null
             ? ""
             : await request.Content.ReadAsStringAsync(cancellationToken);
+         RequestBodies.Add(requestBody);
 
          var response = responseJson.Count == 0
             ? "{}"
