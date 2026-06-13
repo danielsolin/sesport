@@ -12,7 +12,8 @@ namespace SESport.AI.Providers;
 
 public sealed class LlamaServerClient : IAiProviderClient
 {
-   private const int MaxToolCalls = 6;
+   private const int MaxToolCalls = 3;
+   private const int MaxSearchResults = 5;
 
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
@@ -419,7 +420,25 @@ public sealed class LlamaServerClient : IAiProviderClient
    )
    {
       var payload = CreateBaseRequestPayload(provider, prompt, null);
-      payload["messages"] = messages.DeepClone();
+      var finalMessages = new JsonArray
+      {
+         new JsonObject
+         {
+            ["role"] = "system",
+            ["content"] =
+               "You have already searched the web. " +
+               "Do not use tools again. " +
+               "Use the collected evidence and return only the final " +
+               "JSON object."
+         }
+      };
+
+      foreach(var message in messages)
+      {
+         finalMessages.Add(message?.DeepClone());
+      }
+
+      payload["messages"] = finalMessages;
       ResponsesRequestFormat.Apply(
          payload,
          job.OutputMode,
@@ -480,7 +499,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       var query = ExtractQuery(toolCall.Arguments);
-      var maxResults = ExtractMaxResults(toolCall.Arguments);
+      var maxResults = Math.Min(
+         ExtractMaxResults(toolCall.Arguments),
+         MaxSearchResults
+      );
       var searchResults = await WebSearchClient.SearchAsync(
          query,
          maxResults,
@@ -817,6 +839,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static bool IsWebSearchTool(string name)
    {
+      //TODO: "altra/web-search" is only relevant for LMStudio so should
+      // probably be removed.
       return string.Equals(name, "web_search", StringComparison.Ordinal) ||
          string.Equals(name, "altra/web-search", StringComparison.Ordinal) ||
          string.Equals(name, "altra_web_search", StringComparison.Ordinal);
