@@ -35,6 +35,23 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchDropsDeniedSocialDomains()
+   {
+      var handler = new RecordingHandler(CreateMixedResponseJson());
+      var client = new SearxngWebSearchClient(new HttpClient(handler));
+
+      var results = await client.SearchAsync(
+         "Tre Kronor",
+         5,
+         CancellationToken.None
+      );
+
+      Assert.Single(results);
+      Assert.Equal("Official roster", results[0].Title);
+      Assert.Equal("https://example.test/roster", results[0].Url);
+   }
+
+   [Fact]
    public async Task EmptyQuerySkipsRequest()
    {
       var handler = new RecordingHandler(CreateResponseJson());
@@ -60,6 +77,34 @@ public class SearxngWebSearchClientTests
             new
             {
                title = "Tre Kronor roster",
+               url = "https://example.test/roster",
+               content = "Sweden lineup info."
+            }
+         },
+         answers = Array.Empty<object>(),
+         corrections = Array.Empty<string>(),
+         infoboxes = Array.Empty<object>(),
+         suggestions = Array.Empty<string>(),
+         unresponsive_engines = Array.Empty<object>()
+      });
+   }
+
+   private static string CreateMixedResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         query = "Tre Kronor",
+         results = new[]
+         {
+            new
+            {
+               title = "Instagram post",
+               url = "https://instagram.com/p/example",
+               content = "Social post."
+            },
+            new
+            {
+               title = "Official roster",
                url = "https://example.test/roster",
                content = "Sweden lineup info."
             }

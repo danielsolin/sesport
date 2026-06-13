@@ -8,6 +8,26 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       "https://xng.sesport.se/"
    );
 
+   private static readonly string[] DeniedHostSuffixes =
+   [
+      "instagram.com",
+      "www.instagram.com",
+      "facebook.com",
+      "www.facebook.com",
+      "x.com",
+      "www.x.com",
+      "twitter.com",
+      "www.twitter.com",
+      "tiktok.com",
+      "www.tiktok.com",
+      "youtube.com",
+      "www.youtube.com",
+      "youtu.be",
+      "www.youtu.be",
+      "threads.net",
+      "www.threads.net"
+   ];
+
    private static readonly Uri SearchUri = new(
       DefaultBaseAddress,
       "search"
@@ -93,6 +113,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             continue;
          }
 
+         if(IsDeniedDomain(url))
+         {
+            continue;
+         }
+
          items.Add(
             new WebSearchResult(
                title,
@@ -108,6 +133,29 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       }
 
       return items;
+   }
+
+   private static bool IsDeniedDomain(string url)
+   {
+      if(!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+      {
+         return false;
+      }
+
+      var host = uri.Host;
+
+      foreach(var deniedHostSuffix in DeniedHostSuffixes)
+      {
+         if(host.EndsWith(
+            deniedHostSuffix,
+            StringComparison.OrdinalIgnoreCase
+         ))
+         {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    private static string ReadString(
