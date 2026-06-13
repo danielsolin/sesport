@@ -31,6 +31,20 @@ public class WebPageContentClientTests
       Assert.DoesNotContain("Menu item", page.MainText);
    }
 
+   [Fact]
+   public async Task FetchSkipsPdfResponses()
+   {
+      var handler = new PdfRecordingHandler();
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/entry-list.pdf",
+         CancellationToken.None
+      );
+
+      Assert.Null(page);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -76,6 +90,28 @@ public class WebPageContentClientTests
                )
             }
          );
+      }
+   }
+
+   private sealed class PdfRecordingHandler : HttpMessageHandler
+   {
+      protected override Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         var response = new HttpResponseMessage(HttpStatusCode.OK)
+         {
+            Content = new ByteArrayContent(
+               new byte[] { 0x25, 0x50, 0x44, 0x46 }
+            )
+         };
+         response.Content.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue(
+               "application/pdf"
+            );
+
+         return Task.FromResult(response);
       }
    }
 }

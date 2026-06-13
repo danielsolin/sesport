@@ -57,6 +57,26 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchDropsPdfResults()
+   {
+      var handler = new RecordingHandler(CreatePdfMixedResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
+
+      var results = await client.SearchAsync(
+         "Tre Kronor",
+         5,
+         CancellationToken.None
+      );
+
+      Assert.Single(results);
+      Assert.Equal("Official roster", results[0].Title);
+      Assert.Equal("https://example.test/roster", results[0].Url);
+   }
+
+   [Fact]
    public async Task EmptyQuerySkipsRequest()
    {
       var handler = new RecordingHandler(CreateResponseJson());
@@ -131,6 +151,34 @@ public class SearxngWebSearchClientTests
                title = "Instagram post",
                url = "https://instagram.com/p/example",
                content = "Social post."
+            },
+            new
+            {
+               title = "Official roster",
+               url = "https://example.test/roster",
+               content = "Sweden lineup info."
+            }
+         },
+         answers = Array.Empty<object>(),
+         corrections = Array.Empty<string>(),
+         infoboxes = Array.Empty<object>(),
+         suggestions = Array.Empty<string>(),
+         unresponsive_engines = Array.Empty<object>()
+      });
+   }
+
+   private static string CreatePdfMixedResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         query = "Tre Kronor",
+         results = new[]
+         {
+            new
+            {
+               title = "PDF roster",
+               url = "https://example.test/roster.pdf",
+               content = "PDF file."
             },
             new
             {

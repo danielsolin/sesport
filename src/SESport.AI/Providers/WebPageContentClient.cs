@@ -80,6 +80,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
          request,
          cancellationToken
       );
+      if(IsPdfResponse(response, absoluteUrl))
+      {
+         return null;
+      }
+
       var rawHtml = await response.Content.ReadAsStringAsync(
          cancellationToken
       );
@@ -91,6 +96,37 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return ExtractPageContent(absoluteUrl.ToString(), rawHtml);
+   }
+
+   private static bool IsPdfResponse(
+      HttpResponseMessage response,
+      Uri absoluteUrl
+   )
+   {
+      var contentType = response.Content.Headers.ContentType?.MediaType;
+
+      if(string.Equals(
+         contentType,
+         "application/pdf",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return true;
+      }
+
+      if(absoluteUrl.AbsolutePath.EndsWith(
+         ".pdf",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return true;
+      }
+
+      return string.Equals(
+         contentType,
+         "application/x-pdf",
+         StringComparison.OrdinalIgnoreCase
+      );
    }
 
    private static WebPageContent? ExtractPageContent(
