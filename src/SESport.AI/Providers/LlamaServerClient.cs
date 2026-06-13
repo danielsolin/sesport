@@ -270,7 +270,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       return finishReasonNode is JsonValue value &&
          value.TryGetValue<string>(out var finishReason)
          ? finishReason
-         : finishReasonNode.ToJsonString() ?? "";
+         : finishReasonNode is null
+            ? ""
+            : finishReasonNode.ToJsonString();
    }
 
    private static string ExtractReasoningContent(JsonObject response)
@@ -290,7 +292,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       return reasoningNode is JsonValue value &&
          value.TryGetValue<string>(out var reasoningContent)
          ? reasoningContent
-         : reasoningNode.ToJsonString() ?? "";
+         : reasoningNode is null
+            ? ""
+            : reasoningNode.ToJsonString();
    }
 
    private static string[] ExtractToolCallNames(JsonObject response)
