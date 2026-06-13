@@ -9,6 +9,7 @@ use_default_settings:
       - duckduckgo.definitions
 
 search:
+  default_lang: all
   formats:
     - html
     - json

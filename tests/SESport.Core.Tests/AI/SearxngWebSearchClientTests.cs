@@ -28,7 +28,6 @@ public class SearxngWebSearchClientTests
       );
       Assert.Contains("q=Tre+Kronor", handler.RequestBody);
       Assert.Contains("format=json", handler.RequestBody);
-      Assert.Contains("language=sv", handler.RequestBody);
       Assert.Contains("categories=general", handler.RequestBody);
       Assert.Equal("application/json", handler.AcceptHeader);
       Assert.Single(results);

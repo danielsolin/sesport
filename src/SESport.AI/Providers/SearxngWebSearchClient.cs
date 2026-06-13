@@ -71,7 +71,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             {
                ["q"] = query,
                ["format"] = "json",
-               ["language"] = "sv",
                ["categories"] = "general"
             }
          )
