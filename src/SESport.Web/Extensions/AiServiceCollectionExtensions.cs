@@ -29,19 +29,6 @@ public static class AiServiceCollectionExtensions
          IAiProviderClient,
          LmStudioClient
       >();
-      services.AddHttpClient<
-         IAiProviderClient,
-         LlamaServerClient
-      >(client =>
-      {
-         client.Timeout = TimeSpan.FromMinutes(20);
-      });
-      services.AddHttpClient<IWebSearchClient, DuckDuckGoWebSearchClient>(
-         client =>
-         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-         }
-      );
 
       return services;
    }

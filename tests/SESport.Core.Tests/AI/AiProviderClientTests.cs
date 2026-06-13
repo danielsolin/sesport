@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.Extensions.Logging.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Providers;
 
@@ -30,58 +29,6 @@ public class AiProviderClientTests
       Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody);
       Assert.Contains("\"input\":\"Prompt text\"", handler.RequestBody);
-   }
-
-   [Fact]
-   public async Task LlamaServerGenerateAsyncUsesToolLoop()
-   {
-      var handler = new RecordingHandler(
-         CreateToolCallResponseJson(),
-         CreateChatResponseJson("Working through the results."),
-         CreateChatResponseJson("{\"ok\":true}")
-      );
-      var webSearchClient = new RecordingWebSearchClient();
-      var client = new LlamaServerClient(
-         new HttpClient(handler),
-         webSearchClient,
-         NullLogger<LlamaServerClient>.Instance
-      );
-
-      var result = await client.GenerateAsync(
-         CreateProvider("llama-server"),
-         CreateJob(),
-         CreatePrompt(),
-         "Prompt text",
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Equal("{\"ok\":true}", result.OutputText);
-      Assert.Equal(3, handler.RequestBodies.Count);
-      Assert.Equal(
-         new Uri("http://127.0.0.1:1234/v1/chat/completions"),
-         handler.RequestUri
-      );
-      Assert.Contains("\"tools\":[{\"type\":\"function\"",
-         handler.RequestBodies[0]);
-      Assert.DoesNotContain(
-         "\"response_format\"",
-         handler.RequestBodies[0]
-      );
-      Assert.Contains("\"name\":\"web_search\"",
-         handler.RequestBodies[0]);
-      Assert.Contains("\"tools\":[{\"type\":\"function\"",
-         handler.RequestBodies[1]);
-      Assert.DoesNotContain(
-         "\"response_format\"",
-         handler.RequestBodies[1]
-      );
-      Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
-         handler.RequestBodies[2]);
-      Assert.DoesNotContain("\"tools\"",
-         handler.RequestBodies[2]);
-      Assert.Single(webSearchClient.Queries);
-      Assert.Equal("Tre Kronor Swedish roster", webSearchClient.Queries[0]);
    }
 
    [Fact]
@@ -209,38 +156,6 @@ public class AiProviderClientTests
       });
    }
 
-   private static string CreateToolCallResponseJson()
-   {
-      return JsonSerializer.Serialize(new
-      {
-         choices = new[]
-         {
-            new
-            {
-               message = new
-               {
-                  role = "assistant",
-                  content = (string?)null,
-                  tool_calls = new[]
-                  {
-                     new
-                     {
-                        id = "call_1",
-                        type = "function",
-                        function = new
-                        {
-                           name = "web_search",
-                           arguments =
-                              "{\"query\":\"Tre Kronor Swedish roster\"}"
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      });
-   }
-
    private static string CreateChatResponseJson(string content)
    {
       return JsonSerializer.Serialize(new
@@ -258,30 +173,6 @@ public class AiProviderClientTests
          },
          model = "openai/gpt-4o-2024-08-06"
       });
-   }
-
-   private sealed class RecordingWebSearchClient : IWebSearchClient
-   {
-      public List<string> Queries { get; } = [];
-
-      public Task<IReadOnlyList<WebSearchResult>> SearchAsync(
-         string query,
-         int maxResults,
-         CancellationToken cancellationToken
-      )
-      {
-         Queries.Add(query);
-
-         return Task.FromResult<IReadOnlyList<WebSearchResult>>(
-            [
-               new WebSearchResult(
-                  "Tre Kronor roster",
-                  "https://example.test/roster",
-                  "A Swedish roster result."
-               )
-            ]
-         );
-      }
    }
 
    private sealed class RecordingHandler : HttpMessageHandler
