@@ -18,7 +18,7 @@ public class AiProviderApiKeySourceTests
          provider,
          CreateJob(),
          CreatePrompt(),
-         "Prompt text",
+         CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
       );
@@ -45,7 +45,7 @@ public class AiProviderApiKeySourceTests
             provider,
             CreateJob(),
             CreatePrompt(),
-            "Prompt text",
+            CreateRenderedPrompt(),
             "{}",
             CancellationToken.None
          );
@@ -101,6 +101,14 @@ public class AiProviderApiKeySourceTests
          null,
          null,
          true
+      );
+   }
+
+   private static AiRenderedPrompt CreateRenderedPrompt()
+   {
+      return new AiRenderedPrompt(
+         "System",
+         "User"
       );
    }
 

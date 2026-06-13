@@ -4,5 +4,8 @@ namespace SESport.AI.Abstractions;
 
 public interface IAiPromptRenderer
 {
-   string Render(AiPromptDefinition prompt, string inputPayloadJson);
+   AiRenderedPrompt Render(
+      AiPromptDefinition prompt,
+      string inputPayloadJson
+   );
 }

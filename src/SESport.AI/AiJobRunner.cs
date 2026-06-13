@@ -67,6 +67,7 @@ public sealed class AiJobRunner(
          prompt,
          request.InputPayloadJson
       );
+      var renderedPromptText = renderedPrompt.ToPromptText();
       var requestPayload = providerClient.CreateRequestPayload(
          provider,
          job,
@@ -83,7 +84,7 @@ public sealed class AiJobRunner(
          AiJobRunStatus.Running,
          request.CorrelationId,
          request.InputPayloadJson,
-         renderedPrompt,
+         renderedPromptText,
          rawRequestJson,
          null,
          null,

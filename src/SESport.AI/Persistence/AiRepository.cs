@@ -536,9 +536,12 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       string? errorMessage
    )
    {
-      var sourceUrls = ParticipationSourceUrlExtractor.Extract(
-         rawResponseText
+      var sourceUrls = ParticipationSourceUrlExtractor.ExtractFromOutput(
+         outputText
       );
+      var resolvedSourceUrls = sourceUrls.Count > 0
+         ? sourceUrls
+         : ParticipationSourceUrlExtractor.Extract(rawResponseText);
 
       if(string.IsNullOrWhiteSpace(outputText))
       {
@@ -547,7 +550,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             statusId,
             null,
             [],
-            sourceUrls,
+            resolvedSourceUrls,
             errorMessage
          );
       }
@@ -606,7 +609,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             statusId,
             participation.GetString(),
             participants,
-            sourceUrls,
+            resolvedSourceUrls,
             errorMessage
          );
       }
@@ -617,7 +620,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             statusId,
             null,
             [],
-            sourceUrls,
+            resolvedSourceUrls,
             errorMessage ?? "The model returned invalid JSON."
          );
       }

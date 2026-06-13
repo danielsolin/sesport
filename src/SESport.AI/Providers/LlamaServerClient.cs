@@ -42,7 +42,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt
+      AiRenderedPrompt renderedPrompt
    )
    {
       return CreateRequestPayload(
@@ -58,7 +58,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt,
+      AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
       CancellationToken cancellationToken
    )
@@ -129,7 +129,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          {
             LogToolCall(turn, toolCall);
 
-            var toolResponse = await ExecuteToolCallAsync(
+            var toolResult = await ExecuteToolCallAsync(
                toolCall,
                cancellationToken
             );
@@ -139,7 +139,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                {
                   ["role"] = "tool",
                   ["tool_call_id"] = toolCall.Id,
-                  ["content"] = toolResponse
+                  ["content"] = toolResult
                }
             );
          }
@@ -164,7 +164,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          job.Id,
          provider.Id,
          provider.Model,
-         renderedPrompt,
+         renderedPrompt.ToPromptText(),
          AiRequestJsonSerializer.Serialize(request),
          finalOutputText,
          rawResponse,
@@ -340,7 +340,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt,
+      AiRenderedPrompt renderedPrompt,
       bool includeTools
    )
    {
@@ -391,7 +391,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    private JsonObject CreateBaseRequestPayload(
       AiProviderDefinition provider,
       AiPromptDefinition prompt,
-      string? renderedPrompt
+      AiRenderedPrompt renderedPrompt
    )
    {
       var payload = new JsonObject
@@ -399,17 +399,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["model"] = provider.Model
       };
 
-      if(renderedPrompt is not null)
-      {
-         payload["messages"] = new JsonArray
-         {
-            new JsonObject
-            {
-               ["role"] = "user",
-               ["content"] = renderedPrompt
-            }
-         };
-      }
+      payload["messages"] = CreateMessages(renderedPrompt);
 
       if(prompt.MaxOutputTokens is not null)
       {
@@ -422,6 +412,34 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return payload;
+   }
+
+   private static JsonArray CreateMessages(
+      AiRenderedPrompt renderedPrompt
+   )
+   {
+      var messages = new JsonArray();
+
+      if(!string.IsNullOrWhiteSpace(renderedPrompt.SystemPrompt))
+      {
+         messages.Add(
+            new JsonObject
+            {
+               ["role"] = "system",
+               ["content"] = renderedPrompt.SystemPrompt.Trim()
+            }
+         );
+      }
+
+      messages.Add(
+         new JsonObject
+         {
+            ["role"] = "user",
+            ["content"] = renderedPrompt.UserPrompt.Trim()
+         }
+      );
+
+      return messages;
    }
 
    private async Task<string> ExecuteToolCallAsync(
@@ -837,4 +855,5 @@ public sealed class LlamaServerClient : IAiProviderClient
       string Name,
       string Arguments
    );
+
 }

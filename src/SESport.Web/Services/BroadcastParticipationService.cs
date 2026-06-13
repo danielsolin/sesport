@@ -88,9 +88,14 @@ public sealed class BroadcastParticipationService(
             ),
             cancellationToken
          );
-         var sourceUrls = ParticipationSourceUrlExtractor.Extract(
-            result.RawResponseJson
+         var sourceUrls = ParticipationSourceUrlExtractor.ExtractFromOutput(
+            result.OutputText
          );
+         var fallbackSourceUrls = sourceUrls.Count > 0
+            ? sourceUrls
+            : ParticipationSourceUrlExtractor.Extract(
+               result.RawResponseJson
+            );
 
          if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
          {
@@ -104,14 +109,17 @@ public sealed class BroadcastParticipationService(
                   null,
                   [],
                   [],
-                  sourceUrls
+                  fallbackSourceUrls
                )
             );
 
             continue;
          }
 
-         var parsed = ParseParticipationResult(result.OutputText);
+         var parsed = ParseParticipationResult(
+            result.OutputText,
+            fallbackSourceUrls
+         );
 
          if(parsed is null)
          {
@@ -125,7 +133,7 @@ public sealed class BroadcastParticipationService(
                   null,
                   [],
                   [],
-                  sourceUrls
+                  fallbackSourceUrls
                )
             );
 
@@ -147,7 +155,7 @@ public sealed class BroadcastParticipationService(
                parsed.SwedishParticipation,
                parsed.SwedishParticipants,
                participantItems,
-               sourceUrls
+               parsed.SourceUrls
             )
          );
       }
@@ -182,7 +190,8 @@ public sealed class BroadcastParticipationService(
    }
 
    private static SwedishParticipationResult? ParseParticipationResult(
-      string outputText
+      string outputText,
+      IReadOnlyList<string> fallbackSourceUrls
    )
    {
       try
@@ -232,9 +241,14 @@ public sealed class BroadcastParticipationService(
             }
          }
 
+         var sourceUrls = ParticipationSourceUrlExtractor.ExtractFromOutput(
+            outputText
+         );
+
          return new SwedishParticipationResult(
             participation.GetString() ?? string.Empty,
-            participants
+            participants,
+            sourceUrls.Count > 0 ? sourceUrls : fallbackSourceUrls
          );
       }
       catch(JsonException)
@@ -311,7 +325,8 @@ public sealed class BroadcastParticipationService(
 
    private sealed record SwedishParticipationResult(
       string SwedishParticipation,
-      IReadOnlyList<string> SwedishParticipants
+      IReadOnlyList<string> SwedishParticipants,
+      IReadOnlyList<string> SourceUrls
    );
 }
 

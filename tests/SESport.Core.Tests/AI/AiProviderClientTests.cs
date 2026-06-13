@@ -21,7 +21,7 @@ public class AiProviderClientTests
          CreateProvider("lmstudio"),
          CreateJob(),
          CreatePrompt(),
-         "Prompt text",
+         CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
       );
@@ -29,7 +29,8 @@ public class AiProviderClientTests
       Assert.Equal("KLM Open spelas i Amsterdam.", result.OutputText);
       Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody);
-      Assert.Contains("\"input\":\"Prompt text\"", handler.RequestBody);
+      Assert.Contains("\"instructions\":\"System\"", handler.RequestBody);
+      Assert.Contains("\"input\":\"User\"", handler.RequestBody);
    }
 
    [Fact]
@@ -37,7 +38,7 @@ public class AiProviderClientTests
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
-         CreateLlamaFinalResponseJson("Tre Kronor spelar i Stockholm.")
+         CreateLlamaFinalResponseJson()
       );
       var webSearchClient = new RecordingWebSearchClient(
          new WebSearchResult(
@@ -55,14 +56,20 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("text"),
-         CreatePrompt(null),
-         "Prompt text",
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
       );
 
-      Assert.Equal("Tre Kronor spelar i Stockholm.", result.OutputText);
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\",\"SwedishParticipants\":[\"Dino Beganovic\"],\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.DoesNotContain("\"sources\"", result.RawResponseJson);
       Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);
+      Assert.Contains("\"role\":\"user\"", handler.RequestBodies[0]);
       Assert.Contains("\"tools\":[{\"type\":\"function\"",
          handler.RequestBodies[0]);
       Assert.Contains("\"tool_choice\":\"auto\"",
@@ -86,7 +93,7 @@ public class AiProviderClientTests
          CreateProvider("openrouter"),
          CreateJob("json_schema"),
          CreatePrompt(),
-         "Prompt text",
+         CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
       );
@@ -94,7 +101,9 @@ public class AiProviderClientTests
       Assert.Equal("{\"ok\":true}", result.OutputText);
       Assert.Equal(new Uri("http://127.0.0.1:1234/v1/chat/completions"),
          handler.RequestUri);
-      Assert.Contains("\"messages\":[{\"role\":\"user\"",
+      Assert.Contains("\"messages\":[{\"role\":\"system\"",
+         handler.RequestBody);
+      Assert.Contains("\"role\":\"user\"",
          handler.RequestBody);
       Assert.Contains("\"plugins\":[{\"id\":\"web\"}]",
          handler.RequestBody);
@@ -114,7 +123,7 @@ public class AiProviderClientTests
          CreateProvider("openrouter"),
          CreateJob("json_object"),
          CreatePrompt(),
-         "Prompt text",
+         CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
       );
@@ -168,6 +177,14 @@ public class AiProviderClientTests
          null,
          null,
          true
+      );
+   }
+
+   private static AiRenderedPrompt CreateRenderedPrompt()
+   {
+      return new AiRenderedPrompt(
+         "System",
+         "User"
       );
    }
 
@@ -258,20 +275,53 @@ public class AiProviderClientTests
       """;
    }
 
-   private static string CreateLlamaFinalResponseJson(string content)
+   private static string CreateLlamaFinalResponseJson()
    {
-      return $$"""
+      return """
       {
         "choices": [
           {
             "message": {
               "role": "assistant",
-              "content": "{{content}}"
+              "content": "{\"SwedishParticipation\":\"Yes\",\"SwedishParticipants\":[\"Dino Beganovic\"],\"Sources\":[\"https://example.test/roster\"]}"
             },
             "finish_reason": "stop"
           }
         ],
         "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
+   private static string CreateParticipationSchemaJson()
+   {
+      return """
+      {
+        "type": "object",
+        "properties": {
+          "SwedishParticipation": {
+            "type": "string"
+          },
+          "SwedishParticipants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "Sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "required": [
+          "SwedishParticipation",
+          "SwedishParticipants",
+          "Sources"
+        ],
+        "additionalProperties": false
       }
       """;
    }

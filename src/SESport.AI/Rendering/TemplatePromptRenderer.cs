@@ -12,7 +12,10 @@ public sealed class TemplatePromptRenderer : IAiPromptRenderer
       RegexOptions.Compiled | RegexOptions.CultureInvariant
    );
 
-   public string Render(AiPromptDefinition prompt, string inputPayloadJson)
+   public AiRenderedPrompt Render(
+      AiPromptDefinition prompt,
+      string inputPayloadJson
+   )
    {
       using var document = JsonDocument.Parse(inputPayloadJson);
       var userPrompt = ReplaceTokens(
@@ -20,14 +23,11 @@ public sealed class TemplatePromptRenderer : IAiPromptRenderer
          document.RootElement
       );
 
-      return string.Join(
-         Environment.NewLine + Environment.NewLine,
-         new[]
-         {
-            prompt.SystemPrompt.Trim(),
-            userPrompt.Trim()
-         }
-            .Where(value => !string.IsNullOrWhiteSpace(value))
+      return new AiRenderedPrompt(
+         string.IsNullOrWhiteSpace(prompt.SystemPrompt)
+            ? null
+            : prompt.SystemPrompt.Trim(),
+         userPrompt.Trim()
       );
    }
 

@@ -31,7 +31,7 @@ public sealed class LmStudioClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt
+      AiRenderedPrompt renderedPrompt
    )
    {
       return ResponsesRequestBuilder.CreateRequestPayload(
@@ -46,7 +46,7 @@ public sealed class LmStudioClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt,
+      AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
       CancellationToken cancellationToken
    )
@@ -89,7 +89,7 @@ public sealed class LmStudioClient : IAiProviderClient
          job.Id,
          provider.Id,
          provider.Model,
-         renderedPrompt,
+         renderedPrompt.ToPromptText(),
          AiRequestJsonSerializer.Serialize(request),
          outputText,
          rawResponse,

@@ -32,6 +32,32 @@ public class ParticipationSourceUrlExtractorTests
    }
 
    [Fact]
+   public void ExtractFromOutput_ReturnsSourcesArray()
+   {
+      var outputText = """
+         {
+            "SwedishParticipation": "Yes",
+            "SwedishParticipants": ["Dino Beganovic"],
+            "Sources": [
+               "https://example.test/a",
+               "https://example.test/a",
+               "https://example.test/b"
+            ]
+         }
+         """;
+
+      var urls = ParticipationSourceUrlExtractor.ExtractFromOutput(outputText);
+
+      Assert.Equal(
+         [
+            "https://example.test/a",
+            "https://example.test/b"
+         ],
+         urls
+      );
+   }
+
+   [Fact]
    public void Extract_ReturnsEmptyListForMissingResponse()
    {
       var urls = ParticipationSourceUrlExtractor.Extract(null);

@@ -18,14 +18,19 @@ internal static class ResponsesRequestBuilder
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt
+      AiRenderedPrompt renderedPrompt
    )
    {
       var payload = new JsonObject
       {
          ["model"] = provider.Model,
-         ["input"] = renderedPrompt
+         ["input"] = renderedPrompt.UserPrompt.Trim()
       };
+
+      if(!string.IsNullOrWhiteSpace(renderedPrompt.SystemPrompt))
+      {
+         payload["instructions"] = renderedPrompt.SystemPrompt.Trim();
+      }
 
       if(prompt.MaxOutputTokens is not null)
       {

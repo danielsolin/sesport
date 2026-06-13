@@ -11,14 +11,14 @@ public interface IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt
+      AiRenderedPrompt renderedPrompt
    );
 
    Task<AiJobResult> GenerateAsync(
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt,
+      AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
       CancellationToken cancellationToken
    );

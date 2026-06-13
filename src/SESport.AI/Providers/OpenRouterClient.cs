@@ -30,20 +30,13 @@ public sealed class OpenRouterClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt
+      AiRenderedPrompt renderedPrompt
    )
    {
       var payload = new JsonObject
       {
          ["model"] = provider.Model,
-         ["messages"] = new JsonArray
-         {
-            new JsonObject
-            {
-               ["role"] = "user",
-               ["content"] = renderedPrompt
-            }
-         },
+         ["messages"] = CreateMessages(renderedPrompt),
          ["plugins"] = new JsonArray
          {
             new JsonObject
@@ -79,7 +72,7 @@ public sealed class OpenRouterClient : IAiProviderClient
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
-      string renderedPrompt,
+      AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
       CancellationToken cancellationToken
    )
@@ -126,12 +119,40 @@ public sealed class OpenRouterClient : IAiProviderClient
          job.Id,
          provider.Id,
          provider.Model,
-         renderedPrompt,
+         renderedPrompt.ToPromptText(),
          AiRequestJsonSerializer.Serialize(request),
          outputText,
          rawResponse,
          null
       );
+   }
+
+   private static JsonArray CreateMessages(
+      AiRenderedPrompt renderedPrompt
+   )
+   {
+      var messages = new JsonArray();
+
+      if(!string.IsNullOrWhiteSpace(renderedPrompt.SystemPrompt))
+      {
+         messages.Add(
+            new JsonObject
+            {
+               ["role"] = "system",
+               ["content"] = renderedPrompt.SystemPrompt.Trim()
+            }
+         );
+      }
+
+      messages.Add(
+         new JsonObject
+         {
+            ["role"] = "user",
+            ["content"] = renderedPrompt.UserPrompt.Trim()
+         }
+      );
+
+      return messages;
    }
 
    private async Task<HttpResponseMessage> SendAsync(
