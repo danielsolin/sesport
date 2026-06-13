@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace SESport.AI.Providers;
 
@@ -17,10 +18,15 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
    );
 
    private readonly HttpClient httpClient;
+   private readonly ILogger<DuckDuckGoWebSearchClient> logger;
 
-   public DuckDuckGoWebSearchClient(HttpClient httpClient)
+   public DuckDuckGoWebSearchClient(
+      HttpClient httpClient,
+      ILogger<DuckDuckGoWebSearchClient> logger
+   )
    {
       this.httpClient = httpClient;
+      this.logger = logger;
    }
 
    public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
@@ -38,15 +44,70 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
          "https://html.duckduckgo.com/html/?q=" +
          Uri.EscapeDataString(query) +
          "&kl=se-sv&kp=-1";
-      var html = await httpClient.GetStringAsync(
-         url,
+      if(logger.IsEnabled(LogLevel.Debug))
+      {
+         logger.LogDebug(
+            "DuckDuckGo search start query={Query} max_results={MaxResults}",
+            TruncateForLog(query, 240),
+            maxResults
+         );
+      }
+
+      using var request = new HttpRequestMessage(HttpMethod.Get, url);
+      using var response = await httpClient.SendAsync(
+         request,
          cancellationToken
       );
+      var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+      if(!response.IsSuccessStatusCode)
+      {
+         logger.LogWarning(
+            "DuckDuckGo search failed status={StatusCode} query={Query} " +
+            "body={Body}",
+            (int)response.StatusCode,
+            TruncateForLog(query, 240),
+            TruncateForLog(html, 1200)
+         );
+
+         response.EnsureSuccessStatusCode();
+      }
+
       var results = ParseResults(html)
          .Take(Math.Clamp(maxResults, 1, 10))
          .ToList();
 
+      if(results.Count == 0)
+      {
+         logger.LogWarning(
+            "DuckDuckGo search returned no results query={Query} " +
+            "html_length={HtmlLength} html_head={HtmlHead}",
+            TruncateForLog(query, 240),
+            html.Length,
+            TruncateForLog(html, 2000)
+         );
+      }
+      else if(logger.IsEnabled(LogLevel.Debug))
+      {
+         logger.LogDebug(
+            "DuckDuckGo search returned results={ResultCount} " +
+            "first_result={FirstResult}",
+            results.Count,
+            $"{results[0].Title} | {results[0].Url}"
+         );
+      }
+
       return results;
+   }
+
+   private static string TruncateForLog(string value, int maxLength)
+   {
+      if(value.Length <= maxLength)
+      {
+         return value;
+      }
+
+      return value[..maxLength] + "...";
    }
 
    private static IEnumerable<WebSearchResult> ParseResults(string html)

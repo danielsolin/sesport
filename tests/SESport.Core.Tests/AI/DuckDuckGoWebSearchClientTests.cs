@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging.Abstractions;
 using SESport.AI.Providers;
 
 namespace SESport.Core.Tests.AI;
@@ -10,7 +11,10 @@ public class DuckDuckGoWebSearchClientTests
    public async Task SearchParsesDuckDuckGoHtmlResults()
    {
       var handler = new RecordingHandler(CreateHtml());
-      var client = new DuckDuckGoWebSearchClient(new HttpClient(handler));
+      var client = new DuckDuckGoWebSearchClient(
+         new HttpClient(handler),
+         NullLogger<DuckDuckGoWebSearchClient>.Instance
+      );
 
       var results = await client.SearchAsync(
          "Tre Kronor",
