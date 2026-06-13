@@ -14,6 +14,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 {
    private const int MaxToolCalls = 3;
    private const int MaxSearchResults = 5;
+   private const int FinalThinkingBudgetTokens = 0;
 
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
@@ -439,6 +440,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       payload["messages"] = finalMessages;
+      payload["thinking_budget_tokens"] = FinalThinkingBudgetTokens;
       ResponsesRequestFormat.Apply(
          payload,
          job.OutputMode,
