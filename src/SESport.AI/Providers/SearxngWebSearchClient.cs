@@ -206,7 +206,9 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          return null;
       }
 
-      var credentials = $"{options.BasicAuthUsername}:{options.BasicAuthPassword}";
+      var credentials =
+         $"{options.BasicAuthUsername}:" +
+         $"{options.BasicAuthPassword}";
       var bytes = Encoding.UTF8.GetBytes(credentials);
 
       return Convert.ToBase64String(bytes);
