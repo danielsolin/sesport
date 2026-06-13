@@ -47,7 +47,9 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
       if(logger.IsEnabled(LogLevel.Debug))
       {
          logger.LogDebug(
-            "DuckDuckGo search start query={Query} max_results={MaxResults}",
+            "DuckDuckGo search start url={Url} query={Query} " +
+            "max_results={MaxResults}",
+            url,
             TruncateForLog(query, 240),
             maxResults
          );
@@ -63,8 +65,9 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
       if(!response.IsSuccessStatusCode)
       {
          logger.LogWarning(
-            "DuckDuckGo search failed status={StatusCode} query={Query} " +
-            "body={Body}",
+            "DuckDuckGo search failed url={Url} status={StatusCode} " +
+            "query={Query} body={Body}",
+            url,
             (int)response.StatusCode,
             TruncateForLog(query, 240),
             TruncateForLog(html, 1200)
@@ -80,8 +83,9 @@ public sealed class DuckDuckGoWebSearchClient : IWebSearchClient
       if(results.Count == 0)
       {
          logger.LogWarning(
-            "DuckDuckGo search returned no results query={Query} " +
-            "html_length={HtmlLength} html_head={HtmlHead}",
+            "DuckDuckGo search returned no results url={Url} " +
+            "query={Query} html_length={HtmlLength} html_head={HtmlHead}",
+            url,
             TruncateForLog(query, 240),
             html.Length,
             TruncateForLog(html, 2000)
