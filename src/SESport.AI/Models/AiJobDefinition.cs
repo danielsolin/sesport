@@ -6,5 +6,6 @@ public sealed record AiJobDefinition(
    string? Description,
    string ProviderId,
    string OutputMode,
+   bool RequiresWebSearch,
    bool Enabled
 );

@@ -102,6 +102,7 @@ public class AiProviderClientTests
          null,
          "provider",
          outputMode,
+         true,
          true
       );
    }

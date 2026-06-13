@@ -171,7 +171,14 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, label, description, provider_id, output_mode, enabled
+         select
+            id,
+            label,
+            description,
+            provider_id,
+            output_mode,
+            requires_web_search,
+            enabled
          from ai_jobs
          where id = @id
          """;
@@ -195,7 +202,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Description = ReadNullableString(reader, 2),
          ProviderId = reader.GetString(3),
          OutputMode = reader.GetString(4),
-         Enabled = reader.GetBoolean(5)
+         RequiresWebSearch = reader.GetBoolean(5),
+         Enabled = reader.GetBoolean(6)
       };
    }
 
@@ -213,10 +221,21 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       {
          const string insertSql = """
             insert into ai_jobs (
-               id, label, description, provider_id, output_mode, enabled
+               id,
+               label,
+               description,
+               provider_id,
+               output_mode,
+               requires_web_search,
+               enabled
             )
             values (
-               @id, @label, @description, @provider_id, @output_mode,
+               @id,
+               @label,
+               @description,
+               @provider_id,
+               @output_mode,
+               @requires_web_search,
                @enabled
             )
             """;
@@ -235,6 +254,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description = @description,
             provider_id = @provider_id,
             output_mode = @output_mode,
+            requires_web_search = @requires_web_search,
             enabled = @enabled,
             updated_at = now()
          where id = @original_id
@@ -427,6 +447,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
+      command.Parameters.AddWithValue(
+         "requires_web_search",
+         model.RequiresWebSearch
+      );
       command.Parameters.AddWithValue("enabled", model.Enabled);
    }
 

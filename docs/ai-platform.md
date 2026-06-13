@@ -27,6 +27,7 @@ Defines a reusable job.
 - `description`: short explanation
 - `provider_id`: default provider
 - `output_mode`: `text`, `json_object`, or `json_schema`
+- `requires_web_search`: whether web search is required, default `true`
 - `enabled`: feature flag
 
 ### `ai_job_prompts`

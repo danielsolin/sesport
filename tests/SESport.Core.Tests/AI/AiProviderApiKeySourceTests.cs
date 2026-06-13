@@ -83,6 +83,7 @@ public class AiProviderApiKeySourceTests
          null,
          "provider",
          "text",
+         true,
          true
       );
    }

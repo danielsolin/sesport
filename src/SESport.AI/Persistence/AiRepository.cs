@@ -230,7 +230,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, label, description, provider_id, output_mode, enabled
+         select
+            id,
+            label,
+            description,
+            provider_id,
+            output_mode,
+            requires_web_search,
+            enabled
          from ai_jobs
          where id = @id
          """;
@@ -252,7 +259,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(reader, 2),
          reader.GetString(3),
          reader.GetString(4),
-         reader.GetBoolean(5)
+         reader.GetBoolean(5),
+         reader.GetBoolean(6)
       );
    }
 
