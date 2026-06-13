@@ -27,6 +27,13 @@ public static class AiServiceCollectionExtensions
       });
       services.AddHttpClient<
          IAiProviderClient,
+         LlamaServerClient
+      >(client =>
+      {
+         client.Timeout = TimeSpan.FromMinutes(20);
+      });
+      services.AddHttpClient<
+         IAiProviderClient,
          LmStudioClient
       >();
       services.AddHttpClient<

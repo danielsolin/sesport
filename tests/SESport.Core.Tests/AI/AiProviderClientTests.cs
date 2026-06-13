@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using SESport.AI.Models;
 using SESport.AI.Providers;
 
@@ -29,6 +30,48 @@ public class AiProviderClientTests
       Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody);
       Assert.Contains("\"input\":\"Prompt text\"", handler.RequestBody);
+   }
+
+   [Fact]
+   public async Task LlamaServerGenerateAsyncUsesModelDrivenToolLoop()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaFinalResponseJson("Tre Kronor spelar i Stockholm.")
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text"),
+         CreatePrompt(null),
+         "Prompt text",
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal("Tre Kronor spelar i Stockholm.", result.OutputText);
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains("\"tools\":[{\"type\":\"function\"",
+         handler.RequestBodies[0]);
+      Assert.Contains("\"tool_choice\":\"auto\"",
+         handler.RequestBodies[0]);
+      Assert.Contains("\"role\":\"tool\"",
+         handler.RequestBodies[1]);
+      Assert.Single(webSearchClient.Queries);
+      Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
+      Assert.Equal(3, webSearchClient.Queries[0].MaxResults);
    }
 
    [Fact]
@@ -94,7 +137,10 @@ public class AiProviderClientTests
       );
    }
 
-   private static AiJobDefinition CreateJob(string outputMode = "json_object")
+   private static AiJobDefinition CreateJob(
+      string outputMode = "json_object",
+      bool requiresWebSearch = true
+   )
    {
       return new AiJobDefinition(
          "job",
@@ -102,12 +148,14 @@ public class AiProviderClientTests
          null,
          "provider",
          outputMode,
-         true,
+         requiresWebSearch,
          true
       );
    }
 
-   private static AiPromptDefinition CreatePrompt()
+   private static AiPromptDefinition CreatePrompt(
+      string? outputSchemaJson = """{"type":"object"}"""
+   )
    {
       return new AiPromptDefinition(
          Guid.Parse("11111111-1111-1111-1111-111111111111"),
@@ -115,7 +163,7 @@ public class AiProviderClientTests
          1,
          "System",
          "User",
-         """{"type":"object"}""",
+         outputSchemaJson,
          "{}",
          null,
          null,
@@ -157,7 +205,11 @@ public class AiProviderClientTests
       });
    }
 
-   private static string CreateChatResponseJson(string content)
+   private static string CreateChatResponseJson(
+      string content,
+      object[]? toolCalls = null,
+      string? finishReason = null
+   )
    {
       return JsonSerializer.Serialize(new
       {
@@ -169,11 +221,59 @@ public class AiProviderClientTests
                {
                   role = "assistant",
                   content
-               }
+               },
+               tool_calls = toolCalls,
+               finish_reason = finishReason
             }
          },
          model = "openai/gpt-4o-2024-08-06"
       });
+   }
+
+   private static string CreateLlamaToolCallResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_1",
+                  "type": "function",
+                  "function": {
+                    "name": "web_search",
+                    "arguments": "{\"query\":\"Tre Kronor\",\"max_results\":3}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
+   private static string CreateLlamaFinalResponseJson(string content)
+   {
+      return $$"""
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "{{content}}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
    }
 
    private sealed class RecordingHandler : HttpMessageHandler
@@ -213,6 +313,62 @@ public class AiProviderClientTests
                JsonSerializer.Deserialize<JsonElement>(response)
             )
          };
+      }
+   }
+
+   private sealed class RecordingWebSearchClient : IWebSearchClient
+   {
+      private readonly IReadOnlyList<WebSearchResult> results;
+
+      public RecordingWebSearchClient(
+         params WebSearchResult[] results
+      )
+      {
+         this.results = results;
+      }
+
+      public List<(string Query, int MaxResults)> Queries { get; } = [];
+
+      public Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+         string query,
+         int maxResults,
+         CancellationToken cancellationToken
+      )
+      {
+         Queries.Add((query, maxResults));
+         return Task.FromResult(results);
+      }
+   }
+
+   private sealed class NoopLogger<T> : ILogger<T>
+   {
+      IDisposable ILogger.BeginScope<TState>(TState state)
+      {
+         return EmptyDisposable.Instance;
+      }
+
+      public bool IsEnabled(LogLevel logLevel)
+      {
+         return false;
+      }
+
+      void ILogger.Log<TState>(
+         LogLevel logLevel,
+         EventId eventId,
+         TState state,
+         Exception? exception,
+         Func<TState, Exception?, string> formatter
+      )
+      {
+      }
+
+      private sealed class EmptyDisposable : IDisposable
+      {
+         public static readonly EmptyDisposable Instance = new();
+
+         public void Dispose()
+         {
+         }
       }
    }
 }
