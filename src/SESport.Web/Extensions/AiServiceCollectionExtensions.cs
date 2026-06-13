@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using SESport.AI;
 using SESport.AI.Abstractions;
 using SESport.AI.Persistence;
@@ -9,9 +10,15 @@ namespace SESport.Web.Extensions;
 public static class AiServiceCollectionExtensions
 {
    public static IServiceCollection AddAiPlatform(
-      this IServiceCollection services
+      this IServiceCollection services,
+      IConfiguration configuration
    )
    {
+      services.AddSingleton(
+         _ => configuration.GetSection("SearXNG")
+            .Get<SearxngWebSearchClientOptions>() ??
+            new SearxngWebSearchClientOptions()
+      );
       services.AddScoped<AiRepository>();
       services.AddScoped<IAiJobDefinitionRepository, AiRepository>();
       services.AddScoped<IAiJobRunRepository, AiRepository>();

@@ -15,7 +15,7 @@ builder.Services.AddSingleton(
       defaultConnectionString
    )
 );
-builder.Services.AddAiPlatform();
+builder.Services.AddAiPlatform(builder.Configuration);
 builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();

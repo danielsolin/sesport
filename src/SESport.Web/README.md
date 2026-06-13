@@ -57,6 +57,13 @@ $env:Admin__Password="<local-password>"
 dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 ```
 
+If `xng.sesport.se` is protected with Basic Auth, set:
+
+```powershell
+$env:SearXNG__BasicAuthUsername="<searxng-user>"
+$env:SearXNG__BasicAuthPassword="<searxng-password>"
+```
+
 ## Sport Date Rule
 
 - Persisted activity dates and times always represent the real calendar

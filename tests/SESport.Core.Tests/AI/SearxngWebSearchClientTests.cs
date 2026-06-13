@@ -11,7 +11,10 @@ public class SearxngWebSearchClientTests
    public async Task SearchParsesJsonResults()
    {
       var handler = new RecordingHandler(CreateResponseJson());
-      var client = new SearxngWebSearchClient(new HttpClient(handler));
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
 
       var results = await client.SearchAsync(
          "Tre Kronor",
@@ -38,7 +41,10 @@ public class SearxngWebSearchClientTests
    public async Task SearchDropsDeniedSocialDomains()
    {
       var handler = new RecordingHandler(CreateMixedResponseJson());
-      var client = new SearxngWebSearchClient(new HttpClient(handler));
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
 
       var results = await client.SearchAsync(
          "Tre Kronor",
@@ -55,7 +61,10 @@ public class SearxngWebSearchClientTests
    public async Task EmptyQuerySkipsRequest()
    {
       var handler = new RecordingHandler(CreateResponseJson());
-      var client = new SearxngWebSearchClient(new HttpClient(handler));
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
 
       var results = await client.SearchAsync(
          " ",
@@ -65,6 +74,28 @@ public class SearxngWebSearchClientTests
 
       Assert.Empty(results);
       Assert.Null(handler.RequestUri);
+   }
+
+   [Fact]
+   public async Task SearchUsesBasicAuthWhenConfigured()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions
+         {
+            BasicAuthUsername = "user",
+            BasicAuthPassword = "pass"
+         }
+      );
+
+      await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal("Basic dXNlcjpwYXNz", handler.AuthorizationHeader);
    }
 
    private static string CreateResponseJson()
@@ -132,6 +163,8 @@ public class SearxngWebSearchClientTests
 
       public string? AcceptHeader { get; private set; }
 
+      public string? AuthorizationHeader { get; private set; }
+
       protected override async Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
@@ -139,6 +172,7 @@ public class SearxngWebSearchClientTests
       {
          RequestUri = request.RequestUri;
          AcceptHeader = request.Headers.Accept.FirstOrDefault()?.ToString();
+         AuthorizationHeader = request.Headers.Authorization?.ToString();
          RequestBody = request.Content is null
             ? string.Empty
             : await request.Content.ReadAsStringAsync(cancellationToken);
