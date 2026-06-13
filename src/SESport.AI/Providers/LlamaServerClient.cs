@@ -12,6 +12,10 @@ namespace SESport.AI.Providers;
 
 public sealed class LlamaServerClient : IAiProviderClient
 {
+   // Rough character budget for the in-memory chat history.
+   // Keep this comfortably below the llama-server token limit.
+   private const int MaxConversationContextCharacters = 12000;
+
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -168,6 +172,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   }
                );
             }
+
+            TrimConversationMessages(messages);
          }
 
          if(responseJson is null)
@@ -1031,6 +1037,83 @@ public sealed class LlamaServerClient : IAiProviderClient
       };
 
       return JsonSerializer.Serialize(output, JsonOptions);
+   }
+
+   private static void TrimConversationMessages(JsonArray messages)
+   {
+      while(EstimateConversationSize(messages) >
+         MaxConversationContextCharacters)
+      {
+         var firstAssistantIndex = FindFirstAssistantMessageIndex(messages);
+
+         if(firstAssistantIndex < 0)
+         {
+            return;
+         }
+
+         var nextAssistantIndex = FindNextAssistantMessageIndex(
+            messages,
+            firstAssistantIndex + 1
+         );
+
+         var removeCount = nextAssistantIndex < 0
+            ? messages.Count - firstAssistantIndex
+            : nextAssistantIndex - firstAssistantIndex;
+
+         if(removeCount <= 0)
+         {
+            return;
+         }
+
+         for(var index = 0; index < removeCount; index++)
+         {
+            messages.RemoveAt(firstAssistantIndex);
+         }
+      }
+   }
+
+   private static int FindFirstAssistantMessageIndex(JsonArray messages)
+   {
+      for(var index = 2; index < messages.Count; index++)
+      {
+         if(messages[index] is JsonObject message &&
+            string.Equals(
+               message["role"]?.GetValue<string>(),
+               "assistant",
+               StringComparison.Ordinal
+            ))
+         {
+            return index;
+         }
+      }
+
+      return -1;
+   }
+
+   private static int FindNextAssistantMessageIndex(
+      JsonArray messages,
+      int startIndex
+   )
+   {
+      for(var index = startIndex; index < messages.Count; index++)
+      {
+         if(messages[index] is JsonObject message &&
+            string.Equals(
+               message["role"]?.GetValue<string>(),
+               "assistant",
+               StringComparison.Ordinal
+            ))
+         {
+            return index;
+         }
+      }
+
+      return -1;
+   }
+
+   private static int EstimateConversationSize(JsonArray messages)
+   {
+      return messages.ToJsonString(JsonOptions).Length;
    }
 
    private static string CreateFailureMessage(

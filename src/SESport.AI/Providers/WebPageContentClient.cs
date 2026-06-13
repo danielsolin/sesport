@@ -6,7 +6,8 @@ namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
-   private const int MaxMainTextLength = 16000;
+   // Keep extracted page text small enough for tool traces and follow-up calls.
+   private const int MaxMainTextLength = 8000;
 
    private static readonly Regex TitleRegex = new(
       @"<title\b[^>]*>(?<text>.*?)</title>",
