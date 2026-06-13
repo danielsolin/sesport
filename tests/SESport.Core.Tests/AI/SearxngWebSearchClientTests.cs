@@ -97,6 +97,30 @@ public class SearxngWebSearchClientTests
       Assert.Equal("Basic dXNlcjpwYXNz", handler.AuthorizationHeader);
    }
 
+   [Fact]
+   public async Task SearchFetchesMultiplePagesWhenNeeded()
+   {
+      var handler = new RecordingHandler(
+         CreatePagedResponseJson("page1", 20),
+         CreatePagedResponseJson("page2", 10)
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
+
+      var results = await client.SearchAsync(
+         "Tre Kronor",
+         25,
+         CancellationToken.None
+      );
+
+      Assert.Equal(25, results.Count);
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains("pageno=1", handler.RequestBodies[0]);
+      Assert.Contains("pageno=2", handler.RequestBodies[1]);
+   }
+
    private static string CreateResponseJson()
    {
       return JsonSerializer.Serialize(new
@@ -147,18 +171,44 @@ public class SearxngWebSearchClientTests
       });
    }
 
+   private static string CreatePagedResponseJson(
+      string prefix,
+      int count
+   )
+   {
+      var results = Enumerable.Range(1, count).Select(index => new
+      {
+         title = $"{prefix} result {index}",
+         url = $"https://example.test/{prefix}/{index}",
+         content = $"{prefix} snippet {index}"
+      });
+
+      return JsonSerializer.Serialize(new
+      {
+         query = "Tre Kronor",
+         results,
+         answers = Array.Empty<object>(),
+         corrections = Array.Empty<string>(),
+         infoboxes = Array.Empty<object>(),
+         suggestions = Array.Empty<string>(),
+         unresponsive_engines = Array.Empty<object>()
+      });
+   }
+
    private sealed class RecordingHandler : HttpMessageHandler
    {
-      private readonly string responseJson;
+      private readonly Queue<string> responseJson;
 
-      public RecordingHandler(string responseJson)
+      public RecordingHandler(params string[] responseJson)
       {
-         this.responseJson = responseJson;
+         this.responseJson = new Queue<string>(responseJson);
       }
 
       public Uri? RequestUri { get; private set; }
 
       public string RequestBody { get; private set; } = string.Empty;
+
+      public List<string> RequestBodies { get; } = [];
 
       public string? AcceptHeader { get; private set; }
 
@@ -175,11 +225,14 @@ public class SearxngWebSearchClientTests
          RequestBody = request.Content is null
             ? string.Empty
             : await request.Content.ReadAsStringAsync(cancellationToken);
+         RequestBodies.Add(RequestBody);
 
          return new HttpResponseMessage(HttpStatusCode.OK)
          {
             Content = JsonContent.Create(
-               JsonSerializer.Deserialize<JsonElement>(responseJson)
+               JsonSerializer.Deserialize<JsonElement>(
+                  responseJson.Count == 0 ? "{}" : responseJson.Dequeue()
+               )
             )
          };
       }

@@ -78,7 +78,7 @@ public class AiProviderClientTests
          handler.RequestBodies[1]);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
-      Assert.Equal(3, webSearchClient.Queries[0].MaxResults);
+      Assert.Equal(25, webSearchClient.Queries[0].MaxResults);
    }
 
    [Fact]
@@ -262,7 +262,7 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "web_search",
-                    "arguments": "{\"query\":\"Tre Kronor\",\"max_results\":3}"
+                    "arguments": "{\"query\":\"Tre Kronor\",\"max_results\":25}"
                   }
                 }
               ]
