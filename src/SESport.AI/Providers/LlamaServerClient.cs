@@ -122,6 +122,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          foreach(var toolCall in toolCalls)
          {
+            LogToolCall(toolCallIndex, toolCall);
             var toolResponse = await ExecuteToolCallAsync(
                toolCall,
                cancellationToken
@@ -317,6 +318,54 @@ public sealed class LlamaServerClient : IAiProviderClient
       return value[..maxLength] + "...";
    }
 
+   private void LogToolCall(
+      int step,
+      ToolCall toolCall
+   )
+   {
+      if(!Logger.IsEnabled(LogLevel.Debug))
+      {
+         return;
+      }
+
+      var query = ExtractQuery(toolCall.Arguments);
+      var maxResults = ExtractMaxResults(toolCall.Arguments);
+
+      Logger.LogDebug(
+         "llama-server tool:{Step} name={Name} query={Query} " +
+         "max_results={MaxResults}",
+         step,
+         toolCall.Name,
+         TruncateForLog(query, 240),
+         maxResults
+      );
+   }
+
+   private void LogSearchResults(
+      string query,
+      int maxResults,
+      IReadOnlyList<WebSearchResult> searchResults
+   )
+   {
+      if(!Logger.IsEnabled(LogLevel.Debug))
+      {
+         return;
+      }
+
+      var firstResult = searchResults.Count == 0
+         ? "none"
+         : $"{searchResults[0].Title} | {searchResults[0].Url}";
+
+      Logger.LogDebug(
+         "llama-server search query={Query} max_results={MaxResults} " +
+         "results={ResultCount} first_result={FirstResult}",
+         TruncateForLog(query, 240),
+         maxResults,
+         searchResults.Count,
+         TruncateForLog(firstResult, 240)
+      );
+   }
+
    private JsonObject CreateToolLoopRequestPayload(
       AiProviderDefinition provider,
       AiPromptDefinition prompt,
@@ -437,6 +486,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          maxResults,
          cancellationToken
       );
+
+      LogSearchResults(query, maxResults, searchResults);
 
       return FormatSearchResults(query, searchResults);
    }
