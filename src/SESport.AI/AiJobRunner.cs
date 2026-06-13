@@ -139,6 +139,37 @@ public sealed class AiJobRunner(
             null
          );
       }
+      catch(AiProviderExecutionException exception)
+      {
+         run = run with
+         {
+            Status = AiJobRunStatus.Failed,
+            RawRequestJson = exception.RawRequestJson ?? run.RawRequestJson,
+            RawResponseJson =
+               exception.RawResponseJson ?? run.RawResponseJson,
+            ToolTraceJson = exception.ToolTraceJson ?? run.ToolTraceJson,
+            ErrorMessage = exception.Message,
+            CompletedAt = DateTimeOffset.UtcNow,
+            DurationSeconds = (decimal)(
+               DateTimeOffset.UtcNow - run.StartedAt
+            ).TotalSeconds
+         };
+
+         await runRepository.UpdateAsync(run, cancellationToken);
+
+         return new AiJobResult(
+            run.Id,
+            run.JobId,
+            run.ProviderId,
+            run.ProviderModel,
+            run.RenderedPrompt,
+            run.RawRequestJson,
+            run.OutputText ?? string.Empty,
+            run.RawResponseJson,
+            run.ToolTraceJson,
+            exception.Message
+         );
+      }
       catch(Exception exception)
       {
          run = run with

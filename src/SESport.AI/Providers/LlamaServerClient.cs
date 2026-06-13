@@ -67,27 +67,13 @@ public sealed class LlamaServerClient : IAiProviderClient
       CancellationToken cancellationToken
    )
    {
-      if(string.IsNullOrWhiteSpace(provider.BaseAddress))
-      {
-         throw new InvalidOperationException(
-            $"Provider '{provider.Id}' is missing a base address."
-         );
-      }
-
-      if(string.IsNullOrWhiteSpace(provider.Model))
-      {
-         throw new InvalidOperationException(
-            $"Provider '{provider.Id}' is missing a model."
-         );
-      }
-
       var request = CreateRequestPayload(
          provider,
          job,
          prompt,
          renderedPrompt
       );
-      var messages = (JsonArray)request["messages"]!;
+      var requestJson = AiRequestJsonSerializer.Serialize(request);
       JsonObject? responseJson = null;
       var rawResponse = "";
       var toolTrace = new JsonArray();
@@ -97,104 +83,135 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolState = new ToolLoopState();
       var turn = 0;
 
-      while(true)
+      try
       {
-         turn++;
-
-         var response = await SendAsync(provider, request, cancellationToken);
-         rawResponse = await response.Content.ReadAsStringAsync(
-            cancellationToken
-         );
-
-         if(!response.IsSuccessStatusCode)
+         if(string.IsNullOrWhiteSpace(provider.BaseAddress))
          {
-            throw new HttpRequestException(
-               CreateFailureMessage(response.StatusCode, rawResponse),
-               null,
-               response.StatusCode
+            throw new InvalidOperationException(
+               $"Provider '{provider.Id}' is missing a base address."
             );
          }
 
-         responseJson = JsonDocument.Parse(rawResponse).RootElement
-            .Deserialize<JsonObject>(JsonOptions);
+         if(string.IsNullOrWhiteSpace(provider.Model))
+         {
+            throw new InvalidOperationException(
+               $"Provider '{provider.Id}' is missing a model."
+            );
+         }
+
+         var messages = (JsonArray)request["messages"]!;
+
+         while(true)
+         {
+            turn++;
+
+            var response = await SendAsync(provider, request, cancellationToken);
+            rawResponse = await response.Content.ReadAsStringAsync(
+               cancellationToken
+            );
+
+            if(!response.IsSuccessStatusCode)
+            {
+               throw new HttpRequestException(
+                  CreateFailureMessage(response.StatusCode, rawResponse),
+                  null,
+                  response.StatusCode
+               );
+            }
+
+            responseJson = JsonDocument.Parse(rawResponse).RootElement
+               .Deserialize<JsonObject>(JsonOptions);
+
+            if(responseJson is null)
+            {
+               throw new InvalidOperationException(
+                  "llama-server returned an empty response."
+               );
+            }
+
+            LogResponse("turn", turn, responseJson);
+
+            if(!TryGetToolCalls(responseJson, out var toolCalls))
+            {
+               toolTrace.Add(
+                  CreateAssistantTraceEntry(turn, responseJson, [])
+               );
+               break;
+            }
+
+            toolTrace.Add(
+               CreateAssistantTraceEntry(turn, responseJson, toolCalls)
+            );
+            AppendAssistantMessage(messages, responseJson);
+
+            foreach(var toolCall in toolCalls)
+            {
+               LogToolCall(turn, toolCall);
+
+               var toolResult = await ExecuteToolCallAsync(
+                  toolCall,
+                  searchResultsById,
+                  toolState,
+                  cancellationToken
+               );
+
+               toolTrace.Add(
+                  CreateToolTraceEntry(turn, toolCall, toolResult)
+               );
+
+               messages.Add(
+                  new JsonObject
+                  {
+                     ["role"] = "tool",
+                     ["tool_call_id"] = toolCall.Id,
+                     ["content"] = toolResult
+                  }
+               );
+            }
+         }
 
          if(responseJson is null)
          {
             throw new InvalidOperationException(
-               "llama-server returned an empty response."
+               "llama-server returned no response."
             );
          }
 
-         LogResponse("turn", turn, responseJson);
-
-         if(!TryGetToolCalls(responseJson, out var toolCalls))
-         {
-            toolTrace.Add(
-               CreateAssistantTraceEntry(turn, responseJson, [])
-            );
-            break;
-         }
-
-         toolTrace.Add(
-            CreateAssistantTraceEntry(turn, responseJson, toolCalls)
+         var finalOutputText = NormalizeOutput(ExtractFinalText(responseJson));
+         finalOutputText = ResponsesOutputValidator.ValidateStructuredOutput(
+            finalOutputText,
+            job.OutputMode,
+            prompt.OutputSchemaJson
          );
-         AppendAssistantMessage(messages, responseJson);
+         var toolTraceJson = toolTrace.Count == 0
+            ? null
+            : JsonSerializer.Serialize(toolTrace, JsonOptions);
 
-         foreach(var toolCall in toolCalls)
-         {
-            LogToolCall(turn, toolCall);
-
-            var toolResult = await ExecuteToolCallAsync(
-               toolCall,
-               searchResultsById,
-               toolState,
-               cancellationToken
-            );
-
-            toolTrace.Add(
-               CreateToolTraceEntry(turn, toolCall, toolResult)
-            );
-
-            messages.Add(
-               new JsonObject
-               {
-                  ["role"] = "tool",
-                  ["tool_call_id"] = toolCall.Id,
-                  ["content"] = toolResult
-               }
-            );
-         }
+         return new AiJobResult(
+            Guid.NewGuid(),
+            job.Id,
+            provider.Id,
+            provider.Model,
+            renderedPrompt.ToPromptText(),
+            requestJson,
+            finalOutputText,
+            rawResponse,
+            toolTraceJson,
+            null
+         );
       }
-
-      if(responseJson is null)
+      catch(Exception exception)
       {
-         throw new InvalidOperationException(
-            "llama-server returned no response."
+         throw new AiProviderExecutionException(
+            exception.Message,
+            exception,
+            requestJson,
+            string.IsNullOrWhiteSpace(rawResponse) ? null : rawResponse,
+            toolTrace.Count == 0
+               ? null
+               : JsonSerializer.Serialize(toolTrace, JsonOptions)
          );
       }
-
-      var finalOutputText = NormalizeOutput(ExtractFinalText(responseJson));
-      finalOutputText = ResponsesOutputValidator.ValidateStructuredOutput(
-         finalOutputText,
-         job.OutputMode,
-         prompt.OutputSchemaJson
-      );
-      var toolTraceJson = toolTrace.Count == 0
-         ? null
-         : JsonSerializer.Serialize(toolTrace, JsonOptions);
-
-      return new AiJobResult(
-         Guid.NewGuid(),
-         job.Id,
-         provider.Id,
-         provider.Model,
-         renderedPrompt.ToPromptText(),
-         AiRequestJsonSerializer.Serialize(request),
-         finalOutputText,
-         rawResponse,
-         toolTraceJson,
-         null
-      );
    }
 
    private async Task<HttpResponseMessage> SendAsync(
