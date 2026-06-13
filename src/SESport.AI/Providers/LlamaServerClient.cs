@@ -24,17 +24,21 @@ public sealed class LlamaServerClient : IAiProviderClient
    public LlamaServerClient(
       HttpClient httpClient,
       IWebSearchClient webSearchClient,
+      IWebPageContentClient webPageContentClient,
       ILogger<LlamaServerClient> logger
    )
    {
       HttpClient = httpClient;
       WebSearchClient = webSearchClient;
+      WebPageContentClient = webPageContentClient;
       Logger = logger;
    }
 
    private HttpClient HttpClient { get; }
 
    private IWebSearchClient WebSearchClient { get; }
+
+   private IWebPageContentClient WebPageContentClient { get; }
 
    private ILogger<LlamaServerClient> Logger { get; }
 
@@ -464,7 +468,10 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       LogSearchResults(query, maxResults, searchResults);
 
-      return FormatSearchResults(query, searchResults);
+      return await FormatSearchResultsAsync(
+         searchResults,
+         cancellationToken
+      );
    }
 
    private static bool TryGetToolCalls(
@@ -760,34 +767,35 @@ public sealed class LlamaServerClient : IAiProviderClient
       return !string.IsNullOrWhiteSpace(value);
    }
 
-   private static string FormatSearchResults(
-      string query,
-      IReadOnlyList<WebSearchResult> searchResults
+   private async Task<string> FormatSearchResultsAsync(
+      IReadOnlyList<WebSearchResult> searchResults,
+      CancellationToken cancellationToken
    )
    {
-      var builder = new System.Text.StringBuilder();
-      builder.AppendLine($"Search query: {query}");
-
       if(searchResults.Count == 0)
       {
-         builder.Append("No web search results were found.");
-         return builder.ToString();
+         return "[]";
       }
 
-      for(var index = 0; index < searchResults.Count; index++)
+      var firstResult = searchResults[0];
+      var pageContent = await WebPageContentClient.FetchAsync(
+         firstResult.Url,
+         cancellationToken
+      );
+      var output = new object[]
       {
-         var result = searchResults[index];
-         builder.AppendLine();
-         builder.AppendLine($"{index + 1}. {result.Title}");
-         builder.AppendLine($"URL: {result.Url}");
-
-         if(!string.IsNullOrWhiteSpace(result.Snippet))
+         new
          {
-            builder.AppendLine($"Snippet: {result.Snippet}");
+            Title = pageContent?.Title ?? firstResult.Title,
+            Url = firstResult.Url,
+            PublishedAt = pageContent?.PublishedAt?.ToString("O"),
+            MainText = pageContent?.MainText
+               ?? firstResult.Snippet
+               ?? string.Empty
          }
-      }
+      };
 
-      return builder.ToString().TrimEnd();
+      return JsonSerializer.Serialize(output, JsonOptions);
    }
 
    private static bool IsWebSearchTool(string name)

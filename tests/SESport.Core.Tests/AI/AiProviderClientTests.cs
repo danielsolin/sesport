@@ -47,9 +47,18 @@ public class AiProviderClientTests
             "Sweden lineup info."
          )
       );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            "Full article content."
+         )
+      );
       var client = new LlamaServerClient(
          new HttpClient(handler),
          webSearchClient,
+         webPageContentClient,
          new NoopLogger<LlamaServerClient>()
       );
 
@@ -76,9 +85,16 @@ public class AiProviderClientTests
          handler.RequestBodies[0]);
       Assert.Contains("\"role\":\"tool\"",
          handler.RequestBodies[1]);
+      Assert.Contains("Article Title", handler.RequestBodies[1]);
+      Assert.Contains("Full article content.", handler.RequestBodies[1]);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
       Assert.Equal(3, webSearchClient.Queries[0].MaxResults);
+      Assert.Single(webPageContentClient.Urls);
+      Assert.Equal(
+         "https://example.test/roster",
+         webPageContentClient.Urls[0]
+      );
    }
 
    [Fact]
@@ -387,6 +403,28 @@ public class AiProviderClientTests
       {
          Queries.Add((query, maxResults));
          return Task.FromResult(results);
+      }
+   }
+
+   private sealed class RecordingWebPageContentClient
+      : IWebPageContentClient
+   {
+      private readonly WebPageContent? content;
+
+      public RecordingWebPageContentClient(WebPageContent? content)
+      {
+         this.content = content;
+      }
+
+      public List<string> Urls { get; } = [];
+
+      public Task<WebPageContent?> FetchAsync(
+         string url,
+         CancellationToken cancellationToken
+      )
+      {
+         Urls.Add(url);
+         return Task.FromResult(content);
       }
    }
 

@@ -50,6 +50,13 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = TimeSpan.FromSeconds(30);
       });
+      services.AddHttpClient<
+         IWebPageContentClient,
+         WebPageContentClient
+      >(client =>
+      {
+         client.Timeout = TimeSpan.FromSeconds(30);
+      });
 
       return services;
    }
