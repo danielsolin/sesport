@@ -1,0 +1,10 @@
+use_default_settings: true
+
+server:
+  base_url: https://xng.sesport.se/
+  bind_address: "0.0.0.0"
+  port: 8080
+  secret_key: "sesport-development-secret-key"
+  limiter: false
+  public_instance: false
+  image_proxy: false
