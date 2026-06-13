@@ -371,7 +371,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                         {
                            ["type"] = "integer",
                            ["minimum"] = 1,
-                           ["maximum"] = 50
+                           ["maximum"] = 10
                         }
                      },
                      ["required"] = new JsonArray { "query" },
@@ -716,7 +716,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       if(string.IsNullOrWhiteSpace(arguments))
       {
-         return 20;
+         return 5;
       }
 
       try
@@ -730,14 +730,14 @@ public sealed class LlamaServerClient : IAiProviderClient
             maxResultsNode.TryGetInt32(out var maxResults)
          )
          {
-            return Math.Clamp(maxResults, 1, 50);
+            return Math.Clamp(maxResults, 1, 10);
          }
       }
       catch(JsonException)
       {
       }
 
-      return 20;
+      return 5;
    }
 
    private static bool TryGetStringProperty(

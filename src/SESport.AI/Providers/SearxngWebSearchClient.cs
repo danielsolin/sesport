@@ -6,8 +6,6 @@ namespace SESport.AI.Providers;
 
 public sealed class SearxngWebSearchClient : IWebSearchClient
 {
-   private const int ResultsPerPage = 20;
-
    private static readonly Uri DefaultBaseAddress = new(
       "https://xng.sesport.se/"
    );
@@ -66,53 +64,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          return [];
       }
 
-      var results = new List<WebSearchResult>();
-      var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-      var targetResults = Math.Clamp(maxResults, 1, 50);
-
-      for(var page = 1; results.Count < targetResults; page++)
-      {
-         var pageResults = await SearchPageAsync(
-            query,
-            page,
-            cancellationToken
-         );
-
-         if(pageResults.Count == 0)
-         {
-            break;
-         }
-
-         foreach(var result in pageResults)
-         {
-            if(!seenUrls.Add(result.Url))
-            {
-               continue;
-            }
-
-            results.Add(result);
-
-            if(results.Count >= targetResults)
-            {
-               break;
-            }
-         }
-
-         if(pageResults.Count < ResultsPerPage)
-         {
-            break;
-         }
-      }
-
-      return results;
-   }
-
-   private async Task<IReadOnlyList<WebSearchResult>> SearchPageAsync(
-      string query,
-      int page,
-      CancellationToken cancellationToken
-   )
-   {
       using var request = new HttpRequestMessage(HttpMethod.Post, SearchUri)
       {
          Content = new FormUrlEncodedContent(
@@ -120,8 +71,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             {
                ["q"] = query,
                ["format"] = "json",
-               ["categories"] = "general",
-               ["pageno"] = page.ToString()
+               ["categories"] = "general"
             }
          )
       };
@@ -145,7 +95,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
-      return ParseResults(rawResponse, ResultsPerPage);
+      return ParseResults(rawResponse, maxResults);
    }
 
    private static IReadOnlyList<WebSearchResult> ParseResults(
