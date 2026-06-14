@@ -49,6 +49,19 @@
             <span asp-validation-for="Job.ProviderId"></span>
          </label>
          <label>
+            <span>Active prompt</span>
+            <select asp-for="Job.ActivePromptId">
+               <option value="">Select prompt</option>
+               @foreach (var prompt in Model.Prompts)
+               {
+                  var promptLabel = $"v{prompt.Version}"
+                     + (prompt.Enabled ? "" : " (disabled)");
+                  <option value="@prompt.Id">@promptLabel</option>
+               }
+            </select>
+            <span asp-validation-for="Job.ActivePromptId"></span>
+         </label>
+         <label>
             <span>Output mode</span>
             <select asp-for="Job.OutputMode">
                <option value="text">text</option>

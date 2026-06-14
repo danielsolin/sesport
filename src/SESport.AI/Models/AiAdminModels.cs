@@ -52,6 +52,8 @@ public sealed class AiJobEditModel
 
    public string OutputMode { get; set; } = "text";
 
+   public string? ActivePromptId { get; set; }
+
    public bool RequiresWebSearch { get; set; } = true;
 
    public bool Enabled { get; set; } = true;

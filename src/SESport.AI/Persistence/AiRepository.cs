@@ -239,6 +239,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             provider_id,
             output_mode,
             requires_web_search,
+            active_prompt_id,
             enabled
          from ai_jobs
          where id = @id
@@ -262,11 +263,87 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          reader.GetString(3),
          reader.GetString(4),
          reader.GetBoolean(5),
-         reader.GetBoolean(6)
+         reader.GetBoolean(7),
+         ReadNullableGuid(reader, 6)
       );
    }
 
    public async Task<AiPromptDefinition?> GetActivePromptAsync(
+      string jobId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select active_prompt_id
+         from ai_jobs
+         where id = @job_id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("job_id", jobId);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      if(reader.IsDBNull(0))
+      {
+         return await GetLatestEnabledPromptAsync(
+            jobId,
+            cancellationToken
+         );
+      }
+
+      var promptId = reader.GetGuid(0);
+      const string promptSql = """
+         select
+            id,
+            job_id,
+            version,
+            system_prompt,
+            user_prompt_template,
+            output_schema::text,
+            request_options::text,
+            temperature,
+            max_output_tokens,
+            enabled
+         from ai_job_prompts
+         where id = @id
+         """;
+
+      await using var promptCommand = dataSource.CreateCommand(promptSql);
+      promptCommand.Parameters.AddWithValue("id", promptId);
+      await using var promptReader = await promptCommand.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await promptReader.ReadAsync(cancellationToken))
+      {
+         return await GetLatestEnabledPromptAsync(
+            jobId,
+            cancellationToken
+         );
+      }
+
+      return new AiPromptDefinition(
+         promptReader.GetGuid(0),
+         promptReader.GetString(1),
+         promptReader.GetInt32(2),
+         promptReader.GetString(3),
+         promptReader.GetString(4),
+         ReadNullableString(promptReader, 5),
+         ReadNullableString(promptReader, 6) ?? "{}",
+         ReadNullableDecimal(promptReader, 7),
+         ReadNullableInt32(promptReader, 8),
+         promptReader.GetBoolean(9)
+      );
+   }
+
+   private async Task<AiPromptDefinition?> GetLatestEnabledPromptAsync(
       string jobId,
       CancellationToken cancellationToken
    )
@@ -649,6 +726,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    )
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+   }
+
+   private static Guid? ReadNullableGuid(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
    }
 
    private static decimal? ReadNullableDecimal(

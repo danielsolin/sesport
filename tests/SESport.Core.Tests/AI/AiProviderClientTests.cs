@@ -184,7 +184,8 @@ public class AiProviderClientTests
          "provider",
          outputMode,
          requiresWebSearch,
-         true
+         true,
+         null
       );
    }
 

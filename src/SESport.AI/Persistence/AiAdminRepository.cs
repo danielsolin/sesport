@@ -177,6 +177,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description,
             provider_id,
             output_mode,
+            active_prompt_id,
             requires_web_search,
             enabled
          from ai_jobs
@@ -202,8 +203,9 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Description = ReadNullableString(reader, 2),
          ProviderId = reader.GetString(3),
          OutputMode = reader.GetString(4),
-         RequiresWebSearch = reader.GetBoolean(5),
-         Enabled = reader.GetBoolean(6)
+         ActivePromptId = ReadNullableGuid(reader, 5)?.ToString(),
+         RequiresWebSearch = reader.GetBoolean(6),
+         Enabled = reader.GetBoolean(7)
       };
    }
 
@@ -226,6 +228,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                description,
                provider_id,
                output_mode,
+               active_prompt_id,
                requires_web_search,
                enabled
             )
@@ -235,6 +238,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                @description,
                @provider_id,
                @output_mode,
+               @active_prompt_id,
                @requires_web_search,
                @enabled
             )
@@ -254,6 +258,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description = @description,
             provider_id = @provider_id,
             output_mode = @output_mode,
+            active_prompt_id = @active_prompt_id,
             requires_web_search = @requires_web_search,
             enabled = @enabled,
             updated_at = now()
@@ -278,6 +283,42 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          """;
 
       await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var items = new List<AiPromptListItem>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         items.Add(
+            new AiPromptListItem(
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetInt32(3),
+               reader.GetBoolean(4)
+            )
+         );
+      }
+
+      return items;
+   }
+
+   public async Task<IReadOnlyList<AiPromptListItem>> GetJobPromptsAsync(
+      string jobId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select p.id::text, p.job_id, j.label, p.version, p.enabled
+         from ai_job_prompts p
+         join ai_jobs j on j.id = p.job_id
+         where p.job_id = @job_id
+         order by p.version desc
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("job_id", jobId);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -448,6 +489,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
       command.Parameters.AddWithValue(
+         "active_prompt_id",
+         BlankToDbNullGuid(model.ActivePromptId)
+      );
+      command.Parameters.AddWithValue(
          "requires_web_search",
          model.RequiresWebSearch
       );
@@ -517,6 +562,21 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
    )
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+   }
+
+   private static Guid? ReadNullableGuid(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
+   }
+
+   private static object BlankToDbNullGuid(string? value)
+   {
+      return string.IsNullOrWhiteSpace(value)
+         ? DBNull.Value
+         : Guid.Parse(value.Trim());
    }
 
    private static decimal? ReadNullableDecimal(

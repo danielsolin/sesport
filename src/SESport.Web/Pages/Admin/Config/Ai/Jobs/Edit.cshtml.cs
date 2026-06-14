@@ -10,6 +10,9 @@ public class EditModel(AiAdminRepository repository) : PageModel
    [BindProperty]
    public AiJobEditModel Job { get; set; } = new();
 
+   public IReadOnlyList<AiPromptListItem> Prompts { get; private set; } =
+      [];
+
    public IReadOnlyList<AiProviderListItem> Providers { get; private set; } =
       [];
 
@@ -24,6 +27,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
       if (string.IsNullOrWhiteSpace(id))
       {
+         await LoadPromptsAsync(cancellationToken);
          return Page();
       }
 
@@ -31,6 +35,8 @@ public class EditModel(AiAdminRepository repository) : PageModel
          id,
          cancellationToken
       ) ?? new AiJobEditModel();
+
+      await LoadPromptsAsync(cancellationToken);
 
       return Job.OriginalId is null ? NotFound() : Page();
    }
@@ -40,6 +46,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
    )
    {
       await LoadProvidersAsync(cancellationToken);
+      await LoadPromptsAsync(cancellationToken);
       ValidateJob();
 
       if (!ModelState.IsValid)
@@ -63,6 +70,17 @@ public class EditModel(AiAdminRepository repository) : PageModel
    private async Task LoadProvidersAsync(CancellationToken cancellationToken)
    {
       Providers = await repository.GetProvidersAsync(cancellationToken);
+   }
+
+   private async Task LoadPromptsAsync(CancellationToken cancellationToken)
+   {
+      var jobId = string.IsNullOrWhiteSpace(Job.Id)
+         ? Job.OriginalId
+         : Job.Id.Trim();
+
+      Prompts = string.IsNullOrWhiteSpace(jobId)
+         ? []
+         : await repository.GetJobPromptsAsync(jobId, cancellationToken);
    }
 
    private void ValidateJob()
@@ -93,6 +111,20 @@ public class EditModel(AiAdminRepository repository) : PageModel
          ModelState.AddModelError(
             "Job.OutputMode",
             "Output mode must be text or json_object."
+         );
+      }
+
+      if (!string.IsNullOrWhiteSpace(Job.ActivePromptId)
+         && !Prompts.Any(prompt =>
+            string.Equals(
+               prompt.Id,
+               Job.ActivePromptId,
+               StringComparison.Ordinal
+            )))
+      {
+         ModelState.AddModelError(
+            "Job.ActivePromptId",
+            "Active prompt must belong to this job."
          );
       }
 

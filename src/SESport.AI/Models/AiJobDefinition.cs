@@ -7,5 +7,6 @@ public sealed record AiJobDefinition(
    string ProviderId,
    string OutputMode,
    bool RequiresWebSearch,
-   bool Enabled
+   bool Enabled,
+   Guid? ActivePromptId
 );

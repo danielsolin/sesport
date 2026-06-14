@@ -54,12 +54,13 @@ public class AiJobRunnerTests
                "job",
                "Job",
                null,
-               "provider",
-               "json_object",
-               true,
-               true
-            )
-         );
+            "provider",
+            "json_object",
+            true,
+            true,
+            null
+         )
+      );
       }
 
       public Task<AiPromptDefinition?> GetActivePromptAsync(
