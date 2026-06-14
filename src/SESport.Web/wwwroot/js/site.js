@@ -959,14 +959,6 @@
          list.append(link);
       });
 
-      const runLink = createParticipationRunLink(runId);
-
-      if(runLink)
-      {
-         runLink.dataset.runLink = "true";
-         list.append(runLink);
-      }
-
       wrapper.append(list);
       initializeParticipationSources(wrapper);
 
