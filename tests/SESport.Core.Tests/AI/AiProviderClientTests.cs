@@ -30,7 +30,8 @@ public class AiProviderClientTests
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
             ["Article heading"],
-            "Full article content."
+            "Full article content.",
+            true
          )
       );
       var client = new LlamaServerClient(
@@ -111,7 +112,8 @@ public class AiProviderClientTests
             "https://example.test/direct-page",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
             ["Article heading"],
-            "Full article content."
+            "Full article content.",
+            true
          )
       );
       var client = new LlamaServerClient(
@@ -170,7 +172,8 @@ public class AiProviderClientTests
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
             ["Article heading"],
-            "Full article content."
+            "Full article content.",
+            true
          )
       );
       var client = new LlamaServerClient(

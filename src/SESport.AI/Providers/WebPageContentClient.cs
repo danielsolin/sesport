@@ -171,10 +171,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var title = ExtractTitle(rawHtml);
       var publishedAt = ExtractPublishedAt(rawHtml);
       var headings = ExtractHeadings(rawHtml);
-      var mainText = ExtractMainText(rawHtml);
+      var mainTextInfo = ExtractMainText(rawHtml);
 
       if(string.IsNullOrWhiteSpace(title) &&
-         string.IsNullOrWhiteSpace(mainText) &&
+         string.IsNullOrWhiteSpace(mainTextInfo.Text) &&
          headings.Count == 0)
       {
          return null;
@@ -185,7 +185,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          url,
          publishedAt,
          headings,
-         mainText
+         mainTextInfo.Text,
+         mainTextInfo.HasBodyText
       );
    }
 
@@ -230,7 +231,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       return null;
    }
 
-   private static string ExtractMainText(string rawHtml)
+   private static MainTextResult ExtractMainText(string rawHtml)
    {
       var candidate = ExtractContentCandidate(rawHtml);
 
@@ -270,13 +271,16 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          if(text.Length > MaxMainTextLength)
          {
-            return text[..MaxMainTextLength].TrimEnd() + "...";
+            return new MainTextResult(
+               text[..MaxMainTextLength].TrimEnd() + "...",
+               true
+            );
          }
 
-         return text.Trim();
+         return new MainTextResult(text.Trim(), true);
       }
 
-      return ExtractSupplementalText(rawHtml);
+      return new MainTextResult(ExtractSupplementalText(rawHtml), false);
    }
 
    private static string ExtractSupplementalText(string rawHtml)
@@ -816,4 +820,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
          .ReplaceLineEndings(" ")
          .Trim();
    }
+
+   private sealed record MainTextResult(
+      string Text,
+      bool HasBodyText
+   );
 }

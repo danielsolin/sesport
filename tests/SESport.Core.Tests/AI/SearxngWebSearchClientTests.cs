@@ -13,6 +13,7 @@ public class SearxngWebSearchClientTests
       var handler = new RecordingHandler(CreateResponseJson());
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
+         new RecordingWebPageContentClient(true),
          new SearxngWebSearchClientOptions()
       );
 
@@ -42,6 +43,7 @@ public class SearxngWebSearchClientTests
       var handler = new RecordingHandler(CreateMixedResponseJson());
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
+         new RecordingWebPageContentClient(true),
          new SearxngWebSearchClientOptions()
       );
 
@@ -54,6 +56,25 @@ public class SearxngWebSearchClientTests
       Assert.Single(results);
       Assert.Equal("Official roster", results[0].Title);
       Assert.Equal("https://example.test/roster", results[0].Url);
+   }
+
+   [Fact]
+   public async Task SearchDropsMetadataOnlyResults()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new RecordingWebPageContentClient(false),
+         new SearxngWebSearchClientOptions()
+      );
+
+      var results = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Empty(results);
    }
 
    [Fact]
@@ -62,6 +83,7 @@ public class SearxngWebSearchClientTests
       var handler = new RecordingHandler(CreatePdfMixedResponseJson());
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
+         new RecordingWebPageContentClient(true),
          new SearxngWebSearchClientOptions()
       );
 
@@ -77,11 +99,31 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchDropsUnverifiedResults()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new RecordingWebPageContentClient(false),
+         new SearxngWebSearchClientOptions()
+      );
+
+      var results = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Empty(results);
+   }
+
+   [Fact]
    public async Task EmptyQuerySkipsRequest()
    {
       var handler = new RecordingHandler(CreateResponseJson());
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
+         new RecordingWebPageContentClient(true),
          new SearxngWebSearchClientOptions()
       );
 
@@ -101,6 +143,7 @@ public class SearxngWebSearchClientTests
       var handler = new RecordingHandler(CreateResponseJson());
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
+         new RecordingWebPageContentClient(true),
          new SearxngWebSearchClientOptions
          {
             BasicAuthUsername = "user",
@@ -230,6 +273,43 @@ public class SearxngWebSearchClientTests
                JsonSerializer.Deserialize<JsonElement>(responseJson)
             )
          };
+      }
+   }
+
+   private sealed class RecordingWebPageContentClient
+      : IWebPageContentClient
+   {
+      private readonly bool shouldVerify;
+
+      public RecordingWebPageContentClient(bool shouldVerify)
+      {
+         this.shouldVerify = shouldVerify;
+      }
+
+      public List<string> Urls { get; } = [];
+
+      public Task<WebPageContent?> FetchAsync(
+         string url,
+         CancellationToken cancellationToken
+      )
+      {
+         Urls.Add(url);
+
+         if(!shouldVerify)
+         {
+            return Task.FromResult<WebPageContent?>(null);
+         }
+
+         return Task.FromResult<WebPageContent?>(
+            new WebPageContent(
+               "Verified Title",
+               url,
+               null,
+               [],
+               "Verified body.",
+               true
+            )
+         );
       }
    }
 }
