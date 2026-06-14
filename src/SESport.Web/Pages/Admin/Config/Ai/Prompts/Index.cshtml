@@ -23,9 +23,9 @@
    <table class="admin-table">
       <thead>
          <tr>
-            <th>ID</th>
             <th>VERSION</th>
             <th>AI JOB</th>
+            <th>PROMPT</th>
             <th>TEMPERATURE</th>
             <th></th>
          </tr>
@@ -34,9 +34,15 @@
          @foreach (var prompt in Model.Prompts)
          {
             <tr>
-               <td><code>@prompt.Id</code></td>
                <td>@prompt.Version</td>
                <td><code>@prompt.JobId</code></td>
+               <td>
+                  <div>Sys: @IndexModel.Truncate(prompt.SystemPrompt, 50)</div>
+                  <div>User: @IndexModel.Truncate(
+                     prompt.UserPromptTemplate,
+                     50
+                  )</div>
+               </td>
                <td>@prompt.Temperature</td>
                <td class="table-actions">
                   <a asp-page="./Edit" asp-route-id="@prompt.Id">Edit</a>

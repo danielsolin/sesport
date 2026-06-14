@@ -65,6 +65,8 @@ public sealed record AiPromptListItem(
    string JobId,
    string JobLabel,
    int Version,
+   string SystemPrompt,
+   string UserPromptTemplate,
    decimal? Temperature,
    bool Enabled
 );

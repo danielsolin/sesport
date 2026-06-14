@@ -21,4 +21,11 @@ public class IndexModel(AiAdminRepository repository) : PageModel
          LoadError = exception.Message;
       }
    }
+
+   public static string Truncate(string value, int maxLength)
+   {
+      return value.Length <= maxLength
+         ? value
+         : value[..maxLength] + "...";
+   }
 }
