@@ -951,6 +951,11 @@ h2 {
    height: 200px;
 }
 
+.short-textarea {
+   min-height: 48px !important;
+   height: 48px !important;
+}
+
 .proposal-summary {
    display: grid;
    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
@@ -1317,8 +1322,8 @@ textarea {
 }
 
 .edit-form textarea {
-   min-height: 38px;
-   height: 38px;
+   min-height: 28px;
+   height: 28px;
    resize: vertical;
    overflow: auto;
 }

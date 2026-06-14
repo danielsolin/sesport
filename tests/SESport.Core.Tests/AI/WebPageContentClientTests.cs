@@ -30,6 +30,8 @@ public class WebPageContentClientTests
       Assert.Contains("First paragraph.", page.MainText);
       Assert.Contains("Second paragraph.", page.MainText);
       Assert.DoesNotContain("Menu item", page.MainText);
+      Assert.Contains("Mozilla/5.0", handler.UserAgentHeader);
+      Assert.Equal("en-US,en;q=0.9", handler.AcceptLanguageHeader);
    }
 
    [Fact]
@@ -76,11 +78,18 @@ public class WebPageContentClientTests
          this.html = html;
       }
 
+      public string? UserAgentHeader { get; private set; }
+
+      public string? AcceptLanguageHeader { get; private set; }
+
       protected override Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
       )
       {
+         UserAgentHeader = request.Headers.UserAgent.ToString();
+         AcceptLanguageHeader = request.Headers.AcceptLanguage.ToString();
+
          return Task.FromResult(
             new HttpResponseMessage(HttpStatusCode.OK)
             {

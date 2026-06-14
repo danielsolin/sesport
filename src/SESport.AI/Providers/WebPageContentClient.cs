@@ -81,6 +81,15 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
       request.Headers.Accept.ParseAdd("text/html,application/xhtml+xml");
+      request.Headers.TryAddWithoutValidation(
+         "User-Agent",
+         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+         "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+      );
+      request.Headers.TryAddWithoutValidation(
+         "Accept-Language",
+         "en-US,en;q=0.9"
+      );
 
       using var response = await httpClient.SendAsync(
          request,
