@@ -66,17 +66,24 @@ public class AiProviderClientTests
 
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
-         CreateJob("text"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson(),
+            CreateToolsDescription()
+         ),
          CreatePrompt(CreateParticipationSchemaJson()),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
       );
 
-      Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\",\"SwedishParticipants\":[\"Dino Beganovic\"],\"Sources\":[\"https://example.test/roster\"]}",
-         result.OutputText
-      );
+      var expectedOutput =
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}";
+
+      Assert.Equal(expectedOutput, result.OutputText);
       Assert.Contains("\"kind\":\"assistant\"", result.ToolTraceJson);
       Assert.Contains("\"kind\":\"tool\"", result.ToolTraceJson);
       Assert.Contains("Article Title", result.ToolTraceJson);
@@ -84,7 +91,7 @@ public class AiProviderClientTests
       Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);
       Assert.Contains(
-         "When web_search returns promising results",
+         CreateToolsDescription(),
          handler.RequestBodies[0]
       );
       Assert.Contains("\"role\":\"user\"", handler.RequestBodies[0]);
@@ -179,7 +186,9 @@ public class AiProviderClientTests
 
    private static AiJobDefinition CreateJob(
       string outputMode = "json_object",
-      bool requiresWebSearch = true
+      bool requiresWebSearch = true,
+      string? toolsJson = null,
+      string? toolsDescription = null
    )
    {
       return new AiJobDefinition(
@@ -188,9 +197,80 @@ public class AiProviderClientTests
          null,
          "provider",
          outputMode,
+         toolsJson,
+         toolsDescription,
          requiresWebSearch,
          true,
          null
+      );
+   }
+
+   private static string CreateToolsDescription()
+   {
+      return
+         "When web_search returns promising results, inspect the most " +
+         "relevant result pages with web_get_page before answering.";
+   }
+
+   private static string CreateToolsJson()
+   {
+      return JsonSerializer.Serialize(
+         new object[]
+         {
+            new
+            {
+               type = "function",
+               function = new
+               {
+                  name = "web_search",
+                  description =
+                     "Search the web for current or factual information.",
+                  parameters = new
+                  {
+                     type = "object",
+                     properties = new
+                     {
+                        query = new
+                        {
+                           type = "string"
+                        },
+                        limit = new
+                        {
+                           type = "integer",
+                           minimum = 1,
+                           maximum = 10
+                        }
+                     },
+                     required = new[] { "query" },
+                     additionalProperties = false
+                  }
+               }
+            },
+            new
+            {
+               type = "function",
+               function = new
+               {
+                  name = "web_get_page",
+                  description =
+                     "Fetch the full page text for a search result id " +
+                     "returned by web_search.",
+                  parameters = new
+                  {
+                     type = "object",
+                     properties = new
+                     {
+                        id = new
+                        {
+                           type = "string"
+                        }
+                     },
+                     required = new[] { "id" },
+                     additionalProperties = false
+                  }
+               }
+            }
+         }
       );
    }
 
@@ -337,20 +417,29 @@ public class AiProviderClientTests
 
    private static string CreateLlamaFinalResponseJson()
    {
-      return """
-      {
-        "choices": [
-          {
-            "message": {
-              "role": "assistant",
-              "content": "{\"SwedishParticipation\":\"Yes\",\"SwedishParticipants\":[\"Dino Beganovic\"],\"Sources\":[\"https://example.test/roster\"]}"
+      var content =
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}";
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            choices = new[]
+            {
+               new
+               {
+                  message = new
+                  {
+                     role = "assistant",
+                     content
+                  },
+                  finish_reason = "stop"
+               }
             },
-            "finish_reason": "stop"
-          }
-        ],
-        "model": "openai/gpt-4o-2024-08-06"
-      }
-      """;
+            model = "openai/gpt-4o-2024-08-06"
+         }
+      );
    }
 
    private static string CreateParticipationSchemaJson()

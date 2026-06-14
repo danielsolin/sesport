@@ -75,6 +75,12 @@ public sealed class AiJobRunner(
          renderedPrompt
       );
       var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
+      var displayedRenderedPrompt = BuildRenderedPromptText(
+         provider.Kind,
+         job.RequiresWebSearch,
+         job.ToolsDescription,
+         renderedPromptText
+      );
 
       var run = new AiJobRun(
          Guid.NewGuid(),
@@ -85,7 +91,7 @@ public sealed class AiJobRunner(
          AiJobRunStatus.Running,
          request.CorrelationId,
          request.InputPayloadJson,
-         renderedPromptText,
+         displayedRenderedPrompt,
          rawRequestJson,
          null,
          null,
@@ -151,7 +157,7 @@ public sealed class AiJobRunner(
 
          await runRepository.UpdateAsync(run, cancellationToken);
 
-         return new AiJobResult(
+      return new AiJobResult(
             run.Id,
             run.JobId,
             run.ProviderId,
@@ -222,5 +228,29 @@ public sealed class AiJobRunner(
             exception.Message
          );
       }
+   }
+
+   private static string BuildRenderedPromptText(
+      string providerKind,
+      bool requiresWebSearch,
+      string? toolsDescription,
+      string renderedPromptText
+   )
+   {
+      if(!requiresWebSearch ||
+         !string.Equals(providerKind, "llama-server",
+            StringComparison.Ordinal))
+      {
+         return renderedPromptText;
+      }
+
+      return string.Join(
+         Environment.NewLine + Environment.NewLine,
+         new[]
+         {
+            renderedPromptText.Trim(),
+            toolsDescription?.Trim()
+         }.Where(value => !string.IsNullOrWhiteSpace(value))
+      );
    }
 }

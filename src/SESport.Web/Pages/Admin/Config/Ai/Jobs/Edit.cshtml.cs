@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.AI.Models;
@@ -35,6 +36,8 @@ public class EditModel(AiAdminRepository repository) : PageModel
          id,
          cancellationToken
       ) ?? new AiJobEditModel();
+
+      Job.ToolsJson = PrettyPrintJson(Job.ToolsJson);
 
       await LoadPromptsAsync(cancellationToken);
 
@@ -114,6 +117,27 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
+      ValidateJson("Job.ToolsJson", Job.ToolsJson);
+
+      if(Job.RequiresWebSearch)
+      {
+         if(string.IsNullOrWhiteSpace(Job.ToolsJson))
+         {
+            ModelState.AddModelError(
+               "Job.ToolsJson",
+               "Tools JSON is required when web search is enabled."
+            );
+         }
+
+         if(string.IsNullOrWhiteSpace(Job.ToolsDescription))
+         {
+            ModelState.AddModelError(
+               "Job.ToolsDescription",
+               "Tools description is required when web search is enabled."
+            );
+         }
+      }
+
       if (!string.IsNullOrWhiteSpace(Job.ActivePromptId)
          && !Prompts.Any(prompt =>
             string.Equals(
@@ -128,5 +152,46 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
+   }
+
+   private static string? PrettyPrintJson(string? json)
+   {
+      if(string.IsNullOrWhiteSpace(json))
+      {
+         return json;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(json);
+         return JsonSerializer.Serialize(
+            document.RootElement,
+            new JsonSerializerOptions
+            {
+               WriteIndented = true
+            }
+         );
+      }
+      catch(JsonException)
+      {
+         return json;
+      }
+   }
+
+   private void ValidateJson(string fieldName, string? json)
+   {
+      if(string.IsNullOrWhiteSpace(json))
+      {
+         return;
+      }
+
+      try
+      {
+         JsonDocument.Parse(json);
+      }
+      catch(JsonException)
+      {
+         ModelState.AddModelError(fieldName, "Must be valid JSON.");
+      }
    }
 }

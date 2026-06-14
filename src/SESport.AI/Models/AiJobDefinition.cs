@@ -6,6 +6,8 @@ public sealed record AiJobDefinition(
    string? Description,
    string ProviderId,
    string OutputMode,
+   string? ToolsJson,
+   string? ToolsDescription,
    bool RequiresWebSearch,
    bool Enabled,
    Guid? ActivePromptId

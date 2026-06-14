@@ -185,6 +185,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description,
             provider_id,
             output_mode,
+            tools_json::text,
+            tools_description,
             active_prompt_id,
             requires_web_search,
             enabled
@@ -211,9 +213,11 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Description = ReadNullableString(reader, 2),
          ProviderId = reader.GetString(3),
          OutputMode = reader.GetString(4),
-         ActivePromptId = ReadNullableGuid(reader, 5)?.ToString(),
-         RequiresWebSearch = reader.GetBoolean(6),
-         Enabled = reader.GetBoolean(7)
+         ToolsJson = ReadNullableString(reader, 5),
+         ToolsDescription = ReadNullableString(reader, 6),
+         ActivePromptId = ReadNullableGuid(reader, 7)?.ToString(),
+         RequiresWebSearch = reader.GetBoolean(8),
+         Enabled = reader.GetBoolean(9)
       };
    }
 
@@ -233,24 +237,28 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             insert into ai_jobs (
                id,
                label,
-               description,
-               provider_id,
-               output_mode,
-               active_prompt_id,
-               requires_web_search,
-               enabled
-            )
-            values (
+            description,
+            provider_id,
+            output_mode,
+            tools_json,
+            tools_description,
+            active_prompt_id,
+            requires_web_search,
+            enabled
+         )
+         values (
                @id,
                @label,
-               @description,
-               @provider_id,
-               @output_mode,
-               @active_prompt_id,
-               @requires_web_search,
-               @enabled
-            )
-            """;
+            @description,
+            @provider_id,
+            @output_mode,
+            @tools_json,
+            @tools_description,
+            @active_prompt_id,
+            @requires_web_search,
+            @enabled
+         )
+         """;
 
          await using var insertCommand = dataSource.CreateCommand(insertSql);
          AddJobParameters(insertCommand, id, model);
@@ -266,6 +274,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description = @description,
             provider_id = @provider_id,
             output_mode = @output_mode,
+            tools_json = @tools_json,
+            tools_description = @tools_description,
             active_prompt_id = @active_prompt_id,
             requires_web_search = @requires_web_search,
             enabled = @enabled,
@@ -518,6 +528,11 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
+      AddJsonbParameter(command, "tools_json", model.ToolsJson);
+      command.Parameters.AddWithValue(
+         "tools_description",
+         BlankToDbNull(model.ToolsDescription)
+      );
       command.Parameters.AddWithValue(
          "active_prompt_id",
          BlankToDbNullGuid(model.ActivePromptId)

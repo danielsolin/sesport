@@ -24,14 +24,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
    };
 
-   private const string ToolUsageInstruction =
-      """
-      When web_search returns promising results, inspect the most relevant
-      result pages with web_get_page before answering. Do not rely only on
-      search snippets when page text is available. Use web_get_page for the
-      top result or top few results if the answer depends on page details.
-      """;
-
    public string Kind => "llama-server";
 
    public LlamaServerClient(
@@ -500,68 +492,13 @@ public sealed class LlamaServerClient : IAiProviderClient
          provider,
          prompt,
          renderedPrompt,
-         includeTools
+         includeTools,
+         job.ToolsDescription
       );
 
       if(includeTools)
       {
-         payload["tools"] = new JsonArray
-         {
-            new JsonObject
-            {
-               ["type"] = "function",
-               ["function"] = new JsonObject
-               {
-                  ["name"] = "web_search",
-                  ["description"] =
-                     "Search the web for current or factual information.",
-                  ["parameters"] = new JsonObject
-                  {
-                     ["type"] = "object",
-                     ["properties"] = new JsonObject
-                     {
-                        ["query"] = new JsonObject
-                        {
-                           ["type"] = "string"
-                        },
-                        ["limit"] = new JsonObject
-                        {
-                           ["type"] = "integer",
-                           ["minimum"] = 1,
-                           ["maximum"] = 10
-                        }
-                     },
-                     ["required"] = new JsonArray { "query" },
-                     ["additionalProperties"] = false
-                  }
-               }
-            },
-            new JsonObject
-            {
-               ["type"] = "function",
-               ["function"] = new JsonObject
-               {
-                  ["name"] = "web_get_page",
-                  ["description"] =
-                     "Fetch the full page text for a search result id " +
-                     "returned by web_search. Use this after search when " +
-                     "page details matter more than the snippet.",
-                  ["parameters"] = new JsonObject
-                  {
-                     ["type"] = "object",
-                     ["properties"] = new JsonObject
-                     {
-                        ["id"] = new JsonObject
-                        {
-                           ["type"] = "string"
-                        }
-                     },
-                     ["required"] = new JsonArray { "id" },
-                     ["additionalProperties"] = false
-                  }
-               }
-            }
-         };
+         payload["tools"] = CreateToolsArray(job.ToolsJson);
          payload["tool_choice"] = "auto";
       }
 
@@ -574,7 +511,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiProviderDefinition provider,
       AiPromptDefinition prompt,
       AiRenderedPrompt renderedPrompt,
-      bool includeTools
+      bool includeTools,
+      string? toolsDescription
    )
    {
       var payload = new JsonObject
@@ -582,7 +520,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["model"] = provider.Model
       };
 
-      payload["messages"] = CreateMessages(renderedPrompt, includeTools);
+      payload["messages"] = CreateMessages(
+         renderedPrompt,
+         includeTools,
+         toolsDescription
+      );
 
       if(prompt.MaxOutputTokens is not null)
       {
@@ -599,7 +541,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static JsonArray CreateMessages(
       AiRenderedPrompt renderedPrompt,
-      bool includeTools
+      bool includeTools,
+      string? toolsDescription
    )
    {
       var messages = new JsonArray();
@@ -607,10 +550,10 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(includeTools)
       {
-         systemPrompt = string.IsNullOrWhiteSpace(systemPrompt)
-            ? ToolUsageInstruction
-            : systemPrompt + Environment.NewLine + Environment.NewLine +
-               ToolUsageInstruction;
+         systemPrompt = AppendToolUsageInstruction(
+            systemPrompt,
+            toolsDescription
+         );
       }
 
       if(!string.IsNullOrWhiteSpace(systemPrompt))
@@ -633,6 +576,45 @@ public sealed class LlamaServerClient : IAiProviderClient
       );
 
       return messages;
+   }
+
+   private static string? AppendToolUsageInstruction(
+      string? systemPrompt,
+      string? toolsDescription
+   )
+   {
+      var description = toolsDescription?.Trim();
+
+      if(string.IsNullOrWhiteSpace(description))
+      {
+         return systemPrompt;
+      }
+
+      return string.IsNullOrWhiteSpace(systemPrompt)
+         ? description
+         : systemPrompt + Environment.NewLine + Environment.NewLine +
+            description;
+   }
+
+   private static JsonArray CreateToolsArray(string? toolsJson)
+   {
+      if(string.IsNullOrWhiteSpace(toolsJson))
+      {
+         throw new InvalidOperationException(
+            "Tool usage is enabled but no tools JSON was configured."
+         );
+      }
+
+      var tools = JsonNode.Parse(toolsJson) as JsonArray;
+
+      if(tools is null)
+      {
+         throw new InvalidOperationException(
+            "Configured tools JSON must be a JSON array."
+         );
+      }
+
+      return tools;
    }
 
    private async Task<string> ExecuteToolCallAsync(

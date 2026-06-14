@@ -31,6 +31,10 @@ public class AiJobRunnerTests
       Assert.Contains("web_search", result.ToolTraceJson);
       Assert.Equal("""{"request":"payload"}""", result.RawRequestJson);
       Assert.Equal("""{"error":"boom"}""", result.RawResponseJson);
+      Assert.Contains(
+         "Search the web and fetch the most relevant pages",
+         runRepository.StoredRun!.RenderedPrompt
+      );
       Assert.NotNull(runRepository.UpdatedRun);
       Assert.Equal(AiJobRunStatus.Failed, runRepository.UpdatedRun!.Status);
       Assert.Contains("web_search", runRepository.UpdatedRun.ToolTraceJson);
@@ -54,13 +58,15 @@ public class AiJobRunnerTests
                "job",
                "Job",
                null,
-            "provider",
-            "json_object",
-            true,
-            true,
-            null
-         )
-      );
+               "provider",
+               "json_object",
+               null,
+               "Search the web and fetch the most relevant pages.",
+               true,
+               true,
+               null
+            )
+         );
       }
 
       public Task<AiPromptDefinition?> GetActivePromptAsync(

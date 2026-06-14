@@ -55,6 +55,10 @@ public sealed class AiJobEditModel
 
    public string? ActivePromptId { get; set; }
 
+   public string? ToolsJson { get; set; }
+
+   public string? ToolsDescription { get; set; }
+
    public bool RequiresWebSearch { get; set; } = true;
 
    public bool Enabled { get; set; } = true;

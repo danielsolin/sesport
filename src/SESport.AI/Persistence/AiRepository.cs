@@ -238,6 +238,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             description,
             provider_id,
             output_mode,
+            tools_json::text,
+            tools_description,
             requires_web_search,
             active_prompt_id,
             enabled
@@ -262,9 +264,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(reader, 2),
          reader.GetString(3),
          reader.GetString(4),
-         reader.GetBoolean(5),
+         ReadNullableString(reader, 5),
+         ReadNullableString(reader, 6),
          reader.GetBoolean(7),
-         ReadNullableGuid(reader, 6)
+         reader.GetBoolean(9),
+         ReadNullableGuid(reader, 8)
       );
    }
 
