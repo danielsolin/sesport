@@ -142,7 +142,8 @@ public class AiJobRunnerTests
          AiPromptDefinition prompt,
          AiRenderedPrompt renderedPrompt,
          string inputPayloadJson,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         Func<string?, CancellationToken, Task>? toolTraceUpdated = null
       )
       {
          throw new AiProviderExecutionException(
@@ -176,6 +177,29 @@ public class AiJobRunnerTests
       )
       {
          UpdatedRun = run;
+         return Task.CompletedTask;
+      }
+
+      public Task UpdateToolTraceAsync(
+         Guid runId,
+         string? toolTraceJson,
+         CancellationToken cancellationToken
+      )
+      {
+         StoredRun = StoredRun is null
+            ? null
+            : StoredRun with
+            {
+               ToolTraceJson = toolTraceJson
+            };
+
+         UpdatedRun = UpdatedRun is null
+            ? null
+            : UpdatedRun with
+            {
+               ToolTraceJson = toolTraceJson
+            };
+
          return Task.CompletedTask;
       }
    }

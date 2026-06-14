@@ -75,6 +75,7 @@ public sealed class AiJobRunner(
          renderedPrompt
       );
       var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
+
       var run = new AiJobRun(
          Guid.NewGuid(),
          job.Id,
@@ -98,6 +99,29 @@ public sealed class AiJobRunner(
          null
       );
 
+      async Task ReportToolTraceProgressAsync(
+         string? toolTraceJson,
+         CancellationToken progressCancellationToken
+      )
+      {
+         run = run with
+         {
+            ToolTraceJson = toolTraceJson
+         };
+
+         try
+         {
+            await runRepository.UpdateToolTraceAsync(
+               run.Id,
+               toolTraceJson,
+               progressCancellationToken
+            );
+         }
+         catch(Exception)
+         {
+         }
+      }
+
       await runRepository.StoreAsync(run, cancellationToken);
 
       try
@@ -108,7 +132,8 @@ public sealed class AiJobRunner(
             prompt,
             renderedPrompt,
             request.InputPayloadJson,
-            cancellationToken
+            cancellationToken,
+            ReportToolTraceProgressAsync
          );
 
          run = run with

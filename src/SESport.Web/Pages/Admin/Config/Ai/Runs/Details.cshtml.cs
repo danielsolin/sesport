@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
 
@@ -8,6 +9,9 @@ namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
 public class DetailsModel(AiRepository repository) : PageModel
 {
    public AiRunDetail? Run { get; private set; }
+
+   public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns { get; private
+      set; } = [];
 
    [BindProperty(SupportsGet = true)]
    public string? JobId { get; set; }
@@ -22,6 +26,275 @@ public class DetailsModel(AiRepository repository) : PageModel
    {
       Run = await repository.GetRunAsync(id, cancellationToken);
 
+      if(Run is not null)
+      {
+         ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
+      }
+
       return Run is null ? NotFound() : Page();
+   }
+
+   public static string FormatJson(string? value)
+   {
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return "";
+      }
+
+      if(TryPrettyPrintJson(value, out var prettyPrinted))
+      {
+         return prettyPrinted;
+      }
+
+      return value.Trim();
+   }
+
+   private static IReadOnlyList<ToolTraceTurnViewModel> ParseToolTrace(
+      string? toolTraceJson
+   )
+   {
+      if(string.IsNullOrWhiteSpace(toolTraceJson))
+      {
+         return [];
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(toolTraceJson);
+         if(document.RootElement.ValueKind != JsonValueKind.Array)
+         {
+            return [];
+         }
+
+         var turns = new Dictionary<int, ToolTraceTurnBuilder>();
+
+         foreach(var entry in document.RootElement.EnumerateArray())
+         {
+            if(entry.ValueKind != JsonValueKind.Object)
+            {
+               continue;
+            }
+
+            var kind = GetString(entry, "kind");
+            var turn = GetInt32(entry, "turn") ?? 0;
+            var builder = GetOrCreateTurn(turns, turn);
+
+            if(string.Equals(kind, "assistant", StringComparison.Ordinal))
+            {
+               builder.FinishReason = GetString(entry, "finish_reason");
+               builder.AssistantContent = GetString(entry, "content");
+               builder.ToolCalls.AddRange(ParseToolCalls(entry));
+               continue;
+            }
+
+            if(string.Equals(kind, "tool", StringComparison.Ordinal))
+            {
+               builder.ToolResults.Add(ParseToolResult(entry));
+            }
+         }
+
+         return turns
+            .OrderBy(pair => pair.Key)
+            .Select(pair => pair.Value.ToViewModel())
+            .ToArray();
+      }
+      catch(JsonException)
+      {
+         return [];
+      }
+   }
+
+   private static ToolTraceTurnBuilder GetOrCreateTurn(
+      IDictionary<int, ToolTraceTurnBuilder> turns,
+      int turn
+   )
+   {
+      if(!turns.TryGetValue(turn, out var builder))
+      {
+         builder = new ToolTraceTurnBuilder(turn);
+         turns[turn] = builder;
+      }
+
+      return builder;
+   }
+
+   private static IReadOnlyList<ToolTraceCallViewModel> ParseToolCalls(
+      JsonElement entry
+   )
+   {
+      if(!TryGetArray(entry, "tool_calls", out var toolCalls))
+      {
+         return [];
+      }
+
+      return toolCalls
+         .Where(call => call.ValueKind == JsonValueKind.Object)
+         .Select(call => new ToolTraceCallViewModel(
+            GetString(call, "id") ?? "",
+            GetString(call, "name") ?? "",
+            FormatDisplayValue(GetProperty(call, "arguments"))
+         ))
+         .ToArray();
+   }
+
+   private static ToolTraceToolResultViewModel ParseToolResult(
+      JsonElement entry
+   )
+   {
+      return new ToolTraceToolResultViewModel(
+         GetString(entry, "tool_call_id") ?? "",
+         GetString(entry, "name") ?? "",
+         FormatDisplayValue(GetProperty(entry, "arguments")),
+         GetString(entry, "query"),
+         GetString(entry, "id"),
+         FormatDisplayValue(GetProperty(entry, "result"))
+      );
+   }
+
+   private static string? GetString(JsonElement element, string name)
+   {
+      if(!element.TryGetProperty(name, out var property))
+      {
+         return null;
+      }
+
+      return property.ValueKind == JsonValueKind.String
+         ? property.GetString()
+         : property.ToString();
+   }
+
+   private static int? GetInt32(JsonElement element, string name)
+   {
+      if(!element.TryGetProperty(name, out var property))
+      {
+         return null;
+      }
+
+      return property.ValueKind == JsonValueKind.Number &&
+         property.TryGetInt32(out var value)
+         ? value
+         : null;
+   }
+
+   private static bool TryGetArray(
+      JsonElement element,
+      string name,
+      out IEnumerable<JsonElement> values
+   )
+   {
+      values = [];
+
+      if(!element.TryGetProperty(name, out var property) ||
+         property.ValueKind != JsonValueKind.Array)
+      {
+         return false;
+      }
+
+      values = property.EnumerateArray().ToArray();
+      return true;
+   }
+
+   private static JsonElement? GetProperty(JsonElement element, string name)
+   {
+      return element.TryGetProperty(name, out var property) ? property : null;
+   }
+
+   private static string FormatDisplayValue(JsonElement? value)
+   {
+      if(value is null)
+      {
+         return "";
+      }
+
+      var text = value.Value.ValueKind switch
+      {
+         JsonValueKind.String => value.Value.GetString() ?? "",
+         JsonValueKind.Null => "",
+         _ => value.Value.GetRawText()
+      };
+
+      if(TryPrettyPrintJson(text, out var prettyPrinted))
+      {
+         return prettyPrinted;
+      }
+
+      return text.ReplaceLineEndings(" ").Trim();
+   }
+
+   private static bool TryPrettyPrintJson(
+      string value,
+      out string prettyPrinted
+   )
+   {
+      prettyPrinted = "";
+
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return false;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(value);
+         prettyPrinted = JsonSerializer.Serialize(
+            document.RootElement,
+            new JsonSerializerOptions
+            {
+               WriteIndented = true
+            }
+         );
+         return true;
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
+   }
+
+   public sealed record ToolTraceCallViewModel(
+      string Id,
+      string Name,
+      string Arguments
+   );
+
+   public sealed record ToolTraceToolResultViewModel(
+      string ToolCallId,
+      string Name,
+      string Arguments,
+      string? Query,
+      string? Id,
+      string Result
+   );
+
+   public sealed record ToolTraceTurnViewModel(
+      int Turn,
+      string? FinishReason,
+      string? AssistantContent,
+      IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
+      IReadOnlyList<ToolTraceToolResultViewModel> ToolResults
+   );
+
+   private sealed class ToolTraceTurnBuilder(int turn)
+   {
+      public int Turn { get; } = turn;
+
+      public string? FinishReason { get; set; }
+
+      public string? AssistantContent { get; set; }
+
+      public List<ToolTraceCallViewModel> ToolCalls { get; } = [];
+
+      public List<ToolTraceToolResultViewModel> ToolResults { get; } = [];
+
+      public ToolTraceTurnViewModel ToViewModel()
+      {
+         return new ToolTraceTurnViewModel(
+            Turn,
+            FinishReason,
+            AssistantContent,
+            ToolCalls,
+            ToolResults
+         );
+      }
    }
 }

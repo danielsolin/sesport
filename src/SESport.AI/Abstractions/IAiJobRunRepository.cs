@@ -9,6 +9,12 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
+   Task UpdateToolTraceAsync(
+      Guid runId,
+      string? toolTraceJson,
+      CancellationToken cancellationToken
+   );
+
    Task UpdateAsync(
       AiJobRun run,
       CancellationToken cancellationToken

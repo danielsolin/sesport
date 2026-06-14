@@ -74,7 +74,8 @@ public sealed class OpenRouterClient : IAiProviderClient
       AiPromptDefinition prompt,
       AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      Func<string?, CancellationToken, Task>? toolTraceUpdated = null
    )
    {
       if(string.IsNullOrWhiteSpace(provider.BaseAddress))

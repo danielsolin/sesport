@@ -68,7 +68,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiPromptDefinition prompt,
       AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      Func<string?, CancellationToken, Task>? toolTraceUpdated = null
    )
    {
       var request = CreateRequestPayload(
@@ -146,6 +147,11 @@ public sealed class LlamaServerClient : IAiProviderClient
             toolTrace.Add(
                CreateAssistantTraceEntry(turn, responseJson, toolCalls)
             );
+            await ReportToolTraceProgressAsync(
+               toolTrace,
+               toolTraceUpdated,
+               cancellationToken
+            );
             AppendAssistantMessage(messages, responseJson);
 
             foreach(var toolCall in toolCalls)
@@ -161,6 +167,11 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                toolTrace.Add(
                   CreateToolTraceEntry(turn, toolCall, toolResult)
+               );
+               await ReportToolTraceProgressAsync(
+                  toolTrace,
+                  toolTraceUpdated,
+                  cancellationToken
                );
 
                messages.Add(
@@ -337,6 +348,24 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["id"] = isGetPageTool ? ExtractId(toolCall.Arguments) : null,
          ["result"] = toolResult
       };
+   }
+
+   private static async Task ReportToolTraceProgressAsync(
+      JsonArray toolTrace,
+      Func<string?, CancellationToken, Task>? toolTraceUpdated,
+      CancellationToken cancellationToken
+   )
+   {
+      if(toolTraceUpdated is null)
+      {
+         return;
+      }
+
+      var toolTraceJson = toolTrace.Count == 0
+         ? null
+         : JsonSerializer.Serialize(toolTrace, JsonOptions);
+
+      await toolTraceUpdated(toolTraceJson, cancellationToken);
    }
 
    private static string? GetFinishReason(JsonObject response)

@@ -490,6 +490,24 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task UpdateToolTraceAsync(
+      Guid runId,
+      string? toolTraceJson,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set tool_trace = @tool_trace
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", runId);
+      AddJsonbParameter(command, "tool_trace", toolTraceJson);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    private static void AddRunParameters(
       NpgsqlCommand command,
       AiJobRun run
