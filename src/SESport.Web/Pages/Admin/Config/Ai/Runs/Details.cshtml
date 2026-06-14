@@ -65,21 +65,38 @@
             </dd>
          </div>
          <div>
+            <dt>Tool rounds</dt>
+            <dd>@Model.Run.ToolRoundCount</dd>
+         </div>
+         <div>
+            <dt>Conversation chars</dt>
+            <dd>@Model.Run.ConversationCharacterCount</dd>
+         </div>
+         <div>
             <dt>Correlation</dt>
             <dd>@Model.Run.CorrelationId</dd>
          </div>
-         <div>
-            <dt>Input tokens</dt>
-            <dd>@Model.Run.InputTokens</dd>
-         </div>
-         <div>
-            <dt>Output tokens</dt>
-            <dd>@Model.Run.OutputTokens</dd>
-         </div>
-         <div>
-            <dt>Reasoning tokens</dt>
-            <dd>@Model.Run.ReasoningTokens</dd>
-         </div>
+         @if (Model.Run.InputTokens is not null)
+         {
+            <div>
+               <dt>Input tokens</dt>
+               <dd>@Model.Run.InputTokens</dd>
+            </div>
+         }
+         @if (Model.Run.OutputTokens is not null)
+         {
+            <div>
+               <dt>Output tokens</dt>
+               <dd>@Model.Run.OutputTokens</dd>
+            </div>
+         }
+         @if (Model.Run.ReasoningTokens is not null)
+         {
+            <div>
+               <dt>Reasoning tokens</dt>
+               <dd>@Model.Run.ReasoningTokens</dd>
+            </div>
+         }
       </dl>
    </section>
 
@@ -124,109 +141,119 @@
    }
 
    <section class="form-section">
-      <h2>Tool trace</h2>
-      @if (string.Equals(Model.Run.StatusId, "running",
-            StringComparison.Ordinal))
-      {
-         <div class="notice">
-            This run is still in progress. Tool trace updates as rounds
-            complete.
-         </div>
-      }
+      <details class="run-data-details">
+         <summary>Tool trace</summary>
+         @if (string.Equals(Model.Run.StatusId, "running",
+               StringComparison.Ordinal))
+         {
+            <div class="notice">
+               This run is still in progress. Tool trace updates as rounds
+               complete.
+            </div>
+         }
 
-      @if (Model.ToolTraceTurns.Count == 0)
-      {
-         <div class="notice">No tool trace recorded yet.</div>
-      }
-      else
-      {
-         <div class="tool-trace-list">
-            @foreach (var turn in Model.ToolTraceTurns)
-            {
-               <article class="tool-trace-turn">
-                  <header class="tool-trace-turn-header">
-                     <div>
-                        <span class="tool-trace-turn-label">
-                           Round @turn.Turn
-                        </span>
-                        @if (!string.IsNullOrWhiteSpace(turn.FinishReason))
-                        {
-                           <span class="tool-trace-turn-meta">
-                              Finish: @turn.FinishReason
+         @if (Model.ToolTraceTurns.Count == 0)
+         {
+            <div class="notice">No tool trace recorded yet.</div>
+         }
+         else
+         {
+            <div class="tool-trace-list">
+               @foreach (var turn in Model.ToolTraceTurns)
+               {
+                  <article class="tool-trace-turn">
+                     <header class="tool-trace-turn-header">
+                        <div>
+                           <span class="tool-trace-turn-label">
+                              Round @turn.Turn
                            </span>
-                        }
-                     </div>
-                  </header>
+                           @if (!string.IsNullOrWhiteSpace(
+                              turn.FinishReason))
+                           {
+                              <span class="tool-trace-turn-meta">
+                                 Finish: @turn.FinishReason
+                              </span>
+                           }
+                        </div>
+                     </header>
 
-                  @if (!string.IsNullOrWhiteSpace(turn.AssistantContent))
-                  {
-                     <div class="tool-trace-block">
-                        <div class="tool-trace-block-label">Assistant</div>
-                        <pre class="prompt-details-pre">
+                     @if (!string.IsNullOrWhiteSpace(
+                        turn.AssistantContent))
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Assistant
+                           </div>
+                           <pre class="prompt-details-pre">
 @turn.AssistantContent
-                        </pre>
-                     </div>
-                  }
+                           </pre>
+                        </div>
+                     }
 
-                  @if (turn.ToolCalls.Count > 0)
-                  {
-                     <div class="tool-trace-block">
-                        <div class="tool-trace-block-label">Tool calls</div>
-                        <div class="tool-trace-items">
-                           @foreach (var toolCall in turn.ToolCalls)
-                           {
-                              <div class="tool-trace-item">
-                                 <div class="tool-trace-item-title">
-                                    <code>@toolCall.Name</code>
-                                    <span>@toolCall.Id</span>
-                                 </div>
-                                 @if (!string.IsNullOrWhiteSpace(
-                                    toolCall.Arguments))
-                                 {
-                                    <pre class="prompt-details-pre">
+                     @if (turn.ToolCalls.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Tool calls
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach (var toolCall in turn.ToolCalls)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>@toolCall.Name</code>
+                                       <span>@toolCall.Id</span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(
+                                       toolCall.Arguments))
+                                    {
+                                       <pre class="prompt-details-pre">
 @toolCall.Arguments
-                                    </pre>
-                                 }
-                              </div>
-                           }
-                        </div>
-                     </div>
-                  }
-
-                  @if (turn.ToolResults.Count > 0)
-                  {
-                     <div class="tool-trace-block">
-                        <div class="tool-trace-block-label">Tool results</div>
-                        <div class="tool-trace-items">
-                           @foreach (var toolResult in turn.ToolResults)
-                           {
-                              <div class="tool-trace-item">
-                                 <div class="tool-trace-item-title">
-                                    <code>@toolResult.Name</code>
-                                    <span>@toolResult.ToolCallId</span>
+                                       </pre>
+                                    }
                                  </div>
-                                 @if (!string.IsNullOrWhiteSpace(
-                                    toolResult.Query))
-                                 {
-                                    <div>Query: @toolResult.Query</div>
-                                 }
-                                 @if (!string.IsNullOrWhiteSpace(
-                                    toolResult.Id))
-                                 {
-                                    <div>Id: @toolResult.Id</div>
-                                 }
-                                 <pre class="prompt-details-pre">
-@toolResult.Result
-                                 </pre>
-                              </div>
-                           }
+                              }
+                           </div>
                         </div>
-                     </div>
-                  }
-               </article>
-            }
-         </div>
-      }
+                     }
+
+                     @if (turn.ToolResults.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Tool results
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach (var toolResult in turn.ToolResults)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>@toolResult.Name</code>
+                                       <span>@toolResult.ToolCallId</span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(
+                                       toolResult.Query))
+                                    {
+                                       <div>Query: @toolResult.Query</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(
+                                       toolResult.Id))
+                                    {
+                                       <div>Id: @toolResult.Id</div>
+                                    }
+                                    <pre class="prompt-details-pre">
+@toolResult.Result
+                                    </pre>
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+                  </article>
+               }
+            </div>
+         }
+      </details>
    </section>
 
    @if (!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))

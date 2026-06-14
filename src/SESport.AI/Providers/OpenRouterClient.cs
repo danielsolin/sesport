@@ -94,6 +94,7 @@ public sealed class OpenRouterClient : IAiProviderClient
       }
 
       var request = CreateRequestPayload(provider, job, prompt, renderedPrompt);
+      var requestJson = AiRequestJsonSerializer.Serialize(request);
       var response = await SendAsync(
          provider,
          request,
@@ -124,9 +125,14 @@ public sealed class OpenRouterClient : IAiProviderClient
          provider.Id,
          provider.Model,
          renderedPrompt.ToPromptText(),
-         AiRequestJsonSerializer.Serialize(request),
+         requestJson,
          outputText,
          rawResponse,
+         null,
+         0,
+         requestJson.Length,
+         null,
+         null,
          null,
          null
       );

@@ -13,6 +13,8 @@ public sealed record AiJobRun(
    string RawRequestJson,
    string? RawResponseJson,
    string? ToolTraceJson,
+   int ToolRoundCount,
+   int ConversationCharacterCount,
    string? OutputText,
    string? ErrorMessage,
    DateTimeOffset StartedAt,

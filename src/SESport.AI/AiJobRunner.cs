@@ -1,6 +1,7 @@
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Providers;
+using System.Text.Json;
 
 namespace SESport.AI;
 
@@ -95,6 +96,8 @@ public sealed class AiJobRunner(
          rawRequestJson,
          null,
          null,
+         0,
+         rawRequestJson.Length,
          null,
          null,
          DateTimeOffset.UtcNow,
@@ -141,6 +144,9 @@ public sealed class AiJobRunner(
             cancellationToken,
             ReportToolTraceProgressAsync
          );
+         var tokenUsage = ExtractTokenUsage(
+            providerResult.RawResponseJson
+         );
 
          run = run with
          {
@@ -148,7 +154,13 @@ public sealed class AiJobRunner(
             RawRequestJson = providerResult.RawRequestJson,
             RawResponseJson = providerResult.RawResponseJson,
             ToolTraceJson = providerResult.ToolTraceJson,
+            ToolRoundCount = providerResult.ToolRoundCount,
+            ConversationCharacterCount =
+               providerResult.ConversationCharacterCount,
             OutputText = providerResult.OutputText,
+            InputTokens = tokenUsage.inputTokens,
+            OutputTokens = tokenUsage.outputTokens,
+            ReasoningTokens = tokenUsage.reasoningTokens,
             CompletedAt = DateTimeOffset.UtcNow,
             DurationSeconds = (decimal)(
                DateTimeOffset.UtcNow - run.StartedAt
@@ -167,11 +179,18 @@ public sealed class AiJobRunner(
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
             run.ToolTraceJson,
+            run.ToolRoundCount,
+            run.ConversationCharacterCount,
+            tokenUsage.inputTokens,
+            tokenUsage.outputTokens,
+            tokenUsage.reasoningTokens,
             null
          );
       }
       catch(AiProviderExecutionException exception)
       {
+         var tokenUsage = ExtractTokenUsage(exception.RawResponseJson);
+
          run = run with
          {
             Status = AiJobRunStatus.Failed,
@@ -179,7 +198,13 @@ public sealed class AiJobRunner(
             RawResponseJson =
                exception.RawResponseJson ?? run.RawResponseJson,
             ToolTraceJson = exception.ToolTraceJson ?? run.ToolTraceJson,
+            ToolRoundCount = exception.ToolRoundCount,
+            ConversationCharacterCount =
+               exception.ConversationCharacterCount,
             ErrorMessage = exception.Message,
+            InputTokens = tokenUsage.inputTokens,
+            OutputTokens = tokenUsage.outputTokens,
+            ReasoningTokens = tokenUsage.reasoningTokens,
             CompletedAt = DateTimeOffset.UtcNow,
             DurationSeconds = (decimal)(
                DateTimeOffset.UtcNow - run.StartedAt
@@ -198,6 +223,11 @@ public sealed class AiJobRunner(
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
             run.ToolTraceJson,
+            run.ToolRoundCount,
+            run.ConversationCharacterCount,
+            tokenUsage.inputTokens,
+            tokenUsage.outputTokens,
+            tokenUsage.reasoningTokens,
             exception.Message
          );
       }
@@ -225,6 +255,11 @@ public sealed class AiJobRunner(
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
             run.ToolTraceJson,
+            run.ToolRoundCount,
+            run.ConversationCharacterCount,
+            null,
+            null,
+            null,
             exception.Message
          );
       }
@@ -252,5 +287,100 @@ public sealed class AiJobRunner(
             toolsDescription?.Trim()
          }.Where(value => !string.IsNullOrWhiteSpace(value))
       );
+   }
+
+   private static (
+      int? inputTokens,
+      int? outputTokens,
+      int? reasoningTokens
+   ) ExtractTokenUsage(string? rawResponseJson)
+   {
+      if(string.IsNullOrWhiteSpace(rawResponseJson))
+      {
+         return (null, null, null);
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponseJson);
+         var root = document.RootElement;
+
+         if(TryExtractTokenUsage(root, out var tokens))
+         {
+            return tokens;
+         }
+
+         if(root.TryGetProperty("usage", out var usageNode) &&
+            usageNode.ValueKind == JsonValueKind.Object &&
+            TryExtractTokenUsage(usageNode, out tokens))
+         {
+            return tokens;
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return (null, null, null);
+   }
+
+   private static bool TryExtractTokenUsage(
+      JsonElement element,
+      out (
+         int? inputTokens,
+         int? outputTokens,
+         int? reasoningTokens
+      ) tokens
+   )
+   {
+      tokens = (null, null, null);
+
+      var inputTokens = ReadIntProperty(
+         element,
+         "input_tokens",
+         "prompt_tokens",
+         "tokens_prompt"
+      );
+      var outputTokens = ReadIntProperty(
+         element,
+         "output_tokens",
+         "completion_tokens",
+         "tokens_completion"
+      );
+      var reasoningTokens = ReadIntProperty(
+         element,
+         "reasoning_tokens",
+         "tokens_reasoning"
+      );
+
+      if(inputTokens is null &&
+         outputTokens is null &&
+         reasoningTokens is null)
+      {
+         return false;
+      }
+
+      tokens = (inputTokens, outputTokens, reasoningTokens);
+      return true;
+   }
+
+   private static int? ReadIntProperty(
+      JsonElement element,
+      params string[] propertyNames
+   )
+   {
+      foreach(var propertyName in propertyNames)
+      {
+         if(!element.TryGetProperty(propertyName, out var property) ||
+            property.ValueKind != JsonValueKind.Number ||
+            !property.TryGetInt32(out var value))
+         {
+            continue;
+         }
+
+         return value;
+      }
+
+      return null;
    }
 }

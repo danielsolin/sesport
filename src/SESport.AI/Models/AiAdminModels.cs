@@ -101,6 +101,8 @@ public sealed record AiRunDetail(
    string? RawRequestJson,
    string? RawResponseJson,
    string? ToolTraceJson,
+   int ToolRoundCount,
+   int ConversationCharacterCount,
    string? OutputText,
    string? ErrorMessage,
    DateTimeOffset StartedAt,

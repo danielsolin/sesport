@@ -106,6 +106,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.raw_request::text,
             r.raw_response::text,
             r.tool_trace::text,
+            r.tool_round_count,
+            r.conversation_character_count,
             r.output_text,
             r.error_message,
             r.started_at,
@@ -148,14 +150,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(reader, 12),
          ReadNullableString(reader, 13),
          ReadNullableString(reader, 14),
-         ReadNullableString(reader, 15),
-         ReadNullableString(reader, 16),
-         reader.GetFieldValue<DateTimeOffset>(17),
-         ReadNullableDateTimeOffset(reader, 18),
-         ReadNullableDecimal(reader, 19),
-         ReadNullableInt32(reader, 20),
-         ReadNullableInt32(reader, 21),
-         ReadNullableInt32(reader, 22)
+         reader.GetInt32(15),
+         reader.GetInt32(16),
+         ReadNullableString(reader, 17),
+         ReadNullableString(reader, 18),
+         reader.GetFieldValue<DateTimeOffset>(19),
+         ReadNullableDateTimeOffset(reader, 20),
+         ReadNullableDecimal(reader, 21),
+         ReadNullableInt32(reader, 22),
+         ReadNullableInt32(reader, 23),
+         ReadNullableInt32(reader, 24)
       );
    }
 
@@ -449,7 +453,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             provider_model, input_payload, rendered_prompt, raw_request,
             raw_response, tool_trace, output_text, error_message, started_at,
             completed_at, duration_seconds, input_tokens, output_tokens,
-            reasoning_tokens
+            reasoning_tokens, tool_round_count, conversation_character_count
          )
          values (
             @id, @job_id, @prompt_id, @provider_id, @status_id,
@@ -457,7 +461,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             @rendered_prompt, @raw_request, @raw_response, @tool_trace,
             @output_text, @error_message, @started_at, @completed_at,
             @duration_seconds, @input_tokens, @output_tokens,
-            @reasoning_tokens
+            @reasoning_tokens, @tool_round_count,
+            @conversation_character_count
          )
          """;
 
@@ -479,6 +484,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             raw_request = @raw_request,
             raw_response = @raw_response,
             tool_trace = @tool_trace,
+            tool_round_count = @tool_round_count,
+            conversation_character_count = @conversation_character_count,
             output_text = @output_text,
             error_message = @error_message,
             completed_at = @completed_at,
@@ -532,6 +539,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       AddJsonbParameter(command, "raw_request", run.RawRequestJson);
       AddJsonbParameter(command, "raw_response", run.RawResponseJson);
       AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);
+      command.Parameters.AddWithValue("tool_round_count", run.ToolRoundCount);
+      command.Parameters.AddWithValue(
+         "conversation_character_count",
+         run.ConversationCharacterCount
+      );
       command.Parameters.AddWithValue(
          "output_text",
          (object?)run.OutputText ?? DBNull.Value
@@ -577,6 +589,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       AddJsonbParameter(command, "raw_request", run.RawRequestJson);
       AddJsonbParameter(command, "raw_response", run.RawResponseJson);
       AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);
+      command.Parameters.AddWithValue("tool_round_count", run.ToolRoundCount);
+      command.Parameters.AddWithValue(
+         "conversation_character_count",
+         run.ConversationCharacterCount
+      );
       command.Parameters.AddWithValue(
          "output_text",
          (object?)run.OutputText ?? DBNull.Value

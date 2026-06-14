@@ -10,5 +10,10 @@ public sealed record AiJobResult(
    string OutputText,
    string? RawResponseJson,
    string? ToolTraceJson,
+   int ToolRoundCount,
+   int ConversationCharacterCount,
+   int? InputTokens,
+   int? OutputTokens,
+   int? ReasoningTokens,
    string? ErrorMessage
 );

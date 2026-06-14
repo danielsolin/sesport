@@ -87,6 +87,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          StringComparer.OrdinalIgnoreCase
       );
       var toolState = new ToolLoopState();
+      var messages = (JsonArray)request["messages"]!;
+      var toolRoundCount = 0;
       var turn = 0;
 
       try
@@ -104,8 +106,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                $"Provider '{provider.Id}' is missing a model."
             );
          }
-
-         var messages = (JsonArray)request["messages"]!;
 
          while(true)
          {
@@ -145,6 +145,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                break;
             }
 
+            toolRoundCount++;
             toolTrace.Add(
                CreateAssistantTraceEntry(turn, responseJson, toolCalls)
             );
@@ -215,19 +216,28 @@ public sealed class LlamaServerClient : IAiProviderClient
             finalOutputText,
             rawResponse,
             toolTraceJson,
+            toolRoundCount,
+            EstimateConversationSize(messages),
+            null,
+            null,
+            null,
             null
          );
       }
       catch(Exception exception)
       {
+         var toolTraceJson = toolTrace.Count == 0
+            ? null
+            : JsonSerializer.Serialize(toolTrace, JsonOptions);
+
          throw new AiProviderExecutionException(
             exception.Message,
             exception,
             requestJson,
             string.IsNullOrWhiteSpace(rawResponse) ? null : rawResponse,
-            toolTrace.Count == 0
-               ? null
-               : JsonSerializer.Serialize(toolTrace, JsonOptions)
+            toolTraceJson,
+            toolRoundCount,
+            EstimateConversationSize(messages)
          );
       }
    }
