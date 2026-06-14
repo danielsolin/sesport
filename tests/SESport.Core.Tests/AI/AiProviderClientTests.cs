@@ -96,6 +96,62 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncUsesDirectPageUrlToolCall()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallWithUrlResponseJson(),
+         CreateLlamaFinalResponseJson(
+            "https://example.test/direct-page"
+         )
+      );
+      var webSearchClient = new RecordingWebSearchClient();
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/direct-page",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
+            "Full article content."
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson(),
+            CreateToolsDescription()
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/direct-page\"]}",
+         result.OutputText
+      );
+      Assert.Empty(webSearchClient.Queries);
+      Assert.Single(webPageContentClient.Urls);
+      Assert.Equal(
+         "https://example.test/direct-page",
+         webPageContentClient.Urls[0]
+      );
+      Assert.Contains("\"url\":\"https://example.test/direct-page\"",
+         result.ToolTraceJson);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncStopsAfterMaxToolRounds()
    {
       var handler = new RecordingHandler(
@@ -239,7 +295,8 @@ public class AiProviderClientTests
    {
       return
          "When web_search returns promising results, inspect the most " +
-         "relevant result pages with web_get_page before answering.";
+         "relevant result pages with web_get_page before answering. " +
+         "web_get_page can open either a search result id or a direct URL.";
    }
 
    private static string CreateToolsJson()
@@ -284,7 +341,7 @@ public class AiProviderClientTests
                   name = "web_get_page",
                   description =
                      "Fetch the full page text for a search result id " +
-                     "returned by web_search.",
+                     "returned by web_search, or open a direct URL.",
                   parameters = new
                   {
                      type = "object",
@@ -293,9 +350,23 @@ public class AiProviderClientTests
                         id = new
                         {
                            type = "string"
+                        },
+                        url = new
+                        {
+                           type = "string"
                         }
                      },
-                     required = new[] { "id" },
+                     anyOf = new object[]
+                     {
+                        new
+                        {
+                           required = new[] { "id" }
+                        },
+                        new
+                        {
+                           required = new[] { "url" }
+                        }
+                     },
                      additionalProperties = false
                   }
                }
@@ -447,12 +518,75 @@ public class AiProviderClientTests
       """;
    }
 
+   private static string CreateLlamaToolCallWithUrlResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_1",
+                  "type": "function",
+                  "function": {
+                    "name": "web_get_page",
+                    "arguments":
+                      "{\"url\":\"https://example.test/direct-page\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
+   private static string CreateLlamaPageCallWithUrlResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_2",
+                  "type": "function",
+                  "function": {
+                    "name": "web_get_page",
+                    "arguments":
+                      "{\"url\":\"https://example.test/direct-page\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
    private static string CreateLlamaFinalResponseJson()
+   {
+      return CreateLlamaFinalResponseJson("https://example.test/roster");
+   }
+
+   private static string CreateLlamaFinalResponseJson(string sourceUrl)
    {
       var content =
          "{\"SwedishParticipation\":\"Yes\","
          + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
-         + "\"Sources\":[\"https://example.test/roster\"]}";
+         + "\"Sources\":[\"" + sourceUrl + "\"]}";
 
       return JsonSerializer.Serialize(
          new

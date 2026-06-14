@@ -51,6 +51,25 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchFallsBackToEmbeddedJsonWhenBodyIsEmpty()
+   {
+      var handler = new RecordingHandler(CreateClientRenderedHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/client-rendered",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("client-rendered", page!.MainText);
+      Assert.Contains("Site settings", page.MainText);
+      Assert.Contains("webAPIBaseURL", page.MainText);
+      Assert.Contains("api-web.nhle.com", page.MainText);
+      Assert.Contains("Example description.", page.MainText);
+   }
+
+   [Fact]
    public async Task FetchSkipsPdfResponses()
    {
       var handler = new PdfRecordingHandler();
@@ -102,6 +121,28 @@ public class WebPageContentClientTests
                </h2>
                <p>Example body text.</p>
             </article>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateClientRenderedHtml()
+   {
+      return """
+      <html>
+         <head>
+            <title>Client Rendered Example</title>
+            <meta name="description"
+                  content="Example description." />
+         </head>
+         <body>
+            <div id="root"></div>
+            <script>
+               window.__SITE_SETTINGS__ = {
+                  "webAPIBaseURL": "https://api-web.nhle.com",
+                  "appName": "NHL"
+               };
+            </script>
          </body>
       </html>
       """;

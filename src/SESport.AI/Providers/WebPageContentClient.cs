@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace SESport.AI.Providers;
 
@@ -29,6 +30,19 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static readonly Regex HeadingRegex = new(
       @"<h[1-6]\b[^>]*>(?<text>.*?)</h[1-6]>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
+   private static readonly Regex JsonLdScriptRegex = new(
+      @"<script\b[^>]*type\s*=\s*[\""']application/ld\+json[\""'][^>]*>" +
+      @"(?<json>.*?)</script>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
+   private static readonly Regex ScriptRegex = new(
+      @"<script\b[^>]*>(?<script>.*?)</script>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
       RegexOptions.CultureInvariant
    );
@@ -252,12 +266,420 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       var text = string.Join(Environment.NewLine, lines);
 
+      if(!string.IsNullOrWhiteSpace(text))
+      {
+         if(text.Length > MaxMainTextLength)
+         {
+            return text[..MaxMainTextLength].TrimEnd() + "...";
+         }
+
+         return text.Trim();
+      }
+
+      return ExtractSupplementalText(rawHtml);
+   }
+
+   private static string ExtractSupplementalText(string rawHtml)
+   {
+      var sections = new List<string>();
+
+      var description = ExtractDescription(rawHtml);
+
+      if(!string.IsNullOrWhiteSpace(description))
+      {
+         sections.Add("Description:");
+         sections.Add(description.Trim());
+      }
+
+      var embeddedData = ExtractEmbeddedDataSections(rawHtml);
+
+      if(embeddedData.Count > 0)
+      {
+         if(sections.Count > 0)
+         {
+            sections.Add(string.Empty);
+         }
+
+         sections.Add("Embedded data:");
+         sections.AddRange(embeddedData);
+      }
+
+      if(sections.Count == 0)
+      {
+         return string.Empty;
+      }
+
+      sections.Insert(0, "Page appears to be client-rendered.");
+
+      var text = string.Join(Environment.NewLine, sections);
+
       if(text.Length > MaxMainTextLength)
       {
          return text[..MaxMainTextLength].TrimEnd() + "...";
       }
 
       return text.Trim();
+   }
+
+   private static string ExtractDescription(string rawHtml)
+   {
+      var candidates = new[]
+      {
+         ExtractMetaContent(rawHtml, "name", "description"),
+         ExtractMetaContent(rawHtml, "property", "og:description"),
+         ExtractMetaContent(rawHtml, "name", "twitter:description"),
+         ExtractMetaContent(rawHtml, "itemprop", "description")
+      };
+
+      return candidates.FirstOrDefault(
+         candidate => !string.IsNullOrWhiteSpace(candidate)
+      ) ?? string.Empty;
+   }
+
+   private static IReadOnlyList<string> ExtractEmbeddedDataSections(
+      string rawHtml
+   )
+   {
+      var sections = new List<string>();
+
+      foreach(var (label, jsonText) in ExtractJsonLdSections(rawHtml))
+      {
+         sections.Add(FormatJsonSection(label, jsonText));
+      }
+
+      foreach(var (label, jsonText) in ExtractInlineJsonSections(rawHtml))
+      {
+         sections.Add(FormatJsonSection(label, jsonText));
+      }
+
+      return sections;
+   }
+
+   private static IReadOnlyList<(string Label, string JsonText)>
+      ExtractJsonLdSections(string rawHtml)
+   {
+      var sections = new List<(string Label, string JsonText)>();
+
+      foreach(Match match in JsonLdScriptRegex.Matches(rawHtml))
+      {
+         var jsonText = WebUtility.HtmlDecode(match.Groups["json"].Value)
+            .Trim();
+
+         if(string.IsNullOrWhiteSpace(jsonText))
+         {
+            continue;
+         }
+
+         sections.Add(("JSON-LD", jsonText));
+      }
+
+      return sections;
+   }
+
+   private static IReadOnlyList<(string Label, string JsonText)>
+      ExtractInlineJsonSections(string rawHtml)
+   {
+      var sections = new List<(string Label, string JsonText)>();
+
+      foreach(var (marker, label) in InlineJsonMarkers)
+      {
+         foreach(Match match in ScriptRegex.Matches(rawHtml))
+         {
+            var script = WebUtility.HtmlDecode(match.Groups["script"].Value);
+            var jsonText = ExtractAssignedJson(script, marker);
+
+            if(string.IsNullOrWhiteSpace(jsonText))
+            {
+               continue;
+            }
+
+            sections.Add((label, jsonText));
+            break;
+         }
+      }
+
+      return sections;
+   }
+
+   private static readonly (string Marker, string Label)[] InlineJsonMarkers =
+   {
+      ("window.__SITE_SETTINGS__", "Site settings"),
+      ("window.__INITIAL_STATE__", "Initial state"),
+      ("window.__PRELOADED_STATE__", "Preloaded state"),
+      ("window.__NEXT_DATA__", "Next data"),
+      ("window.__NUXT__", "Nuxt data")
+   };
+
+   private static string? ExtractAssignedJson(
+      string script,
+      string marker
+   )
+   {
+      var markerIndex = script.IndexOf(marker, StringComparison.Ordinal);
+
+      if(markerIndex < 0)
+      {
+         return null;
+      }
+
+      var value = script[(markerIndex + marker.Length)..].TrimStart();
+
+      if(value.StartsWith("="))
+      {
+         value = value[1..].TrimStart();
+      }
+
+      value = value.Trim();
+
+      if(value.EndsWith(';'))
+      {
+         value = value[..^1].TrimEnd();
+      }
+
+      if(value.StartsWith("{", StringComparison.Ordinal) ||
+         value.StartsWith("[", StringComparison.Ordinal))
+      {
+         return value;
+      }
+
+      return null;
+   }
+
+   private static string FormatJsonSection(string label, string jsonText)
+   {
+      if(TryFormatJson(jsonText, out var formattedJson))
+      {
+         return string.Join(
+            Environment.NewLine,
+            new[]
+            {
+               $"{label}:",
+               formattedJson
+            }
+         );
+      }
+
+      var snippet = CleanText(jsonText);
+
+      if(snippet.Length > 1200)
+      {
+         snippet = snippet[..1200].TrimEnd() + "...";
+      }
+
+      return string.Join(
+         Environment.NewLine,
+         new[]
+         {
+            $"{label}:",
+            snippet
+         }
+      );
+   }
+
+   private static bool TryFormatJson(
+      string jsonText,
+      out string formattedJson
+   )
+   {
+      formattedJson = string.Empty;
+
+      try
+      {
+         using var document = JsonDocument.Parse(
+            jsonText,
+            new JsonDocumentOptions
+            {
+               AllowTrailingCommas = true,
+               CommentHandling = JsonCommentHandling.Skip
+            }
+         );
+
+         formattedJson = SummarizeJsonElement(document.RootElement, 0);
+         return !string.IsNullOrWhiteSpace(formattedJson);
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
+   }
+
+   private static string SummarizeJsonElement(
+      JsonElement element,
+      int depth
+   )
+   {
+      var lines = new List<string>();
+      AppendJsonSummary(lines, element, string.Empty, depth);
+      return string.Join(Environment.NewLine, lines);
+   }
+
+   private static void AppendJsonSummary(
+      List<string> lines,
+      JsonElement element,
+      string indent,
+      int depth
+   )
+   {
+      const int maxProperties = 8;
+      const int maxArrayItems = 3;
+
+      switch(element.ValueKind)
+      {
+         case JsonValueKind.Object:
+         {
+            var propertyCount = 0;
+
+            foreach(var property in element.EnumerateObject())
+            {
+               if(propertyCount >= maxProperties)
+               {
+                  lines.Add($"{indent}...");
+                  break;
+               }
+
+               propertyCount++;
+
+               if(IsNoiseProperty(property.Name))
+               {
+                  continue;
+               }
+
+               AppendJsonPropertySummary(
+                  lines,
+                  property.Name,
+                  property.Value,
+                  indent,
+                  depth,
+                  maxArrayItems
+               );
+            }
+
+            return;
+         }
+         case JsonValueKind.Array:
+         {
+            var itemCount = 0;
+
+            foreach(var item in element.EnumerateArray())
+            {
+               if(itemCount >= maxArrayItems)
+               {
+                  lines.Add($"{indent}...");
+                  break;
+               }
+
+               itemCount++;
+               lines.Add($"{indent}- {FormatJsonScalar(item)}");
+            }
+
+            if(itemCount == 0)
+            {
+               lines.Add($"{indent}[]");
+            }
+
+            return;
+         }
+         default:
+         {
+            lines.Add($"{indent}{FormatJsonScalar(element)}");
+            return;
+         }
+      }
+   }
+
+   private static void AppendJsonPropertySummary(
+      List<string> lines,
+      string name,
+      JsonElement value,
+      string indent,
+      int depth,
+      int maxArrayItems
+   )
+   {
+      var nextIndent = string.IsNullOrEmpty(indent)
+         ? "  "
+         : indent + "  ";
+
+      switch(value.ValueKind)
+      {
+         case JsonValueKind.Object:
+            lines.Add($"{indent}- {name}:");
+
+            if(depth >= 1)
+            {
+               lines.Add($"{nextIndent}...");
+               return;
+            }
+
+            AppendJsonSummary(lines, value, nextIndent, depth + 1);
+            return;
+         case JsonValueKind.Array:
+            lines.Add(
+               $"{indent}- {name}: {FormatJsonArray(value, maxArrayItems)}"
+            );
+            return;
+         default:
+            lines.Add($"{indent}- {name}: {FormatJsonScalar(value)}");
+            return;
+      }
+   }
+
+   private static string FormatJsonArray(
+      JsonElement array,
+      int maxArrayItems
+   )
+   {
+      if(array.GetArrayLength() == 0)
+      {
+         return "[]";
+      }
+
+      var values = new List<string>();
+      var count = 0;
+
+      foreach(var item in array.EnumerateArray())
+      {
+         if(count >= maxArrayItems)
+         {
+            values.Add("...");
+            break;
+         }
+
+         count++;
+         values.Add(FormatJsonScalar(item));
+      }
+
+      return $"[{string.Join(", ", values)}]";
+   }
+
+   private static string FormatJsonScalar(JsonElement element)
+   {
+      return element.ValueKind switch
+      {
+         JsonValueKind.String => TruncateForSummary(element.GetString() ?? ""),
+         JsonValueKind.Number => element.GetRawText(),
+         JsonValueKind.True => "true",
+         JsonValueKind.False => "false",
+         JsonValueKind.Null => "null",
+         _ => TruncateForSummary(element.GetRawText())
+      };
+   }
+
+   private static bool IsNoiseProperty(string name)
+   {
+      return string.Equals(name, "$schema", StringComparison.OrdinalIgnoreCase);
+   }
+
+   private static string TruncateForSummary(string value)
+   {
+      var cleaned = CleanText(value);
+
+      if(cleaned.Length <= 200)
+      {
+         return cleaned;
+      }
+
+      return cleaned[..200].TrimEnd() + "...";
    }
 
    private static IReadOnlyList<string> ExtractHeadings(string rawHtml)

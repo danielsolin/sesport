@@ -369,6 +369,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["query"] = isSearchTool ? ExtractQuery(toolCall.Arguments) : null,
          ["limit"] = isSearchTool ? ExtractLimit(toolCall.Arguments) : null,
          ["id"] = isGetPageTool ? ExtractId(toolCall.Arguments) : null,
+         ["url"] = isGetPageTool ? ExtractUrl(toolCall.Arguments) : null,
          ["result"] = toolResult
       };
    }
@@ -675,8 +676,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       if(string.Equals(toolCall.Name, "web_get_page", StringComparison.Ordinal))
       {
          var id = ExtractId(toolCall.Arguments);
+         var url = ExtractUrl(toolCall.Arguments);
          return await FormatPageContentAsync(
             id,
+            url,
             searchResultsById,
             cancellationToken
          );
@@ -987,6 +990,33 @@ public sealed class LlamaServerClient : IAiProviderClient
       return arguments.Trim();
    }
 
+   private static string ExtractUrl(string arguments)
+   {
+      if(string.IsNullOrWhiteSpace(arguments))
+      {
+         return "";
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(arguments);
+         var root = document.RootElement;
+
+         if(
+            TryGetStringProperty(root, "url", out var url) &&
+            !string.IsNullOrWhiteSpace(url)
+         )
+         {
+            return url;
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return "";
+   }
+
    private static bool TryGetStringProperty(
       JsonElement element,
       string propertyName,
@@ -1040,45 +1070,61 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private async Task<string> FormatPageContentAsync(
       string id,
+      string url,
       IDictionary<string, WebSearchResult> searchResultsById,
       CancellationToken cancellationToken
    )
    {
-      if(string.IsNullOrWhiteSpace(id))
+      var searchResult = default(WebSearchResult);
+      var hasSearchResult = !string.IsNullOrWhiteSpace(id) &&
+         searchResultsById.TryGetValue(id, out searchResult);
+
+      if(!hasSearchResult && string.IsNullOrWhiteSpace(url))
       {
          return JsonSerializer.Serialize(
             new
             {
-               error = "Missing search result id."
+               error = "Missing search result id or URL."
             },
             JsonOptions
          );
       }
 
-      if(!searchResultsById.TryGetValue(id, out var searchResult))
+      if(!hasSearchResult)
       {
-         return JsonSerializer.Serialize(
-            new
-            {
-               error = "Unknown search result id.",
-               id
-            },
-            JsonOptions
-         );
+         if(!TryValidatePageUrl(url, out var normalizedUrl, out var error))
+         {
+            return JsonSerializer.Serialize(
+               new
+               {
+                  error,
+                  url
+               },
+               JsonOptions
+            );
+         }
+
+         url = normalizedUrl;
       }
 
       var pageContent = await WebPageContentClient.FetchAsync(
-         searchResult.Url,
+         hasSearchResult ? searchResult!.Url : url,
          cancellationToken
       );
 
       if(pageContent is null)
       {
+         var pageReference = hasSearchResult ? id : url;
+         var pageTitle = hasSearchResult ? searchResult!.Title : url;
+         var pageUrl = hasSearchResult ? searchResult!.Url : url;
+         var pageSnippet = hasSearchResult ? searchResult!.Snippet : null;
+
          return FormatPageContentText(
-            id,
-            searchResult.Title,
-            searchResult.Url,
-            searchResult.Snippet,
+            hasSearchResult ? "Page id" : "Page URL",
+            pageReference,
+            pageTitle,
+            pageUrl,
+            pageSnippet,
             null,
             null,
             "Unable to fetch page content."
@@ -1086,18 +1132,95 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return FormatPageContentText(
-         id,
+         hasSearchResult ? "Page id" : "Page URL",
+         hasSearchResult ? id : url,
          pageContent.Title,
          pageContent.Url,
-         searchResult.Snippet,
+         hasSearchResult ? searchResult!.Snippet : null,
          pageContent.PublishedAt,
          pageContent.Headings,
          pageContent.MainText
       );
    }
 
+   private static bool TryValidatePageUrl(
+      string url,
+      out string normalizedUrl,
+      out string error
+   )
+   {
+      normalizedUrl = "";
+      error = "";
+
+      if(string.IsNullOrWhiteSpace(url))
+      {
+         error = "Missing page URL.";
+         return false;
+      }
+
+      if(url.Length > 2048)
+      {
+         error = "Page URL is too long.";
+         return false;
+      }
+
+      if(!Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
+      {
+         error = "Invalid page URL.";
+         return false;
+      }
+
+      if(!string.Equals(
+         absoluteUrl.Scheme,
+         Uri.UriSchemeHttp,
+         StringComparison.OrdinalIgnoreCase
+      ) &&
+         !string.Equals(
+            absoluteUrl.Scheme,
+            Uri.UriSchemeHttps,
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         error = "Page URL must use http or https.";
+         return false;
+      }
+
+      if(string.IsNullOrWhiteSpace(absoluteUrl.Host))
+      {
+         error = "Page URL is missing a host.";
+         return false;
+      }
+
+      if(IsBlockedHost(absoluteUrl.Host))
+      {
+         error = "Page URL host is not allowed.";
+         return false;
+      }
+
+      normalizedUrl = absoluteUrl.ToString();
+      return true;
+   }
+
+   private static bool IsBlockedHost(string host)
+   {
+      return string.Equals(
+         host,
+         "localhost",
+         StringComparison.OrdinalIgnoreCase
+      ) || string.Equals(
+         host,
+         "127.0.0.1",
+         StringComparison.OrdinalIgnoreCase
+      ) || string.Equals(
+         host,
+         "::1",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
    private static string FormatPageContentText(
-      string id,
+      string referenceLabel,
+      string referenceValue,
       string title,
       string url,
       string? searchSnippet,
@@ -1108,7 +1231,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var builder = new StringBuilder();
 
-      builder.AppendLine($"Page id: {id}");
+      builder.AppendLine($"{referenceLabel}: {referenceValue}");
       builder.AppendLine($"Title: {title}");
       builder.AppendLine($"URL: {url}");
 
