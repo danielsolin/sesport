@@ -253,8 +253,49 @@ public class IndexModel(
             });
          }
 
-         var results =
-            await participationService.CheckSwedishParticipationAsync(
+         await participationService.QueueSwedishParticipationAsync(
+            normalizedBroadcastIds,
+            CancellationToken.None
+         );
+
+         return new JsonResult(new
+         {
+            queued = true,
+            broadcastIds = normalizedBroadcastIds
+         });
+      }
+      catch(Exception exception)
+      {
+         return new JsonResult(new
+         {
+            error = exception.Message
+         })
+         {
+            StatusCode = StatusCodes.Status500InternalServerError
+         };
+      }
+   }
+
+   public async Task<IActionResult>
+      OnPostCheckSwedishParticipationStatusAsync(
+         List<Guid> broadcastIds,
+         CancellationToken cancellationToken
+      )
+   {
+      try
+      {
+         var normalizedBroadcastIds = NormalizeBroadcastIds(broadcastIds);
+
+         if(normalizedBroadcastIds.Count == 0)
+         {
+            return BadRequest(new
+            {
+               error = "Select at least one broadcast."
+            });
+         }
+
+         var results = await participationService
+            .GetSwedishParticipationCheckResultsAsync(
                normalizedBroadcastIds,
                cancellationToken
             );

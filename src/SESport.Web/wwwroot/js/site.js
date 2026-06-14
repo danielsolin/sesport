@@ -10,8 +10,11 @@
       "[data-check-swedish-participation-row]";
    const participationCellSelector = "[data-swedish-participation-cell]";
    const participantCreateUrlSelector = "[data-create-participant-url]";
+   const participationStatusUrlSelector =
+      "[data-check-swedish-participation-status-url]";
    const currentMarkerSelector = "#activity-now-marker";
    const pendingParticipationIds = new Set();
+   let participationPollingTimer = null;
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
@@ -28,6 +31,7 @@
    initializeParticipationMoreButtons();
    initializeParticipationSources();
    initializeBroadcastParticipationRowChecks();
+   initializeParticipationPolling();
    initializeCurrentMarkerScroll();
 
    document.addEventListener("submit", async event => {
@@ -376,6 +380,14 @@
             url,
             [broadcastId]
          );
+
+         if(payload && payload.queued === true)
+         {
+            setQueuedParticipationCell(cell);
+            startParticipationPolling();
+            return;
+         }
+
          const result = Array.isArray(payload.results)
             ? payload.results[0]
             : null;
@@ -410,6 +422,213 @@
    }
 
    async function postParticipationCheckAsync(url, selectedIds)
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      selectedIds.forEach(id => {
+         formData.append("broadcastIds", id);
+      });
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         keepalive: true,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(createParticipationErrorMessage(
+            response.status,
+            payload?.error,
+            trimmedResponseText
+         ));
+      }
+
+      return payload ?? {};
+   }
+
+   function setQueuedParticipationCell(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      cell.replaceChildren();
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "broadcast-ai-check";
+
+      const pending = document.createElement("span");
+      pending.className = "broadcast-ai-check-pending";
+      pending.textContent = "Queued";
+      wrapper.append(pending);
+
+      cell.dataset.participationStatus = "pending";
+      cell.append(wrapper);
+   }
+
+   function initializeParticipationPolling(root = document)
+   {
+      root.querySelectorAll(participationCellSelector).forEach(cell => {
+         if(!(cell instanceof HTMLElement))
+         {
+            return;
+         }
+
+         const statusId = (cell.dataset.participationStatus ?? "").trim();
+         const broadcastId = (cell.dataset.broadcastId ?? "").trim();
+
+         if(!broadcastId)
+         {
+            return;
+         }
+
+         if(statusId === "running" || statusId === "pending")
+         {
+            pendingParticipationIds.add(broadcastId);
+         }
+      });
+
+      if(pendingParticipationIds.size > 0)
+      {
+         startParticipationPolling();
+      }
+   }
+
+   function startParticipationPolling()
+   {
+      if(participationPollingTimer !== null)
+      {
+         return;
+      }
+
+      participationPollingTimer = window.setInterval(() => {
+         void pollParticipationStatusesAsync();
+      }, 4000);
+
+      void pollParticipationStatusesAsync();
+   }
+
+   function stopParticipationPolling()
+   {
+      if(participationPollingTimer === null)
+      {
+         return;
+      }
+
+      window.clearInterval(participationPollingTimer);
+      participationPollingTimer = null;
+   }
+
+   async function pollParticipationStatusesAsync()
+   {
+      if(pendingParticipationIds.size === 0)
+      {
+         stopParticipationPolling();
+         return;
+      }
+
+      const url = getParticipationStatusUrl();
+
+      if(!url)
+      {
+         return;
+      }
+
+      try
+      {
+         const payload = await postParticipationStatusAsync(
+            url,
+            [...pendingParticipationIds]
+         );
+
+         if(!payload || !Array.isArray(payload.results))
+         {
+            return;
+         }
+
+         payload.results.forEach(result => {
+            if(!result || typeof result !== "object")
+            {
+               return;
+            }
+
+            updateParticipationCellByResult(result);
+
+            const broadcastId = typeof result.id === "string"
+               ? result.id
+               : "";
+            const statusId = typeof result.statusId === "string"
+               ? result.statusId.trim()
+               : "";
+            const isFinal =
+               (typeof result.error === "string"
+                  && result.error.trim() !== "") ||
+               (typeof result.swedishParticipation === "string"
+                  && result.swedishParticipation.trim() !== "") ||
+               statusId === "completed" ||
+               statusId === "failed";
+
+            if(broadcastId && isFinal)
+            {
+               pendingParticipationIds.delete(broadcastId);
+            }
+         });
+
+         if(pendingParticipationIds.size === 0)
+         {
+            stopParticipationPolling();
+         }
+      }
+      catch
+      {
+      }
+   }
+
+   function getParticipationStatusUrl()
+   {
+      const container = document.querySelector(
+         participationStatusUrlSelector
+      );
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.checkSwedishParticipationStatusUrl;
+
+      return typeof url === "string" && url.trim() !== ""
+         ? url.trim()
+         : "";
+   }
+
+   async function postParticipationStatusAsync(url, selectedIds)
    {
       const formData = new URLSearchParams();
       const token = getAntiForgeryToken();
@@ -520,6 +739,11 @@
 
       if(typeof result.error === "string" && result.error.trim() !== "")
       {
+         if(typeof result.statusId === "string")
+         {
+            cell.dataset.participationStatus = result.statusId.trim();
+         }
+
          cell.append(
             createParticipationErrorBlock(
                cell,
@@ -532,6 +756,13 @@
          return;
       }
 
+      const statusId = typeof result.statusId === "string"
+         ? result.statusId.trim()
+         : "";
+      if(statusId !== "")
+      {
+         cell.dataset.participationStatus = statusId;
+      }
       const participation = typeof result.swedishParticipation === "string"
          && result.swedishParticipation.trim() !== ""
          ? result.swedishParticipation.trim()
@@ -552,10 +783,15 @@
 
       if(participation === "")
       {
-         const fallback = document.createElement("span");
-         fallback.className = "broadcast-ai-check-empty";
-         fallback.textContent = "Not checked yet";
-         cell.append(fallback);
+         const wrapper = document.createElement("div");
+         wrapper.className = "broadcast-ai-check";
+
+         const pending = document.createElement("span");
+         pending.className = "broadcast-ai-check-pending";
+         pending.textContent = formatParticipationStatus(statusId);
+         wrapper.append(pending);
+
+         cell.append(wrapper);
          initializeBroadcastParticipationRowChecks(cell);
          return;
       }
@@ -580,6 +816,28 @@
 
       cell.append(wrapper);
       initializeBroadcastParticipationRowChecks(cell);
+   }
+
+   function formatParticipationStatus(statusId)
+   {
+      if(typeof statusId !== "string" || statusId.trim() === "")
+      {
+         return "Not checked yet";
+      }
+
+      switch(statusId.trim())
+      {
+         case "running":
+            return "Running";
+         case "pending":
+            return "Queued";
+         case "completed":
+            return "Completed";
+         case "failed":
+            return "Failed";
+         default:
+            return statusId.trim();
+      }
    }
 
    function setPendingParticipationCell(cell)

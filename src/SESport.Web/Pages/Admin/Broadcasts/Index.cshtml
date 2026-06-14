@@ -6,6 +6,10 @@
       "./Index",
       "CheckSwedishParticipation"
    );
+   var checkSwedishParticipationStatusUrl = Url.Page(
+      "./Index",
+      "CheckSwedishParticipationStatus"
+   );
    var createParticipantEntityUrl = Url.Page(
       "./Index",
       "CreateParticipantEntity",
@@ -68,7 +72,9 @@
 </section>
 
 <div data-broadcast-results
-     data-create-participant-url="@createParticipantEntityUrl">
+     data-create-participant-url="@createParticipantEntityUrl"
+     data-check-swedish-participation-status-url=
+        "@checkSwedishParticipationStatusUrl">
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
@@ -182,6 +188,8 @@
                         </td>
                         <td data-swedish-participation-cell
                             data-broadcast-id="@broadcast.Id"
+                            data-participation-status=
+                               "@broadcast.ParticipationCheck?.StatusId"
                             data-check-swedish-participation-url=
                                "@checkSwedishParticipationUrl">
                            @{
@@ -320,16 +328,16 @@
                                                       <span>@participant.Name</span>
                                                    }
 
-                                                  @if(participant.TemplateEntityId is not null)
-                                                  {
-                                                     <form method="post"
-                                                           action="@createParticipantEntityUrl"
-                                                         class="broadcast-ai-check-participant-create-form"
-                                                         data-ajax-success="reload">
+                                                   @if(participant.TemplateEntityId is not null)
+                                                   {
+                                                      <form method="post"
+                                                            action="@createParticipantEntityUrl"
+                                                            class="broadcast-ai-check-participant-create-form"
+                                                            data-ajax-success="reload">
                                                          @Html.AntiForgeryToken()
-                                                      <input type="hidden"
-                                                             name="participantName"
-                                                             value="@participant.Name" />
+                                                         <input type="hidden"
+                                                                name="participantName"
+                                                                value="@participant.Name" />
                                                          <input type="hidden"
                                                                 name="templateEntityId"
                                                                 value="@participant.TemplateEntityId" />

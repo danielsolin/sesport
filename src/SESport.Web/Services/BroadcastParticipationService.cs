@@ -12,7 +12,8 @@ public sealed class BroadcastParticipationService(
    AdminRepository adminRepository,
    AiRepository aiRepository,
    BroadcastRepository broadcastRepository,
-   IAiJobRunner aiJobRunner
+   IAiJobRunner aiJobRunner,
+   BroadcastParticipationCheckQueue checkQueue
 )
 {
    private const string ParticipationJobId =
@@ -59,6 +60,73 @@ public sealed class BroadcastParticipationService(
          .ToList();
    }
 
+   public async Task QueueSwedishParticipationAsync(
+      IReadOnlyCollection<Guid> broadcastIds,
+      CancellationToken cancellationToken
+   )
+   {
+      var normalizedBroadcastIds = NormalizeBroadcastIds(broadcastIds);
+
+      if(normalizedBroadcastIds.Count == 0)
+      {
+         return;
+      }
+
+      await checkQueue.EnqueueAsync(
+         normalizedBroadcastIds,
+         cancellationToken
+      );
+   }
+
+   public async Task<IReadOnlyList<BroadcastParticipationCheckResult>>
+      GetSwedishParticipationCheckResultsAsync(
+         IReadOnlyCollection<Guid> broadcastIds,
+         CancellationToken cancellationToken
+      )
+   {
+      var normalizedBroadcastIds = NormalizeBroadcastIds(broadcastIds);
+
+      if(normalizedBroadcastIds.Count == 0)
+      {
+         return [];
+      }
+
+      var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
+         normalizedBroadcastIds,
+         cancellationToken
+      );
+      var checks = await aiRepository.GetParticipationChecksAsync(
+         normalizedBroadcastIds,
+         cancellationToken
+      );
+      var results = new List<BroadcastParticipationCheckResult>();
+
+      foreach(var broadcast in broadcasts)
+      {
+         if(!checks.TryGetValue(broadcast.Id, out var participationCheck))
+         {
+            continue;
+         }
+
+         results.Add(
+            new BroadcastParticipationCheckResult(
+               broadcast.Id,
+               participationCheck.RunId,
+               participationCheck.StatusId,
+               broadcast.ChannelName,
+               broadcast.Title,
+               participationCheck.ErrorMessage,
+               participationCheck.SwedishParticipation,
+               participationCheck.SwedishParticipants,
+               [],
+               participationCheck.SourceUrls
+            )
+         );
+      }
+
+      return results;
+   }
+
    public async Task<IReadOnlyList<BroadcastParticipationCheckResult>>
       CheckSwedishParticipationAsync(
          IReadOnlyCollection<Guid> broadcastIds,
@@ -100,13 +168,14 @@ public sealed class BroadcastParticipationService(
          if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
          {
             results.Add(
-               new BroadcastParticipationCheckResult(
-                  broadcast.Id,
-                  result.RunId,
-                  broadcast.ChannelName,
-                  broadcast.Title,
-                  result.ErrorMessage,
-                  null,
+            new BroadcastParticipationCheckResult(
+               broadcast.Id,
+               result.RunId,
+               "failed",
+               broadcast.ChannelName,
+               broadcast.Title,
+               result.ErrorMessage,
+               null,
                   [],
                   [],
                   fallbackSourceUrls
@@ -124,12 +193,13 @@ public sealed class BroadcastParticipationService(
          if(parsed is null)
          {
             results.Add(
-               new BroadcastParticipationCheckResult(
-                  broadcast.Id,
-                  result.RunId,
-                  broadcast.ChannelName,
-                  broadcast.Title,
-                  "The model returned invalid JSON.",
+            new BroadcastParticipationCheckResult(
+               broadcast.Id,
+               result.RunId,
+               "completed",
+               broadcast.ChannelName,
+               broadcast.Title,
+               "The model returned invalid JSON.",
                   null,
                   [],
                   [],
@@ -149,6 +219,7 @@ public sealed class BroadcastParticipationService(
             new BroadcastParticipationCheckResult(
                broadcast.Id,
                result.RunId,
+               "completed",
                broadcast.ChannelName,
                broadcast.Title,
                null,
@@ -333,6 +404,7 @@ public sealed class BroadcastParticipationService(
 public sealed record BroadcastParticipationCheckResult(
    Guid Id,
    Guid RunId,
+   string StatusId,
    string ChannelName,
    string Title,
    string? Error,
