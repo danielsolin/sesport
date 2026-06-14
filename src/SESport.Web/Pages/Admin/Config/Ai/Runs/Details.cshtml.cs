@@ -15,6 +15,14 @@ public class DetailsModel(AiRepository repository) : PageModel
    public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns { get; private
       set; } = [];
 
+   public IReadOnlyList<ToolTraceBadgeViewModel> ToolTraceSummaryBadges
+   {
+      get
+      {
+         return BuildToolTraceSummaryBadges(ToolTraceTurns);
+      }
+   }
+
    [BindProperty(SupportsGet = true)]
    public string? JobId { get; set; }
 
@@ -112,6 +120,60 @@ public class DetailsModel(AiRepository repository) : PageModel
       {
          return [];
       }
+   }
+
+   private static IReadOnlyList<ToolTraceBadgeViewModel>
+      BuildToolTraceSummaryBadges(
+         IReadOnlyList<ToolTraceTurnViewModel> turns
+      )
+   {
+      if(turns.Count == 0)
+      {
+         return [];
+      }
+
+      var badges = new List<ToolTraceBadgeViewModel>
+      {
+         new(
+            $"{turns.Count} round{(turns.Count == 1 ? "" : "s")}",
+            "tool-trace-badge-round"
+         )
+      };
+
+      var toolCalls = turns
+         .SelectMany(turn => turn.ToolCalls)
+         .GroupBy(call => call.Name, StringComparer.Ordinal)
+         .OrderBy(group => group.Key, StringComparer.Ordinal)
+         .ToArray();
+
+      foreach(var toolCallGroup in toolCalls)
+      {
+         badges.Add(new(
+            $"{toolCallGroup.Key} × {toolCallGroup.Count()}",
+            "tool-trace-badge-tool"
+         ));
+      }
+
+      var totalToolResults = turns.Sum(turn => turn.ToolResults.Count);
+      if(totalToolResults > 0)
+      {
+         badges.Add(new(
+            $"{totalToolResults} result{(totalToolResults == 1 ? "" : "s")}",
+            "tool-trace-badge-result"
+         ));
+      }
+
+      var finalTurn = turns.LastOrDefault();
+      if(finalTurn is not null &&
+         !string.IsNullOrWhiteSpace(finalTurn.FinishReason))
+      {
+         badges.Add(new(
+            $"Finish: {finalTurn.FinishReason}",
+            "tool-trace-badge-finish"
+         ));
+      }
+
+      return badges;
    }
 
    private static ToolTraceTurnBuilder GetOrCreateTurn(
@@ -267,6 +329,11 @@ public class DetailsModel(AiRepository repository) : PageModel
       string Arguments
    );
 
+   public sealed record ToolTraceBadgeViewModel(
+      string Text,
+      string CssClass
+   );
+
    public sealed record ToolTraceToolResultViewModel(
       string ToolCallId,
       string Name,
@@ -281,7 +348,9 @@ public class DetailsModel(AiRepository repository) : PageModel
       string? FinishReason,
       string? AssistantContent,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
-      IReadOnlyList<ToolTraceToolResultViewModel> ToolResults
+      IReadOnlyList<ToolTraceToolResultViewModel> ToolResults,
+      IReadOnlyList<ToolTraceBadgeViewModel> CompactBadges,
+      string? AssistantPreview
    );
 
    private sealed class ToolTraceTurnBuilder(int turn)
@@ -303,8 +372,80 @@ public class DetailsModel(AiRepository repository) : PageModel
             FinishReason,
             AssistantContent,
             ToolCalls,
-            ToolResults
+            ToolResults,
+            BuildCompactBadges(),
+            BuildAssistantPreview()
          );
       }
+
+      private IReadOnlyList<ToolTraceBadgeViewModel> BuildCompactBadges()
+      {
+         var badges = new List<ToolTraceBadgeViewModel>
+         {
+            new($"Round {Turn}", "tool-trace-badge-round")
+         };
+
+         if(!string.IsNullOrWhiteSpace(AssistantContent))
+         {
+            badges.Add(new("Assistant", "tool-trace-badge-assistant"));
+         }
+
+         foreach(var toolCallGroup in ToolCalls
+            .GroupBy(call => call.Name, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.Ordinal))
+         {
+            badges.Add(new(
+               $"{toolCallGroup.Key} × {toolCallGroup.Count()}",
+               "tool-trace-badge-tool"
+            ));
+         }
+
+         if(ToolResults.Count > 0)
+         {
+            badges.Add(new(
+               $"{ToolResults.Count} result{(ToolResults.Count == 1 ? "" :
+                  "s")}",
+               "tool-trace-badge-result"
+            ));
+         }
+
+         if(!string.IsNullOrWhiteSpace(FinishReason))
+         {
+            badges.Add(new(
+               $"Finish: {FinishReason}",
+               "tool-trace-badge-finish"
+            ));
+         }
+
+         return badges;
+      }
+
+      private string? BuildAssistantPreview()
+      {
+         return BuildCompactPreview(AssistantContent, 120);
+      }
+   }
+
+   private static string? BuildCompactPreview(
+      string? value,
+      int maxLength
+   )
+   {
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return null;
+      }
+
+      var text = string.Join(
+         " ",
+         value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+      ).Trim();
+
+      if(text.Length <= maxLength)
+      {
+         return text;
+      }
+
+      return text[..(maxLength - 3)] + "...";
    }
 }

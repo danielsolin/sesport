@@ -883,6 +883,71 @@ h2 {
    content: "−";
 }
 
+.tool-trace-summary-content {
+   display: grid;
+   gap: 8px;
+   min-width: 0;
+}
+
+.tool-trace-summary-header {
+   display: flex;
+   align-items: baseline;
+   justify-content: space-between;
+   gap: 12px;
+   min-width: 0;
+}
+
+.tool-trace-summary-count {
+   flex: 0 0 auto;
+   color: var(--muted);
+   font-size: 13px;
+   font-weight: 700;
+}
+
+.tool-trace-summary-badges {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+}
+
+.tool-trace-badge {
+   display: inline-flex;
+   align-items: center;
+   min-height: 24px;
+   padding: 0 10px;
+   border-radius: 999px;
+   background: #edf2ef;
+   color: var(--text);
+   font-size: 11px;
+   font-weight: 800;
+   line-height: 1.2;
+}
+
+.tool-trace-badge-round {
+   background: #e8f1ef;
+   color: var(--accent-strong);
+}
+
+.tool-trace-badge-assistant {
+   background: #f0f1f6;
+   color: #434762;
+}
+
+.tool-trace-badge-tool {
+   background: #eef4ff;
+   color: #284e8d;
+}
+
+.tool-trace-badge-result {
+   background: #edf7ee;
+   color: #2c6b38;
+}
+
+.tool-trace-badge-finish {
+   background: #fff1df;
+   color: var(--warning);
+}
+
 .tool-trace-list {
    display: grid;
    gap: 16px;
@@ -898,10 +963,16 @@ h2 {
 }
 
 .tool-trace-turn-header {
-   display: flex;
-   align-items: flex-start;
-   justify-content: space-between;
+   display: grid;
    gap: 12px;
+}
+
+.tool-trace-turn-header-main {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   justify-content: space-between;
+   gap: 8px;
 }
 
 .tool-trace-turn-label {
@@ -917,12 +988,50 @@ h2 {
    text-transform: uppercase;
 }
 
-.tool-trace-turn-meta {
-   display: inline-flex;
-   margin-left: 10px;
+.tool-trace-turn-badges {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+}
+
+.tool-trace-turn-preview {
+   color: var(--muted);
+   font-size: 12px;
+   line-height: 1.35;
+}
+
+.tool-trace-turn-details {
+   display: grid;
+   gap: 12px;
+}
+
+.tool-trace-turn-details > summary {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+   cursor: pointer;
+   list-style: none;
    color: var(--muted);
    font-size: 13px;
-   font-weight: 700;
+   font-weight: 800;
+   text-transform: uppercase;
+}
+
+.tool-trace-turn-details > summary::-webkit-details-marker {
+   display: none;
+}
+
+.tool-trace-turn-details > summary::after {
+   content: "+";
+   flex: 0 0 auto;
+   color: var(--muted);
+   font-size: 16px;
+   line-height: 1;
+}
+
+.tool-trace-turn-details[open] > summary::after {
+   content: "−";
 }
 
 .tool-trace-block {
