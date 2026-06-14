@@ -784,6 +784,7 @@
          ? result.swedishParticipation.trim()
          : "";
       const participants = Array.isArray(result.swedishParticipantItems)
+         && result.swedishParticipantItems.length > 0
          ? result.swedishParticipantItems
             .filter(participant => isValidParticipantItem(participant))
          : Array.isArray(result.swedishParticipants)

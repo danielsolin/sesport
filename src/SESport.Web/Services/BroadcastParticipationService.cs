@@ -108,6 +108,11 @@ public sealed class BroadcastParticipationService(
             continue;
          }
 
+         var participantItems = await ResolveParticipantItemsAsync(
+            participationCheck.SwedishParticipants,
+            cancellationToken
+         );
+
          results.Add(
             new BroadcastParticipationCheckResult(
                broadcast.Id,
@@ -118,7 +123,7 @@ public sealed class BroadcastParticipationService(
                participationCheck.ErrorMessage,
                participationCheck.SwedishParticipation,
                participationCheck.SwedishParticipants,
-               [],
+               participantItems,
                participationCheck.SourceUrls
             )
          );
