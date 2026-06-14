@@ -309,17 +309,31 @@
 
    function initializeBroadcastParticipationRowChecks(root = document)
    {
-      root.querySelectorAll(checkParticipationRowSelector).forEach(button => {
-         if(!(button instanceof HTMLButtonElement)
-            || button.dataset.checkParticipationRowInitialized === "true")
+      if(root !== document
+         || document.documentElement.dataset.broadcastChecksInitialized
+            === "true")
+      {
+         return;
+      }
+
+      document.documentElement.dataset.broadcastChecksInitialized = "true";
+
+      document.addEventListener("click", async event => {
+         const target = event.target;
+
+         if(!(target instanceof Element))
          {
             return;
          }
 
-         button.dataset.checkParticipationRowInitialized = "true";
-         button.addEventListener("click", async () => {
-            await checkParticipationRowAsync(button);
-         });
+         const button = target.closest(checkParticipationRowSelector);
+
+         if(!(button instanceof HTMLButtonElement))
+         {
+            return;
+         }
+
+         await checkParticipationRowAsync(button);
       });
    }
 
@@ -1661,6 +1675,10 @@
          initializeCheckboxToggles(nextTarget);
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
+         initializeBroadcastParticipationRowChecks(nextTarget);
+         initializeParticipationMoreButtons(nextTarget);
+         initializeParticipationSources(nextTarget);
+         initializeParticipationPolling(nextTarget);
          history.replaceState(null, "", url);
       }
       catch
