@@ -81,8 +81,12 @@ public sealed class LmStudioClient : IAiProviderClient
          );
       }
 
-      var outputText = NormalizeOutput(
-         ResponsesOutputValidator.ExtractFinalText(rawResponse)
+      var outputText = ResponsesOutputValidator.ValidateStructuredOutput(
+         NormalizeOutput(
+            ResponsesOutputValidator.ExtractFinalText(rawResponse)
+         ),
+         job.OutputMode,
+         prompt.OutputSchemaJson
       );
 
       return new AiJobResult(

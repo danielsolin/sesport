@@ -13,7 +13,7 @@ public class AiProviderClientTests
    public async Task LmStudioGenerateAsyncUsesResponsesEnvelope()
    {
       var handler = new RecordingHandler(
-         CreateReasoningResponseJson("KLM Open spelas i Amsterdam.")
+         CreateReasoningResponseJson("{\"ok\":true}")
       );
       var client = new LmStudioClient(new HttpClient(handler));
 
@@ -26,7 +26,7 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal("KLM Open spelas i Amsterdam.", result.OutputText);
+      Assert.Equal("{\"ok\":true}", result.OutputText);
       Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody);
       Assert.Contains("\"instructions\":\"System\"", handler.RequestBody);

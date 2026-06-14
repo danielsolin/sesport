@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SESport.AI.Validation;
 
@@ -49,6 +50,8 @@ public static class ResponsesOutputValidator
       string? outputSchemaJson
    )
    {
+      outputText = NormalizeStructuredJsonOutput(outputText);
+
       if(!string.IsNullOrWhiteSpace(outputSchemaJson))
       {
          EnsureSchemaConformity(outputText, outputSchemaJson);
@@ -66,6 +69,31 @@ public static class ResponsesOutputValidator
 
       return outputText;
    }
+
+   public static string NormalizeStructuredJsonOutput(string outputText)
+   {
+      if(string.IsNullOrWhiteSpace(outputText))
+      {
+         return outputText;
+      }
+
+      var trimmed = outputText.Trim();
+      var match = FencedJsonRegex.Match(trimmed);
+
+      if(!match.Success)
+      {
+         return trimmed;
+      }
+
+      return match.Groups["content"].Value.Trim();
+   }
+
+   private static readonly Regex FencedJsonRegex = new(
+      @"^\s*```(?:json)?[ \t]*\r?\n(?<content>.*)\r?\n```\s*$",
+      RegexOptions.IgnoreCase |
+      RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
 
    private static bool IsMessageItem(JsonElement item)
    {

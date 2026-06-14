@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
+using SESport.AI.Validation;
 
 namespace SESport.AI.Providers;
 
@@ -111,8 +112,10 @@ public sealed class OpenRouterClient : IAiProviderClient
          );
       }
 
-      var outputText = NormalizeOutput(
-         ExtractFinalText(rawResponse)
+      var outputText = ResponsesOutputValidator.ValidateStructuredOutput(
+         NormalizeOutput(ExtractFinalText(rawResponse)),
+         job.OutputMode,
+         prompt.OutputSchemaJson
       );
 
       return new AiJobResult(
