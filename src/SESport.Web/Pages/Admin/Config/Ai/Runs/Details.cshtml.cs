@@ -218,7 +218,7 @@ public class DetailsModel(AiRepository repository) : PageModel
          return prettyPrinted;
       }
 
-      return text.ReplaceLineEndings(" ").Trim();
+      return text.Trim();
    }
 
    private static bool TryPrettyPrintJson(
