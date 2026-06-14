@@ -10,8 +10,7 @@ namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
 
 public class IndexModel(
    AiAdminRepository adminRepository,
-   AiRepository repository,
-   AdminDatePreferenceStore datePreferenceStore
+   AiRepository repository
 ) : PageModel
 {
    public IReadOnlyList<AiRunListItem> Runs { get; private set; } = [];
@@ -40,7 +39,7 @@ public class IndexModel(
    {
       try
       {
-         SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
+         SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
          Jobs = await adminRepository.GetJobsAsync(cancellationToken);
          StatusOptions =
          [
