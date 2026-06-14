@@ -27,7 +27,7 @@
             <th>Label</th>
             <th>Provider</th>
             <th>Output</th>
-            <th>Enabled</th>
+            <th>PROMPT</th>
             <th></th>
          </tr>
       </thead>
@@ -39,7 +39,11 @@
                <td>@job.Label</td>
                <td><code>@job.ProviderId</code></td>
                <td>@job.OutputMode</td>
-               <td>@job.Enabled</td>
+               <td>
+                  @(job.ActivePromptVersion is null
+                     ? "-"
+                     : $"V{job.ActivePromptVersion}")
+               </td>
                <td class="table-actions">
                   <a asp-page="./Edit" asp-route-id="@job.Id">Edit</a>
                </td>

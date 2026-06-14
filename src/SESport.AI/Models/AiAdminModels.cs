@@ -35,6 +35,7 @@ public sealed record AiJobListItem(
    string Label,
    string ProviderId,
    string OutputMode,
+   int? ActivePromptVersion,
    bool Enabled
 );
 
@@ -64,6 +65,7 @@ public sealed record AiPromptListItem(
    string JobId,
    string JobLabel,
    int Version,
+   decimal? Temperature,
    bool Enabled
 );
 

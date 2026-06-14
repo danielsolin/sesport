@@ -23,9 +23,10 @@
    <table class="admin-table">
       <thead>
          <tr>
-            <th>Job</th>
-            <th>Version</th>
-            <th>Enabled</th>
+            <th>ID</th>
+            <th>VERSION</th>
+            <th>AI JOB</th>
+            <th>TEMPERATURE</th>
             <th></th>
          </tr>
       </thead>
@@ -33,9 +34,10 @@
          @foreach (var prompt in Model.Prompts)
          {
             <tr>
-               <td>@prompt.JobLabel</td>
+               <td><code>@prompt.Id</code></td>
                <td>@prompt.Version</td>
-               <td>@prompt.Enabled</td>
+               <td><code>@prompt.JobId</code></td>
+               <td>@prompt.Temperature</td>
                <td class="table-actions">
                   <a asp-page="./Edit" asp-route-id="@prompt.Id">Edit</a>
                </td>

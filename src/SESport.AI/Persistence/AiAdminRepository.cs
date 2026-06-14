@@ -138,9 +138,16 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, label, provider_id, output_mode, enabled
-         from ai_jobs
-         order by label
+         select
+            j.id,
+            j.label,
+            j.provider_id,
+            j.output_mode,
+            p.version,
+            j.enabled
+         from ai_jobs j
+         left join ai_job_prompts p on p.id = j.active_prompt_id
+         order by j.label
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -157,7 +164,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(1),
                reader.GetString(2),
                reader.GetString(3),
-               reader.GetBoolean(4)
+               ReadNullableInt32(reader, 4),
+               reader.GetBoolean(5)
             )
          );
       }
@@ -276,10 +284,16 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select p.id::text, p.job_id, j.label, p.version, p.enabled
+         select
+            p.id::text,
+            p.job_id,
+            j.label,
+            p.version,
+            p.temperature,
+            p.enabled
          from ai_job_prompts p
          join ai_jobs j on j.id = p.job_id
-         order by j.label, p.version desc
+         order by p.job_id, p.version desc
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -296,7 +310,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(1),
                reader.GetString(2),
                reader.GetInt32(3),
-               reader.GetBoolean(4)
+               ReadNullableDecimal(reader, 4),
+               reader.GetBoolean(5)
             )
          );
       }
@@ -310,7 +325,13 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select p.id::text, p.job_id, j.label, p.version, p.enabled
+         select
+            p.id::text,
+            p.job_id,
+            j.label,
+            p.version,
+            p.temperature,
+            p.enabled
          from ai_job_prompts p
          join ai_jobs j on j.id = p.job_id
          where p.job_id = @job_id
@@ -332,7 +353,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(1),
                reader.GetString(2),
                reader.GetInt32(3),
-               reader.GetBoolean(4)
+               ReadNullableDecimal(reader, 4),
+               reader.GetBoolean(5)
             )
          );
       }
