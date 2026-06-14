@@ -40,10 +40,6 @@ public static class AiServiceCollectionExtensions
          client.Timeout = TimeSpan.FromMinutes(20);
       });
       services.AddHttpClient<
-         IAiProviderClient,
-         LmStudioClient
-      >();
-      services.AddHttpClient<
          IWebSearchClient,
          SearxngWebSearchClient
       >(client =>

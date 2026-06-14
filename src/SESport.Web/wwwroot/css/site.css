@@ -1273,6 +1273,12 @@ h2 {
    gap: 10px;
 }
 
+.ai-runs-filter-grid {
+   grid-template-columns: 160px minmax(220px, 280px) 160px;
+   align-items: end;
+   justify-content: start;
+}
+
 label {
    display: grid;
    gap: 4px;

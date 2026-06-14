@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
+using SESport.Core.Formatting;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
 
@@ -19,11 +21,19 @@ public class DetailsModel(AiRepository repository) : PageModel
    [BindProperty(SupportsGet = true)]
    public string? StatusId { get; set; }
 
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
+   public DateOnly? Date { get; set; }
+
+   public string DateText => DateDisplay.Format(SelectedDate);
+
+   public DateOnly SelectedDate { get; private set; }
+
    public async Task<IActionResult> OnGetAsync(
       Guid id,
       CancellationToken cancellationToken
    )
    {
+      SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
       Run = await repository.GetRunAsync(id, cancellationToken);
 
       if(Run is not null)

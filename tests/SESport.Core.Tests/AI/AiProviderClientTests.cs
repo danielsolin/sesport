@@ -10,30 +10,6 @@ namespace SESport.Core.Tests.AI;
 public class AiProviderClientTests
 {
    [Fact]
-   public async Task LmStudioGenerateAsyncUsesResponsesEnvelope()
-   {
-      var handler = new RecordingHandler(
-         CreateReasoningResponseJson("{\"ok\":true}")
-      );
-      var client = new LmStudioClient(new HttpClient(handler));
-
-      var result = await client.GenerateAsync(
-         CreateProvider("lmstudio"),
-         CreateJob(),
-         CreatePrompt(),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Equal("{\"ok\":true}", result.OutputText);
-      Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
-         handler.RequestBody);
-      Assert.Contains("\"instructions\":\"System\"", handler.RequestBody);
-      Assert.Contains("\"input\":\"User\"", handler.RequestBody);
-   }
-
-   [Fact]
    public async Task LlamaServerGenerateAsyncUsesModelDrivenToolLoop()
    {
       var handler = new RecordingHandler(

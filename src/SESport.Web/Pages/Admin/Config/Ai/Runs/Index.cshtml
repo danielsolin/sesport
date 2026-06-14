@@ -14,7 +14,14 @@
 <form method="get" class="edit-form">
    <section class="form-section">
       <h2>Filters</h2>
-      <div class="form-grid">
+      <div class="form-grid ai-runs-filter-grid">
+         <label>
+            <span>Date</span>
+            <input type="date"
+                   name="@RouteKeys.Date"
+                   value="@Model.DateText"
+                   onchange="this.form.submit();" />
+         </label>
          <label>
             <span>Job</span>
             <select asp-for="JobId">
@@ -88,6 +95,7 @@
                <td class="table-actions">
                   <a asp-page="./Details"
                      asp-route-id="@run.Id"
+                     asp-route-date="@Model.DateText"
                      asp-route-jobId="@Model.JobId"
                      asp-route-statusId="@Model.StatusId">
                      View

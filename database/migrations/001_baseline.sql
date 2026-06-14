@@ -663,7 +663,7 @@ create table ai_activity_search_runs
    api_key_source text not null,
    allow_web_search boolean not null,
    web_search_tool_type text not null,
-   lmstudio_plugin_id text null,
+   plugin_id text null,
    search_date date not null,
    window_start date not null,
    window_end date not null,

@@ -12,12 +12,24 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository
 {
    public async Task<IReadOnlyList<AiRunListItem>> GetRunsAsync(
+      DateOnly date,
       string? jobId,
       string? statusId,
       CancellationToken cancellationToken
    )
    {
       var where = new List<string>();
+
+      var dateStart = new DateTimeOffset(
+         DateTime.SpecifyKind(
+            date.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc
+         )
+      );
+      var dateEnd = dateStart.AddDays(1);
+
+      where.Add("r.started_at >= @start");
+      where.Add("r.started_at < @end");
 
       if(!string.IsNullOrWhiteSpace(jobId))
       {
@@ -51,6 +63,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("limit 200");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
+      command.Parameters.AddWithValue("start", dateStart);
+      command.Parameters.AddWithValue("end", dateEnd);
       if(!string.IsNullOrWhiteSpace(jobId))
       {
          command.Parameters.AddWithValue("job_id", jobId);

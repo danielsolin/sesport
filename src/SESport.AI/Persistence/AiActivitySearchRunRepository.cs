@@ -46,14 +46,14 @@ public sealed class AiActivitySearchRunRepository : IAsyncDisposable
          insert into ai_activity_search_runs (
             id, started_at, status_id, client_mode, base_address,
             requested_model, api_key_source, allow_web_search,
-            web_search_tool_type, lmstudio_plugin_id, search_date,
+            web_search_tool_type, plugin_id, search_date,
             window_start, window_end, max_proposals, write_to_database,
             run_directory, output_path, total_entity_count
          )
          values (
             @id, @started_at, @status_id, @client_mode, @base_address,
             @requested_model, @api_key_source, @allow_web_search,
-            @web_search_tool_type, @lmstudio_plugin_id, @search_date,
+            @web_search_tool_type, @plugin_id, @search_date,
             @window_start, @window_end, @max_proposals, @write_to_database,
             @run_directory, @output_path, @total_entity_count
          )
@@ -68,7 +68,7 @@ public sealed class AiActivitySearchRunRepository : IAsyncDisposable
             api_key_source = excluded.api_key_source,
             allow_web_search = excluded.allow_web_search,
             web_search_tool_type = excluded.web_search_tool_type,
-            lmstudio_plugin_id = excluded.lmstudio_plugin_id,
+            plugin_id = excluded.plugin_id,
             search_date = excluded.search_date,
             window_start = excluded.window_start,
             window_end = excluded.window_end,
@@ -232,8 +232,8 @@ public sealed class AiActivitySearchRunRepository : IAsyncDisposable
          run.WebSearchToolType
       );
       command.Parameters.AddWithValue(
-         "lmstudio_plugin_id",
-         (object?)run.LmStudioPluginId ?? DBNull.Value
+         "plugin_id",
+         (object?)run.PluginId ?? DBNull.Value
       );
       command.Parameters.AddWithValue("search_date", run.SearchDate);
       command.Parameters.AddWithValue("window_start", run.WindowStart);
@@ -282,7 +282,7 @@ public sealed record AiActivitySearchRunRecord(
    string ApiKeySource,
    bool AllowWebSearch,
    string WebSearchToolType,
-   string? LmStudioPluginId,
+   string? PluginId,
    DateOnly SearchDate,
    DateOnly WindowStart,
    DateOnly WindowEnd,
