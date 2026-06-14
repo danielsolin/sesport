@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -1044,28 +1045,76 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(pageContent is null)
       {
-         return JsonSerializer.Serialize(
-            new
-            {
-               id,
-               title = searchResult.Title,
-               url = searchResult.Url,
-               error = "Unable to fetch page content."
-            },
-            JsonOptions
+         return FormatPageContentText(
+            id,
+            searchResult.Title,
+            searchResult.Url,
+            searchResult.Snippet,
+            null,
+            null,
+            "Unable to fetch page content."
          );
       }
 
-      var output = new
-      {
+      return FormatPageContentText(
          id,
-         title = pageContent.Title,
-         url = pageContent.Url,
-         published_at = pageContent.PublishedAt?.ToString("O"),
-         main_text = pageContent.MainText
-      };
+         pageContent.Title,
+         pageContent.Url,
+         searchResult.Snippet,
+         pageContent.PublishedAt,
+         pageContent.Headings,
+         pageContent.MainText
+      );
+   }
 
-      return JsonSerializer.Serialize(output, JsonOptions);
+   private static string FormatPageContentText(
+      string id,
+      string title,
+      string url,
+      string? searchSnippet,
+      DateTimeOffset? publishedAt,
+      IReadOnlyList<string>? headings,
+      string? mainText
+   )
+   {
+      var builder = new StringBuilder();
+
+      builder.AppendLine($"Page id: {id}");
+      builder.AppendLine($"Title: {title}");
+      builder.AppendLine($"URL: {url}");
+
+      if(publishedAt is not null)
+      {
+         builder.AppendLine($"Published: {publishedAt:O}");
+      }
+
+      if(!string.IsNullOrWhiteSpace(searchSnippet))
+      {
+         builder.AppendLine("Search snippet:");
+         builder.AppendLine(searchSnippet.Trim());
+      }
+
+      if(headings is not null && headings.Count > 0)
+      {
+         builder.AppendLine("Headings:");
+
+         foreach(var heading in headings)
+         {
+            builder.AppendLine($"- {heading}");
+         }
+      }
+
+      if(!string.IsNullOrWhiteSpace(mainText))
+      {
+         builder.AppendLine("Page text:");
+         builder.AppendLine(mainText.Trim());
+      }
+      else if(headings is null || headings.Count == 0)
+      {
+         builder.AppendLine("Page text: (empty)");
+      }
+
+      return builder.ToString().Trim();
    }
 
    private static void TrimConversationMessages(JsonArray messages)

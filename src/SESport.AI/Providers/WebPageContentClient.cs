@@ -27,6 +27,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
       RegexOptions.CultureInvariant
    );
 
+   private static readonly Regex HeadingRegex = new(
+      @"<h[1-6]\b[^>]*>(?<text>.*?)</h[1-6]>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
    private static readonly Regex BodyRegex = new(
       @"<body\b[^>]*>(?<html>.*?)</body>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -136,10 +142,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       var title = ExtractTitle(rawHtml);
       var publishedAt = ExtractPublishedAt(rawHtml);
+      var headings = ExtractHeadings(rawHtml);
       var mainText = ExtractMainText(rawHtml);
 
       if(string.IsNullOrWhiteSpace(title) &&
-         string.IsNullOrWhiteSpace(mainText))
+         string.IsNullOrWhiteSpace(mainText) &&
+         headings.Count == 0)
       {
          return null;
       }
@@ -148,6 +156,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          string.IsNullOrWhiteSpace(title) ? url : title,
          url,
          publishedAt,
+         headings,
          mainText
       );
    }
@@ -195,10 +204,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static string ExtractMainText(string rawHtml)
    {
-      var candidate = ExtractSection(rawHtml, ArticleRegex)
-         ?? ExtractSection(rawHtml, MainRegex)
-         ?? ExtractSection(rawHtml, BodyRegex)
-         ?? rawHtml;
+      var candidate = ExtractContentCandidate(rawHtml);
 
       candidate = StripBlockRegex.Replace(candidate, " ");
       candidate = CommentRegex.Replace(candidate, " ");
@@ -238,6 +244,37 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return text.Trim();
+   }
+
+   private static IReadOnlyList<string> ExtractHeadings(string rawHtml)
+   {
+      var candidate = ExtractContentCandidate(rawHtml);
+      var headings = new List<string>();
+
+      foreach(Match match in HeadingRegex.Matches(candidate))
+      {
+         var heading = CleanText(match.Groups["text"].Value);
+
+         if(string.IsNullOrWhiteSpace(heading))
+         {
+            continue;
+         }
+
+         if(!headings.Contains(heading, StringComparer.OrdinalIgnoreCase))
+         {
+            headings.Add(heading);
+         }
+      }
+
+      return headings;
+   }
+
+   private static string ExtractContentCandidate(string rawHtml)
+   {
+      return ExtractSection(rawHtml, ArticleRegex)
+         ?? ExtractSection(rawHtml, MainRegex)
+         ?? ExtractSection(rawHtml, BodyRegex)
+         ?? rawHtml;
    }
 
    private static string? ExtractSection(

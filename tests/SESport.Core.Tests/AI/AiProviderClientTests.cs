@@ -53,6 +53,7 @@ public class AiProviderClientTests
             "Article Title",
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
             "Full article content."
          )
       );

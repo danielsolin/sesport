@@ -25,6 +25,7 @@ public class WebPageContentClientTests
          DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
          page.PublishedAt
       );
+      Assert.Contains("Heading", page.Headings);
       Assert.Contains("Heading", page.MainText);
       Assert.Contains("First paragraph.", page.MainText);
       Assert.Contains("Second paragraph.", page.MainText);
