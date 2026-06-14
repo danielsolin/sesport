@@ -20,6 +20,17 @@ public class ResponsesOutputValidatorTests
    }
 
    [Fact]
+   public void NormalizeStructuredJsonOutputStripsInlineJsonFences()
+   {
+      var output = "```json {\"ok\":true} ```";
+
+      var normalized = ResponsesOutputValidator
+         .NormalizeStructuredJsonOutput(output);
+
+      Assert.Equal("{\"ok\":true}", normalized);
+   }
+
+   [Fact]
    public void ValidateStructuredOutputStripsJsonFencesForJsonObject()
    {
       var output = """

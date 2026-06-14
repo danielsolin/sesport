@@ -89,7 +89,7 @@ public static class ResponsesOutputValidator
    }
 
    private static readonly Regex FencedJsonRegex = new(
-      @"^\s*```(?:json)?[ \t]*\r?\n(?<content>.*)\r?\n```\s*$",
+      @"^\s*```(?:json)?\s*(?<content>.*?)\s*```\s*$",
       RegexOptions.IgnoreCase |
       RegexOptions.Singleline |
       RegexOptions.CultureInvariant
