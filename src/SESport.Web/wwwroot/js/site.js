@@ -357,6 +357,7 @@
       const url = button.dataset.checkSwedishParticipationUrl;
       const broadcastId = button.dataset.broadcastId;
       const cell = button.closest(participationCellSelector);
+      let keepPolling = false;
 
       if(!url || !broadcastId || !(cell instanceof HTMLElement))
       {
@@ -383,6 +384,7 @@
 
          if(payload && payload.queued === true)
          {
+            keepPolling = true;
             setQueuedParticipationCell(cell);
             startParticipationPolling();
             return;
@@ -415,7 +417,10 @@
       }
       finally
       {
-         pendingParticipationIds.delete(broadcastId);
+         if(!keepPolling)
+         {
+            pendingParticipationIds.delete(broadcastId);
+         }
          button.disabled = false;
          button.textContent = originalLabel;
       }
@@ -489,6 +494,7 @@
       wrapper.append(pending);
 
       cell.dataset.participationStatus = "pending";
+      updateParticipationRowStatus(cell, "pending");
       cell.append(wrapper);
    }
 
@@ -742,6 +748,11 @@
          if(typeof result.statusId === "string")
          {
             cell.dataset.participationStatus = result.statusId.trim();
+            updateParticipationRowStatus(cell, result.statusId.trim());
+         }
+         else
+         {
+            updateParticipationRowStatus(cell, "");
          }
 
          cell.append(
@@ -762,6 +773,11 @@
       if(statusId !== "")
       {
          cell.dataset.participationStatus = statusId;
+         updateParticipationRowStatus(cell, statusId);
+      }
+      else
+      {
+         updateParticipationRowStatus(cell, "");
       }
       const participation = typeof result.swedishParticipation === "string"
          && result.swedishParticipation.trim() !== ""
@@ -829,6 +845,35 @@
       initializeBroadcastParticipationRowChecks(cell);
    }
 
+   function updateParticipationRowStatus(cell, statusId)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const row = cell.closest("tr");
+
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const normalizedStatusId = typeof statusId === "string"
+         ? statusId.trim().toLowerCase()
+         : "";
+
+      if(normalizedStatusId === "running"
+         || normalizedStatusId === "pending")
+      {
+         row.dataset.participationStatus = normalizedStatusId;
+      }
+      else
+      {
+         delete row.dataset.participationStatus;
+      }
+   }
+
    function formatParticipationStatus(statusId)
    {
       if(typeof statusId !== "string" || statusId.trim() === "")
@@ -868,6 +913,7 @@
       pending.textContent = "Checking...";
       wrapper.append(pending);
 
+      updateParticipationRowStatus(cell, "pending");
       cell.append(wrapper);
    }
 

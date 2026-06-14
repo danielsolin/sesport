@@ -684,6 +684,26 @@ h2 {
    background: #edf3ee;
 }
 
+.admin-table-hover tbody tr[data-participation-status="running"] > td {
+   background: #fff6d9;
+}
+
+.admin-table-hover tbody tr[data-participation-status="pending"] > td {
+   background: #eef7ff;
+}
+
+.admin-table-hover
+   tbody
+   tr[data-participation-status="running"]:hover > td {
+   background: #fbeebb;
+}
+
+.admin-table-hover
+   tbody
+   tr[data-participation-status="pending"]:hover > td {
+   background: #ddeeff;
+}
+
 .admin-table th {
    color: var(--muted);
    font-size: 11px;
