@@ -111,7 +111,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          {
             turn++;
 
-            var response = await SendAsync(provider, request, cancellationToken);
+            var response = await SendAsync(
+               provider,
+               request,
+               cancellationToken
+            );
             rawResponse = await response.Content.ReadAsStringAsync(
                cancellationToken
             );
@@ -187,6 +191,14 @@ public sealed class LlamaServerClient : IAiProviderClient
             }
 
             TrimConversationMessages(messages);
+
+            if(prompt.MaxToolRounds is not null &&
+               toolRoundCount >= prompt.MaxToolRounds.Value)
+            {
+               throw new InvalidOperationException(
+                  $"Max tool rounds exceeded ({prompt.MaxToolRounds.Value})."
+               );
+            }
          }
 
          if(responseJson is null)

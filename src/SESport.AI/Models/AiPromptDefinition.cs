@@ -10,5 +10,6 @@ public sealed record AiPromptDefinition(
    string RequestOptionsJson,
    decimal? Temperature,
    int? MaxOutputTokens,
+   int? MaxToolRounds,
    bool Enabled
 );

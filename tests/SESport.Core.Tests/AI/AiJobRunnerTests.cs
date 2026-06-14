@@ -121,6 +121,7 @@ public class AiJobRunnerTests
                "{}",
                null,
                null,
+               null,
                true
             )
          );

@@ -19,6 +19,7 @@ public class TemplatePromptRendererTests
          "{}",
          null,
          null,
+         null,
          true
       );
 

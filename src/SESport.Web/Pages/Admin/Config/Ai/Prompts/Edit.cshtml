@@ -56,6 +56,10 @@
             <span>Max output tokens</span>
             <input asp-for="Prompt.MaxOutputTokens" type="number" min="1" />
          </label>
+         <label>
+            <span>Max tool rounds</span>
+            <input asp-for="Prompt.MaxToolRounds" type="number" min="1" />
+         </label>
       </div>
       <label>
          <span>System prompt</span>

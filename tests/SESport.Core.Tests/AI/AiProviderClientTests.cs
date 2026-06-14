@@ -96,6 +96,60 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncStopsAfterMaxToolRounds()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
+            "Full article content."
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var exception = await Assert.ThrowsAsync<
+         AiProviderExecutionException
+      >(
+         () => client.GenerateAsync(
+            CreateProvider("llama-server"),
+            CreateJob(
+               "text",
+               true,
+               CreateToolsJson(),
+               CreateToolsDescription()
+            ),
+            CreatePrompt(
+               CreateParticipationSchemaJson(),
+               maxToolRounds: 1
+            ),
+            CreateRenderedPrompt(),
+            "{}",
+            CancellationToken.None
+         )
+      );
+
+      Assert.Contains("Max tool rounds exceeded", exception.Message);
+      Assert.Single(handler.RequestBodies);
+   }
+
+   [Fact]
    public async Task OpenRouterGenerateAsyncUsesChatCompletionsEnvelope()
    {
       var handler = new RecordingHandler(
@@ -251,7 +305,8 @@ public class AiProviderClientTests
    }
 
    private static AiPromptDefinition CreatePrompt(
-      string? outputSchemaJson = """{"type":"object"}"""
+      string? outputSchemaJson = """{"type":"object"}""",
+      int? maxToolRounds = null
    )
    {
       return new AiPromptDefinition(
@@ -264,6 +319,7 @@ public class AiProviderClientTests
          "{}",
          null,
          null,
+         maxToolRounds,
          true
       );
    }

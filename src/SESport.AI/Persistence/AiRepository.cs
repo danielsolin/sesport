@@ -332,6 +332,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             request_options::text,
             temperature,
             max_output_tokens,
+            max_tool_rounds,
             enabled
          from ai_job_prompts
          where id = @id
@@ -351,7 +352,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          );
       }
 
-      return new AiPromptDefinition(
+         return new AiPromptDefinition(
          promptReader.GetGuid(0),
          promptReader.GetString(1),
          promptReader.GetInt32(2),
@@ -361,7 +362,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(promptReader, 6) ?? "{}",
          ReadNullableDecimal(promptReader, 7),
          ReadNullableInt32(promptReader, 8),
-         promptReader.GetBoolean(9)
+         ReadNullableInt32(promptReader, 9),
+         promptReader.GetBoolean(10)
       );
    }
 
@@ -381,6 +383,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             request_options::text,
             temperature,
             max_output_tokens,
+            max_tool_rounds,
             enabled
          from ai_job_prompts
          where job_id = @job_id
@@ -400,7 +403,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      return new AiPromptDefinition(
+         return new AiPromptDefinition(
          reader.GetGuid(0),
          reader.GetString(1),
          reader.GetInt32(2),
@@ -410,7 +413,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(reader, 6) ?? "{}",
          ReadNullableDecimal(reader, 7),
          ReadNullableInt32(reader, 8),
-         reader.GetBoolean(9)
+         ReadNullableInt32(reader, 9),
+         reader.GetBoolean(10)
       );
    }
 

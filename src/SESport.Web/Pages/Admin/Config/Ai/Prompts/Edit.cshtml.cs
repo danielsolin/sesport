@@ -83,6 +83,14 @@ public class EditModel(AiAdminRepository repository) : PageModel
          ModelState.AddModelError("Prompt.Version", "Version is required.");
       }
 
+      if (Prompt.MaxToolRounds is not null && Prompt.MaxToolRounds < 1)
+      {
+         ModelState.AddModelError(
+            "Prompt.MaxToolRounds",
+            "Max tool rounds must be at least 1."
+         );
+      }
+
       if (string.IsNullOrWhiteSpace(Prompt.SystemPrompt))
       {
          ModelState.AddModelError(

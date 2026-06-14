@@ -135,5 +135,7 @@ public sealed class AiPromptEditModel
 
    public int? MaxOutputTokens { get; set; }
 
+   public int? MaxToolRounds { get; set; }
+
    public bool Enabled { get; set; } = true;
 }
