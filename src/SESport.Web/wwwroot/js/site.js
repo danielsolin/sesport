@@ -785,11 +785,22 @@
       {
          const wrapper = document.createElement("div");
          wrapper.className = "broadcast-ai-check";
+         const line = document.createElement("div");
+         line.className = "broadcast-ai-check-line";
 
          const pending = document.createElement("span");
          pending.className = "broadcast-ai-check-pending";
          pending.textContent = formatParticipationStatus(statusId);
-         wrapper.append(pending);
+         line.append(pending);
+
+         const runLink = createParticipationRunLink(result.runId);
+
+         if(runLink)
+         {
+            line.append(runLink);
+         }
+
+         wrapper.append(line);
 
          cell.append(wrapper);
          initializeBroadcastParticipationRowChecks(cell);
