@@ -24,6 +24,14 @@ public sealed class LlamaServerClient : IAiProviderClient
       DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
    };
 
+   private const string ToolUsageInstruction =
+      """
+      When web_search returns promising results, inspect the most relevant
+      result pages with web_get_page before answering. Do not rely only on
+      search snippets when page text is available. Use web_get_page for the
+      top result or top few results if the answer depends on page details.
+      """;
+
    public string Kind => "llama-server";
 
    public LlamaServerClient(
@@ -488,7 +496,12 @@ public sealed class LlamaServerClient : IAiProviderClient
       bool includeTools
    )
    {
-      var payload = CreateBaseRequestPayload(provider, prompt, renderedPrompt);
+      var payload = CreateBaseRequestPayload(
+         provider,
+         prompt,
+         renderedPrompt,
+         includeTools
+      );
 
       if(includeTools)
       {
@@ -530,8 +543,9 @@ public sealed class LlamaServerClient : IAiProviderClient
                {
                   ["name"] = "web_get_page",
                   ["description"] =
-                     "Open a previously returned search result by id " +
-                     "and extract the full page text.",
+                     "Fetch the full page text for a search result id " +
+                     "returned by web_search. Use this after search when " +
+                     "page details matter more than the snippet.",
                   ["parameters"] = new JsonObject
                   {
                      ["type"] = "object",
@@ -559,7 +573,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private JsonObject CreateBaseRequestPayload(
       AiProviderDefinition provider,
       AiPromptDefinition prompt,
-      AiRenderedPrompt renderedPrompt
+      AiRenderedPrompt renderedPrompt,
+      bool includeTools
    )
    {
       var payload = new JsonObject
@@ -567,7 +582,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["model"] = provider.Model
       };
 
-      payload["messages"] = CreateMessages(renderedPrompt);
+      payload["messages"] = CreateMessages(renderedPrompt, includeTools);
 
       if(prompt.MaxOutputTokens is not null)
       {
@@ -583,18 +598,28 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private static JsonArray CreateMessages(
-      AiRenderedPrompt renderedPrompt
+      AiRenderedPrompt renderedPrompt,
+      bool includeTools
    )
    {
       var messages = new JsonArray();
+      var systemPrompt = renderedPrompt.SystemPrompt?.Trim();
 
-      if(!string.IsNullOrWhiteSpace(renderedPrompt.SystemPrompt))
+      if(includeTools)
+      {
+         systemPrompt = string.IsNullOrWhiteSpace(systemPrompt)
+            ? ToolUsageInstruction
+            : systemPrompt + Environment.NewLine + Environment.NewLine +
+               ToolUsageInstruction;
+      }
+
+      if(!string.IsNullOrWhiteSpace(systemPrompt))
       {
          messages.Add(
             new JsonObject
             {
                ["role"] = "system",
-               ["content"] = renderedPrompt.SystemPrompt.Trim()
+               ["content"] = systemPrompt
             }
          );
       }

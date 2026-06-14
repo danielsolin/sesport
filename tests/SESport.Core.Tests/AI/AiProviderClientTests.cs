@@ -83,6 +83,10 @@ public class AiProviderClientTests
       Assert.DoesNotContain("\"sources\"", result.RawResponseJson);
       Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);
+      Assert.Contains(
+         "When web_search returns promising results",
+         handler.RequestBodies[0]
+      );
       Assert.Contains("\"role\":\"user\"", handler.RequestBodies[0]);
       Assert.Contains("\"tools\":[{\"type\":\"function\"",
          handler.RequestBodies[0]);
