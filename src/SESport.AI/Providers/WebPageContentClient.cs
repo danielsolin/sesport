@@ -33,6 +33,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       RegexOptions.CultureInvariant
    );
 
+   private static readonly Regex NoisyHeadingTagRegex = new(
+      @"<(form|select|option|input|button|textarea|label|fieldset|legend)\b",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+   );
+
    private static readonly Regex BodyRegex = new(
       @"<body\b[^>]*>(?<html>.*?)</body>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -262,9 +267,21 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       foreach(Match match in HeadingRegex.Matches(candidate))
       {
-         var heading = CleanText(match.Groups["text"].Value);
+         var headingHtml = match.Groups["text"].Value;
+
+         if(NoisyHeadingTagRegex.IsMatch(headingHtml))
+         {
+            continue;
+         }
+
+         var heading = CleanText(headingHtml);
 
          if(string.IsNullOrWhiteSpace(heading))
+         {
+            continue;
+         }
+
+         if(heading.Length > 120)
          {
             continue;
          }

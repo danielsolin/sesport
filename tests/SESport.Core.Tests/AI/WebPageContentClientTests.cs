@@ -35,6 +35,22 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchSkipsNoisyHeadingsWithFormMarkup()
+   {
+      var handler = new RecordingHandler(CreateNoisyHeadingHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/noisy-heading",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.DoesNotContain("Calendar", page!.Headings);
+      Assert.DoesNotContain("2026/2027", page.Headings);
+   }
+
+   [Fact]
    public async Task FetchSkipsPdfResponses()
    {
       var handler = new PdfRecordingHandler();
@@ -63,6 +79,28 @@ public class WebPageContentClientTests
                <h1>Heading</h1>
                <p>First paragraph.</p>
                <p>Second paragraph.</p>
+            </article>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateNoisyHeadingHtml()
+   {
+      return """
+      <html>
+         <body>
+            <article>
+               <h2>
+                  Calendar
+                  <form class="seasonmenu select autosubmit" action="/res/index.asp" method="get">
+                     <select name="season" id="season">
+                        <option value="2027">2027/2028</option>
+                        <option value="2026" selected="selected">2026/2027</option>
+                     </select>
+                  </form>
+               </h2>
+               <p>Example body text.</p>
             </article>
          </body>
       </html>
