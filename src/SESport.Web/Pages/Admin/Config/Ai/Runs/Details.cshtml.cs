@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
+using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
 using SESport.Core.Formatting;
@@ -8,9 +9,16 @@ using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
 
-public class DetailsModel(AiRepository repository) : PageModel
+public class DetailsModel(
+   AiRepository repository,
+   IAiPromptRenderer promptRenderer
+) : PageModel
 {
    public AiRunDetail? Run { get; private set; }
+
+   public string SystemPromptText { get; private set; } = string.Empty;
+
+   public string RenderedPromptText { get; private set; } = string.Empty;
 
    public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns { get; private
       set; } = [];
@@ -47,9 +55,69 @@ public class DetailsModel(AiRepository repository) : PageModel
       if(Run is not null)
       {
          ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
+         var prompt = new AiPromptDefinition(
+            Run.PromptId,
+            Run.JobId,
+            Run.PromptVersion,
+            Run.SystemPrompt,
+            Run.UserPromptTemplate,
+            null,
+            "{}",
+            null,
+            null,
+            null,
+            true
+         );
+         var renderedPrompt = promptRenderer.Render(
+            prompt,
+            Run.InputPayloadJson
+         );
+         SystemPromptText = BuildSystemPromptText(
+            renderedPrompt.SystemPrompt,
+            Run.ProviderKind,
+            Run.RequiresWebSearch,
+            Run.ToolsDescription
+         );
+         RenderedPromptText = BuildRenderedPromptText(renderedPrompt);
       }
 
       return Run is null ? NotFound() : Page();
+   }
+
+   public static string BuildSystemPromptText(
+      string? systemPrompt,
+      string providerKind,
+      bool requiresWebSearch,
+      string? toolsDescription
+   )
+   {
+      if(string.IsNullOrWhiteSpace(systemPrompt))
+      {
+         return string.Empty;
+      }
+
+      if(!requiresWebSearch ||
+         !string.Equals(providerKind, "llama-server",
+            StringComparison.Ordinal))
+      {
+         return systemPrompt.Trim();
+      }
+
+      return string.Join(
+         Environment.NewLine + Environment.NewLine,
+         new[]
+         {
+            systemPrompt.Trim(),
+            toolsDescription?.Trim()
+         }.Where(value => !string.IsNullOrWhiteSpace(value))
+      );
+   }
+
+   public static string BuildRenderedPromptText(
+      AiRenderedPrompt renderedPrompt
+   )
+   {
+      return renderedPrompt.UserPrompt.Trim();
    }
 
    public static string FormatJson(string? value)

@@ -74,7 +74,7 @@ public class AiProviderClientTests
       Assert.Contains("\"role\":\"user\"", handler.RequestBodies[0]);
       Assert.Contains("\"tools\":[{\"type\":\"function\"",
          handler.RequestBodies[0]);
-      Assert.Contains("\"tool_choice\":\"auto\"",
+      Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[0]);
       Assert.Contains("\"name\":\"web_get_page\"",
          handler.RequestBodies[0]);
@@ -86,12 +86,8 @@ public class AiProviderClientTests
          handler.RequestBodies[2]);
       Assert.Contains("Article Title", handler.RequestBodies[2]);
       Assert.Contains("Full article content.", handler.RequestBodies[2]);
-      Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
-         handler.RequestBodies[0]
-      );
-      Assert.Contains(
-         "\"schema\":{\"type\":\"object\"",
+      Assert.DoesNotContain(
+         "\"response_format\"",
          handler.RequestBodies[0]
       );
       Assert.Single(webSearchClient.Queries);
@@ -159,6 +155,50 @@ public class AiProviderClientTests
       );
       Assert.Contains("\"url\":\"https://example.test/direct-page\"",
          result.ToolTraceJson);
+   }
+
+   [Fact]
+   public async Task LlamaServerGenerateAsyncUsesSchemaForNonToolJobs()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: false,
+            toolsJson: null,
+            toolsDescription: null
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Single(handler.RequestBodies);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[0]
+      );
+      Assert.Contains(
+         "\"schema\":{\"type\":\"object\"",
+         handler.RequestBodies[0]
+      );
    }
 
    [Fact]

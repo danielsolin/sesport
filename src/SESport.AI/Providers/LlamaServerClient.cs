@@ -523,7 +523,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       if(includeTools)
       {
          payload["tools"] = CreateToolsArray(job.ToolsJson);
-         payload["tool_choice"] = "auto";
+         payload["tool_choice"] = "required";
       }
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
@@ -561,12 +561,15 @@ public sealed class LlamaServerClient : IAiProviderClient
          payload["temperature"] = prompt.Temperature.Value;
       }
 
-      ResponsesRequestFormat.Apply(
-         payload,
-         job.OutputMode,
-         prompt.OutputSchemaJson,
-         $"prompt_{prompt.Id:N}"
-      );
+      if(!includeTools)
+      {
+         ResponsesRequestFormat.Apply(
+            payload,
+            job.OutputMode,
+            prompt.OutputSchemaJson,
+            $"prompt_{prompt.Id:N}"
+         );
+      }
 
       return payload;
    }
