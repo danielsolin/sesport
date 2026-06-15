@@ -33,8 +33,8 @@ public class AiJobRunnerTests
       Assert.Equal("""{"error":"boom"}""", result.RawResponseJson);
       Assert.Equal(2, result.ToolRoundCount);
       Assert.Equal(8123, result.ConversationCharacterCount);
-      Assert.Contains(
-         "Search the web and fetch the most relevant pages",
+      Assert.Equal(
+         "System" + Environment.NewLine + Environment.NewLine + "User",
          runRepository.StoredRun!.RenderedPrompt
       );
       Assert.NotNull(runRepository.UpdatedRun);
@@ -97,7 +97,6 @@ public class AiJobRunnerTests
                "provider",
                "json_object",
                null,
-               "Search the web and fetch the most relevant pages.",
                true,
                true,
                null

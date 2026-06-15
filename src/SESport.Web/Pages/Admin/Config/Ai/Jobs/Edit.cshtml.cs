@@ -128,14 +128,6 @@ public class EditModel(AiAdminRepository repository) : PageModel
                "Tools JSON is required when web search is enabled."
             );
          }
-
-         if(string.IsNullOrWhiteSpace(Job.ToolsDescription))
-         {
-            ModelState.AddModelError(
-               "Job.ToolsDescription",
-               "Tools description is required when web search is enabled."
-            );
-         }
       }
 
       if (!string.IsNullOrWhiteSpace(Job.ActivePromptId)

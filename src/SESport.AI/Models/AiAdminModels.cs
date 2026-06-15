@@ -57,8 +57,6 @@ public sealed class AiJobEditModel
 
    public string? ToolsJson { get; set; }
 
-   public string? ToolsDescription { get; set; }
-
    public bool RequiresWebSearch { get; set; } = true;
 
    public bool Enabled { get; set; } = true;
@@ -89,14 +87,11 @@ public sealed record AiRunDetail(
    Guid Id,
    string JobId,
    string JobLabel,
-   bool RequiresWebSearch,
-   string? ToolsDescription,
    Guid PromptId,
    int PromptVersion,
    string SystemPrompt,
    string UserPromptTemplate,
    string ProviderId,
-   string ProviderKind,
    string ProviderLabel,
    string? ProviderModel,
    string StatusId,

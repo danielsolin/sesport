@@ -516,8 +516,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          job,
          prompt,
          renderedPrompt,
-         includeTools,
-         job.ToolsDescription
+         includeTools
       );
 
       if(includeTools)
@@ -536,8 +535,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiJobDefinition job,
       AiPromptDefinition prompt,
       AiRenderedPrompt renderedPrompt,
-      bool includeTools,
-      string? toolsDescription
+      bool includeTools
    )
    {
       var payload = new JsonObject
@@ -546,9 +544,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       };
 
       payload["messages"] = CreateMessages(
-         renderedPrompt,
-         includeTools,
-         toolsDescription
+         renderedPrompt
       );
 
       if(prompt.MaxOutputTokens is not null)
@@ -575,21 +571,11 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private static JsonArray CreateMessages(
-      AiRenderedPrompt renderedPrompt,
-      bool includeTools,
-      string? toolsDescription
+      AiRenderedPrompt renderedPrompt
    )
    {
       var messages = new JsonArray();
       var systemPrompt = renderedPrompt.SystemPrompt?.Trim();
-
-      if(includeTools)
-      {
-         systemPrompt = AppendToolUsageInstruction(
-            systemPrompt,
-            toolsDescription
-         );
-      }
 
       if(!string.IsNullOrWhiteSpace(systemPrompt))
       {
@@ -611,24 +597,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       );
 
       return messages;
-   }
-
-   private static string? AppendToolUsageInstruction(
-      string? systemPrompt,
-      string? toolsDescription
-   )
-   {
-      var description = toolsDescription?.Trim();
-
-      if(string.IsNullOrWhiteSpace(description))
-      {
-         return systemPrompt;
-      }
-
-      return string.IsNullOrWhiteSpace(systemPrompt)
-         ? description
-         : systemPrompt + Environment.NewLine + Environment.NewLine +
-            description;
    }
 
    private static JsonArray CreateToolsArray(string? toolsJson)

@@ -46,8 +46,7 @@ public class AiProviderClientTests
          CreateJob(
             "text",
             true,
-            CreateToolsJson(),
-            CreateToolsDescription()
+            CreateToolsJson()
          ),
          CreatePrompt(CreateParticipationSchemaJson()),
          CreateRenderedPrompt(),
@@ -67,10 +66,6 @@ public class AiProviderClientTests
       Assert.DoesNotContain("\"sources\"", result.RawResponseJson);
       Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);
-      Assert.Contains(
-         CreateToolsDescription(),
-         handler.RequestBodies[0]
-      );
       Assert.Contains("\"role\":\"user\"", handler.RequestBodies[0]);
       Assert.Contains("\"tools\":[{\"type\":\"function\"",
          handler.RequestBodies[0]);
@@ -132,8 +127,7 @@ public class AiProviderClientTests
          CreateJob(
             "text",
             true,
-            CreateToolsJson(),
-            CreateToolsDescription()
+            CreateToolsJson()
          ),
          CreatePrompt(CreateParticipationSchemaJson()),
          CreateRenderedPrompt(),
@@ -175,8 +169,7 @@ public class AiProviderClientTests
          CreateJob(
             "json_schema",
             requiresWebSearch: false,
-            toolsJson: null,
-            toolsDescription: null
+            toolsJson: null
          ),
          CreatePrompt(CreateParticipationSchemaJson()),
          CreateRenderedPrompt(),
@@ -236,12 +229,11 @@ public class AiProviderClientTests
       >(
          () => client.GenerateAsync(
             CreateProvider("llama-server"),
-            CreateJob(
-               "text",
-               true,
-               CreateToolsJson(),
-               CreateToolsDescription()
-            ),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson()
+         ),
             CreatePrompt(
                CreateParticipationSchemaJson(),
                maxToolRounds: 1
@@ -324,8 +316,7 @@ public class AiProviderClientTests
    private static AiJobDefinition CreateJob(
       string outputMode = "json_object",
       bool requiresWebSearch = true,
-      string? toolsJson = null,
-      string? toolsDescription = null
+      string? toolsJson = null
    )
    {
       return new AiJobDefinition(
@@ -335,19 +326,10 @@ public class AiProviderClientTests
          "provider",
          outputMode,
          toolsJson,
-         toolsDescription,
          requiresWebSearch,
          true,
          null
       );
-   }
-
-   private static string CreateToolsDescription()
-   {
-      return
-         "When web_search returns promising results, inspect the most " +
-         "relevant result pages with web_get_page before answering. " +
-         "web_get_page can open either a search result id or a direct URL.";
    }
 
    private static string CreateToolsJson()

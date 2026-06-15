@@ -186,7 +186,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             provider_id,
             output_mode,
             tools_json::text,
-            tools_description,
             active_prompt_id,
             requires_web_search,
             enabled
@@ -214,10 +213,9 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          ProviderId = reader.GetString(3),
          OutputMode = reader.GetString(4),
          ToolsJson = ReadNullableString(reader, 5),
-         ToolsDescription = ReadNullableString(reader, 6),
-         ActivePromptId = ReadNullableGuid(reader, 7)?.ToString(),
-         RequiresWebSearch = reader.GetBoolean(8),
-         Enabled = reader.GetBoolean(9)
+         ActivePromptId = ReadNullableGuid(reader, 6)?.ToString(),
+         RequiresWebSearch = reader.GetBoolean(7),
+         Enabled = reader.GetBoolean(8)
       };
    }
 
@@ -241,7 +239,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             provider_id,
             output_mode,
             tools_json,
-            tools_description,
             active_prompt_id,
             requires_web_search,
             enabled
@@ -253,7 +250,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             @provider_id,
             @output_mode,
             @tools_json,
-            @tools_description,
             @active_prompt_id,
             @requires_web_search,
             @enabled
@@ -275,7 +271,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             provider_id = @provider_id,
             output_mode = @output_mode,
             tools_json = @tools_json,
-            tools_description = @tools_description,
             active_prompt_id = @active_prompt_id,
             requires_web_search = @requires_web_search,
             enabled = @enabled,
@@ -532,10 +527,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
       AddJsonbParameter(command, "tools_json", model.ToolsJson);
-      command.Parameters.AddWithValue(
-         "tools_description",
-         BlankToDbNull(model.ToolsDescription)
-      );
       command.Parameters.AddWithValue(
          "active_prompt_id",
          BlankToDbNullGuid(model.ActivePromptId)
