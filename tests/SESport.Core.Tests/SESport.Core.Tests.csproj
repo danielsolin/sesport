@@ -22,7 +22,6 @@
       <ProjectReference Include="..\..\src\SESport.Core\SESport.Core.csproj" />
       <ProjectReference Include="..\..\src\SESport.AI\SESport.AI.csproj" />
       <ProjectReference Include="..\..\src\SESport.Web\SESport.Web.csproj" />
-      <ProjectReference Include="..\..\tools\SESport.WebAutomation\SESport.WebAutomation.csproj" />
    </ItemGroup>
 
 </Project>
