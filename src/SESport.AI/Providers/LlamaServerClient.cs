@@ -118,6 +118,18 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                toolRoundCount
             );
+            toolTrace.Add(
+               CreateToolBudgetTraceEntry(
+                  turn,
+                  prompt.MaxToolRounds,
+                  toolRoundCount
+               )
+            );
+            await ReportToolTraceProgressAsync(
+               toolTrace,
+               toolTraceUpdated,
+               cancellationToken
+            );
             LogToolBudget(
                turn,
                prompt.MaxToolRounds,
@@ -226,6 +238,18 @@ public sealed class LlamaServerClient : IAiProviderClient
                baseSystemPrompt,
                prompt.MaxToolRounds,
                prompt.MaxToolRounds ?? 0
+            );
+            toolTrace.Add(
+               CreateToolBudgetTraceEntry(
+                  turn + 1,
+                  prompt.MaxToolRounds,
+                  prompt.MaxToolRounds ?? 0
+               )
+            );
+            await ReportToolTraceProgressAsync(
+               toolTrace,
+               toolTraceUpdated,
+               cancellationToken
             );
             LogToolBudget(
                turn + 1,
@@ -422,6 +446,37 @@ public sealed class LlamaServerClient : IAiProviderClient
             }).ToArray(),
             JsonOptions
          )
+      };
+   }
+
+   private static JsonObject CreateToolBudgetTraceEntry(
+      int turn,
+      int? maxToolRounds,
+      int toolRoundCount
+   )
+   {
+      if(maxToolRounds is null)
+      {
+         return new JsonObject
+         {
+            ["kind"] = "budget",
+            ["turn"] = turn,
+            ["enabled"] = false
+         };
+      }
+
+      var remainingToolCalls = Math.Max(maxToolRounds.Value - toolRoundCount,
+         0);
+
+      return new JsonObject
+      {
+         ["kind"] = "budget",
+         ["turn"] = turn,
+         ["enabled"] = true,
+         ["remaining"] = remainingToolCalls,
+         ["max"] = maxToolRounds.Value,
+         ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
+            $"{maxToolRounds.Value}."
       };
    }
 

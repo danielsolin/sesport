@@ -60,6 +60,7 @@ public class AiProviderClientTests
          + "\"Sources\":[\"https://example.test/roster\"]}";
 
       Assert.Equal(expectedOutput, result.OutputText);
+      Assert.Contains("\"kind\":\"budget\"", result.ToolTraceJson);
       Assert.Contains("\"kind\":\"assistant\"", result.ToolTraceJson);
       Assert.Contains("\"kind\":\"tool\"", result.ToolTraceJson);
       Assert.Contains("Article Title", result.ToolTraceJson);
@@ -319,6 +320,7 @@ public class AiProviderClientTests
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
+      Assert.Contains("\"kind\":\"budget\"", result.ToolTraceJson);
       Assert.Equal(2, handler.RequestBodies.Count);
       Assert.Contains(
          "Tool calls remaining: 1 of 1.",

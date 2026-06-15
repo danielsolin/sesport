@@ -16,6 +16,7 @@ public sealed class DetailsMarkupTests
 
       Assert.Contains("<h2>System prompt</h2>", html);
       Assert.Contains("<h2>Rendered prompt</h2>", html);
+      Assert.Contains("Tool budget", html);
       Assert.DoesNotContain("Tools description", html);
    }
 }
