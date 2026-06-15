@@ -513,6 +513,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var payload = CreateBaseRequestPayload(
          provider,
+         job,
          prompt,
          renderedPrompt,
          includeTools,
@@ -532,6 +533,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private JsonObject CreateBaseRequestPayload(
       AiProviderDefinition provider,
+      AiJobDefinition job,
       AiPromptDefinition prompt,
       AiRenderedPrompt renderedPrompt,
       bool includeTools,
@@ -558,6 +560,13 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          payload["temperature"] = prompt.Temperature.Value;
       }
+
+      ResponsesRequestFormat.Apply(
+         payload,
+         job.OutputMode,
+         prompt.OutputSchemaJson,
+         $"prompt_{prompt.Id:N}"
+      );
 
       return payload;
    }

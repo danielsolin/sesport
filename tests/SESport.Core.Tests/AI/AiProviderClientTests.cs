@@ -86,6 +86,14 @@ public class AiProviderClientTests
          handler.RequestBodies[2]);
       Assert.Contains("Article Title", handler.RequestBodies[2]);
       Assert.Contains("Full article content.", handler.RequestBodies[2]);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[0]
+      );
+      Assert.Contains(
+         "\"schema\":{\"type\":\"object\"",
+         handler.RequestBodies[0]
+      );
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
       Assert.Equal(10, webSearchClient.Queries[0].MaxResults);
