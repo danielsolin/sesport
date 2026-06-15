@@ -1,14 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
+using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
+using SESport.AI.Rendering;
 using SESport.Core.Formatting;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
 
-public class DetailsModel(AiRepository repository) : PageModel
+public class DetailsModel(
+   AiRepository repository,
+   IAiPromptRenderer promptRenderer
+) : PageModel
 {
    public AiRunDetail? Run { get; private set; }
 
@@ -52,10 +57,42 @@ public class DetailsModel(AiRepository repository) : PageModel
       {
          ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
          SystemPromptText = Run.SystemPrompt;
-         RenderedPromptText = Run.RenderedPrompt;
+         RenderedPromptText = BuildRenderedPromptText(
+            promptRenderer,
+            Run.SystemPrompt,
+            Run.UserPromptTemplate,
+            Run.InputPayloadJson
+         );
       }
 
       return Run is null ? NotFound() : Page();
+   }
+
+   public static string BuildRenderedPromptText(
+      IAiPromptRenderer promptRenderer,
+      string systemPrompt,
+      string userPromptTemplate,
+      string inputPayloadJson
+   )
+   {
+      var prompt = new AiPromptDefinition(
+         Guid.Empty,
+         string.Empty,
+         0,
+         systemPrompt,
+         userPromptTemplate,
+         null,
+         "{}",
+         null,
+         null,
+         null,
+         true
+      );
+
+      return promptRenderer.Render(
+         prompt,
+         inputPayloadJson
+      ).UserPrompt;
    }
 
    public static string FormatJson(string? value)
