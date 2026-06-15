@@ -174,12 +174,6 @@ public class DetailsModel(AiRepository repository) : PageModel
                continue;
             }
 
-            if(string.Equals(kind, "budget", StringComparison.Ordinal))
-            {
-               builder.BudgetEntries.Add(ParseBudgetEntry(entry));
-               continue;
-            }
-
             if(string.Equals(kind, "tool", StringComparison.Ordinal))
             {
                builder.ToolResults.Add(ParseToolResult(entry));
@@ -295,17 +289,6 @@ public class DetailsModel(AiRepository repository) : PageModel
          GetString(entry, "query"),
          GetString(entry, "id"),
          FormatDisplayValue(GetProperty(entry, "result"))
-      );
-   }
-
-   private static ToolTraceBudgetViewModel ParseBudgetEntry(
-      JsonElement entry
-   )
-   {
-      return new ToolTraceBudgetViewModel(
-         GetInt32(entry, "remaining"),
-         GetInt32(entry, "max"),
-         GetString(entry, "content") ?? ""
       );
    }
 
@@ -485,18 +468,11 @@ public class DetailsModel(AiRepository repository) : PageModel
       string Result
    );
 
-   public sealed record ToolTraceBudgetViewModel(
-      int? Remaining,
-      int? Max,
-      string Content
-   );
-
    public sealed record ToolTraceTurnViewModel(
       int Turn,
       string? FinishReason,
       string? AssistantContent,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
-      IReadOnlyList<ToolTraceBudgetViewModel> BudgetEntries,
       IReadOnlyList<ToolTraceToolResultViewModel> ToolResults,
       IReadOnlyList<ToolTraceBadgeViewModel> CompactBadges,
       string? AssistantPreview
@@ -512,8 +488,6 @@ public class DetailsModel(AiRepository repository) : PageModel
 
       public List<ToolTraceCallViewModel> ToolCalls { get; } = [];
 
-      public List<ToolTraceBudgetViewModel> BudgetEntries { get; } = [];
-
       public List<ToolTraceToolResultViewModel> ToolResults { get; } = [];
 
       public ToolTraceTurnViewModel ToViewModel()
@@ -523,7 +497,6 @@ public class DetailsModel(AiRepository repository) : PageModel
             FinishReason,
             AssistantContent,
             ToolCalls,
-            BudgetEntries,
             ToolResults,
             BuildCompactBadges(),
             BuildAssistantPreview()
@@ -540,15 +513,6 @@ public class DetailsModel(AiRepository repository) : PageModel
          if(!string.IsNullOrWhiteSpace(AssistantContent))
          {
             badges.Add(new("Assistant", "tool-trace-badge-assistant"));
-         }
-
-         if(BudgetEntries.Count > 0)
-         {
-            var lastBudget = BudgetEntries[^1];
-            badges.Add(new(
-               lastBudget.Content,
-               "tool-trace-badge-budget"
-            ));
          }
 
          foreach(var toolCallGroup in ToolCalls

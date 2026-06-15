@@ -235,29 +235,6 @@
                            </div>
                         }
 
-                        @if (turn.BudgetEntries.Count > 0)
-                        {
-                           <div class="tool-trace-block">
-                              <div class="tool-trace-block-label">
-                                 Tool budget
-                              </div>
-                              <div class="tool-trace-items">
-                                 @foreach (var budgetEntry in turn
-                                    .BudgetEntries)
-                                 {
-                                    <div class="tool-trace-item">
-                                       <div class="tool-trace-item-title">
-                                          <code>budget</code>
-                                       </div>
-                                       <div>
-                                          @budgetEntry.Content
-                                       </div>
-                                    </div>
-                                 }
-                              </div>
-                           </div>
-                        }
-
                         @if (turn.ToolCalls.Count > 0)
                         {
                            <div class="tool-trace-block">

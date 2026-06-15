@@ -19,7 +19,6 @@ public sealed class DetailsMarkupTests
       Assert.Contains("summary>Rendered prompt</summary>", html);
       Assert.Contains("summary>Output</summary>", html);
       Assert.Contains("tool-trace-turn-header-main", html);
-      Assert.Contains("Tool budget", html);
       Assert.DoesNotContain("Full trace", html);
       Assert.Contains("Round", html);
       Assert.DoesNotContain("Tools description", html);
