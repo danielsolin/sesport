@@ -14,9 +14,14 @@ public sealed class DetailsMarkupTests
       );
       var html = await File.ReadAllTextAsync(htmlPath);
 
-      Assert.Contains("<h2>System prompt</h2>", html);
-      Assert.Contains("<h2>Rendered prompt</h2>", html);
+      Assert.Contains("summary>Input payload</summary>", html);
+      Assert.Contains("summary>System prompt</summary>", html);
+      Assert.Contains("summary>Rendered prompt</summary>", html);
+      Assert.Contains("summary>Output</summary>", html);
+      Assert.Contains("tool-trace-turn-header-main", html);
       Assert.Contains("Tool budget", html);
+      Assert.DoesNotContain("Full trace", html);
+      Assert.Contains("Round", html);
       Assert.DoesNotContain("Tools description", html);
    }
 }

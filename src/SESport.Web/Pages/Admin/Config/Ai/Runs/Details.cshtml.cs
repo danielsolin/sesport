@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
 using SESport.Core.Formatting;
@@ -71,6 +72,68 @@ public class DetailsModel(AiRepository repository) : PageModel
       }
 
       return value.Trim();
+   }
+
+   public static string FormatToolCall(ToolTraceCallViewModel toolCall)
+   {
+      var arguments = TryParseArguments(toolCall.Arguments);
+
+      if(arguments is null || arguments.Count == 0)
+      {
+         return toolCall.Name;
+      }
+
+      var parts = new List<string>();
+      var find = GetString(arguments, "find");
+      var query = GetString(arguments, "query");
+      var id = GetString(arguments, "id");
+      var url = GetString(arguments, "url");
+      var limit = GetInt32(arguments, "limit");
+
+      if(string.Equals(toolCall.Name, "web_search", StringComparison.Ordinal))
+      {
+         if(!string.IsNullOrWhiteSpace(query))
+         {
+            parts.Add(FormatQuoted(query));
+         }
+
+         if(limit is not null)
+         {
+            parts.Add(limit.Value.ToString());
+         }
+      }
+      else if(string.Equals(
+         toolCall.Name,
+         "web_find_in_page",
+         StringComparison.Ordinal
+      ) || string.Equals(
+         toolCall.Name,
+         "web_get_page",
+         StringComparison.Ordinal
+      ))
+      {
+         if(!string.IsNullOrWhiteSpace(id))
+         {
+            parts.Add(FormatQuoted(id));
+         }
+         else if(!string.IsNullOrWhiteSpace(url))
+         {
+            parts.Add(FormatQuoted(url));
+         }
+
+         if(!string.IsNullOrWhiteSpace(find))
+         {
+            parts.Add(FormatQuoted(find));
+         }
+      }
+      else
+      {
+         parts.Add(FormatCompactJson(arguments));
+      }
+
+      return parts.Count == 0
+         ? toolCall.Name
+         : $"{toolCall.Name}({string.Join(",", parts)})";
    }
 
    private static IReadOnlyList<ToolTraceTurnViewModel> ParseToolTrace(
@@ -292,6 +355,62 @@ public class DetailsModel(AiRepository repository) : PageModel
    private static JsonElement? GetProperty(JsonElement element, string name)
    {
       return element.TryGetProperty(name, out var property) ? property : null;
+   }
+
+   private static JsonObject? TryParseArguments(string arguments)
+   {
+      if(string.IsNullOrWhiteSpace(arguments))
+      {
+         return null;
+      }
+
+      try
+      {
+         return JsonDocument.Parse(arguments).RootElement.ValueKind ==
+            JsonValueKind.Object
+            ? JsonSerializer.Deserialize<JsonObject>(arguments)
+            : null;
+      }
+      catch(JsonException)
+      {
+         return null;
+      }
+   }
+
+   private static string? GetString(JsonObject? element, string name)
+   {
+      if(element is null || !element.TryGetPropertyValue(name, out var value))
+      {
+         return null;
+      }
+
+      return value is JsonValue jsonValue &&
+         jsonValue.TryGetValue<string>(out var text)
+         ? text
+         : value?.ToString();
+   }
+
+   private static int? GetInt32(JsonObject? element, string name)
+   {
+      if(element is null || !element.TryGetPropertyValue(name, out var value))
+      {
+         return null;
+      }
+
+      return value is JsonValue jsonValue &&
+         jsonValue.TryGetValue<int>(out var number)
+         ? number
+         : null;
+   }
+
+   private static string FormatQuoted(string value)
+   {
+      return "'" + value.Replace("'", "\\'") + "'";
+   }
+
+   private static string FormatCompactJson(JsonObject value)
+   {
+      return JsonSerializer.Serialize(value);
    }
 
    private static string FormatDisplayValue(JsonElement? value)
