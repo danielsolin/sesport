@@ -85,7 +85,7 @@ public sealed class AiJobRunner(
          AiJobRunStatus.Running,
          request.CorrelationId,
          request.InputPayloadJson,
-         renderedPrompt.ToPromptText(),
+         renderedPrompt.UserPrompt.Trim(),
          rawRequestJson,
          null,
          null,

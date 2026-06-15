@@ -34,7 +34,7 @@ public class AiJobRunnerTests
       Assert.Equal(2, result.ToolRoundCount);
       Assert.Equal(8123, result.ConversationCharacterCount);
       Assert.Equal(
-         "System" + Environment.NewLine + Environment.NewLine + "User",
+         "User",
          runRepository.StoredRun!.RenderedPrompt
       );
       Assert.NotNull(runRepository.UpdatedRun);
