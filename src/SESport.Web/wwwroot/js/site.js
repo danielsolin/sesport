@@ -371,6 +371,7 @@
       const url = button.dataset.checkSwedishParticipationUrl;
       const broadcastId = button.dataset.broadcastId;
       const cell = button.closest(participationCellSelector);
+      const previousRunId = getParticipationRunId(cell);
       let keepPolling = false;
 
       if(!url || !broadcastId || !(cell instanceof HTMLElement))
@@ -399,6 +400,10 @@
          if(payload && payload.queued === true)
          {
             keepPolling = true;
+            if(previousRunId !== "")
+            {
+               cell.dataset.participationQueuedFromRunId = previousRunId;
+            }
             setQueuedParticipationCell(cell);
             startParticipationPolling();
             return;
@@ -598,13 +603,15 @@
                return;
             }
 
-            updateParticipationCellByResult(result);
-
             const broadcastId = typeof result.id === "string"
                ? result.id
                : "";
+            const cell = getParticipationCellByBroadcastId(broadcastId);
             const statusId = typeof result.statusId === "string"
                ? result.statusId.trim()
+               : "";
+            const resultRunId = typeof result.runId === "string"
+               ? result.runId.trim()
                : "";
             const isFinal =
                (typeof result.error === "string"
@@ -613,6 +620,21 @@
                   && result.swedishParticipation.trim() !== "") ||
                statusId === "completed" ||
                statusId === "failed";
+            const queuedFromRunId = cell instanceof HTMLElement
+               ? (cell.dataset.participationQueuedFromRunId ?? "").trim()
+               : "";
+            const isStaleQueuedResult =
+               isFinal &&
+               queuedFromRunId !== "" &&
+               resultRunId !== "" &&
+               resultRunId === queuedFromRunId;
+
+            if(isStaleQueuedResult)
+            {
+               return;
+            }
+
+            updateParticipationCellByResult(result);
 
             if(broadcastId && isFinal)
             {
@@ -739,6 +761,18 @@
       updateParticipationCell(cell, result);
    }
 
+   function getParticipationCellByBroadcastId(broadcastId)
+   {
+      if(typeof broadcastId !== "string" || broadcastId.trim() === "")
+      {
+         return null;
+      }
+
+      return document.querySelector(
+         `${participationCellSelector}[data-broadcast-id='${broadcastId}']`
+      );
+   }
+
    function updateParticipationCell(cell, result)
    {
       if(!(cell instanceof HTMLElement))
@@ -759,6 +793,8 @@
 
       if(typeof result.error === "string" && result.error.trim() !== "")
       {
+         updateParticipationRunId(cell, result.runId);
+
          if(typeof result.statusId === "string")
          {
             cell.dataset.participationStatus = result.statusId.trim();
@@ -784,6 +820,7 @@
       const statusId = typeof result.statusId === "string"
          ? result.statusId.trim()
          : "";
+      updateParticipationRunId(cell, result.runId);
       if(statusId !== "")
       {
          cell.dataset.participationStatus = statusId;
@@ -858,6 +895,33 @@
 
       cell.append(wrapper);
       initializeBroadcastParticipationRowChecks(cell);
+   }
+
+   function updateParticipationRunId(cell, runId)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      if(typeof runId === "string" && runId.trim() !== "")
+      {
+         cell.dataset.participationRunId = runId.trim();
+      }
+
+      delete cell.dataset.participationQueuedFromRunId;
+   }
+
+   function getParticipationRunId(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      return typeof cell.dataset.participationRunId === "string"
+         ? cell.dataset.participationRunId.trim()
+         : "";
    }
 
    function updateParticipationRowStatus(cell, statusId)
