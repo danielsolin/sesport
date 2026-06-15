@@ -5,6 +5,8 @@ using NpgsqlTypes;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
+using SESport.Core.Formatting;
 
 namespace SESport.AI.Persistence;
 
@@ -20,13 +22,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       var where = new List<string>();
 
-      var dateStart = new DateTimeOffset(
-         DateTime.SpecifyKind(
-            date.ToDateTime(TimeOnly.MinValue),
-            DateTimeKind.Utc
-         )
+      var dateStart = TimeZoneHelper.ToUtc(
+         date,
+         TimeOnly.MinValue,
+         SportDay.TimeZoneId
       );
-      var dateEnd = dateStart.AddDays(1);
+      var dateEnd = TimeZoneHelper.ToUtc(
+         date.AddDays(1),
+         TimeOnly.MinValue,
+         SportDay.TimeZoneId
+      );
 
       where.Add("r.started_at >= @start");
       where.Add("r.started_at < @end");
@@ -535,6 +540,48 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", runId);
       AddJsonbParameter(command, "tool_trace", toolTraceJson);
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task<int> FailStaleRunningRunsAsync(
+      TimeSpan maxAge,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set
+            status_id = 'failed',
+            error_message = @error_message,
+            completed_at = now(),
+            duration_seconds = extract(
+               epoch from now() - started_at
+            )
+         where status_id = 'running'
+            and started_at < @cutoff
+         returning id
+         """;
+
+      var cutoff = DateTimeOffset.UtcNow.Subtract(maxAge);
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("cutoff", cutoff);
+      command.Parameters.AddWithValue(
+         "error_message",
+         "Run timed out after 1 hour."
+      );
+
+      var updatedCount = 0;
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         updatedCount++;
+      }
+
+      return updatedCount;
    }
 
    private static void AddRunParameters(

@@ -19,4 +19,9 @@ public interface IAiJobRunRepository
       AiJobRun run,
       CancellationToken cancellationToken
    );
+
+   Task<int> FailStaleRunningRunsAsync(
+      TimeSpan maxAge,
+      CancellationToken cancellationToken
+   );
 }

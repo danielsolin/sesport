@@ -27,6 +27,7 @@ builder.Services.AddScoped<AuditRepository>();
 builder.Services.AddScoped<BroadcastRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
 builder.Services.AddHostedService<BroadcastParticipationCheckWorker>();
+builder.Services.AddHostedService<AiRunTimeoutWorker>();
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
    .AddCookie(

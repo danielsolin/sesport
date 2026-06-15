@@ -306,5 +306,13 @@ public class AiJobRunnerTests
 
          return Task.CompletedTask;
       }
+
+      public Task<int> FailStaleRunningRunsAsync(
+         TimeSpan maxAge,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult(0);
+      }
    }
 }

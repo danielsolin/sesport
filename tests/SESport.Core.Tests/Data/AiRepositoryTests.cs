@@ -1,0 +1,383 @@
+using Npgsql;
+using SESport.AI.Models;
+using SESport.AI.Persistence;
+using SESport.Core.Domain;
+using SESport.Core.Formatting;
+
+namespace SESport.Core.Tests.Data;
+
+public sealed class AiRepositoryTests
+{
+   [Fact]
+   public async Task GetRunsAsyncUsesLocalDateBoundaries()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      var localDate = new DateOnly(2026, 6, 15);
+      var startedAt = TimeZoneHelper.ToUtc(
+         localDate,
+         new TimeOnly(0, 52, 1),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         startedAt
+      );
+
+      try
+      {
+         var previousDayRuns = await repository.GetRunsAsync(
+            localDate.AddDays(-1),
+            null,
+            null,
+            CancellationToken.None
+         );
+         var localDayRuns = await repository.GetRunsAsync(
+            localDate,
+            null,
+            null,
+            CancellationToken.None
+         );
+
+         Assert.DoesNotContain(previousDayRuns, run => run.Id == runId);
+         Assert.Contains(localDayRuns, run => run.Id == runId);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task FailStaleRunningRunsAsyncMarksOldRunsAsFailed()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId
+      );
+
+      try
+      {
+         var updatedCount = await repository.FailStaleRunningRunsAsync(
+            TimeSpan.FromHours(1),
+            CancellationToken.None
+         );
+
+         Assert.True(updatedCount >= 1);
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select status_id, error_message, completed_at, duration_seconds
+            from ai_job_runs
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", runId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal("failed", reader.GetString(0));
+         Assert.Equal("Run timed out after 1 hour.", reader.GetString(1));
+         _ = reader.GetFieldValue<DateTimeOffset>(2);
+         Assert.True(reader.GetDecimal(3) >= 3600m);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   private static NpgsqlDataSource CreateDataSource()
+   {
+      var connectionString =
+         Environment.GetEnvironmentVariable("ConnectionStrings__Default") ??
+         "Host=localhost;Port=5432;Database=sesport;" +
+         "Username=sesport;Password=sesport";
+
+      return new NpgsqlDataSourceBuilder(connectionString).Build();
+   }
+
+   private static async Task InsertProviderAsync(
+      NpgsqlDataSource dataSource,
+      string providerId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into ai_providers (
+            id,
+            label,
+            kind,
+            base_address,
+            model,
+            api_key_source,
+            request_options,
+            enabled,
+            created_at,
+            updated_at
+         )
+         values (
+            @id,
+            @label,
+            'llama-server',
+            'http://127.0.0.1:8080/v1/',
+            'gpt',
+            'key:secret',
+            '{}'::jsonb,
+            true,
+            now(),
+            now()
+         )
+         """;
+      command.Parameters.AddWithValue("id", providerId);
+      command.Parameters.AddWithValue("label", "Test provider");
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertJobAsync(
+      NpgsqlDataSource dataSource,
+      string jobId,
+      string providerId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into ai_jobs (
+            id,
+            label,
+            provider_id,
+            output_mode,
+            enabled,
+            created_at,
+            updated_at,
+            requires_web_search
+         )
+         values (
+            @id,
+            @label,
+            @provider_id,
+            'json_object',
+            true,
+            now(),
+            now(),
+            false
+         )
+         """;
+      command.Parameters.AddWithValue("id", jobId);
+      command.Parameters.AddWithValue("label", "Test job");
+      command.Parameters.AddWithValue("provider_id", providerId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertPromptAsync(
+      NpgsqlDataSource dataSource,
+      Guid promptId,
+      string jobId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into ai_job_prompts (
+            id,
+            job_id,
+            version,
+            system_prompt,
+            user_prompt_template,
+            output_schema,
+            temperature,
+            max_output_tokens,
+            enabled,
+            created_at,
+            updated_at,
+            request_options,
+            max_tool_rounds
+         )
+         values (
+            @id,
+            @job_id,
+            1,
+            'System',
+            'User',
+            null,
+            null,
+            null,
+            true,
+            now(),
+            now(),
+            '{}'::jsonb,
+            null
+         )
+         """;
+      command.Parameters.AddWithValue("id", promptId);
+      command.Parameters.AddWithValue("job_id", jobId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid runId,
+      string jobId,
+      Guid promptId,
+      string providerId,
+      DateTimeOffset? startedAt = null
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into ai_job_runs (
+            id,
+            job_id,
+            prompt_id,
+            provider_id,
+            status_id,
+            correlation_id,
+            provider_model,
+            input_payload,
+            rendered_prompt,
+            raw_request,
+            raw_response,
+            tool_trace,
+            output_text,
+            error_message,
+            started_at,
+            completed_at,
+            duration_seconds,
+            input_tokens,
+            output_tokens,
+            reasoning_tokens,
+            tool_round_count,
+            conversation_character_count
+         )
+         values (
+            @id,
+            @job_id,
+            @prompt_id,
+            @provider_id,
+            'running',
+            null,
+            'gpt',
+            '{}'::jsonb,
+            'Rendered',
+            null,
+            null,
+            null,
+            null,
+            null,
+            @started_at,
+            null,
+            null,
+            null,
+            null,
+            null,
+            0,
+            0
+         )
+         """;
+      command.Parameters.AddWithValue("id", runId);
+      command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.AddWithValue("prompt_id", promptId);
+      command.Parameters.AddWithValue("provider_id", providerId);
+      command.Parameters.AddWithValue(
+         "started_at",
+         startedAt ?? DateTimeOffset.UtcNow.AddHours(-2)
+      );
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid runId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_job_runs
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", runId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeletePromptAsync(
+      NpgsqlDataSource dataSource,
+      Guid promptId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_job_prompts
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", promptId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteJobAsync(
+      NpgsqlDataSource dataSource,
+      string jobId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_jobs
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", jobId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteProviderAsync(
+      NpgsqlDataSource dataSource,
+      string providerId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_providers
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", providerId);
+      await command.ExecuteNonQueryAsync();
+   }
+}
