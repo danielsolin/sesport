@@ -39,6 +39,10 @@ Several console applications live in `tools/legacy/` for occasional use:
   including `Microsoft.NET.SDK.WorkloadAutoImportPropsLocator`.
   When that happens, verify with project tests or per-project builds
   instead of re-investigating the same restore failure.
+- Hard rule: Never seed application data from database migrations.
+  Use migrations only for schema changes. If data must be added or
+  changed, do it manually via `psql` so existing data cannot be altered
+  by surprise.
 - Hard rule: Avoid magic strings where practical. Prefer shared constants,
   enums, or helpers such as `TrackedEntityTypeIds`.
 - Hard rule: No lines in any file should exceed 80 characters wide unless it's

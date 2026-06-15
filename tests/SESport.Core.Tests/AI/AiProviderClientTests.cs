@@ -71,6 +71,10 @@ public class AiProviderClientTests
          handler.RequestBodies[0]);
       Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[0]);
+      Assert.Contains("\"tool_choice\":\"auto\"",
+         handler.RequestBodies[1]);
+      Assert.Contains("\"tool_choice\":\"auto\"",
+         handler.RequestBodies[2]);
       Assert.Contains("\"name\":\"web_get_page\"",
          handler.RequestBodies[0]);
       Assert.Contains("\"role\":\"tool\"",
@@ -81,9 +85,15 @@ public class AiProviderClientTests
          handler.RequestBodies[2]);
       Assert.Contains("Article Title", handler.RequestBodies[2]);
       Assert.Contains("Full article content.", handler.RequestBodies[2]);
+      Assert.Contains("\"name\":\"web_find_in_page\"",
+         handler.RequestBodies[0]);
       Assert.DoesNotContain(
          "\"response_format\"",
          handler.RequestBodies[0]
+      );
+      Assert.DoesNotContain(
+         "\"tool_choice\":\"required\"",
+         handler.RequestBodies[1]
       );
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
@@ -152,6 +162,68 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncCachesPageFetchesForFindTools()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallWithFindResponseJson(),
+         CreateLlamaFindPageCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
+            "Full article content mentioning Sweden and Swedish players.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson()
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.Contains("\"name\":\"web_get_page\"",
+         result.ToolTraceJson);
+      Assert.Contains("\"find\":\"Sweden\"",
+         result.ToolTraceJson);
+      Assert.Contains("\"name\":\"web_find_in_page\"",
+         result.ToolTraceJson);
+      Assert.Single(webPageContentClient.Urls);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesSchemaForNonToolJobs()
    {
       var handler = new RecordingHandler(
@@ -195,10 +267,11 @@ public class AiProviderClientTests
    }
 
    [Fact]
-   public async Task LlamaServerGenerateAsyncStopsAfterMaxToolRounds()
+   public async Task LlamaServerGenerateAsyncFallsBackAfterMaxToolRounds()
    {
       var handler = new RecordingHandler(
-         CreateLlamaToolCallResponseJson()
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaFinalResponseJson()
       );
       var webSearchClient = new RecordingWebSearchClient(
          new WebSearchResult(
@@ -224,28 +297,45 @@ public class AiProviderClientTests
          new NoopLogger<LlamaServerClient>()
       );
 
-      var exception = await Assert.ThrowsAsync<
-         AiProviderExecutionException
-      >(
-         () => client.GenerateAsync(
-            CreateProvider("llama-server"),
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
          CreateJob(
             "text",
             true,
             CreateToolsJson()
          ),
-            CreatePrompt(
-               CreateParticipationSchemaJson(),
-               maxToolRounds: 1
-            ),
-            CreateRenderedPrompt(),
-            "{}",
-            CancellationToken.None
-         )
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            maxToolRounds: 1
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
       );
 
-      Assert.Contains("Max tool rounds exceeded", exception.Message);
-      Assert.Single(handler.RequestBodies);
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains(
+         "Tool calls remaining: 1 of 1.",
+         handler.RequestBodies[0]
+      );
+      Assert.Contains(
+         "Tool calls remaining: 0 of 1.",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains("\"tool_choice\":\"required\"",
+         handler.RequestBodies[0]);
+      Assert.Contains("\"tools\":[",
+         handler.RequestBodies[0]);
+      Assert.DoesNotContain("\"tools\":[",
+         handler.RequestBodies[1]);
+      Assert.DoesNotContain("\"tool_choice\"",
+         handler.RequestBodies[1]);
    }
 
    [Fact]
@@ -389,6 +479,48 @@ public class AiProviderClientTests
                            type = "string"
                         }
                      },
+                     anyOf = new object[]
+                     {
+                        new
+                        {
+                           required = new[] { "id" }
+                        },
+                        new
+                        {
+                           required = new[] { "url" }
+                        }
+                     },
+                     additionalProperties = false
+                  }
+               }
+            },
+            new
+            {
+               type = "function",
+               function = new
+               {
+                  name = "web_find_in_page",
+                  description =
+                     "Find matching text in a fetched page or direct URL.",
+                  parameters = new
+                  {
+                     type = "object",
+                     properties = new
+                     {
+                        id = new
+                        {
+                           type = "string"
+                        },
+                        url = new
+                        {
+                           type = "string"
+                        },
+                        find = new
+                        {
+                           type = "string"
+                        }
+                     },
+                     required = new[] { "find" },
                      anyOf = new object[]
                      {
                         new
@@ -597,6 +729,64 @@ public class AiProviderClientTests
                     "name": "web_get_page",
                     "arguments":
                       "{\"url\":\"https://example.test/direct-page\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
+   private static string CreateLlamaPageCallWithFindResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_2",
+                  "type": "function",
+                  "function": {
+                    "name": "web_get_page",
+                    "arguments":
+                      "{\"id\":\"s1_1\",\"find\":\"Sweden\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
+   private static string CreateLlamaFindPageCallResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_3",
+                  "type": "function",
+                  "function": {
+                    "name": "web_find_in_page",
+                    "arguments":
+                      "{\"id\":\"s1_1\",\"find\":\"Swedish\"}"
                   }
                 }
               ]

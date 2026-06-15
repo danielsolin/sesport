@@ -83,6 +83,40 @@ public class WebPageContentClientTests
       Assert.Null(page);
    }
 
+   [Fact]
+   public async Task FetchTranslatesFlagClassesToCountryNames()
+   {
+      var handler = new RecordingHandler(CreateFlagHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/flags",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("Sweden", page!.MainText);
+      Assert.Contains("Example Player", page.MainText);
+      Assert.DoesNotContain("Detected flags:", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchTranslatesCommonCountryAttributes()
+   {
+      var handler = new RecordingHandler(CreateCountryAttributeHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/countries",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("Sweden", page!.MainText);
+      Assert.Contains("Norway", page.MainText);
+      Assert.Contains("Finland", page.MainText);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -112,10 +146,13 @@ public class WebPageContentClientTests
             <article>
                <h2>
                   Calendar
-                  <form class="seasonmenu select autosubmit" action="/res/index.asp" method="get">
+                  <form class="seasonmenu select autosubmit"
+                        action="/res/index.asp" method="get">
                      <select name="season" id="season">
                         <option value="2027">2027/2028</option>
-                        <option value="2026" selected="selected">2026/2027</option>
+                        <option value="2026" selected="selected">
+                           2026/2027
+                        </option>
                      </select>
                   </form>
                </h2>
@@ -143,6 +180,37 @@ public class WebPageContentClientTests
                   "appName": "NHL"
                };
             </script>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateFlagHtml()
+   {
+      return """
+      <html>
+         <body>
+            <article>
+               <div class="participant">
+                  <span class="flag se __text_mode_custom_bg__"></span>
+                  <span class="name">Example Player</span>
+               </div>
+            </article>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateCountryAttributeHtml()
+   {
+      return """
+      <html>
+         <body>
+            <article>
+               <span class="flag-icon flag-icon-se"></span>
+               <span data-country="no" aria-label="Norway"></span>
+               <img alt="Finland flag" title="Finland" src="/fi.svg" />
+            </article>
          </body>
       </html>
       """;

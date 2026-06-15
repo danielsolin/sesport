@@ -1,4 +1,5 @@
 using System.Net;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Json;
@@ -52,6 +53,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
    );
 
+   private static readonly Regex CountryElementRegex = new(
+      @"<[^>]*(class|alt|title|aria-label|data-country|data-country-code|" +
+      @"data-country-name|data-iso)\s*=\s*[""'][^""']+[""'][^>]*>",
+      RegexOptions.IgnoreCase |
+      RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
+   private static readonly Lazy<IReadOnlyDictionary<string, string>>
+      CountryNameLookup = new(BuildCountryNameLookup);
+
    private static readonly Regex BodyRegex = new(
       @"<body\b[^>]*>(?<html>.*?)</body>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -59,13 +71,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
    );
 
    private static readonly Regex StripBlockRegex = new(
-      @"<(script|style|noscript|iframe|svg|footer|header|nav|aside|form|button|input|select|option|textarea|canvas|video|audio)\b[^>]*>.*?</\1>",
+      @"<(script|style|noscript|iframe|svg|footer|header|nav|aside|" +
+      @"form|button|input|select|option|textarea|canvas|video|audio)\b" +
+      @"[^>]*>.*?</\1>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
       RegexOptions.CultureInvariant
    );
 
    private static readonly Regex BlockTagRegex = new(
-      @"</?\s*(p|div|section|article|main|li|tr|td|th|table|ul|ol|blockquote|pre|h[1-6]|figcaption|figure|header|footer|nav|aside|dl|dt|dd|time|br|hr)\b[^>]*>",
+      @"</?\s*(p|div|section|article|main|li|tr|td|th|table|ul|ol|" +
+      @"blockquote|pre|h[1-6]|figcaption|figure|header|footer|nav|" +
+      @"aside|dl|dt|dd|time|br|hr)\b[^>]*>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
       RegexOptions.CultureInvariant
    );
@@ -234,6 +250,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static MainTextResult ExtractMainText(string rawHtml)
    {
       var candidate = ExtractContentCandidate(rawHtml);
+      candidate = NormalizeCountryMarkers(candidate);
 
       candidate = StripBlockRegex.Replace(candidate, " ");
       candidate = CommentRegex.Replace(candidate, " ");
@@ -261,7 +278,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
 
       var lines = candidate
-         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+         .Split(
+            '\n',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries
+         )
          .Where(line => !string.IsNullOrWhiteSpace(line))
          .ToArray();
 
@@ -819,6 +840,326 @@ public sealed class WebPageContentClient : IWebPageContentClient
       return WebUtility.HtmlDecode(value)
          .ReplaceLineEndings(" ")
          .Trim();
+   }
+
+   private static IReadOnlyList<string> ExtractFlagLabels(string rawHtml)
+   {
+      var labels = new List<string>();
+
+      foreach(Match match in CountryElementRegex.Matches(rawHtml))
+      {
+         var element = match.Value;
+         AddLabelFromAttribute(labels, element, "aria-label");
+         AddLabelFromAttribute(labels, element, "title");
+         AddLabelFromAttribute(labels, element, "alt");
+         AddLabelFromAttribute(labels, element, "data-country");
+         AddLabelFromAttribute(labels, element, "data-country-code");
+         AddLabelFromAttribute(labels, element, "data-country-name");
+         AddLabelFromAttribute(labels, element, "data-iso");
+
+         var classValue = ExtractAttributeValue(element, "class");
+
+         foreach(var token in classValue.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries
+         ))
+         {
+            if(TryGetCountryLabelFromClassToken(token, out var label))
+            {
+               AddUniqueLabel(labels, label);
+            }
+         }
+      }
+
+      return labels;
+   }
+
+   private static void AddLabelFromAttribute(
+      ICollection<string> labels,
+      string element,
+      string attributeName
+   )
+   {
+      var value = ExtractAttributeValue(element, attributeName);
+
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return;
+      }
+
+      if(TryGetCountryLabelFromRawValue(value, out var label))
+      {
+         AddUniqueLabel(labels, label);
+      }
+   }
+
+   private static string NormalizeCountryMarkers(string html)
+   {
+      return CountryElementRegex.Replace(
+         html,
+         match =>
+         {
+            var element = match.Value;
+
+            if(TryExtractCountryLabelFromElement(element, out var label))
+            {
+               return " " + label + " ";
+            }
+
+            return element;
+         }
+      );
+   }
+
+   private static bool TryExtractCountryLabelFromElement(
+      string element,
+      out string label
+   )
+   {
+      label = "";
+
+      AddLabelFromAttributeCandidate(element, "aria-label", ref label);
+      AddLabelFromAttributeCandidate(element, "title", ref label);
+      AddLabelFromAttributeCandidate(element, "alt", ref label);
+      AddLabelFromAttributeCandidate(element, "data-country", ref label);
+      AddLabelFromAttributeCandidate(
+         element,
+         "data-country-code",
+         ref label
+      );
+      AddLabelFromAttributeCandidate(
+         element,
+         "data-country-name",
+         ref label
+      );
+      AddLabelFromAttributeCandidate(element, "data-iso", ref label);
+
+      if(!string.IsNullOrWhiteSpace(label))
+      {
+         return true;
+      }
+
+      var classValue = ExtractAttributeValue(element, "class");
+
+      foreach(var token in classValue.Split(
+         ' ',
+         StringSplitOptions.RemoveEmptyEntries |
+         StringSplitOptions.TrimEntries
+      ))
+      {
+         if(TryGetCountryLabelFromClassToken(token, out label))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static void AddLabelFromAttributeCandidate(
+      string element,
+      string attributeName,
+      ref string label
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(label))
+      {
+         return;
+      }
+
+      var value = ExtractAttributeValue(element, attributeName);
+
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return;
+      }
+
+      if(TryGetCountryLabelFromRawValue(value, out label))
+      {
+         return;
+      }
+   }
+
+   private static void AddUniqueLabel(
+      ICollection<string> labels,
+      string label
+   )
+   {
+      if(string.IsNullOrWhiteSpace(label) ||
+         labels.Contains(label, StringComparer.OrdinalIgnoreCase))
+      {
+         return;
+      }
+
+      labels.Add(label);
+   }
+
+   private static string ExtractAttributeValue(
+      string element,
+      string attributeName
+   )
+   {
+      var pattern =
+         $@"\b{Regex.Escape(attributeName)}\s*=\s*[""'](?<value>[^""']+)[""']";
+
+      var match = Regex.Match(
+         element,
+         pattern,
+         RegexOptions.IgnoreCase |
+         RegexOptions.Singleline |
+         RegexOptions.CultureInvariant
+      );
+
+      return match.Success
+         ? WebUtility.HtmlDecode(match.Groups["value"].Value).Trim()
+         : "";
+   }
+
+   private static bool TryGetCountryLabelFromClassToken(
+      string token,
+      out string label
+   )
+   {
+      label = "";
+
+      if(TryGetCountryName(token, out label))
+      {
+         return true;
+      }
+
+      foreach(var separator in new[] { '-', '_' })
+      {
+         var separatorIndex = token.LastIndexOf(separator);
+
+         if(separatorIndex < 0 || separatorIndex == token.Length - 1)
+         {
+            continue;
+         }
+
+         var suffix = token[(separatorIndex + 1)..];
+
+         if(TryGetCountryName(suffix, out label))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool TryGetCountryLabelFromRawValue(
+      string value,
+      out string label
+   )
+   {
+      label = "";
+
+      var cleaned = CleanText(value);
+
+      if(string.IsNullOrWhiteSpace(cleaned))
+      {
+         return false;
+      }
+
+      if(TryGetCountryName(cleaned, out label))
+      {
+         return true;
+      }
+
+      if(TryGetCountryLabelByName(cleaned, out label))
+      {
+         return true;
+      }
+
+      var stripped = StripCountryDecorators(cleaned);
+
+      if(stripped.Length > 0 && TryGetCountryName(stripped, out label))
+      {
+         return true;
+      }
+
+      if(stripped.Length > 0 && TryGetCountryLabelByName(stripped, out label))
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   private static string StripCountryDecorators(string value)
+   {
+      var stripped = Regex.Replace(
+         value,
+         @"\b(flag|country|national|team)\b",
+         "",
+         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+      );
+
+      return stripped
+         .Replace("  ", " ")
+         .Trim(' ', '-', '_', '|', '/', '\\');
+   }
+
+   private static bool TryGetCountryName(
+      string code,
+      out string label
+   )
+   {
+      label = "";
+
+      try
+      {
+         var region = new RegionInfo(code.ToUpperInvariant());
+         label = region.EnglishName;
+         return true;
+      }
+      catch(ArgumentException)
+      {
+         return false;
+      }
+   }
+
+   private static bool TryGetCountryLabelByName(
+      string value,
+      out string label
+   )
+   {
+      label = "";
+
+      var key = value.Trim().ToLowerInvariant();
+      if(!CountryNameLookup.Value.TryGetValue(key, out var matchedLabel))
+      {
+         return false;
+      }
+
+      label = matchedLabel;
+      return true;
+   }
+
+   private static IReadOnlyDictionary<string, string> BuildCountryNameLookup()
+   {
+      var lookup = new Dictionary<string, string>(StringComparer.Ordinal);
+
+      foreach(var culture in CultureInfo
+         .GetCultures(CultureTypes.SpecificCultures))
+      {
+         try
+         {
+            var region = new RegionInfo(culture.Name);
+            var key = region.EnglishName.Trim().ToLowerInvariant();
+
+            if(!lookup.ContainsKey(key))
+            {
+               lookup[key] = region.EnglishName;
+            }
+         }
+         catch(ArgumentException)
+         {
+         }
+      }
+
+      return lookup;
    }
 
    private sealed record MainTextResult(

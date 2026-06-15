@@ -88,8 +88,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       );
       var toolState = new ToolLoopState();
       var messages = (JsonArray)request["messages"]!;
+      var baseSystemPrompt = renderedPrompt.SystemPrompt?.Trim();
       var toolRoundCount = 0;
       var turn = 0;
+      var toolBudgetExhausted = false;
 
       try
       {
@@ -110,6 +112,18 @@ public sealed class LlamaServerClient : IAiProviderClient
          while(true)
          {
             turn++;
+            ApplyToolBudgetPrompt(
+               messages,
+               baseSystemPrompt,
+               prompt.MaxToolRounds,
+               toolRoundCount
+            );
+            LogToolBudget(
+               turn,
+               prompt.MaxToolRounds,
+               toolRoundCount
+            );
+            requestJson = AiRequestJsonSerializer.Serialize(request);
 
             var response = await SendAsync(
                provider,
@@ -190,15 +204,93 @@ public sealed class LlamaServerClient : IAiProviderClient
                );
             }
 
+            if(job.RequiresWebSearch)
+            {
+               request["tool_choice"] = "auto";
+            }
+
             TrimConversationMessages(messages);
 
             if(prompt.MaxToolRounds is not null &&
                toolRoundCount >= prompt.MaxToolRounds.Value)
             {
-               throw new InvalidOperationException(
-                  $"Max tool rounds exceeded ({prompt.MaxToolRounds.Value})."
+               toolBudgetExhausted = true;
+               break;
+            }
+         }
+
+         if(toolBudgetExhausted)
+         {
+            ApplyToolBudgetPrompt(
+               messages,
+               baseSystemPrompt,
+               prompt.MaxToolRounds,
+               prompt.MaxToolRounds ?? 0
+            );
+            LogToolBudget(
+               turn + 1,
+               prompt.MaxToolRounds,
+               prompt.MaxToolRounds ?? 0
+            );
+
+            request = CreateFinalRequestPayload(
+               request,
+               job,
+               prompt
+            );
+            requestJson = AiRequestJsonSerializer.Serialize(request);
+            turn++;
+
+            var finalResponse = await SendAsync(
+               provider,
+               request,
+               cancellationToken
+            );
+            rawResponse = await finalResponse.Content.ReadAsStringAsync(
+               cancellationToken
+            );
+
+            if(!finalResponse.IsSuccessStatusCode)
+            {
+               throw new HttpRequestException(
+                  CreateFailureMessage(
+                     finalResponse.StatusCode,
+                     rawResponse
+                  ),
+                  null,
+                  finalResponse.StatusCode
                );
             }
+
+            responseJson = JsonDocument.Parse(rawResponse).RootElement
+               .Deserialize<JsonObject>(JsonOptions);
+
+            if(responseJson is null)
+            {
+               throw new InvalidOperationException(
+                  "llama-server returned an empty response."
+               );
+            }
+
+            LogResponse("final", turn, responseJson);
+            if(TryGetToolCalls(responseJson, out var finalToolCalls))
+            {
+               toolTrace.Add(
+                  CreateAssistantTraceEntry(turn, responseJson, finalToolCalls)
+               );
+            }
+            else
+            {
+               toolTrace.Add(
+                  CreateAssistantTraceEntry(turn, responseJson, [])
+               );
+            }
+
+            await ReportToolTraceProgressAsync(
+               toolTrace,
+               toolTraceUpdated,
+               cancellationToken
+            );
          }
 
          if(responseJson is null)
@@ -358,6 +450,12 @@ public sealed class LlamaServerClient : IAiProviderClient
          "web_get_page",
          StringComparison.Ordinal
       );
+      var isFindInPageTool = string.Equals(
+         toolCall.Name,
+         "web_find_in_page",
+         StringComparison.Ordinal
+      );
+      var find = ExtractFind(toolCall.Arguments);
 
       return new JsonObject
       {
@@ -370,6 +468,9 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["limit"] = isSearchTool ? ExtractLimit(toolCall.Arguments) : null,
          ["id"] = isGetPageTool ? ExtractId(toolCall.Arguments) : null,
          ["url"] = isGetPageTool ? ExtractUrl(toolCall.Arguments) : null,
+         ["find"] = isFindInPageTool || !string.IsNullOrWhiteSpace(find)
+            ? find
+            : null,
          ["result"] = toolResult
       };
    }
@@ -466,15 +567,17 @@ public sealed class LlamaServerClient : IAiProviderClient
       var query = ExtractQuery(toolCall.Arguments);
       var limit = ExtractLimit(toolCall.Arguments);
       var id = ExtractId(toolCall.Arguments);
+      var find = ExtractFind(toolCall.Arguments);
 
       Logger.LogDebug(
          "llama-server tool:{Step} name={Name} query={Query} " +
-         "limit={Limit} id={Id}",
+         "limit={Limit} id={Id} find={Find}",
          step,
          toolCall.Name,
          TruncateForLog(query, 240),
          limit,
-         TruncateForLog(id, 120)
+         TruncateForLog(id, 120),
+         TruncateForLog(find, 120)
       );
    }
 
@@ -528,6 +631,89 @@ public sealed class LlamaServerClient : IAiProviderClient
       MergeRequestOptions(payload, provider.RequestOptionsJson);
       MergeRequestOptions(payload, prompt.RequestOptionsJson);
       return payload;
+   }
+
+   private static JsonObject CreateFinalRequestPayload(
+      JsonObject request,
+      AiJobDefinition job,
+      AiPromptDefinition prompt
+   )
+   {
+      var finalRequest = (JsonObject)request.DeepClone();
+      finalRequest.Remove("tools");
+      finalRequest.Remove("tool_choice");
+
+      ResponsesRequestFormat.Apply(
+         finalRequest,
+         job.OutputMode,
+         prompt.OutputSchemaJson,
+         $"prompt_{prompt.Id:N}"
+      );
+
+      return finalRequest;
+   }
+
+   private static void ApplyToolBudgetPrompt(
+      JsonArray messages,
+      string? baseSystemPrompt,
+      int? maxToolRounds,
+      int toolRoundCount
+   )
+   {
+      if(maxToolRounds is null)
+      {
+         return;
+      }
+
+      var remainingToolCalls = Math.Max(maxToolRounds.Value - toolRoundCount,
+         0);
+      var budgetPrompt = $"Tool calls remaining: {remainingToolCalls} of " +
+         $"{maxToolRounds.Value}.";
+      var systemPrompt = string.IsNullOrWhiteSpace(baseSystemPrompt)
+         ? budgetPrompt
+         : $"{baseSystemPrompt}{Environment.NewLine}{Environment.NewLine}" +
+            budgetPrompt;
+      var systemMessage = new JsonObject
+      {
+         ["role"] = "system",
+         ["content"] = systemPrompt
+      };
+
+      var systemIndex = FindSystemMessageIndex(messages);
+
+      if(systemIndex < 0)
+      {
+         messages.Insert(0, systemMessage);
+         return;
+      }
+
+      messages[systemIndex] = systemMessage;
+   }
+
+   private void LogToolBudget(
+      int turn,
+      int? maxToolRounds,
+      int toolRoundCount
+   )
+   {
+      if(maxToolRounds is null || !Logger.IsEnabled(LogLevel.Debug))
+      {
+         return;
+      }
+
+      var remainingToolCalls = Math.Max(maxToolRounds.Value - toolRoundCount,
+         0);
+      var prompt = $"Tool calls remaining: {remainingToolCalls} of " +
+         $"{maxToolRounds.Value}.";
+
+      Logger.LogDebug(
+         "llama-server turn:{Turn} tool_budget={Remaining}/{Max} " +
+         "system_prompt={SystemPrompt}",
+         turn,
+         remainingToolCalls,
+         maxToolRounds.Value,
+         TruncateForLog(prompt, 120)
+      );
    }
 
    private JsonObject CreateBaseRequestPayload(
@@ -657,10 +843,45 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          var id = ExtractId(toolCall.Arguments);
          var url = ExtractUrl(toolCall.Arguments);
+         var find = ExtractFind(toolCall.Arguments);
+
+         if(!string.IsNullOrWhiteSpace(find))
+         {
+            return await FormatPageFindResultsAsync(
+               id,
+               url,
+               find,
+               searchResultsById,
+               toolState,
+               cancellationToken
+            );
+         }
+
          return await FormatPageContentAsync(
             id,
             url,
             searchResultsById,
+            toolState,
+            cancellationToken
+         );
+      }
+
+      if(string.Equals(
+         toolCall.Name,
+         "web_find_in_page",
+         StringComparison.Ordinal
+      ))
+      {
+         var id = ExtractId(toolCall.Arguments);
+         var url = ExtractUrl(toolCall.Arguments);
+         var find = ExtractFind(toolCall.Arguments);
+
+         return await FormatPageFindResultsAsync(
+            id,
+            url,
+            find,
+            searchResultsById,
+            toolState,
             cancellationToken
          );
       }
@@ -776,6 +997,28 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       messages.Add(assistantMessage);
+   }
+
+   private static int FindSystemMessageIndex(JsonArray messages)
+   {
+      for(var index = 0; index < messages.Count; index++)
+      {
+         if(messages[index] is not JsonObject message)
+         {
+            continue;
+         }
+
+         if(string.Equals(
+            message["role"]?.GetValue<string>(),
+            "system",
+            StringComparison.Ordinal
+         ))
+         {
+            return index;
+         }
+      }
+
+      return -1;
    }
 
    private static bool TryGetAssistantToolCalls(
@@ -997,6 +1240,33 @@ public sealed class LlamaServerClient : IAiProviderClient
       return "";
    }
 
+   private static string ExtractFind(string arguments)
+   {
+      if(string.IsNullOrWhiteSpace(arguments))
+      {
+         return "";
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(arguments);
+         var root = document.RootElement;
+
+         if(
+            TryGetStringProperty(root, "find", out var find) &&
+            !string.IsNullOrWhiteSpace(find)
+         )
+         {
+            return find;
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return "";
+   }
+
    private static bool TryGetStringProperty(
       JsonElement element,
       string propertyName,
@@ -1052,59 +1322,43 @@ public sealed class LlamaServerClient : IAiProviderClient
       string id,
       string url,
       IDictionary<string, WebSearchResult> searchResultsById,
+      ToolLoopState toolState,
       CancellationToken cancellationToken
    )
    {
-      var searchResult = default(WebSearchResult);
-      var hasSearchResult = !string.IsNullOrWhiteSpace(id) &&
-         searchResultsById.TryGetValue(id, out searchResult);
-
-      if(!hasSearchResult && string.IsNullOrWhiteSpace(url))
+      if(!TryResolvePageTarget(
+         id,
+         url,
+         searchResultsById,
+         out var pageTarget,
+         out var error
+      ))
       {
          return JsonSerializer.Serialize(
             new
             {
-               error = "Missing search result id or URL."
+               error,
+               id,
+               url
             },
             JsonOptions
          );
       }
 
-      if(!hasSearchResult)
-      {
-         if(!TryValidatePageUrl(url, out var normalizedUrl, out var error))
-         {
-            return JsonSerializer.Serialize(
-               new
-               {
-                  error,
-                  url
-               },
-               JsonOptions
-            );
-         }
-
-         url = normalizedUrl;
-      }
-
-      var pageContent = await WebPageContentClient.FetchAsync(
-         hasSearchResult ? searchResult!.Url : url,
+      var pageContent = await GetPageContentAsync(
+         pageTarget.Url,
+         toolState,
          cancellationToken
       );
 
       if(pageContent is null)
       {
-         var pageReference = hasSearchResult ? id : url;
-         var pageTitle = hasSearchResult ? searchResult!.Title : url;
-         var pageUrl = hasSearchResult ? searchResult!.Url : url;
-         var pageSnippet = hasSearchResult ? searchResult!.Snippet : null;
-
          return FormatPageContentText(
-            hasSearchResult ? "Page id" : "Page URL",
-            pageReference,
-            pageTitle,
-            pageUrl,
-            pageSnippet,
+            pageTarget.ReferenceLabel,
+            pageTarget.ReferenceValue,
+            pageTarget.Title,
+            pageTarget.Url,
+            pageTarget.SearchSnippet,
             null,
             null,
             "Unable to fetch page content."
@@ -1112,14 +1366,92 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return FormatPageContentText(
-         hasSearchResult ? "Page id" : "Page URL",
-         hasSearchResult ? id : url,
+         pageTarget.ReferenceLabel,
+         pageTarget.ReferenceValue,
          pageContent.Title,
          pageContent.Url,
-         hasSearchResult ? searchResult!.Snippet : null,
+         pageTarget.SearchSnippet,
          pageContent.PublishedAt,
          pageContent.Headings,
          pageContent.MainText
+      );
+   }
+
+   private async Task<string> FormatPageFindResultsAsync(
+      string id,
+      string url,
+      string find,
+      IDictionary<string, WebSearchResult> searchResultsById,
+      ToolLoopState toolState,
+      CancellationToken cancellationToken
+   )
+   {
+      if(string.IsNullOrWhiteSpace(find))
+      {
+         return JsonSerializer.Serialize(
+            new
+            {
+               error = "Missing search term."
+            },
+            JsonOptions
+         );
+      }
+
+      if(!TryResolvePageTarget(
+         id,
+         url,
+         searchResultsById,
+         out var pageTarget,
+         out var error
+      ))
+      {
+         return JsonSerializer.Serialize(
+            new
+            {
+               error,
+               id,
+               url,
+               find
+            },
+            JsonOptions
+         );
+      }
+
+      var pageContent = await GetPageContentAsync(
+         pageTarget.Url,
+         toolState,
+         cancellationToken
+      );
+
+      if(pageContent is null)
+      {
+         return FormatPageContentText(
+            pageTarget.ReferenceLabel,
+            pageTarget.ReferenceValue,
+            pageTarget.Title,
+            pageTarget.Url,
+            pageTarget.SearchSnippet,
+            null,
+            null,
+            "Unable to fetch page content."
+         );
+      }
+
+      var matches = FindPageMatches(pageContent, find);
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            reference_label = pageTarget.ReferenceLabel,
+            reference_value = pageTarget.ReferenceValue,
+            find,
+            title = pageContent.Title,
+            url = pageContent.Url,
+            published_at = pageContent.PublishedAt?.ToString("O"),
+            match_count = matches.Count,
+            matches
+         },
+         JsonOptions
       );
    }
 
@@ -1179,6 +1511,172 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       normalizedUrl = absoluteUrl.ToString();
       return true;
+   }
+
+   private static bool TryResolvePageTarget(
+      string id,
+      string url,
+      IDictionary<string, WebSearchResult> searchResultsById,
+      out PageTarget pageTarget,
+      out string error
+   )
+   {
+      pageTarget = null!;
+      error = "";
+
+      if(!string.IsNullOrWhiteSpace(id) &&
+         searchResultsById.TryGetValue(id, out var searchResult))
+      {
+         pageTarget = new PageTarget(
+            "Page id",
+            id,
+            searchResult.Url,
+            searchResult.Title,
+            searchResult.Snippet
+         );
+         return true;
+      }
+
+      if(string.IsNullOrWhiteSpace(url))
+      {
+         error = "Missing search result id or URL.";
+         return false;
+      }
+
+      if(!TryValidatePageUrl(url, out var normalizedUrl, out error))
+      {
+         return false;
+      }
+
+      pageTarget = new PageTarget(
+         "Page URL",
+         normalizedUrl,
+         normalizedUrl,
+         normalizedUrl,
+         null
+      );
+      return true;
+   }
+
+   private async Task<WebPageContent?> GetPageContentAsync(
+      string url,
+      ToolLoopState toolState,
+      CancellationToken cancellationToken
+   )
+   {
+      if(toolState.PageContentCache.TryGetValue(url, out var cachedContent))
+      {
+         return cachedContent;
+      }
+
+      var pageContent = await WebPageContentClient.FetchAsync(
+         url,
+         cancellationToken
+      );
+      toolState.PageContentCache[url] = pageContent;
+      return pageContent;
+   }
+
+   private static List<PageMatch> FindPageMatches(
+      WebPageContent pageContent,
+      string find
+   )
+   {
+      var matches = new List<PageMatch>();
+      var seenSnippets = new HashSet<string>(StringComparer.Ordinal);
+
+      AddSnippetMatch(
+         matches,
+         seenSnippets,
+         "title",
+         pageContent.Title,
+         find
+      );
+
+      foreach(var heading in pageContent.Headings)
+      {
+         AddSnippetMatch(matches, seenSnippets, "heading", heading, find);
+      }
+
+      foreach(var snippet in ExtractTextSnippets(pageContent.MainText, find))
+      {
+         AddSnippetMatch(matches, seenSnippets, "text", snippet, find);
+      }
+
+      return matches;
+   }
+
+   private static void AddSnippetMatch(
+      ICollection<PageMatch> matches,
+      ISet<string> seenSnippets,
+      string section,
+      string snippet,
+      string find
+   )
+   {
+      if(string.IsNullOrWhiteSpace(snippet) ||
+         snippet.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0)
+      {
+         return;
+      }
+
+      var normalizedSnippet = snippet.Trim();
+
+      if(!seenSnippets.Add(normalizedSnippet))
+      {
+         return;
+      }
+
+      matches.Add(new PageMatch(section, normalizedSnippet));
+   }
+
+   private static IEnumerable<string> ExtractTextSnippets(
+      string text,
+      string find,
+      int contextLength = 120,
+      int maxMatches = 5
+   )
+   {
+      if(string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(find))
+      {
+         yield break;
+      }
+
+      var searchIndex = 0;
+      var matches = 0;
+
+      while(matches < maxMatches)
+      {
+         var index = text.IndexOf(
+            find,
+            searchIndex,
+            StringComparison.OrdinalIgnoreCase
+         );
+
+         if(index < 0)
+         {
+            yield break;
+         }
+
+         var start = Math.Max(0, index - contextLength);
+         var end = Math.Min(text.Length, index + find.Length + contextLength);
+         var snippet = text[start..end].ReplaceLineEndings(" ").Trim();
+
+         if(start > 0)
+         {
+            snippet = "..." + snippet;
+         }
+
+         if(end < text.Length)
+         {
+            snippet += "...";
+         }
+
+         yield return snippet;
+
+         searchIndex = index + Math.Max(find.Length, 1);
+         matches++;
+      }
    }
 
    private static bool IsBlockedHost(string host)
@@ -1385,9 +1883,25 @@ public sealed class LlamaServerClient : IAiProviderClient
       string Arguments
    );
 
+   private sealed record PageTarget(
+      string ReferenceLabel,
+      string ReferenceValue,
+      string Url,
+      string Title,
+      string? SearchSnippet
+   );
+
+   private sealed record PageMatch(
+      string Section,
+      string Snippet
+   );
+
    private sealed class ToolLoopState
    {
       public int SearchSequence { get; set; }
+
+      public Dictionary<string, WebPageContent?> PageContentCache { get; } =
+         new(StringComparer.OrdinalIgnoreCase);
    }
 
 }
