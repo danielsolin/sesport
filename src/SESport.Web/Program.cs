@@ -5,7 +5,16 @@ using SESport.Web.Services;
 using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile(
+   "appsettings.Workers.json",
+   optional: true,
+   reloadOnChange: false
+);
 var adminPassword = builder.Configuration["Admin:Password"];
+var enableAiBackgroundWorkers = builder.Configuration.GetValue(
+   "Ai:EnableBackgroundWorkers",
+   builder.Environment.IsDevelopment()
+);
 var defaultConnectionString =
    "Host=localhost;Port=5432;Database=sesport;" +
    "Username=sesport;Password=sesport";
@@ -25,8 +34,11 @@ builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
 builder.Services.AddScoped<BroadcastRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
-builder.Services.AddHostedService<AiPendingRunWorker>();
-builder.Services.AddHostedService<AiRunTimeoutWorker>();
+if(enableAiBackgroundWorkers)
+{
+   builder.Services.AddHostedService<AiPendingRunWorker>();
+   builder.Services.AddHostedService<AiRunTimeoutWorker>();
+}
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
    .AddCookie(
@@ -57,6 +69,11 @@ builder.Services.AddRazorPages(
 );
 
 var app = builder.Build();
+
+app.Logger.LogInformation(
+   "AI background workers enabled: {Enabled}",
+   enableAiBackgroundWorkers
+);
 
 if (!app.Environment.IsDevelopment())
 {

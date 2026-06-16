@@ -86,6 +86,16 @@ consumes them through a project reference to `SESport.Data`.
 - admin UI for prompt versions
 - run history and run details
 
+## Runtime Ownership
+
+AI background workers are enabled only in `sesport-dev.service`.
+
+- `sesport-dev.service` sets `Ai:EnableBackgroundWorkers=true`
+- `sesport.service` keeps `Ai:EnableBackgroundWorkers=false`
+
+This lets production display AI run history without polling or claiming new
+runs from the shared database.
+
 ## First Job
 
 The teaser generator should be migrated first:
