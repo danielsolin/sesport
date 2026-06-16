@@ -288,12 +288,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       var candidate = ExtractContentCandidate(rawHtml);
       candidate = NormalizeCountryMarkers(candidate);
+      var supplementalText = ExtractSupplementalText(rawHtml);
 
       var textCandidates = new List<string>
       {
          ExtractPlainText(candidate),
          ExtractTableText(candidate),
-         ExtractSupplementalText(rawHtml)
+         supplementalText
       };
 
       var text = textCandidates
@@ -302,6 +303,15 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       if(!string.IsNullOrWhiteSpace(text))
       {
+         if(ContainsLayoutNoise(text) &&
+            !string.IsNullOrWhiteSpace(supplementalText))
+         {
+            return new MainTextResult(
+               supplementalText.Trim(),
+               true
+            );
+         }
+
          if(text.Length > MaxMainTextLength)
          {
             return new MainTextResult(
@@ -314,6 +324,15 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return new MainTextResult(ExtractSupplementalText(rawHtml), false);
+   }
+
+   private static bool ContainsLayoutNoise(string text)
+   {
+      return text.Contains("0PX", StringComparison.OrdinalIgnoreCase) ||
+         text.Contains(
+            "SKIP TO MAIN CONTENT",
+            StringComparison.OrdinalIgnoreCase
+         );
    }
 
    private static string ExtractPlainText(string html)

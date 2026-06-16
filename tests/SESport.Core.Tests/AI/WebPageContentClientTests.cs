@@ -187,6 +187,25 @@ public class WebPageContentClientTests
       Assert.Contains("Example Player", page.MainText);
    }
 
+   [Fact]
+   public async Task FetchFallsBackToSupplementalTextWhenMainIsNoisy()
+   {
+      var handler = new RecordingHandler(
+         CreateNoisyLayoutWithEmbeddedJsonHtml()
+      );
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/noisy-layout-with-json",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.DoesNotContain("0PX", page!.MainText);
+      Assert.Contains("Ingrid Lindblad", page.MainText);
+      Assert.Contains("SWE", page.MainText);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -371,6 +390,35 @@ public class WebPageContentClientTests
                   <td>Example Player</td>
                </tr>
             </table>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateNoisyLayoutWithEmbeddedJsonHtml()
+   {
+      return """
+      <html>
+         <head>
+            <title>Noise Example</title>
+         </head>
+         <body>
+            <div>0PX 0PX PRE 0PX SKIP TO MAIN CONTENT</div>
+            <div>0PX 0PX 0PX 0PX 0PX 0PX Tours</div>
+            <script>
+               window.__INITIAL_STATE__ = {
+                  "page": {
+                     "athletes": [
+                        {
+                           "name": "Ingrid Lindblad",
+                           "country": {
+                              "label": "SWE"
+                           }
+                        }
+                     ]
+                  }
+               };
+            </script>
          </body>
       </html>
       """;

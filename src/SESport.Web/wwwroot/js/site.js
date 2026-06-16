@@ -21,6 +21,7 @@
    const broadcastInlineEditCategoriesField = "categories";
    const pendingParticipationIds = new Set();
    let participationPollingTimer = null;
+   let participationPollingInFlight = false;
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
@@ -982,15 +983,22 @@
          return;
       }
 
-      const url = getParticipationStatusUrl();
-
-      if(!url)
+      if(participationPollingInFlight)
       {
          return;
       }
 
+      participationPollingInFlight = true;
+
       try
       {
+         const url = getParticipationStatusUrl();
+
+         if(!url)
+         {
+            return;
+         }
+
          const payload = await postParticipationStatusAsync(
             url,
             [...pendingParticipationIds]
@@ -1053,6 +1061,10 @@
       }
       catch
       {
+      }
+      finally
+      {
+         participationPollingInFlight = false;
       }
    }
 
