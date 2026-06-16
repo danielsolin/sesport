@@ -206,6 +206,25 @@ public class WebPageContentClientTests
       Assert.Contains("SWE", page.MainText);
    }
 
+   [Fact]
+   public async Task FetchIgnoresInvalidRegexEscapesInScripts()
+   {
+      var handler = new RecordingHandler(
+         CreateInvalidEscapeScriptHtml()
+      );
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/invalid-escape",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("Example Title", page!.Title);
+      Assert.Contains("Example Player", page.MainText);
+      Assert.DoesNotContain("\\W", page.MainText);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -417,6 +436,28 @@ public class WebPageContentClientTests
                         }
                      ]
                   }
+               };
+            </script>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateInvalidEscapeScriptHtml()
+   {
+      return """
+      <html>
+         <head>
+            <title>Example Title</title>
+         </head>
+         <body>
+            <article>
+               <h1>Example Player</h1>
+               <p>Example body text.</p>
+            </article>
+            <script>
+               window.__INITIAL_STATE__ = {
+                  "value": "\W"
                };
             </script>
          </body>
