@@ -90,7 +90,7 @@
                </td>
                <td><code>@run.StatusId</code></td>
                <td>
-                  @(run.DurationSeconds?.ToString("0.000") ?? "")
+                  @DetailsModel.FormatDuration(run.DurationSeconds)
                </td>
                <td class="table-actions">
                   <a asp-page="./Details"

@@ -74,6 +74,44 @@ public class DetailsModel(AiRepository repository) : PageModel
       return value.Trim();
    }
 
+   public static string FormatDuration(decimal? durationSeconds)
+   {
+      if(durationSeconds is null)
+      {
+         return string.Empty;
+      }
+
+      var totalSeconds = (int)Math.Round(durationSeconds.Value);
+
+      if(totalSeconds < 0)
+      {
+         totalSeconds = 0;
+      }
+
+      var timeSpan = TimeSpan.FromSeconds(totalSeconds);
+
+      if(timeSpan.TotalHours >= 1)
+      {
+         return string.Format(
+            "{0}h {1:00}m {2:00}s",
+            (int)timeSpan.TotalHours,
+            timeSpan.Minutes,
+            timeSpan.Seconds
+         );
+      }
+
+      if(timeSpan.TotalMinutes >= 1)
+      {
+         return string.Format(
+            "{0}m {1:00}s",
+            (int)timeSpan.TotalMinutes,
+            timeSpan.Seconds
+         );
+      }
+
+      return $"{timeSpan.Seconds}s";
+   }
+
    public static string FormatToolCall(ToolTraceCallViewModel toolCall)
    {
       var arguments = TryParseArguments(toolCall.Arguments);

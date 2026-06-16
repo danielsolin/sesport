@@ -62,7 +62,7 @@
          <div>
             <dt>Duration</dt>
             <dd>
-               @(Model.Run.DurationSeconds?.ToString("0.000") ?? "")
+               @DetailsModel.FormatDuration(Model.Run.DurationSeconds)
             </dd>
          </div>
          <div>
