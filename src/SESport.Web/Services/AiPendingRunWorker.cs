@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using SESport.AI.Abstractions;
 using SESport.AI.Services;
 
