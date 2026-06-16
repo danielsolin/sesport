@@ -80,6 +80,7 @@ public sealed record AiRunListItem(
    string ProviderLabel,
    string? ProviderModel,
    string StatusId,
+   int ToolRoundCount,
    DateTimeOffset StartedAt,
    decimal? DurationSeconds
 );

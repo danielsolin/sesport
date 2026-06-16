@@ -54,6 +54,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   p.label,")
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
+         .AppendLine("   r.tool_round_count,")
          .AppendLine("   r.started_at,")
          .AppendLine("   r.duration_seconds")
          .AppendLine("from ai_job_runs r")
@@ -96,8 +97,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetString(3),
                ReadNullableString(reader, 4),
                reader.GetString(5),
-               reader.GetFieldValue<DateTimeOffset>(6),
-               ReadNullableDecimal(reader, 7)
+               reader.GetInt32(6),
+               reader.GetFieldValue<DateTimeOffset>(7),
+               ReadNullableDecimal(reader, 8)
             )
          );
       }

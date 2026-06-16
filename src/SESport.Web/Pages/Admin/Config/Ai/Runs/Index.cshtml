@@ -64,6 +64,7 @@
          <col class="ai-runs-col-event" />
          <col class="ai-runs-col-provider" />
          <col class="ai-runs-col-status" />
+         <col class="ai-runs-col-rounds" />
          <col class="ai-runs-col-duration" />
          <col class="ai-runs-col-actions" />
       </colgroup>
@@ -74,6 +75,7 @@
             <th>Event</th>
             <th>Provider</th>
             <th>Status</th>
+            <th>Rounds</th>
             <th>Duration</th>
             <th></th>
          </tr>
@@ -104,6 +106,7 @@
                   </div>
                </td>
                <td><code>@run.StatusId</code></td>
+               <td>@run.ToolRoundCount</td>
                <td>
                   @DetailsModel.FormatDuration(run.DurationSeconds)
                </td>
