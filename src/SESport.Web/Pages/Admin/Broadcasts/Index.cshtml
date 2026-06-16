@@ -15,6 +15,11 @@
       "CreateParticipantEntity",
       Model.GetCurrentRouteValues()
    );
+   var editBroadcastFieldUrl = Url.Page(
+      "./Index",
+      "EditBroadcastField",
+      Model.GetCurrentRouteValues()
+   );
 }
 
 @Html.AntiForgeryToken()
@@ -73,6 +78,8 @@
 
 <div data-broadcast-results
      data-create-participant-url="@createParticipantEntityUrl"
+     data-broadcast-inline-edit-url="@editBroadcastFieldUrl"
+     data-search-url-base="@ViewData["SearchUrl"]"
      data-check-swedish-participation-status-url=
         "@checkSwedishParticipationStatusUrl">
    @if(Model.LoadError is not null)
@@ -155,37 +162,71 @@
                               @broadcast.TimeOnlyText
                            </strong>
                         </td>
-                        <td>
-                           <strong>@broadcast.Title</strong>
-                           <a class="ses-entity-search-link"
-                              href="@ViewData["SearchUrl"]@broadcast.Title"
-                              target="_blank">
-                              <span class="ses-icon-search"></span>
-                           </a>
-                           @if(!string.IsNullOrWhiteSpace(
-                              broadcast.Description))
-                           {
-                              <span>@broadcast.Description</span>
-                           }
-                           @if(airDate != null)
-                           {
-                              <span>
-                                 Repris från @airDate
-                              </span>
-                           }
-                        </td>
-                        <td>
-                           <div class="broadcast-categories-list">
-                              @foreach(var category in broadcast.Categories
-                                 .Split(
-                                    ',',
-                                    StringSplitOptions.RemoveEmptyEntries
-                                    | StringSplitOptions.TrimEntries
-                                 ))
+                        <td class="broadcast-inline-editable"
+                            data-broadcast-id="@broadcast.Id"
+                            data-broadcast-inline-edit-field="title"
+                            data-broadcast-inline-edit-value=
+                               "@broadcast.Title"
+                            title="Double-click to edit">
+                           <div data-broadcast-inline-edit-display>
+                              <strong data-broadcast-title-text>
+                                 @broadcast.Title
+                              </strong>
+                              <a class="ses-entity-search-link"
+                                 data-broadcast-title-search-link
+                                 href="@ViewData["SearchUrl"]@broadcast.Title"
+                                 target="_blank">
+                                 <span class="ses-icon-search"></span>
+                              </a>
+                              @if(!string.IsNullOrWhiteSpace(
+                                 broadcast.Description))
                               {
-                                 <span>@category</span>
+                                 <span>@broadcast.Description</span>
+                              }
+                              @if(airDate != null)
+                              {
+                                 <span>
+                                    Repris från @airDate
+                                 </span>
                               }
                            </div>
+                           <input class="broadcast-inline-edit-input"
+                                  data-broadcast-inline-edit-input
+                                  type="text"
+                                  value="@broadcast.Title"
+                                  autocomplete="off"
+                                  spellcheck="false"
+                                  aria-label="Edit broadcast title"
+                                  hidden />
+                        </td>
+                        <td class="broadcast-inline-editable"
+                            data-broadcast-id="@broadcast.Id"
+                            data-broadcast-inline-edit-field="categories"
+                            data-broadcast-inline-edit-value=
+                               "@broadcast.Categories"
+                            title="Double-click to edit">
+                           <div data-broadcast-inline-edit-display>
+                              <div class="broadcast-categories-list"
+                                   data-broadcast-categories-list>
+                                 @foreach(var category in broadcast.Categories
+                                    .Split(
+                                       ',',
+                                       StringSplitOptions.RemoveEmptyEntries
+                                       | StringSplitOptions.TrimEntries
+                                    ))
+                                 {
+                                    <span>@category</span>
+                                 }
+                              </div>
+                           </div>
+                           <input class="broadcast-inline-edit-input"
+                                  data-broadcast-inline-edit-input
+                                  type="text"
+                                  value="@broadcast.Categories"
+                                  autocomplete="off"
+                                  spellcheck="false"
+                                  aria-label="Edit categories"
+                                  hidden />
                         </td>
                            <td data-swedish-participation-cell
                             data-broadcast-id="@broadcast.Id"

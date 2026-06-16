@@ -13,6 +13,12 @@
    const participationStatusUrlSelector =
       "[data-check-swedish-participation-status-url]";
    const currentMarkerSelector = "#activity-now-marker";
+   const broadcastInlineEditCellSelector =
+      "[data-broadcast-inline-edit-field]";
+   const broadcastInlineEditUrlSelector =
+      "[data-broadcast-inline-edit-url]";
+   const broadcastInlineEditTitleField = "title";
+   const broadcastInlineEditCategoriesField = "categories";
    const pendingParticipationIds = new Set();
    let participationPollingTimer = null;
    const getFormSelector = "form[method='get']";
@@ -31,6 +37,7 @@
    initializeParticipationMoreButtons();
    initializeParticipationSources();
    initializeBroadcastParticipationRowChecks();
+   initializeBroadcastInlineEditing();
    initializeParticipationPolling();
    initializeCurrentMarkerScroll();
 
@@ -337,6 +344,223 @@
       });
    }
 
+   function initializeBroadcastInlineEditing(root = document)
+   {
+      if(root === document
+         && document.documentElement.dataset.broadcastInlineEditingInitialized
+            === "true")
+      {
+         return;
+      }
+
+      if(root === document)
+      {
+         document.documentElement.dataset
+            .broadcastInlineEditingInitialized = "true";
+
+         document.addEventListener("dblclick", event => {
+            const target = event.target;
+
+            if(!(target instanceof Element))
+            {
+               return;
+            }
+
+            if(target.closest("a,button,input,textarea,select,label"))
+            {
+               return;
+            }
+
+            const cell = target.closest(broadcastInlineEditCellSelector);
+
+            if(!(cell instanceof HTMLElement))
+            {
+               return;
+            }
+
+            openBroadcastInlineEditCell(cell);
+         });
+      }
+
+      root.querySelectorAll("[data-broadcast-inline-edit-input]").forEach(
+         input => {
+            initializeBroadcastInlineEditInput(input);
+         }
+      );
+   }
+
+   function initializeBroadcastInlineEditInput(input)
+   {
+      if(!(input instanceof HTMLInputElement)
+         || input.dataset.broadcastInlineEditInitialized === "true")
+      {
+         return;
+      }
+
+      input.dataset.broadcastInlineEditInitialized = "true";
+
+      input.addEventListener("blur", () => {
+         void saveBroadcastInlineEditAsync(input);
+      });
+
+      input.addEventListener("keydown", event => {
+         if(event.key === "Enter")
+         {
+            event.preventDefault();
+            input.blur();
+         }
+         else if(event.key === "Escape")
+         {
+            event.preventDefault();
+            cancelBroadcastInlineEdit(input);
+         }
+      });
+   }
+
+   function openBroadcastInlineEditCell(cell)
+   {
+      const input = cell.querySelector(
+         "[data-broadcast-inline-edit-input]"
+      );
+      const display = cell.querySelector(
+         "[data-broadcast-inline-edit-display]"
+      );
+
+      if(!(input instanceof HTMLInputElement)
+         || !(display instanceof HTMLElement)
+         || input.hidden === false)
+      {
+         return;
+      }
+
+      if(input.dataset.broadcastInlineEditSaving === "true")
+      {
+         return;
+      }
+
+      input.dataset.broadcastInlineEditOriginalValue = input.value;
+      cell.dataset.broadcastInlineEditing = "true";
+      display.hidden = true;
+      input.hidden = false;
+
+      window.requestAnimationFrame(() => {
+         input.focus();
+         input.select();
+      });
+   }
+
+   async function saveBroadcastInlineEditAsync(input)
+   {
+      if(!(input instanceof HTMLInputElement)
+         || input.hidden
+         || input.dataset.broadcastInlineEditSaving === "true")
+      {
+         return;
+      }
+
+      const cell = input.closest(broadcastInlineEditCellSelector);
+      const url = getBroadcastInlineEditUrl();
+      const broadcastId = (cell?.dataset.broadcastId ?? "").trim();
+      const field = (cell?.dataset.broadcastInlineEditField ?? "").trim();
+      const currentValue = input.value.trim();
+      const originalValue = (
+         input.dataset.broadcastInlineEditOriginalValue ?? ""
+      ).trim();
+
+      if(!(cell instanceof HTMLElement)
+         || url === ""
+         || broadcastId === ""
+         || field === "")
+      {
+         return;
+      }
+
+      if(field === broadcastInlineEditTitleField && currentValue === "")
+      {
+         window.alert("Title cannot be empty.");
+         restoreBroadcastInlineEditInput(input);
+         return;
+      }
+
+      if(currentValue === originalValue)
+      {
+         restoreBroadcastInlineEditInput(input);
+         return;
+      }
+
+      input.dataset.broadcastInlineEditSaving = "true";
+      input.disabled = true;
+
+      try
+      {
+         const payload = await postBroadcastInlineEditAsync(
+            url,
+            broadcastId,
+            field,
+            currentValue
+         );
+
+         updateBroadcastInlineEditCell(cell, payload);
+         restoreBroadcastInlineEditInput(input);
+      }
+      catch(error)
+      {
+         window.alert(
+            error instanceof Error
+               ? error.message
+               : "Broadcast update failed."
+         );
+         input.hidden = false;
+         window.requestAnimationFrame(() => {
+            input.focus();
+            input.select();
+         });
+      }
+      finally
+      {
+         input.disabled = false;
+         delete input.dataset.broadcastInlineEditSaving;
+      }
+   }
+
+   function cancelBroadcastInlineEdit(input)
+   {
+      if(!(input instanceof HTMLInputElement))
+      {
+         return;
+      }
+
+      const originalValue = (
+         input.dataset.broadcastInlineEditOriginalValue ?? input.value
+      ).trim();
+
+      input.value = originalValue;
+      restoreBroadcastInlineEditInput(input);
+   }
+
+   function restoreBroadcastInlineEditInput(input)
+   {
+      if(!(input instanceof HTMLInputElement))
+      {
+         return;
+      }
+
+      const cell = input.closest(broadcastInlineEditCellSelector);
+      const display = cell?.querySelector("[data-broadcast-inline-edit-display]");
+
+      if(display instanceof HTMLElement)
+      {
+         display.hidden = false;
+      }
+
+      input.hidden = true;
+
+      if(cell instanceof HTMLElement)
+      {
+         delete cell.dataset.broadcastInlineEditing;
+      }
+   }
+
    function initializeCurrentMarkerScroll()
    {
       const marker = document.querySelector(currentMarkerSelector);
@@ -568,6 +792,186 @@
 
       window.clearInterval(participationPollingTimer);
       participationPollingTimer = null;
+   }
+
+   function getBroadcastInlineEditUrl()
+   {
+      const container = document.querySelector(broadcastInlineEditUrlSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.broadcastInlineEditUrl;
+
+      return typeof url === "string" ? url.trim() : "";
+   }
+
+   async function postBroadcastInlineEditAsync(
+      url,
+      broadcastId,
+      field,
+      value
+   )
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      formData.append("id", broadcastId);
+      formData.append("field", field);
+      formData.append("value", value);
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(
+            payload?.error ||
+               trimmedResponseText ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return payload ?? {};
+   }
+
+   function updateBroadcastInlineEditCell(cell, payload)
+   {
+      if(!(cell instanceof HTMLElement) || !payload)
+      {
+         return;
+      }
+
+      const field = typeof payload.field === "string"
+         ? payload.field.trim()
+         : "";
+
+      if(field === broadcastInlineEditTitleField)
+      {
+         const nextValue = typeof payload.value === "string"
+            ? payload.value.trim()
+            : "";
+
+         if(nextValue === "")
+         {
+            return;
+         }
+
+         cell.dataset.broadcastInlineEditValue = nextValue;
+         const input = cell.querySelector(
+            "[data-broadcast-inline-edit-input]"
+         );
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = nextValue;
+            input.dataset.broadcastInlineEditOriginalValue = nextValue;
+         }
+
+         const titleText = cell.querySelector(
+            "[data-broadcast-title-text]"
+         );
+
+         if(titleText instanceof HTMLElement)
+         {
+            titleText.textContent = nextValue;
+         }
+
+         const searchLink = cell.querySelector(
+            "[data-broadcast-title-search-link]"
+         );
+         const searchUrlBase = getBroadcastSearchUrlBase();
+
+         if(searchLink instanceof HTMLAnchorElement &&
+            searchUrlBase !== "")
+         {
+            searchLink.href = `${searchUrlBase}${
+               encodeURIComponent(nextValue)
+            }`;
+         }
+
+         return;
+      }
+
+      if(field === broadcastInlineEditCategoriesField)
+      {
+         const categories = Array.isArray(payload.value)
+            ? payload.value
+               .map(item => typeof item === "string" ? item.trim() : "")
+               .filter(value => value !== "")
+            : [];
+         const list = cell.querySelector(
+            "[data-broadcast-categories-list]"
+         );
+         const input = cell.querySelector(
+            "[data-broadcast-inline-edit-input]"
+         );
+
+         cell.dataset.broadcastInlineEditValue = categories.join(", ");
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = categories.join(", ");
+            input.dataset.broadcastInlineEditOriginalValue =
+               input.value;
+         }
+
+         if(!(list instanceof HTMLElement))
+         {
+            return;
+         }
+
+         list.replaceChildren();
+
+         categories.forEach(category => {
+            const span = document.createElement("span");
+            span.textContent = category;
+            list.append(span);
+         });
+      }
+   }
+
+   function getBroadcastSearchUrlBase()
+   {
+      const container = document.querySelector(
+         "[data-broadcast-results]"
+      );
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.searchUrlBase;
+
+      return typeof url === "string" ? url.trim() : "";
    }
 
    async function pollParticipationStatusesAsync()
@@ -1740,6 +2144,7 @@
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
          initializeBroadcastParticipationRowChecks(nextTarget);
+         initializeBroadcastInlineEditing(nextTarget);
          initializeParticipationMoreButtons(nextTarget);
          initializeParticipationSources(nextTarget);
          initializeParticipationPolling(nextTarget);

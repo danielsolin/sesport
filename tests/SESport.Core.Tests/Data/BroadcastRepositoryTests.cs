@@ -1,5 +1,6 @@
 using Npgsql;
-using SESport.Data.Broadcast;
+using AdminBroadcastRepository = SESport.Data.BroadcastRepository;
+using ImportBroadcastRepository = SESport.Data.Broadcast.BroadcastRepository;
 
 namespace SESport.Core.Tests.Data;
 
@@ -15,7 +16,7 @@ public sealed class BroadcastRepositoryTests
       var uniqueSuffix = Guid.NewGuid().ToString("N");
 
       await using var dataSource = CreateDataSource();
-      var repository = new BroadcastRepository(dataSource);
+      var repository = new ImportBroadcastRepository(dataSource);
 
       await InsertBroadcastAsync(
          dataSource,
@@ -64,6 +65,66 @@ public sealed class BroadcastRepositoryTests
       {
          await DeleteBroadcastAsync(dataSource, broadcastId);
          await DeleteIgnoreRuleAsync(dataSource, ruleId);
+      }
+   }
+
+   [Fact]
+   public async Task UpdateBroadcastTextFieldsAsyncUpdatesBroadcast()
+   {
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         "Old title",
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+
+      try
+      {
+         await repository.UpdateTitleAsync(
+            broadcastId,
+            "New title",
+            CancellationToken.None
+         );
+         await repository.UpdateCategoriesAsync(
+            broadcastId,
+            ["New", "Categories"],
+            CancellationToken.None
+         );
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select title, categories
+            from broadcasts
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", broadcastId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal("New title", reader.GetString(0));
+         Assert.Equal(
+            ["New", "Categories"],
+            reader.GetFieldValue<string[]>(1)
+         );
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
       }
    }
 

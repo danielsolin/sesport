@@ -208,6 +208,46 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task UpdateTitleAsync(
+      Guid id,
+      string title,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update broadcasts
+         set title = @title,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("title", title);
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task UpdateCategoriesAsync(
+      Guid id,
+      IReadOnlyCollection<string> categories,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update broadcasts
+         set categories = @categories,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("categories", categories.ToArray());
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task HideAsync(
       IReadOnlyCollection<Guid> ids,
       CancellationToken cancellationToken

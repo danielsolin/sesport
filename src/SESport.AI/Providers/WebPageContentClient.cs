@@ -107,6 +107,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
    );
 
+   private static readonly Regex LayoutNoiseTokenRegex = new(
+      @"^(?:\d+(?:\.\d+)?(?:px|em|rem|vh|vw|%)|" +
+      @"[a-z]{1,4}\d{0,3}|\d{1,4})$",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+   );
+
+   private static readonly Regex PxNoiseTokenRegex = new(
+      @"^\d+(?:\.\d+)?px$",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+   );
+
    private readonly HttpClient httpClient;
 
    public WebPageContentClient(HttpClient httpClient)
@@ -353,6 +364,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static bool IsNoiseLine(string line)
    {
       var trimmed = line.Trim();
+      var tokens = trimmed
+         .Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries
+         )
+         .Where(token => token.Length > 0)
+         .ToArray();
 
       if(trimmed.Length == 0)
       {
@@ -374,7 +393,62 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return true;
       }
 
+      if(tokens.Length >= 3)
+      {
+         var noiseTokenCount = CountLayoutNoiseTokens(tokens);
+         var letterCount = trimmed.Count(char.IsLetter);
+         var digitCount = trimmed.Count(char.IsDigit);
+         var uppercaseWordCount = tokens.Count(token =>
+            token.Any(char.IsLetter) &&
+            token.All(ch => !char.IsLetter(ch) || char.IsUpper(ch))
+         );
+
+         if(noiseTokenCount == tokens.Length)
+         {
+            return true;
+         }
+
+         if(noiseTokenCount >= tokens.Length - 1 &&
+            letterCount <= 4)
+         {
+            return true;
+         }
+
+         if(noiseTokenCount >= 2 &&
+            trimmed.Any(char.IsLetter) &&
+            uppercaseWordCount >= tokens.Length - noiseTokenCount)
+         {
+            return true;
+         }
+
+         if(letterCount == 0 && digitCount > 0)
+         {
+            return true;
+         }
+      }
+
+      if(trimmed.Length >= 16)
+      {
+         var letterCount = trimmed.Count(char.IsLetter);
+         var tokenCount = tokens.Length;
+
+         if(tokenCount >= 4 &&
+            letterCount * 5 < trimmed.Length)
+         {
+            return true;
+         }
+      }
+
       return false;
+   }
+
+   private static int CountLayoutNoiseTokens(string[] tokens)
+   {
+      return tokens.Count(token =>
+         (LayoutNoiseTokenRegex.IsMatch(token) ||
+          PxNoiseTokenRegex.IsMatch(token)) &&
+         token.Count(char.IsLetter) <= 4
+      );
    }
 
    private static int ScoreText(string text)

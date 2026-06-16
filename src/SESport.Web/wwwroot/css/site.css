@@ -643,6 +643,33 @@ h2 {
    min-width: 0;
 }
 
+.broadcast-inline-editable {
+   cursor: pointer;
+}
+
+.broadcast-inline-editable:hover {
+   background: rgba(0, 108, 103, 0.05);
+}
+
+.broadcast-inline-edit-display {
+   display: block;
+}
+
+.broadcast-inline-edit-input {
+   width: 100%;
+   box-sizing: border-box;
+   font: inherit;
+   color: inherit;
+   padding: 4px 6px;
+   border: 1px solid var(--line);
+   border-radius: 4px;
+   background: var(--surface);
+}
+
+.broadcast-inline-editable[data-broadcast-inline-editing="true"] {
+   cursor: text;
+}
+
 .broadcasts-table th:nth-child(1),
 .broadcasts-table td:nth-child(1) {
    width: 120px;

@@ -134,6 +134,42 @@ public class WebPageContentClientTests
       Assert.Contains("Entered", page.MainText);
    }
 
+   [Fact]
+   public async Task FetchFiltersDenseLayoutNoiseBeforeTableText()
+   {
+      var handler = new RecordingHandler(CreateDenseLayoutNoiseHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/dense-noise",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.DoesNotContain("0PX 0PX 0PX 0PX", page!.MainText);
+      Assert.Contains("Example Player", page.MainText);
+      Assert.Contains("Entered", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchFiltersLpgaStyleLayoutNoiseLines()
+   {
+      var handler = new RecordingHandler(CreateLpgaStyleNoiseHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/lpga-noise",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.DoesNotContain("0PX", page!.MainText);
+      Assert.DoesNotContain("SKIP TO MAIN CONTENT", page.MainText);
+      Assert.Contains("NO.", page.MainText);
+      Assert.Contains("ATHLETE", page.MainText);
+      Assert.Contains("Example Player", page.MainText);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -247,6 +283,47 @@ public class WebPageContentClientTests
                <tr>
                   <td>Example Player</td>
                   <td>Entered</td>
+               </tr>
+            </table>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateDenseLayoutNoiseHtml()
+   {
+      return """
+      <html>
+         <body>
+            <div>0PX 0PX 0PX 0PX</div>
+            <div>0PX 0PX 0PX 0PX 0PX</div>
+            <div>0PX 0PX 0PX 0PX 0PX 0PX</div>
+            <table>
+               <tr>
+                  <td>Example Player</td>
+                  <td>Entered</td>
+               </tr>
+            </table>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateLpgaStyleNoiseHtml()
+   {
+      return """
+      <html>
+         <body>
+            <div>0PX 0PX PRE 0PX SKIP TO MAIN CONTENT</div>
+            <div>0PX 0PX 0PX 0PX 0PX 0PX Tours</div>
+            <table>
+               <tr>
+                  <th>NO.</th>
+                  <th>ATHLETE</th>
+               </tr>
+               <tr>
+                  <td>1</td>
+                  <td>Example Player</td>
                </tr>
             </table>
          </body>
