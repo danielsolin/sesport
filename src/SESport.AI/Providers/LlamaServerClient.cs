@@ -2194,7 +2194,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       return
          $"This exact {toolName} call was already made in round " +
-         $"{previousTurn}. Reusing the previous result.\n\n" +
+         $"{previousTurn}. Do not repeat this check. " +
+         "Reuse the previous result and move on.\n\n" +
          previousResult;
    }
 

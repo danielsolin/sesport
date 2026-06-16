@@ -242,7 +242,11 @@ public class AiProviderClientTests
          string.Join("\n---\n", handler.RequestBodies)
       );
       Assert.True(
-         handler.RequestBodies[3].Contains("Reusing the previous result."),
+         handler.RequestBodies[3].Contains("Do not repeat this check."),
+         string.Join("\n---\n", handler.RequestBodies)
+      );
+      Assert.True(
+         handler.RequestBodies[3].Contains("Reuse the previous result"),
          string.Join("\n---\n", handler.RequestBodies)
       );
    }
