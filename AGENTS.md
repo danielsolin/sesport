@@ -39,6 +39,10 @@ Several console applications live in `tools/legacy/` for occasional use:
   including `Microsoft.NET.SDK.WorkloadAutoImportPropsLocator`.
   When that happens, verify with project tests or per-project builds
   instead of re-investigating the same restore failure.
+- Be careful when publishing to `sesport-dev` with
+  `./bin/web-publish-dev.sh` or a manual service restart. It restarts
+  the dev web service and can interrupt any currently running AI job,
+  which is especially relevant for long-running runs.
 - Hard rule: Never seed application data from database migrations.
   Use migrations only for schema changes. If data must be added or
   changed, do it manually via `psql` so existing data cannot be altered

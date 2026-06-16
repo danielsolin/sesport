@@ -554,7 +554,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
          sections.Add(structuredEntitySummary);
       }
 
-      var embeddedData = ExtractEmbeddedDataSections(rawHtml);
+      var embeddedData = string.IsNullOrWhiteSpace(structuredEntitySummary)
+         ? ExtractEmbeddedDataSections(rawHtml)
+         : [];
 
       if(embeddedData.Count > 0)
       {
