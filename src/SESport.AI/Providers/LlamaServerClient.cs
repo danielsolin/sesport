@@ -20,7 +20,9 @@ public sealed class LlamaServerClient : IAiProviderClient
    // Keep this comfortably below the llama-server token limit.
    private const int MaxConversationContextCharacters = 12000;
    private const int MaxTransientRetryAttempts = 12;
-
+   private const string ToolWebGetPage = "web_get_page";
+   private const string ToolWebSearch = "web_search";
+   private const string ToolWebFindInPage = "web_find_in_page";
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -623,26 +625,18 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var isSearchTool = string.Equals(
          toolCall.Name,
-         "web_search",
-         StringComparison.Ordinal
-      ) || string.Equals(
-         toolCall.Name,
-         "altra/web-search",
-         StringComparison.Ordinal
-      ) || string.Equals(
-         toolCall.Name,
-         "altra_web_search",
+         ToolWebSearch,
          StringComparison.Ordinal
       );
 
       var isGetPageTool = string.Equals(
          toolCall.Name,
-         "web_get_page",
+         ToolWebGetPage,
          StringComparison.Ordinal
       );
       var isFindInPageTool = string.Equals(
          toolCall.Name,
-         "web_find_in_page",
+         ToolWebFindInPage,
          StringComparison.Ordinal
       );
       var find = ExtractFind(toolCall.Arguments);
@@ -1014,13 +1008,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          return repeatedResult;
       }
 
-      if(
-         string.Equals(toolCall.Name, "web_search", StringComparison.Ordinal) ||
-         string.Equals(toolCall.Name, "altra/web-search",
-            StringComparison.Ordinal) ||
-         string.Equals(toolCall.Name, "altra_web_search",
-            StringComparison.Ordinal)
-      )
+      if(string.Equals(toolCall.Name, ToolWebSearch, StringComparison.Ordinal))
       {
          var query = ExtractQuery(toolCall.Arguments);
          var limit = ExtractLimit(toolCall.Arguments);
@@ -1049,7 +1037,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          return result;
       }
 
-      if(string.Equals(toolCall.Name, "web_get_page", StringComparison.Ordinal))
+      if(string.Equals(toolCall.Name, ToolWebGetPage, StringComparison.Ordinal))
       {
          var id = ExtractId(toolCall.Arguments);
          var url = ExtractUrl(toolCall.Arguments);
