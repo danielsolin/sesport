@@ -332,9 +332,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
          if(text.Length > maxLength)
          {
             return new MainTextResult(
-               text[..maxLength].TrimEnd() + "...",
+               AddCutoffMarker(text[..maxLength].TrimEnd()),
                true,
-               text[..maxLength].TrimEnd() + "..."
+               text[..maxLength].TrimEnd()
             );
          }
 
@@ -631,10 +631,15 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       if(!expanded && text.Length > MaxMainTextLength)
       {
-         return text[..MaxMainTextLength].TrimEnd() + "...";
+         return AddCutoffMarker(text[..MaxMainTextLength].TrimEnd());
       }
 
       return text.Trim();
+   }
+
+   private static string AddCutoffMarker(string text)
+   {
+      return text + Environment.NewLine + "[CUTOFF]";
    }
 
    private static string ExtractSearchText(string rawHtml)

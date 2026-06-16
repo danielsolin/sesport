@@ -224,6 +224,23 @@ public class WebPageContentClientTests
       Assert.DoesNotContain("\\W", page.MainText);
    }
 
+   [Fact]
+   public async Task FetchMarksCutoffOnOwnLineWhenMainTextIsTruncated()
+   {
+      var handler = new RecordingHandler(CreateLongBodyHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/long-body",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("Start of article.", page!.MainText);
+      Assert.Contains(Environment.NewLine + "[CUTOFF]", page.MainText);
+      Assert.EndsWith("[CUTOFF]", page.MainText);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -459,6 +476,22 @@ public class WebPageContentClientTests
                   "value": "\W"
                };
             </script>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateLongBodyHtml()
+   {
+      var longText = new string('A', 9000);
+
+      return $"""
+      <html>
+         <body>
+            <article>
+               <p>Start of article.</p>
+               <p>{longText}</p>
+            </article>
          </body>
       </html>
       """;
