@@ -578,8 +578,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
    )
    {
       var sections = new List<string>();
-      var structuredEntityLineLimit = expanded ? int.MaxValue : 80;
-      var keyValueLineLimit = expanded ? int.MaxValue : 60;
+      var structuredEntityLineLimit = expanded ? int.MaxValue : 180;
+      var keyValueLineLimit = expanded ? int.MaxValue : 160;
 
       var description = ExtractDescription(rawHtml);
 
