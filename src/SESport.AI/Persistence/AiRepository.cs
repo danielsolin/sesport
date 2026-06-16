@@ -50,6 +50,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("select")
          .AppendLine("   r.id,")
          .AppendLine("   j.label,")
+         .AppendLine("   r.input_payload->>'event_name',")
          .AppendLine("   p.label,")
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
@@ -91,11 +92,12 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             new AiRunListItem(
                reader.GetGuid(0),
                reader.GetString(1),
-               reader.GetString(2),
-               ReadNullableString(reader, 3),
-               reader.GetString(4),
-               reader.GetFieldValue<DateTimeOffset>(5),
-               ReadNullableDecimal(reader, 6)
+               ReadNullableString(reader, 2),
+               reader.GetString(3),
+               ReadNullableString(reader, 4),
+               reader.GetString(5),
+               reader.GetFieldValue<DateTimeOffset>(6),
+               ReadNullableDecimal(reader, 7)
             )
          );
       }

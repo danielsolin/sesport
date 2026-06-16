@@ -61,8 +61,8 @@
       <colgroup>
          <col class="ai-runs-col-started" />
          <col class="ai-runs-col-job" />
+         <col class="ai-runs-col-event" />
          <col class="ai-runs-col-provider" />
-         <col class="ai-runs-col-model" />
          <col class="ai-runs-col-status" />
          <col class="ai-runs-col-duration" />
          <col class="ai-runs-col-actions" />
@@ -71,8 +71,8 @@
          <tr>
             <th>Started</th>
             <th>Job</th>
+            <th>Event</th>
             <th>Provider</th>
-            <th>Model</th>
             <th>Status</th>
             <th>Duration</th>
             <th></th>
@@ -81,12 +81,27 @@
       <tbody>
          @foreach (var run in Model.Runs)
          {
-            <tr>
-               <td>@TimeDisplay.FormatLocalTimestamp(run.StartedAt)</td>
+            <tr data-ai-run-status="@run.StatusId">
+               <td>
+                  <div class="ai-runs-cell-stack">
+                     <span>@TimeDisplay.FormatLocalDate(run.StartedAt)</span>
+                     <span class="ai-runs-cell-secondary">
+                        @TimeDisplay.FormatLocalTime(run.StartedAt)
+                     </span>
+                  </div>
+               </td>
                <td>@run.JobLabel</td>
-               <td>@run.ProviderLabel</td>
-               <td class="ai-runs-model" title="@run.ProviderModel">
-                  @run.ProviderModel
+               <td>@run.EventName</td>
+               <td>
+                  <div class="ai-runs-cell-stack">
+                     <span>@run.ProviderLabel</span>
+                     @if(!string.IsNullOrWhiteSpace(run.ProviderModel))
+                     {
+                        <span class="ai-runs-cell-secondary">
+                           @run.ProviderModel
+                        </span>
+                     }
+                  </div>
                </td>
                <td><code>@run.StatusId</code></td>
                <td>

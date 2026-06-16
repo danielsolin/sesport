@@ -76,6 +76,7 @@ public sealed record AiPromptListItem(
 public sealed record AiRunListItem(
    Guid Id,
    string JobLabel,
+   string? EventName,
    string ProviderLabel,
    string? ProviderModel,
    string StatusId,
