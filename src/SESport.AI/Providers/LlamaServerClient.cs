@@ -1883,6 +1883,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var matches = new List<PageMatch>();
       var seenSnippets = new HashSet<string>(StringComparer.Ordinal);
+      var searchText = GetPageSearchText(pageContent);
 
       AddSnippetMatch(
          matches,
@@ -1897,12 +1898,22 @@ public sealed class LlamaServerClient : IAiProviderClient
          AddSnippetMatch(matches, seenSnippets, "heading", heading, find);
       }
 
-      foreach(var snippet in ExtractTextSnippets(pageContent.MainText, find))
+      foreach(var snippet in ExtractTextSnippets(searchText, find))
       {
          AddSnippetMatch(matches, seenSnippets, "text", snippet, find);
       }
 
       return matches;
+   }
+
+   private static string GetPageSearchText(WebPageContent pageContent)
+   {
+      if(!string.IsNullOrWhiteSpace(pageContent.MainTextFull))
+      {
+         return pageContent.MainTextFull;
+      }
+
+      return pageContent.MainText;
    }
 
    private static void AddSnippetMatch(

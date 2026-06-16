@@ -312,8 +312,8 @@ public class AiProviderClientTests
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
-         CreateLlamaPageCallWithFindResponseJson(),
-         CreateLlamaFindPageCallResponseJson(),
+         CreateLlamaPageCallWithFindExtraTokenResponseJson(),
+         CreateLlamaFindPageCallExtraTokenResponseJson(),
          CreateLlamaFinalResponseJson()
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -329,8 +329,9 @@ public class AiProviderClientTests
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
             ["Article heading"],
-            "Full article content mentioning Sweden and Swedish players.",
-            true
+            "Short article.",
+            true,
+            "Short article. ExtraToken appears here."
          )
       );
       var client = new LlamaServerClient(
@@ -362,11 +363,15 @@ public class AiProviderClientTests
       Assert.Equal(4, handler.RequestBodies.Count);
       Assert.Contains("\"name\":\"web_get_page\"",
          result.ToolTraceJson);
-      Assert.Contains("\"find\":\"Sweden\"",
+      Assert.Contains("\"find\":\"ExtraToken\"",
          result.ToolTraceJson);
       Assert.Contains("\"name\":\"web_find_in_page\"",
          result.ToolTraceJson);
       Assert.Single(webPageContentClient.Urls);
+      Assert.Contains(
+         handler.RequestBodies,
+         body => body.Contains("ExtraToken", StringComparison.Ordinal)
+      );
    }
 
    [Fact]
@@ -890,30 +895,37 @@ public class AiProviderClientTests
 
    private static string CreateLlamaFindPageCallWithUrlResponseJson()
    {
-      return """
+      return JsonSerializer.Serialize(new
       {
-        "choices": [
-          {
-            "message": {
-              "role": "assistant",
-              "content": "",
-              "tool_calls": [
-                {
-                  "id": "call_2",
-                  "type": "function",
-                  "function": {
-                    "name": "web_find_in_page",
-                    "arguments": "{\"url\":\"https://example.test/direct-page\",\"find\":\"Sweden\"}"
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  @role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_2",
+                        type = "function",
+                        function = new
+                        {
+                           name = "web_find_in_page",
+                           arguments =
+                              "{\"url\":\"https://example.test/direct-page\"," +
+                              "\"find\":\"Sweden\"}"
+                        }
+                     }
                   }
-                }
-              ]
-            },
-            "finish_reason": "tool_calls"
-          }
-        ],
-        "model": "openai/gpt-4o-2024-08-06"
-      }
-      """;
+               },
+               finish_reason = "tool_calls"
+            }
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
    }
 
    private static string CreateLlamaPageCallWithFindResponseJson()
@@ -945,6 +957,40 @@ public class AiProviderClientTests
       """;
    }
 
+   private static string CreateLlamaPageCallWithFindExtraTokenResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  @role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_2",
+                        type = "function",
+                        function = new
+                        {
+                           name = "web_get_page",
+                           arguments =
+                              "{\"id\":\"s1_1\",\"find\":\"ExtraToken\"}"
+                        }
+                     }
+                  }
+               },
+               finish_reason = "tool_calls"
+            }
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
+   }
+
    private static string CreateLlamaFindPageCallResponseJson()
    {
       return """
@@ -972,6 +1018,40 @@ public class AiProviderClientTests
         "model": "openai/gpt-4o-2024-08-06"
       }
       """;
+   }
+
+   private static string CreateLlamaFindPageCallExtraTokenResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  @role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_3",
+                        type = "function",
+                        function = new
+                        {
+                           name = "web_find_in_page",
+                           arguments =
+                              "{\"id\":\"s1_1\",\"find\":\"ExtraToken\"}"
+                        }
+                     }
+                  }
+               },
+               finish_reason = "tool_calls"
+            }
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
    }
 
    private static string CreateLlamaFinalResponseJson()

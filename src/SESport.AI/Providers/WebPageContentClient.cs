@@ -238,7 +238,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          publishedAt,
          headings,
          mainTextInfo.Text,
-         mainTextInfo.HasBodyText
+         mainTextInfo.HasBodyText,
+         mainTextInfo.FullText
       );
    }
 
@@ -285,9 +286,25 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static MainTextResult ExtractMainText(string rawHtml)
    {
+      var displayTextInfo = ExtractMainTextVariant(rawHtml, false);
+      var searchTextInfo = ExtractSearchText(rawHtml);
+
+      return new MainTextResult(
+         displayTextInfo.Text,
+         displayTextInfo.HasBodyText,
+         searchTextInfo
+      );
+   }
+
+   private static MainTextResult ExtractMainTextVariant(
+      string rawHtml,
+      bool expanded
+   )
+   {
       var candidate = ExtractContentCandidate(rawHtml);
       candidate = NormalizeCountryMarkers(candidate);
-      var supplementalText = ExtractSupplementalText(rawHtml);
+      var supplementalText = ExtractSupplementalText(rawHtml, expanded);
+      var maxLength = MaxMainTextLength;
 
       var textCandidates = new List<string>
       {
@@ -307,22 +324,30 @@ public sealed class WebPageContentClient : IWebPageContentClient
          {
             return new MainTextResult(
                supplementalText.Trim(),
-               true
+               true,
+               supplementalText.Trim()
             );
          }
 
-         if(text.Length > MaxMainTextLength)
+         if(text.Length > maxLength)
          {
             return new MainTextResult(
-               text[..MaxMainTextLength].TrimEnd() + "...",
-               true
+               text[..maxLength].TrimEnd() + "...",
+               true,
+               text[..maxLength].TrimEnd() + "..."
             );
          }
 
-         return new MainTextResult(text.Trim(), true);
+         var trimmedText = text.Trim();
+         return new MainTextResult(trimmedText, true, trimmedText);
       }
 
-      return new MainTextResult(ExtractSupplementalText(rawHtml), false);
+      var trimmedSupplementalText = supplementalText.Trim();
+      return new MainTextResult(
+         trimmedSupplementalText,
+         false,
+         trimmedSupplementalText
+      );
    }
 
    private static bool ContainsLayoutNoise(string text)
@@ -547,9 +572,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
       return score;
    }
 
-   private static string ExtractSupplementalText(string rawHtml)
+   private static string ExtractSupplementalText(
+      string rawHtml,
+      bool expanded
+   )
    {
       var sections = new List<string>();
+      var structuredEntityLineLimit = expanded ? int.MaxValue : 80;
+      var keyValueLineLimit = expanded ? int.MaxValue : 60;
 
       var description = ExtractDescription(rawHtml);
 
@@ -559,7 +589,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
          sections.Add(description.Trim());
       }
 
-      var structuredEntitySummary = ExtractStructuredEntitySummary(rawHtml);
+      var structuredEntitySummary = ExtractStructuredEntitySummary(
+         rawHtml,
+         structuredEntityLineLimit
+      );
 
       if(!string.IsNullOrWhiteSpace(structuredEntitySummary))
       {
@@ -573,7 +606,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       var embeddedData = string.IsNullOrWhiteSpace(structuredEntitySummary)
-         ? ExtractEmbeddedDataSections(rawHtml)
+         ? ExtractEmbeddedDataSections(rawHtml, keyValueLineLimit)
          : [];
 
       if(embeddedData.Count > 0)
@@ -596,12 +629,37 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       var text = string.Join(Environment.NewLine, sections);
 
-      if(text.Length > MaxMainTextLength)
+      if(!expanded && text.Length > MaxMainTextLength)
       {
          return text[..MaxMainTextLength].TrimEnd() + "...";
       }
 
       return text.Trim();
+   }
+
+   private static string ExtractSearchText(string rawHtml)
+   {
+      var candidate = ExtractContentCandidate(rawHtml);
+      candidate = NormalizeCountryMarkers(candidate);
+
+      var sections = new List<string>();
+
+      foreach(var text in new[]
+      {
+         ExtractPlainText(candidate),
+         ExtractTableText(candidate),
+         ExtractSupplementalText(rawHtml, true)
+      })
+      {
+         if(string.IsNullOrWhiteSpace(text))
+         {
+            continue;
+         }
+
+         sections.Add(text.Trim());
+      }
+
+      return string.Join(Environment.NewLine + Environment.NewLine, sections);
    }
 
    private static string ExtractDescription(string rawHtml)
@@ -620,7 +678,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
    }
 
    private static IReadOnlyList<string> ExtractEmbeddedDataSections(
-      string rawHtml
+      string rawHtml,
+      int keyValueLineLimit
    )
    {
       var sections = new List<string>();
@@ -646,7 +705,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       var rawSummary = ExtractMeaningfulKeyValueSummaryAcrossUnescapes(
-         rawHtml
+         rawHtml,
+         keyValueLineLimit
       );
 
       if(!string.IsNullOrWhiteSpace(rawSummary))
@@ -664,7 +724,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       return sections;
    }
 
-   private static string ExtractStructuredEntitySummary(string rawHtml)
+   private static string ExtractStructuredEntitySummary(
+      string rawHtml,
+      int maxLines
+   )
    {
       var lines = new List<string>();
       var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -680,7 +743,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          var searchIndex = 0;
 
-         while(lines.Count < 80)
+         while(lines.Count < maxLines)
          {
             var matchIndex = rawHtml.IndexOf(
                marker,
@@ -838,7 +901,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
    }
 
    private static string ExtractMeaningfulKeyValueSummaryAcrossUnescapes(
-      string text
+      string text,
+      int maxLines
    )
    {
       var candidates = new List<string>();
@@ -888,7 +952,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
             lines.Add(line);
 
-            if(lines.Count >= 60)
+            if(lines.Count >= maxLines)
             {
                return string.Join(Environment.NewLine, lines);
             }
@@ -1255,7 +1319,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
       );
 
-      return ExtractMeaningfulKeyValueSummaryFromMatches(matches);
+      return ExtractMeaningfulKeyValueSummaryFromMatches(matches, 30);
    }
 
    private static string ExtractMeaningfulKeyValueSummary(string text)
@@ -1266,11 +1330,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
          @"\s*:\s*""(?<value>[^""]{1,160})""",
          RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
       );
-      return ExtractMeaningfulKeyValueSummaryFromMatches(matches);
+      return ExtractMeaningfulKeyValueSummaryFromMatches(matches, 30);
    }
 
    private static string ExtractMeaningfulKeyValueSummaryFromMatches(
-      MatchCollection matches
+      MatchCollection matches,
+      int maxLines
    )
    {
       var entries = new List<(int Score, string Line, string Signature)>();
@@ -1301,7 +1366,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var lines = entries
          .OrderByDescending(entry => entry.Score)
          .ThenBy(entry => entry.Line, StringComparer.OrdinalIgnoreCase)
-         .Take(30)
+         .Take(maxLines)
          .Select(entry => entry.Line)
          .ToArray();
 
@@ -2450,6 +2515,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private sealed record MainTextResult(
       string Text,
-      bool HasBodyText
+      bool HasBodyText,
+      string FullText
    );
 }

@@ -6,5 +6,6 @@ public sealed record WebPageContent(
    DateTimeOffset? PublishedAt,
    IReadOnlyList<string> Headings,
    string MainText,
-   bool HasBodyText
+   bool HasBodyText,
+   string MainTextFull = ""
 );
