@@ -773,7 +773,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       for(var iteration = 0; iteration < 3; iteration++)
       {
-         var next = Regex.Unescape(current);
+         if(!TryUnescapeRegexText(current, out var next))
+         {
+            break;
+         }
 
          if(string.Equals(next, current, StringComparison.Ordinal))
          {
@@ -784,6 +787,23 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return current;
+   }
+
+   private static bool TryUnescapeRegexText(
+      string text,
+      out string unescapedText
+   )
+   {
+      try
+      {
+         unescapedText = Regex.Unescape(text);
+         return true;
+      }
+      catch(ArgumentException)
+      {
+         unescapedText = text;
+         return false;
+      }
    }
 
    private static string ExtractFirstField(string text, string key)
@@ -832,7 +852,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          candidates.Add(current);
 
-         var next = Regex.Unescape(current);
+         if(!TryUnescapeRegexText(current, out var next))
+         {
+            break;
+         }
 
          if(string.Equals(next, current, StringComparison.Ordinal))
          {
@@ -911,7 +934,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
             continue;
          }
 
-         var decodedPayload = Regex.Unescape(payload);
+         var decodedPayload = TryUnescapeRegexText(
+            payload,
+            out var decodedPayloadValue
+         )
+            ? decodedPayloadValue
+            : payload;
          var lines = new List<string>();
 
          if(TryExtractJsonFromText(decodedPayload, out var jsonText))
@@ -1059,7 +1087,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
             {
                nestedCandidates.Add(currentCandidate);
 
-               var nextCandidate = Regex.Unescape(currentCandidate);
+               if(!TryUnescapeRegexText(
+                  currentCandidate,
+                  out var nextCandidate
+               ))
+               {
+                  break;
+               }
 
                if(string.Equals(
                   nextCandidate,
@@ -1403,7 +1437,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return true;
       }
 
-      var unescapedScript = Regex.Unescape(script);
+      if(!TryUnescapeRegexText(script, out var unescapedScript))
+      {
+         return false;
+      }
 
       if(!string.Equals(unescapedScript, script, StringComparison.Ordinal)
          && TryExtractJsonFromText(unescapedScript, out jsonText))
