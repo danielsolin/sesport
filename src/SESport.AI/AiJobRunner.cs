@@ -1,7 +1,8 @@
+using System.Text.Json;
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.AI.Providers;
-using System.Text.Json;
+using SESport.AI.Services;
 
 namespace SESport.AI;
 
@@ -9,97 +10,144 @@ public sealed class AiJobRunner(
    IAiJobDefinitionRepository definitionRepository,
    IAiPromptRenderer promptRenderer,
    IEnumerable<IAiProviderClient> providerClients,
-   IAiJobRunRepository runRepository
-) : IAiJobRunner
+   IAiJobRunRepository runRepository,
+   AiJobExecutionGate executionGate
+) : IAiJobRunner, IAiJobProcessor
 {
+   public async Task<Guid> QueueAsync(
+      AiJobRequest request,
+      CancellationToken cancellationToken
+   )
+   {
+      var context = await BuildExecutionContextAsync(
+         request,
+         cancellationToken
+      );
+
+      await runRepository.StoreAsync(context.Run, cancellationToken);
+      return context.Run.Id;
+   }
+
    public async Task<AiJobResult> RunAsync(
       AiJobRequest request,
       CancellationToken cancellationToken
    )
    {
-      var job = await definitionRepository.GetJobAsync(
-         request.JobId,
+      var context = await BuildExecutionContextAsync(
+         request,
          cancellationToken
       );
 
-      if(job is null || !job.Enabled)
+      await runRepository.StoreAsync(context.Run, cancellationToken);
+
+      await executionGate.WaitAsync(cancellationToken);
+      try
       {
-         throw new InvalidOperationException(
-            $"AI job '{request.JobId}' does not exist."
-         );
+         if(await runRepository.TryClaimRunAsync(
+            context.Run.Id,
+            cancellationToken
+         ))
+         {
+            return await ExecuteAsync(context, cancellationToken);
+         }
+      }
+      finally
+      {
+         executionGate.Release();
       }
 
-      var prompt = await definitionRepository.GetActivePromptAsync(
-         request.JobId,
+      return await WaitForCompletionAsync(
+         context.Run.Id,
          cancellationToken
       );
+   }
 
-      if(prompt is null || !prompt.Enabled)
+   public async Task ProcessRunAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      try
       {
-         throw new InvalidOperationException(
-            $"AI job '{request.JobId}' has no active prompt."
+         var context = await BuildExecutionContextAsync(
+            runId,
+            cancellationToken
+         );
+
+         await ExecuteAsync(context, cancellationToken);
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(Exception exception)
+      {
+         await MarkRunFailedAsync(
+            runId,
+            exception.Message,
+            cancellationToken
          );
       }
+   }
 
-      var provider = await definitionRepository.GetProviderAsync(
-         job.ProviderId,
-         cancellationToken
-      );
-
-      if(provider is null || !provider.Enabled)
+   private async Task<AiJobResult> WaitForCompletionAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      while(true)
       {
-         throw new InvalidOperationException(
-            $"AI provider '{job.ProviderId}' does not exist."
+         var run = await runRepository.GetRunAsync(
+            runId,
+            cancellationToken
          );
+
+         if(run is null)
+         {
+            throw new InvalidOperationException(
+               $"AI run '{runId}' does not exist."
+            );
+         }
+
+         if(!string.Equals(
+            run.StatusId,
+            "pending",
+            StringComparison.Ordinal
+         ) &&
+            !string.Equals(
+               run.StatusId,
+               "running",
+               StringComparison.Ordinal
+            ))
+         {
+            return MapResult(run);
+         }
+
+         await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
       }
+   }
 
-      var providerClient = providerClients.FirstOrDefault(client =>
-         string.Equals(client.Kind, provider.Kind, StringComparison.Ordinal)
-      );
-
-      if(providerClient is null)
-      {
-         throw new InvalidOperationException(
-            $"No AI provider client is registered for kind '{provider.Kind}'."
-         );
-      }
-
-      var renderedPrompt = promptRenderer.Render(
-         prompt,
-         request.InputPayloadJson
-      );
-      var requestPayload = providerClient.CreateRequestPayload(
-         provider,
-         job,
-         prompt,
-         renderedPrompt
+   private async Task<AiJobResult> ExecuteAsync(
+      ExecutionContext context,
+      CancellationToken cancellationToken
+   )
+   {
+      var run = context.Run;
+      var requestPayload = context.ProviderClient.CreateRequestPayload(
+         context.Provider,
+         context.Job,
+         context.Prompt,
+         context.RenderedPrompt
       );
       var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
 
-      var run = new AiJobRun(
-         Guid.NewGuid(),
-         job.Id,
-         prompt.Id,
-         provider.Id,
-         provider.Model,
-         AiJobRunStatus.Running,
-         request.CorrelationId,
-         request.InputPayloadJson,
-         renderedPrompt.UserPrompt.Trim(),
-         rawRequestJson,
-         null,
-         null,
-         0,
-         rawRequestJson.Length,
-         null,
-         null,
-         DateTimeOffset.UtcNow,
-         null,
-         null,
-         null,
-         null,
-         null
-      );
+      run = run with
+      {
+         Status = AiJobRunStatus.Running,
+         RawRequestJson = rawRequestJson,
+         StartedAt = DateTimeOffset.UtcNow
+      };
 
       async Task ReportToolTraceProgressAsync(
          string? toolTraceJson,
@@ -124,16 +172,14 @@ public sealed class AiJobRunner(
          }
       }
 
-      await runRepository.StoreAsync(run, cancellationToken);
-
       try
       {
-         var providerResult = await providerClient.GenerateAsync(
-            provider,
-            job,
-            prompt,
-            renderedPrompt,
-            request.InputPayloadJson,
+         var providerResult = await context.ProviderClient.GenerateAsync(
+            context.Provider,
+            context.Job,
+            context.Prompt,
+            context.RenderedPrompt,
+            context.InputPayloadJson,
             cancellationToken,
             ReportToolTraceProgressAsync
          );
@@ -162,7 +208,7 @@ public sealed class AiJobRunner(
 
          await runRepository.UpdateAsync(run, cancellationToken);
 
-      return new AiJobResult(
+         return new AiJobResult(
             run.Id,
             run.JobId,
             run.ProviderId,
@@ -258,6 +304,215 @@ public sealed class AiJobRunner(
       }
    }
 
+   private async Task<ExecutionContext> BuildExecutionContextAsync(
+      AiJobRequest request,
+      CancellationToken cancellationToken
+   )
+   {
+      var job = await definitionRepository.GetJobAsync(
+         request.JobId,
+         cancellationToken
+      );
+
+      if(job is null || !job.Enabled)
+      {
+         throw new InvalidOperationException(
+            $"AI job '{request.JobId}' does not exist."
+         );
+      }
+
+      var prompt = await definitionRepository.GetActivePromptAsync(
+         request.JobId,
+         cancellationToken
+      );
+
+      if(prompt is null || !prompt.Enabled)
+      {
+         throw new InvalidOperationException(
+            $"AI job '{request.JobId}' has no active prompt."
+         );
+      }
+
+      var provider = await definitionRepository.GetProviderAsync(
+         job.ProviderId,
+         cancellationToken
+      );
+
+      if(provider is null || !provider.Enabled)
+      {
+         throw new InvalidOperationException(
+            $"AI provider '{job.ProviderId}' does not exist."
+         );
+      }
+
+      var providerClient = GetProviderClient(provider.Kind);
+      var renderedPrompt = promptRenderer.Render(
+         prompt,
+         request.InputPayloadJson
+      );
+      var requestPayload = providerClient.CreateRequestPayload(
+         provider,
+         job,
+         prompt,
+         renderedPrompt
+      );
+      var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
+      var run = new AiJobRun(
+         Guid.NewGuid(),
+         job.Id,
+         prompt.Id,
+         provider.Id,
+         provider.Model,
+         AiJobRunStatus.Pending,
+         request.CorrelationId,
+         request.InputPayloadJson,
+         renderedPrompt.UserPrompt.Trim(),
+         rawRequestJson,
+         null,
+         null,
+         0,
+         rawRequestJson.Length,
+         null,
+         null,
+         DateTimeOffset.UtcNow,
+         null,
+         null,
+         null,
+         null,
+         null
+      );
+
+      return new ExecutionContext(
+         run,
+         job,
+         prompt,
+         provider,
+         providerClient,
+         renderedPrompt,
+         request.InputPayloadJson
+      );
+   }
+
+   private async Task<ExecutionContext> BuildExecutionContextAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      var run = await runRepository.GetRunAsync(
+         runId,
+         cancellationToken
+      );
+
+      if(run is null)
+      {
+         throw new InvalidOperationException(
+            $"AI run '{runId}' does not exist."
+         );
+      }
+
+      var job = await definitionRepository.GetJobAsync(
+         run.JobId,
+         cancellationToken
+      );
+
+      if(job is null || !job.Enabled)
+      {
+         throw new InvalidOperationException(
+            $"AI job '{run.JobId}' does not exist."
+         );
+      }
+
+      var prompt = await definitionRepository.GetPromptAsync(
+         run.PromptId,
+         cancellationToken
+      );
+
+      if(prompt is null || !prompt.Enabled)
+      {
+         throw new InvalidOperationException(
+            $"AI prompt '{run.PromptId}' does not exist."
+         );
+      }
+
+      var provider = await definitionRepository.GetProviderAsync(
+         run.ProviderId,
+         cancellationToken
+      );
+
+      if(provider is null || !provider.Enabled)
+      {
+         throw new InvalidOperationException(
+            $"AI provider '{run.ProviderId}' does not exist."
+         );
+      }
+
+      var providerClient = GetProviderClient(provider.Kind);
+      var renderedPrompt = new AiRenderedPrompt(
+         prompt.SystemPrompt,
+         run.RenderedPrompt
+      );
+
+      return new ExecutionContext(
+         run.ToAiJobRun(),
+         job,
+         prompt,
+         provider,
+         providerClient,
+         renderedPrompt,
+         run.InputPayloadJson
+      );
+   }
+
+   private async Task MarkRunFailedAsync(
+      Guid runId,
+      string message,
+      CancellationToken cancellationToken
+   )
+   {
+      await runRepository.FailRunAsync(
+         runId,
+         message,
+         cancellationToken
+      );
+   }
+
+   private IAiProviderClient GetProviderClient(string kind)
+   {
+      var providerClient = providerClients.FirstOrDefault(client =>
+         string.Equals(client.Kind, kind, StringComparison.Ordinal)
+      );
+
+      if(providerClient is null)
+      {
+         throw new InvalidOperationException(
+            $"No AI provider client is registered for kind '{kind}'."
+         );
+      }
+
+      return providerClient;
+   }
+
+   private static AiJobResult MapResult(AiRunDetail run)
+   {
+      return new AiJobResult(
+         run.Id,
+         run.JobId,
+         run.ProviderId,
+         run.ProviderModel,
+         run.RenderedPrompt,
+         run.RawRequestJson ?? string.Empty,
+         run.OutputText ?? string.Empty,
+         run.RawResponseJson,
+         run.ToolTraceJson,
+         run.ToolRoundCount,
+         run.ConversationCharacterCount,
+         run.InputTokens,
+         run.OutputTokens,
+         run.ReasoningTokens,
+         run.ErrorMessage
+      );
+   }
+
    private static (
       int? inputTokens,
       int? outputTokens,
@@ -351,5 +606,58 @@ public sealed class AiJobRunner(
       }
 
       return null;
+   }
+
+   private sealed record ExecutionContext(
+      AiJobRun Run,
+      AiJobDefinition Job,
+      AiPromptDefinition Prompt,
+      AiProviderDefinition Provider,
+      IAiProviderClient ProviderClient,
+      AiRenderedPrompt RenderedPrompt,
+      string InputPayloadJson
+   );
+}
+
+internal static class AiRunDetailExtensions
+{
+   public static AiJobRun ToAiJobRun(this AiRunDetail run)
+   {
+      return new AiJobRun(
+         run.Id,
+         run.JobId,
+         run.PromptId,
+         run.ProviderId,
+         run.ProviderModel,
+         ToStatus(run.StatusId),
+         run.CorrelationId,
+         run.InputPayloadJson,
+         run.RenderedPrompt,
+         run.RawRequestJson ?? string.Empty,
+         run.RawResponseJson,
+         run.ToolTraceJson,
+         run.ToolRoundCount,
+         run.ConversationCharacterCount,
+         run.OutputText,
+         run.ErrorMessage,
+         run.StartedAt,
+         run.CompletedAt,
+         run.DurationSeconds,
+         run.InputTokens,
+         run.OutputTokens,
+         run.ReasoningTokens
+      );
+   }
+
+   private static AiJobRunStatus ToStatus(string statusId)
+   {
+      return statusId switch
+      {
+         "pending" => AiJobRunStatus.Pending,
+         "running" => AiJobRunStatus.Running,
+         "completed" => AiJobRunStatus.Completed,
+         "failed" => AiJobRunStatus.Failed,
+         _ => AiJobRunStatus.Pending
+      };
    }
 }

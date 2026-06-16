@@ -14,12 +14,14 @@ public class AiJobRunnerTests
       var promptRenderer = new RecordingPromptRenderer();
       var providerClient = new ThrowingProviderClient();
       var runRepository = new RecordingRunRepository();
+      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
 
       var runner = new AiJobRunner(
          jobRepository,
          promptRenderer,
          [providerClient],
-         runRepository
+         runRepository,
+         executionGate
       );
 
       var result = await runner.RunAsync(
@@ -56,12 +58,14 @@ public class AiJobRunnerTests
       var promptRenderer = new RecordingPromptRenderer();
       var providerClient = new SuccessfulProviderClient();
       var runRepository = new RecordingRunRepository();
+      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
 
       var runner = new AiJobRunner(
          jobRepository,
          promptRenderer,
          [providerClient],
-         runRepository
+         runRepository,
+         executionGate
       );
 
       var result = await runner.RunAsync(
@@ -79,6 +83,34 @@ public class AiJobRunnerTests
       Assert.Equal(12, runRepository.UpdatedRun!.InputTokens);
       Assert.Equal(34, runRepository.UpdatedRun.OutputTokens);
       Assert.Equal(5, runRepository.UpdatedRun.ReasoningTokens);
+   }
+
+   [Fact]
+   public async Task QueueAsyncStoresPendingRun()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new SuccessfulProviderClient();
+      var runRepository = new RecordingRunRepository();
+      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var runId = await runner.QueueAsync(
+         new AiJobRequest("job", """{"event":"test"}"""),
+         CancellationToken.None
+      );
+
+      Assert.NotEqual(Guid.Empty, runId);
+      Assert.NotNull(runRepository.StoredRun);
+      Assert.Equal(AiJobRunStatus.Pending, runRepository.StoredRun!.Status);
+      Assert.Equal(runId, runRepository.StoredRun.Id);
    }
 
    private sealed class RecordingJobDefinitionRepository
@@ -101,6 +133,17 @@ public class AiJobRunnerTests
                true,
                null
             )
+         );
+      }
+
+      public Task<AiPromptDefinition?> GetPromptAsync(
+         Guid promptId,
+         CancellationToken cancellationToken
+      )
+      {
+         return GetActivePromptAsync(
+            "job",
+            cancellationToken
          );
       }
 
@@ -271,6 +314,94 @@ public class AiJobRunnerTests
       )
       {
          StoredRun = run;
+         return Task.CompletedTask;
+      }
+
+      public Task<AiRunDetail?> GetRunAsync(
+         Guid id,
+         CancellationToken cancellationToken
+      )
+      {
+         var run = UpdatedRun ?? StoredRun;
+
+         if(run is null)
+         {
+            return Task.FromResult<AiRunDetail?>(null);
+         }
+
+         return Task.FromResult<AiRunDetail?>(
+            new AiRunDetail(
+               run.Id,
+               run.JobId,
+               "Job",
+               run.PromptId,
+               1,
+               "System",
+               "User",
+               run.ProviderId,
+               "Provider",
+               run.ProviderModel,
+               run.Status switch
+               {
+                  AiJobRunStatus.Pending => "pending",
+                  AiJobRunStatus.Running => "running",
+                  AiJobRunStatus.Completed => "completed",
+                  AiJobRunStatus.Failed => "failed",
+                  _ => "pending"
+               },
+               run.CorrelationId,
+               run.InputPayloadJson,
+               run.RenderedPrompt,
+               run.RawRequestJson,
+               run.RawResponseJson,
+               run.ToolTraceJson,
+               run.ToolRoundCount,
+               run.ConversationCharacterCount,
+               run.OutputText,
+               run.ErrorMessage,
+               run.StartedAt,
+               run.CompletedAt,
+               run.DurationSeconds,
+               run.InputTokens,
+               run.OutputTokens,
+               run.ReasoningTokens
+            )
+         );
+      }
+
+      public Task<bool> TryClaimRunAsync(
+         Guid id,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult(true);
+      }
+
+      public Task<Guid?> ClaimNextRunAsync(
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult<Guid?>(null);
+      }
+
+      public Task FailRunAsync(
+         Guid id,
+         string errorMessage,
+         CancellationToken cancellationToken
+      )
+      {
+         var run = UpdatedRun ?? StoredRun;
+
+         if(run is not null)
+         {
+            UpdatedRun = run with
+            {
+               Status = AiJobRunStatus.Failed,
+               ErrorMessage = errorMessage,
+               CompletedAt = DateTimeOffset.UtcNow
+            };
+         }
+
          return Task.CompletedTask;
       }
 

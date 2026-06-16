@@ -17,7 +17,6 @@ builder.Services.AddSingleton(
 );
 builder.Services.AddAiPlatform(builder.Configuration);
 builder.Services.AddSingleton<AdminDatePreferenceStore>();
-builder.Services.AddSingleton<BroadcastParticipationCheckQueue>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();
 builder.Services.AddScoped<ActivityRepository>();
@@ -26,7 +25,7 @@ builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
 builder.Services.AddScoped<BroadcastRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
-builder.Services.AddHostedService<BroadcastParticipationCheckWorker>();
+builder.Services.AddHostedService<AiPendingRunWorker>();
 builder.Services.AddHostedService<AiRunTimeoutWorker>();
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

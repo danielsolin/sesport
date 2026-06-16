@@ -359,7 +359,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          );
       }
 
-         return new AiPromptDefinition(
+      return new AiPromptDefinition(
          promptReader.GetGuid(0),
          promptReader.GetString(1),
          promptReader.GetInt32(2),
@@ -371,6 +371,54 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableInt32(promptReader, 8),
          ReadNullableInt32(promptReader, 9),
          promptReader.GetBoolean(10)
+      );
+   }
+
+   public async Task<AiPromptDefinition?> GetPromptAsync(
+      Guid promptId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select
+            id,
+            job_id,
+            version,
+            system_prompt,
+            user_prompt_template,
+            output_schema::text,
+            request_options::text,
+            temperature,
+            max_output_tokens,
+            max_tool_rounds,
+            enabled
+         from ai_job_prompts
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", promptId);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new AiPromptDefinition(
+         reader.GetGuid(0),
+         reader.GetString(1),
+         reader.GetInt32(2),
+         reader.GetString(3),
+         reader.GetString(4),
+         ReadNullableString(reader, 5),
+         ReadNullableString(reader, 6) ?? "{}",
+         ReadNullableDecimal(reader, 7),
+         ReadNullableInt32(reader, 8),
+         ReadNullableInt32(reader, 9),
+         reader.GetBoolean(10)
       );
    }
 
@@ -493,6 +541,96 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       AddRunParameters(command, run);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task<bool> TryClaimRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set
+            status_id = 'running',
+            started_at = now()
+         where id = @id
+            and status_id = 'pending'
+         returning id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      return await reader.ReadAsync(cancellationToken);
+   }
+
+   public async Task<Guid?> ClaimNextRunAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         with next_run as (
+            select id
+            from ai_job_runs
+            where status_id in ('pending', 'running')
+            order by
+               case status_id
+                  when 'running' then 0
+                  else 1
+               end,
+               started_at asc,
+               created_at asc,
+               id asc
+            for update skip locked
+            limit 1
+         )
+         update ai_job_runs r
+         set
+            status_id = 'running',
+            started_at = now()
+         from next_run
+         where r.id = next_run.id
+         returning r.id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return reader.GetGuid(0);
+   }
+
+   public async Task FailRunAsync(
+      Guid id,
+      string errorMessage,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set
+            status_id = 'failed',
+            error_message = @error_message,
+            completed_at = now(),
+            duration_seconds = extract(
+               epoch from now() - started_at
+            )
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("error_message", errorMessage);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -819,6 +957,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       return status switch
       {
+         AiJobRunStatus.Pending => "pending",
          AiJobRunStatus.Running => "running",
          AiJobRunStatus.Completed => "completed",
          AiJobRunStatus.Failed => "failed",

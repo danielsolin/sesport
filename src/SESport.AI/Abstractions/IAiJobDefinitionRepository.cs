@@ -14,6 +14,11 @@ public interface IAiJobDefinitionRepository
       CancellationToken cancellationToken
    );
 
+   Task<AiPromptDefinition?> GetPromptAsync(
+      Guid promptId,
+      CancellationToken cancellationToken
+   );
+
    Task<AiProviderDefinition?> GetProviderAsync(
       string providerId,
       CancellationToken cancellationToken

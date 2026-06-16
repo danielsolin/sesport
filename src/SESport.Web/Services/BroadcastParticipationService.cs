@@ -12,8 +12,7 @@ public sealed class BroadcastParticipationService(
    AdminRepository adminRepository,
    AiRepository aiRepository,
    BroadcastRepository broadcastRepository,
-   IAiJobRunner aiJobRunner,
-   BroadcastParticipationCheckQueue checkQueue
+   IAiJobRunner aiJobRunner
 )
 {
    private const string ParticipationJobId =
@@ -72,10 +71,22 @@ public sealed class BroadcastParticipationService(
          return;
       }
 
-      await checkQueue.EnqueueAsync(
+      var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
          normalizedBroadcastIds,
          cancellationToken
       );
+
+      foreach(var broadcast in broadcasts)
+      {
+         await aiJobRunner.QueueAsync(
+            new AiJobRequest(
+               ParticipationJobId,
+               CreateParticipationInputJson(broadcast),
+               broadcast.Id.ToString()
+            ),
+            cancellationToken
+         );
+      }
    }
 
    public async Task<IReadOnlyList<BroadcastParticipationCheckResult>>
@@ -132,113 +143,6 @@ public sealed class BroadcastParticipationService(
       return results;
    }
 
-   public async Task<IReadOnlyList<BroadcastParticipationCheckResult>>
-      CheckSwedishParticipationAsync(
-         IReadOnlyCollection<Guid> broadcastIds,
-         CancellationToken cancellationToken
-      )
-   {
-      var normalizedBroadcastIds = NormalizeBroadcastIds(broadcastIds);
-
-      if(normalizedBroadcastIds.Count == 0)
-      {
-         return [];
-      }
-
-      var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
-         normalizedBroadcastIds,
-         cancellationToken
-      );
-      var results = new List<BroadcastParticipationCheckResult>();
-
-      foreach(var broadcast in broadcasts)
-      {
-         var result = await aiJobRunner.RunAsync(
-            new AiJobRequest(
-               ParticipationJobId,
-               CreateParticipationInputJson(broadcast),
-               broadcast.Id.ToString()
-            ),
-            cancellationToken
-         );
-         var sourceUrls = ParticipationSourceUrlExtractor.ExtractFromOutput(
-            result.OutputText
-         );
-         var fallbackSourceUrls = sourceUrls.Count > 0
-            ? sourceUrls
-            : ParticipationSourceUrlExtractor.Extract(
-               result.RawResponseJson
-            );
-
-         if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
-         {
-            results.Add(
-            new BroadcastParticipationCheckResult(
-               broadcast.Id,
-               result.RunId,
-               "failed",
-               broadcast.ChannelName,
-               broadcast.Title,
-               result.ErrorMessage,
-               null,
-                  [],
-                  [],
-                  fallbackSourceUrls
-               )
-            );
-
-            continue;
-         }
-
-         var parsed = ParseParticipationResult(
-            result.OutputText,
-            fallbackSourceUrls
-         );
-
-         if(parsed is null)
-         {
-            results.Add(
-            new BroadcastParticipationCheckResult(
-               broadcast.Id,
-               result.RunId,
-               "completed",
-               broadcast.ChannelName,
-               broadcast.Title,
-               "The model returned invalid JSON.",
-                  null,
-                  [],
-                  [],
-                  fallbackSourceUrls
-               )
-            );
-
-            continue;
-         }
-
-         var participantItems = await ResolveParticipantItemsAsync(
-            parsed.SwedishParticipants,
-            cancellationToken
-         );
-
-         results.Add(
-            new BroadcastParticipationCheckResult(
-               broadcast.Id,
-               result.RunId,
-               "completed",
-               broadcast.ChannelName,
-               broadcast.Title,
-               null,
-               parsed.SwedishParticipation,
-               parsed.SwedishParticipants,
-               participantItems,
-               parsed.SourceUrls
-            )
-         );
-      }
-
-      return results;
-   }
-
    private static string CreateParticipationInputJson(
       BroadcastActivitySource broadcast
    )
@@ -263,74 +167,6 @@ public sealed class BroadcastParticipationService(
          .Where(id => id != Guid.Empty)
          .Distinct()
          .ToList();
-   }
-
-   private static SwedishParticipationResult? ParseParticipationResult(
-      string outputText,
-      IReadOnlyList<string> fallbackSourceUrls
-   )
-   {
-      try
-      {
-         using var document = JsonDocument.Parse(outputText);
-         var root = document.RootElement;
-
-         if(root.ValueKind != JsonValueKind.Object)
-         {
-            return null;
-         }
-
-         if(
-            !root.TryGetProperty(
-               "SwedishParticipation",
-               out var participation
-            ) ||
-            participation.ValueKind != JsonValueKind.String
-         )
-         {
-            return null;
-         }
-
-         var participants = new List<string>();
-
-         if(
-            root.TryGetProperty(
-               "SwedishParticipants",
-               out var participantsElement
-            ) &&
-            participantsElement.ValueKind == JsonValueKind.Array
-         )
-         {
-            foreach(var participant in participantsElement.EnumerateArray())
-            {
-               if(participant.ValueKind != JsonValueKind.String)
-               {
-                  continue;
-               }
-
-               var name = participant.GetString();
-
-               if(!string.IsNullOrWhiteSpace(name))
-               {
-                  participants.Add(name);
-               }
-            }
-         }
-
-         var sourceUrls = ParticipationSourceUrlExtractor.ExtractFromOutput(
-            outputText
-         );
-
-         return new SwedishParticipationResult(
-            participation.GetString() ?? string.Empty,
-            participants,
-            sourceUrls.Count > 0 ? sourceUrls : fallbackSourceUrls
-         );
-      }
-      catch(JsonException)
-      {
-         return null;
-      }
    }
 
    private async Task<IReadOnlyList<BroadcastParticipantDisplayItem>>
@@ -399,11 +235,6 @@ public sealed class BroadcastParticipationService(
       return items;
    }
 
-   private sealed record SwedishParticipationResult(
-      string SwedishParticipation,
-      IReadOnlyList<string> SwedishParticipants,
-      IReadOnlyList<string> SourceUrls
-   );
 }
 
 public sealed record BroadcastParticipationCheckResult(

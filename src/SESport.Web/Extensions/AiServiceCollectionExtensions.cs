@@ -4,6 +4,7 @@ using SESport.AI.Abstractions;
 using SESport.AI.Persistence;
 using SESport.AI.Providers;
 using SESport.AI.Rendering;
+using SESport.AI.Services;
 
 namespace SESport.Web.Extensions;
 
@@ -23,8 +24,10 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<IAiJobDefinitionRepository, AiRepository>();
       services.AddScoped<IAiJobRunRepository, AiRepository>();
       services.AddScoped<AiAdminRepository>();
+      services.AddSingleton<AiJobExecutionGate>();
       services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
       services.AddScoped<IAiJobRunner, AiJobRunner>();
+      services.AddScoped<IAiJobProcessor, AiJobRunner>();
       services.AddHttpClient<
          IAiProviderClient,
          OpenRouterClient
