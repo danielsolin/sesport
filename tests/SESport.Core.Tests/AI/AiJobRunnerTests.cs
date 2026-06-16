@@ -384,6 +384,14 @@ public class AiJobRunnerTests
          return Task.FromResult<Guid?>(null);
       }
 
+      public Task DeleteRunAsync(
+         Guid id,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.CompletedTask;
+      }
+
       public Task FailRunAsync(
          Guid id,
          string errorMessage,

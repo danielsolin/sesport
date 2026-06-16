@@ -23,6 +23,11 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
+   Task DeleteRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   );
+
    Task FailRunAsync(
       Guid id,
       string errorMessage,

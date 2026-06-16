@@ -118,6 +118,15 @@
                      asp-route-statusId="@Model.StatusId">
                      View
                   </a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-id="@run.Id"
+                        asp-route-date="@Model.DateText"
+                        asp-route-jobId="@Model.JobId"
+                        asp-route-statusId="@Model.StatusId"
+                        onsubmit="return confirm('Sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
                </td>
             </tr>
          }

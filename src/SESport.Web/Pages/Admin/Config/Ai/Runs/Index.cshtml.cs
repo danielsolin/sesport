@@ -35,11 +35,16 @@ public class IndexModel(
 
    public string? LoadError { get; private set; }
 
+   private DateOnly GetSelectedDate()
+   {
+      return Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+   }
+
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       try
       {
-         SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+         SelectedDate = GetSelectedDate();
          Jobs = await adminRepository.GetJobsAsync(cancellationToken);
          StatusOptions =
          [
@@ -60,5 +65,24 @@ public class IndexModel(
       {
          LoadError = exception.Message;
       }
+   }
+
+   public async Task<IActionResult> OnPostDeleteAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      SelectedDate = GetSelectedDate();
+      await repository.DeleteRunAsync(id, cancellationToken);
+
+      return RedirectToPage(
+         "./Index",
+         new
+         {
+            date = DateText,
+            JobId,
+            StatusId
+         }
+      );
    }
 }

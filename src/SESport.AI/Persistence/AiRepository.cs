@@ -621,6 +621,21 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       return reader.GetGuid(0);
    }
 
+   public async Task DeleteRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from ai_job_runs
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task FailRunAsync(
       Guid id,
       string errorMessage,
