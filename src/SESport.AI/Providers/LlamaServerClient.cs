@@ -1,3 +1,5 @@
+using System.IO;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -16,6 +18,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    // Rough character budget for the in-memory chat history.
    // Keep this comfortably below the llama-server token limit.
    private const int MaxConversationContextCharacters = 12000;
+   private const int MaxTransientRetryAttempts = 12;
 
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
@@ -136,34 +139,15 @@ public sealed class LlamaServerClient : IAiProviderClient
                toolRoundCount
             );
             requestJson = AiRequestJsonSerializer.Serialize(request);
-
-            var response = await SendAsync(
+            var responseEnvelope = await SendWithRetryAsync(
                provider,
                request,
+               turn,
+               "turn",
                cancellationToken
             );
-            rawResponse = await response.Content.ReadAsStringAsync(
-               cancellationToken
-            );
-
-            if(!response.IsSuccessStatusCode)
-            {
-               throw new HttpRequestException(
-                  CreateFailureMessage(response.StatusCode, rawResponse),
-                  null,
-                  response.StatusCode
-               );
-            }
-
-            responseJson = JsonDocument.Parse(rawResponse).RootElement
-               .Deserialize<JsonObject>(JsonOptions);
-
-            if(responseJson is null)
-            {
-               throw new InvalidOperationException(
-                  "llama-server returned an empty response."
-               );
-            }
+            responseJson = responseEnvelope.ResponseJson;
+            rawResponse = responseEnvelope.RawResponseJson;
 
             LogResponse("turn", turn, responseJson);
 
@@ -264,37 +248,15 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             requestJson = AiRequestJsonSerializer.Serialize(request);
             turn++;
-
-            var finalResponse = await SendAsync(
+            var finalEnvelope = await SendWithRetryAsync(
                provider,
                request,
+               turn,
+               "final",
                cancellationToken
             );
-            rawResponse = await finalResponse.Content.ReadAsStringAsync(
-               cancellationToken
-            );
-
-            if(!finalResponse.IsSuccessStatusCode)
-            {
-               throw new HttpRequestException(
-                  CreateFailureMessage(
-                     finalResponse.StatusCode,
-                     rawResponse
-                  ),
-                  null,
-                  finalResponse.StatusCode
-               );
-            }
-
-            responseJson = JsonDocument.Parse(rawResponse).RootElement
-               .Deserialize<JsonObject>(JsonOptions);
-
-            if(responseJson is null)
-            {
-               throw new InvalidOperationException(
-                  "llama-server returned an empty response."
-               );
-            }
+            responseJson = finalEnvelope.ResponseJson;
+            rawResponse = finalEnvelope.RawResponseJson;
 
             LogResponse("final", turn, responseJson);
             if(TryGetToolCalls(responseJson, out var finalToolCalls))
@@ -352,6 +314,11 @@ public sealed class LlamaServerClient : IAiProviderClient
             null
          );
       }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
       catch(Exception exception)
       {
          var toolTraceJson = toolTrace.Count == 0
@@ -395,6 +362,172 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
+   }
+
+   private async Task<ResponseEnvelope> SendWithRetryAsync(
+      AiProviderDefinition provider,
+      JsonObject request,
+      int turn,
+      string stage,
+      CancellationToken cancellationToken
+   )
+   {
+      for(var attempt = 1; attempt <= MaxTransientRetryAttempts; attempt++)
+      {
+         var rawResponse = "";
+
+         try
+         {
+            using var response = await SendAsync(
+               provider,
+               request,
+               cancellationToken
+            );
+
+            rawResponse = await response.Content.ReadAsStringAsync(
+               cancellationToken
+            );
+
+            if(!response.IsSuccessStatusCode)
+            {
+               if(IsTransientFailure(response.StatusCode, rawResponse) &&
+                  attempt < MaxTransientRetryAttempts)
+               {
+                  await DelayTransientRetryAsync(
+                     stage,
+                     turn,
+                     attempt,
+                     CreateFailureMessage(
+                        response.StatusCode,
+                        rawResponse
+                     ),
+                     cancellationToken
+                  );
+                  continue;
+               }
+
+               throw new HttpRequestException(
+                  CreateFailureMessage(response.StatusCode, rawResponse),
+                  null,
+                  response.StatusCode
+               );
+            }
+
+            var responseJson = JsonDocument.Parse(rawResponse).RootElement
+               .Deserialize<JsonObject>(JsonOptions);
+
+            if(responseJson is null)
+            {
+               throw new InvalidOperationException(
+                  "llama-server returned an empty response."
+               );
+            }
+
+            return new ResponseEnvelope(responseJson, rawResponse);
+         }
+         catch(Exception exception) when (
+            IsTransientFailure(exception, rawResponse, cancellationToken) &&
+            attempt < MaxTransientRetryAttempts)
+         {
+            await DelayTransientRetryAsync(
+               stage,
+               turn,
+               attempt,
+               exception.Message,
+               cancellationToken
+            );
+         }
+      }
+
+      throw new InvalidOperationException(
+         "llama-server stayed unavailable after retrying."
+      );
+   }
+
+   private async Task DelayTransientRetryAsync(
+      string stage,
+      int turn,
+      int attempt,
+      string reason,
+      CancellationToken cancellationToken
+   )
+   {
+      var delay = GetTransientRetryDelay(attempt);
+
+      Logger.LogWarning(
+         "llama-server {Stage}:{Turn} attempt {Attempt} failed with " +
+         "{Reason}. Retrying in {Delay}.",
+         stage,
+         turn,
+         attempt,
+         reason,
+         delay
+      );
+
+      await Task.Delay(delay, cancellationToken);
+   }
+
+   private static bool IsTransientFailure(
+      HttpStatusCode statusCode,
+      string rawResponse
+   )
+   {
+      return statusCode == HttpStatusCode.ServiceUnavailable ||
+         rawResponse.Contains(
+            "Loading model",
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
+   private static bool IsTransientFailure(
+      Exception exception,
+      string rawResponse,
+      CancellationToken cancellationToken
+   )
+   {
+      if(exception is HttpRequestException httpRequestException)
+      {
+         if(httpRequestException.StatusCode is not null)
+         {
+            return IsTransientFailure(
+               httpRequestException.StatusCode.Value,
+               rawResponse
+            );
+         }
+
+         return true;
+      }
+
+      if(exception is TaskCanceledException &&
+         !cancellationToken.IsCancellationRequested)
+      {
+         return true;
+      }
+
+      if(exception is IOException)
+      {
+         return true;
+      }
+
+      return rawResponse.Contains(
+         "Loading model",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static TimeSpan GetTransientRetryDelay(int attempt)
+   {
+      var seconds = attempt switch
+      {
+         1 => 1,
+         2 => 2,
+         3 => 4,
+         4 => 8,
+         5 => 16,
+         _ => 30
+      };
+
+      return TimeSpan.FromSeconds(seconds);
    }
 
    private void LogResponse(
@@ -1897,6 +2030,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          $"llama-server failed with {(int)statusCode} {statusCode}: " +
          preview;
    }
+
+   private sealed record ResponseEnvelope(
+      JsonObject ResponseJson,
+      string RawResponseJson
+   );
 
    private static void MergeRequestOptions(
       JsonObject payload,

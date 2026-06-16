@@ -107,6 +107,83 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncRetriesLoadingModel503()
+   {
+      var handler = new RecordingHandler(
+         new RecordingHandler.ResponseSpec(
+            HttpStatusCode.ServiceUnavailable,
+            CreateLoadingModelResponseJson()
+         ),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: false,
+            toolsJson: null
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Equal(2, handler.RequestBodies.Count);
+   }
+
+   [Fact]
+   public async Task LlamaServerGenerateAsyncRetriesTransportSendFailure()
+   {
+      var handler = new RecordingHandler(
+         new HttpRequestException(
+            "An error occurred while sending the request."
+         ),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: false,
+            toolsJson: null
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Equal(2, handler.RequestBodies.Count);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesDirectPageUrlToolCall()
    {
       var handler = new RecordingHandler(
@@ -833,6 +910,19 @@ public class AiProviderClientTests
       );
    }
 
+   private static string CreateLoadingModelResponseJson()
+   {
+      return """
+      {
+        "error": {
+          "message": "Loading model",
+          "type": "unavailable_error",
+          "code": 503
+        }
+      }
+      """;
+   }
+
    private static string CreateParticipationSchemaJson()
    {
       return """
@@ -868,11 +958,11 @@ public class AiProviderClientTests
 
    private sealed class RecordingHandler : HttpMessageHandler
    {
-      private readonly Queue<string> responseJson;
+      private readonly Queue<object> responses;
 
-      public RecordingHandler(params string[] responseJson)
+      public RecordingHandler(params object[] responses)
       {
-         this.responseJson = new Queue<string>(responseJson);
+         this.responses = new Queue<object>(responses);
       }
 
       public Uri? RequestUri { get; private set; }
@@ -893,17 +983,44 @@ public class AiProviderClientTests
             : await request.Content.ReadAsStringAsync(cancellationToken);
          RequestBodies.Add(requestBody);
 
-         var response = responseJson.Count == 0
+         var response = responses.Count == 0
             ? "{}"
-            : responseJson.Dequeue();
+            : responses.Dequeue();
 
-         return new HttpResponseMessage(HttpStatusCode.OK)
+         return response switch
          {
-            Content = JsonContent.Create(
-               JsonSerializer.Deserialize<JsonElement>(response)
+            string json => CreateResponseMessage(
+               HttpStatusCode.OK,
+               json
+            ),
+            ResponseSpec spec => CreateResponseMessage(
+               spec.StatusCode,
+               spec.Body
+            ),
+            Exception exception => throw exception,
+            _ => throw new InvalidOperationException(
+               $"Unsupported response type '{response.GetType()}'."
             )
          };
       }
+
+      private static HttpResponseMessage CreateResponseMessage(
+         HttpStatusCode statusCode,
+         string body
+      )
+      {
+         return new HttpResponseMessage(statusCode)
+         {
+            Content = JsonContent.Create(
+               JsonSerializer.Deserialize<JsonElement>(body)
+            )
+         };
+      }
+
+      public sealed record ResponseSpec(
+         HttpStatusCode StatusCode,
+         string Body
+      );
    }
 
    private sealed class RecordingWebSearchClient : IWebSearchClient
