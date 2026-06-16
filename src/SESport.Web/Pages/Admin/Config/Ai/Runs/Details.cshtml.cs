@@ -104,6 +104,19 @@ public class DetailsModel(AiRepository repository) : PageModel
       );
    }
 
+   public static int GetToolRoundCount(AiRunDetail run)
+   {
+      return GetToolRoundCount(run.ToolRoundCount, run.ToolTraceJson);
+   }
+
+   public static int GetToolRoundCount(
+      int toolRoundCount,
+      string? toolTraceJson
+   )
+   {
+      return Math.Max(toolRoundCount, ParseToolTrace(toolTraceJson).Count);
+   }
+
    private static string FormatDuration(
       decimal? durationSeconds,
       DateTimeOffset startedAt,

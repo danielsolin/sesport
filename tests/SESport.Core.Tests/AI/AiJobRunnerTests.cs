@@ -425,6 +425,7 @@ public class AiJobRunnerTests
       public Task UpdateToolTraceAsync(
          Guid runId,
          string? toolTraceJson,
+         int toolRoundCount,
          CancellationToken cancellationToken
       )
       {
@@ -432,14 +433,16 @@ public class AiJobRunnerTests
             ? null
             : StoredRun with
             {
-               ToolTraceJson = toolTraceJson
+               ToolTraceJson = toolTraceJson,
+               ToolRoundCount = toolRoundCount
             };
 
          UpdatedRun = UpdatedRun is null
             ? null
             : UpdatedRun with
             {
-               ToolTraceJson = toolTraceJson
+               ToolTraceJson = toolTraceJson,
+               ToolRoundCount = toolRoundCount
             };
 
          return Task.CompletedTask;

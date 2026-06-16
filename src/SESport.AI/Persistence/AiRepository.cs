@@ -55,6 +55,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
          .AppendLine("   r.tool_round_count,")
+         .AppendLine("   r.tool_trace::text,")
          .AppendLine("   r.started_at,")
          .AppendLine("   r.duration_seconds")
          .AppendLine("from ai_job_runs r")
@@ -98,8 +99,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 4),
                reader.GetString(5),
                reader.GetInt32(6),
-               reader.GetFieldValue<DateTimeOffset>(7),
-               ReadNullableDecimal(reader, 8)
+               ReadNullableString(reader, 7),
+               reader.GetFieldValue<DateTimeOffset>(8),
+               ReadNullableDecimal(reader, 9)
             )
          );
       }
@@ -696,18 +698,22 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    public async Task UpdateToolTraceAsync(
       Guid runId,
       string? toolTraceJson,
+      int toolRoundCount,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
          update ai_job_runs
-         set tool_trace = @tool_trace
+         set
+            tool_trace = @tool_trace,
+            tool_round_count = @tool_round_count
          where id = @id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", runId);
       AddJsonbParameter(command, "tool_trace", toolTraceJson);
+      command.Parameters.AddWithValue("tool_round_count", toolRoundCount);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 

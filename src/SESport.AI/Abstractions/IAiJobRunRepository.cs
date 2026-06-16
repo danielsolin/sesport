@@ -37,6 +37,7 @@ public interface IAiJobRunRepository
    Task UpdateToolTraceAsync(
       Guid runId,
       string? toolTraceJson,
+      int toolRoundCount,
       CancellationToken cancellationToken
    );
 

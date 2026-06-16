@@ -81,6 +81,7 @@ public sealed record AiRunListItem(
    string? ProviderModel,
    string StatusId,
    int ToolRoundCount,
+   string? ToolTraceJson,
    DateTimeOffset StartedAt,
    decimal? DurationSeconds
 );

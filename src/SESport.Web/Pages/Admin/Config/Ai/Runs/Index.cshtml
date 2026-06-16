@@ -106,7 +106,12 @@
                   </div>
                </td>
                <td><code>@run.StatusId</code></td>
-               <td>@run.ToolRoundCount</td>
+               <td>
+                  @DetailsModel.GetToolRoundCount(
+                     run.ToolRoundCount,
+                     run.ToolTraceJson
+                  )
+               </td>
                <td>
                   @DetailsModel.FormatDuration(run)
                </td>

@@ -141,6 +141,7 @@ public sealed class AiJobRunner(
          context.RenderedPrompt
       );
       var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
+      var toolRoundCount = 0;
 
       run = run with
       {
@@ -156,7 +157,8 @@ public sealed class AiJobRunner(
       {
          run = run with
          {
-            ToolTraceJson = toolTraceJson
+            ToolTraceJson = toolTraceJson,
+            ToolRoundCount = toolRoundCount
          };
 
          try
@@ -164,6 +166,7 @@ public sealed class AiJobRunner(
             await runRepository.UpdateToolTraceAsync(
                run.Id,
                toolTraceJson,
+               toolRoundCount,
                progressCancellationToken
             );
          }
