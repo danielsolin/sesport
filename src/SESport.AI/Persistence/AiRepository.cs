@@ -1,11 +1,13 @@
 using System.Text;
 using System.Text.Json;
+
 using Npgsql;
+
 using NpgsqlTypes;
+
 using SESport.AI.Abstractions;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
 namespace SESport.AI.Persistence;

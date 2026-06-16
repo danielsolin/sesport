@@ -1,7 +1,6 @@
 using Npgsql;
-using SESport.AI.Models;
+
 using SESport.AI.Persistence;
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
 namespace SESport.Core.Tests.Data;

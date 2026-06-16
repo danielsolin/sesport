@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using SESport.AI;
 using SESport.AI.Abstractions;
 using SESport.AI.Persistence;
