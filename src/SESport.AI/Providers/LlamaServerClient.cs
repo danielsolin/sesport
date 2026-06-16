@@ -178,6 +178,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   toolCall,
                   searchResultsById,
                   toolState,
+                  turn,
                   cancellationToken
                );
 
@@ -998,9 +999,20 @@ public sealed class LlamaServerClient : IAiProviderClient
       ToolCall toolCall,
       IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
+      int turn,
       CancellationToken cancellationToken
    )
    {
+      if(TryGetRepeatedToolResult(
+         toolCall,
+         searchResultsById,
+         toolState,
+         out var repeatedResult
+      ))
+      {
+         return repeatedResult;
+      }
+
       if(
          string.Equals(toolCall.Name, "web_search", StringComparison.Ordinal) ||
          string.Equals(toolCall.Name, "altra/web-search",
@@ -1020,11 +1032,20 @@ public sealed class LlamaServerClient : IAiProviderClient
          LogSearchResults(query, limit, searchResults);
 
          toolState.SearchSequence++;
-         return FormatSearchResults(
+         var result = FormatSearchResults(
             searchResults,
             toolState.SearchSequence,
             searchResultsById
          );
+
+         RecordToolCallResult(
+            toolCall,
+            searchResultsById,
+            toolState,
+            turn,
+            result
+         );
+         return result;
       }
 
       if(string.Equals(toolCall.Name, "web_get_page", StringComparison.Ordinal))
@@ -1035,23 +1056,43 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          if(!string.IsNullOrWhiteSpace(find))
          {
-            return await FormatPageFindResultsAsync(
+            var result = await FormatPageFindResultsAsync(
                id,
                url,
                find,
                searchResultsById,
                toolState,
+               turn,
                cancellationToken
             );
+
+            RecordToolCallResult(
+               toolCall,
+               searchResultsById,
+               toolState,
+               turn,
+               result
+            );
+            return result;
          }
 
-         return await FormatPageContentAsync(
+         var pageResult = await FormatPageContentAsync(
             id,
             url,
             searchResultsById,
             toolState,
+            turn,
             cancellationToken
          );
+
+         RecordToolCallResult(
+            toolCall,
+            searchResultsById,
+            toolState,
+            turn,
+            pageResult
+         );
+         return pageResult;
       }
 
       if(string.Equals(
@@ -1064,14 +1105,24 @@ public sealed class LlamaServerClient : IAiProviderClient
          var url = ExtractUrl(toolCall.Arguments);
          var find = ExtractFind(toolCall.Arguments);
 
-         return await FormatPageFindResultsAsync(
+         var result = await FormatPageFindResultsAsync(
             id,
             url,
             find,
             searchResultsById,
             toolState,
+            turn,
             cancellationToken
          );
+
+         RecordToolCallResult(
+            toolCall,
+            searchResultsById,
+            toolState,
+            turn,
+            result
+         );
+         return result;
       }
 
       throw new InvalidOperationException(
@@ -1511,6 +1562,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       string url,
       IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
+      int turn,
       CancellationToken cancellationToken
    )
    {
@@ -1533,15 +1585,32 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
+      var signature = BuildPageCallSignature(
+         "web_get_page",
+         pageTarget.Url,
+         ""
+      );
+
+      if(TryGetRepeatedResult(
+         signature,
+         toolState.PageCallHistory,
+         out var repeatedResult
+      ))
+      {
+         return repeatedResult;
+      }
+
       var pageContent = await GetPageContentAsync(
          pageTarget.Url,
          toolState,
          cancellationToken
       );
 
+      string result;
+
       if(pageContent is null)
       {
-         return FormatPageContentText(
+         result = FormatPageContentText(
             pageTarget.ReferenceLabel,
             pageTarget.ReferenceValue,
             pageTarget.Title,
@@ -1552,17 +1621,28 @@ public sealed class LlamaServerClient : IAiProviderClient
             "Unable to fetch page content."
          );
       }
+      else
+      {
+         result = FormatPageContentText(
+            pageTarget.ReferenceLabel,
+            pageTarget.ReferenceValue,
+            pageContent.Title,
+            pageContent.Url,
+            pageTarget.SearchSnippet,
+            pageContent.PublishedAt,
+            pageContent.Headings,
+            pageContent.MainText
+         );
+      }
 
-      return FormatPageContentText(
-         pageTarget.ReferenceLabel,
-         pageTarget.ReferenceValue,
-         pageContent.Title,
-         pageContent.Url,
-         pageTarget.SearchSnippet,
-         pageContent.PublishedAt,
-         pageContent.Headings,
-         pageContent.MainText
+      RecordResult(
+         signature,
+         toolState.PageCallHistory,
+         turn,
+         result
       );
+
+      return result;
    }
 
    private async Task<string> FormatPageFindResultsAsync(
@@ -1571,6 +1651,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       string find,
       IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
+      int turn,
       CancellationToken cancellationToken
    )
    {
@@ -1605,15 +1686,32 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
+      var signature = BuildPageCallSignature(
+         "web_find_in_page",
+         pageTarget.Url,
+         find
+      );
+
+      if(TryGetRepeatedResult(
+         signature,
+         toolState.PageCallHistory,
+         out var repeatedResult
+      ))
+      {
+         return repeatedResult;
+      }
+
       var pageContent = await GetPageContentAsync(
          pageTarget.Url,
          toolState,
          cancellationToken
       );
 
+      string result;
+
       if(pageContent is null)
       {
-         return FormatPageContentText(
+         result = FormatPageContentText(
             pageTarget.ReferenceLabel,
             pageTarget.ReferenceValue,
             pageTarget.Title,
@@ -1625,22 +1723,34 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
-      var matches = FindPageMatches(pageContent, find);
+      else
+      {
+         var matches = FindPageMatches(pageContent, find);
 
-      return JsonSerializer.Serialize(
-         new
-         {
-            reference_label = pageTarget.ReferenceLabel,
-            reference_value = pageTarget.ReferenceValue,
-            find,
-            title = pageContent.Title,
-            url = pageContent.Url,
-            published_at = pageContent.PublishedAt?.ToString("O"),
-            match_count = matches.Count,
-            matches
-         },
-         JsonOptions
+         result = JsonSerializer.Serialize(
+            new
+            {
+               reference_label = pageTarget.ReferenceLabel,
+               reference_value = pageTarget.ReferenceValue,
+               find,
+               title = pageContent.Title,
+               url = pageContent.Url,
+               published_at = pageContent.PublishedAt?.ToString("O"),
+               match_count = matches.Count,
+               matches
+            },
+            JsonOptions
+         );
+      }
+
+      RecordResult(
+         signature,
+         toolState.PageCallHistory,
+         turn,
+         result
       );
+
+      return result;
    }
 
    private static bool TryValidatePageUrl(
@@ -2031,6 +2141,164 @@ public sealed class LlamaServerClient : IAiProviderClient
          preview;
    }
 
+   private static bool TryGetRepeatedToolResult(
+      ToolCall toolCall,
+      IDictionary<string, WebSearchResult> searchResultsById,
+      ToolLoopState toolState,
+      out string repeatedResult
+   )
+   {
+      repeatedResult = "";
+      var signature = BuildToolCallSignature(toolCall, searchResultsById);
+
+      if(string.IsNullOrWhiteSpace(signature) ||
+         !toolState.ToolCallHistory.TryGetValue(signature, out var record))
+      {
+         return false;
+      }
+
+      repeatedResult = BuildRepeatedToolResult(
+         toolCall.Name,
+         record.Turn,
+         record.Result
+      );
+      return true;
+   }
+
+   private static void RecordToolCallResult(
+      ToolCall toolCall,
+      IDictionary<string, WebSearchResult> searchResultsById,
+      ToolLoopState toolState,
+      int turn,
+      string result
+   )
+   {
+      var signature = BuildToolCallSignature(toolCall, searchResultsById);
+
+      if(string.IsNullOrWhiteSpace(signature))
+      {
+         return;
+      }
+
+      toolState.ToolCallHistory[signature] = new ToolCallRecord(
+         turn,
+         result
+      );
+   }
+
+   private static string BuildRepeatedToolResult(
+      string toolName,
+      int previousTurn,
+      string previousResult
+   )
+   {
+      return
+         $"This exact {toolName} call was already made in round " +
+         $"{previousTurn}. Reusing the previous result.\n\n" +
+         previousResult;
+   }
+
+   private static string BuildPageCallSignature(
+      string toolName,
+      string url,
+      string find
+   )
+   {
+      return $"{toolName}|url={url}|find={find}";
+   }
+
+   private static bool TryGetRepeatedResult(
+      string signature,
+      IDictionary<string, ToolCallRecord> history,
+      out string repeatedResult
+   )
+   {
+      repeatedResult = "";
+
+      if(string.IsNullOrWhiteSpace(signature) ||
+         !history.TryGetValue(signature, out var record))
+      {
+         return false;
+      }
+
+      repeatedResult = BuildRepeatedToolResult(
+         "page",
+         record.Turn,
+         record.Result
+      );
+      return true;
+   }
+
+   private static void RecordResult(
+      string signature,
+      IDictionary<string, ToolCallRecord> history,
+      int turn,
+      string result
+   )
+   {
+      if(string.IsNullOrWhiteSpace(signature))
+      {
+         return;
+      }
+
+      history[signature] = new ToolCallRecord(turn, result);
+   }
+
+   private static string BuildToolCallSignature(
+      ToolCall toolCall,
+      IDictionary<string, WebSearchResult> searchResultsById
+   )
+   {
+      var query = ExtractQuery(toolCall.Arguments);
+      var limit = ExtractLimit(toolCall.Arguments);
+      var id = ExtractId(toolCall.Arguments);
+      var url = ExtractUrl(toolCall.Arguments);
+      var find = ExtractFind(toolCall.Arguments);
+
+      return toolCall.Name switch
+      {
+         "web_search" or "altra/web-search" or "altra_web_search" =>
+            $"{toolCall.Name}|query={query}|limit={limit}",
+         "web_get_page" => BuildPageToolCallSignature(
+            toolCall.Name,
+            id,
+            url,
+            find,
+            searchResultsById
+         ),
+         "web_find_in_page" => BuildPageToolCallSignature(
+            toolCall.Name,
+            id,
+            url,
+            find,
+            searchResultsById
+         ),
+         _ => $"{toolCall.Name}|arguments={toolCall.Arguments.Trim()}"
+      };
+   }
+
+   private static string BuildPageToolCallSignature(
+      string toolName,
+      string id,
+      string url,
+      string find,
+      IDictionary<string, WebSearchResult> searchResultsById
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(id) &&
+         searchResultsById.TryGetValue(id, out var searchResult))
+      {
+         url = searchResult.Url;
+      }
+
+      if(string.IsNullOrWhiteSpace(url))
+      {
+         url = id;
+      }
+
+      return $"{toolName}|url={url}|find={find}";
+   }
+
    private sealed record ResponseEnvelope(
       JsonObject ResponseJson,
       string RawResponseJson
@@ -2095,6 +2363,17 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
          new(StringComparer.OrdinalIgnoreCase);
+
+      public Dictionary<string, ToolCallRecord> ToolCallHistory { get; } =
+         new(StringComparer.OrdinalIgnoreCase);
+
+      public Dictionary<string, ToolCallRecord> PageCallHistory { get; } =
+         new(StringComparer.OrdinalIgnoreCase);
    }
+
+   private sealed record ToolCallRecord(
+      int Turn,
+      string Result
+   );
 
 }

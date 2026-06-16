@@ -118,9 +118,13 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.job_id,
             j.label,
             r.prompt_id,
-            pr.version,
-            pr.system_prompt,
-            pr.user_prompt_template,
+            coalesce(r.prompt_version, pr.version, 0),
+            coalesce(r.prompt_system_prompt, pr.system_prompt, ''),
+            coalesce(
+               r.prompt_user_prompt_template,
+               pr.user_prompt_template,
+               ''
+            ),
             r.provider_id,
             p.label,
             r.provider_model,
@@ -144,7 +148,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          from ai_job_runs r
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
-         join ai_job_prompts pr on pr.id = r.prompt_id
+         left join ai_job_prompts pr on pr.id = r.prompt_id
          where r.id = @id
          """;
 
@@ -526,14 +530,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          insert into ai_job_runs (
-            id, job_id, prompt_id, provider_id, status_id, correlation_id,
-            provider_model, input_payload, rendered_prompt, raw_request,
-            raw_response, tool_trace, output_text, error_message, started_at,
-            completed_at, duration_seconds, input_tokens, output_tokens,
-            reasoning_tokens, tool_round_count, conversation_character_count
+            id, job_id, prompt_id, prompt_version, prompt_system_prompt,
+            prompt_user_prompt_template, provider_id, status_id,
+            correlation_id, provider_model, input_payload, rendered_prompt,
+            raw_request, raw_response, tool_trace, output_text, error_message,
+            started_at, completed_at, duration_seconds, input_tokens,
+            output_tokens, reasoning_tokens, tool_round_count,
+            conversation_character_count
          )
          values (
-            @id, @job_id, @prompt_id, @provider_id, @status_id,
+            @id, @job_id, @prompt_id, @prompt_version, @prompt_system_prompt,
+            @prompt_user_prompt_template, @provider_id, @status_id,
             @correlation_id, @provider_model, @input_payload,
             @rendered_prompt, @raw_request, @raw_response, @tool_trace,
             @output_text, @error_message, @started_at, @completed_at,
@@ -648,6 +655,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          set
             status_id = @status_id,
             correlation_id = @correlation_id,
+            prompt_version = @prompt_version,
+            prompt_system_prompt = @prompt_system_prompt,
+            prompt_user_prompt_template = @prompt_user_prompt_template,
             raw_request = @raw_request,
             raw_response = @raw_response,
             tool_trace = @tool_trace,
@@ -736,6 +746,15 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", run.Id);
       command.Parameters.AddWithValue("job_id", run.JobId);
       command.Parameters.AddWithValue("prompt_id", run.PromptId);
+      command.Parameters.AddWithValue("prompt_version", run.PromptVersion);
+      command.Parameters.AddWithValue(
+         "prompt_system_prompt",
+         run.PromptSystemPrompt
+      );
+      command.Parameters.AddWithValue(
+         "prompt_user_prompt_template",
+         run.PromptUserPromptTemplate
+      );
       command.Parameters.AddWithValue("provider_id", run.ProviderId);
       AddNullableStringParameter(command, "provider_model", run.ProviderModel);
       command.Parameters.AddWithValue("status_id", ToStatusId(run.Status));
@@ -794,6 +813,15 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "correlation_id",
          (object?)run.CorrelationId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue("prompt_version", run.PromptVersion);
+      command.Parameters.AddWithValue(
+         "prompt_system_prompt",
+         run.PromptSystemPrompt
+      );
+      command.Parameters.AddWithValue(
+         "prompt_user_prompt_template",
+         run.PromptUserPromptTemplate
       );
       AddJsonbParameter(command, "raw_request", run.RawRequestJson);
       AddJsonbParameter(command, "raw_response", run.RawResponseJson);

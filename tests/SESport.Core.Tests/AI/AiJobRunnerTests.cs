@@ -152,7 +152,7 @@ public class AiJobRunnerTests
          CancellationToken cancellationToken
       )
       {
-         return Task.FromResult<AiPromptDefinition?>(
+      return Task.FromResult<AiPromptDefinition?>(
             new AiPromptDefinition(
                Guid.Parse("11111111-1111-1111-1111-111111111111"),
                "job",
@@ -335,9 +335,9 @@ public class AiJobRunnerTests
                run.JobId,
                "Job",
                run.PromptId,
-               1,
-               "System",
-               "User",
+               run.PromptVersion,
+               run.PromptSystemPrompt,
+               run.PromptUserPromptTemplate,
                run.ProviderId,
                "Provider",
                run.ProviderModel,

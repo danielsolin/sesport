@@ -15,6 +15,8 @@ public class DetailsModel(AiRepository repository) : PageModel
 
    public string SystemPromptText { get; private set; } = string.Empty;
 
+   public string UserPromptTemplateText { get; private set; } = string.Empty;
+
    public string RenderedPromptText { get; private set; } = string.Empty;
 
    public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns { get; private
@@ -53,6 +55,7 @@ public class DetailsModel(AiRepository repository) : PageModel
       {
          ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
          SystemPromptText = Run.SystemPrompt;
+         UserPromptTemplateText = Run.UserPromptTemplate;
          RenderedPromptText = Run.RenderedPrompt;
       }
 
@@ -76,12 +79,47 @@ public class DetailsModel(AiRepository repository) : PageModel
 
    public static string FormatDuration(decimal? durationSeconds)
    {
-      if(durationSeconds is null)
-      {
-         return string.Empty;
-      }
+      return FormatDuration(
+         durationSeconds,
+         DateTimeOffset.MinValue,
+         string.Empty
+      );
+   }
 
-      var totalSeconds = (int)Math.Round(durationSeconds.Value);
+   public static string FormatDuration(AiRunListItem run)
+   {
+      return FormatDuration(
+         run.DurationSeconds,
+         run.StartedAt,
+         run.StatusId
+      );
+   }
+
+   public static string FormatDuration(AiRunDetail run)
+   {
+      return FormatDuration(
+         run.DurationSeconds,
+         run.StartedAt,
+         run.StatusId
+      );
+   }
+
+   private static string FormatDuration(
+      decimal? durationSeconds,
+      DateTimeOffset startedAt,
+      string statusId
+   )
+   {
+      var totalSeconds = durationSeconds is not null
+         ? (int)Math.Round(durationSeconds.Value)
+         : 0;
+
+      if(string.Equals(statusId, "running", StringComparison.Ordinal))
+      {
+         totalSeconds = (int)Math.Round(
+            (DateTimeOffset.UtcNow - startedAt).TotalSeconds
+         );
+      }
 
       if(totalSeconds < 0)
       {

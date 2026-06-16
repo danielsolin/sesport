@@ -184,6 +184,70 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncAnnotatesRepeatedPageFindCalls()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaFindPageCallResponseJson(),
+         CreateLlamaFindPageCallWithUrlResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/direct-page",
+            "Sweden lineup info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/direct-page",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
+            "No relevant mention here.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: false,
+            toolsJson: null
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Single(webPageContentClient.Urls);
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.True(
+         handler.RequestBodies[3].Contains("already made in round 2"),
+         string.Join("\n---\n", handler.RequestBodies)
+      );
+      Assert.True(
+         handler.RequestBodies[3].Contains("Reusing the previous result."),
+         string.Join("\n---\n", handler.RequestBodies)
+      );
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesDirectPageUrlToolCall()
    {
       var handler = new RecordingHandler(
@@ -820,6 +884,34 @@ public class AiProviderClientTests
       """;
    }
 
+   private static string CreateLlamaFindPageCallWithUrlResponseJson()
+   {
+      return """
+      {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_2",
+                  "type": "function",
+                  "function": {
+                    "name": "web_find_in_page",
+                    "arguments": "{\"url\":\"https://example.test/direct-page\",\"find\":\"Sweden\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "model": "openai/gpt-4o-2024-08-06"
+      }
+      """;
+   }
+
    private static string CreateLlamaPageCallWithFindResponseJson()
    {
       return """
@@ -865,7 +957,7 @@ public class AiProviderClientTests
                   "function": {
                     "name": "web_find_in_page",
                     "arguments":
-                      "{\"id\":\"s1_1\",\"find\":\"Swedish\"}"
+                      "{\"id\":\"s1_1\",\"find\":\"Sweden\"}"
                   }
                 }
               ]

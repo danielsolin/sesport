@@ -36,6 +36,10 @@
             <dd>@Model.Run.JobLabel</dd>
          </div>
          <div>
+            <dt>Prompt version</dt>
+            <dd>@Model.Run.PromptVersion</dd>
+         </div>
+         <div>
             <dt>Provider</dt>
             <dd>@Model.Run.ProviderLabel</dd>
          </div>
@@ -62,7 +66,7 @@
          <div>
             <dt>Duration</dt>
             <dd>
-               @DetailsModel.FormatDuration(Model.Run.DurationSeconds)
+               @DetailsModel.FormatDuration(Model.Run)
             </dd>
          </div>
          <div>
@@ -123,6 +127,13 @@
       <details class="run-data-details">
          <summary>System prompt</summary>
          <pre class="prompt-details-pre">@Model.SystemPromptText</pre>
+      </details>
+   </section>
+
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>User prompt template</summary>
+         <pre class="prompt-details-pre">@Model.UserPromptTemplateText</pre>
       </details>
    </section>
 
