@@ -70,6 +70,23 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchPrefersEmbeddedJsonWhenBodyIsMostlyNoise()
+   {
+      var handler = new RecordingHandler(CreateMostlyNoisyJsonHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/noisy-json",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("Ingrid Lindblad", page!.MainText);
+      Assert.Contains("SWE", page.MainText);
+      Assert.DoesNotContain("0PX 0PX 0PX", page.MainText);
+   }
+
+   [Fact]
    public async Task FetchSkipsPdfResponses()
    {
       var handler = new PdfRecordingHandler();
@@ -231,6 +248,34 @@ public class WebPageContentClientTests
                window.__SITE_SETTINGS__ = {
                   "webAPIBaseURL": "https://api-web.nhle.com",
                   "appName": "NHL"
+               };
+            </script>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateMostlyNoisyJsonHtml()
+   {
+      return """
+      <html>
+         <head>
+            <title>Noise Example</title>
+         </head>
+         <body>
+            <nav>0PX 0PX PRE 0PX SKIP TO MAIN CONTENT</nav>
+            <script>
+               window.__INITIAL_STATE__ = {
+                  "page": {
+                     "athletes": [
+                        {
+                           "name": "Ingrid Lindblad",
+                           "country": {
+                              "label": "SWE"
+                           }
+                        }
+                     ]
+                  }
                };
             </script>
          </body>

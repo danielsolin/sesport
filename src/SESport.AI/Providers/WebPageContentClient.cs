@@ -54,6 +54,21 @@ public sealed class WebPageContentClient : IWebPageContentClient
       RegexOptions.CultureInvariant
    );
 
+   private static readonly Regex NextFlightPushRegex = new(
+      @"self\.__next_f\.push\(\[1," +
+      @"""(?<payload>(?:\\.|[^""\\])*)""\]\)",
+      RegexOptions.IgnoreCase |
+      RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
+   private static readonly Regex StructuredEntityRegex = new(
+      "\"type\":\"(?<type>athlete|player|team)\"(?<block>.{0,1500})",
+      RegexOptions.IgnoreCase |
+      RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
    private static readonly Regex NoisyHeadingTagRegex = new(
       @"<(form|select|option|input|button|textarea|label|fieldset|legend)\b",
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
@@ -277,7 +292,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var textCandidates = new List<string>
       {
          ExtractPlainText(candidate),
-         ExtractTableText(candidate)
+         ExtractTableText(candidate),
+         ExtractSupplementalText(rawHtml)
       };
 
       var text = textCandidates
@@ -383,6 +399,22 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return true;
       }
 
+      if(tokens.Length == 1 && LayoutNoiseTokenRegex.IsMatch(tokens[0]))
+      {
+         return true;
+      }
+
+      if(tokens.Any(LayoutNoiseTokenRegex.IsMatch) &&
+         !trimmed.Any(char.IsLower))
+      {
+         return true;
+      }
+
+      if(tokens.Length > 0 && LayoutNoiseTokenRegex.IsMatch(tokens[0]))
+      {
+         return true;
+      }
+
       if(trimmed.Length >= 12 &&
          Regex.IsMatch(
             trimmed,
@@ -477,6 +509,21 @@ public sealed class WebPageContentClient : IWebPageContentClient
          {
             score -= 250;
          }
+
+         if(line.StartsWith(
+            "Structured entities:",
+            StringComparison.OrdinalIgnoreCase
+         ))
+         {
+            score += 300;
+         }
+
+         if(line.StartsWith("athlete:", StringComparison.OrdinalIgnoreCase) ||
+            line.StartsWith("player:", StringComparison.OrdinalIgnoreCase) ||
+            line.StartsWith("team:", StringComparison.OrdinalIgnoreCase))
+         {
+            score += 120;
+         }
       }
 
       return score;
@@ -492,6 +539,19 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          sections.Add("Description:");
          sections.Add(description.Trim());
+      }
+
+      var structuredEntitySummary = ExtractStructuredEntitySummary(rawHtml);
+
+      if(!string.IsNullOrWhiteSpace(structuredEntitySummary))
+      {
+         if(sections.Count > 0)
+         {
+            sections.Add(string.Empty);
+         }
+
+         sections.Add("Structured entities:");
+         sections.Add(structuredEntitySummary);
       }
 
       var embeddedData = ExtractEmbeddedDataSections(rawHtml);
@@ -555,7 +615,244 @@ public sealed class WebPageContentClient : IWebPageContentClient
          sections.Add(FormatJsonSection(label, jsonText));
       }
 
+      foreach(var (label, jsonText) in ExtractGenericJsonSections(rawHtml))
+      {
+         sections.Add(FormatJsonSection(label, jsonText));
+      }
+
+      foreach(var (label, jsonText) in ExtractNextFlightSections(rawHtml))
+      {
+         sections.Add(FormatJsonSection(label, jsonText));
+      }
+
+      var rawSummary = ExtractMeaningfulKeyValueSummaryAcrossUnescapes(
+         rawHtml
+      );
+
+      if(!string.IsNullOrWhiteSpace(rawSummary))
+      {
+         sections.Add(string.Join(
+            Environment.NewLine,
+            new[]
+            {
+               "Unescaped raw values:",
+               rawSummary
+            }
+         ));
+      }
+
       return sections;
+   }
+
+   private static string ExtractStructuredEntitySummary(string rawHtml)
+   {
+      var lines = new List<string>();
+      var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      var markers = new[]
+      {
+         "\\\"type\\\":\\\"athlete\\\"",
+         "\\\"type\\\":\\\"player\\\"",
+         "\\\"type\\\":\\\"team\\\""
+      };
+
+      foreach(var marker in markers)
+      {
+         var searchIndex = 0;
+
+         while(lines.Count < 80)
+         {
+            var matchIndex = rawHtml.IndexOf(
+               marker,
+               searchIndex,
+               StringComparison.OrdinalIgnoreCase
+            );
+
+            if(matchIndex < 0)
+            {
+               break;
+            }
+
+            var blockLength = Math.Min(2500, rawHtml.Length - matchIndex);
+            var block = rawHtml[matchIndex..(matchIndex + blockLength)];
+            var normalizedBlock = NormalizeEscapedText(block);
+
+            var type = marker.Contains("athlete", StringComparison.OrdinalIgnoreCase)
+               ? "athlete"
+               : marker.Contains("player", StringComparison.OrdinalIgnoreCase)
+                  ? "player"
+                  : "team";
+
+            var name = ExtractFirstField(normalizedBlock, "name");
+            var shortName = ExtractFirstField(normalizedBlock, "shortName");
+            var country = ExtractCountryLabel(normalizedBlock);
+
+            var summary = string.Join(
+               " / ",
+               new[]
+               {
+                  name,
+                  shortName,
+                  country
+               }.Where(value => !string.IsNullOrWhiteSpace(value))
+            );
+
+            if(!string.IsNullOrWhiteSpace(summary))
+            {
+               var line = $"{type}: {summary}";
+
+               if(seen.Add(line))
+               {
+                  lines.Add(line);
+               }
+            }
+
+            searchIndex = matchIndex + marker.Length;
+         }
+      }
+
+      return string.Join(Environment.NewLine, lines);
+   }
+
+   private static string ExtractCountryLabel(string text)
+   {
+      var markers = new[]
+      {
+         "\"country\":{\"altText\":null,\"label\":\"",
+         "\"country\":{\"label\":\"",
+         "\"label\":\""
+      };
+
+      foreach(var marker in markers)
+      {
+         var index = text.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+
+         if(index < 0)
+         {
+            continue;
+         }
+
+         index += marker.Length;
+         var endIndex = text.IndexOf('"', index);
+
+         if(endIndex < 0 || endIndex <= index)
+         {
+            continue;
+         }
+
+         return CleanText(text[index..endIndex]);
+      }
+
+      return string.Empty;
+   }
+
+   private static string NormalizeEscapedText(string text)
+   {
+      var current = text;
+
+      for(var iteration = 0; iteration < 3; iteration++)
+      {
+         var next = Regex.Unescape(current);
+
+         if(string.Equals(next, current, StringComparison.Ordinal))
+         {
+            break;
+         }
+
+         current = next;
+      }
+
+      return current;
+   }
+
+   private static string ExtractFirstField(string text, string key)
+   {
+      var candidates = new[]
+      {
+         $"\"{key}\":\"",
+         $"\\\"{key}\\\":\\\"",
+         $"\\\\\"{key}\\\\\":\\\\\""
+      };
+
+      foreach(var marker in candidates)
+      {
+         var index = text.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+
+         if(index < 0)
+         {
+            continue;
+         }
+
+         index += marker.Length;
+         var endIndex = text.IndexOf('"', index);
+
+         if(endIndex < 0 || endIndex <= index)
+         {
+            continue;
+         }
+
+         return CleanText(text[index..endIndex]);
+      }
+
+      return string.Empty;
+   }
+
+   private static string ExtractMeaningfulKeyValueSummaryAcrossUnescapes(
+      string text
+   )
+   {
+      var candidates = new List<string>();
+      var current = text;
+
+      for(var iteration = 0;
+         iteration < 4 &&
+         !string.IsNullOrWhiteSpace(current);
+         iteration++)
+      {
+         candidates.Add(current);
+
+         var next = Regex.Unescape(current);
+
+         if(string.Equals(next, current, StringComparison.Ordinal))
+         {
+            break;
+         }
+
+         current = next;
+      }
+
+      var lines = new List<string>();
+      var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(var candidate in candidates)
+      {
+         var summary = ExtractMeaningfulKeyValueSummary(candidate);
+
+         if(string.IsNullOrWhiteSpace(summary))
+         {
+            continue;
+         }
+
+         foreach(var line in summary.Split(
+            '\n',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+         ))
+         {
+            if(!seen.Add(line))
+            {
+               continue;
+            }
+
+            lines.Add(line);
+
+            if(lines.Count >= 60)
+            {
+               return string.Join(Environment.NewLine, lines);
+            }
+         }
+      }
+
+      return string.Join(Environment.NewLine, lines);
    }
 
    private static IReadOnlyList<(string Label, string JsonText)>
@@ -577,6 +874,658 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return sections;
+   }
+
+   private static IReadOnlyList<(string Label, string JsonText)>
+      ExtractNextFlightSections(string rawHtml)
+   {
+      var sections = new List<(string Label, string JsonText)>();
+
+      foreach(Match match in NextFlightPushRegex.Matches(rawHtml))
+      {
+         var payload = match.Groups["payload"].Value;
+
+         if(string.IsNullOrWhiteSpace(payload))
+         {
+            continue;
+         }
+
+         var decodedPayload = Regex.Unescape(payload);
+         var lines = new List<string>();
+
+         if(TryExtractJsonFromText(decodedPayload, out var jsonText))
+         {
+            lines.Add(jsonText);
+
+            var fieldSummary = ExtractInterestingJsonFieldSummary(jsonText);
+
+            if(!string.IsNullOrWhiteSpace(fieldSummary))
+            {
+               lines.Add(fieldSummary);
+            }
+         }
+
+         var escapedFieldSummary = ExtractEscapedFieldSummary(payload);
+
+         if(!string.IsNullOrWhiteSpace(escapedFieldSummary))
+         {
+            lines.Add(escapedFieldSummary);
+         }
+
+         var escapedSummary = ExtractMeaningfulEscapedKeyValueSummary(
+            payload
+         );
+
+         if(!string.IsNullOrWhiteSpace(escapedSummary))
+         {
+            lines.Add(escapedSummary);
+         }
+
+         var summary = ExtractMeaningfulKeyValueSummary(decodedPayload);
+
+         if(!string.IsNullOrWhiteSpace(summary))
+         {
+            lines.Add(summary);
+         }
+
+         if(lines.Count > 0)
+         {
+            sections.Add(("Next flight", string.Join(
+               Environment.NewLine,
+               lines
+            )));
+         }
+      }
+
+      return sections;
+   }
+
+   private static string ExtractInterestingJsonFieldSummary(string jsonText)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(
+            jsonText,
+            new JsonDocumentOptions
+            {
+               AllowTrailingCommas = true,
+               CommentHandling = JsonCommentHandling.Skip
+            }
+         );
+
+         var lines = new List<string>();
+         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+         CollectInterestingJsonFields(
+            document.RootElement,
+            lines,
+            seen,
+            0
+         );
+
+         return string.Join(Environment.NewLine, lines);
+      }
+      catch(JsonException)
+      {
+         return string.Empty;
+      }
+   }
+
+   private static void CollectInterestingJsonFields(
+      JsonElement element,
+      List<string> lines,
+      HashSet<string> seen,
+      int depth
+   )
+   {
+      if(lines.Count >= 40 || depth >= 12)
+      {
+         return;
+      }
+
+      switch(element.ValueKind)
+      {
+         case JsonValueKind.Object:
+            foreach(var property in element.EnumerateObject())
+            {
+               if(lines.Count >= 40)
+               {
+                  return;
+               }
+
+               if(IsInterestingJsonFieldName(property.Name))
+               {
+                  CollectInterestingJsonScalar(
+                     property.Name,
+                     property.Value,
+                     lines,
+                     seen
+                  );
+               }
+
+               CollectInterestingJsonFields(
+                  property.Value,
+                  lines,
+                  seen,
+                  depth + 1
+               );
+            }
+
+            break;
+         case JsonValueKind.Array:
+            foreach(var item in element.EnumerateArray())
+            {
+               CollectInterestingJsonFields(item, lines, seen, depth + 1);
+            }
+
+            break;
+         case JsonValueKind.String:
+         {
+            var nestedJson = element.GetString();
+
+            if(string.IsNullOrWhiteSpace(nestedJson))
+            {
+               break;
+            }
+
+            var nestedCandidates = new List<string>();
+            var currentCandidate = nestedJson;
+
+            for(var iteration = 0;
+               iteration < 4 &&
+               !string.IsNullOrWhiteSpace(currentCandidate);
+               iteration++)
+            {
+               nestedCandidates.Add(currentCandidate);
+
+               var nextCandidate = Regex.Unescape(currentCandidate);
+
+               if(string.Equals(
+                  nextCandidate,
+                  currentCandidate,
+                  StringComparison.Ordinal
+               ))
+               {
+                  break;
+               }
+
+               currentCandidate = nextCandidate;
+            }
+
+            foreach(var nestedCandidate in nestedCandidates)
+            {
+               if(!TryParseJsonText(nestedCandidate, out var nestedJsonText))
+               {
+                  continue;
+               }
+
+               try
+               {
+                  using var nestedDocument = JsonDocument.Parse(
+                     nestedJsonText,
+                     new JsonDocumentOptions
+                     {
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip
+                     }
+                  );
+
+                  CollectInterestingJsonFields(
+                     nestedDocument.RootElement,
+                     lines,
+                     seen,
+                     depth + 1
+                  );
+               }
+               catch(JsonException)
+               {
+               }
+            }
+
+            break;
+         }
+      }
+   }
+
+   private static void CollectInterestingJsonScalar(
+      string name,
+      JsonElement value,
+      List<string> lines,
+      HashSet<string> seen
+   )
+   {
+      if(value.ValueKind != JsonValueKind.String)
+      {
+         return;
+      }
+
+      var text = CleanText(value.GetString() ?? string.Empty);
+
+      if(string.IsNullOrWhiteSpace(text))
+      {
+         return;
+      }
+
+      if(text.Length > 160)
+      {
+         text = text[..160].TrimEnd() + "...";
+      }
+
+      var signature = $"{name}:{text}";
+
+      if(!seen.Add(signature))
+      {
+         return;
+      }
+
+      lines.Add($"{name}: {text}");
+   }
+
+   private static bool IsInterestingJsonFieldName(string name)
+   {
+      return name.ToLowerInvariant() is
+         "name" or
+         "title" or
+         "label" or
+         "text" or
+         "description" or
+         "country" or
+         "shortname" or
+         "alttext";
+   }
+
+   private static string ExtractEscapedFieldSummary(string payload)
+   {
+      var keys = new[]
+      {
+         "name",
+         "title",
+         "label",
+         "text",
+         "shortName",
+         "country"
+      };
+      var lines = new List<string>();
+      var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(var key in keys)
+      {
+         var search = $"\\\"{key}\\\":\\\"";
+         var index = payload.IndexOf(search, StringComparison.Ordinal);
+
+         if(index < 0)
+         {
+            continue;
+         }
+
+         index += search.Length;
+         var endIndex = payload.IndexOf("\\\"", index, StringComparison.Ordinal);
+
+         if(endIndex < 0 || endIndex <= index)
+         {
+            continue;
+         }
+
+         var value = WebUtility.HtmlDecode(payload[index..endIndex]).Trim();
+
+         if(string.IsNullOrWhiteSpace(value))
+         {
+            continue;
+         }
+
+         var signature = $"{key}:{value}";
+
+         if(!seen.Add(signature))
+         {
+            continue;
+         }
+
+         lines.Add($"{key}: {value}");
+
+         if(lines.Count >= 30)
+         {
+            break;
+         }
+      }
+
+      return string.Join(Environment.NewLine, lines);
+   }
+
+   private static string ExtractMeaningfulEscapedKeyValueSummary(string text)
+   {
+      var matches = Regex.Matches(
+         text,
+         "\\\\\\\"?(?<key>name|title|label|text|description|country|" +
+         "shortName)\\\\\\\"?\\s*:\\s*\\\\\\\"(?<value>[^\\\\\\\"]{1,160})" +
+         "\\\\\\\"",
+         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+      );
+
+      return ExtractMeaningfulKeyValueSummaryFromMatches(matches);
+   }
+
+   private static string ExtractMeaningfulKeyValueSummary(string text)
+   {
+      var matches = Regex.Matches(
+         text,
+         @"""?(?<key>name|title|label|text|description|country|shortName)""?" +
+         @"\s*:\s*""(?<value>[^""]{1,160})""",
+         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+      );
+      return ExtractMeaningfulKeyValueSummaryFromMatches(matches);
+   }
+
+   private static string ExtractMeaningfulKeyValueSummaryFromMatches(
+      MatchCollection matches
+   )
+   {
+      var entries = new List<(int Score, string Line, string Signature)>();
+      var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(Match match in matches)
+      {
+         var key = match.Groups["key"].Value.Trim();
+         var value = CleanText(match.Groups["value"].Value);
+
+         if(string.IsNullOrWhiteSpace(key) ||
+            string.IsNullOrWhiteSpace(value))
+         {
+            continue;
+         }
+
+         var signature = $"{key}:{value}";
+
+         if(!seen.Add(signature))
+         {
+            continue;
+         }
+
+         var score = ScoreMeaningfulKeyValue(key, value);
+         entries.Add((score, $"{key}: {value}", signature));
+      }
+
+      var lines = entries
+         .OrderByDescending(entry => entry.Score)
+         .ThenBy(entry => entry.Line, StringComparer.OrdinalIgnoreCase)
+         .Take(30)
+         .Select(entry => entry.Line)
+         .ToArray();
+
+      return string.Join(Environment.NewLine, lines);
+   }
+
+   private static int ScoreMeaningfulKeyValue(string key, string value)
+   {
+      var score = 0;
+      var normalizedKey = key.Trim().ToLowerInvariant();
+      var normalizedValue = value.Trim();
+
+      if(string.IsNullOrWhiteSpace(normalizedKey) ||
+         string.IsNullOrWhiteSpace(normalizedValue))
+      {
+         return int.MinValue;
+      }
+
+      switch(normalizedKey)
+      {
+         case "name":
+         case "title":
+            score += 20;
+            break;
+         case "shortname":
+            score += 18;
+            break;
+         case "country":
+         case "label":
+            score += 16;
+            break;
+         case "text":
+            score += 8;
+            break;
+         case "description":
+            score += 6;
+            break;
+      }
+
+      if(LooksLikeCountryCode(normalizedValue))
+      {
+         score += 18;
+      }
+
+      if(LooksLikePersonName(normalizedValue))
+      {
+         score += 14;
+      }
+
+      if(normalizedValue.Contains('/'))
+      {
+         score -= 8;
+      }
+
+      if(normalizedValue.Contains('-') &&
+         normalizedValue.All(ch => char.IsLower(ch) || ch == '-'))
+      {
+         score -= 6;
+      }
+
+      if(normalizedValue.Length <= 3 && !LooksLikeCountryCode(normalizedValue))
+      {
+         score -= 8;
+      }
+
+      if(normalizedValue.All(ch => !char.IsLetter(ch) || char.IsUpper(ch)))
+      {
+         score += 4;
+      }
+
+      return score;
+   }
+
+   private static bool LooksLikeCountryCode(string value)
+   {
+      return value.Length is >= 2 and <= 4 &&
+         value.All(ch => char.IsUpper(ch) || char.IsDigit(ch));
+   }
+
+   private static bool LooksLikePersonName(string value)
+   {
+      var parts = value.Split(
+         ' ',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      );
+
+      if(parts.Length < 2)
+      {
+         return false;
+      }
+
+      return parts.All(part =>
+         part.Length > 1 &&
+         (char.IsUpper(part[0]) || char.IsDigit(part[0])) &&
+         part.Skip(1).All(ch => char.IsLower(ch) || ch == '.' || ch == '-')
+      );
+   }
+
+   private static IReadOnlyList<(string Label, string JsonText)>
+      ExtractGenericJsonSections(string rawHtml)
+   {
+      var sections = new List<(string Label, string JsonText)>();
+
+      foreach(Match match in ScriptRegex.Matches(rawHtml))
+      {
+         var script = WebUtility.HtmlDecode(match.Groups["script"].Value)
+            .Trim();
+
+         if(string.IsNullOrWhiteSpace(script))
+         {
+            continue;
+         }
+
+         if(TryExtractJsonFromScript(script, out var jsonText))
+         {
+            sections.Add(("Script JSON", jsonText));
+         }
+      }
+
+      return sections;
+   }
+
+   private static bool TryExtractJsonFromScript(
+      string script,
+      out string jsonText
+   )
+   {
+      jsonText = string.Empty;
+
+      if(TryExtractJsonFromText(script, out jsonText))
+      {
+         return true;
+      }
+
+      var unescapedScript = Regex.Unescape(script);
+
+      if(!string.Equals(unescapedScript, script, StringComparison.Ordinal)
+         && TryExtractJsonFromText(unescapedScript, out jsonText))
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   private static bool TryExtractJsonFromText(
+      string text,
+      out string jsonText
+   )
+   {
+      jsonText = string.Empty;
+
+      if(TryParseJsonText(text, out jsonText))
+      {
+         return true;
+      }
+
+      for(var index = 0; index < text.Length; index++)
+      {
+         var ch = text[index];
+
+         if(ch != '{' && ch != '[')
+         {
+            continue;
+         }
+
+         if(!TryExtractBalancedJson(text, index, out var candidate))
+         {
+            continue;
+         }
+
+         if(TryParseJsonText(candidate, out jsonText))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool TryParseJsonText(string jsonText, out string normalized)
+   {
+      normalized = string.Empty;
+
+      try
+      {
+         using var document = JsonDocument.Parse(
+            jsonText,
+            new JsonDocumentOptions
+            {
+               AllowTrailingCommas = true,
+               CommentHandling = JsonCommentHandling.Skip
+            }
+         );
+
+         normalized = document.RootElement.GetRawText();
+         return true;
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
+   }
+
+   private static bool TryExtractBalancedJson(
+      string text,
+      int startIndex,
+      out string jsonText
+   )
+   {
+      jsonText = string.Empty;
+
+      if(startIndex < 0 || startIndex >= text.Length)
+      {
+         return false;
+      }
+
+      var open = text[startIndex];
+      var close = open == '{' ? '}' : open == '[' ? ']' : '\0';
+
+      if(close == '\0')
+      {
+         return false;
+      }
+
+      var depth = 0;
+      var inString = false;
+      var escape = false;
+
+      for(var index = startIndex; index < text.Length; index++)
+      {
+         var ch = text[index];
+
+         if(inString)
+         {
+            if(escape)
+            {
+               escape = false;
+               continue;
+            }
+
+            if(ch == '\\')
+            {
+               escape = true;
+               continue;
+            }
+
+            if(ch == '"')
+            {
+               inString = false;
+            }
+
+            continue;
+         }
+
+         if(ch == '"')
+         {
+            inString = true;
+            continue;
+         }
+
+         if(ch == open)
+         {
+            depth++;
+         }
+         else if(ch == close)
+         {
+            depth--;
+
+            if(depth == 0)
+            {
+               jsonText = text[startIndex..(index + 1)];
+               return true;
+            }
+         }
+      }
+
+      return false;
    }
 
    private static IReadOnlyList<(string Label, string JsonText)>
@@ -723,16 +1672,25 @@ public sealed class WebPageContentClient : IWebPageContentClient
       int depth
    )
    {
-      const int maxProperties = 8;
+      const int maxProperties = 12;
       const int maxArrayItems = 3;
 
       switch(element.ValueKind)
       {
          case JsonValueKind.Object:
          {
+            var properties = element
+               .EnumerateObject()
+               .Where(property => !IsNoiseProperty(property.Name))
+               .OrderByDescending(property => ScoreJsonProperty(property))
+               .ThenBy(
+                  property => property.Name,
+                  StringComparer.OrdinalIgnoreCase
+               )
+               .ToArray();
             var propertyCount = 0;
 
-            foreach(var property in element.EnumerateObject())
+            foreach(var property in properties)
             {
                if(propertyCount >= maxProperties)
                {
@@ -741,11 +1699,6 @@ public sealed class WebPageContentClient : IWebPageContentClient
                }
 
                propertyCount++;
-
-               if(IsNoiseProperty(property.Name))
-               {
-                  continue;
-               }
 
                AppendJsonPropertySummary(
                   lines,
@@ -761,25 +1714,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          }
          case JsonValueKind.Array:
          {
-            var itemCount = 0;
-
-            foreach(var item in element.EnumerateArray())
-            {
-               if(itemCount >= maxArrayItems)
-               {
-                  lines.Add($"{indent}...");
-                  break;
-               }
-
-               itemCount++;
-               lines.Add($"{indent}- {FormatJsonScalar(item)}");
-            }
-
-            if(itemCount == 0)
-            {
-               lines.Add($"{indent}[]");
-            }
-
+            AppendJsonArraySummary(lines, element, indent, depth, maxArrayItems);
             return;
          }
          default:
@@ -808,7 +1743,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          case JsonValueKind.Object:
             lines.Add($"{indent}- {name}:");
 
-            if(depth >= 1)
+            if(depth >= 10)
             {
                lines.Add($"{nextIndent}...");
                return;
@@ -817,13 +1752,68 @@ public sealed class WebPageContentClient : IWebPageContentClient
             AppendJsonSummary(lines, value, nextIndent, depth + 1);
             return;
          case JsonValueKind.Array:
-            lines.Add(
-               $"{indent}- {name}: {FormatJsonArray(value, maxArrayItems)}"
+            lines.Add($"{indent}- {name}:");
+
+            if(depth >= 10)
+            {
+               lines.Add($"{nextIndent}...");
+               return;
+            }
+
+            AppendJsonArraySummary(
+               lines,
+               value,
+               nextIndent,
+               depth + 1,
+               maxArrayItems
             );
             return;
          default:
             lines.Add($"{indent}- {name}: {FormatJsonScalar(value)}");
             return;
+      }
+   }
+
+   private static void AppendJsonArraySummary(
+      List<string> lines,
+      JsonElement array,
+      string indent,
+      int depth,
+      int maxArrayItems
+   )
+   {
+      var itemCount = 0;
+
+      foreach(var item in array.EnumerateArray())
+      {
+         if(itemCount >= maxArrayItems)
+         {
+            lines.Add($"{indent}...");
+            break;
+         }
+
+         itemCount++;
+
+         if(item.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+         {
+            lines.Add($"{indent}-");
+
+            if(depth >= 10)
+            {
+               lines.Add($"{indent}  ...");
+               continue;
+            }
+
+            AppendJsonSummary(lines, item, indent + "  ", depth + 1);
+            continue;
+         }
+
+         lines.Add($"{indent}- {FormatJsonScalar(item)}");
+      }
+
+      if(itemCount == 0)
+      {
+         lines.Add($"{indent}[]");
       }
    }
 
@@ -871,6 +1861,67 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static bool IsNoiseProperty(string name)
    {
       return string.Equals(name, "$schema", StringComparison.OrdinalIgnoreCase);
+   }
+
+   private static int ScoreJsonProperty(JsonProperty property)
+   {
+      var score = 0;
+      var name = property.Name.Trim();
+
+      if(string.IsNullOrWhiteSpace(name))
+      {
+         return score;
+      }
+
+      if(property.Value.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+      {
+         score += 4;
+      }
+
+      switch(name.ToLowerInvariant())
+      {
+         case "name":
+         case "title":
+         case "label":
+         case "text":
+         case "description":
+         case "country":
+         case "athlete":
+         case "athletes":
+         case "player":
+         case "players":
+         case "item":
+         case "items":
+         case "row":
+         case "rows":
+         case "data":
+         case "content":
+         case "children":
+            score += 10;
+            break;
+         case "props":
+         case "page":
+         case "pages":
+         case "section":
+         case "sections":
+         case "table":
+         case "tables":
+            score += 6;
+            break;
+         case "theme":
+         case "config":
+         case "style":
+         case "styles":
+         case "buildid":
+         case "assetprefix":
+         case "urlparts":
+         case "initialtree":
+         case "pageTags":
+            score -= 4;
+            break;
+      }
+
+      return score;
    }
 
    private static string TruncateForSummary(string value)
