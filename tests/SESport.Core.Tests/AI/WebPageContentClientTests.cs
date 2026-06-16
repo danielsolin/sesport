@@ -117,6 +117,23 @@ public class WebPageContentClientTests
       Assert.Contains("Finland", page.MainText);
    }
 
+   [Fact]
+   public async Task FetchFiltersCssLikeNoiseAndKeepsTableText()
+   {
+      var handler = new RecordingHandler(CreateNoisyTableHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/noisy-table",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.DoesNotContain("0PX 0PX 0PX", page!.MainText);
+      Assert.Contains("Example Player", page.MainText);
+      Assert.Contains("Entered", page.MainText);
+   }
+
    private static string CreateHtml()
    {
       return """
@@ -211,6 +228,27 @@ public class WebPageContentClientTests
                <span data-country="no" aria-label="Norway"></span>
                <img alt="Finland flag" title="Finland" src="/fi.svg" />
             </article>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateNoisyTableHtml()
+   {
+      return """
+      <html>
+         <body>
+            <div>0PX 0PX 0PX</div>
+            <table>
+               <tr>
+                  <th>ATHLETE</th>
+                  <th>ENTRY STATUS</th>
+               </tr>
+               <tr>
+                  <td>Example Player</td>
+                  <td>Entered</td>
+               </tr>
+            </table>
          </body>
       </html>
       """;

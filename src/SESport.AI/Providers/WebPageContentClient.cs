@@ -29,6 +29,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
       RegexOptions.CultureInvariant
    );
 
+   private static readonly Regex TableRegex = new(
+      @"<table\b[^>]*>(?<html>.*?)</table>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline |
+      RegexOptions.CultureInvariant
+   );
+
    private static readonly Regex HeadingRegex = new(
       @"<h[1-6]\b[^>]*>(?<text>.*?)</h[1-6]>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -94,6 +100,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static readonly Regex WhitespaceRegex = new(
       @"[ \t\f\v]+",
       RegexOptions.CultureInvariant
+   );
+
+   private static readonly Regex CssNoiseLineRegex = new(
+      @"^(?:\d+(?:\.\d+)?(?:px|em|rem|vh|vw|%)\s*){2,}$",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
    );
 
    private readonly HttpClient httpClient;
@@ -252,41 +263,15 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var candidate = ExtractContentCandidate(rawHtml);
       candidate = NormalizeCountryMarkers(candidate);
 
-      candidate = StripBlockRegex.Replace(candidate, " ");
-      candidate = CommentRegex.Replace(candidate, " ");
-      candidate = BlockTagRegex.Replace(candidate, "\n");
-      candidate = Regex.Replace(
-         candidate,
-         @"<[^>]+>",
-         " ",
-         RegexOptions.CultureInvariant
-      );
-      candidate = WebUtility.HtmlDecode(candidate);
-      candidate = candidate.Replace("\r", "\n");
-      candidate = WhitespaceRegex.Replace(candidate, " ");
-      candidate = Regex.Replace(
-         candidate,
-         @"\n[ \t]+",
-         "\n",
-         RegexOptions.CultureInvariant
-      );
-      candidate = Regex.Replace(
-         candidate,
-         @"\n{3,}",
-         "\n\n",
-         RegexOptions.CultureInvariant
-      );
+      var textCandidates = new List<string>
+      {
+         ExtractPlainText(candidate),
+         ExtractTableText(candidate)
+      };
 
-      var lines = candidate
-         .Split(
-            '\n',
-            StringSplitOptions.RemoveEmptyEntries |
-            StringSplitOptions.TrimEntries
-         )
-         .Where(line => !string.IsNullOrWhiteSpace(line))
-         .ToArray();
-
-      var text = string.Join(Environment.NewLine, lines);
+      var text = textCandidates
+         .OrderByDescending(ScoreText)
+         .FirstOrDefault(text => !string.IsNullOrWhiteSpace(text)) ?? "";
 
       if(!string.IsNullOrWhiteSpace(text))
       {
@@ -302,6 +287,125 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return new MainTextResult(ExtractSupplementalText(rawHtml), false);
+   }
+
+   private static string ExtractPlainText(string html)
+   {
+      html = StripBlockRegex.Replace(html, " ");
+      html = CommentRegex.Replace(html, " ");
+      html = BlockTagRegex.Replace(html, "\n");
+      html = Regex.Replace(
+         html,
+         @"<[^>]+>",
+         " ",
+         RegexOptions.CultureInvariant
+      );
+      html = WebUtility.HtmlDecode(html);
+      html = html.Replace("\r", "\n");
+      html = WhitespaceRegex.Replace(html, " ");
+      html = Regex.Replace(
+         html,
+         @"\n[ \t]+",
+         "\n",
+         RegexOptions.CultureInvariant
+      );
+      html = Regex.Replace(
+         html,
+         @"\n{3,}",
+         "\n\n",
+         RegexOptions.CultureInvariant
+      );
+
+      var lines = html
+         .Split(
+            '\n',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries
+         )
+         .Where(line => !string.IsNullOrWhiteSpace(line))
+         .Where(line => !IsNoiseLine(line))
+         .ToArray();
+
+      return string.Join(Environment.NewLine, lines);
+   }
+
+   private static string ExtractTableText(string html)
+   {
+      var sections = new List<string>();
+
+      foreach(Match match in TableRegex.Matches(html))
+      {
+         var tableHtml = match.Groups["html"].Value;
+         var tableText = ExtractPlainText(tableHtml);
+
+         if(!string.IsNullOrWhiteSpace(tableText))
+         {
+            sections.Add(tableText);
+         }
+      }
+
+      return string.Join(
+         Environment.NewLine + Environment.NewLine,
+         sections
+      );
+   }
+
+   private static bool IsNoiseLine(string line)
+   {
+      var trimmed = line.Trim();
+
+      if(trimmed.Length == 0)
+      {
+         return true;
+      }
+
+      if(CssNoiseLineRegex.IsMatch(trimmed))
+      {
+         return true;
+      }
+
+      if(trimmed.Length >= 12 &&
+         Regex.IsMatch(
+            trimmed,
+            @"^(?:[0-9]+(?:\.[0-9]+)?[a-z%]+(?:\s+|$))+$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+         ))
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   private static int ScoreText(string text)
+   {
+      if(string.IsNullOrWhiteSpace(text))
+      {
+         return int.MinValue;
+      }
+
+      var score = 0;
+
+      foreach(var line in text.Split(
+         '\n',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      ))
+      {
+         if(string.IsNullOrWhiteSpace(line))
+         {
+            continue;
+         }
+
+         score += Math.Min(line.Length, 120);
+         score += line.Count(char.IsLetter);
+
+         if(IsNoiseLine(line))
+         {
+            score -= 250;
+         }
+      }
+
+      return score;
    }
 
    private static string ExtractSupplementalText(string rawHtml)
