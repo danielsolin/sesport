@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 
 using SESport.AI.Providers;
 
@@ -239,6 +240,23 @@ public class WebPageContentClientTests
       Assert.Contains("Start of article.", page!.MainText);
       Assert.Contains(Environment.NewLine + "[CUTOFF]", page.MainText);
       Assert.EndsWith("[CUTOFF]", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchMarksCutoffWhenStructuredEntitiesAreTrimmed()
+   {
+      var handler = new RecordingHandler(CreateManyStructuredEntitiesHtml());
+      var client = new WebPageContentClient(new HttpClient(handler));
+
+      var page = await client.FetchAsync(
+         "https://example.test/structured-entities",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("Structured entities:", page!.MainText);
+      Assert.Contains("athlete: Player 01", page.MainText);
+      Assert.Contains(Environment.NewLine + "[CUTOFF]", page.MainText);
    }
 
    private static string CreateHtml()
@@ -492,6 +510,39 @@ public class WebPageContentClientTests
                <p>Start of article.</p>
                <p>{longText}</p>
             </article>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateManyStructuredEntitiesHtml()
+   {
+      var athletes = string.Join(
+         Environment.NewLine,
+         Enumerable.Range(1, 90).Select(index =>
+            JsonSerializer.Serialize(new
+            {
+               type = "athlete",
+               name = $"Player {index:00}",
+               country = new
+               {
+                  label = "SWE"
+               }
+            }).Replace("\"", "\\\"")
+         )
+      );
+
+      return $"""
+      <html>
+         <head>
+            <title>Structured Entities Example</title>
+         </head>
+         <body>
+            <script>
+               window.__INITIAL_STATE__ = [
+                  {athletes}
+               ];
+            </script>
          </body>
       </html>
       """;

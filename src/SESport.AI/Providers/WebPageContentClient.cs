@@ -736,6 +736,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       var lines = new List<string>();
       var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      var cutoff = false;
 
       var markers = new[]
       {
@@ -792,11 +793,27 @@ public sealed class WebPageContentClient : IWebPageContentClient
                if(seen.Add(line))
                {
                   lines.Add(line);
+
+                  if(lines.Count >= maxLines)
+                  {
+                     cutoff = true;
+                     break;
+                  }
                }
             }
 
             searchIndex = matchIndex + marker.Length;
          }
+
+         if(cutoff)
+         {
+            break;
+         }
+      }
+
+      if(cutoff)
+      {
+         lines.Add("[CUTOFF]");
       }
 
       return string.Join(Environment.NewLine, lines);
@@ -935,6 +952,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       var lines = new List<string>();
       var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      var cutoff = false;
 
       foreach(var candidate in candidates)
       {
@@ -959,9 +977,20 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
             if(lines.Count >= maxLines)
             {
-               return string.Join(Environment.NewLine, lines);
+               cutoff = true;
+               break;
             }
          }
+
+         if(cutoff)
+         {
+            break;
+         }
+      }
+
+      if(cutoff)
+      {
+         lines.Add("[CUTOFF]");
       }
 
       return string.Join(Environment.NewLine, lines);
@@ -1374,6 +1403,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
          .Take(maxLines)
          .Select(entry => entry.Line)
          .ToArray();
+
+      if(entries.Count > maxLines)
+      {
+         return string.Join(
+            Environment.NewLine,
+            lines.Concat(["[CUTOFF]"])
+         );
+      }
 
       return string.Join(Environment.NewLine, lines);
    }
