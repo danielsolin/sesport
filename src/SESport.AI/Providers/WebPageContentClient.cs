@@ -9,7 +9,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 {
    // Keep extracted page text small enough for tool traces and follow-up calls.
    private const int MaxMainTextLength = 8000;
-
+   private const string CutOffMarker = "[CUTOFF]";
    private static readonly Regex TitleRegex = new(
       @"<title\b[^>]*>(?<text>.*?)</title>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -639,7 +639,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static string AddCutoffMarker(string text)
    {
-      return text + Environment.NewLine + "[CUTOFF]";
+      return text + Environment.NewLine + CutOffMarker;
    }
 
    private static string ExtractSearchText(string rawHtml)
@@ -766,7 +766,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             var block = rawHtml[matchIndex..(matchIndex + blockLength)];
             var normalizedBlock = NormalizeEscapedText(block);
 
-            var type = marker.Contains("athlete", StringComparison.OrdinalIgnoreCase)
+            var type = marker.Contains(
+               "athlete",
+               StringComparison.OrdinalIgnoreCase
+            )
                ? "athlete"
                : marker.Contains("player", StringComparison.OrdinalIgnoreCase)
                   ? "player"
@@ -813,7 +816,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       if(cutoff)
       {
-         lines.Add("[CUTOFF]");
+         lines.Add(CutOffMarker);
       }
 
       return string.Join(Environment.NewLine, lines);
@@ -990,7 +993,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       if(cutoff)
       {
-         lines.Add("[CUTOFF]");
+         lines.Add(CutOffMarker);
       }
 
       return string.Join(Environment.NewLine, lines);
@@ -1408,7 +1411,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          return string.Join(
             Environment.NewLine,
-            lines.Concat(["[CUTOFF]"])
+            lines.Concat([CutOffMarker])
          );
       }
 
