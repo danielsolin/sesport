@@ -1,0 +1,94 @@
+[
+   {
+      "type": "function",
+      "function": {
+         "name": "web_search",
+         "parameters": {
+            "type": "object",
+            "required": [
+               "query"
+            ],
+            "properties": {
+               "limit": {
+                  "type": "integer",
+                  "maximum": 10,
+                  "minimum": 1
+               },
+               "query": {
+                  "type": "string"
+               }
+            },
+            "additionalProperties": false
+         },
+         "description": "Search for candidate source pages."
+      }
+   },
+   {
+      "type": "function",
+      "function": {
+         "name": "web_get_page",
+         "parameters": {
+            "type": "object",
+            "anyOf": [
+               {
+                  "required": [
+                     "id"
+                  ]
+               },
+               {
+                  "required": [
+                     "url"
+                  ]
+               }
+            ],
+            "properties": {
+               "id": {
+                  "type": "string"
+               },
+               "url": {
+                  "type": "string"
+               }
+            },
+            "additionalProperties": false
+         },
+         "description": "Fetch page text from a search result id or URL. If the page is very big, this tool will produce a cut-down version indicated by [CUTOFF] at the end"
+      }
+   },
+   {
+      "type": "function",
+      "function": {
+         "name": "web_find_in_page",
+         "parameters": {
+            "type": "object",
+            "anyOf": [
+               {
+                  "required": [
+                     "id"
+                  ]
+               },
+               {
+                  "required": [
+                     "url"
+                  ]
+               }
+            ],
+            "required": [
+               "find"
+            ],
+            "properties": {
+               "id": {
+                  "type": "string"
+               },
+               "url": {
+                  "type": "string"
+               },
+               "find": {
+                  "type": "string"
+               }
+            },
+            "additionalProperties": false
+         },
+         "description": "Find matching text in a fetched page or direct URL. This tool will search the full, uncut, page text."
+      }
+   }
+]
