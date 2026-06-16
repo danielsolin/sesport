@@ -327,10 +327,12 @@
                                     </button>
                                     @if(participationCheck.RunId != Guid.Empty)
                                     {
-                                       <a asp-page="/Admin/Config/Ai/Runs/Details"
+                                       <a asp-page=
+                                             "/Admin/Config/Ai/Runs/Details"
                                           asp-route-id=
                                              "@participationCheck.RunId"
-                                          asp-route-jobId="dec-swe-par"
+                                          asp-route-jobId=
+                                             "decide-swedish-participation"
                                           target="_blank"
                                           rel="noreferrer noopener"
                                           data-run-link="true">

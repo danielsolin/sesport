@@ -226,7 +226,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue(
          "job_id",
-         "dec-swe-par"
+         "decide-swedish-participation"
       );
       command.Parameters.AddWithValue(
          "correlation_ids",

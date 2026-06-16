@@ -16,7 +16,7 @@ public sealed class BroadcastParticipationService(
 )
 {
    private const string ParticipationJobId =
-      "dec-swe-par";
+      "decide-swedish-participation";
 
    public async Task<BroadcastParticipationCheck?>
       GetParticipationCheckAsync(
