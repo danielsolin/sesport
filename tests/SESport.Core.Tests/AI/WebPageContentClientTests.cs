@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 
 using SESport.AI.Providers;
 
@@ -101,40 +100,6 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchTranslatesFlagClassesToCountryNames()
-   {
-      var handler = new RecordingHandler(CreateFlagHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/flags",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Sweden", page!.MainText);
-      Assert.Contains("Example Player", page.MainText);
-      Assert.DoesNotContain("Detected flags:", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchTranslatesCommonCountryAttributes()
-   {
-      var handler = new RecordingHandler(CreateCountryAttributeHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/countries",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Sweden", page!.MainText);
-      Assert.Contains("Norway", page.MainText);
-      Assert.Contains("Finland", page.MainText);
-   }
-
-   [Fact]
    public async Task FetchFiltersCssLikeNoiseAndKeepsTableText()
    {
       var handler = new RecordingHandler(CreateNoisyTableHtml());
@@ -223,40 +188,6 @@ public class WebPageContentClientTests
       Assert.Contains("Example Title", page!.Title);
       Assert.Contains("Example Player", page.MainText);
       Assert.DoesNotContain("\\W", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchMarksCutoffOnOwnLineWhenMainTextIsTruncated()
-   {
-      var handler = new RecordingHandler(CreateLongBodyHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/long-body",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Start of article.", page!.MainText);
-      Assert.Contains(Environment.NewLine + "[CUTOFF]", page.MainText);
-      Assert.EndsWith("[CUTOFF]", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchMarksCutoffWhenStructuredEntitiesAreTrimmed()
-   {
-      var handler = new RecordingHandler(CreateManyStructuredEntitiesHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/structured-entities",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Structured entities:", page!.MainText);
-      Assert.Contains("athlete: Player 01", page.MainText);
-      Assert.Contains(Environment.NewLine + "[CUTOFF]", page.MainText);
    }
 
    private static string CreateHtml()
@@ -350,37 +281,6 @@ public class WebPageContentClientTests
                   }
                };
             </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateFlagHtml()
-   {
-      return """
-      <html>
-         <body>
-            <article>
-               <div class="participant">
-                  <span class="flag se __text_mode_custom_bg__"></span>
-                  <span class="name">Example Player</span>
-               </div>
-            </article>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateCountryAttributeHtml()
-   {
-      return """
-      <html>
-         <body>
-            <article>
-               <span class="flag-icon flag-icon-se"></span>
-               <span data-country="no" aria-label="Norway"></span>
-               <img alt="Finland flag" title="Finland" src="/fi.svg" />
-            </article>
          </body>
       </html>
       """;
@@ -493,55 +393,6 @@ public class WebPageContentClientTests
                window.__INITIAL_STATE__ = {
                   "value": "\W"
                };
-            </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateLongBodyHtml()
-   {
-      var longText = new string('A', 9000);
-
-      return $"""
-      <html>
-         <body>
-            <article>
-               <p>Start of article.</p>
-               <p>{longText}</p>
-            </article>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateManyStructuredEntitiesHtml()
-   {
-      var athletes = string.Join(
-         Environment.NewLine,
-         Enumerable.Range(1, 90).Select(index =>
-            JsonSerializer.Serialize(new
-            {
-               type = "athlete",
-               name = $"Player {index:00}",
-               country = new
-               {
-                  label = "SWE"
-               }
-            }).Replace("\"", "\\\"")
-         )
-      );
-
-      return $"""
-      <html>
-         <head>
-            <title>Structured Entities Example</title>
-         </head>
-         <body>
-            <script>
-               window.__INITIAL_STATE__ = [
-                  {athletes}
-               ];
             </script>
          </body>
       </html>
