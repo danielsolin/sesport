@@ -2,6 +2,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
+using SESport.AI.Interfaces;
+
 namespace SESport.AI.Providers;
 
 public sealed class SearxngWebSearchClient : IWebSearchClient

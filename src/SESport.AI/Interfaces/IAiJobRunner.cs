@@ -1,6 +1,6 @@
 using SESport.AI.Models;
 
-namespace SESport.AI.Abstractions;
+namespace SESport.AI.Interfaces;
 
 public interface IAiJobRunner
 {

@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SESport.AI.Abstractions;
+using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Validation;
 

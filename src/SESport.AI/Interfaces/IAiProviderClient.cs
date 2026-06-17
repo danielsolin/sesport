@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using SESport.AI.Models;
 
-namespace SESport.AI.Abstractions;
+namespace SESport.AI.Interfaces;
 
 public interface IAiProviderClient
 {

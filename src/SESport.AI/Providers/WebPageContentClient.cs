@@ -3,6 +3,8 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 
+using SESport.AI.Interfaces;
+
 namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
@@ -61,6 +63,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       return ExtractPageContent(absoluteUrl.ToString(), rawHtml);
    }
 
+   #region RegEx
    private static readonly Regex TitleRegex = new(
       @"<title\b[^>]*>(?<text>.*?)</title>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -182,6 +185,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       @"^\d+(?:\.\d+)?px$",
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
    );
+   #endregion
 
    private static bool IsPdfResponse(
       HttpResponseMessage response,

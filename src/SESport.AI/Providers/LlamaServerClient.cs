@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.Logging;
 
-using SESport.AI.Abstractions;
+using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Validation;
 

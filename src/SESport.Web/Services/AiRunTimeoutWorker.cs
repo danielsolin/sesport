@@ -1,4 +1,4 @@
-using SESport.AI.Abstractions;
+using SESport.AI.Interfaces;
 
 namespace SESport.Web.Services;
 

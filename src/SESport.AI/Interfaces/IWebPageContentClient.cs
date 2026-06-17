@@ -1,4 +1,6 @@
-namespace SESport.AI.Providers;
+using SESport.AI.Providers;
+
+namespace SESport.AI.Interfaces;
 
 public interface IWebPageContentClient
 {

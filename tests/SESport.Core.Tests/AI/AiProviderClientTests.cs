@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+
+using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Providers;
 

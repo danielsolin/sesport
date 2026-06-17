@@ -5,7 +5,7 @@ using Npgsql;
 
 using NpgsqlTypes;
 
-using SESport.AI.Abstractions;
+using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
