@@ -8,7 +8,7 @@ namespace SESport.AI.Providers;
 public sealed class WebPageContentClient : IWebPageContentClient
 {
    // Single knob for the maximum returned text size.
-   private static int MaxReturnedTextLength = 12000;
+   private const int MaxReturnedTextLength = 8000;
    private const string CutOffMarker = "[CUTOFF]";
 
    public WebPageContentClient(HttpClient httpClient)
@@ -304,51 +304,43 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       var candidate = ExtractContentCandidate(rawHtml);
       candidate = NormalizeCountryMarkers(candidate);
+      var bodyText = ExtractPlainText(candidate);
+      var tableText = ExtractTableText(candidate);
       var supplementalText = ExtractSupplementalText(rawHtml, expanded);
-      var maxLength = MaxReturnedTextLength;
 
-      var textCandidates = new List<string>
+      var mainSections = new List<string>();
+      AddSection(mainSections, bodyText);
+      AddSection(mainSections, tableText);
+
+      if(mainSections.Count > 0)
       {
-         ExtractPlainText(candidate),
-         ExtractTableText(candidate),
-         supplementalText
-      };
+         var text = string.Join(
+            Environment.NewLine + Environment.NewLine,
+            mainSections
+         );
 
-      var text = textCandidates
-         .OrderByDescending(ScoreText)
-         .FirstOrDefault(text => !string.IsNullOrWhiteSpace(text)) ?? "";
-
-      if(!string.IsNullOrWhiteSpace(text))
-      {
-         if(ContainsLayoutNoise(text) &&
+         if(ContainsLayoutNoise(bodyText) &&
             !string.IsNullOrWhiteSpace(supplementalText))
          {
-            var limitedSupplementalText = LimitReturnedText(
-               supplementalText,
-               MaxReturnedTextLength
-            );
-
-            return new MainTextResult(
-               limitedSupplementalText,
-               true,
-               limitedSupplementalText
-            );
+            text = supplementalText.Trim();
          }
 
-         var trimmedText = LimitReturnedText(text, maxLength);
+         var limitedText = LimitReturnedText(
+            text,
+            MaxReturnedTextLength
+         );
 
-         return new MainTextResult(trimmedText, true, trimmedText);
+         return new MainTextResult(
+            limitedText,
+            true,
+            limitedText
+         );
       }
 
-      var trimmedSupplementalText = LimitReturnedText(
-         supplementalText,
-         MaxReturnedTextLength
-      );
-
       return new MainTextResult(
-         trimmedSupplementalText,
+         supplementalText.Trim(),
          false,
-         trimmedSupplementalText
+         supplementalText.Trim()
       );
    }
 
@@ -608,7 +600,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       var embeddedData = string.IsNullOrWhiteSpace(structuredEntitySummary)
-         ? ExtractEmbeddedDataSections(rawHtml, keyValueLineLimit)
+         ? ExtractEmbeddedDataSections(
+            rawHtml,
+            expanded,
+            keyValueLineLimit
+         )
          : [];
 
       if(embeddedData.Count > 0)
@@ -629,14 +625,27 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       sections.Insert(0, "Page appears to be client-rendered.");
 
-      var text = string.Join(Environment.NewLine, sections);
+      return string.Join(Environment.NewLine, sections).Trim();
+   }
 
-      if(!expanded && text.Length > MaxReturnedTextLength)
+   private static void AddSection(
+      List<string> sections,
+      string text
+   )
+   {
+      if(string.IsNullOrWhiteSpace(text))
       {
-         return LimitReturnedText(text, MaxReturnedTextLength);
+         return;
       }
 
-      return text.Trim();
+      var trimmedText = text.Trim();
+
+      if(sections.Contains(trimmedText, StringComparer.Ordinal))
+      {
+         return;
+      }
+
+      sections.Add(trimmedText);
    }
 
    private static string LimitReturnedText(
@@ -706,6 +715,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static IReadOnlyList<string> ExtractEmbeddedDataSections(
       string rawHtml,
+      bool expanded,
       int keyValueLineLimit
    )
    {
@@ -731,21 +741,24 @@ public sealed class WebPageContentClient : IWebPageContentClient
          sections.Add(FormatJsonSection(label, jsonText));
       }
 
-      var rawSummary = ExtractMeaningfulKeyValueSummaryAcrossUnescapes(
-         rawHtml,
-         keyValueLineLimit
-      );
-
-      if(!string.IsNullOrWhiteSpace(rawSummary))
+      if(expanded)
       {
-         sections.Add(string.Join(
-            Environment.NewLine,
-            new[]
-            {
-               "Unescaped raw values:",
-               rawSummary
-            }
-         ));
+         var rawSummary = ExtractMeaningfulKeyValueSummaryAcrossUnescapes(
+            rawHtml,
+            keyValueLineLimit
+         );
+
+         if(!string.IsNullOrWhiteSpace(rawSummary))
+         {
+            sections.Add(string.Join(
+               Environment.NewLine,
+               new[]
+               {
+                  "Unescaped raw values:",
+                  rawSummary
+               }
+            ));
+         }
       }
 
       return sections;
