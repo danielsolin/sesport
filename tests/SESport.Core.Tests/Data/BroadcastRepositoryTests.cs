@@ -1,4 +1,7 @@
 using Npgsql;
+
+using SESport.Core.Configuration;
+
 using AdminBroadcastRepository = SESport.Data.BroadcastRepository;
 using ImportBroadcastRepository = SESport.Data.Broadcast.BroadcastRepository;
 
@@ -130,10 +133,7 @@ public sealed class BroadcastRepositoryTests
 
    private static NpgsqlDataSource CreateDataSource()
    {
-      var connectionString =
-         Environment.GetEnvironmentVariable("ConnectionStrings__Default") ??
-         "Host=localhost;Port=5432;Database=sesport;" +
-         "Username=sesport;Password=sesport";
+      var connectionString = PostgresConnectionStrings.ResolveDefault();
 
       return new NpgsqlDataSourceBuilder(connectionString).Build();
    }

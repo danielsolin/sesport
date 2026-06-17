@@ -1,5 +1,6 @@
 using Npgsql;
 
+using SESport.Core.Configuration;
 using SESport.Data;
 
 namespace SESport.Core.Tests.Data;
@@ -152,10 +153,7 @@ public sealed class AdminRepositoryTests
 
    private static NpgsqlDataSource CreateDataSource()
    {
-      var connectionString =
-         Environment.GetEnvironmentVariable("ConnectionStrings__Default") ??
-         "Host=localhost;Port=5432;Database=sesport;" +
-         "Username=sesport;Password=sesport";
+      var connectionString = PostgresConnectionStrings.ResolveDefault();
 
       return new NpgsqlDataSourceBuilder(connectionString).Build();
    }
