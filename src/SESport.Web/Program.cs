@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
+using SESport.Core.Configuration;
 using SESport.Web.Extensions;
 using SESport.Web.Services;
 using SESport.Data;
@@ -15,13 +16,10 @@ var enableAiBackgroundWorkers = builder.Configuration.GetValue(
    "Ai:EnableBackgroundWorkers",
    builder.Environment.IsDevelopment()
 );
-var defaultConnectionString =
-   "Host=localhost;Port=5432;Database=sesport;" +
-   "Username=sesport;Password=sesport";
 builder.Services.AddSingleton(
    _ => NpgsqlDataSource.Create(
       builder.Configuration.GetConnectionString("Default") ??
-      defaultConnectionString
+      PostgresConnectionStrings.ResolveDefault()
    )
 );
 builder.Services.AddAiPlatform(builder.Configuration);
