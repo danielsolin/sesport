@@ -70,23 +70,6 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchCombinesBodyAndTableText()
-   {
-      var handler = new RecordingHandler(CreateBodyAndTableHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/body-and-table",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Article paragraph.", page!.MainText);
-      Assert.Contains("Driver", page.MainText);
-      Assert.Contains("Wedge", page.MainText);
-   }
-
-   [Fact]
    public async Task FetchPrefersEmbeddedJsonWhenBodyIsMostlyNoise()
    {
       var handler = new RecordingHandler(CreateMostlyNoisyJsonHtml());
@@ -344,41 +327,6 @@ public class WebPageContentClientTests
       """;
    }
 
-   private static string CreateBodyAndTableHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Body And Table Example</title>
-         </head>
-         <body>
-            <article>
-               <h1>Example Player</h1>
-               <p>Article paragraph.</p>
-               <table>
-                  <tr>
-                     <th>Club</th>
-                     <th>Yards</th>
-                  </tr>
-                  <tr>
-                     <td>Driver</td>
-                     <td>300</td>
-                  </tr>
-                  <tr>
-                     <td>Iron</td>
-                     <td>175</td>
-                  </tr>
-                  <tr>
-                     <td>Wedge</td>
-                     <td>95</td>
-                  </tr>
-               </table>
-            </article>
-         </body>
-      </html>
-      """;
-   }
-
    private static string CreateMostlyNoisyJsonHtml()
    {
       return """
@@ -553,7 +501,7 @@ public class WebPageContentClientTests
 
    private static string CreateLongBodyHtml()
    {
-      var longText = new string('A', 52000);
+      var longText = new string('A', 13000);
 
       return $"""
       <html>
