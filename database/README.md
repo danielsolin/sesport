@@ -10,6 +10,12 @@ the reference rows needed by the application.
 Future schema changes should be added as new numbered SQL files after the
 baseline.
 
+Start interactive PostgreSQL session in docker container:
+
+```bash
+docker compose exec -it postgres psql -U sesport -d sesport
+```
+
 Start PostgreSQL with Docker Compose:
 
 ```bash
@@ -28,12 +34,6 @@ baseline as applied:
 
 ```bash
 ./bin/db-mark-baseline-applied.sh
-```
-
-Import the curated entity watchlist after migrations:
-
-```bash
-dotnet run --project tools/legacy/SESport.ImportEntities
 ```
 
 If the local database drifted from the baseline, recreate the local Postgres
