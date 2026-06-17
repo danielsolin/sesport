@@ -8,59 +8,8 @@ namespace SESport.AI.Providers;
 public sealed class WebPageContentClient : IWebPageContentClient
 {
    // Single knob for the maximum returned text size.
-   private static int MaxReturnedTextLength = 12000;
+   private const int MaxReturnedTextLength = 12000;
    private const string CutOffMarker = "[CUTOFF]";
-
-   public WebPageContentClient(HttpClient httpClient)
-   {
-      this.httpClient = httpClient;
-   }
-
-   public async Task<WebPageContent?> FetchAsync(
-      string url,
-      CancellationToken cancellationToken
-   )
-   {
-      if(string.IsNullOrWhiteSpace(url) ||
-         !Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
-      {
-         return null;
-      }
-
-      using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
-      request.Headers.Accept.ParseAdd("text/html,application/xhtml+xml");
-      request.Headers.TryAddWithoutValidation(
-         "User-Agent",
-         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-         "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-      );
-      request.Headers.TryAddWithoutValidation(
-         "Accept-Language",
-         "en-US,en;q=0.9"
-      );
-
-      using var response = await httpClient.SendAsync(
-         request,
-         cancellationToken
-      );
-      if(IsPdfResponse(response, absoluteUrl))
-      {
-         return null;
-      }
-
-      var rawHtml = await response.Content.ReadAsStringAsync(
-         cancellationToken
-      );
-
-      if(!response.IsSuccessStatusCode ||
-         string.IsNullOrWhiteSpace(rawHtml))
-      {
-         return null;
-      }
-
-      return ExtractPageContent(absoluteUrl.ToString(), rawHtml);
-   }
-
    private static readonly Regex TitleRegex = new(
       @"<title\b[^>]*>(?<text>.*?)</title>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline |
@@ -184,6 +133,56 @@ public sealed class WebPageContentClient : IWebPageContentClient
    );
 
    private readonly HttpClient httpClient;
+
+   public WebPageContentClient(HttpClient httpClient)
+   {
+      this.httpClient = httpClient;
+   }
+
+   public async Task<WebPageContent?> FetchAsync(
+      string url,
+      CancellationToken cancellationToken
+   )
+   {
+      if(string.IsNullOrWhiteSpace(url) ||
+         !Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
+      {
+         return null;
+      }
+
+      using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
+      request.Headers.Accept.ParseAdd("text/html,application/xhtml+xml");
+      request.Headers.TryAddWithoutValidation(
+         "User-Agent",
+         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+         "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+      );
+      request.Headers.TryAddWithoutValidation(
+         "Accept-Language",
+         "en-US,en;q=0.9"
+      );
+
+      using var response = await httpClient.SendAsync(
+         request,
+         cancellationToken
+      );
+      if(IsPdfResponse(response, absoluteUrl))
+      {
+         return null;
+      }
+
+      var rawHtml = await response.Content.ReadAsStringAsync(
+         cancellationToken
+      );
+
+      if(!response.IsSuccessStatusCode ||
+         string.IsNullOrWhiteSpace(rawHtml))
+      {
+         return null;
+      }
+
+      return ExtractPageContent(absoluteUrl.ToString(), rawHtml);
+   }
 
    private static bool IsPdfResponse(
       HttpResponseMessage response,
