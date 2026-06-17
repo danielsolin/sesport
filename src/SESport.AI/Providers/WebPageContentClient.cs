@@ -305,7 +305,6 @@ private static MainTextResult ExtractMainText(string rawHtml)
    )
    {
       var candidate = ExtractContentCandidate(rawHtml);
-      candidate = NormalizeCountryMarkers(candidate);
       var supplementalText = ExtractSupplementalText(rawHtml, expanded);
       var maxLength = MaxMainTextLength;
 
@@ -648,7 +647,6 @@ private static MainTextResult ExtractMainText(string rawHtml)
    private static string ExtractSearchText(string rawHtml)
    {
       var candidate = ExtractContentCandidate(rawHtml);
-      candidate = NormalizeCountryMarkers(candidate);
 
       var sections = new List<string>();
 
@@ -2291,69 +2289,6 @@ private static MainTextResult ExtractMainText(string rawHtml)
       {
          AddUniqueLabel(labels, label);
       }
-   }
-
-   private static string NormalizeCountryMarkers(string html)
-   {
-      return CountryElementRegex.Replace(
-         html,
-         match =>
-         {
-            var element = match.Value;
-
-            if(TryExtractCountryLabelFromElement(element, out var label))
-            {
-               return " " + label + " ";
-            }
-
-            return element;
-         }
-      );
-   }
-
-   private static bool TryExtractCountryLabelFromElement(
-      string element,
-      out string label
-   )
-   {
-      label = "";
-
-      AddLabelFromAttributeCandidate(element, "aria-label", ref label);
-      AddLabelFromAttributeCandidate(element, "title", ref label);
-      AddLabelFromAttributeCandidate(element, "alt", ref label);
-      AddLabelFromAttributeCandidate(element, "data-country", ref label);
-      AddLabelFromAttributeCandidate(
-         element,
-         "data-country-code",
-         ref label
-      );
-      AddLabelFromAttributeCandidate(
-         element,
-         "data-country-name",
-         ref label
-      );
-      AddLabelFromAttributeCandidate(element, "data-iso", ref label);
-
-      if(!string.IsNullOrWhiteSpace(label))
-      {
-         return true;
-      }
-
-      var classValue = ExtractAttributeValue(element, "class");
-
-      foreach(var token in classValue.Split(
-         ' ',
-         StringSplitOptions.RemoveEmptyEntries |
-         StringSplitOptions.TrimEntries
-      ))
-      {
-         if(TryGetCountryLabelFromClassToken(token, out label))
-         {
-            return true;
-         }
-      }
-
-      return false;
    }
 
    private static void AddLabelFromAttributeCandidate(
