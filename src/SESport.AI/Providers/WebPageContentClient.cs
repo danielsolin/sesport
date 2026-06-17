@@ -7,8 +7,8 @@ namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
-   // Keep extracted page text small enough for tool traces and follow-up calls.
-   private const int MaxMainTextLength = 8000;
+   // Single knob for the maximum returned text size.
+   private const int MaxReturnedTextLength = 12000;
    private const string CutOffMarker = "[CUTOFF]";
    private static readonly Regex TitleRegex = new(
       @"<title\b[^>]*>(?<text>.*?)</title>",
@@ -304,7 +304,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var candidate = ExtractContentCandidate(rawHtml);
       candidate = NormalizeCountryMarkers(candidate);
       var supplementalText = ExtractSupplementalText(rawHtml, expanded);
-      var maxLength = MaxMainTextLength;
+      var maxLength = MaxReturnedTextLength;
 
       var textCandidates = new List<string>
       {
@@ -322,27 +322,28 @@ public sealed class WebPageContentClient : IWebPageContentClient
          if(ContainsLayoutNoise(text) &&
             !string.IsNullOrWhiteSpace(supplementalText))
          {
+            var limitedSupplementalText = LimitReturnedText(
+               supplementalText,
+               MaxReturnedTextLength
+            );
+
             return new MainTextResult(
-               supplementalText.Trim(),
+               limitedSupplementalText,
                true,
-               supplementalText.Trim()
+               limitedSupplementalText
             );
          }
 
-         if(text.Length > maxLength)
-         {
-            return new MainTextResult(
-               AddCutoffMarker(text[..maxLength].TrimEnd()),
-               true,
-               text[..maxLength].TrimEnd()
-            );
-         }
+         var trimmedText = LimitReturnedText(text, maxLength);
 
-         var trimmedText = text.Trim();
          return new MainTextResult(trimmedText, true, trimmedText);
       }
 
-      var trimmedSupplementalText = supplementalText.Trim();
+      var trimmedSupplementalText = LimitReturnedText(
+         supplementalText,
+         MaxReturnedTextLength
+      );
+
       return new MainTextResult(
          trimmedSupplementalText,
          false,
@@ -629,12 +630,32 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       var text = string.Join(Environment.NewLine, sections);
 
-      if(!expanded && text.Length > MaxMainTextLength)
+      if(!expanded && text.Length > MaxReturnedTextLength)
       {
-         return AddCutoffMarker(text[..MaxMainTextLength].TrimEnd());
+         return LimitReturnedText(text, MaxReturnedTextLength);
       }
 
       return text.Trim();
+   }
+
+   private static string LimitReturnedText(
+      string text,
+      int maxLength
+   )
+   {
+      if(string.IsNullOrWhiteSpace(text))
+      {
+         return string.Empty;
+      }
+
+      var trimmedText = text.Trim();
+
+      if(trimmedText.Length > maxLength)
+      {
+         return AddCutoffMarker(trimmedText[..maxLength].TrimEnd());
+      }
+
+      return trimmedText;
    }
 
    private static string AddCutoffMarker(string text)

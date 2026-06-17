@@ -501,7 +501,7 @@ public class WebPageContentClientTests
 
    private static string CreateLongBodyHtml()
    {
-      var longText = new string('A', 9000);
+      var longText = new string('A', 13000);
 
       return $"""
       <html>
