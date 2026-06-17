@@ -7,7 +7,7 @@ namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
-   private const int MaxMainTextLength = 8000;
+   private const int MaxMainTextLength = 12000;
    private const string CutOffMarker = "[CUTOFF]";
    private readonly HttpClient httpClient;
 
