@@ -287,17 +287,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
       return null;
    }
 
-   private static MainTextResult ExtractMainText(string rawHtml)
-   {
-      var displayTextInfo = ExtractMainTextVariant(rawHtml, false);
-      var searchTextInfo = ExtractSearchText(rawHtml);
+private static MainTextResult ExtractMainText(string rawHtml)
+{
+   var displayTextInfo = ExtractMainTextVariant(rawHtml, true);
+   var searchTextInfo = ExtractSearchText(rawHtml);
 
-      return new MainTextResult(
-         displayTextInfo.Text,
-         displayTextInfo.HasBodyText,
-         searchTextInfo
-      );
-   }
+   return new MainTextResult(
+      displayTextInfo.Text,
+      displayTextInfo.HasBodyText,
+      searchTextInfo
+   );
+}
 
    private static MainTextResult ExtractMainTextVariant(
       string rawHtml,
