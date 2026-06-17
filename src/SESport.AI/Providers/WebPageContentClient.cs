@@ -289,7 +289,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
 private static MainTextResult ExtractMainText(string rawHtml)
 {
-   var displayTextInfo = ExtractMainTextVariant(rawHtml, true);
+   var displayTextInfo = ExtractMainTextVariant(rawHtml, false);
    var searchTextInfo = ExtractSearchText(rawHtml);
 
    return new MainTextResult(
