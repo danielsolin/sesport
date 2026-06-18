@@ -18,11 +18,11 @@
    </a>
 </section>
 
-@if (Model.Run is not null)
+@if(Model.Run is not null)
 {
    <section class="form-section">
-         <h2>Summary</h2>
-         <dl class="detail-grid">
+      <h2>Summary</h2>
+      <dl class="detail-grid">
          <div>
             <dt>Status</dt>
             <dd><code>@Model.Run.StatusId</code></dd>
@@ -81,21 +81,21 @@
             <dt>Max conversation chars</dt>
             <dd>@DetailsModel.GetMaxConversationCharacterCount(Model.Run)</dd>
          </div>
-         @if (Model.Run.InputTokens is not null)
+         @if(Model.Run.InputTokens is not null)
          {
             <div>
                <dt>Input tokens</dt>
                <dd>@Model.Run.InputTokens</dd>
             </div>
          }
-         @if (Model.Run.OutputTokens is not null)
+         @if(Model.Run.OutputTokens is not null)
          {
             <div>
                <dt>Output tokens</dt>
                <dd>@Model.Run.OutputTokens</dd>
             </div>
          }
-         @if (Model.Run.ReasoningTokens is not null)
+         @if(Model.Run.ReasoningTokens is not null)
          {
             <div>
                <dt>Reasoning tokens</dt>
@@ -111,7 +111,7 @@
             <div class="tool-trace-summary-content">
                <div class="tool-trace-summary-header">
                   <span>Tool trace</span>
-                  @if (Model.ToolTraceTurns.Count > 0)
+                  @if(Model.ToolTraceTurns.Count > 0)
                   {
                      <span class="tool-trace-summary-count">
                         @Model.ToolTraceTurns.Count
@@ -119,10 +119,10 @@
                      </span>
                   }
                </div>
-               @if (Model.ToolTraceSummaryBadges.Count > 0)
+               @if(Model.ToolTraceSummaryBadges.Count > 0)
                {
                   <div class="tool-trace-summary-badges">
-                     @foreach (var badge in Model.ToolTraceSummaryBadges)
+                     @foreach(var badge in Model.ToolTraceSummaryBadges)
                      {
                         <span class="tool-trace-badge @badge.CssClass">
                            @badge.Text
@@ -132,7 +132,7 @@
                }
             </div>
          </summary>
-         @if (string.Equals(Model.Run.StatusId, "running",
+         @if(string.Equals(Model.Run.StatusId, "running",
                StringComparison.Ordinal))
          {
             <div class="notice">
@@ -141,14 +141,14 @@
             </div>
          }
 
-         @if (Model.ToolTraceTurns.Count == 0)
+         @if(Model.ToolTraceTurns.Count == 0)
          {
             <div class="notice">No tool trace recorded yet.</div>
          }
          else
          {
-           <div class="tool-trace-list">
-               @foreach (var turn in Model.ToolTraceTurns)
+            <div class="tool-trace-list">
+               @foreach(var turn in Model.ToolTraceTurns)
                {
                   <article class="tool-trace-turn">
                      <details class="tool-trace-turn-details">
@@ -157,23 +157,22 @@
                               <span class="tool-trace-turn-label">
                                  Round @turn.Turn
                               </span>
-                              @if (turn.CompactBadges.Count > 1)
+                              @if(turn.CompactBadges.Count > 1)
                               {
                                  <div class="tool-trace-turn-badges">
-                                    @foreach (var badge in turn.CompactBadges
+                                    @foreach(var badge in turn.CompactBadges
                                        .Skip(1))
                                     {
-                                       <span class=
-                                          "tool-trace-badge @badge.CssClass">
+                                       <span class="tool-trace-badge @badge.CssClass">
                                           @badge.Text
-                                      </span>
+                                       </span>
                                     }
                                  </div>
                               }
                            </div>
                         </summary>
 
-                        @if (!string.IsNullOrWhiteSpace(
+                        @if(!string.IsNullOrWhiteSpace(
                            turn.AssistantContent))
                         {
                            <div class="tool-trace-block">
@@ -186,14 +185,14 @@
                            </div>
                         }
 
-                        @if (turn.ToolCalls.Count > 0)
+                        @if(turn.ToolCalls.Count > 0)
                         {
                            <div class="tool-trace-block">
                               <div class="tool-trace-block-label">
                                  Tool calls
                               </div>
                               <div class="tool-trace-items">
-                                 @foreach (var toolCall in turn.ToolCalls)
+                                 @foreach(var toolCall in turn.ToolCalls)
                                  {
                                     <div class="tool-trace-item">
                                        <div class="tool-trace-item-title">
@@ -209,26 +208,26 @@
                            </div>
                         }
 
-                        @if (turn.ToolResults.Count > 0)
+                        @if(turn.ToolResults.Count > 0)
                         {
                            <div class="tool-trace-block">
                               <div class="tool-trace-block-label">
                                  Tool results
                               </div>
                               <div class="tool-trace-items">
-                                 @foreach (var toolResult in turn.ToolResults)
+                                 @foreach(var toolResult in turn.ToolResults)
                                  {
                                     <div class="tool-trace-item">
                                        <div class="tool-trace-item-title">
                                           <code>@toolResult.Name</code>
                                           <span>@toolResult.ToolCallId</span>
                                        </div>
-                                       @if (!string.IsNullOrWhiteSpace(
+                                       @if(!string.IsNullOrWhiteSpace(
                                           toolResult.Query))
                                        {
                                           <div>Query: @toolResult.Query</div>
                                        }
-                                       @if (!string.IsNullOrWhiteSpace(
+                                       @if(!string.IsNullOrWhiteSpace(
                                           toolResult.Id))
                                        {
                                           <div>Id: @toolResult.Id</div>
@@ -249,19 +248,14 @@
       </details>
    </section>
 
-   @if (!string.IsNullOrWhiteSpace(
-         Model.ConversationHistorySummaryText
-      ))
-   {
-      <section class="form-section">
-         <details class="run-data-details">
-            <summary>Conversation history summary</summary>
-            <pre class="prompt-details-pre">
-@Model.ConversationHistorySummaryText
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>Conversation history summary</summary>
+         <pre class="prompt-details-pre">
+@((Model.ConversationHistorySummaryText ?? string.Empty).Trim())
             </pre>
-         </details>
-      </section>
-   }
+      </details>
+   </section>
 
    <section class="form-section">
       <details class="run-data-details">
@@ -290,7 +284,7 @@
       </details>
    </section>
 
-   @if (!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
+   @if(!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
    {
       <section class="form-section">
          <details class="run-data-details">
@@ -332,7 +326,7 @@
       </details>
    </section>
 
-   @if (!string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
+   @if(!string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
    {
       <section class="form-section">
          <h2>Error</h2>
