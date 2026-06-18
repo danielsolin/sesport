@@ -186,7 +186,8 @@ public class AiProviderClientTests
    }
 
    [Fact]
-   public async Task LlamaServerGenerateAsyncAnnotatesRepeatedPageFindCalls()
+   public async Task
+      LlamaServerGenerateAsyncReusesRepeatedPageFindCallsWithoutAnnotation()
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
@@ -239,18 +240,12 @@ public class AiProviderClientTests
       );
       Assert.Single(webPageContentClient.Urls);
       Assert.Equal(4, handler.RequestBodies.Count);
-      Assert.True(
-         handler.RequestBodies[3].Contains("already made in round 2"),
-         string.Join("\n---\n", handler.RequestBodies)
-      );
-      Assert.True(
-         handler.RequestBodies[3].Contains("Do not repeat this check."),
-         string.Join("\n---\n", handler.RequestBodies)
-      );
-      Assert.True(
-         handler.RequestBodies[3].Contains("Reuse the previous result"),
-         string.Join("\n---\n", handler.RequestBodies)
-      );
+      Assert.DoesNotContain("already made in round",
+         handler.RequestBodies[3]);
+      Assert.DoesNotContain("Do not repeat this check.",
+         handler.RequestBodies[3]);
+      Assert.DoesNotContain("Reuse the previous result",
+         handler.RequestBodies[3]);
    }
 
    [Fact]
