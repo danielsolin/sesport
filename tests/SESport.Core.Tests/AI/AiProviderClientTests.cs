@@ -146,6 +146,43 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void FormatPageContentTextShowsBlockedChallengeStatus()
+   {
+      var method = typeof(LlamaServerClient).GetMethod(
+         "FormatPageContentText",
+         System.Reflection.BindingFlags.NonPublic |
+         System.Reflection.BindingFlags.Static
+      );
+
+      if(method is null)
+      {
+         throw new InvalidOperationException(
+            "Unable to find FormatPageContentText via reflection."
+         );
+      }
+
+      var result = (string?)method.Invoke(
+         null,
+         [
+            "Page id",
+            "s1_1",
+            "Title",
+            "https://example.test",
+            "Snippet",
+            null,
+            null,
+            "",
+            true,
+            "Challenge page detected."
+         ]
+      );
+
+      Assert.NotNull(result);
+      Assert.Contains("Status: blocked by challenge", result);
+      Assert.Contains("Page text: (empty)", result);
+   }
+
+   [Fact]
    public async Task
       LlamaServerGenerateAsyncKeepsLatestCompletedRoundDuringTrim()
    {

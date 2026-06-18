@@ -20,6 +20,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       TimeSpan.FromSeconds(30);
    private static readonly TimeSpan BrowserLoadStateTimeout =
       TimeSpan.FromSeconds(30);
+   private static readonly TimeSpan BrowserBodyTextTimeout =
+      TimeSpan.FromSeconds(8);
    private static readonly IReadOnlyDictionary<string, string>
       CountryNamesByCode = BuildCountryNamesByCode();
    private readonly HttpClient httpClient;
@@ -125,6 +127,19 @@ public sealed class WebPageContentClient : IWebPageContentClient
          cancellationToken.ThrowIfCancellationRequested();
 
          var title = await page.TitleAsync();
+         var bodyTextContent = NormalizeText(
+            await page.Locator("body").TextContentAsync()
+         );
+
+         if(TryGetChallengeReason(bodyTextContent, out var challengeReason))
+         {
+            return CreateBlockedPageContent(
+               title,
+               absoluteUrl,
+               challengeReason
+            );
+         }
+
          var countryNamesJson = JsonSerializer.Serialize(CountryNamesByCode);
          await page.EvaluateAsync(
             """
@@ -164,7 +179,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
             """,
             countryNamesJson
          );
-         var visibleText = await page.Locator("body").InnerTextAsync();
+         var visibleText = await WaitForBodyInnerTextAsync(
+            async _ => await page.EvaluateAsync<string?>(
+               "() => document.body ? document.body.innerText : ''"
+            ),
+            cancellationToken
+         );
          var normalizedText = NormalizeText(visibleText);
 
          return new WebPageContent(
@@ -367,6 +387,101 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return text.Replace("\r", "\n", StringComparison.Ordinal).Trim();
+   }
+
+   private static WebPageContent CreateBlockedPageContent(
+      string? title,
+      Uri absoluteUrl,
+      string challengeReason
+   )
+   {
+      return new WebPageContent(
+         string.IsNullOrWhiteSpace(title) ? absoluteUrl.ToString() : title,
+         absoluteUrl.ToString(),
+         null,
+         [],
+         string.Empty,
+         false,
+         string.Empty,
+         true,
+         challengeReason
+      );
+   }
+
+   internal static bool TryGetChallengeReason(
+      string? bodyTextContent,
+      out string challengeReason
+   )
+   {
+      challengeReason = "";
+
+      if(string.IsNullOrWhiteSpace(bodyTextContent))
+      {
+         return false;
+      }
+
+      if(bodyTextContent.Contains(
+         "Please enable JS and disable any ad blocker",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         challengeReason = "Challenge page detected: JS/ad blocker check.";
+         return true;
+      }
+
+      if(bodyTextContent.Contains(
+         "captcha-delivery.com",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         challengeReason = "Challenge page detected: captcha-delivery.com.";
+         return true;
+      }
+
+      if(bodyTextContent.Contains(
+         "cmsg",
+         StringComparison.OrdinalIgnoreCase
+      ) &&
+         bodyTextContent.Contains(
+            "var dd={",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         challengeReason = "Challenge page detected.";
+         return true;
+      }
+
+      return false;
+   }
+
+   internal static async Task<string> WaitForBodyInnerTextAsync(
+      Func<CancellationToken, Task<string?>> readBodyTextAsync,
+      CancellationToken cancellationToken,
+      TimeSpan? timeout = null
+   )
+   {
+      var waitTimeout = timeout ?? BrowserBodyTextTimeout;
+      var deadline = DateTimeOffset.UtcNow + waitTimeout;
+
+      while(DateTimeOffset.UtcNow < deadline)
+      {
+         cancellationToken.ThrowIfCancellationRequested();
+
+         var bodyText = NormalizeText(
+            await readBodyTextAsync(cancellationToken)
+         );
+
+         if(!string.IsNullOrWhiteSpace(bodyText))
+         {
+            return bodyText;
+         }
+
+         await Task.Delay(250, cancellationToken);
+      }
+
+      return NormalizeText(
+         await readBodyTextAsync(cancellationToken)
+      );
    }
 
    internal static string ApplyResponseCutoff(string text)

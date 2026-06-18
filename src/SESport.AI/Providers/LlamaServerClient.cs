@@ -1629,7 +1629,9 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageTarget.SearchSnippet,
             pageContent.PublishedAt,
             pageContent.Headings,
-            pageContent.MainText
+            pageContent.MainText,
+            pageContent.IsBlockedByChallenge,
+            pageContent.ChallengeReason
          );
       }
 
@@ -1725,20 +1727,42 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          var matches = FindPageMatches(pageContent, find);
 
-         result = JsonSerializer.Serialize(
-            new
-            {
-               reference_label = pageTarget.ReferenceLabel,
-               reference_value = pageTarget.ReferenceValue,
-               find,
-               title = pageContent.Title,
-               url = pageContent.Url,
-               published_at = pageContent.PublishedAt?.ToString("O"),
-               match_count = matches.Count,
-               matches
-            },
-            JsonOptions
-         );
+         if(pageContent.IsBlockedByChallenge)
+         {
+            result = JsonSerializer.Serialize(
+               new
+               {
+                  reference_label = pageTarget.ReferenceLabel,
+                  reference_value = pageTarget.ReferenceValue,
+                  find,
+                  title = pageContent.Title,
+                  url = pageContent.Url,
+                  published_at = pageContent.PublishedAt?.ToString("O"),
+                  blocked_by_challenge = true,
+                  challenge_reason = pageContent.ChallengeReason,
+                  match_count = 0,
+                  matches = Array.Empty<PageMatch>()
+               },
+               JsonOptions
+            );
+         }
+         else
+         {
+            result = JsonSerializer.Serialize(
+               new
+               {
+                  reference_label = pageTarget.ReferenceLabel,
+                  reference_value = pageTarget.ReferenceValue,
+                  find,
+                  title = pageContent.Title,
+                  url = pageContent.Url,
+                  published_at = pageContent.PublishedAt?.ToString("O"),
+                  match_count = matches.Count,
+                  matches
+               },
+               JsonOptions
+            );
+         }
       }
 
       RecordResult(
@@ -1897,6 +1921,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          return pageContent.MainTextFull;
       }
 
+      if(pageContent.IsBlockedByChallenge)
+      {
+         return "";
+      }
+
       return pageContent.MainText;
    }
 
@@ -1998,7 +2027,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       string? searchSnippet,
       DateTimeOffset? publishedAt,
       IReadOnlyList<string>? headings,
-      string? mainText
+      string? mainText,
+      bool isBlockedByChallenge = false,
+      string? challengeReason = null
    )
    {
       var builder = new StringBuilder();
@@ -2016,6 +2047,16 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          builder.AppendLine("Search snippet:");
          builder.AppendLine(searchSnippet.Trim());
+      }
+
+      if(isBlockedByChallenge)
+      {
+         builder.AppendLine("Status: blocked by challenge");
+
+         if(!string.IsNullOrWhiteSpace(challengeReason))
+         {
+            builder.AppendLine(challengeReason.Trim());
+         }
       }
 
       if(headings is not null && headings.Count > 0)
