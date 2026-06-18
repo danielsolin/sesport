@@ -107,66 +107,6 @@
 
    <section class="form-section">
       <details class="run-data-details">
-         <summary>Raw request</summary>
-         <pre class="prompt-details-pre">
-@DetailsModel.FormatJson(Model.Run.RawRequestJson)
-         </pre>
-      </details>
-   </section>
-
-   <section class="form-section">
-      <details class="run-data-details">
-         <summary>Input payload</summary>
-         <pre class="prompt-details-pre">
-@DetailsModel.FormatJson(Model.Run.InputPayloadJson)
-         </pre>
-      </details>
-   </section>
-
-   <section class="form-section">
-      <details class="run-data-details">
-         <summary>System prompt</summary>
-         <pre class="prompt-details-pre">@Model.SystemPromptText</pre>
-      </details>
-   </section>
-
-   <section class="form-section">
-      <details class="run-data-details">
-         <summary>User prompt template</summary>
-         <pre class="prompt-details-pre">@Model.UserPromptTemplateText</pre>
-      </details>
-   </section>
-
-   <section class="form-section">
-      <details class="run-data-details">
-         <summary>Rendered prompt</summary>
-         <pre class="prompt-details-pre">@Model.RenderedPromptText</pre>
-      </details>
-   </section>
-
-   <section class="form-section">
-      <details class="run-data-details">
-         <summary>Output</summary>
-         <pre class="prompt-details-pre">
-@((Model.Run.OutputText ?? string.Empty).Trim())
-         </pre>
-      </details>
-   </section>
-
-   @if (!string.IsNullOrWhiteSpace(Model.Run.RawResponseJson))
-   {
-      <section class="form-section">
-         <details class="run-data-details">
-            <summary>Raw response</summary>
-            <pre class="prompt-details-pre">
-@DetailsModel.FormatJson(Model.Run.RawResponseJson)
-            </pre>
-         </details>
-      </section>
-   }
-
-   <section class="form-section">
-      <details class="run-data-details">
          <summary>
             <div class="tool-trace-summary-content">
                <div class="tool-trace-summary-header">
@@ -309,6 +249,36 @@
       </details>
    </section>
 
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>Output</summary>
+         <pre class="prompt-details-pre">
+@((Model.Run.OutputText ?? string.Empty).Trim())
+         </pre>
+      </details>
+   </section>
+
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>Raw request</summary>
+         <pre class="prompt-details-pre">
+@DetailsModel.FormatJson(Model.Run.RawRequestJson)
+         </pre>
+      </details>
+   </section>
+
+   @if (!string.IsNullOrWhiteSpace(Model.Run.RawResponseJson))
+   {
+      <section class="form-section">
+         <details class="run-data-details">
+            <summary>Raw response</summary>
+            <pre class="prompt-details-pre">
+@DetailsModel.FormatJson(Model.Run.RawResponseJson)
+            </pre>
+         </details>
+      </section>
+   }
+
    @if (!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
    {
       <section class="form-section">
@@ -320,6 +290,36 @@
          </details>
       </section>
    }
+
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>System prompt</summary>
+         <pre class="prompt-details-pre">@Model.SystemPromptText</pre>
+      </details>
+   </section>
+
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>Rendered prompt</summary>
+         <pre class="prompt-details-pre">@Model.RenderedPromptText</pre>
+      </details>
+   </section>
+
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>Input payload</summary>
+         <pre class="prompt-details-pre">
+@DetailsModel.FormatJson(Model.Run.InputPayloadJson)
+         </pre>
+      </details>
+   </section>
+
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>User prompt template</summary>
+         <pre class="prompt-details-pre">@Model.UserPromptTemplateText</pre>
+      </details>
+   </section>
 
    @if (!string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
    {

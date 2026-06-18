@@ -14,10 +14,18 @@ public sealed class DetailsMarkupTests
       );
       var html = await File.ReadAllTextAsync(htmlPath);
 
-      Assert.Contains("summary>Input payload</summary>", html);
-      Assert.Contains("summary>System prompt</summary>", html);
-      Assert.Contains("summary>Rendered prompt</summary>", html);
-      Assert.Contains("summary>Output</summary>", html);
+      AssertOrder(
+         html,
+         "tool-trace-summary-content",
+         "summary>Output</summary>",
+         "summary>Raw request</summary>",
+         "summary>Raw response</summary>",
+         "summary>Raw tool trace JSON</summary>",
+         "summary>System prompt</summary>",
+         "summary>Rendered prompt</summary>",
+         "summary>Input payload</summary>",
+         "summary>User prompt template</summary>"
+      );
       Assert.Contains("<dt>Temperature</dt>", html);
       Assert.Contains("Final conversation chars", html);
       Assert.Contains("Max conversation chars", html);
@@ -25,5 +33,23 @@ public sealed class DetailsMarkupTests
       Assert.DoesNotContain("Full trace", html);
       Assert.Contains("Round", html);
       Assert.DoesNotContain("Tools description", html);
+   }
+
+   private static void AssertOrder(string html, params string[] parts)
+   {
+      var lastIndex = -1;
+
+      foreach(var part in parts)
+      {
+         var index = html.IndexOf(part, StringComparison.Ordinal);
+
+         Assert.True(index >= 0, $"Missing expected text: {part}");
+         Assert.True(
+            index > lastIndex,
+            $"Expected '{part}' after previous section."
+         );
+
+         lastIndex = index;
+      }
    }
 }
