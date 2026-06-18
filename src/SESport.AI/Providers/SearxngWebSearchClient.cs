@@ -102,11 +102,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       }
 
       var results = ParseResults(rawResponse, maxResults);
-      return results;
-
-      //TODO: Temporarily commented out. Unsuccessful results should be
-      // tried with secondary solution, like headless chrome or similar.
-      //return await VerifyResultsAsync(results, cancellationToken);
+      return await VerifyResultsAsync(results, cancellationToken);
    }
 
    private async Task<IReadOnlyList<WebSearchResult>> VerifyResultsAsync(

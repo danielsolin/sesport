@@ -34,6 +34,71 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchFallsBackToBrowserWhenHttpLooksBlocked()
+   {
+      var browserCalls = 0;
+      var handler = new RecordingHandler(CreateBlockedHtml());
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+
+            return Task.FromResult<string?>(
+               """
+               <html>
+                  <head>
+                     <title>Browser Title</title>
+                  </head>
+                  <body>
+                     <article>
+                        <h1>Browser Heading</h1>
+                        <p>Browser body.</p>
+                     </article>
+                  </body>
+               </html>
+               """
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/blocked",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Browser Title", page!.Title);
+      Assert.Contains("Browser Heading", page.Headings);
+      Assert.Contains("Browser body.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchKeepsHttpResultWhenBrowserIsNotNeeded()
+   {
+      var browserCalls = 0;
+      var handler = new RecordingHandler(CreateHtml());
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<string?>(null);
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/article",
+         CancellationToken.None
+      );
+
+      Assert.Equal(0, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Example Title", page!.Title);
+   }
+
+   [Fact]
    public async Task FetchSkipsNoisyHeadingsWithFormMarkup()
    {
       var handler = new RecordingHandler(CreateNoisyHeadingHtml());
@@ -231,6 +296,20 @@ public class WebPageContentClientTests
                </h2>
                <p>Example body text.</p>
             </article>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateBlockedHtml()
+   {
+      return """
+      <html>
+         <head>
+            <title>Just a moment...</title>
+         </head>
+         <body>
+            <p>Checking your browser before accessing the site.</p>
          </body>
       </html>
       """;

@@ -1,7 +1,10 @@
-using System.Net;
 using System.Globalization;
-using System.Text.RegularExpressions;
+using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Playwright;
 
 using SESport.AI.Interfaces;
 
@@ -12,10 +15,22 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private const int MaxMainTextLength = 12000;
    private const string CutOffMarker = "[CUTOFF]";
    private readonly HttpClient httpClient;
+   private readonly Func<Uri, CancellationToken, Task<string?>>
+      browserHtmlFetcher;
 
+   [ActivatorUtilitiesConstructor]
    public WebPageContentClient(HttpClient httpClient)
+      : this(httpClient, null)
+   {
+   }
+
+   public WebPageContentClient(
+      HttpClient httpClient,
+      Func<Uri, CancellationToken, Task<string?>>? browserHtmlFetcher
+   )
    {
       this.httpClient = httpClient;
+      this.browserHtmlFetcher = browserHtmlFetcher ?? FetchBrowserHtmlAsync;
    }
 
    public async Task<WebPageContent?> FetchAsync(
@@ -53,14 +68,173 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var rawHtml = await response.Content.ReadAsStringAsync(
          cancellationToken
       );
+      WebPageContent? extractedPage = null;
 
-      if(!response.IsSuccessStatusCode ||
-         string.IsNullOrWhiteSpace(rawHtml))
+      if(response.IsSuccessStatusCode &&
+         !string.IsNullOrWhiteSpace(rawHtml))
+      {
+         extractedPage = ExtractPageContent(
+            absoluteUrl.ToString(),
+            rawHtml
+         );
+
+         if(extractedPage is not null &&
+            !ShouldUseBrowserFallback(extractedPage))
+         {
+            return extractedPage;
+         }
+      }
+
+      var browserPage = await TryFetchWithBrowserAsync(
+         absoluteUrl,
+         cancellationToken
+      );
+
+      return browserPage ?? extractedPage;
+   }
+
+   private async Task<WebPageContent?> TryFetchWithBrowserAsync(
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         var renderedHtml = await browserHtmlFetcher(
+            absoluteUrl,
+            cancellationToken
+         );
+
+         if(string.IsNullOrWhiteSpace(renderedHtml))
+         {
+            return null;
+         }
+
+         return ExtractPageContent(absoluteUrl.ToString(), renderedHtml);
+      }
+      catch(OperationCanceledException)
+      {
+         throw;
+      }
+      catch(PlaywrightException)
       {
          return null;
       }
+   }
 
-      return ExtractPageContent(absoluteUrl.ToString(), rawHtml);
+   private static async Task<string?> FetchBrowserHtmlAsync(
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.Chromium.LaunchAsync(
+         new BrowserTypeLaunchOptions
+         {
+            Headless = true
+         }
+      );
+
+      await using var context = await browser.NewContextAsync(
+         new BrowserNewContextOptions
+         {
+            Locale = "en-US",
+            UserAgent =
+               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+               "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            ViewportSize = new ViewportSize
+            {
+               Width = 1440,
+               Height = 2400
+            }
+         }
+      );
+
+      await using var page = await context.NewPageAsync();
+      await page.GotoAsync(
+         absoluteUrl.ToString(),
+         new PageGotoOptions
+         {
+            WaitUntil = WaitUntilState.DOMContentLoaded,
+            Timeout = 15000
+         }
+      );
+
+      try
+      {
+         await page.WaitForLoadStateAsync(
+            LoadState.NetworkIdle,
+            new PageWaitForLoadStateOptions
+            {
+               Timeout = 5000
+            }
+         );
+      }
+      catch(PlaywrightException)
+      {
+      }
+
+      cancellationToken.ThrowIfCancellationRequested();
+      return await page.ContentAsync();
+   }
+
+   private static bool ShouldUseBrowserFallback(WebPageContent page)
+   {
+      var pageText = string.Join(
+         Environment.NewLine,
+         page.Title,
+         page.MainText,
+         page.MainTextFull
+      );
+
+      if(string.IsNullOrWhiteSpace(page.MainText))
+      {
+         return true;
+      }
+
+      if(!page.HasBodyText)
+      {
+         return true;
+      }
+
+      if(page.MainText.Length < 40 && page.Headings.Count == 0)
+      {
+         return true;
+      }
+
+      return LooksLikeBotChallenge(pageText);
+   }
+
+   private static bool LooksLikeBotChallenge(string text)
+   {
+      return ContainsAny(text, new[]
+      {
+         "access denied",
+         "captcha",
+         "checking your browser",
+         "enable javascript",
+         "just a moment",
+         "robot",
+         "security check",
+         "unusual traffic",
+         "verify you are human"
+      });
+   }
+
+   private static bool ContainsAny(
+      string text,
+      IReadOnlyList<string> needles
+   )
+   {
+      foreach(var needle in needles)
+      {
+         if(text.Contains(needle, StringComparison.OrdinalIgnoreCase))
+         {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    #region RegEx
@@ -969,7 +1143,8 @@ private static MainTextResult ExtractMainText(string rawHtml)
 
          foreach(var line in summary.Split(
             '\n',
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries
          ))
          {
             if(!seen.Add(line))
@@ -1315,7 +1490,11 @@ private static MainTextResult ExtractMainText(string rawHtml)
          }
 
          index += search.Length;
-         var endIndex = payload.IndexOf("\\\"", index, StringComparison.Ordinal);
+         var endIndex = payload.IndexOf(
+            "\\\"",
+            index,
+            StringComparison.Ordinal
+         );
 
          if(endIndex < 0 || endIndex <= index)
          {
@@ -1882,7 +2061,13 @@ private static MainTextResult ExtractMainText(string rawHtml)
          }
          case JsonValueKind.Array:
          {
-            AppendJsonArraySummary(lines, element, indent, depth, maxArrayItems);
+            AppendJsonArraySummary(
+               lines,
+               element,
+               indent,
+               depth,
+               maxArrayItems
+            );
             return;
          }
          default:
@@ -2041,7 +2226,8 @@ private static MainTextResult ExtractMainText(string rawHtml)
          return score;
       }
 
-      if(property.Value.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+      if(property.Value.ValueKind is
+         JsonValueKind.Object or JsonValueKind.Array)
       {
          score += 4;
       }
