@@ -1,6 +1,10 @@
 using System.Net;
 
 using SESport.AI.Providers;
+using UglyToad.PdfPig.Content;
+using UglyToad.PdfPig.Core;
+using UglyToad.PdfPig.Fonts.Standard14Fonts;
+using UglyToad.PdfPig.Writer;
 
 namespace SESport.Core.Tests.AI;
 
@@ -232,6 +236,32 @@ public class WebPageContentClientTests
       Assert.NotNull(page);
       Assert.Equal("PDF Browser Title", page!.Title);
       Assert.Contains("PDF Browser Heading", page.Headings);
+   }
+
+   [Fact]
+   public async Task FetchExtractsTextFromPdfResponses()
+   {
+      var pdfBytes = CreatePdfBytes("Hello from the PDF body.");
+      var handler = new PdfRecordingHandler(pdfBytes);
+      var browserCalls = 0;
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<string?>(null);
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/sample.pdf",
+         CancellationToken.None
+      );
+
+      Assert.Equal(0, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Sample PDF Title", page!.Title);
+      Assert.Contains("Hello from the PDF body.", page.MainText);
    }
 
    [Fact]
@@ -607,6 +637,18 @@ public class WebPageContentClientTests
 
    private sealed class PdfRecordingHandler : HttpMessageHandler
    {
+      private readonly byte[] content;
+
+      public PdfRecordingHandler()
+         : this(new byte[] { 0x25, 0x50, 0x44, 0x46 })
+      {
+      }
+
+      public PdfRecordingHandler(byte[] content)
+      {
+         this.content = content;
+      }
+
       protected override Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
@@ -614,9 +656,7 @@ public class WebPageContentClientTests
       {
          var response = new HttpResponseMessage(HttpStatusCode.OK)
          {
-            Content = new ByteArrayContent(
-               new byte[] { 0x25, 0x50, 0x44, 0x46 }
-            )
+            Content = new ByteArrayContent(content)
          };
          response.Content.Headers.ContentType =
             new System.Net.Http.Headers.MediaTypeHeaderValue(
@@ -625,5 +665,15 @@ public class WebPageContentClientTests
 
          return Task.FromResult(response);
       }
+   }
+
+   private static byte[] CreatePdfBytes(string text)
+   {
+      var builder = new PdfDocumentBuilder();
+      var page = builder.AddPage(PageSize.A4);
+      var font = builder.AddStandard14Font(Standard14Font.Helvetica);
+      builder.DocumentInformation.Title = "Sample PDF Title";
+      page.AddText(text, 12, new PdfPoint(72, 720), font);
+      return builder.Build();
    }
 }

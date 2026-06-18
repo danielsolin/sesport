@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;
 
 using SESport.AI.Interfaces;
+using UglyToad.PdfPig;
 
 namespace SESport.AI.Providers;
 
@@ -66,6 +67,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
       if(IsPdfResponse(response, absoluteUrl))
       {
+         var pdfPage = await TryFetchPdfAsync(
+            response,
+            absoluteUrl,
+            cancellationToken
+         );
+
+         if(pdfPage is not null)
+         {
+            return pdfPage;
+         }
+
          return await TryFetchWithBrowserAsync(
             absoluteUrl,
             cancellationToken
@@ -98,6 +110,54 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
 
       return browserPage ?? extractedPage;
+   }
+
+   private async Task<WebPageContent?> TryFetchPdfAsync(
+      HttpResponseMessage response,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         var pdfBytes = await response.Content.ReadAsByteArrayAsync(
+            cancellationToken
+         );
+
+         if(pdfBytes.Length == 0)
+         {
+            return null;
+         }
+
+         using var pdfStream = new MemoryStream(pdfBytes);
+         using var pdfDocument = PdfDocument.Open(pdfStream);
+         var pdfText = ExtractPdfText(pdfDocument);
+
+         if(string.IsNullOrWhiteSpace(pdfText))
+         {
+            return null;
+         }
+
+         var title = ExtractPdfTitle(pdfDocument, absoluteUrl);
+         var renderedHtml = BuildBrowserHtml(
+            title,
+            pdfText,
+            absoluteUrl.ToString()
+         );
+
+         return ExtractPageContent(
+            absoluteUrl.ToString(),
+            renderedHtml
+         );
+      }
+      catch(OperationCanceledException)
+      {
+         throw;
+      }
+      catch(Exception)
+      {
+         return null;
+      }
    }
 
    private async Task<WebPageContent?> TryFetchWithBrowserAsync(
@@ -193,6 +253,42 @@ public sealed class WebPageContentClient : IWebPageContentClient
          visibleText,
          absoluteUrl.ToString()
       );
+   }
+
+   private static string ExtractPdfText(PdfDocument pdfDocument)
+   {
+      var pages = pdfDocument
+         .GetPages()
+         .Select(page => page.Text)
+         .Where(text => !string.IsNullOrWhiteSpace(text))
+         .Select(text => text.Trim())
+         .ToArray();
+
+      return string.Join(Environment.NewLine, pages);
+   }
+
+   private static string ExtractPdfTitle(
+      PdfDocument pdfDocument,
+      Uri absoluteUrl
+   )
+   {
+      var documentTitle = pdfDocument.Information.Title?.Trim();
+
+      if(!string.IsNullOrWhiteSpace(documentTitle))
+      {
+         return documentTitle;
+      }
+
+      var fileName = Path.GetFileNameWithoutExtension(
+         absoluteUrl.AbsolutePath
+      );
+
+      if(!string.IsNullOrWhiteSpace(fileName))
+      {
+         return fileName;
+      }
+
+      return absoluteUrl.ToString();
    }
 
    private static string BuildBrowserHtml(
