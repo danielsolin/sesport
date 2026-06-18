@@ -14,12 +14,12 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    private const string PdfQuerySuffix = " filetype:pdf";
    private static readonly string[] PdfQueryHints =
    [
-      "entry",
       "list",
-      "draw",
-      "session",
+      "entries",
       "schedule",
-      "startlist"
+      "draw",
+      "field",
+      "roster"
    ];
 
    private static readonly string[] DeniedHostSuffixes =
@@ -204,7 +204,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
       foreach(var hint in PdfQueryHints)
       {
-         if(normalized.Contains(hint, StringComparison.Ordinal))
+         if(normalized.Contains(hint, StringComparison.OrdinalIgnoreCase))
          {
             return true;
          }
