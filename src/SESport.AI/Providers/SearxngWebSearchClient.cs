@@ -11,16 +11,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    private static readonly Uri DefaultBaseAddress = new(
       "https://xng.sesport.se/"
    );
-   private const string PdfQuerySuffix = " filetype:pdf";
-   private static readonly string[] PdfQueryHints =
-   [
-      "list",
-      "entries",
-      "schedule",
-      "draw",
-      "field",
-      "roster"
-   ];
 
    private static readonly string[] DeniedHostSuffixes =
    [
@@ -90,61 +80,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       };
 
       request.Headers.Accept.ParseAdd("application/json");
-      var results = await SearchOnceAsync(
-         request,
-         maxResults,
-         cancellationToken
-      );
-
-      if(results.Any(result => result.Url.EndsWith(
-         ".pdf",
-         StringComparison.OrdinalIgnoreCase
-      )))
-      {
-         return results;
-      }
-
-      if(!ShouldTryPdfFallback(query))
-      {
-         return results;
-      }
-
-      var pdfQuery = query + PdfQuerySuffix;
-      using var pdfRequest = new HttpRequestMessage(HttpMethod.Post, SearchUri)
-      {
-         Content = new FormUrlEncodedContent(
-            new Dictionary<string, string>
-            {
-               ["q"] = pdfQuery,
-               ["format"] = "json",
-               ["categories"] = "general",
-               ["engines"] = "google"
-            }
-         )
-      };
-
-      pdfRequest.Headers.Accept.ParseAdd("application/json");
-
-      var pdfResults = await SearchOnceAsync(
-         pdfRequest,
-         maxResults,
-         cancellationToken
-      );
-
-      if(pdfResults.Count == 0)
-      {
-         return results;
-      }
-
-      return MergeResults(pdfResults, results, maxResults);
-   }
-
-   private async Task<IReadOnlyList<WebSearchResult>> SearchOnceAsync(
-      HttpRequestMessage request,
-      int maxResults,
-      CancellationToken cancellationToken
-   )
-   {
       using var response = await HttpClient.SendAsync(
          request,
          cancellationToken
@@ -163,54 +98,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       }
 
       return ParseResults(rawResponse, maxResults);
-   }
-
-   private static IReadOnlyList<WebSearchResult> MergeResults(
-      IReadOnlyList<WebSearchResult> preferredResults,
-      IReadOnlyList<WebSearchResult> fallbackResults,
-      int maxResults
-   )
-   {
-      var merged = new List<WebSearchResult>();
-      var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-      foreach(var result in preferredResults)
-      {
-         if(seenUrls.Add(result.Url))
-         {
-            merged.Add(result);
-         }
-      }
-
-      foreach(var result in fallbackResults)
-      {
-         if(seenUrls.Add(result.Url))
-         {
-            merged.Add(result);
-         }
-      }
-
-      return merged.Take(Math.Clamp(maxResults, 1, 20)).ToArray();
-   }
-
-   private static bool ShouldTryPdfFallback(string query)
-   {
-      if(string.IsNullOrWhiteSpace(query))
-      {
-         return false;
-      }
-
-      var normalized = query.ToLowerInvariant();
-
-      foreach(var hint in PdfQueryHints)
-      {
-         if(normalized.Contains(hint, StringComparison.OrdinalIgnoreCase))
-         {
-            return true;
-         }
-      }
-
-      return false;
    }
 
    private static IReadOnlyList<WebSearchResult> ParseResults(
