@@ -1,5 +1,3 @@
-using System.Reflection;
-
 using SESport.AI.Providers;
 
 namespace SESport.Core.Tests.AI;
@@ -36,25 +34,6 @@ public class WebPageContentClientLiveTests
       Assert.DoesNotContain("SKIP TO MAIN CONTENT", page.MainText);
    }
 
-   [Fact]
-   public async Task ExtractLpgaSupplementalTextIncludesPlayerData()
-   {
-      if(!ShouldRunLiveTest())
-      {
-         return;
-      }
-
-      using var httpClient = CreateHttpClient();
-      var rawHtml = await httpClient.GetStringAsync(LiveTestUri);
-      var supplementalText = InvokeSupplementalText(rawHtml);
-
-      Console.WriteLine(
-         supplementalText[..Math.Min(2000, supplementalText.Length)]
-      );
-      Assert.Contains("Ingrid Lindblad", supplementalText);
-      Assert.Contains("SWE", supplementalText);
-   }
-
    private static bool ShouldRunLiveTest()
    {
       var enabled = Environment.GetEnvironmentVariable(
@@ -83,23 +62,5 @@ public class WebPageContentClientLiveTests
       {
          Timeout = TimeSpan.FromSeconds(30)
       };
-   }
-
-   private static string InvokeSupplementalText(string rawHtml)
-   {
-      var method = typeof(WebPageContentClient).GetMethod(
-         "ExtractSupplementalText",
-         BindingFlags.NonPublic | BindingFlags.Static
-      );
-
-      if(method is null)
-      {
-         throw new InvalidOperationException(
-            "ExtractSupplementalText was not found."
-         );
-      }
-
-      return (string?)method.Invoke(null, new object[] { rawHtml })
-         ?? string.Empty;
    }
 }

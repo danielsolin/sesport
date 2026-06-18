@@ -11,250 +11,100 @@ namespace SESport.Core.Tests.AI;
 public class WebPageContentClientTests
 {
    [Fact]
-   public async Task FetchExtractsMainTextAndDateFromHtml()
-   {
-      var handler = new RecordingHandler(CreateHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/article",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Equal("Example Title", page!.Title);
-      Assert.Equal("https://example.test/article", page.Url);
-      Assert.Equal(
-         DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
-         page.PublishedAt
-      );
-      Assert.Contains("Heading", page.Headings);
-      Assert.Contains("Heading", page.MainText);
-      Assert.Contains("First paragraph.", page.MainText);
-      Assert.Contains("Second paragraph.", page.MainText);
-      Assert.DoesNotContain("Menu item", page.MainText);
-      Assert.Contains("Mozilla/5.0", handler.UserAgentHeader);
-      Assert.Equal("en-US,en;q=0.9", handler.AcceptLanguageHeader);
-   }
-
-   [Fact]
-   public async Task FetchFallsBackToBrowserWhenHttpLooksBlocked()
+   public async Task FetchReturnsBrowserContent()
    {
       var browserCalls = 0;
-      var handler = new RecordingHandler(CreateBlockedHtml());
       var client = new WebPageContentClient(
-         new HttpClient(handler),
+         new HttpClient(new HtmlRecordingHandler()),
          (_, _) =>
          {
             browserCalls++;
 
-            return Task.FromResult<string?>(
-               """
-               <html>
-                  <head>
-                     <title>Browser Title</title>
-                  </head>
-                  <body>
-                     <article>
-                        <h1>Browser Heading</h1>
-                        <p>Browser body.</p>
-                     </article>
-                  </body>
-               </html>
-               """
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Browser Title",
+                  "https://example.test/article",
+                  DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+                  [],
+                  "Browser body text.",
+                  true,
+                  "Browser body text."
+               )
             );
          }
       );
 
       var page = await client.FetchAsync(
-         "https://example.test/blocked",
+         "https://example.test/article",
          CancellationToken.None
       );
 
       Assert.Equal(1, browserCalls);
       Assert.NotNull(page);
       Assert.Equal("Browser Title", page!.Title);
-      Assert.Contains("Browser Heading", page.Headings);
-      Assert.Contains("Browser body.", page.MainText);
+      Assert.Equal("Browser body text.", page.MainText);
    }
 
    [Fact]
-   public async Task FetchFallsBackToBrowserWhenHttpLooksClientRendered()
+   public async Task FetchReturnsNullForInvalidUrl()
    {
       var browserCalls = 0;
-      var handler = new RecordingHandler(CreateClientRenderedFallbackHtml());
       var client = new WebPageContentClient(
-         new HttpClient(handler),
+         new HttpClient(),
          (_, _) =>
          {
             browserCalls++;
-
-            return Task.FromResult<string?>(
-               """
-               <html>
-                  <head>
-                     <title>Browser Result</title>
-                  </head>
-                  <body>
-                     <article>
-                        <h1>Browser-visible title</h1>
-                        <p>This year a world-class field.</p>
-                     </article>
-                  </body>
-               </html>
-               """
-            );
+            return Task.FromResult<WebPageContent?>(null);
          }
       );
 
       var page = await client.FetchAsync(
-         "https://example.test/client-rendered-fallback",
-         CancellationToken.None
-      );
-
-      Assert.Equal(1, browserCalls);
-      Assert.NotNull(page);
-      Assert.Equal("Browser Result", page!.Title);
-      Assert.Contains("Browser-visible title", page.Headings);
-      Assert.DoesNotContain(
-         "Page appears to be client-rendered.",
-         page.MainText
-      );
-   }
-
-   [Fact]
-   public async Task FetchKeepsHttpResultWhenBrowserIsNotNeeded()
-   {
-      var browserCalls = 0;
-      var handler = new RecordingHandler(CreateHtml());
-      var client = new WebPageContentClient(
-         new HttpClient(handler),
-         (_, _) =>
-         {
-            browserCalls++;
-            return Task.FromResult<string?>(null);
-         }
-      );
-
-      var page = await client.FetchAsync(
-         "https://example.test/article",
+         "not a url",
          CancellationToken.None
       );
 
       Assert.Equal(0, browserCalls);
-      Assert.NotNull(page);
-      Assert.Equal("Example Title", page!.Title);
+      Assert.Null(page);
    }
 
    [Fact]
-   public async Task FetchSkipsNoisyHeadingsWithFormMarkup()
+   public async Task FetchReturnsNullWhenBrowserReturnsNull()
    {
-      var handler = new RecordingHandler(CreateNoisyHeadingHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/noisy-heading",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.DoesNotContain("Calendar", page!.Headings);
-      Assert.DoesNotContain("2026/2027", page.Headings);
-   }
-
-   [Fact]
-   public async Task FetchFallsBackToEmbeddedJsonWhenBodyIsEmpty()
-   {
-      var handler = new RecordingHandler(CreateClientRenderedHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/client-rendered",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("client-rendered", page!.MainText);
-      Assert.Contains("Site settings", page.MainText);
-      Assert.Contains("webAPIBaseURL", page.MainText);
-      Assert.Contains("api-web.nhle.com", page.MainText);
-      Assert.Contains("Example description.", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchPrefersEmbeddedJsonWhenBodyIsMostlyNoise()
-   {
-      var handler = new RecordingHandler(CreateMostlyNoisyJsonHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/noisy-json",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Ingrid Lindblad", page!.MainText);
-      Assert.Contains("SWE", page.MainText);
-      Assert.DoesNotContain("0PX 0PX 0PX", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchSendsPdfResponsesToBrowserFallback()
-   {
-      var handler = new PdfRecordingHandler();
       var browserCalls = 0;
       var client = new WebPageContentClient(
-         new HttpClient(handler),
+         new HttpClient(new HtmlRecordingHandler()),
          (_, _) =>
          {
             browserCalls++;
-
-            return Task.FromResult<string?>(
-               """
-               <html>
-                  <head>
-                     <title>PDF Browser Title</title>
-                  </head>
-                  <body>
-                     <article>
-                        <h1>PDF Browser Heading</h1>
-                        <p>PDF browser body.</p>
-                     </article>
-                  </body>
-               </html>
-               """
-            );
+            return Task.FromResult<WebPageContent?>(null);
          }
       );
 
       var page = await client.FetchAsync(
-         "https://example.test/entry-list.pdf",
+         "https://example.test/empty",
          CancellationToken.None
       );
 
       Assert.Equal(1, browserCalls);
-      Assert.NotNull(page);
-      Assert.Equal("PDF Browser Title", page!.Title);
-      Assert.Contains("PDF Browser Heading", page.Headings);
+      Assert.Null(page);
    }
 
    [Fact]
    public async Task FetchExtractsTextFromPdfResponses()
    {
-      var pdfBytes = CreatePdfBytes("Hello from the PDF body.");
-      var handler = new PdfRecordingHandler(pdfBytes);
       var browserCalls = 0;
+      var handler = new PdfRecordingHandler(CreatePdfBytes());
       var client = new WebPageContentClient(
          new HttpClient(handler),
          (_, _) =>
          {
             browserCalls++;
-            return Task.FromResult<string?>(null);
+            return Task.FromResult<WebPageContent?>(null);
          }
       );
 
       var page = await client.FetchAsync(
-         "https://example.test/sample.pdf",
+         "https://example.test/entry-list.pdf",
          CancellationToken.None
       );
 
@@ -265,384 +115,53 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchFiltersCssLikeNoiseAndKeepsTableText()
+   public async Task FetchPassesHtmlUrlToBrowserFetcher()
    {
-      var handler = new RecordingHandler(CreateNoisyTableHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/noisy-table",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.DoesNotContain("0PX 0PX 0PX", page!.MainText);
-      Assert.Contains("Example Player", page.MainText);
-      Assert.Contains("Entered", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchFiltersDenseLayoutNoiseBeforeTableText()
-   {
-      var handler = new RecordingHandler(CreateDenseLayoutNoiseHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/dense-noise",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.DoesNotContain("0PX 0PX 0PX 0PX", page!.MainText);
-      Assert.Contains("Example Player", page.MainText);
-      Assert.Contains("Entered", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchFiltersLpgaStyleLayoutNoiseLines()
-   {
-      var handler = new RecordingHandler(CreateLpgaStyleNoiseHtml());
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/lpga-noise",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.DoesNotContain("0PX", page!.MainText);
-      Assert.DoesNotContain("SKIP TO MAIN CONTENT", page.MainText);
-      Assert.Contains("NO.", page.MainText);
-      Assert.Contains("ATHLETE", page.MainText);
-      Assert.Contains("Example Player", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchFallsBackToSupplementalTextWhenMainIsNoisy()
-   {
-      var handler = new RecordingHandler(
-         CreateNoisyLayoutWithEmbeddedJsonHtml()
-      );
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/noisy-layout-with-json",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.DoesNotContain("0PX", page!.MainText);
-      Assert.Contains("Ingrid Lindblad", page.MainText);
-      Assert.Contains("SWE", page.MainText);
-   }
-
-   [Fact]
-   public async Task FetchIgnoresInvalidRegexEscapesInScripts()
-   {
-      var handler = new RecordingHandler(
-         CreateInvalidEscapeScriptHtml()
-      );
-      var client = new WebPageContentClient(new HttpClient(handler));
-
-      var page = await client.FetchAsync(
-         "https://example.test/invalid-escape",
-         CancellationToken.None
-      );
-
-      Assert.NotNull(page);
-      Assert.Contains("Example Title", page!.Title);
-      Assert.Contains("Example Player", page.MainText);
-      Assert.DoesNotContain("\\W", page.MainText);
-   }
-
-   private static string CreateHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Example Title</title>
-            <meta property="article:published_time"
-                  content="2026-06-15T12:34:56Z" />
-         </head>
-         <body>
-            <nav>Menu item</nav>
-            <article>
-               <h1>Heading</h1>
-               <p>First paragraph.</p>
-               <p>Second paragraph.</p>
-            </article>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateNoisyHeadingHtml()
-   {
-      return """
-      <html>
-         <body>
-            <article>
-               <h2>
-                  Calendar
-                  <form class="seasonmenu select autosubmit"
-                        action="/res/index.asp" method="get">
-                     <select name="season" id="season">
-                        <option value="2027">2027/2028</option>
-                        <option value="2026" selected="selected">
-                           2026/2027
-                        </option>
-                     </select>
-                  </form>
-               </h2>
-               <p>Example body text.</p>
-            </article>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateBlockedHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Just a moment...</title>
-         </head>
-         <body>
-            <p>Checking your browser before accessing the site.</p>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateClientRenderedFallbackHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>The Amateur Championship</title>
-            <meta name="description"
-                  content="Today, the championship is one of the biggest and
-                           most prestigious amateur events in the world." />
-         </head>
-         <body>
-            <script type="application/ld+json">
-               {
-                  "@context": "https://schema.org",
-                  "@type": "Event",
-                  "name": "The Amateur Championship"
-               }
-            </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateClientRenderedHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Client Rendered Example</title>
-            <meta name="description"
-                  content="Example description." />
-         </head>
-         <body>
-            <div id="root"></div>
-            <script>
-               window.__SITE_SETTINGS__ = {
-                  "webAPIBaseURL": "https://api-web.nhle.com",
-                  "appName": "NHL"
-               };
-            </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateMostlyNoisyJsonHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Noise Example</title>
-         </head>
-         <body>
-            <nav>0PX 0PX PRE 0PX SKIP TO MAIN CONTENT</nav>
-            <script>
-               window.__INITIAL_STATE__ = {
-                  "page": {
-                     "athletes": [
-                        {
-                           "name": "Ingrid Lindblad",
-                           "country": {
-                              "label": "SWE"
-                           }
-                        }
-                     ]
-                  }
-               };
-            </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateNoisyTableHtml()
-   {
-      return """
-      <html>
-         <body>
-            <div>0PX 0PX 0PX</div>
-            <table>
-               <tr>
-                  <th>ATHLETE</th>
-                  <th>ENTRY STATUS</th>
-               </tr>
-               <tr>
-                  <td>Example Player</td>
-                  <td>Entered</td>
-               </tr>
-            </table>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateDenseLayoutNoiseHtml()
-   {
-      return """
-      <html>
-         <body>
-            <div>0PX 0PX 0PX 0PX</div>
-            <div>0PX 0PX 0PX 0PX 0PX</div>
-            <div>0PX 0PX 0PX 0PX 0PX 0PX</div>
-            <table>
-               <tr>
-                  <td>Example Player</td>
-                  <td>Entered</td>
-               </tr>
-            </table>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateLpgaStyleNoiseHtml()
-   {
-      return """
-      <html>
-         <body>
-            <div>0PX 0PX PRE 0PX SKIP TO MAIN CONTENT</div>
-            <div>0PX 0PX 0PX 0PX 0PX 0PX Tours</div>
-            <table>
-               <tr>
-                  <th>NO.</th>
-                  <th>ATHLETE</th>
-               </tr>
-               <tr>
-                  <td>1</td>
-                  <td>Example Player</td>
-               </tr>
-            </table>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateNoisyLayoutWithEmbeddedJsonHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Noise Example</title>
-         </head>
-         <body>
-            <div>0PX 0PX PRE 0PX SKIP TO MAIN CONTENT</div>
-            <div>0PX 0PX 0PX 0PX 0PX 0PX Tours</div>
-            <script>
-               window.__INITIAL_STATE__ = {
-                  "page": {
-                     "athletes": [
-                        {
-                           "name": "Ingrid Lindblad",
-                           "country": {
-                              "label": "SWE"
-                           }
-                        }
-                     ]
-                  }
-               };
-            </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private static string CreateInvalidEscapeScriptHtml()
-   {
-      return """
-      <html>
-         <head>
-            <title>Example Title</title>
-         </head>
-         <body>
-            <article>
-               <h1>Example Player</h1>
-               <p>Example body text.</p>
-            </article>
-            <script>
-               window.__INITIAL_STATE__ = {
-                  "value": "\W"
-               };
-            </script>
-         </body>
-      </html>
-      """;
-   }
-
-   private sealed class RecordingHandler : HttpMessageHandler
-   {
-      private readonly string html;
-
-      public RecordingHandler(string html)
-      {
-         this.html = html;
-      }
-
-      public string? UserAgentHeader { get; private set; }
-
-      public string? AcceptLanguageHeader { get; private set; }
-
-      protected override Task<HttpResponseMessage> SendAsync(
-         HttpRequestMessage request,
-         CancellationToken cancellationToken
-      )
-      {
-         UserAgentHeader = request.Headers.UserAgent.ToString();
-         AcceptLanguageHeader = request.Headers.AcceptLanguage.ToString();
-
-         return Task.FromResult(
-            new HttpResponseMessage(HttpStatusCode.OK)
-            {
-               Content = new StringContent(
-                  html,
-                  System.Text.Encoding.UTF8,
-                  "text/html"
+      Uri? seenUrl = null;
+      var client = new WebPageContentClient(
+         new HttpClient(new HtmlRecordingHandler()),
+         (url, _) =>
+         {
+            seenUrl = url;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "HTML Title",
+                  url.ToString(),
+                  null,
+                  [],
+                  "HTML body text.",
+                  true,
+                  "HTML body text."
                )
-            }
-         );
-      }
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/article",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(seenUrl);
+      Assert.Equal("https://example.test/article", seenUrl!.ToString());
+      Assert.NotNull(page);
+      Assert.Equal("HTML Title", page!.Title);
+      Assert.Contains("HTML body text.", page.MainText);
+   }
+
+   private static byte[] CreatePdfBytes()
+   {
+      var builder = new PdfDocumentBuilder();
+      var page = builder.AddPage(PageSize.A4);
+      var font = builder.AddStandard14Font(Standard14Font.Helvetica);
+      builder.DocumentInformation.Title = "Sample PDF Title";
+      page.AddText("Hello from the PDF body.", 12, new PdfPoint(72, 720), font);
+      return builder.Build();
    }
 
    private sealed class PdfRecordingHandler : HttpMessageHandler
    {
       private readonly byte[] content;
-
-      public PdfRecordingHandler()
-         : this(new byte[] { 0x25, 0x50, 0x44, 0x46 })
-      {
-      }
 
       public PdfRecordingHandler(byte[] content)
       {
@@ -667,13 +186,23 @@ public class WebPageContentClientTests
       }
    }
 
-   private static byte[] CreatePdfBytes(string text)
+   private sealed class HtmlRecordingHandler : HttpMessageHandler
    {
-      var builder = new PdfDocumentBuilder();
-      var page = builder.AddPage(PageSize.A4);
-      var font = builder.AddStandard14Font(Standard14Font.Helvetica);
-      builder.DocumentInformation.Title = "Sample PDF Title";
-      page.AddText(text, 12, new PdfPoint(72, 720), font);
-      return builder.Build();
+      protected override Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         var response = new HttpResponseMessage(HttpStatusCode.OK)
+         {
+            Content = new StringContent("<html></html>")
+         };
+         response.Content.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue(
+               "text/html"
+            );
+
+         return Task.FromResult(response);
+      }
    }
 }
