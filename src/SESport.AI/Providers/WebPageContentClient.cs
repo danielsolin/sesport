@@ -17,7 +17,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
    private static readonly TimeSpan BrowserLoadStateTimeout =
-      TimeSpan.FromSeconds(15);
+      TimeSpan.FromSeconds(30);
    private readonly HttpClient httpClient;
    private readonly Func<Uri, CancellationToken, Task<string?>>
       browserHtmlFetcher;
@@ -177,9 +177,74 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(PlaywrightException)
       {
       }
+      catch(TimeoutException)
+      {
+      }
 
       cancellationToken.ThrowIfCancellationRequested();
-      return await page.ContentAsync();
+      var title = await page.TitleAsync();
+      var visibleText = await page.Locator("body").InnerTextAsync();
+
+      return BuildBrowserHtml(
+         title,
+         visibleText,
+         absoluteUrl.ToString()
+      );
+   }
+
+   private static string BuildBrowserHtml(
+      string title,
+      string visibleText,
+      string url
+   )
+   {
+      var sections = visibleText
+         .Replace("\r", "\n")
+         .Split(
+            '\n',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries
+         )
+         .Where(line => !string.IsNullOrWhiteSpace(line))
+         .Distinct(StringComparer.Ordinal)
+         .Take(120)
+         .ToArray();
+
+      var body = new System.Text.StringBuilder();
+
+      if(!string.IsNullOrWhiteSpace(title))
+      {
+         body.AppendLine("<article>");
+         body.AppendLine("   <h1>" + WebUtility.HtmlEncode(title) + "</h1>");
+      }
+      else
+      {
+         body.AppendLine("<article>");
+      }
+
+      foreach(var section in sections)
+      {
+         body.AppendLine("   <p>" + WebUtility.HtmlEncode(section) + "</p>");
+      }
+
+      body.AppendLine("</article>");
+
+      return """
+         <!doctype html>
+         <html>
+            <head>
+               <meta charset="utf-8" />
+               <title>{0}</title>
+               <meta name="source-url" content="{1}" />
+            </head>
+            <body>
+               {2}
+            </body>
+         </html>
+         """
+         .Replace("{0}", WebUtility.HtmlEncode(title))
+         .Replace("{1}", WebUtility.HtmlEncode(url))
+         .Replace("{2}", body.ToString().TrimEnd());
    }
 
    private static bool ShouldUseBrowserFallback(WebPageContent page)

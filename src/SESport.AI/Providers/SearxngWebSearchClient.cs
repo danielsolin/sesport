@@ -39,12 +39,10 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
    public SearxngWebSearchClient(
       HttpClient httpClient,
-      IWebPageContentClient webPageContentClient,
       SearxngWebSearchClientOptions options
    )
    {
       HttpClient = httpClient;
-      WebPageContentClient = webPageContentClient;
 
       var basicAuth = CreateBasicAuthHeader(options);
 
@@ -56,8 +54,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    }
 
    private HttpClient HttpClient { get; }
-
-   private IWebPageContentClient WebPageContentClient { get; }
 
    public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
       string query,
@@ -102,59 +98,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       }
 
       var results = ParseResults(rawResponse, maxResults);
-      return await VerifyResultsAsync(results, cancellationToken);
-   }
-
-   private async Task<IReadOnlyList<WebSearchResult>> VerifyResultsAsync(
-      IReadOnlyList<WebSearchResult> results,
-      CancellationToken cancellationToken
-   )
-   {
-      if(results.Count == 0)
-      {
-         return [];
-      }
-
-      var verifiedResults = new List<WebSearchResult>();
-
-      foreach(var result in results)
-      {
-         cancellationToken.ThrowIfCancellationRequested();
-
-         if(await IsVerifiedResultAsync(result, cancellationToken))
-         {
-            verifiedResults.Add(result);
-         }
-      }
-
-      return verifiedResults;
-   }
-
-   private async Task<bool> IsVerifiedResultAsync(
-      WebSearchResult result,
-      CancellationToken cancellationToken
-   )
-   {
-      try
-      {
-         var page = await WebPageContentClient.FetchAsync(
-            result.Url,
-            cancellationToken
-         );
-
-         return page is not null &&
-            page.HasBodyText &&
-            !string.IsNullOrWhiteSpace(page.MainText);
-      }
-      catch(HttpRequestException)
-      {
-         return false;
-      }
-      catch(TaskCanceledException)
-         when(!cancellationToken.IsCancellationRequested)
-      {
-         return false;
-      }
+      return results;
    }
 
    private static IReadOnlyList<WebSearchResult> ParseResults(
