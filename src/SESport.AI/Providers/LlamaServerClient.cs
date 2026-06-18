@@ -1896,19 +1896,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       var seenSnippets = new HashSet<string>(StringComparer.Ordinal);
       var searchText = GetPageSearchText(pageContent);
 
-      AddSnippetMatch(
-         matches,
-         seenSnippets,
-         "title",
-         pageContent.Title,
-         find
-      );
-
-      foreach(var heading in pageContent.Headings)
-      {
-         AddSnippetMatch(matches, seenSnippets, "heading", heading, find);
-      }
-
       foreach(var snippet in ExtractTextSnippets(searchText, find))
       {
          AddSnippetMatch(matches, seenSnippets, "text", snippet, find);
@@ -1955,7 +1942,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       string text,
       string find,
       int contextLength = 120,
-      int maxMatches = 5
+      int maxMatches = 20
    )
    {
       if(string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(find))

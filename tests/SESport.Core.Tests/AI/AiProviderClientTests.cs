@@ -430,6 +430,49 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void FindPageMatchesIgnoresTitleAndHeadings()
+   {
+      var matches = InvokeFindPageMatches(
+         new WebPageContent(
+            "Sweden Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Sweden Heading"],
+            "No relevant mention here.",
+            true,
+            "No relevant mention here."
+         ),
+         "Sweden"
+      );
+
+      Assert.Empty(matches);
+   }
+
+   [Fact]
+   public void FindPageMatchesLimitsTextSnippetsToTwenty()
+   {
+      var body = string.Join(
+         " ",
+         Enumerable.Range(0, 25).Select(index =>
+            $"chunk-{index}-before Sweden chunk-{index}-after")
+      );
+      var matches = InvokeFindPageMatches(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            [],
+            body,
+            true,
+            body
+         ),
+         "Sweden"
+      );
+
+      Assert.Equal(20, matches.Count);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesSchemaForNonToolJobs()
    {
       var handler = new RecordingHandler(
@@ -1185,6 +1228,36 @@ public class AiProviderClientTests
         "additionalProperties": false
       }
       """;
+   }
+
+   private static System.Collections.ICollection InvokeFindPageMatches(
+      WebPageContent pageContent,
+      string find
+   )
+   {
+      var method = typeof(LlamaServerClient).GetMethod(
+         "FindPageMatches",
+         System.Reflection.BindingFlags.NonPublic |
+         System.Reflection.BindingFlags.Static
+      );
+
+      if(method is null)
+      {
+         throw new InvalidOperationException(
+            "Unable to find FindPageMatches via reflection."
+         );
+      }
+
+      var matches = method.Invoke(null, [pageContent, find]);
+
+      if(matches is not System.Collections.ICollection collection)
+      {
+         throw new InvalidOperationException(
+            "FindPageMatches did not return a collection."
+         );
+      }
+
+      return collection;
    }
 
    private sealed class RecordingHandler : HttpMessageHandler
