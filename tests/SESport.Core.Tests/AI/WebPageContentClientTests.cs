@@ -115,6 +115,29 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchPreservesPdfLineBreaks()
+   {
+      var handler = new PdfRecordingHandler(CreateMultiLinePdfBytes());
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            return Task.FromResult<WebPageContent?>(null);
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/multiline.pdf",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("First PDF line.", page!.MainText);
+      Assert.Contains("Second PDF line.", page.MainText);
+      Assert.Contains(Environment.NewLine, page.MainText);
+   }
+
+   [Fact]
    public async Task FetchPassesHtmlUrlToBrowserFetcher()
    {
       Uri? seenUrl = null;
@@ -156,6 +179,17 @@ public class WebPageContentClientTests
       var font = builder.AddStandard14Font(Standard14Font.Helvetica);
       builder.DocumentInformation.Title = "Sample PDF Title";
       page.AddText("Hello from the PDF body.", 12, new PdfPoint(72, 720), font);
+      return builder.Build();
+   }
+
+   private static byte[] CreateMultiLinePdfBytes()
+   {
+      var builder = new PdfDocumentBuilder();
+      var page = builder.AddPage(PageSize.A4);
+      var font = builder.AddStandard14Font(Standard14Font.Helvetica);
+      builder.DocumentInformation.Title = "Multi Line PDF";
+      page.AddText("First PDF line.", 12, new PdfPoint(72, 720), font);
+      page.AddText("Second PDF line.", 12, new PdfPoint(72, 700), font);
       return builder.Build();
    }
 

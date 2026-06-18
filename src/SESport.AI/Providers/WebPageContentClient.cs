@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;
 using UglyToad.PdfPig;
+using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
 using SESport.AI.Interfaces;
 
@@ -222,7 +223,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       var pages = pdfDocument
          .GetPages()
-         .Select(page => page.Text)
+         .Select(page => ContentOrderTextExtractor.GetText(page, true))
          .Where(text => !string.IsNullOrWhiteSpace(text))
          .Select(text => text.Trim());
 
