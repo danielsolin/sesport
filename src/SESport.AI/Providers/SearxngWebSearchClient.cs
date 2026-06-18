@@ -73,7 +73,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             {
                ["q"] = query,
                ["format"] = "json",
-               ["categories"] = "general"
+               ["categories"] = "general",
+               ["engines"] = "google"
             }
          )
       };
