@@ -1,5 +1,3 @@
-using SESport.Core.Domain;
-
 namespace SESport.AI.ActivitySearch;
 
 public sealed record OpenAiResponsesActivitySearchClientOptions(

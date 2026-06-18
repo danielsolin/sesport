@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
+
 using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
-using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AI;
 

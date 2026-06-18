@@ -1,5 +1,4 @@
 using SESport.Web.Pages.Admin.Config.Ai.Runs;
-using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.Pages.Admin.Config.Ai.Runs;
 

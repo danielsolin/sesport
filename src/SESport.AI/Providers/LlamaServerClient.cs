@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Validation;
-using SESport.Core.Domain;
 
 namespace SESport.AI.Providers;
 
