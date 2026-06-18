@@ -2192,13 +2192,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       string previousResult
    )
    {
-      //return
-      //   $"This exact {toolName} call was already made in round " +
-      //   $"{previousTurn}. Do not repeat this check. " +
-      //   "Reuse the previous result and move on.\n\n" +
-      //   previousResult;
-
-      return previousResult;
+      return
+         $"This exact {toolName} call was already made in round " +
+         $"{previousTurn}.\n\n" +
+         previousResult;
    }
 
    private static string BuildPageCallSignature(
