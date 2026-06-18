@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Validation;
+using SESport.Core.Domain;
 
 namespace SESport.AI.Providers;
 
@@ -20,9 +21,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    // Keep this comfortably below the llama-server token limit.
    private const int MaxConversationContextCharacters = 12000;
    private const int MaxTransientRetryAttempts = 12;
-   private const string ToolWebGetPage = "web_get_page";
-   private const string ToolWebSearch = "web_search";
-   private const string ToolWebFindInPage = "web_find_in_page";
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -634,18 +632,18 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var isSearchTool = string.Equals(
          toolCall.Name,
-         ToolWebSearch,
+         WebToolNames.Search,
          StringComparison.Ordinal
       );
 
       var isGetPageTool = string.Equals(
          toolCall.Name,
-         ToolWebGetPage,
+         WebToolNames.GetPage,
          StringComparison.Ordinal
       );
       var isFindInPageTool = string.Equals(
          toolCall.Name,
-         ToolWebFindInPage,
+         WebToolNames.FindInPage,
          StringComparison.Ordinal
       );
       var find = ExtractFind(toolCall.Arguments);
@@ -1017,7 +1015,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          return repeatedResult;
       }
 
-      if(string.Equals(toolCall.Name, ToolWebSearch, StringComparison.Ordinal))
+      if(string.Equals(
+         toolCall.Name,
+         WebToolNames.Search,
+         StringComparison.Ordinal
+      ))
       {
          var query = ExtractQuery(toolCall.Arguments);
          var limit = ExtractLimit(toolCall.Arguments);
@@ -1046,7 +1048,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          return result;
       }
 
-      if(string.Equals(toolCall.Name, ToolWebGetPage, StringComparison.Ordinal))
+      if(string.Equals(
+         toolCall.Name,
+         WebToolNames.GetPage,
+         StringComparison.Ordinal
+      ))
       {
          var id = ExtractId(toolCall.Arguments);
          var url = ExtractUrl(toolCall.Arguments);
@@ -1095,7 +1101,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(string.Equals(
          toolCall.Name,
-         "web_find_in_page",
+         WebToolNames.FindInPage,
          StringComparison.Ordinal
       ))
       {
@@ -1576,7 +1582,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       var signature = BuildPageCallSignature(
-         "web_get_page",
+         WebToolNames.GetPage,
          pageTarget.Url,
          ""
       );
@@ -1677,7 +1683,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       var signature = BuildPageCallSignature(
-         "web_find_in_page",
+         WebToolNames.FindInPage,
          pageTarget.Url,
          find
       );
@@ -2438,17 +2444,17 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       return toolCall.Name switch
       {
-         "web_search" or "altra/web-search" or "altra_web_search" =>
+         WebToolNames.Search =>
             $"{toolCall.Name}(query={FormatSummaryQuoted(query)}, " +
             $"limit={limit})",
-         "web_get_page" =>
+         WebToolNames.GetPage =>
             FormatConversationPageToolCall(
                toolCall.Name,
                id,
                url,
                find
             ),
-         "web_find_in_page" =>
+         WebToolNames.FindInPage =>
             FormatConversationPageToolCall(
                toolCall.Name,
                id,
@@ -2631,16 +2637,16 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       return toolCall.Name switch
       {
-         "web_search" or "altra/web-search" or "altra_web_search" =>
+         WebToolNames.Search =>
             $"{toolCall.Name}|query={query}|limit={limit}",
-         "web_get_page" => BuildPageToolCallSignature(
+         WebToolNames.GetPage => BuildPageToolCallSignature(
             toolCall.Name,
             id,
             url,
             find,
             searchResultsById
          ),
-         "web_find_in_page" => BuildPageToolCallSignature(
+         WebToolNames.FindInPage => BuildPageToolCallSignature(
             toolCall.Name,
             id,
             url,

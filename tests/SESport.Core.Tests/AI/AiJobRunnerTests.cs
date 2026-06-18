@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AI;
 
@@ -30,7 +31,7 @@ public class AiJobRunnerTests
       );
 
       Assert.Equal("Failed run", result.ErrorMessage);
-      Assert.Contains("web_search", result.ToolTraceJson);
+      Assert.Contains(WebToolNames.Search, result.ToolTraceJson);
       Assert.Equal("""{"request":"payload"}""", result.RawRequestJson);
       Assert.Equal("""{"error":"boom"}""", result.RawResponseJson);
       Assert.Equal(2, result.ToolRoundCount);
@@ -41,7 +42,10 @@ public class AiJobRunnerTests
       );
       Assert.NotNull(runRepository.UpdatedRun);
       Assert.Equal(AiJobRunStatus.Failed, runRepository.UpdatedRun!.Status);
-      Assert.Contains("web_search", runRepository.UpdatedRun.ToolTraceJson);
+      Assert.Contains(
+         WebToolNames.Search,
+         runRepository.UpdatedRun.ToolTraceJson
+      );
       Assert.Equal("""{"request":"payload"}""",
          runRepository.UpdatedRun.RawRequestJson);
       Assert.Equal("""{"error":"boom"}""",
@@ -237,7 +241,7 @@ public class AiJobRunnerTests
             null,
             """{"request":"payload"}""",
             """{"error":"boom"}""",
-            """[{"kind":"tool","name":"web_search"}]""",
+            $$"""[{"kind":"tool","name":"{{WebToolNames.Search}}"}]""",
             2,
             8123
          );

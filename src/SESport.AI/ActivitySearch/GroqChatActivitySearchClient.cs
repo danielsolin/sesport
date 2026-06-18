@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SESport.Core.Domain;
 
 namespace SESport.AI.ActivitySearch;
 
@@ -119,7 +120,7 @@ public sealed class GroqChatActivitySearchClient : IActivitySearchModelClient
          {
             tools = new
             {
-               enabled_tools = new[] { "web_search" }
+               enabled_tools = new[] { WebToolNames.Search }
             }
          },
          search_settings = new

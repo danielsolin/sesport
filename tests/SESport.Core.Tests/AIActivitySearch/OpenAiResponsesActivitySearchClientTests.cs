@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using SESport.AI.ActivitySearch;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AIActivitySearch;
 
@@ -32,7 +33,10 @@ public class OpenAiResponsesActivitySearchClientTests
          handler.RequestUri
       );
       Assert.Contains("\"model\":\"gpt-oss-20b\"", handler.RequestBody);
-      Assert.Contains("\"type\":\"web_search\"", handler.RequestBody);
+      Assert.Contains(
+         $"\"type\":\"{WebToolNames.Search}\"",
+         handler.RequestBody
+      );
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);
       Assert.Equal("gpt-oss-20b", result.Producer);
       Assert.Contains("Tre Kronor", result.Prompt);
@@ -70,6 +74,8 @@ public class OpenAiResponsesActivitySearchClientTests
    [Fact]
    public async Task SearchCanUseConfiguredWebSearchToolType()
    {
+      const string customWebSearchToolType = "custom-web-search";
+
       var handler = new RecordingHandler(CreateResponseJson());
       var httpClient = new HttpClient(handler);
       var client = new OpenAiResponsesActivitySearchClient(
@@ -77,7 +83,7 @@ public class OpenAiResponsesActivitySearchClientTests
          new OpenAiResponsesActivitySearchClientOptions(
             new Uri("http://127.0.0.1:1234/v1/"),
             "gpt-oss-20b",
-            WebSearchToolType: "altra/web-search"
+            WebSearchToolType: customWebSearchToolType
          )
       );
 
@@ -86,7 +92,10 @@ public class OpenAiResponsesActivitySearchClientTests
          CancellationToken.None
       );
 
-      Assert.Contains("\"type\":\"altra/web-search\"", handler.RequestBody);
+      Assert.Contains(
+         $"\"type\":\"{customWebSearchToolType}\"",
+         handler.RequestBody
+      );
    }
 
    [Fact]

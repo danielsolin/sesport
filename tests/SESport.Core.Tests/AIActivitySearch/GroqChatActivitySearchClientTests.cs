@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using SESport.AI.ActivitySearch;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AIActivitySearch;
 
@@ -32,7 +33,10 @@ public class GroqChatActivitySearchClientTests
       );
       Assert.Equal("Bearer test-key", handler.AuthorizationHeader);
       Assert.Contains("\"model\":\"groq/compound-mini\"", handler.RequestBody);
-      Assert.Contains("\"enabled_tools\":[\"web_search\"]", handler.RequestBody);
+      Assert.Contains(
+         $"\"enabled_tools\":[\"{WebToolNames.Search}\"]",
+         handler.RequestBody
+      );
       Assert.Contains("\"country\":\"sweden\"", handler.RequestBody);
       Assert.Contains("Tre Kronor", handler.RequestBody);
       Assert.Contains("Tre Kronor vs Finland", result.RawContent);

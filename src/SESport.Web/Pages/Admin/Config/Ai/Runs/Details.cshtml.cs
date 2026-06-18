@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
 using SESport.Core.Formatting;
+using SESport.Core.Domain;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
@@ -282,7 +283,11 @@ public class DetailsModel(AiRepository repository) : PageModel
       var url = GetString(arguments, "url");
       var limit = GetInt32(arguments, "limit");
 
-      if(string.Equals(toolCall.Name, "web_search", StringComparison.Ordinal))
+      if(string.Equals(
+         toolCall.Name,
+         WebToolNames.Search,
+         StringComparison.Ordinal
+      ))
       {
          if(!string.IsNullOrWhiteSpace(query))
          {
@@ -296,11 +301,11 @@ public class DetailsModel(AiRepository repository) : PageModel
       }
       else if(string.Equals(
          toolCall.Name,
-         "web_find_in_page",
+         WebToolNames.FindInPage,
          StringComparison.Ordinal
       ) || string.Equals(
          toolCall.Name,
-         "web_get_page",
+         WebToolNames.GetPage,
          StringComparison.Ordinal
       ))
       {

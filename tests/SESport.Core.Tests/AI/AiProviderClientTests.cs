@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Providers;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AI;
 
@@ -78,7 +79,8 @@ public class AiProviderClientTests
          handler.RequestBodies[1]);
       Assert.Contains("\"tool_choice\":\"auto\"",
          handler.RequestBodies[2]);
-      Assert.Contains("\"name\":\"web_get_page\"",
+      Assert.Contains(
+         $"\"name\":\"{WebToolNames.GetPage}\"",
          handler.RequestBodies[0]);
       Assert.Contains("\"role\":\"tool\"",
          handler.RequestBodies[1]);
@@ -89,7 +91,8 @@ public class AiProviderClientTests
       Assert.Contains("Article Title", handler.RequestBodies[2]);
       Assert.Contains("Full article content.", handler.RequestBodies[2]);
       Assert.Equal(handler.RequestBodies[2], result.RawRequestJson);
-      Assert.Contains("\"name\":\"web_find_in_page\"",
+      Assert.Contains(
+         $"\"name\":\"{WebToolNames.FindInPage}\"",
          handler.RequestBodies[0]);
       Assert.DoesNotContain(
          "\"response_format\"",
@@ -418,11 +421,13 @@ public class AiProviderClientTests
          result.OutputText
       );
       Assert.Equal(4, handler.RequestBodies.Count);
-      Assert.Contains("\"name\":\"web_get_page\"",
+      Assert.Contains(
+         $"\"name\":\"{WebToolNames.GetPage}\"",
          result.ToolTraceJson);
       Assert.Contains("\"find\":\"ExtraToken\"",
          result.ToolTraceJson);
-      Assert.Contains("\"name\":\"web_find_in_page\"",
+      Assert.Contains(
+         $"\"name\":\"{WebToolNames.FindInPage}\"",
          result.ToolTraceJson);
       Assert.Single(webPageContentClient.Urls);
       Assert.Contains(
@@ -684,7 +689,7 @@ public class AiProviderClientTests
                type = "function",
                function = new
                {
-                  name = "web_search",
+                  name = WebToolNames.Search,
                   description =
                      "Search the web for current or factual information.",
                   parameters = new
@@ -713,10 +718,11 @@ public class AiProviderClientTests
                type = "function",
                function = new
                {
-                  name = "web_get_page",
+                  name = WebToolNames.GetPage,
                   description =
                      "Fetch the full page text for a search result id " +
-                     "returned by web_search, or open a direct URL.",
+                     $"returned by {WebToolNames.Search}, or open a " +
+                     "direct URL.",
                   parameters = new
                   {
                      type = "object",
@@ -751,7 +757,7 @@ public class AiProviderClientTests
                type = "function",
                function = new
                {
-                  name = "web_find_in_page",
+                  name = WebToolNames.FindInPage,
                   description =
                      "Find matching text in a fetched page or direct URL.",
                   parameters = new
@@ -881,7 +887,7 @@ public class AiProviderClientTests
 
    private static string CreateLlamaToolCallResponseJson()
    {
-      return """
+      return $$"""
       {
         "choices": [
           {
@@ -893,7 +899,7 @@ public class AiProviderClientTests
                   "id": "call_1",
                   "type": "function",
                   "function": {
-                    "name": "web_search",
+                    "name": "{{WebToolNames.Search}}",
                     "arguments": "{\"query\":\"Tre Kronor\",\"limit\":10}"
                   }
                 }
@@ -909,7 +915,7 @@ public class AiProviderClientTests
 
    private static string CreateLlamaPageCallResponseJson()
    {
-      return """
+      return $$"""
       {
         "choices": [
           {
@@ -921,7 +927,7 @@ public class AiProviderClientTests
                   "id": "call_2",
                   "type": "function",
                   "function": {
-                    "name": "web_get_page",
+                    "name": "{{WebToolNames.GetPage}}",
                     "arguments": "{\"id\":\"s1_1\"}"
                   }
                 }
@@ -937,7 +943,7 @@ public class AiProviderClientTests
 
    private static string CreateLlamaToolCallWithUrlResponseJson()
    {
-      return """
+      return $$"""
       {
         "choices": [
           {
@@ -949,7 +955,7 @@ public class AiProviderClientTests
                   "id": "call_1",
                   "type": "function",
                   "function": {
-                    "name": "web_get_page",
+                    "name": "{{WebToolNames.GetPage}}",
                     "arguments":
                       "{\"url\":\"https://example.test/direct-page\"}"
                   }
@@ -966,7 +972,7 @@ public class AiProviderClientTests
 
    private static string CreateLlamaPageCallWithUrlResponseJson()
    {
-      return """
+      return $$"""
       {
         "choices": [
           {
@@ -978,7 +984,7 @@ public class AiProviderClientTests
                   "id": "call_2",
                   "type": "function",
                   "function": {
-                    "name": "web_get_page",
+                    "name": "{{WebToolNames.GetPage}}",
                     "arguments":
                       "{\"url\":\"https://example.test/direct-page\"}"
                   }
@@ -1013,7 +1019,7 @@ public class AiProviderClientTests
                         type = "function",
                         function = new
                         {
-                           name = "web_find_in_page",
+                           name = WebToolNames.FindInPage,
                            arguments =
                               "{\"url\":\"https://example.test/direct-page\"," +
                               "\"find\":\"Sweden\"}"
@@ -1030,7 +1036,7 @@ public class AiProviderClientTests
 
    private static string CreateLlamaPageCallWithFindResponseJson()
    {
-      return """
+      return $$"""
       {
         "choices": [
           {
@@ -1042,7 +1048,7 @@ public class AiProviderClientTests
                   "id": "call_2",
                   "type": "function",
                   "function": {
-                    "name": "web_get_page",
+                    "name": "{{WebToolNames.GetPage}}",
                     "arguments":
                       "{\"id\":\"s1_1\",\"find\":\"Sweden\"}"
                   }
@@ -1077,7 +1083,7 @@ public class AiProviderClientTests
                         type = "function",
                         function = new
                         {
-                           name = "web_get_page",
+                           name = WebToolNames.GetPage,
                            arguments =
                               "{\"id\":\"s1_1\",\"find\":\"ExtraToken\"}"
                         }
@@ -1093,7 +1099,7 @@ public class AiProviderClientTests
 
    private static string CreateLlamaFindPageCallResponseJson()
    {
-      return """
+      return $$"""
       {
         "choices": [
           {
@@ -1105,7 +1111,7 @@ public class AiProviderClientTests
                   "id": "call_3",
                   "type": "function",
                   "function": {
-                    "name": "web_find_in_page",
+                    "name": "{{WebToolNames.FindInPage}}",
                     "arguments":
                       "{\"id\":\"s1_1\",\"find\":\"Sweden\"}"
                   }
@@ -1140,7 +1146,7 @@ public class AiProviderClientTests
                         type = "function",
                         function = new
                         {
-                           name = "web_find_in_page",
+                           name = WebToolNames.FindInPage,
                            arguments =
                               "{\"id\":\"s1_1\",\"find\":\"ExtraToken\"}"
                         }

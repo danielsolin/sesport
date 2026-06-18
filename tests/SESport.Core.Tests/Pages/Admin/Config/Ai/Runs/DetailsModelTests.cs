@@ -1,4 +1,5 @@
 using SESport.Web.Pages.Admin.Config.Ai.Runs;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.Pages.Admin.Config.Ai.Runs;
 
@@ -9,7 +10,7 @@ public sealed class DetailsModelTests
    {
       var toolCall = new DetailsModel.ToolTraceCallViewModel(
          "call_1",
-         "web_find_in_page",
+         WebToolNames.FindInPage,
          """
          {
            "id": "s2_8",
@@ -19,7 +20,7 @@ public sealed class DetailsModelTests
       );
 
       Assert.Equal(
-         "web_find_in_page('s2_8','Sweden')",
+         $"{WebToolNames.FindInPage}('s2_8','Sweden')",
          DetailsModel.FormatToolCall(toolCall)
       );
    }
@@ -29,7 +30,7 @@ public sealed class DetailsModelTests
    {
       var toolCall = new DetailsModel.ToolTraceCallViewModel(
          "call_1",
-         "web_search",
+         WebToolNames.Search,
          """
          {
            "query": "Belgien runt Etapp 2 participants",
@@ -39,7 +40,7 @@ public sealed class DetailsModelTests
       );
 
       Assert.Equal(
-         "web_search('Belgien runt Etapp 2 participants',5)",
+         $"{WebToolNames.Search}('Belgien runt Etapp 2 participants',5)",
          DetailsModel.FormatToolCall(toolCall)
       );
    }
