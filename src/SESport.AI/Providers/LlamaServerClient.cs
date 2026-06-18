@@ -872,7 +872,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["content"] = systemPrompt
       };
 
-      var systemIndex = FindSystemMessageIndex(messages);
+      var systemIndex = FindPrimarySystemMessageIndex(messages);
 
       if(systemIndex < 0)
       {
@@ -1248,28 +1248,6 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["tool_call_id"] = toolCallId,
          ["content"] = result
       };
-   }
-
-   private static int FindSystemMessageIndex(JsonArray messages)
-   {
-      for(var index = 0; index < messages.Count; index++)
-      {
-         if(messages[index] is not JsonObject message)
-         {
-            continue;
-         }
-
-         if(string.Equals(
-            message["role"]?.GetValue<string>(),
-            "system",
-            StringComparison.Ordinal
-         ))
-         {
-            return index;
-         }
-      }
-
-      return -1;
    }
 
    private static bool TryGetAssistantToolCalls(
@@ -2057,6 +2035,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static void TrimConversationMessages(JsonArray messages)
    {
+      var historyEntries = GetConversationHistoryEntries(messages);
+
       while(EstimateConversationSize(messages) >
          MaxConversationContextCharacters)
       {
@@ -2092,11 +2072,21 @@ public sealed class LlamaServerClient : IAiProviderClient
             return;
          }
 
+         historyEntries.AddRange(SummarizeTrimmedMessages(
+            messages,
+            firstAssistantIndex,
+            removeCount
+         ));
+
          for(var index = 0; index < removeCount; index++)
          {
             messages.RemoveAt(firstAssistantIndex);
          }
+
+         UpdateConversationHistorySummary(messages, historyEntries);
       }
+
+      UpdateConversationHistorySummary(messages, historyEntries);
    }
 
    private static int FindFirstAssistantMessageIndex(JsonArray messages)
@@ -2157,6 +2147,368 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return -1;
+   }
+
+   private static int FindPrimarySystemMessageIndex(JsonArray messages)
+   {
+      for(var index = 0; index < messages.Count; index++)
+      {
+         if(messages[index] is not JsonObject message)
+         {
+            continue;
+         }
+
+         if(!string.Equals(
+            message["role"]?.GetValue<string>(),
+            "system",
+            StringComparison.Ordinal
+         ))
+         {
+            continue;
+         }
+
+         if(IsConversationHistorySummaryMessage(message))
+         {
+            continue;
+         }
+
+         return index;
+      }
+
+      return -1;
+   }
+
+   private static int FindConversationHistorySummaryMessageIndex(
+      JsonArray messages
+   )
+   {
+      for(var index = 0; index < messages.Count; index++)
+      {
+         if(messages[index] is not JsonObject message)
+         {
+            continue;
+         }
+
+         if(IsConversationHistorySummaryMessage(message))
+         {
+            return index;
+         }
+      }
+
+      return -1;
+   }
+
+   private static bool IsConversationHistorySummaryMessage(JsonObject message)
+   {
+      if(!string.Equals(
+         message["role"]?.GetValue<string>(),
+         "system",
+         StringComparison.Ordinal
+      ))
+      {
+         return false;
+      }
+
+      var content = message["content"]?.GetValue<string>() ?? "";
+      return content.StartsWith(
+         ConversationHistorySummaryPrefix,
+         StringComparison.Ordinal
+      );
+   }
+
+   private static List<string> GetConversationHistoryEntries(JsonArray messages)
+   {
+      var summaryIndex = FindConversationHistorySummaryMessageIndex(messages);
+
+      if(summaryIndex < 0 || messages[summaryIndex] is not JsonObject message)
+      {
+         return [];
+      }
+
+      var content = message["content"]?.GetValue<string>() ?? "";
+      return ParseConversationHistoryEntries(content);
+   }
+
+   private static void UpdateConversationHistorySummary(
+      JsonArray messages,
+      IReadOnlyList<string> entries
+   )
+   {
+      var summaryIndex = FindConversationHistorySummaryMessageIndex(messages);
+
+      if(entries.Count == 0)
+      {
+         if(summaryIndex >= 0)
+         {
+            messages.RemoveAt(summaryIndex);
+         }
+
+         return;
+      }
+
+      var summaryMessage = new JsonObject
+      {
+         ["role"] = "system",
+         ["content"] = BuildConversationHistorySummary(entries)
+      };
+
+      if(summaryIndex >= 0)
+      {
+         messages[summaryIndex] = summaryMessage;
+         return;
+      }
+
+      var insertionIndex = FindPrimarySystemMessageIndex(messages);
+      if(insertionIndex < 0)
+      {
+         messages.Insert(0, summaryMessage);
+         return;
+      }
+
+      messages.Insert(insertionIndex + 1, summaryMessage);
+   }
+
+   private static string BuildConversationHistorySummary(
+      IReadOnlyList<string> entries
+   )
+   {
+      var builder = new StringBuilder();
+
+      builder.AppendLine(ConversationHistorySummaryPrefix);
+
+      foreach(var entry in entries)
+      {
+         builder.AppendLine($"- {entry}");
+      }
+
+      return builder.ToString().TrimEnd();
+   }
+
+   private static List<string> ParseConversationHistoryEntries(string content)
+   {
+      if(string.IsNullOrWhiteSpace(content) ||
+         !content.StartsWith(
+            ConversationHistorySummaryPrefix,
+            StringComparison.Ordinal
+         ))
+      {
+         return [];
+      }
+
+      var entries = new List<string>();
+      var lines = content.ReplaceLineEndings("\n").Split('\n');
+
+      foreach(var line in lines.Skip(1))
+      {
+         var entry = line.Trim();
+
+         if(string.IsNullOrWhiteSpace(entry))
+         {
+            continue;
+         }
+
+         if(entry.StartsWith("- ", StringComparison.Ordinal))
+         {
+            entry = entry[2..].Trim();
+         }
+
+         if(!string.IsNullOrWhiteSpace(entry))
+         {
+            entries.Add(entry);
+         }
+      }
+
+      return entries;
+   }
+
+   private static List<string> SummarizeTrimmedMessages(
+      JsonArray messages,
+      int startIndex,
+      int removeCount
+   )
+   {
+      var entries = new List<string>();
+      var endIndex = startIndex + removeCount;
+      IReadOnlyList<ToolCall> currentToolCalls = [];
+      var currentToolIndex = 0;
+
+      for(var index = startIndex; index < endIndex; index++)
+      {
+         if(messages[index] is not JsonObject message)
+         {
+            continue;
+         }
+
+         var role = message["role"]?.GetValue<string>() ?? "";
+
+         if(string.Equals(role, "assistant", StringComparison.Ordinal))
+         {
+            currentToolCalls = ParseMessageToolCalls(message);
+            currentToolIndex = 0;
+
+            if(currentToolCalls.Count == 0)
+            {
+               var assistantContent = message["content"]?.GetValue<string>() ??
+                  "";
+
+               if(!string.IsNullOrWhiteSpace(assistantContent))
+               {
+                  entries.Add(
+                     $"assistant: {TruncateForSummary(assistantContent)}"
+                  );
+               }
+            }
+
+            continue;
+         }
+
+         if(!string.Equals(role, "tool", StringComparison.Ordinal))
+         {
+            continue;
+         }
+
+         var toolName = message["name"]?.GetValue<string>() ?? "";
+         var toolContent = message["content"]?.GetValue<string>() ?? "";
+
+         if(currentToolIndex < currentToolCalls.Count)
+         {
+            var toolCall = currentToolCalls[currentToolIndex];
+            entries.Add(
+               $"{FormatConversationToolCall(toolCall)} -> " +
+               $"{TruncateForSummary(toolContent)}"
+            );
+            currentToolIndex++;
+            continue;
+         }
+
+         entries.Add(
+            $"{toolName}: {TruncateForSummary(toolContent)}"
+         );
+      }
+
+      return entries;
+   }
+
+   private static IReadOnlyList<ToolCall> ParseMessageToolCalls(
+      JsonObject message
+   )
+   {
+      if(!message.TryGetPropertyValue("tool_calls", out var toolCallsNode) ||
+         toolCallsNode is not JsonArray toolCallsArray ||
+         toolCallsArray.Count == 0)
+      {
+         return [];
+      }
+
+      var toolCalls = new List<ToolCall>();
+
+      foreach(var toolCallNode in toolCallsArray)
+      {
+         if(toolCallNode is not JsonObject toolCallObject)
+         {
+            continue;
+         }
+
+         var id = toolCallObject["id"]?.GetValue<string>() ?? "";
+         var function = toolCallObject["function"] as JsonObject;
+         var name = function?["name"]?.GetValue<string>() ?? "";
+         var arguments = function?["arguments"] is JsonValue value &&
+            value.TryGetValue<string>(out var stringArguments)
+            ? stringArguments
+            : function?["arguments"]?.ToJsonString() ?? "";
+
+         if(string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name))
+         {
+            continue;
+         }
+
+         toolCalls.Add(new ToolCall(id, name, arguments));
+      }
+
+      return toolCalls;
+   }
+
+   private static string FormatConversationToolCall(ToolCall toolCall)
+   {
+      var query = ExtractQuery(toolCall.Arguments);
+      var limit = ExtractLimit(toolCall.Arguments);
+      var id = ExtractId(toolCall.Arguments);
+      var url = ExtractUrl(toolCall.Arguments);
+      var find = ExtractFind(toolCall.Arguments);
+
+      return toolCall.Name switch
+      {
+         "web_search" or "altra/web-search" or "altra_web_search" =>
+            $"{toolCall.Name}(query={FormatSummaryQuoted(query)}, " +
+            $"limit={limit})",
+         "web_get_page" =>
+            FormatConversationPageToolCall(
+               toolCall.Name,
+               id,
+               url,
+               find
+            ),
+         "web_find_in_page" =>
+            FormatConversationPageToolCall(
+               toolCall.Name,
+               id,
+               url,
+               find
+            ),
+         _ => $"{toolCall.Name}({TruncateForSummary(toolCall.Arguments)})"
+      };
+   }
+
+   private static string FormatConversationPageToolCall(
+      string toolName,
+      string id,
+      string url,
+      string find
+   )
+   {
+      var parts = new List<string>();
+
+      if(!string.IsNullOrWhiteSpace(id))
+      {
+         parts.Add($"id={FormatSummaryQuoted(id)}");
+      }
+
+      if(!string.IsNullOrWhiteSpace(url))
+      {
+         parts.Add($"url={FormatSummaryQuoted(url)}");
+      }
+
+      if(!string.IsNullOrWhiteSpace(find))
+      {
+         parts.Add($"find={FormatSummaryQuoted(find)}");
+      }
+
+      return $"{toolName}({string.Join(", ", parts)})";
+   }
+
+   private static string FormatSummaryQuoted(string value)
+   {
+      return "'" + value.Replace("'", "\\'", StringComparison.Ordinal) + "'";
+   }
+
+   private static string TruncateForSummary(
+      string value,
+      int maxLength = 220
+   )
+   {
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return "";
+      }
+
+      var normalized = value.ReplaceLineEndings(" ").Trim();
+
+      if(normalized.Length <= maxLength)
+      {
+         return normalized;
+      }
+
+      return normalized[..maxLength] + "...";
    }
 
    private static int EstimateConversationSize(JsonArray messages)
@@ -2378,6 +2730,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       string Section,
       string Snippet
    );
+
+   private const string ConversationHistorySummaryPrefix =
+      "Conversation history summary:";
 
    private sealed class ToolLoopState
    {

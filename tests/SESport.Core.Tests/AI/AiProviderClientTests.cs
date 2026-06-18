@@ -161,6 +161,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.Contains("Conversation history summary:",
+         handler.RequestBodies[2]);
       Assert.Contains("KEEP-ME-ROUND-2-", handler.RequestBodies[2]);
       Assert.Contains("Huge Article", handler.RequestBodies[2]);
       Assert.Equal(handler.RequestBodies[2], result.RawRequestJson);
