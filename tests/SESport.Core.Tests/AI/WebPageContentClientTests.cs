@@ -200,43 +200,6 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public void TryGetChallengeReasonDetectsCaptchaDeliveryChallenge()
-   {
-      var bodyTextContent =
-         "var dd={'rt':'c','host':'geo.captcha-delivery.com'};";
-
-      var matched = WebPageContentClient.TryGetChallengeReason(
-         bodyTextContent,
-         out var challengeReason
-      );
-
-      Assert.True(matched);
-      Assert.Contains("challenge", challengeReason,
-         StringComparison.OrdinalIgnoreCase);
-   }
-
-   [Fact]
-   public async Task WaitForBodyInnerTextAsyncWaitsForLateContent()
-   {
-      var calls = 0;
-
-      var result = await WebPageContentClient.WaitForBodyInnerTextAsync(
-         _ =>
-         {
-            calls++;
-            return Task.FromResult<string?>(
-               calls < 3 ? "   " : "Loaded body text."
-            );
-         },
-         CancellationToken.None,
-         TimeSpan.FromSeconds(1)
-      );
-
-      Assert.Equal("Loaded body text.", result);
-      Assert.Equal(3, calls);
-   }
-
-   [Fact]
    public void GetCountryDisplayNameUsesNetRegionInfo()
    {
       Assert.Equal("Sweden", WebPageContentClient.GetCountryDisplayName("SE"));

@@ -7,7 +7,5 @@ public sealed record WebPageContent(
    IReadOnlyList<string> Headings,
    string MainText,
    bool HasBodyText,
-   string MainTextFull = "",
-   bool IsBlockedByChallenge = false,
-   string ChallengeReason = ""
+   string MainTextFull = ""
 );
