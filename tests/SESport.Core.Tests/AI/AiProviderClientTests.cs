@@ -110,6 +110,63 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task
+      LlamaServerGenerateAsyncKeepsLatestCompletedRoundDuringTrim()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var hugePageText = string.Join(
+         "",
+         Enumerable.Repeat("KEEP-ME-ROUND-2-", 1000)
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Huge Article",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
+            hugePageText,
+            true,
+            hugePageText
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson()
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.Contains("KEEP-ME-ROUND-2-", handler.RequestBodies[2]);
+      Assert.Contains("Huge Article", handler.RequestBodies[2]);
+      Assert.Equal(handler.RequestBodies[2], result.RawRequestJson);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncRetriesLoadingModel503()
    {
       var handler = new RecordingHandler(

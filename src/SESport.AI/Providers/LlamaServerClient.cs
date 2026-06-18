@@ -2073,21 +2073,32 @@ public sealed class LlamaServerClient : IAiProviderClient
       while(EstimateConversationSize(messages) >
          MaxConversationContextCharacters)
       {
+         var lastAssistantIndex = FindLastAssistantMessageIndex(messages);
+
+         if(lastAssistantIndex < 0)
+         {
+            return;
+         }
+
          var firstAssistantIndex = FindFirstAssistantMessageIndex(messages);
 
-         if(firstAssistantIndex < 0)
+         if(firstAssistantIndex < 0 ||
+            firstAssistantIndex >= lastAssistantIndex)
          {
             return;
          }
 
          var nextAssistantIndex = FindNextAssistantMessageIndex(
             messages,
-            firstAssistantIndex + 1
+            firstAssistantIndex + 1,
+            lastAssistantIndex
          );
 
-         var removeCount = nextAssistantIndex < 0
-            ? messages.Count - firstAssistantIndex
-            : nextAssistantIndex - firstAssistantIndex;
+         var removeEndIndex = nextAssistantIndex < 0
+            ? lastAssistantIndex
+            : nextAssistantIndex;
+
+         var removeCount = removeEndIndex - firstAssistantIndex;
 
          if(removeCount <= 0)
          {
@@ -2119,12 +2130,33 @@ public sealed class LlamaServerClient : IAiProviderClient
       return -1;
    }
 
+   private static int FindLastAssistantMessageIndex(JsonArray messages)
+   {
+      for(var index = messages.Count - 1; index >= 2; index--)
+      {
+         if(messages[index] is JsonObject message &&
+            string.Equals(
+               message["role"]?.GetValue<string>(),
+               "assistant",
+               StringComparison.Ordinal
+            ))
+         {
+            return index;
+         }
+      }
+
+      return -1;
+   }
+
    private static int FindNextAssistantMessageIndex(
       JsonArray messages,
-      int startIndex
+      int startIndex,
+      int stopIndexExclusive
    )
    {
-      for(var index = startIndex; index < messages.Count; index++)
+      for(var index = startIndex;
+         index < messages.Count && index < stopIndexExclusive;
+         index++)
       {
          if(messages[index] is JsonObject message &&
             string.Equals(
