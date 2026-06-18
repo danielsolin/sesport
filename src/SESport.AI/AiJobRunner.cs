@@ -134,19 +134,11 @@ public sealed class AiJobRunner(
    )
    {
       var run = context.Run;
-      var requestPayload = context.ProviderClient.CreateRequestPayload(
-         context.Provider,
-         context.Job,
-         context.Prompt,
-         context.RenderedPrompt
-      );
-      var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
       var toolRoundCount = 0;
 
       run = run with
       {
          Status = AiJobRunStatus.Running,
-         RawRequestJson = rawRequestJson,
          StartedAt = DateTimeOffset.UtcNow
       };
 
@@ -353,13 +345,6 @@ public sealed class AiJobRunner(
          prompt,
          request.InputPayloadJson
       );
-      var requestPayload = providerClient.CreateRequestPayload(
-         provider,
-         job,
-         prompt,
-         renderedPrompt
-      );
-      var rawRequestJson = AiRequestJsonSerializer.Serialize(requestPayload);
       var run = new AiJobRun(
          Guid.NewGuid(),
          job.Id,
@@ -373,11 +358,11 @@ public sealed class AiJobRunner(
          request.CorrelationId,
          request.InputPayloadJson,
          renderedPrompt.UserPrompt.Trim(),
-         rawRequestJson,
+         null!,
          null,
          null,
          0,
-         rawRequestJson.Length,
+         0,
          null,
          null,
          DateTimeOffset.UtcNow,

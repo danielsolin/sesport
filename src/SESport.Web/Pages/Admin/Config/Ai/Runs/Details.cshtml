@@ -260,24 +260,21 @@
 
    <section class="form-section">
       <details class="run-data-details">
-         <summary>Raw request</summary>
+         <summary>Raw final request</summary>
          <pre class="prompt-details-pre">
 @DetailsModel.FormatJson(Model.Run.RawRequestJson)
          </pre>
       </details>
    </section>
 
-   @if (!string.IsNullOrWhiteSpace(Model.Run.RawResponseJson))
-   {
-      <section class="form-section">
-         <details class="run-data-details">
-            <summary>Raw response</summary>
-            <pre class="prompt-details-pre">
+   <section class="form-section">
+      <details class="run-data-details">
+         <summary>Raw final response</summary>
+         <pre class="prompt-details-pre">
 @DetailsModel.FormatJson(Model.Run.RawResponseJson)
-            </pre>
-         </details>
-      </section>
-   }
+         </pre>
+      </details>
+   </section>
 
    @if (!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
    {

@@ -88,6 +88,7 @@ public class AiProviderClientTests
          handler.RequestBodies[2]);
       Assert.Contains("Article Title", handler.RequestBodies[2]);
       Assert.Contains("Full article content.", handler.RequestBodies[2]);
+      Assert.Equal(handler.RequestBodies[2], result.RawRequestJson);
       Assert.Contains("\"name\":\"web_find_in_page\"",
          handler.RequestBodies[0]);
       Assert.DoesNotContain(

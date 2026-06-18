@@ -85,7 +85,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          prompt,
          renderedPrompt
       );
-      var requestJson = AiRequestJsonSerializer.Serialize(request);
+      string? rawFinalRequestJson = null;
       JsonObject? responseJson = null;
       var rawResponse = "";
       var toolTrace = new JsonArray();
@@ -145,7 +145,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                toolRoundCount
             );
-            requestJson = AiRequestJsonSerializer.Serialize(request);
+            rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
             var responseEnvelope = await SendWithRetryAsync(
                provider,
                request,
@@ -190,12 +190,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                );
 
                messages.Add(
-                  new JsonObject
-                  {
-                     ["role"] = "tool",
-                     ["tool_call_id"] = toolCall.Id,
-                     ["content"] = toolResult
-                  }
+                  CreateToolMessage(toolCall.Id, toolResult)
                );
 
                toolTrace.Add(
@@ -262,7 +257,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                job,
                prompt
             );
-            requestJson = AiRequestJsonSerializer.Serialize(request);
+            rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
             turn++;
             var finalEnvelope = await SendWithRetryAsync(
                provider,
@@ -318,7 +313,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             provider.Id,
             provider.Model,
             renderedPrompt.ToPromptText(),
-            requestJson,
+            rawFinalRequestJson ?? string.Empty,
             finalOutputText,
             rawResponse,
             toolTraceJson,
@@ -344,7 +339,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          throw new AiProviderExecutionException(
             exception.Message,
             exception,
-            requestJson,
+            rawFinalRequestJson,
             string.IsNullOrWhiteSpace(rawResponse) ? null : rawResponse,
             toolTraceJson,
             toolRoundCount,
@@ -1214,11 +1209,15 @@ public sealed class LlamaServerClient : IAiProviderClient
       JsonObject response
    )
    {
-      var content = ExtractMessageContent(response);
+      messages.Add(CreateAssistantMessage(response));
+   }
+
+   private static JsonObject CreateAssistantMessage(JsonObject response)
+   {
       var assistantMessage = new JsonObject
       {
          ["role"] = "assistant",
-         ["content"] = content
+         ["content"] = ExtractMessageContent(response)
       };
 
       if(TryGetAssistantToolCalls(response, out var toolCalls))
@@ -1238,7 +1237,17 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
-      messages.Add(assistantMessage);
+      return assistantMessage;
+   }
+
+   private static JsonObject CreateToolMessage(string toolCallId, string result)
+   {
+      return new JsonObject
+      {
+         ["role"] = "tool",
+         ["tool_call_id"] = toolCallId,
+         ["content"] = result
+      };
    }
 
    private static int FindSystemMessageIndex(JsonArray messages)
