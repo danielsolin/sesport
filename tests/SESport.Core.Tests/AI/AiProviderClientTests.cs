@@ -114,6 +114,39 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncOmitsAssistantContentForToolCalls()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJsonWithContent(
+            "<|channel|>commentary<|message|>noise"
+         ),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", requiresWebSearch: true, CreateToolsJson()),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.DoesNotContain(
+         "<|channel|>commentary<|message|>noise",
+         handler.RequestBodies[1]
+      );
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncKeepsLatestCompletedRoundDuringTrim()
    {
       var handler = new RecordingHandler(
@@ -911,6 +944,42 @@ public class AiProviderClientTests
         "model": "openai/gpt-4o-2024-08-06"
       }
       """;
+   }
+
+   private static string CreateLlamaToolCallResponseJsonWithContent(
+      string content
+   )
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  @role = "assistant",
+                  content,
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_1",
+                        type = "function",
+                        function = new
+                        {
+                           name = WebToolNames.Search,
+                           arguments =
+                              "{\"query\":\"Tre Kronor\",\"limit\":10}"
+                        }
+                     }
+                  }
+               },
+               finish_reason = "tool_calls"
+            }
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
    }
 
    private static string CreateLlamaPageCallResponseJson()

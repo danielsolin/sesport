@@ -1219,13 +1219,16 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static JsonObject CreateAssistantMessage(JsonObject response)
    {
+      var hasToolCalls = TryGetAssistantToolCalls(response, out var toolCalls);
       var assistantMessage = new JsonObject
       {
          ["role"] = "assistant",
-         ["content"] = ExtractMessageContent(response)
+         ["content"] = hasToolCalls
+            ? ""
+            : ExtractMessageContent(response)
       };
 
-      if(TryGetAssistantToolCalls(response, out var toolCalls))
+      if(hasToolCalls)
       {
          assistantMessage["tool_calls"] = JsonSerializer.SerializeToNode(
             toolCalls.Select(toolCall => new
