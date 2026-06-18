@@ -21,12 +21,8 @@
 @if (Model.Run is not null)
 {
    <section class="form-section">
-      <h2>Summary</h2>
-      <dl class="detail-grid">
-         <div>
-            <dt>Run ID</dt>
-            <dd><code>@Model.Run.Id</code></dd>
-         </div>
+         <h2>Summary</h2>
+         <dl class="detail-grid">
          <div>
             <dt>Status</dt>
             <dd><code>@Model.Run.StatusId</code></dd>
@@ -46,6 +42,10 @@
          <div>
             <dt>Model</dt>
             <dd>@Model.Run.ProviderModel</dd>
+         </div>
+         <div>
+            <dt>Temperature</dt>
+            <dd>@DetailsModel.FormatTemperature(Model.Run)</dd>
          </div>
          <div>
             <dt>Started</dt>
@@ -80,10 +80,6 @@
          <div>
             <dt>Max conversation chars</dt>
             <dd>@DetailsModel.GetMaxConversationCharacterCount(Model.Run)</dd>
-         </div>
-         <div>
-            <dt>Correlation</dt>
-            <dd>@Model.Run.CorrelationId</dd>
          </div>
          @if (Model.Run.InputTokens is not null)
          {

@@ -18,6 +18,7 @@ public sealed class DetailsMarkupTests
       Assert.Contains("summary>System prompt</summary>", html);
       Assert.Contains("summary>Rendered prompt</summary>", html);
       Assert.Contains("summary>Output</summary>", html);
+      Assert.Contains("<dt>Temperature</dt>", html);
       Assert.Contains("Final conversation chars", html);
       Assert.Contains("Max conversation chars", html);
       Assert.Contains("tool-trace-turn-header-main", html);

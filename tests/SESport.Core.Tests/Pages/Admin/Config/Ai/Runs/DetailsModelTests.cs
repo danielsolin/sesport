@@ -91,4 +91,45 @@ public sealed class DetailsModelTests
 
       Assert.Equal(20012, DetailsModel.GetMaxConversationCharacterCount(run));
    }
+
+   [Fact]
+   public void FormatTemperatureUsesRawRequestValue()
+   {
+      var run = new SESport.AI.Models.AiRunDetail(
+         Id: Guid.NewGuid(),
+         JobId: "job",
+         JobLabel: "Job",
+         PromptId: Guid.NewGuid(),
+         PromptVersion: 1,
+         SystemPrompt: "System",
+         UserPromptTemplate: "User",
+         ProviderId: "provider",
+         ProviderLabel: "Provider",
+         ProviderModel: "Model",
+         StatusId: "completed",
+         CorrelationId: null,
+         InputPayloadJson: "{}",
+         RenderedPrompt: "Rendered",
+         RawRequestJson: """
+            {
+              "model": "test",
+              "temperature": 0.73
+            }
+            """,
+         RawResponseJson: null,
+         ToolTraceJson: null,
+         ToolRoundCount: 0,
+         ConversationCharacterCount: 0,
+         OutputText: null,
+         ErrorMessage: null,
+         StartedAt: DateTimeOffset.UtcNow,
+         CompletedAt: DateTimeOffset.UtcNow,
+         DurationSeconds: 1m,
+         InputTokens: null,
+         OutputTokens: null,
+         ReasoningTokens: null
+      );
+
+      Assert.Equal("0.73", DetailsModel.FormatTemperature(run));
+   }
 }
