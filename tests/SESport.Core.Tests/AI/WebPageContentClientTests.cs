@@ -172,6 +172,33 @@ public class WebPageContentClientTests
       Assert.Contains("HTML body text.", page.MainText);
    }
 
+   [Fact]
+   public void ApplyResponseCutoffAppendsMarkerToTruncatedText()
+   {
+      var text = new string(
+         'x',
+         WebPageContentClient.MaxResponseCharacters + 1
+      );
+
+      var result = WebPageContentClient.ApplyResponseCutoff(text);
+
+      Assert.EndsWith("[CUTOFF]", result);
+      Assert.Equal(
+         WebPageContentClient.MaxResponseCharacters,
+         result.Length
+      );
+   }
+
+   [Fact]
+   public void ApplyResponseCutoffLeavesShortTextUntouched()
+   {
+      var text = "Short text.";
+
+      var result = WebPageContentClient.ApplyResponseCutoff(text);
+
+      Assert.Equal(text, result);
+   }
+
    private static byte[] CreatePdfBytes()
    {
       var builder = new PdfDocumentBuilder();

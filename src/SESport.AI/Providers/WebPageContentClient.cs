@@ -12,6 +12,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private const string BrowserUserAgent =
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
       "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+   internal const string CutoffMarker = "[CUTOFF]";
+   internal const int MaxResponseCharacters = 12000;
    private static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
    private static readonly TimeSpan BrowserLoadStateTimeout =
@@ -120,15 +122,16 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
          var title = await page.TitleAsync();
          var visibleText = await page.Locator("body").InnerTextAsync();
+         var normalizedText = NormalizeText(visibleText);
 
          return new WebPageContent(
             string.IsNullOrWhiteSpace(title) ? absoluteUrl.ToString() : title,
             absoluteUrl.ToString(),
             null,
             [],
-            NormalizeText(visibleText),
+            ApplyResponseCutoff(normalizedText),
             !string.IsNullOrWhiteSpace(visibleText),
-            NormalizeText(visibleText)
+            normalizedText
          );
       }
       catch(OperationCanceledException)
@@ -173,7 +176,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             absoluteUrl.ToString(),
             null,
             [],
-            text,
+            ApplyResponseCutoff(text),
             true,
             text
          );
@@ -262,5 +265,23 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return text.Replace("\r", "\n", StringComparison.Ordinal).Trim();
+   }
+
+   internal static string ApplyResponseCutoff(string text)
+   {
+      if(string.IsNullOrWhiteSpace(text) ||
+         text.Length <= MaxResponseCharacters)
+      {
+         return text;
+      }
+
+      var cutoffLength = MaxResponseCharacters - CutoffMarker.Length;
+
+      if(cutoffLength <= 0)
+      {
+         return CutoffMarker;
+      }
+
+      return text[..cutoffLength].TrimEnd() + CutoffMarker;
    }
 }
