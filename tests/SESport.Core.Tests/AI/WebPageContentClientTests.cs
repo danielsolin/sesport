@@ -75,6 +75,50 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchFallsBackToBrowserWhenHttpLooksClientRendered()
+   {
+      var browserCalls = 0;
+      var handler = new RecordingHandler(CreateClientRenderedFallbackHtml());
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+
+            return Task.FromResult<string?>(
+               """
+               <html>
+                  <head>
+                     <title>Browser Result</title>
+                  </head>
+                  <body>
+                     <article>
+                        <h1>Browser-visible title</h1>
+                        <p>This year a world-class field.</p>
+                     </article>
+                  </body>
+               </html>
+               """
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/client-rendered-fallback",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Browser Result", page!.Title);
+      Assert.Contains("Browser-visible title", page.Headings);
+      Assert.DoesNotContain(
+         "Page appears to be client-rendered.",
+         page.MainText
+      );
+   }
+
+   [Fact]
    public async Task FetchKeepsHttpResultWhenBrowserIsNotNeeded()
    {
       var browserCalls = 0;
@@ -310,6 +354,29 @@ public class WebPageContentClientTests
          </head>
          <body>
             <p>Checking your browser before accessing the site.</p>
+         </body>
+      </html>
+      """;
+   }
+
+   private static string CreateClientRenderedFallbackHtml()
+   {
+      return """
+      <html>
+         <head>
+            <title>The Amateur Championship</title>
+            <meta name="description"
+                  content="Today, the championship is one of the biggest and
+                           most prestigious amateur events in the world." />
+         </head>
+         <body>
+            <script type="application/ld+json">
+               {
+                  "@context": "https://schema.org",
+                  "@type": "Event",
+                  "name": "The Amateur Championship"
+               }
+            </script>
          </body>
       </html>
       """;

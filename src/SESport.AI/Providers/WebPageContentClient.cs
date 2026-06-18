@@ -14,6 +14,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
 {
    private const int MaxMainTextLength = 12000;
    private const string CutOffMarker = "[CUTOFF]";
+   private static readonly TimeSpan BrowserNavigationTimeout =
+      TimeSpan.FromSeconds(30);
+   private static readonly TimeSpan BrowserLoadStateTimeout =
+      TimeSpan.FromSeconds(15);
    private readonly HttpClient httpClient;
    private readonly Func<Uri, CancellationToken, Task<string?>>
       browserHtmlFetcher;
@@ -156,7 +160,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          new PageGotoOptions
          {
             WaitUntil = WaitUntilState.DOMContentLoaded,
-            Timeout = 15000
+            Timeout = (float)BrowserNavigationTimeout.TotalMilliseconds
          }
       );
 
@@ -166,7 +170,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             LoadState.NetworkIdle,
             new PageWaitForLoadStateOptions
             {
-               Timeout = 5000
+               Timeout = (float)BrowserLoadStateTimeout.TotalMilliseconds
             }
          );
       }
@@ -186,6 +190,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
          page.MainText,
          page.MainTextFull
       );
+
+      if(pageText.Contains(
+         "Page appears to be client-rendered.",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return true;
+      }
 
       if(string.IsNullOrWhiteSpace(page.MainText))
       {
