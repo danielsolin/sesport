@@ -41,17 +41,18 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = TimeSpan.FromMinutes(20);
       });
-      services.AddHttpClient<
-         IWebSearchClient,
-         SearxngWebSearchClient
-      >(client =>
-      {
-         client.Timeout = TimeSpan.FromSeconds(30);
-      });
-      services.AddHttpClient<GoogleWebSearchClient>(client =>
-      {
-         client.Timeout = TimeSpan.FromSeconds(30);
-      });
+      services.AddHttpClient<IWebSearchClient, SearxngWebSearchClient>(
+         client =>
+         {
+            client.Timeout = TimeSpan.FromSeconds(30);
+         }
+      );
+      services.AddHttpClient<GoogleWebSearchClient>(
+         client =>
+         {
+            client.Timeout = TimeSpan.FromSeconds(30);
+         }
+      );
       services.AddHttpClient<
          IWebPageContentClient,
          WebPageContentClient
