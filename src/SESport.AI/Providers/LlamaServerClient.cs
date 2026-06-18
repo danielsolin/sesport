@@ -124,11 +124,15 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                toolRoundCount
             );
+            var conversationCharacterCount = EstimateConversationSize(
+               messages
+            );
             toolTrace.Add(
                CreateToolBudgetTraceEntry(
                   turn,
                   prompt.MaxToolRounds,
-                  toolRoundCount
+                  toolRoundCount,
+                  conversationCharacterCount
                )
             );
             await ReportToolTraceProgressAsync(
@@ -185,15 +189,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                   cancellationToken
                );
 
-               toolTrace.Add(
-                  CreateToolTraceEntry(turn, toolCall, toolResult)
-               );
-               await ReportToolTraceProgressAsync(
-                  toolTrace,
-                  toolTraceUpdated,
-                  cancellationToken
-               );
-
                messages.Add(
                   new JsonObject
                   {
@@ -201,6 +196,19 @@ public sealed class LlamaServerClient : IAiProviderClient
                      ["tool_call_id"] = toolCall.Id,
                      ["content"] = toolResult
                   }
+               );
+
+               toolTrace.Add(
+                  CreateToolTraceEntry(
+                     turn,
+                     toolCall,
+                     toolResult
+                  )
+               );
+               await ReportToolTraceProgressAsync(
+                  toolTrace,
+                  toolTraceUpdated,
+                  cancellationToken
                );
             }
 
@@ -227,11 +235,15 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                prompt.MaxToolRounds ?? 0
             );
+            var conversationCharacterCount = EstimateConversationSize(
+               messages
+            );
             toolTrace.Add(
                CreateToolBudgetTraceEntry(
                   turn + 1,
                   prompt.MaxToolRounds,
-                  prompt.MaxToolRounds ?? 0
+                  prompt.MaxToolRounds ?? 0,
+                  conversationCharacterCount
                )
             );
             await ReportToolTraceProgressAsync(
@@ -589,7 +601,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static JsonObject CreateToolBudgetTraceEntry(
       int turn,
       int? maxToolRounds,
-      int toolRoundCount
+      int toolRoundCount,
+      int conversationCharacterCount
    )
    {
       if(maxToolRounds is null)
@@ -612,6 +625,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["enabled"] = true,
          ["remaining"] = remainingToolCalls,
          ["max"] = maxToolRounds.Value,
+         ["conversation_chars"] = conversationCharacterCount,
          ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
             $"{maxToolRounds.Value}."
       };
@@ -2157,11 +2171,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          return false;
       }
 
-      repeatedResult = BuildRepeatedToolResult(
-         toolCall.Name,
-         record.Turn,
-         record.Result
-      );
+      repeatedResult = record.Result;
       return true;
    }
 
@@ -2184,18 +2194,6 @@ public sealed class LlamaServerClient : IAiProviderClient
          turn,
          result
       );
-   }
-
-   private static string BuildRepeatedToolResult(
-      string toolName,
-      int previousTurn,
-      string previousResult
-   )
-   {
-      return
-         $"This exact {toolName} call was already made in round " +
-         $"{previousTurn}.\n\n" +
-         previousResult;
    }
 
    private static string BuildPageCallSignature(
@@ -2221,11 +2219,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          return false;
       }
 
-      repeatedResult = BuildRepeatedToolResult(
-         "page",
-         record.Turn,
-         record.Result
-      );
+      repeatedResult = record.Result;
       return true;
    }
 

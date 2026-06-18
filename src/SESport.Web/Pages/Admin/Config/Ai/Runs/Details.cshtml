@@ -74,8 +74,12 @@
             <dd>@DetailsModel.GetToolRoundCount(Model.Run)</dd>
          </div>
          <div>
-            <dt>Conversation chars</dt>
+            <dt>Final conversation chars</dt>
             <dd>@Model.Run.ConversationCharacterCount</dd>
+         </div>
+         <div>
+            <dt>Max conversation chars</dt>
+            <dd>@DetailsModel.GetMaxConversationCharacterCount(Model.Run)</dd>
          </div>
          <div>
             <dt>Correlation</dt>

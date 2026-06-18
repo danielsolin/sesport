@@ -117,6 +117,30 @@ public class DetailsModel(AiRepository repository) : PageModel
       return Math.Max(toolRoundCount, ParseToolTrace(toolTraceJson).Count);
    }
 
+   public static int GetMaxConversationCharacterCount(AiRunDetail run)
+   {
+      return GetMaxConversationCharacterCount(
+         run.ConversationCharacterCount,
+         run.ToolTraceJson
+      );
+   }
+
+   public static int GetMaxConversationCharacterCount(
+      int conversationCharacterCount,
+      string? toolTraceJson
+   )
+   {
+      var maxRoundConversationCharacters = ParseToolTrace(toolTraceJson)
+         .Select(turn => turn.RoundConversationCharacterCount ?? 0)
+         .DefaultIfEmpty(0)
+         .Max();
+
+      return Math.Max(
+         conversationCharacterCount,
+         maxRoundConversationCharacters
+      );
+   }
+
    private static string FormatDuration(
       decimal? durationSeconds,
       DateTimeOffset startedAt,
@@ -254,6 +278,15 @@ public class DetailsModel(AiRepository repository) : PageModel
             var kind = GetString(entry, "kind");
             var turn = GetInt32(entry, "turn") ?? 0;
             var builder = GetOrCreateTurn(turns, turn);
+            var conversationChars = GetInt32(entry, "conversation_chars");
+
+            if(conversationChars is not null)
+            {
+               builder.RoundConversationCharacterCount = Math.Max(
+                  builder.RoundConversationCharacterCount ?? 0,
+                  conversationChars.Value
+               );
+            }
 
             if(string.Equals(kind, "assistant", StringComparison.Ordinal))
             {
@@ -559,6 +592,7 @@ public class DetailsModel(AiRepository repository) : PageModel
 
    public sealed record ToolTraceTurnViewModel(
       int Turn,
+      int? RoundConversationCharacterCount,
       string? FinishReason,
       string? AssistantContent,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
@@ -570,6 +604,8 @@ public class DetailsModel(AiRepository repository) : PageModel
    private sealed class ToolTraceTurnBuilder(int turn)
    {
       public int Turn { get; } = turn;
+
+      public int? RoundConversationCharacterCount { get; set; }
 
       public string? FinishReason { get; set; }
 
@@ -583,6 +619,7 @@ public class DetailsModel(AiRepository repository) : PageModel
       {
          return new ToolTraceTurnViewModel(
             Turn,
+            RoundConversationCharacterCount,
             FinishReason,
             AssistantContent,
             ToolCalls,
@@ -598,6 +635,15 @@ public class DetailsModel(AiRepository repository) : PageModel
          {
             new($"Round {Turn}", "tool-trace-badge-round")
          };
+
+         if(RoundConversationCharacterCount is not null)
+         {
+            badges.Add(new(
+               $"Round conversation chars " +
+               $"{RoundConversationCharacterCount.Value:N0}",
+               "tool-trace-badge-count"
+            ));
+         }
 
          if(!string.IsNullOrWhiteSpace(AssistantContent))
          {

@@ -993,6 +993,11 @@ h2 {
    color: var(--accent-strong);
 }
 
+.tool-trace-badge-count {
+   background: #f3f4f1;
+   color: var(--muted);
+}
+
 .tool-trace-badge-assistant {
    background: #f0f1f6;
    color: #434762;
