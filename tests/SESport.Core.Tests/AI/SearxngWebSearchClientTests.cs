@@ -102,6 +102,33 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchFallsBackToPdfQueryForDocumentLikeQueries()
+   {
+      var handler = new RecordingHandler(
+         CreateResponseJson(),
+         CreatePdfMixedResponseJson()
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
+
+      var results = await client.SearchAsync(
+         "R&A The Amateur Championship 2026 entry list Day 1 first session",
+         5,
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains("engines=google", handler.RequestBodies[0]);
+      Assert.DoesNotContain("filetype%3Apdf", handler.RequestBodies[0]);
+      Assert.Contains("filetype%3Apdf", handler.RequestBodies[1]);
+      Assert.Equal(2, results.Count);
+      Assert.Equal("PDF roster", results[0].Title);
+      Assert.Equal("https://example.test/roster.pdf", results[0].Url);
+   }
+
+   [Fact]
    public async Task SearchReturnsUnverifiedResults()
    {
       var handler = new RecordingHandler(CreateResponseJson());
@@ -242,16 +269,18 @@ public class SearxngWebSearchClientTests
 
    private sealed class RecordingHandler : HttpMessageHandler
    {
-      private readonly string responseJson;
+      private readonly Queue<string> responseJsons;
 
-      public RecordingHandler(string responseJson)
+      public RecordingHandler(params string[] responseJsons)
       {
-         this.responseJson = responseJson;
+         this.responseJsons = new Queue<string>(responseJsons);
       }
 
       public Uri? RequestUri { get; private set; }
 
       public string RequestBody { get; private set; } = string.Empty;
+
+      public List<string> RequestBodies { get; } = [];
 
       public string? AcceptHeader { get; private set; }
 
@@ -268,6 +297,11 @@ public class SearxngWebSearchClientTests
          RequestBody = request.Content is null
             ? string.Empty
             : await request.Content.ReadAsStringAsync(cancellationToken);
+         RequestBodies.Add(RequestBody);
+
+         var responseJson = responseJsons.Count > 0
+            ? responseJsons.Dequeue()
+            : CreateResponseJson();
 
          return new HttpResponseMessage(HttpStatusCode.OK)
          {
