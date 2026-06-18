@@ -116,6 +116,10 @@ public class AiJobRunnerTests
       Assert.Equal(AiJobRunStatus.Pending, runRepository.StoredRun!.Status);
       Assert.Equal(runId, runRepository.StoredRun.Id);
       Assert.Null(runRepository.StoredRun.RawRequestJson);
+      Assert.Equal(
+         ExecutionEnvironment.Current,
+         runRepository.StoredRun.ExecutionEnvironment
+      );
    }
 
    private sealed class RecordingJobDefinitionRepository

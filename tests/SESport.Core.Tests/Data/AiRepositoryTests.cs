@@ -1,5 +1,6 @@
 using Npgsql;
 
+using SESport.AI;
 using SESport.AI.Persistence;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
@@ -114,6 +115,86 @@ public sealed class AiRepositoryTests
       finally
       {
          await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task ClaimNextRunAsyncSkipsOtherExecutionEnvironments()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var otherRunId = Guid.NewGuid();
+      var matchingRunId = Guid.NewGuid();
+      var otherExecutionEnvironment = $"other-worker-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         otherRunId,
+         jobId,
+         promptId,
+         providerId,
+         DateTimeOffset.UtcNow.AddHours(-3),
+         otherExecutionEnvironment
+      );
+      await InsertRunAsync(
+         dataSource,
+         matchingRunId,
+         jobId,
+         promptId,
+         providerId,
+         DateTimeOffset.UtcNow.AddHours(-2),
+         ExecutionEnvironment.Current
+      );
+
+      try
+      {
+         var claimedRunId = await repository.ClaimNextRunAsync(
+            CancellationToken.None
+         );
+
+         Assert.Equal(matchingRunId, claimedRunId);
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select id, status_id, started_at
+            from ai_job_runs
+            where id in (@other_run_id, @matching_run_id)
+            """;
+         command.Parameters.AddWithValue("other_run_id", otherRunId);
+         command.Parameters.AddWithValue("matching_run_id", matchingRunId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         var runs = new Dictionary<Guid, (string statusId, DateTimeOffset startedAt)>();
+
+         while(await reader.ReadAsync())
+         {
+            runs[reader.GetGuid(0)] = (
+               reader.GetString(1),
+               reader.GetFieldValue<DateTimeOffset>(2)
+            );
+         }
+
+         Assert.Equal("running", runs[otherRunId].statusId);
+         Assert.Equal("running", runs[matchingRunId].statusId);
+         Assert.True(
+            runs[otherRunId].startedAt < runs[matchingRunId].startedAt
+         );
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, matchingRunId);
+         await DeleteRunAsync(dataSource, otherRunId);
          await DeletePromptAsync(dataSource, promptId);
          await DeleteJobAsync(dataSource, jobId);
          await DeleteProviderAsync(dataSource, providerId);
@@ -252,7 +333,8 @@ public sealed class AiRepositoryTests
       string jobId,
       Guid promptId,
       string providerId,
-      DateTimeOffset? startedAt = null
+      DateTimeOffset? startedAt = null,
+      string? executionEnvironment = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -280,7 +362,8 @@ public sealed class AiRepositoryTests
             output_tokens,
             reasoning_tokens,
             tool_round_count,
-            conversation_character_count
+            conversation_character_count,
+            execution_environment
          )
          values (
             @id,
@@ -304,13 +387,18 @@ public sealed class AiRepositoryTests
             null,
             null,
             0,
-            0
+            0,
+            @execution_environment
          )
          """;
       command.Parameters.AddWithValue("id", runId);
       command.Parameters.AddWithValue("job_id", jobId);
       command.Parameters.AddWithValue("prompt_id", promptId);
       command.Parameters.AddWithValue("provider_id", providerId);
+      command.Parameters.AddWithValue(
+         "execution_environment",
+         executionEnvironment ?? ExecutionEnvironment.Current
+      );
       command.Parameters.AddWithValue(
          "started_at",
          startedAt ?? DateTimeOffset.UtcNow.AddHours(-2)

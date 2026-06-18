@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Web.Services;
 
@@ -10,7 +11,8 @@ namespace SESport.Web.Pages.Admin.Runs;
 
 public class IndexModel(
    AiAdminRepository adminRepository,
-   AiRepository repository
+   AiRepository repository,
+   AdminDatePreferenceStore datePreferenceStore
 ) : PageModel
 {
    public IReadOnlyList<AiRunListItem> Runs { get; private set; } = [];
@@ -37,7 +39,7 @@ public class IndexModel(
 
    private DateOnly GetSelectedDate()
    {
-      return Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+      return datePreferenceStore.ResolveDate(HttpContext, Date);
    }
 
    public async Task OnGetAsync(CancellationToken cancellationToken)

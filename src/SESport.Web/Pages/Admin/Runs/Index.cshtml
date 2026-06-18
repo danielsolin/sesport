@@ -59,6 +59,7 @@
    <table class="admin-table admin-table-hover ai-runs-table">
       <colgroup>
          <col class="ai-runs-col-started" />
+         <col class="ai-runs-col-environment" />
          <col class="ai-runs-col-job" />
          <col class="ai-runs-col-event" />
          <col class="ai-runs-col-provider" />
@@ -70,6 +71,7 @@
       <thead>
          <tr>
             <th>Started</th>
+            <th>Execution env</th>
             <th>Job</th>
             <th>Event</th>
             <th>Provider</th>
@@ -88,6 +90,14 @@
                      <span>@TimeDisplay.FormatLocalDate(run.StartedAt)</span>
                      <span class="ai-runs-cell-secondary">
                         @TimeDisplay.FormatLocalTime(run.StartedAt)
+                     </span>
+                  </div>
+               </td>
+               <td>
+                  <div class="ai-runs-cell-stack">
+                     <span class="ai-runs-environment"
+                           title="@run.ExecutionEnvironment">
+                        @(run.ExecutionEnvironment ?? "-")
                      </span>
                   </div>
                </td>

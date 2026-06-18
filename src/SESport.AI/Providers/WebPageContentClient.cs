@@ -130,21 +130,45 @@ public sealed class WebPageContentClient : IWebPageContentClient
             """
             (countryNamesJson) => {
                const countryNames = JSON.parse(countryNamesJson);
+               const flagExtensions = '(?:svg|png|gif)';
 
                document.querySelectorAll('img').forEach((img) => {
                   const src = img.getAttribute('src') || '';
                   const match =
-                     src.match(/\/svg\/flag(?:s)?\/([A-Z]{2})\.svg/i) ||
-                     src.match(/\/img\/flag-([a-z]{2})\.svg/i);
-                  const code = match?.[1]?.toUpperCase();
+                     src.match(
+                        new RegExp(
+                           `/svg/flag(?:s)?/([A-Z]{2})\\.` +
+                           flagExtensions + '$',
+                           'i'
+                        )
+                     ) ||
+                     src.match(
+                        new RegExp(
+                           `/img/flag-([a-z]{2})\\.` +
+                           flagExtensions + '$',
+                           'i'
+                        )
+                     ) ||
+                    src.match(
+                        new RegExp(
+                           `/Flags/([^/?#]+)\\.` +
+                           flagExtensions + '$',
+                           'i'
+                        )
+                     ) ||
+                     src.match(
+                        /\/Flag_of_([A-Za-z_]+)\.svg\/[^/?#]+\.(?:svg|png|gif)$/i
+                     );
+                  const code = match?.[1];
 
                   if(!code) {
                      return;
                   }
 
-                  const label = countryNames[code] ||
+                  const labelKey = code.replaceAll('_', ' ');
+                  const label = countryNames[labelKey.toUpperCase()] ||
                      img.getAttribute('alt') ||
-                     code;
+                     labelKey;
 
                   if(label) {
                      img.replaceWith(

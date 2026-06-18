@@ -1,5 +1,6 @@
 using System.Text.Json;
 
+using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Services;
@@ -370,7 +371,8 @@ public sealed class AiJobRunner(
          null,
          null,
          null,
-         null
+         null,
+         ExecutionEnvironment.Current
       );
 
       return new ExecutionContext(
@@ -639,7 +641,8 @@ internal static class AiRunDetailExtensions
          run.DurationSeconds,
          run.InputTokens,
          run.OutputTokens,
-         run.ReasoningTokens
+         run.ReasoningTokens,
+         ExecutionEnvironment.Current
       );
    }
 

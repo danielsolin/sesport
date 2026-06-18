@@ -48,6 +48,6 @@ public class LoginModel(IConfiguration configuration) : PageModel
          principal
       );
 
-      return RedirectToPage("/Admin/Activities/Index");
+      return RedirectToPage("/Admin/Broadcasts/Index");
    }
 }

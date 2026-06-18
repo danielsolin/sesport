@@ -5,13 +5,16 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
-using SESport.Core.Formatting;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Runs;
 
-public class DetailsModel(AiRepository repository) : PageModel
+public class DetailsModel(
+   AiRepository repository,
+   AdminDatePreferenceStore datePreferenceStore
+) : PageModel
 {
    private const string ConversationHistorySummaryPrefix =
       "Conversation history summary:";
@@ -56,7 +59,7 @@ public class DetailsModel(AiRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
-      SelectedDate = Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
       Run = await repository.GetRunAsync(id, cancellationToken);
 
       if(Run is not null)

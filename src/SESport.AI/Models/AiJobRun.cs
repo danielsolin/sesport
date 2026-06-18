@@ -25,5 +25,6 @@ public sealed record AiJobRun(
    decimal? DurationSeconds,
    int? InputTokens,
    int? OutputTokens,
-   int? ReasoningTokens
+   int? ReasoningTokens,
+   string ExecutionEnvironment
 );

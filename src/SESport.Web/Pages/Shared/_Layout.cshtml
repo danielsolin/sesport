@@ -70,13 +70,13 @@
          @if(isAdmin)
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
-               <a class="@runsClass"
-                  asp-page="/Admin/Runs/Index">
-                  Runs
-               </a>
                <a class="@broadcastsClass"
                   asp-page="/Admin/Broadcasts/Index">
                   Broadcasts
+               </a>
+               <a class="@runsClass"
+                  asp-page="/Admin/Runs/Index">
+                  Runs
                </a>
                <a class="@activitiesClass"
                   asp-page="/Admin/Activities/Index">
@@ -101,7 +101,7 @@
       {
          <nav class="site-nav">
             <a asp-page="/Index">Public</a>
-            <a asp-page="/Admin/Index">Admin</a>
+            <a asp-page="/Admin/Broadcasts/Index">Admin</a>
          </nav> 
       }
    </header>

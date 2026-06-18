@@ -5,6 +5,7 @@ using Npgsql;
 
 using NpgsqlTypes;
 
+using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
@@ -51,6 +52,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       var sql = new StringBuilder()
          .AppendLine("select")
          .AppendLine("   r.id,")
+         .AppendLine("   r.execution_environment,")
          .AppendLine("   j.label,")
          .AppendLine("   r.input_payload->>'event_name',")
          .AppendLine("   p.label,")
@@ -95,15 +97,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          runs.Add(
             new AiRunListItem(
                reader.GetGuid(0),
-               reader.GetString(1),
-               ReadNullableString(reader, 2),
-               reader.GetString(3),
-               ReadNullableString(reader, 4),
-               reader.GetString(5),
-               reader.GetInt32(6),
-               ReadNullableString(reader, 7),
-               reader.GetFieldValue<DateTimeOffset>(8),
-               ReadNullableDecimal(reader, 9)
+               ReadNullableString(reader, 1),
+               reader.GetString(2),
+               ReadNullableString(reader, 3),
+               reader.GetString(4),
+               ReadNullableString(reader, 5),
+               reader.GetString(6),
+               reader.GetInt32(7),
+               ReadNullableString(reader, 8),
+               reader.GetFieldValue<DateTimeOffset>(9),
+               ReadNullableDecimal(reader, 10)
             )
          );
       }
@@ -540,7 +543,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             raw_request, raw_response, tool_trace, output_text, error_message,
             started_at, completed_at, duration_seconds, input_tokens,
             output_tokens, reasoning_tokens, tool_round_count,
-            conversation_character_count
+            conversation_character_count, execution_environment
          )
          values (
             @id, @job_id, @prompt_id, @prompt_version, @prompt_system_prompt,
@@ -550,7 +553,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             @output_text, @error_message, @started_at, @completed_at,
             @duration_seconds, @input_tokens, @output_tokens,
             @reasoning_tokens, @tool_round_count,
-            @conversation_character_count
+            @conversation_character_count, @execution_environment
          )
          """;
 
@@ -571,11 +574,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             started_at = now()
          where id = @id
             and status_id = 'pending'
+            and execution_environment = @execution_environment
          returning id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue(
+         "execution_environment",
+         ExecutionEnvironment.Current
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -592,6 +600,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             select id
             from ai_job_runs
             where status_id in ('pending', 'running')
+               and execution_environment = @execution_environment
             order by
                case status_id
                   when 'running' then 0
@@ -613,6 +622,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          """;
 
       await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "execution_environment",
+         ExecutionEnvironment.Current
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -823,6 +836,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "reasoning_tokens",
          (object?)run.ReasoningTokens ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "execution_environment",
+         run.ExecutionEnvironment
       );
    }
 

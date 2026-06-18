@@ -796,16 +796,20 @@ h2 {
    width: 135px;
 }
 
+.ai-runs-col-environment {
+   width: 130px;
+}
+
 .ai-runs-col-job {
-   width: 160px;
+   width: 150px;
 }
 
 .ai-runs-col-event {
-   width: 220px;
+   width: 210px;
 }
 
 .ai-runs-col-provider {
-   width: 210px;
+   width: 200px;
 }
 
 .ai-runs-col-status {
@@ -841,6 +845,13 @@ h2 {
    font-size: 12px;
    line-height: 1.1;
    overflow-wrap: anywhere;
+}
+
+.ai-runs-environment {
+   display: block;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
 }
 
 .ai-runs-table th,

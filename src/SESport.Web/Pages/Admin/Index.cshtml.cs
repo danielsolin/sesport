@@ -1,14 +1,12 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SESport.Data;
 
 namespace SESport.Web.Pages.Admin;
 
-public class IndexModel(AdminRepository repository) : PageModel
+public class IndexModel : PageModel
 {
-   public IReadOnlyList<AdminArea> Areas { get; private set; } = [];
-
-   public void OnGet()
+   public IActionResult OnGet()
    {
-      Areas = repository.GetAdminAreas();
+      return RedirectToPage("/Admin/Broadcasts/Index");
    }
 }
