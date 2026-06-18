@@ -79,7 +79,7 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchDropsPdfResults()
+   public async Task SearchReturnsPdfResults()
    {
       var handler = new RecordingHandler(CreatePdfMixedResponseJson());
       var client = new SearxngWebSearchClient(
@@ -93,9 +93,11 @@ public class SearxngWebSearchClientTests
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("Official roster", results[0].Title);
-      Assert.Equal("https://example.test/roster", results[0].Url);
+      Assert.Equal(2, results.Count);
+      Assert.Equal("PDF roster", results[0].Title);
+      Assert.Equal("https://example.test/roster.pdf", results[0].Url);
+      Assert.Equal("Official roster", results[1].Title);
+      Assert.Equal("https://example.test/roster", results[1].Url);
    }
 
    [Fact]

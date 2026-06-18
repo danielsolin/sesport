@@ -195,17 +195,43 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchSkipsPdfResponses()
+   public async Task FetchSendsPdfResponsesToBrowserFallback()
    {
       var handler = new PdfRecordingHandler();
-      var client = new WebPageContentClient(new HttpClient(handler));
+      var browserCalls = 0;
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+
+            return Task.FromResult<string?>(
+               """
+               <html>
+                  <head>
+                     <title>PDF Browser Title</title>
+                  </head>
+                  <body>
+                     <article>
+                        <h1>PDF Browser Heading</h1>
+                        <p>PDF browser body.</p>
+                     </article>
+                  </body>
+               </html>
+               """
+            );
+         }
+      );
 
       var page = await client.FetchAsync(
          "https://example.test/entry-list.pdf",
          CancellationToken.None
       );
 
-      Assert.Null(page);
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("PDF Browser Title", page!.Title);
+      Assert.Contains("PDF Browser Heading", page.Headings);
    }
 
    [Fact]

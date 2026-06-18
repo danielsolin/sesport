@@ -134,11 +134,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             continue;
          }
 
-         if(IsPdfUrl(url))
-         {
-            continue;
-         }
-
          items.Add(
             new WebSearchResult(
                title,
@@ -200,19 +195,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       }
 
       return false;
-   }
-
-   private static bool IsPdfUrl(string url)
-   {
-      if(!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-      {
-         return false;
-      }
-
-      return uri.AbsolutePath.EndsWith(
-         ".pdf",
-         StringComparison.OrdinalIgnoreCase
-      );
    }
 
    private static string ReadString(

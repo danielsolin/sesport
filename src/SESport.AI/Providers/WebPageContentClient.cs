@@ -66,7 +66,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
       if(IsPdfResponse(response, absoluteUrl))
       {
-         return null;
+         return await TryFetchWithBrowserAsync(
+            absoluteUrl,
+            cancellationToken
+         );
       }
 
       var rawHtml = await response.Content.ReadAsStringAsync(
