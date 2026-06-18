@@ -8,6 +8,9 @@ namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
+   private const string BrowserUserAgent =
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
    private static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
    private static readonly TimeSpan BrowserLoadStateTimeout =
@@ -44,16 +47,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
       request.Headers.Accept.ParseAdd("text/html,application/xhtml+xml");
-      request.Headers.TryAddWithoutValidation(
-         "User-Agent",
-         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-         "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-      );
-      request.Headers.TryAddWithoutValidation(
-         "Accept-Language",
-         "en-US,en;q=0.9"
-      );
-
+      request.Headers.TryAddWithoutValidation("User-Agent", BrowserUserAgent);
       using var response = await httpClient.SendAsync(
          request,
          cancellationToken
@@ -85,10 +79,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          await using var context = await browser.NewContextAsync(
             new BrowserNewContextOptions
             {
-               Locale = "en-US",
-               UserAgent =
-                  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-                  "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+               UserAgent = BrowserUserAgent,
                ViewportSize = new ViewportSize
                {
                   Width = 1440,
