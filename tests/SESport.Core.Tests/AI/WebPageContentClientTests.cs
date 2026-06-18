@@ -199,6 +199,14 @@ public class WebPageContentClientTests
       Assert.Equal(text, result);
    }
 
+   [Fact]
+   public void GetCountryDisplayNameUsesNetRegionInfo()
+   {
+      Assert.Equal("Sweden", WebPageContentClient.GetCountryDisplayName("SE"));
+      Assert.Equal("Norway", WebPageContentClient.GetCountryDisplayName("NO"));
+      Assert.Null(WebPageContentClient.GetCountryDisplayName("??"));
+   }
+
    private static byte[] CreatePdfBytes()
    {
       var builder = new PdfDocumentBuilder();

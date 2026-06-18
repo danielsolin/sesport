@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;
 using UglyToad.PdfPig;
@@ -18,6 +20,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       TimeSpan.FromSeconds(30);
    private static readonly TimeSpan BrowserLoadStateTimeout =
       TimeSpan.FromSeconds(30);
+   private static readonly IReadOnlyDictionary<string, string>
+      CountryNamesByCode = BuildCountryNamesByCode();
    private readonly HttpClient httpClient;
    private readonly Func<Uri, CancellationToken, Task<WebPageContent?>>
       browserPageFetcher;
@@ -121,6 +125,45 @@ public sealed class WebPageContentClient : IWebPageContentClient
          cancellationToken.ThrowIfCancellationRequested();
 
          var title = await page.TitleAsync();
+         var countryNamesJson = JsonSerializer.Serialize(CountryNamesByCode);
+         await page.EvaluateAsync(
+            """
+            (countryNamesJson) => {
+               const countryNames = JSON.parse(countryNamesJson);
+
+               document.querySelectorAll('img').forEach((img) => {
+                  const src = img.getAttribute('src') || '';
+                  const match =
+                     src.match(/\/svg\/flag(?:s)?\/([A-Z]{2})\.svg/i) ||
+                     src.match(/\/img\/flag-([a-z]{2})\.svg/i);
+                  const code = match?.[1]?.toUpperCase();
+
+                  if(!code) {
+                     return;
+                  }
+
+                  const label = countryNames[code] ||
+                     img.getAttribute('alt') ||
+                     code;
+
+                  if(label) {
+                     img.replaceWith(
+                        document.createTextNode(` ${label} `)
+                     );
+                  }
+               });
+
+               document.querySelectorAll(
+                  'nav, footer, aside, [role="dialog"], ' +
+                  '[role="banner"], [aria-modal="true"], ' +
+                  '[class*="modal"], [class*="overlay"], ' +
+                  '[class*="consent"], [class*="privacy"], ' +
+                  '[class*="banner"]'
+               ).forEach((element) => element.remove());
+            }
+            """,
+            countryNamesJson
+         );
          var visibleText = await page.Locator("body").InnerTextAsync();
          var normalizedText = NormalizeText(visibleText);
 
@@ -255,6 +298,65 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       return absoluteUrl.ToString();
+   }
+
+   internal static string? GetCountryDisplayName(string? countryCode)
+   {
+      if(string.IsNullOrWhiteSpace(countryCode))
+      {
+         return null;
+      }
+
+      try
+      {
+         return new RegionInfo(countryCode.Trim().ToUpperInvariant())
+            .EnglishName;
+      }
+      catch(ArgumentException)
+      {
+         return null;
+      }
+   }
+
+   private static IReadOnlyDictionary<string, string> BuildCountryNamesByCode()
+   {
+      var countryNames = new Dictionary<string, string>(
+         StringComparer.OrdinalIgnoreCase
+      );
+
+      foreach(var culture in CultureInfo.GetCultures(
+         CultureTypes.SpecificCultures
+      ))
+      {
+         RegionInfo? region;
+
+         try
+         {
+            region = new RegionInfo(culture.Name);
+         }
+         catch(ArgumentException)
+         {
+            continue;
+         }
+
+         var code = region.TwoLetterISORegionName;
+
+         if(countryNames.ContainsKey(code))
+         {
+            continue;
+         }
+
+         var displayName = GetCountryDisplayName(code);
+
+         if(string.IsNullOrWhiteSpace(displayName))
+         {
+            continue;
+         }
+
+         countryNames[code] = displayName;
+      }
+
+      return countryNames;
    }
 
    private static string NormalizeText(string? text)
