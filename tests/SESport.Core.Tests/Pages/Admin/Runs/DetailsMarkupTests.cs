@@ -1,4 +1,4 @@
-namespace SESport.Core.Tests.Pages.Admin.Config.Ai.Runs;
+namespace SESport.Core.Tests.Pages.Admin.Runs;
 
 public sealed class DetailsMarkupTests
 {
@@ -10,7 +10,7 @@ public sealed class DetailsMarkupTests
       );
       var htmlPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/Pages/Admin/Config/Ai/Runs/Details.cshtml"
+         "src/SESport.Web/Pages/Admin/Runs/Details.cshtml"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
 

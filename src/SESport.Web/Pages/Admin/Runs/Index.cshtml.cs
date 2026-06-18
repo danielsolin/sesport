@@ -6,7 +6,7 @@ using SESport.AI.Persistence;
 using SESport.Core.Formatting;
 using SESport.Web.Services;
 
-namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
+namespace SESport.Web.Pages.Admin.Runs;
 
 public class IndexModel(
    AiAdminRepository adminRepository,

@@ -4,6 +4,10 @@
       "/Admin",
       StringComparison.OrdinalIgnoreCase
    );
+   var isRuns = requestPath.StartsWith(
+      "/Admin/Runs",
+      StringComparison.OrdinalIgnoreCase
+   );
    var isBroadcasts = requestPath.StartsWith(
       "/Admin/Broadcasts",
       StringComparison.OrdinalIgnoreCase
@@ -28,6 +32,9 @@
       StringComparison.OrdinalIgnoreCase
    );
    var adminMenuLink = "admin-top-menu-link";
+   var runsClass = isRuns
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
    var broadcastsClass = isBroadcasts
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
@@ -63,6 +70,10 @@
          @if(isAdmin)
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
+               <a class="@runsClass"
+                  asp-page="/Admin/Runs/Index">
+                  Runs
+               </a>
                <a class="@broadcastsClass"
                   asp-page="/Admin/Broadcasts/Index">
                   Broadcasts

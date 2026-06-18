@@ -1,6 +1,6 @@
-using SESport.Web.Pages.Admin.Config.Ai.Runs;
+using SESport.Web.Pages.Admin.Runs;
 
-namespace SESport.Core.Tests.Pages.Admin.Config.Ai.Runs;
+namespace SESport.Core.Tests.Pages.Admin.Runs;
 
 public sealed class DetailsModelTests
 {

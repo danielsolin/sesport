@@ -1,13 +1,12 @@
 @page
-@model SESport.Web.Pages.Admin.Config.Ai.Runs.IndexModel
+@model SESport.Web.Pages.Admin.Runs.IndexModel
 @{
-   ViewData["Title"] = "AI runs";
+   ViewData["Title"] = "Runs";
 }
 
 <section class="page-heading page-heading-row">
    <div>
-      <p class="eyebrow">Config</p>
-      <h1>AI runs</h1>
+      <h1>Runs</h1>
    </div>
 </section>
 
@@ -116,22 +115,24 @@
                   @DetailsModel.FormatDuration(run)
                </td>
                <td class="table-actions">
-                  <a asp-page="./Details"
-                     asp-route-id="@run.Id"
-                     asp-route-date="@Model.DateText"
-                     asp-route-jobId="@Model.JobId"
-                     asp-route-statusId="@Model.StatusId">
-                     View
-                  </a>
-                  <form method="post"
-                        asp-page-handler="Delete"
+                  <div class="ai-runs-table-actions">
+                     <a asp-page="./Details"
                         asp-route-id="@run.Id"
                         asp-route-date="@Model.DateText"
                         asp-route-jobId="@Model.JobId"
-                        asp-route-statusId="@Model.StatusId"
-                        onsubmit="return confirm('Sure?');">
-                     <button type="submit">Delete</button>
-                  </form>
+                        asp-route-statusId="@Model.StatusId">
+                        View
+                     </a>
+                     <form method="post"
+                           asp-page-handler="Delete"
+                           asp-route-id="@run.Id"
+                           asp-route-date="@Model.DateText"
+                           asp-route-jobId="@Model.JobId"
+                           asp-route-statusId="@Model.StatusId"
+                           onsubmit="return confirm('Sure?');">
+                        <button type="submit">Delete</button>
+                     </form>
+                  </div>
                </td>
             </tr>
          }

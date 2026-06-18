@@ -1642,8 +1642,7 @@
       }
 
       const link = document.createElement("a");
-      link.href =
-         `/Admin/Config/Ai/Runs/Details/${encodeURIComponent(runId)}`;
+      link.href = `/Admin/Runs/Details/${encodeURIComponent(runId)}`;
       link.target = "_blank";
       link.rel = "noreferrer noopener";
       link.textContent = "View run";

@@ -126,6 +126,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return
       [
          new AdminArea(
+            "Runs",
+            "Inspect AI job runs.",
+            "/Admin/Runs"
+         ),
+         new AdminArea(
             "Broadcasts",
             "Inspect imported sport broadcasts from EPG data.",
             "/Admin/Broadcasts"
@@ -200,8 +205,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             [
                new AdminNavItem("AI providers", "/Admin/Config/Ai/Providers"),
                new AdminNavItem("AI jobs", "/Admin/Config/Ai/Jobs"),
-               new AdminNavItem("AI prompts", "/Admin/Config/Ai/Prompts"),
-               new AdminNavItem("AI runs", "/Admin/Config/Ai/Runs")
+               new AdminNavItem("AI prompts", "/Admin/Config/Ai/Prompts")
             ]
          ),
          new AdminNavGroup(

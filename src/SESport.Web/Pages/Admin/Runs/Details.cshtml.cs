@@ -9,7 +9,7 @@ using SESport.Core.Formatting;
 using SESport.Core.Domain;
 using SESport.Web.Services;
 
-namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
+namespace SESport.Web.Pages.Admin.Runs;
 
 public class DetailsModel(AiRepository repository) : PageModel
 {

@@ -624,6 +624,7 @@ h2 {
 }
 
 .admin-table-wrap {
+   width: 100%;
    overflow-x: auto;
    border: 1px solid var(--line);
    border-radius: 8px;
@@ -787,7 +788,7 @@ h2 {
 
 .ai-runs-table {
    table-layout: fixed;
-   width: auto;
+   width: 100%;
    min-width: 0;
 }
 
@@ -820,7 +821,7 @@ h2 {
 }
 
 .ai-runs-col-actions {
-   width: 56px;
+   width: 72px;
 }
 
 .ai-runs-provider {
@@ -849,14 +850,33 @@ h2 {
 }
 
 .ai-runs-table .table-actions {
+   text-align: left;
    padding-left: 4px;
-   padding-right: 14px;
+   padding-right: 8px;
+}
+
+.ai-runs-table-actions {
+   display: grid;
+   gap: 4px;
 }
 
 .ai-runs-table .table-actions a {
-   display: inline-block;
-   white-space: nowrap;
+   display: block;
+   width: 100%;
+   white-space: normal;
+   text-align: left;
    font-size: 12px;
+}
+
+.ai-runs-table .table-actions form {
+   display: block;
+   width: 100%;
+}
+
+.ai-runs-table .table-actions button {
+   display: block;
+   width: 100%;
+   text-align: left;
 }
 
 .admin-table input[type="checkbox"] {
