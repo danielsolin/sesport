@@ -17,6 +17,7 @@ public sealed class DetailsMarkupTests
       AssertOrder(
          html,
          "tool-trace-summary-content",
+         "summary>Conversation history summary</summary>",
          "summary>Output</summary>",
          "summary>Raw final request</summary>",
          "summary>Raw final response</summary>",

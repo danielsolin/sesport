@@ -249,6 +249,20 @@
       </details>
    </section>
 
+   @if (!string.IsNullOrWhiteSpace(
+         Model.ConversationHistorySummaryText
+      ))
+   {
+      <section class="form-section">
+         <details class="run-data-details">
+            <summary>Conversation history summary</summary>
+            <pre class="prompt-details-pre">
+@Model.ConversationHistorySummaryText
+            </pre>
+         </details>
+      </section>
+   }
+
    <section class="form-section">
       <details class="run-data-details">
          <summary>Output</summary>

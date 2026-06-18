@@ -12,9 +12,15 @@ namespace SESport.Web.Pages.Admin.Config.Ai.Runs;
 
 public class DetailsModel(AiRepository repository) : PageModel
 {
+   private const string ConversationHistorySummaryPrefix =
+      "Conversation history summary:";
+
    public AiRunDetail? Run { get; private set; }
 
    public string SystemPromptText { get; private set; } = string.Empty;
+
+   public string ConversationHistorySummaryText { get; private set; } =
+      string.Empty;
 
    public string UserPromptTemplateText { get; private set; } = string.Empty;
 
@@ -55,6 +61,8 @@ public class DetailsModel(AiRepository repository) : PageModel
       if(Run is not null)
       {
          ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
+         ConversationHistorySummaryText =
+            GetConversationHistorySummaryText(Run.RawRequestJson);
          SystemPromptText = Run.SystemPrompt;
          UserPromptTemplateText = Run.UserPromptTemplate;
          RenderedPromptText = Run.RenderedPrompt;
@@ -76,6 +84,67 @@ public class DetailsModel(AiRepository repository) : PageModel
       }
 
       return value.Trim();
+   }
+
+   private static string GetConversationHistorySummaryText(
+      string? rawRequestJson
+   )
+   {
+      if(string.IsNullOrWhiteSpace(rawRequestJson))
+      {
+         return string.Empty;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(rawRequestJson);
+
+         if(document.RootElement.ValueKind != JsonValueKind.Object ||
+            !document.RootElement.TryGetProperty(
+               "messages",
+               out var messages
+            ) ||
+            messages.ValueKind != JsonValueKind.Array)
+         {
+            return string.Empty;
+         }
+
+         foreach(var message in messages.EnumerateArray())
+         {
+            if(message.ValueKind != JsonValueKind.Object)
+            {
+               continue;
+            }
+
+            if(!string.Equals(
+               GetString(message, "role"),
+               "system",
+               StringComparison.Ordinal
+            ))
+            {
+               continue;
+            }
+
+            var content = GetString(message, "content") ?? string.Empty;
+
+            if(!content.StartsWith(
+               ConversationHistorySummaryPrefix,
+               StringComparison.Ordinal
+            ))
+            {
+               continue;
+            }
+
+            return content[
+               ConversationHistorySummaryPrefix.Length..
+            ].TrimStart();
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return string.Empty;
    }
 
    public static string FormatDuration(decimal? durationSeconds)
