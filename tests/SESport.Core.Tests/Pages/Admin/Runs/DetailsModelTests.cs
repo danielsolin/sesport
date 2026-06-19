@@ -45,6 +45,26 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void BuildExecutionEnvironmentOptionsIncludesCurrentEnvironment()
+   {
+      var currentExecutionEnvironment = SESport.AI.ExecutionEnvironment.Current;
+      var options = DetailsModel.BuildExecutionEnvironmentOptions(
+         ["Worker-A"],
+         null,
+         currentExecutionEnvironment
+      );
+
+      Assert.Contains(
+         options,
+         option => string.Equals(
+            option.Value,
+            currentExecutionEnvironment,
+            StringComparison.Ordinal
+         )
+      );
+   }
+
+   [Fact]
    public void GetMaxConversationCharacterCountUsesRoundPeak()
    {
       var run = new SESport.AI.Models.AiRunDetail(

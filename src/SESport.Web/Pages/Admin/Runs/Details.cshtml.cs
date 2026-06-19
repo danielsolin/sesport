@@ -185,34 +185,49 @@ public class DetailsModel(
             cancellationToken
          );
 
-      KnownExecutionEnvironmentValues = executionEnvironments.ToHashSet(
-         StringComparer.Ordinal
+      ExecutionEnvironmentOptions = BuildExecutionEnvironmentOptions(
+         executionEnvironments,
+         selectedExecutionEnvironment,
+         SESport.AI.ExecutionEnvironment.Current
       );
+      KnownExecutionEnvironmentValues = ExecutionEnvironmentOptions
+         .Select(option => option.Value ?? string.Empty)
+         .ToHashSet(StringComparer.Ordinal);
+   }
 
+   internal static IReadOnlyList<SelectListItem>
+      BuildExecutionEnvironmentOptions(
+         IEnumerable<string> executionEnvironments,
+         string? selectedExecutionEnvironment,
+         string currentExecutionEnvironment
+      )
+   {
       var options = new List<SelectListItem>
       {
          new("Not set", string.Empty)
       };
 
-      options.AddRange(
-         executionEnvironments.Select(environment => new SelectListItem(
-            environment,
-            environment
-         ))
-      );
+      var values = new HashSet<string>(StringComparer.Ordinal);
 
-      if(!string.IsNullOrWhiteSpace(selectedExecutionEnvironment) &&
-         !KnownExecutionEnvironmentValues.Contains(
-            selectedExecutionEnvironment
-         ))
+      void AddOption(string value)
       {
-         options.Add(new SelectListItem(
-            selectedExecutionEnvironment,
-            selectedExecutionEnvironment
-         ));
+         if(string.IsNullOrWhiteSpace(value) || !values.Add(value))
+         {
+            return;
+         }
+
+         options.Add(new SelectListItem(value, value));
       }
 
-      ExecutionEnvironmentOptions = options;
+      foreach(var executionEnvironment in executionEnvironments)
+      {
+         AddOption(executionEnvironment);
+      }
+
+      AddOption(currentExecutionEnvironment);
+      AddOption(selectedExecutionEnvironment ?? string.Empty);
+
+      return options;
    }
 
    public static string FormatJson(string? value)
