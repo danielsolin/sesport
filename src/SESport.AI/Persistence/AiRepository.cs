@@ -151,7 +151,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.duration_seconds,
             r.input_tokens,
             r.output_tokens,
-            r.reasoning_tokens
+            r.reasoning_tokens,
+            r.execution_environment
          from ai_job_runs r
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
@@ -197,7 +198,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableDecimal(reader, 23),
          ReadNullableInt32(reader, 24),
          ReadNullableInt32(reader, 25),
-         ReadNullableInt32(reader, 26)
+         ReadNullableInt32(reader, 26),
+         ReadNullableString(reader, 27)
       );
    }
 
@@ -708,6 +710,55 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       AddRunUpdateParameters(command, run);
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task UpdateRunExecutionEnvironmentAsync(
+      Guid runId,
+      string? executionEnvironment,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set
+            execution_environment = @execution_environment
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", runId);
+      command.Parameters.AddWithValue(
+         "execution_environment",
+         (object?)executionEnvironment ?? DBNull.Value
+      );
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task<IReadOnlyList<string>> GetExecutionEnvironmentOptionsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select distinct execution_environment
+         from ai_job_runs
+         where execution_environment is not null
+            and btrim(execution_environment) <> ''
+         order by execution_environment
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      var executionEnvironments = new List<string>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         executionEnvironments.Add(reader.GetString(0));
+      }
+
+      return executionEnvironments;
    }
 
    public async Task UpdateToolTraceAsync(

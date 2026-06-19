@@ -27,6 +27,41 @@
             <dd><code>@Model.Run.StatusId</code></dd>
          </div>
          <div>
+            <dt>Execution Environment</dt>
+            <dd>
+               <form method="post"
+                     asp-page-handler="UpdateExecutionEnvironment"
+                     asp-route-id="@Model.Run.Id"
+                     asp-route-date="@Model.DateText"
+                     asp-route-jobId="@Model.JobId"
+                     asp-route-statusId="@Model.StatusId"
+                     class="button-row run-execution-environment-form">
+                  @if(Model.CanEditExecutionEnvironment)
+                  {
+                     <select asp-for="ExecutionEnvironment"
+                             asp-items="Model.ExecutionEnvironmentOptions">
+                     </select>
+                     <button class="button button-primary" type="submit">
+                        Save
+                     </button>
+                  }
+                  else
+               {
+                  <select asp-for="ExecutionEnvironment"
+                          asp-items="Model.ExecutionEnvironmentOptions"
+                          disabled>
+                  </select>
+               }
+               </form>
+               @if(Model.LoadError is not null)
+               {
+                  <div class="notice notice-warning">
+                     @Model.LoadError
+                  </div>
+               }
+            </dd>
+         </div>
+         <div>
             <dt>Job</dt>
             <dd>@Model.Run.JobLabel</dd>
          </div>
@@ -159,10 +194,11 @@
                               @if(turn.CompactBadges.Count > 1)
                               {
                                  <div class="tool-trace-turn-badges">
-                                    @foreach(var badge in turn.CompactBadges
-                                       .Skip(1))
-                                    {
-                                       <span class="tool-trace-badge @badge.CssClass">
+                                   @foreach(var badge in turn.CompactBadges
+                                      .Skip(1))
+                                   {
+                                       <span class="tool-trace-badge
+                                          @badge.CssClass">
                                           @badge.Text
                                        </span>
                                     }

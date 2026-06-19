@@ -16,6 +16,9 @@ public sealed class DetailsMarkupTests
 
       AssertOrder(
          html,
+         "Execution Environment",
+         "run-execution-environment-form",
+         "Save",
          "tool-trace-summary-content",
          "summary>Conversation history summary</summary>",
          "summary>Output</summary>",
@@ -30,6 +33,7 @@ public sealed class DetailsMarkupTests
       Assert.Contains("<dt>Temperature</dt>", html);
       Assert.Contains("Final conversation chars", html);
       Assert.Contains("Max conversation chars", html);
+      Assert.Contains("asp-for=\"ExecutionEnvironment\"", html);
       Assert.Contains("tool-trace-turn-header-main", html);
       Assert.DoesNotContain("Full trace", html);
       Assert.Contains("Round", html);

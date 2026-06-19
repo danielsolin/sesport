@@ -175,7 +175,8 @@ public sealed class AiRepositoryTests
          command.Parameters.AddWithValue("matching_run_id", matchingRunId);
 
          await using var reader = await command.ExecuteReaderAsync();
-         var runs = new Dictionary<Guid, (string statusId, DateTimeOffset startedAt)>();
+         var runs = new Dictionary<Guid,
+            (string statusId, DateTimeOffset startedAt)>();
 
          while(await reader.ReadAsync())
          {
@@ -195,6 +196,99 @@ public sealed class AiRepositoryTests
       {
          await DeleteRunAsync(dataSource, matchingRunId);
          await DeleteRunAsync(dataSource, otherRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task GetRunAsyncReturnsExecutionEnvironment()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      var executionEnvironment = $"worker-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         executionEnvironment: executionEnvironment
+      );
+
+      try
+      {
+         var run = await repository.GetRunAsync(
+            runId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(run);
+         Assert.Equal(executionEnvironment, run!.ExecutionEnvironment);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task UpdateRunExecutionEnvironmentAsyncUpdatesStoredRun()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      var newExecutionEnvironment = $"worker-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(dataSource, runId, jobId, promptId, providerId);
+
+      try
+      {
+         await repository.UpdateRunExecutionEnvironmentAsync(
+            runId,
+            newExecutionEnvironment,
+            CancellationToken.None
+         );
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select execution_environment
+            from ai_job_runs
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", runId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal(
+            newExecutionEnvironment,
+            reader.GetString(0)
+         );
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
          await DeletePromptAsync(dataSource, promptId);
          await DeleteJobAsync(dataSource, jobId);
          await DeleteProviderAsync(dataSource, providerId);

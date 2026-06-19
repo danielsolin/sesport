@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using SESport.AI.Models;
@@ -33,6 +34,17 @@ public class DetailsModel(
    public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns { get; private
       set; } = [];
 
+   public IReadOnlyList<SelectListItem> ExecutionEnvironmentOptions
+   {
+      get;
+      private set;
+   } = [];
+
+   public string? LoadError { get; private set; }
+
+   private ISet<string> KnownExecutionEnvironmentValues { get; set; } =
+      new HashSet<string>(StringComparer.Ordinal);
+
    public IReadOnlyList<ToolTraceBadgeViewModel> ToolTraceSummaryBadges
    {
       get
@@ -50,7 +62,19 @@ public class DetailsModel(
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
 
+   [BindProperty]
+   public string? ExecutionEnvironment { get; set; }
+
    public string DateText => DateDisplay.Format(SelectedDate);
+
+   public bool CanEditExecutionEnvironment
+   {
+      get
+      {
+         return Run is not null &&
+            string.Equals(Run.StatusId, "pending", StringComparison.Ordinal);
+      }
+   }
 
    public DateOnly SelectedDate { get; private set; }
 
@@ -64,6 +88,11 @@ public class DetailsModel(
 
       if(Run is not null)
       {
+         ExecutionEnvironment = Run.ExecutionEnvironment;
+         await LoadExecutionEnvironmentOptionsAsync(
+            Run.ExecutionEnvironment,
+            cancellationToken
+         );
          ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
          ConversationHistorySummaryText =
             GetConversationHistorySummaryText(Run.RawRequestJson);
@@ -73,6 +102,117 @@ public class DetailsModel(
       }
 
       return Run is null ? NotFound() : Page();
+   }
+
+   public async Task<IActionResult> OnPostUpdateExecutionEnvironmentAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
+      Run = await repository.GetRunAsync(id, cancellationToken);
+
+      if(Run is null)
+      {
+         return NotFound();
+      }
+
+      var requestedExecutionEnvironment = string.IsNullOrWhiteSpace(
+         ExecutionEnvironment
+      )
+         ? null
+         : ExecutionEnvironment.Trim();
+
+      await LoadExecutionEnvironmentOptionsAsync(
+         requestedExecutionEnvironment,
+         cancellationToken
+      );
+
+      if(!CanEditExecutionEnvironment)
+      {
+         ExecutionEnvironment = Run.ExecutionEnvironment;
+         await LoadExecutionEnvironmentOptionsAsync(
+            ExecutionEnvironment,
+            cancellationToken
+         );
+         LoadError =
+            "Execution environment can only be changed while the run is " +
+            "pending.";
+         return Page();
+      }
+
+      if(requestedExecutionEnvironment is not null &&
+         !KnownExecutionEnvironmentValues.Contains(
+            requestedExecutionEnvironment
+         ))
+      {
+         LoadError = "Select a valid execution environment.";
+         return Page();
+      }
+
+      try
+      {
+         await repository.UpdateRunExecutionEnvironmentAsync(
+            id,
+            requestedExecutionEnvironment,
+            cancellationToken
+         );
+      }
+      catch(Exception exception)
+      {
+         LoadError = exception.Message;
+         return Page();
+      }
+
+      return RedirectToPage(
+         "./Index",
+         new
+         {
+            date = DateText,
+            JobId,
+            StatusId
+         }
+      );
+   }
+
+   private async Task LoadExecutionEnvironmentOptionsAsync(
+      string? selectedExecutionEnvironment,
+      CancellationToken cancellationToken
+   )
+   {
+      var executionEnvironments =
+         await repository.GetExecutionEnvironmentOptionsAsync(
+            cancellationToken
+         );
+
+      KnownExecutionEnvironmentValues = executionEnvironments.ToHashSet(
+         StringComparer.Ordinal
+      );
+
+      var options = new List<SelectListItem>
+      {
+         new("Not set", string.Empty)
+      };
+
+      options.AddRange(
+         executionEnvironments.Select(environment => new SelectListItem(
+            environment,
+            environment
+         ))
+      );
+
+      if(!string.IsNullOrWhiteSpace(selectedExecutionEnvironment) &&
+         !KnownExecutionEnvironmentValues.Contains(
+            selectedExecutionEnvironment
+         ))
+      {
+         options.Add(new SelectListItem(
+            selectedExecutionEnvironment,
+            selectedExecutionEnvironment
+         ));
+      }
+
+      ExecutionEnvironmentOptions = options;
    }
 
    public static string FormatJson(string? value)

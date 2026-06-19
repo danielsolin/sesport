@@ -114,7 +114,8 @@ public sealed record AiRunDetail(
    decimal? DurationSeconds,
    int? InputTokens,
    int? OutputTokens,
-   int? ReasoningTokens
+   int? ReasoningTokens,
+   string? ExecutionEnvironment
 );
 
 public sealed class AiPromptEditModel

@@ -373,7 +373,8 @@ public class AiJobRunnerTests
                run.DurationSeconds,
                run.InputTokens,
                run.OutputTokens,
-               run.ReasoningTokens
+               run.ReasoningTokens,
+               run.ExecutionEnvironment
             )
          );
       }

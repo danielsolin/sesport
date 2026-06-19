@@ -86,7 +86,8 @@ public sealed class DetailsModelTests
          DurationSeconds: 1m,
          InputTokens: null,
          OutputTokens: null,
-         ReasoningTokens: null
+         ReasoningTokens: null,
+         ExecutionEnvironment: null
       );
 
       Assert.Equal(20012, DetailsModel.GetMaxConversationCharacterCount(run));
@@ -127,7 +128,8 @@ public sealed class DetailsModelTests
          DurationSeconds: 1m,
          InputTokens: null,
          OutputTokens: null,
-         ReasoningTokens: null
+         ReasoningTokens: null,
+         ExecutionEnvironment: null
       );
 
       Assert.Equal("0.73", DetailsModel.FormatTemperature(run));

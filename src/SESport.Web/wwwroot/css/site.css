@@ -1213,6 +1213,24 @@ h2 {
    font-weight: 700;
 }
 
+.run-execution-environment-form {
+   display: flex;
+   flex-wrap: nowrap;
+   gap: 8px;
+   align-items: center;
+}
+
+.run-execution-environment-form select {
+   width: 220px;
+   max-width: 100%;
+   min-width: 0;
+   flex: 0 0 220px;
+}
+
+.run-execution-environment-form .button {
+   flex: 0 0 auto;
+}
+
 .review-actions {
    display: grid;
    gap: 18px;
