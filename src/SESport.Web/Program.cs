@@ -62,6 +62,15 @@ app.Logger.LogInformation(
    "Execution environment: {ExecutionEnvironment}",
    ExecutionEnvironment.Current
 );
+app.Logger.LogInformation(
+   "SearXNG basic auth configured: username={HasUsername}, password={HasPassword}",
+   !string.IsNullOrWhiteSpace(
+      builder.Configuration["SearXNG:BasicAuthUsername"]
+   ),
+   !string.IsNullOrWhiteSpace(
+      builder.Configuration["SearXNG:BasicAuthPassword"]
+   )
+);
 
 if (!app.Environment.IsDevelopment())
 {
