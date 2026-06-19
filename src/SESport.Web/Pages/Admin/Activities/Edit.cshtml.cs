@@ -77,54 +77,6 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       return await SaveAsync(cancellationToken);
    }
 
-   public async Task<IActionResult> OnPostGenerateTeaserAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      if(string.IsNullOrWhiteSpace(Activity.Title))
-      {
-         return BadRequest(new
-         {
-            error = "Title is required before generating a teaser."
-         });
-      }
-
-      var result = await editService.GenerateTeaserAsync(
-         Activity,
-         cancellationToken
-      );
-
-      if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
-      {
-         if(string.Equals(
-            result.ErrorMessage,
-            "The model returned invalid teaser JSON.",
-            StringComparison.Ordinal
-         ))
-         {
-            return BadRequest(new
-            {
-               error = result.ErrorMessage,
-               prompt = result.Prompt,
-               teaser = result.RawOutputText,
-               teaserPreview = result.TeaserPreview
-            });
-         }
-
-         return BadRequest(new
-         {
-            error = result.ErrorMessage,
-            prompt = result.Prompt
-         });
-      }
-
-      return new JsonResult(new
-      {
-         prompt = result.Prompt,
-         teaser = result.Teaser
-      });
-   }
-
    private async Task LoadEntitiesAsync(
       IEnumerable<Guid> selectedEntityIds,
       CancellationToken cancellationToken

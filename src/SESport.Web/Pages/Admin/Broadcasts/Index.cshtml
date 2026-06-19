@@ -3,22 +3,19 @@
 @{ 
    ViewData["Title"] = "Broadcasts";
    var checkSwedishParticipationUrl = Url.Page(
-      "./Index",
-      "CheckSwedishParticipation"
+      "/Admin/Ajax/Create/SwedishParticipationCheck"
    );
    var checkSwedishParticipationStatusUrl = Url.Page(
-      "./Index",
-      "CheckSwedishParticipationStatus"
+      "/Admin/Ajax/Poll/SwedishParticipationStatus"
    );
    var createParticipantEntityUrl = Url.Page(
-      "./Index",
-      "CreateParticipantEntity",
-      Model.GetCurrentRouteValues()
+      "/Admin/Ajax/Create/ParticipantEntity"
    );
    var editBroadcastFieldUrl = Url.Page(
-      "./Index",
-      "EditBroadcastField",
-      Model.GetCurrentRouteValues()
+      "/Admin/Ajax/Update/BroadcastField"
+   );
+   var hideBroadcastUrl = Url.Page(
+      "/Admin/Ajax/Toggle/BroadcastVisibility"
    );
 }
 
@@ -496,8 +493,7 @@
                                  Activity
                               </a>
                               <form method="post"
-                                    asp-page-handler="Hide"
-                                    asp-route-id="@broadcast.Id"
+                                    action="@hideBroadcastUrl"
                                     data-ajax-success=
                                        "@(broadcast.IsHidden ? null : "remove")"
                                     data-ajax-remove-target=
@@ -508,6 +504,9 @@
                                              ? null
                                              : "[data-broadcast-count]"
                                        )">
+                                 <input type="hidden"
+                                        name="id"
+                                        value="@broadcast.Id" />
                                  <input type="hidden"
                                         name="@RouteKeys.Date"
                                         value="@Model.DateText" />

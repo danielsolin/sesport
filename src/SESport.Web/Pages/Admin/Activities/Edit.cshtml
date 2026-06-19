@@ -5,9 +5,7 @@
       ? "New Activity"
       : "Edit Activity";
    var generateTeaserUrl = Url.Page(
-      "./Edit",
-      "GenerateTeaser",
-      new { id = Model.Activity.Id }
+      "/Admin/Ajax/Create/ActivityTeaser"
    );
 }
 
