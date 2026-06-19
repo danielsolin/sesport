@@ -1093,16 +1093,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       string? toolTraceJson
    )
    {
-      return Math.Max(toolRoundCount, ParseToolTrace(toolTraceJson).Count);
+      return Math.Max(toolRoundCount, CountToolTraceRounds(toolTraceJson));
    }
 
-   private static IReadOnlyList<JsonElement> ParseToolTrace(
+   private static int CountToolTraceRounds(
       string? toolTraceJson
    )
    {
       if(string.IsNullOrWhiteSpace(toolTraceJson))
       {
-         return [];
+         return 0;
       }
 
       try
@@ -1111,14 +1111,28 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
          if(document.RootElement.ValueKind != JsonValueKind.Array)
          {
-            return [];
+            return 0;
          }
 
-         return document.RootElement.EnumerateArray().ToArray();
+         return document.RootElement
+            .EnumerateArray()
+            .Select(entry =>
+            {
+               return entry.ValueKind == JsonValueKind.Object &&
+                  entry.TryGetProperty("turn", out var turn) &&
+                  turn.ValueKind == JsonValueKind.Number &&
+                  turn.TryGetInt32(out var turnNumber)
+                  ? turnNumber
+                  : (int?)null;
+            })
+            .Where(turn => turn is not null)
+            .Select(turn => turn!.Value)
+            .Distinct()
+            .Count();
       }
       catch(JsonException)
       {
-         return [];
+         return 0;
       }
    }
 
