@@ -12,7 +12,7 @@ namespace SESport.Web.Pages.Admin.Runs;
 public class IndexModel(
    AiAdminRepository adminRepository,
    AiRepository repository,
-   AdminDatePreferenceStore datePreferenceStore
+   RunDatePreferenceStore datePreferenceStore
 ) : PageModel
 {
    public IReadOnlyList<AiRunListItem> Runs { get; private set; } = [];

@@ -13,7 +13,7 @@ namespace SESport.Web.Pages.Admin.Runs;
 
 public class DetailsModel(
    AiRepository repository,
-   AdminDatePreferenceStore datePreferenceStore
+   RunDatePreferenceStore datePreferenceStore
 ) : PageModel
 {
    private const string ConversationHistorySummaryPrefix =

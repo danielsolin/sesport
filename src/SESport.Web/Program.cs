@@ -16,6 +16,7 @@ builder.Services.AddSingleton(
 );
 builder.Services.AddAiPlatform(builder.Configuration);
 builder.Services.AddSingleton<AdminDatePreferenceStore>();
+builder.Services.AddSingleton<RunDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();
 builder.Services.AddScoped<ActivityRepository>();
