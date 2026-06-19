@@ -1277,6 +1277,15 @@
          pending.textContent = formatParticipationStatus(statusId);
          line.append(pending);
 
+         const rounds = statusId === "running"
+            ? createParticipationRoundsLabel(result.toolRoundCount, true)
+            : null;
+
+         if(rounds)
+         {
+            line.append(rounds);
+         }
+
          const runLink = createParticipationRunLink(result.runId);
 
          if(runLink)
@@ -1504,6 +1513,25 @@
       initializeParticipationSources(wrapper);
 
       return wrapper;
+   }
+
+   function createParticipationRoundsLabel(
+      toolRoundCount,
+      includeZero = false
+   )
+   {
+      if(typeof toolRoundCount !== "number"
+         || !Number.isFinite(toolRoundCount)
+         || toolRoundCount < 0
+         || (toolRoundCount === 0 && !includeZero))
+      {
+         return null;
+      }
+
+      const label = document.createElement("span");
+      label.className = "broadcast-ai-check-rounds";
+      label.textContent = `Rounds: ${toolRoundCount}`;
+      return label;
    }
 
    function createParticipationParticipantsBlock(participants)

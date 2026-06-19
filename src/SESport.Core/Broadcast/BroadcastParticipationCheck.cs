@@ -3,6 +3,7 @@ namespace SESport.Core.Broadcast;
 public sealed record BroadcastParticipationCheck(
    Guid RunId,
    string StatusId,
+   int ToolRoundCount,
    string? SwedishParticipation,
    IReadOnlyList<string> SwedishParticipants,
    IReadOnlyList<string> SourceUrls,

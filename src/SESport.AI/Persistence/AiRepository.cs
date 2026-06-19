@@ -219,6 +219,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.correlation_id,
             r.id,
             r.status_id,
+            coalesce(r.tool_round_count, 0),
+            r.tool_trace::text,
             r.output_text,
             r.raw_response::text,
             r.error_message
@@ -254,13 +256,19 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
          var runId = reader.GetGuid(1);
          var statusId = reader.GetString(2);
-         var outputText = ReadNullableString(reader, 3);
-         var rawResponseText = ReadNullableString(reader, 4);
-         var errorMessage = ReadNullableString(reader, 5);
+         var toolRoundCount = reader.GetInt32(3);
+         var toolTraceText = ReadNullableString(reader, 4);
+         var outputText = ReadNullableString(reader, 5);
+         var rawResponseText = ReadNullableString(reader, 6);
+         var errorMessage = ReadNullableString(reader, 7);
 
          checks[broadcastId] = ParseParticipationCheck(
             runId,
             statusId,
+            GetParticipationToolRoundCount(
+               toolRoundCount,
+               toolTraceText
+            ),
             outputText,
             rawResponseText,
             errorMessage
@@ -981,6 +989,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private static BroadcastParticipationCheck ParseParticipationCheck(
       Guid runId,
       string statusId,
+      int toolRoundCount,
       string? outputText,
       string? rawResponseText,
       string? errorMessage
@@ -998,6 +1007,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return new BroadcastParticipationCheck(
             runId,
             statusId,
+            toolRoundCount,
             null,
             [],
             resolvedSourceUrls,
@@ -1057,6 +1067,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return new BroadcastParticipationCheck(
             runId,
             statusId,
+            toolRoundCount,
             participation.GetString(),
             participants,
             resolvedSourceUrls,
@@ -1068,11 +1079,46 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return new BroadcastParticipationCheck(
             runId,
             statusId,
+            toolRoundCount,
             null,
             [],
             resolvedSourceUrls,
             errorMessage ?? "The model returned invalid JSON."
          );
+      }
+   }
+
+   private static int GetParticipationToolRoundCount(
+      int toolRoundCount,
+      string? toolTraceJson
+   )
+   {
+      return Math.Max(toolRoundCount, ParseToolTrace(toolTraceJson).Count);
+   }
+
+   private static IReadOnlyList<JsonElement> ParseToolTrace(
+      string? toolTraceJson
+   )
+   {
+      if(string.IsNullOrWhiteSpace(toolTraceJson))
+      {
+         return [];
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(toolTraceJson);
+
+         if(document.RootElement.ValueKind != JsonValueKind.Array)
+         {
+            return [];
+         }
+
+         return document.RootElement.EnumerateArray().ToArray();
+      }
+      catch(JsonException)
+      {
+         return [];
       }
    }
 
