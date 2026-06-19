@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 
 using SESport.AI.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace SESport.AI.Providers;
 
@@ -39,10 +40,12 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
    public SearxngWebSearchClient(
       HttpClient httpClient,
-      SearxngWebSearchClientOptions options
+      SearxngWebSearchClientOptions options,
+      ILogger<SearxngWebSearchClient>? logger = null
    )
    {
       HttpClient = httpClient;
+      Logger = logger;
 
       var basicAuth = CreateBasicAuthHeader(options);
 
@@ -51,9 +54,16 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          HttpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Basic", basicAuth);
       }
+
+      Logger?.LogDebug(
+         "SearXNG basic auth attached: {HasAuth}",
+         HttpClient.DefaultRequestHeaders.Authorization is not null
+      );
    }
 
    private HttpClient HttpClient { get; }
+
+   private ILogger<SearxngWebSearchClient>? Logger { get; }
 
    public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
       string query,
@@ -65,6 +75,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       {
          return [];
       }
+
+      Logger?.LogDebug(
+         "Sending SearXNG search request to {SearchUri}",
+         SearchUri
+      );
 
       using var request = new HttpRequestMessage(HttpMethod.Post, SearchUri)
       {
