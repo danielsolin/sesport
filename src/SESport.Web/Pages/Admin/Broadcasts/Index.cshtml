@@ -504,6 +504,7 @@
                                              ? null
                                              : "[data-broadcast-count]"
                                        )">
+                                 @Html.AntiForgeryToken()
                                  <input type="hidden"
                                         name="id"
                                         value="@broadcast.Id" />
