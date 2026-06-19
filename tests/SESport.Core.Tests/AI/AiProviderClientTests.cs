@@ -147,6 +147,48 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncReportsWhenPageFetchFails()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(
+            new WebSearchResult(
+               "Tre Kronor roster",
+               "https://example.test/roster",
+               "Sweden lineup info."
+            )
+         ),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson()
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Contains(
+         "Unable to fetch page content from",
+         result.ToolTraceJson
+      );
+      Assert.Contains("example.test", result.ToolTraceJson);
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncKeepsLatestCompletedRoundDuringTrim()
    {
       var handler = new RecordingHandler(

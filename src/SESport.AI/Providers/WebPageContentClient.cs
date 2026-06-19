@@ -65,7 +65,22 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return await FetchPdfAsync(response, absoluteUrl, cancellationToken);
       }
 
-      return await browserPageFetcher(absoluteUrl, cancellationToken);
+      try
+      {
+         return await browserPageFetcher(absoluteUrl, cancellationToken);
+      }
+      catch(OperationCanceledException)
+      {
+         throw;
+      }
+      catch(TimeoutException)
+      {
+         return null;
+      }
+      catch(PlaywrightException)
+      {
+         return null;
+      }
    }
 
    private static async Task<WebPageContent?> FetchBrowserPageAsync(
@@ -204,6 +219,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(OperationCanceledException)
       {
          throw;
+      }
+      catch(TimeoutException)
+      {
+         return null;
       }
       catch(PlaywrightException)
       {

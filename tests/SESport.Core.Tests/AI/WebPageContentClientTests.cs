@@ -90,6 +90,28 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchReturnsNullWhenBrowserTimesOut()
+   {
+      var browserCalls = 0;
+      var client = new WebPageContentClient(
+         new HttpClient(new HtmlRecordingHandler()),
+         (_, _) =>
+         {
+            browserCalls++;
+            throw new TimeoutException("Timeout 30000ms exceeded.");
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/slow",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.Null(page);
+   }
+
+   [Fact]
    public async Task FetchExtractsTextFromPdfResponses()
    {
       var browserCalls = 0;

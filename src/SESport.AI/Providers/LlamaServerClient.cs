@@ -1608,6 +1608,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(pageContent is null)
       {
+         var fetchErrorMessage =
+            $"Unable to fetch page content from {pageTarget.Url}.";
          result = FormatPageContentText(
             pageTarget.ReferenceLabel,
             pageTarget.ReferenceValue,
@@ -1616,7 +1618,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageTarget.SearchSnippet,
             null,
             null,
-            "Unable to fetch page content."
+            null,
+            fetchErrorMessage
          );
       }
       else
@@ -1709,6 +1712,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(pageContent is null)
       {
+         var fetchErrorMessage =
+            $"Unable to fetch page content from {pageTarget.Url}.";
          result = FormatPageContentText(
             pageTarget.ReferenceLabel,
             pageTarget.ReferenceValue,
@@ -1717,7 +1722,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageTarget.SearchSnippet,
             null,
             null,
-            "Unable to fetch page content."
+            null,
+            fetchErrorMessage
          );
       }
 
@@ -1998,7 +2004,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       string? searchSnippet,
       DateTimeOffset? publishedAt,
       IReadOnlyList<string>? headings,
-      string? mainText
+      string? mainText,
+      string? fetchErrorMessage = null
    )
    {
       var builder = new StringBuilder();
@@ -2032,6 +2039,11 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          builder.AppendLine("Page text:");
          builder.AppendLine(mainText.Trim());
+      }
+      else if(!string.IsNullOrWhiteSpace(fetchErrorMessage))
+      {
+         builder.AppendLine("Fetch error:");
+         builder.AppendLine(fetchErrorMessage.Trim());
       }
       else if(headings is null || headings.Count == 0)
       {
