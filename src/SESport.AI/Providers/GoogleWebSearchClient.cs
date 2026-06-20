@@ -59,7 +59,7 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
       this.searchFetcher = searchFetcher ?? FetchGoogleResultsAsync;
    }
 
-   public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+   public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
       CancellationToken cancellationToken
@@ -67,11 +67,16 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
    {
       if(string.IsNullOrWhiteSpace(query))
       {
-         return [];
+         return new WebSearchResponse([]);
       }
 
       var searchUri = BuildGoogleSearchUri(query, maxResults);
-      return await searchFetcher(searchUri, maxResults, cancellationToken);
+      var results = await searchFetcher(
+         searchUri,
+         maxResults,
+         cancellationToken
+      );
+      return new WebSearchResponse(results, "Google");
    }
 
    private static Uri BuildGoogleSearchUri(

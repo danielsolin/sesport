@@ -4,7 +4,7 @@ namespace SESport.AI.Interfaces;
 
 public interface IWebSearchClient
 {
-   Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+   Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
       CancellationToken cancellationToken

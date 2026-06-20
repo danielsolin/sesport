@@ -17,7 +17,7 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
 
    private IWebSearchClient SearxngWebSearchClient { get; }
 
-   public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+   public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
       CancellationToken cancellationToken
@@ -32,14 +32,18 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
 
       if(googleResults.Count > 0)
       {
-         return googleResults;
+         return new WebSearchResponse(googleResults, "Google");
       }
 
-      return await TrySearchAsync(
+      var searxngResults = await TrySearchAsync(
          SearxngWebSearchClient,
          query,
          maxResults,
          cancellationToken
+      );
+      return new WebSearchResponse(
+         searxngResults,
+         "Google -> SearXNG fallback"
       );
    }
 
@@ -52,7 +56,11 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
    {
       try
       {
-         return await client.SearchAsync(query, maxResults, cancellationToken);
+         return (await client.SearchAsync(
+            query,
+            maxResults,
+            cancellationToken
+         )).Results;
       }
       catch(OperationCanceledException)
       {

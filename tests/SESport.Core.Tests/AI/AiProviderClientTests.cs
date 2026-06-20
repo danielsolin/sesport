@@ -1459,14 +1459,14 @@ public class AiProviderClientTests
 
       public List<(string Query, int MaxResults)> Queries { get; } = [];
 
-      public Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+      public Task<WebSearchResponse> SearchAsync(
          string query,
          int maxResults,
          CancellationToken cancellationToken
       )
       {
          Queries.Add((query, maxResults));
-         return Task.FromResult(results);
+         return Task.FromResult(new WebSearchResponse(results));
       }
    }
 

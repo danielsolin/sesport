@@ -658,6 +658,7 @@ public class DetailsModel(
          FormatDisplayValue(GetProperty(entry, "arguments")),
          GetString(entry, "query"),
          GetString(entry, "id"),
+         GetString(entry, "search_provider"),
          FormatDisplayValue(GetProperty(entry, "result"))
       );
    }
@@ -888,6 +889,7 @@ public class DetailsModel(
       string Arguments,
       string? Query,
       string? Id,
+      string? SearchProvider,
       string Result
    );
 
@@ -953,7 +955,8 @@ public class DetailsModel(
          if(Temperature is not null)
          {
             badges.Add(new(
-               $"Temp {Temperature.Value.ToString(CultureInfo.InvariantCulture)}",
+               $"Temp " +
+               $"{Temperature.Value.ToString(CultureInfo.InvariantCulture)}",
                "tool-trace-badge-temperature"
             ));
          }

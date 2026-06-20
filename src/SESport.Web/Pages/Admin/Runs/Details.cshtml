@@ -267,6 +267,14 @@
                                        {
                                           <div>Id: @toolResult.Id</div>
                                        }
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          toolResult.SearchProvider))
+                                       {
+                                          <div>
+                                             Source:
+                                             @toolResult.SearchProvider
+                                          </div>
+                                       }
                                        <pre class="prompt-details-pre">
 @toolResult.Result
                                        </pre>

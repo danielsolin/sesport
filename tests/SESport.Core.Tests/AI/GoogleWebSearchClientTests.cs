@@ -31,7 +31,7 @@ public class GoogleWebSearchClientTests
          }
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "R&A The Amateur Championship 2026 entry list Day 1 first session",
          5,
          CancellationToken.None
@@ -48,12 +48,12 @@ public class GoogleWebSearchClientTests
       Assert.Contains("pws=0", capturedUri.Query);
       Assert.Contains("num=5", capturedUri.Query);
       Assert.Equal(5, capturedMaxResults);
-      Assert.Single(results);
+      Assert.Single(response.Results);
       Assert.Equal(
          "https://assets.randa.org/c42c7bf4-dca7-00ea-4f2e-" +
          "373223f80f76/2542a870-e7bb-4d86-a914-2863ef412282/" +
          "MP%20Round%201%20Draw.pdf",
-         results[0].Url
+         response.Results[0].Url
       );
    }
 
@@ -71,13 +71,13 @@ public class GoogleWebSearchClientTests
          }
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          " ",
          3,
          CancellationToken.None
       );
 
-      Assert.Empty(results);
+      Assert.Empty(response.Results);
       Assert.False(called);
    }
 }

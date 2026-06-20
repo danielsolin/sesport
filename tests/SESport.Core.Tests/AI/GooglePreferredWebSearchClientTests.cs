@@ -31,14 +31,15 @@ public sealed class GooglePreferredWebSearchClientTests
          )
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "query",
          5,
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("https://example.test/google", results[0].Url);
+      Assert.Single(response.Results);
+      Assert.Equal("https://example.test/google", response.Results[0].Url);
+      Assert.Equal("Google", response.Provider);
    }
 
    [Fact]
@@ -58,14 +59,15 @@ public sealed class GooglePreferredWebSearchClientTests
          )
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "query",
          5,
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("https://example.test/fallback", results[0].Url);
+      Assert.Single(response.Results);
+      Assert.Equal("https://example.test/fallback", response.Results[0].Url);
+      Assert.Equal("Google -> SearXNG fallback", response.Provider);
    }
 
    [Fact]
@@ -85,14 +87,15 @@ public sealed class GooglePreferredWebSearchClientTests
          )
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "query",
          5,
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("https://example.test/fallback", results[0].Url);
+      Assert.Single(response.Results);
+      Assert.Equal("https://example.test/fallback", response.Results[0].Url);
+      Assert.Equal("Google -> SearXNG fallback", response.Provider);
    }
 
    private sealed class FakeWebSearchClient : IWebSearchClient
@@ -104,7 +107,7 @@ public sealed class GooglePreferredWebSearchClientTests
          this.results = results;
       }
 
-      public Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+      public Task<WebSearchResponse> SearchAsync(
          string query,
          int maxResults,
          CancellationToken cancellationToken
@@ -113,13 +116,13 @@ public sealed class GooglePreferredWebSearchClientTests
          _ = query;
          _ = maxResults;
          _ = cancellationToken;
-         return Task.FromResult(results);
+         return Task.FromResult(new WebSearchResponse(results));
       }
    }
 
    private sealed class ThrowingWebSearchClient : IWebSearchClient
    {
-      public Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+      public Task<WebSearchResponse> SearchAsync(
          string query,
          int maxResults,
          CancellationToken cancellationToken

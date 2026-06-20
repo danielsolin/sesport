@@ -213,7 +213,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   CreateToolTraceEntry(
                      turn,
                      toolCall,
-                     toolResult
+                     toolResult,
+                     toolState.LastSearchProvider
                   )
                );
                await ReportToolTraceProgressAsync(
@@ -706,7 +707,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static JsonObject CreateToolTraceEntry(
       int turn,
       ToolCall toolCall,
-      string toolResult
+      string toolResult,
+      string? searchProvider = null
    )
    {
       var isSearchTool = string.Equals(
@@ -741,6 +743,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["find"] = isFindInPageTool || !string.IsNullOrWhiteSpace(find)
             ? find
             : null,
+         ["search_provider"] = isSearchTool ? searchProvider : null,
          ["result"] = toolResult
       };
    }
@@ -854,7 +857,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private void LogSearchResults(
       string query,
       int limit,
-      IReadOnlyList<WebSearchResult> searchResults
+      IReadOnlyList<WebSearchResult> searchResults,
+      string? searchProvider
    )
    {
       if(!Logger.IsEnabled(LogLevel.Debug))
@@ -867,8 +871,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          : $"{searchResults[0].Title} | {searchResults[0].Url}";
 
       Logger.LogDebug(
-         "llama-server search query={Query} limit={Limit} " +
-         "results={ResultCount} first_result={FirstResult}",
+         "llama-server search provider={SearchProvider} query={Query} " +
+         "limit={Limit} results={ResultCount} first_result={FirstResult}",
+         string.IsNullOrWhiteSpace(searchProvider)
+            ? "unknown"
+            : searchProvider,
          TruncateForLog(query, 240),
          limit,
          searchResults.Count,
@@ -1102,13 +1109,20 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          var query = ExtractQuery(toolCall.Arguments);
          var limit = ExtractLimit(toolCall.Arguments);
-         var searchResults = await WebSearchClient.SearchAsync(
+         var searchResponse = await WebSearchClient.SearchAsync(
             query,
             limit,
             cancellationToken
          );
+         var searchResults = searchResponse.Results;
+         toolState.LastSearchProvider = searchResponse.Provider;
 
-         LogSearchResults(query, limit, searchResults);
+         LogSearchResults(
+            query,
+            limit,
+            searchResults,
+            toolState.LastSearchProvider
+         );
 
          toolState.SearchSequence++;
          var result = FormatSearchResults(
@@ -2837,6 +2851,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private sealed class ToolLoopState
    {
       public int SearchSequence { get; set; }
+
+      public string? LastSearchProvider { get; set; }
 
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
          new(StringComparer.OrdinalIgnoreCase);
