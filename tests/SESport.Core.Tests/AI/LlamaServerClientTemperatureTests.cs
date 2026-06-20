@@ -9,7 +9,7 @@ public sealed class LlamaServerClientTemperatureTests
    {
       var temperature = LlamaServerClient.GetEffectiveTemperature(
          0.0m,
-         false
+         0
       );
 
       Assert.Equal(0.0m, temperature);
@@ -20,10 +20,21 @@ public sealed class LlamaServerClientTemperatureTests
    {
       var temperature = LlamaServerClient.GetEffectiveTemperature(
          0.0m,
-         true
+         1
       );
 
       Assert.Equal(0.15m, temperature);
+   }
+
+   [Fact]
+   public void GetEffectiveTemperatureKeepsIncreasingForRepeatingTurns()
+   {
+      var temperature = LlamaServerClient.GetEffectiveTemperature(
+         0.0m,
+         3
+      );
+
+      Assert.Equal(0.25m, temperature);
    }
 
    [Fact]
@@ -31,7 +42,7 @@ public sealed class LlamaServerClientTemperatureTests
    {
       var temperature = LlamaServerClient.GetEffectiveTemperature(
          0.25m,
-         true
+         1
       );
 
       Assert.Equal(0.25m, temperature);
@@ -42,9 +53,20 @@ public sealed class LlamaServerClientTemperatureTests
    {
       var temperature = LlamaServerClient.GetEffectiveTemperature(
          null,
-         true
+         1
       );
 
       Assert.Null(temperature);
+   }
+
+   [Fact]
+   public void GetEffectiveTemperatureCapsAtReasonableUpperBound()
+   {
+      var temperature = LlamaServerClient.GetEffectiveTemperature(
+         0.0m,
+         20
+      );
+
+      Assert.Equal(0.6m, temperature);
    }
 }

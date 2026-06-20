@@ -95,7 +95,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolRoundCount = 0;
       var turn = 0;
       var toolBudgetExhausted = false;
-      var repeatedToolCallDetected = false;
+      var repeatedToolCallStreak = 0;
 
       try
       {
@@ -119,9 +119,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             ApplyTemperature(
                request,
                prompt.Temperature,
-               repeatedToolCallDetected
+               repeatedToolCallStreak
             );
-            repeatedToolCallDetected = false;
             ApplyToolBudgetPrompt(
                messages,
                baseSystemPrompt,
@@ -165,6 +164,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
             if(!TryGetToolCalls(responseJson, out var toolCalls))
             {
+               repeatedToolCallStreak = 0;
                toolTrace.Add(
                   CreateAssistantTraceEntry(turn, responseJson, [])
                );
@@ -182,6 +182,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             AppendAssistantMessage(messages, responseJson);
 
+            var repeatedToolCallDetectedThisTurn = false;
             foreach(var toolCall in toolCalls)
             {
                LogToolCall(turn, toolCall);
@@ -193,7 +194,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   out _
                ))
                {
-                  repeatedToolCallDetected = true;
+                  repeatedToolCallDetectedThisTurn = true;
                }
 
                var toolResult = await ExecuteToolCallAsync(
@@ -221,6 +222,10 @@ public sealed class LlamaServerClient : IAiProviderClient
                   cancellationToken
                );
             }
+
+            repeatedToolCallStreak = repeatedToolCallDetectedThisTurn
+               ? repeatedToolCallStreak + 1
+               : 0;
 
             if(job.RequiresWebSearch)
             {
@@ -660,7 +665,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    internal static decimal? GetEffectiveTemperature(
       decimal? baseTemperature,
-      bool repeatedToolCallDetected
+      int repeatedToolCallStreak
    )
    {
       if(baseTemperature is null)
@@ -668,23 +673,26 @@ public sealed class LlamaServerClient : IAiProviderClient
          return null;
       }
 
-      if(!repeatedToolCallDetected)
+      if(repeatedToolCallStreak <= 0)
       {
          return baseTemperature;
       }
 
-      return Math.Max(baseTemperature.Value, 0.15m);
+      var adjustedTemperature = 0.15m + (repeatedToolCallStreak - 1) * 0.05m;
+      adjustedTemperature = Math.Min(adjustedTemperature, 0.6m);
+
+      return Math.Max(baseTemperature.Value, adjustedTemperature);
    }
 
    private static void ApplyTemperature(
       JsonObject request,
       decimal? baseTemperature,
-      bool repeatedToolCallDetected
+      int repeatedToolCallStreak
    )
    {
       var effectiveTemperature = GetEffectiveTemperature(
          baseTemperature,
-         repeatedToolCallDetected
+         repeatedToolCallStreak
       );
 
       if(effectiveTemperature is null)
