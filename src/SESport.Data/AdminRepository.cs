@@ -1100,7 +1100,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                source_entity_id = @id
                or target_entity_id = @id
             )
-            and linked.entity_type_id = '{TrackedEntityTypeIds.NationalTeam}'
+            and linked.entity_type_id in (
+               '{TrackedEntityTypeIds.NationalTeam}',
+               '{TrackedEntityTypeIds.Organization}',
+               '{TrackedEntityTypeIds.Series}',
+               '{TrackedEntityTypeIds.Tour}',
+               '{TrackedEntityTypeIds.League}',
+               '{TrackedEntityTypeIds.Championship}'
+            )
          order by linked_entity_id
          ";
 
