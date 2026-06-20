@@ -50,6 +50,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var participationCheck = new BroadcastParticipationCheck(
          Guid.NewGuid(),
          "completed",
+         1,
          "Yes",
          ["alice", " BOB ", "Unknown", "alice"],
          [],
@@ -79,6 +80,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var participationCheck = new BroadcastParticipationCheck(
          Guid.NewGuid(),
          "completed",
+         1,
          "Yes",
          ["Alice", "Bob"],
          ["https://example.test/a"],
@@ -112,6 +114,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var participationCheck = new BroadcastParticipationCheck(
          Guid.NewGuid(),
          "completed",
+         1,
          "Yes",
          ["Hampus Ericsson"],
          [],
@@ -153,6 +156,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var participationCheck = new BroadcastParticipationCheck(
          Guid.NewGuid(),
          "completed",
+         1,
          "Yes",
          ["Hampus Ericsson"],
          [],
@@ -194,6 +198,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var participationCheck = new BroadcastParticipationCheck(
          Guid.NewGuid(),
          "completed",
+         1,
          "Yes",
          ["Hampus Ericsson"],
          [],
@@ -235,6 +240,7 @@ public sealed class ActivityBroadcastPrefillBuilderTests
       var participationCheck = new BroadcastParticipationCheck(
          Guid.NewGuid(),
          "completed",
+         1,
          "Yes",
          ["Hampus Ericsson"],
          [],
