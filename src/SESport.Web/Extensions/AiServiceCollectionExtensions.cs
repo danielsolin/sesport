@@ -41,7 +41,7 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = TimeSpan.FromMinutes(20);
       });
-      services.AddHttpClient<SearxngWebSearchClient>(
+      services.AddHttpClient<IWebSearchClient, SearxngWebSearchClient>(
          client =>
          {
             client.Timeout = TimeSpan.FromSeconds(30);
@@ -52,12 +52,6 @@ public static class AiServiceCollectionExtensions
          {
             client.Timeout = TimeSpan.FromSeconds(30);
          }
-      );
-      services.AddScoped<IWebSearchClient>(serviceProvider =>
-         new GooglePreferredWebSearchClient(
-            serviceProvider.GetRequiredService<GoogleWebSearchClient>(),
-            serviceProvider.GetRequiredService<SearxngWebSearchClient>()
-         )
       );
       services.AddHttpClient<
          IWebPageContentClient,
