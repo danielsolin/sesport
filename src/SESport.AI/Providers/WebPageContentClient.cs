@@ -412,7 +412,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
       var normalizedCode = countryCode.Trim().ToUpperInvariant();
 
       if(normalizedCode.Length == 3 &&
-         CountryNamesByThreeLetterCode.TryGetValue(
+         CountryNamesByThreeLetterCode is
+            { } threeLetterCountryNames &&
+         threeLetterCountryNames.TryGetValue(
             normalizedCode,
             out var threeLetterDisplayName
          ))
@@ -459,15 +461,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
             continue;
          }
 
-         var displayName = GetCountryDisplayName(code);
-
-         if(string.IsNullOrWhiteSpace(displayName))
-         {
-            continue;
-         }
-
-         countryNames[code] = displayName;
-         countryNames[region.ThreeLetterISORegionName] = displayName;
+         countryNames[code] = region.EnglishName;
+         countryNames[region.ThreeLetterISORegionName] =
+            region.EnglishName;
       }
 
       return countryNames;
