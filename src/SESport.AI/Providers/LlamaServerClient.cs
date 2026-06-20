@@ -95,6 +95,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolRoundCount = 0;
       var turn = 0;
       var toolBudgetExhausted = false;
+      var repeatedToolCallDetected = false;
 
       try
       {
@@ -115,6 +116,12 @@ public sealed class LlamaServerClient : IAiProviderClient
          while(true)
          {
             turn++;
+            ApplyTemperature(
+               request,
+               prompt.Temperature,
+               repeatedToolCallDetected
+            );
+            repeatedToolCallDetected = false;
             ApplyToolBudgetPrompt(
                messages,
                baseSystemPrompt,
@@ -177,6 +184,16 @@ public sealed class LlamaServerClient : IAiProviderClient
             foreach(var toolCall in toolCalls)
             {
                LogToolCall(turn, toolCall);
+
+               if(TryGetRepeatedToolResult(
+                  toolCall,
+                  searchResultsById,
+                  toolState,
+                  out _
+               ))
+               {
+                  repeatedToolCallDetected = true;
+               }
 
                var toolResult = await ExecuteToolCallAsync(
                   toolCall,
@@ -621,6 +638,43 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
             $"{maxToolRounds.Value}."
       };
+   }
+
+   internal static decimal? GetEffectiveTemperature(
+      decimal? baseTemperature,
+      bool repeatedToolCallDetected
+   )
+   {
+      if(baseTemperature is null)
+      {
+         return null;
+      }
+
+      if(!repeatedToolCallDetected)
+      {
+         return baseTemperature;
+      }
+
+      return Math.Max(baseTemperature.Value, 0.15m);
+   }
+
+   private static void ApplyTemperature(
+      JsonObject request,
+      decimal? baseTemperature,
+      bool repeatedToolCallDetected
+   )
+   {
+      var effectiveTemperature = GetEffectiveTemperature(
+         baseTemperature,
+         repeatedToolCallDetected
+      );
+
+      if(effectiveTemperature is null)
+      {
+         return;
+      }
+
+      request["temperature"] = effectiveTemperature.Value;
    }
 
    private static JsonObject CreateToolTraceEntry(
