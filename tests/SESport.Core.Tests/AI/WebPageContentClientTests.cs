@@ -226,6 +226,11 @@ public class WebPageContentClientTests
    {
       Assert.Equal("Sweden", WebPageContentClient.GetCountryDisplayName("SE"));
       Assert.Equal("Norway", WebPageContentClient.GetCountryDisplayName("NO"));
+      Assert.Equal("Spain", WebPageContentClient.GetCountryDisplayName("ES"));
+      Assert.Equal(
+         "Belgium",
+         WebPageContentClient.GetCountryDisplayName("BEL")
+      );
       Assert.Null(WebPageContentClient.GetCountryDisplayName("??"));
    }
 
