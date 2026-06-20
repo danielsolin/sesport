@@ -1029,6 +1029,11 @@ h2 {
    color: var(--muted);
 }
 
+.tool-trace-badge-temperature {
+   background: #fff4dd;
+   color: #9a5b00;
+}
+
 .tool-trace-badge-assistant {
    background: #f0f1f6;
    color: #434762;

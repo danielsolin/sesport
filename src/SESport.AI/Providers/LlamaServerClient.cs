@@ -136,7 +136,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   turn,
                   prompt.MaxToolRounds,
                   toolRoundCount,
-                  conversationCharacterCount
+                  conversationCharacterCount,
+                  GetRequestTemperature(request)
                )
             );
             await ReportToolTraceProgressAsync(
@@ -252,7 +253,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   turn + 1,
                   prompt.MaxToolRounds,
                   prompt.MaxToolRounds ?? 0,
-                  conversationCharacterCount
+                  conversationCharacterCount,
+                  GetRequestTemperature(request)
                )
             );
             await ReportToolTraceProgressAsync(
@@ -611,7 +613,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       int turn,
       int? maxToolRounds,
       int toolRoundCount,
-      int conversationCharacterCount
+      int conversationCharacterCount,
+      decimal? temperature
    )
    {
       if(maxToolRounds is null)
@@ -620,7 +623,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          {
             ["kind"] = "budget",
             ["turn"] = turn,
-            ["enabled"] = false
+            ["enabled"] = false,
+            ["temperature"] = temperature
          };
       }
 
@@ -635,9 +639,23 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["remaining"] = remainingToolCalls,
          ["max"] = maxToolRounds.Value,
          ["conversation_chars"] = conversationCharacterCount,
+         ["temperature"] = temperature,
          ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
             $"{maxToolRounds.Value}."
       };
+   }
+
+   private static decimal? GetRequestTemperature(JsonObject request)
+   {
+      if(!request.TryGetPropertyValue("temperature", out var value))
+      {
+         return null;
+      }
+
+      return value is JsonValue jsonValue &&
+         jsonValue.TryGetValue<decimal>(out var temperature)
+         ? temperature
+         : null;
    }
 
    internal static decimal? GetEffectiveTemperature(
