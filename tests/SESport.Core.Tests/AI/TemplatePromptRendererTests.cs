@@ -36,4 +36,35 @@ public class TemplatePromptRendererTests
          rendered.ToPromptText()
       );
    }
+
+   [Fact]
+   public void RenderReplacesCandidatesMarker()
+   {
+      var renderer = new TemplatePromptRenderer();
+      var prompt = new AiPromptDefinition(
+         Guid.Parse("22222222-2222-2222-2222-222222222222"),
+         "job",
+         1,
+         "System",
+         "Possible participants:\n{{candidates}}",
+         null,
+         "{}",
+         null,
+         null,
+         null,
+         true
+      );
+
+      var rendered = renderer.Render(
+         prompt,
+         """
+         {"candidates":"- Jenny Rissveds"}
+         """
+      );
+
+      Assert.Equal(
+         "Possible participants:\n- Jenny Rissveds",
+         rendered.UserPrompt
+      );
+   }
 }
