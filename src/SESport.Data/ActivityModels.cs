@@ -36,7 +36,8 @@ public sealed record EntityOption(
    string Name,
    string Type,
    string Sport,
-   string Organization
+   string Organization,
+   string? PersonGenderId
 );
 
 public sealed record LookupOption(string Id, string Label);

@@ -1,4 +1,8 @@
+using System.Globalization;
+using System.Text;
+
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
 using SESport.Data;
 
 namespace SESport.Web.Services;
@@ -8,31 +12,32 @@ public static class BroadcastParticipationCandidateResolver
    private const int MaxCandidates = 5;
 
    public static string CreateCandidatesText(
-      string broadcastTitle,
+      BroadcastActivitySource broadcast,
       IReadOnlyCollection<EntityOption> candidates
    )
    {
-      if(string.IsNullOrWhiteSpace(broadcastTitle) || candidates.Count == 0)
+      if(string.IsNullOrWhiteSpace(broadcast.Title) || candidates.Count == 0)
       {
          return string.Empty;
       }
 
-      var normalizedTitle = BroadcastEntityFilter.NormalizeName(
-         broadcastTitle
+      var requiredGenderId = DetermineGenderId(
+         broadcast.Title,
+         broadcast.Categories
+      );
+      var normalizedTitle = NormalizeText(
+         $"{broadcast.Title} {string.Join(' ', broadcast.Categories)}"
       );
 
       var matches = candidates
-         .Select(candidate =>
-            CreateMatch(normalizedTitle, candidate)
+         .Where(candidate =>
+            IsGenderCompatible(candidate.PersonGenderId, requiredGenderId)
          )
+         .Select(candidate => CreateMatch(normalizedTitle, candidate))
          .Where(match => match is not null)
          .Select(match => match!)
          .OrderByDescending(match => match.Score)
          .ThenBy(match => match.Name, StringComparer.OrdinalIgnoreCase)
-         .ThenBy(
-            match => match.Hint ?? string.Empty,
-            StringComparer.OrdinalIgnoreCase
-         )
          .Take(MaxCandidates)
          .ToList();
 
@@ -43,7 +48,7 @@ public static class BroadcastParticipationCandidateResolver
 
       return string.Join(
          Environment.NewLine,
-         matches.Select(FormatMatch)
+         matches.Select(match => $"- {match.Name}")
       );
    }
 
@@ -52,24 +57,14 @@ public static class BroadcastParticipationCandidateResolver
       EntityOption candidate
    )
    {
-      var nameMatch = MatchValue(
-         normalizedTitle,
-         candidate.Name,
-         candidate.Name
-      );
+      var nameMatch = MatchValue(normalizedTitle, candidate.Name);
       var organizationMatch = candidate.Organization
          .Split(
             ',',
             StringSplitOptions.RemoveEmptyEntries
                | StringSplitOptions.TrimEntries
          )
-         .Select(organization =>
-            MatchValue(
-               normalizedTitle,
-               candidate.Name,
-               organization
-            )
-         )
+         .Select(organization => MatchValue(normalizedTitle, organization))
          .Where(match => match is not null)
          .Select(match => match!)
          .OrderByDescending(match => match.Score)
@@ -80,28 +75,20 @@ public static class BroadcastParticipationCandidateResolver
          return null;
       }
 
-      if(nameMatch is null)
-      {
-         return organizationMatch;
-      }
+      var score = Math.Max(
+         nameMatch?.Score ?? 0,
+         organizationMatch?.Score ?? 0
+      );
 
-      if(organizationMatch is null)
-      {
-         return nameMatch;
-      }
-
-      return organizationMatch.Score >= nameMatch.Score
-         ? organizationMatch
-         : nameMatch with { Hint = organizationMatch.Hint };
+      return new CandidateMatch(candidate.Name.Trim(), score);
    }
 
    private static CandidateMatch? MatchValue(
       string normalizedTitle,
-      string name,
       string value
    )
    {
-      var normalizedValue = BroadcastEntityFilter.NormalizeName(value);
+      var normalizedValue = NormalizeText(value);
 
       if(string.IsNullOrWhiteSpace(normalizedValue))
       {
@@ -114,11 +101,7 @@ public static class BroadcastParticipationCandidateResolver
          StringComparison.OrdinalIgnoreCase
       ))
       {
-         return new CandidateMatch(
-            name.Trim(),
-            null,
-            3000 + normalizedValue.Length
-         );
+         return new CandidateMatch(value.Trim(), 3000 + normalizedValue.Length);
       }
 
       if(normalizedTitle.Contains(
@@ -126,11 +109,7 @@ public static class BroadcastParticipationCandidateResolver
          StringComparison.OrdinalIgnoreCase
       ))
       {
-         return new CandidateMatch(
-            name.Trim(),
-            value.Trim(),
-            2000 + normalizedValue.Length
-         );
+         return new CandidateMatch(value.Trim(), 2000 + normalizedValue.Length);
       }
 
       if(normalizedValue.Contains(
@@ -138,24 +117,104 @@ public static class BroadcastParticipationCandidateResolver
          StringComparison.OrdinalIgnoreCase
       ))
       {
-         return new CandidateMatch(
-            name.Trim(),
-            null,
-            1000 + normalizedTitle.Length
-         );
+         return new CandidateMatch(value.Trim(), 1000 + normalizedTitle.Length);
       }
 
       return null;
    }
 
-   private static string FormatMatch(CandidateMatch match)
+   private static string? DetermineGenderId(
+      string title,
+      IReadOnlyCollection<string> categories
+   )
    {
-      return $"- {match.Name}";
+      var normalizedText = NormalizeText(
+         $"{title} {string.Join(' ', categories)}"
+      );
+
+      if(ContainsAny(
+         normalizedText,
+         ["damer", "women", "female", "ladies"]
+      ))
+      {
+         return PersonGenderIds.Female;
+      }
+
+      if(ContainsAny(
+         normalizedText,
+         ["herrar", "men", "male", "gentlemen"]
+      ))
+      {
+         return PersonGenderIds.Male;
+      }
+
+      return null;
+   }
+
+   private static bool IsGenderCompatible(
+      string? candidateGenderId,
+      string? requiredGenderId
+   )
+   {
+      if(requiredGenderId is null)
+      {
+         return true;
+      }
+
+      return string.Equals(
+         candidateGenderId,
+         requiredGenderId,
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static bool ContainsAny(
+      string normalizedText,
+      IReadOnlyCollection<string> tokens
+   )
+   {
+      return tokens.Any(token =>
+         normalizedText.Contains(token, StringComparison.OrdinalIgnoreCase)
+      );
+   }
+
+   private static string NormalizeText(string value)
+   {
+      var normalized = value.Normalize(NormalizationForm.FormD);
+      var builder = new StringBuilder(normalized.Length);
+
+      foreach(var character in normalized)
+      {
+         if(CharUnicodeInfo.GetUnicodeCategory(character) ==
+            UnicodeCategory.NonSpacingMark)
+         {
+            continue;
+         }
+
+         if(char.IsLetterOrDigit(character))
+         {
+            builder.Append(char.ToLowerInvariant(character));
+         }
+         else if(char.IsWhiteSpace(character))
+         {
+            builder.Append(' ');
+         }
+      }
+
+      return string.Join(
+         " ",
+         builder
+            .ToString()
+            .Split(
+               ' ',
+               StringSplitOptions.RemoveEmptyEntries
+                  | StringSplitOptions.TrimEntries
+            )
+      );
    }
 
    private sealed record CandidateMatch(
       string Name,
-      string? Hint,
       int Score
    );
 }

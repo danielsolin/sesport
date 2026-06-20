@@ -1,4 +1,5 @@
 using SESport.Core.Domain;
+using SESport.Core.Broadcast;
 using SESport.Data;
 using SESport.Web.Services;
 
@@ -16,20 +17,30 @@ public sealed class BroadcastParticipationCandidateResolverTests
             "Jenny Rissveds",
             TrackedEntityTypeIds.Person,
             "Cycling",
-            "UCI Mountain Bike World Series"
+            "UCI Mountain Bike World Series",
+            PersonGenderIds.Female
          ),
          new EntityOption(
             Guid.NewGuid(),
             "Other Person",
             TrackedEntityTypeIds.Person,
             "Cycling",
-            "Some Other Tour"
+            "Some Other Tour",
+            PersonGenderIds.Male
          )
       };
 
       var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
-         "UCI Mountain Bike World Series, Mountainbike Damer Elit Downhill " +
-         "Lenzerheide",
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "UCI Mountain Bike World Series, Mountainbike Damer Elit " +
+            "Downhill Lenzerheide",
+            null,
+            ["Cycling"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
          candidates
       );
 
@@ -47,12 +58,21 @@ public sealed class BroadcastParticipationCandidateResolverTests
             "Jenny Rissveds",
             TrackedEntityTypeIds.Person,
             "Cycling",
-            "Some Other Tour"
+            "Some Other Tour",
+            PersonGenderIds.Female
          )
       };
 
       var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
-         "Unrelated broadcast title",
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Unrelated broadcast title",
+            null,
+            ["Cycling"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
          candidates
       );
 

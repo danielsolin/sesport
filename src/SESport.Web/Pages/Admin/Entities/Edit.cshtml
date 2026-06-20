@@ -71,6 +71,17 @@
             </select>
             <span asp-validation-for="Entity.ExpectedStabilityId"></span>
          </label>
+         <label>
+            <span>Person gender</span>
+            <select asp-for="Entity.PersonGenderId">
+               <option value="">Select gender</option>
+               @foreach (var gender in Model.PersonGenders)
+               {
+                  <option value="@gender.Id">@gender.Label</option>
+               }
+            </select>
+            <span asp-validation-for="Entity.PersonGenderId"></span>
+         </label>
       </div>
    </section>
 

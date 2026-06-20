@@ -30,6 +30,8 @@ public class EditModel(AdminRepository repository) : PageModel
 
    public IReadOnlyList<ReferenceRow> StabilityKinds { get; private set; } = [];
 
+   public IReadOnlyList<LookupOption> PersonGenders { get; private set; } = [];
+
    public IReadOnlyList<SelectListItem> EntityLinkOptions
    {
       get;
@@ -115,6 +117,9 @@ public class EditModel(AdminRepository repository) : PageModel
             "entity-stability-kinds",
             cancellationToken
          );
+         PersonGenders = await repository.GetPersonGenderOptionsAsync(
+            cancellationToken
+         );
          var entityLinkOptions = await repository.GetEntityLinkOptionsAsync(
             entityId,
             cancellationToken
@@ -192,6 +197,19 @@ public class EditModel(AdminRepository repository) : PageModel
          ModelState.AddModelError(
             "Entity.CountryRelevanceReason",
             "Country relevance reason is required."
+         );
+      }
+
+      if (!string.IsNullOrWhiteSpace(Entity.PersonGenderId) &&
+         !string.Equals(
+            Entity.EntityTypeId,
+            "Person",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         ModelState.AddModelError(
+            "Entity.PersonGenderId",
+            "Person gender is only valid for person entities."
          );
       }
    }

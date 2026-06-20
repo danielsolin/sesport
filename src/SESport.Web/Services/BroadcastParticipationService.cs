@@ -88,7 +88,7 @@ public sealed class BroadcastParticipationService(
                CreateParticipationInputJson(
                   broadcast,
                   BroadcastParticipationCandidateResolver.CreateCandidatesText(
-                     broadcast.Title,
+                     broadcast,
                      candidateOptions
                   )
                ),

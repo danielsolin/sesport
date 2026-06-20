@@ -972,20 +972,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string entitySql = """
-         select
-            id,
-            canonical_name,
-            entity_type_id,
-            sport_id,
-            country_id,
-            country_relevance_kind_id,
-            country_relevance_reason,
-            watch_priority_id,
-            expected_stability_id
-         from entities
-         where id = @id
-         """;
+      var entitySql = await BuildEntitySqlAsync(cancellationToken);
 
       await using var command = dataSource.CreateCommand(entitySql);
       command.Parameters.AddWithValue("id", id);
@@ -1008,7 +995,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CountryRelevanceKindId = reader.GetString(5),
          CountryRelevanceReason = reader.GetString(6),
          WatchPriorityId = reader.GetString(7),
-         ExpectedStabilityId = reader.GetString(8)
+         ExpectedStabilityId = reader.GetString(8),
+         PersonGenderId = reader.IsDBNull(9) ? null : reader.GetString(9)
       };
 
       await reader.DisposeAsync();
@@ -1043,20 +1031,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string entitySql = """
-         select
-            id,
-            canonical_name,
-            entity_type_id,
-            sport_id,
-            country_id,
-            country_relevance_kind_id,
-            country_relevance_reason,
-            watch_priority_id,
-            expected_stability_id
-         from entities
-         where id = @id
-         """;
+      var entitySql = await BuildEntitySqlAsync(cancellationToken);
 
       await using var command = dataSource.CreateCommand(entitySql);
       command.Parameters.AddWithValue("id", id);
@@ -1079,7 +1054,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CountryRelevanceKindId = reader.GetString(5),
          CountryRelevanceReason = reader.GetString(6),
          WatchPriorityId = reader.GetString(7),
-         ExpectedStabilityId = reader.GetString(8)
+         ExpectedStabilityId = reader.GetString(8),
+         PersonGenderId = reader.IsDBNull(9) ? null : reader.GetString(9)
       };
 
       await reader.DisposeAsync();
@@ -1241,15 +1217,117 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
-   public async Task SaveEntityAsync(
-      EntityEditModel model,
+   public async Task<IReadOnlyList<LookupOption>>
+      GetPersonGenderOptionsAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      await Task.CompletedTask.WaitAsync(cancellationToken);
+
+      return
+      [
+         new LookupOption(PersonGenderIds.Female, "Female"),
+         new LookupOption(PersonGenderIds.Male, "Male"),
+         new LookupOption(PersonGenderIds.NonBinary, "Non-binary")
+      ];
+   }
+
+   private async Task<bool> HasPersonGenderColumnAsync(
       CancellationToken cancellationToken
    )
    {
-      var isNew = model.Id is null;
-      var id = model.Id ?? Guid.NewGuid();
-      var sql = isNew
+      const string sql = """
+         select exists (
+            select 1
+            from information_schema.columns
+            where table_schema = current_schema()
+               and table_name = 'entities'
+               and column_name = 'person_gender_id'
+         )
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      await reader.ReadAsync(cancellationToken);
+      return reader.GetBoolean(0);
+   }
+
+   private static string BuildEntitySql(bool includePersonGender)
+   {
+      return includePersonGender
          ? """
+            select
+               id,
+               canonical_name,
+               entity_type_id,
+               sport_id,
+               country_id,
+               country_relevance_kind_id,
+               country_relevance_reason,
+               watch_priority_id,
+               expected_stability_id,
+               person_gender_id
+            from entities
+            where id = @id
+            """
+         : """
+            select
+               id,
+               canonical_name,
+               entity_type_id,
+               sport_id,
+               country_id,
+               country_relevance_kind_id,
+               country_relevance_reason,
+               watch_priority_id,
+               expected_stability_id,
+               null::text as person_gender_id
+            from entities
+            where id = @id
+            """;
+   }
+
+   private async Task<string> BuildEntitySqlAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      return BuildEntitySql(
+         await HasPersonGenderColumnAsync(cancellationToken)
+      );
+   }
+
+   private static string BuildEntityInsertSql(bool includePersonGender)
+   {
+      return includePersonGender
+         ? """
+            insert into entities (
+               id,
+               canonical_name,
+               entity_type_id,
+               sport_id,
+               country_id,
+               country_relevance_kind_id,
+               country_relevance_reason,
+               watch_priority_id,
+               expected_stability_id,
+               person_gender_id
+            )
+            values (
+               @id,
+               @canonical_name,
+               @entity_type_id,
+               @sport_id,
+               @country_id,
+               @country_relevance_kind_id,
+               @country_relevance_reason,
+               @watch_priority_id,
+               @expected_stability_id,
+               @person_gender_id
+            )
+            """
+         : """
             insert into entities (
                id,
                canonical_name,
@@ -1272,6 +1350,26 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @watch_priority_id,
                @expected_stability_id
             )
+            """;
+   }
+
+   private static string BuildEntityUpdateSql(bool includePersonGender)
+   {
+      return includePersonGender
+         ? """
+            update entities
+            set
+               canonical_name = @canonical_name,
+               entity_type_id = @entity_type_id,
+               sport_id = @sport_id,
+               country_id = @country_id,
+               country_relevance_kind_id = @country_relevance_kind_id,
+               country_relevance_reason = @country_relevance_reason,
+               watch_priority_id = @watch_priority_id,
+               expected_stability_id = @expected_stability_id,
+               person_gender_id = @person_gender_id,
+               updated_at = now()
+            where id = @id
             """
          : """
             update entities
@@ -1287,6 +1385,21 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                updated_at = now()
             where id = @id
             """;
+   }
+
+   public async Task SaveEntityAsync(
+      EntityEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      var isNew = model.Id is null;
+      var id = model.Id ?? Guid.NewGuid();
+      var includePersonGender = await HasPersonGenderColumnAsync(
+         cancellationToken
+      );
+      var sql = isNew
+         ? BuildEntityInsertSql(includePersonGender)
+         : BuildEntityUpdateSql(includePersonGender);
 
       await using var connection = await dataSource.OpenConnectionAsync(
          cancellationToken
@@ -1351,6 +1464,26 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          "expected_stability_id",
          model.ExpectedStabilityId
       );
+      command.Parameters.AddWithValue(
+         "person_gender_id",
+         (object?)NormalizePersonGenderId(model) ?? DBNull.Value
+      );
+   }
+
+   private static string? NormalizePersonGenderId(EntityEditModel model)
+   {
+      if(!string.Equals(
+         model.EntityTypeId,
+         TrackedEntityTypeIds.Person,
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return null;
+      }
+
+      return string.IsNullOrWhiteSpace(model.PersonGenderId)
+         ? null
+         : model.PersonGenderId.Trim();
    }
 
    private static async Task SaveEntityLinksAsync(
