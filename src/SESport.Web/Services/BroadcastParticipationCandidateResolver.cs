@@ -48,7 +48,7 @@ public static class BroadcastParticipationCandidateResolver
 
       return string.Join(
          Environment.NewLine,
-         matches.Select(match => $"- {match.Name}")
+         matches.Select(match => $"  - {match.Name}")
       );
    }
 
@@ -132,17 +132,35 @@ public static class BroadcastParticipationCandidateResolver
          $"{title} {string.Join(' ', categories)}"
       );
 
-      if(ContainsAny(
+      if(ContainsAnyToken(
          normalizedText,
-         ["damer", "women", "female", "ladies"]
+         [
+            "dam",
+            "damer",
+            "damernas",
+            "damallsvenskan",
+            "women",
+            "womens",
+            "female",
+            "ladies"
+         ]
       ))
       {
          return PersonGenderIds.Female;
       }
 
-      if(ContainsAny(
+      if(ContainsAnyToken(
          normalizedText,
-         ["herrar", "men", "male", "gentlemen"]
+         [
+            "herr",
+            "herrar",
+            "herrarnas",
+            "herrallsvenskan",
+            "men",
+            "mens",
+            "male",
+            "gentlemen"
+         ]
       ))
       {
          return PersonGenderIds.Male;
@@ -168,13 +186,18 @@ public static class BroadcastParticipationCandidateResolver
       );
    }
 
-   private static bool ContainsAny(
+   private static bool ContainsAnyToken(
       string normalizedText,
       IReadOnlyCollection<string> tokens
    )
    {
+      var paddedText = $" {normalizedText} ";
+
       return tokens.Any(token =>
-         normalizedText.Contains(token, StringComparison.OrdinalIgnoreCase)
+         paddedText.Contains(
+            $" {token} ",
+            StringComparison.OrdinalIgnoreCase
+         )
       );
    }
 

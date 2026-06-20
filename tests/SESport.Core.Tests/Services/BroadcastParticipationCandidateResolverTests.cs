@@ -44,8 +44,88 @@ public sealed class BroadcastParticipationCandidateResolverTests
          candidates
       );
 
-      Assert.Equal("- Jenny Rissveds", text);
+      Assert.Equal("  - Jenny Rissveds", text);
       Assert.DoesNotContain("Other Person", text);
+   }
+
+   [Fact]
+   public void CreateCandidatesTextKeepsFemaleEventsToFemaleCandidates()
+   {
+      var candidates = new[]
+      {
+         new EntityOption(
+            Guid.NewGuid(),
+            "Anna Svensson",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "Some Tour",
+            PersonGenderIds.Female
+         ),
+         new EntityOption(
+            Guid.NewGuid(),
+            "Erik Karlsson",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "Some Tour",
+            PersonGenderIds.Male
+         )
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Anna Svensson vs Erik Karlsson - Damallsvenskan",
+            null,
+            ["Tennis"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal("  - Anna Svensson", text);
+      Assert.DoesNotContain("Erik Karlsson", text);
+   }
+
+   [Fact]
+   public void CreateCandidatesTextKeepsMaleEventsToMaleCandidates()
+   {
+      var candidates = new[]
+      {
+         new EntityOption(
+            Guid.NewGuid(),
+            "Anna Svensson",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "Some Tour",
+            PersonGenderIds.Female
+         ),
+         new EntityOption(
+            Guid.NewGuid(),
+            "Erik Karlsson",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "Some Tour",
+            PersonGenderIds.Male
+         )
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Anna Svensson vs Erik Karlsson - Herrarnas SM",
+            null,
+            ["Tennis"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal("  - Erik Karlsson", text);
+      Assert.DoesNotContain("Anna Svensson", text);
    }
 
    [Fact]
