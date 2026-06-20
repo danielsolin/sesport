@@ -23,31 +23,34 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
       CancellationToken cancellationToken
    )
    {
-      var googleResults = await TrySearchAsync(
+      var googleResponse = await TrySearchAsync(
          GoogleWebSearchClient,
          query,
          maxResults,
          cancellationToken
       );
 
-      if(googleResults.Count > 0)
+      if(googleResponse.Results.Count > 0)
       {
-         return new WebSearchResponse(googleResults, "Google");
+         return googleResponse;
       }
 
-      var searxngResults = await TrySearchAsync(
+      var searxngResponse = await TrySearchAsync(
          SearxngWebSearchClient,
          query,
          maxResults,
          cancellationToken
       );
       return new WebSearchResponse(
-         searxngResults,
-         "Google -> SearXNG fallback"
+         searxngResponse.Results,
+         "Google -> SearXNG fallback",
+         googleResponse.Details is not null
+            ? $"Google failed: {googleResponse.Details}"
+            : "Google returned no results"
       );
    }
 
-   private static async Task<IReadOnlyList<WebSearchResult>> TrySearchAsync(
+   private static async Task<WebSearchResponse> TrySearchAsync(
       IWebSearchClient client,
       string query,
       int maxResults,
@@ -56,11 +59,11 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
    {
       try
       {
-         return (await client.SearchAsync(
+         return await client.SearchAsync(
             query,
             maxResults,
             cancellationToken
-         )).Results;
+         );
       }
       catch(OperationCanceledException)
       {
@@ -68,7 +71,7 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
       }
       catch
       {
-         return [];
+         return new WebSearchResponse([]);
       }
    }
 }

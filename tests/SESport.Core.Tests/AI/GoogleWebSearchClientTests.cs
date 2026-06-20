@@ -16,17 +16,19 @@ public class GoogleWebSearchClientTests
          {
             capturedUri = uri;
             capturedMaxResults = maxResults;
-            return Task.FromResult<IReadOnlyList<WebSearchResult>>(
-               [
-                  new(
-                     "The Amateur Championship START LIST FOR ROUND 1",
-                     "https://assets.randa.org/c42c7bf4-dca7-00ea-4f2e-" +
-                     "373223f80f76/2542a870-e7bb-4d86-a914-2863ef412282/" +
-                     "MP%20Round%201%20Draw.pdf",
-                     null,
-                     null
-                  )
-               ]
+            return Task.FromResult(
+               new GoogleWebSearchClient.GoogleSearchAttempt(
+                  [
+                     new(
+                        "The Amateur Championship START LIST FOR ROUND 1",
+                        "https://assets.randa.org/c42c7bf4-dca7-00ea-4f2e-" +
+                        "373223f80f76/2542a870-e7bb-4d86-a914-2863ef412282/" +
+                        "MP%20Round%201%20Draw.pdf",
+                        null,
+                        null
+                     )
+                  ]
+               )
             );
          }
       );
@@ -67,7 +69,9 @@ public class GoogleWebSearchClientTests
          (_, _, _) =>
          {
             called = true;
-            return Task.FromResult<IReadOnlyList<WebSearchResult>>([]);
+            return Task.FromResult(
+               new GoogleWebSearchClient.GoogleSearchAttempt([])
+            );
          }
       );
 

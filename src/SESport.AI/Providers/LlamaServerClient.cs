@@ -214,7 +214,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      turn,
                      toolCall,
                      toolResult,
-                     toolState.LastSearchProvider
+                     toolState.LastSearchProvider,
+                     toolState.LastSearchProviderDetails
                   )
                );
                await ReportToolTraceProgressAsync(
@@ -708,7 +709,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       int turn,
       ToolCall toolCall,
       string toolResult,
-      string? searchProvider = null
+      string? searchProvider = null,
+      string? searchProviderDetails = null
    )
    {
       var isSearchTool = string.Equals(
@@ -744,6 +746,9 @@ public sealed class LlamaServerClient : IAiProviderClient
             ? find
             : null,
          ["search_provider"] = isSearchTool ? searchProvider : null,
+         ["search_provider_details"] = isSearchTool
+            ? searchProviderDetails
+            : null,
          ["result"] = toolResult
       };
    }
@@ -1116,6 +1121,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
          var searchResults = searchResponse.Results;
          toolState.LastSearchProvider = searchResponse.Provider;
+         toolState.LastSearchProviderDetails = searchResponse.Details;
+         toolState.LastSearchProviderDetails = searchResponse.Details;
 
          LogSearchResults(
             query,
@@ -2853,6 +2860,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       public int SearchSequence { get; set; }
 
       public string? LastSearchProvider { get; set; }
+
+      public string? LastSearchProviderDetails { get; set; }
 
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
          new(StringComparer.OrdinalIgnoreCase);

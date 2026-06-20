@@ -17,7 +17,8 @@ public sealed class GooglePreferredWebSearchClientTests
                   null,
                   null
                )
-            ]
+            ],
+            "Google"
          ),
          new FakeWebSearchClient(
             [
@@ -27,7 +28,8 @@ public sealed class GooglePreferredWebSearchClientTests
                   null,
                   null
                )
-            ]
+            ],
+            "SearXNG"
          )
       );
 
@@ -46,7 +48,7 @@ public sealed class GooglePreferredWebSearchClientTests
    public async Task SearchFallsBackWhenGoogleReturnsNoResults()
    {
       var client = new GooglePreferredWebSearchClient(
-         new FakeWebSearchClient([]),
+         new FakeWebSearchClient([], "Google"),
          new FakeWebSearchClient(
             [
                new(
@@ -55,7 +57,8 @@ public sealed class GooglePreferredWebSearchClientTests
                   null,
                   null
                )
-            ]
+            ],
+            "SearXNG"
          )
       );
 
@@ -83,7 +86,8 @@ public sealed class GooglePreferredWebSearchClientTests
                   null,
                   null
                )
-            ]
+            ],
+            "SearXNG"
          )
       );
 
@@ -101,10 +105,15 @@ public sealed class GooglePreferredWebSearchClientTests
    private sealed class FakeWebSearchClient : IWebSearchClient
    {
       private readonly IReadOnlyList<WebSearchResult> results;
+      private readonly string? provider;
 
-      public FakeWebSearchClient(IReadOnlyList<WebSearchResult> results)
+      public FakeWebSearchClient(
+         IReadOnlyList<WebSearchResult> results,
+         string? provider = null
+      )
       {
          this.results = results;
+         this.provider = provider;
       }
 
       public Task<WebSearchResponse> SearchAsync(
@@ -116,7 +125,7 @@ public sealed class GooglePreferredWebSearchClientTests
          _ = query;
          _ = maxResults;
          _ = cancellationToken;
-         return Task.FromResult(new WebSearchResponse(results));
+         return Task.FromResult(new WebSearchResponse(results, provider));
       }
    }
 

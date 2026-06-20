@@ -659,6 +659,7 @@ public class DetailsModel(
          GetString(entry, "query"),
          GetString(entry, "id"),
          GetString(entry, "search_provider"),
+         GetString(entry, "search_provider_details"),
          FormatDisplayValue(GetProperty(entry, "result"))
       );
    }
@@ -890,6 +891,7 @@ public class DetailsModel(
       string? Query,
       string? Id,
       string? SearchProvider,
+      string? SearchProviderDetails,
       string Result
    );
 
