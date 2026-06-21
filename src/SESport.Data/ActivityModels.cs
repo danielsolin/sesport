@@ -37,6 +37,7 @@ public sealed record EntityOption(
    string Type,
    string Sport,
    string Organization,
+   int WatchPrioritySortOrder,
    string? PersonGenderId
 );
 

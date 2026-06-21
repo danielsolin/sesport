@@ -36,7 +36,8 @@ public static class BroadcastParticipationCandidateResolver
          .Select(candidate => CreateMatch(normalizedTitle, candidate))
          .Where(match => match is not null)
          .Select(match => match!)
-         .OrderByDescending(match => match.Score)
+         .OrderBy(match => match.WatchPrioritySortOrder)
+         .ThenByDescending(match => match.Score)
          .ThenBy(match => match.Name, StringComparer.OrdinalIgnoreCase)
          .Take(MaxCandidates)
          .ToList();
@@ -80,7 +81,11 @@ public static class BroadcastParticipationCandidateResolver
          organizationMatch?.Score ?? 0
       );
 
-      return new CandidateMatch(candidate.Name.Trim(), score);
+      return new CandidateMatch(
+         candidate.Name.Trim(),
+         score,
+         candidate.WatchPrioritySortOrder
+      );
    }
 
    private static CandidateMatch? MatchValue(
@@ -105,7 +110,8 @@ public static class BroadcastParticipationCandidateResolver
          {
             return new CandidateMatch(
                value.Trim(),
-               3000 + pattern.Length
+               3000 + pattern.Length,
+               0
             );
          }
 
@@ -116,7 +122,8 @@ public static class BroadcastParticipationCandidateResolver
          {
             return new CandidateMatch(
                value.Trim(),
-               2000 + pattern.Length
+               2000 + pattern.Length,
+               0
             );
          }
 
@@ -127,7 +134,8 @@ public static class BroadcastParticipationCandidateResolver
          {
             return new CandidateMatch(
                value.Trim(),
-               1000 + normalizedTitle.Length
+               1000 + normalizedTitle.Length,
+               0
             );
          }
       }
@@ -289,6 +297,7 @@ public static class BroadcastParticipationCandidateResolver
 
    private sealed record CandidateMatch(
       string Name,
-      int Score
+      int Score,
+      int WatchPrioritySortOrder
    );
 }

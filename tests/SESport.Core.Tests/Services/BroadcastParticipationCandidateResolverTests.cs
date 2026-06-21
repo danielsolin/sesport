@@ -17,6 +17,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Cycling",
             "UCI Mountain Bike World Series",
+            10,
             PersonGenderIds.Female
          ),
          new EntityOption(
@@ -25,6 +26,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Cycling",
             "Some Other Tour",
+            20,
             PersonGenderIds.Male
          )
       };
@@ -58,6 +60,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Tennis",
             "Some Tour",
+            10,
             PersonGenderIds.Female
          ),
          new EntityOption(
@@ -66,6 +69,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Tennis",
             "Some Tour",
+            20,
             PersonGenderIds.Male
          )
       };
@@ -98,6 +102,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Tennis",
             "Some Tour",
+            10,
             PersonGenderIds.Female
          ),
          new EntityOption(
@@ -106,6 +111,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Tennis",
             "Some Tour",
+            20,
             PersonGenderIds.Male
          )
       };
@@ -138,6 +144,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Cycling",
             "Some Other Tour",
+            10,
             PersonGenderIds.Female
          )
       };
@@ -169,6 +176,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             TrackedEntityTypeIds.Person,
             "Tennis",
             "ATP Tour",
+            10,
             PersonGenderIds.Male
          )
       };
@@ -187,5 +195,46 @@ public sealed class BroadcastParticipationCandidateResolverTests
       );
 
       Assert.Equal("  - Novak Djokovic", text);
+   }
+
+   [Fact]
+   public void CreateCandidatesTextSortsTierOneBeforeTierTwo()
+   {
+      var candidates = new[]
+      {
+         new EntityOption(
+            Guid.NewGuid(),
+            "Alfa",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "Tier 1 Tour",
+            10,
+            null
+         ),
+         new EntityOption(
+            Guid.NewGuid(),
+            "Alfa 2024",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "Tier 2 Tour",
+            20,
+            null
+         )
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Alfa 2024",
+            null,
+            ["Tennis"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal($"  - Alfa{Environment.NewLine}  - Alfa 2024", text);
    }
 }

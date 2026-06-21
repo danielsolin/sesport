@@ -193,11 +193,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             e.entity_type_id,
             s.name,
             coalesce(org.organization_names, ''),
+            p.sort_order,
             e.person_gender_id
          from entities e
          join sports s
             on s.id = e.sport_id
             and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+         join entity_watch_priorities p
+            on p.id = e.watch_priority_id
          left join lateral (
             select string_agg(
                distinct linked.canonical_name,
@@ -220,7 +223,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                      '{{TrackedEntityTypeIds.Championship}}'
                   )
          ) org on true
-         order by e.canonical_name
+         order by p.sort_order, e.canonical_name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -238,7 +241,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.IsDBNull(5) ? null : reader.GetString(5)
+               reader.GetInt32(5),
+               reader.IsDBNull(6) ? null : reader.GetString(6)
             )
          );
       }
