@@ -20,7 +20,7 @@
             },
             "additionalProperties": false
          },
-         "description": "Search for candidate source pages."
+         "description": "Search for participation source pages."
       }
    },
    {
@@ -35,7 +35,7 @@
             },
             "additionalProperties": false
          },
-         "description": "Fetch page text from a URL. If the page is very big, this tool will produce a cut-down version indicated by [CUTOFF] at the end"
+         "description": "Fetch page text from a URL."
       }
    },
    {
@@ -58,7 +58,7 @@
             },
             "additionalProperties": false
          },
-         "description": "Find matching text in a fetched page or direct URL. This tool will search the full, uncut, page text."
+         "description": "Do case-insensitive text search in a page."
       }
    }
 ]
