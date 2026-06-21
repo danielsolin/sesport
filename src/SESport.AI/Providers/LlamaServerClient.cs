@@ -73,7 +73,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiRenderedPrompt renderedPrompt,
       string inputPayloadJson,
       CancellationToken cancellationToken,
-      Func<string?, CancellationToken, Task>? toolTraceUpdated = null
+      Func<string?, int, CancellationToken, Task>? toolTraceUpdated = null
    )
    {
       var request = CreateRequestPayload(
@@ -138,6 +138,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             await ReportToolTraceProgressAsync(
                toolTrace,
+               toolRoundCount,
                toolTraceUpdated,
                cancellationToken
             );
@@ -174,6 +175,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             await ReportToolTraceProgressAsync(
                toolTrace,
+               toolRoundCount,
                toolTraceUpdated,
                cancellationToken
             );
@@ -215,6 +217,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                );
                await ReportToolTraceProgressAsync(
                   toolTrace,
+                  toolRoundCount,
                   toolTraceUpdated,
                   cancellationToken
                );
@@ -261,6 +264,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             await ReportToolTraceProgressAsync(
                toolTrace,
+               toolRoundCount,
                toolTraceUpdated,
                cancellationToken
             );
@@ -303,6 +307,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
             await ReportToolTraceProgressAsync(
                toolTrace,
+               toolRoundCount,
                toolTraceUpdated,
                cancellationToken
             );
@@ -751,7 +756,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static async Task ReportToolTraceProgressAsync(
       JsonArray toolTrace,
-      Func<string?, CancellationToken, Task>? toolTraceUpdated,
+      int toolRoundCount,
+      Func<string?, int, CancellationToken, Task>? toolTraceUpdated,
       CancellationToken cancellationToken
    )
    {
@@ -764,7 +770,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ? null
          : JsonSerializer.Serialize(toolTrace, JsonOptions);
 
-      await toolTraceUpdated(toolTraceJson, cancellationToken);
+      await toolTraceUpdated(toolTraceJson, toolRoundCount, cancellationToken);
    }
 
    private static string? GetFinishReason(JsonObject response)

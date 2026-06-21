@@ -28,7 +28,7 @@ public sealed class AiRepositoryTests
 
       await InsertProviderAsync(dataSource, providerId);
       await InsertJobAsync(dataSource, jobId, providerId);
-      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertPromptAsync(dataSource, promptId, jobId, version: 999);
       await InsertRunAsync(
          dataSource,
          runId,
@@ -436,6 +436,7 @@ public sealed class AiRepositoryTests
             now(),
             false
          )
+         on conflict (id) do nothing
          """;
       command.Parameters.AddWithValue("id", jobId);
       command.Parameters.AddWithValue("label", "Test job");
@@ -446,7 +447,8 @@ public sealed class AiRepositoryTests
    private static async Task InsertPromptAsync(
       NpgsqlDataSource dataSource,
       Guid promptId,
-      string jobId
+      string jobId,
+      int version = 1
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -470,7 +472,7 @@ public sealed class AiRepositoryTests
          values (
             @id,
             @job_id,
-            1,
+            @version,
             'System',
             'User',
             null,
@@ -485,6 +487,7 @@ public sealed class AiRepositoryTests
          """;
       command.Parameters.AddWithValue("id", promptId);
       command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.AddWithValue("version", version);
       await command.ExecuteNonQueryAsync();
    }
 
@@ -496,6 +499,7 @@ public sealed class AiRepositoryTests
       string providerId,
       DateTimeOffset? startedAt = null,
       string? executionEnvironment = null,
+      string? correlationId = null,
       string statusId = "running",
       int toolRoundCount = 0,
       decimal? durationSeconds = null,
@@ -536,7 +540,7 @@ public sealed class AiRepositoryTests
             @prompt_id,
             @provider_id,
             @status_id,
-            null,
+            @correlation_id,
             'gpt',
             '{}'::jsonb,
             'Rendered',
@@ -560,6 +564,10 @@ public sealed class AiRepositoryTests
       command.Parameters.AddWithValue("job_id", jobId);
       command.Parameters.AddWithValue("prompt_id", promptId);
       command.Parameters.AddWithValue("provider_id", providerId);
+      command.Parameters.AddWithValue(
+         "correlation_id",
+         (object?)correlationId ?? DBNull.Value
+      );
       command.Parameters.AddWithValue(
          "execution_environment",
          executionEnvironment ?? ExecutionEnvironment.Current

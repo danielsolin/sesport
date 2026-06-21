@@ -134,7 +134,6 @@ public sealed class AiJobRunner(
    )
    {
       var run = context.Run;
-      var toolRoundCount = 0;
 
       run = run with
       {
@@ -144,13 +143,14 @@ public sealed class AiJobRunner(
 
       async Task ReportToolTraceProgressAsync(
          string? toolTraceJson,
+         int progressToolRoundCount,
          CancellationToken progressCancellationToken
       )
       {
          run = run with
          {
             ToolTraceJson = toolTraceJson,
-            ToolRoundCount = toolRoundCount
+            ToolRoundCount = progressToolRoundCount
          };
 
          try
@@ -158,7 +158,7 @@ public sealed class AiJobRunner(
             await runRepository.UpdateToolTraceAsync(
                run.Id,
                toolTraceJson,
-               toolRoundCount,
+               progressToolRoundCount,
                progressCancellationToken
             );
          }

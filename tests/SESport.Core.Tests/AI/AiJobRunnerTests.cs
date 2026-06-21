@@ -90,6 +90,33 @@ public class AiJobRunnerTests
    }
 
    [Fact]
+   public async Task RunAsyncPersistsLatestToolRoundCountFromProgress()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new ProgressReportingProviderClient();
+      var runRepository = new RecordingRunRepository();
+      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var result = await runner.RunAsync(
+         new AiJobRequest("job", """{"event":"test"}"""),
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, result.ToolRoundCount);
+      Assert.NotNull(runRepository.UpdatedRun);
+      Assert.Equal(2, runRepository.UpdatedRun!.ToolRoundCount);
+   }
+
+   [Fact]
    public async Task QueueAsyncStoresPendingRun()
    {
       var jobRepository = new RecordingJobDefinitionRepository();
@@ -237,7 +264,7 @@ public class AiJobRunnerTests
          AiRenderedPrompt renderedPrompt,
          string inputPayloadJson,
          CancellationToken cancellationToken,
-         Func<string?, CancellationToken, Task>? toolTraceUpdated = null
+         Func<string?, int, CancellationToken, Task>? toolTraceUpdated = null
       )
       {
          throw new AiProviderExecutionException(
@@ -277,7 +304,7 @@ public class AiJobRunnerTests
          AiRenderedPrompt renderedPrompt,
          string inputPayloadJson,
          CancellationToken cancellationToken,
-         Func<string?, CancellationToken, Task>? toolTraceUpdated = null
+         Func<string?, int, CancellationToken, Task>? toolTraceUpdated = null
       )
       {
          return Task.FromResult(
@@ -306,7 +333,74 @@ public class AiJobRunnerTests
                null,
                null,
                null
-            )
+         )
+      );
+      }
+   }
+
+   private sealed class ProgressReportingProviderClient
+      : IAiProviderClient
+   {
+      public string Kind => "llama-server";
+
+      public JsonObject CreateRequestPayload(
+         AiProviderDefinition provider,
+         AiJobDefinition job,
+         AiPromptDefinition prompt,
+         AiRenderedPrompt renderedPrompt
+      )
+      {
+         return new JsonObject
+         {
+            ["model"] = provider.Model,
+            ["messages"] = new JsonArray()
+         };
+      }
+
+      public async Task<AiJobResult> GenerateAsync(
+         AiProviderDefinition provider,
+         AiJobDefinition job,
+         AiPromptDefinition prompt,
+         AiRenderedPrompt renderedPrompt,
+         string inputPayloadJson,
+         CancellationToken cancellationToken,
+         Func<string?, int, CancellationToken, Task>? toolTraceUpdated = null
+      )
+      {
+         if(toolTraceUpdated is not null)
+         {
+            await toolTraceUpdated(
+               """[{"kind":"tool","turn":1}]""",
+               1,
+               cancellationToken
+            );
+            await toolTraceUpdated(
+               """[{"kind":"tool","turn":1},{"kind":"tool","turn":2}]""",
+               2,
+               cancellationToken
+            );
+         }
+
+         return new AiJobResult(
+            Guid.NewGuid(),
+            job.Id,
+            provider.Id,
+            provider.Model,
+            renderedPrompt.ToPromptText(),
+            """{"request":"payload"}""",
+            "Completed run",
+            """
+            {
+               "output_text": "Completed run"
+            }
+            """,
+            """[{"kind":"tool","turn":1},{"kind":"tool","turn":2}]""",
+            2,
+            48,
+            null,
+            null,
+            null,
+            null
          );
       }
    }
