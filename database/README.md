@@ -3,6 +3,34 @@
 This folder contains the database baseline schema plus future migration
 scripts.
 
+The application resolves the default database connection from environment
+variables, in this order:
+
+1. `ConnectionStrings__Default`
+2. `SESPORT_POSTGRES_HOST`
+3. `SESPORT_POSTGRES_PORT`
+4. `SESPORT_POSTGRES_DB`
+5. `SESPORT_POSTGRES_USER`
+6. `SESPORT_POSTGRES_PASSWORD`
+
+If no variables are set, the code falls back to the local defaults for
+`sesport` on `localhost:5432`.
+
+To connect with `psql` after copying `.env.example` to `.env`, source the
+variables into your shell first, or pass them explicitly:
+
+```bash
+set -a
+. ./.env
+set +a
+
+PGPASSWORD="$SESPORT_POSTGRES_PASSWORD" \
+  psql -h "$SESPORT_POSTGRES_HOST" \
+  -p "$SESPORT_POSTGRES_PORT" \
+  -U "$SESPORT_POSTGRES_USER" \
+  -d "$SESPORT_POSTGRES_DB"
+```
+
 `001_baseline.sql` defines the current schema from scratch, including the
 lookup tables, entity model, activity model, TV sport imports, AI jobs, and
 the reference rows needed by the application.
@@ -14,6 +42,19 @@ Start interactive PostgreSQL session in docker container:
 
 ```bash
 docker compose exec -it postgres psql -U sesport -d sesport
+```
+
+If you want to mirror the application config exactly, use the environment
+variables from `.env`:
+
+```bash
+set -a
+. ./.env
+set +a
+
+docker compose exec -it postgres env \
+  PGPASSWORD="$SESPORT_POSTGRES_PASSWORD" \
+  psql -h localhost -U "$SESPORT_POSTGRES_USER" -d "$SESPORT_POSTGRES_DB"
 ```
 
 Start PostgreSQL with Docker Compose:
