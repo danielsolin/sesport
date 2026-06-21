@@ -60,7 +60,7 @@ public sealed class BroadcastParticipationService(
          .ToList();
    }
 
-   public async Task QueueSwedishParticipationAsync(
+   public async Task QueueParticipationAsync(
       IReadOnlyCollection<Guid> broadcastIds,
       CancellationToken cancellationToken
    )
@@ -100,7 +100,7 @@ public sealed class BroadcastParticipationService(
    }
 
    public async Task<IReadOnlyList<BroadcastParticipationCheckResult>>
-      GetSwedishParticipationCheckResultsAsync(
+      GetParticipationCheckResultsAsync(
          IReadOnlyCollection<Guid> broadcastIds,
          CancellationToken cancellationToken
       )

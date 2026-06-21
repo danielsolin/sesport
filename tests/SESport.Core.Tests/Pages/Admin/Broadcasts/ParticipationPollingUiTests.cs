@@ -20,6 +20,7 @@ public sealed class ParticipationPollingUiTests
       var script = await File.ReadAllTextAsync(scriptPath);
 
       Assert.Contains("data-participation-run-id", html);
+      Assert.Contains("data-ajax-success=\"remove\"", html);
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);

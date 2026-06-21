@@ -2,11 +2,11 @@
 @model SESport.Web.Pages.Admin.Broadcasts.IndexModel
 @{ 
    ViewData["Title"] = "Broadcasts";
-   var checkSwedishParticipationUrl = Url.Page(
-      "/Admin/Ajax/Create/SwedishParticipationCheck"
+   var checkParticipationUrl = Url.Page(
+      "/Admin/Ajax/Create/ParticipationCheck"
    );
-   var checkSwedishParticipationStatusUrl = Url.Page(
-      "/Admin/Ajax/Poll/SwedishParticipationStatus"
+   var checkParticipationStatusUrl = Url.Page(
+      "/Admin/Ajax/Poll/ParticipationStatus"
    );
    var createParticipantEntityUrl = Url.Page(
       "/Admin/Ajax/Create/ParticipantEntity"
@@ -77,8 +77,8 @@
      data-create-participant-url="@createParticipantEntityUrl"
      data-broadcast-inline-edit-url="@editBroadcastFieldUrl"
      data-search-url-base="@ViewData["SearchUrl"]"
-     data-check-swedish-participation-status-url=
-        "@checkSwedishParticipationStatusUrl">
+     data-check-participation-status-url=
+        "@checkParticipationStatusUrl">
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
@@ -225,14 +225,14 @@
                                   aria-label="Edit categories"
                                   hidden />
                         </td>
-                           <td data-swedish-participation-cell
+                           <td data-participation-cell
                             data-broadcast-id="@broadcast.Id"
                             data-participation-run-id=
                                "@broadcast.ParticipationCheck?.RunId"
                             data-participation-status=
                                "@broadcast.ParticipationCheck?.StatusId"
-                            data-check-swedish-participation-url=
-                               "@checkSwedishParticipationUrl">
+                            data-check-participation-url=
+                               "@checkParticipationUrl">
                            @{
                               var participationCheck =
                                  broadcast.ParticipationCheck;
@@ -241,9 +241,9 @@
                            {
                               <button class="button broadcast-ai-check-action"
                                       type="button"
-                                      data-check-swedish-participation-row
-                                      data-check-swedish-participation-url=
-                                         "@checkSwedishParticipationUrl"
+                                      data-check-participation-row
+                                      data-check-participation-url=
+                                         "@checkParticipationUrl"
                                       data-broadcast-id="@broadcast.Id">
                                  Check
                               </button>
@@ -261,9 +261,9 @@
                                        broadcast-ai-check-action
                                        broadcast-ai-check-retry"
                                             type="button"
-                                            data-check-swedish-participation-row
-                                            data-check-swedish-participation-url=
-                                               "@checkSwedishParticipationUrl"
+                                            data-check-participation-row
+                                            data-check-participation-url=
+                                               "@checkParticipationUrl"
                                             data-broadcast-id="@broadcast.Id">
                                        Retry
                                     </button>
@@ -316,9 +316,9 @@
                                        broadcast-ai-check-action
                                        broadcast-ai-check-retry"
                                             type="button"
-                                            data-check-swedish-participation-row
-                                            data-check-swedish-participation-url=
-                                               "@checkSwedishParticipationUrl"
+                                            data-check-participation-row
+                                            data-check-participation-url=
+                                               "@checkParticipationUrl"
                                             data-broadcast-id="@broadcast.Id">
                                        Retry
                                     </button>
@@ -496,16 +496,10 @@
                               </a>
                               <form method="post"
                                     action="@hideBroadcastUrl"
-                                    data-ajax-success=
-                                       "@(broadcast.IsHidden ? null : "remove")"
-                                    data-ajax-remove-target=
-                                       "@(broadcast.IsHidden ? null : "tr")"
+                                    data-ajax-success="remove"
+                                    data-ajax-remove-target="tr"
                                     data-ajax-decrement-target=
-                                       "@(
-                                          broadcast.IsHidden
-                                             ? null
-                                             : "[data-broadcast-count]"
-                                       )">
+                                       "[data-broadcast-count]">
                                  @Html.AntiForgeryToken()
                                  <input type="hidden"
                                         name="id"

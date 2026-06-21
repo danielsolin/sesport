@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Web.Services;
 
-namespace SESport.Web.Pages.Admin.Ajax.Poll;
+namespace SESport.Web.Pages.Admin.Ajax.Create;
 
-public sealed class SwedishParticipationStatusModel(
+public sealed class ParticipationCheckModel(
    BroadcastParticipationService participationService
 ) : PageModel
 {
@@ -25,15 +25,15 @@ public sealed class SwedishParticipationStatusModel(
             });
          }
 
-         var results = await participationService
-            .GetSwedishParticipationCheckResultsAsync(
-               normalizedBroadcastIds,
-               cancellationToken
-            );
+         await participationService.QueueParticipationAsync(
+            normalizedBroadcastIds,
+            CancellationToken.None
+         );
 
          return new JsonResult(new
          {
-            results
+            queued = true,
+            broadcastIds = normalizedBroadcastIds
          });
       }
       catch(Exception exception)

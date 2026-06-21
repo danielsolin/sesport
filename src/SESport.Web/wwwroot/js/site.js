@@ -7,11 +7,11 @@
    const entityNameFilterSelector = "[data-entity-name-filter]";
    const generateTeaserSelector = "[data-generate-teaser]";
    const checkParticipationRowSelector =
-      "[data-check-swedish-participation-row]";
-   const participationCellSelector = "[data-swedish-participation-cell]";
+      "[data-check-participation-row]";
+   const participationCellSelector = "[data-participation-cell]";
    const participantCreateUrlSelector = "[data-create-participant-url]";
    const participationStatusUrlSelector =
-      "[data-check-swedish-participation-status-url]";
+      "[data-check-participation-status-url]";
    const runStatusesUrlSelector = "[data-run-statuses-url]";
    const runInlineEditUrlSelector = "[data-run-inline-edit-url]";
    const runRowSelector = "[data-ai-run-id]";
@@ -51,7 +51,7 @@
    initializeTeaserGeneration();
    initializeParticipationMoreButtons();
    initializeParticipationSources();
-   initializeBroadcastParticipationRowChecks();
+   initializeParticipationRowChecks();
    initializeBroadcastInlineEditing();
    initializeParticipationPolling();
    initializeRunPolling();
@@ -335,7 +335,7 @@
       });
    }
 
-   function initializeBroadcastParticipationRowChecks(root = document)
+   function initializeParticipationRowChecks(root = document)
    {
       if(root !== document
          || document.documentElement.dataset.broadcastChecksInitialized
@@ -809,7 +809,7 @@
 
    async function checkParticipationRowAsync(button)
    {
-      const url = button.dataset.checkSwedishParticipationUrl;
+      const url = button.dataset.checkParticipationUrl;
       const broadcastId = button.dataset.broadcastId;
       const cell = button.closest(participationCellSelector);
       const previousRunId = getParticipationRunId(cell);
@@ -1348,7 +1348,7 @@
          return "";
       }
 
-      const url = container.dataset.checkSwedishParticipationStatusUrl;
+      const url = container.dataset.checkParticipationStatusUrl;
 
       return typeof url === "string" && url.trim() !== ""
          ? url.trim()
@@ -1859,7 +1859,7 @@
                result.sourceUrls
             )
          );
-         initializeBroadcastParticipationRowChecks(cell);
+         initializeParticipationRowChecks(cell);
          return;
       }
 
@@ -1926,7 +1926,7 @@
          wrapper.append(line);
 
          cell.append(wrapper);
-         initializeBroadcastParticipationRowChecks(cell);
+         initializeParticipationRowChecks(cell);
          return;
       }
 
@@ -1949,7 +1949,7 @@
       }
 
       cell.append(wrapper);
-      initializeBroadcastParticipationRowChecks(cell);
+      initializeParticipationRowChecks(cell);
    }
 
    function updateParticipationRunId(cell, runId)
@@ -2272,7 +2272,7 @@
          return null;
       }
 
-      const url = cell.dataset.checkSwedishParticipationUrl;
+      const url = cell.dataset.checkParticipationUrl;
       const broadcastId = cell.dataset.broadcastId;
 
       if(!url || !broadcastId)
@@ -2285,8 +2285,8 @@
          "button broadcast-ai-check-action broadcast-ai-check-retry";
       button.type = "button";
       button.textContent = "Retry";
-      button.dataset.checkSwedishParticipationRow = "true";
-      button.dataset.checkSwedishParticipationUrl = url;
+      button.dataset.checkParticipationRow = "true";
+      button.dataset.checkParticipationUrl = url;
       button.dataset.broadcastId = broadcastId;
 
       return button;
@@ -2812,7 +2812,7 @@
          initializeCheckboxToggles(nextTarget);
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
-         initializeBroadcastParticipationRowChecks(nextTarget);
+         initializeParticipationRowChecks(nextTarget);
          initializeBroadcastInlineEditing(nextTarget);
          initializeParticipationMoreButtons(nextTarget);
          initializeParticipationSources(nextTarget);
