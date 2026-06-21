@@ -1,0 +1,27 @@
+{
+   "type": "object",
+   "title": "Swedish Participation",
+   "required": [ "SwedishParticipation", "SwedishParticipants", "Sources" ],
+   "properties": {
+      "Sources": {
+         "type": "array",
+         "items": {
+            "type": "string",
+            "format": "uri"
+         },
+         "description": "Source URLs that support the conclusion."
+      },
+      "SwedishParticipants": {
+         "type": "array",
+         "items": { "type": "string" },
+         "description": "The Swedish participant name or names."
+      },
+      "SwedishParticipation": {
+         "enum": [ "Yes", "No", "Unknown" ],
+         "type": "string",
+         "description": "Whether any Swedes participate in the broadcast event."
+      }
+   },
+   "description": "Structured assessment of whether Sweden participates in the broadcast event, which Swedish participants are involved, and supporting source URLs.",
+   "additionalProperties": false
+}
