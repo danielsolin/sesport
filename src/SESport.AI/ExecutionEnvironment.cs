@@ -1,5 +1,3 @@
-using System;
-
 namespace SESport.AI;
 
 public static class ExecutionEnvironment

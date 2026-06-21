@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+
 using SESport.AI.Models;
 using SESport.AI.Persistence;
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Web.Services;
 

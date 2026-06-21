@@ -1,6 +1,5 @@
 using System.Text.Json;
 
-using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Services;
