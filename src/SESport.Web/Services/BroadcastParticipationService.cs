@@ -159,14 +159,16 @@ public sealed class BroadcastParticipationService(
       string candidates
    )
    {
-      var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
+      var localDate = DateOnly.FromDateTime(
+         BroadcastRepository.ToLocal(broadcast.StartsAt).Date
+      );
 
       return JsonSerializer.Serialize(
          new
          {
             sport = broadcast.Categories,
             event_name = broadcast.Title,
-            date_time = $"{localStart:yyyy-MM-dd HH:mm}",
+            date = $"{localDate:yyyy-MM-dd}",
             candidates
          }
       );
