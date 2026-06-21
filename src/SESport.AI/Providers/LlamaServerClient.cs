@@ -20,6 +20,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    // Keep this comfortably below the llama-server token limit.
    private const int MaxConversationContextCharacters = 12000;
    private const int MaxTransientRetryAttempts = 12;
+   private const int MaxFormatRepairAttempts = 1;
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -93,6 +94,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var turn = 0;
       var toolBudgetExhausted = false;
       var repeatedToolCallStreak = 0;
+      var formatRepairAttempts = 0;
 
       try
       {
@@ -148,12 +150,17 @@ public sealed class LlamaServerClient : IAiProviderClient
                toolRoundCount
             );
             rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
-            var responseEnvelope = await SendWithRetryAsync(
+            var responseEnvelope = await SendWithStructuredOutputRepairAsync(
                provider,
                request,
+               messages,
                turn,
                "turn",
-               cancellationToken
+               job.OutputMode,
+               prompt,
+               formatRepairAttempts,
+               cancellationToken,
+               () => formatRepairAttempts++
             );
             responseJson = responseEnvelope.ResponseJson;
             rawResponse = responseEnvelope.RawResponseJson;
@@ -281,12 +288,17 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
             turn++;
-            var finalEnvelope = await SendWithRetryAsync(
+            var finalEnvelope = await SendWithStructuredOutputRepairAsync(
                provider,
                request,
+               messages,
                turn,
                "final",
-               cancellationToken
+               job.OutputMode,
+               prompt,
+               formatRepairAttempts,
+               cancellationToken,
+               () => formatRepairAttempts++
             );
             responseJson = finalEnvelope.ResponseJson;
             rawResponse = finalEnvelope.RawResponseJson;
@@ -396,6 +408,93 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
+   }
+
+   private async Task<ResponseEnvelope> SendWithStructuredOutputRepairAsync(
+      AiProviderDefinition provider,
+      JsonObject request,
+      JsonArray messages,
+      int turn,
+      string stage,
+      string outputMode,
+      AiPromptDefinition prompt,
+      int formatRepairAttempts,
+      CancellationToken cancellationToken,
+      Action incrementFormatRepairAttempts
+   )
+   {
+      try
+      {
+         return await SendWithRetryAsync(
+            provider,
+            request,
+            turn,
+            stage,
+            cancellationToken
+         );
+      }
+      catch(HttpRequestException exception) when (
+         formatRepairAttempts < MaxFormatRepairAttempts &&
+         IsPegNativeFormatFailure(exception) &&
+         CanRepairStructuredOutput(outputMode, prompt)
+      )
+      {
+         incrementFormatRepairAttempts();
+         ApplyStructuredOutputRepairPrompt(messages);
+         return await SendWithRetryAsync(
+            provider,
+            request,
+            turn,
+            stage,
+            cancellationToken
+         );
+      }
+   }
+
+   private static bool CanRepairStructuredOutput(
+      string outputMode,
+      AiPromptDefinition prompt
+   )
+   {
+      return !string.IsNullOrWhiteSpace(prompt.OutputSchemaJson) ||
+         string.Equals(
+            outputMode,
+            "json_object",
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
+   private static bool IsPegNativeFormatFailure(Exception exception)
+   {
+      return exception.Message.Contains(
+         "peg-native format",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static void ApplyStructuredOutputRepairPrompt(JsonArray messages)
+   {
+      var repairPrompt = """
+         The previous response was rejected because it was not valid JSON.
+         Return only the raw JSON object required by the schema.
+         Do not use markdown, fences, commentary, or explanations.
+         """.Trim();
+
+      var repairMessage = new JsonObject
+      {
+         ["role"] = "system",
+         ["content"] = repairPrompt
+      };
+
+      var insertionIndex = FindPrimarySystemMessageIndex(messages);
+
+      if(insertionIndex < 0)
+      {
+         messages.Insert(0, repairMessage);
+         return;
+      }
+
+      messages.Insert(insertionIndex + 1, repairMessage);
    }
 
    private async Task<ResponseEnvelope> SendWithRetryAsync(
