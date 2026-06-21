@@ -376,7 +376,7 @@ public class AiProviderClientTests
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
-      Assert.Single(webPageContentClient.Urls);
+      Assert.Equal(2, webPageContentClient.Urls.Count);
       Assert.Equal(4, handler.RequestBodies.Count);
       Assert.DoesNotContain("already made in round",
          handler.RequestBodies[3]);
@@ -795,34 +795,18 @@ public class AiProviderClientTests
                {
                   name = WebToolNames.GetPage,
                   description =
-                     "Fetch the full page text for a search result id " +
-                     $"returned by {WebToolNames.Search}, or open a " +
-                     "direct URL.",
+                     "Fetch the full page text from a URL.",
                   parameters = new
                   {
                      type = "object",
                      properties = new
                      {
-                        id = new
-                        {
-                           type = "string"
-                        },
                         url = new
                         {
                            type = "string"
                         }
                      },
-                     anyOf = new object[]
-                     {
-                        new
-                        {
-                           required = new[] { "id" }
-                        },
-                        new
-                        {
-                           required = new[] { "url" }
-                        }
-                     },
+                     required = new[] { "url" },
                      additionalProperties = false
                   }
                }
@@ -840,10 +824,6 @@ public class AiProviderClientTests
                      type = "object",
                      properties = new
                      {
-                        id = new
-                        {
-                           type = "string"
-                        },
                         url = new
                         {
                            type = "string"
@@ -853,18 +833,7 @@ public class AiProviderClientTests
                            type = "string"
                         }
                      },
-                     required = new[] { "find" },
-                     anyOf = new object[]
-                     {
-                        new
-                        {
-                           required = new[] { "id" }
-                        },
-                        new
-                        {
-                           required = new[] { "url" }
-                        }
-                     },
+                     required = new[] { "find", "url" },
                      additionalProperties = false
                   }
                }
@@ -1039,7 +1008,8 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "{{WebToolNames.GetPage}}",
-                    "arguments": "{\"id\":\"s1_1\"}"
+                    "arguments":
+                      "{\"url\":\"https://example.test/roster\"}"
                   }
                 }
               ]
@@ -1160,8 +1130,7 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "{{WebToolNames.GetPage}}",
-                    "arguments":
-                      "{\"id\":\"s1_1\",\"find\":\"Sweden\"}"
+                    "arguments": "{\"url\":\"https://example.test/roster\",\"find\":\"Sweden\"}"
                   }
                 }
               ]
@@ -1196,7 +1165,8 @@ public class AiProviderClientTests
                         {
                            name = WebToolNames.GetPage,
                            arguments =
-                              "{\"id\":\"s1_1\",\"find\":\"ExtraToken\"}"
+                              "{\"url\":\"https://example.test/roster\"," +
+                              "\"find\":\"ExtraToken\"}"
                         }
                      }
                   }
@@ -1223,8 +1193,7 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "{{WebToolNames.FindInPage}}",
-                    "arguments":
-                      "{\"id\":\"s1_1\",\"find\":\"Sweden\"}"
+                    "arguments": "{\"url\":\"https://example.test/roster\",\"find\":\"Sweden\"}"
                   }
                 }
               ]
@@ -1259,7 +1228,8 @@ public class AiProviderClientTests
                         {
                            name = WebToolNames.FindInPage,
                            arguments =
-                              "{\"id\":\"s1_1\",\"find\":\"ExtraToken\"}"
+                              "{\"url\":\"https://example.test/roster\"," +
+                              "\"find\":\"ExtraToken\"}"
                         }
                      }
                   }

@@ -29,29 +29,13 @@
          "name": "web_get_page",
          "parameters": {
             "type": "object",
-            "anyOf": [
-               {
-                  "required": [
-                     "id"
-                  ]
-               },
-               {
-                  "required": [
-                     "url"
-                  ]
-               }
-            ],
+            "required": ["url"],
             "properties": {
-               "id": {
-                  "type": "string"
-               },
-               "url": {
-                  "type": "string"
-               }
+               "url": { "type": "string" }
             },
             "additionalProperties": false
          },
-         "description": "Fetch page text from a search result id or URL. If the page is very big, this tool will produce a cut-down version indicated by [CUTOFF] at the end"
+         "description": "Fetch page text from a URL. If the page is very big, this tool will produce a cut-down version indicated by [CUTOFF] at the end"
       }
    },
    {
@@ -60,25 +44,11 @@
          "name": "web_find_in_page",
          "parameters": {
             "type": "object",
-            "anyOf": [
-               {
-                  "required": [
-                     "id"
-                  ]
-               },
-               {
-                  "required": [
-                     "url"
-                  ]
-               }
-            ],
             "required": [
+               "url",
                "find"
             ],
             "properties": {
-               "id": {
-                  "type": "string"
-               },
                "url": {
                   "type": "string"
                },

@@ -740,8 +740,9 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["arguments"] = toolCall.Arguments,
          ["query"] = isSearchTool ? ExtractQuery(toolCall.Arguments) : null,
          ["limit"] = isSearchTool ? ExtractLimit(toolCall.Arguments) : null,
-         ["id"] = isGetPageTool ? ExtractId(toolCall.Arguments) : null,
-         ["url"] = isGetPageTool ? ExtractUrl(toolCall.Arguments) : null,
+         ["url"] = isGetPageTool || isFindInPageTool
+            ? ExtractUrl(toolCall.Arguments)
+            : null,
          ["find"] = isFindInPageTool || !string.IsNullOrWhiteSpace(find)
             ? find
             : null,
@@ -844,17 +845,15 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       var query = ExtractQuery(toolCall.Arguments);
       var limit = ExtractLimit(toolCall.Arguments);
-      var id = ExtractId(toolCall.Arguments);
       var find = ExtractFind(toolCall.Arguments);
 
       Logger.LogDebug(
          "llama-server tool:{Step} name={Name} query={Query} " +
-         "limit={Limit} id={Id} find={Find}",
+         "limit={Limit} find={Find}",
          step,
          toolCall.Name,
          TruncateForLog(query, 240),
          limit,
-         TruncateForLog(id, 120),
          TruncateForLog(find, 120)
       );
    }
@@ -1154,36 +1153,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          StringComparison.Ordinal
       ))
       {
-         var id = ExtractId(toolCall.Arguments);
          var url = ExtractUrl(toolCall.Arguments);
-         var find = ExtractFind(toolCall.Arguments);
-
-         if(!string.IsNullOrWhiteSpace(find))
-         {
-            var result = await FormatPageFindResultsAsync(
-               id,
-               url,
-               find,
-               searchResultsById,
-               toolState,
-               turn,
-               cancellationToken
-            );
-
-            RecordToolCallResult(
-               toolCall,
-               searchResultsById,
-               toolState,
-               turn,
-               result
-            );
-            return result;
-         }
 
          var pageResult = await FormatPageContentAsync(
-            id,
             url,
-            searchResultsById,
             toolState,
             turn,
             cancellationToken
@@ -1205,15 +1178,12 @@ public sealed class LlamaServerClient : IAiProviderClient
          StringComparison.Ordinal
       ))
       {
-         var id = ExtractId(toolCall.Arguments);
          var url = ExtractUrl(toolCall.Arguments);
          var find = ExtractFind(toolCall.Arguments);
 
          var result = await FormatPageFindResultsAsync(
-            id,
             url,
             find,
-            searchResultsById,
             toolState,
             turn,
             cancellationToken
@@ -1524,33 +1494,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       return 10;
    }
 
-   private static string ExtractId(string arguments)
-   {
-      if(string.IsNullOrWhiteSpace(arguments))
-      {
-         return "";
-      }
-
-      try
-      {
-         using var document = JsonDocument.Parse(arguments);
-         var root = document.RootElement;
-
-         if(
-            TryGetStringProperty(root, "id", out var id) &&
-            !string.IsNullOrWhiteSpace(id)
-         )
-         {
-            return id;
-         }
-      }
-      catch(JsonException)
-      {
-      }
-
-      return arguments.Trim();
-   }
-
    private static string ExtractUrl(string arguments)
    {
       if(string.IsNullOrWhiteSpace(arguments))
@@ -1657,32 +1600,31 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private async Task<string> FormatPageContentAsync(
-      string id,
       string url,
-      IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
       int turn,
       CancellationToken cancellationToken
    )
    {
-      if(!TryResolvePageTarget(
-         id,
-         url,
-         searchResultsById,
-         out var pageTarget,
-         out var error
-      ))
+      if(!TryValidatePageUrl(url, out var normalizedUrl, out var error))
       {
          return JsonSerializer.Serialize(
             new
             {
                error,
-               id,
                url
             },
             JsonOptions
          );
       }
+
+      var pageTarget = new PageTarget(
+         "Page URL",
+         normalizedUrl,
+         normalizedUrl,
+         normalizedUrl,
+         null
+      );
 
       var signature = BuildPageCallSignature(
          WebToolNames.GetPage,
@@ -1748,10 +1690,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private async Task<string> FormatPageFindResultsAsync(
-      string id,
       string url,
       string find,
-      IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
       int turn,
       CancellationToken cancellationToken
@@ -1768,25 +1708,26 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
       }
 
-      if(!TryResolvePageTarget(
-         id,
-         url,
-         searchResultsById,
-         out var pageTarget,
-         out var error
-      ))
+      if(!TryValidatePageUrl(url, out var normalizedUrl, out var error))
       {
          return JsonSerializer.Serialize(
             new
             {
                error,
-               id,
                url,
                find
             },
             JsonOptions
          );
       }
+
+      var pageTarget = new PageTarget(
+         "Page URL",
+         normalizedUrl,
+         normalizedUrl,
+         normalizedUrl,
+         null
+      );
 
       var signature = BuildPageCallSignature(
          WebToolNames.FindInPage,
@@ -1913,51 +1854,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       normalizedUrl = absoluteUrl.ToString();
-      return true;
-   }
-
-   private static bool TryResolvePageTarget(
-      string id,
-      string url,
-      IDictionary<string, WebSearchResult> searchResultsById,
-      out PageTarget pageTarget,
-      out string error
-   )
-   {
-      pageTarget = null!;
-      error = "";
-
-      if(!string.IsNullOrWhiteSpace(id) &&
-         searchResultsById.TryGetValue(id, out var searchResult))
-      {
-         pageTarget = new PageTarget(
-            "Page id",
-            id,
-            searchResult.Url,
-            searchResult.Title,
-            searchResult.Snippet
-         );
-         return true;
-      }
-
-      if(string.IsNullOrWhiteSpace(url))
-      {
-         error = "Missing search result id or URL.";
-         return false;
-      }
-
-      if(!TryValidatePageUrl(url, out var normalizedUrl, out error))
-      {
-         return false;
-      }
-
-      pageTarget = new PageTarget(
-         "Page URL",
-         normalizedUrl,
-         normalizedUrl,
-         normalizedUrl,
-         null
-      );
       return true;
    }
 
@@ -2553,7 +2449,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var query = ExtractQuery(toolCall.Arguments);
       var limit = ExtractLimit(toolCall.Arguments);
-      var id = ExtractId(toolCall.Arguments);
       var url = ExtractUrl(toolCall.Arguments);
       var find = ExtractFind(toolCall.Arguments);
 
@@ -2563,36 +2458,20 @@ public sealed class LlamaServerClient : IAiProviderClient
             $"{toolCall.Name}(query={FormatSummaryQuoted(query)}, " +
             $"limit={limit})",
          WebToolNames.GetPage =>
-            FormatConversationPageToolCall(
-               toolCall.Name,
-               id,
-               url,
-               find
-            ),
+            FormatConversationPageToolCall(toolCall.Name, url, ""),
          WebToolNames.FindInPage =>
-            FormatConversationPageToolCall(
-               toolCall.Name,
-               id,
-               url,
-               find
-            ),
+            FormatConversationPageToolCall(toolCall.Name, url, find),
          _ => $"{toolCall.Name}({TruncateForSummary(toolCall.Arguments)})"
       };
    }
 
    private static string FormatConversationPageToolCall(
       string toolName,
-      string id,
       string url,
       string find
    )
    {
       var parts = new List<string>();
-
-      if(!string.IsNullOrWhiteSpace(id))
-      {
-         parts.Add($"id={FormatSummaryQuoted(id)}");
-      }
 
       if(!string.IsNullOrWhiteSpace(url))
       {
@@ -2746,7 +2625,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       var query = ExtractQuery(toolCall.Arguments);
       var limit = ExtractLimit(toolCall.Arguments);
-      var id = ExtractId(toolCall.Arguments);
       var url = ExtractUrl(toolCall.Arguments);
       var find = ExtractFind(toolCall.Arguments);
 
@@ -2756,17 +2634,13 @@ public sealed class LlamaServerClient : IAiProviderClient
             $"{toolCall.Name}|query={query}|limit={limit}",
          WebToolNames.GetPage => BuildPageToolCallSignature(
             toolCall.Name,
-            id,
             url,
-            find,
-            searchResultsById
+            ""
          ),
          WebToolNames.FindInPage => BuildPageToolCallSignature(
             toolCall.Name,
-            id,
             url,
-            find,
-            searchResultsById
+            find
          ),
          _ => $"{toolCall.Name}|arguments={toolCall.Arguments.Trim()}"
       };
@@ -2774,23 +2648,10 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static string BuildPageToolCallSignature(
       string toolName,
-      string id,
       string url,
-      string find,
-      IDictionary<string, WebSearchResult> searchResultsById
+      string find
    )
    {
-      if(!string.IsNullOrWhiteSpace(id) &&
-         searchResultsById.TryGetValue(id, out var searchResult))
-      {
-         url = searchResult.Url;
-      }
-
-      if(string.IsNullOrWhiteSpace(url))
-      {
-         url = id;
-      }
-
       return $"{toolName}|url={url}|find={find}";
    }
 
