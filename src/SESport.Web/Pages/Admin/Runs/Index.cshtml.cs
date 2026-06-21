@@ -19,6 +19,9 @@ public class IndexModel(
 
    public IReadOnlyList<AiJobListItem> Jobs { get; private set; } = [];
 
+   public IReadOnlyList<string> ExecutionEnvironmentValues { get; private set; }
+      = [];
+
    public IReadOnlyList<SelectListItem> StatusOptions { get; private set; } =
       [];
 
@@ -48,6 +51,10 @@ public class IndexModel(
       {
          SelectedDate = GetSelectedDate();
          Jobs = await adminRepository.GetJobsAsync(cancellationToken);
+         ExecutionEnvironmentValues =
+            await repository.GetExecutionEnvironmentOptionsAsync(
+               cancellationToken
+            );
          StatusOptions =
          [
             new SelectListItem("All statuses", string.Empty),
@@ -85,6 +92,18 @@ public class IndexModel(
             JobId,
             StatusId
          }
+      );
+   }
+
+   public IReadOnlyList<SelectListItem> GetExecutionEnvironmentOptions(
+      string? selectedExecutionEnvironment
+   )
+   {
+      return DetailsModel.BuildExecutionEnvironmentOptions(
+         ExecutionEnvironmentValues,
+         selectedExecutionEnvironment,
+         SESport.AI.ExecutionEnvironment.Current,
+         includeUnsetOption: false
       );
    }
 }

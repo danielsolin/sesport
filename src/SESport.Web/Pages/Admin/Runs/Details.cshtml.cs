@@ -199,13 +199,26 @@ public class DetailsModel(
       BuildExecutionEnvironmentOptions(
          IEnumerable<string> executionEnvironments,
          string? selectedExecutionEnvironment,
-         string currentExecutionEnvironment
+         string currentExecutionEnvironment,
+         bool includeUnsetOption = true
       )
    {
-      var options = new List<SelectListItem>
+      var options = new List<SelectListItem>();
+      var normalizedSelectedExecutionEnvironment =
+         string.IsNullOrWhiteSpace(selectedExecutionEnvironment)
+            ? null
+            : selectedExecutionEnvironment.Trim();
+
+      if(includeUnsetOption)
       {
-         new("Not set", string.Empty)
-      };
+         options.Add(
+            new SelectListItem(
+               "Not set",
+               string.Empty,
+               normalizedSelectedExecutionEnvironment is null
+            )
+         );
+      }
 
       var values = new HashSet<string>(StringComparer.Ordinal);
 
@@ -216,7 +229,17 @@ public class DetailsModel(
             return;
          }
 
-         options.Add(new SelectListItem(value, value));
+         options.Add(
+            new SelectListItem(
+               FormatExecutionEnvironmentDisplayName(value),
+               value,
+               string.Equals(
+                  value,
+                  normalizedSelectedExecutionEnvironment,
+                  StringComparison.Ordinal
+               )
+            )
+         );
       }
 
       foreach(var executionEnvironment in executionEnvironments)
@@ -243,6 +266,42 @@ public class DetailsModel(
       }
 
       return value.Trim();
+   }
+
+   public static string FormatExecutionEnvironmentDisplayName(
+      string? executionEnvironment
+   )
+   {
+      if(string.IsNullOrWhiteSpace(executionEnvironment))
+      {
+         return "-";
+      }
+
+      var value = executionEnvironment.Trim();
+      var segments = value
+         .Split(
+            '-',
+            StringSplitOptions.RemoveEmptyEntries
+               | StringSplitOptions.TrimEntries
+         )
+         .Where(segment => segment.Length > 0)
+         .ToArray();
+
+      if(segments.Length == 0)
+      {
+         return value;
+      }
+
+      var firstPart = segments[0].Length <= 3
+         ? segments[0]
+         : segments[0][..3];
+      var lastPart = segments[^1].Length <= 3
+         ? segments[^1]
+         : segments[^1][^3..];
+
+      return string.Equals(firstPart, lastPart, StringComparison.Ordinal)
+         ? firstPart
+         : $"{firstPart}-{lastPart}";
    }
 
    private static string GetConversationHistorySummaryText(

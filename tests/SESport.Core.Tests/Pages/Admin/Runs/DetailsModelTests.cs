@@ -65,6 +65,58 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void BuildExecutionEnvironmentOptionsMarksSelectedValue()
+   {
+      var options = DetailsModel.BuildExecutionEnvironmentOptions(
+         ["Worker-A", "Worker-B"],
+         "Worker-B",
+         SESport.AI.ExecutionEnvironment.Current,
+         includeUnsetOption: false
+      );
+
+      Assert.Contains(
+         options,
+         option => string.Equals(
+            option.Value,
+            "Worker-B",
+            StringComparison.Ordinal
+         ) && option.Selected
+      );
+
+      Assert.Contains(
+         options,
+         option => string.Equals(
+            option.Value,
+            "Worker-B",
+            StringComparison.Ordinal
+         ) && string.Equals(
+            option.Text,
+            "Wor-B",
+            StringComparison.Ordinal
+         )
+      );
+   }
+
+   [Fact]
+   public void FormatExecutionEnvironmentDisplayNameUsesShortLabel()
+   {
+      Assert.Equal(
+         "Dev-P53",
+         DetailsModel.FormatExecutionEnvironmentDisplayName(
+            "Development-THINKPAD-P53"
+         )
+      );
+      Assert.Equal(
+         "ABC",
+         DetailsModel.FormatExecutionEnvironmentDisplayName("ABC")
+      );
+      Assert.Equal(
+         "-",
+         DetailsModel.FormatExecutionEnvironmentDisplayName(null)
+      );
+   }
+
+   [Fact]
    public void GetMaxConversationCharacterCountUsesRoundPeak()
    {
       var run = new SESport.AI.Models.AiRunDetail(

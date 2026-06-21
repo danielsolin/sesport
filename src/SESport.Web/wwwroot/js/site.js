@@ -13,11 +13,16 @@
    const participationStatusUrlSelector =
       "[data-check-swedish-participation-status-url]";
    const runStatusesUrlSelector = "[data-run-statuses-url]";
+   const runInlineEditUrlSelector = "[data-run-inline-edit-url]";
    const runRowSelector = "[data-ai-run-id]";
    const runStatusCellSelector = "[data-ai-run-status-cell]";
    const runStatusTextSelector = "[data-ai-run-status-text]";
    const runRoundsCellSelector = "[data-ai-run-rounds-cell]";
    const runDurationCellSelector = "[data-ai-run-duration-cell]";
+   const runInlineEditCellSelector = "[data-run-inline-edit-field]";
+   const runInlineEditDisplaySelector = "[data-run-inline-edit-display]";
+   const runInlineEditInputSelector = "[data-run-inline-edit-input]";
+   const runInlineEditField = "execution-environment";
    const currentMarkerSelector = "#activity-now-marker";
    const broadcastInlineEditCellSelector =
       "[data-broadcast-inline-edit-field]";
@@ -50,6 +55,7 @@
    initializeBroadcastInlineEditing();
    initializeParticipationPolling();
    initializeRunPolling();
+   initializeRunInlineEditing();
    initializeCurrentMarkerScroll();
 
    document.addEventListener("submit", async event => {
@@ -386,14 +392,24 @@
                return;
             }
 
-            const cell = target.closest(broadcastInlineEditCellSelector);
+            const broadcastCell = target.closest(
+               broadcastInlineEditCellSelector
+            );
 
-            if(!(cell instanceof HTMLElement))
+            if(broadcastCell instanceof HTMLElement)
+            {
+               openBroadcastInlineEditCell(broadcastCell);
+               return;
+            }
+
+            const runCell = target.closest(runInlineEditCellSelector);
+
+            if(!(runCell instanceof HTMLElement))
             {
                return;
             }
 
-            openBroadcastInlineEditCell(cell);
+            openRunInlineEditCell(runCell);
          });
       }
 
@@ -402,6 +418,192 @@
             initializeBroadcastInlineEditInput(input);
          }
       );
+   }
+
+   function initializeRunInlineEditing(root = document)
+   {
+      if(root === document
+         && document.documentElement.dataset.runInlineEditingInitialized
+            === "true")
+      {
+         return;
+      }
+
+      if(root === document)
+      {
+         document.documentElement.dataset
+            .runInlineEditingInitialized = "true";
+      }
+
+      root.querySelectorAll(runInlineEditInputSelector).forEach(input => {
+         initializeRunInlineEditInput(input);
+      });
+   }
+
+   function initializeRunInlineEditInput(input)
+   {
+      if(!(input instanceof HTMLSelectElement)
+         || input.dataset.runInlineEditInitialized === "true")
+      {
+         return;
+      }
+
+      input.dataset.runInlineEditInitialized = "true";
+
+      input.addEventListener("change", () => {
+         void saveRunInlineEditAsync(input);
+      });
+
+      input.addEventListener("blur", () => {
+         void saveRunInlineEditAsync(input);
+      });
+
+      input.addEventListener("keydown", event => {
+         if(event.key === "Escape")
+         {
+            event.preventDefault();
+            cancelRunInlineEdit(input);
+         }
+      });
+   }
+
+   function openRunInlineEditCell(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const row = cell.closest("tr");
+      const statusId = (row?.dataset.aiRunStatus ?? "").trim().toLowerCase();
+      const input = cell.querySelector(runInlineEditInputSelector);
+      const display = cell.querySelector(runInlineEditDisplaySelector);
+
+      if(statusId !== "pending"
+         || !(input instanceof HTMLSelectElement)
+         || !(display instanceof HTMLElement)
+         || input.hidden === false)
+      {
+         return;
+      }
+
+      if(input.dataset.runInlineEditSaving === "true")
+      {
+         return;
+      }
+
+      input.dataset.runInlineEditOriginalValue = input.value;
+      cell.dataset.runInlineEditing = "true";
+      display.hidden = true;
+      input.hidden = false;
+
+      window.requestAnimationFrame(() => {
+         input.focus();
+      });
+   }
+
+   async function saveRunInlineEditAsync(input)
+   {
+      if(!(input instanceof HTMLSelectElement)
+         || input.hidden
+         || input.dataset.runInlineEditSaving === "true")
+      {
+         return;
+      }
+
+      const cell = input.closest(runInlineEditCellSelector);
+      const url = getRunInlineEditUrl();
+      const runId = (cell?.closest("tr")?.dataset.aiRunId ?? "").trim();
+      const field = (cell?.dataset.runInlineEditField ?? "").trim();
+      const currentValue = input.value.trim();
+      const originalValue = (
+         input.dataset.runInlineEditOriginalValue ?? ""
+      ).trim();
+
+      if(!(cell instanceof HTMLElement)
+         || url === ""
+         || runId === ""
+         || field === "")
+      {
+         return;
+      }
+
+      if(currentValue === originalValue)
+      {
+         restoreRunInlineEditInput(input);
+         return;
+      }
+
+      input.dataset.runInlineEditSaving = "true";
+      input.disabled = true;
+
+      try
+      {
+         const payload = await postRunInlineEditAsync(
+            url,
+            runId,
+            field,
+            currentValue
+         );
+
+         updateRunInlineEditCell(cell, payload);
+         restoreRunInlineEditInput(input);
+      }
+      catch(error)
+      {
+         window.alert(
+            error instanceof Error
+               ? error.message
+               : "Run update failed."
+         );
+         input.hidden = false;
+         window.requestAnimationFrame(() => {
+            input.focus();
+         });
+      }
+      finally
+      {
+         input.disabled = false;
+         delete input.dataset.runInlineEditSaving;
+      }
+   }
+
+   function cancelRunInlineEdit(input)
+   {
+      if(!(input instanceof HTMLSelectElement))
+      {
+         return;
+      }
+
+      const originalValue = (
+         input.dataset.runInlineEditOriginalValue ?? input.value
+      ).trim();
+
+      input.value = originalValue;
+      restoreRunInlineEditInput(input);
+   }
+
+   function restoreRunInlineEditInput(input)
+   {
+      if(!(input instanceof HTMLSelectElement))
+      {
+         return;
+      }
+
+      const cell = input.closest(runInlineEditCellSelector);
+      const display = cell?.querySelector(runInlineEditDisplaySelector);
+
+      if(display instanceof HTMLElement)
+      {
+         display.hidden = false;
+      }
+
+      input.hidden = true;
+
+      if(cell instanceof HTMLElement)
+      {
+         delete cell.dataset.runInlineEditing;
+      }
    }
 
    function initializeBroadcastInlineEditInput(input)
@@ -1293,6 +1495,22 @@
          : "";
    }
 
+   function getRunInlineEditUrl()
+   {
+      const container = document.querySelector(runInlineEditUrlSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.runInlineEditUrl;
+
+      return typeof url === "string" && url.trim() !== ""
+         ? url.trim()
+         : "";
+   }
+
    async function postRunStatusesAsync(url, runIds)
    {
       const formData = new URLSearchParams();
@@ -1306,6 +1524,55 @@
       runIds.forEach(id => {
          formData.append("runIds", id);
       });
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(
+            payload?.error ||
+               trimmedResponseText ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return payload ?? {};
+   }
+
+   async function postRunInlineEditAsync(url, runId, field, value)
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      formData.append("id", runId);
+      formData.append("field", field);
+      formData.append("value", value);
 
       const response = await fetch(url, {
          method: "post",
@@ -1441,6 +1708,53 @@
       if(durationCell instanceof HTMLElement && duration !== "")
       {
          durationCell.textContent = duration;
+      }
+   }
+
+   function updateRunInlineEditCell(cell, payload)
+   {
+      if(!(cell instanceof HTMLElement) || !payload)
+      {
+         return;
+      }
+
+      const field = typeof payload.field === "string"
+         ? payload.field.trim()
+         : "";
+
+      if(field !== runInlineEditField)
+      {
+         return;
+      }
+
+      const nextValue = typeof payload.value === "string"
+         ? payload.value.trim()
+         : "";
+      const displayValue = typeof payload.displayValue === "string"
+         ? payload.displayValue.trim()
+         : nextValue;
+      const display = cell.querySelector(runInlineEditDisplaySelector);
+      const input = cell.querySelector(runInlineEditInputSelector);
+
+      cell.dataset.runInlineEditValue = nextValue;
+
+      if(display instanceof HTMLElement)
+      {
+         display.hidden = false;
+
+         const environment = display.querySelector(".ai-runs-environment");
+
+         if(environment instanceof HTMLElement)
+         {
+            environment.textContent = displayValue || "-";
+            environment.title = nextValue;
+         }
+      }
+
+      if(input instanceof HTMLSelectElement)
+      {
+         input.value = nextValue;
+         input.dataset.runInlineEditOriginalValue = nextValue;
       }
    }
 

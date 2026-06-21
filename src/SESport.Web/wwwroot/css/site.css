@@ -854,6 +854,20 @@ h2 {
    white-space: nowrap;
 }
 
+.ai-runs-inline-edit-cell {
+   cursor: default;
+}
+
+tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
+   cursor: text;
+}
+
+.ai-runs-inline-edit-input {
+   box-sizing: border-box;
+   min-width: 0;
+   width: 100%;
+}
+
 .ai-runs-table th,
 .ai-runs-table td {
    padding: 6px 8px;

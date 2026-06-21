@@ -3,6 +3,7 @@
 @{
    ViewData["Title"] = "Runs";
    var runStatusesUrl = Url.Page("/Admin/Ajax/Poll/RunStatuses");
+   var runFieldUrl = Url.Page("/Admin/Ajax/Update/RunField");
 }
 
 <section class="page-heading page-heading-row">
@@ -57,7 +58,8 @@
 }
 
 <div class="admin-table-wrap"
-     data-run-statuses-url="@runStatusesUrl">
+     data-run-statuses-url="@runStatusesUrl"
+     data-run-inline-edit-url="@runFieldUrl">
    <table class="admin-table admin-table-hover ai-runs-table">
       <colgroup>
          <col class="ai-runs-col-started" />
@@ -86,6 +88,11 @@
       <tbody>
          @foreach (var run in Model.Runs)
          {
+            var canEditExecutionEnvironment = string.Equals(
+               run.StatusId,
+               "pending",
+               StringComparison.Ordinal
+            );
             <tr data-ai-run-id="@run.Id"
                 data-ai-run-status="@run.StatusId">
                <td>
@@ -96,13 +103,28 @@
                      </span>
                   </div>
                </td>
-               <td>
-                  <div class="ai-runs-cell-stack">
-                     <span class="ai-runs-environment"
-                           title="@run.ExecutionEnvironment">
-                        @(run.ExecutionEnvironment ?? "-")
-                     </span>
-                  </div>
+               <td class="ai-runs-inline-edit-cell"
+                   data-run-inline-edit-field="execution-environment"
+                   data-run-inline-edit-value="@run.ExecutionEnvironment"
+                   title="@(canEditExecutionEnvironment
+                              ? "Double-click to edit"
+                              : null)">
+                     <div data-run-inline-edit-display>
+                        <span class="ai-runs-environment"
+                              title="@run.ExecutionEnvironment">
+                        @DetailsModel.FormatExecutionEnvironmentDisplayName(
+                           run.ExecutionEnvironment
+                        )
+                        </span>
+                     </div>
+                  <select class="ai-runs-inline-edit-input"
+                          data-run-inline-edit-input
+                          asp-items=
+                             "Model.GetExecutionEnvironmentOptions(
+                                run.ExecutionEnvironment
+                             )"
+                          hidden>
+                  </select>
                </td>
                <td>@run.JobLabel</td>
                <td>@run.EventName</td>
