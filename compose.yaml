@@ -7,7 +7,7 @@ services:
          POSTGRES_USER: ${SESPORT_POSTGRES_USER:-sesport}
          POSTGRES_PASSWORD: ${SESPORT_POSTGRES_PASSWORD:-sesport}
       ports:
-         - "${SESPORT_POSTGRES_PORT:-5432}:5432"
+         - "207.2.120.181:${SESPORT_POSTGRES_PORT:-15285}:5432"
       volumes:
          - sesport-postgres:/var/lib/postgresql/data
          - ./database/migrations:/migrations:ro
