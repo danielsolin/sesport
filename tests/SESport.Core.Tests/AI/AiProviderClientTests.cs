@@ -84,7 +84,8 @@ public class AiProviderClientTests
          handler.RequestBodies[0]);
       Assert.Contains("\"role\":\"tool\"",
          handler.RequestBodies[1]);
-      Assert.Contains("s1_1", handler.RequestBodies[1]);
+      Assert.Contains("https://example.test/roster",
+         handler.RequestBodies[1]);
       Assert.Contains("Tre Kronor roster", handler.RequestBodies[1]);
       Assert.Contains("\"role\":\"tool\"",
          handler.RequestBodies[2]);

@@ -86,9 +86,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       JsonObject? responseJson = null;
       var rawResponse = "";
       var toolTrace = new JsonArray();
-      var searchResultsById = new Dictionary<string, WebSearchResult>(
-         StringComparer.OrdinalIgnoreCase
-      );
       var toolState = new ToolLoopState();
       var messages = (JsonArray)request["messages"]!;
       var baseSystemPrompt = renderedPrompt.SystemPrompt?.Trim();
@@ -189,7 +186,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                if(TryGetRepeatedToolResult(
                   toolCall,
-                  searchResultsById,
                   toolState,
                   out _
                ))
@@ -199,7 +195,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                var toolResult = await ExecuteToolCallAsync(
                   toolCall,
-                  searchResultsById,
                   toolState,
                   turn,
                   cancellationToken
@@ -1089,7 +1084,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private async Task<string> ExecuteToolCallAsync(
       ToolCall toolCall,
-      IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
       int turn,
       CancellationToken cancellationToken
@@ -1097,7 +1091,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       if(TryGetRepeatedToolResult(
          toolCall,
-         searchResultsById,
          toolState,
          out var repeatedResult
       ))
@@ -1130,16 +1123,12 @@ public sealed class LlamaServerClient : IAiProviderClient
             toolState.LastSearchProvider
          );
 
-         toolState.SearchSequence++;
          var result = FormatSearchResults(
-            searchResults,
-            toolState.SearchSequence,
-            searchResultsById
+            searchResults
          );
 
          RecordToolCallResult(
             toolCall,
-            searchResultsById,
             toolState,
             turn,
             result
@@ -1164,7 +1153,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          RecordToolCallResult(
             toolCall,
-            searchResultsById,
             toolState,
             turn,
             pageResult
@@ -1191,7 +1179,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          RecordToolCallResult(
             toolCall,
-            searchResultsById,
             toolState,
             turn,
             result
@@ -1569,9 +1556,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private static string FormatSearchResults(
-      IReadOnlyList<WebSearchResult> searchResults,
-      int searchSequence,
-      IDictionary<string, WebSearchResult> searchResultsById
+      IReadOnlyList<WebSearchResult> searchResults
    )
    {
       if(searchResults.Count == 0)
@@ -1580,14 +1565,10 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       var output = searchResults
-         .Select((searchResult, index) =>
+         .Select(searchResult =>
          {
-            var id = $"s{searchSequence}_{index + 1}";
-            searchResultsById[id] = searchResult;
-
             return new
             {
-               id,
                title = searchResult.Title,
                url = searchResult.Url,
                snippet = searchResult.Snippet,
@@ -2537,13 +2518,12 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static bool TryGetRepeatedToolResult(
       ToolCall toolCall,
-      IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
       out string repeatedResult
    )
    {
       repeatedResult = "";
-      var signature = BuildToolCallSignature(toolCall, searchResultsById);
+      var signature = BuildToolCallSignature(toolCall);
 
       if(string.IsNullOrWhiteSpace(signature) ||
          !toolState.ToolCallHistory.TryGetValue(signature, out var record))
@@ -2557,13 +2537,12 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static void RecordToolCallResult(
       ToolCall toolCall,
-      IDictionary<string, WebSearchResult> searchResultsById,
       ToolLoopState toolState,
       int turn,
       string result
    )
    {
-      var signature = BuildToolCallSignature(toolCall, searchResultsById);
+      var signature = BuildToolCallSignature(toolCall);
 
       if(string.IsNullOrWhiteSpace(signature))
       {
@@ -2619,8 +2598,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private static string BuildToolCallSignature(
-      ToolCall toolCall,
-      IDictionary<string, WebSearchResult> searchResultsById
+      ToolCall toolCall
    )
    {
       var query = ExtractQuery(toolCall.Arguments);
@@ -2718,8 +2696,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private sealed class ToolLoopState
    {
-      public int SearchSequence { get; set; }
-
       public string? LastSearchProvider { get; set; }
 
       public string? LastSearchProviderDetails { get; set; }
