@@ -10,14 +10,6 @@ public static class PostgresConnectionStrings
 
    public static string ResolveDefault()
    {
-      var explicitConnectionString =
-         Environment.GetEnvironmentVariable("ConnectionStrings__Default");
-
-      if(!string.IsNullOrWhiteSpace(explicitConnectionString))
-      {
-         return explicitConnectionString;
-      }
-
       var host =
          Environment.GetEnvironmentVariable("SESPORT_POSTGRES_HOST") ??
          DefaultHost;

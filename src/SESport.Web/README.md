@@ -38,8 +38,8 @@ The web app reads the database connection from environment variables. Copy
 `.env.example` to `.env`, then load it into your shell before starting the
 app. The app does not auto-read `.env`.
 
-The relevant keys are `ConnectionStrings__Default` or the
-`SESPORT_POSTGRES_*` variables. A simple Bash example is:
+The relevant keys are the `SESPORT_POSTGRES_*` variables. A simple Bash
+example is:
 
 ```bash
 set -a

@@ -6,12 +6,11 @@ scripts.
 The application resolves the default database connection from environment
 variables, in this order:
 
-1. `ConnectionStrings__Default`
-2. `SESPORT_POSTGRES_HOST`
-3. `SESPORT_POSTGRES_PORT`
-4. `SESPORT_POSTGRES_DB`
-5. `SESPORT_POSTGRES_USER`
-6. `SESPORT_POSTGRES_PASSWORD`
+1. `SESPORT_POSTGRES_HOST`
+2. `SESPORT_POSTGRES_PORT`
+3. `SESPORT_POSTGRES_DB`
+4. `SESPORT_POSTGRES_USER`
+5. `SESPORT_POSTGRES_PASSWORD`
 
 If no variables are set, the code falls back to the local defaults for
 `sesport` on `localhost:5432`.
