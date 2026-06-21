@@ -274,7 +274,6 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.id,
             r.status_id,
             coalesce(r.tool_round_count, 0),
-            r.tool_trace::text,
             r.output_text,
             r.raw_response::text,
             r.error_message
@@ -311,18 +310,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          var runId = reader.GetGuid(1);
          var statusId = reader.GetString(2);
          var toolRoundCount = reader.GetInt32(3);
-         var toolTraceText = ReadNullableString(reader, 4);
-         var outputText = ReadNullableString(reader, 5);
-         var rawResponseText = ReadNullableString(reader, 6);
-         var errorMessage = ReadNullableString(reader, 7);
+         var outputText = ReadNullableString(reader, 4);
+         var rawResponseText = ReadNullableString(reader, 5);
+         var errorMessage = ReadNullableString(reader, 6);
 
          checks[broadcastId] = ParseParticipationCheck(
             runId,
             statusId,
-            GetParticipationToolRoundCount(
-               toolRoundCount,
-               toolTraceText
-            ),
+            toolRoundCount,
             outputText,
             rawResponseText,
             errorMessage
@@ -666,10 +661,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             where status_id in ('pending', 'running')
                and execution_environment = @execution_environment
             order by
-               case status_id
-                  when 'running' then 0
-                  else 1
-               end,
+               status_id desc,
                started_at asc,
                created_at asc,
                id asc
@@ -1139,54 +1131,6 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             resolvedSourceUrls,
             errorMessage ?? "The model returned invalid JSON."
          );
-      }
-   }
-
-   private static int GetParticipationToolRoundCount(
-      int toolRoundCount,
-      string? toolTraceJson
-   )
-   {
-      return Math.Max(toolRoundCount, CountToolTraceRounds(toolTraceJson));
-   }
-
-   private static int CountToolTraceRounds(
-      string? toolTraceJson
-   )
-   {
-      if(string.IsNullOrWhiteSpace(toolTraceJson))
-      {
-         return 0;
-      }
-
-      try
-      {
-         using var document = JsonDocument.Parse(toolTraceJson);
-
-         if(document.RootElement.ValueKind != JsonValueKind.Array)
-         {
-            return 0;
-         }
-
-         return document.RootElement
-            .EnumerateArray()
-            .Select(entry =>
-            {
-               return entry.ValueKind == JsonValueKind.Object &&
-                  entry.TryGetProperty("turn", out var turn) &&
-                  turn.ValueKind == JsonValueKind.Number &&
-                  turn.TryGetInt32(out var turnNumber)
-                  ? turnNumber
-                  : (int?)null;
-            })
-            .Where(turn => turn is not null)
-            .Select(turn => turn!.Value)
-            .Distinct()
-            .Count();
-      }
-      catch(JsonException)
-      {
-         return 0;
       }
    }
 

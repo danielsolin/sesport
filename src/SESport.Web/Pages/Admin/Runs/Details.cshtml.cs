@@ -403,15 +403,12 @@ public class DetailsModel(
 
    public static int GetToolRoundCount(AiRunDetail run)
    {
-      return GetToolRoundCount(run.ToolRoundCount, run.ToolTraceJson);
+      return run.ToolRoundCount;
    }
 
-   public static int GetToolRoundCount(
-      int toolRoundCount,
-      string? toolTraceJson
-   )
+   public static int GetToolRoundCount(int toolRoundCount)
    {
-      return Math.Max(toolRoundCount, ParseToolTrace(toolTraceJson).Count);
+      return toolRoundCount;
    }
 
    public static int GetMaxConversationCharacterCount(AiRunDetail run)

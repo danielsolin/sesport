@@ -120,6 +120,21 @@ public sealed class BroadcastParticipationService(
          normalizedBroadcastIds,
          cancellationToken
       );
+
+      if(checks.Count == 0)
+      {
+         return [];
+      }
+
+      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
+         cancellationToken
+      );
+      var entityByName = entityOptions
+         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
+         .GroupBy(entity =>
+            BroadcastEntityFilter.NormalizeName(entity.Name))
+         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+         .ToDictionary(group => group.Key, group => group.First().Id);
       var results = new List<BroadcastParticipationCheckResult>();
 
       foreach(var broadcast in broadcasts)
@@ -129,9 +144,9 @@ public sealed class BroadcastParticipationService(
             continue;
          }
 
-         var participantItems = await ResolveParticipantItemsAsync(
+         var participantItems = ResolveParticipantItems(
             participationCheck.SwedishParticipants,
-            cancellationToken
+            entityByName
          );
 
          results.Add(
@@ -184,10 +199,10 @@ public sealed class BroadcastParticipationService(
          .ToList();
    }
 
-   private async Task<IReadOnlyList<BroadcastParticipantDisplayItem>>
-      ResolveParticipantItemsAsync(
+   private static IReadOnlyList<BroadcastParticipantDisplayItem>
+      ResolveParticipantItems(
          IReadOnlyList<string> participantNames,
-         CancellationToken cancellationToken
+         IReadOnlyDictionary<string, Guid> entityByName
       )
    {
       if(participantNames.Count == 0)
@@ -195,15 +210,6 @@ public sealed class BroadcastParticipationService(
          return [];
       }
 
-      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
-         cancellationToken
-      );
-      var entityByName = entityOptions
-         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-         .GroupBy(entity =>
-            BroadcastEntityFilter.NormalizeName(entity.Name))
-         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-         .ToDictionary(group => group.Key, group => group.First().Id);
       Guid? templateEntityId = null;
 
       foreach(var name in participantNames)

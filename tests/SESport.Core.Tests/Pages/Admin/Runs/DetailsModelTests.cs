@@ -58,6 +58,15 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void GetToolRoundCountUsesStoredValueOnly()
+   {
+      Assert.Equal(
+         1,
+         DetailsModel.GetToolRoundCount(1)
+      );
+   }
+
+   [Fact]
    public void BuildExecutionEnvironmentOptionsIncludesCurrentEnvironment()
    {
       var currentExecutionEnvironment = SESport.AI.ExecutionEnvironment.Current;
