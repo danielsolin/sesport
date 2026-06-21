@@ -33,6 +33,9 @@ public class EditModel(AiAdminRepository repository) : PageModel
          cancellationToken
       ) ?? new AiPromptEditModel();
 
+      Prompt.OutputSchemaJson = FormatJson(Prompt.OutputSchemaJson);
+      Prompt.RequestOptionsJson = FormatJson(Prompt.RequestOptionsJson);
+
       return Prompt.OriginalId is null ? NotFound() : Page();
    }
 
@@ -125,6 +128,30 @@ public class EditModel(AiAdminRepository repository) : PageModel
       catch (JsonException)
       {
          ModelState.AddModelError(fieldName, "Must be valid JSON.");
+      }
+   }
+
+   private static string? FormatJson(string? json)
+   {
+      if(string.IsNullOrWhiteSpace(json))
+      {
+         return json;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(json);
+         return JsonSerializer.Serialize(
+            document.RootElement,
+            new JsonSerializerOptions
+            {
+               WriteIndented = true
+            }
+         );
+      }
+      catch(JsonException)
+      {
+         return json;
       }
    }
 }
