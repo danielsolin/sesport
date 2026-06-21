@@ -34,7 +34,11 @@ public class EditModel(AiAdminRepository repository) : PageModel
       ) ?? new AiPromptEditModel();
 
       Prompt.OutputSchemaJson = FormatJson(Prompt.OutputSchemaJson);
-      Prompt.RequestOptionsJson = FormatJson(Prompt.RequestOptionsJson);
+
+      if(!string.IsNullOrWhiteSpace(Prompt.RequestOptionsJson))
+      {
+         Prompt.RequestOptionsJson = FormatJson(Prompt.RequestOptionsJson)!;
+      }
 
       return Prompt.OriginalId is null ? NotFound() : Page();
    }
