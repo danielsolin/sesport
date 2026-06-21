@@ -65,7 +65,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
    private ILogger<SearxngWebSearchClient>? Logger { get; }
 
-   public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+   public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
       CancellationToken cancellationToken
@@ -73,7 +73,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    {
       if(string.IsNullOrWhiteSpace(query))
       {
-         return [];
+         return new WebSearchResponse([]);
       }
 
       Logger?.LogDebug(
@@ -112,7 +112,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
-      return ParseResults(rawResponse, maxResults);
+      return new WebSearchResponse(ParseResults(rawResponse, maxResults),
+         "SearXNG");
    }
 
    private static IReadOnlyList<WebSearchResult> ParseResults(

@@ -95,6 +95,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolRoundCount = 0;
       var turn = 0;
       var toolBudgetExhausted = false;
+      var repeatedToolCallStreak = 0;
 
       try
       {
@@ -115,6 +116,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          while(true)
          {
             turn++;
+            ApplyTemperature(
+               request,
+               prompt.Temperature,
+               repeatedToolCallStreak
+            );
             ApplyToolBudgetPrompt(
                messages,
                baseSystemPrompt,
@@ -129,7 +135,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   turn,
                   prompt.MaxToolRounds,
                   toolRoundCount,
-                  conversationCharacterCount
+                  conversationCharacterCount,
+                  GetRequestTemperature(request)
                )
             );
             await ReportToolTraceProgressAsync(
@@ -157,6 +164,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
             if(!TryGetToolCalls(responseJson, out var toolCalls))
             {
+               repeatedToolCallStreak = 0;
                toolTrace.Add(
                   CreateAssistantTraceEntry(turn, responseJson, [])
                );
@@ -174,9 +182,20 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             AppendAssistantMessage(messages, responseJson);
 
+            var repeatedToolCallDetectedThisTurn = false;
             foreach(var toolCall in toolCalls)
             {
                LogToolCall(turn, toolCall);
+
+               if(TryGetRepeatedToolResult(
+                  toolCall,
+                  searchResultsById,
+                  toolState,
+                  out _
+               ))
+               {
+                  repeatedToolCallDetectedThisTurn = true;
+               }
 
                var toolResult = await ExecuteToolCallAsync(
                   toolCall,
@@ -194,7 +213,9 @@ public sealed class LlamaServerClient : IAiProviderClient
                   CreateToolTraceEntry(
                      turn,
                      toolCall,
-                     toolResult
+                     toolResult,
+                     toolState.LastSearchProvider,
+                     toolState.LastSearchProviderDetails
                   )
                );
                await ReportToolTraceProgressAsync(
@@ -203,6 +224,10 @@ public sealed class LlamaServerClient : IAiProviderClient
                   cancellationToken
                );
             }
+
+            repeatedToolCallStreak = repeatedToolCallDetectedThisTurn
+               ? repeatedToolCallStreak + 1
+               : 0;
 
             if(job.RequiresWebSearch)
             {
@@ -235,7 +260,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   turn + 1,
                   prompt.MaxToolRounds,
                   prompt.MaxToolRounds ?? 0,
-                  conversationCharacterCount
+                  conversationCharacterCount,
+                  GetRequestTemperature(request)
                )
             );
             await ReportToolTraceProgressAsync(
@@ -594,7 +620,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       int turn,
       int? maxToolRounds,
       int toolRoundCount,
-      int conversationCharacterCount
+      int conversationCharacterCount,
+      decimal? temperature
    )
    {
       if(maxToolRounds is null)
@@ -603,7 +630,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          {
             ["kind"] = "budget",
             ["turn"] = turn,
-            ["enabled"] = false
+            ["enabled"] = false,
+            ["temperature"] = temperature
          };
       }
 
@@ -618,15 +646,71 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["remaining"] = remainingToolCalls,
          ["max"] = maxToolRounds.Value,
          ["conversation_chars"] = conversationCharacterCount,
+         ["temperature"] = temperature,
          ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
             $"{maxToolRounds.Value}."
       };
    }
 
+   private static decimal? GetRequestTemperature(JsonObject request)
+   {
+      if(!request.TryGetPropertyValue("temperature", out var value))
+      {
+         return null;
+      }
+
+      return value is JsonValue jsonValue &&
+         jsonValue.TryGetValue<decimal>(out var temperature)
+         ? temperature
+         : null;
+   }
+
+   internal static decimal? GetEffectiveTemperature(
+      decimal? baseTemperature,
+      int repeatedToolCallStreak
+   )
+   {
+      if(baseTemperature is null)
+      {
+         return null;
+      }
+
+      if(repeatedToolCallStreak <= 0)
+      {
+         return baseTemperature;
+      }
+
+      var adjustedTemperature = 0.15m + (repeatedToolCallStreak - 1) * 0.05m;
+      adjustedTemperature = Math.Min(adjustedTemperature, 0.6m);
+
+      return Math.Max(baseTemperature.Value, adjustedTemperature);
+   }
+
+   private static void ApplyTemperature(
+      JsonObject request,
+      decimal? baseTemperature,
+      int repeatedToolCallStreak
+   )
+   {
+      var effectiveTemperature = GetEffectiveTemperature(
+         baseTemperature,
+         repeatedToolCallStreak
+      );
+
+      if(effectiveTemperature is null)
+      {
+         return;
+      }
+
+      request["temperature"] = effectiveTemperature.Value;
+   }
+
    private static JsonObject CreateToolTraceEntry(
       int turn,
       ToolCall toolCall,
-      string toolResult
+      string toolResult,
+      string? searchProvider = null,
+      string? searchProviderDetails = null
    )
    {
       var isSearchTool = string.Equals(
@@ -660,6 +744,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["url"] = isGetPageTool ? ExtractUrl(toolCall.Arguments) : null,
          ["find"] = isFindInPageTool || !string.IsNullOrWhiteSpace(find)
             ? find
+            : null,
+         ["search_provider"] = isSearchTool ? searchProvider : null,
+         ["search_provider_details"] = isSearchTool
+            ? searchProviderDetails
             : null,
          ["result"] = toolResult
       };
@@ -774,7 +862,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private void LogSearchResults(
       string query,
       int limit,
-      IReadOnlyList<WebSearchResult> searchResults
+      IReadOnlyList<WebSearchResult> searchResults,
+      string? searchProvider
    )
    {
       if(!Logger.IsEnabled(LogLevel.Debug))
@@ -787,8 +876,11 @@ public sealed class LlamaServerClient : IAiProviderClient
          : $"{searchResults[0].Title} | {searchResults[0].Url}";
 
       Logger.LogDebug(
-         "llama-server search query={Query} limit={Limit} " +
-         "results={ResultCount} first_result={FirstResult}",
+         "llama-server search provider={SearchProvider} query={Query} " +
+         "limit={Limit} results={ResultCount} first_result={FirstResult}",
+         string.IsNullOrWhiteSpace(searchProvider)
+            ? "unknown"
+            : searchProvider,
          TruncateForLog(query, 240),
          limit,
          searchResults.Count,
@@ -1022,13 +1114,22 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          var query = ExtractQuery(toolCall.Arguments);
          var limit = ExtractLimit(toolCall.Arguments);
-         var searchResults = await WebSearchClient.SearchAsync(
+         var searchResponse = await WebSearchClient.SearchAsync(
             query,
             limit,
             cancellationToken
          );
+         var searchResults = searchResponse.Results;
+         toolState.LastSearchProvider = searchResponse.Provider;
+         toolState.LastSearchProviderDetails = searchResponse.Details;
+         toolState.LastSearchProviderDetails = searchResponse.Details;
 
-         LogSearchResults(query, limit, searchResults);
+         LogSearchResults(
+            query,
+            limit,
+            searchResults,
+            toolState.LastSearchProvider
+         );
 
          toolState.SearchSequence++;
          var result = FormatSearchResults(
@@ -2757,6 +2858,10 @@ public sealed class LlamaServerClient : IAiProviderClient
    private sealed class ToolLoopState
    {
       public int SearchSequence { get; set; }
+
+      public string? LastSearchProvider { get; set; }
+
+      public string? LastSearchProviderDetails { get; set; }
 
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
          new(StringComparer.OrdinalIgnoreCase);

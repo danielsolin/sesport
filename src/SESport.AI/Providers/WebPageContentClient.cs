@@ -22,6 +22,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       TimeSpan.FromSeconds(30);
    private static readonly IReadOnlyDictionary<string, string>
       CountryNamesByCode = BuildCountryNamesByCode();
+   private static readonly IReadOnlyDictionary<string, string>
+      CountryNamesByThreeLetterCode = BuildCountryNamesByThreeLetterCode();
    private readonly HttpClient httpClient;
    private readonly Func<Uri, CancellationToken, Task<WebPageContent?>>
       browserPageFetcher;
@@ -146,35 +148,92 @@ public sealed class WebPageContentClient : IWebPageContentClient
             (countryNamesJson) => {
                const countryNames = JSON.parse(countryNamesJson);
                const flagExtensions = '(?:svg|png|gif)';
+               const flagClassPattern = /(?:^|\s)flag--([a-z0-9_]+)(?:\s|$)/i;
 
-               document.querySelectorAll('img').forEach((img) => {
-                  const src = img.getAttribute('src') || '';
-                  const match =
-                     src.match(
+               function getFlagCode(source) {
+                  if(typeof source !== 'string' || source === '') {
+                     return null;
+                  }
+
+                  const directMatch =
+                     source.match(
                         new RegExp(
                            `/svg/flag(?:s)?/([A-Z]{2})\\.` +
                            flagExtensions + '$',
                            'i'
                         )
                      ) ||
-                     src.match(
+                     source.match(
                         new RegExp(
                            `/img/flag-([a-z]{2})\\.` +
                            flagExtensions + '$',
                            'i'
                         )
                      ) ||
-                    src.match(
+                     source.match(
                         new RegExp(
                            `/Flags/([^/?#]+)\\.` +
                            flagExtensions + '$',
                            'i'
                         )
                      ) ||
-                     src.match(
+                     source.match(
                         /\/Flag_of_([A-Za-z_]+)\.svg\/[^/?#]+\.(?:svg|png|gif)$/i
                      );
-                  const code = match?.[1];
+
+                  if(directMatch) {
+                     return directMatch[1];
+                  }
+
+                  const nextImageMatch = source.match(
+                     /\/_next\/image\?[^?#]*\burl=([^&\s,]+)/i
+                  );
+
+                  if(!nextImageMatch) {
+                     return null;
+                  }
+
+                  let decodedSource = '';
+
+                  try {
+                     decodedSource =
+                        decodeURIComponent(nextImageMatch[1]);
+                  }
+                  catch {
+                     return null;
+                  }
+
+                  const nextImageFlagMatch =
+                     decodedSource.match(
+                        /\/countries\/([a-z]{2})\.(?:svg|png|gif)$/i
+                     ) ||
+                     decodedSource.match(
+                        /\/flags?\/([a-z]{2})\.(?:svg|png|gif)$/i
+                     ) ||
+                     decodedSource.match(
+                        /\/Flag_of_([A-Za-z_]+)\.svg$/i
+                     );
+
+                  return nextImageFlagMatch?.[1] || null;
+               }
+
+               function getClassFlagCode(element) {
+                  const className = element.getAttribute('class') || '';
+                  const dataClass = element.getAttribute('data-class') || '';
+                  const classMatch = className.match(flagClassPattern);
+                  const dataClassMatch = dataClass.match(flagClassPattern);
+
+                  return classMatch?.[1] || dataClassMatch?.[1] || null;
+               }
+
+               document.querySelectorAll(
+                  'img, [class*="flag--"], [data-class*="flag--"]'
+               ).forEach((element) => {
+                  const code =
+                     element.tagName.toLowerCase() === 'img'
+                        ? getFlagCode(element.getAttribute('src') || '') ||
+                           getFlagCode(element.getAttribute('srcset') || '')
+                        : getClassFlagCode(element);
 
                   if(!code) {
                      return;
@@ -182,11 +241,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
                   const labelKey = code.replaceAll('_', ' ');
                   const label = countryNames[labelKey.toUpperCase()] ||
-                     img.getAttribute('alt') ||
+                     element.getAttribute('alt') ||
                      labelKey;
 
                   if(label) {
-                     img.replaceWith(
+                     element.replaceWith(
                         document.createTextNode(` ${label} `)
                      );
                   }
@@ -350,9 +409,22 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return null;
       }
 
+      var normalizedCode = countryCode.Trim().ToUpperInvariant();
+
+      if(normalizedCode.Length == 3 &&
+         CountryNamesByThreeLetterCode is
+            { } threeLetterCountryNames &&
+         threeLetterCountryNames.TryGetValue(
+            normalizedCode,
+            out var threeLetterDisplayName
+         ))
+      {
+         return threeLetterDisplayName;
+      }
+
       try
       {
-         return new RegionInfo(countryCode.Trim().ToUpperInvariant())
+         return new RegionInfo(normalizedCode)
             .EnglishName;
       }
       catch(ArgumentException)
@@ -389,14 +461,44 @@ public sealed class WebPageContentClient : IWebPageContentClient
             continue;
          }
 
-         var displayName = GetCountryDisplayName(code);
+         countryNames[code] = region.EnglishName;
+         countryNames[region.ThreeLetterISORegionName] =
+            region.EnglishName;
+      }
 
-         if(string.IsNullOrWhiteSpace(displayName))
+      return countryNames;
+   }
+
+   private static IReadOnlyDictionary<string, string>
+      BuildCountryNamesByThreeLetterCode()
+   {
+      var countryNames = new Dictionary<string, string>(
+         StringComparer.OrdinalIgnoreCase
+      );
+
+      foreach(var culture in CultureInfo.GetCultures(
+         CultureTypes.SpecificCultures
+      ))
+      {
+         RegionInfo? region;
+
+         try
+         {
+            region = new RegionInfo(culture.Name);
+         }
+         catch(ArgumentException)
          {
             continue;
          }
 
-         countryNames[code] = displayName;
+         var code = region.ThreeLetterISORegionName;
+
+         if(countryNames.ContainsKey(code))
+         {
+            continue;
+         }
+
+         countryNames[code] = region.EnglishName;
       }
 
       return countryNames;

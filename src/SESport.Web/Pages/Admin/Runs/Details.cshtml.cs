@@ -538,6 +538,12 @@ public class DetailsModel(
                continue;
             }
 
+            if(string.Equals(kind, "budget", StringComparison.Ordinal))
+            {
+               builder.Temperature ??= GetDecimal(entry, "temperature");
+               continue;
+            }
+
             if(string.Equals(kind, "tool", StringComparison.Ordinal))
             {
                builder.ToolResults.Add(ParseToolResult(entry));
@@ -652,6 +658,8 @@ public class DetailsModel(
          FormatDisplayValue(GetProperty(entry, "arguments")),
          GetString(entry, "query"),
          GetString(entry, "id"),
+         GetString(entry, "search_provider"),
+         GetString(entry, "search_provider_details"),
          FormatDisplayValue(GetProperty(entry, "result"))
       );
    }
@@ -677,6 +685,19 @@ public class DetailsModel(
 
       return property.ValueKind == JsonValueKind.Number &&
          property.TryGetInt32(out var value)
+         ? value
+         : null;
+   }
+
+   private static decimal? GetDecimal(JsonElement element, string name)
+   {
+      if(!element.TryGetProperty(name, out var property))
+      {
+         return null;
+      }
+
+      return property.ValueKind == JsonValueKind.Number &&
+         property.TryGetDecimal(out var value)
          ? value
          : null;
    }
@@ -869,12 +890,15 @@ public class DetailsModel(
       string Arguments,
       string? Query,
       string? Id,
+      string? SearchProvider,
+      string? SearchProviderDetails,
       string Result
    );
 
    public sealed record ToolTraceTurnViewModel(
       int Turn,
       int? RoundConversationCharacterCount,
+      decimal? Temperature,
       string? FinishReason,
       string? AssistantContent,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
@@ -889,6 +913,8 @@ public class DetailsModel(
 
       public int? RoundConversationCharacterCount { get; set; }
 
+      public decimal? Temperature { get; set; }
+
       public string? FinishReason { get; set; }
 
       public string? AssistantContent { get; set; }
@@ -902,6 +928,7 @@ public class DetailsModel(
          return new ToolTraceTurnViewModel(
             Turn,
             RoundConversationCharacterCount,
+            Temperature,
             FinishReason,
             AssistantContent,
             ToolCalls,
@@ -924,6 +951,15 @@ public class DetailsModel(
                $"Round conversation chars " +
                $"{RoundConversationCharacterCount.Value:N0}",
                "tool-trace-badge-count"
+            ));
+         }
+
+         if(Temperature is not null)
+         {
+            badges.Add(new(
+               $"Temp " +
+               $"{Temperature.Value.ToString(CultureInfo.InvariantCulture)}",
+               "tool-trace-badge-temperature"
             ));
          }
 

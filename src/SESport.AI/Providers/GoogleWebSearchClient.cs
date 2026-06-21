@@ -42,7 +42,7 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
       TimeSpan.FromSeconds(30);
 
    private readonly Func<Uri, int, CancellationToken,
-      Task<IReadOnlyList<WebSearchResult>>> searchFetcher;
+      Task<GoogleSearchAttempt>> searchFetcher;
 
    public GoogleWebSearchClient(HttpClient httpClient)
       : this(httpClient, null)
@@ -52,14 +52,14 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
    internal GoogleWebSearchClient(
       HttpClient httpClient,
       Func<Uri, int, CancellationToken,
-         Task<IReadOnlyList<WebSearchResult>>>? searchFetcher
+         Task<GoogleSearchAttempt>>? searchFetcher
    )
    {
       _ = httpClient;
       this.searchFetcher = searchFetcher ?? FetchGoogleResultsAsync;
    }
 
-   public async Task<IReadOnlyList<WebSearchResult>> SearchAsync(
+   public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
       CancellationToken cancellationToken
@@ -67,11 +67,20 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
    {
       if(string.IsNullOrWhiteSpace(query))
       {
-         return [];
+         return new WebSearchResponse([]);
       }
 
       var searchUri = BuildGoogleSearchUri(query, maxResults);
-      return await searchFetcher(searchUri, maxResults, cancellationToken);
+      var attempt = await searchFetcher(
+         searchUri,
+         maxResults,
+         cancellationToken
+      );
+      return new WebSearchResponse(
+         attempt.Results,
+         "Google",
+         attempt.FailureMessage
+      );
    }
 
    private static Uri BuildGoogleSearchUri(
@@ -97,7 +106,7 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
       return new Uri($"{GoogleSearchBaseUrl}?{queryString}");
    }
 
-   private static async Task<IReadOnlyList<WebSearchResult>>
+   private static async Task<GoogleSearchAttempt>
       FetchGoogleResultsAsync(
          Uri searchUri,
          int maxResults,
@@ -173,19 +182,20 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
 
          cancellationToken.ThrowIfCancellationRequested();
 
-         return await ParseGoogleResultsAsync(
+         var results = await ParseGoogleResultsAsync(
             page,
             maxResults,
             cancellationToken
          );
+         return new GoogleSearchAttempt(results);
       }
       catch(OperationCanceledException)
       {
          throw;
       }
-      catch(PlaywrightException)
+      catch(PlaywrightException exception)
       {
-         return [];
+         return new GoogleSearchAttempt([], exception.Message);
       }
    }
 
@@ -337,4 +347,9 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
 
       return text.Replace("\r", "\n", StringComparison.Ordinal).Trim();
    }
+
+   internal sealed record GoogleSearchAttempt(
+      IReadOnlyList<WebSearchResult> Results,
+      string? FailureMessage = null
+   );
 }

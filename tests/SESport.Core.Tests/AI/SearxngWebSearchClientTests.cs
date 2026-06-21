@@ -17,7 +17,7 @@ public class SearxngWebSearchClientTests
          new SearxngWebSearchClientOptions()
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "Tre Kronor",
          3,
          CancellationToken.None
@@ -32,10 +32,10 @@ public class SearxngWebSearchClientTests
       Assert.Contains("categories=general", handler.RequestBody);
       Assert.Contains("engines=google", handler.RequestBody);
       Assert.Equal("application/json", handler.AcceptHeader);
-      Assert.Single(results);
-      Assert.Equal("Tre Kronor roster", results[0].Title);
-      Assert.Equal("https://example.test/roster", results[0].Url);
-      Assert.Equal("Sweden lineup info.", results[0].Snippet);
+      Assert.Single(response.Results);
+      Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+      Assert.Equal("https://example.test/roster", response.Results[0].Url);
+      Assert.Equal("Sweden lineup info.", response.Results[0].Snippet);
    }
 
    [Fact]
@@ -47,15 +47,15 @@ public class SearxngWebSearchClientTests
          new SearxngWebSearchClientOptions()
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "Tre Kronor",
          5,
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("Official roster", results[0].Title);
-      Assert.Equal("https://example.test/roster", results[0].Url);
+      Assert.Single(response.Results);
+      Assert.Equal("Official roster", response.Results[0].Title);
+      Assert.Equal("https://example.test/roster", response.Results[0].Url);
    }
 
    [Fact]
@@ -67,15 +67,15 @@ public class SearxngWebSearchClientTests
          new SearxngWebSearchClientOptions()
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "Tre Kronor",
          3,
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("Tre Kronor roster", results[0].Title);
-      Assert.Equal("https://example.test/roster", results[0].Url);
+      Assert.Single(response.Results);
+      Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+      Assert.Equal("https://example.test/roster", response.Results[0].Url);
    }
 
    [Fact]
@@ -87,17 +87,17 @@ public class SearxngWebSearchClientTests
          new SearxngWebSearchClientOptions()
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "Tre Kronor",
          5,
          CancellationToken.None
       );
 
-      Assert.Equal(2, results.Count);
-      Assert.Equal("PDF roster", results[0].Title);
-      Assert.Equal("https://example.test/roster.pdf", results[0].Url);
-      Assert.Equal("Official roster", results[1].Title);
-      Assert.Equal("https://example.test/roster", results[1].Url);
+      Assert.Equal(2, response.Results.Count);
+      Assert.Equal("PDF roster", response.Results[0].Title);
+      Assert.Equal("https://example.test/roster.pdf", response.Results[0].Url);
+      Assert.Equal("Official roster", response.Results[1].Title);
+      Assert.Equal("https://example.test/roster", response.Results[1].Url);
    }
 
    [Fact]
@@ -109,15 +109,15 @@ public class SearxngWebSearchClientTests
          new SearxngWebSearchClientOptions()
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          "Tre Kronor",
          3,
          CancellationToken.None
       );
 
-      Assert.Single(results);
-      Assert.Equal("Tre Kronor roster", results[0].Title);
-      Assert.Equal("https://example.test/roster", results[0].Url);
+      Assert.Single(response.Results);
+      Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+      Assert.Equal("https://example.test/roster", response.Results[0].Url);
    }
 
    [Fact]
@@ -129,13 +129,13 @@ public class SearxngWebSearchClientTests
          new SearxngWebSearchClientOptions()
       );
 
-      var results = await client.SearchAsync(
+      var response = await client.SearchAsync(
          " ",
          3,
          CancellationToken.None
       );
 
-      Assert.Empty(results);
+      Assert.Empty(response.Results);
       Assert.Null(handler.RequestUri);
    }
 

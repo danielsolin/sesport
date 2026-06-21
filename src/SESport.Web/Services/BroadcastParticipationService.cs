@@ -10,6 +10,7 @@ namespace SESport.Web.Services;
 
 public sealed class BroadcastParticipationService(
    AdminRepository adminRepository,
+   ActivityRepository activityRepository,
    AiRepository aiRepository,
    BroadcastRepository broadcastRepository,
    IAiJobRunner aiJobRunner
@@ -75,13 +76,22 @@ public sealed class BroadcastParticipationService(
          normalizedBroadcastIds,
          cancellationToken
       );
+      var candidateOptions = await activityRepository.GetEntityOptionsAsync(
+         cancellationToken
+      );
 
       foreach(var broadcast in broadcasts)
       {
          await aiJobRunner.QueueAsync(
             new AiJobRequest(
                ParticipationJobId,
-               CreateParticipationInputJson(broadcast),
+               CreateParticipationInputJson(
+                  broadcast,
+                  BroadcastParticipationCandidateResolver.CreateCandidatesText(
+                     broadcast,
+                     candidateOptions
+                  )
+               ),
                broadcast.Id.ToString()
             ),
             cancellationToken
@@ -145,7 +155,8 @@ public sealed class BroadcastParticipationService(
    }
 
    private static string CreateParticipationInputJson(
-      BroadcastActivitySource broadcast
+      BroadcastActivitySource broadcast,
+      string candidates
    )
    {
       var localStart = BroadcastRepository.ToLocal(broadcast.StartsAt);
@@ -155,7 +166,8 @@ public sealed class BroadcastParticipationService(
          {
             sport = broadcast.Categories,
             event_name = broadcast.Title,
-            date_time = $"{localStart:yyyy-MM-dd HH:mm}"
+            date_time = $"{localStart:yyyy-MM-dd HH:mm}",
+            candidates
          }
       );
    }

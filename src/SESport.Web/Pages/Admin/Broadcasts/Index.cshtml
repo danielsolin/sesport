@@ -375,10 +375,11 @@
 
                                                    @if(participant.TemplateEntityId is not null)
                                                    {
-                                                      <form method="post"
+                                                         <form method="post"
                                                             action="@createParticipantEntityUrl"
                                                             class="broadcast-ai-check-participant-create-form"
-                                                            data-ajax-success="reload">
+                                                            data-ajax-success=
+                                                               "replace">
                                                          @Html.AntiForgeryToken()
                                                          <input type="hidden"
                                                                 name="participantName"
@@ -428,10 +429,11 @@
 
                                                 @if(participant.TemplateEntityId is not null)
                                                 {
-                                                   <form method="post"
+                                                      <form method="post"
                                                          action="@createParticipantEntityUrl"
                                                          class="broadcast-ai-check-participant-create-form"
-                                                         data-ajax-success="reload">
+                                                         data-ajax-success=
+                                                            "replace">
                                                       @Html.AntiForgeryToken()
                                                       <input type="hidden"
                                                              name="participantName"

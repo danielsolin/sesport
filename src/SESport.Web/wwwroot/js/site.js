@@ -90,6 +90,10 @@
             window.location.reload();
             return;
          }
+         else if(form.dataset.ajaxSuccess === "replace")
+         {
+            await replaceParticipantCreateFormAsync(form, response);
+         }
 
          decrementCounter(form.dataset.ajaxDecrementTarget);
          refreshCheckboxControls();
@@ -1837,7 +1841,7 @@
       const form = document.createElement("form");
       form.method = "post";
       form.action = getParticipantCreateUrl();
-      form.dataset.ajaxSuccess = "reload";
+      form.dataset.ajaxSuccess = "replace";
       form.className = "broadcast-ai-check-participant-create-form";
 
       const token = getAntiForgeryToken();
@@ -2193,6 +2197,68 @@
       {
          HTMLFormElement.prototype.submit.call(form);
       }
+   }
+
+   async function replaceParticipantCreateFormAsync(form, response)
+   {
+      if(!(form instanceof HTMLFormElement))
+      {
+         return;
+      }
+
+      if(!(response instanceof Response))
+      {
+         return;
+      }
+
+      let payload = null;
+
+      try
+      {
+         payload = await response.clone().json();
+      }
+      catch
+      {
+         return;
+      }
+
+      const editUrl = typeof payload.editUrl === "string"
+         ? payload.editUrl.trim()
+         : "";
+      const canonicalName = typeof payload.canonicalName === "string"
+         ? payload.canonicalName.trim()
+         : "";
+
+      if(editUrl === "" || canonicalName === "")
+      {
+         return;
+      }
+
+      const row = form.closest(".broadcast-ai-check-participant-row");
+
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const link = document.createElement("a");
+      link.className = "broadcast-ai-check-participant-link";
+      link.href = editUrl;
+      link.title = "Edit entity";
+      link.textContent = canonicalName;
+
+      const nameNode = row.firstElementChild;
+
+      if(nameNode instanceof Node)
+      {
+         row.replaceChild(link, nameNode);
+      }
+      else
+      {
+         row.prepend(link);
+      }
+
+      form.remove();
    }
 
    function getFormUrl(form)

@@ -75,7 +75,9 @@ public sealed class AdminRepositoryTests
 
          Assert.NotNull(template);
          Assert.Equal(TrackedEntityTypeIds.Person, template!.EntityTypeId);
-         Assert.Equal([nationalTeamId], template.LinkedEntityIds);
+         Assert.Contains(nationalTeamId, template.LinkedEntityIds);
+         Assert.Contains(organizationId, template.LinkedEntityIds);
+         Assert.Equal(2, template.LinkedEntityIds.Count);
       }
       finally
       {

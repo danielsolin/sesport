@@ -167,5 +167,7 @@ public sealed class EntityEditModel
 
    public string ExpectedStabilityId { get; set; } = string.Empty;
 
+   public string? PersonGenderId { get; set; }
+
    public List<Guid> LinkedEntityIds { get; set; } = [];
 }
