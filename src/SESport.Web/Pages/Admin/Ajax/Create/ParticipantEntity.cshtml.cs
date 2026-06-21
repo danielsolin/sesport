@@ -20,7 +20,7 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
       {
          return BadRequest(new
          {
-            error = "Select a participant and a template entity."
+            error = "Template entity missing."
          });
       }
 
