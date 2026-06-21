@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using SESport.AI.Validation;
 
 namespace SESport.Core.Tests.AI;
@@ -64,5 +66,32 @@ public class ResponsesOutputValidatorTests
       );
 
       Assert.Equal("{\"ok\":true}", validated);
+   }
+
+   [Fact]
+   public void ValidateStructuredOutputRejectsEmptyArrayWhenMinItemsSet()
+   {
+      var exception = Assert.Throws<InvalidOperationException>(() =>
+         ResponsesOutputValidator.ValidateStructuredOutput(
+            """
+            {"Sources":[],"SwedishParticipants":[],"SwedishParticipation":"No"}
+            """,
+            "json_schema",
+            """
+            {
+               "type": "object",
+               "properties": {
+                  "Sources": {
+                     "type": "array",
+                     "minItems": 1
+                  }
+               }
+            }
+            """
+         )
+      );
+
+      Assert.IsType<JsonException>(exception.InnerException);
+      Assert.Contains("at least 1 item", exception.InnerException!.Message);
    }
 }

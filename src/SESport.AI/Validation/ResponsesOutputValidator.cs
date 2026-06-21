@@ -266,6 +266,18 @@ public static class ResponsesOutputValidator
                throw new JsonException($"{path} must be a JSON array.");
             }
 
+            if(
+               schema.TryGetProperty("minItems", out var minItems) &&
+               minItems.ValueKind == JsonValueKind.Number &&
+               minItems.TryGetInt32(out var minItemCount) &&
+               value.GetArrayLength() < minItemCount
+            )
+            {
+               throw new JsonException(
+                  $"{path} must contain at least {minItemCount} item(s)."
+               );
+            }
+
             return;
          default:
             ValidateObjectShape(value, schema, path);
