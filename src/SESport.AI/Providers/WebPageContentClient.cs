@@ -1,6 +1,9 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
@@ -25,21 +28,26 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static readonly IReadOnlyDictionary<string, string>
       CountryNamesByThreeLetterCode = BuildCountryNamesByThreeLetterCode();
    private readonly HttpClient httpClient;
+   private readonly ILogger<WebPageContentClient> logger;
    private readonly Func<Uri, CancellationToken, Task<WebPageContent?>>
       browserPageFetcher;
 
    [ActivatorUtilitiesConstructor]
    public WebPageContentClient(HttpClient httpClient)
-      : this(httpClient, null)
+      : this(httpClient, null, null)
    {
    }
 
    public WebPageContentClient(
       HttpClient httpClient,
-      Func<Uri, CancellationToken, Task<WebPageContent?>>? browserPageFetcher
+      Func<Uri, CancellationToken, Task<WebPageContent?>>? browserPageFetcher,
+      ILogger<WebPageContentClient>? logger = null
    )
    {
       this.httpClient = httpClient;
+      this.logger = logger ??
+         Microsoft.Extensions.Logging.Abstractions.NullLogger<
+            WebPageContentClient>.Instance;
       this.browserPageFetcher = browserPageFetcher ?? FetchBrowserPageAsync;
    }
 
@@ -75,13 +83,31 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          throw;
       }
-      catch(TimeoutException)
+      catch(TimeoutException exception)
       {
-         return null;
+         logger.LogWarning(
+            exception,
+            "Playwright timed out for {Url}; falling back to HTML.",
+            absoluteUrl
+         );
+         return await FetchHtmlFallbackAsync(
+            response,
+            absoluteUrl,
+            cancellationToken
+         );
       }
-      catch(PlaywrightException)
+      catch(PlaywrightException exception)
       {
-         return null;
+         logger.LogWarning(
+            exception,
+            "Playwright failed for {Url}; falling back to HTML.",
+            absoluteUrl
+         );
+         return await FetchHtmlFallbackAsync(
+            response,
+            absoluteUrl,
+            cancellationToken
+         );
       }
    }
 
@@ -218,6 +244,116 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          return null;
       }
+   }
+
+   private async Task<WebPageContent?> FetchHtmlFallbackAsync(
+      HttpResponseMessage response,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         var html = await response.Content.ReadAsStringAsync(
+            cancellationToken
+         );
+
+         if(string.IsNullOrWhiteSpace(html))
+         {
+            logger.LogWarning(
+               "HTML fallback had no body for {Url}.",
+               absoluteUrl
+            );
+            return null;
+         }
+
+         var title = ExtractHtmlTitle(html);
+         var text = ExtractHtmlText(html);
+
+         if(string.IsNullOrWhiteSpace(text))
+         {
+            logger.LogWarning(
+               "HTML fallback produced no text for {Url}.",
+               absoluteUrl
+            );
+            return null;
+         }
+
+         logger.LogInformation(
+            "HTML fallback used for {Url}.",
+            absoluteUrl
+         );
+
+         return new WebPageContent(
+            title ?? absoluteUrl.ToString(),
+            absoluteUrl.ToString(),
+            null,
+            [],
+            ApplyResponseCutoff(text),
+            true,
+            text
+         );
+      }
+      catch(OperationCanceledException)
+      {
+         throw;
+      }
+      catch(Exception)
+      {
+         return null;
+      }
+   }
+
+   private static string? ExtractHtmlTitle(string html)
+   {
+      var match = Regex.Match(
+         html,
+         @"<title[^>]*>(.*?)</title>",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
+
+      if(!match.Success)
+      {
+         return null;
+      }
+
+      return WebUtility.HtmlDecode(
+         StripTags(match.Groups[1].Value).Trim()
+      );
+   }
+
+   private static string ExtractHtmlText(string html)
+   {
+      var cleanedHtml = Regex.Replace(
+         html,
+         @"<script\b[^>]*>.*?</script>",
+         " ",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
+      cleanedHtml = Regex.Replace(
+         cleanedHtml,
+         @"<style\b[^>]*>.*?</style>",
+         " ",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
+      cleanedHtml = Regex.Replace(
+         cleanedHtml,
+         @"<noscript\b[^>]*>.*?</noscript>",
+         " ",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
+      cleanedHtml = Regex.Replace(
+         cleanedHtml,
+         @"<[^>]+>",
+         " "
+      );
+
+      return NormalizeText(WebUtility.HtmlDecode(cleanedHtml));
+   }
+
+   private static string StripTags(string value)
+   {
+      return Regex.Replace(value, @"<[^>]+>", " ");
    }
 
    private static bool IsPdfResponse(

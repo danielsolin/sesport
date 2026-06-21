@@ -1,5 +1,6 @@
 using System.Net;
 
+using Microsoft.Playwright;
 using SESport.AI.Providers;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.Core;
@@ -109,6 +110,46 @@ public class WebPageContentClientTests
 
       Assert.Equal(1, browserCalls);
       Assert.Null(page);
+   }
+
+   [Fact]
+   public async Task FetchFallsBackToHtmlWhenBrowserFails()
+   {
+      var browserCalls = 0;
+      var handler = new HtmlRecordingHandler(
+         """
+         <html>
+            <head>
+               <title>Fallback Title</title>
+            </head>
+            <body>
+               <main>
+                  <h1>Fallback heading</h1>
+                  <p>Fallback body text.</p>
+               </main>
+            </body>
+         </html>
+         """
+      );
+      var client = new WebPageContentClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+            throw new PlaywrightException("Browser blocked");
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/fallback",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Fallback Title", page!.Title);
+      Assert.Contains("Fallback heading", page.MainText);
+      Assert.Contains("Fallback body text.", page.MainText);
    }
 
    [Fact]
@@ -284,6 +325,15 @@ public class WebPageContentClientTests
 
    private sealed class HtmlRecordingHandler : HttpMessageHandler
    {
+      private readonly string content;
+
+      public HtmlRecordingHandler(
+         string content = "<html></html>"
+      )
+      {
+         this.content = content;
+      }
+
       protected override Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
@@ -291,7 +341,7 @@ public class WebPageContentClientTests
       {
          var response = new HttpResponseMessage(HttpStatusCode.OK)
          {
-            Content = new StringContent("<html></html>")
+            Content = new StringContent(content)
          };
          response.Content.Headers.ContentType =
             new System.Net.Http.Headers.MediaTypeHeaderValue(
