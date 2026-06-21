@@ -54,11 +54,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          HttpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Basic", basicAuth);
       }
-
-      Logger?.LogDebug(
-         "SearXNG basic auth attached: {HasAuth}",
-         HttpClient.DefaultRequestHeaders.Authorization is not null
-      );
    }
 
    private HttpClient HttpClient { get; }
