@@ -149,6 +149,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
                const countryNames = JSON.parse(countryNamesJson);
                const flagExtensions = '(?:svg|png|gif)';
                const flagClassPattern = /(?:^|\s)flag--([a-z0-9_]+)(?:\s|$)/i;
+               const flagCodePattern = /^[a-z]{2,3}$/i;
 
                function getFlagCode(source) {
                   if(typeof source !== 'string' || source === '') {
@@ -178,7 +179,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
                         )
                      ) ||
                      source.match(
-                        /\/Flag_of_([A-Za-z_]+)\.svg\/[^/?#]+\.(?:svg|png|gif)$/i
+                        new RegExp(
+                           '/\\/Flag_of_([A-Za-z_]+)\\.svg\\/[^/?#]+' +
+                           '\\.(?:svg|png|gif)$',
+                           'i'
+                        )
                      );
 
                   if(directMatch) {
@@ -226,6 +231,16 @@ public sealed class WebPageContentClient : IWebPageContentClient
                   return classMatch?.[1] || dataClassMatch?.[1] || null;
                }
 
+               function getAltFlagCode(element) {
+                  const alt = (element.getAttribute('alt') || '').trim();
+
+                  if(!flagCodePattern.test(alt)) {
+                     return null;
+                  }
+
+                  return alt;
+               }
+
                document.querySelectorAll(
                   'img, [class*="flag--"], [data-class*="flag--"]'
                ).forEach((element) => {
@@ -233,6 +248,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
                      element.tagName.toLowerCase() === 'img'
                         ? getFlagCode(element.getAttribute('src') || '') ||
                            getFlagCode(element.getAttribute('srcset') || '')
+                           || getAltFlagCode(element)
                         : getClassFlagCode(element);
 
                   if(!code) {
