@@ -2,6 +2,7 @@
 @model SESport.Web.Pages.Admin.Runs.IndexModel
 @{
    ViewData["Title"] = "Runs";
+   var runStatusesUrl = Url.Page("/Admin/Ajax/Poll/RunStatuses");
 }
 
 <section class="page-heading page-heading-row">
@@ -55,7 +56,8 @@
    </div>
 }
 
-<div class="admin-table-wrap">
+<div class="admin-table-wrap"
+     data-run-statuses-url="@runStatusesUrl">
    <table class="admin-table admin-table-hover ai-runs-table">
       <colgroup>
          <col class="ai-runs-col-started" />
@@ -84,7 +86,8 @@
       <tbody>
          @foreach (var run in Model.Runs)
          {
-            <tr data-ai-run-status="@run.StatusId">
+            <tr data-ai-run-id="@run.Id"
+                data-ai-run-status="@run.StatusId">
                <td>
                   <div class="ai-runs-cell-stack">
                      <span>@TimeDisplay.FormatLocalDate(run.StartedAt)</span>
@@ -114,14 +117,16 @@
                      }
                   </div>
                </td>
-               <td><code>@run.StatusId</code></td>
-               <td>
+               <td data-ai-run-status-cell>
+                  <code data-ai-run-status-text>@run.StatusId</code>
+               </td>
+               <td data-ai-run-rounds-cell>
                   @DetailsModel.GetToolRoundCount(
                      run.ToolRoundCount,
                      run.ToolTraceJson
                   )
                </td>
-               <td>
+               <td data-ai-run-duration-cell>
                   @DetailsModel.FormatDuration(run)
                </td>
                <td class="table-actions">

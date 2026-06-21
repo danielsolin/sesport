@@ -12,6 +12,12 @@
    const participantCreateUrlSelector = "[data-create-participant-url]";
    const participationStatusUrlSelector =
       "[data-check-swedish-participation-status-url]";
+   const runStatusesUrlSelector = "[data-run-statuses-url]";
+   const runRowSelector = "[data-ai-run-id]";
+   const runStatusCellSelector = "[data-ai-run-status-cell]";
+   const runStatusTextSelector = "[data-ai-run-status-text]";
+   const runRoundsCellSelector = "[data-ai-run-rounds-cell]";
+   const runDurationCellSelector = "[data-ai-run-duration-cell]";
    const currentMarkerSelector = "#activity-now-marker";
    const broadcastInlineEditCellSelector =
       "[data-broadcast-inline-edit-field]";
@@ -20,8 +26,11 @@
    const broadcastInlineEditTitleField = "title";
    const broadcastInlineEditCategoriesField = "categories";
    const pendingParticipationIds = new Set();
+   const pendingRunIds = new Set();
    let participationPollingTimer = null;
    let participationPollingInFlight = false;
+   let runPollingTimer = null;
+   let runPollingInFlight = false;
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
@@ -40,6 +49,7 @@
    initializeBroadcastParticipationRowChecks();
    initializeBroadcastInlineEditing();
    initializeParticipationPolling();
+   initializeRunPolling();
    initializeCurrentMarkerScroll();
 
    document.addEventListener("submit", async event => {
@@ -799,6 +809,59 @@
       participationPollingTimer = null;
    }
 
+   function initializeRunPolling(root = document)
+   {
+      root.querySelectorAll(runRowSelector).forEach(row => {
+         if(!(row instanceof HTMLElement))
+         {
+            return;
+         }
+
+         const runId = (row.dataset.aiRunId ?? "").trim();
+         const statusId = (row.dataset.aiRunStatus ?? "").trim();
+
+         if(!runId)
+         {
+            return;
+         }
+
+         if(statusId === "running" || statusId === "pending")
+         {
+            pendingRunIds.add(runId);
+         }
+      });
+
+      if(pendingRunIds.size > 0)
+      {
+         startRunPolling();
+      }
+   }
+
+   function startRunPolling()
+   {
+      if(runPollingTimer !== null)
+      {
+         return;
+      }
+
+      runPollingTimer = window.setInterval(() => {
+         void pollRunStatusesAsync();
+      }, 4000);
+
+      void pollRunStatusesAsync();
+   }
+
+   function stopRunPolling()
+   {
+      if(runPollingTimer === null)
+      {
+         return;
+      }
+
+      window.clearInterval(runPollingTimer);
+      runPollingTimer = null;
+   }
+
    function getBroadcastInlineEditUrl()
    {
       const container = document.querySelector(broadcastInlineEditUrlSelector);
@@ -1139,6 +1202,146 @@
       return payload ?? {};
    }
 
+   async function pollRunStatusesAsync()
+   {
+      if(pendingRunIds.size === 0)
+      {
+         stopRunPolling();
+         return;
+      }
+
+      if(runPollingInFlight)
+      {
+         return;
+      }
+
+      runPollingInFlight = true;
+
+      try
+      {
+         const url = getRunStatusesUrl();
+
+         if(!url)
+         {
+            return;
+         }
+
+         const payload = await postRunStatusesAsync(url, [...pendingRunIds]);
+
+         if(!payload || !Array.isArray(payload.results))
+         {
+            return;
+         }
+
+         payload.results.forEach(result => {
+            if(!result || typeof result !== "object")
+            {
+               return;
+            }
+
+            const runId = typeof result.id === "string"
+               ? result.id.trim()
+               : "";
+
+            if(!runId)
+            {
+               return;
+            }
+
+            const row = getRunRowById(runId);
+            const statusId = typeof result.statusId === "string"
+               ? result.statusId.trim()
+               : "";
+            const isFinal =
+               statusId !== "running" && statusId !== "pending";
+
+            updateRunRow(row, result);
+
+            if(isFinal)
+            {
+               pendingRunIds.delete(runId);
+            }
+         });
+
+         if(pendingRunIds.size === 0)
+         {
+            stopRunPolling();
+         }
+      }
+      catch
+      {
+      }
+      finally
+      {
+         runPollingInFlight = false;
+      }
+   }
+
+   function getRunStatusesUrl()
+   {
+      const container = document.querySelector(runStatusesUrlSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.runStatusesUrl;
+
+      return typeof url === "string" && url.trim() !== ""
+         ? url.trim()
+         : "";
+   }
+
+   async function postRunStatusesAsync(url, runIds)
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      runIds.forEach(id => {
+         formData.append("runIds", id);
+      });
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(
+            payload?.error ||
+               trimmedResponseText ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return payload ?? {};
+   }
+
    function getAntiForgeryToken()
    {
       const tokenField = document.querySelector(
@@ -1191,6 +1394,115 @@
       return document.querySelector(
          `${participationCellSelector}[data-broadcast-id='${broadcastId}']`
       );
+   }
+
+   function getRunRowById(runId)
+   {
+      if(typeof runId !== "string" || runId.trim() === "")
+      {
+         return null;
+      }
+
+      return document.querySelector(
+         `${runRowSelector}[data-ai-run-id='${runId}']`
+      );
+   }
+
+   function updateRunRow(row, result)
+   {
+      if(!(row instanceof HTMLElement) || !result || typeof result !== "object")
+      {
+         return;
+      }
+
+      const statusId = typeof result.statusId === "string"
+         ? result.statusId.trim()
+         : "";
+      const rounds = typeof result.rounds === "number"
+         ? result.rounds.toString()
+         : "";
+      const duration = typeof result.duration === "string"
+         ? result.duration.trim()
+         : "";
+
+      row.dataset.aiRunStatus = statusId;
+      updateRunStatusRow(row, statusId);
+      updateRunStatusCell(row, statusId);
+
+      const roundsCell = row.querySelector(runRoundsCellSelector);
+
+      if(roundsCell instanceof HTMLElement && rounds !== "")
+      {
+         roundsCell.textContent = rounds;
+      }
+
+      const durationCell = row.querySelector(runDurationCellSelector);
+
+      if(durationCell instanceof HTMLElement && duration !== "")
+      {
+         durationCell.textContent = duration;
+      }
+   }
+
+   function updateRunStatusCell(row, statusId)
+   {
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const statusCell = row.querySelector(runStatusCellSelector);
+      const statusText = row.querySelector(runStatusTextSelector);
+
+      if(statusText instanceof HTMLElement)
+      {
+         statusText.textContent = statusId;
+         return;
+      }
+
+      if(statusCell instanceof HTMLElement)
+      {
+         statusCell.textContent = statusId;
+      }
+   }
+
+   function updateRunStatusRow(row, statusId)
+   {
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const normalizedStatusId = typeof statusId === "string"
+         ? statusId.trim().toLowerCase()
+         : "";
+
+      if(normalizedStatusId === "running"
+         || normalizedStatusId === "pending")
+      {
+         const runId = typeof row.dataset.aiRunId === "string"
+            ? row.dataset.aiRunId.trim()
+            : "";
+
+         row.dataset.aiRunStatus = normalizedStatusId;
+
+         if(runId)
+         {
+            pendingRunIds.add(runId);
+         }
+      }
+      else
+      {
+         delete row.dataset.aiRunStatus;
+         const runId = typeof row.dataset.aiRunId === "string"
+            ? row.dataset.aiRunId.trim()
+            : "";
+
+         if(runId)
+         {
+            pendingRunIds.delete(runId);
+         }
+      }
    }
 
    function updateParticipationCell(cell, result)

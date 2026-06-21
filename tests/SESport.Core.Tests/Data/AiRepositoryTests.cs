@@ -66,6 +66,73 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunsByIdsAsyncReturnsMatchingRuns()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var firstRunId = Guid.NewGuid();
+      var secondRunId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         firstRunId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: "running",
+         toolRoundCount: 2,
+         durationSeconds: null,
+         toolTraceJson: """
+            [{"kind":"tool_call","turn":1},{"kind":"tool_call","turn":2}]
+            """
+      );
+      await InsertRunAsync(
+         dataSource,
+         secondRunId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: "completed",
+         toolRoundCount: 1,
+         durationSeconds: 12m
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsByIdsAsync(
+            [firstRunId, secondRunId],
+            CancellationToken.None
+         );
+
+         Assert.Equal([secondRunId, firstRunId], runs.Select(run => run.Id));
+
+         var firstRun = runs.Single(run => run.Id == firstRunId);
+         var secondRun = runs.Single(run => run.Id == secondRunId);
+
+         Assert.Equal("running", firstRun.StatusId);
+         Assert.Equal(2, firstRun.ToolRoundCount);
+         Assert.Equal("completed", secondRun.StatusId);
+         Assert.Equal(1, secondRun.ToolRoundCount);
+         Assert.Equal(12m, secondRun.DurationSeconds);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, secondRunId);
+         await DeleteRunAsync(dataSource, firstRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task FailStaleRunningRunsAsyncMarksOldRunsAsFailed()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -428,7 +495,11 @@ public sealed class AiRepositoryTests
       Guid promptId,
       string providerId,
       DateTimeOffset? startedAt = null,
-      string? executionEnvironment = null
+      string? executionEnvironment = null,
+      string statusId = "running",
+      int toolRoundCount = 0,
+      decimal? durationSeconds = null,
+      string? toolTraceJson = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -464,23 +535,23 @@ public sealed class AiRepositoryTests
             @job_id,
             @prompt_id,
             @provider_id,
-            'running',
+            @status_id,
             null,
             'gpt',
             '{}'::jsonb,
             'Rendered',
             null,
             null,
-            null,
+            @tool_trace::jsonb,
             null,
             null,
             @started_at,
             null,
+            @duration_seconds,
             null,
             null,
             null,
-            null,
-            0,
+            @tool_round_count,
             0,
             @execution_environment
          )
@@ -497,6 +568,16 @@ public sealed class AiRepositoryTests
          "started_at",
          startedAt ?? DateTimeOffset.UtcNow.AddHours(-2)
       );
+      command.Parameters.AddWithValue("status_id", statusId);
+      command.Parameters.AddWithValue(
+         "tool_trace",
+         (object?)toolTraceJson ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "duration_seconds",
+         (object?)durationSeconds ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue("tool_round_count", toolRoundCount);
       await command.ExecuteNonQueryAsync();
    }
 
