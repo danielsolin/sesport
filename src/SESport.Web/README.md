@@ -34,6 +34,20 @@ https://localhost:7156
 http://localhost:5109
 ```
 
+The web app reads the database connection from environment variables. Copy
+`.env.example` to `.env`, then load it into your shell before starting the
+app. The app does not auto-read `.env`.
+
+The relevant keys are `ConnectionStrings__Default` or the
+`SESPORT_POSTGRES_*` variables. A simple Bash example is:
+
+```bash
+set -a
+. ./.env
+set +a
+dotnet run --project src/SESport.Web/SESport.Web.csproj --launch-profile http
+```
+
 ## Administration
 
 The admin area starts at:
