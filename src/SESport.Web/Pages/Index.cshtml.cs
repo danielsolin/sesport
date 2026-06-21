@@ -90,14 +90,9 @@ public class IndexModel(
    {
       var dates = new List<DateOnly>();
 
-      for(var offset = 0; offset <= 2; offset++)
+      for(var offset = -2; offset <= 2; offset++)
       {
          dates.Add(todayDate.AddDays(offset));
-      }
-
-      if(!dates.Contains(selectedDate))
-      {
-         dates.Add(selectedDate);
       }
 
       return dates
