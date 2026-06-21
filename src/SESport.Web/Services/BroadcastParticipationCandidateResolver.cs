@@ -95,32 +95,83 @@ public static class BroadcastParticipationCandidateResolver
          return null;
       }
 
-      if(string.Equals(
-         normalizedTitle,
-         normalizedValue,
-         StringComparison.OrdinalIgnoreCase
-      ))
+      foreach(var pattern in CreatePatternVariants(normalizedValue))
       {
-         return new CandidateMatch(value.Trim(), 3000 + normalizedValue.Length);
-      }
+         if(string.Equals(
+            normalizedTitle,
+            pattern,
+            StringComparison.OrdinalIgnoreCase
+         ))
+         {
+            return new CandidateMatch(
+               value.Trim(),
+               3000 + pattern.Length
+            );
+         }
 
-      if(normalizedTitle.Contains(
-         normalizedValue,
-         StringComparison.OrdinalIgnoreCase
-      ))
-      {
-         return new CandidateMatch(value.Trim(), 2000 + normalizedValue.Length);
-      }
+         if(normalizedTitle.Contains(
+            pattern,
+            StringComparison.OrdinalIgnoreCase
+         ))
+         {
+            return new CandidateMatch(
+               value.Trim(),
+               2000 + pattern.Length
+            );
+         }
 
-      if(normalizedValue.Contains(
-         normalizedTitle,
-         StringComparison.OrdinalIgnoreCase
-      ))
-      {
-         return new CandidateMatch(value.Trim(), 1000 + normalizedTitle.Length);
+         if(pattern.Contains(
+            normalizedTitle,
+            StringComparison.OrdinalIgnoreCase
+         ))
+         {
+            return new CandidateMatch(
+               value.Trim(),
+               1000 + normalizedTitle.Length
+            );
+         }
       }
 
       return null;
+   }
+
+   private static IEnumerable<string> CreatePatternVariants(string value)
+   {
+      yield return value;
+
+      var lastSpaceIndex = value.LastIndexOf(' ');
+
+      if(lastSpaceIndex < 0)
+      {
+         if(value.Equals("tour", StringComparison.OrdinalIgnoreCase))
+         {
+            yield return "world tour";
+            yield return "touren";
+         }
+
+         if(value.Equals("series", StringComparison.OrdinalIgnoreCase))
+         {
+            yield return "world series";
+            yield return "seriesen";
+         }
+
+         yield break;
+      }
+
+      var prefix = value[..lastSpaceIndex];
+      var lastWord = value[(lastSpaceIndex + 1)..];
+
+      if(lastWord.Equals("tour", StringComparison.OrdinalIgnoreCase))
+      {
+         yield return $"{prefix} world tour";
+         yield return $"{prefix} touren";
+      }
+
+      if(lastWord.Equals("series", StringComparison.OrdinalIgnoreCase))
+      {
+         yield return $"{prefix} world series";
+         yield return $"{prefix} seriesen";
+      }
    }
 
    private static string? DetermineGenderId(

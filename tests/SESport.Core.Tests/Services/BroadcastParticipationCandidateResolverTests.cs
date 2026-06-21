@@ -158,4 +158,35 @@ public sealed class BroadcastParticipationCandidateResolverTests
 
       Assert.Equal(string.Empty, text);
    }
+
+   [Fact]
+   public void CreateCandidatesTextMatchesATPWorldTourVariant()
+   {
+      var candidates = new[]
+      {
+         new EntityOption(
+            Guid.NewGuid(),
+            "Novak Djokovic",
+            TrackedEntityTypeIds.Person,
+            "Tennis",
+            "ATP Tour",
+            PersonGenderIds.Male
+         )
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Tennis: ATP World Tour 250-turnering i Eastbourne",
+            null,
+            ["Tennis"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal("  - Novak Djokovic", text);
+   }
 }
