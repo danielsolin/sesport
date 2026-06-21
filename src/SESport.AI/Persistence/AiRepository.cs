@@ -58,7 +58,6 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
          .AppendLine("   r.tool_round_count,")
-         .AppendLine("   r.tool_trace::text,")
          .AppendLine("   r.started_at,")
          .AppendLine("   r.duration_seconds")
          .AppendLine("from ai_job_runs r")
@@ -103,9 +102,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 5),
                reader.GetString(6),
                reader.GetInt32(7),
-               ReadNullableString(reader, 8),
-               reader.GetFieldValue<DateTimeOffset>(9),
-               ReadNullableDecimal(reader, 10)
+               reader.GetFieldValue<DateTimeOffset>(8),
+               ReadNullableDecimal(reader, 9)
             )
          );
       }
@@ -133,7 +131,6 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.provider_model,
             r.status_id,
             r.tool_round_count,
-            r.tool_trace::text,
             r.started_at,
             r.duration_seconds
          from ai_job_runs r
@@ -162,9 +159,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 5),
                reader.GetString(6),
                reader.GetInt32(7),
-               ReadNullableString(reader, 8),
-               reader.GetFieldValue<DateTimeOffset>(9),
-               ReadNullableDecimal(reader, 10)
+               reader.GetFieldValue<DateTimeOffset>(8),
+               ReadNullableDecimal(reader, 9)
             )
          );
       }

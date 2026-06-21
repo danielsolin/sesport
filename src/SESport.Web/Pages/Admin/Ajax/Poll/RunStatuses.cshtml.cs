@@ -35,10 +35,7 @@ public sealed class RunStatusesModel(AiRepository repository) : PageModel
             {
                id = run.Id,
                statusId = run.StatusId,
-               rounds = DetailsModel.GetToolRoundCount(
-                  run.ToolRoundCount,
-                  run.ToolTraceJson
-               ),
+               rounds = run.ToolRoundCount,
                duration = DetailsModel.FormatDuration(run)
             })
          });

@@ -143,10 +143,7 @@
                   <code data-ai-run-status-text>@run.StatusId</code>
                </td>
                <td data-ai-run-rounds-cell>
-                  @DetailsModel.GetToolRoundCount(
-                     run.ToolRoundCount,
-                     run.ToolTraceJson
-                  )
+                  @run.ToolRoundCount
                </td>
                <td data-ai-run-duration-cell>
                   @DetailsModel.FormatDuration(run)
