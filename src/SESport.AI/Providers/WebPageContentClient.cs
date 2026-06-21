@@ -149,6 +149,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
                const countryNames = JSON.parse(countryNamesJson);
                const flagExtensions = '(?:svg|png|gif)';
                const flagClassPattern = /(?:^|\s)flag--([a-z0-9_]+)(?:\s|$)/i;
+               const flagClassTokenPattern = /(?:^|\s)flag(?:\s|$)/i;
                const flagCodePattern = /^[a-z]{2,3}$/i;
 
                function getFlagCode(source) {
@@ -228,7 +229,31 @@ public sealed class WebPageContentClient : IWebPageContentClient
                   const classMatch = className.match(flagClassPattern);
                   const dataClassMatch = dataClass.match(flagClassPattern);
 
-                  return classMatch?.[1] || dataClassMatch?.[1] || null;
+                  if(classMatch?.[1] || dataClassMatch?.[1]) {
+                     return classMatch?.[1] || dataClassMatch?.[1] || null;
+                  }
+
+                  const classTokens = className
+                     .split(/\s+/)
+                     .map(token => token.trim())
+                     .filter(token => token !== '');
+                  const dataClassTokens = dataClass
+                     .split(/\s+/)
+                     .map(token => token.trim())
+                     .filter(token => token !== '');
+
+                  if(!flagClassTokenPattern.test(className)
+                     && !flagClassTokenPattern.test(dataClass))
+                  {
+                     return null;
+                  }
+
+                  const candidateCode = [...classTokens, ...dataClassTokens]
+                     .find(token =>
+                        token !== 'flag' && flagCodePattern.test(token)
+                     );
+
+                  return candidateCode || null;
                }
 
                function getAltFlagCode(element) {
@@ -242,7 +267,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
                }
 
                document.querySelectorAll(
-                  'img, [class*="flag--"], [data-class*="flag--"]'
+                  'img, [class*="flag--"], [data-class*="flag--"], ' +
+                  '[class~="flag"], [data-class~="flag"]'
                ).forEach((element) => {
                   const code =
                      element.tagName.toLowerCase() === 'img'
