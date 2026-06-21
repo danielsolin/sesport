@@ -45,6 +45,19 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void FormatToolCallSummaryIncludesUniqueCallCount()
+   {
+      Assert.Equal(
+         $"{WebToolNames.GetPage} x 12 (8)",
+         DetailsModel.FormatToolCallSummary(
+            WebToolNames.GetPage,
+            12,
+            8
+         )
+      );
+   }
+
+   [Fact]
    public void BuildExecutionEnvironmentOptionsIncludesCurrentEnvironment()
    {
       var currentExecutionEnvironment = SESport.AI.ExecutionEnvironment.Current;

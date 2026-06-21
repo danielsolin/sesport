@@ -550,6 +550,15 @@ public class DetailsModel(
          : $"{toolCall.Name}({string.Join(",", parts)})";
    }
 
+   public static string FormatToolCallSummary(
+      string toolName,
+      int toolCallCount,
+      int uniqueToolCallCount
+   )
+   {
+      return $"{toolName} x {toolCallCount} ({uniqueToolCallCount})";
+   }
+
    private static IReadOnlyList<ToolTraceTurnViewModel> ParseToolTrace(
       string? toolTraceJson
    )
@@ -646,8 +655,16 @@ public class DetailsModel(
 
       foreach(var toolCallGroup in toolCalls)
       {
+         var uniqueToolCallCount = toolCallGroup
+            .Select(FormatToolCall)
+            .Distinct(StringComparer.Ordinal)
+            .Count();
          badges.Add(new(
-            $"{toolCallGroup.Key} × {toolCallGroup.Count()}",
+            FormatToolCallSummary(
+               toolCallGroup.Key,
+               toolCallGroup.Count(),
+               uniqueToolCallCount
+            ),
             "tool-trace-badge-tool"
          ));
       }
