@@ -2,6 +2,7 @@
 @model SESport.Web.Pages.Admin.Entities.IndexModel
 @{
    ViewData["Title"] = "Entities";
+   var entityFieldUrl = Url.Page("/Admin/Ajax/Update/EntityField");
 }
 
 <section class="page-heading page-heading-row">
@@ -42,8 +43,18 @@ else
       <div class="notice" data-entity-empty-state hidden>
          No matching entities.
       </div>
-      <div class="admin-table-wrap">
-         <table class="admin-table admin-table-hover">
+      <div class="admin-table-wrap"
+           data-entity-inline-edit-url="@entityFieldUrl">
+         <table class="admin-table admin-table-hover entities-table">
+            <colgroup>
+               <col class="entities-col-name" />
+               <col class="entities-col-related" />
+               <col class="entities-col-type" />
+               <col class="entities-col-sport" />
+               <col class="entities-col-watch-priority" />
+               <col class="entities-col-country" />
+               <col class="entities-col-actions" />
+            </colgroup>
             <thead>
                <tr>
                   <th>
@@ -70,12 +81,12 @@ else
                         Sport @Model.GetSortIndicator("Sport")
                      </a>
                   </th>
-                  @* <th>
+                  <th>
                      <a asp-page="./Index" asp-route-sortColumn="Watch"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Watch")'>
-                        Watch @Model.GetSortIndicator("Watch")
+                        Watch priority @Model.GetSortIndicator("Watch")
                      </a>
-                  </th> *@
+                  </th>
                   <th>
                      <a asp-page="./Index" asp-route-sortColumn="Country"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Country")'>
@@ -88,7 +99,8 @@ else
             <tbody>
                @foreach(var entity in Model.Entities)
                {
-                  <tr data-entity-row-name="@entity.Name"
+                  <tr data-entity-row-id="@entity.Id"
+                      data-entity-row-name="@entity.Name"
                       data-entity-row-related=
                          "@entity.RelatedEntityNames">
                      <td>
@@ -105,7 +117,25 @@ else
                      <td>@entity.RelatedEntityNames</td>
                      <td>@entity.EntityType</td>
                      <td>@entity.Sport</td>
-                     @* <td>@entity.WatchPriority</td> *@
+                     <td class="entity-inline-editable"
+                         data-entity-inline-edit-field="watch-priority"
+                         data-entity-inline-edit-value="@entity.WatchPriorityId"
+                         title="Double-click to edit">
+                        <div class="entity-inline-edit-display"
+                             data-entity-inline-edit-display>
+                           <span title="@entity.WatchPriority">
+                              @entity.WatchPriority
+                           </span>
+                        </div>
+                        <select class="entity-inline-edit-input"
+                                data-entity-inline-edit-input
+                                asp-items=
+                                   "Model.GetWatchPriorityOptions(
+                                      entity.WatchPriorityId
+                                   )"
+                                hidden>
+                        </select>
+                     </td>
                      <td>@entity.Country</td>
                      <td class="table-actions">
                         <form method="post"

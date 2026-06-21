@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Entities;
@@ -14,6 +15,12 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string RelatedSortColumn = "Related";
 
    public IReadOnlyList<EntityListItem> Entities { get; private set; } = [];
+
+   public IReadOnlyList<ReferenceRow> WatchPriorities
+   {
+      get;
+      private set;
+   } = [];
 
    public string SortColumn { get; private set; } = NameSortColumn;
 
@@ -33,6 +40,10 @@ public class IndexModel(AdminRepository repository) : PageModel
       try
       {
          var entities = await repository.GetEntitiesAsync(cancellationToken);
+         WatchPriorities = await repository.GetReferenceRowsAsync(
+            "entity-watch-priorities",
+            cancellationToken
+         );
          Entities = SortEntities(entities, SortColumn, SortAsc);
       }
       catch (Exception exception)
@@ -63,6 +74,23 @@ public class IndexModel(AdminRepository repository) : PageModel
    {
       await repository.DeleteEntityAsync(id, cancellationToken);
       return RedirectToPage("./Index");
+   }
+
+   public IReadOnlyList<SelectListItem> GetWatchPriorityOptions(
+      string? selectedWatchPriorityId
+   )
+   {
+      return WatchPriorities
+         .Select(priority => new SelectListItem(
+            priority.Label,
+            priority.Id,
+            string.Equals(
+               priority.Id,
+               selectedWatchPriorityId,
+               StringComparison.Ordinal
+            )
+         ))
+         .ToList();
    }
 
    private static string NormalizeSortColumn(string? sortColumn) =>

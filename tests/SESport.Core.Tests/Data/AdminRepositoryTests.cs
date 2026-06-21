@@ -89,6 +89,44 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task UpdateEntityWatchPriorityAsyncUpdatesStoredEntity()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Watch Priority Entity {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, entityId, entityName);
+
+      try
+      {
+         var updated = await repository.UpdateEntityWatchPriorityAsync(
+            entityId,
+            "tier_1",
+            CancellationToken.None
+         );
+
+         Assert.True(updated);
+
+         var entities = await repository.GetEntitiesAsync(
+            CancellationToken.None
+         );
+         var entity = Assert.Single(
+            entities,
+            item => item.Id == entityId
+         );
+
+         Assert.Equal("tier_1", entity.WatchPriorityId);
+         Assert.Equal("Tier 1", entity.WatchPriority);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
    public async Task SaveBroadcastIgnoreRuleAsyncPersistsRule()
    {
       var ruleKind = "channel_name";

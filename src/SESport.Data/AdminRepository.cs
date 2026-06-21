@@ -916,6 +916,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             e.canonical_name,
             et.label,
             s.name,
+            p.id,
             p.label,
             coalesce(c.name, e.country_id, ''),
             coalesce(linked.related_entity_names, '')
@@ -959,7 +960,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(3),
                reader.GetString(4),
                reader.GetString(5),
-               reader.GetString(6)
+               reader.GetString(6),
+               reader.GetString(7)
             )
          );
       }
@@ -1434,6 +1436,30 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task<bool> UpdateEntityWatchPriorityAsync(
+      Guid id,
+      string watchPriorityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update entities
+         set
+            watch_priority_id = @watch_priority_id,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue(
+         "watch_priority_id",
+         watchPriorityId
+      );
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
    private static void AddEntityParameters(

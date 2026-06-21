@@ -671,6 +671,39 @@ h2 {
    cursor: text;
 }
 
+.entities-table {
+   table-layout: fixed;
+   width: 100%;
+   min-width: 0;
+}
+
+.entity-inline-editable {
+   cursor: pointer;
+}
+
+.entity-inline-editable:hover {
+   background: rgba(0, 108, 103, 0.05);
+}
+
+.entity-inline-edit-display {
+   display: block;
+}
+
+.entity-inline-edit-input {
+   width: 100%;
+   box-sizing: border-box;
+   font: inherit;
+   color: inherit;
+   padding: 4px 6px;
+   border: 1px solid var(--line);
+   border-radius: 4px;
+   background: var(--surface);
+}
+
+.entity-inline-editable[data-entity-inline-editing="true"] {
+   cursor: text;
+}
+
 .broadcasts-table th:nth-child(1),
 .broadcasts-table td:nth-child(1) {
    width: 120px;
@@ -694,6 +727,41 @@ h2 {
 .broadcasts-table th:nth-child(6),
 .broadcasts-table td:nth-child(6) {
    width: 64px;
+}
+
+.entities-table th:nth-child(1),
+.entities-table td:nth-child(1) {
+   width: 240px;
+}
+
+.entities-table th:nth-child(2),
+.entities-table td:nth-child(2) {
+   width: 220px;
+}
+
+.entities-table th:nth-child(3),
+.entities-table td:nth-child(3) {
+   width: 140px;
+}
+
+.entities-table th:nth-child(4),
+.entities-table td:nth-child(4) {
+   width: 120px;
+}
+
+.entities-table th:nth-child(5),
+.entities-table td:nth-child(5) {
+   width: 132px;
+}
+
+.entities-table th:nth-child(6),
+.entities-table td:nth-child(6) {
+   width: 108px;
+}
+
+.entities-table th:nth-child(7),
+.entities-table td:nth-child(7) {
+   width: 72px;
 }
 
 .admin-table th,

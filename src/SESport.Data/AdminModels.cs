@@ -130,6 +130,7 @@ public sealed record EntityListItem(
    string Name,
    string EntityType,
    string Sport,
+   string WatchPriorityId,
    string WatchPriority,
    string Country,
    string RelatedEntityNames
