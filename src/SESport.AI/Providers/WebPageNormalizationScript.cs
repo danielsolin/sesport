@@ -1,0 +1,183 @@
+namespace SESport.AI.Providers;
+
+internal static class WebPageNormalizationScript
+{
+   internal static string Build()
+   {
+      return """
+         (countryNamesJson) => {
+            const countryNames = JSON.parse(countryNamesJson);
+            const flagClassPattern =
+               /(?:^|\s)flag(?:--|-|_)?([a-z0-9_]+)?(?:\s|$)/i;
+            const flagCodePattern = /^[a-z]{2,3}$/i;
+            const flagLabelPatterns = [
+               /(?:^|[^a-z0-9])flag(?:s)?(?:[-_\/#]*)([a-z]{2,3})/i,
+               /(?:^|[^a-z0-9])([a-z]{2,3})(?:[-_\/#]*)(?:flag)(?:s)?/i,
+               /(?:^|[^a-z0-9])Flag_of_([A-Za-z_]+)(?:[^a-z0-9]|$)/i
+            ];
+
+            function getFlagLabelFromSource(source) {
+               if(typeof source !== 'string' || source === '') {
+                  return null;
+               }
+
+               for(const pattern of flagLabelPatterns) {
+                  const match = source.match(pattern);
+
+                  if(match?.[1]) {
+                     return match[1].replaceAll('_', ' ');
+                  }
+               }
+
+               const nextImageMatch = source.match(
+                  /\/_next\/image\?[^?#]*\burl=([^&\s,]+)/i
+               );
+
+               if(!nextImageMatch) {
+                  return null;
+               }
+
+               let decodedSource = '';
+
+               try {
+                  decodedSource =
+                     decodeURIComponent(nextImageMatch[1]);
+               }
+               catch {
+                  return null;
+               }
+
+               return getFlagLabelFromSource(decodedSource);
+            }
+
+            function getClassFlagLabel(element) {
+               const className = element.getAttribute('class') || '';
+               const dataClass = element.getAttribute('data-class') || '';
+               const classMatch = className.match(flagClassPattern);
+               const dataClassMatch = dataClass.match(flagClassPattern);
+
+               if(classMatch?.[1] || dataClassMatch?.[1]) {
+                  return classMatch?.[1] || dataClassMatch?.[1] || null;
+               }
+
+               const tokens = [
+                  ...className.split(/\s+/),
+                  ...dataClass.split(/\s+/)
+               ];
+               const candidateCode = tokens
+                  .flatMap(token => token.split(/[-_]/g))
+                  .map(token => token.trim())
+                  .find(token => flagCodePattern.test(token));
+
+               return candidateCode || null;
+            }
+
+            function getSvgFlagLabel(element) {
+               const svgElement =
+                  element.tagName.toLowerCase() === 'svg'
+                     ? element
+                     : element.closest('svg');
+
+               if(!svgElement) {
+                  return null;
+               }
+
+               const useElements = svgElement.querySelectorAll(
+                  'use[href], use[xlink\\:href]'
+               );
+
+               for(const useElement of useElements) {
+                  const href =
+                     useElement.getAttribute('href') ||
+                     useElement.getAttribute('xlink:href') ||
+                     '';
+                  const label = getFlagLabelFromSource(href);
+
+                  if(label) {
+                     return label;
+                  }
+               }
+
+               return null;
+            }
+
+            function getAltFlagLabel(element) {
+               const alt = (element.getAttribute('alt') || '').trim();
+
+               if(alt === '') {
+                  return null;
+               }
+
+               return alt;
+            }
+
+            function getFlagTarget(element) {
+               if(element.tagName.toLowerCase() === 'use') {
+                  return element.closest('svg') || element;
+               }
+
+               return element;
+            }
+
+            function getFlagLabel(element) {
+               const tagName = element.tagName.toLowerCase();
+
+               if(tagName === 'img') {
+                  return getFlagLabelFromSource(
+                     element.getAttribute('src') || ''
+                  ) ||
+                     getFlagLabelFromSource(
+                        element.getAttribute('srcset') || ''
+                     ) ||
+                     getAltFlagLabel(element);
+               }
+
+               const svgLabel = getSvgFlagLabel(element);
+
+               if(svgLabel) {
+                  return svgLabel;
+               }
+
+               return getClassFlagLabel(getFlagTarget(element));
+            }
+
+            const seenFlagTargets = new Set();
+            document.querySelectorAll(
+               'img, svg, use[href], use[xlink\\:href], ' +
+               '[class*="flag"], [data-class*="flag"]'
+            ).forEach((element) => {
+               const targetElement = getFlagTarget(element);
+               const targetKey = targetElement;
+
+               if(seenFlagTargets.has(targetKey)) {
+                  return;
+               }
+
+               const label = getFlagLabel(element);
+
+               if(!label) {
+                  return;
+               }
+
+               seenFlagTargets.add(targetKey);
+
+               const normalizedLabel =
+                  countryNames[label.toUpperCase()] ||
+                  label;
+
+               targetElement.replaceWith(
+                  document.createTextNode(` ${normalizedLabel} `)
+               );
+            });
+
+            document.querySelectorAll(
+               'nav, footer, aside, [role="dialog"], ' +
+               '[role="banner"], [aria-modal="true"], ' +
+               '[class*="modal"], [class*="overlay"], ' +
+               '[class*="consent"], [class*="privacy"], ' +
+               '[class*="banner"]'
+            ).forEach((element) => element.remove());
+         }
+         """;
+   }
+}
