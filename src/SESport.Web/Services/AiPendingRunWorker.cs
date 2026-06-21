@@ -9,7 +9,7 @@ public sealed class AiPendingRunWorker(
    ILogger<AiPendingRunWorker> logger
 ) : BackgroundService
 {
-   private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
+   private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
 
    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
    {
