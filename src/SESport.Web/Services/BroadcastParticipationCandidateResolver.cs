@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
@@ -165,14 +166,17 @@ public static class BroadcastParticipationCandidateResolver
       string value
    )
    {
-      var normalizedValue = NormalizeText(value);
+      var patterns = CreateTextVariants(value)
+         .SelectMany(CreatePatternVariants)
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList();
 
-      if(string.IsNullOrWhiteSpace(normalizedValue))
+      if(patterns.Count == 0)
       {
          return null;
       }
 
-      foreach(var pattern in CreatePatternVariants(normalizedValue))
+      foreach(var pattern in patterns)
       {
          if(string.Equals(
             normalizedTitle,
@@ -216,6 +220,37 @@ public static class BroadcastParticipationCandidateResolver
       }
 
       return null;
+   }
+
+   private static IEnumerable<string> CreateTextVariants(string value)
+   {
+      var normalizedValue = NormalizeText(value);
+
+      if(!string.IsNullOrWhiteSpace(normalizedValue))
+      {
+         yield return normalizedValue;
+      }
+
+      var strippedValue = StripParentheticalText(value);
+
+      if(!string.Equals(
+         strippedValue,
+         value,
+         StringComparison.Ordinal
+      ))
+      {
+         var normalizedStrippedValue = NormalizeText(strippedValue);
+
+         if(!string.IsNullOrWhiteSpace(normalizedStrippedValue))
+         {
+            yield return normalizedStrippedValue;
+         }
+      }
+   }
+
+   private static string StripParentheticalText(string value)
+   {
+      return Regex.Replace(value, @"\s*\([^)]*\)", string.Empty);
    }
 
    private static IEnumerable<string> CreatePatternVariants(string value)

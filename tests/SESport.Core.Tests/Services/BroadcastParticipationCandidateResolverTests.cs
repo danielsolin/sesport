@@ -306,6 +306,51 @@ public sealed class BroadcastParticipationCandidateResolverTests
    }
 
    [Fact]
+   public void CreateCandidatesTextMatchesParenthesizedChampionshipName()
+   {
+      var candidates = new[]
+      {
+         CreateCandidate(
+            "Oliver Solberg",
+            10,
+            "World Rally Championship (WRC)",
+            "Motorsport"
+         ),
+         CreateCandidate(
+            "Mille Johansson",
+            20,
+            "World Rally Championship (WRC)",
+            "Motorsport"
+         ),
+         CreateCandidate(
+            "Felix Rosenqvist",
+            30,
+            "Indycar Series",
+            "Motorsport"
+         )
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "World Rally Championship: Greece",
+            null,
+            ["Motorsport"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal(
+         $"  - Oliver Solberg{Environment.NewLine}  - Mille Johansson",
+         text
+      );
+      Assert.DoesNotContain("Felix Rosenqvist", text);
+   }
+
+   [Fact]
    public void CreateCandidatesTextFallsBackToSportMatches()
    {
       var candidates = new[]
