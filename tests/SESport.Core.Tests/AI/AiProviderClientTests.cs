@@ -752,6 +752,11 @@ public class AiProviderClientTests
          "Return only the raw JSON object required by the schema.",
          handler.RequestBodies[1]
       );
+      Assert.NotNull(result.ToolTraceJson);
+      Assert.Equal(
+         2,
+         CountOccurrences(result.ToolTraceJson!, "\"kind\":\"assistant\"")
+      );
    }
 
    [Fact]
@@ -1428,6 +1433,29 @@ public class AiProviderClientTests
         "additionalProperties": false
       }
       """;
+   }
+
+   private static int CountOccurrences(string value, string pattern)
+   {
+      var count = 0;
+      var index = 0;
+
+      while(true)
+      {
+         index = value.IndexOf(
+            pattern,
+            index,
+            StringComparison.Ordinal
+         );
+
+         if(index < 0)
+         {
+            return count;
+         }
+
+         count++;
+         index += pattern.Length;
+      }
    }
 
    private static System.Collections.ICollection InvokeFindPageMatches(

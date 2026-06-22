@@ -305,27 +305,6 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             responseJson = finalEnvelope.ResponseJson;
             rawResponse = finalEnvelope.RawResponseJson;
-
-            LogResponse("final", turn, responseJson);
-            if(TryGetToolCalls(responseJson, out var finalToolCalls))
-            {
-               toolTrace.Add(
-                  CreateAssistantTraceEntry(turn, responseJson, finalToolCalls)
-               );
-            }
-            else
-            {
-               toolTrace.Add(
-                  CreateAssistantTraceEntry(turn, responseJson, [])
-               );
-            }
-
-            await ReportToolTraceProgressAsync(
-               toolTrace,
-               toolRoundCount,
-               toolTraceUpdated,
-               cancellationToken
-            );
          }
 
          var structuredOutputRepairAttempts = 0;
@@ -353,6 +332,28 @@ public sealed class LlamaServerClient : IAiProviderClient
                   );
 
                var toolTraceJson = toolTrace.Count == 0
+                  ? null
+                  : JsonSerializer.Serialize(toolTrace, JsonOptions);
+
+               LogResponse("final", turn, responseJson);
+               if(TryGetToolCalls(responseJson, out var finalToolCalls))
+               {
+                  toolTrace.Add(
+                     CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        finalToolCalls
+                     )
+                  );
+               }
+               else
+               {
+                  toolTrace.Add(
+                     CreateAssistantTraceEntry(turn, responseJson, [])
+                  );
+               }
+
+               toolTraceJson = toolTrace.Count == 0
                   ? null
                   : JsonSerializer.Serialize(toolTrace, JsonOptions);
 
@@ -403,31 +404,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                );
                responseJson = finalEnvelope.ResponseJson;
                rawResponse = finalEnvelope.RawResponseJson;
-
-               LogResponse("final", turn, responseJson);
-               if(TryGetToolCalls(responseJson, out var finalToolCalls))
-               {
-                  toolTrace.Add(
-                     CreateAssistantTraceEntry(
-                        turn,
-                        responseJson,
-                        finalToolCalls
-                     )
-                  );
-               }
-               else
-               {
-                  toolTrace.Add(
-                     CreateAssistantTraceEntry(turn, responseJson, [])
-                  );
-               }
-
-               await ReportToolTraceProgressAsync(
-                  toolTrace,
-                  toolRoundCount,
-                  toolTraceUpdated,
-                  cancellationToken
-               );
             }
          }
       }
