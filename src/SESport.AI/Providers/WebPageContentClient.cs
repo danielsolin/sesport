@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
@@ -90,9 +89,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       var browserUserAgent = await this.browserUserAgentFetcher();
+      var browserLikeHeaders = BuildBrowserLikeHeaders(browserUserAgent);
       using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
       request.Headers.Accept.ParseAdd(BrowserAcceptHeader);
-      AddBrowserLikeHeaders(request.Headers, browserUserAgent);
+      foreach(var header in browserLikeHeaders)
+      {
+         request.Headers.TryAddWithoutValidation(
+            header.Key,
+            header.Value
+         );
+      }
+
       request.Headers.TryAddWithoutValidation("User-Agent", browserUserAgent);
       using var response = await httpClient.SendAsync(
          request,
@@ -147,7 +154,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       try
       {
+         var absoluteUrlString = absoluteUrl.ToString();
          var browserUserAgent = await this.browserUserAgentFetcher();
+         var browserLikeHeaders = BuildBrowserLikeHeaders(browserUserAgent);
          using var playwright = await Playwright.CreateAsync();
          await using var browser = await playwright.Chromium.LaunchAsync(
             new BrowserTypeLaunchOptions
@@ -161,7 +170,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             {
                UserAgent = browserUserAgent,
                Locale = BrowserLocale,
-               ExtraHTTPHeaders = BuildBrowserLikeHeaders(browserUserAgent),
+               ExtraHTTPHeaders = browserLikeHeaders,
                ViewportSize = new ViewportSize
                {
                   Width = 1440,
@@ -210,8 +219,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          var normalizedText = NormalizeText(visibleText);
 
          return new WebPageContent(
-            string.IsNullOrWhiteSpace(title) ? absoluteUrl.ToString() : title,
-            absoluteUrl.ToString(),
+            string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
+            absoluteUrlString,
             null,
             [],
             ApplyResponseCutoff(normalizedText),
@@ -241,6 +250,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       try
       {
+         var absoluteUrlString = absoluteUrl.ToString();
          var pdfBytes = await response.Content.ReadAsByteArrayAsync(
             cancellationToken
          );
@@ -262,7 +272,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          var title = ExtractPdfTitle(pdfDocument, absoluteUrl);
          return new WebPageContent(
             title,
-            absoluteUrl.ToString(),
+            absoluteUrlString,
             null,
             [],
             ApplyResponseCutoff(text),
@@ -288,6 +298,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    {
       try
       {
+         var absoluteUrlString = absoluteUrl.ToString();
          var html = await response.Content.ReadAsStringAsync(
             cancellationToken
          );
@@ -319,8 +330,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          );
 
          return new WebPageContent(
-            title ?? absoluteUrl.ToString(),
-            absoluteUrl.ToString(),
+            title ?? absoluteUrlString,
+            absoluteUrlString,
             null,
             [],
             ApplyResponseCutoff(text),
@@ -388,30 +399,6 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static string StripTags(string value)
    {
       return Regex.Replace(value, @"<[^>]+>", " ");
-   }
-
-   private static void AddBrowserLikeHeaders(
-      HttpRequestHeaders headers,
-      string browserUserAgent
-   )
-   {
-      headers.TryAddWithoutValidation(
-         "Accept-Language",
-         BrowserAcceptLanguageHeader
-      );
-      headers.TryAddWithoutValidation(
-         "Upgrade-Insecure-Requests",
-         "1"
-      );
-      headers.TryAddWithoutValidation(
-         "Sec-CH-UA",
-         BuildSecChUaHeader(browserUserAgent)
-      );
-      headers.TryAddWithoutValidation("Sec-CH-UA-Mobile", "?0");
-      headers.TryAddWithoutValidation(
-         "Sec-CH-UA-Platform",
-         $"\"{BrowserPlatform}\""
-      );
    }
 
    internal static string BuildBrowserUserAgent(string browserVersion)
