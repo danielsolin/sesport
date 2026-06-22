@@ -1,4 +1,5 @@
 using SESport.AI.Providers;
+using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AI;
 
@@ -68,5 +69,36 @@ public sealed class LlamaServerClientTemperatureTests
       );
 
       Assert.Equal(0.6m, temperature);
+   }
+
+   [Fact]
+   public void CreateRepeatedToolResultMessageIsShort()
+   {
+      var message = LlamaServerClient.CreateRepeatedToolResultMessage(
+         "web_get_page"
+      );
+
+      Assert.Equal(
+         "Repeated web_get_page call detected. No new information.",
+         message
+      );
+   }
+
+   [Fact]
+   public void SummarizeToolResultCompactsPageContent()
+   {
+      var summary = LlamaServerClient.SummarizeToolResult(
+         WebToolNames.GetPage,
+         """
+         Page URL: https://example.test/roster
+         Title: Huge Article
+         URL: https://example.test/roster
+         Page text:
+         KEEP-ME-ROUND-2-KEEP-ME-ROUND-2-
+         """
+      );
+
+      Assert.NotEmpty(summary);
+      Assert.DoesNotContain("KEEP-ME-ROUND-2-", summary);
    }
 }

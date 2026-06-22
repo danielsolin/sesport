@@ -189,6 +189,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             AppendAssistantMessage(messages, responseJson);
 
             var repeatedToolCallDetectedThisTurn = false;
+            var repeatedToolCallCountThisTurn = 0;
             foreach(var toolCall in toolCalls)
             {
                LogToolCall(turn, toolCall);
@@ -200,6 +201,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                ))
                {
                   repeatedToolCallDetectedThisTurn = true;
+                  repeatedToolCallCountThisTurn++;
                }
 
                var toolResult = await ExecuteToolCallAsync(
@@ -231,7 +233,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             }
 
             repeatedToolCallStreak = repeatedToolCallDetectedThisTurn
-               ? repeatedToolCallStreak + 1
+               ? repeatedToolCallStreak + repeatedToolCallCountThisTurn
                : 0;
 
             if(job.RequiresWebSearch)
@@ -2448,17 +2450,22 @@ public sealed class LlamaServerClient : IAiProviderClient
             currentToolCalls = ParseMessageToolCalls(message);
             currentToolIndex = 0;
 
-            if(currentToolCalls.Count == 0)
+            if(currentToolCalls.Count > 0)
             {
-               var assistantContent = message["content"]?.GetValue<string>() ??
-                  "";
+               entries.Add(
+                  $"assistant: requested {SummarizeToolCalls(currentToolCalls)}"
+               );
+            }
 
-               if(!string.IsNullOrWhiteSpace(assistantContent))
-               {
-                  entries.Add(
-                     $"assistant: {TruncateForSummary(assistantContent)}"
-                  );
-               }
+            var assistantContent = message["content"]?.GetValue<string>() ??
+               "";
+
+            if(currentToolCalls.Count == 0 &&
+               !string.IsNullOrWhiteSpace(assistantContent))
+            {
+               entries.Add(
+                  $"assistant: {TruncateForSummary(assistantContent)}"
+               );
             }
 
             continue;
@@ -2477,18 +2484,208 @@ public sealed class LlamaServerClient : IAiProviderClient
             var toolCall = currentToolCalls[currentToolIndex];
             entries.Add(
                $"{FormatConversationToolCall(toolCall)} -> " +
-               $"{TruncateForSummary(toolContent)}"
+               $"{SummarizeToolResult(toolCall.Name, toolContent)}"
             );
             currentToolIndex++;
             continue;
          }
 
          entries.Add(
-            $"{toolName}: {TruncateForSummary(toolContent)}"
+            $"{toolName}: {SummarizeToolResult(toolName, toolContent)}"
          );
       }
 
       return entries;
+   }
+
+   private static string SummarizeToolCalls(
+      IReadOnlyList<ToolCall> toolCalls
+   )
+   {
+      var summary = string.Join(
+         "; ",
+         toolCalls.Select(FormatConversationToolCall)
+      );
+
+      return TruncateForSummary(summary, 240);
+   }
+
+   internal static string SummarizeToolResult(
+      string toolName,
+      string toolContent
+   )
+   {
+      if(string.Equals(toolName, WebToolNames.Search, StringComparison.Ordinal))
+      {
+         return SummarizeSearchToolResult(toolContent);
+      }
+
+      if(string.Equals(
+         toolName,
+         WebToolNames.GetPage,
+         StringComparison.Ordinal
+      ))
+      {
+         return SummarizePageToolResult(toolContent);
+      }
+
+      if(string.Equals(
+         toolName,
+         WebToolNames.FindInPage,
+         StringComparison.Ordinal
+      ))
+      {
+         return SummarizeFindInPageResult(toolContent);
+      }
+
+      return TruncateForSummary(toolContent);
+   }
+
+   private static string SummarizeSearchToolResult(string toolContent)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(toolContent);
+
+         if(document.RootElement.ValueKind != JsonValueKind.Array)
+         {
+            return TruncateForSummary(toolContent);
+         }
+
+         var results = document.RootElement.EnumerateArray().ToArray();
+         if(results.Length == 0)
+         {
+            return "0 results";
+         }
+
+         var firstResult = results[0];
+         var firstTitle = GetJsonString(firstResult, "title") ?? "";
+         var firstUrl = GetJsonString(firstResult, "url") ?? "";
+
+         return results.Length == 1
+            ? $"1 result: {firstTitle} ({firstUrl})"
+            : $"{results.Length} results: {firstTitle} ({firstUrl})";
+      }
+      catch(JsonException)
+      {
+         return "search results fetched";
+      }
+   }
+
+   private static string SummarizePageToolResult(string toolContent)
+   {
+      var title = GetLineValue(toolContent, "Title:");
+      var url = GetLineValue(toolContent, "URL:");
+      var fetchError = GetLineValue(toolContent, "Fetch error:");
+
+      if(!string.IsNullOrWhiteSpace(fetchError))
+      {
+         return string.IsNullOrWhiteSpace(url)
+            ? $"fetch error: {TruncateForSummary(fetchError, 120)}"
+            : $"fetch error for {url}: {TruncateForSummary(fetchError, 120)}";
+      }
+
+      if(string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(url))
+      {
+         return "page fetched";
+      }
+
+      if(string.IsNullOrWhiteSpace(title))
+      {
+         return $"page: {url}";
+      }
+
+      return string.IsNullOrWhiteSpace(url)
+         ? $"page title: {title}"
+         : $"page title: {title} ({url})";
+   }
+
+   private static string SummarizeFindInPageResult(string toolContent)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(toolContent);
+
+         if(document.RootElement.ValueKind != JsonValueKind.Object)
+         {
+            return TruncateForSummary(toolContent);
+         }
+
+         var title = GetJsonString(document.RootElement, "title") ?? "";
+         var url = GetJsonString(document.RootElement, "url") ?? "";
+         var matchCount = GetJsonInt32(
+            document.RootElement,
+            "match_count"
+         );
+
+         if(matchCount is null)
+         {
+            return TruncateForSummary(toolContent);
+         }
+
+         if(string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(url))
+         {
+            return $"{matchCount} matches";
+         }
+
+         return string.IsNullOrWhiteSpace(url)
+            ? $"{matchCount} matches in {title}"
+            : $"{matchCount} matches in {title} ({url})";
+      }
+      catch(JsonException)
+      {
+         return "page matches fetched";
+      }
+   }
+
+   private static string? GetLineValue(string value, string prefix)
+   {
+      var lines = value.ReplaceLineEndings("\n").Split('\n');
+
+      foreach(var line in lines)
+      {
+         var trimmedLine = line.TrimStart();
+
+         if(!trimmedLine.StartsWith(prefix, StringComparison.Ordinal))
+         {
+            continue;
+         }
+
+         return trimmedLine[prefix.Length..].Trim();
+      }
+
+      return null;
+   }
+
+   private static string? GetJsonString(
+      JsonElement element,
+      string propertyName
+   )
+   {
+      if(!element.TryGetProperty(propertyName, out var property))
+      {
+         return null;
+      }
+
+      return property.ValueKind == JsonValueKind.String
+         ? property.GetString()
+         : property.ToString();
+   }
+
+   private static int? GetJsonInt32(
+      JsonElement element,
+      string propertyName
+   )
+   {
+      if(!element.TryGetProperty(propertyName, out var property))
+      {
+         return null;
+      }
+
+      return property.ValueKind == JsonValueKind.Number &&
+         property.TryGetInt32(out var value)
+         ? value
+         : null;
    }
 
    private static IReadOnlyList<ToolCall> ParseMessageToolCalls(
@@ -2635,8 +2832,13 @@ public sealed class LlamaServerClient : IAiProviderClient
          return false;
       }
 
-      repeatedResult = record.Result;
+      repeatedResult = CreateRepeatedToolResultMessage(toolCall.Name);
       return true;
+   }
+
+   internal static string CreateRepeatedToolResultMessage(string toolName)
+   {
+      return $"Repeated {toolName} call detected. No new information.";
    }
 
    private static void RecordToolCallResult(
