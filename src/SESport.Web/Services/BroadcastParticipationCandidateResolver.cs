@@ -9,8 +9,6 @@ namespace SESport.Web.Services;
 
 public static class BroadcastParticipationCandidateResolver
 {
-   private const int MaxCandidates = 5;
-
    public static string CreateCandidatesText(
       BroadcastActivitySource broadcast,
       IReadOnlyCollection<EntityOption> candidates
@@ -39,7 +37,6 @@ public static class BroadcastParticipationCandidateResolver
          .OrderBy(match => match.WatchPrioritySortOrder)
          .ThenByDescending(match => match.Score)
          .ThenBy(match => match.Name, StringComparer.OrdinalIgnoreCase)
-         .Take(MaxCandidates)
          .ToList();
 
       if(matches.Count == 0)

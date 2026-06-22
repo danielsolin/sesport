@@ -237,4 +237,55 @@ public sealed class BroadcastParticipationCandidateResolverTests
 
       Assert.Equal($"  - Alfa{Environment.NewLine}  - Alfa 2024", text);
    }
+
+   [Fact]
+   public void CreateCandidatesTextReturnsMoreThanFiveMatches()
+   {
+      var candidates = new[]
+      {
+         CreateCandidate("Candidate 1", 10, "Candidate"),
+         CreateCandidate("Candidate 2", 20, "Candidate"),
+         CreateCandidate("Candidate 3", 30, "Candidate"),
+         CreateCandidate("Candidate 4", 40, "Candidate"),
+         CreateCandidate("Candidate 5", 50, "Candidate"),
+         CreateCandidate("Candidate 6", 60, "Candidate")
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Candidate",
+            null,
+            ["Tennis"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      var lines = text.Split(
+         Environment.NewLine,
+         StringSplitOptions.RemoveEmptyEntries
+      );
+
+      Assert.Equal(6, lines.Length);
+   }
+
+   private static EntityOption CreateCandidate(
+      string name,
+      int sortOrder,
+      string organization
+   )
+   {
+      return new EntityOption(
+         Guid.NewGuid(),
+         name,
+         TrackedEntityTypeIds.Person,
+         "Tennis",
+         organization,
+         sortOrder,
+         null
+      );
+   }
 }
