@@ -39,7 +39,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       });
       """;
    internal const string CutoffMarker = "[CUTOFF]";
-   internal const int MaxResponseCharacters = 12000;
+   internal const int MaxResponseCharacters = 20000;
    private static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
    private static readonly TimeSpan BrowserLoadStateTimeout =

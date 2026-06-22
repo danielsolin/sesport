@@ -254,7 +254,7 @@ public class AiProviderClientTests
       );
       var hugePageText = string.Join(
          "",
-         Enumerable.Repeat("KEEP-ME-ROUND-2-", 1000)
+         Enumerable.Repeat("KEEP-ME-ROUND-2-", 2000)
       );
       var webPageContentClient = new RecordingWebPageContentClient(
          new WebPageContent(
