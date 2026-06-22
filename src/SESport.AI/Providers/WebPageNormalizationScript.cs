@@ -10,13 +10,37 @@ internal static class WebPageNormalizationScript
             const flagClassPattern =
                /(?:^|\s)flag(?:--|-|_)?([a-z0-9_]+)?(?:\s|$)/i;
             const flagCodePattern = /^[a-z]{2,3}$/i;
+            const flagNoisePatterns = [
+               /^(?:flag|flags)(?:\s+(?:of|for|from))?\s+/i,
+               /\s+(?:flag|flags)(?:\s+(?:icon|image|symbol))?$/i
+            ];
             const flagLabelPatterns = [
                /(?:^|[^a-z0-9])flag(?:s)?(?:[-_\/#]*)([a-z]{2,3})/i,
                /(?:^|[^a-z0-9])([a-z]{2,3})(?:[-_\/#]*)(?:flag)(?:s)?/i,
                /(?:^|[^a-z0-9])Flag_of_([A-Za-z_]+)(?:[^a-z0-9]|$)/i
             ];
 
-            function getFlagLabelFromSource(source) {
+            function normalizeFlagLabel(label) {
+               if(typeof label !== 'string') {
+                  return null;
+               }
+
+               let normalizedLabel = label.replace(/\s+/g, ' ').trim();
+
+               if(normalizedLabel === '') {
+                  return null;
+               }
+
+               for(const pattern of flagNoisePatterns) {
+                  normalizedLabel = normalizedLabel.replace(pattern, '');
+               }
+
+               normalizedLabel = normalizedLabel.trim();
+
+               return normalizedLabel === '' ? null : normalizedLabel;
+            }
+
+            function getFlagLabelFromSourceCandidate(source) {
                if(typeof source !== 'string' || source === '') {
                   return null;
                }
@@ -25,7 +49,29 @@ internal static class WebPageNormalizationScript
                   const match = source.match(pattern);
 
                   if(match?.[1]) {
-                     return match[1].replaceAll('_', ' ');
+                     return normalizeFlagLabel(match[1].replaceAll('_', ' '));
+                  }
+               }
+
+               return null;
+            }
+
+            function getFlagLabelFromSource(source) {
+               if(typeof source !== 'string' || source === '') {
+                  return null;
+               }
+
+               const sourceCandidates = source
+                  .split(',')
+                  .map(candidate => candidate.trim())
+                  .filter(candidate => candidate !== '');
+
+               for(const candidate of sourceCandidates) {
+                  const urlCandidate = candidate.split(/\s+/)[0];
+                  const label = getFlagLabelFromSourceCandidate(urlCandidate);
+
+                  if(label) {
+                     return label;
                   }
                }
 
@@ -72,6 +118,12 @@ internal static class WebPageNormalizationScript
                return candidateCode || null;
             }
 
+            function getAttributeFlagLabel(element, attributeName) {
+               return normalizeFlagLabel(
+                  element.getAttribute(attributeName) || ''
+               );
+            }
+
             function getSvgFlagLabel(element) {
                const svgElement =
                   element.tagName.toLowerCase() === 'svg'
@@ -101,16 +153,6 @@ internal static class WebPageNormalizationScript
                return null;
             }
 
-            function getAltFlagLabel(element) {
-               const alt = (element.getAttribute('alt') || '').trim();
-
-               if(alt === '') {
-                  return null;
-               }
-
-               return alt;
-            }
-
             function getFlagTarget(element) {
                if(element.tagName.toLowerCase() === 'use') {
                   return element.closest('svg') || element;
@@ -129,7 +171,9 @@ internal static class WebPageNormalizationScript
                      getFlagLabelFromSource(
                         element.getAttribute('srcset') || ''
                      ) ||
-                     getAltFlagLabel(element);
+                     getAttributeFlagLabel(element, 'alt') ||
+                     getAttributeFlagLabel(element, 'title') ||
+                     getAttributeFlagLabel(element, 'aria-label');
                }
 
                const svgLabel = getSvgFlagLabel(element);

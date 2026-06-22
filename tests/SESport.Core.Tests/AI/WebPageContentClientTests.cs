@@ -473,6 +473,38 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchNormalizesFlagImageFromLivePlayerList()
+   {
+      if(!ShouldRunLiveWebPageTests())
+      {
+         return;
+      }
+
+      using var httpClient = new HttpClient
+      {
+         Timeout = TimeSpan.FromSeconds(90)
+      };
+      var client = CreateClient(httpClient);
+
+      var page = await client.FetchAsync(
+         "https://www.anwagolf.com/en_US/players/player_list.html",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains(
+         "Sweden",
+         page!.MainText,
+         StringComparison.OrdinalIgnoreCase
+      );
+      Assert.DoesNotContain(
+         "SWE_sm",
+         page.MainText,
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   [Fact]
    public void BuildBrowserUserAgentUsesBrowserMajorVersion()
    {
       var userAgent = WebPageContentClient.BuildBrowserUserAgent(
@@ -635,6 +667,17 @@ public class WebPageContentClientTests
          null,
          BrowserUserAgentProvider,
          curlFetcher ?? ((_, _) => Task.FromResult<WebPageContent?>(null))
+      );
+   }
+
+   private static bool ShouldRunLiveWebPageTests()
+   {
+      return string.Equals(
+         Environment.GetEnvironmentVariable(
+            "SESPORT_RUN_LIVE_WEBPAGE_TESTS"
+         ),
+         "1",
+         StringComparison.OrdinalIgnoreCase
       );
    }
 }
