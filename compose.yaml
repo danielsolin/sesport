@@ -1,5 +1,7 @@
 services:
    postgres:
+      profiles:
+         - postgresql-searxng
       image: postgres:17
       container_name: sesport-postgres
       environment:
@@ -21,6 +23,8 @@ services:
       restart: unless-stopped
 
    searxng:
+      profiles:
+         - postgresql-searxng
       image: docker.io/searxng/searxng:latest
       container_name: sesport-searxng
       ports:

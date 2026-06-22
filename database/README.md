@@ -18,6 +18,10 @@ If no variables are set, the code falls back to the local defaults for
 The helper scripts in `bin/` read these values from the repository-root
 `.env` file.
 
+The `postgres` and `searxng` containers in `compose.yaml` are gated
+behind the `postgresql-searxng` profile, so `docker compose up -d` no longer starts
+them by default.
+
 To connect with `psql` after copying `.env.example` to `.env`, source the
 variables into your shell first, or pass them explicitly:
 
@@ -62,7 +66,7 @@ docker compose exec -it postgres env \
 Start PostgreSQL with Docker Compose:
 
 ```bash
-docker compose up -d postgres
+docker compose --profile postgresql-searxng up -d postgres searxng
 ```
 
 Run migrations from a Linux or WSL shell:
