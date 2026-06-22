@@ -718,6 +718,43 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesWhenFinalStructuredOutputIsInvalid()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaInvalidFinalResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("json_schema", requiresWebSearch: false, null),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains(
+         "Return only the raw JSON object required by the schema.",
+         handler.RequestBodies[1]
+      );
+   }
+
+   [Fact]
    public async Task OpenRouterGenerateAsyncUsesChatCompletionsEnvelope()
    {
       var handler = new RecordingHandler(
@@ -1299,6 +1336,33 @@ public class AiProviderClientTests
          "{\"SwedishParticipation\":\"Yes\","
          + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"" + sourceUrl + "\"]}";
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            choices = new[]
+            {
+               new
+               {
+                  message = new
+                  {
+                     role = "assistant",
+                     content
+                  },
+                  finish_reason = "stop"
+               }
+            },
+            model = "openai/gpt-4o-2024-08-06"
+         }
+      );
+   }
+
+   private static string CreateLlamaInvalidFinalResponseJson()
+   {
+      var content =
+         "{\"SwedishParticipation\":\"Yes\","
+         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]";
 
       return JsonSerializer.Serialize(
          new

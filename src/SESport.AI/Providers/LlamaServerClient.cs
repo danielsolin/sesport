@@ -328,40 +328,108 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
          }
 
-         if(responseJson is null)
+         var structuredOutputRepairAttempts = 0;
+
+         while(true)
          {
-            throw new InvalidOperationException(
-               "llama-server returned no response."
+            if(responseJson is null)
+            {
+               throw new InvalidOperationException(
+                  "llama-server returned no response."
+               );
+            }
+
+            var finalOutputText = NormalizeOutput(
+               ExtractFinalText(responseJson)
             );
+
+            try
+            {
+               finalOutputText =
+                  ResponsesOutputValidator.ValidateStructuredOutput(
+                     finalOutputText,
+                     job.OutputMode,
+                     prompt.OutputSchemaJson
+                  );
+
+               var toolTraceJson = toolTrace.Count == 0
+                  ? null
+                  : JsonSerializer.Serialize(toolTrace, JsonOptions);
+
+               return new AiJobResult(
+                  Guid.NewGuid(),
+                  job.Id,
+                  provider.Id,
+                  provider.Model,
+                  renderedPrompt.ToPromptText(),
+                  rawFinalRequestJson ?? string.Empty,
+                  finalOutputText,
+                  rawResponse,
+                  toolTraceJson,
+                  toolRoundCount,
+                  EstimateConversationSize(messages),
+                  null,
+                  null,
+                  null,
+                  null
+               );
+            }
+            catch(InvalidOperationException exception) when (
+               structuredOutputRepairAttempts < MaxFormatRepairAttempts &&
+               IsInvalidStructuredOutputFailure(exception) &&
+               CanRepairStructuredOutput(job.OutputMode, prompt)
+            )
+            {
+               structuredOutputRepairAttempts++;
+               ApplyStructuredOutputRepairPrompt(messages);
+               request = CreateFinalRequestPayload(
+                  request,
+                  job,
+                  prompt
+               );
+               rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
+               turn++;
+               var finalEnvelope = await SendWithStructuredOutputRepairAsync(
+                  provider,
+                  request,
+                  messages,
+                  turn,
+                  "final",
+                  job.OutputMode,
+                  prompt,
+                  formatRepairAttempts,
+                  cancellationToken,
+                  () => formatRepairAttempts++
+               );
+               responseJson = finalEnvelope.ResponseJson;
+               rawResponse = finalEnvelope.RawResponseJson;
+
+               LogResponse("final", turn, responseJson);
+               if(TryGetToolCalls(responseJson, out var finalToolCalls))
+               {
+                  toolTrace.Add(
+                     CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        finalToolCalls
+                     )
+                  );
+               }
+               else
+               {
+                  toolTrace.Add(
+                     CreateAssistantTraceEntry(turn, responseJson, [])
+                  );
+               }
+
+               await ReportToolTraceProgressAsync(
+                  toolTrace,
+                  toolRoundCount,
+                  toolTraceUpdated,
+                  cancellationToken
+               );
+            }
          }
-
-         var finalOutputText = NormalizeOutput(ExtractFinalText(responseJson));
-         finalOutputText = ResponsesOutputValidator.ValidateStructuredOutput(
-            finalOutputText,
-            job.OutputMode,
-            prompt.OutputSchemaJson
-         );
-         var toolTraceJson = toolTrace.Count == 0
-            ? null
-            : JsonSerializer.Serialize(toolTrace, JsonOptions);
-
-         return new AiJobResult(
-            Guid.NewGuid(),
-            job.Id,
-            provider.Id,
-            provider.Model,
-            renderedPrompt.ToPromptText(),
-            rawFinalRequestJson ?? string.Empty,
-            finalOutputText,
-            rawResponse,
-            toolTraceJson,
-            toolRoundCount,
-            EstimateConversationSize(messages),
-            null,
-            null,
-            null,
-            null
-         );
       }
       catch(OperationCanceledException)
          when(cancellationToken.IsCancellationRequested)
@@ -428,13 +496,24 @@ public sealed class LlamaServerClient : IAiProviderClient
    {
       try
       {
-         return await SendWithRetryAsync(
+         var responseEnvelope = await SendWithRetryAsync(
             provider,
             request,
             turn,
             stage,
             cancellationToken
          );
+
+         if(ShouldRepairStructuredOutput(stage, outputMode, prompt))
+         {
+            ValidateStructuredOutput(
+               responseEnvelope,
+               outputMode,
+               prompt
+            );
+         }
+
+         return responseEnvelope;
       }
       catch(HttpRequestException exception) when (
          formatRepairAttempts < MaxFormatRepairAttempts &&
@@ -452,6 +531,48 @@ public sealed class LlamaServerClient : IAiProviderClient
             cancellationToken
          );
       }
+      catch(InvalidOperationException exception) when (
+         formatRepairAttempts < MaxFormatRepairAttempts &&
+         IsInvalidStructuredOutputFailure(exception) &&
+         CanRepairStructuredOutput(outputMode, prompt) &&
+         string.Equals(stage, "final", StringComparison.Ordinal)
+      )
+      {
+         incrementFormatRepairAttempts();
+         ApplyStructuredOutputRepairPrompt(messages);
+         var repairedEnvelope = await SendWithRetryAsync(
+            provider,
+            request,
+            turn,
+            stage,
+            cancellationToken
+         );
+
+         ValidateStructuredOutput(
+            repairedEnvelope,
+            outputMode,
+            prompt
+         );
+
+         return repairedEnvelope;
+      }
+   }
+
+   private static void ValidateStructuredOutput(
+      ResponseEnvelope responseEnvelope,
+      string outputMode,
+      AiPromptDefinition prompt
+   )
+   {
+      var outputText = NormalizeOutput(
+         ExtractFinalText(responseEnvelope.ResponseJson)
+      );
+
+      ResponsesOutputValidator.ValidateStructuredOutput(
+         outputText,
+         outputMode,
+         prompt.OutputSchemaJson
+      );
    }
 
    private static bool CanRepairStructuredOutput(
@@ -473,6 +594,29 @@ public sealed class LlamaServerClient : IAiProviderClient
          "peg-native format",
          StringComparison.OrdinalIgnoreCase
       );
+   }
+
+   private static bool IsInvalidStructuredOutputFailure(
+      Exception exception
+   )
+   {
+      return exception.Message.Contains(
+         "invalid json_schema output",
+         StringComparison.OrdinalIgnoreCase
+      ) || exception.Message.Contains(
+         "invalid json_object output",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static bool ShouldRepairStructuredOutput(
+      string stage,
+      string outputMode,
+      AiPromptDefinition prompt
+   )
+   {
+      return string.Equals(stage, "final", StringComparison.Ordinal) &&
+         CanRepairStructuredOutput(outputMode, prompt);
    }
 
    private static void ApplyStructuredOutputRepairPrompt(JsonArray messages)
