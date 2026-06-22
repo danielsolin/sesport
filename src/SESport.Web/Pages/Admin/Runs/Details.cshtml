@@ -214,9 +214,44 @@
                               <div class="tool-trace-block-label">
                                  Assistant
                               </div>
+                              @if(!string.IsNullOrWhiteSpace(
+                                 turn.AssistantValidationStatus))
+                              {
+                                 <div>
+                                    Validation:
+                                    @turn.AssistantValidationStatus
+                                 </div>
+                              }
+                              @if(!string.IsNullOrWhiteSpace(
+                                 turn.AssistantValidationError))
+                              {
+                                 <div>
+                                    Error:
+                                    @turn.AssistantValidationError
+                                 </div>
+                              }
                               <pre class="prompt-details-pre">
 @turn.AssistantContent
                               </pre>
+                           </div>
+                        }
+
+                        @if(turn.RepairPrompts.Count > 0)
+                        {
+                           <div class="tool-trace-block">
+                              <div class="tool-trace-block-label">
+                                 Repair prompts
+                              </div>
+                              <div class="tool-trace-items">
+                                 @foreach(var repairPrompt in turn.RepairPrompts)
+                                 {
+                                    <div class="tool-trace-item">
+                                       <pre class="prompt-details-pre">
+@repairPrompt
+                                       </pre>
+                                    </div>
+                                 }
+                              </div>
                            </div>
                         }
 

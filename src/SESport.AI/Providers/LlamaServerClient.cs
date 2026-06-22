@@ -393,6 +393,12 @@ public sealed class LlamaServerClient : IAiProviderClient
                      validationError: exception.Message
                   )
                );
+               toolTrace.Add(
+                  CreateRepairPromptTraceEntry(
+                     turn,
+                     GetStructuredOutputRepairPrompt()
+                  )
+               );
                await ReportToolTraceProgressAsync(
                   toolTrace,
                   toolRoundCount,
@@ -614,11 +620,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
    private static void ApplyStructuredOutputRepairPrompt(JsonArray messages)
    {
-      var repairPrompt = """
-         The previous response was rejected because it was not valid JSON.
-         Return only the raw JSON object required by the schema.
-         Do not use markdown, fences, commentary, or explanations.
-         """.Trim();
+      var repairPrompt = GetStructuredOutputRepairPrompt();
 
       var repairMessage = new JsonObject
       {
@@ -635,6 +637,28 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       messages.Insert(insertionIndex + 1, repairMessage);
+   }
+
+   private static JsonObject CreateRepairPromptTraceEntry(
+      int turn,
+      string repairPrompt
+   )
+   {
+      return new JsonObject
+      {
+         ["kind"] = "repair_prompt",
+         ["turn"] = turn,
+         ["content"] = repairPrompt
+      };
+   }
+
+   private static string GetStructuredOutputRepairPrompt()
+   {
+      return """
+         The previous response was rejected because it was not valid JSON.
+         Return only the raw JSON object required by the schema.
+         Do not use markdown, fences, commentary, or explanations.
+         """.Trim();
    }
 
    private async Task<ResponseEnvelope> SendWithRetryAsync(

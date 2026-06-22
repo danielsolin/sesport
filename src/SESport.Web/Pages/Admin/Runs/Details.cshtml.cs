@@ -599,6 +599,10 @@ public class DetailsModel(
             {
                builder.FinishReason = GetString(entry, "finish_reason");
                builder.AssistantContent = GetString(entry, "content");
+               builder.AssistantValidationStatus =
+                  GetString(entry, "validation_status");
+               builder.AssistantValidationError =
+                  GetString(entry, "validation_error");
                builder.ToolCalls.AddRange(ParseToolCalls(entry));
                continue;
             }
@@ -612,6 +616,17 @@ public class DetailsModel(
             if(string.Equals(kind, "tool", StringComparison.Ordinal))
             {
                builder.ToolResults.Add(ParseToolResult(entry));
+               continue;
+            }
+
+            if(string.Equals(kind, "repair_prompt", StringComparison.Ordinal))
+            {
+               var repairPrompt = GetString(entry, "content");
+
+               if(!string.IsNullOrWhiteSpace(repairPrompt))
+               {
+                  builder.RepairPrompts.Add(repairPrompt);
+               }
             }
          }
 
@@ -976,6 +991,9 @@ public class DetailsModel(
       decimal? Temperature,
       string? FinishReason,
       string? AssistantContent,
+      string? AssistantValidationStatus,
+      string? AssistantValidationError,
+      IReadOnlyList<string> RepairPrompts,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
       IReadOnlyList<ToolTraceToolResultViewModel> ToolResults,
       IReadOnlyList<ToolTraceBadgeViewModel> CompactBadges,
@@ -994,6 +1012,12 @@ public class DetailsModel(
 
       public string? AssistantContent { get; set; }
 
+      public string? AssistantValidationStatus { get; set; }
+
+      public string? AssistantValidationError { get; set; }
+
+      public List<string> RepairPrompts { get; } = [];
+
       public List<ToolTraceCallViewModel> ToolCalls { get; } = [];
 
       public List<ToolTraceToolResultViewModel> ToolResults { get; } = [];
@@ -1006,6 +1030,9 @@ public class DetailsModel(
             Temperature,
             FinishReason,
             AssistantContent,
+            AssistantValidationStatus,
+            AssistantValidationError,
+            RepairPrompts,
             ToolCalls,
             ToolResults,
             BuildCompactBadges(),
@@ -1041,6 +1068,14 @@ public class DetailsModel(
          if(!string.IsNullOrWhiteSpace(AssistantContent))
          {
             badges.Add(new("Assistant", "tool-trace-badge-assistant"));
+         }
+
+         if(!string.IsNullOrWhiteSpace(AssistantValidationStatus))
+         {
+            badges.Add(new(
+               $"Validation: {AssistantValidationStatus}",
+               "tool-trace-badge-result"
+            ));
          }
 
          foreach(var toolCallGroup in ToolCalls

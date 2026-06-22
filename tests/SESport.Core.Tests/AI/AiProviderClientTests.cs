@@ -771,6 +771,10 @@ public class AiProviderClientTests
             "\"validation_status\":\"accepted\""
          )
       );
+      Assert.Contains(
+         "Return only the raw JSON object required by the schema.",
+         result.ToolTraceJson
+      );
    }
 
    [Fact]
