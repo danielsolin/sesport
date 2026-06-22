@@ -69,4 +69,20 @@ public sealed class LlamaServerClientTemperatureTests
 
       Assert.Equal(0.6m, temperature);
    }
+
+   [Fact]
+   public void CreateRepeatedToolResultMessageDescribesTheOriginalTurn()
+   {
+      var message = LlamaServerClient.CreateRepeatedToolResultMessage(
+         "web_get_page",
+         """
+         {"url":"https://example.com/article"}
+         """,
+         4
+      );
+
+      Assert.Contains("Repeated web_get_page call", message);
+      Assert.Contains("URL https://example.com/article", message);
+      Assert.Contains("turn 4", message);
+   }
 }

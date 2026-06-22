@@ -1219,7 +1219,6 @@ public sealed class LlamaServerClient : IAiProviderClient
          var searchResults = searchResponse.Results;
          toolState.LastSearchProvider = searchResponse.Provider;
          toolState.LastSearchProviderDetails = searchResponse.Details;
-         toolState.LastSearchProviderDetails = searchResponse.Details;
 
          LogSearchResults(
             query,
@@ -1229,7 +1228,14 @@ public sealed class LlamaServerClient : IAiProviderClient
          );
 
          var result = FormatSearchResults(
-            searchResults
+            searchResults,
+            TryGetAlreadyFetchedPageUrl(
+               searchResults,
+               toolState,
+               out var repeatedPageUrl
+            )
+               ? repeatedPageUrl
+               : null
          );
 
          RecordToolCallResult(
@@ -1661,7 +1667,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    }
 
    private static string FormatSearchResults(
-      IReadOnlyList<WebSearchResult> searchResults
+      IReadOnlyList<WebSearchResult> searchResults,
+      string? repeatedPageUrl = null
    )
    {
       if(searchResults.Count == 0)
@@ -1682,7 +1689,12 @@ public sealed class LlamaServerClient : IAiProviderClient
          })
          .ToArray();
 
-      return JsonSerializer.Serialize(output, JsonOptions);
+      var repeatNotice = string.IsNullOrWhiteSpace(repeatedPageUrl)
+         ? ""
+         : "Note: this search already surfaced a page fetched earlier in " +
+            $"this run: {repeatedPageUrl}. ";
+
+      return repeatNotice + JsonSerializer.Serialize(output, JsonOptions);
    }
 
    private async Task<string> FormatPageContentAsync(
@@ -2636,8 +2648,102 @@ public sealed class LlamaServerClient : IAiProviderClient
          return false;
       }
 
-      repeatedResult = record.Result;
+      repeatedResult = CreateRepeatedToolResultMessage(
+         toolCall.Name,
+         toolCall.Arguments,
+         record.Turn
+      );
       return true;
+   }
+
+   internal static string CreateRepeatedToolResultMessage(
+      string toolName,
+      string arguments,
+      int originalTurn
+   )
+   {
+      return $"Repeated {toolName} call for {DescribeToolTarget(
+         toolName,
+         arguments
+      )}. The same result was already returned on turn {originalTurn}. " +
+         "Use the earlier result instead of calling the tool again.";
+   }
+
+   private static string DescribeToolTarget(
+      string toolName,
+      string arguments
+   )
+   {
+      if(string.Equals(toolName, WebToolNames.Search, StringComparison.Ordinal))
+      {
+         var query = ExtractQuery(arguments);
+         return string.IsNullOrWhiteSpace(query)
+            ? "the same query"
+            : $"query \"{TruncateForLog(query, 80)}\"";
+      }
+
+      if(string.Equals(
+         toolName,
+         WebToolNames.GetPage,
+         StringComparison.Ordinal
+      ))
+      {
+         var url = ExtractUrl(arguments);
+         return string.IsNullOrWhiteSpace(url)
+            ? "the same URL"
+            : $"URL {url}";
+      }
+
+      if(string.Equals(
+         toolName,
+         WebToolNames.FindInPage,
+         StringComparison.Ordinal
+      ))
+      {
+         var url = ExtractUrl(arguments);
+         var find = ExtractFind(arguments);
+
+         if(string.IsNullOrWhiteSpace(url) &&
+            string.IsNullOrWhiteSpace(find))
+         {
+            return "the same page lookup";
+         }
+
+         if(string.IsNullOrWhiteSpace(find))
+         {
+            return $"URL {url}";
+         }
+
+         return $"URL {url} with find \"{TruncateForLog(find, 80)}\"";
+      }
+
+      return "the same arguments";
+   }
+
+   private static bool TryGetAlreadyFetchedPageUrl(
+      IReadOnlyList<WebSearchResult> searchResults,
+      ToolLoopState toolState,
+      out string repeatedPageUrl
+   )
+   {
+      repeatedPageUrl = "";
+
+      foreach(var searchResult in searchResults)
+      {
+         var pageSignature = BuildPageToolCallSignature(
+            WebToolNames.GetPage,
+            searchResult.Url,
+            ""
+         );
+
+         if(toolState.PageCallHistory.ContainsKey(pageSignature))
+         {
+            repeatedPageUrl = searchResult.Url;
+            return true;
+         }
+      }
+
+      return false;
    }
 
    private static void RecordToolCallResult(
