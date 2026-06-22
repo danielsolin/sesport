@@ -124,6 +124,47 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchUsesCurlFallbackWhenHtmlFallbackIsEmpty()
+   {
+      var browserCalls = 0;
+      var curlCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(string.Empty)),
+         (_, _) =>
+         {
+            browserCalls++;
+            throw new PlaywrightException("Browser blocked");
+         },
+         (_, _) =>
+         {
+            curlCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Curl Title",
+                  "https://example.test/curl",
+                  null,
+                  [],
+                  "Curl body text.",
+                  true,
+                  "Curl body text."
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/curl",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.Equal(1, curlCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Curl Title", page!.Title);
+      Assert.Equal("Curl body text.", page.MainText);
+   }
+
+   [Fact]
    public async Task FetchFallsBackToHtmlWhenBrowserFails()
    {
       var browserCalls = 0;
@@ -161,6 +202,56 @@ public class WebPageContentClientTests
       Assert.Equal("Fallback Title", page!.Title);
       Assert.Contains("Fallback heading", page.MainText);
       Assert.Contains("Fallback body text.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchExtractsEmbeddedStateFromHtmlFallback()
+   {
+      var browserCalls = 0;
+      var handler = new HtmlRecordingHandler(
+         """
+         <html>
+            <head>
+               <title>Embedded State Title</title>
+            </head>
+            <body>
+               <div>Visible body text.</div>
+               <script type="application/json" id="embedded-state">
+                  {
+                     "event": {
+                        "title": "Embedded Event"
+                     },
+                     "participants": [
+                        { "name": "Oliver Solberg" },
+                        { "name": "Mille Johansson" },
+                        { "name": "https://example.test/ignore" }
+                     ]
+                  }
+               </script>
+            </body>
+         </html>
+         """
+      );
+      var client = CreateClient(
+         new HttpClient(handler),
+         (_, _) =>
+         {
+            browserCalls++;
+            throw new PlaywrightException("Browser blocked");
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/embedded-state",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Embedded State Title", page!.Title);
+      Assert.Contains("Oliver Solberg", page.MainText);
+      Assert.Contains("Mille Johansson", page.MainText);
+      Assert.Contains("Visible body text.", page.MainText);
    }
 
    [Fact]
@@ -481,6 +572,8 @@ public class WebPageContentClientTests
    private static WebPageContentClient CreateClient(
       HttpClient httpClient,
       Func<Uri, CancellationToken, Task<WebPageContent?>>? browserFetcher =
+         null,
+      Func<Uri, CancellationToken, Task<WebPageContent?>>? curlFetcher =
          null
    )
    {
@@ -488,7 +581,8 @@ public class WebPageContentClientTests
          httpClient,
          browserFetcher,
          null,
-         BrowserUserAgentProvider
+         BrowserUserAgentProvider,
+         curlFetcher ?? ((_, _) => Task.FromResult<WebPageContent?>(null))
       );
    }
 }

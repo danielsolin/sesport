@@ -60,6 +60,42 @@ public class WebPageContentClientLiveTests
       Assert.Contains("Entry List", page.Title);
    }
 
+   [Fact]
+   public async Task FetchWrcEntryListPageUsesCurlFallback()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         "https://www.wrc.com/en/events/" +
+         "wrc-eko-acropolis-rally-greece-2026/" +
+         "entry-list-wrc-eko-acropolis-rally-greece-2026",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.NotEqual("Access Denied", page!.Title);
+      Assert.DoesNotContain("Access Denied", page.MainText);
+      Assert.Contains("WRC EKO Acropolis Rally Greece 2026", page.Title);
+      Assert.True(
+         page.MainText.Contains(
+            "Oliver Solberg",
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+      Assert.True(
+         page.MainText.Contains(
+            "Mille Johansson",
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+   }
+
    private static bool ShouldRunLiveTest()
    {
       var enabled = Environment.GetEnvironmentVariable(
