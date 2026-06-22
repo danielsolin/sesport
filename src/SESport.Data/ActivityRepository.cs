@@ -214,7 +214,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             where (l.source_entity_id = e.id or l.target_entity_id = e.id)
                and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and linked.entity_type_id in
-                  (
+                   (
+                     '{{TrackedEntityTypeIds.Organization}}',
                      '{{TrackedEntityTypeIds.Team}}',
                      '{{TrackedEntityTypeIds.NationalTeam}}',
                      '{{TrackedEntityTypeIds.Series}}',
