@@ -9,6 +9,8 @@ namespace SESport.Web.Services;
 
 public static class BroadcastParticipationCandidateResolver
 {
+   private const int MaxCandidateNames = 5;
+
    public static string CreateCandidatesText(
       BroadcastActivitySource broadcast,
       IReadOnlyCollection<EntityOption> candidates
@@ -27,27 +29,91 @@ public static class BroadcastParticipationCandidateResolver
          $"{broadcast.Title} {string.Join(' ', broadcast.Categories)}"
       );
 
-      var matches = candidates
+      var eligibleCandidates = candidates
          .Where(candidate =>
             IsGenderCompatible(candidate.PersonGenderId, requiredGenderId)
          )
+         .ToList();
+
+      var primaryCandidatesText = CreatePrimaryCandidatesText(
+         normalizedTitle,
+         eligibleCandidates
+      );
+
+      if(!string.IsNullOrWhiteSpace(primaryCandidatesText))
+      {
+         return primaryCandidatesText;
+      }
+
+      return CreateFallbackCandidatesText(
+         normalizedTitle,
+         eligibleCandidates
+      );
+   }
+
+   private static string CreatePrimaryCandidatesText(
+      string normalizedTitle,
+      IReadOnlyCollection<EntityOption> candidates
+   )
+   {
+      var matches = candidates
          .Select(candidate => CreateMatch(normalizedTitle, candidate))
          .Where(match => match is not null)
          .Select(match => match!)
+         .ToList();
+
+      return CreateCandidatesText(matches);
+   }
+
+   private static string CreateFallbackCandidatesText(
+      string normalizedTitle,
+      IReadOnlyCollection<EntityOption> candidates
+   )
+   {
+      var fallbackMatches = candidates
+         .Where(candidate =>
+            MatchValue(normalizedTitle, candidate.Sport) is not null
+         )
+         .Select(candidate =>
+            new CandidateMatch(
+               candidate.Id,
+               candidate.Name.Trim(),
+               0,
+               candidate.WatchPrioritySortOrder
+            )
+         )
+         .ToList();
+
+      fallbackMatches = OrderCandidateMatches(fallbackMatches)
+         .Take(MaxCandidateNames)
+         .ToList();
+
+      return CreateCandidatesText(fallbackMatches);
+   }
+
+   private static string CreateCandidatesText(
+      IEnumerable<CandidateMatch> matches
+   )
+   {
+      var orderedMatches = OrderCandidateMatches(matches);
+
+      return orderedMatches.Count == 0
+         ? string.Empty
+         : string.Join(
+            Environment.NewLine,
+            orderedMatches.Select(match => $"  - {match.Name}")
+         );
+   }
+
+   private static List<CandidateMatch> OrderCandidateMatches(
+      IEnumerable<CandidateMatch> matches
+   )
+   {
+      return matches
          .OrderBy(match => match.WatchPrioritySortOrder)
          .ThenByDescending(match => match.Score)
          .ThenBy(match => match.Name, StringComparer.OrdinalIgnoreCase)
          .ToList();
-
-      if(matches.Count == 0)
-      {
-         return string.Empty;
-      }
-
-      return string.Join(
-         Environment.NewLine,
-         matches.Select(match => $"  - {match.Name}")
-      );
    }
 
    private static CandidateMatch? CreateMatch(
@@ -87,6 +153,7 @@ public static class BroadcastParticipationCandidateResolver
       );
 
       return new CandidateMatch(
+         candidate.Id,
          candidate.Name.Trim(),
          score,
          candidate.WatchPrioritySortOrder
@@ -114,6 +181,7 @@ public static class BroadcastParticipationCandidateResolver
          ))
          {
             return new CandidateMatch(
+               Guid.Empty,
                value.Trim(),
                3000 + pattern.Length,
                0
@@ -126,6 +194,7 @@ public static class BroadcastParticipationCandidateResolver
          ))
          {
             return new CandidateMatch(
+               Guid.Empty,
                value.Trim(),
                2000 + pattern.Length,
                0
@@ -138,6 +207,7 @@ public static class BroadcastParticipationCandidateResolver
          ))
          {
             return new CandidateMatch(
+               Guid.Empty,
                value.Trim(),
                1000 + normalizedTitle.Length,
                0
@@ -301,6 +371,7 @@ public static class BroadcastParticipationCandidateResolver
    }
 
    private sealed record CandidateMatch(
+      Guid Id,
       string Name,
       int Score,
       int WatchPrioritySortOrder

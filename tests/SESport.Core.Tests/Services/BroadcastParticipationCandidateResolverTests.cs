@@ -155,7 +155,7 @@ public sealed class BroadcastParticipationCandidateResolverTests
             "Channel",
             "Unrelated broadcast title",
             null,
-            ["Cycling"],
+            ["Tennis"],
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow
          ),
@@ -305,17 +305,85 @@ public sealed class BroadcastParticipationCandidateResolverTests
       Assert.Equal("  - Daniela Holmqvist", text);
    }
 
+   [Fact]
+   public void CreateCandidatesTextFallsBackToSportMatches()
+   {
+      var candidates = new[]
+      {
+         CreateCandidate("Player 1", 30, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 2", 10, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 3", 20, "PDC / WDF Tournaments", "Darts")
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "U.S. Darts Masters",
+            null,
+            ["Darts"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal(
+         $"  - Player 2{Environment.NewLine}" +
+         "  - Player 3" +
+         $"{Environment.NewLine}  - Player 1",
+         text
+      );
+   }
+
+   [Fact]
+   public void CreateCandidatesTextCapsFallbackToFiveNames()
+   {
+      var candidates = new[]
+      {
+         CreateCandidate("Player 1", 10, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 2", 20, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 3", 30, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 4", 40, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 5", 50, "PDC / WDF Tournaments", "Darts"),
+         CreateCandidate("Player 6", 60, "PDC / WDF Tournaments", "Darts")
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "U.S. Darts Masters",
+            null,
+            ["Darts"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      var lines = text.Split(
+         Environment.NewLine,
+         StringSplitOptions.RemoveEmptyEntries
+      );
+
+      Assert.Equal(5, lines.Length);
+      Assert.Equal("  - Player 1", lines[0]);
+      Assert.Equal("  - Player 5", lines[^1]);
+   }
+
    private static EntityOption CreateCandidate(
       string name,
       int sortOrder,
-      string organization
+      string organization,
+      string sport = "Tennis"
    )
    {
       return new EntityOption(
          Guid.NewGuid(),
          name,
          TrackedEntityTypeIds.Person,
-         "Tennis",
+         sport,
          organization,
          sortOrder,
          null
