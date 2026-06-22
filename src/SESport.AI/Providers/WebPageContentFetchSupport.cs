@@ -104,7 +104,10 @@ internal static class WebPageContentFetchSupport
          return string.Empty;
       }
 
-      return text.Replace("\r", "\n", StringComparison.Ordinal).Trim();
+      var normalizedText = text.Replace("\r", "\n", StringComparison.Ordinal)
+         .Trim();
+
+      return CollapseAdjacentCountryNameDuplicates(normalizedText);
    }
 
    internal static string ApplyResponseCutoff(string text)
@@ -209,6 +212,14 @@ internal static class WebPageContentFetchSupport
       {
          return null;
       }
+   }
+
+   private static string CollapseAdjacentCountryNameDuplicates(string text)
+   {
+      return RepeatedCountryNameRegex.Value.Replace(
+         text,
+         match => match.Groups["country"].Value
+      );
    }
 
    internal static string? ExtractHtmlTitle(string html)
@@ -905,6 +916,28 @@ internal static class WebPageContentFetchSupport
          $"\"Chromium\";v=\"{majorVersion}\", " +
          $"\"Not A(Brand\";v=\"24\", \"Google Chrome\";v=\"{majorVersion}\"";
    }
+
+   private static Regex BuildRepeatedCountryNameRegex()
+   {
+      var countryNames = CountryNamesByCode.Values
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .OrderByDescending(name => name.Length)
+         .Select(Regex.Escape)
+         .ToArray();
+
+      var pattern =
+         $@"\b(?<country>{string.Join("|", countryNames)})\b" +
+         @"(?:\s+\k<country>\b)+";
+
+      return new Regex(
+         pattern,
+         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase |
+            RegexOptions.Compiled
+      );
+   }
+
+   private static readonly Lazy<Regex> RepeatedCountryNameRegex =
+      new(BuildRepeatedCountryNameRegex);
 
    private static async Task<string> BuildBrowserUserAgentAsync()
    {

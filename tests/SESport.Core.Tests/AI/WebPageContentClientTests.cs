@@ -505,6 +505,21 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void NormalizeTextCollapsesAdjacentCountryNameDuplicates()
+   {
+      Assert.Equal(
+         "Sweden",
+         WebPageContentFetchSupport.NormalizeText("Sweden Sweden")
+      );
+      Assert.Equal(
+         "South Africa",
+         WebPageContentFetchSupport.NormalizeText(
+            "South Africa\nSouth Africa"
+         )
+      );
+   }
+
+   [Fact]
    public void BuildBrowserUserAgentUsesBrowserMajorVersion()
    {
       var userAgent = WebPageContentClient.BuildBrowserUserAgent(
