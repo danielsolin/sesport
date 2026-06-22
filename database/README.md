@@ -15,6 +15,9 @@ variables, in this order:
 If no variables are set, the code falls back to the local defaults for
 `sesport` on `localhost:5432`.
 
+The helper scripts in `bin/` read these values from the repository-root
+`.env` file.
+
 To connect with `psql` after copying `.env.example` to `.env`, source the
 variables into your shell first, or pass them explicitly:
 
