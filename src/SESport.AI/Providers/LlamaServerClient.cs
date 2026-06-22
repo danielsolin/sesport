@@ -331,10 +331,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                      prompt.OutputSchemaJson
                   );
 
-               var toolTraceJson = toolTrace.Count == 0
-                  ? null
-                  : JsonSerializer.Serialize(toolTrace, JsonOptions);
-
                LogResponse("final", turn, responseJson);
                if(TryGetToolCalls(responseJson, out var finalToolCalls))
                {
@@ -342,18 +338,24 @@ public sealed class LlamaServerClient : IAiProviderClient
                      CreateAssistantTraceEntry(
                         turn,
                         responseJson,
-                        finalToolCalls
+                        finalToolCalls,
+                        validationStatus: "accepted"
                      )
                   );
                }
                else
                {
                   toolTrace.Add(
-                     CreateAssistantTraceEntry(turn, responseJson, [])
+                     CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        [],
+                        validationStatus: "accepted"
+                     )
                   );
                }
 
-               toolTraceJson = toolTrace.Count == 0
+               var toolTraceJson = toolTrace.Count == 0
                   ? null
                   : JsonSerializer.Serialize(toolTrace, JsonOptions);
 
@@ -382,6 +384,21 @@ public sealed class LlamaServerClient : IAiProviderClient
             )
             {
                structuredOutputRepairAttempts++;
+               toolTrace.Add(
+                  CreateAssistantTraceEntry(
+                     turn,
+                     responseJson,
+                     [],
+                     validationStatus: "rejected",
+                     validationError: exception.Message
+                  )
+               );
+               await ReportToolTraceProgressAsync(
+                  toolTrace,
+                  toolRoundCount,
+                  toolTraceUpdated,
+                  cancellationToken
+               );
                ApplyStructuredOutputRepairPrompt(messages);
                request = CreateFinalRequestPayload(
                   request,
@@ -817,7 +834,9 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static JsonObject CreateAssistantTraceEntry(
       int turn,
       JsonObject response,
-      IReadOnlyList<ToolCall> toolCalls
+      IReadOnlyList<ToolCall> toolCalls,
+      string? validationStatus = null,
+      string? validationError = null
    )
    {
       return new JsonObject
@@ -826,6 +845,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["turn"] = turn,
          ["finish_reason"] = GetFinishReason(response),
          ["content"] = NormalizeOutput(ExtractFinalText(response)),
+         ["validation_status"] = validationStatus,
+         ["validation_error"] = validationError,
          ["tool_calls"] = JsonSerializer.SerializeToNode(
             toolCalls.Select(toolCall => new
             {

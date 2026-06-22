@@ -754,8 +754,22 @@ public class AiProviderClientTests
       );
       Assert.NotNull(result.ToolTraceJson);
       Assert.Equal(
-         2,
+         3,
          CountOccurrences(result.ToolTraceJson!, "\"kind\":\"assistant\"")
+      );
+      Assert.Equal(
+         1,
+         CountOccurrences(
+            result.ToolTraceJson!,
+            "\"validation_status\":\"rejected\""
+         )
+      );
+      Assert.Equal(
+         1,
+         CountOccurrences(
+            result.ToolTraceJson!,
+            "\"validation_status\":\"accepted\""
+         )
       );
    }
 
