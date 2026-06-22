@@ -326,37 +326,11 @@ h2 {
    font-weight: 700;
 }
 
-.activity-time-summary-list {
-   display: grid;
-   gap: 6px;
-   margin-top: 4px;
-   margin-bottom: 12px;
-}
-
-.activity-time-summary {
+.activity-time-participants {
    padding-left: 4px;
-}
-
-.activity-time-summary-primary {
-   color: var(--accent-strong);
-   font-size: 12px;
-   font-weight: 800;
-   line-height: 1.25;
-}
-
-.activity-time-summary-entities {
    color: var(--text);
    font-size: 12px;
    font-weight: 600;
-   line-height: 1.25;
-   white-space: nowrap;
-}
-
-.activity-time-related {
-   padding-left: 4px;
-   color: var(--accent-strong);
-   font-size: 12px;
-   font-weight: 700;
    line-height: 1.25;
 }
 

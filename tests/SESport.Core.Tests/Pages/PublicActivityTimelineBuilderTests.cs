@@ -91,6 +91,37 @@ public class PublicActivityTimelineBuilderTests
       );
    }
 
+   [Fact]
+   public void Build_ShowsSeparateSectionsForSameStartTime()
+   {
+      var now = new DateTimeOffset(2026, 6, 12, 12, 0, 0, TimeSpan.Zero);
+      var selectedDate = SportDay.GetSportDate(now).AddDays(1);
+      var builder = new PublicActivityTimelineBuilder();
+      var sharedStart = now.AddHours(6);
+      var activities = new[]
+      {
+         CreateActivity("First", selectedDate, sharedStart),
+         CreateActivity("Second", selectedDate, sharedStart)
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+
+      Assert.Equal(2, timeline.TimelineEntries.Count);
+      Assert.Equal(
+         ["First", "Second"],
+         timeline.TimelineEntries.Select(entry =>
+            entry.Section!.Activities[0].Title)
+      );
+      Assert.All(
+         timeline.TimelineEntries,
+         entry => Assert.Single(entry.Section!.Activities)
+      );
+      Assert.Equal(
+         ["18:00", "18:00"],
+         timeline.TimelineEntries.Select(entry => entry.Section!.TimeLabel)
+      );
+   }
+
    private static ActivityListItem CreateActivity(
       string title,
       DateOnly activityDate,

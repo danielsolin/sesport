@@ -24,19 +24,15 @@ public sealed class PublicActivityTimelineBuilder
          .ToList();
 
       var timedSections = timedActivities
-         .GroupBy(activity => activity.TimeOnlyText)
-         .Select(group =>
-            new
-            {
-               Start = group
-                  .Select(activity => activity.StartsAt)
-                  .Where(startsAt => startsAt is not null)
-                  .Select(startsAt => startsAt!.Value)
-                  .DefaultIfEmpty(DateTimeOffset.MaxValue)
-                  .Min(),
-               Section = CreateSection(group)
-            })
+         .Select(activity => new
+         {
+            Start = activity.StartsAt ?? DateTimeOffset.MaxValue,
+            Activity = activity,
+            Section = CreateSection(activity)
+         })
          .OrderBy(item => item.Start)
+         .ThenBy(item => item.Activity.TimeText, StringComparer.Ordinal)
+         .ThenBy(item => item.Activity.Title, StringComparer.OrdinalIgnoreCase)
          .ToList();
 
       var timelineEntries = new List<PublicActivityTimelineEntry>();
@@ -89,21 +85,13 @@ public sealed class PublicActivityTimelineBuilder
    }
 
    private static ActivityAgendaSection CreateSection(
-      IGrouping<string, ActivityListItem> group
+      ActivityListItem activity
    )
    {
-      var relatedOrganization = string.Join(
-         ", ",
-         group.Select(activity =>
-            activity.RelatedOrganizationEntities)
-            .Where(summary => !string.IsNullOrWhiteSpace(summary))
-            .Distinct(StringComparer.Ordinal)
-      );
-
       return new ActivityAgendaSection(
-         group.Key,
-         group.ToList(),
-         relatedOrganization
+         activity.TimeOnlyText,
+         [activity],
+         activity.RelatedOrganizationEntities
       );
    }
 }
