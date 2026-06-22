@@ -9,5 +9,6 @@ public sealed record WebPageContent(
    bool HasBodyText,
    string MainTextFull = "",
    string? FetchErrorMessage = null,
-   WebPageFetchErrorKind? FetchErrorKind = null
+   WebPageFetchErrorKind? FetchErrorKind = null,
+   string? Fetcher = null
 );

@@ -23,7 +23,8 @@ internal static class WebPagePdfPageFetcher
                absoluteUrl,
                null,
                null,
-               "PDF response had no body."
+               "PDF response had no body.",
+               "pdf"
             );
          }
 
@@ -40,7 +41,8 @@ internal static class WebPagePdfPageFetcher
                   absoluteUrl
                ),
                fetchErrorKind: null,
-               fetchErrorMessage: "PDF response produced no text."
+               fetchErrorMessage: "PDF response produced no text.",
+               fetcher: "pdf"
             );
          }
 
@@ -53,7 +55,8 @@ internal static class WebPagePdfPageFetcher
             [],
             WebPageContentFetchSupport.ApplyResponseCutoff(text),
             true,
-            text
+            text,
+            Fetcher: "pdf"
          );
       }
       catch(OperationCanceledException)
@@ -66,7 +69,8 @@ internal static class WebPagePdfPageFetcher
             absoluteUrl,
             null,
             null,
-            "Unable to extract PDF response."
+            "Unable to extract PDF response.",
+            "pdf"
          );
       }
    }

@@ -221,7 +221,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      toolCall,
                      toolResult,
                      toolState.LastSearchProvider,
-                     toolState.LastSearchProviderDetails
+                     toolState.LastSearchProviderDetails,
+                     toolState.LastPageFetcher
                   )
                );
                await ReportToolTraceProgressAsync(
@@ -811,7 +812,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       ToolCall toolCall,
       string toolResult,
       string? searchProvider = null,
-      string? searchProviderDetails = null
+      string? searchProviderDetails = null,
+      string? pageFetcher = null
    )
    {
       var isSearchTool = string.Equals(
@@ -850,6 +852,9 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["search_provider"] = isSearchTool ? searchProvider : null,
          ["search_provider_details"] = isSearchTool
             ? searchProviderDetails
+            : null,
+         ["fetcher"] = isGetPageTool || isFindInPageTool
+            ? pageFetcher
             : null,
          ["result"] = toolResult
       };
@@ -1725,6 +1730,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          out var repeatedResult
       ))
       {
+         toolState.LastPageFetcher = TryGetCachedPageFetcher(
+            toolState,
+            pageTarget.Url
+         );
          return repeatedResult;
       }
 
@@ -1733,6 +1742,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          toolState,
          cancellationToken
       );
+      toolState.LastPageFetcher = pageContent?.Fetcher;
 
       string result;
 
@@ -1818,6 +1828,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          out var repeatedResult
       ))
       {
+         toolState.LastPageFetcher = TryGetCachedPageFetcher(
+            toolState,
+            pageTarget.Url
+         );
          return repeatedResult;
       }
 
@@ -1826,6 +1840,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          toolState,
          cancellationToken
       );
+      toolState.LastPageFetcher = pageContent?.Fetcher;
 
       string result;
 
@@ -1946,6 +1961,16 @@ public sealed class LlamaServerClient : IAiProviderClient
       );
       toolState.PageContentCache[url] = pageContent;
       return pageContent;
+   }
+
+   private static string? TryGetCachedPageFetcher(
+      ToolLoopState toolState,
+      string url
+   )
+   {
+      return toolState.PageContentCache.TryGetValue(url, out var cachedPage)
+         ? cachedPage?.Fetcher
+         : null;
    }
 
    private static List<PageMatch> FindPageMatches(
@@ -3037,6 +3062,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       public string? LastSearchProvider { get; set; }
 
       public string? LastSearchProviderDetails { get; set; }
+
+      public string? LastPageFetcher { get; set; }
 
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
          new(StringComparer.OrdinalIgnoreCase);

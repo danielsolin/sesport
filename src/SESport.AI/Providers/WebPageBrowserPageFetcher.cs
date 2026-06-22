@@ -111,7 +111,8 @@ internal static class WebPageBrowserPageFetcher
                normalizedText
             ),
             !string.IsNullOrWhiteSpace(visibleText),
-            normalizedText
+            normalizedText,
+            Fetcher: "browser"
          );
       }
       catch(OperationCanceledException)

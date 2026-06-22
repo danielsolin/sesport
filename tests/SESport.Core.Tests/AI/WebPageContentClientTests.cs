@@ -1,5 +1,6 @@
 using System.Net;
 
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 using SESport.AI.Providers;
 using UglyToad.PdfPig.Content;
@@ -286,6 +287,39 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task HtmlFetcherMarksReturnedContent()
+   {
+      var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new StringContent(
+            """
+            <html>
+               <head>
+                  <title>HTML Title</title>
+               </head>
+               <body>
+                  <main>
+                     <p>HTML body text.</p>
+                  </main>
+               </body>
+            </html>
+            """
+         )
+      };
+
+      var page = await WebPageHtmlPageFetcher.FetchAsync(
+         NullLogger.Instance,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         response,
+         new Uri("https://example.test/html"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal("html", page!.Fetcher);
+   }
+
+   [Fact]
    public async Task FetchExtractsTextFromPdfResponses()
    {
       var browserCalls = 0;
@@ -308,6 +342,24 @@ public class WebPageContentClientTests
       Assert.NotNull(page);
       Assert.Equal("Sample PDF Title", page!.Title);
       Assert.Contains("Hello from the PDF body.", page.MainText);
+   }
+
+   [Fact]
+   public async Task PdfFetcherMarksReturnedContent()
+   {
+      var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new ByteArrayContent(CreatePdfBytes())
+      };
+
+      var page = await WebPagePdfPageFetcher.FetchAsync(
+         response,
+         new Uri("https://example.test/sample.pdf"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal("pdf", page!.Fetcher);
    }
 
    [Fact]

@@ -62,7 +62,8 @@ internal static class WebPageHtmlPageFetcher
                absoluteUrl,
                title ?? absoluteUrlString,
                browserFailureKind,
-               "HTML fallback produced no text."
+               "HTML fallback produced no text.",
+               "html"
             );
          }
 
@@ -90,7 +91,8 @@ internal static class WebPageHtmlPageFetcher
             [],
             WebPageContentFetchSupport.ApplyResponseCutoff(text),
             true,
-            text
+            text,
+            Fetcher: "html"
          );
       }
       catch(OperationCanceledException)
@@ -103,7 +105,8 @@ internal static class WebPageHtmlPageFetcher
             absoluteUrl,
             null,
             browserFailureKind,
-            "Unable to extract HTML fallback."
+            "Unable to extract HTML fallback.",
+            "html"
          );
       }
    }
@@ -146,7 +149,8 @@ internal static class WebPageHtmlPageFetcher
          absoluteUrl,
          null,
          browserFailureKind,
-         fallbackFailureMessage
+         fallbackFailureMessage,
+         "curl"
       );
    }
 

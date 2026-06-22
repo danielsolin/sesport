@@ -283,6 +283,14 @@
                                              @toolResult.SearchProviderDetails
                                           </div>
                                        }
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          toolResult.Fetcher))
+                                       {
+                                          <div>
+                                             Fetcher:
+                                             @toolResult.Fetcher
+                                          </div>
+                                       }
                                        <pre class="prompt-details-pre">
 @toolResult.Result
                                        </pre>

@@ -125,7 +125,8 @@ internal static class WebPageCurlPageFetcher
             absoluteUrl,
             null,
             WebPageFetchErrorKind.BrowserBlocked,
-            "Curl fallback returned an unexpected response."
+            "Curl fallback returned an unexpected response.",
+            "curl"
          );
       }
 
@@ -142,7 +143,8 @@ internal static class WebPageCurlPageFetcher
             absoluteUrl,
             null,
             WebPageFetchErrorKind.BrowserBlocked,
-            $"Curl fallback returned HTTP {statusCode}."
+            $"Curl fallback returned HTTP {statusCode}.",
+            "curl"
          );
       }
 
@@ -156,7 +158,8 @@ internal static class WebPageCurlPageFetcher
             absoluteUrl,
             title,
             WebPageFetchErrorKind.BrowserBlocked,
-            "Curl fallback produced no text."
+            "Curl fallback produced no text.",
+            "curl"
          );
       }
 
@@ -166,7 +169,8 @@ internal static class WebPageCurlPageFetcher
             absoluteUrl,
             title,
             WebPageFetchErrorKind.BrowserBlocked,
-            "Curl fallback was blocked."
+            "Curl fallback was blocked.",
+            "curl"
          );
       }
 
@@ -177,7 +181,8 @@ internal static class WebPageCurlPageFetcher
          [],
          WebPageContentFetchSupport.ApplyResponseCutoff(text),
          true,
-         text
+         text,
+         Fetcher: "curl"
       );
    }
 
