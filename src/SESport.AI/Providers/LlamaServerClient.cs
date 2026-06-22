@@ -1738,19 +1738,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(pageContent is null)
       {
-         var fetchErrorMessage =
-            $"Unable to fetch page content from {pageTarget.Url}.";
-         result = FormatPageContentText(
-            pageTarget.ReferenceLabel,
-            pageTarget.ReferenceValue,
-            pageTarget.Title,
-            pageTarget.Url,
-            pageTarget.SearchSnippet,
-            null,
-            null,
-            null,
-            fetchErrorMessage
-         );
+         result = FormatFetchErrorText(pageTarget, null, null);
       }
       else
       {
@@ -1762,7 +1750,9 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageTarget.SearchSnippet,
             pageContent.PublishedAt,
             pageContent.Headings,
-            pageContent.MainText
+            pageContent.MainText,
+            pageContent.FetchErrorMessage,
+            pageContent.FetchErrorKind
          );
       }
 
@@ -1841,21 +1831,16 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(pageContent is null)
       {
-         var fetchErrorMessage =
-            $"Unable to fetch page content from {pageTarget.Url}.";
-         result = FormatPageContentText(
-            pageTarget.ReferenceLabel,
-            pageTarget.ReferenceValue,
-            pageTarget.Title,
-            pageTarget.Url,
-            pageTarget.SearchSnippet,
-            null,
-            null,
-            null,
-            fetchErrorMessage
+         result = FormatFetchErrorText(pageTarget, null, null);
+      }
+      else if(!string.IsNullOrWhiteSpace(pageContent.FetchErrorMessage))
+      {
+         result = FormatFetchErrorText(
+            pageTarget,
+            pageContent.FetchErrorMessage,
+            pageContent.FetchErrorKind
          );
       }
-
       else
       {
          var matches = FindPageMatches(pageContent, find);
@@ -2089,7 +2074,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       DateTimeOffset? publishedAt,
       IReadOnlyList<string>? headings,
       string? mainText,
-      string? fetchErrorMessage = null
+      string? fetchErrorMessage = null,
+      WebPageFetchErrorKind? fetchErrorKind = null
    )
    {
       var builder = new StringBuilder();
@@ -2127,7 +2113,17 @@ public sealed class LlamaServerClient : IAiProviderClient
       else if(!string.IsNullOrWhiteSpace(fetchErrorMessage))
       {
          builder.AppendLine("Fetch error:");
-         builder.AppendLine(fetchErrorMessage.Trim());
+         if(fetchErrorKind is not null)
+         {
+            builder.AppendLine(
+               $"{DescribeFetchErrorKind(fetchErrorKind)}: " +
+               fetchErrorMessage.Trim()
+            );
+         }
+         else
+         {
+            builder.AppendLine(fetchErrorMessage.Trim());
+         }
       }
       else if(headings is null || headings.Count == 0)
       {
@@ -2135,6 +2131,42 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return builder.ToString().Trim();
+   }
+
+   private static string FormatFetchErrorText(
+      PageTarget pageTarget,
+      string? fetchErrorMessage,
+      WebPageFetchErrorKind? fetchErrorKind
+   )
+   {
+      var message = string.IsNullOrWhiteSpace(fetchErrorMessage)
+         ? $"Unable to fetch page content from {pageTarget.Url}."
+         : fetchErrorMessage.Trim();
+
+      return FormatPageContentText(
+         pageTarget.ReferenceLabel,
+         pageTarget.ReferenceValue,
+         pageTarget.Title,
+         pageTarget.Url,
+         pageTarget.SearchSnippet,
+         null,
+         null,
+         null,
+         message,
+         fetchErrorKind
+      );
+   }
+
+   private static string DescribeFetchErrorKind(
+      WebPageFetchErrorKind? fetchErrorKind
+   )
+   {
+      return fetchErrorKind switch
+      {
+         WebPageFetchErrorKind.BrowserBlocked => "Browser blocked",
+         WebPageFetchErrorKind.Timeout => "Timeout",
+         _ => "Fetch error"
+      };
    }
 
    private static void TrimConversationMessages(JsonArray messages)

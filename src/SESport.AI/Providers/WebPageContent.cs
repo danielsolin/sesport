@@ -7,5 +7,7 @@ public sealed record WebPageContent(
    IReadOnlyList<string> Headings,
    string MainText,
    bool HasBodyText,
-   string MainTextFull = ""
+   string MainTextFull = "",
+   string? FetchErrorMessage = null,
+   WebPageFetchErrorKind? FetchErrorKind = null
 );

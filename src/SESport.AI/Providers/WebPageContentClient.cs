@@ -115,6 +115,20 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          return await browserPageFetcher(absoluteUrl, cancellationToken);
       }
+      catch(WebPageFetchException exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Playwright failed for {Url}; falling back to HTML.",
+            absoluteUrl
+         );
+         return await FetchHtmlFallbackAsync(
+            response,
+            absoluteUrl,
+            cancellationToken,
+            exception.ErrorKind
+         );
+      }
       catch(OperationCanceledException)
       {
          throw;
@@ -129,7 +143,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return await FetchHtmlFallbackAsync(
             response,
             absoluteUrl,
-            cancellationToken
+            cancellationToken,
+            WebPageFetchErrorKind.Timeout
          );
       }
       catch(PlaywrightException exception)
@@ -142,7 +157,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return await FetchHtmlFallbackAsync(
             response,
             absoluteUrl,
-            cancellationToken
+            cancellationToken,
+            WebPageFetchErrorKind.BrowserBlocked
          );
       }
    }
@@ -234,11 +250,17 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
       catch(TimeoutException)
       {
-         return null;
+         throw new WebPageFetchException(
+            WebPageFetchErrorKind.Timeout,
+            "Playwright timed out."
+         );
       }
       catch(PlaywrightException)
       {
-         return null;
+         throw new WebPageFetchException(
+            WebPageFetchErrorKind.BrowserBlocked,
+            "Playwright failed."
+         );
       }
    }
 
@@ -257,7 +279,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
          if(pdfBytes.Length == 0)
          {
-            return null;
+            return BuildFailureContent(
+               absoluteUrl,
+               null,
+               null,
+               "PDF response had no body."
+            );
          }
 
          using var pdfStream = new MemoryStream(pdfBytes);
@@ -266,7 +293,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
          if(string.IsNullOrWhiteSpace(text))
          {
-            return null;
+            return BuildFailureContent(
+               absoluteUrl,
+               title: ExtractPdfTitle(pdfDocument, absoluteUrl),
+               fetchErrorKind: null,
+               fetchErrorMessage: "PDF response produced no text."
+            );
          }
 
          var title = ExtractPdfTitle(pdfDocument, absoluteUrl);
@@ -286,14 +318,20 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
       catch(Exception)
       {
-         return null;
+         return BuildFailureContent(
+            absoluteUrl,
+            null,
+            null,
+            "Unable to extract PDF response."
+         );
       }
    }
 
    private async Task<WebPageContent?> FetchHtmlFallbackAsync(
       HttpResponseMessage response,
       Uri absoluteUrl,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      WebPageFetchErrorKind? browserFailureKind = null
    )
    {
       try
@@ -309,7 +347,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
                "HTML fallback had no body for {Url}.",
                absoluteUrl
             );
-            return null;
+            return BuildFailureContent(
+               absoluteUrl,
+               null,
+               browserFailureKind,
+               "HTML fallback had no body."
+            );
          }
 
          var title = ExtractHtmlTitle(html);
@@ -321,7 +364,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
                "HTML fallback produced no text for {Url}.",
                absoluteUrl
             );
-            return null;
+            return BuildFailureContent(
+               absoluteUrl,
+               title ?? absoluteUrlString,
+               browserFailureKind,
+               "HTML fallback produced no text."
+            );
          }
 
          logger.LogInformation(
@@ -345,8 +393,35 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
       catch(Exception)
       {
-         return null;
+         return BuildFailureContent(
+            absoluteUrl,
+            null,
+            browserFailureKind,
+            "Unable to extract HTML fallback."
+         );
       }
+   }
+
+   private static WebPageContent BuildFailureContent(
+      Uri absoluteUrl,
+      string? title,
+      WebPageFetchErrorKind? fetchErrorKind,
+      string fetchErrorMessage
+   )
+   {
+      var absoluteUrlString = absoluteUrl.ToString();
+
+      return new WebPageContent(
+         string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
+         absoluteUrlString,
+         null,
+         [],
+         string.Empty,
+         false,
+         string.Empty,
+         fetchErrorMessage,
+         fetchErrorKind
+      );
    }
 
    private static string? ExtractHtmlTitle(string html)
@@ -489,6 +564,20 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          return BrowserUserAgentFallback;
       }
+   }
+
+   private sealed class WebPageFetchException : Exception
+   {
+      public WebPageFetchException(
+         WebPageFetchErrorKind errorKind,
+         string message
+      )
+         : base(message)
+      {
+         ErrorKind = errorKind;
+      }
+
+      public WebPageFetchErrorKind ErrorKind { get; }
    }
 
    private static bool IsPdfResponse(

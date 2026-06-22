@@ -97,7 +97,7 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchReturnsNullWhenBrowserTimesOut()
+   public async Task FetchReturnsErrorContentWhenBrowserTimesOut()
    {
       var browserCalls = 0;
       var client = CreateClient(
@@ -115,7 +115,12 @@ public class WebPageContentClientTests
       );
 
       Assert.Equal(1, browserCalls);
-      Assert.Null(page);
+      Assert.NotNull(page);
+      Assert.Equal(WebPageFetchErrorKind.Timeout, page!.FetchErrorKind);
+      Assert.Equal(
+         "HTML fallback produced no text.",
+         page!.FetchErrorMessage
+      );
    }
 
    [Fact]
@@ -156,6 +161,37 @@ public class WebPageContentClientTests
       Assert.Equal("Fallback Title", page!.Title);
       Assert.Contains("Fallback heading", page.MainText);
       Assert.Contains("Fallback body text.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchReturnsErrorContentWhenFallbackHasNoBody()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(string.Empty)),
+         (_, _) =>
+         {
+            browserCalls++;
+            throw new PlaywrightException("Browser blocked");
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/fallback-error",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal(
+         WebPageFetchErrorKind.BrowserBlocked,
+         page!.FetchErrorKind
+      );
+      Assert.Equal(
+         "HTML fallback had no body.",
+         page!.FetchErrorMessage
+      );
+      Assert.False(page.HasBodyText);
    }
 
    [Fact]
