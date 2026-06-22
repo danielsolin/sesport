@@ -62,7 +62,8 @@ public sealed class ActivitySearchEntityRepository : IAsyncDisposable
          where
             @entity_id_or_name is null or
             e.id::text = @entity_id_or_name or
-            e.canonical_name ilike @entity_id_or_name
+            e.canonical_name ilike @entity_id_or_name or
+            e.alias_name ilike @entity_id_or_name
          order by
             case e.watch_priority_id
                when 'tier_1' then 1

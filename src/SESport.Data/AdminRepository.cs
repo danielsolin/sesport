@@ -998,7 +998,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CountryRelevanceReason = reader.GetString(6),
          WatchPriorityId = reader.GetString(7),
          ExpectedStabilityId = reader.GetString(8),
-         PersonGenderId = reader.IsDBNull(9) ? null : reader.GetString(9)
+         AliasName = reader.IsDBNull(9) ? null : reader.GetString(9),
+         PersonGenderId = reader.IsDBNull(10) ? null : reader.GetString(10)
       };
 
       await reader.DisposeAsync();
@@ -1057,7 +1058,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CountryRelevanceReason = reader.GetString(6),
          WatchPriorityId = reader.GetString(7),
          ExpectedStabilityId = reader.GetString(8),
-         PersonGenderId = reader.IsDBNull(9) ? null : reader.GetString(9)
+         AliasName = reader.IsDBNull(9) ? null : reader.GetString(9),
+         PersonGenderId = reader.IsDBNull(10) ? null : reader.GetString(10)
       };
 
       await reader.DisposeAsync();
@@ -1166,12 +1168,22 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       )
    {
       const string sql = $$"""
-         select
-            e.id,
-            e.canonical_name
-         from entities e
-         where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-         order by e.canonical_name
+         select id, name
+         from (
+            select
+               e.id,
+               e.canonical_name as name
+            from entities e
+            where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            union all
+            select
+               e.id,
+               e.alias_name as name
+            from entities e
+            where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+               and e.alias_name is not null
+         ) names
+         order by name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -1270,6 +1282,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_reason,
                watch_priority_id,
                expected_stability_id,
+               alias_name,
                person_gender_id
             from entities
             where id = @id
@@ -1285,6 +1298,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_reason,
                watch_priority_id,
                expected_stability_id,
+               alias_name,
                null::text as person_gender_id
             from entities
             where id = @id
@@ -1314,6 +1328,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_reason,
                watch_priority_id,
                expected_stability_id,
+               alias_name,
                person_gender_id
             )
             values (
@@ -1326,6 +1341,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @country_relevance_reason,
                @watch_priority_id,
                @expected_stability_id,
+               @alias_name,
                @person_gender_id
             )
             """
@@ -1339,7 +1355,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_kind_id,
                country_relevance_reason,
                watch_priority_id,
-               expected_stability_id
+               expected_stability_id,
+               alias_name
             )
             values (
                @id,
@@ -1350,7 +1367,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @country_relevance_kind_id,
                @country_relevance_reason,
                @watch_priority_id,
-               @expected_stability_id
+               @expected_stability_id,
+               @alias_name
             )
             """;
    }
@@ -1369,6 +1387,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_reason = @country_relevance_reason,
                watch_priority_id = @watch_priority_id,
                expected_stability_id = @expected_stability_id,
+               alias_name = @alias_name,
                person_gender_id = @person_gender_id,
                updated_at = now()
             where id = @id
@@ -1384,6 +1403,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_reason = @country_relevance_reason,
                watch_priority_id = @watch_priority_id,
                expected_stability_id = @expected_stability_id,
+               alias_name = @alias_name,
                updated_at = now()
             where id = @id
             """;
@@ -1491,9 +1511,29 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          model.ExpectedStabilityId
       );
       command.Parameters.AddWithValue(
+         "alias_name",
+         (object?)NormalizePersonAliasName(model) ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
          "person_gender_id",
          (object?)NormalizePersonGenderId(model) ?? DBNull.Value
       );
+   }
+
+   private static string? NormalizePersonAliasName(EntityEditModel model)
+   {
+      if(!string.Equals(
+         model.EntityTypeId,
+         TrackedEntityTypeIds.Person,
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return null;
+      }
+
+      return string.IsNullOrWhiteSpace(model.AliasName)
+         ? null
+         : model.AliasName.Trim();
    }
 
    private static string? NormalizePersonGenderId(EntityEditModel model)

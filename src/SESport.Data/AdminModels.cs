@@ -168,6 +168,8 @@ public sealed class EntityEditModel
 
    public string ExpectedStabilityId { get; set; } = string.Empty;
 
+   public string? AliasName { get; set; }
+
    public string? PersonGenderId { get; set; }
 
    public List<Guid> LinkedEntityIds { get; set; } = [];

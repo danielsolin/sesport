@@ -41,7 +41,22 @@ public static class BroadcastEntityFilter
 
          if(!entityByName.TryGetValue(normalizedName, out var entityId))
          {
-            continue;
+            var aliasMatch = personEntities
+               .Where(entity => !string.IsNullOrWhiteSpace(entity.AliasName))
+               .FirstOrDefault(entity =>
+                  string.Equals(
+                     NormalizeName(entity.AliasName!),
+                     normalizedName,
+                     StringComparison.OrdinalIgnoreCase
+                  )
+               );
+
+            if(aliasMatch is null)
+            {
+               continue;
+            }
+
+            entityId = aliasMatch.Id;
          }
 
          if(!matchedEntityIds.Contains(entityId))

@@ -309,14 +309,18 @@ public sealed class ActivityEditPageService(
 
    private static string FormatEntityLabel(BroadcastEntityOption entity)
    {
+      var name = string.IsNullOrWhiteSpace(entity.AliasName)
+         ? entity.Name
+         : $"{entity.Name} [aka {entity.AliasName}]";
+
       if(entity.Type == TrackedEntityTypeIds.Person &&
          !string.IsNullOrWhiteSpace(entity.Organization))
       {
-         return $"{entity.Name} ({FormatEntityTypeLabel(entity.Type)}/" +
+         return $"{name} ({FormatEntityTypeLabel(entity.Type)}/" +
             $"{entity.Sport}/{entity.Organization})";
       }
 
-      return $"{entity.Name} ({FormatEntityTypeLabel(entity.Type)}/" +
+      return $"{name} ({FormatEntityTypeLabel(entity.Type)}/" +
          $"{entity.Sport})";
    }
 
@@ -340,7 +344,8 @@ public sealed class ActivityEditPageService(
          entity.Name,
          entity.Type,
          entity.Sport,
-         entity.Organization
+         entity.Organization,
+         entity.AliasName
       );
    }
 }

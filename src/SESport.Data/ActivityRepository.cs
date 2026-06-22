@@ -194,7 +194,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             s.name,
             coalesce(org.organization_names, ''),
             p.sort_order,
-            e.person_gender_id
+            e.person_gender_id,
+            e.alias_name
          from entities e
          join sports s
             on s.id = e.sport_id
@@ -243,7 +244,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(3),
                reader.GetString(4),
                reader.GetInt32(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6)
+               reader.IsDBNull(6) ? null : reader.GetString(6),
+               reader.IsDBNull(7) ? null : reader.GetString(7)
             )
          );
       }

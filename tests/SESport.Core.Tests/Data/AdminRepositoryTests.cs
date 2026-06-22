@@ -1,6 +1,7 @@
 using Npgsql;
 
 using SESport.Core.Configuration;
+using SESport.Core.Domain;
 using SESport.Data;
 
 namespace SESport.Core.Tests.Data;
@@ -29,6 +30,37 @@ public sealed class AdminRepositoryTests
             option =>
                option.Id == entityId &&
                option.Name == entityName
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
+   public async Task GetPersonEntityNameOptionsAsyncReturnsAliasName()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Test Person {entityId:N}";
+      var aliasName = $"Alias Person {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, entityId, entityName, aliasName);
+
+      try
+      {
+         var options = await repository.GetPersonEntityNameOptionsAsync(
+            CancellationToken.None
+         );
+
+         Assert.Contains(
+            options,
+            option =>
+               option.Id == entityId &&
+               option.Name == aliasName
          );
       }
       finally
@@ -127,6 +159,53 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task SaveEntityAsyncPersistsAliasName()
+   {
+      var entityKey = Guid.NewGuid();
+      var entityName = $"Alias Entity {entityKey:N}";
+      var aliasName = $"Alias {entityKey:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      var model = new EntityEditModel
+      {
+         Id = null,
+         CanonicalName = entityName,
+         AliasName = aliasName,
+         EntityTypeId = TrackedEntityTypeIds.Person,
+         SportId = "football",
+         CountryId = "se",
+         CountryRelevanceKindId =
+            "NationalityOrSportingIdentity",
+         CountryRelevanceReason = "Test coverage",
+         WatchPriorityId = "review",
+         ExpectedStabilityId = "short_term",
+         PersonGenderId = PersonGenderIds.Female
+      };
+
+      try
+      {
+         await repository.SaveEntityAsync(model, CancellationToken.None);
+
+         var loaded = await repository.GetEntityForEditAsync(
+            model.Id!.Value,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(loaded);
+         Assert.Equal(aliasName, loaded!.AliasName);
+      }
+      finally
+      {
+         if(model.Id is not null)
+         {
+            await DeleteEntityAsync(dataSource, model.Id.Value);
+         }
+      }
+   }
+
+   [Fact]
    public async Task SaveBroadcastIgnoreRuleAsyncPersistsRule()
    {
       var ruleKind = "channel_name";
@@ -201,7 +280,8 @@ public sealed class AdminRepositoryTests
    private static async Task InsertEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId,
-      string entityName
+      string entityName,
+      string? aliasName = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -216,7 +296,8 @@ public sealed class AdminRepositoryTests
             country_relevance_kind_id,
             country_relevance_reason,
             watch_priority_id,
-            expected_stability_id
+            expected_stability_id,
+            alias_name
          )
          values (
             @id,
@@ -227,11 +308,16 @@ public sealed class AdminRepositoryTests
             'NationalityOrSportingIdentity',
             'Test coverage',
             'review',
-            'short_term'
+            'short_term',
+            @alias_name
          )
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue(
+         "alias_name",
+         (object?)aliasName ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
    }

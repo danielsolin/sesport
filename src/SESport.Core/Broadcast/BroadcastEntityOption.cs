@@ -5,5 +5,6 @@ public sealed record BroadcastEntityOption(
    string Name,
    string Type,
    string Sport,
-   string Organization
+   string Organization,
+   string? AliasName = null
 );

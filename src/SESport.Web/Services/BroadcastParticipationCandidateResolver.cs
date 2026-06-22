@@ -56,6 +56,9 @@ public static class BroadcastParticipationCandidateResolver
    )
    {
       var nameMatch = MatchValue(normalizedTitle, candidate.Name);
+      var aliasMatch = string.IsNullOrWhiteSpace(candidate.AliasName)
+         ? null
+         : MatchValue(normalizedTitle, candidate.AliasName);
       var organizationMatch = candidate.Organization
          .Split(
             ',',
@@ -68,14 +71,19 @@ public static class BroadcastParticipationCandidateResolver
          .OrderByDescending(match => match.Score)
          .FirstOrDefault();
 
-      if(nameMatch is null && organizationMatch is null)
+      if(nameMatch is null &&
+         aliasMatch is null &&
+         organizationMatch is null)
       {
          return null;
       }
 
       var score = Math.Max(
          nameMatch?.Score ?? 0,
-         organizationMatch?.Score ?? 0
+         Math.Max(
+            aliasMatch?.Score ?? 0,
+            organizationMatch?.Score ?? 0
+         )
       );
 
       return new CandidateMatch(

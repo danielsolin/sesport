@@ -28,6 +28,11 @@
             <span asp-validation-for="Entity.CanonicalName"></span>
          </label>
          <label>
+            <span>Alias name</span>
+            <input asp-for="Entity.AliasName" />
+            <span asp-validation-for="Entity.AliasName"></span>
+         </label>
+         <label>
             <span>Entity type</span>
             <select asp-for="Entity.EntityTypeId">
                <option value="">Select entity type</option>

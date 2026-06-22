@@ -38,7 +38,8 @@ public sealed record EntityOption(
    string Sport,
    string Organization,
    int WatchPrioritySortOrder,
-   string? PersonGenderId
+   string? PersonGenderId,
+   string? AliasName = null
 );
 
 public sealed record LookupOption(string Id, string Label);

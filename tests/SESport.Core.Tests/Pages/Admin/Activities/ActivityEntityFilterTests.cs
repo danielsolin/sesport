@@ -72,4 +72,28 @@ public sealed class ActivityEntityFilterTests
 
       Assert.Equal([linneaId], matched);
    }
+
+   [Fact]
+   public void MatchPersonEntityIdsMatchesAliasName()
+   {
+      var entityId = Guid.NewGuid();
+      var entities = new[]
+      {
+         new BroadcastEntityOption(
+            entityId,
+            "Daniela Holmqvist",
+            TrackedEntityTypeIds.Person,
+            "Golf",
+            "",
+            "Dani Holmqvist"
+         )
+      };
+
+      var matched = BroadcastEntityFilter.MatchPersonEntityIds(
+         entities,
+         ["Dani Holmqvist"]
+      );
+
+      Assert.Equal([entityId], matched);
+   }
 }

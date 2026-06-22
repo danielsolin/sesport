@@ -272,6 +272,39 @@ public sealed class BroadcastParticipationCandidateResolverTests
       Assert.Equal(6, lines.Length);
    }
 
+   [Fact]
+   public void CreateCandidatesTextMatchesAliasName()
+   {
+      var candidates = new[]
+      {
+         new EntityOption(
+            Guid.NewGuid(),
+            "Daniela Holmqvist",
+            TrackedEntityTypeIds.Person,
+            "Golf",
+            "LPGA Tour",
+            10,
+            PersonGenderIds.Female,
+            "Dani Holmqvist"
+         )
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Dani Holmqvist at the LPGA",
+            null,
+            ["Golf"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal("  - Daniela Holmqvist", text);
+   }
+
    private static EntityOption CreateCandidate(
       string name,
       int sortOrder,

@@ -176,6 +176,19 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
+      if (!string.IsNullOrWhiteSpace(Entity.AliasName) &&
+         !string.Equals(
+            Entity.EntityTypeId,
+            "Person",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         ModelState.AddModelError(
+            "Entity.AliasName",
+            "Alias name is only valid for person entities."
+         );
+      }
+
       if (string.IsNullOrWhiteSpace(Entity.CountryId))
       {
          ModelState.AddModelError(
