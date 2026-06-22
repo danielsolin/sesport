@@ -9,6 +9,10 @@ public class WebPageContentClientLiveTests
       "meijer-lpga-classic-for-simply-give/entries";
 
    private static readonly Uri LiveTestUri = new(LiveTestUrl);
+   private static readonly Uri ProtectedLiveTestUri = new(
+      "https://www.europeantour.com/dpworld-tour/" +
+      "open-d-italia-2026/entry-list"
+   );
 
    [Fact]
    public async Task FetchLpgaEntriesPageDoesNotContainLayoutNoise()
@@ -22,7 +26,7 @@ public class WebPageContentClientLiveTests
       var client = new WebPageContentClient(httpClient);
 
       var page = await client.FetchAsync(
-         LiveTestUrl,
+         LiveTestUri.ToString(),
          CancellationToken.None
       );
 
@@ -32,6 +36,28 @@ public class WebPageContentClientLiveTests
       Assert.Contains("SWE", page.MainText);
       Assert.DoesNotContain("0PX", page.MainText);
       Assert.DoesNotContain("SKIP TO MAIN CONTENT", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchEuropeanTourEntryListPageIsNotAccessDenied()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         ProtectedLiveTestUri.ToString(),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.NotEqual("Access Denied", page!.Title);
+      Assert.DoesNotContain("Access Denied", page.MainText);
+      Assert.Contains("Entry List", page.Title);
    }
 
    private static bool ShouldRunLiveTest()

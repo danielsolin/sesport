@@ -11,11 +11,17 @@ namespace SESport.Core.Tests.AI;
 
 public class WebPageContentClientTests
 {
+   private static readonly Func<Task<string>> BrowserUserAgentProvider =
+      () => Task.FromResult(
+         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+         "(KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+      );
+
    [Fact]
    public async Task FetchReturnsBrowserContent()
    {
       var browserCalls = 0;
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(new HtmlRecordingHandler()),
          (_, _) =>
          {
@@ -50,7 +56,7 @@ public class WebPageContentClientTests
    public async Task FetchReturnsNullForInvalidUrl()
    {
       var browserCalls = 0;
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(),
          (_, _) =>
          {
@@ -72,7 +78,7 @@ public class WebPageContentClientTests
    public async Task FetchReturnsNullWhenBrowserReturnsNull()
    {
       var browserCalls = 0;
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(new HtmlRecordingHandler()),
          (_, _) =>
          {
@@ -94,7 +100,7 @@ public class WebPageContentClientTests
    public async Task FetchReturnsNullWhenBrowserTimesOut()
    {
       var browserCalls = 0;
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(new HtmlRecordingHandler()),
          (_, _) =>
          {
@@ -131,7 +137,7 @@ public class WebPageContentClientTests
          </html>
          """
       );
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(handler),
          (_, _) =>
          {
@@ -157,7 +163,7 @@ public class WebPageContentClientTests
    {
       var browserCalls = 0;
       var handler = new PdfRecordingHandler(CreatePdfBytes());
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(handler),
          (_, _) =>
          {
@@ -181,7 +187,7 @@ public class WebPageContentClientTests
    public async Task FetchPreservesPdfLineBreaks()
    {
       var handler = new PdfRecordingHandler(CreateMultiLinePdfBytes());
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(handler),
          (_, _) =>
          {
@@ -204,7 +210,7 @@ public class WebPageContentClientTests
    public async Task FetchPassesHtmlUrlToBrowserFetcher()
    {
       Uri? seenUrl = null;
-      var client = new WebPageContentClient(
+      var client = CreateClient(
          new HttpClient(new HtmlRecordingHandler()),
          (url, _) =>
          {
@@ -233,6 +239,70 @@ public class WebPageContentClientTests
       Assert.NotNull(page);
       Assert.Equal("HTML Title", page!.Title);
       Assert.Contains("HTML body text.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchSendsBrowserLikeHeaders()
+   {
+      HttpRequestMessage? seenRequest = null;
+      var client = CreateClient(
+         new HttpClient(new RecordingHandler(request =>
+         {
+            seenRequest = request;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+               Content = new StringContent("<html></html>")
+            };
+         })),
+         (_, _) =>
+         {
+            return Task.FromResult<WebPageContent?>(null);
+         }
+      );
+
+      await client.FetchAsync(
+         "https://example.test/article",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(seenRequest);
+      Assert.NotNull(seenRequest!.Headers.Accept);
+      Assert.Contains(
+         seenRequest.Headers.Accept,
+         value => string.Equals(
+            value.MediaType,
+            "text/html",
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+      Assert.True(
+         seenRequest.Headers.TryGetValues("Accept-Language", out var languages)
+      );
+      Assert.Contains("en-US", languages);
+      Assert.Contains("en; q=0.9", languages);
+      Assert.True(
+         seenRequest.Headers.TryGetValues(
+            "Upgrade-Insecure-Requests",
+            out var upgrades
+         )
+      );
+      Assert.Contains("1", upgrades);
+      Assert.Contains(
+         "Chrome/143.0.0.0",
+         seenRequest.Headers.UserAgent.ToString()
+      );
+   }
+
+   [Fact]
+   public void BuildBrowserUserAgentUsesBrowserMajorVersion()
+   {
+      var userAgent = WebPageContentClient.BuildBrowserUserAgent(
+         "HeadlessChrome/143.0.7499.0"
+      );
+
+      Assert.StartsWith("Mozilla/5.0", userAgent);
+      Assert.Contains("Chrome/143.0.0.0", userAgent);
+      Assert.EndsWith("Safari/537.36", userAgent);
    }
 
    [Fact]
@@ -350,5 +420,39 @@ public class WebPageContentClientTests
 
          return Task.FromResult(response);
       }
+   }
+
+   private sealed class RecordingHandler : HttpMessageHandler
+   {
+      private readonly Func<HttpRequestMessage, HttpResponseMessage> respond;
+
+      public RecordingHandler(
+         Func<HttpRequestMessage, HttpResponseMessage> respond
+      )
+      {
+         this.respond = respond;
+      }
+
+      protected override Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult(respond(request));
+      }
+   }
+
+   private static WebPageContentClient CreateClient(
+      HttpClient httpClient,
+      Func<Uri, CancellationToken, Task<WebPageContent?>>? browserFetcher =
+         null
+   )
+   {
+      return new WebPageContentClient(
+         httpClient,
+         browserFetcher,
+         null,
+         BrowserUserAgentProvider
+      );
    }
 }

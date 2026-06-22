@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,9 +15,29 @@ namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
-   private const string BrowserUserAgent =
+   private const string BrowserUserAgentFallback =
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
       "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+   private const string BrowserAcceptHeader =
+      "text/html,application/xhtml+xml,application/xml;q=0.9," +
+      "image/avif,image/webp,*/*;q=0.8";
+   private const string BrowserAcceptLanguageHeader = "en-US,en;q=0.9";
+   private const string BrowserLocale = "en-US";
+   private const string BrowserPlatform = "Linux";
+   private const string AutomationEvasionScript = """
+      Object.defineProperty(navigator, 'webdriver', {
+         get: () => undefined
+      });
+      Object.defineProperty(navigator, 'languages', {
+         get: () => ['en-US', 'en']
+      });
+      Object.defineProperty(navigator, 'platform', {
+         get: () => 'Linux x86_64'
+      });
+      Object.defineProperty(navigator, 'vendor', {
+         get: () => 'Google Inc.'
+      });
+      """;
    internal const string CutoffMarker = "[CUTOFF]";
    internal const int MaxResponseCharacters = 12000;
    private static readonly TimeSpan BrowserNavigationTimeout =
@@ -27,27 +48,33 @@ public sealed class WebPageContentClient : IWebPageContentClient
       CountryNamesByCode = BuildCountryNamesByCode();
    private static readonly IReadOnlyDictionary<string, string>
       CountryNamesByThreeLetterCode = BuildCountryNamesByThreeLetterCode();
+   private static readonly Lazy<Task<string>> BrowserUserAgentTask =
+      new(BuildBrowserUserAgentAsync);
    private readonly HttpClient httpClient;
    private readonly ILogger<WebPageContentClient> logger;
+   private readonly Func<Task<string>> browserUserAgentFetcher;
    private readonly Func<Uri, CancellationToken, Task<WebPageContent?>>
       browserPageFetcher;
 
    [ActivatorUtilitiesConstructor]
    public WebPageContentClient(HttpClient httpClient)
-      : this(httpClient, null, null)
+      : this(httpClient, null, null, null)
    {
    }
 
    public WebPageContentClient(
       HttpClient httpClient,
       Func<Uri, CancellationToken, Task<WebPageContent?>>? browserPageFetcher,
-      ILogger<WebPageContentClient>? logger = null
+      ILogger<WebPageContentClient>? logger = null,
+      Func<Task<string>>? browserUserAgentFetcher = null
    )
    {
       this.httpClient = httpClient;
       this.logger = logger ??
          Microsoft.Extensions.Logging.Abstractions.NullLogger<
             WebPageContentClient>.Instance;
+      this.browserUserAgentFetcher = browserUserAgentFetcher ??
+         GetBrowserUserAgentAsync;
       this.browserPageFetcher = browserPageFetcher ?? FetchBrowserPageAsync;
    }
 
@@ -62,9 +89,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return null;
       }
 
+      var browserUserAgent = await this.browserUserAgentFetcher();
       using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
-      request.Headers.Accept.ParseAdd("text/html,application/xhtml+xml");
-      request.Headers.TryAddWithoutValidation("User-Agent", BrowserUserAgent);
+      request.Headers.Accept.ParseAdd(BrowserAcceptHeader);
+      AddBrowserLikeHeaders(request.Headers, browserUserAgent);
+      request.Headers.TryAddWithoutValidation("User-Agent", browserUserAgent);
       using var response = await httpClient.SendAsync(
          request,
          cancellationToken
@@ -111,13 +140,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
    }
 
-   private static async Task<WebPageContent?> FetchBrowserPageAsync(
+   private async Task<WebPageContent?> FetchBrowserPageAsync(
       Uri absoluteUrl,
       CancellationToken cancellationToken
    )
    {
       try
       {
+         var browserUserAgent = await this.browserUserAgentFetcher();
          using var playwright = await Playwright.CreateAsync();
          await using var browser = await playwright.Chromium.LaunchAsync(
             new BrowserTypeLaunchOptions
@@ -129,7 +159,9 @@ public sealed class WebPageContentClient : IWebPageContentClient
          await using var context = await browser.NewContextAsync(
             new BrowserNewContextOptions
             {
-               UserAgent = BrowserUserAgent,
+               UserAgent = browserUserAgent,
+               Locale = BrowserLocale,
+               ExtraHTTPHeaders = BuildBrowserLikeHeaders(browserUserAgent),
                ViewportSize = new ViewportSize
                {
                   Width = 1440,
@@ -137,6 +169,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
                }
             }
          );
+
+         await context.AddInitScriptAsync(AutomationEvasionScript);
 
          await using var page = await context.NewPageAsync();
          await page.GotoAsync(
@@ -354,6 +388,120 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static string StripTags(string value)
    {
       return Regex.Replace(value, @"<[^>]+>", " ");
+   }
+
+   private static void AddBrowserLikeHeaders(
+      HttpRequestHeaders headers,
+      string browserUserAgent
+   )
+   {
+      headers.TryAddWithoutValidation(
+         "Accept-Language",
+         BrowserAcceptLanguageHeader
+      );
+      headers.TryAddWithoutValidation(
+         "Upgrade-Insecure-Requests",
+         "1"
+      );
+      headers.TryAddWithoutValidation(
+         "Sec-CH-UA",
+         BuildSecChUaHeader(browserUserAgent)
+      );
+      headers.TryAddWithoutValidation("Sec-CH-UA-Mobile", "?0");
+      headers.TryAddWithoutValidation(
+         "Sec-CH-UA-Platform",
+         $"\"{BrowserPlatform}\""
+      );
+   }
+
+   internal static string BuildBrowserUserAgent(string browserVersion)
+   {
+      var majorVersionMatch = Regex.Match(
+         browserVersion,
+         @"\b(\d+)",
+         RegexOptions.CultureInvariant
+      );
+
+      if(!majorVersionMatch.Success ||
+         !int.TryParse(
+            majorVersionMatch.Groups[1].Value,
+            out var majorVersion
+         ) ||
+         majorVersion <= 0)
+      {
+         return BrowserUserAgentFallback;
+      }
+
+      return
+         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+         $"(KHTML, like Gecko) Chrome/{majorVersion}.0.0.0 Safari/537.36";
+   }
+
+   private static async Task<string> GetBrowserUserAgentAsync()
+   {
+      try
+      {
+         return await BrowserUserAgentTask.Value;
+      }
+      catch
+      {
+         return BrowserUserAgentFallback;
+      }
+   }
+
+   private static IReadOnlyDictionary<string, string>
+      BuildBrowserLikeHeaders(string browserUserAgent)
+   {
+      return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+      {
+         ["Accept"] = BrowserAcceptHeader,
+         ["Accept-Language"] = BrowserAcceptLanguageHeader,
+         ["Upgrade-Insecure-Requests"] = "1",
+         ["Sec-CH-UA"] = BuildSecChUaHeader(browserUserAgent),
+         ["Sec-CH-UA-Mobile"] = "?0",
+         ["Sec-CH-UA-Platform"] = $"\"{BrowserPlatform}\""
+      };
+   }
+
+   private static string BuildSecChUaHeader(string browserUserAgent)
+   {
+      var majorVersionMatch = Regex.Match(
+         browserUserAgent,
+         @"Chrome/(\d+)",
+         RegexOptions.CultureInvariant
+      );
+
+      var majorVersion = majorVersionMatch.Success &&
+         int.TryParse(
+            majorVersionMatch.Groups[1].Value,
+            out var parsedMajorVersion
+         )
+         ? parsedMajorVersion
+         : 125;
+
+      return
+         $"\"Chromium\";v=\"{majorVersion}\", " +
+         $"\"Not A(Brand\";v=\"24\", \"Google Chrome\";v=\"{majorVersion}\"";
+   }
+
+   private static async Task<string> BuildBrowserUserAgentAsync()
+   {
+      try
+      {
+         using var playwright = await Playwright.CreateAsync();
+         await using var browser = await playwright.Chromium.LaunchAsync(
+            new BrowserTypeLaunchOptions
+            {
+               Headless = true
+            }
+         );
+
+         return BuildBrowserUserAgent(browser.Version);
+      }
+      catch
+      {
+         return BrowserUserAgentFallback;
+      }
    }
 
    private static bool IsPdfResponse(
