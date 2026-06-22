@@ -235,7 +235,7 @@ h2 {
 
 .activity-agenda {
    display: grid;
-   gap: 14px;
+   gap: 24px;
    width: min(974px, 100%);
    margin-left: auto;
    margin-right: auto;
