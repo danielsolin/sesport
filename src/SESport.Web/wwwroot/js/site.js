@@ -5,6 +5,8 @@
    const checkboxToggleSelector = "[data-checkbox-toggle]";
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
    const entityNameFilterSelector = "[data-entity-name-filter]";
+   const entityTypeSelectSelector = "[data-entity-type-select]";
+   const personGenderFieldSelector = "[data-person-gender-field]";
    const entityInlineEditUrlSelector = "[data-entity-inline-edit-url]";
    const entityInlineEditCellSelector =
       "[data-entity-inline-edit-field]";
@@ -53,6 +55,7 @@
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
    initializeEntityNameFilters();
+   initializePersonGenderVisibility();
    initializeGetFormRestoration();
    initializeDateSelect();
    initializeEntityInlineEditing();
@@ -309,6 +312,37 @@
          };
 
          field.addEventListener("input", update);
+         update();
+      });
+   }
+
+   function initializePersonGenderVisibility(root = document)
+   {
+      root.querySelectorAll(entityTypeSelectSelector).forEach(select => {
+         if(!(select instanceof HTMLSelectElement)
+            || select.dataset.personGenderVisibilityInitialized === "true")
+         {
+            return;
+         }
+
+         const form = select.closest("form");
+         const genderField = form?.querySelector(personGenderFieldSelector);
+
+         if(!(genderField instanceof HTMLElement))
+         {
+            return;
+         }
+
+         select.dataset.personGenderVisibilityInitialized = "true";
+
+         const update = () => {
+            genderField.style.display =
+               select.value.trim().toLowerCase() === "person"
+                  ? ""
+                  : "none";
+         };
+
+         select.addEventListener("change", update);
          update();
       });
    }

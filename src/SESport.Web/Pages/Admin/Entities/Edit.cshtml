@@ -2,6 +2,11 @@
 @model SESport.Web.Pages.Admin.Entities.EditModel
 @{
    ViewData["Title"] = Model.Entity.Id is null ? "New Entity" : "Edit Entity";
+   var isPersonEntity = string.Equals(
+      Model.Entity.EntityTypeId,
+      "Person",
+      StringComparison.OrdinalIgnoreCase
+   );
 }
 
 <section class="page-heading page-heading-row">
@@ -78,11 +83,7 @@
             <span asp-validation-for="Entity.ExpectedStabilityId"></span>
          </label>
          <label data-person-gender-field
-                hidden="@(string.Equals(
-                  Model.Entity.EntityTypeId,
-                  "Person",
-                  StringComparison.OrdinalIgnoreCase
-               ) ? null : "hidden")">
+                style="@(isPersonEntity ? "" : "display: none;")">
             <span>Person gender</span>
             <select asp-for="Entity.PersonGenderId">
                <option value="">Select gender</option>
@@ -156,30 +157,3 @@
       <button class="button button-primary" type="submit">Save</button>
    </section>
 </form>
-
-@section Scripts {
-   <script>
-      (() => {
-         const typeSelect = document.querySelector(
-            "[data-entity-type-select]"
-         );
-         const genderField = document.querySelector(
-            "[data-person-gender-field]"
-         );
-
-         if(!(typeSelect instanceof HTMLSelectElement)
-            || !(genderField instanceof HTMLElement))
-         {
-            return;
-         }
-
-         const updateGenderField = () => {
-            genderField.hidden =
-               typeSelect.value.trim().toLowerCase() !== "person";
-         };
-
-         typeSelect.addEventListener("change", updateGenderField);
-         updateGenderField();
-      })();
-   </script>
-}
