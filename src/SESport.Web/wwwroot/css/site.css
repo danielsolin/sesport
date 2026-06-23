@@ -1335,42 +1335,28 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    min-width: 0;
 }
 
-.broadcast-ai-check-runs > summary {
+.broadcast-ai-check-runs-head th {
    width: 100%;
-   display: flex;
-   align-items: center;
-   justify-content: space-between;
-   gap: 12px;
-   padding: 0;
+   padding: 0 0 8px;
    border: 0;
    background: transparent;
-   color: var(--accent-strong);
-   list-style: none;
-   cursor: pointer;
-   font: inherit;
-   font-size: 12px;
-   font-weight: 800;
-   line-height: 1.2;
-}
-
-.broadcast-ai-check-runs > summary::-webkit-details-marker {
-   display: none;
-}
-
-.broadcast-ai-check-runs > summary::after {
-   content: "+";
-   flex: 0 0 auto;
-   color: var(--muted);
-   font-size: 14px;
-   line-height: 1;
-}
-
-.broadcast-ai-check-runs[open] > summary::after {
-   content: "−";
 }
 
 .broadcast-ai-check-runs-body {
    width: 100%;
+}
+
+.broadcast-ai-check-runs-summary-bar {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+   width: 100%;
+   color: var(--accent-strong);
+   font: inherit;
+   font-size: 12px;
+   font-weight: 800;
+   line-height: 1.2;
 }
 
 .broadcast-ai-check-runs-summary-text {
@@ -1378,18 +1364,16 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    overflow-wrap: anywhere;
 }
 
-.broadcast-ai-check-runs[open] .broadcast-ai-check-runs-summary-text {
-   visibility: hidden;
+.broadcast-ai-check-runs-summary-actions {
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+   margin-left: auto;
 }
 
-.broadcast-ai-check-runs-summary-count {
-   flex: 0 0 auto;
-   color: var(--muted);
+.broadcast-ai-check-toggle {
+   min-height: 28px;
    font-size: 12px;
-}
-
-.broadcast-ai-check-runs[open] .broadcast-ai-check-runs-summary-count {
-   visibility: hidden;
 }
 
 .broadcast-participation-main-row > td {

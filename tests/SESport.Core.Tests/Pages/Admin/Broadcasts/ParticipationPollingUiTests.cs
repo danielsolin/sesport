@@ -10,7 +10,7 @@ public sealed class ParticipationPollingUiTests
       );
       var htmlPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/Pages/Admin/Broadcasts/Index.cshtml"
+         "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastParticipationRuns.cshtml"
       );
       var scriptPath = Path.Combine(
          repoRoot,
@@ -19,8 +19,10 @@ public sealed class ParticipationPollingUiTests
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
 
-      Assert.Contains("data-participation-run-id", html);
-      Assert.Contains("data-ajax-success=\"remove\"", html);
+      Assert.Contains("data-check-participation-row", html);
+      Assert.Contains("data-participation-runs-toggle", html);
+      Assert.Contains("broadcast-ai-check-runs-head", html);
+      Assert.DoesNotContain("broadcast-ai-check-retry", html);
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);

@@ -17,6 +17,8 @@
    const generateTeaserSelector = "[data-generate-teaser]";
    const checkParticipationRowSelector =
       "[data-check-participation-row]";
+   const participationRunsToggleSelector =
+      "[data-participation-runs-toggle]";
    const participationCellSelector = "[data-participation-cell]";
    const participantCreateUrlSelector = "[data-create-participant-url]";
    const participationStatusUrlSelector =
@@ -423,10 +425,19 @@
             return;
          }
 
-         const button = target.closest(checkParticipationRowSelector);
+         const button = target.closest(
+            `${checkParticipationRowSelector},${participationRunsToggleSelector}`
+         );
 
          if(!(button instanceof HTMLButtonElement))
          {
+            return;
+         }
+
+         event.preventDefault();
+         if(button.hasAttribute("data-participation-runs-toggle"))
+         {
+            toggleParticipationRuns(button);
             return;
          }
 
@@ -880,7 +891,7 @@
    {
       const url = button.dataset.checkParticipationUrl;
       const broadcastId = button.dataset.broadcastId;
-      const cell = button.closest(participationCellSelector);
+      const cell = getParticipationCellForButton(button);
       const previousRunId = getParticipationRunId(cell);
       let keepPolling = false;
 
@@ -955,6 +966,46 @@
       }
    }
 
+   function getParticipationCellForButton(button)
+   {
+      if(!(button instanceof HTMLButtonElement))
+      {
+         return null;
+      }
+
+      const directCell = button.closest(participationCellSelector);
+
+      if(directCell instanceof HTMLElement)
+      {
+         return directCell;
+      }
+
+      const broadcastId = (button.dataset.broadcastId ?? "").trim();
+
+      if(broadcastId === "")
+      {
+         return null;
+      }
+
+      const mainRow = button.closest("tr[data-broadcast-row='true']");
+
+      if(!(mainRow instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const runsRow = mainRow.nextElementSibling;
+
+      if(!(runsRow instanceof HTMLElement)
+         || !runsRow.matches(".broadcast-participation-runs-row")
+         || runsRow.dataset.broadcastId !== broadcastId)
+      {
+         return null;
+      }
+
+      return runsRow.querySelector(participationCellSelector);
+   }
+
    async function postParticipationCheckAsync(url, selectedIds)
    {
       const formData = new URLSearchParams();
@@ -1016,9 +1067,10 @@
       const pendingCheck = normalizeParticipationCheckResult({
          statusId: "pending"
       });
-      const { wrapper, body } = createParticipationRunsShell([
-         pendingCheck
-      ]);
+      const { wrapper, body } = createParticipationRunsShell(
+         cell,
+         [pendingCheck]
+      );
       body.append(createParticipationRunBlock(cell, pendingCheck));
 
       cell.dataset.participationStatus = "pending";
@@ -2017,6 +2069,7 @@
       if(checks.length === 0)
       {
          const { wrapper, body } = createParticipationRunsShell(
+            cell,
             checks,
             isOpen
          );
@@ -2026,6 +2079,7 @@
       }
 
       const { wrapper, body } = createParticipationRunsShell(
+         cell,
          checks,
          isOpen
       );
@@ -2127,15 +2181,28 @@
    }
 
    function createParticipationRunsShell(
+      cell,
       checks,
       isOpen = false
    )
    {
-      const wrapper = document.createElement("details");
+      const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check-runs";
-      wrapper.open = isOpen;
+      wrapper.dataset.participationRunsOpen = String(isOpen);
 
-      const summary = document.createElement("summary");
+      const table = document.createElement("table");
+      table.className = "broadcast-ai-check-runs-table";
+      table.dataset.participationRunsOpen = String(isOpen);
+
+      const head = document.createElement("thead");
+      head.className = "broadcast-ai-check-runs-head";
+      const headRow = document.createElement("tr");
+      const headCell = document.createElement("th");
+      headCell.colSpan = 6;
+
+      const headerBar = document.createElement("div");
+      headerBar.className = "broadcast-ai-check-runs-summary-bar";
+
       const summaryCheck = selectParticipationSummaryCheck(checks);
       const summaryText = document.createElement("span");
       summaryText.className = [
@@ -2144,26 +2211,67 @@
       ].filter(value => value !== "").join(" ");
       summaryText.textContent = summaryCheck?.summaryText
          ?? "Not checked yet";
-      summary.append(summaryText);
+      headerBar.append(summaryText);
 
-      if(checks.length > 1)
+      const actions = document.createElement("div");
+      actions.className = "broadcast-ai-check-runs-summary-actions";
+
+      const checkButton = createParticipationActionButton(cell, "Check");
+
+      if(checkButton)
       {
-         const summaryCount = document.createElement("span");
-         summaryCount.className = "broadcast-ai-check-runs-summary-count";
-         summaryCount.textContent = `+${checks.length - 1} more`;
-         summary.append(summaryCount);
+         actions.append(checkButton);
       }
 
-      const table = document.createElement("table");
-      table.className = "broadcast-ai-check-runs-table";
+      const toggleButton = document.createElement("button");
+      toggleButton.className = "button broadcast-ai-check-toggle";
+      toggleButton.type = "button";
+      toggleButton.dataset.participationRunsToggle = "true";
+      toggleButton.setAttribute("aria-expanded", String(isOpen));
+      toggleButton.textContent = isOpen ? "Hide" : "Show";
+      actions.append(toggleButton);
+
+      headerBar.append(actions);
+      headCell.append(headerBar);
+      headRow.append(headCell);
+      head.append(headRow);
 
       const body = document.createElement("tbody");
       body.className = "broadcast-ai-check-runs-body";
+      body.hidden = !isOpen;
 
-      table.append(body);
-      wrapper.append(summary, table);
+      table.append(head, body);
+      wrapper.append(table);
 
       return { wrapper, body };
+   }
+
+   function toggleParticipationRuns(toggleButton)
+   {
+      if(!(toggleButton instanceof HTMLButtonElement))
+      {
+         return;
+      }
+
+      const table = toggleButton.closest(".broadcast-ai-check-runs-table");
+
+      if(!(table instanceof HTMLTableElement))
+      {
+         return;
+      }
+
+      const body = table.querySelector(".broadcast-ai-check-runs-body");
+
+      if(!(body instanceof HTMLElement))
+      {
+         return;
+      }
+
+      body.hidden = !body.hidden;
+      const isOpen = !body.hidden;
+      table.dataset.participationRunsOpen = String(isOpen);
+      toggleButton.setAttribute("aria-expanded", String(isOpen));
+      toggleButton.textContent = isOpen ? "Hide" : "Show";
    }
 
    function getParticipationSummaryBadgeClass(check)
@@ -2241,11 +2349,9 @@
          return false;
       }
 
-      const details = cell.querySelector(".broadcast-ai-check-runs");
+      const body = cell.querySelector(".broadcast-ai-check-runs-body");
 
-      return details instanceof HTMLDetailsElement
-         ? details.open
-         : false;
+      return body instanceof HTMLElement ? !body.hidden : false;
    }
 
    function createParticipationEmptyRunBlock(cell)
@@ -2340,17 +2446,6 @@
          error.textContent = check.error;
          summaryCell.append(line, error);
 
-         const retryButton = createParticipationActionButton(
-            cell,
-            "Retry",
-            "broadcast-ai-check-retry"
-         );
-
-         if(retryButton)
-         {
-            actionCell.append(retryButton);
-         }
-
          const runLink = createParticipationRunLink(check.runId);
 
          if(runLink)
@@ -2418,14 +2513,14 @@
             }
          }
 
+         summaryCell.append(line);
+
          const runLink = createParticipationRunLink(check.runId);
 
          if(runLink)
          {
-            line.append(runLink);
+            viewRunCell.append(runLink);
          }
-
-         summaryCell.append(line);
 
          const activityLink = createParticipationActivityLink(
             cell,
@@ -2458,17 +2553,6 @@
       };
 
       summaryCell.append(createParticipationSummaryLine(cell, result));
-
-      const retryButton = createParticipationActionButton(
-         cell,
-         "Retry",
-         "broadcast-ai-check-retry"
-      );
-
-      if(retryButton)
-      {
-         actionCell.append(retryButton);
-      }
 
       const runLink = createParticipationRunLink(check.runId);
 
@@ -2620,6 +2704,7 @@
          statusId: "pending"
       });
       const { wrapper, body } = createParticipationRunsShell(
+         cell,
          [pendingCheck],
          isOpen
       );
@@ -2850,13 +2935,6 @@
          line.append(runLink);
       }
 
-      const retryButton = createParticipationRetryButton(cell);
-
-      if(retryButton)
-      {
-         line.append(retryButton);
-      }
-
       const error = document.createElement("span");
       error.className = "broadcast-ai-check-error";
       error.textContent = errorMessage;
@@ -2871,33 +2949,6 @@
       }
 
       return wrapper;
-   }
-
-   function createParticipationRetryButton(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return null;
-      }
-
-      const url = cell.dataset.checkParticipationUrl;
-      const broadcastId = cell.dataset.broadcastId;
-
-      if(!url || !broadcastId)
-      {
-         return null;
-      }
-
-      const button = document.createElement("button");
-      button.className =
-         "button broadcast-ai-check-action broadcast-ai-check-retry";
-      button.type = "button";
-      button.textContent = "Retry";
-      button.dataset.checkParticipationRow = "true";
-      button.dataset.checkParticipationUrl = url;
-      button.dataset.broadcastId = broadcastId;
-
-      return button;
    }
 
    function createParticipationRunLink(runId)
