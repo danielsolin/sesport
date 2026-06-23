@@ -951,7 +951,7 @@
             error: message,
             runId: null,
             swedishParticipation: null,
-            swedishParticipants: [],
+            participants: [],
             sourceUrls: []
          });
       }
@@ -2150,6 +2150,12 @@
             ? check.error.trim()
             : "";
 
+      const participants = Array.isArray(check.participants)
+         ? check.participants
+         : Array.isArray(check.Participants)
+            ? check.Participants
+            : [];
+
       return {
          runId,
          statusId,
@@ -2160,12 +2166,7 @@
             typeof check.swedishParticipation === "string"
                ? check.swedishParticipation.trim()
                : "",
-         swedishParticipants: Array.isArray(check.swedishParticipants)
-            ? check.swedishParticipants
-               .filter(participant =>
-                  typeof participant === "string"
-                     && participant.trim() !== "")
-            : [],
+         participants,
          sourceUrls: Array.isArray(check.sourceUrls)
             ? check.sourceUrls
                .filter(url => typeof url === "string" && url.trim() !== "")
@@ -2372,9 +2373,6 @@
       const summaryCell = document.createElement("td");
       summaryCell.className = "broadcast-ai-check-summary-cell";
 
-      const viewRunCell = document.createElement("td");
-      viewRunCell.className = "broadcast-ai-check-view-run-cell";
-
       const participantsCell = document.createElement("td");
       participantsCell.className = "broadcast-ai-check-participants-cell";
 
@@ -2398,7 +2396,6 @@
 
       row.append(
          summaryCell,
-         viewRunCell,
          participantsCell,
          sourcesCell,
          activityCell
@@ -2414,9 +2411,6 @@
 
       const summaryCell = document.createElement("td");
       summaryCell.className = "broadcast-ai-check-summary-cell";
-
-      const viewRunCell = document.createElement("td");
-      viewRunCell.className = "broadcast-ai-check-view-run-cell";
 
       const participantsCell = document.createElement("td");
       participantsCell.className = "broadcast-ai-check-participants-cell";
@@ -2442,21 +2436,12 @@
          error.textContent = check.error;
          summaryCell.append(line, error);
 
-         const runLink = createParticipationRunLink(check.runId);
-
-         if(runLink)
+         if(check.participants.length > 0)
          {
-            viewRunCell.append(runLink);
+            participantsCell.append(
+               createParticipationParticipantsBlock(check.participants)
+            );
          }
-
-      if(check.swedishParticipants.length > 0)
-      {
-         participantsCell.append(
-            createParticipationParticipantsBlock(
-               check.swedishParticipants
-            )
-         );
-      }
 
          const sources =
             createParticipationSourcesBlock(check.sourceUrls, check.runId);
@@ -2478,7 +2463,6 @@
 
          row.append(
             summaryCell,
-            viewRunCell,
             participantsCell,
             sourcesCell,
             activityCell
@@ -2511,21 +2495,12 @@
 
          summaryCell.append(line);
 
-         const runLink = createParticipationRunLink(check.runId);
-
-         if(runLink)
+         if(check.participants.length > 0)
          {
-            viewRunCell.append(runLink);
+            participantsCell.append(
+               createParticipationParticipantsBlock(check.participants)
+            );
          }
-
-      if(check.swedishParticipants.length > 0)
-      {
-         participantsCell.append(
-            createParticipationParticipantsBlock(
-               check.swedishParticipants
-            )
-         );
-      }
 
          const activityLink = createParticipationActivityLink(
             cell,
@@ -2539,7 +2514,6 @@
 
          row.append(
             summaryCell,
-            viewRunCell,
             participantsCell,
             sourcesCell,
             activityCell
@@ -2552,18 +2526,11 @@
          statusId: check.statusId,
          toolRoundCount: check.toolRoundCount,
          swedishParticipation: check.swedishParticipation,
-         swedishParticipants: check.swedishParticipants,
+         participants: check.participants,
          sourceUrls: check.sourceUrls
       };
 
       summaryCell.append(createParticipationSummaryLine(cell, result));
-
-      const runLink = createParticipationRunLink(check.runId);
-
-      if(runLink)
-      {
-         viewRunCell.append(runLink);
-      }
 
       const sources =
          createParticipationSourcesBlock(check.sourceUrls, check.runId);
@@ -2583,16 +2550,15 @@
          activityCell.append(activityLink);
       }
 
-      if(check.swedishParticipants.length > 0)
+      if(check.participants.length > 0)
       {
          participantsCell.append(
-            createParticipationParticipantsBlock(check.swedishParticipants)
+            createParticipationParticipantsBlock(check.participants)
          );
       }
 
       row.append(
          summaryCell,
-         viewRunCell,
          participantsCell,
          sourcesCell,
          activityCell
@@ -2806,9 +2772,17 @@
       link.rel = "noreferrer noopener";
       link.textContent = "Create Activity";
 
+      const runLink = createParticipationRunLink(runId);
+
       const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check-activity-link";
+      wrapper.className = "broadcast-ai-check-activity-links";
       wrapper.append(link);
+
+      if(runLink)
+      {
+         wrapper.append(runLink);
+      }
+
       return wrapper;
    }
 
@@ -2969,7 +2943,7 @@
       link.href = `/Admin/Runs/Details/${encodeURIComponent(runId)}`;
       link.target = "_blank";
       link.rel = "noreferrer noopener";
-      link.textContent = "View run";
+      link.textContent = "View Run";
       return link;
    }
 

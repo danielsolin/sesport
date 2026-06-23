@@ -55,7 +55,7 @@
    <table class="broadcast-ai-check-runs-table">
       <thead class="broadcast-ai-check-runs-head">
          <tr>
-            <th colspan="5">
+            <th colspan="4">
                <div class="broadcast-ai-check-runs-summary-bar">
                   <span class="broadcast-ai-check-runs-summary-text
                      @summaryBadgeClass">
@@ -93,17 +93,18 @@
                         Not checked yet
                      </span>
                   </td>
-                  <td class="broadcast-ai-check-view-run-cell"></td>
                   <td class="broadcast-ai-check-participants-cell"></td>
                   <td class="broadcast-ai-check-sources-cell"></td>
                   <td class="broadcast-ai-check-activity-cell">
                      @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
                      {
-                        <a href="@baseActivityUrl"
-                           target="_blank"
-                           rel="noreferrer noopener">
-                           Create Activity
-                        </a>
+                        <div class="broadcast-ai-check-activity-links">
+                           <a href="@baseActivityUrl"
+                              target="_blank"
+                              rel="noreferrer noopener">
+                              Create Activity
+                           </a>
+                        </div>
                      }
                   </td>
                </tr>
@@ -149,20 +150,6 @@
                               @check.BadgeText
                            </span>
                         </div>
-                     }
-                  </td>
-                  <td class="broadcast-ai-check-view-run-cell">
-                     @if(check.RunId != Guid.Empty)
-                     {
-                        <a asp-page="/Admin/Runs/Details"
-                           asp-route-id="@check.RunId"
-                           asp-route-jobId=
-                              "decide-swedish-participation"
-                           target="_blank"
-                           rel="noreferrer noopener"
-                           data-run-link="true">
-                           View run
-                        </a>
                      }
                   </td>
                   <td class="broadcast-ai-check-participants-cell">
@@ -250,14 +237,32 @@
                            )
                         );
                      }
-                     @if(!string.IsNullOrWhiteSpace(activityUrl))
+                     @if(!string.IsNullOrWhiteSpace(activityUrl)
+                        || check.RunId != Guid.Empty)
                      {
-                        <div class="broadcast-ai-check-activity-link">
-                           <a href="@activityUrl"
-                              target="_blank"
-                              rel="noreferrer noopener">
-                              Create Activity
-                           </a>
+                        <div class="broadcast-ai-check-activity-links">
+                           @if(!string.IsNullOrWhiteSpace(activityUrl))
+                           {
+                              <div class="broadcast-ai-check-activity-link">
+                                 <a href="@activityUrl"
+                                    target="_blank"
+                                    rel="noreferrer noopener">
+                                    Create Activity
+                                 </a>
+                              </div>
+                           }
+                           @if(check.RunId != Guid.Empty)
+                           {
+                              <a asp-page="/Admin/Runs/Details"
+                                 asp-route-id="@check.RunId"
+                                 asp-route-jobId=
+                                    "decide-swedish-participation"
+                                 target="_blank"
+                                 rel="noreferrer noopener"
+                                 data-run-link="true">
+                                 View Run
+                              </a>
+                           }
                         </div>
                      }
                   </td>
