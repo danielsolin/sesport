@@ -149,17 +149,17 @@
                      }
                      <tr data-participation-status=
                             "@broadcast.ParticipationCheck?.StatusId">
-                        <td class="se-no-bottom-border">
+                        <td>
                            <div class="ses-nowrap">
                               @broadcast.ChannelName
                            </div>
                         </td>
-                        <td class="se-no-bottom-border">
+                        <td>
                            <strong class="ses-nowrap">
                               @broadcast.TimeOnlyText
                            </strong>
                         </td>
-                        <td class="broadcast-inline-editable se-no-bottom-border"
+                        <td class="broadcast-inline-editable"
                             data-broadcast-id="@broadcast.Id"
                             data-broadcast-inline-edit-field="title"
                             data-broadcast-inline-edit-value=
@@ -196,7 +196,7 @@
                                   aria-label="Edit broadcast title"
                                   hidden />
                         </td>
-                        <td class="broadcast-inline-editable se-no-bottom-border"
+                        <td class="broadcast-inline-editable"
                             data-broadcast-id="@broadcast.Id"
                             data-broadcast-inline-edit-field="categories"
                             data-broadcast-inline-edit-value=
@@ -534,7 +534,7 @@
                                  </details>
                               }
                            </td>
-                        <td class="table-actions se-no-bottom-border">
+                           <td class="table-actions">
                            <div class="table-actions-stack">
                               <a class="broadcast-activity-link"
                                  asp-page="/Admin/Activities/Edit"
