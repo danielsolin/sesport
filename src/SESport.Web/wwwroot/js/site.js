@@ -2213,15 +2213,31 @@
       const normalizedStatusId = typeof statusId === "string"
          ? statusId.trim().toLowerCase()
          : "";
+      const broadcastId = typeof cell.dataset.broadcastId === "string"
+         ? cell.dataset.broadcastId.trim()
+         : "";
+      const mainRow = broadcastId === ""
+         ? null
+         : document.querySelector(
+            `tr[data-broadcast-row='true'][data-broadcast-id='${broadcastId}']`
+         );
 
       if(normalizedStatusId === "running"
          || normalizedStatusId === "pending")
       {
          row.dataset.participationStatus = normalizedStatusId;
+         if(mainRow instanceof HTMLElement && mainRow !== row)
+         {
+            mainRow.dataset.participationStatus = normalizedStatusId;
+         }
       }
       else
       {
          delete row.dataset.participationStatus;
+         if(mainRow instanceof HTMLElement && mainRow !== row)
+         {
+            delete mainRow.dataset.participationStatus;
+         }
       }
    }
 
