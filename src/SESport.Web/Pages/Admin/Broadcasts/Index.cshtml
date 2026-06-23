@@ -146,7 +146,7 @@
                      {
                         airDate = broadcast.OriginalAirDate.Value;
                      }
-                     var activityUrl = Url.Page(
+                     var activityUrlBase = Url.Page(
                         "/Admin/Activities/Edit",
                         Model.GetActivityRouteValues(broadcast.Id)
                      );
@@ -291,7 +291,7 @@
                                   "@broadcast.ParticipationCheck?.StatusId"
                                data-check-participation-url=
                                   "@checkParticipationUrl"
-                               data-activity-url="@activityUrl">
+                               data-activity-url-base="@activityUrlBase">
                               @await Html.PartialAsync(
                                  "_BroadcastParticipationRuns",
                                  new SESport.Web.Pages.Admin.Broadcasts.
@@ -300,7 +300,6 @@
                                        checkParticipationUrl ?? string.Empty,
                                        createParticipantEntityUrl ??
                                           string.Empty,
-                                       activityUrl ?? string.Empty,
                                        Model
                                     )
                               )

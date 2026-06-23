@@ -99,14 +99,23 @@ public class IndexModel(
    }
 
    public Dictionary<string, string?> GetActivityRouteValues(
-      Guid broadcastId
+      Guid broadcastId,
+      Guid? participationRunId = null
    )
    {
-      return new Dictionary<string, string?>
+      var routeValues = new Dictionary<string, string?>
       {
          [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
          [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
       };
+
+      if(participationRunId is not null && participationRunId != Guid.Empty)
+      {
+         routeValues[RouteKeys.ParticipationRunId] =
+            participationRunId.Value.ToString();
+      }
+
+      return routeValues;
    }
 
    public IReadOnlyList<BroadcastParticipantDisplayItem>

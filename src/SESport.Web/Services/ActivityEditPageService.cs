@@ -78,6 +78,7 @@ public sealed class ActivityEditPageService(
    public async Task PrefillFromBroadcastsAsync(
       ActivityEditModel activity,
       IReadOnlyCollection<Guid> ids,
+      Guid? participationRunId,
       CancellationToken cancellationToken
    )
    {
@@ -103,6 +104,7 @@ public sealed class ActivityEditPageService(
       var participationCheck =
          await participationService.GetParticipationCheckAsync(
             firstBroadcast.Id,
+            participationRunId,
             cancellationToken
          );
       var selectableEntities = participationCheck is null

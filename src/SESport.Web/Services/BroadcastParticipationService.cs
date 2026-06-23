@@ -22,6 +22,7 @@ public sealed class BroadcastParticipationService(
    public async Task<BroadcastParticipationCheck?>
       GetParticipationCheckAsync(
          Guid broadcastId,
+         Guid? runId,
          CancellationToken cancellationToken
       )
    {
@@ -30,10 +31,20 @@ public sealed class BroadcastParticipationService(
          cancellationToken
       );
 
-      return checks.TryGetValue(broadcastId, out var participationChecks)
-         && participationChecks.Count > 0
-         ? participationChecks[0]
-         : null;
+      if(!checks.TryGetValue(broadcastId, out var participationChecks)
+         || participationChecks.Count == 0)
+      {
+         return null;
+      }
+
+      if(runId is null || runId == Guid.Empty)
+      {
+         return participationChecks[0];
+      }
+
+      return participationChecks.FirstOrDefault(check =>
+         check.RunId == runId.Value)
+         ?? participationChecks[0];
    }
 
    public async Task<IReadOnlyList<BroadcastListItem>>

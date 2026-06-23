@@ -1,6 +1,10 @@
 @model SESport.Web.Pages.Admin.Broadcasts.BroadcastParticipationRunsViewModel
 @{
    var broadcast = Model.Broadcast;
+   var baseActivityUrl = Url.Page(
+      "/Admin/Activities/Edit",
+      Model.PageModel.GetActivityRouteValues(broadcast.Id)
+   );
    var participationChecks = broadcast.ParticipationChecks.Count > 0
       ? broadcast.ParticipationChecks
       : broadcast.ParticipationCheck is null
@@ -45,9 +49,11 @@
                <td class="broadcast-ai-check-participants-cell"></td>
                <td class="broadcast-ai-check-sources-cell"></td>
                <td class="broadcast-ai-check-activity-cell">
-                  @if(!string.IsNullOrWhiteSpace(Model.ActivityUrl))
+                  @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
                   {
-                     <a href="@Model.ActivityUrl">Activity</a>
+                     <a href="@baseActivityUrl">
+                        Activity
+                     </a>
                   }
                </td>
             </tr>
@@ -198,9 +204,18 @@
                      }
                   </td>
                   <td class="broadcast-ai-check-activity-cell">
-                     @if(!string.IsNullOrWhiteSpace(Model.ActivityUrl))
+                     @{
+                        var activityUrl = Url.Page(
+                           "/Admin/Activities/Edit",
+                           Model.PageModel.GetActivityRouteValues(
+                              broadcast.Id,
+                              check.RunId
+                           )
+                        );
+                     }
+                     @if(!string.IsNullOrWhiteSpace(activityUrl))
                      {
-                        <a href="@Model.ActivityUrl">Activity</a>
+                        <a href="@activityUrl">Activity</a>
                      }
                   </td>
                </tr>

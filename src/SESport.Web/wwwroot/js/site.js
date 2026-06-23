@@ -2240,7 +2240,10 @@
             sourcesCell.append(sources);
          }
 
-         const activityLink = createParticipationActivityLink(cell);
+         const activityLink = createParticipationActivityLink(
+            cell,
+            check.runId
+         );
 
          if(activityLink)
          {
@@ -2290,7 +2293,10 @@
 
          summaryCell.append(line);
 
-         const activityLink = createParticipationActivityLink(cell);
+         const activityLink = createParticipationActivityLink(
+            cell,
+            check.runId
+         );
 
          if(activityLink)
          {
@@ -2352,7 +2358,10 @@
          sourcesCell.append(sources);
       }
 
-      const activityLink = createParticipationActivityLink(cell);
+      const activityLink = createParticipationActivityLink(
+         cell,
+         check.runId
+      );
 
       if(activityLink)
       {
@@ -2540,24 +2549,37 @@
       return button;
    }
 
-   function createParticipationActivityLink(cell)
+   function createParticipationActivityLink(cell, runId = "")
    {
       if(!(cell instanceof HTMLElement))
       {
          return null;
       }
 
-      const activityUrl = typeof cell.dataset.activityUrl === "string"
-         ? cell.dataset.activityUrl.trim()
+      const activityUrlBase = typeof cell.dataset.activityUrlBase === "string"
+         ? cell.dataset.activityUrlBase.trim()
          : "";
 
-      if(activityUrl === "")
+      if(activityUrlBase === "")
       {
          return null;
       }
 
+      const url = new URL(activityUrlBase, window.location.origin);
+      const normalizedRunId = typeof runId === "string"
+         ? runId.trim()
+         : "";
+
+      if(normalizedRunId !== "")
+      {
+         url.searchParams.set(
+            "participationRunId",
+            normalizedRunId
+         );
+      }
+
       const link = document.createElement("a");
-      link.href = activityUrl;
+      link.href = `${url.pathname}${url.search}${url.hash}`;
       link.textContent = "Activity";
       return link;
    }

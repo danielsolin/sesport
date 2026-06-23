@@ -25,6 +25,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
       List<Guid>? broadcastIds,
+      Guid? participationRunId,
       string? returnUrl,
       CancellationToken cancellationToken
    )
@@ -36,6 +37,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
          await editService.PrefillFromBroadcastsAsync(
             Activity,
             broadcastIds ?? [],
+            participationRunId,
             cancellationToken
          );
          await LoadEntitiesAsync(

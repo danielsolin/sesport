@@ -7,6 +7,5 @@ public sealed record BroadcastParticipationRunsViewModel(
    BroadcastListItem Broadcast,
    string CheckParticipationUrl,
    string CreateParticipantEntityUrl,
-   string ActivityUrl,
    IndexModel PageModel
 );
