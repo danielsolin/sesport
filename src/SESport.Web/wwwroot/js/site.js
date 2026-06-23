@@ -104,6 +104,7 @@
 
             if(target)
             {
+               removeBroadcastRunRowIfNeeded(target);
                target.remove();
             }
          }
@@ -162,6 +163,34 @@
       }
 
       counter.textContent = Math.max(0, currentValue - 1).toString();
+   }
+
+   function removeBroadcastRunRowIfNeeded(target)
+   {
+      if(!(target instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const broadcastId = typeof target.dataset.broadcastId === "string"
+         ? target.dataset.broadcastId.trim()
+         : "";
+
+      if(broadcastId === "" || !target.matches(".broadcast-participation-main-row"))
+      {
+         return;
+      }
+
+      const nextRow = target.nextElementSibling;
+
+      if(!(nextRow instanceof HTMLElement)
+         || !nextRow.matches(".broadcast-participation-runs-row")
+         || nextRow.dataset.broadcastId !== broadcastId)
+      {
+         return;
+      }
+
+      nextRow.remove();
    }
 
    function initializeCheckboxToggles(root = document)
