@@ -31,14 +31,6 @@ public sealed record BroadcastParticipationCheck(
       }
    }
 
-   public string ParticipantsPreviewNames
-   {
-      get
-      {
-         return string.Join(", ", Participants);
-      }
-   }
-
    public string SummaryText =>
       !string.IsNullOrWhiteSpace(ErrorMessage)
          ? ErrorMessage

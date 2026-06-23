@@ -9,7 +9,6 @@ using SESport.Data;
 namespace SESport.Web.Services;
 
 public sealed class BroadcastParticipationService(
-   AdminRepository adminRepository,
    ActivityRepository activityRepository,
    AiRepository aiRepository,
    BroadcastRepository broadcastRepository,
@@ -146,15 +145,6 @@ public sealed class BroadcastParticipationService(
          return [];
       }
 
-      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
-         cancellationToken
-      );
-      var entityByName = entityOptions
-         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-         .GroupBy(entity =>
-            BroadcastEntityFilter.NormalizeName(entity.Name))
-         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-         .ToDictionary(group => group.Key, group => group.First().Id);
       var results = new List<BroadcastParticipationCheckResult>();
 
       foreach(var broadcast in broadcasts)
@@ -169,11 +159,6 @@ public sealed class BroadcastParticipationService(
          }
 
          var participationCheck = participationChecks[0];
-         var participantItems = ResolveParticipantItems(
-            participationCheck.Participants,
-            entityByName
-         );
-
          results.Add(
             new BroadcastParticipationCheckResult(
                broadcast.Id,
@@ -184,8 +169,6 @@ public sealed class BroadcastParticipationService(
                broadcast.Title,
                participationCheck.ErrorMessage,
                participationCheck.Participation,
-               participationCheck.Participants,
-               participantItems,
                participationCheck.SourceUrls,
                participationChecks
             )
@@ -225,63 +208,6 @@ public sealed class BroadcastParticipationService(
          .ToList();
    }
 
-   private static IReadOnlyList<BroadcastParticipantDisplayItem>
-      ResolveParticipantItems(
-         IReadOnlyList<string> participantNames,
-         IReadOnlyDictionary<string, Guid> entityByName
-      )
-   {
-      if(participantNames.Count == 0)
-      {
-         return [];
-      }
-
-      Guid? templateEntityId = null;
-
-      foreach(var name in participantNames)
-      {
-         var normalizedName = BroadcastEntityFilter.NormalizeName(name);
-
-         if(!string.IsNullOrWhiteSpace(normalizedName) &&
-            entityByName.TryGetValue(normalizedName, out var entityId))
-         {
-            templateEntityId = entityId;
-            break;
-         }
-      }
-
-      var items = new List<BroadcastParticipantDisplayItem>();
-
-      foreach(var name in participantNames)
-      {
-         var normalizedName = BroadcastEntityFilter.NormalizeName(name);
-
-         if(!string.IsNullOrWhiteSpace(normalizedName) &&
-            entityByName.TryGetValue(normalizedName, out var entityId))
-         {
-            items.Add(
-               new BroadcastParticipantDisplayItem(
-                  name,
-                  $"/Admin/Entities/Edit/{entityId}",
-                  null
-               )
-            );
-         }
-         else
-         {
-            items.Add(
-               new BroadcastParticipantDisplayItem(
-                  name,
-                  null,
-                  templateEntityId
-               )
-            );
-         }
-      }
-
-      return items;
-   }
-
 }
 
 public sealed record BroadcastParticipationCheckResult(
@@ -293,8 +219,6 @@ public sealed record BroadcastParticipationCheckResult(
    string Title,
    string? Error,
    string? Participation,
-   IReadOnlyList<string> Participants,
-   IReadOnlyList<BroadcastParticipantDisplayItem> ParticipantItems,
    IReadOnlyList<string> SourceUrls,
    IReadOnlyList<BroadcastParticipationCheck> Checks
 );

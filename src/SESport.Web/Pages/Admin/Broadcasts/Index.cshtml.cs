@@ -98,26 +98,6 @@ public class IndexModel(
       return routeValues;
    }
 
-   public Dictionary<string, string?> GetActivityRouteValues(
-      Guid broadcastId,
-      Guid? participationRunId = null
-   )
-   {
-      var routeValues = new Dictionary<string, string?>
-      {
-         [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
-         [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
-      };
-
-      if(participationRunId is not null && participationRunId != Guid.Empty)
-      {
-         routeValues[RouteKeys.ParticipationRunId] =
-            participationRunId.Value.ToString();
-      }
-
-      return routeValues;
-   }
-
    public IReadOnlyList<BroadcastParticipantDisplayItem>
       GetParticipantDisplayItems(
          IReadOnlyList<string> participantNames
@@ -164,6 +144,26 @@ public class IndexModel(
             );
          })
          .ToList();
+   }
+
+   public Dictionary<string, string?> GetActivityRouteValues(
+      Guid broadcastId,
+      Guid? participationRunId = null
+   )
+   {
+      var routeValues = new Dictionary<string, string?>
+      {
+         [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
+         [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
+      };
+
+      if(participationRunId is not null && participationRunId != Guid.Empty)
+      {
+         routeValues[RouteKeys.ParticipationRunId] =
+            participationRunId.Value.ToString();
+      }
+
+      return routeValues;
    }
 
    public async Task<IActionResult> OnPostGenerateActivityAsync(
