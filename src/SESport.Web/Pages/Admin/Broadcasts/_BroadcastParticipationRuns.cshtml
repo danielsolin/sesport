@@ -31,7 +31,9 @@
       ?? participationChecks.FirstOrDefault();
    var summaryText = summaryCheck is null
       ? "Not checked yet"
-      : summaryCheck.SummaryText;
+      : !string.IsNullOrWhiteSpace(summaryCheck.ErrorMessage)
+         ? summaryCheck.ErrorMessage
+         : summaryCheck.BadgeText;
    var summaryBadgeClass = summaryCheck is null ||
       string.IsNullOrWhiteSpace(summaryCheck.Participation)
          ? string.Empty
