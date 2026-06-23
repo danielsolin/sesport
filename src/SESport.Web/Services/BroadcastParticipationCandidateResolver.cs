@@ -55,6 +55,8 @@ public static class BroadcastParticipationCandidateResolver
          return primaryCandidatesText;
       }
 
+      // Keep this as a narrow heuristic for amateur events until we have
+      // richer broadcast metadata to drive candidate selection directly.
       var amateurOrganizationCandidatesText =
          CreateCandidatesTextForStrategy(
             CandidateSourceStrategy.AmateurOrganizationMatch,
