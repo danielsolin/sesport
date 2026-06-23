@@ -1335,12 +1335,14 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 }
 
 .broadcast-ai-check-runs {
-   display: grid;
+   display: block;
    gap: 8px;
+   width: 100%;
    min-width: 0;
 }
 
 .broadcast-ai-check-runs > summary {
+   width: 100%;
    display: flex;
    align-items: center;
    justify-content: space-between;
@@ -1376,6 +1378,7 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 .broadcast-ai-check-runs-body {
    display: grid;
    gap: 4px;
+   width: 100%;
    min-width: 0;
    padding-top: 4px;
 }
@@ -1389,6 +1392,37 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    flex: 0 0 auto;
    color: var(--muted);
    font-size: 12px;
+}
+
+.broadcast-participation-main-row > td {
+   vertical-align: top;
+}
+
+.broadcast-participation-runs-row > td {
+   padding-top: 0;
+   border-top: 0;
+}
+
+.broadcast-participation-spacer {
+   padding: 0 10px;
+   border-bottom: 0;
+}
+
+.broadcast-participation-runs-cell {
+   padding-left: 0;
+   padding-right: 0;
+}
+
+.broadcast-participation-runs-cell .broadcast-ai-check-runs {
+   padding-right: 10px;
+}
+
+.broadcast-participation-runs-cell .broadcast-ai-check-runs-body > * {
+   width: 100%;
+}
+
+.broadcast-participation-runs-cell .broadcast-ai-check {
+   width: 100%;
 }
 
 .broadcast-ai-check {

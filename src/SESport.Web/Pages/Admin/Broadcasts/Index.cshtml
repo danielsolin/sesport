@@ -147,7 +147,10 @@
                      {
                         airDate = broadcast.OriginalAirDate.Value;
                      }
-                     <tr data-participation-status=
+                     <tr class="broadcast-participation-main-row"
+                         data-broadcast-row="true"
+                         data-broadcast-id="@broadcast.Id"
+                         data-participation-status=
                             "@broadcast.ParticipationCheck?.StatusId">
                         <td>
                            <div class="ses-nowrap">
@@ -225,315 +228,7 @@
                                   aria-label="Edit categories"
                                   hidden />
                         </td>
-                           <td data-participation-cell
-                               data-broadcast-id="@broadcast.Id"
-                               data-participation-run-id=
-                                  "@broadcast.ParticipationCheck?.RunId"
-                               data-participation-status=
-                                  "@broadcast.ParticipationCheck?.StatusId"
-                               data-check-participation-url=
-                                  "@checkParticipationUrl">
-                              @{
-                                 var participationChecks =
-                                    broadcast.ParticipationChecks.Count > 0
-                                       ? broadcast.ParticipationChecks
-                                       : broadcast.ParticipationCheck is null
-                                          ? []
-                                          : [broadcast.ParticipationCheck];
-                                 var latestCheck = participationChecks.FirstOrDefault();
-                              }
-                              @if(latestCheck is null)
-                              {
-                                 <button class="button broadcast-ai-check-action"
-                                         type="button"
-                                         data-check-participation-row
-                                         data-check-participation-url=
-                                            "@checkParticipationUrl"
-                                         data-broadcast-id="@broadcast.Id">
-                                    Check
-                                 </button>
-                              }
-                              else
-                              {
-                                 <details class="broadcast-ai-check-runs">
-                                    <summary>
-                                       <span class="broadcast-ai-check-runs-summary-text">
-                                          @latestCheck.SummaryText
-                                       </span>
-                                       @if(participationChecks.Count > 1)
-                                       {
-                                          <span class="broadcast-ai-check-runs-summary-count">
-                                             +@(participationChecks.Count - 1) more
-                                          </span>
-                                       }
-                                    </summary>
-                                    <div class="broadcast-ai-check-runs-body">
-                                       @foreach(var check in participationChecks)
-                                       {
-                                          <div class="broadcast-ai-check">
-                                             @if(!string.IsNullOrWhiteSpace(
-                                                check.ErrorMessage))
-                                             {
-                                                <div class="broadcast-ai-check">
-                                                   <div class="broadcast-ai-check-line">
-                                                      <span class="status-pill
-                                                         status-pill-warning">
-                                                         Error
-                                                      </span>
-                                                      <button class="button
-                                                         broadcast-ai-check-action
-                                                         broadcast-ai-check-retry"
-                                                              type="button"
-                                                              data-check-participation-row
-                                                              data-check-participation-url=
-                                                                 "@checkParticipationUrl"
-                                                              data-broadcast-id=
-                                                                 "@broadcast.Id">
-                                                         Retry
-                                                      </button>
-                                                   </div>
-                                                   <span class="broadcast-ai-check-error">
-                                                      @check.ErrorMessage
-                                                   </span>
-                                                   @if(check.SourceUrls.Count > 0)
-                                                   {
-                                                      <details class="broadcast-ai-check-sources"
-                                                         data-source-count=
-                                                            "@check.SourceUrls.Count">
-                                                         <summary>
-                                                            <button type="button"
-                                                                    class="broadcast-ai-check-participants-more"
-                                                                    data-sources-toggle="true">
-                                                               Sources (@(
-                                                                  check.SourceUrls.Count
-                                                               ))
-                                                            </button>
-                                                         </summary>
-                                                         <div class="broadcast-ai-check-sources-list">
-                                                            @foreach(
-                                                               var sourceUrl in check.SourceUrls
-                                                            )
-                                                            {
-                                                               <a href="@sourceUrl"
-                                                                  target="_blank"
-                                                                  rel="noreferrer noopener"
-                                                                  title="@sourceUrl">
-                                                                  @sourceUrl
-                                                               </a>
-                                                            }
-                                                         </div>
-                                                      </details>
-                                                   }
-                                                </div>
-                                             }
-                                             else if(string.IsNullOrWhiteSpace(
-                                                check.SwedishParticipation))
-                                             {
-                                                <div class="broadcast-ai-check-line">
-                                                   <span class="broadcast-ai-check-pending">
-                                                      @check.StatusId
-                                                   </span>
-                                                   @if(check.StatusId == "running")
-                                                   {
-                                                      <span class="broadcast-ai-check-rounds">
-                                                         Rounds: @check.ToolRoundCount
-                                                      </span>
-                                                   }
-                                                   @if(check.RunId != Guid.Empty)
-                                                   {
-                                                      <a asp-page=
-                                                            "/Admin/Runs/Details"
-                                                         asp-route-id=
-                                                            "@check.RunId"
-                                                         asp-route-jobId=
-                                                            "decide-swedish-participation"
-                                                         target="_blank"
-                                                         rel="noreferrer noopener"
-                                                         data-run-link="true">
-                                                         View run
-                                                      </a>
-                                                   }
-                                                </div>
-                                             }
-                                             else
-                                             {
-                                                <div class="broadcast-ai-check-line">
-                                                   <span class="status-pill
-                                                      @(check.IsPositive
-                                                         ? "status-pill-positive"
-                                                         : "status-pill-neutral")">
-                                                      @check.BadgeText
-                                                   </span>
-                                                   <button class="button
-                                                      broadcast-ai-check-action
-                                                      broadcast-ai-check-retry"
-                                                           type="button"
-                                                           data-check-participation-row
-                                                           data-check-participation-url=
-                                                              "@checkParticipationUrl"
-                                                           data-broadcast-id=
-                                                              "@broadcast.Id">
-                                                      Retry
-                                                   </button>
-                                                   @if(check.RunId != Guid.Empty)
-                                                   {
-                                                      <a asp-page=
-                                                            "/Admin/Runs/Details"
-                                                         asp-route-id=
-                                                            "@check.RunId"
-                                                         asp-route-jobId=
-                                                            "decide-swedish-participation"
-                                                         target="_blank"
-                                                         rel="noreferrer noopener"
-                                                         data-run-link="true">
-                                                         View run
-                                                      </a>
-                                                   }
-                                                </div>
-                                                @if(!string.IsNullOrWhiteSpace(
-                                                   check.ParticipantsPreview))
-                                                {
-                                                   var participantItems =
-                                                      Model.GetParticipantDisplayItems(
-                                                         check.SwedishParticipants
-                                                      );
-                                                   if(check.HasMoreParticipants)
-                                                   {
-                                                      <div class="broadcast-ai-check-participants"
-                                                           data-participants-json=
-                                                              "@System.Text.Json.JsonSerializer.Serialize(
-                                                                 participantItems
-                                                              )">
-                                                         <div class="broadcast-ai-check-participants-preview">
-                                                            @foreach(
-                                                               var participant in participantItems.Take(3)
-                                                            )
-                                                            {
-                                                               <div class="broadcast-ai-check-participant-row">
-                                                                  @if(participant.EditUrl is not null)
-                                                                  {
-                                                                     <a class="broadcast-ai-check-participant-link"
-                                                                        href="@participant.EditUrl"
-                                                                        title="Edit entity">
-                                                                        @participant.Name
-                                                                     </a>
-                                                                  }
-                                                                  else
-                                                                  {
-                                                                     <span>@participant.Name</span>
-                                                                  }
-
-                                                                  @if(participant.TemplateEntityId is not null)
-                                                                  {
-                                                                        <form method="post"
-                                                                           action="@createParticipantEntityUrl"
-                                                                           class="broadcast-ai-check-participant-create-form"
-                                                                           data-ajax-success=
-                                                                              "replace">
-                                                                           @Html.AntiForgeryToken()
-                                                                           <input type="hidden"
-                                                                                  name="participantName"
-                                                                                  value="@participant.Name" />
-                                                                           <input type="hidden"
-                                                                                  name="templateEntityId"
-                                                                                  value="@participant.TemplateEntityId" />
-                                                                           <button type="submit"
-                                                                                   class="broadcast-ai-check-participant-create-button"
-                                                                                   title="Create entity"
-                                                                                   aria-label="Create entity for @participant.Name">
-                                                                              +
-                                                                           </button>
-                                                                        </form>
-                                                                  }
-                                                               </div>
-                                                            }
-                                                         </div>
-                                                      </div>
-                                                   }
-                                                   else
-                                                   {
-                                                      <div class="broadcast-ai-check-participants"
-                                                           data-participants-json=
-                                                              "@System.Text.Json.JsonSerializer.Serialize(
-                                                                 participantItems
-                                                              )">
-                                                         @foreach(var participant in participantItems)
-                                                         {
-                                                            <div class="broadcast-ai-check-participant-row">
-                                                               @if(participant.EditUrl is not null)
-                                                               {
-                                                                  <a class="broadcast-ai-check-participant-link"
-                                                                     href="@participant.EditUrl"
-                                                                     title="Edit entity">
-                                                                     @participant.Name
-                                                                  </a>
-                                                               }
-                                                               else
-                                                               {
-                                                                  <span>@participant.Name</span>
-                                                               }
-
-                                                               @if(participant.TemplateEntityId is not null)
-                                                               {
-                                                                     <form method="post"
-                                                                        action="@createParticipantEntityUrl"
-                                                                        class="broadcast-ai-check-participant-create-form"
-                                                                        data-ajax-success=
-                                                                           "replace">
-                                                                        @Html.AntiForgeryToken()
-                                                                        <input type="hidden"
-                                                                               name="participantName"
-                                                                               value="@participant.Name" />
-                                                                        <input type="hidden"
-                                                                               name="templateEntityId"
-                                                                               value="@participant.TemplateEntityId" />
-                                                                        <button type="submit"
-                                                                                class="broadcast-ai-check-participant-create-button"
-                                                                                title="Create entity"
-                                                                                aria-label="Create entity for @participant.Name">
-                                                                           +
-                                                                        </button>
-                                                                     </form>
-                                                               }
-                                                            </div>
-                                                         }
-                                                      </div>
-                                                   }
-                                                }
-                                                @if(check.SourceUrls.Count > 0)
-                                                {
-                                                   <details class="broadcast-ai-check-sources">
-                                                      <summary>
-                                                         <button type="button"
-                                                                 class="broadcast-ai-check-participants-more"
-                                                                 data-sources-toggle="true">
-                                                            Sources (@(
-                                                               check.SourceUrls.Count
-                                                            ))
-                                                         </button>
-                                                      </summary>
-                                                      <div class="broadcast-ai-check-sources-list">
-                                                         @foreach(
-                                                            var sourceUrl in check.SourceUrls
-                                                         )
-                                                         {
-                                                            <a href="@sourceUrl"
-                                                               target="_blank"
-                                                               rel="noreferrer noopener"
-                                                               title="@sourceUrl">
-                                                               @sourceUrl
-                                                            </a>
-                                                         }
-                                                      </div>
-                                                   </details>
-                                                }
-                                             }
-                                          </div>
-                                       }
-                                    </div>
-                                 </details>
-                              }
-                           </td>
+                           <td class="broadcast-participation-placeholder"></td>
                            <td class="table-actions">
                            <div class="table-actions-stack">
                               <a class="broadcast-activity-link"
@@ -585,6 +280,34 @@
                                  </button>
                               </form>
                            </div>
+                           </td>
+                        </tr>
+                        <tr class="broadcast-participation-runs-row"
+                            data-broadcast-id="@broadcast.Id"
+                            data-participation-status=
+                               "@broadcast.ParticipationCheck?.StatusId">
+                           <td class="broadcast-participation-spacer"></td>
+                           <td class="broadcast-participation-runs-cell"
+                               colspan="5"
+                               data-participation-cell
+                               data-broadcast-id="@broadcast.Id"
+                               data-participation-run-id=
+                                  "@broadcast.ParticipationCheck?.RunId"
+                               data-participation-status=
+                                  "@broadcast.ParticipationCheck?.StatusId"
+                               data-check-participation-url=
+                                  "@checkParticipationUrl">
+                              @await Html.PartialAsync(
+                                 "_BroadcastParticipationRuns",
+                                 new SESport.Web.Pages.Admin.Broadcasts.
+                                    BroadcastParticipationRunsViewModel(
+                                       broadcast,
+                                       checkParticipationUrl ?? string.Empty,
+                                       createParticipantEntityUrl ??
+                                          string.Empty,
+                                       Model
+                                    )
+                              )
                            </td>
                         </tr>
                      }
