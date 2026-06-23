@@ -34,7 +34,8 @@
          </label>
          <label>
             <span>Entity type</span>
-            <select asp-for="Entity.EntityTypeId">
+            <select asp-for="Entity.EntityTypeId"
+                    data-entity-type-select>
                <option value="">Select entity type</option>
                @foreach (var type in Model.EntityTypes)
                {
@@ -76,24 +77,22 @@
             </select>
             <span asp-validation-for="Entity.ExpectedStabilityId"></span>
          </label>
-         @if (string.Equals(
-            Model.Entity.EntityTypeId,
-            "Person",
-            StringComparison.OrdinalIgnoreCase
-         ))
-         {
-            <label>
-               <span>Person gender</span>
-               <select asp-for="Entity.PersonGenderId">
-                  <option value="">Select gender</option>
-                  @foreach (var gender in Model.PersonGenders)
-                  {
-                     <option value="@gender.Id">@gender.Label</option>
-                  }
-               </select>
-               <span asp-validation-for="Entity.PersonGenderId"></span>
-            </label>
-         }
+         <label data-person-gender-field
+                hidden="@(string.Equals(
+                  Model.Entity.EntityTypeId,
+                  "Person",
+                  StringComparison.OrdinalIgnoreCase
+               ) ? null : "hidden")">
+            <span>Person gender</span>
+            <select asp-for="Entity.PersonGenderId">
+               <option value="">Select gender</option>
+               @foreach (var gender in Model.PersonGenders)
+               {
+                  <option value="@gender.Id">@gender.Label</option>
+               }
+            </select>
+            <span asp-validation-for="Entity.PersonGenderId"></span>
+         </label>
       </div>
    </section>
 
@@ -157,3 +156,30 @@
       <button class="button button-primary" type="submit">Save</button>
    </section>
 </form>
+
+@section Scripts {
+   <script>
+      (() => {
+         const typeSelect = document.querySelector(
+            "[data-entity-type-select]"
+         );
+         const genderField = document.querySelector(
+            "[data-person-gender-field]"
+         );
+
+         if(!(typeSelect instanceof HTMLSelectElement)
+            || !(genderField instanceof HTMLElement))
+         {
+            return;
+         }
+
+         const updateGenderField = () => {
+            genderField.hidden =
+               typeSelect.value.trim().toLowerCase() !== "person";
+         };
+
+         typeSelect.addEventListener("change", updateGenderField);
+         updateGenderField();
+      })();
+   </script>
+}
