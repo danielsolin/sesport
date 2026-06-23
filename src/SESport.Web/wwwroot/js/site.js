@@ -2073,8 +2073,12 @@
       wrapper.open = isOpen;
 
       const summary = document.createElement("summary");
+      const latestCheck = checks[0] ?? null;
       const summaryText = document.createElement("span");
-      summaryText.className = "broadcast-ai-check-runs-summary-text";
+      summaryText.className = [
+         "broadcast-ai-check-runs-summary-text",
+         getParticipationSummaryBadgeClass(latestCheck)
+      ].filter(value => value !== "").join(" ");
       summaryText.textContent = checks.length > 0
          ? checks[0].summaryText
          : "Not checked yet";
@@ -2098,6 +2102,30 @@
       wrapper.append(summary, table);
 
       return { wrapper, body };
+   }
+
+   function getParticipationSummaryBadgeClass(check)
+   {
+      if(!check || typeof check !== "object")
+      {
+         return "";
+      }
+
+      const participation = typeof check.swedishParticipation === "string"
+         ? check.swedishParticipation.trim().toLowerCase()
+         : "";
+
+      switch(participation)
+      {
+         case "yes":
+            return "tool-trace-badge tool-trace-badge-result";
+         case "no":
+            return "tool-trace-badge tool-trace-badge-temperature";
+         case "unknown":
+            return "tool-trace-badge tool-trace-badge-count";
+         default:
+            return "";
+      }
    }
 
    function isParticipationRunsOpen(cell)
@@ -2580,6 +2608,8 @@
 
       const link = document.createElement("a");
       link.href = `${url.pathname}${url.search}${url.hash}`;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
       link.textContent = "Activity";
       return link;
    }
@@ -3049,6 +3079,8 @@
          anchor.textContent = item.name;
          anchor.className = "broadcast-ai-check-participant-link";
          anchor.title = "Edit entity";
+         anchor.target = "_blank";
+         anchor.rel = "noreferrer noopener";
          return anchor;
       }
 
@@ -3405,6 +3437,8 @@
       const link = document.createElement("a");
       link.className = "broadcast-ai-check-participant-link";
       link.href = editUrl;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
       link.title = "Edit entity";
       link.textContent = canonicalName;
 

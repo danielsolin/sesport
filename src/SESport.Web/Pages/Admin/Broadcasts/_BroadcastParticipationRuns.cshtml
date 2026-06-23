@@ -15,8 +15,23 @@
 
 <details class="broadcast-ai-check-runs">
    <summary>
-      <span class="broadcast-ai-check-runs-summary-text">
-         @(latestCheck is null ? "Not checked yet" : latestCheck.SummaryText)
+      @{
+         var summaryText = latestCheck is null
+            ? "Not checked yet"
+            : latestCheck.SummaryText;
+         var summaryBadgeClass = latestCheck is null ||
+            string.IsNullOrWhiteSpace(latestCheck.SwedishParticipation)
+               ? string.Empty
+               : latestCheck.IsPositive
+                  ? "tool-trace-badge tool-trace-badge-result"
+                  : latestCheck.SwedishParticipation.Trim()
+                     .Equals("Unknown", StringComparison.OrdinalIgnoreCase)
+                     ? "tool-trace-badge tool-trace-badge-count"
+                     : "tool-trace-badge tool-trace-badge-temperature";
+      }
+      <span class="broadcast-ai-check-runs-summary-text
+         @summaryBadgeClass">
+         @summaryText
       </span>
       @if(participationChecks.Count > 1)
       {
@@ -51,7 +66,9 @@
                <td class="broadcast-ai-check-activity-cell">
                   @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
                   {
-                     <a href="@baseActivityUrl">
+                     <a href="@baseActivityUrl"
+                        target="_blank"
+                        rel="noreferrer noopener">
                         Activity
                      </a>
                   }
@@ -145,6 +162,8 @@
                                  {
                                     <a class="broadcast-ai-check-participant-link"
                                        href="@participant.EditUrl"
+                                       target="_blank"
+                                       rel="noreferrer noopener"
                                        title="Edit entity">
                                        @participant.Name
                                     </a>
@@ -215,7 +234,11 @@
                      }
                      @if(!string.IsNullOrWhiteSpace(activityUrl))
                      {
-                        <a href="@activityUrl">Activity</a>
+                        <a href="@activityUrl"
+                           target="_blank"
+                           rel="noreferrer noopener">
+                           Activity
+                        </a>
                      }
                   </td>
                </tr>
