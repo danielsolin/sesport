@@ -1379,13 +1379,17 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 }
 
 .broadcast-ai-check-runs[open] .broadcast-ai-check-runs-summary-text {
-   display: none;
+   visibility: hidden;
 }
 
 .broadcast-ai-check-runs-summary-count {
    flex: 0 0 auto;
    color: var(--muted);
    font-size: 12px;
+}
+
+.broadcast-ai-check-runs[open] .broadcast-ai-check-runs-summary-count {
+   visibility: hidden;
 }
 
 .broadcast-participation-main-row > td {
