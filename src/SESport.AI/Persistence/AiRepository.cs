@@ -1106,6 +1106,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          if(!TryGetStringProperty(
             root,
             "Participation",
+            "SwedishParticipation",
             out var participation
          ))
          {
@@ -1119,6 +1120,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          if(TryGetArrayProperty(
             root,
             "Participants",
+            "SwedishParticipants",
             out var participantsElement
          ))
          {
@@ -1177,6 +1179,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private static bool TryGetStringProperty(
       JsonElement root,
       string propertyName,
+      string legacyPropertyName,
       out string? value
    )
    {
@@ -1187,6 +1190,13 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return true;
       }
 
+      if(root.TryGetProperty(legacyPropertyName, out var legacyProperty) &&
+         legacyProperty.ValueKind == JsonValueKind.String)
+      {
+         value = legacyProperty.GetString();
+         return true;
+      }
+
       value = null;
       return false;
    }
@@ -1194,10 +1204,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private static bool TryGetArrayProperty(
       JsonElement root,
       string propertyName,
+      string legacyPropertyName,
       out JsonElement value
    )
    {
       if(root.TryGetProperty(propertyName, out value) &&
+         value.ValueKind == JsonValueKind.Array)
+      {
+         return true;
+      }
+
+      if(root.TryGetProperty(legacyPropertyName, out value) &&
          value.ValueKind == JsonValueKind.Array)
       {
          return true;
