@@ -1,7 +1,7 @@
 {
    "type": "object",
-   "title": "Swedish Participation",
-   "required": [ "SwedishParticipation", "SwedishParticipants", "Sources" ],
+   "title": "Participation",
+   "required": [ "Participation", "Participants", "Sources" ],
    "properties": {
       "Sources": {
          "type": "array",
@@ -12,17 +12,17 @@
          },
          "description": "Source URLs that support the conclusion."
       },
-      "SwedishParticipants": {
+      "Participants": {
          "type": "array",
          "items": { "type": "string" },
-         "description": "The Swedish participant name or names."
+         "description": "The participant name or names."
       },
-      "SwedishParticipation": {
+      "Participation": {
          "enum": [ "Yes", "No", "Unknown" ],
          "type": "string",
-         "description": "Whether any Swedes participate in the broadcast event."
+         "description": "Whether any participants from the target country are in the broadcast event."
       }
    },
-   "description": "Structured assessment of whether Sweden participates in the broadcast event, which Swedish participants are involved, and supporting source URLs.",
+   "description": "Structured assessment of whether the target-country participation is present in the broadcast event, which participants are involved, and supporting source URLs.",
    "additionalProperties": false
 }

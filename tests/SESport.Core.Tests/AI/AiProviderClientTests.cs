@@ -58,8 +58,8 @@ public class AiProviderClientTests
       );
 
       var expectedOutput =
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}";
 
       Assert.Equal(expectedOutput, result.OutputText);
@@ -156,8 +156,8 @@ public class AiProviderClientTests
          handler.RequestBodies[1]
       );
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -326,8 +326,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -364,8 +364,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -420,8 +420,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -476,8 +476,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/direct-page\"]}",
          result.OutputText
       );
@@ -588,8 +588,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -679,8 +679,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -743,8 +743,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -793,8 +793,8 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
@@ -1407,8 +1407,8 @@ public class AiProviderClientTests
    private static string CreateLlamaFinalResponseJson(string sourceUrl)
    {
       var content =
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"" + sourceUrl + "\"]}";
 
       return JsonSerializer.Serialize(
@@ -1434,8 +1434,8 @@ public class AiProviderClientTests
    private static string CreateLlamaInvalidFinalResponseJson()
    {
       var content =
-         "{\"SwedishParticipation\":\"Yes\","
-         + "\"SwedishParticipants\":[\"Dino Beganovic\"],"
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"https://example.test/roster\"]";
 
       return JsonSerializer.Serialize(
@@ -1477,10 +1477,10 @@ public class AiProviderClientTests
       {
         "type": "object",
         "properties": {
-          "SwedishParticipation": {
+          "Participation": {
             "type": "string"
           },
-          "SwedishParticipants": {
+          "Participants": {
             "type": "array",
             "items": {
               "type": "string"
@@ -1495,8 +1495,8 @@ public class AiProviderClientTests
           }
         },
         "required": [
-          "SwedishParticipation",
-          "SwedishParticipants",
+          "Participation",
+          "Participants",
           "Sources"
         ],
         "additionalProperties": false

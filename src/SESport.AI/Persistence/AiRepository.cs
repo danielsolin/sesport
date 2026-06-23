@@ -1103,28 +1103,24 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             throw new JsonException("Expected a JSON object.");
          }
 
-         if(
-            !root.TryGetProperty(
-               "SwedishParticipation",
-               out var participation
-            ) ||
-            participation.ValueKind != JsonValueKind.String
-         )
+         if(!TryGetStringProperty(
+            root,
+            "Participation",
+            out var participation
+         ))
          {
             throw new JsonException(
-               "Missing SwedishParticipation property."
+               "Missing Participation property."
             );
          }
 
          var participants = new List<string>();
 
-         if(
-            root.TryGetProperty(
-               "SwedishParticipants",
-               out var participantsElement
-            ) &&
-            participantsElement.ValueKind == JsonValueKind.Array
-         )
+         if(TryGetArrayProperty(
+            root,
+            "Participants",
+            out var participantsElement
+         ))
          {
             foreach(var participant in participantsElement.EnumerateArray())
             {
@@ -1146,7 +1142,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             runId,
             statusId,
             toolRoundCount,
-            participation.GetString(),
+            participation,
             participants,
             resolvedSourceUrls,
             errorMessage
@@ -1176,6 +1172,39 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          AiJobRunStatus.Failed => "failed",
          _ => "pending"
       };
+   }
+
+   private static bool TryGetStringProperty(
+      JsonElement root,
+      string propertyName,
+      out string? value
+   )
+   {
+      if(root.TryGetProperty(propertyName, out var property) &&
+         property.ValueKind == JsonValueKind.String)
+      {
+         value = property.GetString();
+         return true;
+      }
+
+      value = null;
+      return false;
+   }
+
+   private static bool TryGetArrayProperty(
+      JsonElement root,
+      string propertyName,
+      out JsonElement value
+   )
+   {
+      if(root.TryGetProperty(propertyName, out value) &&
+         value.ValueKind == JsonValueKind.Array)
+      {
+         return true;
+      }
+
+      value = default;
+      return false;
    }
 
    private static string? ReadNullableString(

@@ -74,7 +74,7 @@ public class ResponsesOutputValidatorTests
       var exception = Assert.Throws<InvalidOperationException>(() =>
          ResponsesOutputValidator.ValidateStructuredOutput(
             """
-            {"Sources":[],"SwedishParticipants":[],"SwedishParticipation":"No"}
+            {"Sources":[],"Participants":[],"Participation":"No"}
             """,
             "json_schema",
             """

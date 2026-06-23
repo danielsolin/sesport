@@ -170,7 +170,7 @@ public sealed class BroadcastParticipationService(
 
          var participationCheck = participationChecks[0];
          var participantItems = ResolveParticipantItems(
-            participationCheck.SwedishParticipants,
+            participationCheck.Participants,
             entityByName
          );
 
@@ -183,8 +183,8 @@ public sealed class BroadcastParticipationService(
                broadcast.ChannelName,
                broadcast.Title,
                participationCheck.ErrorMessage,
-               participationCheck.SwedishParticipation,
-               participationCheck.SwedishParticipants,
+               participationCheck.Participation,
+               participationCheck.Participants,
                participantItems,
                participationCheck.SourceUrls,
                participationChecks
@@ -292,9 +292,9 @@ public sealed record BroadcastParticipationCheckResult(
    string ChannelName,
    string Title,
    string? Error,
-   string? SwedishParticipation,
-   IReadOnlyList<string> SwedishParticipants,
-   IReadOnlyList<BroadcastParticipantDisplayItem> SwedishParticipantItems,
+   string? Participation,
+   IReadOnlyList<string> Participants,
+   IReadOnlyList<BroadcastParticipantDisplayItem> ParticipantItems,
    IReadOnlyList<string> SourceUrls,
    IReadOnlyList<BroadcastParticipationCheck> Checks
 );

@@ -36,8 +36,8 @@ public class ParticipationSourceUrlExtractorTests
    {
       var outputText = """
          {
-            "SwedishParticipation": "Yes",
-            "SwedishParticipants": ["Dino Beganovic"],
+            "Participation": "Yes",
+            "Participants": ["Dino Beganovic"],
             "Sources": [
                "https://example.test/a",
                "https://example.test/a",

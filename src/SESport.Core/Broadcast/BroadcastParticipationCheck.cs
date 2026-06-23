@@ -4,43 +4,30 @@ public sealed record BroadcastParticipationCheck(
    Guid RunId,
    string StatusId,
    int ToolRoundCount,
-   string? SwedishParticipation,
-   IReadOnlyList<string> SwedishParticipants,
+   string? Participation,
+   IReadOnlyList<string> Participants,
    IReadOnlyList<string> SourceUrls,
    string? ErrorMessage
 )
 {
-   public bool HasResult => !string.IsNullOrWhiteSpace(SwedishParticipation);
+   public bool HasResult => !string.IsNullOrWhiteSpace(Participation);
 
    public bool IsPositive =>
       string.Equals(
-         SwedishParticipation,
+         Participation,
          "Yes",
          StringComparison.OrdinalIgnoreCase
       );
 
    public string BadgeText => HasResult
-      ? SwedishParticipation ?? StatusId
+      ? Participation ?? StatusId
       : StatusId;
 
    public string ParticipantsPreview
    {
       get
       {
-         if(SwedishParticipants.Count == 0)
-         {
-            return "";
-         }
-
-         if(SwedishParticipants.Count <= 3)
-         {
-            return string.Join(", ", SwedishParticipants);
-         }
-
-         var preview = string.Join(", ", SwedishParticipants.Take(3));
-         var moreCount = SwedishParticipants.Count - 3;
-
-         return $"{preview} +{moreCount} more";
+         return string.Join(", ", Participants);
       }
    }
 
@@ -48,24 +35,15 @@ public sealed record BroadcastParticipationCheck(
    {
       get
       {
-         if(SwedishParticipants.Count <= 3)
-         {
-            return string.Join(", ", SwedishParticipants);
-         }
-
-         return string.Join(", ", SwedishParticipants.Take(3));
+         return string.Join(", ", Participants);
       }
    }
-
-   public int MoreParticipantsCount => Math.Max(0, SwedishParticipants.Count - 3);
-
-   public bool HasMoreParticipants => MoreParticipantsCount > 0;
 
    public string SummaryText =>
       !string.IsNullOrWhiteSpace(ErrorMessage)
          ? ErrorMessage
          : HasResult
-            ? (SwedishParticipants.Count == 0
+            ? (Participants.Count == 0
                ? BadgeText
                : $"{BadgeText}: {ParticipantsPreview}")
             : StatusId;

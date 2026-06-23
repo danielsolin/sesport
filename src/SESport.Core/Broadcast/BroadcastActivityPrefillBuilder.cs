@@ -24,14 +24,14 @@ public static class BroadcastActivityPrefillBuilder
    )
    {
       if(participationCheck is null ||
-         participationCheck.SwedishParticipants.Count == 0)
+         participationCheck.Participants.Count == 0)
       {
          return [];
       }
 
       return BroadcastEntityFilter.MatchPersonEntityIds(
          entities,
-         participationCheck.SwedishParticipants
+         participationCheck.Participants
       );
    }
 
@@ -78,11 +78,11 @@ public static class BroadcastActivityPrefillBuilder
 
       lines.Add($"AI participation: {participationCheck.SummaryText}");
 
-      if(participationCheck.SwedishParticipants.Count > 0)
+      if(participationCheck.Participants.Count > 0)
       {
          lines.Add(
             "AI participants: " +
-            string.Join(", ", participationCheck.SwedishParticipants)
+            string.Join(", ", participationCheck.Participants)
          );
       }
 
@@ -103,14 +103,14 @@ public static class BroadcastActivityPrefillBuilder
    )
    {
       if(participationCheck is null ||
-         participationCheck.SwedishParticipants.Count == 0)
+         participationCheck.Participants.Count == 0)
       {
          return [];
       }
 
       var matchedEntityIds = BroadcastEntityFilter.MatchPersonEntityIds(
          entities,
-         participationCheck.SwedishParticipants
+         participationCheck.Participants
       );
 
       return entities

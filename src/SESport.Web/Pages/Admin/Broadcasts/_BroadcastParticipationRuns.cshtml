@@ -12,19 +12,19 @@
          : [broadcast.ParticipationCheck];
    var summaryCheck = participationChecks.FirstOrDefault(check =>
       string.Equals(
-         check.SwedishParticipation,
+         check.Participation,
          "Yes",
          StringComparison.OrdinalIgnoreCase
       ))
       ?? participationChecks.FirstOrDefault(check =>
          string.Equals(
-            check.SwedishParticipation,
+            check.Participation,
             "No",
             StringComparison.OrdinalIgnoreCase
          ))
       ?? participationChecks.FirstOrDefault(check =>
          string.Equals(
-            check.SwedishParticipation,
+            check.Participation,
             "Unknown",
             StringComparison.OrdinalIgnoreCase
          ))
@@ -33,11 +33,11 @@
       ? "Not checked yet"
       : summaryCheck.SummaryText;
    var summaryBadgeClass = summaryCheck is null ||
-      string.IsNullOrWhiteSpace(summaryCheck.SwedishParticipation)
+      string.IsNullOrWhiteSpace(summaryCheck.Participation)
          ? string.Empty
          : summaryCheck.IsPositive
             ? "tool-trace-badge tool-trace-badge-result"
-            : summaryCheck.SwedishParticipation.Trim()
+            : summaryCheck.Participation.Trim()
                .Equals("Unknown", StringComparison.OrdinalIgnoreCase)
                ? "tool-trace-badge tool-trace-badge-count"
                : "tool-trace-badge tool-trace-badge-temperature";
@@ -115,7 +115,7 @@
                            @check.ErrorMessage
                         </span>
                      }
-                     else if(string.IsNullOrWhiteSpace(check.SwedishParticipation))
+                     else if(string.IsNullOrWhiteSpace(check.Participation))
                      {
                         <div class="broadcast-ai-check-line">
                            <span class="broadcast-ai-check-pending">
@@ -157,11 +157,11 @@
                      }
                   </td>
                   <td class="broadcast-ai-check-participants-cell">
-                     @if(check.SwedishParticipants.Count > 0)
+                     @if(check.Participants.Count > 0)
                      {
                         var participantItems = Model.PageModel
                            .GetParticipantDisplayItems(
-                              check.SwedishParticipants
+                              check.Participants
                            );
                         <div class="broadcast-ai-check-participants">
                            @foreach(var participant in participantItems)
