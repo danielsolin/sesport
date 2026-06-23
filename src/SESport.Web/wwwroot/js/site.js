@@ -2073,15 +2073,14 @@
       wrapper.open = isOpen;
 
       const summary = document.createElement("summary");
-      const latestCheck = checks[0] ?? null;
+      const summaryCheck = selectParticipationSummaryCheck(checks);
       const summaryText = document.createElement("span");
       summaryText.className = [
          "broadcast-ai-check-runs-summary-text",
-         getParticipationSummaryBadgeClass(latestCheck)
+         getParticipationSummaryBadgeClass(summaryCheck)
       ].filter(value => value !== "").join(" ");
-      summaryText.textContent = checks.length > 0
-         ? checks[0].summaryText
-         : "Not checked yet";
+      summaryText.textContent = summaryCheck?.summaryText
+         ?? "Not checked yet";
       summary.append(summaryText);
 
       if(checks.length > 1)
@@ -2125,6 +2124,50 @@
             return "tool-trace-badge tool-trace-badge-count";
          default:
             return "";
+      }
+   }
+
+   function selectParticipationSummaryCheck(checks)
+   {
+      if(!Array.isArray(checks) || checks.length === 0)
+      {
+         return null;
+      }
+
+      const normalizedChecks = checks.filter(check =>
+         check && typeof check === "object");
+
+      return normalizedChecks.find(check =>
+            getParticipationSummaryPriority(check) === 0)
+         ?? normalizedChecks.find(check =>
+            getParticipationSummaryPriority(check) === 1)
+         ?? normalizedChecks.find(check =>
+            getParticipationSummaryPriority(check) === 2)
+         ?? normalizedChecks[0]
+         ?? null;
+   }
+
+   function getParticipationSummaryPriority(check)
+   {
+      if(!check || typeof check !== "object")
+      {
+         return Number.POSITIVE_INFINITY;
+      }
+
+      const participation = typeof check.swedishParticipation === "string"
+         ? check.swedishParticipation.trim().toLowerCase()
+         : "";
+
+      switch(participation)
+      {
+         case "yes":
+            return 0;
+         case "no":
+            return 1;
+         case "unknown":
+            return 2;
+         default:
+            return Number.POSITIVE_INFINITY;
       }
    }
 

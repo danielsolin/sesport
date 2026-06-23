@@ -1378,6 +1378,10 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    overflow-wrap: anywhere;
 }
 
+.broadcast-ai-check-runs[open] .broadcast-ai-check-runs-summary-text {
+   display: none;
+}
+
 .broadcast-ai-check-runs-summary-count {
    flex: 0 0 auto;
    color: var(--muted);

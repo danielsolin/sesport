@@ -10,25 +10,41 @@
       : broadcast.ParticipationCheck is null
          ? []
          : [broadcast.ParticipationCheck];
-   var latestCheck = participationChecks.FirstOrDefault();
+   var summaryCheck = participationChecks.FirstOrDefault(check =>
+      string.Equals(
+         check.SwedishParticipation,
+         "Yes",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      ?? participationChecks.FirstOrDefault(check =>
+         string.Equals(
+            check.SwedishParticipation,
+            "No",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      ?? participationChecks.FirstOrDefault(check =>
+         string.Equals(
+            check.SwedishParticipation,
+            "Unknown",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      ?? participationChecks.FirstOrDefault();
+   var summaryText = summaryCheck is null
+      ? "Not checked yet"
+      : summaryCheck.SummaryText;
+   var summaryBadgeClass = summaryCheck is null ||
+      string.IsNullOrWhiteSpace(summaryCheck.SwedishParticipation)
+         ? string.Empty
+         : summaryCheck.IsPositive
+            ? "tool-trace-badge tool-trace-badge-result"
+            : summaryCheck.SwedishParticipation.Trim()
+               .Equals("Unknown", StringComparison.OrdinalIgnoreCase)
+               ? "tool-trace-badge tool-trace-badge-count"
+               : "tool-trace-badge tool-trace-badge-temperature";
 }
 
 <details class="broadcast-ai-check-runs">
    <summary>
-      @{
-         var summaryText = latestCheck is null
-            ? "Not checked yet"
-            : latestCheck.SummaryText;
-         var summaryBadgeClass = latestCheck is null ||
-            string.IsNullOrWhiteSpace(latestCheck.SwedishParticipation)
-               ? string.Empty
-               : latestCheck.IsPositive
-                  ? "tool-trace-badge tool-trace-badge-result"
-                  : latestCheck.SwedishParticipation.Trim()
-                     .Equals("Unknown", StringComparison.OrdinalIgnoreCase)
-                     ? "tool-trace-badge tool-trace-badge-count"
-                     : "tool-trace-badge tool-trace-badge-temperature";
-      }
       <span class="broadcast-ai-check-runs-summary-text
          @summaryBadgeClass">
          @summaryText
@@ -42,7 +58,7 @@
    </summary>
    <table class="broadcast-ai-check-runs-table">
       <tbody class="broadcast-ai-check-runs-body">
-         @if(latestCheck is null)
+         @if(participationChecks.Count == 0)
          {
             <tr class="broadcast-ai-check-row">
                <td class="broadcast-ai-check-summary-cell">
