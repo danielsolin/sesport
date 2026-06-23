@@ -1364,6 +1364,15 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    overflow-wrap: anywhere;
 }
 
+.broadcast-ai-check-runs-summary-text.tool-trace-badge {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   padding-top: 2px;
+   padding-bottom: 2px;
+   line-height: 1;
+}
+
 .broadcast-ai-check-runs-summary-actions {
    display: inline-flex;
    align-items: center;
@@ -1403,7 +1412,7 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 .broadcast-ai-check-runs-table {
    width: 100%;
    border-collapse: collapse;
-   table-layout: fixed;
+   table-layout: auto;
 }
 
 .broadcast-ai-check-runs-body > tr > td {
@@ -1417,34 +1426,46 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 }
 
 .broadcast-ai-check-summary-cell {
-   width: 120px;
-   padding-right: 12px;
-}
-
-.broadcast-ai-check-action-cell {
-   width: 90px;
-   white-space: nowrap;
+   width: 96px;
+   max-width: 96px;
    padding-right: 12px;
 }
 
 .broadcast-ai-check-view-run-cell {
-   width: 96px;
+   width: 84px;
+   max-width: 84px;
    white-space: nowrap;
    padding-right: 12px;
 }
 
 .broadcast-ai-check-participants-cell {
-   width: auto;
+   width: 100px;
+   max-width: 100px;
    padding-right: 12px;
+   white-space: normal;
 }
 
 .broadcast-ai-check-sources-cell {
-   width: 220px;
+   width: auto;
+   min-width: 0;
+   padding-right: 12px;
 }
 
 .broadcast-ai-check-activity-cell {
    width: 84px;
    white-space: nowrap;
+   text-align: center;
+}
+
+.broadcast-ai-check-activity-link {
+   display: flex;
+   justify-content: flex-end;
+   width: 100%;
+}
+
+.broadcast-ai-check-activity-link a {
+   display: inline-block;
+   text-align: center;
 }
 
 .broadcast-ai-check {
@@ -1461,11 +1482,14 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 }
 
 .broadcast-ai-check-participants {
-   display: grid;
+   display: inline-grid;
    gap: 2px;
    color: var(--muted);
    overflow-wrap: anywhere;
    min-width: 0;
+   width: fit-content;
+   max-width: 100%;
+   justify-items: start;
 }
 
 .broadcast-ai-check-participant-row {

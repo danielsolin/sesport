@@ -2372,14 +2372,8 @@
       const summaryCell = document.createElement("td");
       summaryCell.className = "broadcast-ai-check-summary-cell";
 
-      const actionCell = document.createElement("td");
-      actionCell.className = "broadcast-ai-check-action-cell";
-
       const viewRunCell = document.createElement("td");
       viewRunCell.className = "broadcast-ai-check-view-run-cell";
-
-      const participantsCell = document.createElement("td");
-      participantsCell.className = "broadcast-ai-check-participants-cell";
 
       const sourcesCell = document.createElement("td");
       sourcesCell.className = "broadcast-ai-check-sources-cell";
@@ -2396,24 +2390,10 @@
 
       if(checkButton)
       {
-         actionCell.append(checkButton);
+         summaryCell.append(checkButton);
       }
 
-      const activityLink = createParticipationActivityLink(cell);
-
-      if(activityLink)
-      {
-         activityCell.append(activityLink);
-      }
-
-      row.append(
-         summaryCell,
-         actionCell,
-         viewRunCell,
-         participantsCell,
-         sourcesCell,
-         activityCell
-      );
+      row.append(summaryCell, viewRunCell, sourcesCell, activityCell);
 
       return row;
    }
@@ -2425,9 +2405,6 @@
 
       const summaryCell = document.createElement("td");
       summaryCell.className = "broadcast-ai-check-summary-cell";
-
-      const actionCell = document.createElement("td");
-      actionCell.className = "broadcast-ai-check-action-cell";
 
       const viewRunCell = document.createElement("td");
       viewRunCell.className = "broadcast-ai-check-view-run-cell";
@@ -2463,12 +2440,13 @@
             viewRunCell.append(runLink);
          }
 
-         const participants =
-            createParticipationParticipantsBlock(check.swedishParticipants);
-
-         if(participants)
+         if(check.swedishParticipants.length > 0)
          {
-            participantsCell.append(participants);
+            participantsCell.append(
+               createParticipationParticipantsBlock(
+                  check.swedishParticipants
+               )
+            );
          }
 
          const sources =
@@ -2491,7 +2469,6 @@
 
          row.append(
             summaryCell,
-            actionCell,
             viewRunCell,
             participantsCell,
             sourcesCell,
@@ -2532,6 +2509,15 @@
             viewRunCell.append(runLink);
          }
 
+         if(check.swedishParticipants.length > 0)
+         {
+            participantsCell.append(
+               createParticipationParticipantsBlock(
+                  check.swedishParticipants
+               )
+            );
+         }
+
          const activityLink = createParticipationActivityLink(
             cell,
             check.runId
@@ -2544,7 +2530,6 @@
 
          row.append(
             summaryCell,
-            actionCell,
             viewRunCell,
             participantsCell,
             sourcesCell,
@@ -2571,13 +2556,6 @@
          viewRunCell.append(runLink);
       }
 
-      if(check.swedishParticipants.length > 0)
-      {
-         participantsCell.append(
-            createParticipationParticipantsBlock(check.swedishParticipants)
-         );
-      }
-
       const sources =
          createParticipationSourcesBlock(check.sourceUrls, check.runId);
 
@@ -2596,14 +2574,22 @@
          activityCell.append(activityLink);
       }
 
-      row.append(
-         summaryCell,
-         actionCell,
-         viewRunCell,
-         participantsCell,
-         sourcesCell,
-         activityCell
-      );
+      if(check.swedishParticipants.length > 0)
+      {
+         participantsCell.append(
+            createParticipationParticipantsBlock(check.swedishParticipants)
+         );
+      }
+
+      const cells = [summaryCell, viewRunCell];
+
+      if(check.swedishParticipants.length > 0)
+      {
+         cells.push(participantsCell);
+      }
+
+      cells.push(sourcesCell, activityCell);
+      row.append(...cells);
       return row;
    }
 
@@ -2811,8 +2797,12 @@
       link.href = `${url.pathname}${url.search}${url.hash}`;
       link.target = "_blank";
       link.rel = "noreferrer noopener";
-      link.textContent = "Activity";
-      return link;
+      link.textContent = "Create Activity";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "broadcast-ai-check-activity-link";
+      wrapper.append(link);
+      return wrapper;
    }
 
    function createParticipationSourcesBlock(sourceUrls, runId)
