@@ -108,12 +108,12 @@
             <dd>@DetailsModel.GetToolRoundCount(Model.Run)</dd>
          </div>
          <div>
-            <dt>Final conversation chars</dt>
+            <dt>Final payload chars</dt>
             <dd>@Model.Run.ConversationCharacterCount</dd>
          </div>
          <div>
-            <dt>Max conversation chars</dt>
-            <dd>@DetailsModel.GetMaxConversationCharacterCount(Model.Run)</dd>
+            <dt>Max payload chars</dt>
+            <dd>@DetailsModel.GetMaxPayloadCharacterCount(Model.Run)</dd>
          </div>
          @if(Model.Run.InputTokens is not null)
          {

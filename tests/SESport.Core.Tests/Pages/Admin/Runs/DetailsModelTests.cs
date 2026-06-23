@@ -139,7 +139,7 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
-   public void GetMaxConversationCharacterCountUsesRoundPeak()
+   public void GetMaxPayloadCharacterCountUsesRoundPeak()
    {
       var run = new SESport.AI.Models.AiRunDetail(
          Id: Guid.NewGuid(),
@@ -163,7 +163,7 @@ public sealed class DetailsModelTests
               {
                 "kind": "budget",
                 "turn": 16,
-                "conversation_chars": 20012,
+                "payload_chars": 20012,
                 "enabled": true,
                 "remaining": 0,
                 "max": 16,
@@ -184,7 +184,7 @@ public sealed class DetailsModelTests
          ExecutionEnvironment: null
       );
 
-      Assert.Equal(20012, DetailsModel.GetMaxConversationCharacterCount(run));
+      Assert.Equal(20012, DetailsModel.GetMaxPayloadCharacterCount(run));
    }
 
    [Fact]

@@ -411,27 +411,27 @@ public class DetailsModel(
       return toolRoundCount;
    }
 
-   public static int GetMaxConversationCharacterCount(AiRunDetail run)
+   public static int GetMaxPayloadCharacterCount(AiRunDetail run)
    {
-      return GetMaxConversationCharacterCount(
+      return GetMaxPayloadCharacterCount(
          run.ConversationCharacterCount,
          run.ToolTraceJson
       );
    }
 
-   public static int GetMaxConversationCharacterCount(
-      int conversationCharacterCount,
+   public static int GetMaxPayloadCharacterCount(
+      int payloadCharacterCount,
       string? toolTraceJson
    )
    {
-      var maxRoundConversationCharacters = ParseToolTrace(toolTraceJson)
-         .Select(turn => turn.RoundConversationCharacterCount ?? 0)
+      var maxRoundPayloadCharacters = ParseToolTrace(toolTraceJson)
+         .Select(turn => turn.RoundPayloadCharacterCount ?? 0)
          .DefaultIfEmpty(0)
          .Max();
 
       return Math.Max(
-         conversationCharacterCount,
-         maxRoundConversationCharacters
+         payloadCharacterCount,
+         maxRoundPayloadCharacters
       );
    }
 
@@ -585,13 +585,13 @@ public class DetailsModel(
             var kind = GetString(entry, "kind");
             var turn = GetInt32(entry, "turn") ?? 0;
             var builder = GetOrCreateTurn(turns, turn);
-            var conversationChars = GetInt32(entry, "conversation_chars");
+            var payloadChars = GetInt32(entry, "payload_chars");
 
-            if(conversationChars is not null)
+            if(payloadChars is not null)
             {
-               builder.RoundConversationCharacterCount = Math.Max(
-                  builder.RoundConversationCharacterCount ?? 0,
-                  conversationChars.Value
+               builder.RoundPayloadCharacterCount = Math.Max(
+                  builder.RoundPayloadCharacterCount ?? 0,
+                  payloadChars.Value
                );
             }
 
@@ -989,7 +989,7 @@ public class DetailsModel(
 
    public sealed record ToolTraceTurnViewModel(
       int Turn,
-      int? RoundConversationCharacterCount,
+      int? RoundPayloadCharacterCount,
       decimal? Temperature,
       string? FinishReason,
       string? AssistantContent,
@@ -1006,7 +1006,7 @@ public class DetailsModel(
    {
       public int Turn { get; } = turn;
 
-      public int? RoundConversationCharacterCount { get; set; }
+      public int? RoundPayloadCharacterCount { get; set; }
 
       public decimal? Temperature { get; set; }
 
@@ -1028,7 +1028,7 @@ public class DetailsModel(
       {
          return new ToolTraceTurnViewModel(
             Turn,
-            RoundConversationCharacterCount,
+            RoundPayloadCharacterCount,
             Temperature,
             FinishReason,
             AssistantContent,
@@ -1049,11 +1049,11 @@ public class DetailsModel(
             new($"Round {Turn}", "tool-trace-badge-round")
          };
 
-         if(RoundConversationCharacterCount is not null)
+         if(RoundPayloadCharacterCount is not null)
          {
             badges.Add(new(
-               $"Round conversation chars " +
-               $"{RoundConversationCharacterCount.Value:N0}",
+               $"Payload chars " +
+               $"{RoundPayloadCharacterCount.Value:N0}",
                "tool-trace-badge-count"
             ));
          }

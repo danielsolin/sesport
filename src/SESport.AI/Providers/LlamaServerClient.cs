@@ -130,15 +130,15 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                toolRoundCount
             );
-            var conversationCharacterCount = EstimateConversationSize(
-               messages
+            var payloadCharacterCount = EstimateRequestPayloadSize(
+               request
             );
             toolTrace.Add(
                CreateToolBudgetTraceEntry(
                   turn,
                   prompt.MaxToolRounds,
                   toolRoundCount,
-                  conversationCharacterCount,
+                  payloadCharacterCount,
                   GetRequestTemperature(request)
                )
             );
@@ -247,7 +247,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                request["tool_choice"] = "auto";
             }
 
-            TrimConversationMessages(messages);
+            TrimConversationMessages(request, messages);
 
             if(prompt.MaxToolRounds is not null &&
                toolRoundCount >= prompt.MaxToolRounds.Value)
@@ -265,15 +265,15 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                prompt.MaxToolRounds ?? 0
             );
-            var conversationCharacterCount = EstimateConversationSize(
-               messages
+            var payloadCharacterCount = EstimateRequestPayloadSize(
+               request
             );
             toolTrace.Add(
                CreateToolBudgetTraceEntry(
                   turn + 1,
                   prompt.MaxToolRounds,
                   prompt.MaxToolRounds ?? 0,
-                  conversationCharacterCount,
+                  payloadCharacterCount,
                   GetRequestTemperature(request)
                )
             );
@@ -364,7 +364,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   ? null
                   : JsonSerializer.Serialize(toolTrace, JsonOptions);
 
-               return new AiJobResult(
+                  return new AiJobResult(
                   Guid.NewGuid(),
                   job.Id,
                   provider.Id,
@@ -375,7 +375,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   rawResponse,
                   toolTraceJson,
                   toolRoundCount,
-                  EstimateConversationSize(messages),
+                  EstimateRequestPayloadSize(request),
                   null,
                   null,
                   null,
@@ -453,7 +453,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             string.IsNullOrWhiteSpace(rawResponse) ? null : rawResponse,
             toolTraceJson,
             toolRoundCount,
-            EstimateConversationSize(messages)
+            EstimateRequestPayloadSize(request)
          );
       }
    }
@@ -892,7 +892,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       int turn,
       int? maxToolRounds,
       int toolRoundCount,
-      int conversationCharacterCount,
+      int payloadCharacterCount,
       decimal? temperature
    )
    {
@@ -917,7 +917,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["enabled"] = true,
          ["remaining"] = remainingToolCalls,
          ["max"] = maxToolRounds.Value,
-         ["conversation_chars"] = conversationCharacterCount,
+         ["payload_chars"] = payloadCharacterCount,
          ["temperature"] = temperature,
          ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
             $"{maxToolRounds.Value}."
@@ -2419,11 +2419,14 @@ public sealed class LlamaServerClient : IAiProviderClient
       };
    }
 
-   private static void TrimConversationMessages(JsonArray messages)
+   private static void TrimConversationMessages(
+      JsonObject request,
+      JsonArray messages
+   )
    {
       var historyEntries = GetConversationHistoryEntries(messages);
 
-      while(EstimateConversationSize(messages) >
+      while(EstimateRequestPayloadSize(request) >
          MaxConversationContextCharacters)
       {
          var lastAssistantIndex = FindLastAssistantMessageIndex(messages);
@@ -3075,9 +3078,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       return normalized[..maxLength] + "...";
    }
 
-   private static int EstimateConversationSize(JsonArray messages)
+   private static int EstimateRequestPayloadSize(JsonObject request)
    {
-      return messages.ToJsonString(JsonOptions).Length;
+      return request.ToJsonString(JsonOptions).Length;
    }
 
    private static string CreateFailureMessage(

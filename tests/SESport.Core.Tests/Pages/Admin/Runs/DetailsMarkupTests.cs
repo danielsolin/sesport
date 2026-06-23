@@ -31,8 +31,8 @@ public sealed class DetailsMarkupTests
          "summary>User prompt template</summary>"
       );
       Assert.Contains("<dt>Temperature</dt>", html);
-      Assert.Contains("Final conversation chars", html);
-      Assert.Contains("Max conversation chars", html);
+      Assert.Contains("Final payload chars", html);
+      Assert.Contains("Max payload chars", html);
       Assert.Contains("asp-for=\"ExecutionEnvironment\"", html);
       Assert.Contains("tool-trace-turn-header-main", html);
       Assert.DoesNotContain("Full trace", html);
