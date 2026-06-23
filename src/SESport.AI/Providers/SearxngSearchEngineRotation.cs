@@ -41,7 +41,13 @@ internal static class SearxngSearchEngineRotation
          return DefaultEngines[0];
       }
 
-      var index = Math.Clamp(searchAttempt, 0, normalizedEngines.Count - 1);
+      var index = searchAttempt % normalizedEngines.Count;
+
+      if(index < 0)
+      {
+         index += normalizedEngines.Count;
+      }
+
       return normalizedEngines[index];
    }
 

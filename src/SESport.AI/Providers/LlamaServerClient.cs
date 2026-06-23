@@ -1461,17 +1461,18 @@ public sealed class LlamaServerClient : IAiProviderClient
       var query = ExtractQuery(toolCall.Arguments);
       var limit = ExtractLimit(toolCall.Arguments);
       var signature = BuildToolCallSignature(toolCall);
-      var searchAttempt = toolState.SearchAttemptCounts.TryGetValue(
+      var searchAttempt = toolState.SearchCallCount;
+      var engineCount = SearxngSearchEngineRotation.GetEngineCount(
+         SearxngOptions?.Engines
+      );
+      var repeatedSearchCount = toolState.SearchAttemptCounts.TryGetValue(
          signature,
          out var existingAttempt
       )
          ? existingAttempt
          : 0;
-      var engineCount = SearxngSearchEngineRotation.GetEngineCount(
-         SearxngOptions?.Engines
-      );
 
-      if(searchAttempt >= engineCount)
+      if(repeatedSearchCount >= engineCount)
       {
          return CreateRepeatedToolResultMessage(toolCall.Name);
       }
@@ -1486,7 +1487,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       toolState.LastSearchProvider = searchResponse.Provider;
       toolState.LastSearchProviderDetails = searchResponse.Details;
       toolState.LastSearchEngine = GetSearchEngine(searchResponse.Details);
-      toolState.SearchAttemptCounts[signature] = searchAttempt + 1;
+      toolState.SearchCallCount = searchAttempt + 1;
+      toolState.SearchAttemptCounts[signature] = repeatedSearchCount + 1;
 
       LogSearchResults(
          query,
@@ -3295,6 +3297,8 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       public Dictionary<string, ToolCallRecord> ToolCallHistory { get; } =
          new(StringComparer.OrdinalIgnoreCase);
+
+      public int SearchCallCount { get; set; }
 
       public Dictionary<string, int> SearchAttemptCounts { get; } =
          new(StringComparer.OrdinalIgnoreCase);
