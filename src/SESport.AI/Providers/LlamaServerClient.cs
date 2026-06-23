@@ -226,6 +226,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                      toolResult,
                      toolState.LastSearchProvider,
                      toolState.LastSearchProviderDetails,
+                     toolState.LastSearchEngine,
                      toolState.LastPageFetcher
                   )
                );
@@ -982,6 +983,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       string toolResult,
       string? searchProvider = null,
       string? searchProviderDetails = null,
+      string? searchEngine = null,
       string? pageFetcher = null
    )
    {
@@ -1022,6 +1024,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          ["search_provider_details"] = isSearchTool
             ? searchProviderDetails
             : null,
+         ["search_engine"] = isSearchTool ? searchEngine : null,
          ["fetcher"] = isGetPageTool || isFindInPageTool
             ? pageFetcher
             : null,
@@ -1482,6 +1485,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var searchResults = searchResponse.Results;
       toolState.LastSearchProvider = searchResponse.Provider;
       toolState.LastSearchProviderDetails = searchResponse.Details;
+      toolState.LastSearchEngine = GetSearchEngine(searchResponse.Details);
       toolState.SearchAttemptCounts[signature] = searchAttempt + 1;
 
       LogSearchResults(
@@ -1502,6 +1506,23 @@ public sealed class LlamaServerClient : IAiProviderClient
          result
       );
       return result;
+   }
+
+   private static string? GetSearchEngine(string? searchProviderDetails)
+   {
+      if(string.IsNullOrWhiteSpace(searchProviderDetails))
+      {
+         return null;
+      }
+
+      const string prefix = "engines=";
+
+      return searchProviderDetails.StartsWith(
+         prefix,
+         StringComparison.OrdinalIgnoreCase
+      )
+         ? searchProviderDetails[prefix.Length..]
+         : null;
    }
 
    private static bool TryGetToolCalls(
@@ -3264,6 +3285,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       public string? LastSearchProvider { get; set; }
 
       public string? LastSearchProviderDetails { get; set; }
+
+      public string? LastSearchEngine { get; set; }
 
       public string? LastPageFetcher { get; set; }
 

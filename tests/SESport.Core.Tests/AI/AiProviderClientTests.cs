@@ -103,9 +103,11 @@ public class AiProviderClientTests
          "\"tool_choice\":\"required\"",
          handler.RequestBodies[1]
       );
+      Assert.Contains("\"search_engine\":\"google\"", result.ToolTraceJson);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
       Assert.Equal(10, webSearchClient.Queries[0].MaxResults);
+      Assert.Equal(0, webSearchClient.SearchAttempts[0]);
       Assert.Single(webPageContentClient.Urls);
       Assert.Equal(
          "https://example.test/roster",
@@ -1646,7 +1648,11 @@ public class AiProviderClientTests
       {
          Queries.Add((query, maxResults));
          SearchAttempts.Add(searchAttempt);
-         return Task.FromResult(new WebSearchResponse(results));
+         return Task.FromResult(new WebSearchResponse(
+            results,
+            "SearXNG/google",
+            "engines=google"
+         ));
       }
    }
 

@@ -319,6 +319,14 @@
                                           </div>
                                        }
                                        @if(!string.IsNullOrWhiteSpace(
+                                          toolResult.SearchEngine))
+                                       {
+                                          <div>
+                                             Engine:
+                                             @toolResult.SearchEngine
+                                          </div>
+                                       }
+                                       @if(!string.IsNullOrWhiteSpace(
                                           toolResult.Fetcher))
                                        {
                                           <div>

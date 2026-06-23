@@ -748,6 +748,7 @@ public class DetailsModel(
          GetString(entry, "id"),
          GetString(entry, "search_provider"),
          GetString(entry, "search_provider_details"),
+         GetString(entry, "search_engine"),
          GetString(entry, "fetcher"),
          FormatDisplayValue(GetProperty(entry, "result"))
       );
@@ -981,6 +982,7 @@ public class DetailsModel(
       string? Id,
       string? SearchProvider,
       string? SearchProviderDetails,
+      string? SearchEngine,
       string? Fetcher,
       string Result
    );
