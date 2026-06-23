@@ -2375,6 +2375,9 @@
       const viewRunCell = document.createElement("td");
       viewRunCell.className = "broadcast-ai-check-view-run-cell";
 
+      const participantsCell = document.createElement("td");
+      participantsCell.className = "broadcast-ai-check-participants-cell";
+
       const sourcesCell = document.createElement("td");
       sourcesCell.className = "broadcast-ai-check-sources-cell";
 
@@ -2393,7 +2396,13 @@
          summaryCell.append(checkButton);
       }
 
-      row.append(summaryCell, viewRunCell, sourcesCell, activityCell);
+      row.append(
+         summaryCell,
+         viewRunCell,
+         participantsCell,
+         sourcesCell,
+         activityCell
+      );
 
       return row;
    }
@@ -2440,14 +2449,14 @@
             viewRunCell.append(runLink);
          }
 
-         if(check.swedishParticipants.length > 0)
-         {
-            participantsCell.append(
-               createParticipationParticipantsBlock(
-                  check.swedishParticipants
-               )
-            );
-         }
+      if(check.swedishParticipants.length > 0)
+      {
+         participantsCell.append(
+            createParticipationParticipantsBlock(
+               check.swedishParticipants
+            )
+         );
+      }
 
          const sources =
             createParticipationSourcesBlock(check.sourceUrls, check.runId);
@@ -2509,14 +2518,14 @@
             viewRunCell.append(runLink);
          }
 
-         if(check.swedishParticipants.length > 0)
-         {
-            participantsCell.append(
-               createParticipationParticipantsBlock(
-                  check.swedishParticipants
-               )
-            );
-         }
+      if(check.swedishParticipants.length > 0)
+      {
+         participantsCell.append(
+            createParticipationParticipantsBlock(
+               check.swedishParticipants
+            )
+         );
+      }
 
          const activityLink = createParticipationActivityLink(
             cell,
@@ -2581,15 +2590,13 @@
          );
       }
 
-      const cells = [summaryCell, viewRunCell];
-
-      if(check.swedishParticipants.length > 0)
-      {
-         cells.push(participantsCell);
-      }
-
-      cells.push(sourcesCell, activityCell);
-      row.append(...cells);
+      row.append(
+         summaryCell,
+         viewRunCell,
+         participantsCell,
+         sourcesCell,
+         activityCell
+      );
       return row;
    }
 

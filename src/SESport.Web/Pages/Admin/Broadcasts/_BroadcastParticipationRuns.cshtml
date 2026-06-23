@@ -93,19 +93,20 @@
                         Not checked yet
                      </span>
                   </td>
-               <td class="broadcast-ai-check-view-run-cell"></td>
-               <td class="broadcast-ai-check-sources-cell"></td>
-               <td class="broadcast-ai-check-activity-cell">
-                  @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
+                  <td class="broadcast-ai-check-view-run-cell"></td>
+                  <td class="broadcast-ai-check-participants-cell"></td>
+                  <td class="broadcast-ai-check-sources-cell"></td>
+                  <td class="broadcast-ai-check-activity-cell">
+                     @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
                      {
                         <a href="@baseActivityUrl"
-                        target="_blank"
-                        rel="noreferrer noopener">
-                        Create Activity
-                     </a>
-                  }
-               </td>
-            </tr>
+                           target="_blank"
+                           rel="noreferrer noopener">
+                           Create Activity
+                        </a>
+                     }
+                  </td>
+               </tr>
          }
          else
          {
@@ -164,15 +165,13 @@
                         </a>
                      }
                   </td>
-                  @if(check.Participants.Count > 0)
-                  {
-                     <td class="broadcast-ai-check-participants-cell">
-                        @{
-                           var participantItems = Model.PageModel
-                              .GetParticipantDisplayItems(
-                                 check.Participants
-                              );
-                        }
+                  <td class="broadcast-ai-check-participants-cell">
+                     @if(check.Participants.Count > 0)
+                     {
+                        var participantItems = Model.PageModel
+                           .GetParticipantDisplayItems(
+                              check.Participants
+                           );
                         <div class="broadcast-ai-check-participants">
                            @foreach(var participant in participantItems)
                            {
@@ -221,8 +220,8 @@
                               </div>
                            }
                         </div>
-                     </td>
-                  }
+                     }
+                  </td>
                   <td class="broadcast-ai-check-sources-cell">
                      @if(check.SourceUrls.Count > 0)
                      {
