@@ -16,6 +16,9 @@ public sealed record BroadcastListItem(
 {
    public BroadcastParticipationCheck? ParticipationCheck { get; init; }
 
+   public IReadOnlyList<BroadcastParticipationCheck>
+      ParticipationChecks { get; init; } = [];
+
    public string TimeOnlyText
    {
       get

@@ -25,13 +25,14 @@ public sealed class BroadcastParticipationService(
          CancellationToken cancellationToken
       )
    {
-      var checks = await aiRepository.GetParticipationChecksAsync(
+      var checks = await aiRepository.GetParticipationCheckHistoryAsync(
          [broadcastId],
          cancellationToken
       );
 
-      return checks.TryGetValue(broadcastId, out var participationCheck)
-         ? participationCheck
+      return checks.TryGetValue(broadcastId, out var participationChecks)
+         && participationChecks.Count > 0
+         ? participationChecks[0]
          : null;
    }
 
@@ -42,7 +43,7 @@ public sealed class BroadcastParticipationService(
       )
    {
       var broadcastIds = broadcasts.Select(broadcast => broadcast.Id).ToArray();
-      var checks = await aiRepository.GetParticipationChecksAsync(
+      var checkHistory = await aiRepository.GetParticipationCheckHistoryAsync(
          broadcastIds,
          cancellationToken
       );
@@ -50,11 +51,19 @@ public sealed class BroadcastParticipationService(
       return broadcasts
          .Select(broadcast =>
          {
-            checks.TryGetValue(broadcast.Id, out var participationCheck);
+            checkHistory.TryGetValue(
+               broadcast.Id,
+               out var participationChecks
+            );
+            var participationCheck = participationChecks is null ||
+               participationChecks.Count == 0
+               ? null
+               : participationChecks[0];
 
             return broadcast with
             {
-               ParticipationCheck = participationCheck
+               ParticipationCheck = participationCheck,
+               ParticipationChecks = participationChecks ?? []
             };
          })
          .ToList();
@@ -116,12 +125,12 @@ public sealed class BroadcastParticipationService(
          normalizedBroadcastIds,
          cancellationToken
       );
-      var checks = await aiRepository.GetParticipationChecksAsync(
+      var checkHistory = await aiRepository.GetParticipationCheckHistoryAsync(
          normalizedBroadcastIds,
          cancellationToken
       );
 
-      if(checks.Count == 0)
+      if(checkHistory.Count == 0)
       {
          return [];
       }
@@ -139,11 +148,16 @@ public sealed class BroadcastParticipationService(
 
       foreach(var broadcast in broadcasts)
       {
-         if(!checks.TryGetValue(broadcast.Id, out var participationCheck))
+         if(!checkHistory.TryGetValue(
+            broadcast.Id,
+            out var participationChecks
+         ) ||
+            participationChecks.Count == 0)
          {
             continue;
          }
 
+         var participationCheck = participationChecks[0];
          var participantItems = ResolveParticipantItems(
             participationCheck.SwedishParticipants,
             entityByName
@@ -161,7 +175,8 @@ public sealed class BroadcastParticipationService(
                participationCheck.SwedishParticipation,
                participationCheck.SwedishParticipants,
                participantItems,
-               participationCheck.SourceUrls
+               participationCheck.SourceUrls,
+               participationChecks
             )
          );
       }
@@ -269,7 +284,8 @@ public sealed record BroadcastParticipationCheckResult(
    string? SwedishParticipation,
    IReadOnlyList<string> SwedishParticipants,
    IReadOnlyList<BroadcastParticipantDisplayItem> SwedishParticipantItems,
-   IReadOnlyList<string> SourceUrls
+   IReadOnlyList<string> SourceUrls,
+   IReadOnlyList<BroadcastParticipationCheck> Checks
 );
 
 public sealed record BroadcastParticipantDisplayItem(

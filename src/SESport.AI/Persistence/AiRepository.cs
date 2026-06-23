@@ -263,13 +263,34 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
+      var history = await GetParticipationCheckHistoryAsync(
+         broadcastIds,
+         cancellationToken
+      );
+
+      return history
+         .Where(pair => pair.Value.Count > 0)
+         .ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value[0]
+         );
+   }
+
+   public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<
+      BroadcastParticipationCheck>>>
+      GetParticipationCheckHistoryAsync(
+         IReadOnlyCollection<Guid> broadcastIds,
+         CancellationToken cancellationToken
+      )
+   {
       if(broadcastIds.Count == 0)
       {
-         return new Dictionary<Guid, BroadcastParticipationCheck>();
+         return new Dictionary<Guid, IReadOnlyList<
+            BroadcastParticipationCheck>>();
       }
 
       const string sql = """
-         select distinct on (r.correlation_id)
+         select
             r.correlation_id,
             r.id,
             r.status_id,
@@ -296,7 +317,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var checks = new Dictionary<Guid, BroadcastParticipationCheck>();
+      var checks = new Dictionary<Guid, List<BroadcastParticipationCheck>>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
@@ -314,17 +335,28 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          var rawResponseText = ReadNullableString(reader, 5);
          var errorMessage = ReadNullableString(reader, 6);
 
-         checks[broadcastId] = ParseParticipationCheck(
-            runId,
-            statusId,
-            toolRoundCount,
-            outputText,
-            rawResponseText,
-            errorMessage
+         if(!checks.TryGetValue(broadcastId, out var history))
+         {
+            history = [];
+            checks[broadcastId] = history;
+         }
+
+         history.Add(
+            ParseParticipationCheck(
+               runId,
+               statusId,
+               toolRoundCount,
+               outputText,
+               rawResponseText,
+               errorMessage
+            )
          );
       }
 
-      return checks;
+      return checks.ToDictionary(
+         pair => pair.Key,
+         pair => (IReadOnlyList<BroadcastParticipationCheck>)pair.Value
+      );
    }
 
    public async Task<AiJobDefinition?> GetJobAsync(

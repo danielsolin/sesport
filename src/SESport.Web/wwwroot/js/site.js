@@ -952,19 +952,16 @@
       }
 
       cell.replaceChildren();
-      const { wrapper, body } = createParticipationRunsShell();
-
-      const check = document.createElement("div");
-      check.className = "broadcast-ai-check";
-
-      const pending = document.createElement("span");
-      pending.className = "broadcast-ai-check-pending";
-      pending.textContent = "Queued";
-      check.append(pending);
+      const pendingCheck = normalizeParticipationCheckResult({
+         statusId: "pending"
+      });
+      const { wrapper, body } = createParticipationRunsShell([
+         pendingCheck
+      ]);
+      body.append(createParticipationRunBlock(cell, pendingCheck));
 
       cell.dataset.participationStatus = "pending";
       updateParticipationRowStatus(cell, "pending");
-      body.append(check);
       cell.append(wrapper);
    }
 
@@ -1953,49 +1950,26 @@
       }
 
       cell.replaceChildren();
-      const { wrapper: runsWrapper, body } = createParticipationRunsShell();
+      const checks = normalizeParticipationChecks(result);
 
-      if(!result || typeof result !== "object")
+      if(checks.length === 0)
       {
          const fallback = document.createElement("span");
          fallback.className = "broadcast-ai-check-empty";
          fallback.textContent = "Not checked yet";
-         body.append(fallback);
-         cell.append(runsWrapper);
+         cell.append(fallback);
          return;
       }
 
-      if(typeof result.error === "string" && result.error.trim() !== "")
-      {
-         updateParticipationRunId(cell, result.runId);
+      const { wrapper, body } = createParticipationRunsShell(checks);
+      cell.append(wrapper);
 
-         if(typeof result.statusId === "string")
-         {
-            cell.dataset.participationStatus = result.statusId.trim();
-            updateParticipationRowStatus(cell, result.statusId.trim());
-         }
-         else
-         {
-            updateParticipationRowStatus(cell, "");
-         }
+      const latestCheck = checks[0];
 
-         body.append(
-            createParticipationErrorBlock(
-               cell,
-               result.error,
-               result.runId,
-               result.sourceUrls
-            )
-         );
-         cell.append(runsWrapper);
-         initializeParticipationRowChecks(cell);
-         return;
-      }
-
-      const statusId = typeof result.statusId === "string"
-         ? result.statusId.trim()
+      const statusId = typeof latestCheck.statusId === "string"
+         ? latestCheck.statusId.trim()
          : "";
-      updateParticipationRunId(cell, result.runId);
+      updateParticipationRunId(cell, latestCheck.runId);
       if(statusId !== "")
       {
          cell.dataset.participationStatus = statusId;
@@ -2005,26 +1979,129 @@
       {
          updateParticipationRowStatus(cell, "");
       }
-      const participation = typeof result.swedishParticipation === "string"
-         && result.swedishParticipation.trim() !== ""
-         ? result.swedishParticipation.trim()
+
+      const latestWrapper = createParticipationRunBlock(cell, latestCheck);
+
+      body.append(latestWrapper);
+
+      checks.slice(1).forEach(check => {
+         body.append(createParticipationRunBlock(cell, check));
+      });
+
+      initializeParticipationRowChecks(cell);
+   }
+
+   function normalizeParticipationChecks(result)
+   {
+      if(!result || typeof result !== "object")
+      {
+         return [];
+      }
+
+      if(Array.isArray(result.checks) && result.checks.length > 0)
+      {
+         return result.checks
+            .map(check => normalizeParticipationCheckResult(check))
+            .filter(check => check !== null);
+      }
+
+      return [
+         normalizeParticipationCheckResult(result)
+      ].filter(check => check !== null);
+   }
+
+   function normalizeParticipationCheckResult(check)
+   {
+      if(!check || typeof check !== "object")
+      {
+         return null;
+      }
+
+      const statusId = typeof check.statusId === "string"
+         ? check.statusId.trim()
          : "";
-      const participants = Array.isArray(result.swedishParticipantItems)
-         && result.swedishParticipantItems.length > 0
-         ? result.swedishParticipantItems
-            .filter(participant => isValidParticipantItem(participant))
-         : Array.isArray(result.swedishParticipants)
-            ? result.swedishParticipants
+      const runId = typeof check.runId === "string"
+         ? check.runId.trim()
+         : "";
+      const error = typeof check.errorMessage === "string"
+         ? check.errorMessage.trim()
+         : typeof check.error === "string"
+            ? check.error.trim()
+            : "";
+
+      return {
+         runId,
+         statusId,
+         toolRoundCount: typeof check.toolRoundCount === "number"
+            ? check.toolRoundCount
+            : 0,
+         swedishParticipation:
+            typeof check.swedishParticipation === "string"
+               ? check.swedishParticipation.trim()
+               : "",
+         swedishParticipants: Array.isArray(check.swedishParticipants)
+            ? check.swedishParticipants
                .filter(participant =>
                   typeof participant === "string"
                      && participant.trim() !== "")
-            : [];
-      const sourceUrls = Array.isArray(result.sourceUrls)
-         ? result.sourceUrls
-            .filter(url => typeof url === "string" && url.trim() !== "")
-         : [];
+            : [],
+         sourceUrls: Array.isArray(check.sourceUrls)
+            ? check.sourceUrls
+               .filter(url => typeof url === "string" && url.trim() !== "")
+            : [],
+         error,
+         summaryText: typeof check.summaryText === "string"
+            && check.summaryText.trim() !== ""
+            ? check.summaryText.trim()
+            : check.swedishParticipation === ""
+               ? formatParticipationStatus(statusId)
+               : statusId
+      };
+   }
 
-      if(participation === "")
+   function createParticipationRunsShell(checks)
+   {
+      const wrapper = document.createElement("details");
+      wrapper.className = "broadcast-ai-check-runs";
+      wrapper.open = false;
+
+      const summary = document.createElement("summary");
+      const summaryText = document.createElement("span");
+      summaryText.className = "broadcast-ai-check-runs-summary-text";
+      summaryText.textContent = checks.length > 0
+         ? checks[0].summaryText
+         : "Not checked yet";
+      summary.append(summaryText);
+
+      if(checks.length > 1)
+      {
+         const summaryCount = document.createElement("span");
+         summaryCount.className = "broadcast-ai-check-runs-summary-count";
+         summaryCount.textContent = `+${checks.length - 1} more`;
+         summary.append(summaryCount);
+      }
+
+      const body = document.createElement("div");
+      body.className = "broadcast-ai-check-runs-body";
+
+      wrapper.append(summary, body);
+
+      return { wrapper, body };
+   }
+
+   function createParticipationRunBlock(cell, check)
+   {
+      if(check.error !== "")
+      {
+         return createParticipationErrorBlock(
+            cell,
+            check.error,
+            check.runId,
+            check.sourceUrls
+         );
+      }
+
+      if(check.swedishParticipation === "")
       {
          const wrapper = document.createElement("div");
          wrapper.className = "broadcast-ai-check";
@@ -2033,19 +2110,23 @@
 
          const pending = document.createElement("span");
          pending.className = "broadcast-ai-check-pending";
-         pending.textContent = formatParticipationStatus(statusId);
+         pending.textContent = formatParticipationStatus(check.statusId);
          line.append(pending);
 
-         const rounds = statusId === "running"
-            ? createParticipationRoundsLabel(result.toolRoundCount, true)
-            : null;
-
-         if(rounds)
+         if(check.statusId === "running")
          {
-            line.append(rounds);
+            const rounds = createParticipationRoundsLabel(
+               check.toolRoundCount,
+               true
+            );
+
+            if(rounds)
+            {
+               line.append(rounds);
+            }
          }
 
-         const runLink = createParticipationRunLink(result.runId);
+         const runLink = createParticipationRunLink(check.runId);
 
          if(runLink)
          {
@@ -2053,51 +2134,39 @@
          }
 
          wrapper.append(line);
-
-         body.append(wrapper);
-         cell.append(runsWrapper);
-         initializeParticipationRowChecks(cell);
-         return;
+         return wrapper;
       }
 
       const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check";
+
+      const result = {
+         runId: check.runId,
+         statusId: check.statusId,
+         toolRoundCount: check.toolRoundCount,
+         swedishParticipation: check.swedishParticipation,
+         swedishParticipants: check.swedishParticipants,
+         sourceUrls: check.sourceUrls
+      };
+
       wrapper.append(createParticipationSummaryLine(cell, result));
 
-      if(participants.length > 0)
+      if(check.swedishParticipants.length > 0)
       {
          wrapper.append(
-            createParticipationParticipantsBlock(participants)
+            createParticipationParticipantsBlock(check.swedishParticipants)
          );
       }
 
-      const sources = createParticipationSourcesBlock(sourceUrls, result.runId);
+      const sources =
+         createParticipationSourcesBlock(check.sourceUrls, check.runId);
 
       if(sources)
       {
          wrapper.append(sources);
       }
 
-      body.append(wrapper);
-      cell.append(runsWrapper);
-      initializeParticipationRowChecks(cell);
-   }
-
-   function createParticipationRunsShell()
-   {
-      const wrapper = document.createElement("details");
-      wrapper.className = "broadcast-ai-check-runs";
-      wrapper.open = true;
-
-      const summary = document.createElement("summary");
-      summary.textContent = "Runs";
-
-      const body = document.createElement("div");
-      body.className = "broadcast-ai-check-runs-body";
-
-      wrapper.append(summary, body);
-
-      return { wrapper, body };
+      return wrapper;
    }
 
    function updateParticipationRunId(cell, runId)
