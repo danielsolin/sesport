@@ -46,8 +46,25 @@ internal static class WebPageHtmlPageFetcher
                "HTML fallback produced no text for {Url}.",
                absoluteUrl
             );
-            if(IsBlockedPage(title, text))
+            if(WebPageBlockDetection.IsBlocked(
+               title,
+               text,
+               WebPageBlockSource.HtmlFallback
+            ))
             {
+               var blockedSignature =
+                  WebPageBlockDetection.FindBlockedSignature(
+                     title,
+                     text,
+                     WebPageBlockSource.HtmlFallback
+                  );
+
+               logger.LogWarning(
+                  "HTML fallback blocked for {Url} by signature {Signature}.",
+                  absoluteUrl,
+                  blockedSignature ?? "<unknown>"
+               );
+
                return await TryCurlFallbackAsync(
                   logger,
                   curlPageFetcher,
@@ -72,8 +89,25 @@ internal static class WebPageHtmlPageFetcher
             absoluteUrl
          );
 
-         if(IsBlockedPage(title, text))
+         if(WebPageBlockDetection.IsBlocked(
+            title,
+            text,
+            WebPageBlockSource.HtmlFallback
+         ))
          {
+            var blockedSignature = WebPageBlockDetection
+               .FindBlockedSignature(
+                  title,
+                  text,
+                  WebPageBlockSource.HtmlFallback
+               );
+
+            logger.LogWarning(
+               "HTML fallback blocked for {Url} by signature {Signature}.",
+               absoluteUrl,
+               blockedSignature ?? "<unknown>"
+            );
+
             return await TryCurlFallbackAsync(
                logger,
                curlPageFetcher,
@@ -154,30 +188,4 @@ internal static class WebPageHtmlPageFetcher
       );
    }
 
-   private static bool IsBlockedPage(string? title, string text)
-   {
-      var combinedText =
-         WebPageContentFetchSupport.NormalizeText($"{title} {text}");
-
-      return combinedText.Contains(
-         "access denied",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "you do not have permission to access",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "you don't have permission to access",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "errors edgesuite net",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "reference",
-         StringComparison.OrdinalIgnoreCase
-      );
-   }
 }

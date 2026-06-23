@@ -24,7 +24,7 @@ internal static class WebPageCurlPageFetcher
             return null;
          }
 
-         return ParseCurlOutput(output, absoluteUrl);
+         return ParseCurlOutput(logger, output, absoluteUrl);
       }
       catch(OperationCanceledException)
       {
@@ -109,6 +109,7 @@ internal static class WebPageCurlPageFetcher
    }
 
    private static WebPageContent? ParseCurlOutput(
+      ILogger logger,
       string output,
       Uri absoluteUrl
    )
@@ -121,6 +122,12 @@ internal static class WebPageCurlPageFetcher
 
       if(markerIndex < 0)
       {
+         logger.LogWarning(
+            "Curl fallback blocked for {Url} by signature {Signature}.",
+            absoluteUrl,
+            "<unexpected response>"
+         );
+
          return WebPageContentFetchSupport.BuildFailureContent(
             absoluteUrl,
             null,
@@ -139,6 +146,12 @@ internal static class WebPageCurlPageFetcher
 
       if(!string.Equals(statusCode, "200", StringComparison.Ordinal))
       {
+         logger.LogWarning(
+            "Curl fallback blocked for {Url} by signature {Signature}.",
+            absoluteUrl,
+            $"HTTP {statusCode}"
+         );
+
          return WebPageContentFetchSupport.BuildFailureContent(
             absoluteUrl,
             null,
@@ -154,6 +167,12 @@ internal static class WebPageCurlPageFetcher
 
       if(string.IsNullOrWhiteSpace(text))
       {
+         logger.LogWarning(
+            "Curl fallback blocked for {Url} by signature {Signature}.",
+            absoluteUrl,
+            "<no text>"
+         );
+
          return WebPageContentFetchSupport.BuildFailureContent(
             absoluteUrl,
             title,
@@ -163,8 +182,24 @@ internal static class WebPageCurlPageFetcher
          );
       }
 
-      if(IsBlockedPage(title, text))
+      if(WebPageBlockDetection.IsBlocked(
+         title,
+         text,
+         WebPageBlockSource.CurlFallback
+      ))
       {
+         var blockedSignature = WebPageBlockDetection.FindBlockedSignature(
+            title,
+            text,
+            WebPageBlockSource.CurlFallback
+         );
+
+         logger.LogWarning(
+            "Curl fallback blocked for {Url} by signature {Signature}.",
+            absoluteUrl,
+            blockedSignature ?? "<unknown>"
+         );
+
          return WebPageContentFetchSupport.BuildFailureContent(
             absoluteUrl,
             title,
@@ -186,30 +221,4 @@ internal static class WebPageCurlPageFetcher
       );
    }
 
-   private static bool IsBlockedPage(string? title, string text)
-   {
-      var combinedText =
-         WebPageContentFetchSupport.NormalizeText($"{title} {text}");
-
-      return combinedText.Contains(
-         "access denied",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "you do not have permission to access",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "you don't have permission to access",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "errors edgesuite net",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      combinedText.Contains(
-         "reference",
-         StringComparison.OrdinalIgnoreCase
-      );
-   }
 }

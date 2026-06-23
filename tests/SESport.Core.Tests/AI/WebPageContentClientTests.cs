@@ -320,6 +320,71 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task HtmlFetcherAllowsReferenceText()
+   {
+      var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new StringContent(
+            """
+            <html>
+               <head>
+                  <title>Reference Guide</title>
+               </head>
+               <body>
+                  <main>
+                     <p>Please read the reference guide.</p>
+                  </main>
+               </body>
+            </html>
+            """
+         )
+      };
+
+      var page = await WebPageHtmlPageFetcher.FetchAsync(
+         NullLogger.Instance,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         response,
+         new Uri("https://example.test/reference"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal("Reference Guide", page!.Title);
+      Assert.Contains("reference guide", page.MainText);
+      Assert.Equal("html", page.Fetcher);
+   }
+
+   [Theory]
+   [InlineData("html")]
+   [InlineData("curl")]
+   public void BlockDetectionMatchesReferenceHashSignature(string sourceKind)
+   {
+      var source = ParseBlockSource(sourceKind);
+      var blocked = WebPageBlockDetection.IsBlocked(
+         "Error",
+         "Reference #12345",
+         source
+      );
+
+      Assert.True(blocked);
+   }
+
+   [Theory]
+   [InlineData("html")]
+   [InlineData("curl")]
+   public void BlockDetectionAllowsReferenceGuideText(string sourceKind)
+   {
+      var source = ParseBlockSource(sourceKind);
+      var blocked = WebPageBlockDetection.IsBlocked(
+         "Reference Guide",
+         "Please read the reference guide.",
+         source
+      );
+
+      Assert.False(blocked);
+   }
+
+   [Fact]
    public async Task FetchExtractsTextFromPdfResponses()
    {
       var browserCalls = 0;
@@ -590,6 +655,17 @@ public class WebPageContentClientTests
       page.AddText("First PDF line.", 12, new PdfPoint(72, 720), font);
       page.AddText("Second PDF line.", 12, new PdfPoint(72, 700), font);
       return builder.Build();
+   }
+
+   private static WebPageBlockSource ParseBlockSource(string sourceKind)
+   {
+      return string.Equals(
+         sourceKind,
+         "curl",
+         StringComparison.OrdinalIgnoreCase
+      )
+         ? WebPageBlockSource.CurlFallback
+         : WebPageBlockSource.HtmlFallback;
    }
 
    private sealed class PdfRecordingHandler : HttpMessageHandler
