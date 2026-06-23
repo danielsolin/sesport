@@ -695,11 +695,6 @@ h2 {
 
 .broadcasts-table th:nth-child(5),
 .broadcasts-table td:nth-child(5) {
-   width: 224px;
-}
-
-.broadcasts-table th:nth-child(6),
-.broadcasts-table td:nth-child(6) {
    width: 64px;
 }
 
@@ -1336,7 +1331,6 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 
 .broadcast-ai-check-runs {
    display: block;
-   gap: 8px;
    width: 100%;
    min-width: 0;
 }
@@ -1376,11 +1370,7 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 }
 
 .broadcast-ai-check-runs-body {
-   display: grid;
-   gap: 4px;
    width: 100%;
-   min-width: 0;
-   padding-top: 4px;
 }
 
 .broadcast-ai-check-runs-summary-text {
@@ -1418,17 +1408,55 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    padding-right: 10px;
 }
 
-.broadcast-participation-runs-cell .broadcast-ai-check-runs-body > * {
+.broadcast-ai-check-runs-table {
    width: 100%;
+   border-collapse: collapse;
+   table-layout: fixed;
 }
 
-.broadcast-participation-runs-cell .broadcast-ai-check {
-   width: 100%;
+.broadcast-ai-check-runs-body > tr > td {
+   padding-top: 4px;
+   vertical-align: top;
+   min-width: 0;
+}
+
+.broadcast-ai-check-runs-body > tr:first-child > td {
+   padding-top: 0;
+}
+
+.broadcast-ai-check-summary-cell {
+   width: 120px;
+   padding-right: 12px;
+}
+
+.broadcast-ai-check-action-cell {
+   width: 90px;
+   white-space: nowrap;
+   padding-right: 12px;
+}
+
+.broadcast-ai-check-view-run-cell {
+   width: 96px;
+   white-space: nowrap;
+   padding-right: 12px;
+}
+
+.broadcast-ai-check-participants-cell {
+   width: auto;
+   padding-right: 12px;
+}
+
+.broadcast-ai-check-sources-cell {
+   width: 220px;
+}
+
+.broadcast-ai-check-activity-cell {
+   width: 84px;
+   white-space: nowrap;
 }
 
 .broadcast-ai-check {
-   display: grid;
-   gap: 4px;
+   display: block;
    min-width: 0;
 }
 
@@ -1437,20 +1465,15 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    flex-wrap: wrap;
    align-items: center;
    gap: 8px;
+   min-width: 0;
 }
 
 .broadcast-ai-check-participants {
-   display: flex;
-   flex-wrap: wrap;
-   align-items: center;
-   gap: 6px;
-   color: var(--muted);
-   overflow-wrap: anywhere;
-}
-
-.broadcast-ai-check-participants-preview {
    display: grid;
    gap: 2px;
+   color: var(--muted);
+   overflow-wrap: anywhere;
+   min-width: 0;
 }
 
 .broadcast-ai-check-participant-row {
@@ -1494,55 +1517,16 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    background: rgba(0, 108, 103, 0.06);
 }
 
-.broadcast-ai-check-participants-more {
-   display: inline-flex;
-   align-items: center;
-   padding: 0;
-   border: 0;
-   background: transparent;
-   color: var(--accent);
-   font: inherit;
-   font-size: 12px;
-   font-weight: 700;
-   cursor: pointer;
-}
-
-.broadcast-ai-check-participants-more:hover {
-   text-decoration: underline;
-}
-
 .broadcast-ai-check-sources {
    color: var(--muted);
    font-size: 12px;
    min-width: 0;
-}
-
-.broadcast-ai-check-sources summary {
-   width: fit-content;
-   padding: 0;
-   border: 0;
-   background: transparent;
-   color: var(--accent);
-   list-style: none;
-   cursor: pointer;
-   font: inherit;
-   font-size: 12px;
-   font-weight: 700;
-   line-height: 1.2;
-}
-
-.broadcast-ai-check-sources summary::-webkit-details-marker {
-   display: none;
-}
-
-.broadcast-ai-check-sources summary:hover {
-   text-decoration: underline;
+   display: block;
 }
 
 .broadcast-ai-check-sources-list {
    display: grid;
    gap: 2px;
-   margin-top: 4px;
    min-width: 0;
    overflow-wrap: anywhere;
 }
@@ -1551,18 +1535,11 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    display: block;
    width: 100%;
    min-width: 0;
-   overflow: hidden;
-   text-overflow: ellipsis;
-   white-space: nowrap;
    color: var(--accent);
 }
 
 .broadcast-ai-check-sources-list a:hover {
    text-decoration: underline;
-}
-
-.broadcast-ai-check-sources-list a[data-run-link='true'] {
-   margin-top: 4px;
 }
 
 .broadcast-ai-check-empty {

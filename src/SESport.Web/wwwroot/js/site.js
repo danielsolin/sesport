@@ -57,8 +57,6 @@
    initializeDateSelect();
    initializeEntityInlineEditing();
    initializeTeaserGeneration();
-   initializeParticipationMoreButtons();
-   initializeParticipationSources();
    initializeParticipationRowChecks();
    initializeBroadcastInlineEditing();
    initializeParticipationPolling();
@@ -1954,10 +1952,9 @@
 
       if(checks.length === 0)
       {
-         const fallback = document.createElement("span");
-         fallback.className = "broadcast-ai-check-empty";
-         fallback.textContent = "Not checked yet";
-         cell.append(fallback);
+         const { wrapper, body } = createParticipationRunsShell(checks);
+         cell.append(wrapper);
+         body.append(createParticipationEmptyRunBlock(cell));
          return;
       }
 
@@ -2081,30 +2078,164 @@
          summary.append(summaryCount);
       }
 
-      const body = document.createElement("div");
+      const table = document.createElement("table");
+      table.className = "broadcast-ai-check-runs-table";
+
+      const body = document.createElement("tbody");
       body.className = "broadcast-ai-check-runs-body";
 
-      wrapper.append(summary, body);
+      table.append(body);
+      wrapper.append(summary, table);
 
       return { wrapper, body };
    }
 
+   function createParticipationEmptyRunBlock(cell)
+   {
+      const row = document.createElement("tr");
+      row.className = "broadcast-ai-check-row";
+
+      const summaryCell = document.createElement("td");
+      summaryCell.className = "broadcast-ai-check-summary-cell";
+
+      const actionCell = document.createElement("td");
+      actionCell.className = "broadcast-ai-check-action-cell";
+
+      const viewRunCell = document.createElement("td");
+      viewRunCell.className = "broadcast-ai-check-view-run-cell";
+
+      const participantsCell = document.createElement("td");
+      participantsCell.className = "broadcast-ai-check-participants-cell";
+
+      const sourcesCell = document.createElement("td");
+      sourcesCell.className = "broadcast-ai-check-sources-cell";
+
+      const activityCell = document.createElement("td");
+      activityCell.className = "broadcast-ai-check-activity-cell";
+
+      const fallback = document.createElement("span");
+      fallback.className = "broadcast-ai-check-empty";
+      fallback.textContent = "Not checked yet";
+      summaryCell.append(fallback);
+
+      const checkButton = createParticipationActionButton(cell, "Check");
+
+      if(checkButton)
+      {
+         actionCell.append(checkButton);
+      }
+
+      const activityLink = createParticipationActivityLink(cell);
+
+      if(activityLink)
+      {
+         activityCell.append(activityLink);
+      }
+
+      row.append(
+         summaryCell,
+         actionCell,
+         viewRunCell,
+         participantsCell,
+         sourcesCell,
+         activityCell
+      );
+
+      return row;
+   }
+
    function createParticipationRunBlock(cell, check)
    {
+      const row = document.createElement("tr");
+      row.className = "broadcast-ai-check-row";
+
+      const summaryCell = document.createElement("td");
+      summaryCell.className = "broadcast-ai-check-summary-cell";
+
+      const actionCell = document.createElement("td");
+      actionCell.className = "broadcast-ai-check-action-cell";
+
+      const viewRunCell = document.createElement("td");
+      viewRunCell.className = "broadcast-ai-check-view-run-cell";
+
+      const participantsCell = document.createElement("td");
+      participantsCell.className = "broadcast-ai-check-participants-cell";
+
+      const sourcesCell = document.createElement("td");
+      sourcesCell.className = "broadcast-ai-check-sources-cell";
+
+      const activityCell = document.createElement("td");
+      activityCell.className = "broadcast-ai-check-activity-cell";
+
       if(check.error !== "")
       {
-         return createParticipationErrorBlock(
+         const line = document.createElement("div");
+         line.className = "broadcast-ai-check-line";
+
+         const pill = document.createElement("span");
+         pill.className = "status-pill status-pill-warning";
+         pill.textContent = "Error";
+         line.append(pill);
+
+         const error = document.createElement("span");
+         error.className = "broadcast-ai-check-error";
+         error.textContent = check.error;
+         summaryCell.append(line, error);
+
+         const retryButton = createParticipationActionButton(
             cell,
-            check.error,
-            check.runId,
-            check.sourceUrls
+            "Retry",
+            "broadcast-ai-check-retry"
          );
+
+         if(retryButton)
+         {
+            actionCell.append(retryButton);
+         }
+
+         const runLink = createParticipationRunLink(check.runId);
+
+         if(runLink)
+         {
+            viewRunCell.append(runLink);
+         }
+
+         const participants =
+            createParticipationParticipantsBlock(check.swedishParticipants);
+
+         if(participants)
+         {
+            participantsCell.append(participants);
+         }
+
+         const sources =
+            createParticipationSourcesBlock(check.sourceUrls, check.runId);
+
+         if(sources)
+         {
+            sourcesCell.append(sources);
+         }
+
+         const activityLink = createParticipationActivityLink(cell);
+
+         if(activityLink)
+         {
+            activityCell.append(activityLink);
+         }
+
+         row.append(
+            summaryCell,
+            actionCell,
+            viewRunCell,
+            participantsCell,
+            sourcesCell,
+            activityCell
+         );
+         return row;
       }
 
       if(check.swedishParticipation === "")
       {
-         const wrapper = document.createElement("div");
-         wrapper.className = "broadcast-ai-check";
          const line = document.createElement("div");
          line.className = "broadcast-ai-check-line";
 
@@ -2133,12 +2264,25 @@
             line.append(runLink);
          }
 
-         wrapper.append(line);
-         return wrapper;
-      }
+         summaryCell.append(line);
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check";
+         const activityLink = createParticipationActivityLink(cell);
+
+         if(activityLink)
+         {
+            activityCell.append(activityLink);
+         }
+
+         row.append(
+            summaryCell,
+            actionCell,
+            viewRunCell,
+            participantsCell,
+            sourcesCell,
+            activityCell
+         );
+         return row;
+      }
 
       const result = {
          runId: check.runId,
@@ -2149,11 +2293,29 @@
          sourceUrls: check.sourceUrls
       };
 
-      wrapper.append(createParticipationSummaryLine(cell, result));
+      summaryCell.append(createParticipationSummaryLine(cell, result));
+
+      const retryButton = createParticipationActionButton(
+         cell,
+         "Retry",
+         "broadcast-ai-check-retry"
+      );
+
+      if(retryButton)
+      {
+         actionCell.append(retryButton);
+      }
+
+      const runLink = createParticipationRunLink(check.runId);
+
+      if(runLink)
+      {
+         viewRunCell.append(runLink);
+      }
 
       if(check.swedishParticipants.length > 0)
       {
-         wrapper.append(
+         participantsCell.append(
             createParticipationParticipantsBlock(check.swedishParticipants)
          );
       }
@@ -2163,10 +2325,25 @@
 
       if(sources)
       {
-         wrapper.append(sources);
+         sourcesCell.append(sources);
       }
 
-      return wrapper;
+      const activityLink = createParticipationActivityLink(cell);
+
+      if(activityLink)
+      {
+         activityCell.append(activityLink);
+      }
+
+      row.append(
+         summaryCell,
+         actionCell,
+         viewRunCell,
+         participantsCell,
+         sourcesCell,
+         activityCell
+      );
+      return row;
    }
 
    function updateParticipationRunId(cell, runId)
@@ -2271,14 +2448,13 @@
       }
 
       cell.replaceChildren();
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check";
-
-      const pending = document.createElement("span");
-      pending.className = "broadcast-ai-check-pending";
-      pending.textContent = "Checking...";
-      wrapper.append(pending);
+      const pendingCheck = normalizeParticipationCheckResult({
+         statusId: "pending"
+      });
+      const { wrapper, body } = createParticipationRunsShell([
+         pendingCheck
+      ]);
+      body.append(createParticipationRunBlock(cell, pendingCheck));
 
       updateParticipationRowStatus(cell, "pending");
       cell.append(wrapper);
@@ -2303,21 +2479,61 @@
       pill.textContent = participation;
       line.append(pill);
 
-      const runLink = createParticipationRunLink(result.runId);
-
-      if(runLink)
-      {
-         line.append(runLink);
-      }
-
-      const retryButton = createParticipationRetryButton(cell);
-
-      if(retryButton)
-      {
-         line.append(retryButton);
-      }
-
       return line;
+   }
+
+   function createParticipationActionButton(
+      cell,
+      text,
+      extraClass = ""
+   )
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const url = cell.dataset.checkParticipationUrl;
+      const broadcastId = cell.dataset.broadcastId;
+
+      if(!url || !broadcastId)
+      {
+         return null;
+      }
+
+      const button = document.createElement("button");
+      button.className = ["button", "broadcast-ai-check-action", extraClass]
+         .filter(value => value !== "")
+         .join(" ");
+      button.type = "button";
+      button.textContent = text;
+      button.dataset.checkParticipationRow = "true";
+      button.dataset.checkParticipationUrl = url;
+      button.dataset.broadcastId = broadcastId;
+
+      return button;
+   }
+
+   function createParticipationActivityLink(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const activityUrl = typeof cell.dataset.activityUrl === "string"
+         ? cell.dataset.activityUrl.trim()
+         : "";
+
+      if(activityUrl === "")
+      {
+         return null;
+      }
+
+      const link = document.createElement("a");
+      link.href = activityUrl;
+      link.textContent = "Activity";
+      return link;
    }
 
    function createParticipationSourcesBlock(sourceUrls, runId)
@@ -2352,12 +2568,8 @@
          return null;
       }
 
-      const wrapper = document.createElement("details");
+      const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check-sources";
-
-      const summary = document.createElement("summary");
-      summary.textContent = `Show sources (${urls.length})`;
-      wrapper.append(summary);
 
       const list = document.createElement("div");
       list.className = "broadcast-ai-check-sources-list";
@@ -2373,7 +2585,6 @@
       });
 
       wrapper.append(list);
-      initializeParticipationSources(wrapper);
 
       return wrapper;
    }
@@ -2422,31 +2633,11 @@
 
       const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check-participants";
-      wrapper.dataset.participantsJson = JSON.stringify(names);
 
-      if(names.length > 3)
-      {
-         const preview = document.createElement("div");
-         preview.className = "broadcast-ai-check-participants-preview";
-         names.slice(0, 3).forEach(participant => {
-            preview.append(createParticipantRow(participant));
-         });
-         wrapper.append(preview);
+      names.forEach(participant => {
+         wrapper.append(createParticipantRow(participant));
+      });
 
-         const moreButton = document.createElement("button");
-         moreButton.type = "button";
-         moreButton.className = "broadcast-ai-check-participants-more";
-         moreButton.textContent = `+${names.length - 3} more`;
-         wrapper.append(moreButton);
-      }
-      else
-      {
-         names.forEach(participant => {
-            wrapper.append(createParticipantRow(participant));
-         });
-      }
-
-      initializeParticipationMoreButtons(wrapper);
       return wrapper;
    }
 
@@ -2563,23 +2754,6 @@
       }
 
       return parts.join(" ");
-   }
-
-   function initializeParticipationMoreButtons(root = document)
-   {
-      root.querySelectorAll(".broadcast-ai-check-participants-more")
-         .forEach(button => {
-            if(!(button instanceof HTMLButtonElement)
-               || button.dataset.participantsMoreInitialized === "true")
-            {
-               return;
-            }
-
-            button.dataset.participantsMoreInitialized = "true";
-            button.addEventListener("click", () => {
-               expandParticipationMore(button);
-            });
-         });
    }
 
    function initializeEntityInlineEditing(root = document)
@@ -2786,63 +2960,6 @@
       }
    }
 
-   function expandParticipationMore(button)
-   {
-      if(!(button instanceof HTMLButtonElement))
-      {
-         return;
-      }
-
-      const block = button.closest(".broadcast-ai-check-participants");
-
-      if(!(block instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const preview = block.querySelector(
-         ".broadcast-ai-check-participants-preview"
-      );
-
-      if(!(preview instanceof HTMLElement))
-      {
-         return;
-      }
-
-      let names = [];
-
-      try
-      {
-         const parsed = JSON.parse(block.dataset.participantsJson ?? "[]");
-
-         if(Array.isArray(parsed))
-         {
-            names = parsed
-               .map(participant =>
-                  typeof participant === "string"
-                     ? { name: participant.trim(), editUrl: null }
-                     : normalizeParticipantItem(participant))
-               .filter(participant => participant !== null);
-         }
-      }
-      catch
-      {
-         return;
-      }
-
-      if(names.length === 0)
-      {
-         return;
-      }
-
-      preview.replaceChildren();
-
-      names.forEach(participant => {
-         preview.append(createParticipantRow(participant));
-      });
-      button.remove();
-   }
-
    function createParticipantRow(participant)
    {
       const item = normalizeParticipantItem(participant);
@@ -3011,71 +3128,6 @@
       }
 
       return `${preview.slice(0, 220)}...`;
-   }
-
-   function initializeParticipationSources(root = document)
-   {
-      const blocks = [];
-
-      if(root instanceof HTMLDetailsElement
-         && root.matches(".broadcast-ai-check-sources"))
-      {
-         blocks.push(root);
-      }
-
-      root.querySelectorAll(".broadcast-ai-check-sources").forEach(block => {
-         blocks.push(block);
-      });
-
-      blocks.forEach(block => {
-         if(!(block instanceof HTMLDetailsElement)
-            || block.dataset.sourceToggleInitialized === "true")
-         {
-            return;
-         }
-
-         block.dataset.sourceToggleInitialized = "true";
-
-         const update = () => {
-            updateParticipationSourcesLabel(block);
-         };
-
-         update();
-         block.addEventListener("toggle", update);
-      });
-   }
-
-   function updateParticipationSourcesLabel(block)
-   {
-      if(!(block instanceof HTMLDetailsElement))
-      {
-         return;
-      }
-
-      const summary = block.querySelector("summary");
-
-      if(!(summary instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const count = getParticipationSourceCount(block);
-
-      summary.textContent =
-         `Sources (${count}) ${block.open ? "-" : "+"}`;
-   }
-
-   function getParticipationSourceCount(block)
-   {
-      if(!(block instanceof HTMLElement))
-      {
-         return 0;
-      }
-
-      return block
-         .querySelectorAll(
-            ".broadcast-ai-check-sources-list a:not([data-run-link='true'])"
-         ).length;
    }
 
    async function generateTeaserAsync(button)
@@ -3251,8 +3303,6 @@
          initializeTeaserGeneration(nextTarget);
          initializeParticipationRowChecks(nextTarget);
          initializeBroadcastInlineEditing(nextTarget);
-         initializeParticipationMoreButtons(nextTarget);
-         initializeParticipationSources(nextTarget);
          initializeParticipationPolling(nextTarget);
          history.replaceState(null, "", url);
       }

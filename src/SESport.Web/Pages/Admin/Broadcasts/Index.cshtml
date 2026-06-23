@@ -134,11 +134,10 @@
                            Categories @Model.GetSortIndicator("Categories")
                         </a>
                      </th>
-                     <th>AI check</th>
                      <th>Actions</th>
                   </tr>
                </thead>
-               <tbody>
+         <tbody>
                  @foreach(var broadcast in Model.Broadcasts)
                      {
                      DateOnly? airDate = null;
@@ -147,6 +146,10 @@
                      {
                         airDate = broadcast.OriginalAirDate.Value;
                      }
+                     var activityUrl = Url.Page(
+                        "/Admin/Activities/Edit",
+                        Model.GetActivityRouteValues(broadcast.Id)
+                     );
                      <tr class="broadcast-participation-main-row"
                          data-broadcast-row="true"
                          data-broadcast-id="@broadcast.Id"
@@ -228,17 +231,8 @@
                                   aria-label="Edit categories"
                                   hidden />
                         </td>
-                           <td class="broadcast-participation-placeholder"></td>
                            <td class="table-actions">
                            <div class="table-actions-stack">
-                              <a class="broadcast-activity-link"
-                                 asp-page="/Admin/Activities/Edit"
-                                 asp-all-route-data=
-                                    "@Model.GetActivityRouteValues(
-                                       broadcast.Id
-                                    )">
-                                 Activity
-                              </a>
                               <form method="post"
                                     action="@hideBroadcastUrl"
                                     data-ajax-success="remove"
@@ -288,7 +282,7 @@
                                "@broadcast.ParticipationCheck?.StatusId">
                            <td class="broadcast-participation-spacer"></td>
                            <td class="broadcast-participation-runs-cell"
-                               colspan="5"
+                           colspan="4"
                                data-participation-cell
                                data-broadcast-id="@broadcast.Id"
                                data-participation-run-id=
@@ -296,7 +290,8 @@
                                data-participation-status=
                                   "@broadcast.ParticipationCheck?.StatusId"
                                data-check-participation-url=
-                                  "@checkParticipationUrl">
+                                  "@checkParticipationUrl"
+                               data-activity-url="@activityUrl">
                               @await Html.PartialAsync(
                                  "_BroadcastParticipationRuns",
                                  new SESport.Web.Pages.Admin.Broadcasts.
@@ -305,6 +300,7 @@
                                        checkParticipationUrl ?? string.Empty,
                                        createParticipantEntityUrl ??
                                           string.Empty,
+                                       activityUrl ?? string.Empty,
                                        Model
                                     )
                               )
