@@ -11,6 +11,13 @@ namespace SESport.Web.Services;
 public static class BroadcastParticipationCandidateResolver
 {
    private const int MaxCandidateNames = 5;
+   private static readonly string[] AmateurTokens = ["amateur", "amator"];
+   private enum CandidateSourceStrategy
+   {
+      PrimaryMatch,
+      AmateurOrganizationMatch,
+      SportFallback
+   }
 
    public static string CreateCandidatesText(
       BroadcastActivitySource broadcast,
@@ -36,7 +43,9 @@ public static class BroadcastParticipationCandidateResolver
          )
          .ToList();
 
-      var primaryCandidatesText = CreatePrimaryCandidatesText(
+      var primaryCandidatesText = CreateCandidatesTextForStrategy(
+         CandidateSourceStrategy.PrimaryMatch,
+         broadcast.Title,
          normalizedTitle,
          eligibleCandidates
       );
@@ -46,13 +55,54 @@ public static class BroadcastParticipationCandidateResolver
          return primaryCandidatesText;
       }
 
-      return CreateFallbackCandidatesText(
+      var amateurOrganizationCandidatesText =
+         CreateCandidatesTextForStrategy(
+            CandidateSourceStrategy.AmateurOrganizationMatch,
+            broadcast.Title,
+            normalizedTitle,
+            eligibleCandidates
+         );
+
+      if(!string.IsNullOrWhiteSpace(amateurOrganizationCandidatesText))
+      {
+         return amateurOrganizationCandidatesText;
+      }
+
+      return CreateCandidatesTextForStrategy(
+         CandidateSourceStrategy.SportFallback,
+         broadcast.Title,
          normalizedTitle,
          eligibleCandidates
-      );
+      ) ?? string.Empty;
    }
 
-   private static string CreatePrimaryCandidatesText(
+   private static string? CreateCandidatesTextForStrategy(
+      CandidateSourceStrategy strategy,
+      string title,
+      string normalizedTitle,
+      IReadOnlyCollection<EntityOption> candidates
+   )
+   {
+      return strategy switch
+      {
+         CandidateSourceStrategy.PrimaryMatch => CreatePrimaryMatchText(
+            normalizedTitle,
+            candidates
+         ),
+         CandidateSourceStrategy.AmateurOrganizationMatch =>
+            CreateAmateurOrganizationMatchText(
+               title,
+               candidates
+            ),
+         CandidateSourceStrategy.SportFallback => CreateSportFallbackText(
+            normalizedTitle,
+            candidates
+         ),
+         _ => null
+      };
+   }
+
+   private static string CreatePrimaryMatchText(
       string normalizedTitle,
       IReadOnlyCollection<EntityOption> candidates
    )
@@ -66,7 +116,39 @@ public static class BroadcastParticipationCandidateResolver
       return CreateCandidatesText(matches);
    }
 
-   private static string CreateFallbackCandidatesText(
+   private static string CreateAmateurOrganizationMatchText(
+      string title,
+      IReadOnlyCollection<EntityOption> candidates
+   )
+   {
+      if(!ContainsAmateurKeyword(title))
+      {
+         return string.Empty;
+      }
+
+      var amateurOrganizations = candidates
+         .SelectMany(candidate => GetOrganizationSegments(candidate))
+         .Where(ContainsAmateurKeyword)
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList();
+
+      foreach(var organization in amateurOrganizations)
+      {
+         var organizationMatches = CreatePrimaryMatchText(
+            NormalizeText(organization),
+            candidates
+         );
+
+         if(!string.IsNullOrWhiteSpace(organizationMatches))
+         {
+            return organizationMatches;
+         }
+      }
+
+      return string.Empty;
+   }
+
+   private static string CreateSportFallbackText(
       string normalizedTitle,
       IReadOnlyCollection<EntityOption> candidates
    )
@@ -367,6 +449,29 @@ public static class BroadcastParticipationCandidateResolver
             $" {token} ",
             StringComparison.OrdinalIgnoreCase
          )
+      );
+   }
+
+   private static bool ContainsAmateurKeyword(string value)
+   {
+      var normalizedValue = NormalizeText(value);
+
+      if(string.IsNullOrWhiteSpace(normalizedValue))
+      {
+         return false;
+      }
+
+      return ContainsAnyToken(normalizedValue, AmateurTokens);
+   }
+
+   private static IEnumerable<string> GetOrganizationSegments(
+      EntityOption candidate
+   )
+   {
+      return candidate.Organization.Split(
+         ',',
+         StringSplitOptions.RemoveEmptyEntries
+            | StringSplitOptions.TrimEntries
       );
    }
 

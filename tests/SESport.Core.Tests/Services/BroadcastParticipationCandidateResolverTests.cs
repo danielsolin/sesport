@@ -382,6 +382,37 @@ public sealed class BroadcastParticipationCandidateResolverTests
    }
 
    [Fact]
+   public void CreateCandidatesTextPrefersAmateurOrganizationMatch()
+   {
+      var candidates = new[]
+      {
+         CreateCandidate(
+            "Alice Player",
+            10,
+            "European Amateur Tour",
+            "Golf"
+         ),
+         CreateCandidate("Bob Player", 20, "LPGA Tour", "Golf")
+      };
+
+      var text = BroadcastParticipationCandidateResolver.CreateCandidatesText(
+         new BroadcastActivitySource(
+            Guid.NewGuid(),
+            "Channel",
+            "Amatör Open 2026",
+            null,
+            ["Golf"],
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow
+         ),
+         candidates
+      );
+
+      Assert.Equal("  - Alice Player", text);
+      Assert.DoesNotContain("Bob Player", text);
+   }
+
+   [Fact]
    public void CreateCandidatesTextCapsFallbackToFiveNames()
    {
       var candidates = new[]
