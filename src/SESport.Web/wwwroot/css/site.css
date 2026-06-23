@@ -1334,6 +1334,51 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    color: var(--warning) !important;
 }
 
+.broadcast-ai-check-runs {
+   display: grid;
+   gap: 8px;
+   min-width: 0;
+}
+
+.broadcast-ai-check-runs > summary {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+   padding: 0;
+   border: 0;
+   background: transparent;
+   color: var(--accent-strong);
+   list-style: none;
+   cursor: pointer;
+   font: inherit;
+   font-size: 12px;
+   font-weight: 800;
+   line-height: 1.2;
+}
+
+.broadcast-ai-check-runs > summary::-webkit-details-marker {
+   display: none;
+}
+
+.broadcast-ai-check-runs > summary::after {
+   content: "+";
+   flex: 0 0 auto;
+   color: var(--muted);
+   font-size: 14px;
+   line-height: 1;
+}
+
+.broadcast-ai-check-runs[open] > summary::after {
+   content: "−";
+}
+
+.broadcast-ai-check-runs-body {
+   display: grid;
+   gap: 4px;
+   min-width: 0;
+}
+
 .broadcast-ai-check {
    display: grid;
    gap: 4px;

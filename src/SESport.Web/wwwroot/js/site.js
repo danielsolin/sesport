@@ -952,17 +952,19 @@
       }
 
       cell.replaceChildren();
+      const { wrapper, body } = createParticipationRunsShell();
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check";
+      const check = document.createElement("div");
+      check.className = "broadcast-ai-check";
 
       const pending = document.createElement("span");
       pending.className = "broadcast-ai-check-pending";
       pending.textContent = "Queued";
-      wrapper.append(pending);
+      check.append(pending);
 
       cell.dataset.participationStatus = "pending";
       updateParticipationRowStatus(cell, "pending");
+      body.append(check);
       cell.append(wrapper);
    }
 
@@ -1951,13 +1953,15 @@
       }
 
       cell.replaceChildren();
+      const { wrapper: runsWrapper, body } = createParticipationRunsShell();
 
       if(!result || typeof result !== "object")
       {
          const fallback = document.createElement("span");
          fallback.className = "broadcast-ai-check-empty";
          fallback.textContent = "Not checked yet";
-         cell.append(fallback);
+         body.append(fallback);
+         cell.append(runsWrapper);
          return;
       }
 
@@ -1975,7 +1979,7 @@
             updateParticipationRowStatus(cell, "");
          }
 
-         cell.append(
+         body.append(
             createParticipationErrorBlock(
                cell,
                result.error,
@@ -1983,6 +1987,7 @@
                result.sourceUrls
             )
          );
+         cell.append(runsWrapper);
          initializeParticipationRowChecks(cell);
          return;
       }
@@ -2049,7 +2054,8 @@
 
          wrapper.append(line);
 
-         cell.append(wrapper);
+         body.append(wrapper);
+         cell.append(runsWrapper);
          initializeParticipationRowChecks(cell);
          return;
       }
@@ -2072,8 +2078,26 @@
          wrapper.append(sources);
       }
 
-      cell.append(wrapper);
+      body.append(wrapper);
+      cell.append(runsWrapper);
       initializeParticipationRowChecks(cell);
+   }
+
+   function createParticipationRunsShell()
+   {
+      const wrapper = document.createElement("details");
+      wrapper.className = "broadcast-ai-check-runs";
+      wrapper.open = true;
+
+      const summary = document.createElement("summary");
+      summary.textContent = "Runs";
+
+      const body = document.createElement("div");
+      body.className = "broadcast-ai-check-runs-body";
+
+      wrapper.append(summary, body);
+
+      return { wrapper, body };
    }
 
    function updateParticipationRunId(cell, runId)
