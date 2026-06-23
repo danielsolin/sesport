@@ -1947,18 +1947,25 @@
          return;
       }
 
+      const isOpen = isParticipationRunsOpen(cell);
       cell.replaceChildren();
       const checks = normalizeParticipationChecks(result);
 
       if(checks.length === 0)
       {
-         const { wrapper, body } = createParticipationRunsShell(checks);
+         const { wrapper, body } = createParticipationRunsShell(
+            checks,
+            isOpen
+         );
          cell.append(wrapper);
          body.append(createParticipationEmptyRunBlock(cell));
          return;
       }
 
-      const { wrapper, body } = createParticipationRunsShell(checks);
+      const { wrapper, body } = createParticipationRunsShell(
+         checks,
+         isOpen
+      );
       cell.append(wrapper);
 
       const latestCheck = checks[0];
@@ -2056,11 +2063,14 @@
       };
    }
 
-   function createParticipationRunsShell(checks)
+   function createParticipationRunsShell(
+      checks,
+      isOpen = false
+   )
    {
       const wrapper = document.createElement("details");
       wrapper.className = "broadcast-ai-check-runs";
-      wrapper.open = false;
+      wrapper.open = isOpen;
 
       const summary = document.createElement("summary");
       const summaryText = document.createElement("span");
@@ -2088,6 +2098,20 @@
       wrapper.append(summary, table);
 
       return { wrapper, body };
+   }
+
+   function isParticipationRunsOpen(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return false;
+      }
+
+      const details = cell.querySelector(".broadcast-ai-check-runs");
+
+      return details instanceof HTMLDetailsElement
+         ? details.open
+         : false;
    }
 
    function createParticipationEmptyRunBlock(cell)
@@ -2447,13 +2471,15 @@
          return;
       }
 
+      const isOpen = isParticipationRunsOpen(cell);
       cell.replaceChildren();
       const pendingCheck = normalizeParticipationCheckResult({
          statusId: "pending"
       });
-      const { wrapper, body } = createParticipationRunsShell([
-         pendingCheck
-      ]);
+      const { wrapper, body } = createParticipationRunsShell(
+         [pendingCheck],
+         isOpen
+      );
       body.append(createParticipationRunBlock(cell, pendingCheck));
 
       updateParticipationRowStatus(cell, "pending");
