@@ -2204,6 +2204,10 @@
       headerBar.className = "broadcast-ai-check-runs-summary-bar";
 
       const summaryCheck = selectParticipationSummaryCheck(checks);
+      const hasRunningCheck = checks.some(check =>
+         typeof check?.statusId === "string"
+            && check.statusId.trim().toLowerCase() === "running"
+      );
       const summaryText = document.createElement("span");
       summaryText.className = [
          "broadcast-ai-check-runs-summary-text",
@@ -2216,11 +2220,17 @@
       const actions = document.createElement("div");
       actions.className = "broadcast-ai-check-runs-summary-actions";
 
-      const checkButton = createParticipationActionButton(cell, "Check");
-
-      if(checkButton)
+      if(!hasRunningCheck)
       {
-         actions.append(checkButton);
+         const checkButton = createParticipationActionButton(
+            cell,
+            "Check"
+         );
+
+         if(checkButton)
+         {
+            actions.append(checkButton);
+         }
       }
 
       const toggleButton = document.createElement("button");

@@ -34,6 +34,12 @@
       : !string.IsNullOrWhiteSpace(summaryCheck.ErrorMessage)
          ? summaryCheck.ErrorMessage
          : summaryCheck.BadgeText;
+   var hasRunningCheck = participationChecks.Any(check =>
+      string.Equals(
+         check.StatusId,
+         "running",
+         StringComparison.OrdinalIgnoreCase
+      ));
    var summaryBadgeClass = summaryCheck is null ||
       string.IsNullOrWhiteSpace(summaryCheck.Participation)
          ? string.Empty
@@ -56,14 +62,17 @@
                      @summaryText
                   </span>
                   <div class="broadcast-ai-check-runs-summary-actions">
-                     <button class="button broadcast-ai-check-action"
-                             type="button"
-                             data-check-participation-row
-                             data-check-participation-url=
-                                "@Model.CheckParticipationUrl"
-                             data-broadcast-id="@broadcast.Id">
-                        Check
-                     </button>
+                     @if(!hasRunningCheck)
+                     {
+                        <button class="button broadcast-ai-check-action"
+                                type="button"
+                                data-check-participation-row
+                                data-check-participation-url=
+                                   "@Model.CheckParticipationUrl"
+                                data-broadcast-id="@broadcast.Id">
+                           Check
+                        </button>
+                     }
                      <button class="button broadcast-ai-check-toggle"
                              type="button"
                              data-participation-runs-toggle
