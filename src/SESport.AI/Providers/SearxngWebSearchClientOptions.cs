@@ -5,4 +5,6 @@ public sealed record SearxngWebSearchClientOptions
    public string? BasicAuthUsername { get; init; }
 
    public string? BasicAuthPassword { get; init; }
+
+   public IReadOnlyList<string>? Engines { get; init; }
 }

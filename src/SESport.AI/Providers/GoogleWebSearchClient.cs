@@ -62,7 +62,8 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
    public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      int searchAttempt = 0
    )
    {
       if(string.IsNullOrWhiteSpace(query))

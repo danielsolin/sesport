@@ -34,13 +34,15 @@ public sealed class LlamaServerClient : IAiProviderClient
       HttpClient httpClient,
       IWebSearchClient webSearchClient,
       IWebPageContentClient webPageContentClient,
-      ILogger<LlamaServerClient> logger
+      ILogger<LlamaServerClient> logger,
+      SearxngWebSearchClientOptions? searxngOptions = null
    )
    {
       HttpClient = httpClient;
       WebSearchClient = webSearchClient;
       WebPageContentClient = webPageContentClient;
       Logger = logger;
+      SearxngOptions = searxngOptions;
    }
 
    private HttpClient HttpClient { get; }
@@ -50,6 +52,8 @@ public sealed class LlamaServerClient : IAiProviderClient
    private IWebPageContentClient WebPageContentClient { get; }
 
    private ILogger<LlamaServerClient> Logger { get; }
+
+   private SearxngWebSearchClientOptions? SearxngOptions { get; }
 
    public JsonObject CreateRequestPayload(
       AiProviderDefinition provider,
@@ -1366,6 +1370,20 @@ public sealed class LlamaServerClient : IAiProviderClient
       CancellationToken cancellationToken
    )
    {
+      if(string.Equals(
+         toolCall.Name,
+         WebToolNames.Search,
+         StringComparison.Ordinal
+      ))
+      {
+         return await ExecuteSearchToolCallAsync(
+            toolCall,
+            toolState,
+            turn,
+            cancellationToken
+         );
+      }
+
       if(TryGetRepeatedToolResult(
          toolCall,
          toolState,
@@ -1373,43 +1391,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       ))
       {
          return repeatedResult;
-      }
-
-      if(string.Equals(
-         toolCall.Name,
-         WebToolNames.Search,
-         StringComparison.Ordinal
-      ))
-      {
-         var query = ExtractQuery(toolCall.Arguments);
-         var limit = ExtractLimit(toolCall.Arguments);
-         var searchResponse = await WebSearchClient.SearchAsync(
-            query,
-            limit,
-            cancellationToken
-         );
-         var searchResults = searchResponse.Results;
-         toolState.LastSearchProvider = searchResponse.Provider;
-         toolState.LastSearchProviderDetails = searchResponse.Details;
-
-         LogSearchResults(
-            query,
-            limit,
-            searchResults,
-            toolState.LastSearchProvider
-         );
-
-         var result = FormatSearchResults(
-            searchResults
-         );
-
-         RecordToolCallResult(
-            toolCall,
-            toolState,
-            turn,
-            result
-         );
-         return result;
       }
 
       if(string.Equals(
@@ -1465,6 +1446,62 @@ public sealed class LlamaServerClient : IAiProviderClient
       throw new InvalidOperationException(
          $"Unsupported tool call '{toolCall.Name}'."
       );
+   }
+
+   private async Task<string> ExecuteSearchToolCallAsync(
+      ToolCall toolCall,
+      ToolLoopState toolState,
+      int turn,
+      CancellationToken cancellationToken
+   )
+   {
+      var query = ExtractQuery(toolCall.Arguments);
+      var limit = ExtractLimit(toolCall.Arguments);
+      var signature = BuildToolCallSignature(toolCall);
+      var searchAttempt = toolState.SearchAttemptCounts.TryGetValue(
+         signature,
+         out var existingAttempt
+      )
+         ? existingAttempt
+         : 0;
+      var engineCount = SearxngSearchEngineRotation.GetEngineCount(
+         SearxngOptions?.Engines
+      );
+
+      if(searchAttempt >= engineCount)
+      {
+         return CreateRepeatedToolResultMessage(toolCall.Name);
+      }
+
+      var searchResponse = await WebSearchClient.SearchAsync(
+         query,
+         limit,
+         cancellationToken,
+         searchAttempt
+      );
+      var searchResults = searchResponse.Results;
+      toolState.LastSearchProvider = searchResponse.Provider;
+      toolState.LastSearchProviderDetails = searchResponse.Details;
+      toolState.SearchAttemptCounts[signature] = searchAttempt + 1;
+
+      LogSearchResults(
+         query,
+         limit,
+         searchResults,
+         toolState.LastSearchProvider
+      );
+
+      var result = FormatSearchResults(
+         searchResults
+      );
+
+      RecordToolCallResult(
+         toolCall,
+         toolState,
+         turn,
+         result
+      );
+      return result;
    }
 
    private static bool TryGetToolCalls(
@@ -3234,6 +3271,9 @@ public sealed class LlamaServerClient : IAiProviderClient
          new(StringComparer.OrdinalIgnoreCase);
 
       public Dictionary<string, ToolCallRecord> ToolCallHistory { get; } =
+         new(StringComparer.OrdinalIgnoreCase);
+
+      public Dictionary<string, int> SearchAttemptCounts { get; } =
          new(StringComparer.OrdinalIgnoreCase);
 
       public Dictionary<string, ToolCallRecord> PageCallHistory { get; } =

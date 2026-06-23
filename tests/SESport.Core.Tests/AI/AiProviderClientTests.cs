@@ -490,6 +490,55 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRotatesSearchEnginesBeforeBlockingRepeat()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson()
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(3, webSearchClient.Queries.Count);
+      Assert.Equal(3, webSearchClient.SearchAttempts.Count);
+      Assert.Equal(0, webSearchClient.SearchAttempts[0]);
+      Assert.Equal(1, webSearchClient.SearchAttempts[1]);
+      Assert.Equal(2, webSearchClient.SearchAttempts[2]);
+      Assert.All(
+         webSearchClient.Queries,
+         query => Assert.Equal("Tre Kronor", query.Query)
+      );
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncCachesPageFetchesForFindTools()
    {
       var handler = new RecordingHandler(
@@ -1586,13 +1635,17 @@ public class AiProviderClientTests
 
       public List<(string Query, int MaxResults)> Queries { get; } = [];
 
+      public List<int> SearchAttempts { get; } = [];
+
       public Task<WebSearchResponse> SearchAsync(
          string query,
          int maxResults,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         int searchAttempt = 0
       )
       {
          Queries.Add((query, maxResults));
+         SearchAttempts.Add(searchAttempt);
          return Task.FromResult(new WebSearchResponse(results));
       }
    }

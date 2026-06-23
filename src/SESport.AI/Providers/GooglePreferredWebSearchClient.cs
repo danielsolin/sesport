@@ -20,14 +20,16 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
    public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      int searchAttempt = 0
    )
    {
       var googleResponse = await TrySearchAsync(
          GoogleWebSearchClient,
          query,
          maxResults,
-         cancellationToken
+         cancellationToken,
+         searchAttempt
       );
 
       if(googleResponse.Results.Count > 0)
@@ -39,7 +41,8 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
          SearxngWebSearchClient,
          query,
          maxResults,
-         cancellationToken
+         cancellationToken,
+         searchAttempt
       );
       return new WebSearchResponse(
          searxngResponse.Results,
@@ -54,7 +57,8 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
       IWebSearchClient client,
       string query,
       int maxResults,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      int searchAttempt
    )
    {
       try
@@ -62,7 +66,8 @@ public sealed class GooglePreferredWebSearchClient : IWebSearchClient
          return await client.SearchAsync(
             query,
             maxResults,
-            cancellationToken
+            cancellationToken,
+            searchAttempt
          );
       }
       catch(OperationCanceledException)

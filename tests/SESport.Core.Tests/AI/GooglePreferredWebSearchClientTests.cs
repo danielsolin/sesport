@@ -119,12 +119,14 @@ public sealed class GooglePreferredWebSearchClientTests
       public Task<WebSearchResponse> SearchAsync(
          string query,
          int maxResults,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         int searchAttempt = 0
       )
       {
          _ = query;
          _ = maxResults;
          _ = cancellationToken;
+         _ = searchAttempt;
          return Task.FromResult(new WebSearchResponse(results, provider));
       }
    }
@@ -134,12 +136,14 @@ public sealed class GooglePreferredWebSearchClientTests
       public Task<WebSearchResponse> SearchAsync(
          string query,
          int maxResults,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         int searchAttempt = 0
       )
       {
          _ = query;
          _ = maxResults;
          _ = cancellationToken;
+         _ = searchAttempt;
          throw new InvalidOperationException("Google robot detection");
       }
    }

@@ -39,6 +39,14 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchRotatesConfiguredEngines()
+   {
+      await AssertRequestUsesEngine(0, "google");
+      await AssertRequestUsesEngine(1, "brave");
+      await AssertRequestUsesEngine(2, "duckduckgo");
+   }
+
+   [Fact]
    public async Task SearchDropsDeniedSocialDomains()
    {
       var handler = new RecordingHandler(CreateMixedResponseJson());
@@ -237,6 +245,27 @@ public class SearxngWebSearchClientTests
          suggestions = Array.Empty<string>(),
          unresponsive_engines = Array.Empty<object>()
       });
+   }
+
+   private static async Task AssertRequestUsesEngine(
+      int searchAttempt,
+      string engine
+   )
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
+
+      await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None,
+         searchAttempt
+      );
+
+      Assert.Contains($"engines={engine}", handler.RequestBody);
    }
 
    private sealed class RecordingHandler : HttpMessageHandler

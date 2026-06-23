@@ -1,13 +1,3 @@
-use_default_settings:
-  engines:
-    remove:
-      - brave
-      - brave.images
-      - brave.videos
-      - brave.news
-      - duckduckgo
-      - duckduckgo.definitions
-
 search:
   default_lang: all
   formats:

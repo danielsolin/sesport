@@ -45,6 +45,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    )
    {
       HttpClient = httpClient;
+      Options = options;
       Logger = logger;
 
       var basicAuth = CreateBasicAuthHeader(options);
@@ -58,12 +59,15 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
    private HttpClient HttpClient { get; }
 
+   private SearxngWebSearchClientOptions Options { get; }
+
    private ILogger<SearxngWebSearchClient>? Logger { get; }
 
    public async Task<WebSearchResponse> SearchAsync(
       string query,
       int maxResults,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      int searchAttempt = 0
    )
    {
       if(string.IsNullOrWhiteSpace(query))
@@ -71,9 +75,18 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          return new WebSearchResponse([]);
       }
 
+      var engines = SearxngSearchEngineRotation.NormalizeEngines(
+         Options.Engines
+      );
+      var engine = SearxngSearchEngineRotation.GetEngineForAttempt(
+         engines,
+         searchAttempt
+      );
+
       Logger?.LogDebug(
-         "Sending SearXNG search request to {SearchUri}",
-         SearchUri
+         "Sending SearXNG search request to {SearchUri} using {Engine}",
+         SearchUri,
+         engine
       );
 
       using var request = new HttpRequestMessage(HttpMethod.Post, SearchUri)
@@ -84,7 +97,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                ["q"] = query,
                ["format"] = "json",
                ["categories"] = "general",
-               ["engines"] = "google"
+               ["engines"] = engine
             }
          )
       };
@@ -107,8 +120,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
-      return new WebSearchResponse(ParseResults(rawResponse, maxResults),
-         "SearXNG");
+      return new WebSearchResponse(
+         ParseResults(rawResponse, maxResults),
+         $"SearXNG/{engine}",
+         $"engines={engine}"
+      );
    }
 
    private static IReadOnlyList<WebSearchResult> ParseResults(
