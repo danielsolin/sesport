@@ -95,21 +95,23 @@ public sealed class BroadcastParticipationService(
          normalizedBroadcastIds,
          cancellationToken
       );
-      var candidateOptions = await activityRepository.GetEntityOptionsAsync(
-         cancellationToken
-      );
+      var candidateOptionsCache =
+         new Dictionary<Guid, IReadOnlyList<EntityOption>>();
 
       foreach(var broadcast in broadcasts)
       {
+         var candidateOptions = await GetCandidateOptionsAsync(
+            broadcast.EntityId,
+            candidateOptionsCache,
+            cancellationToken
+         );
+
          await aiJobRunner.QueueAsync(
             new AiJobRequest(
                ParticipationJobId,
                CreateParticipationInputJson(
                   broadcast,
-                  BroadcastParticipationCandidateResolver.CreateCandidatesText(
-                     broadcast,
-                     candidateOptions
-                  )
+                  CreateCandidatesText(candidateOptions)
                ),
                broadcast.Id.ToString()
             ),
@@ -196,6 +198,42 @@ public sealed class BroadcastParticipationService(
             candidates
          }
       );
+   }
+
+   private async Task<IReadOnlyList<EntityOption>> GetCandidateOptionsAsync(
+      Guid? organizationEntityId,
+      IDictionary<Guid, IReadOnlyList<EntityOption>> cache,
+      CancellationToken cancellationToken
+   )
+   {
+      if(organizationEntityId is null)
+      {
+         return [];
+      }
+
+      if(cache.TryGetValue(organizationEntityId.Value, out var candidates))
+      {
+         return candidates;
+      }
+
+      candidates = await activityRepository.GetEntityOptionsForOrganizationAsync(
+         organizationEntityId.Value,
+         cancellationToken
+      );
+      cache[organizationEntityId.Value] = candidates;
+      return candidates;
+   }
+
+   private static string CreateCandidatesText(
+      IReadOnlyList<EntityOption> candidates
+   )
+   {
+      return candidates.Count == 0
+         ? string.Empty
+         : string.Join(
+            Environment.NewLine,
+            candidates.Select(candidate => $"  - {candidate.Name}")
+         );
    }
 
    private static List<Guid> NormalizeBroadcastIds(

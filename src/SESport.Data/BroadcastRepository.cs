@@ -26,6 +26,7 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
       var sql = $$"""
          select
             broadcasts.id,
+            broadcasts.entity_id,
             broadcasts.channel_id,
             broadcasts.channel_name,
             broadcasts.title,
@@ -36,7 +37,6 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.starts_at,
             broadcasts.ends_at,
             broadcasts.hidden_at,
-            broadcasts.entity_id,
             org.canonical_name as organization_name
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
@@ -66,23 +66,23 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         var channelId = reader.GetString(1);
-         var channelName = ReadString(reader, 2) ?? channelId;
-         var startsAt = reader.GetFieldValue<DateTimeOffset>(8);
-         var endsAt = reader.GetFieldValue<DateTimeOffset>(9);
+         var channelId = reader.GetString(2);
+         var channelName = ReadString(reader, 3) ?? channelId;
+         var startsAt = reader.GetFieldValue<DateTimeOffset>(9);
+         var endsAt = reader.GetFieldValue<DateTimeOffset>(10);
 
          broadcasts.Add(
             new BroadcastListItem(
                reader.GetGuid(0),
                FormatTime(startsAt, endsAt),
                channelName,
-               reader.GetString(3),
-               ReadString(reader, 4),
-               string.Join(", ", reader.GetFieldValue<string[]>(5)),
-               reader.GetBoolean(6),
-               reader.IsDBNull(7) ? null : reader.GetFieldValue<DateOnly>(7),
-               reader.IsDBNull(10) == false,
-               reader.IsDBNull(11) ? null : reader.GetGuid(11),
+               reader.GetString(4),
+               ReadString(reader, 5),
+               string.Join(", ", reader.GetFieldValue<string[]>(6)),
+               reader.GetBoolean(7),
+               reader.IsDBNull(8) ? null : reader.GetFieldValue<DateOnly>(8),
+               reader.IsDBNull(11) == false,
+               reader.IsDBNull(1) ? null : reader.GetGuid(1),
                reader.IsDBNull(12) ? null : reader.GetString(12)
             )
          );
@@ -147,6 +147,7 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
       const string sql = """
          select
             id,
+            entity_id,
             channel_id,
             channel_name,
             title,
@@ -169,18 +170,19 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         var channelId = reader.GetString(1);
-         var channelName = ReadString(reader, 2) ?? channelId;
+         var channelId = reader.GetString(2);
+         var channelName = ReadString(reader, 3) ?? channelId;
 
          broadcasts.Add(
             new BroadcastActivitySource(
                reader.GetGuid(0),
                channelName,
-               reader.GetString(3),
-               ReadString(reader, 4),
-               reader.GetFieldValue<string[]>(5),
-               reader.GetFieldValue<DateTimeOffset>(6),
-               reader.GetFieldValue<DateTimeOffset>(7)
+               reader.GetString(4),
+               ReadString(reader, 5),
+               reader.GetFieldValue<string[]>(6),
+               reader.GetFieldValue<DateTimeOffset>(7),
+               reader.GetFieldValue<DateTimeOffset>(8),
+               reader.IsDBNull(1) ? null : reader.GetGuid(1)
             )
          );
       }
