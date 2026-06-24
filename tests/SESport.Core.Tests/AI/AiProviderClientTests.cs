@@ -122,15 +122,14 @@ public class AiProviderClientTests
       var handler = new RecordingHandler(
          new RecordingHandler.ResponseSpec(
             HttpStatusCode.InternalServerError,
-            """
-            {
-               "error": {
-                  "code": 500,
-                  "message": "The model produced output that does not match the expected peg-native format",
-                  "type": "server_error"
-               }
-            }
-            """
+            "{"
+            + "\"error\":{"
+            + "\"code\":500,"
+            + "\"message\":\"The model produced output that does not " +
+            "match the expected peg-native format\","
+            + "\"type\":\"server_error\""
+            + "}"
+            + "}"
          ),
          CreateLlamaFinalResponseJson()
       );
@@ -154,6 +153,68 @@ public class AiProviderClientTests
       Assert.Contains(
          "Return only the raw JSON object",
          handler.RequestBodies[1]
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesStructuredOutputRepairMoreThanOnce()
+   {
+      var handler = new RecordingHandler(
+         new RecordingHandler.ResponseSpec(
+            HttpStatusCode.InternalServerError,
+            "{"
+            + "\"error\":{"
+            + "\"code\":500,"
+            + "\"message\":\"The model produced output that does not " +
+            "match the expected peg-native format\","
+            + "\"type\":\"server_error\""
+            + "}"
+            + "}"
+         ),
+         new RecordingHandler.ResponseSpec(
+            HttpStatusCode.InternalServerError,
+            "{"
+            + "\"error\":{"
+            + "\"code\":500,"
+            + "\"message\":\"The model produced output that does not " +
+            "match the expected peg-native format\","
+            + "\"type\":\"server_error\""
+            + "}"
+            + "}"
+         ),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", requiresWebSearch: false, null),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.Contains(
+         "Return only the raw JSON object",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         "Return only the raw JSON object",
+         handler.RequestBodies[2]
       );
       Assert.Equal(
          "{\"Participation\":\"Yes\","
@@ -1288,7 +1349,9 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "{{WebToolNames.GetPage}}",
-                    "arguments": "{\"url\":\"https://example.test/roster\",\"find\":\"Sweden\"}"
+                    "arguments":
+                      "{\"url\":\"https://example.test/roster\"," +
+                      "\"find\":\"Sweden\"}"
                   }
                 }
               ]
@@ -1317,10 +1380,10 @@ public class AiProviderClientTests
                   {
                      new
                      {
-                        id = "call_2",
-                        type = "function",
-                        function = new
-                        {
+                       id = "call_2",
+                       type = "function",
+                       function = new
+                       {
                            name = WebToolNames.GetPage,
                            arguments =
                               "{\"url\":\"https://example.test/roster\"," +
@@ -1351,7 +1414,9 @@ public class AiProviderClientTests
                   "type": "function",
                   "function": {
                     "name": "{{WebToolNames.FindInPage}}",
-                    "arguments": "{\"url\":\"https://example.test/roster\",\"find\":\"Sweden\"}"
+                    "arguments":
+                      "{\"url\":\"https://example.test/roster\"," +
+                      "\"find\":\"Sweden\"}"
                   }
                 }
               ]

@@ -20,7 +20,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    // Keep this comfortably below the llama-server token limit.
    private const int MaxConversationContextCharacters = 20000;
    private const int MaxTransientRetryAttempts = 12;
-   private const int MaxFormatRepairAttempts = 1;
+   private const int MaxFormatRepairAttempts = 3;
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -519,7 +519,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          return responseEnvelope;
       }
-      catch(HttpRequestException exception) when (
+         catch(HttpRequestException exception) when (
          formatRepairAttempts < MaxFormatRepairAttempts &&
          IsPegNativeFormatFailure(exception) &&
          CanRepairStructuredOutput(outputMode, prompt)
@@ -527,12 +527,17 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          incrementFormatRepairAttempts();
          ApplyStructuredOutputRepairPrompt(messages);
-         return await SendWithRetryAsync(
+         return await SendWithStructuredOutputRepairAsync(
             provider,
             request,
+            messages,
             turn,
             stage,
-            cancellationToken
+            outputMode,
+            prompt,
+            formatRepairAttempts + 1,
+            cancellationToken,
+            incrementFormatRepairAttempts
          );
       }
       catch(InvalidOperationException exception) when (
@@ -544,19 +549,27 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          incrementFormatRepairAttempts();
          ApplyStructuredOutputRepairPrompt(messages);
-         var repairedEnvelope = await SendWithRetryAsync(
+         var repairedEnvelope = await SendWithStructuredOutputRepairAsync(
             provider,
             request,
+            messages,
             turn,
             stage,
-            cancellationToken
+            outputMode,
+            prompt,
+            formatRepairAttempts + 1,
+            cancellationToken,
+            incrementFormatRepairAttempts
          );
 
-         ValidateStructuredOutput(
-            repairedEnvelope,
-            outputMode,
-            prompt
-         );
+         if(ShouldRepairStructuredOutput(stage, outputMode, prompt))
+         {
+            ValidateStructuredOutput(
+               repairedEnvelope,
+               outputMode,
+               prompt
+            );
+         }
 
          return repairedEnvelope;
       }
@@ -662,7 +675,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       return """
          The previous response was rejected because it was not valid JSON.
          Return only the raw JSON object required by the schema.
-         Do not use markdown, fences, commentary, or explanations.
+         Do not use markdown, fences, tool calls, commentary, or
+         explanations.
          """.Trim();
    }
 
