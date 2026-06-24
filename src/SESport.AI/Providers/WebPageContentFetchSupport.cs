@@ -112,9 +112,10 @@ internal static class WebPageContentFetchSupport
          .Split('\n', StringSplitOptions.RemoveEmptyEntries)
          .Select(line => line.Trim())
          .Where(line => !IsStandaloneNoiseLine(line));
+      var augmentedLines = CollapseAdjacentNameFragmentRuns(normalizedLines);
       var normalizedText = string.Join(
          Environment.NewLine,
-         normalizedLines
+         augmentedLines
       ).Trim();
 
       return CollapseAdjacentCountryNameDuplicates(normalizedText);
@@ -252,6 +253,84 @@ internal static class WebPageContentFetchSupport
       }
 
       return false;
+   }
+
+   private static IReadOnlyList<string> CollapseAdjacentNameFragmentRuns(
+      IEnumerable<string> lines
+   )
+   {
+      var result = new List<string>();
+      var bufferedLines = lines.ToList();
+
+      for(var index = 0; index < bufferedLines.Count; )
+      {
+         var currentLine = bufferedLines[index];
+
+         if(!IsNameFragmentLine(currentLine))
+         {
+            result.Add(currentLine);
+            index++;
+
+            continue;
+         }
+
+         var runEnd = index + 1;
+
+         while(runEnd < bufferedLines.Count &&
+               IsNameFragmentLine(bufferedLines[runEnd]))
+         {
+            runEnd++;
+         }
+
+         if(runEnd - index > 1)
+         {
+            result.Add(string.Join(
+               " ",
+               bufferedLines.Skip(index).Take(runEnd - index)
+            ));
+            index = runEnd;
+            continue;
+         }
+
+         result.Add(currentLine);
+         index++;
+      }
+
+      return result;
+   }
+
+   private static bool IsNameFragmentLine(string line)
+   {
+      if(string.IsNullOrWhiteSpace(line) ||
+         line.Any(char.IsDigit) ||
+         line.Contains("  ", StringComparison.Ordinal))
+      {
+         return false;
+      }
+
+      var tokens = line.Split(
+         ' ',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      );
+
+      if(tokens.Length != 1)
+      {
+         return false;
+      }
+
+      var token = tokens[0];
+
+      if(token.Length < 2 || token.Length > 40)
+      {
+         return false;
+      }
+
+      if(token.All(char.IsUpper))
+      {
+         return false;
+      }
+
+      return char.IsLetter(token[0]);
    }
 
    internal static string? ExtractHtmlTitle(string html)

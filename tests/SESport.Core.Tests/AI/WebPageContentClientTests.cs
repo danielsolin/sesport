@@ -687,6 +687,21 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void NormalizeTextCollapsesAdjacentNameFragmentsWithoutDuplication()
+   {
+      var text = """
+         SWE
+         Hanna
+         Karlsson
+         """;
+
+      Assert.Equal(
+         "SWE\nHanna Karlsson",
+         WebPageContentFetchSupport.NormalizeText(text)
+      );
+   }
+
+   [Fact]
    public void BuildBrowserUserAgentUsesBrowserMajorVersion()
    {
       var userAgent = WebPageContentClient.BuildBrowserUserAgent(
