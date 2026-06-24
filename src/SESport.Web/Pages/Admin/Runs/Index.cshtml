@@ -63,10 +63,8 @@
    <table class="admin-table admin-table-hover ai-runs-table">
       <colgroup>
          <col class="ai-runs-col-started" />
-         <col class="ai-runs-col-environment" />
-         <col class="ai-runs-col-job" />
+         <col class="ai-runs-col-env-job-prov" />
          <col class="ai-runs-col-event" />
-         <col class="ai-runs-col-provider" />
          <col class="ai-runs-col-status" />
          <col class="ai-runs-col-rounds" />
          <col class="ai-runs-col-duration" />
@@ -75,10 +73,8 @@
       <thead>
          <tr>
             <th>Started</th>
-            <th>Execution env</th>
-            <th>Job</th>
+            <th>ENV/JOB/PROV</th>
             <th>Event</th>
-            <th>Provider</th>
             <th>Status</th>
             <th>Rounds</th>
             <th>Duration</th>
@@ -109,14 +105,22 @@
                    title="@(canEditExecutionEnvironment
                               ? "Double-click to edit"
                               : null)">
-                     <div data-run-inline-edit-display>
-                        <span class="ai-runs-environment"
-                              title="@run.ExecutionEnvironment">
+                  <div class="ai-runs-cell-stack" data-run-inline-edit-display>
+                     <span class="ai-runs-environment"
+                           title="@run.ExecutionEnvironment">
                         @DetailsModel.FormatExecutionEnvironmentDisplayName(
                            run.ExecutionEnvironment
                         )
-                        </span>
-                     </div>
+                     </span>
+                     <span>@run.JobLabel</span>
+                     <span class="ai-runs-cell-secondary">
+                        @run.ProviderLabel
+                        @if(!string.IsNullOrWhiteSpace(run.ProviderModel))
+                        {
+                           <span> (@run.ProviderModel)</span>
+                        }
+                     </span>
+                  </div>
                   <select class="ai-runs-inline-edit-input"
                           data-run-inline-edit-input
                           asp-items=
@@ -126,19 +130,7 @@
                           hidden>
                   </select>
                </td>
-               <td>@run.JobLabel</td>
                <td>@run.EventName</td>
-               <td>
-                  <div class="ai-runs-cell-stack">
-                     <span>@run.ProviderLabel</span>
-                     @if(!string.IsNullOrWhiteSpace(run.ProviderModel))
-                     {
-                        <span class="ai-runs-cell-secondary">
-                           @run.ProviderModel
-                        </span>
-                     }
-                  </div>
-               </td>
                <td data-ai-run-status-cell>
                   <code data-ai-run-status-text>@run.StatusId</code>
                </td>

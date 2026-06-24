@@ -830,23 +830,15 @@ h2 {
 }
 
 .ai-runs-col-started {
-   width: 135px;
+   width: 100px;
 }
 
-.ai-runs-col-environment {
-   width: 130px;
-}
-
-.ai-runs-col-job {
-   width: 150px;
+.ai-runs-col-env-job-prov {
+   width: 140px;
 }
 
 .ai-runs-col-event {
-   width: 210px;
-}
-
-.ai-runs-col-provider {
-   width: 200px;
+   width: auto;
 }
 
 .ai-runs-col-status {
@@ -875,6 +867,11 @@ h2 {
    display: grid;
    gap: 2px;
    min-width: 0;
+}
+
+.ai-runs-table .ai-runs-cell-stack > span {
+   min-width: 0;
+   overflow-wrap: anywhere;
 }
 
 .ai-runs-cell-secondary {
