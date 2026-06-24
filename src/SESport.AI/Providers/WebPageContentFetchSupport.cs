@@ -47,6 +47,10 @@ internal static class WebPageContentFetchSupport
       CountryNamesByThreeLetterCode = BuildCountryNamesByThreeLetterCode();
    private static readonly Lazy<Task<string>> BrowserUserAgentTask =
       new(BuildBrowserUserAgentAsync);
+   private static readonly Regex StandaloneNoiseLineRegex = new(
+      @"^(?:\d+|[^\p{L}\p{N}]+)$",
+      RegexOptions.CultureInvariant
+   );
 
    internal static async Task<string> GetBrowserUserAgentAsync()
    {
@@ -104,8 +108,14 @@ internal static class WebPageContentFetchSupport
          return string.Empty;
       }
 
-      var normalizedText = text.Replace("\r", "\n", StringComparison.Ordinal)
-         .Trim();
+      var normalizedLines = text.Replace("\r", "\n", StringComparison.Ordinal)
+         .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+         .Select(line => line.Trim())
+         .Where(line => !IsStandaloneNoiseLine(line));
+      var normalizedText = string.Join(
+         Environment.NewLine,
+         normalizedLines
+      ).Trim();
 
       return CollapseAdjacentCountryNameDuplicates(normalizedText);
    }
@@ -220,6 +230,28 @@ internal static class WebPageContentFetchSupport
          text,
          match => match.Groups["country"].Value
       );
+   }
+
+   private static bool IsStandaloneNoiseLine(string line)
+   {
+      if(string.IsNullOrWhiteSpace(line))
+      {
+         return true;
+      }
+
+      if(StandaloneNoiseLineRegex.IsMatch(line))
+      {
+         return true;
+      }
+
+      if(line.Length <= 3 &&
+         line.All(char.IsLetter) &&
+         line.All(char.IsLower))
+      {
+         return true;
+      }
+
+      return false;
    }
 
    internal static string? ExtractHtmlTitle(string html)

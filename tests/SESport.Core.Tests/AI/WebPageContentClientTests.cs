@@ -639,6 +639,7 @@ public class WebPageContentClientTests
          page!.MainText,
          StringComparison.OrdinalIgnoreCase
       );
+      Assert.Contains("SWE", page.MainText);
       Assert.DoesNotContain(
          "SWE_sm",
          page.MainText,
@@ -658,6 +659,30 @@ public class WebPageContentClientTests
          WebPageContentFetchSupport.NormalizeText(
             "South Africa\nSouth Africa"
          )
+      );
+   }
+
+   [Fact]
+   public void NormalizeTextDropsStandaloneNoiseLines()
+   {
+      var text = """
+         12
+         fl
+         Jurander Fanny
+         18
+         1
+         90
+         0
+         0
+         0
+         0
+         1
+         BK Häcken
+         """;
+
+      Assert.Equal(
+         "Jurander Fanny\nBK Häcken",
+         WebPageContentFetchSupport.NormalizeText(text)
       );
    }
 

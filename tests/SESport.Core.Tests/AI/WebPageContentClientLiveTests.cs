@@ -1,9 +1,18 @@
+using Xunit.Abstractions;
+
 using SESport.AI.Providers;
 
 namespace SESport.Core.Tests.AI;
 
 public class WebPageContentClientLiveTests
 {
+   private readonly ITestOutputHelper output;
+
+   public WebPageContentClientLiveTests(ITestOutputHelper output)
+   {
+      this.output = output;
+   }
+
    private const string LiveTestUrl =
       "https://www.lpga.com/tournaments/" +
       "meijer-lpga-classic-for-simply-give/entries";
@@ -36,6 +45,39 @@ public class WebPageContentClientLiveTests
       Assert.Contains("SWE", page.MainText);
       Assert.DoesNotContain("0PX", page.MainText);
       Assert.DoesNotContain("SKIP TO MAIN CONTENT", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchLpgaEntriesPageKeepsCountryCodesAsLines()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         LiveTestUri.ToString(),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      output.WriteLine(page!.MainText);
+
+      var lines = page.MainText.Split(
+         '\n',
+         StringSplitOptions.RemoveEmptyEntries
+      );
+
+      Assert.Contains(
+         lines,
+         line => string.Equals(line, "SWE", StringComparison.Ordinal)
+      );
+      Assert.DoesNotContain("12", lines);
+      Assert.DoesNotContain("18", lines);
+      Assert.DoesNotContain("90", lines);
    }
 
    [Fact]
@@ -94,6 +136,29 @@ public class WebPageContentClientLiveTests
             StringComparison.OrdinalIgnoreCase
          )
       );
+   }
+
+   [Fact]
+   public async Task FetchFlashscoreSquadPageShowsRosterText()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         "https://www.flashscore.se/lag/sverige/2i5WvP7a/trupp/",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      output.WriteLine(page!.Title);
+      output.WriteLine(page.MainText);
+      Assert.Contains("Fanny", page.MainText);
+      Assert.Contains("Hanna", page.MainText);
    }
 
    private static bool ShouldRunLiveTest()

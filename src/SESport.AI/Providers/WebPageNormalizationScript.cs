@@ -221,6 +221,62 @@ internal static class WebPageNormalizationScript
                '[class*="consent"], [class*="privacy"], ' +
                '[class*="banner"]'
             ).forEach((element) => element.remove());
+
+            function normalizeText(text) {
+               return (text || '').replace(/\s+/g, ' ').trim();
+            }
+
+            function flattenTableElement(tableElement) {
+               const rowSelector = 'tr, [role="row"]';
+               const cellSelector =
+                  'th, td, [role="cell"], [role="gridcell"], ' +
+                  '[role="columnheader"], [role="rowheader"]';
+               const rows = tableElement.querySelectorAll(rowSelector);
+               const lines = [];
+
+               rows.forEach((row) => {
+                  const cells = row.querySelectorAll(cellSelector);
+                  const parts = [];
+
+                  cells.forEach((cell) => {
+                     const cellText = normalizeText(
+                        cell.textContent || ''
+                     );
+
+                     if(cellText !== '') {
+                        parts.push(cellText);
+                     }
+                  });
+
+                  const rowText = parts.join(' | ').trim();
+
+                  if(rowText !== '') {
+                     lines.push(rowText);
+                  }
+               });
+
+               if(lines.length > 0) {
+                  tableElement.replaceWith(
+                     document.createTextNode(` ${lines.join('\n')} `)
+                  );
+               }
+            }
+
+            document.querySelectorAll(
+               'table, [role="table"], [role="grid"], [role="treegrid"]'
+            ).forEach((tableElement) => {
+               if(!tableElement.isConnected) {
+                  return;
+               }
+
+               if(tableElement.closest(
+                  'table, [role="table"], [role="grid"], [role="treegrid"]'
+               ) !== tableElement) {
+                  return;
+               }
+
+               flattenTableElement(tableElement);
+            });
          }
          """;
    }
