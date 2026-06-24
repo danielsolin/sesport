@@ -100,21 +100,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          try
          {
-            var content = await FetchOnceAsync(
+            return await FetchOnceAsync(
                absoluteUrl,
-               cancellationToken
-            );
-
-            if(!ShouldRetry(content) ||
-               attempt == MaxTransientRetryAttempts)
-            {
-               return content;
-            }
-
-            await DelayTransientRetryAsync(
-               attempt,
-               absoluteUrl,
-               "timeout result",
                cancellationToken
             );
          }
@@ -162,20 +149,131 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
 
       request.Headers.TryAddWithoutValidation("User-Agent", browserUserAgent);
-      using var response = await httpClient.SendAsync(
-         request,
-         cancellationToken
-      );
+      HttpResponseMessage response;
 
-      if(WebPageContentFetchSupport.IsPdfResponse(response, absoluteUrl))
+      try
       {
-         return await WebPagePdfPageFetcher.FetchAsync(
-            response,
-            absoluteUrl,
+         response = await httpClient.SendAsync(
+            request,
             cancellationToken
          );
       }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(TaskCanceledException exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Primary HTTP request timed out for {Url}; " +
+            "trying browser fallback.",
+            absoluteUrl
+         );
 
+         return await FetchWithoutPrimaryResponseAsync(
+            absoluteUrl,
+            cancellationToken,
+            WebPageFetchErrorKind.Timeout
+         );
+      }
+      catch(TimeoutException exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Primary HTTP request timed out for {Url}; " +
+            "trying browser fallback.",
+            absoluteUrl
+         );
+
+         return await FetchWithoutPrimaryResponseAsync(
+            absoluteUrl,
+            cancellationToken,
+            WebPageFetchErrorKind.Timeout
+         );
+      }
+
+      using(response)
+      {
+         if(WebPageContentFetchSupport.IsPdfResponse(response, absoluteUrl))
+         {
+            return await WebPagePdfPageFetcher.FetchAsync(
+               response,
+               absoluteUrl,
+               cancellationToken
+            );
+         }
+
+         try
+         {
+            return await this.browserPageFetcher(
+               absoluteUrl,
+               cancellationToken
+            );
+         }
+         catch(WebPageFetchException exception)
+         {
+            logger.LogWarning(
+               exception,
+               "Playwright failed for {Url}; falling back to HTML.",
+               absoluteUrl
+            );
+            return await WebPageHtmlPageFetcher.FetchAsync(
+               this.logger,
+               this.curlPageFetcher,
+               response,
+               absoluteUrl,
+               cancellationToken,
+               exception.ErrorKind
+            );
+         }
+         catch(OperationCanceledException)
+            when(cancellationToken.IsCancellationRequested)
+         {
+            throw;
+         }
+         catch(TimeoutException exception)
+         {
+            logger.LogWarning(
+               exception,
+               "Playwright timed out for {Url}; falling back to HTML.",
+               absoluteUrl
+            );
+            return await WebPageHtmlPageFetcher.FetchAsync(
+               this.logger,
+               this.curlPageFetcher,
+               response,
+               absoluteUrl,
+               cancellationToken,
+               WebPageFetchErrorKind.Timeout
+            );
+         }
+         catch(PlaywrightException exception)
+         {
+            logger.LogWarning(
+               exception,
+               "Playwright failed for {Url}; falling back to HTML.",
+               absoluteUrl
+            );
+            return await WebPageHtmlPageFetcher.FetchAsync(
+               this.logger,
+               this.curlPageFetcher,
+               response,
+               absoluteUrl,
+               cancellationToken,
+               WebPageFetchErrorKind.BrowserBlocked
+            );
+         }
+      }
+   }
+
+   private async Task<WebPageContent?> FetchWithoutPrimaryResponseAsync(
+      Uri absoluteUrl,
+      CancellationToken cancellationToken,
+      WebPageFetchErrorKind browserFailureKind
+   )
+   {
       try
       {
          return await this.browserPageFetcher(absoluteUrl, cancellationToken);
@@ -184,19 +282,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          logger.LogWarning(
             exception,
-            "Playwright failed for {Url}; falling back to HTML.",
+            "Playwright failed for {Url}; falling back to curl.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchAsync(
-            this.logger,
-            this.curlPageFetcher,
-            response,
-            absoluteUrl,
-            cancellationToken,
-            exception.ErrorKind
-         );
+         browserFailureKind = exception.ErrorKind;
       }
       catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
       {
          throw;
       }
@@ -204,46 +296,59 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          logger.LogWarning(
             exception,
-            "Playwright timed out for {Url}; falling back to HTML.",
+            "Playwright timed out for {Url}; falling back to curl.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchAsync(
-            this.logger,
-            this.curlPageFetcher,
-            response,
-            absoluteUrl,
-            cancellationToken,
-            WebPageFetchErrorKind.Timeout
-         );
+         browserFailureKind = WebPageFetchErrorKind.Timeout;
       }
       catch(PlaywrightException exception)
       {
          logger.LogWarning(
             exception,
-            "Playwright failed for {Url}; falling back to HTML.",
+            "Playwright failed for {Url}; falling back to curl.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchAsync(
-            this.logger,
-            this.curlPageFetcher,
-            response,
+         browserFailureKind = WebPageFetchErrorKind.BrowserBlocked;
+      }
+
+      try
+      {
+         var curlContent = await this.curlPageFetcher(
             absoluteUrl,
-            cancellationToken,
-            WebPageFetchErrorKind.BrowserBlocked
+            cancellationToken
+         );
+
+         if(curlContent is not null)
+         {
+            return curlContent;
+         }
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(Exception exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Curl fallback failed for {Url}.",
+            absoluteUrl
          );
       }
-   }
 
-   private static bool ShouldRetry(WebPageContent? content)
-   {
-      return content?.FetchErrorKind == WebPageFetchErrorKind.Timeout;
+      return WebPageContentFetchSupport.BuildFailureContent(
+         absoluteUrl,
+         null,
+         browserFailureKind,
+         $"Could not retrieve page content from {absoluteUrl}.",
+         "curl"
+      );
    }
 
    private static bool IsTransientFailure(Exception exception)
    {
-      return exception is HttpRequestException ||
-         exception is TaskCanceledException ||
-         exception is TimeoutException;
+      return exception is HttpRequestException;
    }
 
    private async Task DelayTransientRetryAsync(

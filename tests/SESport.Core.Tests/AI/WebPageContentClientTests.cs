@@ -115,7 +115,7 @@ public class WebPageContentClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(3, browserCalls);
+      Assert.Equal(1, browserCalls);
       Assert.NotNull(page);
       Assert.Equal(WebPageFetchErrorKind.Timeout, page!.FetchErrorKind);
       Assert.Equal(
@@ -125,7 +125,7 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchRetriesWhenInitialRequestTimesOut()
+   public async Task FetchFallsBackWhenInitialRequestTimesOut()
    {
       var browserCalls = 0;
       var handler = new FlakyTimeoutHandler();
@@ -156,14 +156,14 @@ public class WebPageContentClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(2, handler.RequestCount);
+      Assert.Equal(1, handler.RequestCount);
       Assert.Equal(1, browserCalls);
       Assert.NotNull(page);
       Assert.Equal("Retry Title", page!.Title);
    }
 
    [Fact]
-   public async Task FetchRetriesWhenBrowserTimesOut()
+   public async Task FetchFallsBackWhenBrowserTimesOut()
    {
       var browserCalls = 0;
       var client = CreateClient(
@@ -196,9 +196,10 @@ public class WebPageContentClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(2, browserCalls);
+      Assert.Equal(1, browserCalls);
       Assert.NotNull(page);
-      Assert.Equal("Retry Title", page!.Title);
+      Assert.Equal(WebPageFetchErrorKind.Timeout, page!.FetchErrorKind);
+      Assert.Equal("HTML fallback had no body.", page!.FetchErrorMessage);
    }
 
    [Fact]
