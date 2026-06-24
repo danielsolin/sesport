@@ -9,6 +9,7 @@ namespace SESport.AI.Providers;
 
 public sealed class SearxngWebSearchClient : IWebSearchClient
 {
+   private const int MaxTransientRetryAttempts = 3;
    private static readonly Uri DefaultBaseAddress = new(
       "https://xng.sesport.se/"
    );
@@ -75,6 +76,63 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          return new WebSearchResponse([]);
       }
 
+      return await SearchWithRetryAsync(
+         query,
+         maxResults,
+         cancellationToken,
+         searchAttempt
+      );
+   }
+
+   private async Task<WebSearchResponse> SearchWithRetryAsync(
+      string query,
+      int maxResults,
+      CancellationToken cancellationToken,
+      int searchAttempt
+   )
+   {
+      for(var attempt = 1; attempt <= MaxTransientRetryAttempts; attempt++)
+      {
+         try
+         {
+            return await SearchOnceAsync(
+               query,
+               maxResults,
+               cancellationToken,
+               searchAttempt
+            );
+         }
+         catch(OperationCanceledException)
+            when(cancellationToken.IsCancellationRequested)
+         {
+            throw;
+         }
+         catch(Exception exception) when (
+            IsTransientFailure(exception) &&
+            attempt < MaxTransientRetryAttempts
+         )
+         {
+            await DelayTransientRetryAsync(
+               attempt,
+               query,
+               exception.Message,
+               cancellationToken
+            );
+         }
+      }
+
+      throw new InvalidOperationException(
+         "SearXNG search retry loop exhausted."
+      );
+   }
+
+   private async Task<WebSearchResponse> SearchOnceAsync(
+      string query,
+      int maxResults,
+      CancellationToken cancellationToken,
+      int searchAttempt
+   )
+   {
       var engines = SearxngSearchEngineRotation.NormalizeEngines(
          Options.Engines
       );
@@ -125,6 +183,54 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          $"SearXNG/{engine}",
          $"engines={engine}"
       );
+   }
+
+   private static bool IsTransientFailure(Exception exception)
+   {
+      return exception is HttpRequestException httpRequestException
+         ? IsTransientStatusCode(httpRequestException.StatusCode)
+         : exception is TaskCanceledException or TimeoutException;
+   }
+
+   private static bool IsTransientStatusCode(System.Net.HttpStatusCode? code)
+   {
+      return code is null ||
+         code is System.Net.HttpStatusCode.RequestTimeout ||
+         code is System.Net.HttpStatusCode.TooManyRequests ||
+         code is System.Net.HttpStatusCode.BadGateway ||
+         code is System.Net.HttpStatusCode.ServiceUnavailable ||
+         code is System.Net.HttpStatusCode.GatewayTimeout;
+   }
+
+   private async Task DelayTransientRetryAsync(
+      int attempt,
+      string query,
+      string reason,
+      CancellationToken cancellationToken
+   )
+   {
+      var delay = GetTransientRetryDelay(attempt);
+
+      Logger?.LogWarning(
+         "SearXNG search attempt {Attempt} failed for {Query} with " +
+         "{Reason}. Retrying in {Delay}.",
+         attempt,
+         query,
+         reason,
+         delay
+      );
+
+      await Task.Delay(delay, cancellationToken);
+   }
+
+   private static TimeSpan GetTransientRetryDelay(int attempt)
+   {
+      return attempt switch
+      {
+         1 => TimeSpan.FromSeconds(2),
+         2 => TimeSpan.FromSeconds(5),
+         _ => TimeSpan.FromSeconds(10)
+      };
    }
 
    private static IReadOnlyList<WebSearchResult> ParseResults(

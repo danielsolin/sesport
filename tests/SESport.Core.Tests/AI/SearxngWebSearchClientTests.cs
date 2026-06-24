@@ -169,6 +169,29 @@ public class SearxngWebSearchClientTests
       Assert.Equal("Basic dXNlcjpwYXNz", handler.AuthorizationHeader);
    }
 
+   [Fact]
+   public async Task SearchRetriesWhenInitialRequestTimesOut()
+   {
+      var handler = new FlakyTimeoutHandler(CreateResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler)
+         {
+            Timeout = TimeSpan.FromMilliseconds(50)
+         },
+         new SearxngWebSearchClientOptions()
+      );
+
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Single(response.Results);
+      Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+   }
+
    private static string CreateResponseJson()
    {
       return JsonSerializer.Serialize(new
@@ -296,6 +319,38 @@ public class SearxngWebSearchClientTests
          RequestBody = request.Content is null
             ? string.Empty
             : await request.Content.ReadAsStringAsync(cancellationToken);
+
+         return new HttpResponseMessage(HttpStatusCode.OK)
+         {
+            Content = JsonContent.Create(
+               JsonSerializer.Deserialize<JsonElement>(responseJson)
+            )
+         };
+      }
+   }
+
+   private sealed class FlakyTimeoutHandler : HttpMessageHandler
+   {
+      private readonly string responseJson;
+
+      public FlakyTimeoutHandler(string responseJson)
+      {
+         this.responseJson = responseJson;
+      }
+
+      public int RequestCount { get; private set; }
+
+      protected override async Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         RequestCount++;
+
+         if(RequestCount == 1)
+         {
+            await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+         }
 
          return new HttpResponseMessage(HttpStatusCode.OK)
          {

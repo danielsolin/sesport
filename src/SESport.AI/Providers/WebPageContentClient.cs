@@ -8,6 +8,7 @@ namespace SESport.AI.Providers;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
+   private const int MaxTransientRetryAttempts = 3;
    internal const string CutoffMarker =
       WebPageContentFetchSupport.CutoffMarker;
    internal const int MaxResponseCharacters =
@@ -69,6 +70,81 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return null;
       }
 
+      return await FetchWithRetryAsync(
+         absoluteUrl,
+         cancellationToken
+      );
+   }
+
+   internal static string BuildBrowserUserAgent(string browserVersion)
+   {
+      return WebPageContentFetchSupport.BuildBrowserUserAgent(browserVersion);
+   }
+
+   internal static string ApplyResponseCutoff(string text)
+   {
+      return WebPageContentFetchSupport.ApplyResponseCutoff(text);
+   }
+
+   internal static string? GetCountryDisplayName(string? countryCode)
+   {
+      return WebPageContentFetchSupport.GetCountryDisplayName(countryCode);
+   }
+
+   private async Task<WebPageContent?> FetchWithRetryAsync(
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      for(var attempt = 1; attempt <= MaxTransientRetryAttempts; attempt++)
+      {
+         try
+         {
+            var content = await FetchOnceAsync(
+               absoluteUrl,
+               cancellationToken
+            );
+
+            if(!ShouldRetry(content) ||
+               attempt == MaxTransientRetryAttempts)
+            {
+               return content;
+            }
+
+            await DelayTransientRetryAsync(
+               attempt,
+               absoluteUrl,
+               "timeout result",
+               cancellationToken
+            );
+         }
+         catch(OperationCanceledException)
+            when(cancellationToken.IsCancellationRequested)
+         {
+            throw;
+         }
+         catch(Exception exception) when (
+            IsTransientFailure(exception) &&
+            attempt < MaxTransientRetryAttempts
+         )
+         {
+            await DelayTransientRetryAsync(
+               attempt,
+               absoluteUrl,
+               exception.Message,
+               cancellationToken
+            );
+         }
+      }
+
+      return null;
+   }
+
+   private async Task<WebPageContent?> FetchOnceAsync(
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
       var browserUserAgent = await this.browserUserAgentFetcher();
       using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
       request.Headers.Accept.ParseAdd(
@@ -158,18 +234,46 @@ public sealed class WebPageContentClient : IWebPageContentClient
       }
    }
 
-   internal static string BuildBrowserUserAgent(string browserVersion)
+   private static bool ShouldRetry(WebPageContent? content)
    {
-      return WebPageContentFetchSupport.BuildBrowserUserAgent(browserVersion);
+      return content?.FetchErrorKind == WebPageFetchErrorKind.Timeout;
    }
 
-   internal static string ApplyResponseCutoff(string text)
+   private static bool IsTransientFailure(Exception exception)
    {
-      return WebPageContentFetchSupport.ApplyResponseCutoff(text);
+      return exception is HttpRequestException ||
+         exception is TaskCanceledException ||
+         exception is TimeoutException;
    }
 
-   internal static string? GetCountryDisplayName(string? countryCode)
+   private async Task DelayTransientRetryAsync(
+      int attempt,
+      Uri absoluteUrl,
+      string reason,
+      CancellationToken cancellationToken
+   )
    {
-      return WebPageContentFetchSupport.GetCountryDisplayName(countryCode);
+      var delay = GetTransientRetryDelay(attempt);
+
+      logger.LogWarning(
+         "Web page fetch attempt {Attempt} failed for {Url} with {Reason}." +
+         " Retrying in {Delay}.",
+         attempt,
+         absoluteUrl,
+         reason,
+         delay
+      );
+
+      await Task.Delay(delay, cancellationToken);
+   }
+
+   private static TimeSpan GetTransientRetryDelay(int attempt)
+   {
+      return attempt switch
+      {
+         1 => TimeSpan.FromSeconds(2),
+         2 => TimeSpan.FromSeconds(5),
+         _ => TimeSpan.FromSeconds(10)
+      };
    }
 }

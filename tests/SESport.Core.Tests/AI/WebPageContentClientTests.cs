@@ -115,13 +115,90 @@ public class WebPageContentClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(1, browserCalls);
+      Assert.Equal(3, browserCalls);
       Assert.NotNull(page);
       Assert.Equal(WebPageFetchErrorKind.Timeout, page!.FetchErrorKind);
       Assert.Equal(
          "HTML fallback produced no text.",
          page!.FetchErrorMessage
       );
+   }
+
+   [Fact]
+   public async Task FetchRetriesWhenInitialRequestTimesOut()
+   {
+      var browserCalls = 0;
+      var handler = new FlakyTimeoutHandler();
+      var client = CreateClient(
+         new HttpClient(handler)
+         {
+            Timeout = TimeSpan.FromMilliseconds(50)
+         },
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Retry Title",
+                  "https://example.test/retry",
+                  null,
+                  [],
+                  "Retry body text.",
+                  true,
+                  "Retry body text."
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/retry",
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Retry Title", page!.Title);
+   }
+
+   [Fact]
+   public async Task FetchRetriesWhenBrowserTimesOut()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(string.Empty)),
+         (_, _) =>
+         {
+            browserCalls++;
+
+            if(browserCalls == 1)
+            {
+               throw new TimeoutException("Timeout 30000ms exceeded.");
+            }
+
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Retry Title",
+                  "https://example.test/browser-timeout",
+                  null,
+                  [],
+                  "Retry body text.",
+                  true,
+                  "Retry body text."
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/browser-timeout",
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Retry Title", page!.Title);
    }
 
    [Fact]
@@ -741,6 +818,29 @@ public class WebPageContentClientTests
       )
       {
          return Task.FromResult(respond(request));
+      }
+   }
+
+   private sealed class FlakyTimeoutHandler : HttpMessageHandler
+   {
+      public int RequestCount { get; private set; }
+
+      protected override async Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         RequestCount++;
+
+         if(RequestCount == 1)
+         {
+            await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+         }
+
+         return new HttpResponseMessage(HttpStatusCode.OK)
+         {
+            Content = new StringContent("<html></html>")
+         };
       }
    }
 

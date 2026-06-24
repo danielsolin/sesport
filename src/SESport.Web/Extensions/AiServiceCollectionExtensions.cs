@@ -44,7 +44,7 @@ public static class AiServiceCollectionExtensions
       services.AddHttpClient<IWebSearchClient, SearxngWebSearchClient>(
          client =>
          {
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(60);
          }
       );
       services.AddHttpClient<GoogleWebSearchClient>(
@@ -58,7 +58,7 @@ public static class AiServiceCollectionExtensions
          WebPageContentClient
       >(client =>
       {
-         client.Timeout = TimeSpan.FromSeconds(30);
+         client.Timeout = TimeSpan.FromMinutes(2);
       });
 
       return services;

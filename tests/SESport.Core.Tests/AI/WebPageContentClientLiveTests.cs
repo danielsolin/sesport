@@ -122,7 +122,7 @@ public class WebPageContentClientLiveTests
 
       return new HttpClient(handler)
       {
-         Timeout = TimeSpan.FromSeconds(30)
+         Timeout = TimeSpan.FromMinutes(2)
       };
    }
 }
