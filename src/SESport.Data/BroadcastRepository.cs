@@ -35,7 +35,8 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
             original_air_date,
             starts_at,
             ends_at,
-            hidden_at
+            hidden_at,
+            entity_id
          from broadcasts
          where starts_at >= @start and starts_at < @end
             {{hiddenFilterSql}}
@@ -73,7 +74,8 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
                string.Join(", ", reader.GetFieldValue<string[]>(5)),
                reader.GetBoolean(6),
                reader.IsDBNull(7) ? null : reader.GetFieldValue<DateOnly>(7),
-               reader.IsDBNull(10) == false
+               reader.IsDBNull(10) == false,
+               reader.IsDBNull(11) ? null : reader.GetGuid(11)
             )
          );
       }
@@ -244,6 +246,29 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue("categories", categories.ToArray());
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task UpdateOrganizationAsync(
+      Guid id,
+      Guid? organizationEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update broadcasts
+         set entity_id = @entity_id,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue(
+         "entity_id",
+         (object?)organizationEntityId ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync(cancellationToken);
    }

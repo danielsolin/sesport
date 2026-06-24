@@ -5,6 +5,25 @@ namespace SESport.Core.Broadcast;
 
 public static class BroadcastEntityFilter
 {
+   public static bool IsOrganizationEntityType(string entityTypeId)
+   {
+      return !string.Equals(
+         entityTypeId,
+         TrackedEntityTypeIds.Person,
+         StringComparison.OrdinalIgnoreCase
+      ) &&
+      !string.Equals(
+         entityTypeId,
+         TrackedEntityTypeIds.NationalTeam,
+         StringComparison.OrdinalIgnoreCase
+      ) &&
+      !string.Equals(
+         entityTypeId,
+         TrackedEntityTypeIds.Pair,
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
    public static IReadOnlyList<BroadcastEntityOption> FilterSelectableEntities(
       IEnumerable<BroadcastEntityOption> entities
    )

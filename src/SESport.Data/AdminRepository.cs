@@ -1162,6 +1162,49 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
+   public async Task<IReadOnlyList<EntityLinkOption>>
+      GetBroadcastOrganizationLinkOptionsAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = $"""
+         select
+            e.id,
+            e.canonical_name,
+            et.label,
+            s.name
+         from entities e
+         join entity_types et on et.id = e.entity_type_id
+         join sports s on s.id = e.sport_id
+         where e.entity_type_id not in (
+            '{TrackedEntityTypeIds.Person}',
+            '{TrackedEntityTypeIds.NationalTeam}',
+            '{TrackedEntityTypeIds.Pair}'
+         )
+         order by e.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityLinkOption>();
+
+      while (await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityLinkOption(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3)
+            )
+         );
+      }
+
+      return options;
+   }
+
    public async Task<IReadOnlyList<EntityNameOption>>
       GetPersonEntityNameOptionsAsync(
          CancellationToken cancellationToken
