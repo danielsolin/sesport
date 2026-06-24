@@ -14,6 +14,9 @@
    var editBroadcastFieldUrl = Url.Page(
       "/Admin/Ajax/Update/BroadcastField"
    );
+   var searchEntityUrl = Url.Page(
+      "/Admin/Ajax/Search/Entity"
+   );
    var hideBroadcastUrl = Url.Page(
       "/Admin/Ajax/Toggle/BroadcastVisibility"
    );
@@ -76,6 +79,7 @@
 <div data-broadcast-results
      data-create-participant-url="@createParticipantEntityUrl"
      data-broadcast-inline-edit-url="@editBroadcastFieldUrl"
+     data-org-entity-search-url="@searchEntityUrl"
      data-search-url-base="@ViewData["SearchUrl"]"
      data-check-participation-status-url=
         "@checkParticipationStatusUrl">
@@ -106,35 +110,38 @@
             <table class="admin-table admin-table-hover broadcasts-table">
                <thead>
                   <tr>
-                     <th>
+                     <th class="broadcasts-col-channel">
                         <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Channel")'>
                            Channel @Model.GetSortIndicator("Channel")
                         </a>
                      </th>
-                     <th>
+                     <th class="broadcasts-col-time">
                         <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Time")'>
                            Time @Model.GetSortIndicator("Time")
                         </a>
                      </th>
-                     <th>
+                     <th class="broadcasts-col-broadcast">
                         <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Broadcast")'>
                            Broadcast @Model.GetSortIndicator("Broadcast")
                         </a>
                      </th>
-                     <th>
+                     <th class="broadcasts-col-organization">
+                        Organization
+                     </th>
+                     <th class="broadcasts-col-categories">
                         <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Categories")'>
                            Categories @Model.GetSortIndicator("Categories")
                         </a>
                      </th>
-                     <th>Actions</th>
+                     <th class="broadcasts-col-actions">Actions</th>
                   </tr>
                </thead>
          <tbody>
@@ -155,17 +162,18 @@
                          data-broadcast-id="@broadcast.Id"
                          data-participation-status=
                             "@broadcast.ParticipationCheck?.StatusId">
-                        <td>
+                        <td class="broadcasts-col-channel">
                            <div class="ses-nowrap">
                               @broadcast.ChannelName
                            </div>
                         </td>
-                        <td>
+                        <td class="broadcasts-col-time">
                            <strong class="ses-nowrap">
                               @broadcast.TimeOnlyText
                            </strong>
                         </td>
-                        <td class="broadcast-inline-editable"
+                        <td class="broadcasts-col-broadcast
+                                   broadcast-inline-editable"
                             data-broadcast-id="@broadcast.Id"
                             data-broadcast-inline-edit-field="title"
                             data-broadcast-inline-edit-value=
@@ -202,7 +210,36 @@
                                   aria-label="Edit broadcast title"
                                   hidden />
                         </td>
-                        <td class="broadcast-inline-editable"
+                        <td class="broadcasts-col-organization
+                                   broadcast-inline-editable"
+                            data-broadcast-id="@broadcast.Id"
+                            data-broadcast-inline-edit-field="organization"
+                            data-broadcast-inline-edit-value=
+                               "@broadcast.OrganizationEntityId"
+                            data-broadcast-inline-edit-label=
+                               "@broadcast.OrganizationEntityName"
+                            title="Double-click to edit">
+                           <div class="broadcast-org-autocomplete"
+                                data-org-entity-autocomplete>
+                              <input class="broadcast-org-entity-input"
+                                     type="text"
+                                     aria-label="Organization entity"
+                                     data-org-entity-input
+                                     autocomplete="off"
+                                     spellcheck="false"
+                                     value=
+                                        "@broadcast.OrganizationEntityName" />
+                              <input type="hidden"
+                                     data-org-entity-id
+                                     value=
+                                        "@broadcast.OrganizationEntityId" />
+                              <div class="broadcast-org-entity-suggestions"
+                                   data-org-entity-suggestions
+                                   hidden></div>
+                           </div>
+                        </td>
+                        <td class="broadcasts-col-categories
+                                   broadcast-inline-editable"
                             data-broadcast-id="@broadcast.Id"
                             data-broadcast-inline-edit-field="categories"
                             data-broadcast-inline-edit-value=
@@ -231,7 +268,7 @@
                                   aria-label="Edit categories"
                                   hidden />
                         </td>
-                        <td class="table-actions">
+                        <td class="broadcasts-col-actions table-actions">
                            <div class="table-actions-stack">
                               <form method="post"
                                     action="@hideBroadcastUrl"
@@ -274,7 +311,7 @@
                                  </button>
                               </form>
                            </div>
-                           </td>
+                        </td>
                         </tr>
                         <tr class="broadcast-participation-runs-row"
                             data-broadcast-id="@broadcast.Id"
@@ -282,7 +319,7 @@
                                "@broadcast.ParticipationCheck?.StatusId">
                            <td class="broadcast-participation-spacer"></td>
                            <td class="broadcast-participation-runs-cell"
-                           colspan="4"
+                               colspan="5"
                                data-participation-cell
                                data-broadcast-id="@broadcast.Id"
                                data-participation-run-id=

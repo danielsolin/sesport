@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Core.Broadcast;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
-public sealed class BroadcastFieldModel(BroadcastRepository repository)
-   : PageModel
+public sealed class BroadcastFieldModel(
+   BroadcastRepository repository,
+   AdminRepository adminRepository
+) : PageModel
 {
    public async Task<IActionResult> OnPostAsync(
       Guid id,
@@ -68,6 +71,37 @@ public sealed class BroadcastFieldModel(BroadcastRepository repository)
             });
          }
 
+         if(string.Equals(field, "organization", StringComparison.Ordinal))
+         {
+            var organizationEntityId =
+               await ValidateOrganizationEntityIdAsync(
+                  value,
+                  cancellationToken
+               );
+
+            if(!string.IsNullOrWhiteSpace(value) &&
+               organizationEntityId is null)
+            {
+               return BadRequest(new
+               {
+                  error = "Selected organization is invalid."
+               });
+            }
+
+            await repository.UpdateOrganizationAsync(
+               id,
+               organizationEntityId,
+               cancellationToken
+            );
+
+            return new JsonResult(new
+            {
+               updated = true,
+               field = "organization",
+               value = organizationEntityId?.ToString() ?? string.Empty
+            });
+         }
+
          return BadRequest(new { error = "Unsupported field." });
       }
       catch(Exception exception)
@@ -77,6 +111,37 @@ public sealed class BroadcastFieldModel(BroadcastRepository repository)
             StatusCode = StatusCodes.Status500InternalServerError
          };
       }
+   }
+
+   private async Task<Guid?> ValidateOrganizationEntityIdAsync(
+      string? value,
+      CancellationToken cancellationToken
+   )
+   {
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return null;
+      }
+
+      if(!Guid.TryParse(value, out var entityId))
+      {
+         return null;
+      }
+
+      var entity = await adminRepository.GetEntityForEditAsync(
+         entityId,
+         cancellationToken
+      );
+
+      if(entity is null ||
+         !BroadcastEntityFilter.IsOrganizationEntityType(
+            entity.EntityTypeId
+         ))
+      {
+         return null;
+      }
+
+      return entityId;
    }
 
    private static string[] NormalizeCategories(string? value)

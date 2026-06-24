@@ -25,24 +25,31 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 
       var sql = $$"""
          select
-            id,
-            channel_id,
-            channel_name,
-            title,
-            description,
-            categories,
-            is_replay,
-            original_air_date,
-            starts_at,
-            ends_at,
-            hidden_at,
-            entity_id
+            broadcasts.id,
+            broadcasts.channel_id,
+            broadcasts.channel_name,
+            broadcasts.title,
+            broadcasts.description,
+            broadcasts.categories,
+            broadcasts.is_replay,
+            broadcasts.original_air_date,
+            broadcasts.starts_at,
+            broadcasts.ends_at,
+            broadcasts.hidden_at,
+            broadcasts.entity_id,
+            org.canonical_name as organization_name
          from broadcasts
-         where starts_at >= @start and starts_at < @end
+         left join entities org on org.id = broadcasts.entity_id
+         where broadcasts.starts_at >= @start
+            and broadcasts.starts_at < @end
             {{hiddenFilterSql}}
-            and (@hide_replays = false or is_replay = false)
-            and (@category_count = 0 or categories && @categories)
-         order by starts_at, channel_name nulls last, channel_id, title
+            and (@hide_replays = false or broadcasts.is_replay = false)
+            and (@category_count = 0 or broadcasts.categories && @categories)
+         order by
+            broadcasts.starts_at,
+            broadcasts.channel_name nulls last,
+            broadcasts.channel_id,
+            broadcasts.title
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -75,7 +82,8 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
                reader.GetBoolean(6),
                reader.IsDBNull(7) ? null : reader.GetFieldValue<DateOnly>(7),
                reader.IsDBNull(10) == false,
-               reader.IsDBNull(11) ? null : reader.GetGuid(11)
+               reader.IsDBNull(11) ? null : reader.GetGuid(11),
+               reader.IsDBNull(12) ? null : reader.GetString(12)
             )
          );
       }

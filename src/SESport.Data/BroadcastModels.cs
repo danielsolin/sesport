@@ -12,7 +12,8 @@ public sealed record BroadcastListItem(
    bool IsReplay,
    DateOnly? OriginalAirDate,
    bool IsHidden,
-   Guid? OrganizationEntityId
+   Guid? OrganizationEntityId,
+   string? OrganizationEntityName
 )
 {
    public BroadcastParticipationCheck? ParticipationCheck { get; init; }
