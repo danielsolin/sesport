@@ -1,8 +1,6 @@
 (() => {
    const broadcastInlineEditCellSelector =
       "[data-broadcast-inline-edit-field]";
-   const broadcastInlineEditUrlSelector =
-      "[data-broadcast-inline-edit-url]";
    const broadcastInlineEditOrganizationField = "organization";
    const broadcastOrganizationAutocompleteSelector =
       "[data-org-entity-autocomplete]";
@@ -12,6 +10,12 @@
       "[data-org-entity-suggestions]";
    const broadcastOrganizationSearchUrlSelector =
       "[data-org-entity-search-url]";
+   const getBroadcastInlineEditUrl =
+      window.getBroadcastInlineEditUrl;
+   const postBroadcastInlineEditAsync =
+      window.postBroadcastInlineEditAsync;
+   const updateBroadcastInlineEditCell =
+      window.updateBroadcastInlineEditCell;
 
    window.initializeBroadcastOrganizationAutocomplete =
       initializeBroadcastOrganizationAutocomplete;
@@ -535,125 +539,4 @@
       }
    }
 
-   function getBroadcastInlineEditUrl()
-   {
-      const container = document.querySelector(broadcastInlineEditUrlSelector);
-
-      if(!(container instanceof HTMLElement))
-      {
-         return "";
-      }
-
-      const url = container.dataset.broadcastInlineEditUrl;
-
-      return typeof url === "string" ? url.trim() : "";
-   }
-
-   async function postBroadcastInlineEditAsync(
-      url,
-      broadcastId,
-      field,
-      value
-   )
-   {
-      const formData = new URLSearchParams();
-      const token = getAntiForgeryToken();
-
-      if(token)
-      {
-         formData.append("__RequestVerificationToken", token);
-      }
-
-      formData.append("id", broadcastId);
-      formData.append("field", field);
-      formData.append("value", value);
-
-      const response = await fetch(url, {
-         method: "post",
-         body: formData,
-         headers: {
-            Accept: "application/json"
-         }
-      });
-      const responseText = await response.text();
-      const trimmedResponseText = responseText.trim();
-      let payload = null;
-
-      if(trimmedResponseText !== "")
-      {
-         try
-         {
-            payload = JSON.parse(trimmedResponseText);
-         }
-         catch
-         {
-            payload = null;
-         }
-      }
-
-      if(!response.ok)
-      {
-         throw new Error(
-            payload?.error ||
-               trimmedResponseText ||
-               `Request failed with status ${response.status}`
-         );
-      }
-
-      return payload ?? {};
-   }
-
-   function updateBroadcastInlineEditCell(cell, payload)
-   {
-      if(!(cell instanceof HTMLElement) || !payload)
-      {
-         return;
-      }
-
-      const field = typeof payload.field === "string"
-         ? payload.field.trim()
-         : "";
-
-      if(field !== broadcastInlineEditOrganizationField)
-      {
-         return;
-      }
-
-      const nextValue = typeof payload.value === "string"
-         ? payload.value.trim()
-         : "";
-      const input = cell.querySelector(
-         broadcastOrganizationInputSelector
-      );
-      const hiddenId = cell.querySelector(
-         broadcastOrganizationIdSelector
-      );
-
-      cell.dataset.broadcastInlineEditValue = nextValue;
-
-      if(hiddenId instanceof HTMLInputElement)
-      {
-         hiddenId.value = nextValue;
-         hiddenId.dataset.broadcastOrgOriginalValue = nextValue;
-      }
-
-      if(input instanceof HTMLInputElement)
-      {
-         input.dataset.broadcastOrgOriginalLabel = input.value.trim();
-      }
-   }
-
-   function getAntiForgeryToken()
-   {
-      const token = document.querySelector(
-         "input[name='__RequestVerificationToken']"
-      );
-
-      if(!(token instanceof HTMLInputElement))
-      {
-         return "";
-      }
-
-      return token.value.trim();
-   }
 })();

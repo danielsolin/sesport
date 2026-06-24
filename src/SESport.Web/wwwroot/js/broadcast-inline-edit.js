@@ -1,0 +1,236 @@
+(() => {
+   const broadcastInlineEditUrlSelector =
+      "[data-broadcast-inline-edit-url]";
+   const broadcastResultsSelector = "[data-broadcast-results]";
+   const broadcastInlineEditFieldSelector =
+      "[data-broadcast-inline-edit-field]";
+   const broadcastInlineEditTitleField = "title";
+   const broadcastInlineEditCategoriesField = "categories";
+   const broadcastInlineEditOrganizationField = "organization";
+   const broadcastInlineEditInputSelector =
+      "[data-broadcast-inline-edit-input]";
+   const broadcastTitleTextSelector = "[data-broadcast-title-text]";
+   const broadcastTitleSearchLinkSelector =
+      "[data-broadcast-title-search-link]";
+   const broadcastCategoriesListSelector =
+      "[data-broadcast-categories-list]";
+   const broadcastOrganizationInputSelector = "[data-org-entity-input]";
+   const broadcastOrganizationIdSelector = "[data-org-entity-id]";
+
+   window.getBroadcastInlineEditUrl = getBroadcastInlineEditUrl;
+   window.postBroadcastInlineEditAsync = postBroadcastInlineEditAsync;
+   window.updateBroadcastInlineEditCell = updateBroadcastInlineEditCell;
+   window.getBroadcastSearchUrlBase = getBroadcastSearchUrlBase;
+   window.getAntiForgeryToken = getAntiForgeryToken;
+
+   function getBroadcastInlineEditUrl()
+   {
+      const container = document.querySelector(broadcastInlineEditUrlSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.broadcastInlineEditUrl;
+
+      return typeof url === "string" ? url.trim() : "";
+   }
+
+   async function postBroadcastInlineEditAsync(
+      url,
+      broadcastId,
+      field,
+      value
+   )
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      formData.append("id", broadcastId);
+      formData.append("field", field);
+      formData.append("value", value);
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(
+            payload?.error ||
+               trimmedResponseText ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return payload ?? {};
+   }
+
+   function updateBroadcastInlineEditCell(cell, payload)
+   {
+      if(!(cell instanceof HTMLElement) || !payload)
+      {
+         return;
+      }
+
+      const field = typeof payload.field === "string"
+         ? payload.field.trim()
+         : "";
+
+      if(field === broadcastInlineEditTitleField)
+      {
+         const nextValue = typeof payload.value === "string"
+            ? payload.value.trim()
+            : "";
+
+         if(nextValue === "")
+         {
+            return;
+         }
+
+         cell.dataset.broadcastInlineEditValue = nextValue;
+         const input = cell.querySelector(
+            broadcastInlineEditInputSelector
+         );
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = nextValue;
+            input.dataset.broadcastInlineEditOriginalValue = nextValue;
+         }
+
+         const titleText = cell.querySelector(broadcastTitleTextSelector);
+
+         if(titleText instanceof HTMLElement)
+         {
+            titleText.textContent = nextValue;
+         }
+
+         const searchLink = cell.querySelector(
+            broadcastTitleSearchLinkSelector
+         );
+         const searchUrlBase = getBroadcastSearchUrlBase();
+
+         if(searchLink instanceof HTMLAnchorElement &&
+            searchUrlBase !== "")
+         {
+            searchLink.href = `${searchUrlBase}${
+               encodeURIComponent(nextValue)
+            }`;
+         }
+
+         return;
+      }
+
+      if(field === broadcastInlineEditCategoriesField)
+      {
+         const categories = Array.isArray(payload.value)
+            ? payload.value
+               .map(item => typeof item === "string" ? item.trim() : "")
+               .filter(value => value !== "")
+            : [];
+         const list = cell.querySelector(broadcastCategoriesListSelector);
+         const input = cell.querySelector(broadcastInlineEditInputSelector);
+
+         cell.dataset.broadcastInlineEditValue = categories.join(", ");
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = categories.join(", ");
+            input.dataset.broadcastInlineEditOriginalValue =
+               input.value;
+         }
+
+         if(!(list instanceof HTMLElement))
+         {
+            return;
+         }
+
+         list.replaceChildren();
+
+         categories.forEach(category => {
+            const span = document.createElement("span");
+            span.textContent = category;
+            list.append(span);
+         });
+         return;
+      }
+
+      if(field === broadcastInlineEditOrganizationField)
+      {
+         const nextValue = typeof payload.value === "string"
+            ? payload.value.trim()
+            : "";
+         const input = cell.querySelector(broadcastOrganizationInputSelector);
+         const hiddenId = cell.querySelector(broadcastOrganizationIdSelector);
+
+         cell.dataset.broadcastInlineEditValue = nextValue;
+
+         if(hiddenId instanceof HTMLInputElement)
+         {
+            hiddenId.value = nextValue;
+            hiddenId.dataset.broadcastOrgOriginalValue = nextValue;
+         }
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.dataset.broadcastOrgOriginalLabel = input.value.trim();
+         }
+
+         window.setBroadcastOrganizationLockState?.(cell, nextValue !== "");
+      }
+   }
+
+   function getBroadcastSearchUrlBase()
+   {
+      const container = document.querySelector(broadcastResultsSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.searchUrlBase;
+
+      return typeof url === "string" ? url.trim() : "";
+   }
+
+   function getAntiForgeryToken()
+   {
+      const tokenField = document.querySelector(
+         "input[name='__RequestVerificationToken']"
+      );
+
+      if(tokenField instanceof HTMLInputElement)
+      {
+         return tokenField.value;
+      }
+
+      return "";
+   }
+})();
