@@ -216,10 +216,11 @@ public sealed class BroadcastParticipationService(
          return candidates;
       }
 
-      candidates = await activityRepository.GetEntityOptionsForOrganizationAsync(
-         organizationEntityId.Value,
-         cancellationToken
-      );
+      candidates = await activityRepository
+         .GetPersonEntitiesForPromptCandidatesAsync(
+            organizationEntityId.Value,
+            cancellationToken
+         );
       cache[organizationEntityId.Value] = candidates;
       return candidates;
    }

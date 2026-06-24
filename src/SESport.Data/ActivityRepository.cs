@@ -225,8 +225,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                      '{{TrackedEntityTypeIds.Championship}}'
                   )
          ) org on true
-         order by p.sort_order, random()
-         limit 5
+         order by
+            p.sort_order,
+            e.canonical_name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -255,7 +256,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    }
 
    public async Task<IReadOnlyList<EntityOption>>
-      GetEntityOptionsForOrganizationAsync(
+      GetPersonEntitiesForPromptCandidatesAsync(
          Guid organizationEntityId,
          CancellationToken cancellationToken
       )
