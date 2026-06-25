@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 
+using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.AI.Persistence;
@@ -69,7 +70,9 @@ public sealed class RunFieldModelTests
          );
 
          var jsonResult = Assert.IsType<JsonResult>(result);
-         var payload = Assert.IsNotNull(jsonResult.Value);
+         var payload = jsonResult.Value;
+
+         Assert.NotNull(payload);
 
          Assert.True(GetRequiredProperty<bool>(payload, "updated"));
          Assert.Equal("archive", GetRequiredProperty<string>(payload, "field"));
