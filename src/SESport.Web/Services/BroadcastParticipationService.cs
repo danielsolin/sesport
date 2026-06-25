@@ -11,6 +11,7 @@ namespace SESport.Web.Services;
 public sealed class BroadcastParticipationService(
    ActivityRepository activityRepository,
    AiRepository aiRepository,
+   AdminRepository adminRepository,
    BroadcastRepository broadcastRepository,
    IAiJobRunner aiJobRunner
 )
@@ -147,6 +148,8 @@ public sealed class BroadcastParticipationService(
          return [];
       }
 
+      var participantEntityIdsByName =
+         await LoadParticipantEntityIdsAsync(cancellationToken);
       var results = new List<BroadcastParticipationCheckResult>();
 
       foreach(var broadcast in broadcasts)
@@ -161,6 +164,13 @@ public sealed class BroadcastParticipationService(
          }
 
          var participationCheck = participationChecks[0];
+         var displayChecks = participationChecks
+            .Select(check => CreateParticipationCheckDisplay(
+               check,
+               participantEntityIdsByName
+            ))
+            .ToList();
+
          results.Add(
             new BroadcastParticipationCheckResult(
                broadcast.Id,
@@ -172,12 +182,98 @@ public sealed class BroadcastParticipationService(
                participationCheck.ErrorMessage,
                participationCheck.Participation,
                participationCheck.SourceUrls,
-               participationChecks
+               displayChecks
             )
          );
       }
 
       return results;
+   }
+
+   private async Task<IReadOnlyDictionary<string, Guid>>
+      LoadParticipantEntityIdsAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
+         cancellationToken
+      );
+
+      return entityOptions
+         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
+         .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
+         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+         .ToDictionary(group => group.Key, group => group.First().Id);
+   }
+
+   private static BroadcastParticipationCheckDisplay
+      CreateParticipationCheckDisplay(
+         BroadcastParticipationCheck check,
+         IReadOnlyDictionary<string, Guid> participantEntityIdsByName
+      )
+   {
+      return new BroadcastParticipationCheckDisplay(
+         check.RunId,
+         check.StatusId,
+         check.ToolRoundCount,
+         check.Participation,
+         GetParticipantDisplayItems(
+            check.Participants,
+            participantEntityIdsByName
+         ),
+         check.SourceUrls,
+         check.ErrorMessage
+      );
+   }
+
+   internal static IReadOnlyList<BroadcastParticipantDisplayItem>
+      GetParticipantDisplayItems(
+         IReadOnlyList<string> participantNames,
+         IReadOnlyDictionary<string, Guid> participantEntityIdsByName
+      )
+   {
+      Guid? templateEntityId = null;
+
+      foreach(var participantName in participantNames)
+      {
+         var normalizedName =
+            BroadcastEntityFilter.NormalizeName(participantName);
+
+         if(participantEntityIdsByName.TryGetValue(
+            normalizedName,
+            out var entityId
+         ))
+         {
+            templateEntityId = entityId;
+            break;
+         }
+      }
+
+      return participantNames
+         .Select(name =>
+         {
+            var normalizedName = BroadcastEntityFilter.NormalizeName(name);
+            var displayName = BroadcastParticipantNameFormatter.Format(name);
+
+            if(participantEntityIdsByName.TryGetValue(
+               normalizedName,
+               out var entityId
+            ))
+            {
+               return new BroadcastParticipantDisplayItem(
+                  displayName,
+                  $"/Admin/Entities/Edit/{entityId}",
+                  null
+               );
+            }
+
+            return new BroadcastParticipantDisplayItem(
+               displayName,
+               null,
+               templateEntityId
+            );
+         })
+         .ToList();
    }
 
    private static string CreateParticipationInputJson(
@@ -259,8 +355,37 @@ public sealed record BroadcastParticipationCheckResult(
    string? Error,
    string? Participation,
    IReadOnlyList<string> SourceUrls,
-   IReadOnlyList<BroadcastParticipationCheck> Checks
+   IReadOnlyList<BroadcastParticipationCheckDisplay> Checks
 );
+
+public sealed record BroadcastParticipationCheckDisplay(
+   Guid RunId,
+   string StatusId,
+   int ToolRoundCount,
+   string? Participation,
+   IReadOnlyList<BroadcastParticipantDisplayItem> Participants,
+   IReadOnlyList<string> SourceUrls,
+   string? ErrorMessage
+)
+{
+   public bool HasResult => !string.IsNullOrWhiteSpace(Participation);
+
+   public string BadgeText => HasResult
+      ? Participation ?? StatusId
+      : StatusId;
+
+   public string ParticipantsPreview =>
+      string.Join(", ", Participants.Select(participant => participant.Name));
+
+   public string SummaryText =>
+      !string.IsNullOrWhiteSpace(ErrorMessage)
+         ? ErrorMessage
+         : HasResult
+            ? (Participants.Count == 0
+               ? BadgeText
+               : $"{BadgeText}: {ParticipantsPreview}")
+            : StatusId;
+}
 
 public sealed record BroadcastParticipantDisplayItem(
    string Name,

@@ -46,6 +46,29 @@ public sealed class BroadcastParticipationServiceTests
    }
 
    [Fact]
+   public void GetParticipantDisplayItemsLinksExistingEntities()
+   {
+      var entityId = Guid.NewGuid();
+      var entityIdsByName = new Dictionary<string, Guid>
+      {
+         [BroadcastEntityFilter.NormalizeName("Christoffer Brunnhagen")] =
+            entityId
+      };
+
+      var result = BroadcastParticipationService.GetParticipantDisplayItems(
+         ["Christoffer BRUNNHAGEN", "New PERSON"],
+         entityIdsByName
+      );
+
+      Assert.Equal("Christoffer Brunnhagen", result[0].Name);
+      Assert.Equal($"/Admin/Entities/Edit/{entityId}", result[0].EditUrl);
+      Assert.Null(result[0].TemplateEntityId);
+      Assert.Equal("New Person", result[1].Name);
+      Assert.Null(result[1].EditUrl);
+      Assert.Equal(entityId, result[1].TemplateEntityId);
+   }
+
+   [Fact]
    public async Task QueueParticipationAsyncUsesEmptyCandidatesWithoutOrg()
    {
       var broadcastId = Guid.NewGuid();
@@ -210,6 +233,7 @@ public sealed class BroadcastParticipationServiceTests
          new BroadcastParticipationService(
             new ActivityRepository(dataSource),
             new AiRepository(dataSource),
+            new AdminRepository(dataSource),
             new BroadcastRepository(dataSource),
             jobRunner
          ),

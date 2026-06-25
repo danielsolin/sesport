@@ -103,48 +103,10 @@ public class IndexModel(
          IReadOnlyList<string> participantNames
       )
    {
-      Guid? templateEntityId = null;
-
-      foreach(var participantName in participantNames)
-      {
-         var normalizedName =
-            BroadcastEntityFilter.NormalizeName(participantName);
-
-         if(ParticipantEntityIdsByName.TryGetValue(
-            normalizedName,
-            out var entityId
-         ))
-         {
-            templateEntityId = entityId;
-            break;
-         }
-      }
-
-      return participantNames
-         .Select(name =>
-         {
-            var normalizedName = BroadcastEntityFilter.NormalizeName(name);
-            var displayName = BroadcastParticipantNameFormatter.Format(name);
-
-            if(ParticipantEntityIdsByName.TryGetValue(
-               normalizedName,
-               out var entityId
-            ))
-            {
-               return new BroadcastParticipantDisplayItem(
-                  displayName,
-                  Url.Page("/Admin/Entities/Edit", new { id = entityId }),
-                  null
-               );
-            }
-
-            return new BroadcastParticipantDisplayItem(
-               displayName,
-               null,
-               templateEntityId
-            );
-         })
-         .ToList();
+      return BroadcastParticipationService.GetParticipantDisplayItems(
+         participantNames,
+         ParticipantEntityIdsByName
+      );
    }
 
    public Dictionary<string, string?> GetActivityRouteValues(
