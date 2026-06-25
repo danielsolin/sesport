@@ -3,6 +3,7 @@ namespace SESport.Web.Services;
 public static class RouteKeys
 {
    public const string Date = "date";
+   public const string JobId = "jobId";
    public const string HideReplays = "hideReplays";
    public const string ShowHidden = "showHidden";
    public const string SelectedSports = "SelectedSports";

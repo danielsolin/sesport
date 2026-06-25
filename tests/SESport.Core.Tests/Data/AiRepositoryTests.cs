@@ -1,6 +1,7 @@
 using Npgsql;
 
 using SESport.AI;
+using SESport.AI.Models;
 using SESport.AI.Persistence;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
@@ -93,7 +94,7 @@ public sealed class AiRepositoryTests
          promptId,
          providerId,
          startedAt,
-         statusId: "completed"
+         statusId: AiJobRunStatusIds.Running
       );
       await InsertRunAsync(
          dataSource,
@@ -120,7 +121,7 @@ public sealed class AiRepositoryTests
          var archivedRuns = await repository.GetRunsAsync(
             localDate,
             null,
-            "archived",
+            [AiJobRunStatusIds.Archived],
             CancellationToken.None
          );
 
@@ -130,6 +131,121 @@ public sealed class AiRepositoryTests
       {
          await DeleteRunAsync(dataSource, archivedRunId);
          await DeleteRunAsync(dataSource, activeRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task GetRunsAsyncOrdersRunningBeforePendingByDefault()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runningRunId = Guid.NewGuid();
+      var pendingRunId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runningRunId,
+         jobId,
+         promptId,
+         providerId,
+         DateTimeOffset.UtcNow.AddMinutes(-30),
+         statusId: AiJobRunStatusIds.Running
+      );
+      await InsertRunAsync(
+         dataSource,
+         pendingRunId,
+         jobId,
+         promptId,
+         providerId,
+         DateTimeOffset.UtcNow.AddMinutes(-5),
+         statusId: AiJobRunStatusIds.Pending
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            jobId,
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal(
+            [runningRunId, pendingRunId],
+            runs.Select(run => run.Id)
+         );
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, pendingRunId);
+         await DeleteRunAsync(dataSource, runningRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task GetRunsAsyncLimitsResultsToFiftyRows()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runIds = new List<Guid>();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+
+      for(var index = 0; index < 51; index++)
+      {
+         var runId = Guid.NewGuid();
+         runIds.Add(runId);
+
+         await InsertRunAsync(
+            dataSource,
+            runId,
+            jobId,
+            promptId,
+            providerId,
+            DateTimeOffset.UtcNow.AddMinutes(-index),
+            statusId: AiJobRunStatusIds.Running
+         );
+      }
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            jobId,
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal(50, runs.Count);
+         Assert.Equal(runIds[0], runs.First().Id);
+         Assert.DoesNotContain(runIds[^1], runs.Select(run => run.Id));
+      }
+      finally
+      {
+         foreach(var runId in runIds)
+         {
+            await DeleteRunAsync(dataSource, runId);
+         }
+
          await DeletePromptAsync(dataSource, promptId);
          await DeleteJobAsync(dataSource, jobId);
          await DeleteProviderAsync(dataSource, providerId);

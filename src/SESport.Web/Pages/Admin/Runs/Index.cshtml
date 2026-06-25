@@ -21,31 +21,24 @@
             <input type="date"
                    name="@RouteKeys.Date"
                    value="@Model.DateText"
-                   onchange="this.form.submit();" />
+                   onchange="submitFilterForm(this);" />
          </label>
          <label>
             <span>Job</span>
-            <select asp-for="JobId">
-               <option value="">All jobs</option>
-               @foreach (var job in Model.Jobs)
-               {
-                  <option value="@job.Id">@job.Label</option>
-               }
+            <select name="@RouteKeys.JobId"
+                    asp-items="Model.JobOptions"
+                    onchange="submitFilterForm(this);">
             </select>
          </label>
          <label>
             <span>Status</span>
-            <select asp-for="StatusId">
-               @foreach (var status in Model.StatusOptions)
-               {
-                  <option value="@status.Value">@status.Text</option>
-               }
+            <select name="@RouteKeys.Status"
+                    multiple="multiple"
+                    size="5"
+                    onchange="submitFilterForm(this);"
+                    asp-items="Model.StatusOptions">
             </select>
          </label>
-      </div>
-      <div class="form-actions">
-         <button class="button button-primary" type="submit">Apply</button>
-         <a class="button" asp-page="./Index">Reset</a>
       </div>
    </section>
 </form>
@@ -144,17 +137,13 @@
                   <div class="ai-runs-table-actions">
                      <a asp-page="./Details"
                         asp-route-id="@run.Id"
-                        asp-route-date="@Model.DateText"
-                        asp-route-jobId="@Model.JobId"
-                        asp-route-statusId="@Model.StatusId">
+                        asp-all-route-data="@Model.GetFilterRouteValues()">
                         View
                      </a>
                      <form method="post"
                            asp-page-handler="Delete"
                            asp-route-id="@run.Id"
-                           asp-route-date="@Model.DateText"
-                           asp-route-jobId="@Model.JobId"
-                           asp-route-statusId="@Model.StatusId"
+                           asp-all-route-data="@Model.GetFilterRouteValues()"
                            onsubmit="return confirm('Sure?');">
                         <button type="submit">Delete</button>
                      </form>

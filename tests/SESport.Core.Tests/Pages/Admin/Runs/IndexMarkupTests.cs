@@ -25,5 +25,8 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-run-inline-edit-display", html);
       Assert.Contains("data-run-inline-edit-input", html);
       Assert.Contains("ENV/JOB/PROV", html);
+      Assert.Contains("multiple=\"multiple\"", html);
+      Assert.DoesNotContain(">Apply<", html);
+      Assert.DoesNotContain(">Reset<", html);
    }
 }

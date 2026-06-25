@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.AI.Models;
 using SESport.AI.Persistence;
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Web.Services;
 
@@ -11,13 +12,14 @@ namespace SESport.Web.Pages.Admin.Runs;
 
 public class IndexModel(
    AiAdminRepository adminRepository,
-   AiRepository repository,
-   RunDatePreferenceStore datePreferenceStore
+   AiRepository repository
 ) : PageModel
 {
    public IReadOnlyList<AiRunListItem> Runs { get; private set; } = [];
 
    public IReadOnlyList<AiJobListItem> Jobs { get; private set; } = [];
+
+   public IReadOnlyList<SelectListItem> JobOptions { get; private set; } = [];
 
    public IReadOnlyList<string> ExecutionEnvironmentValues { get; private set; }
       = [];
@@ -28,46 +30,49 @@ public class IndexModel(
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
 
-   [BindProperty(SupportsGet = true)]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.JobId)]
    public string? JobId { get; set; }
 
-   [BindProperty(SupportsGet = true)]
-   public string? StatusId { get; set; }
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Status)]
+   public string[]? StatusIds { get; set; } =
+      AiJobRunStatusIds.DefaultRunListStatuses;
 
-   public string DateText => DateDisplay.Format(SelectedDate);
-
-   public DateOnly SelectedDate { get; private set; }
+   public string DateText => Date is null
+      ? string.Empty
+      : DateDisplay.Format(Date.Value);
 
    public string? LoadError { get; private set; }
-
-   private DateOnly GetSelectedDate()
-   {
-      return datePreferenceStore.ResolveDate(HttpContext, Date);
-   }
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       try
       {
-         SelectedDate = GetSelectedDate();
          Jobs = await adminRepository.GetJobsAsync(cancellationToken);
+         JobOptions =
+         [
+            new SelectListItem(
+               "All jobs",
+               string.Empty,
+               string.IsNullOrWhiteSpace(JobId)
+            ),
+            .. Jobs.Select(job =>
+               new SelectListItem(
+                  job.Label,
+                  job.Id,
+                  string.Equals(job.Id, JobId, StringComparison.Ordinal)
+               )
+            )
+         ];
          ExecutionEnvironmentValues =
             await repository.GetExecutionEnvironmentOptionsAsync(
                cancellationToken
             );
-         StatusOptions =
-         [
-            new SelectListItem("All statuses", string.Empty),
-            new SelectListItem("Pending", "pending"),
-            new SelectListItem("Running", "running"),
-            new SelectListItem("Completed", "completed"),
-            new SelectListItem("Failed", "failed"),
-            new SelectListItem("Archived", "archived")
-         ];
+         StatusIds = NormalizeStatusIds(StatusIds);
+         StatusOptions = BuildStatusOptions(StatusIds);
          Runs = await repository.GetRunsAsync(
-            SelectedDate,
+            Date,
             JobId,
-            StatusId,
+            StatusIds,
             cancellationToken
          );
       }
@@ -82,17 +87,11 @@ public class IndexModel(
       CancellationToken cancellationToken
    )
    {
-      SelectedDate = GetSelectedDate();
       await repository.DeleteRunAsync(id, cancellationToken);
 
       return RedirectToPage(
          "./Index",
-         new
-         {
-            date = DateText,
-            JobId,
-            StatusId
-         }
+         GetFilterRouteValues()
       );
    }
 
@@ -106,5 +105,113 @@ public class IndexModel(
          SESport.AI.ExecutionEnvironment.Current,
          includeUnsetOption: false
       );
+   }
+
+   public Dictionary<string, string> GetFilterRouteValues()
+   {
+      var routeValues = new Dictionary<string, string>();
+
+      if(Date is not null)
+      {
+         routeValues[RouteKeys.Date] = DateDisplay.Format(Date.Value);
+      }
+
+      if(!string.IsNullOrWhiteSpace(JobId))
+      {
+         routeValues[RouteKeys.JobId] = JobId;
+      }
+
+      AddStatusRouteValues(routeValues, StatusIds);
+      return routeValues;
+   }
+
+   private static IReadOnlyList<SelectListItem> BuildStatusOptions(
+      IReadOnlyCollection<string> selectedStatusIds
+   )
+   {
+      return
+      [
+         new SelectListItem(
+            "Running",
+            AiJobRunStatusIds.Running,
+            selectedStatusIds.Any(statusId =>
+               string.Equals(
+                  statusId,
+                  AiJobRunStatusIds.Running,
+                  StringComparison.OrdinalIgnoreCase
+               ))
+         ),
+         new SelectListItem(
+            "Pending",
+            AiJobRunStatusIds.Pending,
+            selectedStatusIds.Any(statusId =>
+               string.Equals(
+                  statusId,
+                  AiJobRunStatusIds.Pending,
+                  StringComparison.OrdinalIgnoreCase
+               ))
+         ),
+         new SelectListItem(
+            "Completed",
+            AiJobRunStatusIds.Completed,
+            selectedStatusIds.Any(statusId =>
+               string.Equals(
+                  statusId,
+                  AiJobRunStatusIds.Completed,
+                  StringComparison.OrdinalIgnoreCase
+               ))
+         ),
+         new SelectListItem(
+            "Failed",
+            AiJobRunStatusIds.Failed,
+            selectedStatusIds.Any(statusId =>
+               string.Equals(
+                  statusId,
+                  AiJobRunStatusIds.Failed,
+                  StringComparison.OrdinalIgnoreCase
+               ))
+         ),
+         new SelectListItem(
+            "Archived",
+            AiJobRunStatusIds.Archived,
+            selectedStatusIds.Any(statusId =>
+               string.Equals(
+                  statusId,
+                  AiJobRunStatusIds.Archived,
+                  StringComparison.OrdinalIgnoreCase
+               ))
+         )
+      ];
+   }
+
+   private static string[] NormalizeStatusIds(
+      IReadOnlyCollection<string>? statusIds
+   )
+   {
+      var normalizedStatusIds = statusIds?
+         .Where(statusId => !string.IsNullOrWhiteSpace(statusId))
+         .Select(statusId => statusId.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList()
+         ?? [];
+
+      return normalizedStatusIds.Count > 0
+         ? normalizedStatusIds.ToArray()
+         : AiJobRunStatusIds.DefaultRunListStatuses;
+   }
+
+   private static void AddStatusRouteValues(
+      IDictionary<string, string> routeValues,
+      IReadOnlyList<string>? statusIds
+   )
+   {
+      var normalizedStatusIds = NormalizeStatusIds(statusIds);
+
+      var index = 0;
+      foreach(var statusId in normalizedStatusIds)
+      {
+         routeValues[$"{RouteKeys.Status}[{index}]"] = statusId;
+         index++;
+      }
    }
 }

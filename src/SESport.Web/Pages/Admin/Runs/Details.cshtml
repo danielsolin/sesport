@@ -10,9 +10,7 @@
    </div>
    <a class="button"
       asp-page="./Index"
-      asp-route-date="@Model.DateText"
-      asp-route-jobId="@Model.JobId"
-      asp-route-statusId="@Model.StatusId">
+      asp-all-route-data="@Model.GetFilterRouteValues()">
       Back
    </a>
 </section>
@@ -32,9 +30,7 @@
                <form method="post"
                      asp-page-handler="UpdateExecutionEnvironment"
                      asp-route-id="@Model.Run.Id"
-                     asp-route-date="@Model.DateText"
-                     asp-route-jobId="@Model.JobId"
-                     asp-route-statusId="@Model.StatusId"
+                     asp-all-route-data="@Model.GetFilterRouteValues()"
                      class="button-row run-execution-environment-form">
                   @if(Model.CanEditExecutionEnvironment)
                   {

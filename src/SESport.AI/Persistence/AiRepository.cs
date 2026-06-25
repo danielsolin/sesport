@@ -16,40 +16,40 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository
 {
    public async Task<IReadOnlyList<AiRunListItem>> GetRunsAsync(
-      DateOnly date,
+      DateOnly? date,
       string? jobId,
-      string? statusId,
+      IReadOnlyCollection<string>? statusIds,
       CancellationToken cancellationToken
    )
    {
       var where = new List<string>();
 
-      var dateStart = TimeZoneHelper.ToUtc(
-         date,
-         TimeOnly.MinValue,
-         SportDay.TimeZoneId
-      );
-      var dateEnd = TimeZoneHelper.ToUtc(
-         date.AddDays(1),
-         TimeOnly.MinValue,
-         SportDay.TimeZoneId
-      );
+      if(date is not null)
+      {
+         var dateStart = TimeZoneHelper.ToUtc(
+            date.Value,
+            TimeOnly.MinValue,
+            SportDay.TimeZoneId
+         );
+         var dateEnd = TimeZoneHelper.ToUtc(
+            date.Value.AddDays(1),
+            TimeOnly.MinValue,
+            SportDay.TimeZoneId
+         );
 
-      where.Add("r.started_at >= @start");
-      where.Add("r.started_at < @end");
+         where.Add("r.started_at >= @start");
+         where.Add("r.started_at < @end");
+      }
 
       if(!string.IsNullOrWhiteSpace(jobId))
       {
          where.Add("r.job_id = @job_id");
       }
 
-      if(!string.IsNullOrWhiteSpace(statusId))
+      var normalizedStatusIds = NormalizeStatusIds(statusIds);
+      if(normalizedStatusIds.Count > 0)
       {
-         where.Add("r.status_id = @status_id");
-      }
-      else
-      {
-         where.Add("r.status_id <> 'archived'");
+         where.Add("r.status_id = any(@status_ids)");
       }
 
       var sql = new StringBuilder()
@@ -73,20 +73,38 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          sql.AppendLine("where " + string.Join(" and ", where));
       }
 
-      sql.AppendLine("order by r.started_at desc")
-         .AppendLine("limit 200");
+      sql.AppendLine("order by")
+         .AppendLine("   case r.status_id")
+         .AppendLine(
+            $"      when '{AiJobRunStatusIds.Running}' then 0"
+         )
+         .AppendLine(
+            $"      when '{AiJobRunStatusIds.Pending}' then 1"
+         )
+         .AppendLine("      else 2")
+         .AppendLine("   end,")
+         .AppendLine("   r.started_at desc,")
+         .AppendLine("   r.id desc")
+         .AppendLine("limit 50");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
-      command.Parameters.AddWithValue("start", dateStart);
-      command.Parameters.AddWithValue("end", dateEnd);
+      if(date is not null)
+      {
+         command.Parameters.AddWithValue("start", GetDateStart(date.Value));
+         command.Parameters.AddWithValue("end", GetDateEnd(date.Value));
+      }
+
       if(!string.IsNullOrWhiteSpace(jobId))
       {
          command.Parameters.AddWithValue("job_id", jobId);
       }
 
-      if(!string.IsNullOrWhiteSpace(statusId))
+      if(normalizedStatusIds.Count > 0)
       {
-         command.Parameters.AddWithValue("status_id", statusId);
+         command.Parameters.AddWithValue(
+            "status_ids",
+            normalizedStatusIds.ToArray()
+         );
       }
 
       await using var reader = await command.ExecuteReaderAsync(
@@ -113,6 +131,40 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       }
 
       return runs;
+   }
+
+   private static DateTimeOffset GetDateStart(DateOnly date)
+   {
+      return TimeZoneHelper.ToUtc(
+         date,
+         TimeOnly.MinValue,
+         SportDay.TimeZoneId
+      );
+   }
+
+   private static DateTimeOffset GetDateEnd(DateOnly date)
+   {
+      return TimeZoneHelper.ToUtc(
+         date.AddDays(1),
+         TimeOnly.MinValue,
+         SportDay.TimeZoneId
+      );
+   }
+
+   private static IReadOnlyList<string> NormalizeStatusIds(
+      IReadOnlyCollection<string>? statusIds
+   )
+   {
+      var normalizedStatusIds = statusIds?
+         .Where(statusId => !string.IsNullOrWhiteSpace(statusId))
+         .Select(statusId => statusId.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList()
+         ?? [];
+
+      return normalizedStatusIds.Count > 0
+         ? normalizedStatusIds
+         : AiJobRunStatusIds.DefaultRunListStatuses;
    }
 
    public async Task<IReadOnlyList<AiRunListItem>> GetRunsByIdsAsync(

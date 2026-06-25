@@ -13,8 +13,7 @@ using SESport.Web.Services;
 namespace SESport.Web.Pages.Admin.Runs;
 
 public class DetailsModel(
-   AiRepository repository,
-   RunDatePreferenceStore datePreferenceStore
+   AiRepository repository
 ) : PageModel
 {
    private const string ConversationHistorySummaryPrefix =
@@ -53,11 +52,12 @@ public class DetailsModel(
       }
    }
 
-   [BindProperty(SupportsGet = true)]
+   [BindProperty(SupportsGet = true, Name = RouteKeys.JobId)]
    public string? JobId { get; set; }
 
-   [BindProperty(SupportsGet = true)]
-   public string? StatusId { get; set; }
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Status)]
+   public string[]? StatusIds { get; set; } =
+      AiJobRunStatusIds.DefaultRunListStatuses;
 
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
@@ -65,25 +65,29 @@ public class DetailsModel(
    [BindProperty]
    public string? ExecutionEnvironment { get; set; }
 
-   public string DateText => DateDisplay.Format(SelectedDate);
+   public string DateText => Date is null
+      ? string.Empty
+      : DateDisplay.Format(Date.Value);
 
    public bool CanEditExecutionEnvironment
    {
       get
       {
          return Run is not null &&
-            string.Equals(Run.StatusId, "pending", StringComparison.Ordinal);
+            string.Equals(
+               Run.StatusId,
+               AiJobRunStatusIds.Pending,
+               StringComparison.Ordinal
+            );
       }
    }
-
-   public DateOnly SelectedDate { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
       Guid id,
       CancellationToken cancellationToken
    )
    {
-      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
+      StatusIds = NormalizeStatusIds(StatusIds);
       Run = await repository.GetRunAsync(id, cancellationToken);
 
       if(Run is not null)
@@ -109,7 +113,7 @@ public class DetailsModel(
       CancellationToken cancellationToken
    )
    {
-      SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
+      StatusIds = NormalizeStatusIds(StatusIds);
       Run = await repository.GetRunAsync(id, cancellationToken);
 
       if(Run is null)
@@ -166,12 +170,7 @@ public class DetailsModel(
 
       return RedirectToPage(
          "./Index",
-         new
-         {
-            date = DateText,
-            JobId,
-            StatusId
-         }
+         GetFilterRouteValues()
       );
    }
 
@@ -365,6 +364,55 @@ public class DetailsModel(
       return string.Empty;
    }
 
+   public Dictionary<string, string> GetFilterRouteValues()
+   {
+      var routeValues = new Dictionary<string, string>();
+
+      if(Date is not null)
+      {
+         routeValues[RouteKeys.Date] = DateDisplay.Format(Date.Value);
+      }
+
+      if(!string.IsNullOrWhiteSpace(JobId))
+      {
+         routeValues[RouteKeys.JobId] = JobId;
+      }
+
+      AddStatusRouteValues(routeValues, StatusIds);
+      return routeValues;
+   }
+
+   private static string[] NormalizeStatusIds(
+      IReadOnlyCollection<string>? statusIds
+   )
+   {
+      var normalizedStatusIds = statusIds?
+         .Where(statusId => !string.IsNullOrWhiteSpace(statusId))
+         .Select(statusId => statusId.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList()
+         ?? [];
+
+      return normalizedStatusIds.Count > 0
+         ? normalizedStatusIds.ToArray()
+         : AiJobRunStatusIds.DefaultRunListStatuses;
+   }
+
+   private static void AddStatusRouteValues(
+      IDictionary<string, string> routeValues,
+      IReadOnlyList<string>? statusIds
+   )
+   {
+      var normalizedStatusIds = NormalizeStatusIds(statusIds);
+
+      var index = 0;
+      foreach(var statusId in normalizedStatusIds)
+      {
+         routeValues[$"{RouteKeys.Status}[{index}]"] = statusId;
+         index++;
+      }
+   }
+
    public static string FormatDuration(decimal? durationSeconds)
    {
       return FormatDuration(
@@ -445,7 +493,11 @@ public class DetailsModel(
          ? (int)Math.Round(durationSeconds.Value)
          : 0;
 
-      if(string.Equals(statusId, "running", StringComparison.Ordinal))
+      if(string.Equals(
+         statusId,
+         AiJobRunStatusIds.Running,
+         StringComparison.Ordinal
+      ))
       {
          totalSeconds = (int)Math.Round(
             (DateTimeOffset.UtcNow - startedAt).TotalSeconds
