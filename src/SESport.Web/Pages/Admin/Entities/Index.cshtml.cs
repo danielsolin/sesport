@@ -7,6 +7,7 @@ namespace SESport.Web.Pages.Admin.Entities;
 
 public class IndexModel(AdminRepository repository) : PageModel
 {
+   public const string FilterCookieName = "sesport.admin.entities.filter";
    public const string NameSortColumn = "Name";
    public const string TypeSortColumn = "Type";
    public const string SportSortColumn = "Sport";
@@ -26,6 +27,10 @@ public class IndexModel(AdminRepository repository) : PageModel
 
    public bool SortAsc { get; private set; } = true;
 
+   public string Filter { get; private set; } = string.Empty;
+
+   public bool HasFilter => !string.IsNullOrWhiteSpace(Filter);
+
    public string? LoadError { get; private set; }
 
    public async Task OnGetAsync(
@@ -36,10 +41,16 @@ public class IndexModel(AdminRepository repository) : PageModel
    {
       SortColumn = NormalizeSortColumn(sortColumn);
       SortAsc = sortAsc;
+      Filter = Request.Cookies.TryGetValue(FilterCookieName, out var cookie)
+         ? cookie?.Trim() ?? string.Empty
+         : string.Empty;
 
       try
       {
-         var entities = await repository.GetEntitiesAsync(cancellationToken);
+         var entities = await repository.SearchEntitiesAsync(
+            Filter,
+            cancellationToken
+         );
          WatchPriorities = await repository.GetReferenceRowsAsync(
             "entity-watch-priorities",
             cancellationToken
@@ -93,7 +104,7 @@ public class IndexModel(AdminRepository repository) : PageModel
          .ToList();
    }
 
-   private static string NormalizeSortColumn(string? sortColumn) =>
+   internal static string NormalizeSortColumn(string? sortColumn) =>
       sortColumn switch
       {
          TypeSortColumn => TypeSortColumn,
@@ -104,7 +115,7 @@ public class IndexModel(AdminRepository repository) : PageModel
          _ => NameSortColumn
       };
 
-   private static IReadOnlyList<EntityListItem> SortEntities(
+   internal static IReadOnlyList<EntityListItem> SortEntities(
       IEnumerable<EntityListItem> entities,
       string sortColumn,
       bool sortAsc

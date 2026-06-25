@@ -978,6 +978,86 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return entities;
    }
 
+   public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(
+      string? term,
+      CancellationToken cancellationToken
+   )
+   {
+      term = term?.Trim() ?? string.Empty;
+
+      if(term == string.Empty)
+      {
+         return [];
+      }
+
+      var escapedTerm = term
+         .Replace("\\", "\\\\", StringComparison.Ordinal)
+         .Replace("%", "\\%", StringComparison.Ordinal)
+         .Replace("_", "\\_", StringComparison.Ordinal);
+
+      const string sql = """
+         select
+            e.id,
+            e.canonical_name,
+            et.label,
+            s.name,
+            p.id,
+            p.label,
+            coalesce(c.name, e.country_id, ''),
+            coalesce(linked.related_entity_names, '')
+         from entities e
+         join entity_types et on et.id = e.entity_type_id
+         join sports s on s.id = e.sport_id
+         join entity_watch_priorities p on p.id = e.watch_priority_id
+         left join countries c on c.id = e.country_id
+         left join lateral (
+            select string_agg(linked_name, ', ' order by linked_name)
+               as related_entity_names
+            from (
+               select distinct e2.canonical_name as linked_name
+               from entity_to_entity_links l
+               join entities e2
+                  on e2.id = case
+                     when l.source_entity_id = e.id
+                        then l.target_entity_id
+                     else l.source_entity_id
+                  end
+               where l.source_entity_id = e.id
+                  or l.target_entity_id = e.id
+            ) linked_entities
+         ) linked on true
+         where e.canonical_name ilike @term escape '\'
+            or coalesce(linked.related_entity_names, '') ilike @term
+               escape '\'
+         order by e.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("term", $"%{escapedTerm}%");
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var entities = new List<EntityListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         entities.Add(
+            new EntityListItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3),
+               reader.GetString(4),
+               reader.GetString(5),
+               reader.GetString(6),
+               reader.GetString(7)
+            )
+         );
+      }
+
+      return entities;
+   }
+
    public async Task<EntityEditModel?> GetEntityForEditAsync(
       Guid id,
       CancellationToken cancellationToken

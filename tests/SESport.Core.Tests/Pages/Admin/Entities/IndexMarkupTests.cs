@@ -15,9 +15,12 @@ public sealed class IndexMarkupTests
       var html = await File.ReadAllTextAsync(htmlPath);
 
       Assert.Contains("data-entity-inline-edit-url", html);
+      Assert.Contains("data-entity-search-url", html);
+      Assert.Contains("data-entity-list-body", html);
       Assert.Contains("data-entity-row-id", html);
       Assert.Contains("data-entity-inline-edit-field", html);
       Assert.Contains("data-entity-inline-edit-display", html);
       Assert.Contains("data-entity-inline-edit-input", html);
+      Assert.Contains("entities-index.js", html);
    }
 }

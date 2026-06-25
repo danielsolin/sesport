@@ -3,6 +3,10 @@
 @{
    ViewData["Title"] = "Entities";
    var entityFieldUrl = Url.Page("/Admin/Ajax/Update/EntityField");
+   var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
+   var entityEditUrl = Url.Page("./Edit");
+   var entityDeleteUrl = Url.Page("./Index");
+   var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
 }
 
 <section class="page-heading page-heading-row">
@@ -22,6 +26,7 @@
       class="entity-name-filter"
       placeholder="name"
       autofocus
+      value="@Model.Filter"
       aria-label="Filter entities by name"
       data-entity-name-filter
    />
@@ -33,18 +38,38 @@
       @Model.LoadError
    </div>
 }
-else if(Model.Entities.Count == 0)
-{
-   <div class="notice">No entities have been created yet.</div>
-}
 else
 {
-   <div data-entity-list-container>
-      <div class="notice" data-entity-empty-state hidden>
-         No matching entities.
-      </div>
+   <div data-entity-list-container
+        data-entity-search-url="@entitySearchUrl"
+        data-entity-edit-url="@entityEditUrl"
+        data-entity-delete-url="@entityDeleteUrl"
+        data-entity-filter-cookie-name=
+           "@IndexModel.FilterCookieName"
+        data-entity-sort-column="@Model.SortColumn"
+        data-entity-sort-asc="@Model.SortAsc.ToString().ToLowerInvariant()"
+        data-entity-search-url-base="@searchUrlBase">
+      @if(Model.HasFilter && Model.Entities.Count == 0)
+      {
+         <div class="notice" data-entity-empty-state>
+            No matching entities.
+         </div>
+      }
+      else
+      {
+         <div class="notice" data-entity-empty-state hidden>
+            No matching entities.
+         </div>
+      }
       <div class="admin-table-wrap"
            data-entity-inline-edit-url="@entityFieldUrl">
+         <select hidden aria-hidden="true"
+                 data-entity-watch-priority-template>
+            @foreach(var option in Model.GetWatchPriorityOptions(null))
+            {
+               <option value="@option.Value">@option.Text</option>
+            }
+         </select>
          <table class="admin-table admin-table-hover entities-table">
             <colgroup>
                <col class="entities-col-name" />
@@ -96,7 +121,7 @@ else
                   <th></th>
                </tr>
             </thead>
-            <tbody>
+            <tbody data-entity-list-body>
                @foreach(var entity in Model.Entities)
                {
                   <tr data-entity-row-id="@entity.Id"
@@ -151,4 +176,9 @@ else
          </table>
       </div>
    </div>
+}
+
+@section Scripts {
+   <script src="~/js/entities-index.js"
+           asp-append-version="true"></script>
 }

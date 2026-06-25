@@ -1,28 +1,34 @@
-using System.Text.Json;
-
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
 
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Data;
-using SESport.Web.Pages.Admin.Ajax.Search;
+using SESport.Web.Pages.Admin.Entities;
 
-namespace SESport.Core.Tests.Pages.Admin.Ajax.Search;
+namespace SESport.Core.Tests.Pages.Admin.Entities;
 
-public sealed class EntityModelTests
+public sealed class IndexModelTests
 {
    [Fact]
-   public async Task OnGetAsyncReturnsMatchingEntities()
+   public async Task OnGetAsyncUsesFilterCookieOnPageLoad()
    {
       var organizationId = Guid.NewGuid();
       var personId = Guid.NewGuid();
       var queryToken = Guid.NewGuid().ToString("N")[..8];
-      var personToken = Guid.NewGuid().ToString("N")[..8];
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
-      var model = new EntityModel(repository);
+      var model = new IndexModel(repository)
+      {
+         PageContext = new PageContext
+         {
+            HttpContext = CreateContext(
+               $"{IndexModel.FilterCookieName}=Organization"
+            )
+         }
+      };
 
       await InsertRelatedEntityAsync(
          dataSource,
@@ -34,42 +40,28 @@ public sealed class EntityModelTests
       await InsertRelatedEntityAsync(
          dataSource,
          personId,
-         $"Person {personToken}",
+         $"Person {queryToken}",
          TrackedEntityTypeIds.Person,
          "football"
       );
 
       try
       {
-         var result = await model.OnGetAsync(
-            queryToken,
+         await model.OnGetAsync(
             null,
-            CancellationToken.None,
-            true
+            true,
+            CancellationToken.None
          );
 
-         var jsonResult = Assert.IsType<JsonResult>(result);
-         using var document = JsonDocument.Parse(
-            JsonSerializer.Serialize(jsonResult.Value)
-         );
-         var results = document.RootElement.GetProperty("results");
-
-         Assert.Single(results.EnumerateArray());
-         Assert.Contains(
-            organizationId.ToString(),
-            results.ToString()
-         );
-         Assert.Contains(
-            $"Organization {queryToken}",
-            results.ToString()
+         Assert.Equal("Organization", model.Filter);
+         Assert.True(model.HasFilter);
+         Assert.Single(
+            model.Entities,
+            entity => entity.Id == organizationId
          );
          Assert.DoesNotContain(
-            personId.ToString(),
-            results.ToString()
-         );
-         Assert.DoesNotContain(
-            $"Person {personToken}",
-            results.ToString()
+            model.Entities,
+            entity => entity.Id == personId
          );
       }
       finally
@@ -80,26 +72,51 @@ public sealed class EntityModelTests
    }
 
    [Fact]
-   public async Task OnGetAsyncReturnsEmptyResultsForBlankTerm()
+   public async Task OnGetAsyncShowsNoEntitiesWithoutFilterCookie()
    {
+      var entityId = Guid.NewGuid();
+
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
-      var model = new EntityModel(repository);
+      var model = new IndexModel(repository)
+      {
+         PageContext = new PageContext
+         {
+            HttpContext = new DefaultHttpContext()
+         }
+      };
 
-      var result = await model.OnGetAsync(
-         string.Empty,
-         null,
-         CancellationToken.None,
-         true
+      await InsertRelatedEntityAsync(
+         dataSource,
+         entityId,
+         $"Entity {Guid.NewGuid():N}",
+         TrackedEntityTypeIds.Person,
+         "football"
       );
 
-      var jsonResult = Assert.IsType<JsonResult>(result);
-      using var document = JsonDocument.Parse(
-         JsonSerializer.Serialize(jsonResult.Value)
-      );
-      var results = document.RootElement.GetProperty("results");
+      try
+      {
+         await model.OnGetAsync(
+            null,
+            true,
+            CancellationToken.None
+         );
 
-      Assert.Empty(results.EnumerateArray());
+         Assert.Equal(string.Empty, model.Filter);
+         Assert.False(model.HasFilter);
+         Assert.Empty(model.Entities);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   private static DefaultHttpContext CreateContext(string cookieHeader)
+   {
+      var context = new DefaultHttpContext();
+      context.Request.Headers.Cookie = cookieHeader;
+      return context;
    }
 
    private static NpgsqlDataSource CreateDataSource()

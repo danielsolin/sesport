@@ -4,7 +4,6 @@
    const replacementFormSelector = "form[data-ajax-replace-target]";
    const checkboxToggleSelector = "[data-checkbox-toggle]";
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
-   const entityNameFilterSelector = "[data-entity-name-filter]";
    const entityTypeSelectSelector = "[data-entity-type-select]";
    const personGenderFieldSelector = "[data-person-gender-field]";
    const entityInlineEditUrlSelector = "[data-entity-inline-edit-url]";
@@ -66,11 +65,12 @@
    initializeMultiSelectClearButtons();
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
-   initializeEntityNameFilters();
+   window.initializeEntitySearch?.(document);
    initializePersonGenderVisibility();
    initializeGetFormRestoration();
    initializeDateSelect();
    initializeEntityInlineEditing();
+   window.initializeEntityInlineEditing = initializeEntityInlineEditing;
    initializeTeaserGeneration();
    initializeParticipationRowChecks();
    initializeBroadcastInlineEditing();
@@ -316,64 +316,6 @@
                updateCheckboxVisibility(target);
             });
          });
-      });
-   }
-
-   function initializeEntityNameFilters(root = document)
-   {
-      root.querySelectorAll(entityNameFilterSelector).forEach(field => {
-         if(!(field instanceof HTMLInputElement)
-            || field.dataset.entityNameFilterInitialized === "true")
-         {
-            return;
-         }
-
-         field.dataset.entityNameFilterInitialized = "true";
-
-         const container = document.querySelector(
-            "[data-entity-list-container]"
-         );
-         const rows = container?.querySelectorAll("[data-entity-row-name]");
-         const emptyState = container?.querySelector(
-            "[data-entity-empty-state]"
-         );
-
-         const update = () => {
-            const query = field.value.trim().toLowerCase();
-            let visibleCount = 0;
-
-            rows?.forEach(row => {
-               const rowName = (
-                  row instanceof HTMLElement
-                     ? row.dataset.entityRowName ?? ""
-                     : ""
-               ).toLowerCase();
-               const rowRelated = (
-                  row instanceof HTMLElement
-                     ? row.dataset.entityRowRelated ?? ""
-                     : ""
-               ).toLowerCase();
-               const matches =
-                  query === "" ||
-                  rowName.includes(query) ||
-                  rowRelated.includes(query);
-
-               row.hidden = !matches;
-
-               if(matches)
-               {
-                  visibleCount++;
-               }
-            });
-
-            if(emptyState instanceof HTMLElement)
-            {
-               emptyState.hidden = visibleCount > 0;
-            }
-         };
-
-         field.addEventListener("input", update);
-         update();
       });
    }
 
