@@ -1459,6 +1459,8 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 
 .broadcast-ai-check-toggle {
    min-height: 28px;
+   min-width: 30px;
+   padding: 0 10px;
    font-size: 12px;
 }
 
@@ -1691,9 +1693,10 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 
 .table-actions-stack {
    display: flex;
-   flex-direction: column;
-   align-items: flex-end;
-   gap: 2px;
+   flex-direction: row;
+   align-items: center;
+   gap: 8px;
+   justify-content: flex-end;
 }
 
 .table-actions a.broadcast-activity-link {
@@ -1724,6 +1727,15 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    font-weight: 800;
    line-height: 1.2;
    cursor: pointer;
+}
+
+.table-actions button.broadcast-participation-check-link {
+   color: var(--accent);
+}
+
+.table-actions button.broadcast-participation-check-link:hover,
+.table-actions button.broadcast-participation-check-link:focus-visible {
+   color: var(--accent-strong);
 }
 
 .edit-form {

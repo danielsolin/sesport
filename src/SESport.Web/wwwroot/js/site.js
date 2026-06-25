@@ -2052,10 +2052,6 @@
       headerBar.className = "broadcast-ai-check-runs-summary-bar";
 
       const summaryCheck = selectParticipationSummaryCheck(checks);
-      const hasRunningCheck = checks.some(check =>
-         typeof check?.statusId === "string"
-            && check.statusId.trim().toLowerCase() === "running"
-      );
       const summaryText = document.createElement("span");
       summaryText.className = [
          "broadcast-ai-check-runs-summary-text",
@@ -2068,25 +2064,16 @@
       const actions = document.createElement("div");
       actions.className = "broadcast-ai-check-runs-summary-actions";
 
-      if(!hasRunningCheck)
-      {
-         const checkButton = createParticipationActionButton(
-            cell,
-            "Check"
-         );
-
-         if(checkButton)
-         {
-            actions.append(checkButton);
-         }
-      }
-
       const toggleButton = document.createElement("button");
       toggleButton.className = "button broadcast-ai-check-toggle";
       toggleButton.type = "button";
       toggleButton.dataset.participationRunsToggle = "true";
       toggleButton.setAttribute("aria-expanded", String(isOpen));
-      toggleButton.textContent = isOpen ? "Hide" : "Show";
+      toggleButton.setAttribute(
+         "aria-label",
+         isOpen ? "Hide participation runs" : "Show participation runs"
+      );
+      toggleButton.textContent = isOpen ? "−" : "+";
       actions.append(toggleButton);
 
       headerBar.append(actions);
@@ -2129,7 +2116,11 @@
       const isOpen = !body.hidden;
       table.dataset.participationRunsOpen = String(isOpen);
       toggleButton.setAttribute("aria-expanded", String(isOpen));
-      toggleButton.textContent = isOpen ? "Hide" : "Show";
+      toggleButton.setAttribute(
+         "aria-label",
+         isOpen ? "Hide participation runs" : "Show participation runs"
+      );
+      toggleButton.textContent = isOpen ? "−" : "+";
    }
 
    function getParticipationSummaryBadgeClass(check)
@@ -2233,13 +2224,6 @@
       fallback.className = "broadcast-ai-check-empty";
       fallback.textContent = "Not checked yet";
       summaryCell.append(fallback);
-
-      const checkButton = createParticipationActionButton(cell, "Check");
-
-      if(checkButton)
-      {
-         summaryCell.append(checkButton);
-      }
 
       row.append(
          summaryCell,
@@ -2473,6 +2457,7 @@
          if(mainRow instanceof HTMLElement && mainRow !== row)
          {
             mainRow.dataset.participationStatus = normalizedStatusId;
+            syncParticipationCheckButton(mainRow, normalizedStatusId);
          }
       }
       else
@@ -2481,8 +2466,32 @@
          if(mainRow instanceof HTMLElement && mainRow !== row)
          {
             delete mainRow.dataset.participationStatus;
+            syncParticipationCheckButton(mainRow, "");
          }
       }
+   }
+
+   function syncParticipationCheckButton(mainRow, statusId)
+   {
+      if(!(mainRow instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const checkButton = mainRow.querySelector(
+         "[data-check-participation-row]"
+      );
+
+      if(!(checkButton instanceof HTMLButtonElement))
+      {
+         return;
+      }
+
+      const normalizedStatusId = typeof statusId === "string"
+         ? statusId.trim().toLowerCase()
+         : "";
+
+      checkButton.hidden = normalizedStatusId === "running";
    }
 
    function formatParticipationStatus(statusId)
@@ -2555,6 +2564,7 @@
    function createParticipationActionButton(
       cell,
       text,
+      baseClass = "broadcast-ai-check-action",
       extraClass = ""
    )
    {
@@ -2572,7 +2582,7 @@
       }
 
       const button = document.createElement("button");
-      button.className = ["button", "broadcast-ai-check-action", extraClass]
+      button.className = ["button", baseClass, extraClass]
          .filter(value => value !== "")
          .join(" ");
       button.type = "button";
