@@ -195,7 +195,8 @@
          ? target.dataset.broadcastId.trim()
          : "";
 
-      if(broadcastId === "" || !target.matches(".broadcast-participation-main-row"))
+      if(broadcastId === "" ||
+         !target.matches(".broadcast-participation-main-row"))
       {
          return;
       }
@@ -440,7 +441,8 @@
          }
 
          const button = target.closest(
-            `${checkParticipationRowSelector},${participationRunsToggleSelector}`
+            `${checkParticipationRowSelector},`
+               + participationRunsToggleSelector
          );
 
          if(!(button instanceof HTMLButtonElement))
@@ -857,7 +859,9 @@
       }
 
       const cell = input.closest(broadcastInlineEditCellSelector);
-      const display = cell?.querySelector("[data-broadcast-inline-edit-display]");
+      const display = cell?.querySelector(
+         "[data-broadcast-inline-edit-display]"
+      );
 
       if(display instanceof HTMLElement)
       {
@@ -2588,8 +2592,7 @@
 
       const link = document.createElement("a");
       link.href = `${url.pathname}${url.search}${url.hash}`;
-      link.target = "_blank";
-      link.rel = "noreferrer noopener";
+      link.className = "ses-nowrap";
       link.textContent = "Create Activity";
 
       const runLink = createParticipationRunLink(runId);
@@ -2689,7 +2692,7 @@
          .map(participant =>
             typeof participant === "string"
                ? {
-                  name: participant.trim(),
+                  name: formatParticipantName(participant),
                   editUrl: null,
                   templateEntityId: null
                }
@@ -3051,7 +3054,9 @@
    {
       const item = normalizeParticipantItem(participant);
 
-      if(item === null || item.editUrl !== null || item.templateEntityId === null)
+      if(item === null ||
+         item.editUrl !== null ||
+         item.templateEntityId === null)
       {
          return null;
       }
@@ -3102,9 +3107,9 @@
       }
 
       const name = typeof participant.Name === "string"
-         ? participant.Name.trim()
+         ? formatParticipantName(participant.Name)
          : typeof participant.name === "string"
-            ? participant.name.trim()
+            ? formatParticipantName(participant.name)
             : "";
       const editUrl = typeof participant.EditUrl === "string"
          && participant.EditUrl.trim() !== ""
@@ -3124,6 +3129,31 @@
       return name === ""
          ? null
          : { name, editUrl, templateEntityId };
+   }
+
+   function formatParticipantName(value)
+   {
+      if(typeof value !== "string")
+      {
+         return "";
+      }
+
+      return value.trim()
+         .replace(/\s+/gu, " ")
+         .replace(/\p{L}+/gu, word => isShoutedParticipantWord(word)
+            ? word.toLocaleLowerCase("en-US")
+               .replace(/^\p{L}/u, first => first.toLocaleUpperCase("en-US"))
+            : word);
+   }
+
+   function isShoutedParticipantWord(value)
+   {
+      const letters = Array.from(value)
+         .filter(character => /\p{L}/u.test(character));
+
+      return letters.length >= 2
+         && letters.every(character =>
+            character === character.toLocaleUpperCase("en-US"));
    }
 
    function isValidParticipantItem(participant)

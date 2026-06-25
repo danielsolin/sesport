@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Core.Broadcast;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Ajax.Create;
@@ -13,7 +14,9 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
       CancellationToken cancellationToken
    )
    {
-      participantName = participantName?.Trim() ?? string.Empty;
+      participantName = BroadcastParticipantNameFormatter.Format(
+         participantName ?? string.Empty
+      );
 
       if(string.IsNullOrWhiteSpace(participantName) ||
          templateEntityId == Guid.Empty)

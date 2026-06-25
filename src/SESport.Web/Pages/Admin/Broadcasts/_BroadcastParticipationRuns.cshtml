@@ -99,9 +99,8 @@
                      @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
                      {
                         <div class="broadcast-ai-check-activity-links">
-                           <a href="@baseActivityUrl"
-                              target="_blank"
-                              rel="noreferrer noopener">
+                           <a class="ses-nowrap"
+                              href="@baseActivityUrl">
                               Create Activity
                            </a>
                         </div>
@@ -162,10 +161,18 @@
                         <div class="broadcast-ai-check-participants">
                            @foreach(var participant in participantItems)
                            {
+                              var linkClass =
+                                 "broadcast-ai-check-participant-link";
+                              var formClass =
+                                 "broadcast-ai-check-participant-create-form";
+                              var buttonClass =
+                                 "broadcast-ai-check-participant-create-button";
+                              var createEntityLabel =
+                                 $"Create entity for {participant.Name}";
                               <div class="broadcast-ai-check-participant-row">
                                  @if(participant.EditUrl is not null)
                                  {
-                                    <a class="broadcast-ai-check-participant-link"
+                                    <a class="@linkClass"
                                        href="@participant.EditUrl"
                                        target="_blank"
                                        rel="noreferrer noopener"
@@ -180,26 +187,26 @@
 
                                  @if(participant.TemplateEntityId is not null)
                                  {
+                                    var templateEntityId =
+                                       participant.TemplateEntityId.Value;
                                     <form method="post"
                                           action=
                                              "@Model.CreateParticipantEntityUrl"
-                                          class=
-                                             "broadcast-ai-check-participant-create-form"
+                                          class="@formClass"
                                           data-ajax-success="replace">
                                        @Html.AntiForgeryToken()
-                                       <input type="hidden"
-                                              name="participantName"
-                                              value="@participant.Name" />
-                                       <input type="hidden"
-                                              name="templateEntityId"
-                                              value=
-                                                 "@participant.TemplateEntityId" />
+                                       <input
+                                          type="hidden"
+                                          name="participantName"
+                                          value="@participant.Name" />
+                                       <input
+                                          type="hidden"
+                                          name="templateEntityId"
+                                          value="@templateEntityId" />
                                        <button type="submit"
-                                               class=
-                                                  "broadcast-ai-check-participant-create-button"
+                                               class="@buttonClass"
                                                title="Create entity"
-                                               aria-label=
-                                                  "Create entity for @participant.Name">
+                                               aria-label="@createEntityLabel">
                                           +
                                        </button>
                                     </form>
@@ -244,9 +251,8 @@
                            @if(!string.IsNullOrWhiteSpace(activityUrl))
                            {
                               <div class="broadcast-ai-check-activity-link">
-                                 <a href="@activityUrl"
-                                    target="_blank"
-                                    rel="noreferrer noopener">
+                                 <a class="ses-nowrap"
+                                    href="@activityUrl">
                                     Create Activity
                                  </a>
                               </div>

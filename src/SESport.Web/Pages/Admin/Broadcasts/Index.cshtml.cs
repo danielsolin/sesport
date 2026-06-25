@@ -124,6 +124,7 @@ public class IndexModel(
          .Select(name =>
          {
             var normalizedName = BroadcastEntityFilter.NormalizeName(name);
+            var displayName = BroadcastParticipantNameFormatter.Format(name);
 
             if(ParticipantEntityIdsByName.TryGetValue(
                normalizedName,
@@ -131,14 +132,14 @@ public class IndexModel(
             ))
             {
                return new BroadcastParticipantDisplayItem(
-                  name,
+                  displayName,
                   Url.Page("/Admin/Entities/Edit", new { id = entityId }),
                   null
                );
             }
 
             return new BroadcastParticipantDisplayItem(
-               name,
+               displayName,
                null,
                templateEntityId
             );
