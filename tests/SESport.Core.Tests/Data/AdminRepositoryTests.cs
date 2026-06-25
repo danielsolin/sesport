@@ -124,6 +124,7 @@ public sealed class AdminRepositoryTests
    public async Task SearchBroadcastOrganizationLinkOptionsAsyncReturnsMatches()
    {
       var organizationId = Guid.NewGuid();
+      var nationalTeamId = Guid.NewGuid();
       var personId = Guid.NewGuid();
       var queryToken = Guid.NewGuid().ToString("N")[..8];
 
@@ -135,6 +136,13 @@ public sealed class AdminRepositoryTests
          organizationId,
          $"Organization {queryToken}",
          TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         nationalTeamId,
+         $"National Team {queryToken}",
+         TrackedEntityTypeIds.NationalTeam,
          "football"
       );
       await InsertRelatedEntityAsync(
@@ -159,6 +167,12 @@ public sealed class AdminRepositoryTests
                option.Id == organizationId &&
                option.Name == $"Organization {queryToken}"
          );
+         Assert.Contains(
+            options,
+            option =>
+               option.Id == nationalTeamId &&
+               option.Name == $"National Team {queryToken}"
+         );
          Assert.DoesNotContain(
             options,
             option => option.Id == personId
@@ -167,6 +181,7 @@ public sealed class AdminRepositoryTests
       finally
       {
          await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, nationalTeamId);
          await DeleteEntityAsync(dataSource, organizationId);
       }
    }

@@ -50,6 +50,23 @@ public sealed class ActivityEntityFilterTests
       Assert.Equal("Bob", filtered[1].Name);
    }
 
+   [Theory]
+   [InlineData(TrackedEntityTypeIds.Organization, true)]
+   [InlineData(TrackedEntityTypeIds.NationalTeam, true)]
+   [InlineData(TrackedEntityTypeIds.Series, true)]
+   [InlineData(TrackedEntityTypeIds.Person, false)]
+   [InlineData(TrackedEntityTypeIds.Pair, false)]
+   public void IsOrganizationEntityTypeAllowsBroadcastOrganizationTypes(
+      string entityTypeId,
+      bool expected
+   )
+   {
+      Assert.Equal(
+         expected,
+         BroadcastEntityFilter.IsOrganizationEntityType(entityTypeId)
+      );
+   }
+
    [Fact]
    public void MatchPersonEntityIdsTreatsAccentsAsEquivalent()
    {

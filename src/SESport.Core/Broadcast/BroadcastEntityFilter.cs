@@ -14,11 +14,6 @@ public static class BroadcastEntityFilter
       ) &&
       !string.Equals(
          entityTypeId,
-         TrackedEntityTypeIds.NationalTeam,
-         StringComparison.OrdinalIgnoreCase
-      ) &&
-      !string.Equals(
-         entityTypeId,
          TrackedEntityTypeIds.Pair,
          StringComparison.OrdinalIgnoreCase
       );

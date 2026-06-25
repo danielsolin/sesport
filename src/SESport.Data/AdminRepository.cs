@@ -1178,7 +1178,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          join sports s on s.id = e.sport_id
          where e.entity_type_id not in (
             '{TrackedEntityTypeIds.Person}',
-            '{TrackedEntityTypeIds.NationalTeam}',
             '{TrackedEntityTypeIds.Pair}'
          )
          order by e.canonical_name
@@ -1229,7 +1228,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          join sports s on s.id = e.sport_id
          where e.entity_type_id not in (
             '{TrackedEntityTypeIds.Person}',
-            '{TrackedEntityTypeIds.NationalTeam}',
             '{TrackedEntityTypeIds.Pair}'
          )
             and (

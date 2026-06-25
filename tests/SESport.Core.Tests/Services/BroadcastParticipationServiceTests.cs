@@ -170,7 +170,10 @@ public sealed class BroadcastParticipationServiceTests
             $"Unrelated Person {unrelatedPersonId:N}",
             candidates
          );
-         Assert.All(lines, line => Assert.StartsWith("  - Linked Person ", line));
+         Assert.All(
+            lines,
+            line => Assert.StartsWith("  - Linked Person ", line)
+         );
          Assert.DoesNotContain(
             $"Unrelated Person {unrelatedPersonId:N}",
             candidates
