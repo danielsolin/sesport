@@ -1542,9 +1542,32 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    width: 100%;
 }
 
-.broadcast-ai-check-activity-links a {
+.broadcast-ai-check-archive-form {
+   display: flex;
+   justify-content: flex-end;
+   width: 100%;
+   margin: 0;
+}
+
+.broadcast-ai-check-action-link,
+.broadcast-ai-check-archive-link {
    display: inline-block;
-   text-align: center;
+   padding: 0;
+   border: 0;
+   background: none;
+   color: var(--accent);
+   font: inherit;
+   font-size: 13px;
+   font-weight: 700;
+   line-height: 1.2;
+   cursor: pointer;
+   white-space: nowrap;
+}
+
+.broadcast-ai-check-action-link:hover,
+.broadcast-ai-check-archive-link:hover {
+   color: var(--accent-strong);
+   text-decoration: underline;
 }
 
 .broadcast-ai-check {

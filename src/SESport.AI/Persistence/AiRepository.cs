@@ -47,6 +47,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       {
          where.Add("r.status_id = @status_id");
       }
+      else
+      {
+         where.Add("r.status_id <> 'archived'");
+      }
 
       var sql = new StringBuilder()
          .AppendLine("select")
@@ -137,6 +141,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
          where r.id = any(@ids)
+            and r.status_id <> 'archived'
          order by r.started_at desc
          """;
 
@@ -301,6 +306,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          from ai_job_runs r
          where r.job_id = @job_id
             and r.correlation_id = any(@correlation_ids)
+            and r.status_id <> 'archived'
          order by r.correlation_id, r.started_at desc
          """;
 
@@ -741,6 +747,27 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task<bool> ArchiveRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set status_id = 'archived'
+         where id = @id
+         returning id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      return await reader.ReadAsync(cancellationToken);
+   }
+
    public async Task FailRunAsync(
       Guid id,
       string errorMessage,
@@ -1172,6 +1199,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          AiJobRunStatus.Running => "running",
          AiJobRunStatus.Completed => "completed",
          AiJobRunStatus.Failed => "failed",
+         AiJobRunStatus.Archived => "archived",
          _ => "pending"
       };
    }

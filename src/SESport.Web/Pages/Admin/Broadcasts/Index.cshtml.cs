@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using SESport.AI.Persistence;
 using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -11,6 +12,7 @@ namespace SESport.Web.Pages.Admin.Broadcasts;
 
 public class IndexModel(
    BroadcastRepository repository,
+   AiRepository aiRepository,
    AdminRepository adminRepository,
    AdminDatePreferenceStore datePreferenceStore,
    BroadcastParticipationService participationService
@@ -156,6 +158,28 @@ public class IndexModel(
       }
 
       return RedirectToPage("/Admin/Activities/Edit", routeValues);
+   }
+
+   public async Task<IActionResult> OnPostArchiveRunAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(runId == Guid.Empty)
+      {
+         return BadRequest(new { error = "Run ID is required." });
+      }
+
+      SortColumn = NormalizeSortColumn(SortColumn);
+
+      if(!await aiRepository.ArchiveRunAsync(runId, cancellationToken))
+      {
+         return NotFound();
+      }
+
+      await LoadAsync(cancellationToken);
+
+      return Page();
    }
 
    private async Task LoadAsync(CancellationToken cancellationToken)

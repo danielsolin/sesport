@@ -66,6 +66,77 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunsAsyncSkipsArchivedRunsByDefault()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var activeRunId = Guid.NewGuid();
+      var archivedRunId = Guid.NewGuid();
+      var localDate = new DateOnly(2026, 6, 15);
+      var startedAt = TimeZoneHelper.ToUtc(
+         localDate,
+         new TimeOnly(8, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         activeRunId,
+         jobId,
+         promptId,
+         providerId,
+         startedAt,
+         statusId: "completed"
+      );
+      await InsertRunAsync(
+         dataSource,
+         archivedRunId,
+         jobId,
+         promptId,
+         providerId,
+         startedAt,
+         statusId: "archived"
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            localDate,
+            null,
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Contains(runs, run => run.Id == activeRunId);
+         Assert.DoesNotContain(runs, run => run.Id == archivedRunId);
+
+         var archivedRuns = await repository.GetRunsAsync(
+            localDate,
+            null,
+            "archived",
+            CancellationToken.None
+         );
+
+         Assert.Equal([archivedRunId], archivedRuns.Select(run => run.Id));
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, archivedRunId);
+         await DeleteRunAsync(dataSource, activeRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task GetRunsByIdsAsyncReturnsMatchingRuns()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -126,6 +197,111 @@ public sealed class AiRepositoryTests
       {
          await DeleteRunAsync(dataSource, secondRunId);
          await DeleteRunAsync(dataSource, firstRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task GetRunsByIdsAsyncSkipsArchivedRuns()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var archivedRunId = Guid.NewGuid();
+      var activeRunId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         archivedRunId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: "archived"
+      );
+      await InsertRunAsync(
+         dataSource,
+         activeRunId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: "running"
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsByIdsAsync(
+            [archivedRunId, activeRunId],
+            CancellationToken.None
+         );
+
+         Assert.Equal([activeRunId], runs.Select(run => run.Id));
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, activeRunId);
+         await DeleteRunAsync(dataSource, archivedRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task ArchiveRunAsyncMarksRunArchived()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: "running"
+      );
+
+      try
+      {
+         var archived = await repository.ArchiveRunAsync(
+            runId,
+            CancellationToken.None
+         );
+
+         Assert.True(archived);
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select status_id
+            from ai_job_runs
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", runId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal("archived", reader.GetString(0));
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
          await DeletePromptAsync(dataSource, promptId);
          await DeleteJobAsync(dataSource, jobId);
          await DeleteProviderAsync(dataSource, providerId);

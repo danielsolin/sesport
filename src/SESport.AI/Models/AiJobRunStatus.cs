@@ -5,5 +5,6 @@ public enum AiJobRunStatus
    Pending,
    Running,
    Completed,
-   Failed
+   Failed,
+   Archived
 }

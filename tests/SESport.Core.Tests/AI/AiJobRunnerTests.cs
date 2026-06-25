@@ -450,6 +450,7 @@ public class AiJobRunnerTests
                   AiJobRunStatus.Running => "running",
                   AiJobRunStatus.Completed => "completed",
                   AiJobRunStatus.Failed => "failed",
+                  AiJobRunStatus.Archived => "archived",
                   _ => "pending"
                },
                run.CorrelationId,

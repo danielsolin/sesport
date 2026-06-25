@@ -136,6 +136,10 @@
          {
             await replaceParticipantCreateFormAsync(form, response);
          }
+         else if(form.dataset.ajaxSuccess === "replace-target")
+         {
+            await replaceTargetFromFormAsync(form);
+         }
 
          decrementCounter(form.dataset.ajaxDecrementTarget);
          refreshCheckboxControls();
@@ -3398,6 +3402,139 @@
       {
          HTMLFormElement.prototype.submit.call(form);
       }
+   }
+
+   async function replaceTargetFromFormAsync(form)
+   {
+      const targetSelector = (form.dataset.ajaxReplaceTarget ?? "").trim();
+
+      if(targetSelector === "")
+      {
+         HTMLFormElement.prototype.submit.call(form);
+         return;
+      }
+
+      const target = document.querySelector(targetSelector);
+
+      if(!(target instanceof HTMLElement))
+      {
+         HTMLFormElement.prototype.submit.call(form);
+         return;
+      }
+
+      const openBroadcastIds = captureOpenBroadcastIds(target);
+
+      try
+      {
+         const response = await fetch(form.action, {
+            method: form.method || "post",
+            body: new FormData(form),
+            headers: {
+               Accept: "text/html"
+            }
+         });
+
+         if(!response.ok)
+         {
+            throw new Error(`Request failed with status ${response.status}`);
+         }
+
+         const documentText = await response.text();
+         const parser = new DOMParser();
+         const nextDocument = parser.parseFromString(
+            documentText,
+            "text/html"
+         );
+         const nextTarget = nextDocument.querySelector(targetSelector);
+
+         if(!(nextTarget instanceof HTMLElement))
+         {
+            throw new Error("Replacement target was not found.");
+         }
+
+         target.replaceWith(nextTarget);
+         initializeCheckboxToggles(nextTarget);
+         initializeCheckboxVisibility(nextTarget);
+         initializeTeaserGeneration(nextTarget);
+         initializeParticipationRowChecks(nextTarget);
+         initializeBroadcastInlineEditing(nextTarget);
+         window.initializeBroadcastOrganizationAutocomplete?.(nextTarget);
+         initializeParticipationPolling(nextTarget);
+         restoreExpandedBroadcastRows(nextTarget, openBroadcastIds);
+      }
+      catch
+      {
+         HTMLFormElement.prototype.submit.call(form);
+      }
+   }
+
+   function captureOpenBroadcastIds(root)
+   {
+      if(!(root instanceof HTMLElement))
+      {
+         return [];
+      }
+
+      const ids = [];
+
+      root.querySelectorAll(".broadcast-participation-runs-row").forEach(
+         row => {
+            if(!(row instanceof HTMLElement))
+            {
+               return;
+            }
+
+            const table = row.querySelector(
+               ".broadcast-ai-check-runs-table"
+            );
+            const broadcastId = (row.dataset.broadcastId ?? "").trim();
+
+            if(!(table instanceof HTMLTableElement)
+               || table.dataset.participationRunsOpen !== "true"
+               || broadcastId === "")
+            {
+               return;
+            }
+
+            ids.push(broadcastId);
+         }
+      );
+
+      return ids;
+   }
+
+   function restoreExpandedBroadcastRows(root, broadcastIds)
+   {
+      if(!(root instanceof HTMLElement) || broadcastIds.length === 0)
+      {
+         return;
+      }
+
+      root.querySelectorAll(".broadcast-participation-runs-row").forEach(
+         row => {
+            if(!(row instanceof HTMLElement))
+            {
+               return;
+            }
+
+            const broadcastId = (row.dataset.broadcastId ?? "").trim();
+
+            if(!broadcastIds.includes(broadcastId))
+            {
+               return;
+            }
+
+            const toggleButton = row.querySelector(
+               "[data-participation-runs-toggle]"
+            );
+
+            if(toggleButton instanceof HTMLButtonElement &&
+               toggleButton.getAttribute("aria-expanded") !== "true")
+            {
+               toggleParticipationRuns(toggleButton);
+            }
+         }
+      );
    }
 
    async function replaceParticipantCreateFormAsync(form, response)

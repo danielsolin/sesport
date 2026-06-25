@@ -61,7 +61,8 @@ public class IndexModel(
             new SelectListItem("Pending", "pending"),
             new SelectListItem("Running", "running"),
             new SelectListItem("Completed", "completed"),
-            new SelectListItem("Failed", "failed")
+            new SelectListItem("Failed", "failed"),
+            new SelectListItem("Archived", "archived")
          ];
          Runs = await repository.GetRunsAsync(
             SelectedDate,

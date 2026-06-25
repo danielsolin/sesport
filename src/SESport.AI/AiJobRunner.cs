@@ -653,6 +653,7 @@ internal static class AiRunDetailExtensions
          "running" => AiJobRunStatus.Running,
          "completed" => AiJobRunStatus.Completed,
          "failed" => AiJobRunStatus.Failed,
+         "archived" => AiJobRunStatus.Archived,
          _ => AiJobRunStatus.Pending
       };
    }

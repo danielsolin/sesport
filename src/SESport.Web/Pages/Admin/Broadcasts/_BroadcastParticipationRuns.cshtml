@@ -105,7 +105,8 @@
                      @if(!string.IsNullOrWhiteSpace(baseActivityUrl))
                      {
                         <div class="broadcast-ai-check-activity-links">
-                           <a class="ses-nowrap"
+                           <a class="broadcast-ai-check-action-link
+                                 ses-nowrap"
                               href="@baseActivityUrl">
                               Create Activity
                            </a>
@@ -251,7 +252,8 @@
                            @if(!string.IsNullOrWhiteSpace(activityUrl))
                            {
                               <div class="broadcast-ai-check-activity-link">
-                                 <a class="ses-nowrap"
+                                 <a class="broadcast-ai-check-action-link
+                                       ses-nowrap"
                                     href="@activityUrl">
                                     Create Activity
                                  </a>
@@ -263,11 +265,58 @@
                                  asp-route-id="@check.RunId"
                                  asp-route-jobId=
                                     "decide-swedish-participation"
+                                 class="broadcast-ai-check-action-link
+                                    ses-nowrap"
                                  target="_blank"
                                  rel="noreferrer noopener"
                                  data-run-link="true">
                                  View Run
                               </a>
+                              <form method="post"
+                                    asp-page-handler="ArchiveRun"
+                                    class="broadcast-ai-check-archive-form"
+                                    data-ajax-success="replace-target"
+                                    data-ajax-replace-target=
+                                       "[data-broadcast-results]">
+                                 @Html.AntiForgeryToken()
+                                 <input type="hidden"
+                                        name="runId"
+                                        value="@check.RunId" />
+                                 <input type="hidden"
+                                        name="@RouteKeys.Date"
+                                        value="@Model.PageModel.DateText" />
+                                 <input type="hidden"
+                                        name="@RouteKeys.HideReplays"
+                                        value="@Model.PageModel.HideReplays" />
+                                 <input type="hidden"
+                                        name="@RouteKeys.ShowHidden"
+                                        value="@Model.PageModel.ShowHidden" />
+                                 <input type="hidden"
+                                        name="@RouteKeys.SortColumn"
+                                        value="@Model.PageModel.SortColumn" />
+                                 <input type="hidden"
+                                        name="@RouteKeys.SortAsc"
+                                        value="@Model.PageModel.SortAsc" />
+                                 @foreach(var selectedSport
+                                    in Model.PageModel.SelectedSports)
+                                 {
+                                    if(string.IsNullOrWhiteSpace(
+                                       selectedSport
+                                    ))
+                                    {
+                                       continue;
+                                    }
+
+                                    <input type="hidden"
+                                           name="@RouteKeys.SelectedSports"
+                                           value="@selectedSport" />
+                                 }
+                                 <button type="submit"
+                                         class="broadcast-ai-check-archive-link
+                                            ses-nowrap">
+                                    Archive Run
+                                 </button>
+                              </form>
                            }
                         </div>
                      }
