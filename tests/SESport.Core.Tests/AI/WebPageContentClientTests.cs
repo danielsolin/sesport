@@ -736,6 +736,47 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task NormalizeWikipediaFlagImageUsesAltText()
+   {
+      var html =
+         "<html><body><table><tbody><tr><td>" +
+         "<span class=\"flagicon\">" +
+         "<span class=\"mw-image-border\" typeof=\"mw:File\">" +
+         "<a href=\"/wiki/Argentina\" title=\"Argentina\">" +
+         "<img alt=\"Argentina\" " +
+         "src=\"//upload.wikimedia.org/wikipedia/commons/thumb/1/1a/" +
+         "Flag_of_Argentina.svg/40px-Flag_of_Argentina.svg.png\" />" +
+         "</a></span></span> Luciano Martinez" +
+         "</td></tr></tbody></table></body></html>";
+      var normalizedText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Contains(
+         "Argentina",
+         normalizedText,
+         StringComparison.OrdinalIgnoreCase
+      );
+      Assert.Contains(
+         "Luciano Martinez",
+         normalizedText,
+         StringComparison.OrdinalIgnoreCase
+      );
+      Assert.DoesNotContain(" of ", normalizedText, StringComparison.Ordinal);
+   }
+
+   [Fact]
+   public async Task NormalizeWikipediaFlagImageSourceSkipsOfNoise()
+   {
+      var html =
+         "<html><body><img " +
+         "src=\"//upload.wikimedia.org/wikipedia/commons/thumb/1/1a/" +
+         "Flag_of_Argentina.svg/40px-Flag_of_Argentina.svg.png\" />" +
+         "</body></html>";
+      var normalizedText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Equal("Argentina", normalizedText);
+   }
+
+   [Fact]
    public void BuildBrowserUserAgentUsesBrowserMajorVersion()
    {
       var userAgent = WebPageContentClient.BuildBrowserUserAgent(

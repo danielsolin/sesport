@@ -20,6 +20,7 @@ internal static class WebPageNormalizationScript
                /(?:^|[^a-z0-9])Flag_of_([A-Za-z_]+)(?:[^a-z0-9]|$)/i
             ];
             const genericFlagLabels = new Set([
+               'of',
                'icon',
                'image',
                'symbol'
@@ -58,7 +59,13 @@ internal static class WebPageNormalizationScript
                   const match = source.match(pattern);
 
                   if(match?.[1]) {
-                     return normalizeFlagLabel(match[1].replaceAll('_', ' '));
+                     const label = normalizeFlagLabel(
+                        match[1].replaceAll('_', ' ')
+                     );
+
+                     if(label) {
+                        return label;
+                     }
                   }
                }
 
@@ -178,15 +185,15 @@ internal static class WebPageNormalizationScript
                const tagName = element.tagName.toLowerCase();
 
                if(tagName === 'img') {
-                  return getFlagLabelFromSource(
-                     element.getAttribute('src') || ''
-                  ) ||
+                  return getAttributeFlagLabel(element, 'alt') ||
+                     getAttributeFlagLabel(element, 'title') ||
+                     getAttributeFlagLabel(element, 'aria-label') ||
+                     getFlagLabelFromSource(
+                        element.getAttribute('src') || ''
+                     ) ||
                      getFlagLabelFromSource(
                         element.getAttribute('srcset') || ''
-                     ) ||
-                     getAttributeFlagLabel(element, 'alt') ||
-                     getAttributeFlagLabel(element, 'title') ||
-                     getAttributeFlagLabel(element, 'aria-label');
+                     );
                }
 
                const svgLabel = getSvgFlagLabel(element);
