@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
@@ -703,6 +704,38 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task NormalizeFlagIconClassUsesCountryLabel()
+   {
+      var html = """
+         <html>
+            <body>
+               <span class="flag-icon flag-icon-se"></span>
+            </body>
+         </html>
+         """;
+      var normalizedText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Equal("Sweden", normalizedText);
+      Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
+   }
+
+   [Fact]
+   public async Task NormalizeFlagImageSourcePrefersCountryCode()
+   {
+      var html = """
+         <html>
+            <body>
+               <img src="/images/flags/se.png" alt="icon" />
+            </body>
+         </html>
+         """;
+      var normalizedText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Equal("Sweden", normalizedText);
+      Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
+   }
+
+   [Fact]
    public void BuildBrowserUserAgentUsesBrowserMajorVersion()
    {
       var userAgent = WebPageContentClient.BuildBrowserUserAgent(
@@ -784,6 +817,31 @@ public class WebPageContentClientTests
       )
          ? WebPageBlockSource.CurlFallback
          : WebPageBlockSource.HtmlFallback;
+   }
+
+   private static async Task<string> EvaluateNormalizationScriptAsync(
+      string html
+   )
+   {
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.Chromium.LaunchAsync(
+         new BrowserTypeLaunchOptions
+         {
+            Headless = true
+         }
+      );
+      await using var context = await browser.NewContextAsync();
+      await using var page = await context.NewPageAsync();
+
+      await page.SetContentAsync(html);
+      await page.EvaluateAsync(
+         WebPageNormalizationScript.Build(),
+         JsonSerializer.Serialize(
+            WebPageContentFetchSupport.CountryNamesByCode
+         )
+      );
+
+      return await page.Locator("body").InnerTextAsync();
    }
 
    private sealed class PdfRecordingHandler : HttpMessageHandler

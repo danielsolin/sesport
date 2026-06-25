@@ -19,6 +19,11 @@ internal static class WebPageNormalizationScript
                /(?:^|[^a-z0-9])([a-z]{2,3})(?:[-_\/#]*)(?:flag)(?:s)?/i,
                /(?:^|[^a-z0-9])Flag_of_([A-Za-z_]+)(?:[^a-z0-9]|$)/i
             ];
+            const genericFlagLabels = new Set([
+               'icon',
+               'image',
+               'symbol'
+            ]);
 
             function normalizeFlagLabel(label) {
                if(typeof label !== 'string') {
@@ -36,6 +41,10 @@ internal static class WebPageNormalizationScript
                }
 
                normalizedLabel = normalizedLabel.trim();
+
+               if(genericFlagLabels.has(normalizedLabel.toLowerCase())) {
+                  return null;
+               }
 
                return normalizedLabel === '' ? null : normalizedLabel;
             }
@@ -101,9 +110,13 @@ internal static class WebPageNormalizationScript
                const dataClass = element.getAttribute('data-class') || '';
                const classMatch = className.match(flagClassPattern);
                const dataClassMatch = dataClass.match(flagClassPattern);
+               const classLabel =
+                  normalizeFlagLabel(classMatch?.[1] || '');
+               const dataClassLabel =
+                  normalizeFlagLabel(dataClassMatch?.[1] || '');
 
-               if(classMatch?.[1] || dataClassMatch?.[1]) {
-                  return classMatch?.[1] || dataClassMatch?.[1] || null;
+               if(classLabel || dataClassLabel) {
+                  return classLabel || dataClassLabel || null;
                }
 
                const tokens = [

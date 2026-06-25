@@ -33,8 +33,9 @@
          <label>
             <span>Status</span>
             <select name="@RouteKeys.Status"
+                    class="ai-runs-status-select"
                     multiple="multiple"
-                    size="5"
+                    size="1"
                     onchange="submitFilterForm(this);"
                     asp-items="Model.StatusOptions">
             </select>
