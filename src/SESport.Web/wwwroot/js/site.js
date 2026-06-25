@@ -140,12 +140,22 @@
          {
             await replaceTargetFromFormAsync(form);
          }
+         else if(form.dataset.ajaxSuccess === "update-participation")
+         {
+            await updateParticipationFromResponseAsync(response);
+         }
 
          decrementCounter(form.dataset.ajaxDecrementTarget);
          refreshCheckboxControls();
       }
-      catch
+      catch(error)
       {
+         if(form.dataset.ajaxSuccess === "update-participation")
+         {
+            console.error(error);
+            return;
+         }
+
          HTMLFormElement.prototype.submit.call(form);
       }
       finally
@@ -169,6 +179,36 @@
       event.preventDefault();
       await replaceFromFormAsync(form);
    });
+
+   async function updateParticipationFromResponseAsync(response)
+   {
+      if(!(response instanceof Response))
+      {
+         return;
+      }
+
+      let payload = null;
+
+      try
+      {
+         payload = await response.clone().json();
+      }
+      catch
+      {
+         return;
+      }
+
+      if(Array.isArray(payload?.results))
+      {
+         payload.results.forEach(updateParticipationCellByResult);
+         return;
+      }
+
+      if(payload?.result)
+      {
+         updateParticipationCellByResult(payload.result);
+      }
+   }
 
    function decrementCounter(selector)
    {
@@ -1902,6 +1942,8 @@
             isOpen
          );
          cell.append(wrapper);
+         updateParticipationRunId(cell, "");
+         updateParticipationRowStatus(cell, "");
          body.append(createParticipationEmptyRunBlock(cell));
          return;
       }
@@ -1947,7 +1989,7 @@
          return [];
       }
 
-      if(Array.isArray(result.checks) && result.checks.length > 0)
+      if(Array.isArray(result.checks))
       {
          return result.checks
             .map(check => normalizeParticipationCheckResult(check))
@@ -2407,6 +2449,10 @@
       if(typeof runId === "string" && runId.trim() !== "")
       {
          cell.dataset.participationRunId = runId.trim();
+      }
+      else
+      {
+         delete cell.dataset.participationRunId;
       }
 
       delete cell.dataset.participationQueuedFromRunId;

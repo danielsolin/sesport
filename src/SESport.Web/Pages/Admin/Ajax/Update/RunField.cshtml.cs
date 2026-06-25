@@ -2,10 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.AI.Persistence;
 using SESport.Web.Pages.Admin.Runs;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
-public sealed class RunFieldModel(AiRepository repository) : PageModel
+public sealed class RunFieldModel(
+   AiRepository repository,
+   BroadcastParticipationService participationService
+) : PageModel
 {
    public async Task<IActionResult> OnPostAsync(
       Guid id,
@@ -14,30 +18,35 @@ public sealed class RunFieldModel(AiRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
-      field = NormalizeField(field);
-      value = value?.Trim();
-
-      if(id == Guid.Empty)
-      {
-         return BadRequest(new { error = "Run ID is required." });
-      }
-
-      if(string.IsNullOrWhiteSpace(field))
-      {
-         return BadRequest(new { error = "Field is required." });
-      }
-
-      if(!string.Equals(
-         field,
-         "executionenvironment",
-         StringComparison.Ordinal
-      ))
-      {
-         return BadRequest(new { error = "Unsupported field." });
-      }
-
       try
       {
+         field = NormalizeField(field);
+         value = value?.Trim();
+
+         if(id == Guid.Empty)
+         {
+            return BadRequest(new { error = "Run ID is required." });
+         }
+
+         if(string.IsNullOrWhiteSpace(field))
+         {
+            return BadRequest(new { error = "Field is required." });
+         }
+
+         if(string.Equals(field, "archive", StringComparison.Ordinal))
+         {
+            return await ArchiveRunAsync(id, cancellationToken);
+         }
+
+         if(!string.Equals(
+            field,
+            "executionenvironment",
+            StringComparison.Ordinal
+         ))
+         {
+            return BadRequest(new { error = "Unsupported field." });
+         }
+
          var run = await repository.GetRunAsync(id, cancellationToken);
 
          if(run is null)
@@ -98,6 +107,53 @@ public sealed class RunFieldModel(AiRepository repository) : PageModel
             StatusCode = StatusCodes.Status500InternalServerError
          };
       }
+   }
+
+   private async Task<IActionResult> ArchiveRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      var run = await repository.GetRunAsync(id, cancellationToken);
+
+      if(run is null)
+      {
+         return NotFound();
+      }
+
+      if(!Guid.TryParse(run.CorrelationId, out var broadcastId))
+      {
+         return BadRequest(new
+         {
+            error = "Run is not linked to a broadcast."
+         });
+      }
+
+      if(!await repository.ArchiveRunAsync(id, cancellationToken))
+      {
+         return NotFound();
+      }
+
+      var results =
+         await participationService.GetParticipationCheckResultsAsync(
+            [broadcastId],
+            cancellationToken
+         );
+
+      object result = results.Count > 0
+         ? results[0]
+         : new
+         {
+            id = broadcastId.ToString(),
+            checks = Array.Empty<object>()
+         };
+
+      return new JsonResult(new
+      {
+         updated = true,
+         field = "archive",
+         result
+      });
    }
 
    private static string NormalizeField(string? field)

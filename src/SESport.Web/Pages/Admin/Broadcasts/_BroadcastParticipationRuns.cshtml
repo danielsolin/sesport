@@ -1,6 +1,7 @@
 @model SESport.Web.Pages.Admin.Broadcasts.BroadcastParticipationRunsViewModel
 @{
    var broadcast = Model.Broadcast;
+   var runFieldUrl = Url.Page("/Admin/Ajax/Update/RunField");
    var baseActivityUrl = Url.Page(
       "/Admin/Activities/Edit",
       Model.PageModel.GetActivityRouteValues(broadcast.Id)
@@ -257,44 +258,17 @@
                                  View Run
                               </a>
                               <form method="post"
-                                    asp-page-handler="ArchiveRun"
+                                    action="@runFieldUrl"
                                     class="broadcast-ai-check-archive-form"
-                                    data-ajax-success="replace-target"
-                                    data-ajax-replace-target=
-                                       "[data-broadcast-results]">
+                                    data-ajax-success=
+                                       "update-participation">
                                  @Html.AntiForgeryToken()
                                  <input type="hidden"
-                                        name="runId"
+                                        name="id"
                                         value="@check.RunId" />
                                  <input type="hidden"
-                                        name="@RouteKeys.Date"
-                                        value="@Model.PageModel.DateText" />
-                                 <input type="hidden"
-                                        name="@RouteKeys.HideReplays"
-                                        value="@Model.PageModel.HideReplays" />
-                                 <input type="hidden"
-                                        name="@RouteKeys.ShowHidden"
-                                        value="@Model.PageModel.ShowHidden" />
-                                 <input type="hidden"
-                                        name="@RouteKeys.SortColumn"
-                                        value="@Model.PageModel.SortColumn" />
-                                 <input type="hidden"
-                                        name="@RouteKeys.SortAsc"
-                                        value="@Model.PageModel.SortAsc" />
-                                 @foreach(var selectedSport
-                                    in Model.PageModel.SelectedSports)
-                                 {
-                                    if(string.IsNullOrWhiteSpace(
-                                       selectedSport
-                                    ))
-                                    {
-                                       continue;
-                                    }
-
-                                    <input type="hidden"
-                                           name="@RouteKeys.SelectedSports"
-                                           value="@selectedSport" />
-                                 }
+                                        name="field"
+                                        value="archive" />
                                  <button type="submit"
                                          class="broadcast-ai-check-archive-link
                                             ses-nowrap">

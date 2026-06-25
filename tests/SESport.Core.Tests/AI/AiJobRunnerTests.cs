@@ -497,6 +497,14 @@ public class AiJobRunnerTests
          return Task.CompletedTask;
       }
 
+      public Task<bool> ArchiveRunAsync(
+         Guid id,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult(true);
+      }
+
       public Task FailRunAsync(
          Guid id,
          string errorMessage,
