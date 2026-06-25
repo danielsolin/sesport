@@ -1401,32 +1401,37 @@ public class AiProviderClientTests
 
    private static string CreateLlamaFindPageCallResponseJson()
    {
-      return $$"""
+      return JsonSerializer.Serialize(new
       {
-        "choices": [
-          {
-            "message": {
-              "role": "assistant",
-              "content": "",
-              "tool_calls": [
-                {
-                  "id": "call_3",
-                  "type": "function",
-                  "function": {
-                    "name": "{{WebToolNames.FindInPage}}",
-                    "arguments":
-                      "{\"url\":\"https://example.test/roster\"," +
-                      "\"find\":\"Sweden\"}"
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  @role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_3",
+                        type = "function",
+                        function = new
+                        {
+                           name = WebToolNames.FindInPage,
+                           arguments =
+                              "{\"url\":\"https://example.test/roster\"," +
+                              "\"find\":\"Sweden\"}"
+                        }
+                     }
                   }
-                }
-              ]
-            },
-            "finish_reason": "tool_calls"
-          }
-        ],
-        "model": "openai/gpt-4o-2024-08-06"
-      }
-      """;
+               },
+               finish_reason = "tool_calls"
+            }
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
    }
 
    private static string CreateLlamaFindPageCallExtraTokenResponseJson()
