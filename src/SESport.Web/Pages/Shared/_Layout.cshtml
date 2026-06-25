@@ -44,9 +44,6 @@
    var entitiesClass = isEntities
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
-   var activityProposalsClass = isActivityProposals
-      ? $"{adminMenuLink} is-active"
-      : adminMenuLink;
    var configClass = isConfig
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
@@ -85,10 +82,6 @@
                <a class="@entitiesClass"
                   asp-page="/Admin/Entities/Index">
                   Entities
-               </a>
-               <a class="@activityProposalsClass"
-                  asp-page="/Admin/Activities/Proposals">
-                  Activity Proposals
                </a>
                <a class="@configClass"
                   asp-page="/Admin/Config/Index">

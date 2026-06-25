@@ -187,6 +187,28 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public void GetConfigNavigationGroupsPlacesActivityProposalsInLegacy()
+   {
+      using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      var groups = repository.GetConfigNavigationGroups();
+      var legacyGroup = Assert.Single(
+         groups,
+         group => string.Equals(
+            group.Title,
+            "Legacy",
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+
+      var legacyItem = Assert.Single(legacyGroup.Items);
+      Assert.Equal("Activity Proposals", legacyItem.Title);
+      Assert.Equal("/Admin/Activities/Proposals", legacyItem.Href);
+      Assert.Equal("Legacy", groups[^1].Title);
+   }
+
+   [Fact]
    public async Task UpdateEntityWatchPriorityAsyncUpdatesStoredEntity()
    {
       var entityId = Guid.NewGuid();

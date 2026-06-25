@@ -211,6 +211,15 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          new AdminNavGroup(
             "Reference tables",
             referenceItems
+         ),
+         new AdminNavGroup(
+            "Legacy",
+            [
+               new AdminNavItem(
+                  "Activity Proposals",
+                  "/Admin/Activities/Proposals"
+               )
+            ]
          )
       ];
    }
