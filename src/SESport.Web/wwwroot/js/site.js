@@ -1252,11 +1252,11 @@
             const resultRunId = typeof result.runId === "string"
                ? result.runId.trim()
                : "";
+            const participation = getParticipationValue(result);
             const isFinal =
                (typeof result.error === "string"
                   && result.error.trim() !== "") ||
-               (typeof result.swedishParticipation === "string"
-                  && result.swedishParticipation.trim() !== "") ||
+               participation !== "" ||
                statusId === "completed" ||
                statusId === "failed";
             const queuedFromRunId = cell instanceof HTMLElement
@@ -1986,10 +1986,7 @@
          toolRoundCount: typeof check.toolRoundCount === "number"
             ? check.toolRoundCount
             : 0,
-         swedishParticipation:
-            typeof check.swedishParticipation === "string"
-               ? check.swedishParticipation.trim()
-               : "",
+         swedishParticipation: getParticipationValue(check),
          participants,
          sourceUrls: Array.isArray(check.sourceUrls)
             ? check.sourceUrls
@@ -1999,10 +1996,32 @@
          summaryText: typeof check.summaryText === "string"
             && check.summaryText.trim() !== ""
             ? check.summaryText.trim()
-            : check.swedishParticipation === ""
-               ? formatParticipationStatus(statusId)
-               : statusId
+               : getParticipationValue(check) === ""
+                  ? formatParticipationStatus(statusId)
+                  : statusId
       };
+   }
+
+   function getParticipationValue(check)
+   {
+      if(!check || typeof check !== "object")
+      {
+         return "";
+      }
+
+      if(typeof check.swedishParticipation === "string")
+      {
+         return check.swedishParticipation.trim();
+      }
+
+      if(typeof check.participation === "string")
+      {
+         return check.participation.trim();
+      }
+
+      return typeof check.Participation === "string"
+         ? check.Participation.trim()
+         : "";
    }
 
    function createParticipationRunsShell(
@@ -2023,7 +2042,7 @@
       head.className = "broadcast-ai-check-runs-head";
       const headRow = document.createElement("tr");
       const headCell = document.createElement("th");
-      headCell.colSpan = 6;
+      headCell.colSpan = 4;
 
       const headerBar = document.createElement("div");
       headerBar.className = "broadcast-ai-check-runs-summary-bar";

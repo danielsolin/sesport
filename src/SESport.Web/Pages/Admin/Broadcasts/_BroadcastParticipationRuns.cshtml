@@ -49,6 +49,12 @@
                .Equals("Unknown", StringComparison.OrdinalIgnoreCase)
                ? "tool-trace-badge tool-trace-badge-count"
                : "tool-trace-badge tool-trace-badge-temperature";
+   const string participantLinkClass =
+      "broadcast-ai-check-participant-link";
+   const string participantCreateFormClass =
+      "broadcast-ai-check-participant-create-form";
+   const string createButtonClass =
+      "broadcast-ai-check-participant-create-button";
 }
 
 <div class="broadcast-ai-check-runs">
@@ -161,18 +167,12 @@
                         <div class="broadcast-ai-check-participants">
                            @foreach(var participant in participantItems)
                            {
-                              var linkClass =
-                                 "broadcast-ai-check-participant-link";
-                              var formClass =
-                                 "broadcast-ai-check-participant-create-form";
-                              var buttonClass =
-                                 "broadcast-ai-check-participant-create-button";
                               var createEntityLabel =
                                  $"Create entity for {participant.Name}";
                               <div class="broadcast-ai-check-participant-row">
                                  @if(participant.EditUrl is not null)
                                  {
-                                    <a class="@linkClass"
+                                    <a class="@participantLinkClass"
                                        href="@participant.EditUrl"
                                        target="_blank"
                                        rel="noreferrer noopener"
@@ -192,7 +192,7 @@
                                     <form method="post"
                                           action=
                                              "@Model.CreateParticipantEntityUrl"
-                                          class="@formClass"
+                                          class="@participantCreateFormClass"
                                           data-ajax-success="replace">
                                        @Html.AntiForgeryToken()
                                        <input
@@ -204,7 +204,7 @@
                                           name="templateEntityId"
                                           value="@templateEntityId" />
                                        <button type="submit"
-                                               class="@buttonClass"
+                                               class="@createButtonClass"
                                                title="Create entity"
                                                aria-label="@createEntityLabel">
                                           +

@@ -10,7 +10,8 @@ public sealed class ParticipationPollingUiTests
       );
       var htmlPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastParticipationRuns.cshtml"
+         "src/SESport.Web/Pages/Admin/Broadcasts",
+         "_BroadcastParticipationRuns.cshtml"
       );
       var scriptPath = Path.Combine(
          repoRoot,
@@ -26,5 +27,8 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);
+      Assert.Contains("headCell.colSpan = 4", script);
+      Assert.Contains("function getParticipationValue", script);
+      Assert.Contains("check.participation", script);
    }
 }

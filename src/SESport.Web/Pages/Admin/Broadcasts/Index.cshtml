@@ -34,7 +34,9 @@
       <form method="get"
          class="filter-form"
          data-ajax-replace-target="[data-broadcast-results]">
-      <input type="hidden" name="@RouteKeys.SortColumn" value="@Model.SortColumn" />
+      <input type="hidden"
+             name="@RouteKeys.SortColumn"
+             value="@Model.SortColumn" />
       <input type="hidden"
              name="@RouteKeys.SortAsc"
              value="@Model.SortAsc.ToString()" />
@@ -285,7 +287,8 @@
                                         value="@Model.DateText" />
                                  <input type="hidden"
                                         name="isHidden"
-                                        value="@broadcast.IsHidden.ToString()" />
+                                        value=
+                                           "@broadcast.IsHidden.ToString()" />
                                  <input type="hidden"
                                         name="@RouteKeys.SortColumn"
                                         value="@Model.SortColumn" />
