@@ -19,6 +19,10 @@
    color: var(--brand);
 }
 
+.site-header {
+   background: rgba(255, 204, 0, 0.22);
+}
+
 .index-heading {
    display: flex;
    align-items: flex-start;
