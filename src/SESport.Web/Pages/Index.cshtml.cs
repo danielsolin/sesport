@@ -81,15 +81,22 @@ public class IndexModel(
          CountParticipants(activity.RelatedPersonEntities));
    }
 
-   private static int CountParticipants(string? participants)
+   internal static IReadOnlyList<string> SplitParticipantNames(
+      string? participants
+   )
    {
       return string.IsNullOrWhiteSpace(participants)
-         ? 0
+         ? []
          : participants.Split(
                ", ",
                StringSplitOptions.RemoveEmptyEntries |
                StringSplitOptions.TrimEntries
-            ).Length;
+            );
+   }
+
+   private static int CountParticipants(string? participants)
+   {
+      return SplitParticipantNames(participants).Count;
    }
 
    private static DateOnly? ParseDate(string? date)

@@ -1,0 +1,346 @@
+:root {
+   --background: #f6faff;
+   --surface: #ffffff;
+   --text: #15202b;
+   --muted: #567086;
+   --line: #c9dcef;
+   --accent: #006aa8;
+   --accent-strong: #004f80;
+   --brand: #006aa8;
+   --warning: #8a6500;
+   --warning-bg: #fff0b8;
+}
+
+.brand {
+   color: var(--brand);
+}
+
+.brand:hover {
+   color: var(--brand);
+}
+
+.index-heading {
+   display: flex;
+   align-items: flex-start;
+   justify-content: flex-start;
+   gap: 18px;
+   width: min(974px, 100%);
+   margin-left: auto;
+   margin-right: auto;
+   margin-bottom: 28px;
+}
+
+.index-heading-left {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 12px;
+   flex-wrap: nowrap;
+}
+
+.index-participants {
+   flex: 0 0 170px;
+   width: 170px;
+   min-width: 170px;
+}
+
+.index-participants-pill {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   gap: 8px;
+   width: 100%;
+   min-height: 48px;
+   padding: 7px 14px;
+   border: 1px solid rgba(255, 204, 0, 0.55);
+   border-radius: 999px;
+   background: #006aa8;
+   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
+   color: #ffcc00;
+   font-size: 16px;
+   font-weight: 800;
+   line-height: 1.2;
+}
+
+.index-participants-count {
+   color: inherit;
+   text-decoration: underline;
+   text-decoration-thickness: 2px;
+   text-underline-offset: 3px;
+}
+
+.index-participants-value {
+   margin-left: 6px;
+}
+
+.date-select {
+   flex: 0 0 170px;
+   width: 170px;
+   min-width: 170px;
+}
+
+.date-select-control {
+   position: relative;
+   width: 100%;
+}
+
+.date-select-control::after {
+   content: "";
+   position: absolute;
+   top: 50%;
+   right: 16px;
+   width: 8px;
+   height: 8px;
+   border-right: 2px solid #ffcc00;
+   border-bottom: 2px solid #ffcc00;
+   transform: translateY(-65%) rotate(45deg);
+   pointer-events: none;
+}
+
+.date-select-input {
+   width: 100%;
+   min-height: 48px;
+   padding: 7px 32px 7px 18px;
+   border: 1px solid rgba(255, 204, 0, 0.55);
+   border-radius: 999px;
+   background: #006aa8;
+   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
+   color: #ffcc00;
+   font-size: 16px;
+   font-weight: 800;
+   line-height: 1.2;
+   text-align: center;
+   appearance: none;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+}
+
+.date-select-input:focus {
+   outline: 2px solid rgba(255, 204, 0, 0.35);
+   outline-offset: 2px;
+}
+
+.date-select-input option {
+   background: #006aa8;
+   color: #ffcc00;
+   font-weight: 600;
+}
+
+.date-select-input option:checked,
+.date-select-input option:hover,
+.date-select-input option:focus {
+   background: #006aa8;
+   color: #ffcc00;
+}
+
+.activity-agenda {
+   display: grid;
+   gap: 24px;
+   width: min(974px, 100%);
+   margin-left: auto;
+   margin-right: auto;
+}
+
+.activity-now-marker {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   margin: 4px 0 2px;
+   scroll-margin-top: 24px;
+}
+
+.activity-now-marker-line {
+   flex: 1;
+   height: 1px;
+   background:
+      linear-gradient(
+         90deg,
+         transparent,
+         rgba(0, 106, 168, 0.22),
+         transparent
+      );
+}
+
+.activity-now-marker-badge {
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+   padding: 7px 14px;
+   border: 1px solid rgba(255, 204, 0, 0.45);
+   border-radius: 999px;
+   background: rgba(255, 204, 0, 0.22);
+   color: var(--accent);
+   font-size: 12px;
+   font-weight: 800;
+   letter-spacing: 0.04em;
+   text-transform: uppercase;
+   white-space: nowrap;
+   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
+}
+
+.activity-agenda-section {
+   display: grid;
+   grid-template-columns: 160px minmax(0, 1fr);
+   gap: 14px;
+   align-items: stretch;
+}
+
+.activity-agenda-time {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+   gap: 6px;
+   padding-top: 4px;
+}
+
+.activity-time-row {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   flex-wrap: wrap;
+}
+
+.activity-time-badge {
+   display: inline-flex;
+   align-items: center;
+   min-height: 30px;
+   padding: 0 12px;
+   border-radius: 999px;
+   background: var(--accent);
+   color: #ffcc00;
+   font-size: 12px;
+   font-weight: 800;
+   letter-spacing: 0.02em;
+   white-space: nowrap;
+}
+
+.activity-time-badge-muted {
+   background: #e8ece7;
+   color: var(--muted);
+}
+
+.activity-time-count {
+   padding-left: 4px;
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 700;
+}
+
+.activity-time-participants {
+   padding-left: 4px;
+   color: var(--text);
+   font-size: 12px;
+   font-weight: 600;
+   line-height: 1.25;
+}
+
+.activity-participants-toggle {
+   display: grid;
+   gap: 4px;
+   margin: 0;
+}
+
+.activity-participants-toggle > summary {
+   position: relative;
+   display: block;
+   padding-right: 16px;
+   cursor: pointer;
+   list-style: none;
+}
+
+.activity-participants-toggle > summary::-webkit-details-marker {
+   display: none;
+}
+
+.activity-participants-toggle[open] > summary {
+   display: none;
+}
+
+.activity-participants-more {
+   margin-left: 6px;
+   color: var(--muted);
+   font-weight: 700;
+   white-space: nowrap;
+}
+
+.activity-participants-expanded {
+   display: block;
+   padding-left: 0;
+}
+
+.activity-agenda-items {
+   display: grid;
+   gap: 10px;
+   align-self: stretch;
+   padding-left: 14px;
+   border-left: 2px solid var(--line);
+   max-width: 800px;
+}
+
+.activity-agenda-section-untimed .activity-agenda-items {
+   border-left-style: dashed;
+}
+
+.activity-entry {
+   padding: 12px 14px;
+   border: 2px solid #006aa8;
+   border-radius: 12px;
+   background: #eaf4ff;
+   box-shadow: 0 1px 0 rgba(20, 22, 20, 0.02);
+   font-size: 13px;
+   line-height: 1.35;
+}
+
+.activity-meta {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 6px;
+   margin-bottom: 3px;
+   color: var(--muted);
+   font-size: 11px;
+   font-weight: 700;
+   line-height: 1.2;
+   text-transform: uppercase;
+}
+
+.activity-sport {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+}
+
+.activity-time-channel {
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 700;
+   line-height: 1.2;
+   white-space: nowrap;
+}
+
+.activity-teaser {
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 400;
+   line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+   .index-heading {
+      width: 100%;
+   }
+
+   .activity-agenda-section {
+      grid-template-columns: 125px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+   }
+
+   .activity-agenda-time {
+      padding-top: 2px;
+   }
+
+   .activity-agenda-items {
+      padding-left: 10px;
+   }
+}

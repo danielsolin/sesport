@@ -59,6 +59,12 @@
          href="~/vendor/multi-select-dropdown-js/MultiSelect.min.css"
          asp-append-version="true" />
    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+   @if(!isAdmin)
+   {
+      <link rel="stylesheet"
+            href="~/css/public.css"
+            asp-append-version="true" />
+   }
 </head>
 <body>
    <header class="site-header">

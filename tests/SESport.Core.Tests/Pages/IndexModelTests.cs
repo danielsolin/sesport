@@ -20,6 +20,16 @@ public sealed class IndexModelTests
       Assert.Equal(5, total);
    }
 
+   [Fact]
+   public void SplitParticipantNames_TrimsAndSplitsNames()
+   {
+      var names = IndexModel.SplitParticipantNames(
+         " Anna, Björn ,  Cecilia "
+      );
+
+      Assert.Equal(["Anna", "Björn", "Cecilia"], names);
+   }
+
    private static ActivityListItem CreateActivity(
       string title,
       string participants

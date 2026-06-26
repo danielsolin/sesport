@@ -31,7 +31,7 @@
       </div>
       @if(Model.TotalParticipantsCount is not null)
       {
-         <div class="index-participants">
+         <div class="index-participants date-select">
             <div class="index-participants-pill">
                <span>Svenskar:</span>
                <span class="index-participants-count index-participants-value">
@@ -96,23 +96,56 @@ else
                   @if(!string.IsNullOrWhiteSpace(
                      activity.RelatedPersonEntities))
                   {
+                     var participantNames =
+                        IndexModel.SplitParticipantNames(
+                           activity.RelatedPersonEntities
+                        );
                      <div class="activity-time-participants">
-                        @{
-                           var participantNames = activity
-                              .RelatedPersonEntities
-                              .Split(
-                                 ", ",
-                                 StringSplitOptions.RemoveEmptyEntries
-                              );
-                        }
-                        @for(var i = 0; i < participantNames.Length; i++)
+                        @if(participantNames.Count <= 5)
                         {
-                           <span>@participantNames[i]</span>
-
-                           @if(i < participantNames.Length - 1)
+                           @for(var i = 0; i < participantNames.Count; i++)
                            {
-                              <br />
+                              <span>@participantNames[i]</span>
+
+                              @if(i < participantNames.Count - 1)
+                              {
+                                 <br />
+                              }
                            }
+                        }
+                        else
+                        {
+                           <details class="activity-participants-toggle">
+                              <summary class="activity-participants-summary">
+                                 @for(var i = 0; i < 5; i++)
+                                 {
+                                    <span>@participantNames[i]</span>
+
+                                    @if(i < 4)
+                                    {
+                                       <br />
+                                    }
+                                 }
+                                 <span class="activity-participants-more">
+                                    + @(participantNames.Count - 5) till
+                                 </span>
+                              </summary>
+                              <div class="activity-participants-expanded">
+                                 @for(
+                                    var i = 0;
+                                    i < participantNames.Count;
+                                    i++
+                                 )
+                                 {
+                                    <span>@participantNames[i]</span>
+
+                                    @if(i < participantNames.Count - 1)
+                                    {
+                                       <br />
+                                    }
+                                 }
+                              </div>
+                           </details>
                         }
                      </div>
                   }

@@ -16,6 +16,9 @@ public sealed class IndexMarkupTests
 
       Assert.Contains("index-participants-pill", html);
       Assert.Contains("TotalParticipantsCount", html);
-      Assert.Contains("Deltagare:", html);
+      Assert.Contains("Svenskar:", html);
+      Assert.Contains("activity-participants-toggle", html);
+      Assert.Contains("activity-participants-more", html);
+      Assert.Contains("SplitParticipantNames", html);
    }
 }
