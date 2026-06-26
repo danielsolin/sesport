@@ -1,13 +1,13 @@
 :root {
-   --background: #f7f8f5;
+   --background: #f9fcfe;
    --surface: #ffffff;
-   --text: #141614;
-   --muted: #667067;
-   --line: #dfe5dc;
-   --accent: #006c67;
-   --accent-strong: #004f4b;
-   --warning: #8a4b00;
-   --warning-bg: #fff3df;
+   --text: #15202b;
+   --muted: #567086;
+   --line: #c9dcef;
+   --accent: #006aa8;
+   --accent-strong: #004f80;
+   --warning: #8a6500;
+   --warning-bg: #fff0b8;
 }
 
 * {
@@ -51,8 +51,9 @@ a:hover {
    justify-content: space-between;
    gap: 16px;
    padding: 10px 32px;
-   border-bottom: 1px solid var(--line);
-   background: var(--surface);
+   border-bottom: 1px solid rgba(255, 204, 0, 0.22);
+   background: #006aa8;
+   color: #ffcc00;
 }
 
 .site-header-main {
@@ -64,9 +65,13 @@ a:hover {
 
 .brand {
    flex: 0 0 auto;
-   color: var(--text);
+   color: #ffcc00;
    font-size: 18px;
    font-weight: 800;
+}
+
+.brand:hover {
+   color: #ffcc00;
 }
 
 .site-nav {
@@ -75,6 +80,14 @@ a:hover {
    gap: 18px;
    font-size: 14px;
    font-weight: 700;
+}
+
+.site-nav a {
+   color: #ffcc00;
+}
+
+.site-nav a:hover {
+   color: #ffcc00;
 }
 
 .admin-top-menu {
@@ -91,10 +104,10 @@ a:hover {
    justify-content: center;
    min-height: 26px;
    padding: 0 8px;
-   border: 1px solid var(--line);
+   border: 1px solid rgba(255, 204, 0, 0.55);
    border-radius: 3px;
-   background: var(--background);
-   color: var(--text);
+   background: #006aa8;
+   color: #ffcc00;
    font-size: 12px;
    font-weight: 800;
    line-height: 1.2;
@@ -103,9 +116,9 @@ a:hover {
 
 .admin-top-menu-link:hover,
 .admin-top-menu-link.is-active {
-   border-color: var(--accent);
-   background: var(--accent);
-   color: #ffffff;
+   border-color: rgba(255, 204, 0, 0.55);
+   background: #005b91;
+   color: #ffcc00;
 }
 
 .page-shell {
@@ -347,7 +360,7 @@ h2 {
 }
 
 .admin-sidebar a.is-active {
-   background: rgba(0, 108, 103, 0.08);
+   background: rgba(0, 106, 168, 0.08);
    color: var(--accent-strong);
 }
 
@@ -356,7 +369,7 @@ h2 {
 }
 
 .admin-sidebar-group a:hover {
-   background: rgba(0, 108, 103, 0.06);
+   background: rgba(0, 106, 168, 0.06);
 }
 
 .compact-heading {
@@ -394,7 +407,7 @@ h2 {
 }
 
 .broadcast-inline-editable:hover {
-   background: rgba(0, 108, 103, 0.05);
+   background: rgba(0, 106, 168, 0.05);
 }
 
 .broadcast-inline-edit-display {
@@ -427,7 +440,7 @@ h2 {
 }
 
 .entity-inline-editable:hover {
-   background: rgba(0, 108, 103, 0.05);
+   background: rgba(0, 106, 168, 0.05);
 }
 
 .entity-inline-edit-display {
@@ -484,16 +497,16 @@ h2 {
 }
 
 .broadcast-org-autocomplete.is-locked .broadcast-org-entity-input {
-   background: #edf0f2;
-   border-color: #c7d0d6;
-   color: #5f6b75;
+   background: #ecf5fd;
+   border-color: #bed3e4;
+   color: #536c81;
    cursor: not-allowed;
    opacity: 1;
    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 
 .broadcast-org-autocomplete.is-locked .broadcast-org-entity-input::selection {
-   background: rgba(95, 107, 117, 0.18);
+   background: rgba(0, 106, 168, 0.18);
 }
 
 .broadcast-org-entity-suggestions {
@@ -538,7 +551,7 @@ h2 {
 
 .broadcast-org-entity-option:hover,
 .broadcast-org-entity-option.is-active {
-   background: rgba(0, 108, 103, 0.08);
+   background: rgba(0, 106, 168, 0.08);
 }
 
 .broadcasts-col-categories {
