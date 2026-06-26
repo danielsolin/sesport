@@ -71,6 +71,81 @@ public sealed class ActivityRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task GetPublishedForDateAsyncOrdersParticipantsByWatchPriority()
+   {
+      var now = DateTimeOffset.UtcNow;
+      var selectedDate = SportDay.Today(now).StartDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var tierOneId = Guid.NewGuid();
+      var reviewAlphaId = Guid.NewGuid();
+      var reviewBravoId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt
+      );
+      await InsertEntityAsync(
+         dataSource,
+         tierOneId,
+         "Zulu Tier",
+         TrackedEntityTypeIds.Person,
+         "tier_1"
+      );
+      await InsertEntityAsync(
+         dataSource,
+         reviewAlphaId,
+         "Alpha Review",
+         TrackedEntityTypeIds.Person,
+         "review"
+      );
+      await InsertEntityAsync(
+         dataSource,
+         reviewBravoId,
+         "Bravo Review",
+         TrackedEntityTypeIds.Person,
+         "review"
+      );
+      await InsertActivityEntityLinkAsync(dataSource, activityId, reviewBravoId);
+      await InsertActivityEntityLinkAsync(dataSource, activityId, tierOneId);
+      await InsertActivityEntityLinkAsync(dataSource, activityId, reviewAlphaId);
+
+      try
+      {
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         Assert.Equal(
+            "Zulu Tier, Alpha Review, Bravo Review",
+            activity.RelatedPersonEntities
+         );
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, reviewBravoId);
+         await DeleteEntityAsync(dataSource, reviewAlphaId);
+         await DeleteEntityAsync(dataSource, tierOneId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();
@@ -138,7 +213,8 @@ public sealed class ActivityRepositoryTests
       NpgsqlDataSource dataSource,
       Guid entityId,
       string entityName,
-      string entityTypeId
+      string entityTypeId,
+      string watchPriorityId = "review"
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -163,13 +239,14 @@ public sealed class ActivityRepositoryTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            @watch_priority_id,
             'short_term'
          )
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
+      command.Parameters.AddWithValue("watch_priority_id", watchPriorityId);
 
       await command.ExecuteNonQueryAsync();
    }
