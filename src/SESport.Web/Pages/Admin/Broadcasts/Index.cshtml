@@ -159,6 +159,8 @@
                         "/Admin/Activities/Edit",
                         Model.GetActivityRouteValues(broadcast.Id)
                      );
+                     var organizationAutocompleteClass =
+                        "broadcast-org-autocomplete is-locked";
                      <tr class="broadcast-participation-main-row"
                          data-broadcast-row="true"
                          data-broadcast-id="@broadcast.Id"
@@ -221,7 +223,7 @@
                             data-broadcast-inline-edit-label=
                                "@broadcast.OrganizationEntityName"
                             title="Double-click to edit">
-                           <div class="broadcast-org-autocomplete"
+                           <div class="@organizationAutocompleteClass"
                                 data-org-entity-autocomplete>
                               <input class="broadcast-org-entity-input"
                                      type="text"
@@ -229,6 +231,7 @@
                                      data-org-entity-input
                                      autocomplete="off"
                                      spellcheck="false"
+                                     readonly
                                      value=
                                         "@broadcast.OrganizationEntityName" />
                               <input type="hidden"

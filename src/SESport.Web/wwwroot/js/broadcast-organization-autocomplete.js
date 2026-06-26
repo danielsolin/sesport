@@ -100,17 +100,14 @@
 
       const unlockForEdit = () => {
          closeSuggestions();
-         hiddenId.value = "";
-         input.value = "";
-         cell.dataset.broadcastInlineEditValue = "";
-         cell.dataset.broadcastInlineEditLabel = "";
          setLockedState(false);
          window.requestAnimationFrame(() => {
             input.focus();
+            input.select();
          });
       };
 
-      setLockedState(originalId !== "");
+      setLockedState(true);
 
       const renderSuggestions = items => {
          suggestions.replaceChildren();
@@ -284,7 +281,7 @@
          input.value = originalLabel;
          cell.dataset.broadcastInlineEditValue = originalValue;
          cell.dataset.broadcastInlineEditLabel = originalLabel;
-         setLockedState(originalValue !== "");
+         setLockedState(true);
          closeSuggestions();
       };
 
@@ -357,9 +354,31 @@
          window.setTimeout(() => {
             if(!container.contains(document.activeElement))
             {
-               if(hiddenId.value.trim() === "")
+               const currentValue = hiddenId.value.trim();
+               const currentLabel = input.value.trim();
+
+               if(currentValue === "")
                {
-                  revertToOriginal();
+                  if(currentLabel === "")
+                  {
+                     closeSuggestions();
+
+                     if(
+                        (hiddenId.dataset.broadcastOrgOriginalValue ?? "")
+                           .trim() !== ""
+                     )
+                     {
+                        void saveBroadcastOrganizationAsync(container);
+                     }
+                     else
+                     {
+                        setLockedState(true);
+                     }
+                  }
+                  else
+                  {
+                     revertToOriginal();
+                  }
                }
                else
                {
@@ -541,7 +560,7 @@
          hiddenId.value = originalId;
          cell.dataset.broadcastInlineEditValue = originalId;
          cell.dataset.broadcastInlineEditLabel = originalLabel;
-         setBroadcastOrganizationLockState(container, originalId !== "");
+         setBroadcastOrganizationLockState(container, true);
       }
    }
 
