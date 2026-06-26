@@ -20,7 +20,16 @@
 }
 
 .site-header {
-   background: rgba(255, 204, 0, 0.22);
+   background: #006aa8;
+   color: #ffcc00;
+}
+
+.site-header a {
+   color: #ffcc00;
+}
+
+.site-header a:hover {
+   color: #ffcc00;
 }
 
 .index-heading {
@@ -289,10 +298,21 @@
    padding: 12px 14px;
    border: 2px solid #006aa8;
    border-radius: 12px;
-   background: #eaf4ff;
+   background: #dbe7f1;
+   color: #006aa8;
    box-shadow: 0 1px 0 rgba(20, 22, 20, 0.02);
    font-size: 13px;
    line-height: 1.35;
+}
+
+.activity-entry h2,
+.activity-entry p,
+.activity-entry span {
+   color: inherit;
+}
+
+.activity-entry .activity-meta {
+   color: #004f80;
 }
 
 .activity-meta {
