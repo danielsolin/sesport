@@ -980,7 +980,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
    public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(
       string? term,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      bool excludePersonAndPair = false
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -1026,14 +1027,35 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                   or l.target_entity_id = e.id
             ) linked_entities
          ) linked on true
-         where e.canonical_name ilike @term escape '\'
+         where (
+            e.canonical_name ilike @term escape '\'
             or coalesce(linked.related_entity_names, '') ilike @term
                escape '\'
+         )
+         and (
+            @exclude_person_and_pair = false
+            or e.entity_type_id not in (
+               @person_type_id,
+               @pair_type_id
+            )
+         )
          order by e.canonical_name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("term", $"%{escapedTerm}%");
+      command.Parameters.AddWithValue(
+         "exclude_person_and_pair",
+         excludePersonAndPair
+      );
+      command.Parameters.AddWithValue(
+         "person_type_id",
+         TrackedEntityTypeIds.Person
+      );
+      command.Parameters.AddWithValue(
+         "pair_type_id",
+         TrackedEntityTypeIds.Pair
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );

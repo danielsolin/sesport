@@ -10,7 +10,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       string? term,
       string? sortColumn,
       CancellationToken cancellationToken,
-      bool? sortAsc = null
+      bool? sortAsc = null,
+      bool organizationOnly = false
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -22,7 +23,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
 
       var results = await repository.SearchEntitiesAsync(
          term,
-         cancellationToken
+         cancellationToken,
+         organizationOnly
       );
       results = SortEntities(
          results,

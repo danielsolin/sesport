@@ -415,10 +415,16 @@
 
       const id = typeof item.id === "string"
          ? item.id.trim()
-         : "";
+         : typeof item.Id === "string"
+            ? item.Id.trim()
+            : "";
       const text = typeof item.text === "string"
          ? item.text.trim()
-         : "";
+         : typeof item.name === "string"
+            ? item.name.trim()
+            : typeof item.Name === "string"
+               ? item.Name.trim()
+               : "";
 
       return id === "" || text === ""
          ? null

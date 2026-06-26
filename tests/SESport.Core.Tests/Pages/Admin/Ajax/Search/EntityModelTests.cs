@@ -80,6 +80,78 @@ public sealed class EntityModelTests
    }
 
    [Fact]
+   public async Task OnGetAsyncOrganizationOnlyExcludesPersonAndPair()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var pairId = Guid.NewGuid();
+      var queryToken = Guid.NewGuid().ToString("N")[..8];
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var model = new EntityModel(repository);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {queryToken}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {queryToken}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         pairId,
+         $"Pair {queryToken}",
+         TrackedEntityTypeIds.Pair,
+         "football"
+      );
+
+      try
+      {
+         var result = await model.OnGetAsync(
+            queryToken,
+            null,
+            CancellationToken.None,
+            sortAsc: true,
+            organizationOnly: true
+         );
+
+         var jsonResult = Assert.IsType<JsonResult>(result);
+         using var document = JsonDocument.Parse(
+            JsonSerializer.Serialize(jsonResult.Value)
+         );
+         var results = document.RootElement.GetProperty("results");
+
+         Assert.Single(results.EnumerateArray());
+         Assert.Contains(
+            organizationId.ToString(),
+            results.ToString()
+         );
+         Assert.DoesNotContain(
+            personId.ToString(),
+            results.ToString()
+         );
+         Assert.DoesNotContain(
+            pairId.ToString(),
+            results.ToString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, pairId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task OnGetAsyncReturnsEmptyResultsForBlankTerm()
    {
       await using var dataSource = CreateDataSource();
