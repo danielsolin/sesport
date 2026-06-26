@@ -132,6 +132,11 @@ public class IndexModel(
       return routeValues;
    }
 
+   public Dictionary<string, string> GetDeleteRouteValues(Guid id)
+   {
+      return GetDetailsRouteValues(id);
+   }
+
    private static IReadOnlyList<SelectListItem> BuildStatusOptions(
       IReadOnlyCollection<string> selectedStatusIds
    )

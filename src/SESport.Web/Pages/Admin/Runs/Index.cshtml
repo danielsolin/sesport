@@ -143,10 +143,13 @@
                         View
                      </a>
                      <form method="post"
-                           asp-page-handler="Delete"
-                           asp-route-id="@run.Id"
-                           asp-all-route-data="@Model.GetFilterRouteValues()"
+                           action="@Url.Page(
+                                 "/Admin/Runs/Index",
+                                 "Delete",
+                                 Model.GetDeleteRouteValues(run.Id)
+                              )"
                            onsubmit="return confirm('Sure?');">
+                        @Html.AntiForgeryToken()
                         <button type="submit">Delete</button>
                      </form>
                   </div>
