@@ -98,6 +98,9 @@ internal static class WebPageBrowserPageFetcher
                WebPageContentFetchSupport.CountryNamesByCode
             )
          );
+         var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
+            "element => element.innerHTML"
+         );
          var visibleText = await page.Locator("body").InnerTextAsync();
          var normalizedText =
             WebPageContentFetchSupport.NormalizeText(visibleText);
@@ -112,7 +115,12 @@ internal static class WebPageBrowserPageFetcher
             ),
             !string.IsNullOrWhiteSpace(visibleText),
             normalizedText,
-            Fetcher: "browser"
+            Fetcher: "browser",
+            RelevantLinks:
+               WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+                  bodyHtml,
+                  absoluteUrl
+               )
          );
       }
       catch(OperationCanceledException)

@@ -51,6 +51,41 @@ internal static class WebPageContentFetchSupport
       @"^(?:\d+|[^\p{L}\p{N}]+)$",
       RegexOptions.CultureInvariant
    );
+   private static readonly Regex HtmlAnchorRegex = new(
+      @"<a\b(?<attrs>[^>]*)>(?<content>.*?)</a>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlAttributeRegex = new(
+      @"\b(?<name>[a-zA-Z0-9:-]+)\s*=\s*(?:" +
+      @"""(?<value>[^""]*)""|'(?<value>[^']*)')",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlBoilerplateBlockRegex = new(
+      @"<(?:header|nav|footer|aside|script|style|noscript)\b[^>]*>.*?</" +
+      @"(?:header|nav|footer|aside|script|style|noscript)>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlMainBlockRegex = new(
+      @"<main\b[^>]*>(?<content>.*?)</main>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlBodyBlockRegex = new(
+      @"<body\b[^>]*>(?<content>.*?)</body>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex GenericLinkTextRegex = new(
+      @"^(?:more|read more|view all|open|close|next|previous|back|" +
+      @"home|menu|search|login|log in|sign in|register|continue|" +
+      @"share|print|contact|privacy|terms|cookies?|accessibility)$",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex RelevantLinkLabelBoostRegex = new(
+      @"\b(?:entry|entries|start|result|results|schedule|draw|" +
+      @"list|live|ranking|registration|entry list|start list)\b",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
 
    internal static async Task<string> GetBrowserUserAgentAsync()
    {
@@ -370,50 +405,73 @@ internal static class WebPageContentFetchSupport
       );
    }
 
+   internal static IReadOnlyList<WebPageRelevantLink>
+      ExtractRelevantLinksFromHtml(string html, Uri absoluteUrl)
+   {
+      if(string.IsNullOrWhiteSpace(html))
+      {
+         return [];
+      }
+
+      var candidateHtml = ExtractRelevantLinkSourceHtml(html);
+      if(string.IsNullOrWhiteSpace(candidateHtml))
+      {
+         return [];
+      }
+
+      var scoredLinks = new List<(WebPageRelevantLink Link, int Score)>();
+      var seenLinks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(Match match in HtmlAnchorRegex.Matches(candidateHtml))
+      {
+         if(!TryGetAttributeValue(
+            match.Groups["attrs"].Value,
+            "href",
+            out var href
+         ))
+         {
+            continue;
+         }
+
+         if(!TryBuildRelevantLinkUrl(absoluteUrl, href, out var linkUrl))
+         {
+            continue;
+         }
+
+         var linkLabel = NormalizeText(
+            WebUtility.HtmlDecode(
+               StripTags(match.Groups["content"].Value)
+            )
+         );
+
+         if(!ShouldCaptureRelevantLink(linkLabel))
+         {
+            continue;
+         }
+
+         var linkKey = $"{linkLabel}\n{linkUrl}";
+
+         if(!seenLinks.Add(linkKey))
+         {
+            continue;
+         }
+
+         scoredLinks.Add((
+            new WebPageRelevantLink(linkLabel, linkUrl),
+            ScoreRelevantLink(linkLabel)
+         ));
+      }
+
+      return scoredLinks
+         .OrderByDescending(link => link.Score)
+         .Select(link => link.Link)
+         .Take(10)
+         .ToArray();
+   }
+
    internal static string ExtractHtmlText(string html)
    {
-      html = Regex.Replace(
-         html,
-         @"<header\b[^>]*>.*?</header>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
-      html = Regex.Replace(
-         html,
-         @"<nav\b[^>]*>.*?</nav>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
-      html = Regex.Replace(
-         html,
-         @"<footer\b[^>]*>.*?</footer>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
-      html = Regex.Replace(
-         html,
-         @"<aside\b[^>]*>.*?</aside>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
-      var cleanedHtml = Regex.Replace(
-         html,
-         @"<script\b[^>]*>.*?</script>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
-      cleanedHtml = Regex.Replace(
-         cleanedHtml,
-         @"<style\b[^>]*>.*?</style>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
-      cleanedHtml = Regex.Replace(
-         cleanedHtml,
-         @"<noscript\b[^>]*>.*?</noscript>",
-         " ",
-         RegexOptions.IgnoreCase | RegexOptions.Singleline
-      );
+      var cleanedHtml = RemoveBoilerplateHtml(html);
       cleanedHtml = Regex.Replace(
          cleanedHtml,
          @"<[^>]+>",
@@ -421,6 +479,155 @@ internal static class WebPageContentFetchSupport
       );
 
       return NormalizeText(WebUtility.HtmlDecode(cleanedHtml));
+   }
+
+   private static string ExtractRelevantLinkSourceHtml(string html)
+   {
+      var mainMatch = HtmlMainBlockRegex.Match(html);
+
+      if(mainMatch.Success)
+      {
+         return RemoveBoilerplateHtml(mainMatch.Groups["content"].Value);
+      }
+
+      var bodyMatch = HtmlBodyBlockRegex.Match(html);
+
+      if(bodyMatch.Success)
+      {
+         return RemoveBoilerplateHtml(bodyMatch.Groups["content"].Value);
+      }
+
+      return RemoveBoilerplateHtml(html);
+   }
+
+   private static string RemoveBoilerplateHtml(string html)
+   {
+      return HtmlBoilerplateBlockRegex.Replace(html, " ");
+   }
+
+   private static bool TryGetAttributeValue(
+      string attributes,
+      string attributeName,
+      out string value
+   )
+   {
+      foreach(Match match in HtmlAttributeRegex.Matches(attributes))
+      {
+         if(!string.Equals(
+            match.Groups["name"].Value,
+            attributeName,
+            StringComparison.OrdinalIgnoreCase
+         ))
+         {
+            continue;
+         }
+
+         value = WebUtility.HtmlDecode(match.Groups["value"].Value.Trim());
+         return !string.IsNullOrWhiteSpace(value);
+      }
+
+      value = string.Empty;
+      return false;
+   }
+
+   private static bool TryBuildRelevantLinkUrl(
+      Uri absoluteUrl,
+      string href,
+      out string linkUrl
+   )
+   {
+      linkUrl = string.Empty;
+
+      if(string.IsNullOrWhiteSpace(href))
+      {
+         return false;
+      }
+
+      if(!Uri.TryCreate(absoluteUrl, href.Trim(), out var linkUri))
+      {
+         return false;
+      }
+
+      if(!string.Equals(
+         linkUri.Scheme,
+         Uri.UriSchemeHttp,
+         StringComparison.OrdinalIgnoreCase
+      ) &&
+         !string.Equals(
+            linkUri.Scheme,
+            Uri.UriSchemeHttps,
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return false;
+      }
+
+      var strippedFragmentUri = new UriBuilder(linkUri)
+      {
+         Fragment = string.Empty
+      }.Uri;
+
+      if(Uri.Compare(
+         strippedFragmentUri,
+         absoluteUrl,
+         UriComponents.AbsoluteUri,
+         UriFormat.UriEscaped,
+         StringComparison.OrdinalIgnoreCase
+      ) == 0)
+      {
+         return false;
+      }
+
+      linkUrl = strippedFragmentUri.ToString();
+      return true;
+   }
+
+   private static bool ShouldCaptureRelevantLink(string label)
+   {
+      if(string.IsNullOrWhiteSpace(label))
+      {
+         return false;
+      }
+
+      if(label.Length < 2 || label.Length > 100)
+      {
+         return false;
+      }
+
+      if(!label.Any(char.IsLetter) || IsLikelyMachineValue(label))
+      {
+         return false;
+      }
+
+      if(GenericLinkTextRegex.IsMatch(label))
+      {
+         return false;
+      }
+
+      return true;
+   }
+
+   private static int ScoreRelevantLink(string label)
+   {
+      var score = 0;
+
+      if(RelevantLinkLabelBoostRegex.IsMatch(label))
+      {
+         score += 4;
+      }
+
+      if(label.Contains("entry list", StringComparison.OrdinalIgnoreCase) ||
+         label.Contains("start list", StringComparison.OrdinalIgnoreCase))
+      {
+         score += 4;
+      }
+
+      if(label.Length <= 20)
+      {
+         score += 1;
+      }
+
+      return score;
    }
 
    internal static string ExtractEmbeddedStateText(string html)

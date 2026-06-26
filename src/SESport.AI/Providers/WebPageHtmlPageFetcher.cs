@@ -126,7 +126,9 @@ internal static class WebPageHtmlPageFetcher
             WebPageContentFetchSupport.ApplyResponseCutoff(text),
             true,
             text,
-            Fetcher: "html"
+            Fetcher: "html",
+            RelevantLinks: WebPageContentFetchSupport
+               .ExtractRelevantLinksFromHtml(html, absoluteUrl)
          );
       }
       catch(OperationCanceledException)

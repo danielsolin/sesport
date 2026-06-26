@@ -704,6 +704,82 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractRelevantLinksFromHtmlPrefersMainBodyLink()
+   {
+      var entryListUrl =
+         "https://registration.jstiming.com/events/" +
+         "a0755ff4-4b6e-4d54-8566-caf947debd99/entries";
+      var html = """
+         <html>
+            <body>
+               <header>
+                  <a href="/en">Home</a>
+               </header>
+               <main>
+                  <h1>UEC BMX Championships</h1>
+                  <p>
+                     <a href="{0}">
+                        Entry list
+                     </a>
+                  </p>
+                  <p>
+                     <a href="#details">Details</a>
+                  </p>
+               </main>
+               <footer>
+                  <a href="/privacy">Privacy</a>
+               </footer>
+            </body>
+         </html>
+         """;
+      html = string.Format(html, entryListUrl);
+
+      var links = WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+         html,
+         new Uri(
+            "https://www.uec.ch/en/event/274/" +
+            "2026-uec-bmx-racing-european-championships"
+         )
+      );
+
+      Assert.Single(links);
+      Assert.Equal("Entry list", links[0].Label);
+      Assert.Equal(
+         "https://registration.jstiming.com/events/" +
+         "a0755ff4-4b6e-4d54-8566-caf947debd99/entries",
+         links[0].Url
+      );
+   }
+
+   [Fact]
+   public void FormatPageContentTextPlacesRelevantLinksBeforePageText()
+   {
+      var output = LlamaServerClient.FormatPageContentText(
+         "Page URL",
+         "https://example.test/article",
+         "Title",
+         "https://example.test/article",
+         null,
+         null,
+         [],
+         [
+            new WebPageRelevantLink(
+               "Entry list",
+               "https://example.test/entries"
+            )
+         ],
+         "Page body text."
+      );
+
+      Assert.Contains("Relevant links:", output);
+      Assert.Contains("- Entry list: https://example.test/entries", output);
+      Assert.True(
+         output.IndexOf("Relevant links:", StringComparison.Ordinal) <
+         output.IndexOf("Page text:", StringComparison.Ordinal)
+      );
+   }
+
+   [Fact]
    public async Task NormalizeFlagIconClassUsesCountryLabel()
    {
       var html = """

@@ -1999,6 +1999,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageTarget.SearchSnippet,
             pageContent.PublishedAt,
             pageContent.Headings,
+            pageContent.RelevantLinks,
             pageContent.MainText,
             pageContent.FetchErrorMessage,
             pageContent.FetchErrorKind
@@ -2329,7 +2330,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       );
    }
 
-   private static string FormatPageContentText(
+   internal static string FormatPageContentText(
       string referenceLabel,
       string referenceValue,
       string title,
@@ -2337,6 +2338,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       string? searchSnippet,
       DateTimeOffset? publishedAt,
       IReadOnlyList<string>? headings,
+      IReadOnlyList<WebPageRelevantLink>? relevantLinks,
       string? mainText,
       string? fetchErrorMessage = null,
       WebPageFetchErrorKind? fetchErrorKind = null
@@ -2366,6 +2368,16 @@ public sealed class LlamaServerClient : IAiProviderClient
          foreach(var heading in headings)
          {
             builder.AppendLine($"- {heading}");
+         }
+      }
+
+      if(relevantLinks is not null && relevantLinks.Count > 0)
+      {
+         builder.AppendLine("Relevant links:");
+
+         foreach(var link in relevantLinks)
+         {
+            builder.AppendLine($"- {link.Label}: {link.Url}");
          }
       }
 
@@ -2413,6 +2425,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          pageTarget.Title,
          pageTarget.Url,
          pageTarget.SearchSnippet,
+         null,
          null,
          null,
          null,

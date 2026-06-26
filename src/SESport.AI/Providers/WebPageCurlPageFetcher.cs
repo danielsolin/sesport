@@ -217,7 +217,11 @@ internal static class WebPageCurlPageFetcher
          WebPageContentFetchSupport.ApplyResponseCutoff(text),
          true,
          text,
-         Fetcher: "curl"
+         Fetcher: "curl",
+         RelevantLinks: WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+            body,
+            absoluteUrl
+         )
       );
    }
 

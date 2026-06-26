@@ -10,5 +10,6 @@ public sealed record WebPageContent(
    string MainTextFull = "",
    string? FetchErrorMessage = null,
    WebPageFetchErrorKind? FetchErrorKind = null,
-   string? Fetcher = null
+   string? Fetcher = null,
+   IReadOnlyList<WebPageRelevantLink>? RelevantLinks = null
 );
