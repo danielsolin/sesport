@@ -865,14 +865,15 @@
    function initializeCurrentMarkerScroll()
    {
       const marker = document.querySelector(currentMarkerSelector);
+      const storageKey = `sesport.currentMarkerScrolled:${
+         window.location.pathname
+      }`;
 
       if(!(marker instanceof HTMLElement)
-         || marker.dataset.currentMarkerScrollInitialized === "true")
+         || window.sessionStorage.getItem(storageKey) === "true")
       {
          return;
       }
-
-      marker.dataset.currentMarkerScrollInitialized = "true";
 
       const scroll = () => {
          marker.scrollIntoView({
@@ -884,6 +885,8 @@
             block: "start",
             inline: "nearest"
          });
+
+         window.sessionStorage.setItem(storageKey, "true");
       };
 
       window.requestAnimationFrame(() => {
