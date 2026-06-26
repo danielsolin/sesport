@@ -33,6 +33,8 @@ public class IndexModel(
 
    public bool IsSportToday { get; private set; }
 
+   public int? TotalParticipantsCount { get; private set; }
+
    public string? LoadError { get; private set; }
 
    public bool ShowLoadErrorDetails =>
@@ -63,11 +65,31 @@ public class IndexModel(
          );
          TimelineEntries = timeline.TimelineEntries;
          UntimedActivities = timeline.UntimedActivities;
+         TotalParticipantsCount = CountParticipants(activities);
       }
       catch (Exception exception)
       {
          LoadError = exception.Message;
       }
+   }
+
+   internal static int CountParticipants(
+      IEnumerable<ActivityListItem> activities
+   )
+   {
+      return activities.Sum(activity =>
+         CountParticipants(activity.RelatedPersonEntities));
+   }
+
+   private static int CountParticipants(string? participants)
+   {
+      return string.IsNullOrWhiteSpace(participants)
+         ? 0
+         : participants.Split(
+               ", ",
+               StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+            ).Length;
    }
 
    private static DateOnly? ParseDate(string? date)
@@ -83,7 +105,7 @@ public class IndexModel(
          : null;
    }
 
-  private static IReadOnlyList<DateOption> BuildDateOptions(
+   private static IReadOnlyList<DateOption> BuildDateOptions(
       DateOnly todayDate,
       DateOnly selectedDate
    )

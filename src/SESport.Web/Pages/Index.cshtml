@@ -29,6 +29,17 @@
             </form>
          </div>
       </div>
+      @if(Model.TotalParticipantsCount is not null)
+      {
+         <div class="index-participants">
+            <div class="index-participants-pill">
+               <span>Svenskar:</span>
+               <span class="index-participants-count index-participants-value">
+                  @Model.TotalParticipantsCount
+               </span>
+            </div>
+         </div>
+      }
    </div>
 </section>
 
