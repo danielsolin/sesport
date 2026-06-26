@@ -1,6 +1,6 @@
 # AI Platform
 
-This project use a generic AI platform that is not overly abstracted.
+This project uses a generic AI platform that is not overly abstracted.
 
 ## Database Model
 
@@ -62,22 +62,19 @@ Stores each execution.
 
 ## Project Structure
 
-### `src/SESport.Core/AI`
+### `src/SESport.AI`
 
-- `Abstractions/`
+- `ActivitySearch/`
+- `Interfaces/`
 - `Models/`
-- `Rendering/`
+- `Persistence/`
 - `Providers/`
+- `Rendering/`
+- `Services/`
 - `Validation/`
 
-### `src/SESport.Data/AI`
-
-- repositories for provider config
-- repositories for jobs and prompt versions
-- repositories for execution history
-
-The AI repositories now live in `src/SESport.Data/AI`, and the web project
-consumes them through a project reference to `SESport.Data`.
+The active AI code lives in `src/SESport.AI`, and the web project consumes it
+through a project reference to `SESport.AI`.
 
 ### `src/SESport.Web/Pages/Admin/AI`
 
