@@ -121,43 +121,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          )
       };
 
-   public IReadOnlyList<AdminArea> GetAdminAreas()
-   {
-      return
-      [
-         new AdminArea(
-            "Runs",
-            "Inspect AI job runs.",
-            "/Admin/Runs"
-         ),
-         new AdminArea(
-            "Broadcasts",
-            "Inspect imported sport broadcasts from EPG data.",
-            "/Admin/Broadcasts"
-         ),
-         new AdminArea(
-            "Activity proposals",
-            "Review imported and AI-produced activity proposals.",
-            "/Admin/Activities/Proposals"
-         ),
-         new AdminArea(
-            "Activities",
-            "Create and publish activities for the public site.",
-            "/Admin/Activities"
-         ),
-         new AdminArea(
-            "Config",
-            "Manage lookup tables and AI configuration.",
-            "/Admin/Config"
-         ),
-         new AdminArea(
-            "Entities",
-            "Maintain the curated entity watchlist.",
-            "/Admin/Entities"
-         )
-      ];
-   }
-
    public IReadOnlyList<ReferenceNavigationItem> GetReferenceNavigationItems()
    {
       return GetReferenceTables()
@@ -913,69 +876,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
-   }
-
-   public async Task<IReadOnlyList<EntityListItem>> GetEntitiesAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         select
-            e.id,
-            e.canonical_name,
-            et.label,
-            s.name,
-            p.id,
-            p.label,
-            coalesce(c.name, e.country_id, ''),
-            coalesce(linked.related_entity_names, '')
-         from entities e
-         join entity_types et on et.id = e.entity_type_id
-         join sports s on s.id = e.sport_id
-         join entity_watch_priorities p on p.id = e.watch_priority_id
-         left join countries c on c.id = e.country_id
-         left join lateral (
-            select string_agg(linked_name, ', ' order by linked_name)
-               as related_entity_names
-            from (
-               select distinct e2.canonical_name as linked_name
-               from entity_to_entity_links l
-               join entities e2
-                  on e2.id = case
-                     when l.source_entity_id = e.id
-                        then l.target_entity_id
-                     else l.source_entity_id
-                  end
-               where l.source_entity_id = e.id
-                  or l.target_entity_id = e.id
-            ) linked_entities
-         ) linked on true
-         order by e.canonical_name
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var entities = new List<EntityListItem>();
-
-      while (await reader.ReadAsync(cancellationToken))
-      {
-         entities.Add(
-            new EntityListItem(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetString(3),
-               reader.GetString(4),
-               reader.GetString(5),
-               reader.GetString(6),
-               reader.GetString(7)
-            )
-         );
-      }
-
-      return entities;
    }
 
    public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(

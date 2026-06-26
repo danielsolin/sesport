@@ -93,17 +93,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   public async Task<IReadOnlyList<ActivityListItem>> GetPublishedAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      return await GetActivityListAsync(
-         $"where a.publication_status_id = " +
-         $"'{ActivityPublicationStatusIds.Published}'",
-         cancellationToken
-      );
-   }
-
    public async Task<IReadOnlyList<ActivityListItem>> GetPublishedForDateAsync(
       DateOnly date,
       CancellationToken cancellationToken
@@ -113,44 +102,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          SportDay.ForDate(date),
          cancellationToken
       );
-   }
-
-   public async Task<IReadOnlyList<ActivityListItem>> GetTodaysAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      return await GetPublishedActivitiesAsync(
-         SportDay.Today(DateTimeOffset.UtcNow),
-         cancellationToken
-      );
-   }
-
-   public async Task<IReadOnlyList<ActivityListItem>> GetTomorrowsAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      return await GetPublishedActivitiesAsync(
-         SportDay.Tomorrow(DateTimeOffset.UtcNow),
-         cancellationToken
-      );
-   }
-
-   public async Task<IReadOnlyList<ActivityListItem>> GetDraftsAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      return await GetActivityListAsync(
-         $"where a.publication_status_id = " +
-         $"'{ActivityPublicationStatusIds.Draft}'",
-         cancellationToken
-      );
-   }
-
-   public async Task<IReadOnlyList<ActivityListItem>> GetAllAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      return await GetActivityListAsync(string.Empty, cancellationToken);
    }
 
    private async Task<IReadOnlyList<ActivityListItem>>

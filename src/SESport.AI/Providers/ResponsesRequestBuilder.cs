@@ -54,11 +54,6 @@ internal static class ResponsesRequestBuilder
       return payload;
    }
 
-   public static string SerializeRequest(JsonObject payload)
-   {
-      return JsonSerializer.Serialize(payload, JsonOptions);
-   }
-
    private static void MergeRequestOptions(
       JsonObject payload,
       string requestOptionsJson
