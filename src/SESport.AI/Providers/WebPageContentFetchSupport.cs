@@ -19,7 +19,7 @@ internal static class WebPageContentFetchSupport
    private const string BrowserAcceptLanguageHeader = "en-US,en;q=0.9";
    private const string BrowserLocale = "en-US";
    private const string BrowserPlatform = "Linux";
-   private const string AutomationEvasionScript = """
+   private const string BrowserFingerprintScript = """
       Object.defineProperty(navigator, 'webdriver', {
          get: () => undefined
       });

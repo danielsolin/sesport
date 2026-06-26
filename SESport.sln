@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Web", "src\SESport.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.Data", "src\SESport.Data\SESport.Data.csproj", "{4FD13881-5DB9-48E6-928E-5D2EAC1C6FAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.WebAutomation", "tools\SESport.WebAutomation\SESport.WebAutomation.csproj", "{DE5B5BE9-6E2D-4FA6-9117-E7ED5BC43B3D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.BroadcastCollector", "tools\SESport.BroadcastCollector\SESport.BroadcastCollector.csproj", "{DE5B5BE9-6E2D-4FA6-9117-E7ED5BC43B3D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SESport.AI", "src\SESport.AI\SESport.AI.csproj", "{A71FEF04-04F3-4333-AB42-3BA838AF0E6A}"
 EndProject
