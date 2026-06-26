@@ -125,6 +125,13 @@ public class IndexModel(
       return routeValues;
    }
 
+   public Dictionary<string, string> GetDetailsRouteValues(Guid id)
+   {
+      var routeValues = GetFilterRouteValues();
+      routeValues["id"] = id.ToString();
+      return routeValues;
+   }
+
    private static IReadOnlyList<SelectListItem> BuildStatusOptions(
       IReadOnlyCollection<string> selectedStatusIds
    )

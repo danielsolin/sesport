@@ -136,9 +136,10 @@
                </td>
                <td class="table-actions">
                   <div class="ai-runs-table-actions">
-                     <a asp-page="./Details"
-                        asp-route-id="@run.Id"
-                        asp-all-route-data="@Model.GetFilterRouteValues()">
+                     <a href="@Url.Page(
+                              "/Admin/Runs/Details",
+                              Model.GetDetailsRouteValues(run.Id)
+                           )">
                         View
                      </a>
                      <form method="post"
