@@ -162,7 +162,7 @@ else
                         @(string.IsNullOrEmpty(
                         activity.RelatedOrganizationEntities)
                         ? string.Empty
-                        : $"{activity.RelatedOrganizationEntities} - ")
+                        : $"{activity.RelatedOrganizationEntities}: ")
                         @activity.Title
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
