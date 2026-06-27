@@ -34,8 +34,9 @@ journalctl -u sesport-db-backup.service -n 100 --no-pager
 ## Notes
 
 - The service expects the repo to be at `/home/daniel/sesport`.
-- `bin/db-backup.sh` also commits and pushes each backup file, so Git
-  credentials and push access must already work non-interactively.
+- `bin/db-backup.sh --with-git` commits and pushes the backup folder,
+  so Git credentials and push access must already work non-interactively
+  if that flag is used.
 - `flock` prevents overlapping backup runs if one job is still active
   when the next hourly trigger fires.
 - Older `.dump` files are removed on each run, so the backup set stays
