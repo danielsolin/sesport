@@ -1,8 +1,8 @@
 .vs/
 **/bin/
 !/bin/
-!/android/SESportWebWrapper/bin/
-!/android/SESportWebWrapper/bin/**
+!/android/**/bin/
+!/android/**/bin/**
 **/obj/
 *.swp
 docs/TODO.md
