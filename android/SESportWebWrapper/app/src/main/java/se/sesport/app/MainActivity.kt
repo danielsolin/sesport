@@ -1,4 +1,4 @@
-package se.sesport.webwrapper
+package se.sesport.app
 
 import android.annotation.SuppressLint
 import android.os.Bundle

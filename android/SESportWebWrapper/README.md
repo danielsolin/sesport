@@ -1,6 +1,6 @@
-# SESport Web Wrapper
+# SE Sport Android App
 
-Minimal Android app that opens `https://sesport.se` in a WebView.
+Minimal Android app that opens the SE Sport site in a WebView.
 
 ## What it does
 
@@ -21,6 +21,13 @@ Use the Gradle wrapper in the project root:
 ```bash
 cd android/SESportWebWrapper
 ./gradlew assembleDebug
+```
+
+To build the release bundle for Google Play:
+
+```bash
+cd android/SESportWebWrapper
+./gradlew :app:bundleRelease
 ```
 
 ## Release signing

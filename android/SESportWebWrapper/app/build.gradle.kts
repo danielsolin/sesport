@@ -26,15 +26,15 @@ fun hasReleaseSigning(): Boolean {
 }
 
 android {
-    namespace = "se.sesport.webwrapper"
-    compileSdk = 34
+    namespace = "se.sesport.app"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "se.sesport.webwrapper"
+        applicationId = "se.sesport.app"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 35
+        versionCode = 2
+        versionName = "1.0.0"
     }
 
     signingConfigs {
