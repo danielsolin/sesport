@@ -335,7 +335,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       GetSportReferenceRowsAsync(CancellationToken cancellationToken)
    {
       const string sql = """
-         select id, name, icon_id
+         select id, name, display_name, icon_id
          from sports
          order by name
          """;
@@ -352,7 +352,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             new SportReferenceRow(
                reader.GetString(0),
                reader.GetString(1),
-               reader.IsDBNull(2) ? null : reader.GetString(2)
+               reader.IsDBNull(2) ? null : reader.GetString(2),
+               reader.IsDBNull(3) ? null : reader.GetString(3)
             )
          );
       }
@@ -435,7 +436,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, name, icon_id
+         select id, name, display_name, icon_id
          from sports
          where id = @id
          """;
@@ -456,7 +457,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          OriginalId = reader.GetString(0),
          Id = reader.GetString(0),
          Name = reader.GetString(1),
-         IconId = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+         DisplayName = reader.IsDBNull(2) ? null : reader.GetString(2),
+         IconId = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
       };
    }
 
@@ -617,20 +619,22 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       var isNew = string.IsNullOrWhiteSpace(model.OriginalId);
       var id = model.Id.Trim();
       var name = model.Name.Trim();
+      var displayName = NormalizeNullable(model.DisplayName);
       var iconId = string.IsNullOrWhiteSpace(model.IconId)
          ? null
          : model.IconId.Trim();
 
       var sql = isNew
          ? """
-            insert into sports (id, name, icon_id)
-            values (@id, @name, @icon_id)
+            insert into sports (id, name, display_name, icon_id)
+            values (@id, @name, @display_name, @icon_id)
             """
          : """
             update sports
             set
                id = @id,
                name = @name,
+               display_name = @display_name,
                icon_id = @icon_id,
                updated_at = now()
             where id = @original_id
@@ -639,6 +643,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue("name", name);
+      command.Parameters.AddWithValue(
+         "display_name",
+         (object?)displayName ?? DBNull.Value
+      );
       command.Parameters.AddWithValue(
          "icon_id",
          (object?)iconId ?? DBNull.Value

@@ -63,6 +63,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return await QueryActivityListAsync(
          whereClause.ToString(),
          TimedOrderClause,
+         "s.name",
          command =>
          {
             command.Parameters.AddWithValue("start", start);
@@ -118,6 +119,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and a.starts_at < @end
          """,
          DefaultOrderClause,
+         """
+         coalesce(s.display_name, s.name)
+         """,
          command =>
          {
             command.Parameters.AddWithValue(
@@ -543,6 +547,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return await QueryActivityListAsync(
          whereClause,
          DefaultOrderClause,
+         "s.name",
          null,
          cancellationToken
       );
@@ -551,11 +556,16 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private async Task<IReadOnlyList<ActivityListItem>> QueryActivityListAsync(
       string whereClause,
       string orderClause,
+      string sportNameExpression,
       Action<NpgsqlCommand>? configureCommand,
       CancellationToken cancellationToken
    )
    {
-      var sql = CreateActivityListSql(whereClause, orderClause);
+      var sql = CreateActivityListSql(
+         whereClause,
+         orderClause,
+         sportNameExpression
+      );
 
       await using var command = dataSource.CreateCommand(sql);
       configureCommand?.Invoke(command);
@@ -564,7 +574,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static string CreateActivityListSql(
       string whereClause,
-      string orderClause
+      string orderClause,
+      string sportNameExpression
    )
    {
       var builder = new StringBuilder()
@@ -575,7 +586,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   a.teaser,")
          .AppendLine("   at.label,")
          .AppendLine("   s.id,")
-         .AppendLine("   s.name,")
+         .AppendLine($"   {sportNameExpression},")
          .AppendLine("   s.icon_id,")
          .AppendLine("   a.activity_date,")
          .AppendLine("   a.local_start_time,")
@@ -668,7 +679,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(") ro on true")
          .AppendLine(whereClause)
          .AppendLine(
-            "group by a.id, at.label, s.id, s.name, s.icon_id,"
+            "group by a.id, at.label, s.id, " +
+            $"{sportNameExpression}, s.icon_id,"
          )
          .AppendLine(
             "         a.tv_channel_name, rp.related_person_entities,"

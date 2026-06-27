@@ -85,6 +85,7 @@ public sealed record CountryReferenceRow(
 public sealed record SportReferenceRow(
    string Id,
    string Name,
+   string? DisplayName,
    string? IconId
 );
 
@@ -106,6 +107,8 @@ public sealed class SportReferenceEditModel
    public string Id { get; set; } = string.Empty;
 
    public string Name { get; set; } = string.Empty;
+
+   public string? DisplayName { get; set; }
 
    public string IconId { get; set; } = string.Empty;
 }

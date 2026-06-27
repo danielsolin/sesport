@@ -21,6 +21,8 @@
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
    @if (Model.CurrentTable?.Kind == ReferenceTableKind.Countries)
    {
+      <input asp-for="Country.OriginalId" type="hidden" />
+
       <section class="form-section">
          <h2>Country</h2>
          <div class="form-grid">
@@ -44,6 +46,8 @@
    }
    else if (Model.CurrentTable?.Kind == ReferenceTableKind.Sports)
    {
+      <input asp-for="Sport.OriginalId" type="hidden" />
+
       <section class="form-section">
          <h2>Sport</h2>
          <div class="form-grid">
@@ -58,6 +62,10 @@
                <span asp-validation-for="Sport.Name"></span>
             </label>
             <label>
+               <span>Display Name</span>
+               <input asp-for="Sport.DisplayName" />
+            </label>
+            <label>
                <span>Icon ID</span>
                <input asp-for="Sport.IconId" />
             </label>
@@ -66,6 +74,8 @@
    }
    else
    {
+      <input asp-for="Row.OriginalId" type="hidden" />
+
       <section class="form-section">
          <h2>Row</h2>
          <div class="form-grid">
