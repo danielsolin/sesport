@@ -8,6 +8,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -15,6 +16,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
         webView = WebView(this)
@@ -34,6 +36,7 @@ class MainActivity : ComponentActivity() {
                 request: WebResourceRequest,
             ): Boolean = !isAllowedUrl(request.url.toString())
 
+            @Suppress("OVERRIDE_DEPRECATION")
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 url: String,
@@ -77,4 +80,3 @@ class MainActivity : ComponentActivity() {
         private const val HOME_URL = "https://sesport.se"
     }
 }
-

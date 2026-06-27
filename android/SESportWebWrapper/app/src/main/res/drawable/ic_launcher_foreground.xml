@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/sesport_cream"
+        android:pathData="M54,10
+            A44,44 0 1,1 53.999,10 Z" />
+    <path
+        android:fillColor="@color/sesport_red"
+        android:pathData="M30,28h36a10,10 0 0,1 10,10v32a10,10 0 0,1 -10,10h-36
+            a10,10 0 0,1 -10,-10v-32a10,10 0 0,1 10,-10z" />
+    <path
+        android:fillColor="@color/sesport_navy"
+        android:pathData="M43,39h22l11,15l-11,15h-22l-11,-15z" />
+</vector>
+

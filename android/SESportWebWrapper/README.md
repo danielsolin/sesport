@@ -14,8 +14,28 @@ Open `android/SESportWebWrapper` as a project in Android Studio.
 Android Studio will sync the Gradle project and let you run it on an
 emulator or device.
 
+## Build from CLI
+
+Use the Gradle wrapper in the project root:
+
+```bash
+cd android/SESportWebWrapper
+./gradlew assembleDebug
+```
+
+## Release signing
+
+Copy `keystore.properties.example` to `keystore.properties` and fill in
+the values. The release build will then sign the app with that keystore.
+
+Required keys:
+
+- `storeFile`
+- `storePassword`
+- `keyAlias`
+- `keyPassword`
+
 ## Notes
 
 - The project is intentionally tiny.
 - It needs the Android SDK and Java 17 to build.
-
