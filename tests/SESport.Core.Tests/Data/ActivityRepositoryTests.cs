@@ -72,6 +72,70 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetActivitiesAsyncPrefersOrganizationAliasName()
+   {
+      var now = DateTimeOffset.UtcNow;
+      var selectedDate = SportDay.Today(now).StartDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var seriesId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt
+      );
+      await InsertEntityAsync(
+         dataSource,
+         personId,
+         "Test Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertEntityAsync(
+         dataSource,
+         seriesId,
+         "Test Series",
+         TrackedEntityTypeIds.Series,
+         aliasName: "Series Alias"
+      );
+      await InsertActivityEntityLinkAsync(dataSource, activityId, personId);
+      await InsertEntityLinkAsync(dataSource, personId, seriesId);
+
+      try
+      {
+         var activities = await repository.GetActivitiesAsync(
+            selectedDate,
+            ActivityListStatusIds.All,
+            [],
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         Assert.Equal("Series Alias", activity.RelatedOrganizationEntities);
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, seriesId);
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedForDateAsyncOrdersParticipantsByWatchPriority()
    {
       var now = DateTimeOffset.UtcNow;
@@ -214,7 +278,8 @@ public sealed class ActivityRepositoryTests
       Guid entityId,
       string entityName,
       string entityTypeId,
-      string watchPriorityId = "review"
+      string watchPriorityId = "review",
+      string? aliasName = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -229,7 +294,8 @@ public sealed class ActivityRepositoryTests
             country_relevance_kind_id,
             country_relevance_reason,
             watch_priority_id,
-            expected_stability_id
+            expected_stability_id,
+            alias_name
          )
          values (
             @id,
@@ -240,13 +306,18 @@ public sealed class ActivityRepositoryTests
             'NationalityOrSportingIdentity',
             'Test coverage',
             @watch_priority_id,
-            'short_term'
+            'short_term',
+            @alias_name
          )
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("watch_priority_id", watchPriorityId);
+      command.Parameters.AddWithValue(
+         "alias_name",
+         (object?)aliasName ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
    }

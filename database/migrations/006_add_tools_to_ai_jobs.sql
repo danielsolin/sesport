@@ -1,5 +1,5 @@
 alter table ai_jobs
-   add column tools_json jsonb null;
+   add column if not exists tools_json jsonb null;
 
 alter table ai_jobs
-   add column tools_description text null;
+   add column if not exists tools_description text null;

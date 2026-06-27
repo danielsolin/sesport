@@ -631,28 +631,32 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(") rp on true")
          .AppendLine("left join lateral (")
          .AppendLine("   select string_agg(")
-         .AppendLine("      distinct entity.canonical_name,")
-         .AppendLine("      ', ' order by entity.canonical_name")
+         .AppendLine("      distinct organization_name,")
+         .AppendLine("      ', ' order by organization_name")
          .AppendLine("   ) as related_organization_entities")
-         .AppendLine("   from activity_entity_links al")
-         .AppendLine("   join entities p on p.id = al.entity_id")
-         .AppendLine("   join entity_to_entity_links el")
-         .AppendLine("      on el.source_entity_id = p.id")
-         .AppendLine("      or el.target_entity_id = p.id")
-         .AppendLine("   join entities entity")
-         .AppendLine("      on entity.id = case")
-         .AppendLine("         when el.source_entity_id = p.id")
-         .AppendLine("            then el.target_entity_id")
-         .AppendLine("         else el.source_entity_id")
-         .AppendLine("      end")
-         .AppendLine("   where al.activity_id = a.id")
+         .AppendLine("   from (")
+         .AppendLine("      select distinct")
+         .AppendLine("         coalesce(entity.alias_name,")
+         .AppendLine("            entity.canonical_name) as organization_name")
+         .AppendLine("      from activity_entity_links al")
+         .AppendLine("      join entities p on p.id = al.entity_id")
+         .AppendLine("      join entity_to_entity_links el")
+         .AppendLine("         on el.source_entity_id = p.id")
+         .AppendLine("         or el.target_entity_id = p.id")
+         .AppendLine("      join entities entity")
+         .AppendLine("         on entity.id = case")
+         .AppendLine("            when el.source_entity_id = p.id")
+         .AppendLine("               then el.target_entity_id")
+         .AppendLine("            else el.source_entity_id")
+         .AppendLine("         end")
+         .AppendLine("      where al.activity_id = a.id")
          .AppendLine(
             $$"""
                and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
             """
          )
          .AppendLine(
-            "      and entity.entity_type_id in (" +
+            "         and entity.entity_type_id in (" +
             $"'{TrackedEntityTypeIds.Organization}', " +
             $"'{TrackedEntityTypeIds.NationalTeam}', " +
             $"'{TrackedEntityTypeIds.Series}', " +
@@ -660,6 +664,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             $"'{TrackedEntityTypeIds.League}', " +
             $"'{TrackedEntityTypeIds.Championship}')"
          )
+         .AppendLine("   ) organizations")
          .AppendLine(") ro on true")
          .AppendLine(whereClause)
          .AppendLine(

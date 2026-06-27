@@ -1621,7 +1621,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue(
          "alias_name",
-         (object?)NormalizePersonAliasName(model) ?? DBNull.Value
+         (object?)NormalizeAliasName(model.AliasName) ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "person_gender_id",
@@ -1629,20 +1629,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   private static string? NormalizePersonAliasName(EntityEditModel model)
+   private static string? NormalizeAliasName(string? aliasName)
    {
-      if(!string.Equals(
-         model.EntityTypeId,
-         TrackedEntityTypeIds.Person,
-         StringComparison.OrdinalIgnoreCase
-      ))
-      {
-         return null;
-      }
-
-      return string.IsNullOrWhiteSpace(model.AliasName)
+      return string.IsNullOrWhiteSpace(aliasName)
          ? null
-         : model.AliasName.Trim();
+         : aliasName.Trim();
    }
 
    private static string? NormalizePersonGenderId(EntityEditModel model)
