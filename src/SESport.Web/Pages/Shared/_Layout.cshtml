@@ -1,5 +1,22 @@
 @{
    var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
+   var selectedDate = ViewContext.HttpContext.Request.Query[
+      RouteKeys.Date
+   ].ToString();
+   var dateRouteValues = string.IsNullOrWhiteSpace(selectedDate)
+      ? null
+      : new Dictionary<string, string?>
+      {
+         [RouteKeys.Date] = selectedDate
+      };
+   var broadcastsHref = Url.Page(
+      "/Admin/Broadcasts/Index",
+      dateRouteValues
+   ) ?? "/Admin/Broadcasts";
+   var activitiesHref = Url.Page(
+      "/Admin/Activities/Index",
+      dateRouteValues
+   ) ?? "/Admin/Activities";
    var isAdmin = requestPath.StartsWith(
       "/Admin",
       StringComparison.OrdinalIgnoreCase
@@ -74,11 +91,11 @@
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
                <a class="@broadcastsClass"
-                  asp-page="/Admin/Broadcasts/Index">
+                  href="@broadcastsHref">
                   Broadcasts
                </a>
                <a class="@activitiesClass"
-                  asp-page="/Admin/Activities/Index">
+                  href="@activitiesHref">
                   Activities
                </a>
                <a class="@entitiesClass"
@@ -100,7 +117,7 @@
       {
          <nav class="site-nav">
             <a asp-page="/Index">Public</a>
-            <a asp-page="/Admin/Broadcasts/Index">Admin</a>
+            <a href="@broadcastsHref">Admin</a>
          </nav> 
       }
    </header>

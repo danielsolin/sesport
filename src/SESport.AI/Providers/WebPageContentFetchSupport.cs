@@ -444,7 +444,7 @@ internal static class WebPageContentFetchSupport
             )
          );
 
-         if(!ShouldCaptureRelevantLink(linkLabel))
+         if(!ShouldCaptureRelevantLink(linkLabel, linkUrl))
          {
             continue;
          }
@@ -582,7 +582,10 @@ internal static class WebPageContentFetchSupport
       return true;
    }
 
-   private static bool ShouldCaptureRelevantLink(string label)
+   private static bool ShouldCaptureRelevantLink(
+      string label,
+      string url
+   )
    {
       if(string.IsNullOrWhiteSpace(label))
       {
@@ -604,7 +607,36 @@ internal static class WebPageContentFetchSupport
          return false;
       }
 
-      return true;
+      return IsParticipationListLink(label, url);
+   }
+
+   private static bool IsParticipationListLink(string label, string url)
+   {
+      var value = $"{label} {url}".Trim();
+
+      return value.Contains("entry list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("start list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("entrylist", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("startlist", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("competitors", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("competitor list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("players", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("player list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("lineup", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("line-up", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("entries", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("participants", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("participant list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("roster", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("grid", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("drivers", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("driver list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("riders", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("rider list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("trupp", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("squad", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("deltagarlista", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains("startlista", StringComparison.OrdinalIgnoreCase);
    }
 
    private static int ScoreRelevantLink(string label)

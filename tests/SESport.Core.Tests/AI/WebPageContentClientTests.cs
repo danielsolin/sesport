@@ -752,6 +752,71 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractRelevantLinksFromHtmlSkipsNoiseLinks()
+   {
+      var html = """
+         <html>
+            <body>
+               <main>
+                  <a href="/landslag/f07/f19-em/">
+                     Resultat och spelschema EM
+                  </a>
+                  <a href="/go-to/?fplguid=123">
+                     Saga Andersson
+                     FC Rosengård Elitfotboll AB
+                  </a>
+                  <a href="/entries">
+                     Entry list
+                  </a>
+               </main>
+            </body>
+         </html>
+         """;
+
+      var links = WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+         html,
+         new Uri("https://www.svenskfotboll.se/nyheter/landslag/")
+      );
+
+      Assert.Single(links);
+      Assert.Equal("Entry list", links[0].Label);
+      Assert.Equal(
+         "https://www.svenskfotboll.se/entries",
+         links[0].Url
+      );
+   }
+
+   [Fact]
+   public void ExtractRelevantLinksFromHtmlAllowsCommonListTerms()
+   {
+      var html = """
+         <html>
+            <body>
+               <main>
+                  <a href="/roster">Roster</a>
+                  <a href="/players">Players</a>
+                  <a href="/competitors">Competitors</a>
+                  <a href="/trupp">Trupp</a>
+                  <a href="/squad">Squad</a>
+               </main>
+            </body>
+         </html>
+         """;
+
+      var links = WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+         html,
+         new Uri("https://www.example.test/event/")
+      );
+
+      Assert.Equal(5, links.Count);
+      Assert.Contains(links, link => link.Label == "Roster");
+      Assert.Contains(links, link => link.Label == "Players");
+      Assert.Contains(links, link => link.Label == "Competitors");
+      Assert.Contains(links, link => link.Label == "Trupp");
+      Assert.Contains(links, link => link.Label == "Squad");
+   }
+
+   [Fact]
    public void FormatPageContentTextPlacesRelevantLinksBeforePageText()
    {
       var output = LlamaServerClient.FormatPageContentText(

@@ -17,5 +17,8 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("public.css", html);
       Assert.Contains("site.css", html);
       Assert.Contains("!isAdmin", html);
+      Assert.Contains("var broadcastsHref = Url.Page(", html);
+      Assert.Contains("var activitiesHref = Url.Page(", html);
+      Assert.Contains("RouteKeys.Date", html);
    }
 }
