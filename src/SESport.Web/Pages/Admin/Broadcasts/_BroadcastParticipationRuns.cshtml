@@ -148,6 +148,7 @@
                      {
                         var participantItems = Model.PageModel
                            .GetParticipantDisplayItems(
+                              broadcast.OrganizationEntityId,
                               check.Participants
                            );
                         <div class="broadcast-ai-check-participants">

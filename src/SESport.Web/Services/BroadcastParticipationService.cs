@@ -148,8 +148,8 @@ public sealed class BroadcastParticipationService(
          return [];
       }
 
-      var participantEntityIdsByName =
-         await LoadParticipantEntityIdsAsync(cancellationToken);
+      var participantEntityIdsByOrgId =
+         new Dictionary<Guid, IReadOnlyDictionary<string, Guid>>();
       var results = new List<BroadcastParticipationCheckResult>();
 
       foreach(var broadcast in broadcasts)
@@ -164,6 +164,12 @@ public sealed class BroadcastParticipationService(
          }
 
          var participationCheck = participationChecks[0];
+         var participantEntityIdsByName =
+            await LoadParticipantEntityIdsAsync(
+               broadcast.EntityId,
+               participantEntityIdsByOrgId,
+               cancellationToken
+            );
          var displayChecks = participationChecks
             .Select(check => CreateParticipationCheckDisplay(
                check,
@@ -192,18 +198,34 @@ public sealed class BroadcastParticipationService(
 
    private async Task<IReadOnlyDictionary<string, Guid>>
       LoadParticipantEntityIdsAsync(
+         Guid? organizationEntityId,
+         IDictionary<Guid, IReadOnlyDictionary<string, Guid>> cache,
          CancellationToken cancellationToken
       )
    {
+      if(organizationEntityId is null)
+      {
+         return new Dictionary<string, Guid>();
+      }
+
+      if(cache.TryGetValue(organizationEntityId.Value, out var cached))
+      {
+         return cached;
+      }
+
       var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
+         organizationEntityId.Value,
          cancellationToken
       );
 
-      return entityOptions
+      var entityIdsByName = entityOptions
          .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
          .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
          .Where(group => !string.IsNullOrWhiteSpace(group.Key))
          .ToDictionary(group => group.Key, group => group.First().Id);
+
+      cache[organizationEntityId.Value] = entityIdsByName;
+      return entityIdsByName;
    }
 
    private static BroadcastParticipationCheckDisplay

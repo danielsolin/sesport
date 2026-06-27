@@ -1314,6 +1314,69 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
+   public async Task<IReadOnlyList<EntityNameOption>>
+      GetPersonEntityNameOptionsAsync(
+         Guid organizationEntityId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = $$"""
+         with linked_persons as (
+            select distinct
+               e.id,
+               e.canonical_name,
+               e.alias_name
+            from entities e
+            where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+               and exists (
+                  select 1
+                  from entity_to_entity_links l
+                  where (l.source_entity_id = @organization_entity_id
+                        and l.target_entity_id = e.id)
+                     or (l.target_entity_id = @organization_entity_id
+                        and l.source_entity_id = e.id)
+               )
+         )
+         select id, name
+         from (
+            select
+               id,
+               canonical_name as name
+            from linked_persons
+            union all
+            select
+               id,
+               alias_name as name
+            from linked_persons
+            where alias_name is not null
+         ) names
+         order by name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         organizationEntityId
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityNameOption>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityNameOption(
+               reader.GetGuid(0),
+               reader.GetString(1)
+            )
+         );
+      }
+
+      return options;
+   }
+
    public async Task<IReadOnlyList<LookupOption>> GetCountryOptionsAsync(
       CancellationToken cancellationToken
    )

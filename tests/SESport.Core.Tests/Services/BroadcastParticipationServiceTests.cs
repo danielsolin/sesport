@@ -218,6 +218,144 @@ public sealed class BroadcastParticipationServiceTests
       }
    }
 
+   [Fact]
+   public async Task GetParticipationCheckResultsAsyncUsesBroadcastOrg()
+   {
+      var organizationAId = Guid.NewGuid();
+      var organizationBId = Guid.NewGuid();
+      var personAId = Guid.NewGuid();
+      var personBId = Guid.NewGuid();
+      var broadcastAId = Guid.NewGuid();
+      var broadcastBId = Guid.NewGuid();
+      var sourceKeyA = $"test-source-{Guid.NewGuid():N}";
+      var sourceKeyB = $"test-source-{Guid.NewGuid():N}";
+      var sharedName = "Shared Participant";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateService(dataSource);
+      var jobId = "decide-swedish-participation";
+      var context = await LoadParticipationJobContextAsync(
+         dataSource,
+         jobId
+      );
+      var runAId = Guid.NewGuid();
+      var runBId = Guid.NewGuid();
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationAId,
+         $"Organization A {organizationAId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationBId,
+         $"Organization B {organizationBId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personAId,
+         sharedName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personBId,
+         sharedName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personAId, organizationAId);
+      await InsertEntityLinkAsync(dataSource, personBId, organizationBId);
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastAId,
+         sourceKeyA,
+         organizationAId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         "Broadcast A",
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastBId,
+         sourceKeyB,
+         organizationBId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-2",
+         "Viaplay",
+         "Broadcast B",
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow.AddMinutes(1),
+         DateTimeOffset.UtcNow.AddHours(2).AddMinutes(1)
+      );
+      await InsertRunAsync(
+         dataSource,
+         runAId,
+         jobId,
+         context.PromptId,
+         context.ProviderId,
+         broadcastAId.ToString(),
+         sharedName
+      );
+      await InsertRunAsync(
+         dataSource,
+         runBId,
+         jobId,
+         context.PromptId,
+         context.ProviderId,
+         broadcastBId.ToString(),
+         sharedName
+      );
+
+      try
+      {
+         var results = await fixture.Service.GetParticipationCheckResultsAsync(
+            [broadcastAId, broadcastBId],
+            CancellationToken.None
+         );
+
+         var resultsById = results.ToDictionary(result => result.Id);
+         var broadcastAResult = Assert.Single(
+            resultsById[broadcastAId].Checks
+         );
+         var broadcastBResult = Assert.Single(
+            resultsById[broadcastBId].Checks
+         );
+
+         Assert.Equal(
+            $"/Admin/Entities/Edit/{personAId}",
+            broadcastAResult.Participants[0].EditUrl
+         );
+         Assert.Equal(
+            $"/Admin/Entities/Edit/{personBId}",
+            broadcastBResult.Participants[0].EditUrl
+         );
+      }
+      finally
+      {
+         await DeleteParticipationRunsAsync(dataSource, runAId, runBId);
+         await DeleteBroadcastAsync(dataSource, broadcastAId);
+         await DeleteBroadcastAsync(dataSource, broadcastBId);
+         await DeleteLinksAsync(dataSource, personAId);
+         await DeleteLinksAsync(dataSource, personBId);
+         await DeleteEntityAsync(dataSource, personAId);
+         await DeleteEntityAsync(dataSource, personBId);
+         await DeleteEntityAsync(dataSource, organizationAId);
+         await DeleteEntityAsync(dataSource, organizationBId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();
@@ -410,6 +548,138 @@ public sealed class BroadcastParticipationServiceTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task InsertRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid runId,
+      string jobId,
+      Guid promptId,
+      string providerId,
+      string correlationId,
+      string participantName
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into ai_job_runs (
+            id,
+            job_id,
+            prompt_id,
+            provider_id,
+            status_id,
+            correlation_id,
+            provider_model,
+            input_payload,
+            rendered_prompt,
+            raw_request,
+            raw_response,
+            tool_trace,
+            output_text,
+            error_message,
+            started_at,
+            completed_at,
+            duration_seconds,
+            input_tokens,
+            output_tokens,
+            reasoning_tokens,
+            tool_round_count,
+            conversation_character_count,
+            execution_environment
+         )
+         values (
+            @id,
+            @job_id,
+            @prompt_id,
+            @provider_id,
+            'completed',
+            @correlation_id,
+            'gpt',
+            '{}'::jsonb,
+            'Rendered',
+            null,
+            null,
+            null,
+            @output_text::jsonb,
+            null,
+            now(),
+            now(),
+            null,
+            null,
+            null,
+            null,
+            0,
+            0,
+            null
+         )
+         """;
+      command.Parameters.AddWithValue("id", runId);
+      command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.AddWithValue("prompt_id", promptId);
+      command.Parameters.AddWithValue("provider_id", providerId);
+      command.Parameters.AddWithValue("correlation_id", correlationId);
+      command.Parameters.AddWithValue(
+         "output_text",
+         $$"""
+         {"Participation":"Yes","Participants":["{{participantName}}"]}
+         """
+      );
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteParticipationRunsAsync(
+      NpgsqlDataSource dataSource,
+      Guid runAId,
+      Guid runBId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_job_runs
+         where id = @run_a_id
+            or id = @run_b_id
+         """;
+      command.Parameters.AddWithValue("run_a_id", runAId);
+      command.Parameters.AddWithValue("run_b_id", runBId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<JobContext> LoadParticipationJobContextAsync(
+      NpgsqlDataSource dataSource,
+      string jobId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         select
+            j.provider_id,
+            coalesce(j.active_prompt_id, p.id)
+         from ai_jobs j
+         left join ai_job_prompts p
+            on p.job_id = j.id
+               and p.enabled = true
+         where j.id = @job_id
+         order by p.version desc nulls last
+         limit 1
+         """;
+      command.Parameters.AddWithValue("job_id", jobId);
+
+      await using var reader = await command.ExecuteReaderAsync();
+
+      if(!await reader.ReadAsync())
+      {
+         throw new InvalidOperationException(
+            $"Missing AI job definition: {jobId}"
+         );
+      }
+
+      return new JobContext(
+         reader.GetString(0),
+         reader.GetGuid(1)
+      );
+   }
+
    private static async Task DeleteBroadcastAsync(
       NpgsqlDataSource dataSource,
       Guid broadcastId
@@ -425,6 +695,11 @@ public sealed class BroadcastParticipationServiceTests
 
       await command.ExecuteNonQueryAsync();
    }
+
+   private sealed record JobContext(
+      string ProviderId,
+      Guid PromptId
+   );
 
    private static async Task DeleteEntityAsync(
       NpgsqlDataSource dataSource,

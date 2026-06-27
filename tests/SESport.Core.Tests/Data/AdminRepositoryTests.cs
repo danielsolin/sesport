@@ -70,6 +70,82 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task GetPersonEntityNameOptionsAsyncUsesOrganizationScope()
+   {
+      var organizationAId = Guid.NewGuid();
+      var organizationBId = Guid.NewGuid();
+      var personAId = Guid.NewGuid();
+      var personBId = Guid.NewGuid();
+      var personName = $"Shared Person {Guid.NewGuid():N}";
+      var aliasName = $"Alias Person {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationAId,
+         "Organization A",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationBId,
+         "Organization B",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertEntityAsync(
+         dataSource,
+         personAId,
+         personName,
+         aliasName
+      );
+      await InsertEntityAsync(
+         dataSource,
+         personBId,
+         personName
+      );
+      await InsertLinkAsync(dataSource, personAId, organizationAId);
+      await InsertLinkAsync(dataSource, personBId, organizationBId);
+
+      try
+      {
+         var options = await repository.GetPersonEntityNameOptionsAsync(
+            organizationAId,
+            CancellationToken.None
+         );
+
+         Assert.Contains(
+            options,
+            option =>
+               option.Id == personAId &&
+               option.Name == personName
+         );
+         Assert.Contains(
+            options,
+            option =>
+               option.Id == personAId &&
+               option.Name == aliasName
+         );
+         Assert.DoesNotContain(
+            options,
+            option => option.Id == personBId
+         );
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personAId);
+         await DeleteLinksAsync(dataSource, personBId);
+         await DeleteEntityAsync(dataSource, personAId);
+         await DeleteEntityAsync(dataSource, personBId);
+         await DeleteEntityAsync(dataSource, organizationAId);
+         await DeleteEntityAsync(dataSource, organizationBId);
+      }
+   }
+
+   [Fact]
    public async Task GetEntityCloneTemplateAsyncKeepsOnlyNationalTeams()
    {
       var templateId = Guid.NewGuid();

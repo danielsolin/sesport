@@ -55,11 +55,11 @@ public class IndexModel(
       private set;
    } = [];
 
-   public IReadOnlyDictionary<string, Guid> ParticipantEntityIdsByName
-   {
-      get;
-      private set;
-   } = new Dictionary<string, Guid>();
+   private IReadOnlyDictionary<Guid, IReadOnlyDictionary<string, Guid>>
+      participantEntityIdsByOrganizationEntityId = new Dictionary<
+         Guid,
+         IReadOnlyDictionary<string, Guid>
+      >();
 
    public string? LoadError { get; private set; }
 
@@ -100,12 +100,22 @@ public class IndexModel(
 
    public IReadOnlyList<BroadcastParticipantDisplayItem>
       GetParticipantDisplayItems(
+         Guid? organizationEntityId,
          IReadOnlyList<string> participantNames
       )
    {
+      if(organizationEntityId is null ||
+         !participantEntityIdsByOrganizationEntityId.TryGetValue(
+            organizationEntityId.Value,
+            out var participantEntityIdsByName
+         ))
+      {
+         participantEntityIdsByName = new Dictionary<string, Guid>();
+      }
+
       return BroadcastParticipationService.GetParticipantDisplayItems(
          participantNames,
-         ParticipantEntityIdsByName
+         participantEntityIdsByName
       );
    }
 
@@ -204,8 +214,17 @@ public class IndexModel(
             Broadcasts,
             cancellationToken
          );
-         ParticipantEntityIdsByName = await LoadParticipantEntityIdsAsync(
-            cancellationToken
+         participantEntityIdsByOrganizationEntityId =
+            await LoadParticipantEntityIdsAsync(
+               Broadcasts
+                  .Select(broadcast => broadcast.OrganizationEntityId)
+                  .Where(
+                     organizationEntityId => organizationEntityId is not null
+                  )
+                  .Select(organizationEntityId => organizationEntityId!.Value)
+                  .Distinct()
+                  .ToArray(),
+               cancellationToken
          );
       }
       catch(Exception exception)
@@ -294,20 +313,32 @@ public class IndexModel(
          .ToList();
    }
 
-   private async Task<IReadOnlyDictionary<string, Guid>>
+   private async Task<IReadOnlyDictionary<Guid, IReadOnlyDictionary<string, Guid>>>
       LoadParticipantEntityIdsAsync(
+         Guid[] organizationEntityIds,
          CancellationToken cancellationToken
       )
    {
-      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
-         cancellationToken
-      );
+      var participantEntityIdsByOrganizationEntityId =
+         new Dictionary<Guid, IReadOnlyDictionary<string, Guid>>();
 
-      return entityOptions
-         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-         .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
-         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-         .ToDictionary(group => group.Key, group => group.First().Id);
+      foreach(var organizationEntityId in organizationEntityIds)
+      {
+         var entityOptions =
+            await adminRepository.GetPersonEntityNameOptionsAsync(
+               organizationEntityId,
+               cancellationToken
+            );
+         participantEntityIdsByOrganizationEntityId[organizationEntityId] =
+            entityOptions
+               .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
+               .GroupBy(entity =>
+                  BroadcastEntityFilter.NormalizeName(entity.Name))
+               .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+               .ToDictionary(group => group.Key, group => group.First().Id);
+      }
+
+      return participantEntityIdsByOrganizationEntityId;
    }
 
 }
