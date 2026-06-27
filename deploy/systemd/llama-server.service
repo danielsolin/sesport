@@ -1,0 +1,16 @@
+[Unit]
+Description=llama-server
+After=network.target
+
+[Service]
+WorkingDirectory=/home/daniel/llama.cpp
+ExecStart=/usr/bin/bash /home/daniel/sesport/bin/llm-start-vps.sh
+Restart=always
+RestartSec=5
+User=daniel
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llama-server
+
+[Install]
+WantedBy=multi-user.target

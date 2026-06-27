@@ -1,0 +1,9 @@
+[Unit]
+Description=SESport database backup
+
+[Service]
+Type=oneshot
+User=daniel
+WorkingDirectory=/home/daniel/sesport
+ExecStart=/usr/bin/flock -n /tmp/sesport-db-backup.lock \
+   /home/daniel/sesport/bin/db-backup.sh

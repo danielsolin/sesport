@@ -1,0 +1,11 @@
+[Unit]
+Description=Run SESport database backup hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=5m
+Unit=sesport-db-backup.service
+
+[Install]
+WantedBy=timers.target

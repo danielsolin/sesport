@@ -1,0 +1,16 @@
+[Unit]
+Description=SESport
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/sesport
+ExecStart=/usr/bin/dotnet /opt/sesport/SESport.Web.dll --urls \
+   http://127.0.0.1:5000
+Restart=always
+RestartSec=5
+User=daniel
+Environment=ASPNETCORE_ENVIRONMENT=Production
+EnvironmentFile=/home/daniel/sesport/.env
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=SESport SearXNG
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=daniel
+WorkingDirectory=/home/daniel/sesport
+ExecStart=/usr/bin/docker compose up -d --no-deps searxng
+ExecStop=/usr/bin/docker compose stop searxng
+
+[Install]
+WantedBy=multi-user.target

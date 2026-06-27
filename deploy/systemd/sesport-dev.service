@@ -1,0 +1,17 @@
+[Unit]
+Description=SESport Dev
+After=network.target
+
+[Service]
+WorkingDirectory=/home/daniel/sesport/artifacts/publish-dev
+ExecStart=/usr/bin/dotnet \
+   /home/daniel/sesport/artifacts/publish-dev/SESport.Web.dll \
+   --urls http://127.0.0.1:5001
+Restart=always
+RestartSec=5
+User=daniel
+Environment=ASPNETCORE_ENVIRONMENT=Development
+EnvironmentFile=/home/daniel/sesport/.env
+
+[Install]
+WantedBy=multi-user.target
