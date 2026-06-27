@@ -1,9 +1,12 @@
 .vs/
 **/bin/
 !/bin/
+!/android/SESportWebWrapper/bin/
+!/android/SESportWebWrapper/bin/**
 **/obj/
 *.swp
 docs/TODO.md
 artifacts/publish-dev/
+data/db-backups/
 .worktale/
 .env

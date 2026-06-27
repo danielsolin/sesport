@@ -35,6 +35,16 @@ Required keys:
 - `keyAlias`
 - `keyPassword`
 
+You can also generate both files with:
+
+```bash
+cd android/SESportWebWrapper
+./bin/create-release-keystore.sh /absolute/path/to/release-keystore.jks
+```
+
+That script will prompt for the passwords and write
+`keystore.properties` for you.
+
 ## Notes
 
 - The project is intentionally tiny.
