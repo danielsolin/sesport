@@ -6,5 +6,5 @@
     <path
         android:fillColor="@color/sesport_yellow"
         android:pathData="M54,21
-            A33,33 0 1,1 53.999,21 Z" />
+            A30,30 0 1,1 53.999,21 Z" />
 </vector>
