@@ -26,6 +26,25 @@
    {
       "type": "function",
       "function": {
+         "name": "web_remember",
+         "parameters": {
+            "type": "object",
+            "required": [
+               "note"
+            ],
+            "properties": {
+               "note": {
+                  "type": "string"
+               }
+            },
+            "additionalProperties": false
+         },
+         "description": "Remember a finding for later turns."
+      }
+   },
+   {
+      "type": "function",
+      "function": {
          "name": "web_get_page",
          "parameters": {
             "type": "object",
