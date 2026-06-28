@@ -11,6 +11,7 @@ namespace SESport.Web.Services;
 
 public sealed class ActivityEditPageService(
    ActivityRepository repository,
+   AdminRepository adminRepository,
    BroadcastRepository broadcastRepository,
    BroadcastParticipationService participationService,
    IAiJobRunner aiJobRunner
@@ -145,11 +146,14 @@ public sealed class ActivityEditPageService(
 
       if(participationCheck is not null)
       {
-         activity.LinkedEntityIds =
-            BroadcastActivityPrefillBuilder.SelectLinkedEntityIds(
+         activity.LinkedEntityIds = (
+            await ResolveLinkedEntityIdsAsync(
+               firstBroadcast.EntityId,
                selectableEntities,
-               participationCheck
-            ).ToList();
+               participationCheck.Participants,
+               cancellationToken
+            )
+         ).ToList();
       }
    }
 
@@ -216,6 +220,88 @@ public sealed class ActivityEditPageService(
       var entities = await repository.GetEntityOptionsAsync(cancellationToken);
 
       return entities.Select(ToBroadcastEntityOption).ToList();
+   }
+
+   private async Task<IReadOnlyList<Guid>> ResolveLinkedEntityIdsAsync(
+      Guid? organizationEntityId,
+      IReadOnlyList<BroadcastEntityOption> selectableEntities,
+      IReadOnlyCollection<string> participantNames,
+      CancellationToken cancellationToken
+   )
+   {
+      if(organizationEntityId is null || participantNames.Count == 0)
+      {
+         return [];
+      }
+
+      var selectablePersonIds = selectableEntities
+         .Where(entity => entity.Type == TrackedEntityTypeIds.Person)
+         .Select(entity => entity.Id)
+         .ToHashSet();
+      var entityIdsByName = (
+         await adminRepository.GetParticipantEntityNameOptionsAsync(
+            organizationEntityId.Value,
+            cancellationToken
+         )
+      )
+         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
+         .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
+         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+         .ToDictionary(group => group.Key, group => group.First().Id);
+      var linkedEntityIds = new List<Guid>();
+      var seenEntityIds = new HashSet<Guid>();
+
+      foreach(var participantName in participantNames)
+      {
+         var normalizedName = BroadcastEntityFilter.NormalizeName(
+            participantName
+         );
+
+         if(string.IsNullOrWhiteSpace(normalizedName) ||
+            !entityIdsByName.TryGetValue(normalizedName, out var entityId))
+         {
+            continue;
+         }
+
+         var entity = await adminRepository.GetEntityForEditAsync(
+            entityId,
+            cancellationToken
+         );
+
+         if(entity is null)
+         {
+            continue;
+         }
+
+         if(string.Equals(
+            entity.EntityTypeId,
+            TrackedEntityTypeIds.Pair,
+            StringComparison.OrdinalIgnoreCase))
+         {
+            foreach(var linkedEntityId in entity.LinkedEntityIds)
+            {
+               if(!selectablePersonIds.Contains(linkedEntityId) ||
+                  !seenEntityIds.Add(linkedEntityId))
+               {
+                  continue;
+               }
+
+               linkedEntityIds.Add(linkedEntityId);
+            }
+
+            continue;
+         }
+
+         if(!selectablePersonIds.Contains(entityId) ||
+            !seenEntityIds.Add(entityId))
+         {
+            continue;
+         }
+
+         linkedEntityIds.Add(entityId);
+      }
+
+      return linkedEntityIds;
    }
 
    private async Task<string> CreateTeaserInputJsonAsync(
