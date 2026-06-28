@@ -882,7 +882,7 @@
             ).matches
                ? "auto"
                : "smooth",
-            block: "start",
+            block: "center",
             inline: "nearest"
          });
 
