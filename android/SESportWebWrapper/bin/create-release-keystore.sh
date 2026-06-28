@@ -32,7 +32,7 @@ keytool -genkeypair \
    -keystore "$keystore_path" \
    -storepass "$store_password" \
    -keypass "$key_password" \
-   -dname "CN=SE Sport, OU=Mobile, O=SE Sport, L=Stockholm, S=Stockholm, C=SE"
+   -dname "CN=sesport, OU=Mobile, O=sesport, L=Stockholm, S=Stockholm, C=SE"
 
 cat > "$project_root/keystore.properties" <<EOF
 storeFile=$keystore_path
@@ -44,4 +44,3 @@ EOF
 echo "Created:"
 echo "  $keystore_path"
 echo "  $project_root/keystore.properties"
-

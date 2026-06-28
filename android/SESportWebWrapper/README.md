@@ -1,6 +1,6 @@
-# SE Sport Android App
+# sesport Android App
 
-Minimal Android app that opens the SE Sport site in a WebView.
+Minimal Android app that opens the sesport site in a WebView.
 
 ## What it does
 
