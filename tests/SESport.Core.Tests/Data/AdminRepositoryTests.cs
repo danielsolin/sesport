@@ -70,6 +70,42 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task GetPersonEntityNameOptionsAsyncReturnsInsertedPair()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Test Pair {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         entityId,
+         entityName,
+         TrackedEntityTypeIds.Pair,
+         "football"
+      );
+
+      try
+      {
+         var options = await repository.GetPersonEntityNameOptionsAsync(
+            CancellationToken.None
+         );
+
+         Assert.Contains(
+            options,
+            option =>
+               option.Id == entityId &&
+               option.Name == entityName
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
    public async Task GetPersonEntityNameOptionsAsyncUsesOrganizationScope()
    {
       var organizationAId = Guid.NewGuid();
@@ -107,8 +143,18 @@ public sealed class AdminRepositoryTests
          personBId,
          personName
       );
+      var pairId = Guid.NewGuid();
+      var pairName = $"Shared Pair {Guid.NewGuid():N}";
+      await InsertRelatedEntityAsync(
+         dataSource,
+         pairId,
+         pairName,
+         TrackedEntityTypeIds.Pair,
+         "football"
+      );
       await InsertLinkAsync(dataSource, personAId, organizationAId);
       await InsertLinkAsync(dataSource, personBId, organizationBId);
+      await InsertLinkAsync(dataSource, pairId, organizationAId);
 
       try
       {
@@ -129,6 +175,12 @@ public sealed class AdminRepositoryTests
                option.Id == personAId &&
                option.Name == aliasName
          );
+         Assert.Contains(
+            options,
+            option =>
+               option.Id == pairId &&
+               option.Name == pairName
+         );
          Assert.DoesNotContain(
             options,
             option => option.Id == personBId
@@ -136,10 +188,12 @@ public sealed class AdminRepositoryTests
       }
       finally
       {
+         await DeleteLinksAsync(dataSource, pairId);
          await DeleteLinksAsync(dataSource, personAId);
          await DeleteLinksAsync(dataSource, personBId);
          await DeleteEntityAsync(dataSource, personAId);
          await DeleteEntityAsync(dataSource, personBId);
+         await DeleteEntityAsync(dataSource, pairId);
          await DeleteEntityAsync(dataSource, organizationAId);
          await DeleteEntityAsync(dataSource, organizationBId);
       }

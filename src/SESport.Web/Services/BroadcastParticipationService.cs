@@ -213,10 +213,11 @@ public sealed class BroadcastParticipationService(
          return cached;
       }
 
-      var entityOptions = await adminRepository.GetPersonEntityNameOptionsAsync(
-         organizationEntityId.Value,
-         cancellationToken
-      );
+      var entityOptions =
+         await adminRepository.GetParticipantEntityNameOptionsAsync(
+            organizationEntityId.Value,
+            cancellationToken
+         );
 
       var entityIdsByName = entityOptions
          .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
@@ -312,6 +313,7 @@ public sealed class BroadcastParticipationService(
          {
             sport = broadcast.Categories,
             event_name = broadcast.Title,
+            description = broadcast.Description,
             date = $"{localDate:yyyy-MM-dd}",
             candidates
          }

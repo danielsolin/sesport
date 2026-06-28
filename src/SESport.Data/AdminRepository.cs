@@ -1279,8 +1279,28 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
-   public async Task<IReadOnlyList<EntityNameOption>>
+   public Task<IReadOnlyList<EntityNameOption>>
       GetPersonEntityNameOptionsAsync(
+         CancellationToken cancellationToken
+      )
+   {
+      return GetParticipantEntityNameOptionsAsync(cancellationToken);
+   }
+
+   public Task<IReadOnlyList<EntityNameOption>>
+      GetPersonEntityNameOptionsAsync(
+         Guid organizationEntityId,
+         CancellationToken cancellationToken
+      )
+   {
+      return GetParticipantEntityNameOptionsAsync(
+         organizationEntityId,
+         cancellationToken
+      );
+   }
+
+   public async Task<IReadOnlyList<EntityNameOption>>
+      GetParticipantEntityNameOptionsAsync(
          CancellationToken cancellationToken
       )
    {
@@ -1291,13 +1311,19 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                e.id,
                e.canonical_name as name
             from entities e
-            where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            where e.entity_type_id in (
+               '{{TrackedEntityTypeIds.Person}}',
+               '{{TrackedEntityTypeIds.Pair}}'
+            )
             union all
             select
                e.id,
                e.alias_name as name
             from entities e
-            where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            where e.entity_type_id in (
+               '{{TrackedEntityTypeIds.Person}}',
+               '{{TrackedEntityTypeIds.Pair}}'
+            )
                and e.alias_name is not null
          ) names
          order by name
@@ -1323,7 +1349,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    }
 
    public async Task<IReadOnlyList<EntityNameOption>>
-      GetPersonEntityNameOptionsAsync(
+      GetParticipantEntityNameOptionsAsync(
          Guid organizationEntityId,
          CancellationToken cancellationToken
       )
@@ -1335,7 +1361,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                e.canonical_name,
                e.alias_name
             from entities e
-            where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            where e.entity_type_id in (
+               '{{TrackedEntityTypeIds.Person}}',
+               '{{TrackedEntityTypeIds.Pair}}'
+            )
                and exists (
                   select 1
                   from entity_to_entity_links l

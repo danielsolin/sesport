@@ -313,8 +313,9 @@ public class IndexModel(
          .ToList();
    }
 
-   private async Task<IReadOnlyDictionary<Guid, IReadOnlyDictionary<string, Guid>>>
-      LoadParticipantEntityIdsAsync(
+   private async Task<
+      IReadOnlyDictionary<Guid, IReadOnlyDictionary<string, Guid>>
+   > LoadParticipantEntityIdsAsync(
          Guid[] organizationEntityIds,
          CancellationToken cancellationToken
       )
@@ -325,7 +326,7 @@ public class IndexModel(
       foreach(var organizationEntityId in organizationEntityIds)
       {
          var entityOptions =
-            await adminRepository.GetPersonEntityNameOptionsAsync(
+            await adminRepository.GetParticipantEntityNameOptionsAsync(
                organizationEntityId,
                cancellationToken
             );

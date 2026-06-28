@@ -23,7 +23,7 @@ public sealed class BroadcastParticipationServiceTests
          Guid.NewGuid(),
          "Channel",
          "Event title",
-         null,
+         "Broadcast description",
          ["Tennis"],
          DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
          DateTimeOffset.Parse("2026-06-15T14:00:00Z")
@@ -42,6 +42,10 @@ public sealed class BroadcastParticipationServiceTests
       Assert.False(root.TryGetProperty("date_time", out _));
       Assert.Equal("2026-06-15", date.GetString());
       Assert.Equal("Event title", root.GetProperty("event_name").GetString());
+      Assert.Equal(
+         "Broadcast description",
+         root.GetProperty("description").GetString()
+      );
       Assert.Equal("  - Candidate", root.GetProperty("candidates").GetString());
    }
 
@@ -66,6 +70,88 @@ public sealed class BroadcastParticipationServiceTests
       Assert.Equal("New Person", result[1].Name);
       Assert.Null(result[1].EditUrl);
       Assert.Equal(entityId, result[1].TemplateEntityId);
+   }
+
+   [Fact]
+   public async Task GetParticipationCheckResultsAsyncLinksPairEntities()
+   {
+      var organizationId = Guid.NewGuid();
+      var pairId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var pairName = $"Pair {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateService(dataSource);
+      var jobId = "decide-swedish-participation";
+      var context = await LoadParticipationJobContextAsync(
+         dataSource,
+         jobId
+      );
+      var runId = Guid.NewGuid();
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         pairId,
+         pairName,
+         TrackedEntityTypeIds.Pair,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, pairId, organizationId);
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         "Broadcast title",
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         context.PromptId,
+         context.ProviderId,
+         broadcastId.ToString(),
+         pairName
+      );
+
+      try
+      {
+         var results = await fixture.Service.GetParticipationCheckResultsAsync(
+            [broadcastId],
+            CancellationToken.None
+         );
+
+         var result = Assert.Single(results);
+         var check = Assert.Single(result.Checks);
+
+         Assert.Equal(
+            $"/Admin/Entities/Edit/{pairId}",
+            check.Participants[0].EditUrl
+         );
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, runId);
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, pairId);
+         await DeleteEntityAsync(dataSource, pairId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
    }
 
    [Fact]
@@ -641,6 +727,21 @@ public sealed class BroadcastParticipationServiceTests
          """;
       command.Parameters.AddWithValue("run_a_id", runAId);
       command.Parameters.AddWithValue("run_b_id", runBId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteParticipationRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid runId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_job_runs
+         where id = @run_id
+         """;
+      command.Parameters.AddWithValue("run_id", runId);
       await command.ExecuteNonQueryAsync();
    }
 

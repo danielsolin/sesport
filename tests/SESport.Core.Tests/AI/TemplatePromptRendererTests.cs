@@ -67,4 +67,33 @@ public class TemplatePromptRendererTests
          rendered.UserPrompt
       );
    }
+
+   [Fact]
+   public void RenderReplacesDescriptionMarker()
+   {
+      var renderer = new TemplatePromptRenderer();
+      var prompt = new AiPromptDefinition(
+         Guid.Parse("33333333-3333-3333-3333-333333333333"),
+         "job",
+         1,
+         "System",
+         "Description: {{description}}",
+         null,
+         "{}",
+         null,
+         null,
+         null,
+         true
+      );
+
+      var rendered = renderer.Render(
+         prompt,
+         """{"description":"Olympic qualifier"}"""
+      );
+
+      Assert.Equal(
+         "Description: Olympic qualifier",
+         rendered.UserPrompt
+      );
+   }
 }
