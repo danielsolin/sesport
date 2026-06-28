@@ -1,7 +1,9 @@
 <resources>
-    <color name="sesport_navy">#10233E</color>
-    <color name="sesport_red">#E94E4E</color>
-    <color name="sesport_cream">#F7F2E8</color>
-    <color name="sesport_white">#FFFFFF</color>
+   <color name="sesport_navy">#10233E</color>
+   <color name="sesport_red">#E94E4E</color>
+   <color name="sesport_cream">#F7F2E8</color>
+   <color name="sesport_white">#FFFFFF</color>
+   <color name="sesport_blue">#006aa8</color>
+   <color name="sesport_yellow">#ffcc00</color>
 </resources>
 
