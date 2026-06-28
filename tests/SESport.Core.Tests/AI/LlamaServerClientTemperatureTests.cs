@@ -85,6 +85,21 @@ public sealed class LlamaServerClientTemperatureTests
    }
 
    [Fact]
+   public void CreateRepeatedToolReplayMessageIncludesCachedResult()
+   {
+      var message = LlamaServerClient.CreateRepeatedToolReplayMessage(
+         "web_get_page",
+         "Page URL: https://example.test/roster"
+      );
+
+      Assert.Contains(
+         "Repeated web_get_page call detected. No new information.",
+         message
+      );
+      Assert.Contains("Page URL: https://example.test/roster", message);
+   }
+
+   [Fact]
    public void SummarizeToolResultCompactsPageContent()
    {
       var summary = LlamaServerClient.SummarizeToolResult(

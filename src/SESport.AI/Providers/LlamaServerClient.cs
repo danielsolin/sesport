@@ -1488,7 +1488,15 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(repeatedSearchCount >= engineCount)
       {
-         return CreateRepeatedToolResultMessage(toolCall.Name);
+         return CreateRepeatedToolReplayMessage(
+            toolCall.Name,
+            toolState.ToolCallHistory.TryGetValue(
+               signature,
+               out var record
+            )
+               ? record.Result
+               : ""
+         );
       }
 
       var searchResponse = await WebSearchClient.SearchAsync(
@@ -3144,13 +3152,34 @@ public sealed class LlamaServerClient : IAiProviderClient
          return false;
       }
 
-      repeatedResult = CreateRepeatedToolResultMessage(toolCall.Name);
+      repeatedResult = CreateRepeatedToolReplayMessage(
+         toolCall.Name,
+         record.Result
+      );
       return true;
    }
 
    internal static string CreateRepeatedToolResultMessage(string toolName)
    {
       return $"Repeated {toolName} call detected. No new information.";
+   }
+
+   internal static string CreateRepeatedToolReplayMessage(
+      string toolName,
+      string cachedResult
+   )
+   {
+      var result = new StringBuilder();
+
+      result.AppendLine(CreateRepeatedToolResultMessage(toolName));
+
+      if(!string.IsNullOrWhiteSpace(cachedResult))
+      {
+         result.AppendLine();
+         result.Append(cachedResult);
+      }
+
+      return result.ToString().TrimEnd();
    }
 
    private static void RecordToolCallResult(
