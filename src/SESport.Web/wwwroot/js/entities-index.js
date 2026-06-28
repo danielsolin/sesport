@@ -187,6 +187,7 @@
       watchPriorityTemplate
    )
    {
+      const token = getAntiForgeryToken();
       const entityId = escapeHtml(entity.id ?? "");
       const name = escapeHtml(entity.name ?? "");
       const relatedEntityNames = escapeHtml(entity.relatedEntityNames ?? "");
@@ -250,10 +251,25 @@
                <form method="post"
                      action="${deleteUrl.toString()}"
                      onsubmit='return confirm("Sure?");'>
+                  ${renderAntiForgeryTokenInputHtml(token)}
                   <button type="submit">Delete</button>
                </form>
             </td>
          </tr>
+      `;
+   }
+
+   function renderAntiForgeryTokenInputHtml(token)
+   {
+      if(typeof token !== "string" || token.trim() === "")
+      {
+         return "";
+      }
+
+      return `
+         <input type="hidden"
+                name="__RequestVerificationToken"
+                value="${escapeHtml(token)}" />
       `;
    }
 
@@ -286,6 +302,20 @@
 
       const value = container.dataset[key];
       return typeof value === "string" ? value.trim() : "";
+   }
+
+   function getAntiForgeryToken()
+   {
+      const tokenInput = document.querySelector(
+         "input[name='__RequestVerificationToken']"
+      );
+
+      if(!(tokenInput instanceof HTMLInputElement))
+      {
+         return "";
+      }
+
+      return tokenInput.value;
    }
 
    function getCookie(name)

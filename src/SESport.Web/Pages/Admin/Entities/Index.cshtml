@@ -9,6 +9,8 @@
    var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
 }
 
+@Html.AntiForgeryToken()
+
 <section class="page-heading page-heading-row">
    <div class="page-heading-title-row">
       <h1>Entities</h1>

@@ -21,6 +21,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-entity-inline-edit-field", html);
       Assert.Contains("data-entity-inline-edit-display", html);
       Assert.Contains("data-entity-inline-edit-input", html);
+      Assert.Contains("AntiForgeryToken", html);
       Assert.Contains("entities-index.js", html);
    }
 }
