@@ -1,4 +1,4 @@
-# SE Sport Agent Guidelines
+# sesport Agent Guidelines
 
 ## Setup
 1. Copy `.env.example` to `.env` (adjust if needed)

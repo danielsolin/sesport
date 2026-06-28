@@ -1,6 +1,6 @@
 # Product Goal
 
-The purpose of SE Sport is to answer a simple question:
+The purpose of sesport is to answer a simple question:
 
 ```text
 What international sports activities are connected to the entities that matter
@@ -23,7 +23,7 @@ activities connected to relevant entities.
 
 ## Product Boundary
 
-SE Sport is not a sports celebrity product by default.
+sesport is not a sports celebrity product by default.
 
 The default product should focus on activities with direct sporting relevance:
 competition, participation, performance, selection, availability, transfers,

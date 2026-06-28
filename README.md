@@ -1,6 +1,6 @@
-# SE Sport
+# sesport
 
-SE Sport helps users discover country-relevant international sport.
+sesport helps users discover country-relevant international sport.
 
 It is for users whose main sports interest is not one traditional club or team.
 The user's "team" is instead a country, and that country is represented by athletes,

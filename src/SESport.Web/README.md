@@ -1,6 +1,6 @@
 # SESport.Web
 
-`SESport.Web` is the Razor Pages web application for the public SE Sport
+`SESport.Web` is the Razor Pages web application for the public sesport
 site and the manual administration interface.
 
 ## Prerequisites
