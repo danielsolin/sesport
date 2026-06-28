@@ -10,11 +10,11 @@
     <style name="Theme.SESportApp.Splash"
         parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">
-            @color/sesport_navy</item>
+            @color/sesport_blue</item>
         <item name="windowSplashScreenAnimatedIcon">
             @drawable/splash_logo</item>
         <item name="windowSplashScreenIconBackgroundColor">
-            @color/sesport_navy</item>
+            @color/sesport_blue</item>
         <item name="postSplashScreenTheme">
             @style/Theme.SESportApp</item>
     </style>
