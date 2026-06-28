@@ -4,15 +4,11 @@
     android:viewportWidth="96"
     android:viewportHeight="96">
     <path
-        android:fillColor="@color/sesport_cream"
+        android:fillColor="@color/sesport_blue"
         android:pathData="M48,8
             A40,40 0 1,1 47.999,8 Z" />
     <path
-        android:fillColor="@color/sesport_red"
+        android:fillColor="@color/sesport_yellow"
         android:pathData="M30,24h28a8,8 0 0,1 8,8v28a8,8 0 0,1 -8,8h-28
             a8,8 0 0,1 -8,-8v-28a8,8 0 0,1 8,-8z" />
-    <path
-        android:fillColor="@color/sesport_navy"
-        android:pathData="M40,36h16l8,12l-8,12h-16l-8,-12z" />
 </vector>
-
