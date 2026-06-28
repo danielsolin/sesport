@@ -31,16 +31,19 @@ public class EditModel(ActivityEditPageService editService) : PageModel
    )
    {
       ReturnUrl = GetLocalReturnUrl(returnUrl);
+      Guid? organizationEntityId = null;
 
       if(id is null)
       {
-         await editService.PrefillFromBroadcastsAsync(
-            Activity,
-            broadcastIds ?? [],
-            participationRunId,
-            cancellationToken
-         );
+         organizationEntityId =
+            await editService.PrefillFromBroadcastsAsync(
+               Activity,
+               broadcastIds ?? [],
+               participationRunId,
+               cancellationToken
+            );
          await LoadEntitiesAsync(
+            organizationEntityId,
             Activity.LinkedEntityIds ?? [],
             cancellationToken
          );
@@ -58,6 +61,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       }
 
       await LoadEntitiesAsync(
+         organizationEntityId,
          Activity.LinkedEntityIds ?? [],
          cancellationToken
       );
@@ -80,12 +84,14 @@ public class EditModel(ActivityEditPageService editService) : PageModel
    }
 
    private async Task LoadEntitiesAsync(
+      Guid? organizationEntityId,
       IEnumerable<Guid> selectedEntityIds,
       CancellationToken cancellationToken
    )
    {
       var options = await editService.LoadOptionsAsync(
          selectedEntityIds,
+         organizationEntityId,
          cancellationToken
       );
 
@@ -104,6 +110,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       if(!ModelState.IsValid)
       {
          await LoadEntitiesAsync(
+            null,
             Activity.LinkedEntityIds ?? [],
             cancellationToken
          );

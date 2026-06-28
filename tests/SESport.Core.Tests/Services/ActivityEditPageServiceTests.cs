@@ -16,15 +16,158 @@ namespace SESport.Core.Tests.Services;
 public sealed class ActivityEditPageServiceTests
 {
    [Fact]
-   public async Task PrefillFromBroadcastsAsyncExpandsPairToPersons()
+   public async Task LoadOptionsAsyncShowsOnlyOrganizationPersons()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var pairId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         pairId,
+         $"Pair {pairId:N}",
+         TrackedEntityTypeIds.Pair,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
+      await InsertEntityLinkAsync(dataSource, pairId, organizationId);
+
+      try
+      {
+         var options = await fixture.Service.LoadOptionsAsync(
+            [],
+            organizationId,
+            CancellationToken.None
+         );
+
+         Assert.Contains(
+            options.Entities,
+            option => option.Value == personId.ToString()
+         );
+         Assert.DoesNotContain(
+            options.Entities,
+            option => option.Value == pairId.ToString()
+         );
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteLinksAsync(dataSource, pairId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, pairId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task PrefillFromBroadcastsAsyncUsesDirectOrgPersons()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var personName = $"Person {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var jobContext = await LoadParticipationJobContextAsync(
+         dataSource,
+         "decide-swedish-participation"
+      );
+      var runId = Guid.NewGuid();
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         personName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         "Broadcast title",
+         ["football"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         "decide-swedish-participation",
+         jobContext.PromptId,
+         jobContext.ProviderId,
+         broadcastId.ToString(),
+         personName
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal([broadcastId], activity.BroadcastIds);
+         Assert.Equal([personId], activity.LinkedEntityIds);
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, runId);
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task PrefillFromBroadcastsAsyncExpandsPairParticipants()
    {
       var organizationId = Guid.NewGuid();
       var pairId = Guid.NewGuid();
-      var personAId = Guid.NewGuid();
-      var personBId = Guid.NewGuid();
+      var firstPersonId = Guid.NewGuid();
+      var secondPersonId = Guid.NewGuid();
       var broadcastId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var pairName = $"Pair {Guid.NewGuid():N}";
+      var firstPersonName = $"First {Guid.NewGuid():N}";
+      var secondPersonName = $"Second {Guid.NewGuid():N}";
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
@@ -50,21 +193,23 @@ public sealed class ActivityEditPageServiceTests
       );
       await InsertRelatedEntityAsync(
          dataSource,
-         personAId,
-         $"Person A {personAId:N}",
+         firstPersonId,
+         firstPersonName,
          TrackedEntityTypeIds.Person,
          "football"
       );
       await InsertRelatedEntityAsync(
          dataSource,
-         personBId,
-         $"Person B {personBId:N}",
+         secondPersonId,
+         secondPersonName,
          TrackedEntityTypeIds.Person,
          "football"
       );
       await InsertEntityLinkAsync(dataSource, pairId, organizationId);
-      await InsertEntityLinkAsync(dataSource, pairId, personAId);
-      await InsertEntityLinkAsync(dataSource, pairId, personBId);
+      await InsertEntityLinkAsync(dataSource, pairId, firstPersonId);
+      await InsertEntityLinkAsync(dataSource, pairId, secondPersonId);
+      await InsertEntityLinkAsync(dataSource, firstPersonId, organizationId);
+      await InsertEntityLinkAsync(dataSource, secondPersonId, organizationId);
       await InsertBroadcastAsync(
          dataSource,
          broadcastId,
@@ -100,19 +245,19 @@ public sealed class ActivityEditPageServiceTests
             CancellationToken.None
          );
 
-         Assert.Equal([broadcastId], activity.BroadcastIds);
          Assert.Equal(2, activity.LinkedEntityIds.Count);
-         Assert.Contains(personAId, activity.LinkedEntityIds);
-         Assert.Contains(personBId, activity.LinkedEntityIds);
-         Assert.DoesNotContain(pairId, activity.LinkedEntityIds);
+         Assert.Contains(firstPersonId, activity.LinkedEntityIds);
+         Assert.Contains(secondPersonId, activity.LinkedEntityIds);
       }
       finally
       {
          await DeleteParticipationRunAsync(dataSource, runId);
          await DeleteBroadcastAsync(dataSource, broadcastId);
          await DeleteLinksAsync(dataSource, pairId);
-         await DeleteEntityAsync(dataSource, personAId);
-         await DeleteEntityAsync(dataSource, personBId);
+         await DeleteLinksAsync(dataSource, firstPersonId);
+         await DeleteLinksAsync(dataSource, secondPersonId);
+         await DeleteEntityAsync(dataSource, firstPersonId);
+         await DeleteEntityAsync(dataSource, secondPersonId);
          await DeleteEntityAsync(dataSource, pairId);
          await DeleteEntityAsync(dataSource, organizationId);
       }
@@ -130,13 +275,12 @@ public sealed class ActivityEditPageServiceTests
    )
    {
       var activityRepository = new ActivityRepository(dataSource);
-      var adminRepository = new AdminRepository(dataSource);
       var broadcastRepository = new BroadcastRepository(dataSource);
       var jobRunner = new CapturingAiJobRunner();
       var participationService = new BroadcastParticipationService(
          activityRepository,
          new AiRepository(dataSource),
-         adminRepository,
+         new AdminRepository(dataSource),
          broadcastRepository,
          jobRunner
       );
@@ -144,7 +288,7 @@ public sealed class ActivityEditPageServiceTests
       return new ActivityEditPageServiceFixture(
          new ActivityEditPageService(
             activityRepository,
-            adminRepository,
+            new AdminRepository(dataSource),
             broadcastRepository,
             participationService,
             jobRunner

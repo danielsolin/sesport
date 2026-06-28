@@ -21,13 +21,17 @@ public sealed class ActivityEditPageService(
 
    public async Task<ActivityEditOptions> LoadOptionsAsync(
       IEnumerable<Guid> selectedEntityIds,
+      Guid? organizationEntityId,
       CancellationToken cancellationToken
    )
    {
       try
       {
          var selectedIds = selectedEntityIds.ToHashSet();
-         var entities = await GetSelectableEntitiesAsync(cancellationToken);
+         var entities = await GetSelectableEntitiesAsync(
+            organizationEntityId,
+            cancellationToken
+         );
 
          var entityOptions = entities
             .Select(entity => new SelectListItem
@@ -76,7 +80,7 @@ public sealed class ActivityEditPageService(
       );
    }
 
-   public async Task PrefillFromBroadcastsAsync(
+   public async Task<Guid?> PrefillFromBroadcastsAsync(
       ActivityEditModel activity,
       IReadOnlyCollection<Guid> ids,
       Guid? participationRunId,
@@ -87,7 +91,7 @@ public sealed class ActivityEditPageService(
 
       if(normalizedIds.Count == 0)
       {
-         return;
+         return null;
       }
 
       var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
@@ -97,7 +101,7 @@ public sealed class ActivityEditPageService(
 
       if(broadcasts.Count == 0)
       {
-         return;
+         return null;
       }
 
       var firstBroadcast = broadcasts[0];
@@ -110,7 +114,10 @@ public sealed class ActivityEditPageService(
          );
       var selectableEntities = participationCheck is null
          ? []
-         : await GetSelectableEntitiesAsync(cancellationToken);
+         : await GetSelectableEntitiesAsync(
+            firstBroadcast.EntityId,
+            cancellationToken
+         );
 
       activity.BroadcastIds = [firstBroadcast.Id];
       activity.TvChannelName = firstBroadcast.ChannelName;
@@ -155,6 +162,8 @@ public sealed class ActivityEditPageService(
             )
          ).ToList();
       }
+
+      return firstBroadcast.EntityId;
    }
 
    public async Task<ActivityTeaserResult> GenerateTeaserAsync(
@@ -214,10 +223,16 @@ public sealed class ActivityEditPageService(
    private async Task<
       IReadOnlyList<BroadcastEntityOption>
    > GetSelectableEntitiesAsync(
+      Guid? organizationEntityId,
       CancellationToken cancellationToken
    )
    {
-      var entities = await repository.GetEntityOptionsAsync(cancellationToken);
+      var entities = organizationEntityId is null
+         ? await repository.GetEntityOptionsAsync(cancellationToken)
+         : await repository.GetPersonEntitiesForOrganizationAsync(
+            organizationEntityId.Value,
+            cancellationToken
+         );
 
       return entities.Select(ToBroadcastEntityOption).ToList();
    }
@@ -257,28 +272,32 @@ public sealed class ActivityEditPageService(
             participantName
          );
 
-         if(string.IsNullOrWhiteSpace(normalizedName) ||
-            !entityIdsByName.TryGetValue(normalizedName, out var entityId))
+         if(string.IsNullOrWhiteSpace(normalizedName))
          {
             continue;
          }
 
-         var entity = await adminRepository.GetEntityForEditAsync(
+         if(!entityIdsByName.TryGetValue(normalizedName, out var entityId))
+         {
+            continue;
+         }
+
+         var linkedEntity = await adminRepository.GetEntityForEditAsync(
             entityId,
             cancellationToken
          );
 
-         if(entity is null)
+         if(linkedEntity is null)
          {
             continue;
          }
 
          if(string.Equals(
-            entity.EntityTypeId,
+            linkedEntity.EntityTypeId,
             TrackedEntityTypeIds.Pair,
             StringComparison.OrdinalIgnoreCase))
          {
-            foreach(var linkedEntityId in entity.LinkedEntityIds)
+            foreach(var linkedEntityId in linkedEntity.LinkedEntityIds)
             {
                if(!selectablePersonIds.Contains(linkedEntityId) ||
                   !seenEntityIds.Add(linkedEntityId))
@@ -292,13 +311,14 @@ public sealed class ActivityEditPageService(
             continue;
          }
 
-         if(!selectablePersonIds.Contains(entityId) ||
-            !seenEntityIds.Add(entityId))
+         if(linkedEntity.Id is null ||
+            !selectablePersonIds.Contains(linkedEntity.Id.Value) ||
+            !seenEntityIds.Add(linkedEntity.Id.Value))
          {
             continue;
          }
 
-         linkedEntityIds.Add(entityId);
+         linkedEntityIds.Add(linkedEntity.Id.Value);
       }
 
       return linkedEntityIds;
@@ -311,6 +331,7 @@ public sealed class ActivityEditPageService(
    {
       var selectedIds = (activity.LinkedEntityIds ?? []).ToHashSet();
       var entityNames = await GetSelectableEntitiesAsync(
+         null,
          cancellationToken
       );
 

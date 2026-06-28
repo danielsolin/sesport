@@ -211,6 +211,90 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    }
 
    public async Task<IReadOnlyList<EntityOption>>
+      GetPersonEntitiesForOrganizationAsync(
+         Guid organizationEntityId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = $$"""
+         select
+            e.id,
+            e.canonical_name,
+            e.entity_type_id,
+            s.name,
+            coalesce(org.organization_names, '') as organization_names,
+            p.sort_order,
+            e.person_gender_id,
+            e.alias_name
+         from entities e
+         join sports s
+            on s.id = e.sport_id
+         join entity_watch_priorities p
+            on p.id = e.watch_priority_id
+         left join lateral (
+            select string_agg(
+               distinct linked.canonical_name,
+               ', ' order by linked.canonical_name
+            ) as organization_names
+            from entity_to_entity_links l
+            join entities linked on linked.id = case
+               when l.source_entity_id = e.id then l.target_entity_id
+               else l.source_entity_id
+            end
+            where (l.source_entity_id = e.id or l.target_entity_id = e.id)
+               and linked.entity_type_id in
+                   (
+                     '{{TrackedEntityTypeIds.Organization}}',
+                     '{{TrackedEntityTypeIds.Team}}',
+                     '{{TrackedEntityTypeIds.NationalTeam}}',
+                     '{{TrackedEntityTypeIds.Series}}',
+                     '{{TrackedEntityTypeIds.Tour}}',
+                     '{{TrackedEntityTypeIds.League}}',
+                     '{{TrackedEntityTypeIds.Championship}}'
+                  )
+         ) org on true
+         where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            and exists (
+               select 1
+               from entity_to_entity_links l
+               where (l.source_entity_id = @organization_entity_id
+                     and l.target_entity_id = e.id)
+                  or (l.target_entity_id = @organization_entity_id
+                     and l.source_entity_id = e.id)
+            )
+         order by sort_order, canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         organizationEntityId
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var entities = new List<EntityOption>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         entities.Add(
+            new EntityOption(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3),
+               reader.GetString(4),
+               reader.GetInt32(5),
+               reader.IsDBNull(6) ? null : reader.GetString(6),
+               reader.IsDBNull(7) ? null : reader.GetString(7)
+            )
+         );
+      }
+
+      return entities;
+   }
+
+   public async Task<IReadOnlyList<EntityOption>>
       GetPersonEntitiesForPromptCandidatesAsync(
          Guid organizationEntityId,
          CancellationToken cancellationToken
