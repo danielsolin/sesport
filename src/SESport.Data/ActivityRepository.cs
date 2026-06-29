@@ -689,6 +689,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "related_person_entities,"
          )
          .AppendLine(
+            "   coalesce(rp.related_person_entity_ids, '{}'::uuid[]) " +
+            "as related_person_entity_ids,"
+         )
+         .AppendLine(
             "   coalesce(ro.related_organization_entities, '') " +
             "as related_organization_entities"
          )
@@ -700,12 +704,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine("left join entities te on te.id = l.entity_id")
          .AppendLine("left join lateral (")
-         .AppendLine("   select string_agg(")
-         .AppendLine("      person_name,")
-         .AppendLine("      ', ' order by sort_order, person_name")
-         .AppendLine("   ) as related_person_entities")
+         .AppendLine("   select")
+         .AppendLine("      string_agg(")
+         .AppendLine("         person_name,")
+         .AppendLine("         ', ' order by sort_order, person_name")
+         .AppendLine("      ) as related_person_entities,")
+         .AppendLine("      coalesce(")
+         .AppendLine("         array_agg(")
+         .AppendLine("            person_id order by sort_order, person_name")
+         .AppendLine("         ),")
+         .AppendLine("         '{}'::uuid[]")
+         .AppendLine("      ) as related_person_entity_ids")
          .AppendLine("   from (")
          .AppendLine("      select distinct")
+         .AppendLine("         p.id as person_id,")
          .AppendLine("         p.canonical_name as person_name,")
          .AppendLine("         wp.sort_order")
          .AppendLine("      from activity_entity_links al")
@@ -768,6 +780,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "         a.tv_channel_name, rp.related_person_entities,"
+         )
+         .AppendLine(
+            "         rp.related_person_entity_ids,"
          )
          .AppendLine("         ro.related_organization_entities")
          .AppendLine(orderClause);
@@ -1232,7 +1247,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ReadString(reader, 12),
                reader.GetString(11),
                reader.GetString(14),
-               reader.GetString(15)
+               ReadGuidArray(reader, 15),
+               reader.GetString(16)
             )
          );
       }
@@ -1255,6 +1271,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal)
          ? null
          : reader.GetFieldValue<DateTimeOffset>(ordinal);
+   }
+
+   private static Guid[] ReadGuidArray(NpgsqlDataReader reader, int ordinal)
+   {
+      return reader.IsDBNull(ordinal)
+         ? []
+         : reader.GetFieldValue<Guid[]>(ordinal);
    }
 
    private static List<string> NormalizeSelectedSports(

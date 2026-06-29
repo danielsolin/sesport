@@ -141,8 +141,8 @@ public sealed class BroadcastRepositoryTests
 
       await using var dataSource = CreateDataSource();
       var repository = new ImportBroadcastRepository(dataSource);
-      var existingCategories = ["Handboll", "U20 VM"];
-      var broadcast = new Broadcast(
+      var existingCategories = new[] { "Handboll", "U20 VM" };
+      var broadcast = new global::SESport.Core.Broadcast.Broadcast(
          broadcastId,
          sourceKey,
          $"external-{uniqueSuffix}",
@@ -150,7 +150,8 @@ public sealed class BroadcastRepositoryTests
          "channel-1",
          "Viaplay",
          "Test Match",
-         [],
+         null,
+         new string[0],
          false,
          null,
          DateTimeOffset.UtcNow,

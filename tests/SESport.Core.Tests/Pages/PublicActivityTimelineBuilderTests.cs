@@ -144,6 +144,7 @@ public class PublicActivityTimelineBuilderTests
          null,
          "Published",
          string.Empty,
+         [],
          string.Empty
       );
    }

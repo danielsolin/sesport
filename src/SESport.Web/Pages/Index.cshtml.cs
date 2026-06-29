@@ -77,8 +77,11 @@ public class IndexModel(
       IEnumerable<ActivityListItem> activities
    )
    {
-      return activities.Sum(activity =>
-         CountParticipants(activity.RelatedPersonEntities));
+      return activities
+         .SelectMany(activity => activity.RelatedPersonEntityIds)
+         .Where(entityId => entityId != Guid.Empty)
+         .Distinct()
+         .Count();
    }
 
    internal static IReadOnlyList<string> SplitParticipantNames(
@@ -92,11 +95,6 @@ public class IndexModel(
                StringSplitOptions.RemoveEmptyEntries |
                StringSplitOptions.TrimEntries
             );
-   }
-
-   private static int CountParticipants(string? participants)
-   {
-      return SplitParticipantNames(participants).Count;
    }
 
    private static DateOnly? ParseDate(string? date)

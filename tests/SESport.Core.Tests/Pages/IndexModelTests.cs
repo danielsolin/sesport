@@ -6,18 +6,24 @@ namespace SESport.Core.Tests.Pages;
 public sealed class IndexModelTests
 {
    [Fact]
-   public void CountParticipants_SumsAllListedParticipants()
+   public void CountParticipants_CountsUniqueEntityIds()
    {
       var activities = new[]
       {
-         CreateActivity("A", "Anna, Björn"),
-         CreateActivity("B", string.Empty),
-         CreateActivity("C", "Cecilia, David, Erik")
+         CreateActivity("A", [Guid.Parse("11111111-1111-1111-1111-111111111111")]),
+         CreateActivity("B", []),
+         CreateActivity(
+            "C",
+            [
+               Guid.Parse("11111111-1111-1111-1111-111111111111"),
+               Guid.Parse("22222222-2222-2222-2222-222222222222")
+            ]
+         )
       };
 
       var total = IndexModel.CountParticipants(activities);
 
-      Assert.Equal(5, total);
+      Assert.Equal(2, total);
    }
 
    [Fact]
@@ -32,7 +38,7 @@ public sealed class IndexModelTests
 
    private static ActivityListItem CreateActivity(
       string title,
-      string participants
+      Guid[] participantIds
    )
    {
       return new ActivityListItem(
@@ -48,7 +54,8 @@ public sealed class IndexModelTests
          null,
          null,
          "Published",
-         participants,
+         string.Empty,
+         participantIds,
          string.Empty
       );
    }

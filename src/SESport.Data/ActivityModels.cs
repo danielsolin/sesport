@@ -16,6 +16,7 @@ public sealed record ActivityListItem(
    string? TvChannelName,
    string PublicationStatus,
    string RelatedPersonEntities,
+   Guid[] RelatedPersonEntityIds,
    string RelatedOrganizationEntities
 )
 {

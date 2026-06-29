@@ -28,7 +28,7 @@ public sealed class ParticipationPollingUiTests
       Assert.DoesNotContain("broadcast-ai-check-retry", html);
       Assert.Contains("initializeParticipationRunsAsync", script);
       Assert.Contains("setNoParticipationHistoryCell", script);
-      Assert.Contains("hydrateBroadcastCategoriesList", script);
+      Assert.Contains("renderBroadcastCategories", script);
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);
