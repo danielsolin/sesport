@@ -38,6 +38,12 @@
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditUrlSelector =
       "[data-broadcast-inline-edit-url]";
+   const broadcastCategoriesListSelector =
+      "[data-broadcast-categories-list]";
+   const broadcastResultsSelector = "[data-broadcast-results]";
+   const broadcastRowSelector = "tr[data-broadcast-row='true']";
+   const broadcastRunsRowSelector =
+      ".broadcast-participation-runs-row";
    const broadcastInlineEditTitleField = "title";
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
@@ -47,6 +53,8 @@
       window.postBroadcastInlineEditAsync;
    const updateBroadcastInlineEditCell =
       window.updateBroadcastInlineEditCell;
+   const renderBroadcastCategories =
+      window.renderBroadcastCategories;
    const getBroadcastSearchUrlBase =
       window.getBroadcastSearchUrlBase;
    const getAntiForgeryToken = window.getAntiForgeryToken;
@@ -73,6 +81,7 @@
    window.initializeEntityInlineEditing = initializeEntityInlineEditing;
    initializeTeaserGeneration();
    initializeParticipationRowChecks();
+   void initializeParticipationRunsAsync();
    initializeBroadcastInlineEditing();
    if(typeof window.initializeBroadcastOrganizationAutocomplete === "function")
    {
@@ -120,12 +129,27 @@
          {
             const targetSelector = form.dataset.ajaxRemoveTarget || "tr";
             const target = form.closest(targetSelector);
+            const preserveScroll =
+               form.dataset.ajaxPreserveScroll === "true";
+            const scrollX = preserveScroll ? window.scrollX : 0;
+            const scrollY = preserveScroll ? window.scrollY : 0;
 
             if(target)
             {
-               removeBroadcastRunRowIfNeeded(target);
-               target.remove();
+              removeBroadcastRunRowIfNeeded(target);
+              target.remove();
+
+               if(preserveScroll)
+               {
+                  window.requestAnimationFrame(() => {
+                     window.scrollTo(scrollX, scrollY);
+                  });
+               }
             }
+         }
+         else if(form.dataset.ajaxSuccess === "toggle-visibility")
+         {
+            await updateBroadcastVisibilityAsync(form, response);
          }
          else if(form.dataset.ajaxSuccess === "reload")
          {
@@ -255,6 +279,580 @@
       }
 
       nextRow.remove();
+   }
+
+   async function updateBroadcastVisibilityAsync(form, response)
+   {
+      if(!(form instanceof HTMLFormElement)
+         || !(response instanceof Response))
+      {
+         return;
+      }
+
+      let payload = null;
+
+      try
+      {
+         payload = await response.clone().json();
+      }
+      catch
+      {
+         return;
+      }
+
+      const hidden = typeof payload?.hidden === "boolean"
+         ? payload.hidden
+         : null;
+
+      if(hidden === null)
+      {
+         return;
+      }
+
+      const target = form.closest(broadcastRowSelector);
+      const showHidden = isBroadcastShowHiddenEnabled(form);
+      const preserveScroll = form.dataset.ajaxPreserveScroll === "true";
+      const scrollX = preserveScroll ? window.scrollX : 0;
+      const scrollY = preserveScroll ? window.scrollY : 0;
+      const rowPayload = await fetchBroadcastRowAsync(form);
+
+      if(hidden && !showHidden)
+      {
+         if(target instanceof HTMLElement)
+         {
+            removeBroadcastRowPair(target);
+         }
+
+         if(preserveScroll)
+         {
+            window.requestAnimationFrame(() => {
+               window.scrollTo(scrollX, scrollY);
+            });
+         }
+
+         return;
+      }
+
+      if(!rowPayload)
+      {
+         return;
+      }
+
+      const nextRows = createBroadcastRows(rowPayload, form, target);
+      const nextMainRow = nextRows?.firstElementChild;
+      const nextRunsRow = nextMainRow?.nextElementSibling;
+
+      if(!(nextRows instanceof DocumentFragment)
+         || !(nextMainRow instanceof HTMLElement)
+         || !(nextRunsRow instanceof HTMLElement))
+      {
+         return;
+      }
+
+      replaceBroadcastRowPair(target, nextMainRow, nextRunsRow);
+
+      initializeBroadcastInlineEditing(nextMainRow);
+      window.initializeBroadcastOrganizationAutocomplete?.(nextMainRow);
+      initializeParticipationRunsAsync(nextRunsRow);
+      initializeParticipationPolling(nextRunsRow);
+
+      if(preserveScroll)
+      {
+         window.requestAnimationFrame(() => {
+            window.scrollTo(scrollX, scrollY);
+         });
+      }
+   }
+
+   async function fetchBroadcastRowAsync(form)
+   {
+      const url = getBroadcastRowUrl();
+
+      if(!(form instanceof HTMLFormElement) || url === "")
+      {
+         return null;
+      }
+
+      try
+      {
+         const response = await fetch(url, {
+            method: "post",
+            body: new FormData(form),
+            headers: {
+               Accept: "application/json"
+            }
+         });
+
+         if(!response.ok)
+         {
+            throw new Error(`Request failed with status ${response.status}`);
+         }
+
+         const payload = await response.json();
+         return payload?.broadcast ?? null;
+      }
+      catch
+      {
+         return null;
+      }
+   }
+
+   function getBroadcastRowUrl()
+   {
+      const container = document.querySelector(broadcastResultsSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.broadcastRowUrl;
+
+      return typeof url === "string" ? url.trim() : "";
+   }
+
+   function isBroadcastShowHiddenEnabled(form)
+   {
+      if(!(form instanceof HTMLFormElement))
+      {
+         return false;
+      }
+
+      const input = form.querySelector("input[name='ShowHidden']");
+
+      return input instanceof HTMLInputElement && input.checked;
+   }
+
+   function getBroadcastVisibilityLabels()
+   {
+      const container = document.querySelector(broadcastResultsSelector);
+
+      if(!(container instanceof HTMLElement))
+      {
+         return {
+            show: "",
+            hide: "",
+            check: ""
+         };
+      }
+
+      return {
+         show: container.dataset.broadcastShowLabel || "",
+         hide: container.dataset.broadcastHideLabel || "",
+         check: container.dataset.broadcastCheckLabel || ""
+      };
+   }
+
+   function removeBroadcastRowPair(target)
+   {
+      if(!(target instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const nextRow = getBroadcastRunsRow(target);
+
+      if(nextRow instanceof HTMLElement)
+      {
+         nextRow.remove();
+      }
+
+      const broadcastId = (target.dataset.broadcastId ?? "").trim();
+      target.remove();
+
+      if(broadcastId !== "")
+      {
+         pendingParticipationIds.delete(broadcastId);
+
+         if(pendingParticipationIds.size === 0)
+         {
+            stopParticipationPolling();
+         }
+      }
+   }
+
+   function replaceBroadcastRowPair(target, nextMainRow, nextRunsRow)
+   {
+      if(!(target instanceof HTMLElement)
+         || !(nextMainRow instanceof HTMLElement)
+         || !(nextRunsRow instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const currentRunsRow = getBroadcastRunsRow(target);
+
+      target.before(nextMainRow, nextRunsRow);
+
+      if(currentRunsRow instanceof HTMLElement)
+      {
+         currentRunsRow.remove();
+      }
+
+      target.remove();
+   }
+
+   function getBroadcastRunsRow(target)
+   {
+      if(!(target instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const broadcastId = (target.dataset.broadcastId ?? "").trim();
+      const nextRow = target.nextElementSibling;
+
+      if(broadcastId === "" || !(nextRow instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      if(!nextRow.matches(broadcastRunsRowSelector)
+         || (nextRow.dataset.broadcastId ?? "").trim() !== broadcastId)
+      {
+         return null;
+      }
+
+      return nextRow;
+   }
+
+   function createBroadcastRows(broadcast, form, target)
+   {
+      if(!(broadcast && typeof broadcast === "object"))
+      {
+         return null;
+      }
+
+      const fragment = document.createDocumentFragment();
+      const labels = getBroadcastVisibilityLabels();
+      const sourceForm = form instanceof HTMLFormElement ? form : null;
+      const sourceRunsRow = getBroadcastRunsRow(target);
+      const sourceRunsCell =
+         sourceRunsRow?.querySelector(participationCellSelector) ?? null;
+      const searchUrlBase = getBroadcastSearchUrlBase();
+      const showHidden = isBroadcastShowHiddenEnabled(form);
+      const broadcastId = normalizeString(broadcast.id);
+      const title = normalizeString(broadcast.title);
+      const timeOnlyText = normalizeString(broadcast.timeOnlyText);
+      const channelName = normalizeString(broadcast.channelName);
+      const description = normalizeNullableString(broadcast.description);
+      const categories = normalizeString(broadcast.categories);
+      const originalAirDate = normalizeNullableString(
+         broadcast.originalAirDate
+      );
+      const organizationEntityId = normalizeNullableString(
+         broadcast.organizationEntityId
+      );
+      const organizationEntityName = normalizeNullableString(
+         broadcast.organizationEntityName
+      );
+      const participationStatusId = normalizeNullableString(
+         broadcast.participationStatusId
+      );
+      const isHidden = Boolean(broadcast.isHidden);
+      const isReplay = Boolean(broadcast.isReplay);
+      const activityUrlBase = sourceRunsCell instanceof HTMLElement
+         ? (sourceRunsCell.dataset.activityUrlBase ?? "").trim()
+         : "";
+      const checkParticipationUrl = sourceRunsCell instanceof HTMLElement
+         ? (sourceRunsCell.dataset.checkParticipationUrl ?? "").trim()
+         : "";
+
+      if(broadcastId === "" || title === "" || timeOnlyText === "")
+      {
+         return null;
+      }
+
+      const mainRow = document.createElement("tr");
+      mainRow.className = "broadcast-participation-main-row";
+      mainRow.dataset.broadcastRow = "true";
+      mainRow.dataset.broadcastId = broadcastId;
+      mainRow.dataset.participationStatus = participationStatusId || "";
+
+      const channelCell = document.createElement("td");
+      channelCell.className = "broadcasts-col-channel";
+      const channelDiv = document.createElement("div");
+      channelDiv.className = "ses-nowrap";
+      channelDiv.textContent = channelName;
+      channelCell.append(channelDiv);
+
+      const timeCell = document.createElement("td");
+      timeCell.className = "broadcasts-col-time";
+      const timeStrong = document.createElement("strong");
+      timeStrong.className = "ses-nowrap";
+      timeStrong.textContent = timeOnlyText;
+      timeCell.append(timeStrong);
+
+      const titleCell = document.createElement("td");
+      titleCell.className =
+         "broadcasts-col-broadcast broadcast-inline-editable";
+      titleCell.dataset.broadcastId = broadcastId;
+      titleCell.dataset.broadcastInlineEditField = "title";
+      titleCell.dataset.broadcastInlineEditValue = title;
+      titleCell.title = "Double-click to edit";
+      const titleDisplay = document.createElement("div");
+      titleDisplay.dataset.broadcastInlineEditDisplay = "true";
+      const titleStrong = document.createElement("strong");
+      titleStrong.dataset.broadcastTitleText = "true";
+      titleStrong.textContent = title;
+      titleDisplay.append(titleStrong);
+
+      const searchLink = document.createElement("a");
+      searchLink.className = "ses-entity-search-link";
+      searchLink.dataset.broadcastTitleSearchLink = "true";
+      searchLink.target = "_blank";
+      searchLink.href = searchUrlBase === ""
+         ? ""
+         : `${searchUrlBase}${encodeURIComponent(title)}`;
+      const searchIcon = document.createElement("span");
+      searchIcon.className = "ses-icon-search";
+      searchLink.append(searchIcon);
+      titleDisplay.append(searchLink);
+
+      if(description !== "")
+      {
+         const descriptionSpan = document.createElement("span");
+         descriptionSpan.textContent = description;
+         titleDisplay.append(descriptionSpan);
+      }
+
+      if(isReplay && originalAirDate !== "")
+      {
+         const replaySpan = document.createElement("span");
+         replaySpan.textContent = `Repris från ${originalAirDate}`;
+         titleDisplay.append(replaySpan);
+      }
+
+      const titleInput = document.createElement("input");
+      titleInput.className = "broadcast-inline-edit-input";
+      titleInput.dataset.broadcastInlineEditInput = "true";
+      titleInput.type = "text";
+      titleInput.value = title;
+      titleInput.autocomplete = "off";
+      titleInput.spellcheck = false;
+      titleInput.setAttribute("aria-label", "Edit broadcast title");
+      titleInput.hidden = true;
+
+      titleCell.append(titleDisplay, titleInput);
+
+      const organizationCell = document.createElement("td");
+      organizationCell.className =
+         "broadcasts-col-organization broadcast-inline-editable";
+      organizationCell.dataset.broadcastId = broadcastId;
+      organizationCell.dataset.broadcastInlineEditField = "organization";
+      organizationCell.dataset.broadcastInlineEditValue =
+         organizationEntityId || "";
+      organizationCell.dataset.broadcastInlineEditLabel =
+         organizationEntityName || "";
+      organizationCell.title = "Double-click to edit";
+      const organizationWrap = document.createElement("div");
+      organizationWrap.className = "broadcast-org-autocomplete is-locked";
+      organizationWrap.dataset.orgEntityAutocomplete = "true";
+      const organizationInput = document.createElement("input");
+      organizationInput.className = "broadcast-org-entity-input";
+      organizationInput.type = "text";
+      organizationInput.setAttribute("aria-label", "Organization entity");
+      organizationInput.dataset.orgEntityInput = "true";
+      organizationInput.autocomplete = "off";
+      organizationInput.spellcheck = false;
+      organizationInput.readOnly = true;
+      organizationInput.value = organizationEntityName || "";
+      const organizationHidden = document.createElement("input");
+      organizationHidden.type = "hidden";
+      organizationHidden.dataset.orgEntityId = "true";
+      organizationHidden.value = organizationEntityId || "";
+      const organizationSuggestions = document.createElement("div");
+      organizationSuggestions.className =
+         "broadcast-org-entity-suggestions";
+      organizationSuggestions.dataset.orgEntitySuggestions = "true";
+      organizationSuggestions.hidden = true;
+      organizationWrap.append(
+         organizationInput,
+         organizationHidden,
+         organizationSuggestions
+      );
+      organizationCell.append(organizationWrap);
+
+      const categoriesCell = document.createElement("td");
+      categoriesCell.className =
+         "broadcasts-col-categories broadcast-inline-editable";
+      categoriesCell.dataset.broadcastId = broadcastId;
+      categoriesCell.dataset.broadcastInlineEditField = "categories";
+      categoriesCell.dataset.broadcastInlineEditValue = categories;
+      categoriesCell.title = "Double-click to edit";
+      const categoriesDisplay = document.createElement("div");
+      categoriesDisplay.dataset.broadcastInlineEditDisplay = "true";
+      const categoriesList = document.createElement("div");
+      categoriesList.className = "broadcast-categories-list";
+      categoriesList.dataset.broadcastCategoriesList = "true";
+      if(typeof renderBroadcastCategories === "function")
+      {
+         renderBroadcastCategories(categoriesList, categories);
+      }
+      categoriesDisplay.append(categoriesList);
+      const categoriesInput = document.createElement("input");
+      categoriesInput.className = "broadcast-inline-edit-input";
+      categoriesInput.dataset.broadcastInlineEditInput = "true";
+      categoriesInput.type = "text";
+      categoriesInput.value = categories;
+      categoriesInput.autocomplete = "off";
+      categoriesInput.spellcheck = false;
+      categoriesInput.setAttribute("aria-label", "Edit categories");
+      categoriesInput.hidden = true;
+      categoriesCell.append(categoriesDisplay, categoriesInput);
+
+      const actionsCell = document.createElement("td");
+      actionsCell.className = "broadcasts-col-actions table-actions";
+      const actionsStack = document.createElement("div");
+      actionsStack.className = "table-actions-stack";
+
+      if((participationStatusId || "").toLowerCase() !== "running"
+         && checkParticipationUrl !== "")
+      {
+         const checkButton = document.createElement("button");
+         checkButton.type = "button";
+         checkButton.className = "broadcast-participation-check-link";
+         checkButton.dataset.checkParticipationRow = "true";
+         checkButton.dataset.checkParticipationUrl = checkParticipationUrl;
+         checkButton.dataset.broadcastId = broadcastId;
+         checkButton.textContent = labels.check;
+         actionsStack.append(checkButton);
+      }
+
+      const visibilityForm = document.createElement("form");
+      visibilityForm.method = "post";
+      visibilityForm.action = sourceForm?.action ?? "";
+      visibilityForm.dataset.ajaxSuccess = "toggle-visibility";
+      visibilityForm.dataset.ajaxRemoveTarget = "tr";
+      visibilityForm.dataset.ajaxPreserveScroll = "true";
+      appendHiddenBroadcastVisibilityFields(
+         visibilityForm,
+         sourceForm,
+         broadcastId,
+         isHidden,
+         showHidden
+      );
+
+      const visibilityButton = document.createElement("button");
+      visibilityButton.type = "submit";
+      visibilityButton.textContent = isHidden
+         ? labels.show
+         : labels.hide;
+      visibilityForm.append(visibilityButton);
+      actionsStack.append(visibilityForm);
+      actionsCell.append(actionsStack);
+
+      mainRow.append(
+         channelCell,
+         timeCell,
+         titleCell,
+         organizationCell,
+         categoriesCell,
+         actionsCell
+      );
+
+      const runsRow = document.createElement("tr");
+      runsRow.className = "broadcast-participation-runs-row";
+      runsRow.dataset.broadcastId = broadcastId;
+      runsRow.dataset.participationStatus = participationStatusId || "";
+
+      const spacerCell = document.createElement("td");
+      spacerCell.className = "broadcast-participation-spacer";
+
+      const runsCell = document.createElement("td");
+      runsCell.className = "broadcast-participation-runs-cell";
+      runsCell.colSpan = 5;
+      runsCell.dataset.participationCell = "true";
+      runsCell.dataset.broadcastId = broadcastId;
+      runsCell.dataset.participationRunId = "";
+      runsCell.dataset.participationStatus = participationStatusId || "";
+      runsCell.dataset.checkParticipationUrl = checkParticipationUrl;
+      runsCell.dataset.activityUrlBase = activityUrlBase;
+      runsRow.append(spacerCell, runsCell);
+
+      fragment.append(mainRow, runsRow);
+      return fragment;
+   }
+
+   function appendHiddenBroadcastVisibilityFields(
+      form,
+      sourceForm,
+      broadcastId,
+      isHidden,
+      showHidden
+   )
+   {
+      if(!(form instanceof HTMLFormElement))
+      {
+         return;
+      }
+
+      if(sourceForm instanceof HTMLFormElement)
+      {
+         sourceForm.querySelectorAll("input").forEach(input => {
+            if(!(input instanceof HTMLInputElement) || input.type !== "hidden")
+            {
+               return;
+            }
+
+            if(["id", "isHidden", "ShowHidden"].includes(input.name))
+            {
+               return;
+            }
+
+            form.append(input.cloneNode(true));
+         });
+      }
+
+      ensureHiddenInput(form, "id", broadcastId);
+      ensureHiddenInput(form, "isHidden", String(isHidden));
+      ensureHiddenInput(form, "ShowHidden", String(showHidden));
+   }
+
+   function ensureHiddenInput(form, name, value)
+   {
+      if(!(form instanceof HTMLFormElement))
+      {
+         return;
+      }
+
+      const selector = `input[name='${name}']`;
+      let input = form.querySelector(selector);
+
+      if(!(input instanceof HTMLInputElement))
+      {
+         input = document.createElement("input");
+         input.type = "hidden";
+         input.name = name;
+         form.append(input);
+      }
+
+      input.value = value;
+   }
+
+   function normalizeString(value)
+   {
+      if(typeof value !== "string")
+      {
+         return "";
+      }
+
+      return value.trim();
+   }
+
+   function normalizeNullableString(value)
+   {
+      if(value === null || typeof value === "undefined")
+      {
+         return "";
+      }
+
+      if(typeof value !== "string")
+      {
+         return String(value).trim();
+      }
+
+      return value.trim();
    }
 
    function initializeCheckboxToggles(root = document)
@@ -500,6 +1098,18 @@
             initializeBroadcastInlineEditInput(input);
          }
       );
+
+      root.querySelectorAll(broadcastCategoriesListSelector).forEach(list => {
+         const cell = list.closest(broadcastInlineEditCellSelector);
+         const value = cell instanceof HTMLElement
+            ? (cell.dataset.broadcastInlineEditValue ?? "")
+            : "";
+
+         if(typeof renderBroadcastCategories === "function")
+         {
+            renderBroadcastCategories(list, value);
+         }
+      });
    }
 
    function initializeRunInlineEditing(root = document)
@@ -547,6 +1157,100 @@
             cancelRunInlineEdit(input);
          }
       });
+   }
+
+   async function initializeParticipationRunsAsync(root = document)
+   {
+      if(root === document
+         && document.documentElement.dataset.broadcastParticipationRunsLoaded
+            === "true")
+      {
+         return;
+      }
+
+      if(root === document)
+      {
+         document.documentElement.dataset
+            .broadcastParticipationRunsLoaded = "true";
+      }
+
+      const cells = Array.from(root.querySelectorAll(participationCellSelector))
+         .filter(cell => cell instanceof HTMLElement);
+
+      if(cells.length === 0)
+      {
+         return;
+      }
+
+      const broadcastIds = [];
+
+      cells.forEach(cell => {
+         const broadcastId = (cell.dataset.broadcastId ?? "").trim();
+
+         if(broadcastId !== "" && !broadcastIds.includes(broadcastId))
+         {
+            broadcastIds.push(broadcastId);
+         }
+      });
+
+      if(broadcastIds.length === 0)
+      {
+         return;
+      }
+
+      const url = getParticipationStatusUrl();
+
+      if(url === "")
+      {
+         return;
+      }
+
+      try
+      {
+         const payload = await postParticipationStatusAsync(url, broadcastIds);
+         const results = Array.isArray(payload?.results)
+            ? payload.results
+            : [];
+         const resultsByBroadcastId = new Map();
+
+         results.forEach(result => {
+            if(!result || typeof result !== "object")
+            {
+               return;
+            }
+
+            const broadcastId = typeof result.id === "string"
+               ? result.id.trim()
+               : "";
+
+            if(broadcastId !== "")
+            {
+               resultsByBroadcastId.set(broadcastId, result);
+            }
+         });
+
+         cells.forEach(cell => {
+            const broadcastId = (cell.dataset.broadcastId ?? "").trim();
+            const result = broadcastIds.includes(broadcastId)
+               ? resultsByBroadcastId.get(broadcastId)
+               : null;
+
+            if(result)
+            {
+               updateParticipationCell(cell, result);
+            }
+            else
+            {
+               setNoParticipationHistoryCell(cell);
+            }
+         });
+
+         initializeParticipationPolling(root);
+      }
+      catch(error)
+      {
+         console.error("Participation runs load failed:", error);
+      }
    }
 
    function openRunInlineEditCell(cell)
@@ -1889,7 +2593,7 @@
          cell.append(wrapper);
          updateParticipationRunId(cell, "");
          updateParticipationRowStatus(cell, "");
-         body.append(createParticipationEmptyRunBlock(cell));
+         body.append(createParticipationNoHistoryRunBlock(cell));
          return;
       }
 
@@ -1925,6 +2629,27 @@
       });
 
       initializeParticipationRowChecks(cell);
+   }
+
+   function setNoParticipationHistoryCell(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const isOpen = isParticipationRunsOpen(cell);
+      cell.replaceChildren();
+      const { wrapper, body } = createParticipationRunsShell(
+         cell,
+         [],
+         isOpen
+      );
+      body.append(createParticipationNoHistoryRunBlock(cell));
+
+      updateParticipationRunId(cell, "");
+      updateParticipationRowStatus(cell, "");
+      cell.append(wrapper);
    }
 
    function normalizeParticipationChecks(result)
@@ -2218,6 +2943,22 @@
          sourcesCell,
          activityCell
       );
+
+      return row;
+   }
+
+   function createParticipationNoHistoryRunBlock(cell)
+   {
+      const row = createParticipationEmptyRunBlock(cell);
+      const activityCell = row.querySelector(
+         ".broadcast-ai-check-activity-cell"
+      );
+      const activityLink = createParticipationActivityLink(cell, "");
+
+      if(activityCell instanceof HTMLElement && activityLink)
+      {
+         activityCell.append(activityLink);
+      }
 
       return row;
    }
@@ -3023,6 +3764,7 @@
       }
    }
 
+
    function createParticipantRow(participant)
    {
       const item = normalizeParticipantItem(participant);
@@ -3394,6 +4136,7 @@
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
          initializeParticipationRowChecks(nextTarget);
+         void initializeParticipationRunsAsync(nextTarget);
          initializeBroadcastInlineEditing(nextTarget);
          window.initializeBroadcastOrganizationAutocomplete?.(nextTarget);
          initializeParticipationPolling(nextTarget);
@@ -3458,6 +4201,7 @@
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
          initializeParticipationRowChecks(nextTarget);
+         void initializeParticipationRunsAsync(nextTarget);
          initializeBroadcastInlineEditing(nextTarget);
          window.initializeBroadcastOrganizationAutocomplete?.(nextTarget);
          initializeParticipationPolling(nextTarget);

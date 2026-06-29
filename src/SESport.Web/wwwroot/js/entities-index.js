@@ -42,7 +42,7 @@
          const sortAsc = getDataValue(container, "entitySortAsc")
             .toLowerCase() === "true";
 
-            if(!(container instanceof HTMLElement)
+         if(!(container instanceof HTMLElement)
             || !(listBody instanceof HTMLTableSectionElement)
             || searchUrl === ""
             || editUrlBase === ""
@@ -70,12 +70,7 @@
                return;
             }
 
-            emptyState.hidden = hasMatches || currentQuery() === "";
-         };
-
-         const clearRows = () => {
-            listBody.replaceChildren();
-            setEmptyState(false);
+            emptyState.hidden = hasMatches;
          };
 
          const renderRows = entities => {
@@ -106,7 +101,14 @@
             try
             {
                const url = new URL(searchUrl, window.location.origin);
-               url.searchParams.set("term", query);
+
+               if(query !== "")
+               {
+                  url.searchParams.set("term", query);
+               }
+
+               url.searchParams.set("includeAll", "true");
+
                url.searchParams.set("sortColumn", sortColumn);
                url.searchParams.set("sortAsc", sortAsc ? "true" : "false");
 
@@ -168,14 +170,16 @@
 
          field.addEventListener("input", scheduleSearch);
 
-         if(field.value.trim() === "")
+         const initialQuery = currentQuery();
+
+         if(initialQuery === "")
          {
-            clearRows();
+            listBody.replaceChildren();
+            setEmptyState(false);
+            return;
          }
-         else if(listBody.querySelectorAll("tr").length === 0)
-         {
-            void fetchAndRenderAsync(field.value.trim());
-         }
+
+         void fetchAndRenderAsync(initialQuery);
       });
    }
 

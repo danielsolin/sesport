@@ -47,15 +47,10 @@ public class IndexModel(AdminRepository repository) : PageModel
 
       try
       {
-         var entities = await repository.SearchEntitiesAsync(
-            Filter,
-            cancellationToken
-         );
          WatchPriorities = await repository.GetReferenceRowsAsync(
             "entity-watch-priorities",
             cancellationToken
          );
-         Entities = SortEntities(entities, SortColumn, SortAsc);
       }
       catch (Exception exception)
       {

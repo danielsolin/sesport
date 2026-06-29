@@ -51,18 +51,9 @@ else
         data-entity-sort-column="@Model.SortColumn"
         data-entity-sort-asc="@Model.SortAsc.ToString().ToLowerInvariant()"
         data-entity-search-url-base="@searchUrlBase">
-      @if(Model.HasFilter && Model.Entities.Count == 0)
-      {
-         <div class="notice" data-entity-empty-state>
-            No matching entities.
-         </div>
-      }
-      else
-      {
-         <div class="notice" data-entity-empty-state hidden>
-            No matching entities.
-         </div>
-      }
+      <div class="notice" data-entity-empty-state hidden>
+         No matching entities.
+      </div>
       <div class="admin-table-wrap"
            data-entity-inline-edit-url="@entityFieldUrl">
          <select hidden aria-hidden="true"
@@ -123,58 +114,7 @@ else
                   <th></th>
                </tr>
             </thead>
-            <tbody data-entity-list-body>
-               @foreach(var entity in Model.Entities)
-               {
-                  <tr data-entity-row-id="@entity.Id"
-                      data-entity-row-name="@entity.Name"
-                      data-entity-row-related=
-                         "@entity.RelatedEntityNames">
-                     <td>
-                        <a asp-page="./Edit" asp-route-id="@entity.Id">
-                           <strong>@entity.Name</strong>
-                        </a>
-                        <a class="ses-entity-search-link"
-                           href=
-                              "@ViewData["SearchUrl"]@entity.Name @entity.Sport"
-                           target="_blank">
-                           <span class="ses-icon-search"></span>
-                        </a>
-                     </td>
-                     <td>@entity.RelatedEntityNames</td>
-                     <td>@entity.EntityType</td>
-                     <td>@entity.Sport</td>
-                     <td class="entity-inline-editable"
-                         data-entity-inline-edit-field="watch-priority"
-                         data-entity-inline-edit-value="@entity.WatchPriorityId"
-                         title="Double-click to edit">
-                        <div class="entity-inline-edit-display"
-                             data-entity-inline-edit-display>
-                           <span title="@entity.WatchPriority">
-                              @entity.WatchPriority
-                           </span>
-                        </div>
-                        <select class="entity-inline-edit-input"
-                                data-entity-inline-edit-input
-                                asp-items=
-                                   "Model.GetWatchPriorityOptions(
-                                      entity.WatchPriorityId
-                                   )"
-                                hidden>
-                        </select>
-                     </td>
-                     <td>@entity.Country</td>
-                     <td class="table-actions">
-                        <form method="post"
-                              asp-page-handler="Delete"
-                              asp-route-id="@entity.Id"
-                              onsubmit='return confirm("Sure?");'>
-                           <button type="submit">Delete</button>
-                        </form>
-                     </td>
-                  </tr>
-               }
-            </tbody>
+            <tbody data-entity-list-body></tbody>
          </table>
       </div>
    </div>

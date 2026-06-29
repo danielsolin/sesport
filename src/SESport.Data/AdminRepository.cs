@@ -892,19 +892,78 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       bool excludePersonAndPair = false
    )
    {
+      return await QueryEntitiesAsync(
+         term,
+         true,
+         cancellationToken,
+         excludePersonAndPair
+      );
+   }
+
+   public async Task<IReadOnlyList<EntityListItem>> GetEntitiesAsync(
+      CancellationToken cancellationToken,
+      bool excludePersonAndPair = false
+   )
+   {
+      return await QueryEntitiesAsync(
+         null,
+         false,
+         cancellationToken,
+         excludePersonAndPair
+      );
+   }
+
+   private async Task<IReadOnlyList<EntityListItem>> QueryEntitiesAsync(
+      string? term,
+      bool applyTermFilter,
+      CancellationToken cancellationToken,
+      bool excludePersonAndPair
+   )
+   {
       term = term?.Trim() ?? string.Empty;
 
-      if(term == string.Empty)
+      if(applyTermFilter && term == string.Empty)
       {
          return [];
       }
 
-      var escapedTerm = term
-         .Replace("\\", "\\\\", StringComparison.Ordinal)
-         .Replace("%", "\\%", StringComparison.Ordinal)
-         .Replace("_", "\\_", StringComparison.Ordinal);
+      var whereClauses = new List<string>();
 
-      const string sql = """
+      if(applyTermFilter)
+      {
+         var escapedTerm = term
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal);
+
+         whereClauses.Add(
+            """
+            (
+               e.canonical_name ilike @term escape '\'
+               or coalesce(linked.related_entity_names, '') ilike @term
+                  escape '\'
+            )
+            """
+         );
+         term = $"%{escapedTerm}%";
+      }
+
+      if(excludePersonAndPair)
+      {
+         whereClauses.Add(
+            """
+            e.entity_type_id not in (
+               @person_type_id,
+               @pair_type_id
+            )
+            """
+         );
+      }
+
+      var whereSql = whereClauses.Count == 0
+         ? string.Empty
+         : "where " + string.Join("\n         and ", whereClauses);
+      var sql = $"""
          select
             e.id,
             e.canonical_name,
@@ -935,35 +994,29 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                   or l.target_entity_id = e.id
             ) linked_entities
          ) linked on true
-         where (
-            e.canonical_name ilike @term escape '\'
-            or coalesce(linked.related_entity_names, '') ilike @term
-               escape '\'
-         )
-         and (
-            @exclude_person_and_pair = false
-            or e.entity_type_id not in (
-               @person_type_id,
-               @pair_type_id
-            )
-         )
+         {whereSql}
          order by e.canonical_name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("term", $"%{escapedTerm}%");
-      command.Parameters.AddWithValue(
-         "exclude_person_and_pair",
-         excludePersonAndPair
-      );
-      command.Parameters.AddWithValue(
-         "person_type_id",
-         TrackedEntityTypeIds.Person
-      );
-      command.Parameters.AddWithValue(
-         "pair_type_id",
-         TrackedEntityTypeIds.Pair
-      );
+
+      if(applyTermFilter)
+      {
+         command.Parameters.AddWithValue("term", term);
+      }
+
+      if(excludePersonAndPair)
+      {
+         command.Parameters.AddWithValue(
+            "person_type_id",
+            TrackedEntityTypeIds.Person
+         );
+         command.Parameters.AddWithValue(
+            "pair_type_id",
+            TrackedEntityTypeIds.Pair
+         );
+      }
+
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );

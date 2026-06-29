@@ -55,14 +55,7 @@ public sealed class IndexModelTests
 
          Assert.Equal("Organization", model.Filter);
          Assert.True(model.HasFilter);
-         Assert.Single(
-            model.Entities,
-            entity => entity.Id == organizationId
-         );
-         Assert.DoesNotContain(
-            model.Entities,
-            entity => entity.Id == personId
-         );
+         Assert.Empty(model.Entities);
       }
       finally
       {

@@ -11,21 +11,27 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       string? sortColumn,
       CancellationToken cancellationToken,
       bool? sortAsc = null,
+      bool includeAll = false,
       bool organizationOnly = false
    )
    {
       term = term?.Trim() ?? string.Empty;
 
-      if(term == string.Empty)
+      if(term == string.Empty && !includeAll)
       {
          return new JsonResult(new { results = Array.Empty<object>() });
       }
 
-      var results = await repository.SearchEntitiesAsync(
-         term,
-         cancellationToken,
-         organizationOnly
-      );
+      var results = term == string.Empty
+         ? await repository.GetEntitiesAsync(
+            cancellationToken,
+            organizationOnly
+         )
+         : await repository.SearchEntitiesAsync(
+            term,
+            cancellationToken,
+            organizationOnly
+         );
       results = SortEntities(
          results,
          NormalizeSortColumn(sortColumn),

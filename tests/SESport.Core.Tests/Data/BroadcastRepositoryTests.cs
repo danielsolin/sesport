@@ -1,5 +1,6 @@
 using Npgsql;
 
+using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 
 using AdminBroadcastRepository = SESport.Data.BroadcastRepository;
@@ -123,6 +124,87 @@ public sealed class BroadcastRepositoryTests
          Assert.Equal(
             ["New", "Categories"],
             reader.GetFieldValue<string[]>(1)
+         );
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+      }
+   }
+
+   [Fact]
+   public async Task SaveAsyncDoesNotClearCategoriesWhenSourceIsEmpty()
+   {
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ImportBroadcastRepository(dataSource);
+      var existingCategories = ["Handboll", "U20 VM"];
+      var broadcast = new Broadcast(
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         "Test Match",
+         [],
+         false,
+         null,
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2),
+         "Europe/Stockholm",
+         null
+      );
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         "Test Match",
+         existingCategories,
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+
+      try
+      {
+         var importRun = new BroadcastImportRun(
+            Guid.NewGuid(),
+            sourceKey,
+            new Uri("https://example.invalid/broadcasts"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            BroadcastImportRunStatus.Completed,
+            1
+         );
+
+         await repository.SaveAsync(
+            importRun,
+            [broadcast],
+            CancellationToken.None
+         );
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select categories
+            from broadcasts
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", broadcastId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal(
+            existingCategories,
+            reader.GetFieldValue<string[]>(0)
          );
       }
       finally

@@ -20,6 +20,7 @@
    window.getBroadcastInlineEditUrl = getBroadcastInlineEditUrl;
    window.postBroadcastInlineEditAsync = postBroadcastInlineEditAsync;
    window.updateBroadcastInlineEditCell = updateBroadcastInlineEditCell;
+   window.renderBroadcastCategories = renderBroadcastCategories;
    window.getBroadcastSearchUrlBase = getBroadcastSearchUrlBase;
    window.getAntiForgeryToken = getAntiForgeryToken;
 
@@ -171,13 +172,7 @@
             return;
          }
 
-         list.replaceChildren();
-
-         categories.forEach(category => {
-            const span = document.createElement("span");
-            span.textContent = category;
-            list.append(span);
-         });
+         renderBroadcastCategories(list, categories);
          return;
       }
 
@@ -218,6 +213,33 @@
       const url = container.dataset.searchUrlBase;
 
       return typeof url === "string" ? url.trim() : "";
+   }
+
+   function renderBroadcastCategories(list, categories)
+   {
+      if(!(list instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const items = Array.isArray(categories)
+         ? categories
+            .map(item => typeof item === "string" ? item.trim() : "")
+            .filter(item => item !== "")
+         : typeof categories === "string"
+            ? categories
+               .split(",")
+               .map(item => item.trim())
+               .filter(item => item !== "")
+            : [];
+
+      list.replaceChildren();
+
+      items.forEach(category => {
+         const span = document.createElement("span");
+         span.textContent = category;
+         list.append(span);
+      });
    }
 
    function getAntiForgeryToken()

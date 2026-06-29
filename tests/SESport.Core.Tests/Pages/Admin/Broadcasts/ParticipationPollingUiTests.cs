@@ -13,26 +13,26 @@ public sealed class ParticipationPollingUiTests
          "src/SESport.Web/Pages/Admin/Broadcasts",
          "Index.cshtml"
       );
-      var partialPath = Path.Combine(
-         repoRoot,
-         "src/SESport.Web/Pages/Admin/Broadcasts",
-         "_BroadcastParticipationRuns.cshtml"
-      );
       var scriptPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/wwwroot/js/site.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
-      var partial = await File.ReadAllTextAsync(partialPath);
       var script = await File.ReadAllTextAsync(scriptPath);
 
       Assert.Contains("data-check-participation-row", html);
-      Assert.Contains("data-participation-runs-toggle", partial);
-      Assert.Contains("broadcast-ai-check-runs-head", partial);
+      Assert.Contains("data-ajax-success=\"toggle-visibility\"", html);
+      Assert.Contains("data-participation-cell", html);
+      Assert.Contains("data-broadcast-categories-list", html);
+      Assert.DoesNotContain("_BroadcastParticipationRuns", html);
       Assert.DoesNotContain("broadcast-ai-check-retry", html);
+      Assert.Contains("initializeParticipationRunsAsync", script);
+      Assert.Contains("setNoParticipationHistoryCell", script);
+      Assert.Contains("hydrateBroadcastCategoriesList", script);
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);
+      Assert.Contains("updateBroadcastVisibilityAsync", script);
       Assert.Contains("headCell.colSpan = 4", script);
       Assert.Contains("function getParticipationValue", script);
       Assert.Contains("check.participation", script);

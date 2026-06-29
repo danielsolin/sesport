@@ -12,16 +12,23 @@ public sealed class IndexMarkupTests
          repoRoot,
          "src/SESport.Web/Pages/Admin/Entities/Index.cshtml"
       );
+      var scriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/entities-index.js"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
+      var script = await File.ReadAllTextAsync(scriptPath);
 
       Assert.Contains("data-entity-inline-edit-url", html);
       Assert.Contains("data-entity-search-url", html);
       Assert.Contains("data-entity-list-body", html);
-      Assert.Contains("data-entity-row-id", html);
-      Assert.Contains("data-entity-inline-edit-field", html);
-      Assert.Contains("data-entity-inline-edit-display", html);
-      Assert.Contains("data-entity-inline-edit-input", html);
+      Assert.Contains("data-entity-watch-priority-template", html);
       Assert.Contains("AntiForgeryToken", html);
       Assert.Contains("entities-index.js", html);
+      Assert.Contains("renderEntityRowHtml", script);
+      Assert.Contains("data-entity-inline-edit-field", script);
+      Assert.Contains("data-entity-inline-edit-display", script);
+      Assert.Contains("data-entity-inline-edit-input", script);
+      Assert.Contains("renderWatchPriorityOptions", script);
    }
 }

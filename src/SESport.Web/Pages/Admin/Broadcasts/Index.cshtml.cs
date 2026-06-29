@@ -20,6 +20,9 @@ public class IndexModel(
    public const string TimeSortColumn = "Time";
    public const string BroadcastSortColumn = "Broadcast";
    public const string CategoriesSortColumn = "Categories";
+   public const string BroadcastVisibilityShowLabel = "Show";
+   public const string BroadcastVisibilityHideLabel = "Hide";
+   public const string BroadcastVisibilityCheckLabel = "Check";
 
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
