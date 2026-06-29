@@ -7,6 +7,46 @@ namespace SESport.Data;
 
 public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 {
+   public async Task<BroadcastListItem?> GetByIdAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select
+            broadcasts.id,
+            broadcasts.entity_id,
+            broadcasts.channel_id,
+            broadcasts.channel_name,
+            broadcasts.title,
+            broadcasts.description,
+            broadcasts.categories,
+            broadcasts.is_replay,
+            broadcasts.original_air_date,
+            broadcasts.starts_at,
+            broadcasts.ends_at,
+            broadcasts.hidden_at,
+            org.canonical_name as organization_name
+         from broadcasts
+         left join entities org on org.id = broadcasts.entity_id
+         where broadcasts.id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return ReadBroadcastListItem(reader);
+   }
+
    public async Task<IReadOnlyList<BroadcastListItem>> GetByDateAsync(
       DateOnly date,
       bool hideReplays,
@@ -66,26 +106,7 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         var channelId = reader.GetString(2);
-         var channelName = ReadString(reader, 3) ?? channelId;
-         var startsAt = reader.GetFieldValue<DateTimeOffset>(9);
-         var endsAt = reader.GetFieldValue<DateTimeOffset>(10);
-
-         broadcasts.Add(
-            new BroadcastListItem(
-               reader.GetGuid(0),
-               FormatTime(startsAt, endsAt),
-               channelName,
-               reader.GetString(4),
-               ReadString(reader, 5),
-               string.Join(", ", reader.GetFieldValue<string[]>(6)),
-               reader.GetBoolean(7),
-               reader.IsDBNull(8) ? null : reader.GetFieldValue<DateOnly>(8),
-               reader.IsDBNull(11) == false,
-               reader.IsDBNull(1) ? null : reader.GetGuid(1),
-               reader.IsDBNull(12) ? null : reader.GetString(12)
-            )
-         );
+         broadcasts.Add(ReadBroadcastListItem(reader));
       }
 
       return broadcasts;
@@ -330,5 +351,29 @@ public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+   }
+
+   private static BroadcastListItem ReadBroadcastListItem(
+      NpgsqlDataReader reader
+   )
+   {
+      var channelId = reader.GetString(2);
+      var channelName = ReadString(reader, 3) ?? channelId;
+      var startsAt = reader.GetFieldValue<DateTimeOffset>(9);
+      var endsAt = reader.GetFieldValue<DateTimeOffset>(10);
+
+      return new BroadcastListItem(
+         reader.GetGuid(0),
+         FormatTime(startsAt, endsAt),
+         channelName,
+         reader.GetString(4),
+         ReadString(reader, 5),
+         string.Join(", ", reader.GetFieldValue<string[]>(6)),
+         reader.GetBoolean(7),
+         reader.IsDBNull(8) ? null : reader.GetFieldValue<DateOnly>(8),
+         reader.IsDBNull(11) == false,
+         reader.IsDBNull(1) ? null : reader.GetGuid(1),
+         reader.IsDBNull(12) ? null : reader.GetString(12)
+      );
    }
 }

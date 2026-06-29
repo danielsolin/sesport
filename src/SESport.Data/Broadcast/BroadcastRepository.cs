@@ -277,7 +277,11 @@ public sealed class BroadcastRepository : IAsyncDisposable
                channel_name = source.channel_name,
                title = source.title,
                description = source.description,
-               categories = source.categories,
+               categories = case
+                  when cardinality(source.categories) = 0
+                     then target.categories
+                  else source.categories
+               end,
                is_replay = source.is_replay,
                original_air_date = source.original_air_date,
                starts_at = source.starts_at,
