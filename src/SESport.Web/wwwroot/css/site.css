@@ -127,6 +127,16 @@ a:hover {
    padding: 36px 0 64px;
 }
 
+.activity-entry-title {
+   margin-top: 10px;
+   margin-bottom: 0;
+}
+
+.activity-entry-organization {
+   margin-top: 0;
+   margin-bottom: 10px;
+}
+
 .page-heading {
    margin-bottom: 28px;
 }

@@ -105,7 +105,7 @@ else
                         {
                            @for(var i = 0; i < participantNames.Count; i++)
                            {
-                              <span>@participantNames[i]</span>
+                              <span>- @participantNames[i]</span>
 
                               @if(i < participantNames.Count - 1)
                               {
@@ -119,7 +119,7 @@ else
                               <summary class="activity-participants-summary">
                                  @for(var i = 0; i < 5; i++)
                                  {
-                                    <span>@participantNames[i]</span>
+                                    <span>- @participantNames[i]</span>
 
                                     @if(i < 4)
                                     {
@@ -137,7 +137,7 @@ else
                                     i++
                                  )
                                  {
-                                    <span>@participantNames[i]</span>
+                                    <span>- @participantNames[i]</span>
 
                                     @if(i < participantNames.Count - 1)
                                     {
@@ -157,13 +157,15 @@ else
                            @activity.SportName
                         </span>
                      </div>
-                     <h2>
-                        @(string.IsNullOrEmpty(
-                        activity.RelatedOrganizationEntities)
-                        ? string.Empty
-                        : $"{activity.RelatedOrganizationEntities}: ")
+                     <h2 class="activity-entry-title">
                         @activity.Title
                      </h2>
+                     <h3 class="activity-entry-organization">
+                        @(string.IsNullOrEmpty(
+                           activity.RelatedOrganizationEntities)
+                        ? string.Empty
+                        : $"{activity.RelatedOrganizationEntities} ")
+                     </h3>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
                         <p>@activity.Description</p>
@@ -178,51 +180,6 @@ else
                </div>
             </section>
          }
-      }
-
-      @if(Model.UntimedActivities.Count > 0)
-      {
-         <section
-            class="activity-agenda-section
-                   activity-agenda-section-untimed"
-         >
-            <div class="activity-agenda-time">
-               <div class="activity-time-row">
-                  <div class="activity-time-badge activity-time-badge-muted">
-                     Utan tid
-                  </div>
-               </div>
-               @if(Model.UntimedActivities.Count > 1)
-               {
-                  <div class="activity-time-count">
-                     @Model.UntimedActivities.Count st
-                  </div>
-               }
-            </div>
-            <div class="activity-agenda-items">
-               @foreach(var activity in Model.UntimedActivities)
-               {
-                  <article class="activity-entry">
-                     <div class="activity-meta">
-                        <span class="activity-sport">
-                           @activity.SportName
-                        </span>
-                     </div>
-                     <h2>@activity.Title</h2>
-                     @if(!string.IsNullOrWhiteSpace(activity.Description))
-                     {
-                        <p>@activity.Description</p>
-                     }
-                     @if(!string.IsNullOrWhiteSpace(activity.Teaser))
-                     {
-                        <p class="activity-teaser">
-                           @activity.Teaser
-                        </p>
-                     }
-                  </article>
-               }
-            </div>
-         </section>
       }
    </div>
 }
