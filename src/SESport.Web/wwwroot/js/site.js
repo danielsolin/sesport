@@ -604,6 +604,7 @@
       searchLink.href = searchUrlBase === ""
          ? ""
          : `${searchUrlBase}${encodeURIComponent(title)}`;
+      searchLink.tabIndex = -1;
       const searchIcon = document.createElement("span");
       searchIcon.className = "ses-icon-search";
       searchLink.append(searchIcon);
@@ -632,6 +633,7 @@
       titleInput.spellcheck = false;
       titleInput.setAttribute("aria-label", "Edit broadcast title");
       titleInput.hidden = true;
+      titleInput.tabIndex = -1;
 
       titleCell.append(titleDisplay, titleInput);
 
@@ -657,6 +659,7 @@
       organizationInput.spellcheck = false;
       organizationInput.readOnly = true;
       organizationInput.value = organizationEntityName || "";
+      organizationInput.tabIndex = 0;
       const organizationHidden = document.createElement("input");
       organizationHidden.type = "hidden";
       organizationHidden.dataset.orgEntityId = "true";
@@ -699,6 +702,7 @@
       categoriesInput.spellcheck = false;
       categoriesInput.setAttribute("aria-label", "Edit categories");
       categoriesInput.hidden = true;
+      categoriesInput.tabIndex = -1;
       categoriesCell.append(categoriesDisplay, categoriesInput);
 
       const actionsCell = document.createElement("td");
@@ -716,6 +720,7 @@
          checkButton.dataset.checkParticipationUrl = checkParticipationUrl;
          checkButton.dataset.broadcastId = broadcastId;
          checkButton.textContent = labels.check;
+         checkButton.tabIndex = -1;
          actionsStack.append(checkButton);
       }
 
@@ -738,9 +743,12 @@
       visibilityButton.textContent = isHidden
          ? labels.show
          : labels.hide;
+      visibilityButton.tabIndex = -1;
       visibilityForm.append(visibilityButton);
       actionsStack.append(visibilityForm);
       actionsCell.append(actionsStack);
+
+      setBroadcastRowTabOrder(mainRow);
 
       mainRow.append(
          channelCell,
@@ -772,6 +780,31 @@
 
       fragment.append(mainRow, runsRow);
       return fragment;
+   }
+
+   function setBroadcastRowTabOrder(row)
+   {
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      row.querySelectorAll(
+         "a,button,input,select,textarea,[tabindex]"
+      ).forEach(element => {
+         if(!(element instanceof HTMLElement))
+         {
+            return;
+         }
+
+         if(element.matches(".broadcast-org-entity-input"))
+         {
+            element.tabIndex = 0;
+            return;
+         }
+
+         element.tabIndex = -1;
+      });
    }
 
    function appendHiddenBroadcastVisibilityFields(
@@ -1109,6 +1142,10 @@
          {
             renderBroadcastCategories(list, value);
          }
+      });
+
+      root.querySelectorAll(broadcastRowSelector).forEach(row => {
+         setBroadcastRowTabOrder(row);
       });
    }
 
@@ -2786,6 +2823,7 @@
          isOpen ? "Hide participation runs" : "Show participation runs"
       );
       toggleButton.textContent = isOpen ? "−" : "+";
+      toggleButton.tabIndex = -1;
       actions.append(toggleButton);
 
       headerBar.append(actions);
@@ -3860,6 +3898,7 @@
       button.textContent = "+";
       button.title = "Create entity";
       button.setAttribute("aria-label", `Create entity for ${item.name}`);
+      button.tabIndex = -1;
 
       form.append(nameInput, templateInput, button);
       return form;

@@ -16,11 +16,28 @@
       window.postBroadcastInlineEditAsync;
    const updateBroadcastInlineEditCell =
       window.updateBroadcastInlineEditCell;
+   let keyboardTabFocusActive = false;
 
    window.initializeBroadcastOrganizationAutocomplete =
       initializeBroadcastOrganizationAutocomplete;
    window.setBroadcastOrganizationLockState =
       setBroadcastOrganizationLockState;
+
+   document.addEventListener("keydown", event => {
+      if(event.key === "Tab")
+      {
+         keyboardTabFocusActive = true;
+      }
+   }, true);
+
+   document.addEventListener("keyup", event => {
+      if(event.key === "Tab")
+      {
+         window.requestAnimationFrame(() => {
+            keyboardTabFocusActive = false;
+         });
+      }
+   }, true);
 
    function initializeBroadcastOrganizationAutocomplete(root = document)
    {
@@ -296,6 +313,12 @@
       });
 
       input.addEventListener("focus", () => {
+         if(input.readOnly && keyboardTabFocusActive)
+         {
+            unlockForEdit();
+            return;
+         }
+
          if(!input.readOnly && input.value.trim() !== "")
          {
             scheduleSearch();
