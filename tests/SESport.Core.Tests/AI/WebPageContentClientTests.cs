@@ -126,6 +126,41 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchReturnsErrorContentWhenPrimaryRequestFails()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new ThrowingHandler(
+            new HttpRequestException(
+               "The SSL connection could not be established."
+            )
+         )),
+         (_, _) =>
+         {
+            browserCalls++;
+            throw new PlaywrightException("Browser blocked");
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/ssl",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal(
+         WebPageFetchErrorKind.BrowserBlocked,
+         page!.FetchErrorKind
+      );
+      Assert.Equal(
+         "Could not retrieve page content from " +
+         "https://example.test/ssl.",
+         page.FetchErrorMessage
+      );
+   }
+
+   [Fact]
    public async Task FetchFallsBackWhenInitialRequestTimesOut()
    {
       var browserCalls = 0;
@@ -1099,6 +1134,26 @@ public class WebPageContentClientTests
       )
       {
          return Task.FromResult(respond(request));
+      }
+   }
+
+   private sealed class ThrowingHandler : HttpMessageHandler
+   {
+      private readonly Exception exception;
+
+      public ThrowingHandler(Exception exception)
+      {
+         this.exception = exception;
+      }
+
+      protected override Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         _ = request;
+         _ = cancellationToken;
+         return Task.FromException<HttpResponseMessage>(exception);
       }
    }
 

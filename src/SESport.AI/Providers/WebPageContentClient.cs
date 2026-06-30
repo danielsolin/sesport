@@ -124,7 +124,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
          }
       }
 
-      return null;
+      return WebPageContentFetchSupport.BuildFailureContent(
+         absoluteUrl,
+         null,
+         null,
+         $"Could not retrieve page content from {absoluteUrl}.",
+         "http"
+      );
    }
 
    private async Task<WebPageContent?> FetchOnceAsync(
@@ -162,6 +168,24 @@ public sealed class WebPageContentClient : IWebPageContentClient
          when(cancellationToken.IsCancellationRequested)
       {
          throw;
+      }
+      catch(Exception exception) when (
+         exception is not TaskCanceledException &&
+         exception is not TimeoutException
+      )
+      {
+         logger.LogWarning(
+            exception,
+            "Primary HTTP request failed for {Url}; " +
+            "trying browser fallback.",
+            absoluteUrl
+         );
+
+         return await FetchWithoutPrimaryResponseAsync(
+            absoluteUrl,
+            cancellationToken,
+            null
+         );
       }
       catch(TaskCanceledException exception)
       {
@@ -271,7 +295,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private async Task<WebPageContent?> FetchWithoutPrimaryResponseAsync(
       Uri absoluteUrl,
       CancellationToken cancellationToken,
-      WebPageFetchErrorKind browserFailureKind
+      WebPageFetchErrorKind? browserFailureKind
    )
    {
       try
