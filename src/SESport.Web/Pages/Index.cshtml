@@ -160,7 +160,7 @@ else
                         <p style="margin-bottom: 0px;">@activity.Description</p>
                      }
                      <h3 class="activity-entry-organization">
-                        //@(string.IsNullOrEmpty(
+                        #@(string.IsNullOrEmpty(
                            activity.RelatedOrganizationEntities)
                         ? string.Empty
                         : $"{activity.RelatedOrganizationEntities} ")
