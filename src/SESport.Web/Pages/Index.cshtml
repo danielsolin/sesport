@@ -152,11 +152,11 @@ else
                </div>
                <div class="activity-agenda-items">
                   <article class="activity-entry">
-                     <div class="activity-meta">
+                     @* <div class="activity-meta">
                         <span class="activity-sport">
                            @activity.SportName
                         </span>
-                     </div>
+                     </div> *@
                      <h3 class="activity-entry-organization">
                         @(string.IsNullOrEmpty(
                            activity.RelatedOrganizationEntities)
@@ -168,7 +168,7 @@ else
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
-                        <p>@activity.Description</p>
+                        <p style="margin-bottom: 0px;">@activity.Description</p>
                      }
                      @if(!string.IsNullOrWhiteSpace(activity.Teaser))
                      {
