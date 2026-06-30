@@ -159,6 +159,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                provider,
                request,
                messages,
+               toolTrace,
                turn,
                "turn",
                job.OutputMode,
@@ -301,6 +302,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                provider,
                request,
                messages,
+               toolTrace,
                turn,
                "final",
                job.OutputMode,
@@ -423,6 +425,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   provider,
                   request,
                   messages,
+                  toolTrace,
                   turn,
                   "final",
                   job.OutputMode,
@@ -490,6 +493,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiProviderDefinition provider,
       JsonObject request,
       JsonArray messages,
+      JsonArray toolTrace,
       int turn,
       string stage,
       string outputMode,
@@ -528,10 +532,17 @@ public sealed class LlamaServerClient : IAiProviderClient
       {
          incrementFormatRepairAttempts();
          ApplyStructuredOutputRepairPrompt(messages);
+         toolTrace.Add(
+            CreateRepairPromptTraceEntry(
+               turn,
+               GetStructuredOutputRepairPrompt()
+            )
+         );
          return await SendWithStructuredOutputRepairAsync(
             provider,
             request,
             messages,
+            toolTrace,
             turn,
             stage,
             outputMode,
@@ -554,6 +565,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             provider,
             request,
             messages,
+            toolTrace,
             turn,
             stage,
             outputMode,

@@ -195,6 +195,7 @@ public class AiProviderClientTests
          "Return only the raw JSON object",
          handler.RequestBodies[1]
       );
+      Assert.Contains("\"kind\":\"repair_prompt\"", result.ToolTraceJson);
       Assert.Equal(
          "{\"Participation\":\"Yes\","
          + "\"Participants\":[\"Dino Beganovic\"],"
