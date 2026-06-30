@@ -157,15 +157,15 @@ else
                            @activity.SportName
                         </span>
                      </div>
-                     <h2 class="activity-entry-title">
-                        @activity.Title
-                     </h2>
                      <h3 class="activity-entry-organization">
                         @(string.IsNullOrEmpty(
                            activity.RelatedOrganizationEntities)
                         ? string.Empty
                         : $"{activity.RelatedOrganizationEntities} ")
                      </h3>
+                     <h2 class="activity-entry-title">
+                        @activity.Title
+                     </h2>
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
                         <p>@activity.Description</p>
