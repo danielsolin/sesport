@@ -157,12 +157,6 @@ else
                            @activity.SportName
                         </span>
                      </div> *@
-                     <h3 class="activity-entry-organization">
-                        @(string.IsNullOrEmpty(
-                           activity.RelatedOrganizationEntities)
-                        ? string.Empty
-                        : $"{activity.RelatedOrganizationEntities} ")
-                     </h3>
                      <h2 class="activity-entry-title">
                         @activity.Title
                      </h2>
@@ -170,6 +164,12 @@ else
                      {
                         <p style="margin-bottom: 0px;">@activity.Description</p>
                      }
+                     <h3 class="activity-entry-organization">
+                        @(string.IsNullOrEmpty(
+                           activity.RelatedOrganizationEntities)
+                        ? string.Empty
+                        : $"{activity.RelatedOrganizationEntities} ")
+                     </h3>
                      @if(!string.IsNullOrWhiteSpace(activity.Teaser))
                      {
                         <p class="activity-teaser">
