@@ -128,13 +128,13 @@ a:hover {
 }
 
 .activity-entry-title {
-   margin-top: 10px;
-   margin-bottom: 0;
+   margin-top: 0px;
+   margin-bottom: 0px;
 }
 
 .activity-entry-organization {
-   margin-top: 0;
-   margin-bottom: 10px;
+   margin-top: 0px;
+   margin-bottom: 0px;
 }
 
 .page-heading {
