@@ -9,19 +9,15 @@
       <div class="date-select">
          <div class="date-select-control">
             <form method="get">
-               <select
-                  id="date-select-input"
-                  class="date-select-input"
-                  name="@RouteKeys.Date"
-                  aria-label="Date"
-                  onchange="this.form.submit();"
-               >
+               <select id="date-select-input"
+                       class="date-select-input"
+                       name="@RouteKeys.Date"
+                       aria-label="Date"
+                       onchange="this.form.submit();">
                   @foreach(var dateOption in Model.DateOptions)
                   {
-                     <option
-                        value="@dateOption.Value"
-                        selected="@(dateOption.IsSelected ? "selected" : null)"
-                     >
+                     <option value="@dateOption.Value"
+                             selected="@(dateOption.IsSelected ? "selected" : null)">
                         @dateOption.Label
                      </option>
                   }
@@ -152,6 +148,12 @@ else
                </div>
                <div class="activity-agenda-items">
                   <article class="activity-entry">
+                     <h3 class="activity-entry-organization">
+                        #@(string.IsNullOrEmpty(
+                           activity.RelatedOrganizationEntities)
+                           ? string.Empty
+                           : $"{activity.RelatedOrganizationEntities} ")
+                     </h3>
                      <h2 class="activity-entry-title">
                         @activity.Title
                      </h2>
@@ -159,12 +161,6 @@ else
                      {
                         <p style="margin-bottom: 0px;">@activity.Description</p>
                      }
-                     <h3 class="activity-entry-organization">
-                        #@(string.IsNullOrEmpty(
-                           activity.RelatedOrganizationEntities)
-                        ? string.Empty
-                        : $"{activity.RelatedOrganizationEntities} ")
-                     </h3>
                   </article>
                </div>
             </section>
