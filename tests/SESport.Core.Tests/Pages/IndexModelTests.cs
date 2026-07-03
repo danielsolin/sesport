@@ -1,5 +1,6 @@
 using SESport.Data;
 using SESport.Web.Pages;
+using System.Reflection;
 
 namespace SESport.Core.Tests.Pages;
 
@@ -34,6 +35,29 @@ public sealed class IndexModelTests
       );
 
       Assert.Equal(["Anna", "Björn", "Cecilia"], names);
+   }
+
+   [Fact]
+   public void BuildDateOptions_UsesThreeDayWindow()
+   {
+      var today = new DateOnly(2026, 7, 3);
+      var selectedDate = today;
+
+      var method = typeof(IndexModel).GetMethod(
+         "BuildDateOptions",
+         BindingFlags.NonPublic | BindingFlags.Static
+      );
+
+      var options = (IReadOnlyList<DateOption>)method!.Invoke(
+         null,
+         [today, selectedDate]
+      )!;
+
+      Assert.Equal(3, options.Count);
+      Assert.Equal(
+         [today.AddDays(-1), today, today.AddDays(1)],
+         options.Select(option => DateOnly.Parse(option.Value))
+      );
    }
 
    private static ActivityListItem CreateActivity(

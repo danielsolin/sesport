@@ -117,7 +117,7 @@ public class IndexModel(
    {
       var dates = new List<DateOnly>();
 
-      for(var offset = -2; offset <= 2; offset++)
+      for(var offset = -1; offset <= 1; offset++)
       {
          dates.Add(todayDate.AddDays(offset));
       }
