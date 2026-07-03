@@ -1,3 +1,8 @@
+# Merge this file with the image defaults.
+# SearXNG 2026.6+ expects default settings such as
+# `default_doi_resolver` to still exist.
+use_default_settings: true
+
 search:
   default_lang: all
   formats:

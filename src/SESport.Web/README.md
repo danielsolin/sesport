@@ -78,6 +78,17 @@ $env:SearXNG__BasicAuthUsername="<searxng-user>"
 $env:SearXNG__BasicAuthPassword="<searxng-password>"
 ```
 
+## SearXNG Config
+
+The file in `searxng/core-config/settings.yml` is an override, not a
+full replacement. Keep `use_default_settings: true` there so the
+container merges our local tweaks with the image defaults.
+
+If you test the backend directly on `127.0.0.1:8088`, SearXNG will log
+warnings about missing `X-Forwarded-For` or `X-Real-IP` headers. That
+is expected; the public site is served through Caddy at
+`xng.sesport.se`.
+
 ## Sport Date Rule
 
 - Persisted activity dates and times always represent the real calendar
