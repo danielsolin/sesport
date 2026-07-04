@@ -1,5 +1,6 @@
 @{
    var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
+   var pageTitle = (ViewData["Title"] as string ?? string.Empty).Trim();
    var selectedDate = ViewContext.HttpContext.Request.Query[
       RouteKeys.Date
    ].ToString();
@@ -70,8 +71,17 @@
 <head>
    <meta charset="utf-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <title>@ViewData["Title"] - sesport</title>
    <script type="importmap"></script>
+   @if(IsSectionDefined("Head"))
+   {
+      @RenderSection("Head", required: false)
+   }
+   else
+   {
+      <title>@(string.IsNullOrWhiteSpace(pageTitle)
+         ? "sesport"
+         : $"{pageTitle} - sesport")</title>
+   }
    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
    <link rel="icon" href="~/favicon-32x32.png"
          sizes="32x32" type="image/png" />
