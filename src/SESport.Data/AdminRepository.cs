@@ -1,4 +1,5 @@
 using Npgsql;
+using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 
 namespace SESport.Data;
@@ -951,11 +952,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(excludePersonAndPair)
       {
          whereClauses.Add(
-            """
-            e.entity_type_id not in (
-               @person_type_id,
-               @pair_type_id
-            )
+            $"""
+            {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+               "e.entity_type_id"
+            )}
             """
          );
       }
@@ -985,11 +985,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                select distinct e2.canonical_name as linked_name
                from entity_to_entity_links l
                join entities e2
-                  on e2.id = case
-                     when l.source_entity_id = e.id
-                        then l.target_entity_id
-                     else l.source_entity_id
-                  end
+                  on e2.id =
+                     {EntityLinkSql.GetOtherSideEntityIdSql("e.id")}
                where l.source_entity_id = e.id
                   or l.target_entity_id = e.id
             ) linked_entities
@@ -1003,18 +1000,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(applyTermFilter)
       {
          command.Parameters.AddWithValue("term", term);
-      }
-
-      if(excludePersonAndPair)
-      {
-         command.Parameters.AddWithValue(
-            "person_type_id",
-            TrackedEntityTypeIds.Person
-         );
-         command.Parameters.AddWithValue(
-            "pair_type_id",
-            TrackedEntityTypeIds.Pair
-         );
       }
 
       await using var reader = await command.ExecuteReaderAsync(
@@ -1076,12 +1061,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       await reader.DisposeAsync();
 
-      const string linkSql = $$"""
+      var linkSql = $$"""
          select
-            case
-               when source_entity_id = @id then target_entity_id
-               else source_entity_id
-            end as linked_entity_id
+            {{EntityLinkSql.GetOtherSideEntityIdSql("@id")}}
+               as linked_entity_id
          from entity_to_entity_links
          where source_entity_id = @id or target_entity_id = @id
          order by linked_entity_id
@@ -1136,32 +1119,23 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       await reader.DisposeAsync();
 
-      var linkSql = $@"
+      var linkSql = $"""
          select
-            case
-               when source_entity_id = @id then target_entity_id
-               else source_entity_id
-            end as linked_entity_id
+            {EntityLinkSql.GetOtherSideEntityIdSql("@id")}
+               as linked_entity_id
          from entity_to_entity_links l
          join entities linked
-            on linked.id = case
-               when source_entity_id = @id then target_entity_id
-               else source_entity_id
-            end
+            on linked.id =
+               {EntityLinkSql.GetOtherSideEntityIdSql("@id")}
             where (
                source_entity_id = @id
                or target_entity_id = @id
             )
-            and linked.entity_type_id in (
-               '{TrackedEntityTypeIds.NationalTeam}',
-               '{TrackedEntityTypeIds.Organization}',
-               '{TrackedEntityTypeIds.Series}',
-               '{TrackedEntityTypeIds.Tour}',
-               '{TrackedEntityTypeIds.League}',
-               '{TrackedEntityTypeIds.Championship}'
-            )
+            and {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+               "linked.entity_type_id"
+            )}
          order by linked_entity_id
-         ";
+         """;
 
       await using var linkCommand = dataSource.CreateCommand(linkSql);
       linkCommand.Parameters.AddWithValue("id", id);
@@ -1239,7 +1213,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = $"""
+      var sql = $"""
          select
             e.id,
             e.canonical_name,
@@ -1248,10 +1222,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
-         where e.entity_type_id not in (
-            '{TrackedEntityTypeIds.Person}',
-            '{TrackedEntityTypeIds.Pair}'
-         )
+         where {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+            "e.entity_type_id"
+         )}
          order by e.canonical_name
          """;
 
@@ -1289,7 +1262,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          return [];
       }
 
-      const string sql = $"""
+      var sql = $"""
          select
             e.id,
             e.canonical_name,
@@ -1298,10 +1271,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
-         where e.entity_type_id not in (
-            '{TrackedEntityTypeIds.Person}',
-            '{TrackedEntityTypeIds.Pair}'
-         )
+         where {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+            "e.entity_type_id"
+         )}
             and (
                e.canonical_name ilike '%' || @term || '%'
                or coalesce(e.alias_name, '') ilike '%' || @term || '%'

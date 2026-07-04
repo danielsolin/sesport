@@ -5,18 +5,39 @@ namespace SESport.Core.Broadcast;
 
 public static class BroadcastEntityFilter
 {
+   private static readonly IReadOnlyList<string> NonOrganizationEntityTypeIds =
+   [
+      TrackedEntityTypeIds.Person,
+      TrackedEntityTypeIds.Pair
+   ];
+
    public static bool IsOrganizationEntityType(string entityTypeId)
    {
-      return !string.Equals(
-         entityTypeId,
-         TrackedEntityTypeIds.Person,
-         StringComparison.OrdinalIgnoreCase
-      ) &&
-      !string.Equals(
-         entityTypeId,
-         TrackedEntityTypeIds.Pair,
-         StringComparison.OrdinalIgnoreCase
+      return !NonOrganizationEntityTypeIds.Any(
+         nonOrganizationEntityTypeId =>
+            string.Equals(
+               entityTypeId,
+               nonOrganizationEntityTypeId,
+               StringComparison.OrdinalIgnoreCase
+            )
       );
+   }
+
+   public static string GetNonOrganizationEntityTypeSql()
+   {
+      return string.Join(
+         ", ",
+         NonOrganizationEntityTypeIds.Select(
+            entityTypeId => $"'{entityTypeId}'"
+         )
+      );
+   }
+
+   public static string GetNonOrganizationEntityTypePredicateSql(
+      string entityTypeSql
+   )
+   {
+      return $"{entityTypeSql} not in ({GetNonOrganizationEntityTypeSql()})";
    }
 
    public static IReadOnlyList<BroadcastEntityOption> FilterSelectableEntities(

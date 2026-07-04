@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using Npgsql;
@@ -141,7 +142,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = $$"""
+      var sql = $$"""
          select
             e.id,
             e.canonical_name,
@@ -157,29 +158,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
          join entity_watch_priorities p
             on p.id = e.watch_priority_id
-         left join lateral (
-            select string_agg(
-               distinct linked.canonical_name,
-               ', ' order by linked.canonical_name
-            ) as organization_names
-            from entity_to_entity_links l
-            join entities linked on linked.id = case
-               when l.source_entity_id = e.id then l.target_entity_id
-               else l.source_entity_id
-            end
-            where (l.source_entity_id = e.id or l.target_entity_id = e.id)
-               and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-               and linked.entity_type_id in
-                   (
-                     '{{TrackedEntityTypeIds.Organization}}',
-                     '{{TrackedEntityTypeIds.Team}}',
-                     '{{TrackedEntityTypeIds.NationalTeam}}',
-                     '{{TrackedEntityTypeIds.Series}}',
-                     '{{TrackedEntityTypeIds.Tour}}',
-                     '{{TrackedEntityTypeIds.League}}',
-                     '{{TrackedEntityTypeIds.Championship}}'
-                  )
-         ) org on true
+         {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
          order by
             p.sort_order,
             e.canonical_name
@@ -216,7 +195,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = $$"""
+      var sql = $$"""
          select
             e.id,
             e.canonical_name,
@@ -231,28 +210,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             on s.id = e.sport_id
          join entity_watch_priorities p
             on p.id = e.watch_priority_id
-         left join lateral (
-            select string_agg(
-               distinct linked.canonical_name,
-               ', ' order by linked.canonical_name
-            ) as organization_names
-            from entity_to_entity_links l
-            join entities linked on linked.id = case
-               when l.source_entity_id = e.id then l.target_entity_id
-               else l.source_entity_id
-            end
-            where (l.source_entity_id = e.id or l.target_entity_id = e.id)
-               and linked.entity_type_id in
-                   (
-                     '{{TrackedEntityTypeIds.Organization}}',
-                     '{{TrackedEntityTypeIds.Team}}',
-                     '{{TrackedEntityTypeIds.NationalTeam}}',
-                     '{{TrackedEntityTypeIds.Series}}',
-                     '{{TrackedEntityTypeIds.Tour}}',
-                     '{{TrackedEntityTypeIds.League}}',
-                     '{{TrackedEntityTypeIds.Championship}}'
-                  )
-         ) org on true
+         {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
          where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
             and exists (
                select 1
@@ -300,7 +258,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = $$"""
+      var sql = $$"""
          with candidate_rows as (
             select distinct
                e.id,
@@ -316,30 +274,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                on s.id = e.sport_id
             join entity_watch_priorities p
                on p.id = e.watch_priority_id
-            left join lateral (
-               select string_agg(
-                  distinct linked.canonical_name,
-                  ', ' order by linked.canonical_name
-               ) as organization_names
-               from entity_to_entity_links l
-               join entities linked on linked.id = case
-                  when l.source_entity_id = e.id
-                     then l.target_entity_id
-                  else l.source_entity_id
-               end
-               where (l.source_entity_id = e.id
-                     or l.target_entity_id = e.id)
-                  and linked.entity_type_id in
-                      (
-                        '{{TrackedEntityTypeIds.Organization}}',
-                        '{{TrackedEntityTypeIds.Team}}',
-                        '{{TrackedEntityTypeIds.NationalTeam}}',
-                        '{{TrackedEntityTypeIds.Series}}',
-                        '{{TrackedEntityTypeIds.Tour}}',
-                        '{{TrackedEntityTypeIds.League}}',
-                        '{{TrackedEntityTypeIds.Championship}}'
-                     )
-            ) org on true
+            {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
             where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and exists (
                   select 1
@@ -763,13 +698,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             """
          )
          .AppendLine(
-            "         and entity.entity_type_id in (" +
-            $"'{TrackedEntityTypeIds.Organization}', " +
-            $"'{TrackedEntityTypeIds.NationalTeam}', " +
-            $"'{TrackedEntityTypeIds.Series}', " +
-            $"'{TrackedEntityTypeIds.Tour}', " +
-            $"'{TrackedEntityTypeIds.League}', " +
-            $"'{TrackedEntityTypeIds.Championship}')"
+            "         and " +
+            BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+               "entity.entity_type_id"
+            )
          )
          .AppendLine("   ) organizations")
          .AppendLine(") ro on true")

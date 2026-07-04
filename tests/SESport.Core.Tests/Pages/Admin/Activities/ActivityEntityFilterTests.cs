@@ -68,6 +68,27 @@ public sealed class ActivityEntityFilterTests
    }
 
    [Fact]
+   public void GetNonOrganizationEntityTypeSqlListsPersonAndPair()
+   {
+      var sql = BroadcastEntityFilter.GetNonOrganizationEntityTypeSql();
+
+      Assert.Equal("'Person', 'Pair'", sql);
+   }
+
+   [Fact]
+   public void GetNonOrganizationEntityTypePredicateSqlUsesProvidedColumn()
+   {
+      var sql = BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+         "e.entity_type_id"
+      );
+
+      Assert.Equal(
+         "e.entity_type_id not in ('Person', 'Pair')",
+         sql
+      );
+   }
+
+   [Fact]
    public void MatchPersonEntityIdsTreatsAccentsAsEquivalent()
    {
       var linneaId = Guid.NewGuid();
