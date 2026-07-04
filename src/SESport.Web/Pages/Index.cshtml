@@ -1,9 +1,10 @@
 @page
 @model IndexModel
 @{
+   var selectedDate = Model.DateOptions.Where(d => d.IsSelected).First().Label;
 }
 @section Head {
-   <title>sesport</title>
+   <title>sesport - @selectedDate</title>
    <meta name="description"
          content="Svenskar idrottar internationellt på TV - vi håller koll så du slipper." />
    <meta property="og:title" content="sesport" />
@@ -54,7 +55,7 @@
    <div class="notice notice-warning">
       @(Model.ShowLoadErrorDetails
          ? Model.LoadError
-         : "The activity database is not available right now.")
+         : "Ett problem uppstod. Vänligen försök igen.")
    </div>
 }
 else if(Model.TimelineEntries.Count == 0 &&
@@ -62,8 +63,8 @@ else if(Model.TimelineEntries.Count == 0 &&
 {
    <div class="notice">
       @(Model.IsSportToday
-         ? "No upcoming activities yet."
-         : "No published activities yet.")
+         ? "Inga svenskar här än."
+         : "Inga svenskar här än.")
    </div>
 }
 else
