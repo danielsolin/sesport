@@ -1,0 +1,17 @@
+sesport.se {
+   encode zstd gzip
+
+   reverse_proxy 127.0.0.1:5000
+}
+
+dev.sesport.se {
+   encode zstd gzip
+
+   reverse_proxy 127.0.0.1:5001
+}
+
+xng.sesport.se {
+   encode zstd gzip
+
+   reverse_proxy 127.0.0.1:8088
+}
