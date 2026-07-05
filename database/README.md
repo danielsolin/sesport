@@ -19,8 +19,8 @@ The helper scripts in `bin/` read these values from the repository-root
 `.env` file.
 
 The `postgres` and `searxng` containers in `compose.yaml` are gated
-behind the `postgresql-searxng` profile, so `docker compose up -d` no longer starts
-them by default.
+behind the `postgresql-searxng` profile, so `docker compose up -d`
+no longer starts them by default.
 
 To connect with `psql` after copying `.env.example` to `.env`, source the
 variables into your shell first, or pass them explicitly:
