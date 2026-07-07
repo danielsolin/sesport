@@ -35,7 +35,7 @@ internal static class WebPageContentFetchSupport
       """;
 
    internal const string CutoffMarker = "[CUTOFF]";
-   internal const int MaxResponseCharacters = 20000;
+   internal const int MaxResponseCharacters = 30000;
 
    internal static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
@@ -866,14 +866,20 @@ internal static class WebPageContentFetchSupport
          value.Contains("entrylist", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("startlist", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("competitors", StringComparison.OrdinalIgnoreCase) ||
-         value.Contains("competitor list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains(
+            "competitor list",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
          value.Contains("players", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("player list", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("lineup", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("line-up", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("entries", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("participants", StringComparison.OrdinalIgnoreCase) ||
-         value.Contains("participant list", StringComparison.OrdinalIgnoreCase) ||
+         value.Contains(
+            "participant list",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
          value.Contains("roster", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("grid", StringComparison.OrdinalIgnoreCase) ||
          value.Contains("drivers", StringComparison.OrdinalIgnoreCase) ||
@@ -957,7 +963,9 @@ internal static class WebPageContentFetchSupport
       var seenTexts = new HashSet<string>(StringComparer.Ordinal);
       var tableMatches = Regex.Matches(
          html,
-         @"<(?<tag>[a-zA-Z0-9:-]+)(?<attrs>[^>]*)\brole=""(?<role>cell|gridcell|rowheader|columnheader)""[^>]*>(?<content>.*?)</\k<tag>>",
+         @"<(?<tag>[a-zA-Z0-9:-]+)(?<attrs>[^>]*)\brole=""" +
+         @"(?<role>cell|gridcell|rowheader|columnheader)""[^>]*>" +
+         @"(?<content>.*?)</\k<tag>>",
          RegexOptions.IgnoreCase | RegexOptions.Singleline
       );
 
@@ -1291,14 +1299,20 @@ internal static class WebPageContentFetchSupport
 
       var normalizedPropertyName = propertyName.Trim().ToLowerInvariant();
 
-      return normalizedPropertyName.EndsWith("name", StringComparison.Ordinal) ||
+      return normalizedPropertyName.EndsWith(
+            "name",
+            StringComparison.Ordinal
+         ) ||
          normalizedPropertyName.EndsWith("title", StringComparison.Ordinal) ||
          normalizedPropertyName.EndsWith("label", StringComparison.Ordinal) ||
          normalizedPropertyName.EndsWith("text", StringComparison.Ordinal) ||
          normalizedPropertyName.EndsWith("description",
             StringComparison.Ordinal) ||
          normalizedPropertyName.EndsWith("caption", StringComparison.Ordinal) ||
-         normalizedPropertyName.EndsWith("headline", StringComparison.Ordinal) ||
+         normalizedPropertyName.EndsWith(
+            "headline",
+            StringComparison.Ordinal
+         ) ||
          normalizedPropertyName.EndsWith("standfirst",
             StringComparison.Ordinal) ||
          normalizedPropertyName.EndsWith("summary", StringComparison.Ordinal) ||
