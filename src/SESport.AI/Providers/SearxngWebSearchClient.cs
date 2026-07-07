@@ -1,5 +1,3 @@
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 
 using SESport.AI.Interfaces;
@@ -45,14 +43,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       Logger = logger;
       BaseAddress = BuildBaseAddress(options.BaseUrl);
       SearchUri = new Uri(BaseAddress, "search");
-
-      var basicAuth = CreateBasicAuthHeader(options);
-
-      if(!string.IsNullOrWhiteSpace(basicAuth))
-      {
-         HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Basic", basicAuth);
-      }
    }
 
    private HttpClient HttpClient { get; }
@@ -368,24 +358,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       return uriString.EndsWith("/", StringComparison.Ordinal)
          ? uri
          : new Uri(uriString + "/");
-   }
-
-   private static string? CreateBasicAuthHeader(
-      SearxngWebSearchClientOptions options
-   )
-   {
-      if(string.IsNullOrWhiteSpace(options.BasicAuthUsername) ||
-         string.IsNullOrWhiteSpace(options.BasicAuthPassword))
-      {
-         return null;
-      }
-
-      var credentials =
-         $"{options.BasicAuthUsername}:" +
-         $"{options.BasicAuthPassword}";
-      var bytes = Encoding.UTF8.GetBytes(credentials);
-
-      return Convert.ToBase64String(bytes);
    }
 
    private static string CreateFailureMessage(

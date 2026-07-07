@@ -172,28 +172,6 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchUsesBasicAuthWhenConfigured()
-   {
-      var handler = new RecordingHandler(CreateResponseJson());
-      var client = new SearxngWebSearchClient(
-         new HttpClient(handler),
-         new SearxngWebSearchClientOptions
-         {
-            BasicAuthUsername = "user",
-            BasicAuthPassword = "pass"
-         }
-      );
-
-      await client.SearchAsync(
-         "Tre Kronor",
-         3,
-         CancellationToken.None
-      );
-
-      Assert.Equal("Basic dXNlcjpwYXNz", handler.AuthorizationHeader);
-   }
-
-   [Fact]
    public async Task SearchRetriesWhenInitialRequestTimesOut()
    {
       var handler = new FlakyTimeoutHandler(CreateResponseJson());

@@ -95,12 +95,3 @@ The web application registers the AI pending-run and timeout workers at
 startup. Deployment scripts should keep the worker setting enabled for both
 services so either environment can claim pending runs from the shared
 database.
-
-## First Job
-
-The teaser generator should be migrated first:
-
-- job id: `generate-activity-teaser`
-- provider: `openrouter-free`
-- prompt version: `1`
-- output mode: `json_object`

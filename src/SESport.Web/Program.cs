@@ -63,28 +63,14 @@ app.Logger.LogInformation(
    ExecutionEnvironment.Current
 );
 app.Logger.LogInformation(
-   "SearXNG env vars present in process: baseUrl={HasBaseUrl}, " +
-   "username={HasUsername}, password={HasPassword}",
+   "SearXNG env vars present in process: baseUrl={HasBaseUrl}",
    !string.IsNullOrWhiteSpace(
       Environment.GetEnvironmentVariable("SearXNG__BaseUrl")
-   ),
-   !string.IsNullOrWhiteSpace(
-      Environment.GetEnvironmentVariable("SearXNG__BasicAuthUsername")
-   ),
-   !string.IsNullOrWhiteSpace(
-      Environment.GetEnvironmentVariable("SearXNG__BasicAuthPassword")
    )
 );
 app.Logger.LogInformation(
-   "SearXNG config bound: baseUrl={BaseUrl}, username={HasUsername}, " +
-   "password={HasPassword}",
-   builder.Configuration["SearXNG:BaseUrl"] ?? "<default>",
-   !string.IsNullOrWhiteSpace(
-      builder.Configuration["SearXNG:BasicAuthUsername"]
-   ),
-   !string.IsNullOrWhiteSpace(
-      builder.Configuration["SearXNG:BasicAuthPassword"]
-   )
+   "SearXNG config bound: baseUrl={BaseUrl}",
+   builder.Configuration["SearXNG:BaseUrl"] ?? "<default>"
 );
 
 if (!app.Environment.IsDevelopment())
