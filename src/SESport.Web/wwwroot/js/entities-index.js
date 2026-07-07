@@ -22,7 +22,6 @@
 
          const container = field.closest(containerSelector)
             || document.querySelector(containerSelector);
-         const typeFilter = document.querySelector(typeFilterSelector);
          const listBody = container?.querySelector(listBodySelector);
          const emptyState = container?.querySelector(emptyStateSelector);
          const template = container?.querySelector(
@@ -50,7 +49,6 @@
 
          if(!(container instanceof HTMLElement)
             || !(listBody instanceof HTMLTableSectionElement)
-            || !(typeFilter instanceof HTMLSelectElement)
             || searchUrl === ""
             || editUrlBase === ""
             || deleteUrlBase === "")
@@ -66,15 +64,35 @@
             field.value = cookieValue;
          }
 
-         applyTypeFilterCookie(typeFilter, getCookie(typeCookieName));
+         const getTypeFilter = () => {
+            const filter = document.querySelector(typeFilterSelector);
+            return filter instanceof HTMLSelectElement ? filter : null;
+         };
+
+         const initialTypeFilter = getTypeFilter();
+
+         if(initialTypeFilter instanceof HTMLSelectElement)
+         {
+            applyTypeFilterCookie(
+               initialTypeFilter,
+               getCookie(typeCookieName)
+            );
+         }
 
          let debounceTimer = null;
          let activeController = null;
 
          const currentQuery = () => field.value.trim();
-         const getSelectedTypeIds = () => Array.from(typeFilter.options)
-            .filter(option => option.selected && option.value.trim() !== "")
-            .map(option => option.value.trim());
+         const getSelectedTypeIds = () => {
+            const typeFilter = getTypeFilter();
+
+            return typeFilter instanceof HTMLSelectElement
+               ? Array.from(typeFilter.options)
+                  .filter(option =>
+                     option.selected && option.value.trim() !== "")
+                  .map(option => option.value.trim())
+               : [];
+         };
 
          const setEmptyState = hasMatches => {
             if(!(emptyState instanceof HTMLElement))
@@ -192,7 +210,7 @@
          };
 
          field.addEventListener("input", scheduleSearch);
-         typeFilter.addEventListener("change", scheduleSearch);
+         initialTypeFilter?.addEventListener("change", scheduleSearch);
 
          const initialQuery = currentQuery();
          const initialTypeIds = getSelectedTypeIds();
