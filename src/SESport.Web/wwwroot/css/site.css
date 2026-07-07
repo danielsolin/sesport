@@ -1354,7 +1354,7 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    color: var(--accent);
    font: inherit;
    font-size: 13px;
-   font-weight: 700;
+   font-weight: 400;
    line-height: 1.2;
    cursor: pointer;
    white-space: nowrap;

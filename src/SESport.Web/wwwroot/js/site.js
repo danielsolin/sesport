@@ -3058,6 +3058,13 @@
             activityCell.append(activityLink);
          }
 
+         const archiveForm = createParticipationArchiveForm(cell, check);
+
+         if(archiveForm)
+         {
+            activityCell.append(archiveForm);
+         }
+
          row.append(
             summaryCell,
             participantsCell,
@@ -3109,6 +3116,13 @@
             activityCell.append(activityLink);
          }
 
+         const archiveForm = createParticipationArchiveForm(cell, check);
+
+         if(archiveForm)
+         {
+            activityCell.append(archiveForm);
+         }
+
          row.append(
             summaryCell,
             participantsCell,
@@ -3147,6 +3161,13 @@
          activityCell.append(activityLink);
       }
 
+      const archiveForm = createParticipationArchiveForm(cell, check);
+
+      if(archiveForm)
+      {
+         activityCell.append(archiveForm);
+      }
+
       if(check.participants.length > 0)
       {
          participantsCell.append(
@@ -3161,6 +3182,64 @@
          activityCell
       );
       return row;
+   }
+
+   function createParticipationArchiveForm(cell, check)
+   {
+      if(!(cell instanceof HTMLElement) ||
+         !check ||
+         typeof check.runId !== "string" ||
+         check.runId.trim() === "" ||
+         (typeof check.statusId === "string" &&
+            check.statusId.trim().toLowerCase() === "archived"))
+      {
+         return null;
+      }
+
+      const urlContainer = document.querySelector(runInlineEditUrlSelector);
+
+      if(!(urlContainer instanceof HTMLElement) ||
+         typeof urlContainer.dataset.runInlineEditUrl !== "string" ||
+         urlContainer.dataset.runInlineEditUrl.trim() === "")
+      {
+         return null;
+      }
+
+      const form = document.createElement("form");
+      form.className = "broadcast-ai-check-archive-form";
+      form.method = "post";
+      form.action = urlContainer.dataset.runInlineEditUrl.trim();
+      form.dataset.ajaxSuccess = "update-participation";
+
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         const tokenInput = document.createElement("input");
+         tokenInput.type = "hidden";
+         tokenInput.name = "__RequestVerificationToken";
+         tokenInput.value = token;
+         form.append(tokenInput);
+      }
+
+      const idInput = document.createElement("input");
+      idInput.type = "hidden";
+      idInput.name = "id";
+      idInput.value = check.runId.trim();
+
+      const fieldInput = document.createElement("input");
+      fieldInput.type = "hidden";
+      fieldInput.name = "field";
+      fieldInput.value = "archive";
+
+      const button = document.createElement("button");
+      button.type = "submit";
+      button.className = "broadcast-ai-check-archive-link";
+      button.textContent = "Archive Run";
+
+      form.append(idInput, fieldInput, button);
+
+      return form;
    }
 
    function updateParticipationRunId(cell, runId)
