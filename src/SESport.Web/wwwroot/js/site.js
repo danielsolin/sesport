@@ -68,8 +68,10 @@
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
    const dateSelectSelector = "#date-select-input";
    const exclusiveEmptySelectStates = new WeakMap();
+   const multiSelectScrollPositions = new WeakMap();
    window.submitFilterForm = submitFilterForm;
    initializeExclusiveEmptySelects();
+   initializeMultiSelectScrollRetention();
    initializeMultiSelectClearButtons();
    initializeCheckboxToggles();
    initializeCheckboxVisibility();
@@ -4600,5 +4602,101 @@
          select.addEventListener("change", update);
          update();
       });
+   }
+
+   function initializeMultiSelectScrollRetention()
+   {
+      if(document.documentElement.dataset
+         .multiSelectScrollRetentionInitialized === "true")
+      {
+         return;
+      }
+
+      document.documentElement.dataset
+         .multiSelectScrollRetentionInitialized = "true";
+
+      document.addEventListener(
+         "pointerdown",
+         rememberMultiSelectScroll,
+         true
+      );
+      document.addEventListener(
+         "click",
+         preserveMultiSelectScroll,
+         true
+      );
+      document.addEventListener(
+         "focusin",
+         preserveMultiSelectScroll,
+         true
+      );
+      document.addEventListener(
+         "change",
+         preserveMultiSelectScroll,
+         true
+      );
+   }
+
+   function rememberMultiSelectScroll(event)
+   {
+      const options = getMultiSelectOptionsForEvent(event);
+
+      if(options instanceof HTMLElement)
+      {
+         multiSelectScrollPositions.set(options, options.scrollTop);
+      }
+   }
+
+   function preserveMultiSelectScroll(event)
+   {
+      const options = getMultiSelectOptionsForEvent(event);
+
+      if(!(options instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const scrollTop = multiSelectScrollPositions.get(options)
+         ?? options.scrollTop;
+
+      if(scrollTop <= 0)
+      {
+         return;
+      }
+
+      const restore = () => {
+         if(options.isConnected)
+         {
+            options.scrollTop = scrollTop;
+         }
+      };
+
+      queueMicrotask(restore);
+      window.requestAnimationFrame(restore);
+      window.setTimeout(restore, 0);
+      window.setTimeout(restore, 25);
+      window.setTimeout(restore, 100);
+   }
+
+   function getMultiSelectOptionsForEvent(event)
+   {
+      const target = event.target;
+
+      if(!(target instanceof Element))
+      {
+         return null;
+      }
+
+      const directOptions = target.closest(".multi-select-options");
+
+      if(directOptions instanceof HTMLElement)
+      {
+         return directOptions;
+      }
+
+      const multiSelect = target.closest(".multi-select");
+      const options = multiSelect?.querySelector(".multi-select-options");
+
+      return options instanceof HTMLElement ? options : null;
    }
 })();
