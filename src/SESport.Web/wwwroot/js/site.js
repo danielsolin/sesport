@@ -2806,8 +2806,9 @@
          "broadcast-ai-check-runs-summary-text",
          getParticipationSummaryBadgeClass(summaryCheck)
       ].filter(value => value !== "").join(" ");
-      summaryText.textContent = summaryCheck?.summaryText
-         ?? "Not checked yet";
+      summaryText.textContent = formatParticipationRunsSummaryText(
+         summaryCheck
+      );
       headerBar.append(summaryText);
 
       const actions = document.createElement("div");
@@ -2839,6 +2840,32 @@
       wrapper.append(table);
 
       return { wrapper, body };
+   }
+
+   function formatParticipationRunsSummaryText(check)
+   {
+      if(!check || typeof check !== "object")
+      {
+         return "Not checked yet";
+      }
+
+      const participation = typeof check.swedishParticipation === "string"
+         ? check.swedishParticipation.trim()
+         : "";
+
+      if(participation.toLowerCase() === "yes")
+      {
+         const participantCount = Array.isArray(check.participants)
+            ? check.participants.length
+            : 0;
+
+         return `YES: ${participantCount}`;
+      }
+
+      return typeof check.summaryText === "string" &&
+         check.summaryText.trim() !== ""
+         ? check.summaryText.trim()
+         : "Not checked yet";
    }
 
    function toggleParticipationRuns(toggleButton)
