@@ -177,11 +177,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
          logger.LogWarning(
             exception,
             "Primary HTTP request failed for {Url}; " +
-            "trying browser fallback.",
+            "trying browser renderer without HTTP fallback.",
             absoluteUrl
          );
 
-         return await FetchWithoutPrimaryResponseAsync(
+         return await FetchRenderedPageWithoutPrimaryResponseAsync(
             absoluteUrl,
             cancellationToken,
             null
@@ -192,11 +192,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
          logger.LogWarning(
             exception,
             "Primary HTTP request timed out for {Url}; " +
-            "trying browser fallback.",
+            "trying browser renderer without HTTP fallback.",
             absoluteUrl
          );
 
-         return await FetchWithoutPrimaryResponseAsync(
+         return await FetchRenderedPageWithoutPrimaryResponseAsync(
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.Timeout
@@ -207,11 +207,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
          logger.LogWarning(
             exception,
             "Primary HTTP request timed out for {Url}; " +
-            "trying browser fallback.",
+            "trying browser renderer without HTTP fallback.",
             absoluteUrl
          );
 
-         return await FetchWithoutPrimaryResponseAsync(
+         return await FetchRenderedPageWithoutPrimaryResponseAsync(
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.Timeout
@@ -229,70 +229,88 @@ public sealed class WebPageContentClient : IWebPageContentClient
             );
          }
 
-         try
-         {
-            return await this.browserPageFetcher(
-               absoluteUrl,
-               cancellationToken
-            );
-         }
-         catch(WebPageFetchException exception)
-         {
-            logger.LogWarning(
-               exception,
-               "Playwright failed for {Url}; falling back to HTML.",
-               absoluteUrl
-            );
-            return await WebPageHtmlPageFetcher.FetchAsync(
-               this.logger,
-               this.curlPageFetcher,
-               response,
-               absoluteUrl,
-               cancellationToken,
-               exception.ErrorKind
-            );
-         }
-         catch(OperationCanceledException)
-            when(cancellationToken.IsCancellationRequested)
-         {
-            throw;
-         }
-         catch(TimeoutException exception)
-         {
-            logger.LogWarning(
-               exception,
-               "Playwright timed out for {Url}; falling back to HTML.",
-               absoluteUrl
-            );
-            return await WebPageHtmlPageFetcher.FetchAsync(
-               this.logger,
-               this.curlPageFetcher,
-               response,
-               absoluteUrl,
-               cancellationToken,
-               WebPageFetchErrorKind.Timeout
-            );
-         }
-         catch(PlaywrightException exception)
-         {
-            logger.LogWarning(
-               exception,
-               "Playwright failed for {Url}; falling back to HTML.",
-               absoluteUrl
-            );
-            return await WebPageHtmlPageFetcher.FetchAsync(
-               this.logger,
-               this.curlPageFetcher,
-               response,
-               absoluteUrl,
-               cancellationToken,
-               WebPageFetchErrorKind.BrowserBlocked
-            );
-         }
+         return await FetchRenderedHtmlWithPrimaryResponseAsync(
+            response,
+            absoluteUrl,
+            cancellationToken
+         );
       }
    }
 
-   private async Task<WebPageContent?> FetchWithoutPrimaryResponseAsync(
+   private async Task<WebPageContent?>
+      FetchRenderedHtmlWithPrimaryResponseAsync(
+      HttpResponseMessage response,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         return await this.browserPageFetcher(
+            absoluteUrl,
+            cancellationToken
+         );
+      }
+      catch(WebPageFetchException exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Playwright renderer failed for {Url}; " +
+            "using primary HTML response.",
+            absoluteUrl
+         );
+         return await WebPageHtmlPageFetcher.FetchAsync(
+            this.logger,
+            this.curlPageFetcher,
+            response,
+            absoluteUrl,
+            cancellationToken,
+            exception.ErrorKind
+         );
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(TimeoutException exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Playwright renderer timed out for {Url}; " +
+            "using primary HTML response.",
+            absoluteUrl
+         );
+         return await WebPageHtmlPageFetcher.FetchAsync(
+            this.logger,
+            this.curlPageFetcher,
+            response,
+            absoluteUrl,
+            cancellationToken,
+            WebPageFetchErrorKind.Timeout
+         );
+      }
+      catch(PlaywrightException exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Playwright renderer failed for {Url}; " +
+            "using primary HTML response.",
+            absoluteUrl
+         );
+         return await WebPageHtmlPageFetcher.FetchAsync(
+            this.logger,
+            this.curlPageFetcher,
+            response,
+            absoluteUrl,
+            cancellationToken,
+            WebPageFetchErrorKind.BrowserBlocked
+         );
+      }
+   }
+
+   private async Task<WebPageContent?>
+      FetchRenderedPageWithoutPrimaryResponseAsync(
       Uri absoluteUrl,
       CancellationToken cancellationToken,
       WebPageFetchErrorKind? browserFailureKind
