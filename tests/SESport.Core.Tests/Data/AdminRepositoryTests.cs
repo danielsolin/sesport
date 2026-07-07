@@ -106,6 +106,55 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task SearchEntitiesAsyncFiltersByEntityType()
+   {
+      var personId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var token = Guid.NewGuid().ToString("N");
+      var personName = $"Type Filter Person {token}";
+      var organizationName = $"Type Filter Organization {token}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         personName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         organizationName,
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+
+      try
+      {
+         var results = await repository.SearchEntitiesAsync(
+            token,
+            CancellationToken.None,
+            false,
+            [TrackedEntityTypeIds.Person]
+         );
+
+         Assert.Contains(results, entity => entity.Id == personId);
+         Assert.DoesNotContain(
+            results,
+            entity => entity.Id == organizationId
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task GetPersonEntityNameOptionsAsyncUsesOrganizationScope()
    {
       var organizationAId = Guid.NewGuid();

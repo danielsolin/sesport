@@ -1,6 +1,7 @@
 (() => {
    const containerSelector = "[data-entity-list-container]";
    const filterSelector = "[data-entity-name-filter]";
+   const typeFilterSelector = "[data-entity-type-filter]";
    const listBodySelector = "[data-entity-list-body]";
    const emptyStateSelector = "[data-entity-empty-state]";
    const watchPriorityTemplateSelector =
@@ -21,6 +22,7 @@
 
          const container = field.closest(containerSelector)
             || document.querySelector(containerSelector);
+         const typeFilter = document.querySelector(typeFilterSelector);
          const listBody = container?.querySelector(listBodySelector);
          const emptyState = container?.querySelector(emptyStateSelector);
          const template = container?.querySelector(
@@ -37,6 +39,10 @@
             container,
             "entityFilterCookieName"
          );
+         const typeCookieName = getDataValue(
+            container,
+            "entityTypeFilterCookieName"
+         );
          const sortColumn = getDataValue(container, "entitySortColumn")
             || "Name";
          const sortAsc = getDataValue(container, "entitySortAsc")
@@ -44,6 +50,7 @@
 
          if(!(container instanceof HTMLElement)
             || !(listBody instanceof HTMLTableSectionElement)
+            || !(typeFilter instanceof HTMLSelectElement)
             || searchUrl === ""
             || editUrlBase === ""
             || deleteUrlBase === "")
@@ -59,10 +66,15 @@
             field.value = cookieValue;
          }
 
+         applyTypeFilterCookie(typeFilter, getCookie(typeCookieName));
+
          let debounceTimer = null;
          let activeController = null;
 
          const currentQuery = () => field.value.trim();
+         const getSelectedTypeIds = () => Array.from(typeFilter.options)
+            .filter(option => option.selected && option.value.trim() !== "")
+            .map(option => option.value.trim());
 
          const setEmptyState = hasMatches => {
             if(!(emptyState instanceof HTMLElement))
@@ -89,7 +101,12 @@
             setEmptyState(entities.length > 0);
          };
 
-         const fetchAndRenderAsync = async query => {
+         const clearRows = () => {
+            listBody.replaceChildren();
+            setEmptyState(false);
+         };
+
+         const fetchAndRenderAsync = async (query, typeIds) => {
             if(activeController instanceof AbortController)
             {
                activeController.abort();
@@ -108,6 +125,10 @@
                }
 
                url.searchParams.set("includeAll", "true");
+
+               typeIds.forEach(typeId => {
+                  url.searchParams.append("entityTypeIds", typeId);
+               });
 
                url.searchParams.set("sortColumn", sortColumn);
                url.searchParams.set("sortAsc", sortAsc ? "true" : "false");
@@ -155,32 +176,64 @@
             window.clearTimeout(debounceTimer);
             debounceTimer = window.setTimeout(() => {
                const query = currentQuery();
+               const typeIds = getSelectedTypeIds();
 
                setCookie(cookieName, query);
+               setCookie(typeCookieName, typeIds.join(","));
 
-               if(query === "")
+               if(query === "" && typeIds.length === 0)
                {
                   clearRows();
                   return;
                }
 
-               void fetchAndRenderAsync(query);
+               void fetchAndRenderAsync(query, typeIds);
             }, debounceMs);
          };
 
          field.addEventListener("input", scheduleSearch);
+         typeFilter.addEventListener("change", scheduleSearch);
 
          const initialQuery = currentQuery();
+         const initialTypeIds = getSelectedTypeIds();
 
-         if(initialQuery === "")
+         if(initialQuery === "" && initialTypeIds.length === 0)
          {
             listBody.replaceChildren();
             setEmptyState(false);
             return;
          }
 
-         void fetchAndRenderAsync(initialQuery);
+         void fetchAndRenderAsync(initialQuery, initialTypeIds);
       });
+   }
+
+   function applyTypeFilterCookie(select, cookieValue)
+   {
+      if(!(select instanceof HTMLSelectElement) ||
+         typeof cookieValue !== "string" ||
+         cookieValue.trim() === "")
+      {
+         return;
+      }
+
+      const selectedValues = cookieValue
+         .split(",")
+         .map(value => value.trim())
+         .filter(value => value !== "");
+
+      if(selectedValues.length === 0)
+      {
+         return;
+      }
+
+      const selectedSet = new Set(selectedValues);
+
+      Array.from(select.options).forEach(option => {
+         option.selected = selectedSet.has(option.value);
+      });
+
+      select._multiSelect?.setValues(selectedValues);
    }
 
    function renderEntityRowHtml(

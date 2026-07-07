@@ -12,12 +12,16 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       CancellationToken cancellationToken,
       bool? sortAsc = null,
       bool includeAll = false,
-      bool organizationOnly = false
+      bool organizationOnly = false,
+      string[]? entityTypeIds = null
    )
    {
       term = term?.Trim() ?? string.Empty;
+      var normalizedEntityTypeIds = NormalizeEntityTypeIds(entityTypeIds);
 
-      if(term == string.Empty && !includeAll)
+      if(term == string.Empty &&
+         normalizedEntityTypeIds.Count == 0 &&
+         !includeAll)
       {
          return new JsonResult(new { results = Array.Empty<object>() });
       }
@@ -25,12 +29,14 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       var results = term == string.Empty
          ? await repository.GetEntitiesAsync(
             cancellationToken,
-            organizationOnly
+            organizationOnly,
+            normalizedEntityTypeIds
          )
          : await repository.SearchEntitiesAsync(
             term,
             cancellationToken,
-            organizationOnly
+            organizationOnly,
+            normalizedEntityTypeIds
          );
       results = SortEntities(
          results,
@@ -39,6 +45,26 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       );
 
       return new JsonResult(new { results });
+   }
+
+   private static IReadOnlyList<string> NormalizeEntityTypeIds(
+      IEnumerable<string>? entityTypeIds
+   )
+   {
+      if(entityTypeIds is null)
+      {
+         return [];
+      }
+
+      return entityTypeIds
+         .SelectMany(value => value.Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         ))
+         .Where(value => value != string.Empty)
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 
    private static string NormalizeSortColumn(string? sortColumn) =>

@@ -890,27 +890,31 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(
       string? term,
       CancellationToken cancellationToken,
-      bool excludePersonAndPair = false
+      bool excludePersonAndPair = false,
+      IReadOnlyCollection<string>? entityTypeIds = null
    )
    {
       return await QueryEntitiesAsync(
          term,
          true,
          cancellationToken,
-         excludePersonAndPair
+         excludePersonAndPair,
+         entityTypeIds
       );
    }
 
    public async Task<IReadOnlyList<EntityListItem>> GetEntitiesAsync(
       CancellationToken cancellationToken,
-      bool excludePersonAndPair = false
+      bool excludePersonAndPair = false,
+      IReadOnlyCollection<string>? entityTypeIds = null
    )
    {
       return await QueryEntitiesAsync(
          null,
          false,
          cancellationToken,
-         excludePersonAndPair
+         excludePersonAndPair,
+         entityTypeIds
       );
    }
 
@@ -918,10 +922,16 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       string? term,
       bool applyTermFilter,
       CancellationToken cancellationToken,
-      bool excludePersonAndPair
+      bool excludePersonAndPair,
+      IReadOnlyCollection<string>? entityTypeIds
    )
    {
       term = term?.Trim() ?? string.Empty;
+      var normalizedEntityTypeIds = entityTypeIds?
+         .Where(entityTypeId => !string.IsNullOrWhiteSpace(entityTypeId))
+         .Select(entityTypeId => entityTypeId.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray() ?? [];
 
       if(applyTermFilter && term == string.Empty)
       {
@@ -958,6 +968,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             )}
             """
          );
+      }
+
+      if(normalizedEntityTypeIds.Length > 0)
+      {
+         whereClauses.Add("e.entity_type_id = any(@entity_type_ids)");
       }
 
       var whereSql = whereClauses.Count == 0
@@ -1000,6 +1015,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(applyTermFilter)
       {
          command.Parameters.AddWithValue("term", term);
+      }
+
+      if(normalizedEntityTypeIds.Length > 0)
+      {
+         command.Parameters.AddWithValue(
+            "entity_type_ids",
+            normalizedEntityTypeIds
+         );
       }
 
       await using var reader = await command.ExecuteReaderAsync(

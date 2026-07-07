@@ -160,6 +160,28 @@ a:hover {
    max-width: 100%;
 }
 
+.entity-type-filter {
+   width: 280px;
+   max-width: 100%;
+}
+
+.entity-filter-grid {
+   display: grid;
+   grid-template-columns: minmax(180px, 220px) minmax(260px, 340px);
+   align-items: end;
+   gap: 12px;
+}
+
+.entity-filter-grid label {
+   margin-bottom: 0;
+}
+
+.entity-filter-grid .multi-select-header {
+   min-height: 32px;
+   padding-top: 5px;
+   padding-bottom: 5px;
+}
+
 .eyebrow {
    margin: 0 0 4px;
    color: var(--muted);

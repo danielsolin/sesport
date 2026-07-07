@@ -21,17 +21,32 @@
 </section>
 
 <section class="form-section">
-   <label>
-      <span>Filter</span>
-   </label>
-   <input type="text"
-      class="entity-name-filter"
-      placeholder="name"
-      autofocus
-      value="@Model.Filter"
-      aria-label="Filter entities by name"
-      data-entity-name-filter
-   />
+   <div class="entity-filter-grid">
+      <label>
+         <span>Filter</span>
+         <input type="text"
+            class="entity-name-filter"
+            placeholder="name"
+            autofocus
+            value="@Model.Filter"
+            aria-label="Filter entities by name"
+            data-entity-name-filter
+         />
+      </label>
+      <label>
+         <span>Type</span>
+         <div class="multi-select-row">
+            <select asp-items="Model.GetEntityTypeOptions()"
+                    multiple
+                    class="ses-multiselect entity-type-filter"
+                    data-multi-select
+                    data-placeholder="All"
+                    data-list-all="false"
+                    data-entity-type-filter>
+            </select>
+         </div>
+      </label>
+   </div>
 </section>
 
 @if(Model.LoadError is not null)
@@ -48,6 +63,8 @@ else
         data-entity-delete-url="@entityDeleteUrl"
         data-entity-filter-cookie-name=
            "@IndexModel.FilterCookieName"
+        data-entity-type-filter-cookie-name=
+           "@IndexModel.TypeFilterCookieName"
         data-entity-sort-column="@Model.SortColumn"
         data-entity-sort-asc="@Model.SortAsc.ToString().ToLowerInvariant()"
         data-entity-search-url-base="@searchUrlBase">
