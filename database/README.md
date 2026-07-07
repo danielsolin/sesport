@@ -12,18 +12,24 @@ variables, in this order:
 4. `SESPORT_POSTGRES_USER`
 5. `SESPORT_POSTGRES_PASSWORD`
 
-If no variables are set, the code falls back to the local defaults for
-`sesport` on `localhost:5432`.
+The active development and service database is the shared PostgreSQL
+instance at `207.2.120.181:15285`. Keep the repository-root `.env` pointed
+at that host unless you are deliberately running an isolated replacement.
 
-The helper scripts in `bin/` read these values from the repository-root
-`.env` file.
+If no variables are set, the code still falls back to the legacy local
+defaults for `sesport` on `localhost:5432`.
 
-The `postgres` and `searxng` containers in `compose.yaml` are gated
-behind the `postgresql-searxng` profile, so `docker compose up -d`
-no longer starts them by default.
+The helper scripts in `bin/` and the integration-test bootstrap read these
+values from the repository-root `.env` file, so they target the shared
+database by design when that file contains the standard host and port.
 
-To connect with `psql` after copying `.env.example` to `.env`, source the
-variables into your shell first, or pass them explicitly:
+The `postgres` and `searxng` containers in `compose.yaml` are gated behind
+the `postgresql-searxng` profile. Use them only when operating the database
+host or a deliberate local replacement. The Postgres service binds to
+`207.2.120.181:${SESPORT_POSTGRES_PORT:-15285}:5432`.
+
+To connect with `psql`, source the variables into your shell first, or pass
+them explicitly:
 
 ```bash
 set -a
@@ -44,7 +50,8 @@ the reference rows needed by the application.
 Future schema changes should be added as new numbered SQL files after the
 baseline.
 
-Start interactive PostgreSQL session in docker container:
+Start an interactive PostgreSQL session in the Docker container when you are
+operating the Compose-hosted database:
 
 ```bash
 docker compose exec -it postgres psql -U sesport -d sesport
@@ -63,7 +70,8 @@ docker compose exec -it postgres env \
   psql -h localhost -U "$SESPORT_POSTGRES_USER" -d "$SESPORT_POSTGRES_DB"
 ```
 
-Start PostgreSQL with Docker Compose:
+Start PostgreSQL with Docker Compose when you are operating that host or a
+deliberate local replacement:
 
 ```bash
 docker compose --profile postgresql-searxng up -d postgres searxng
@@ -83,8 +91,8 @@ baseline as applied:
 ./bin/db-mark-baseline-applied.sh
 ```
 
-If the local database drifted from the baseline, recreate the local Postgres
-volume before rerunning migrations.
+If an isolated replacement database drifted from the baseline, recreate the
+Postgres volume before rerunning migrations.
 
 On Windows, run the bash script from WSL if Docker is only available there.
 

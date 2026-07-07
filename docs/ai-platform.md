@@ -85,13 +85,16 @@ through a project reference to `SESport.AI`.
 
 ## Runtime Ownership
 
-AI background workers are enabled only in `sesport-dev.service`.
+AI background workers run in both the development and production web
+services.
 
 - `sesport-dev.service` sets `Ai:EnableBackgroundWorkers=true`
-- `sesport.service` keeps `Ai:EnableBackgroundWorkers=false`
+- `sesport.service` sets `Ai:EnableBackgroundWorkers=true`
 
-This lets production display AI run history without polling or claiming new
-runs from the shared database.
+The web application registers the AI pending-run and timeout workers at
+startup. Deployment scripts should keep the worker setting enabled for both
+services so either environment can claim pending runs from the shared
+database.
 
 ## First Job
 

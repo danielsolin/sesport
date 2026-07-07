@@ -1,9 +1,12 @@
 # sesport Agent Guidelines
 
 ## Setup
-1. Copy `.env.example` to `.env` (adjust if needed)
-2. Start PostgreSQL: `docker compose up -d` (run in WSL if Docker is only
-available there)
+1. Copy `.env.example` to `.env` and point it at the shared PostgreSQL
+   database on `207.2.120.181:15285`, unless you are deliberately using an
+   isolated replacement.
+2. Start PostgreSQL with Docker Compose only when operating the database host
+   or a deliberate local replacement:
+   `docker compose --profile postgresql-searxng up -d postgres searxng`
 3. Run database migrations:
    - Bash: `./bin/db-run-migrations.sh` (run in WSL if Docker is only
      available there)
@@ -28,12 +31,12 @@ Several console applications live in `tools/legacy/` for occasional use:
 
 ## Notes
 - The solution targets .NET 10.0 SDK
-- Database connection string defaults to
-  Host=localhost;Port=5432;Database=sesport;Username=sesport;Password=sesport
+- The active development and service database is `207.2.120.181:15285`.
+  The code falls back to localhost defaults only when no environment
+  variables are set.
 - The web app uses Npgsql for PostgreSQL data access
-- Ensure PostgreSQL is running and migrated before running the web app or
-  import tools (PostgreSQL must be started via Docker in WSL if Docker is only
-  available there)
+- Ensure PostgreSQL is reachable and migrated before running the web app or
+  import tools.
 - Known build issue: `dotnet build SESport.sln` can fail in this
   environment during restore with missing workload SDK resolvers,
   including `Microsoft.NET.SDK.WorkloadAutoImportPropsLocator`.

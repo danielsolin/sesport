@@ -1,8 +1,4 @@
 <Project>
-   <PropertyGroup>
-      <NuGetAudit>false</NuGetAudit>
-   </PropertyGroup>
-
    <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
       <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
