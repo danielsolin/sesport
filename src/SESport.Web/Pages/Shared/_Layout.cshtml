@@ -1,10 +1,27 @@
 @{
    var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
    var pageTitle = (ViewData["Title"] as string ?? string.Empty).Trim();
+   var isRuns = requestPath.StartsWith(
+      "/Admin/Runs",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isBroadcasts = requestPath.StartsWith(
+      "/Admin/Broadcasts",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isActivities = requestPath.StartsWith(
+      "/Admin/Activities",
+      StringComparison.OrdinalIgnoreCase
+   ) && !requestPath.StartsWith(
+      "/Admin/Activities/Proposal",
+      StringComparison.OrdinalIgnoreCase
+   );
    var selectedDate = ViewContext.HttpContext.Request.Query[
       RouteKeys.Date
    ].ToString();
-   var dateRouteValues = string.IsNullOrWhiteSpace(selectedDate)
+   var shareSelectedDate = isBroadcasts || isActivities;
+   var dateRouteValues = string.IsNullOrWhiteSpace(selectedDate) ||
+      !shareSelectedDate
       ? null
       : new Dictionary<string, string?>
       {
@@ -20,21 +37,6 @@
    ) ?? "/Admin/Activities";
    var isAdmin = requestPath.StartsWith(
       "/Admin",
-      StringComparison.OrdinalIgnoreCase
-   );
-   var isRuns = requestPath.StartsWith(
-      "/Admin/Runs",
-      StringComparison.OrdinalIgnoreCase
-   );
-   var isBroadcasts = requestPath.StartsWith(
-      "/Admin/Broadcasts",
-      StringComparison.OrdinalIgnoreCase
-   );
-   var isActivities = requestPath.StartsWith(
-      "/Admin/Activities",
-      StringComparison.OrdinalIgnoreCase
-   ) && !requestPath.StartsWith(
-      "/Admin/Activities/Proposal",
       StringComparison.OrdinalIgnoreCase
    );
    var isEntities = requestPath.StartsWith(

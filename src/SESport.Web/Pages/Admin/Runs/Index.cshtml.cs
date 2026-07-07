@@ -12,9 +12,23 @@ namespace SESport.Web.Pages.Admin.Runs;
 
 public class IndexModel(
    AiAdminRepository adminRepository,
-   AiRepository repository
+   AiRepository repository,
+   RunDatePreferenceStore datePreferenceStore
 ) : PageModel
 {
+   public const string JobFilterCookieName =
+      "sesport.admin.runs.job";
+   public const string StatusFilterCookieName =
+      "sesport.admin.runs.status";
+   private static readonly string[] ValidStatusIds =
+   [
+      AiJobRunStatusIds.Running,
+      AiJobRunStatusIds.Pending,
+      AiJobRunStatusIds.Completed,
+      AiJobRunStatusIds.Failed,
+      AiJobRunStatusIds.Archived
+   ];
+
    public IReadOnlyList<AiRunListItem> Runs { get; private set; } = [];
 
    public IReadOnlyList<AiJobListItem> Jobs { get; private set; } = [];
@@ -47,6 +61,10 @@ public class IndexModel(
    {
       try
       {
+         Date = datePreferenceStore.ResolveDate(HttpContext, Date);
+         JobId = ResolveJobId();
+         StatusIds = ResolveStatusIds();
+
          Jobs = await adminRepository.GetJobsAsync(cancellationToken);
          JobOptions =
          [
@@ -68,6 +86,7 @@ public class IndexModel(
                cancellationToken
             );
          StatusIds = NormalizeStatusIds(StatusIds);
+         WriteFilterCookies();
          StatusOptions = BuildStatusOptions(StatusIds);
          Runs = await repository.GetRunsAsync(
             Date,
@@ -123,6 +142,70 @@ public class IndexModel(
 
       AddStatusRouteValues(routeValues, StatusIds);
       return routeValues;
+   }
+
+   private string? ResolveJobId()
+   {
+      if(Request.Query.ContainsKey(RouteKeys.JobId))
+      {
+         return string.IsNullOrWhiteSpace(JobId) ? null : JobId.Trim();
+      }
+
+      return Request.Cookies.TryGetValue(
+         JobFilterCookieName,
+         out var cookieValue
+      )
+         ? string.IsNullOrWhiteSpace(cookieValue) ? null : cookieValue.Trim()
+         : JobId;
+   }
+
+   private string[] ResolveStatusIds()
+   {
+      if(Request.Query.ContainsKey(RouteKeys.Status))
+      {
+         return NormalizeStatusIds(StatusIds);
+      }
+
+      if(!Request.Cookies.TryGetValue(
+         StatusFilterCookieName,
+         out var cookieValue
+      ))
+      {
+         return NormalizeStatusIds(StatusIds);
+      }
+
+      return NormalizeStatusIds(
+         cookieValue.Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         )
+      );
+   }
+
+   private void WriteFilterCookies()
+   {
+      WriteCookie(JobFilterCookieName, JobId ?? string.Empty);
+      WriteCookie(
+         StatusFilterCookieName,
+         string.Join(",", NormalizeStatusIds(StatusIds))
+      );
+   }
+
+   private void WriteCookie(string name, string value)
+   {
+      Response.Cookies.Append(
+         name,
+         value,
+         new CookieOptions
+         {
+            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            HttpOnly = true,
+            IsEssential = true,
+            Path = "/Admin",
+            SameSite = SameSiteMode.Lax
+         }
+      );
    }
 
    public Dictionary<string, string> GetDetailsRouteValues(Guid id)
@@ -203,6 +286,12 @@ public class IndexModel(
       var normalizedStatusIds = statusIds?
          .Where(statusId => !string.IsNullOrWhiteSpace(statusId))
          .Select(statusId => statusId.Trim())
+         .Where(statusId => ValidStatusIds.Any(validStatusId =>
+            string.Equals(
+               validStatusId,
+               statusId,
+               StringComparison.OrdinalIgnoreCase
+            )))
          .Distinct(StringComparer.OrdinalIgnoreCase)
          .ToList()
          ?? [];
