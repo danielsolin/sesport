@@ -130,7 +130,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                prompt.MaxToolRounds,
                toolRoundCount
             );
-            ApplyPersistentNotesPrompt(messages, toolState.RememberedNotes);
             var payloadCharacterCount = EstimateRequestPayloadSize(
                request
             );
@@ -1277,53 +1276,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       messages[systemIndex] = systemMessage;
    }
 
-   private static void ApplyPersistentNotesPrompt(
-      JsonArray messages,
-      IReadOnlyList<string> notes
-   )
-   {
-      var notesIndex = FindPersistentNotesMessageIndex(messages);
-
-      if(notes.Count == 0)
-      {
-         if(notesIndex >= 0)
-         {
-            messages.RemoveAt(notesIndex);
-         }
-
-         return;
-      }
-
-      var notesMessage = new JsonObject
-      {
-         ["role"] = "system",
-         ["content"] = BuildPersistentNotesPrompt(notes)
-      };
-
-      if(notesIndex >= 0)
-      {
-         messages[notesIndex] = notesMessage;
-         return;
-      }
-
-      var insertionIndex = FindConversationHistorySummaryMessageIndex(
-         messages
-      );
-
-      if(insertionIndex < 0)
-      {
-         insertionIndex = FindPrimarySystemMessageIndex(messages);
-      }
-
-      if(insertionIndex < 0)
-      {
-         messages.Insert(0, notesMessage);
-         return;
-      }
-
-      messages.Insert(insertionIndex + 1, notesMessage);
-   }
-
    private void LogToolBudget(
       int turn,
       int? maxToolRounds,
@@ -1472,20 +1424,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       if(string.Equals(
          toolCall.Name,
-         WebToolNames.Remember,
-         StringComparison.Ordinal
-      ))
-      {
-         return ExecuteRememberToolCallAsync(
-            toolCall,
-            toolState,
-            turn,
-            cancellationToken
-         );
-      }
-
-      if(string.Equals(
-         toolCall.Name,
          WebToolNames.GetPage,
          StringComparison.Ordinal
       ))
@@ -1603,59 +1541,6 @@ public sealed class LlamaServerClient : IAiProviderClient
          turn,
          result
       );
-      return result;
-   }
-
-   private static string ExecuteRememberToolCallAsync(
-      ToolCall toolCall,
-      ToolLoopState toolState,
-      int turn,
-      CancellationToken cancellationToken
-   )
-   {
-      cancellationToken.ThrowIfCancellationRequested();
-
-      var note = ExtractNote(toolCall.Arguments);
-
-      if(string.IsNullOrWhiteSpace(note))
-      {
-         var errorResult = JsonSerializer.Serialize(
-            new
-            {
-               error = "Missing note."
-            },
-            JsonOptions
-         );
-
-         RecordToolCallResult(
-            toolCall,
-            toolState,
-            turn,
-            errorResult
-         );
-
-         return errorResult;
-      }
-
-      var normalizedNote = NormalizeMemoryNote(note);
-      toolState.RememberedNotes.Add(normalizedNote);
-
-      var result = JsonSerializer.Serialize(
-         new
-         {
-            saved = true,
-            note = normalizedNote
-         },
-         JsonOptions
-      );
-
-      RecordToolCallResult(
-         toolCall,
-         toolState,
-         turn,
-         result
-      );
-
       return result;
    }
 
@@ -2011,33 +1896,6 @@ public sealed class LlamaServerClient : IAiProviderClient
          )
          {
             return find;
-         }
-      }
-      catch(JsonException)
-      {
-      }
-
-      return "";
-   }
-
-   private static string ExtractNote(string arguments)
-   {
-      if(string.IsNullOrWhiteSpace(arguments))
-      {
-         return "";
-      }
-
-      try
-      {
-         using var document = JsonDocument.Parse(arguments);
-         var root = document.RootElement;
-
-         if(
-            TryGetStringProperty(root, "note", out var note) &&
-            !string.IsNullOrWhiteSpace(note)
-         )
-         {
-            return note;
          }
       }
       catch(JsonException)
@@ -2862,63 +2720,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       return builder.ToString().TrimEnd();
    }
 
-   private static int FindPersistentNotesMessageIndex(JsonArray messages)
-   {
-      for(var index = 0; index < messages.Count; index++)
-      {
-         if(messages[index] is not JsonObject message)
-         {
-            continue;
-         }
-
-         if(IsPersistentNotesMessage(message))
-         {
-            return index;
-         }
-      }
-
-      return -1;
-   }
-
-   private static bool IsPersistentNotesMessage(JsonObject message)
-   {
-      if(!string.Equals(
-         message["role"]?.GetValue<string>(),
-         "system",
-         StringComparison.Ordinal
-      ))
-      {
-         return false;
-      }
-
-      var content = message["content"]?.GetValue<string>() ?? "";
-      return content.StartsWith(
-         PersistentNotesPrefix,
-         StringComparison.Ordinal
-      );
-   }
-
-   private static string BuildPersistentNotesPrompt(
-      IReadOnlyList<string> notes
-   )
-   {
-      var builder = new StringBuilder();
-
-      builder.AppendLine(PersistentNotesPrefix);
-
-      foreach(var note in notes)
-      {
-         builder.AppendLine($"- {note}");
-      }
-
-      return builder.ToString().TrimEnd();
-   }
-
-   private static string NormalizeMemoryNote(string note)
-   {
-      return note.ReplaceLineEndings(" ").Trim();
-   }
-
    private static List<string> ParseConversationHistoryEntries(string content)
    {
       if(string.IsNullOrWhiteSpace(content) ||
@@ -3552,9 +3353,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const string ConversationHistorySummaryPrefix =
       "Conversation history summary:";
 
-   private const string PersistentNotesPrefix =
-      "Persistent notes:";
-
    private sealed class ToolLoopState
    {
       public string? LastSearchProvider { get; set; }
@@ -3578,8 +3376,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       public Dictionary<string, ToolCallRecord> PageCallHistory { get; } =
          new(StringComparer.OrdinalIgnoreCase);
-
-      public List<string> RememberedNotes { get; } = [];
    }
 
    private sealed record ToolCallRecord(

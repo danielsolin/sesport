@@ -117,47 +117,6 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncPersistsRememberedNotesIntoNextTurn()
-   {
-      var handler = new RecordingHandler(
-         CreateLlamaRememberToolCallResponseJson(
-            "Men start list found at men page."
-         ),
-         CreateLlamaFinalResponseJson()
-      );
-      var client = new LlamaServerClient(
-         new HttpClient(handler),
-         new RecordingWebSearchClient(),
-         new RecordingWebPageContentClient(null),
-         new NoopLogger<LlamaServerClient>()
-      );
-
-      await client.GenerateAsync(
-         CreateProvider("llama-server"),
-         CreateJob(
-            "text",
-            true,
-            CreateToolsJson()
-         ),
-         CreatePrompt(CreateParticipationSchemaJson()),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Contains(
-         $"\"name\":\"{WebToolNames.Remember}\"",
-         handler.RequestBodies[0]
-      );
-      Assert.Contains("Persistent notes:", handler.RequestBodies[1]);
-      Assert.Contains(
-         "Men start list found at men page.",
-         handler.RequestBodies[1]
-      );
-   }
-
-   [Fact]
-   public async Task
       LlamaServerGenerateAsyncRetriesWhenStructuredOutputFormatFails()
    {
       var handler = new RecordingHandler(
@@ -1098,29 +1057,6 @@ public class AiProviderClientTests
                      additionalProperties = false
                   }
                }
-            },
-            new
-            {
-               type = "function",
-               function = new
-               {
-                  name = WebToolNames.Remember,
-                  description =
-                     "Remember a finding for later turns.",
-                  parameters = new
-                  {
-                     type = "object",
-                     properties = new
-                     {
-                        note = new
-                        {
-                           type = "string"
-                        }
-                     },
-                     required = new[] { "note" },
-                     additionalProperties = false
-                  }
-               }
             }
          }
       );
@@ -1239,48 +1175,6 @@ public class AiProviderClientTests
         "model": "openai/gpt-4o-2024-08-06"
       }
       """;
-   }
-
-   private static string CreateLlamaRememberToolCallResponseJson(
-      string note
-   )
-   {
-      return JsonSerializer.Serialize(
-         new
-         {
-            choices = new[]
-            {
-               new
-               {
-                  message = new
-                  {
-                     role = "assistant",
-                     content = "",
-                     tool_calls = new[]
-                     {
-                        new
-                        {
-                           id = "call_1",
-                           type = "function",
-                           function = new
-                           {
-                              name = WebToolNames.Remember,
-                              arguments = JsonSerializer.Serialize(
-                                 new
-                                 {
-                                    note
-                                 }
-                              )
-                           }
-                        }
-                     }
-                  },
-                  finish_reason = "tool_calls"
-               }
-            },
-            model = "openai/gpt-4o-2024-08-06"
-         }
-      );
    }
 
    private static string CreateLlamaToolCallResponseJsonWithContent(
