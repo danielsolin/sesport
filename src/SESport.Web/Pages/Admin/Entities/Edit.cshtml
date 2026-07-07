@@ -118,6 +118,46 @@
             </button>
          </div>
       </label>
+
+      <h3 class="subgrid-heading">Activities</h3>
+      @if(Model.Activities.Count == 0)
+      {
+         <div class="notice">
+            No linked activities.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact
+                          entity-activities-table">
+               <thead>
+                  <tr>
+                     <th>Activity Date/Time</th>
+                     <th>Activity Title</th>
+                     <th>Sport / Activity Type</th>
+                     <th>Activity Status</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var activity in Model.Activities)
+                  {
+                     <tr>
+                        <td>@activity.DateTimeText</td>
+                        <td>
+                           <a asp-page="/Admin/Activities/Edit"
+                              asp-route-id="@activity.Id">
+                              @activity.Title
+                           </a>
+                        </td>
+                        <td>@activity.Sport / @activity.ActivityType</td>
+                        <td>@activity.PublicationStatus</td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
    </section>
 
    <section class="form-section">

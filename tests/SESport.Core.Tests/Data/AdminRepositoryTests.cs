@@ -155,6 +155,96 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task GetEntityActivitiesAsyncReturnsLinkedActivities()
+   {
+      var entityId = Guid.NewGuid();
+      var otherEntityId = Guid.NewGuid();
+      var olderActivityId = Guid.NewGuid();
+      var newerActivityId = Guid.NewGuid();
+      var otherActivityId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(
+         dataSource,
+         entityId,
+         $"Activity Entity {entityId:N}"
+      );
+      await InsertEntityAsync(
+         dataSource,
+         otherEntityId,
+         $"Other Activity Entity {otherEntityId:N}"
+      );
+      await InsertActivityAsync(
+         dataSource,
+         olderActivityId,
+         "Older Linked Activity",
+         new DateOnly(2026, 7, 1),
+         new TimeOnly(12, 0),
+         "Draft"
+      );
+      await InsertActivityAsync(
+         dataSource,
+         newerActivityId,
+         "Newer Linked Activity",
+         new DateOnly(2026, 7, 2),
+         new TimeOnly(13, 30),
+         "Published"
+      );
+      await InsertActivityAsync(
+         dataSource,
+         otherActivityId,
+         "Other Linked Activity",
+         new DateOnly(2026, 7, 3),
+         new TimeOnly(14, 0),
+         "Published"
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         olderActivityId,
+         entityId
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         newerActivityId,
+         entityId
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         otherActivityId,
+         otherEntityId
+      );
+
+      try
+      {
+         var activities = await repository.GetEntityActivitiesAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.Equal([newerActivityId, olderActivityId], activities
+            .Select(activity => activity.Id)
+            .ToArray());
+         Assert.Equal("2026-07-02 13:30", activities[0].DateTimeText);
+         Assert.Equal("Football", activities[0].Sport);
+         Assert.Equal("Match", activities[0].ActivityType);
+         Assert.Equal("Published", activities[0].PublicationStatus);
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, olderActivityId);
+         await DeleteActivityEntityLinksAsync(dataSource, newerActivityId);
+         await DeleteActivityEntityLinksAsync(dataSource, otherActivityId);
+         await DeleteActivityAsync(dataSource, olderActivityId);
+         await DeleteActivityAsync(dataSource, newerActivityId);
+         await DeleteActivityAsync(dataSource, otherActivityId);
+         await DeleteEntityAsync(dataSource, entityId);
+         await DeleteEntityAsync(dataSource, otherEntityId);
+      }
+   }
+
+   [Fact]
    public async Task GetPersonEntityNameOptionsAsyncUsesOrganizationScope()
    {
       var organizationAId = Guid.NewGuid();
@@ -620,6 +710,96 @@ public sealed class AdminRepositoryTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task InsertActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId,
+      string title,
+      DateOnly activityDate,
+      TimeOnly localStartTime,
+      string publicationStatusId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into activities (
+            id,
+            title,
+            description,
+            teaser,
+            activity_type_id,
+            sport_id,
+            activity_date,
+            local_start_time,
+            starts_at,
+            time_zone_id,
+            publication_status_id,
+            tv_channel_name,
+            slug
+         )
+         values (
+            @id,
+            @title,
+            null,
+            null,
+            'Match',
+            'football',
+            @activity_date,
+            @local_start_time,
+            @starts_at,
+            'Europe/Stockholm',
+            @publication_status_id,
+            null,
+            @slug
+         )
+         """;
+      command.Parameters.AddWithValue("id", activityId);
+      command.Parameters.AddWithValue("title", title);
+      command.Parameters.AddWithValue("activity_date", activityDate);
+      command.Parameters.AddWithValue("local_start_time", localStartTime);
+      command.Parameters.AddWithValue(
+         "starts_at",
+         activityDate.ToDateTime(localStartTime)
+      );
+      command.Parameters.AddWithValue(
+         "publication_status_id",
+         publicationStatusId
+      );
+      command.Parameters.AddWithValue(
+         "slug",
+         $"test-entity-activity-{activityId:N}"
+      );
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertActivityEntityLinkAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId,
+      Guid entityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into activity_entity_links (
+            id,
+            activity_id,
+            entity_id
+         )
+         values (
+            @id,
+            @activity_id,
+            @entity_id
+         )
+         """;
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
    private static async Task DeleteEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId
@@ -632,6 +812,38 @@ public sealed class AdminRepositoryTests
          where id = @id
          """;
       command.Parameters.AddWithValue("id", entityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from activities
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityEntityLinksAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from activity_entity_links
+         where activity_id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityId);
 
       await command.ExecuteNonQueryAsync();
    }

@@ -429,6 +429,27 @@ h2 {
    line-height: 1.35;
 }
 
+.admin-table-compact {
+   min-width: 0;
+   font-size: 12px;
+   line-height: 1.25;
+}
+
+.admin-table-compact th,
+.admin-table-compact td {
+   padding: 4px 6px;
+}
+
+.subgrid-heading {
+   margin: 12px 0 6px;
+   font-size: 14px;
+   line-height: 1.2;
+}
+
+.entity-activities-table {
+   table-layout: fixed;
+}
+
 .broadcasts-table {
    table-layout: fixed;
    min-width: 0;

@@ -151,6 +151,21 @@ public sealed record EntityNameOption(
    string Name
 );
 
+public sealed record EntityActivityListItem(
+   Guid Id,
+   DateOnly ActivityDate,
+   TimeOnly? LocalStartTime,
+   string Title,
+   string Sport,
+   string ActivityType,
+   string PublicationStatus
+)
+{
+   public string DateTimeText => LocalStartTime is null
+      ? $"{ActivityDate:yyyy-MM-dd}"
+      : $"{ActivityDate:yyyy-MM-dd} {LocalStartTime.Value:HH:mm}";
+}
+
 public sealed class EntityEditModel
 {
    public Guid? Id { get; set; }

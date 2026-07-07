@@ -38,6 +38,12 @@ public class EditModel(AdminRepository repository) : PageModel
       private set;
    } = [];
 
+   public IReadOnlyList<EntityActivityListItem> Activities
+   {
+      get;
+      private set;
+   } = [];
+
    public string? LoadError { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -130,6 +136,12 @@ public class EditModel(AdminRepository repository) : PageModel
                entity.Id.ToString()
             ))
             .ToList();
+         Activities = entityId is null
+            ? []
+            : await repository.GetEntityActivitiesAsync(
+               entityId.Value,
+               cancellationToken
+            );
       }
       catch (Exception exception)
       {

@@ -1107,6 +1107,59 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return model;
    }
 
+   public async Task<IReadOnlyList<EntityActivityListItem>>
+      GetEntityActivitiesAsync(
+         Guid entityId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            a.id,
+            a.activity_date,
+            a.local_start_time,
+            a.title,
+            s.name,
+            at.label,
+            a.publication_status_id
+         from activity_entity_links l
+         join activities a on a.id = l.activity_id
+         join sports s on s.id = a.sport_id
+         join activity_types at on at.id = a.activity_type_id
+         where l.entity_id = @entity_id
+         order by
+            a.activity_date desc,
+            a.local_start_time desc nulls last,
+            a.title
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var activities = new List<EntityActivityListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         activities.Add(
+            new EntityActivityListItem(
+               reader.GetGuid(0),
+               reader.GetFieldValue<DateOnly>(1),
+               reader.IsDBNull(2)
+                  ? null
+                  : reader.GetFieldValue<TimeOnly>(2),
+               reader.GetString(3),
+               reader.GetString(4),
+               reader.GetString(5),
+               reader.GetString(6)
+            )
+         );
+      }
+
+      return activities;
+   }
+
    public async Task<EntityEditModel?> GetEntityCloneTemplateAsync(
       Guid id,
       CancellationToken cancellationToken
