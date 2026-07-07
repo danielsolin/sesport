@@ -54,6 +54,10 @@ docker compose up -d postgres
 
 - Copy the systemd units into `/etc/systemd/system/`
 - Copy the Caddyfile into the Caddy config location used on the VPS
+- Keep a host-local `.env` in the repository root on each machine that runs
+  a systemd service. The file is intentionally ignored by git, but
+  `sesport.service`, `sesport-dev.service`, and related service units load it
+  through `EnvironmentFile=/home/daniel/sesport/.env`.
 - The SearXNG override is mounted directly from the repo by `compose.yaml`
 - SearXNG is intended to run locally on the machine that runs AI jobs.
   It is not exposed through the public `*.sesport.se` sites.
