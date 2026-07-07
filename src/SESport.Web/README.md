@@ -71,11 +71,15 @@ $env:Admin__Password="<local-password>"
 dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 ```
 
-If `xng.sesport.se` is protected with Basic Auth, set:
+SearXNG is used only by AI runs. Run it locally on the machine that runs
+AI jobs and point the application at that local instance:
+
+```bash
+docker compose up -d searxng
+```
 
 ```powershell
-$env:SearXNG__BasicAuthUsername="<searxng-user>"
-$env:SearXNG__BasicAuthPassword="<searxng-password>"
+$env:SearXNG__BaseUrl="http://127.0.0.1:8088/"
 ```
 
 ## SearXNG Config
@@ -84,9 +88,8 @@ The file in `deploy/searxng/settings.yml` is an override, not a
 full replacement. Keep `use_default_settings: true` there so the
 container merges our local tweaks with the image defaults.
 
-If you test the backend directly on `127.0.0.1:8088`, SearXNG will log
-warnings about missing `X-Forwarded-For` or `X-Real-IP` headers. That
-is expected; SearXNG is served through Caddy at `xng.sesport.se`.
+The application defaults to `http://127.0.0.1:8088/` for SearXNG. The
+service is not part of the public `*.sesport.se` deployment surface.
 
 ## Sport Date Rule
 

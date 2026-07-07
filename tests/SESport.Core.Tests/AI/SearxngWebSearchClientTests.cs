@@ -24,7 +24,7 @@ public class SearxngWebSearchClientTests
       );
 
       Assert.Equal(
-         new Uri("https://xng.sesport.se/search"),
+         new Uri("http://127.0.0.1:8088/search"),
          handler.RequestUri
       );
       Assert.Contains("q=Tre+Kronor", handler.RequestBody);
@@ -36,6 +36,30 @@ public class SearxngWebSearchClientTests
       Assert.Equal("Tre Kronor roster", response.Results[0].Title);
       Assert.Equal("https://example.test/roster", response.Results[0].Url);
       Assert.Equal("Sweden lineup info.", response.Results[0].Snippet);
+   }
+
+   [Fact]
+   public async Task SearchUsesConfiguredBaseUrl()
+   {
+      var handler = new RecordingHandler(CreateResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions
+         {
+            BaseUrl = "http://127.0.0.1:18088"
+         }
+      );
+
+      await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         new Uri("http://127.0.0.1:18088/search"),
+         handler.RequestUri
+      );
    }
 
    [Fact]

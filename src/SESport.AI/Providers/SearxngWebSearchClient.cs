@@ -11,7 +11,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 {
    private const int MaxTransientRetryAttempts = 3;
    private static readonly Uri DefaultBaseAddress = new(
-      "https://xng.sesport.se/"
+      "http://127.0.0.1:8088/"
    );
 
    private static readonly string[] DeniedHostSuffixes =
@@ -34,11 +34,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       "www.threads.net"
    ];
 
-   private static readonly Uri SearchUri = new(
-      DefaultBaseAddress,
-      "search"
-   );
-
    public SearxngWebSearchClient(
       HttpClient httpClient,
       SearxngWebSearchClientOptions options,
@@ -48,6 +43,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       HttpClient = httpClient;
       Options = options;
       Logger = logger;
+      BaseAddress = BuildBaseAddress(options.BaseUrl);
+      SearchUri = new Uri(BaseAddress, "search");
 
       var basicAuth = CreateBasicAuthHeader(options);
 
@@ -63,6 +60,10 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    private SearxngWebSearchClientOptions Options { get; }
 
    private ILogger<SearxngWebSearchClient>? Logger { get; }
+
+   private Uri BaseAddress { get; }
+
+   private Uri SearchUri { get; }
 
    public async Task<WebSearchResponse> SearchAsync(
       string query,
@@ -233,7 +234,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       };
    }
 
-   private static IReadOnlyList<WebSearchResult> ParseResults(
+   private IReadOnlyList<WebSearchResult> ParseResults(
       string rawResponse,
       int maxResults
    )
@@ -344,14 +345,29 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          : string.Empty;
    }
 
-   private static string NormalizeUrl(string url)
+   private string NormalizeUrl(string url)
    {
       if(Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri))
       {
          return absoluteUri.ToString();
       }
 
-      return new Uri(DefaultBaseAddress, url).ToString();
+      return new Uri(BaseAddress, url).ToString();
+   }
+
+   private static Uri BuildBaseAddress(string? baseUrl)
+   {
+      if(string.IsNullOrWhiteSpace(baseUrl) ||
+         !Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+      {
+         return DefaultBaseAddress;
+      }
+
+      var uriString = uri.ToString();
+
+      return uriString.EndsWith("/", StringComparison.Ordinal)
+         ? uri
+         : new Uri(uriString + "/");
    }
 
    private static string? CreateBasicAuthHeader(

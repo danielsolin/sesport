@@ -23,9 +23,10 @@ The helper scripts in `bin/` and the integration-test bootstrap read these
 values from the repository-root `.env` file, so they target the shared
 database by design when that file contains the standard host and port.
 
-The `postgres` and `searxng` containers in `compose.yaml` are gated behind
-the `postgresql-searxng` profile. Use them only when operating the database
-host or a deliberate local replacement. The Postgres service binds to
+The `postgres` and `searxng` containers in `compose.yaml` are deliberately
+started by service name. Start `postgres` only on the VPS/database host.
+Start `searxng` only on machines that run AI jobs. The Postgres service binds
+to
 `207.2.120.181:${SESPORT_POSTGRES_PORT:-15285}:5432`.
 
 To connect with `psql`, source the variables into your shell first, or pass
@@ -70,11 +71,17 @@ docker compose exec -it postgres env \
   psql -h localhost -U "$SESPORT_POSTGRES_USER" -d "$SESPORT_POSTGRES_DB"
 ```
 
-Start PostgreSQL with Docker Compose when you are operating that host or a
-deliberate local replacement:
+Start PostgreSQL with Docker Compose only when operating the VPS/database
+host:
 
 ```bash
-docker compose --profile postgresql-searxng up -d postgres searxng
+docker compose up -d postgres
+```
+
+Start local SearXNG with Docker Compose on machines that run AI jobs:
+
+```bash
+docker compose up -d searxng
 ```
 
 Run migrations from a Linux or WSL shell:
@@ -91,8 +98,8 @@ baseline as applied:
 ./bin/db-mark-baseline-applied.sh
 ```
 
-If an isolated replacement database drifted from the baseline, recreate the
-Postgres volume before rerunning migrations.
+If the database-host Postgres volume drifted from the baseline, recreate the
+volume before rerunning migrations.
 
 On Windows, run the bash script from WSL if Docker is only available there.
 

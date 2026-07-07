@@ -4,10 +4,12 @@
 1. Copy `.env.example` to `.env` and point it at the shared PostgreSQL
    database on `207.2.120.181:15285`, unless you are deliberately using an
    isolated replacement.
-2. Start PostgreSQL with Docker Compose only when operating the database host
-   or a deliberate local replacement:
-   `docker compose --profile postgresql-searxng up -d postgres searxng`
-3. Run database migrations:
+2. Install Docker on machines that run local SearXNG.
+3. Start local SearXNG only on machines that run AI jobs:
+   `docker compose up -d searxng`
+4. Start PostgreSQL with Docker Compose only on the VPS/database host:
+   `docker compose up -d postgres`
+5. Run database migrations:
    - Bash: `./bin/db-run-migrations.sh` (run in WSL if Docker is only
      available there)
 
@@ -34,6 +36,10 @@ Several console applications live in `tools/legacy/` for occasional use:
 - The active development and service database is `207.2.120.181:15285`.
   The code falls back to localhost defaults only when no environment
   variables are set.
+- SearXNG is a local dependency for AI-run machines and defaults to
+  `http://127.0.0.1:8088/`.
+- Docker is required only for the local SearXNG container or when operating
+  the VPS/database-host PostgreSQL container.
 - The web app uses Npgsql for PostgreSQL data access
 - Ensure PostgreSQL is reachable and migrated before running the web app or
   import tools.

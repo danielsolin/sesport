@@ -2,13 +2,14 @@
 
 These files are the source of truth for SESport systemd units.
 
-Copy the units to `/etc/systemd/system/` with `sudo`, then reload
-systemd and enable the services or timer you want active.
+Copy only the units that belong on the target machine to
+`/etc/systemd/system/` with `sudo`, then reload systemd and enable the
+services or timer you want active.
 
 ## Units
 
 - `llama-server.service`
-- `searxng.service`
+- `searxng.service` for local AI-run machines only
 - `sesport.service`
 - `sesport-dev.service`
 - `sesport-db-backup.service`
@@ -22,6 +23,9 @@ sudo cp deploy/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now sesport.service
 ```
+
+Do not enable `searxng.service` on the VPS/database host unless that machine
+also runs AI jobs locally.
 
 ## Backup Switch
 
