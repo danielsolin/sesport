@@ -112,6 +112,29 @@ public sealed class ActivityEntityFilterTests
    }
 
    [Fact]
+   public void MatchPersonEntityIdsMatchesCommaSeparatedParticipantName()
+   {
+      var ludvigId = Guid.NewGuid();
+      var entities = new[]
+      {
+         new BroadcastEntityOption(
+            ludvigId,
+            "Ludvig Åberg",
+            TrackedEntityTypeIds.Person,
+            "Golf",
+            ""
+         )
+      };
+
+      var matched = BroadcastEntityFilter.MatchPersonEntityIds(
+         entities,
+         ["Åberg, Ludvig"]
+      );
+
+      Assert.Equal([ludvigId], matched);
+   }
+
+   [Fact]
    public void MatchPersonEntityIdsMatchesAliasName()
    {
       var entityId = Guid.NewGuid();

@@ -268,7 +268,7 @@ public sealed class ActivityEditPageService(
 
       foreach(var participantName in participantNames)
       {
-         var normalizedName = BroadcastEntityFilter.NormalizeName(
+         var normalizedName = BroadcastEntityFilter.NormalizeParticipantName(
             participantName
          );
 

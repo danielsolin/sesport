@@ -67,7 +67,7 @@ public static class BroadcastEntityFilter
 
       foreach(var participantName in participantNames)
       {
-         var normalizedName = NormalizeName(participantName);
+         var normalizedName = NormalizeParticipantName(participantName);
 
          if(string.IsNullOrWhiteSpace(normalizedName))
          {
@@ -136,5 +136,10 @@ public static class BroadcastEntityFilter
                   | StringSplitOptions.TrimEntries
             )
       );
+   }
+
+   public static string NormalizeParticipantName(string value)
+   {
+      return NormalizeName(BroadcastParticipantNameFormatter.Format(value));
    }
 }

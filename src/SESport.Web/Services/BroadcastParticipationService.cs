@@ -260,7 +260,7 @@ public sealed class BroadcastParticipationService(
       foreach(var participantName in participantNames)
       {
          var normalizedName =
-            BroadcastEntityFilter.NormalizeName(participantName);
+            BroadcastEntityFilter.NormalizeParticipantName(participantName);
 
          if(participantEntityIdsByName.TryGetValue(
             normalizedName,
@@ -275,8 +275,10 @@ public sealed class BroadcastParticipationService(
       return participantNames
          .Select(name =>
          {
-            var normalizedName = BroadcastEntityFilter.NormalizeName(name);
             var displayName = BroadcastParticipantNameFormatter.Format(name);
+            var normalizedName = BroadcastEntityFilter.NormalizeParticipantName(
+               name
+            );
 
             if(participantEntityIdsByName.TryGetValue(
                normalizedName,

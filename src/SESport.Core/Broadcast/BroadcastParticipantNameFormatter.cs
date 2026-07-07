@@ -14,13 +14,41 @@ public static partial class BroadcastParticipantNameFormatter
 
       var trimmed = WhitespaceRegex()
          .Replace(value.Trim(), " ");
+      var orderedName = OrderCommaSeparatedName(trimmed);
 
       return NameWordRegex().Replace(
-         trimmed,
+         orderedName,
          match => LooksShoutedWord(match.Value)
             ? FormatShoutedWord(match.Value)
             : match.Value
       );
+   }
+
+   private static string OrderCommaSeparatedName(string value)
+   {
+      var commaIndex = value.IndexOf(',');
+
+      if(commaIndex <= 0 ||
+         commaIndex != value.LastIndexOf(',') ||
+         commaIndex == value.Length - 1)
+      {
+         return value;
+      }
+
+      var lastName = value[..commaIndex].Trim();
+      var firstNames = value[(commaIndex + 1)..].Trim();
+
+      if(!ContainsLetter(lastName) || !ContainsLetter(firstNames))
+      {
+         return value;
+      }
+
+      return $"{firstNames} {lastName}";
+   }
+
+   private static bool ContainsLetter(string value)
+   {
+      return value.Any(char.IsLetter);
    }
 
    private static bool LooksShoutedWord(string value)
