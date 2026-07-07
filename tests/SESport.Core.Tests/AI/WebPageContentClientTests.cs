@@ -912,6 +912,36 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractHtmlTextKeepsFlagImageCountryLabel()
+   {
+      var html = """
+         <html>
+            <body>
+               <span>
+                  <img
+                     src="/Images/Flags/SWE_18x18_1x.png"
+                     width="18"
+                     height="18"
+                     alt="Flag for SWE"
+                     class="flag flag--outline"
+                     srcset="/Images/Flags/SWE_18x18_1x.png,
+                        /Images/Flags/SWE_18x18_2x.png 2x" />
+                  Hanna Karlsson
+               </span>
+            </body>
+         </html>
+         """;
+
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+
+      Assert.Equal(
+         "Sweden\nHanna Karlsson",
+         text
+      );
+   }
+
+   [Fact]
    public async Task NormalizeWikipediaFlagImageUsesAltText()
    {
       var html =

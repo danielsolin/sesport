@@ -55,6 +55,10 @@ internal static class WebPageContentFetchSupport
       @"<a\b(?<attrs>[^>]*)>(?<content>.*?)</a>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
+   private static readonly Regex HtmlImageRegex = new(
+      @"<img\b(?<attrs>[^>]*)>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
    private static readonly Regex HtmlAttributeRegex = new(
       @"\b(?<name>[a-zA-Z0-9:-]+)\s*=\s*(?:" +
       @"""(?<value>[^""]*)""|'(?<value>[^']*)')",
@@ -83,6 +87,30 @@ internal static class WebPageContentFetchSupport
    private static readonly Regex RelevantLinkLabelBoostRegex = new(
       @"\b(?:entry|entries|start|result|results|schedule|draw|" +
       @"list|live|ranking|registration|entry list|start list)\b",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex FlagSourceCodeRegex = new(
+      @"(?:^|[^a-z0-9])flag(?:s)?(?:[-_/#]*)(?<code>[a-z]{2,3})" +
+      @"(?:[^a-z0-9]|$)|" +
+      @"(?:^|[^a-z0-9])(?<code>[a-z]{2,3})(?:[-_/#]*)(?:flag)(?:s)?" +
+      @"(?:[^a-z0-9]|$)|" +
+      @"(?:^|[^a-z0-9])(?<code>[a-z]{2,3})(?:[_-]\d|\.)",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex FlagClassCodeRegex = new(
+      @"(?:^|\s)flag(?:-icon)?[-_](?<code>[a-z]{2,3})(?:\s|$)",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex FlagNoisePrefixRegex = new(
+      @"^(?:flag|flags)(?:\s+(?:of|for|from))?\s+",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex FlagNoiseSuffixRegex = new(
+      @"\s+(?:flag|flags)(?:\s+(?:icon|image|symbol))?$",
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
          RegexOptions.Compiled
    );
@@ -472,6 +500,7 @@ internal static class WebPageContentFetchSupport
    internal static string ExtractHtmlText(string html)
    {
       var cleanedHtml = RemoveBoilerplateHtml(html);
+      cleanedHtml = ReplaceFlagImagesWithCountryLabels(cleanedHtml);
       cleanedHtml = Regex.Replace(
          cleanedHtml,
          @"<[^>]+>",
@@ -479,6 +508,224 @@ internal static class WebPageContentFetchSupport
       );
 
       return NormalizeText(WebUtility.HtmlDecode(cleanedHtml));
+   }
+
+   private static string ReplaceFlagImagesWithCountryLabels(string html)
+   {
+      return HtmlImageRegex.Replace(
+         html,
+         match =>
+         {
+            var label = GetFlagImageCountryLabel(
+               match.Groups["attrs"].Value
+            );
+
+            return label is null ? " " : $" {label} ";
+         }
+      );
+   }
+
+   private static string? GetFlagImageCountryLabel(string attributes)
+   {
+      if(!IsFlagImageCandidate(attributes))
+      {
+         return null;
+      }
+
+      foreach(var attributeName in new[]
+      {
+         "alt",
+         "title",
+         "aria-label"
+      })
+      {
+         if(!TryGetAttributeValue(
+            attributes,
+            attributeName,
+            out var attributeValue
+         ))
+         {
+            continue;
+         }
+
+         var label = NormalizeFlagLabel(attributeValue);
+
+         if(label is not null)
+         {
+            return ResolveCountryFlagLabel(label);
+         }
+      }
+
+      foreach(var attributeName in new[]
+      {
+         "src",
+         "srcset",
+         "class",
+         "data-class"
+      })
+      {
+         if(!TryGetAttributeValue(
+            attributes,
+            attributeName,
+            out var attributeValue
+         ))
+         {
+            continue;
+         }
+
+         var label = GetFlagLabelFromAttribute(attributeName, attributeValue);
+
+         if(label is not null)
+         {
+            return ResolveCountryFlagLabel(label);
+         }
+      }
+
+      return null;
+   }
+
+   private static bool IsFlagImageCandidate(string attributes)
+   {
+      foreach(var attributeName in new[]
+      {
+         "alt",
+         "title",
+         "aria-label"
+      })
+      {
+         if(!TryGetAttributeValue(
+            attributes,
+            attributeName,
+            out var attributeValue
+         ))
+         {
+            continue;
+         }
+
+         if(FlagNoisePrefixRegex.IsMatch(attributeValue) ||
+            FlagNoiseSuffixRegex.IsMatch(attributeValue))
+         {
+            return true;
+         }
+      }
+
+      foreach(var attributeName in new[]
+      {
+         "src",
+         "srcset"
+      })
+      {
+         if(TryGetAttributeValue(
+            attributes,
+            attributeName,
+            out var attributeValue
+         ) &&
+            FlagSourceCodeRegex.IsMatch(attributeValue))
+         {
+            return true;
+         }
+      }
+
+      foreach(var attributeName in new[]
+      {
+         "class",
+         "data-class"
+      })
+      {
+         if(TryGetAttributeValue(
+            attributes,
+            attributeName,
+            out var attributeValue
+         ) &&
+            attributeValue.Contains("flag", StringComparison.OrdinalIgnoreCase))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static string? GetFlagLabelFromAttribute(
+      string attributeName,
+      string attributeValue
+   )
+   {
+      if(string.Equals(
+         attributeName,
+         "class",
+         StringComparison.OrdinalIgnoreCase
+      ) ||
+         string.Equals(
+            attributeName,
+            "data-class",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         var classMatch = FlagClassCodeRegex.Match(attributeValue);
+
+         return classMatch.Success
+            ? classMatch.Groups["code"].Value
+            : null;
+      }
+
+      foreach(var sourceCandidate in attributeValue.Split(
+         ',',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      ))
+      {
+         var urlCandidate = sourceCandidate.Split(
+            [' ', '\t', '\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries
+         ).FirstOrDefault();
+
+         if(string.IsNullOrWhiteSpace(urlCandidate))
+         {
+            continue;
+         }
+
+         var sourceMatch = FlagSourceCodeRegex.Match(urlCandidate);
+
+         if(sourceMatch.Success)
+         {
+            return sourceMatch.Groups["code"].Value;
+         }
+      }
+
+      return null;
+   }
+
+   private static string? NormalizeFlagLabel(string label)
+   {
+      var normalizedLabel = NormalizeText(label);
+
+      if(string.IsNullOrWhiteSpace(normalizedLabel))
+      {
+         return null;
+      }
+
+      normalizedLabel = FlagNoisePrefixRegex
+         .Replace(normalizedLabel, string.Empty);
+      normalizedLabel = FlagNoiseSuffixRegex
+         .Replace(normalizedLabel, string.Empty)
+         .Trim();
+
+      if(string.IsNullOrWhiteSpace(normalizedLabel))
+      {
+         return null;
+      }
+
+      return normalizedLabel.ToLowerInvariant() is
+         "of" or "icon" or "image" or "symbol"
+            ? null
+            : normalizedLabel;
+   }
+
+   private static string ResolveCountryFlagLabel(string label)
+   {
+      return CountryNamesByCode.TryGetValue(label, out var displayName)
+         ? displayName
+         : label;
    }
 
    private static string ExtractRelevantLinkSourceHtml(string html)
