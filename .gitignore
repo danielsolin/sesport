@@ -1,4 +1,5 @@
 .vs/
+.env
 **/bin/
 !/bin/
 !/android/**/bin/
@@ -9,3 +10,4 @@ docs/TODO.md
 artifacts/publish-dev/
 .worktale/
 ./artifacts/screenshots/*
+android/keys/
