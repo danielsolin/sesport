@@ -249,11 +249,30 @@ internal static class WebPageNormalizationScript
                   '(?:GC|G&CC|G&SC|GK|CC|Club|Links|Estate|Resort)\\b)',
                   'gu'
                );
+               const gluedDuplicateCellSuffixPattern = new RegExp(
+                  '(?<=[a-zåäöéáíóúüñ])' +
+                  '(?<suffix>[A-ZÅÄÖÉÁÍÓÚÜÑ][\\p{L}&.\\- ]{2,})' +
+                  '\\s+\\|\\s+\\k<suffix>\\b',
+                  'gu'
+               );
+               const adjacentPipeCellDuplicatePattern = new RegExp(
+                  '(?<prefix>^|\\|\\s*)(?<value>[^|\\r\\n]+?)' +
+                  '\\s+\\|\\s+\\k<value>(?=\\s*(?:\\||$))',
+                  'gu'
+               );
 
                return (text || '')
                   .replace(
                      gluedGolfClubPattern,
                      ' | '
+                  )
+                  .replace(
+                     gluedDuplicateCellSuffixPattern,
+                     ' | $<suffix> | $<suffix>'
+                  )
+                  .replace(
+                     adjacentPipeCellDuplicatePattern,
+                     '$<prefix>$<value>'
                   )
                   .replace(/\s+/g, ' ')
                   .trim();

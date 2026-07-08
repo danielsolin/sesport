@@ -721,8 +721,8 @@ public class AiProviderClientTests
    public void FindPageMatchesSkipsOverlappingTextSnippets()
    {
       var body =
-         "Norway Add Favourite | Sweden | Sweden TOWNSEND, Hugo | " +
-         "Stockholms GK | 16 Norway Add Favourite | Sweden | Sweden " +
+         "Entry action | Target | Target TOWNSEND, Hugo | " +
+         "Stockholms GK | 16 Entry action | Target | Target " +
          "JONSSON, Tobias | Haninge Strand GK";
       var matches = InvokeFindPageMatches(
          new WebPageContent(
@@ -734,7 +734,7 @@ public class AiProviderClientTests
             true,
             body
          ),
-         "Sweden"
+         "Target"
       );
 
       Assert.Equal(2, matches.Count);
@@ -765,6 +765,8 @@ public class AiProviderClientTests
          null,
          null,
          null,
+         null,
+         null,
          "Sweden | LAGERGREN, Joakim | Black Mountain GC | 24"
       );
 
@@ -772,6 +774,85 @@ public class AiProviderClientTests
          "Sweden |\nLAGERGREN, Joakim |\nBlack Mountain GC |",
          output,
          StringComparison.Ordinal
+      );
+   }
+
+   [Fact]
+   public void FormatPageContentTextIncludesHighlightedRows()
+   {
+      var output = LlamaServerClient.FormatPageContentText(
+         "Page URL",
+         "https://example.test/entry-list",
+         "Entry List",
+         "https://example.test/entry-list",
+         null,
+         null,
+         null,
+         null,
+         "Detected rows for Target",
+         ["Target Player | Club | 24"],
+         "Full page text."
+      );
+
+      Assert.Contains("Detected rows for Target:", output);
+      Assert.Contains("Count: 1", output);
+      Assert.Contains("- Target Player | Club | 24", output);
+   }
+
+   [Fact]
+   public void ExtractMatchingRowsReturnsCompactMatchingRows()
+   {
+      var body =
+         "Target LAGERGREN, Joakim | Black Mountain GC | 24\n" +
+         "Other OTHER, One | Club | 99\n" +
+         "Target DANTORP, Jens | Hills G&SC | 85\n" +
+         "Target NOREN, AlexTroon | Troon | 60\n" +
+         "Target FORSSTRÖM, SimonGamebook | Gamebook | 11";
+      var rows = InvokeExtractMatchingRows(body, "Target", 50);
+
+      Assert.Equal(4, rows.Count);
+      Assert.Contains(
+         "Target LAGERGREN, Joakim | Black Mountain GC | 24",
+         rows
+      );
+      Assert.Contains(
+         "Target DANTORP, Jens | Hills G&SC | 85",
+         rows
+      );
+      Assert.Contains(
+         "Target NOREN, Alex | Troon | 60",
+         rows
+      );
+      Assert.Contains(
+         "Target FORSSTRÖM, Simon | Gamebook | 11",
+         rows
+      );
+   }
+
+   [Fact]
+   public void ExtractMatchingRowsAcceptsMultipleMatchingTerms()
+   {
+      var body =
+         $"{PrimaryCountry.DisplayName} Player One | Club A | 1\n" +
+         $"{PrimaryCountry.LocalDisplayName} Player Two | Club B | 2\n" +
+         "Other Player Three | Club C | 3";
+      var rows = InvokeExtractMatchingRows(
+         body,
+         [
+            PrimaryCountry.DisplayName,
+            PrimaryCountry.LocalDisplayName
+         ],
+         50
+      );
+
+      Assert.Equal(2, rows.Count);
+      Assert.Contains(
+         $"{PrimaryCountry.DisplayName} Player One | Club A | 1",
+         rows
+      );
+      Assert.Contains(
+         $"{PrimaryCountry.LocalDisplayName} Player Two | Club B | 2",
+         rows
       );
    }
 
@@ -1683,6 +1764,51 @@ public class AiProviderClientTests
       {
          throw new InvalidOperationException(
             "FindPageMatches did not return a collection."
+         );
+      }
+
+      return collection;
+   }
+
+   private static IReadOnlyList<string> InvokeExtractMatchingRows(
+      string text,
+      string find,
+      int maxRows
+   )
+   {
+      return InvokeExtractMatchingRows(text, [find], maxRows);
+   }
+
+   private static IReadOnlyList<string> InvokeExtractMatchingRows(
+      string text,
+      IReadOnlyCollection<string> findTerms,
+      int maxRows
+   )
+   {
+      var method = typeof(LlamaServerClient).GetMethod(
+         "ExtractMatchingRows",
+         System.Reflection.BindingFlags.NonPublic |
+         System.Reflection.BindingFlags.Static,
+         [
+            typeof(string),
+            typeof(IReadOnlyCollection<string>),
+            typeof(int)
+         ]
+      );
+
+      if(method is null)
+      {
+         throw new InvalidOperationException(
+            "Unable to find ExtractMatchingRows via reflection."
+         );
+      }
+
+      var rows = method.Invoke(null, [text, findTerms, maxRows]);
+
+      if(rows is not IReadOnlyList<string> collection)
+      {
+         throw new InvalidOperationException(
+            "ExtractMatchingRows did not return string rows."
          );
       }
 

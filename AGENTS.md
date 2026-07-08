@@ -60,6 +60,11 @@ Several console applications live in `tools/legacy/` for occasional use:
   by surprise.
 - Hard rule: Avoid magic strings where practical. Prefer shared constants,
   enums, or helpers such as `TrackedEntityTypeIds`.
+- Hard rule: Country-specific behavior is acceptable when it is part of the
+  product domain, but it must use `src/SESport.Core/Domain/PrimaryCountry.cs`
+  instead of hard-coded country names or country codes. Site-specific behavior
+  is not acceptable unless it can be justified as a generally useful parsing,
+  normalization, or extraction rule.
 - Hard rule: No lines in any file should exceed 80 characters wide unless it's
   required for the file to work.
 - Hard rule: All conversations/chats in Swedish, but everything produced for

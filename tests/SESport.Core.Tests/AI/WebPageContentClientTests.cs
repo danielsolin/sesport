@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 using SESport.AI.Providers;
+using SESport.Core.Domain;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.Fonts.Standard14Fonts;
@@ -721,6 +722,23 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void NormalizeTextSeparatesNamesFromDuplicatedNextCellSuffix()
+   {
+      Assert.Equal(
+         "Sweden NOREN, Alex | Troon | 60",
+         WebPageContentFetchSupport.NormalizeText(
+            "Sweden NOREN, AlexTroon | Troon | 60"
+         )
+      );
+      Assert.Equal(
+         "Sweden FORSSTRÖM, Simon | Gamebook | 11",
+         WebPageContentFetchSupport.NormalizeText(
+            "Sweden FORSSTRÖM, SimonGamebook | Gamebook | 11"
+         )
+      );
+   }
+
+   [Fact]
    public void NormalizeTextDropsStandaloneNoiseLines()
    {
       var text = """
@@ -889,6 +907,8 @@ public class WebPageContentClientTests
                "https://example.test/entries"
             )
          ],
+         null,
+         null,
          "Page body text."
       );
 
@@ -906,13 +926,13 @@ public class WebPageContentClientTests
       var html = """
          <html>
             <body>
-               <span class="flag-icon flag-icon-se"></span>
+               <span class="flag-icon flag-icon-SE"></span>
             </body>
          </html>
          """;
       var normalizedText = await EvaluateNormalizationScriptAsync(html);
 
-      Assert.Equal("Sweden", normalizedText);
+      Assert.Equal(PrimaryCountry.DisplayName, normalizedText);
       Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
    }
 
@@ -922,20 +942,20 @@ public class WebPageContentClientTests
       var html = """
          <html>
             <body>
-               <img src="/images/flags/se.png" alt="icon" />
+               <img src="/images/flags/SE.png" alt="icon" />
             </body>
          </html>
          """;
       var normalizedText = await EvaluateNormalizationScriptAsync(html);
 
-      Assert.Equal("Sweden", normalizedText);
+      Assert.Equal(PrimaryCountry.DisplayName, normalizedText);
       Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
    }
 
    [Fact]
    public async Task NormalizeTableRowsDeduplicatesFlagCountryCells()
    {
-      var html = """
+      var html = $$"""
          <html>
             <body>
                <table>
@@ -943,12 +963,12 @@ public class WebPageContentClientTests
                      <td class="table__cell--country">
                         <div>
                            <img
-                              src="/Images/Flags/SWE_18x18_1x.png"
-                              alt="Flag for SWE"
+                              src="/Images/Flags/PRIMARY_18x18_1x.png"
+                              alt="Flag for {{PrimaryCountry.ThreeLetterCode}}"
                               class="flag flag--outline" />
                         </div>
                      </td>
-                     <td>Sweden</td>
+                     <td>{{PrimaryCountry.DisplayName}}</td>
                      <td>LAGERGREN, JoakimBlack Mountain GC</td>
                      <td>Black Mountain GC</td>
                   </tr>
@@ -959,12 +979,13 @@ public class WebPageContentClientTests
       var normalizedText = await EvaluateNormalizationScriptAsync(html);
 
       Assert.Contains(
-         "Sweden | LAGERGREN, Joakim | Black Mountain GC",
+         $"{PrimaryCountry.DisplayName} | LAGERGREN, Joakim | " +
+         "Black Mountain GC",
          normalizedText,
          StringComparison.Ordinal
       );
       Assert.DoesNotContain(
-         "Sweden | Sweden",
+         $"{PrimaryCountry.DisplayName} | {PrimaryCountry.DisplayName}",
          normalizedText,
          StringComparison.Ordinal
       );
@@ -973,18 +994,18 @@ public class WebPageContentClientTests
    [Fact]
    public void ExtractHtmlTextKeepsFlagImageCountryLabel()
    {
-      var html = """
+      var html = $$"""
          <html>
             <body>
                <span>
                   <img
-                     src="/Images/Flags/SWE_18x18_1x.png"
+                     src="/Images/Flags/PRIMARY_18x18_1x.png"
                      width="18"
                      height="18"
-                     alt="Flag for SWE"
+                     alt="Flag for {{PrimaryCountry.ThreeLetterCode}}"
                      class="flag flag--outline"
-                     srcset="/Images/Flags/SWE_18x18_1x.png,
-                        /Images/Flags/SWE_18x18_2x.png 2x" />
+                    srcset="/Images/Flags/PRIMARY_18x18_1x.png,
+                       /Images/Flags/PRIMARY_18x18_2x.png 2x" />
                   Hanna Karlsson
                </span>
             </body>
@@ -995,7 +1016,7 @@ public class WebPageContentClientTests
          .ExtractHtmlTextWithEmbeddedState(html);
 
       Assert.Equal(
-         "Sweden\nHanna Karlsson",
+         $"{PrimaryCountry.DisplayName}\nHanna Karlsson",
          text
       );
    }
@@ -1083,7 +1104,18 @@ public class WebPageContentClientTests
    [Fact]
    public void GetCountryDisplayNameUsesNetRegionInfo()
    {
-      Assert.Equal("Sweden", WebPageContentClient.GetCountryDisplayName("SE"));
+      Assert.Equal(
+         PrimaryCountry.DisplayName,
+         WebPageContentClient.GetCountryDisplayName(
+            PrimaryCountry.TwoLetterCode
+         )
+      );
+      Assert.Equal(
+         PrimaryCountry.DisplayName,
+         WebPageContentClient.GetCountryDisplayName(
+            PrimaryCountry.ThreeLetterCode
+         )
+      );
       Assert.Equal("Norway", WebPageContentClient.GetCountryDisplayName("NO"));
       Assert.Equal("Spain", WebPageContentClient.GetCountryDisplayName("ES"));
       Assert.Equal(

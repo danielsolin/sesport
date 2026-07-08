@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 using Microsoft.Extensions.Logging;
 
@@ -2020,6 +2021,14 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageContent.PublishedAt,
             pageContent.Headings,
             pageContent.RelevantLinks,
+            $"Detected rows for {PrimaryCountry.DisplayName}",
+            ExtractMatchingRows(
+               pageContent.MainTextFull,
+               [
+                  PrimaryCountry.DisplayName,
+                  PrimaryCountry.LocalDisplayName
+               ]
+            ),
             pageContent.MainText,
             pageContent.FetchErrorMessage,
             pageContent.FetchErrorKind
@@ -2119,6 +2128,13 @@ public sealed class LlamaServerClient : IAiProviderClient
       else
       {
          var matches = FindPageMatches(pageContent, find);
+         var allRows = ExtractMatchingRows(
+            pageContent.MainTextFull,
+            find,
+            int.MaxValue
+         );
+         var returnedRows = allRows.Take(50).ToList();
+         var hasRows = returnedRows.Count > 0;
 
          result = JsonSerializer.Serialize(
             new
@@ -2129,7 +2145,9 @@ public sealed class LlamaServerClient : IAiProviderClient
                title = pageContent.Title,
                url = pageContent.Url,
                published_at = pageContent.PublishedAt?.ToString("O"),
-               match_count = matches.Count,
+               match_count = hasRows ? allRows.Count : matches.Count,
+               returned_count = hasRows ? returnedRows.Count : matches.Count,
+               rows = hasRows ? returnedRows : null,
                matches
             },
             JsonOptions
@@ -2359,6 +2377,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       DateTimeOffset? publishedAt,
       IReadOnlyList<string>? headings,
       IReadOnlyList<WebPageRelevantLink>? relevantLinks,
+      string? highlightedRowLabel,
+      IReadOnlyList<string>? highlightedRows,
       string? mainText,
       string? fetchErrorMessage = null,
       WebPageFetchErrorKind? fetchErrorKind = null
@@ -2401,6 +2421,19 @@ public sealed class LlamaServerClient : IAiProviderClient
          }
       }
 
+      if(!string.IsNullOrWhiteSpace(highlightedRowLabel) &&
+         highlightedRows is not null &&
+         highlightedRows.Count > 0)
+      {
+         builder.AppendLine($"{highlightedRowLabel}:");
+         builder.AppendLine($"Count: {highlightedRows.Count}");
+
+         foreach(var row in highlightedRows)
+         {
+            builder.AppendLine($"- {row}");
+         }
+      }
+
       if(!string.IsNullOrWhiteSpace(mainText))
       {
          builder.AppendLine("Page text:");
@@ -2436,6 +2469,168 @@ public sealed class LlamaServerClient : IAiProviderClient
          .Trim();
    }
 
+   private static IReadOnlyList<string> ExtractMatchingRows(
+      string text,
+      string find,
+      int maxRows = 50
+   )
+   {
+      return ExtractMatchingRows(text, [find], maxRows);
+   }
+
+   private static IReadOnlyList<string> ExtractMatchingRows(
+      string text,
+      IReadOnlyCollection<string> findTerms,
+      int maxRows = 50
+   )
+   {
+      if(string.IsNullOrWhiteSpace(text) ||
+         findTerms.Count == 0)
+      {
+         return [];
+      }
+
+      var terms = findTerms
+         .Where(term => !string.IsNullOrWhiteSpace(term))
+         .Select(term => term.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray();
+
+      if(terms.Length == 0)
+      {
+         return [];
+      }
+
+      var rows = new List<string>();
+      var seenRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      var normalizedText = text.ReplaceLineEndings("\n");
+
+      foreach(var line in normalizedText.Split(
+         '\n',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      ))
+      {
+         foreach(var candidate in ExtractMatchingRowCandidates(line, terms))
+         {
+            var row = NormalizeMatchingRow(candidate);
+
+            if(!ContainsAnyTerm(row, terms) ||
+               !seenRows.Add(row))
+            {
+               continue;
+            }
+
+            rows.Add(row);
+
+            if(rows.Count >= maxRows)
+            {
+               return rows;
+            }
+         }
+      }
+
+      return rows;
+   }
+
+   private static IEnumerable<string> ExtractMatchingRowCandidates(
+      string line,
+      IReadOnlyCollection<string> terms
+   )
+   {
+      if(!ContainsAnyTerm(line, terms))
+      {
+         yield break;
+      }
+
+      if(line.Length <= 600)
+      {
+         yield return line;
+         yield break;
+      }
+
+      foreach(var segment in ExtractRepeatedFindSegments(line, terms))
+      {
+         yield return segment;
+      }
+   }
+
+   private static IEnumerable<string> ExtractRepeatedFindSegments(
+      string line,
+      IReadOnlyCollection<string> terms
+   )
+   {
+      var pattern = new Regex(
+         string.Join("|", terms.Select(Regex.Escape)),
+         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+      );
+      var matches = pattern.Matches(line);
+
+      if(matches.Count <= 1)
+      {
+         yield return ExtractTextAroundMatch(line, matches[0].Index, 240);
+         yield break;
+      }
+
+      for(var index = 0; index < matches.Count; index++)
+      {
+         var start = matches[index].Index;
+         var end = index + 1 < matches.Count
+            ? matches[index + 1].Index
+            : Math.Min(line.Length, start + 600);
+
+         yield return line[start..end];
+      }
+   }
+
+   private static string ExtractTextAroundMatch(
+      string text,
+      int matchIndex,
+      int maxCharacters
+   )
+   {
+      var start = Math.Max(0, matchIndex - maxCharacters / 2);
+      var end = Math.Min(text.Length, start + maxCharacters);
+
+      return text[start..end];
+   }
+
+   private static bool ContainsAnyTerm(
+      string value,
+      IReadOnlyCollection<string> terms
+   )
+   {
+      return terms.Any(term =>
+         value.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0
+      );
+   }
+
+   private static string NormalizeMatchingRow(string row)
+   {
+      var normalized = row
+         .ReplaceLineEndings(" ")
+         .Trim();
+
+      normalized = WebPageContentFetchSupport.NormalizeGluedTableCellText(
+         normalized
+      );
+
+      normalized = Regex.Replace(
+         normalized,
+         @"\s+",
+         " ",
+         RegexOptions.CultureInvariant
+      );
+
+      normalized = Regex.Replace(
+         normalized,
+         @"\b(?<value>[^|]+?)\s+\|\s+\k<value>\b",
+         "${value}",
+         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase
+      );
+
+      return normalized.Trim();
+   }
+
    private static string FormatFetchErrorText(
       PageTarget pageTarget,
       string? fetchErrorMessage,
@@ -2452,6 +2647,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          pageTarget.Title,
          pageTarget.Url,
          pageTarget.SearchSnippet,
+         null,
+         null,
          null,
          null,
          null,

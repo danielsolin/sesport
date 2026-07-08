@@ -119,6 +119,16 @@ internal static class WebPageContentFetchSupport
       @"\s+(?:GC|G&CC|G&SC|GK|CC|Club|Links|Estate|Resort)\b)",
       RegexOptions.CultureInvariant | RegexOptions.Compiled
    );
+   private static readonly Regex GluedDuplicateCellSuffixRegex = new(
+      @"(?<=[\p{Ll}])(?<suffix>[\p{Lu}][\p{L}'’&.\- ]{2,})" +
+      @"\s+\|\s+\k<suffix>\b",
+      RegexOptions.CultureInvariant | RegexOptions.Compiled
+   );
+   private static readonly Regex AdjacentPipeCellDuplicateRegex = new(
+      @"(?<prefix>^|\|\s*)(?<value>[^|\r\n]+?)\s+\|\s+\k<value>" +
+      @"(?=\s*(?:\||$))",
+      RegexOptions.CultureInvariant | RegexOptions.Compiled
+   );
 
    internal static async Task<string> GetBrowserUserAgentAsync()
    {
@@ -176,7 +186,7 @@ internal static class WebPageContentFetchSupport
          return string.Empty;
       }
 
-      text = GluedGolfClubRegex.Replace(text, " | ");
+      text = NormalizeGluedTableCellText(text);
 
       var normalizedLines = text.Replace("\r", "\n", StringComparison.Ordinal)
          .Split('\n', StringSplitOptions.RemoveEmptyEntries)
@@ -189,6 +199,20 @@ internal static class WebPageContentFetchSupport
       ).Trim();
 
       return CollapseAdjacentCountryNameDuplicates(normalizedText);
+   }
+
+   internal static string NormalizeGluedTableCellText(string text)
+   {
+      text = GluedGolfClubRegex.Replace(text, " | ");
+      text = GluedDuplicateCellSuffixRegex.Replace(
+         text,
+         " | ${suffix} | ${suffix}"
+      );
+
+      return AdjacentPipeCellDuplicateRegex.Replace(
+         text,
+         "${prefix}${value}"
+      );
    }
 
    internal static string ApplyResponseCutoff(string text)
@@ -272,6 +296,11 @@ internal static class WebPageContentFetchSupport
       }
 
       var normalizedCode = countryCode.Trim().ToUpperInvariant();
+
+      if(IsPrimaryCountryCode(normalizedCode))
+      {
+         return PrimaryCountry.DisplayName;
+      }
 
       if(normalizedCode.Length == 3 &&
          CountryNamesByThreeLetterCode is
@@ -730,9 +759,29 @@ internal static class WebPageContentFetchSupport
 
    private static string ResolveCountryFlagLabel(string label)
    {
+      if(IsPrimaryCountryCode(label))
+      {
+         return PrimaryCountry.DisplayName;
+      }
+
       return CountryNamesByCode.TryGetValue(label, out var displayName)
          ? displayName
          : label;
+   }
+
+   private static bool IsPrimaryCountryCode(string value)
+   {
+      value = value.Trim();
+
+      return string.Equals(
+         value,
+         PrimaryCountry.TwoLetterCode,
+         StringComparison.OrdinalIgnoreCase
+      ) || string.Equals(
+         value,
+         PrimaryCountry.ThreeLetterCode,
+         StringComparison.OrdinalIgnoreCase
+      );
    }
 
    private static string ExtractRelevantLinkSourceHtml(string html)
@@ -1476,6 +1525,11 @@ internal static class WebPageContentFetchSupport
             region.EnglishName;
       }
 
+      countryNames[PrimaryCountry.TwoLetterCode] =
+         PrimaryCountry.DisplayName;
+      countryNames[PrimaryCountry.ThreeLetterCode] =
+         PrimaryCountry.DisplayName;
+
       return countryNames;
    }
 
@@ -1510,6 +1564,9 @@ internal static class WebPageContentFetchSupport
 
          countryNames[code] = region.EnglishName;
       }
+
+      countryNames[PrimaryCountry.ThreeLetterCode] =
+         PrimaryCountry.DisplayName;
 
       return countryNames;
    }
