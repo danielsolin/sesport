@@ -1130,10 +1130,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          join activity_types at on at.id = a.activity_type_id
          left join lateral (
             select string_agg(
-               distinct coalesce(org_entity.alias_name,
-                  org_entity.canonical_name),
-               ', ' order by coalesce(org_entity.alias_name,
-                  org_entity.canonical_name)
+               distinct org_entity.canonical_name,
+               ', ' order by org_entity.canonical_name
             ) as organization_name
             from activity_entity_links org_link
             join entities org_entity

@@ -159,6 +159,7 @@ public sealed class AdminRepositoryTests
    {
       var entityId = Guid.NewGuid();
       var otherEntityId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
       var olderActivityId = Guid.NewGuid();
       var newerActivityId = Guid.NewGuid();
       var otherActivityId = Guid.NewGuid();
@@ -175,6 +176,12 @@ public sealed class AdminRepositoryTests
          dataSource,
          otherEntityId,
          $"Other Activity Entity {otherEntityId:N}"
+      );
+      await InsertEntityAsync(
+         dataSource,
+         organizationId,
+         "Canonical Activity Org",
+         "Alias Activity Org"
       );
       await InsertActivityAsync(
          dataSource,
@@ -208,7 +215,8 @@ public sealed class AdminRepositoryTests
       await InsertActivityEntityLinkAsync(
          dataSource,
          newerActivityId,
-         entityId
+         entityId,
+         organizationId
       );
       await InsertActivityEntityLinkAsync(
          dataSource,
@@ -230,6 +238,7 @@ public sealed class AdminRepositoryTests
          Assert.Equal("Football", activities[0].Sport);
          Assert.Equal("Match", activities[0].ActivityType);
          Assert.Equal("Published", activities[0].PublicationStatus);
+         Assert.Equal("Canonical Activity Org", activities[0].Organization);
       }
       finally
       {
@@ -241,6 +250,7 @@ public sealed class AdminRepositoryTests
          await DeleteActivityAsync(dataSource, otherActivityId);
          await DeleteEntityAsync(dataSource, entityId);
          await DeleteEntityAsync(dataSource, otherEntityId);
+         await DeleteEntityAsync(dataSource, organizationId);
       }
    }
 
@@ -936,7 +946,8 @@ public sealed class AdminRepositoryTests
    private static async Task InsertActivityEntityLinkAsync(
       NpgsqlDataSource dataSource,
       Guid activityId,
-      Guid entityId
+      Guid entityId,
+      Guid? organizationEntityId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -945,17 +956,23 @@ public sealed class AdminRepositoryTests
          insert into activity_entity_links (
             id,
             activity_id,
-            entity_id
+            entity_id,
+            organization_entity_id
          )
          values (
             @id,
             @activity_id,
-            @entity_id
+            @entity_id,
+            @organization_entity_id
          )
          """;
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         (object?)organizationEntityId ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
    }
