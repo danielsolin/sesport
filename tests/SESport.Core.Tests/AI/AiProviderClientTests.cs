@@ -905,6 +905,46 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void ExtractMatchingRowsAcceptsStructuredCountryCodeRows()
+   {
+      var body =
+         "COLLET Thibaut | 5.88 | 5.95 SWE | " +
+         "DUPLANTIS Armand | 6.13 | 6.30 FRA | " +
+         "MARSCHALL Kurtis | 5.95 | 6.05";
+      var rows = InvokeExtractMatchingRows(
+         body,
+         [
+            PrimaryCountry.DisplayName,
+            PrimaryCountry.LocalDisplayName,
+            PrimaryCountry.ThreeLetterCode
+         ],
+         50
+      );
+
+      Assert.Single(rows);
+      Assert.Contains(
+         "SWE | DUPLANTIS Armand | 6.13",
+         rows[0],
+         StringComparison.Ordinal
+      );
+      Assert.DoesNotContain("COLLET", rows[0], StringComparison.Ordinal);
+   }
+
+   [Fact]
+   public void ExtractMatchingRowsIgnoresCountryCodeInsideWords()
+   {
+      var body =
+         "SWEET weather note | strong winds expected | 12";
+      var rows = InvokeExtractMatchingRows(
+         body,
+         [PrimaryCountry.ThreeLetterCode],
+         50
+      );
+
+      Assert.Empty(rows);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesSchemaForNonToolJobs()
    {
       var handler = new RecordingHandler(

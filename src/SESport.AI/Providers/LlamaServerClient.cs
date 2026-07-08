@@ -2026,7 +2026,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                pageContent.MainTextFull,
                [
                   PrimaryCountry.DisplayName,
-                  PrimaryCountry.LocalDisplayName
+                  PrimaryCountry.LocalDisplayName,
+                  PrimaryCountry.ThreeLetterCode
                ]
             ),
             pageContent.MainText,
@@ -2510,7 +2511,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
       ))
       {
-         foreach(var candidate in ExtractMatchingRowCandidates(line, terms))
+         foreach(var candidate in ExtractMatchingRowCandidates(
+            line,
+            terms
+         ))
          {
             var row = NormalizeMatchingRow(candidate);
 
@@ -2623,7 +2627,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var remainingText = text[matchIndex..];
       var match = Regex.Match(
          remainingText,
-         @"^(?<row>.{0,260}?\|\s*\d+[a-z]?\b)",
+         @"^(?<row>.{0,260}?\|\s*\d+(?:[.,]\d+)?[a-z]?\b)",
          RegexOptions.CultureInvariant | RegexOptions.Singleline
       );
 
@@ -2647,10 +2651,31 @@ public sealed class LlamaServerClient : IAiProviderClient
       IReadOnlyCollection<string> terms
    )
    {
+      var alternatives = terms
+         .Select(BuildFindTermPattern)
+         .ToArray();
+
       return new Regex(
-         string.Join("|", terms.Select(Regex.Escape)),
+         string.Join("|", alternatives),
          RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
       );
+   }
+
+   private static string BuildFindTermPattern(string term)
+   {
+      var escapedTerm = Regex.Escape(term);
+
+      return IsCountryCodeTerm(term)
+         ? $@"(?<![\p{{L}}\p{{N}}]){escapedTerm}(?![\p{{L}}\p{{N}}])"
+         : escapedTerm;
+   }
+
+   private static bool IsCountryCodeTerm(string term)
+   {
+      return term.Length == 3 &&
+         term.All(character =>
+            character is >= 'A' and <= 'Z' or >= 'a' and <= 'z'
+         );
    }
 
    private static bool ContainsAnyTerm(
@@ -2658,9 +2683,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       IReadOnlyCollection<string> terms
    )
    {
-      return terms.Any(term =>
-         value.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0
-      );
+      return BuildFindTermRegex(terms).IsMatch(value);
    }
 
    private static string NormalizeMatchingRow(string row)
