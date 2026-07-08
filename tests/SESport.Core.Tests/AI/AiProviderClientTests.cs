@@ -857,6 +857,32 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void ExtractMatchingRowsClipsLongPipeDelimitedRows()
+   {
+      var body =
+         "Action | Sweden LINDBERG, Mikael | Svartinge GC | " +
+         "5 Action | Austria WIESBERGER, Bernd | Club B | " +
+         "6 Action | United States GUMBERG, Jordan | Club C | " +
+         "8 Action | Sweden SVENSSON, Jesper | Upsala GC | " +
+         "48 Action | Japan HOSHINO, Rikuya | Club D | 50";
+      var rows = InvokeExtractMatchingRows(body, "Sweden", 50);
+
+      Assert.Equal(2, rows.Count);
+      Assert.Contains(
+         "Sweden LINDBERG, Mikael | Svartinge GC | 5",
+         rows
+      );
+      Assert.Contains(
+         "Sweden SVENSSON, Jesper | Upsala GC | 48",
+         rows
+      );
+      Assert.DoesNotContain(
+         rows,
+         row => row.Contains("WIESBERGER", StringComparison.Ordinal)
+      );
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesSchemaForNonToolJobs()
    {
       var handler = new RecordingHandler(

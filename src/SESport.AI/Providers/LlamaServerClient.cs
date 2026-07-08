@@ -2537,7 +2537,29 @@ public sealed class LlamaServerClient : IAiProviderClient
       IReadOnlyCollection<string> terms
    )
    {
-      if(!ContainsAnyTerm(line, terms))
+      var matches = BuildFindTermRegex(terms).Matches(line);
+
+      if(matches.Count == 0)
+      {
+         yield break;
+      }
+
+      var hasPipeDelimitedRows = false;
+
+      foreach(Match match in matches)
+      {
+         if(TryExtractPipeDelimitedRow(
+            line,
+            match.Index,
+            out var pipeDelimitedRow
+         ))
+         {
+            hasPipeDelimitedRows = true;
+            yield return pipeDelimitedRow;
+         }
+      }
+
+      if(hasPipeDelimitedRows)
       {
          yield break;
       }
@@ -2559,10 +2581,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       IReadOnlyCollection<string> terms
    )
    {
-      var pattern = new Regex(
-         string.Join("|", terms.Select(Regex.Escape)),
-         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
-      );
+      var pattern = BuildFindTermRegex(terms);
       var matches = pattern.Matches(line);
 
       if(matches.Count <= 1)
@@ -2592,6 +2611,46 @@ public sealed class LlamaServerClient : IAiProviderClient
       var end = Math.Min(text.Length, start + maxCharacters);
 
       return text[start..end];
+   }
+
+   private static bool TryExtractPipeDelimitedRow(
+      string text,
+      int matchIndex,
+      out string row
+   )
+   {
+      row = string.Empty;
+      var remainingText = text[matchIndex..];
+      var match = Regex.Match(
+         remainingText,
+         @"^(?<row>.{0,260}?\|\s*\d+[a-z]?\b)",
+         RegexOptions.CultureInvariant | RegexOptions.Singleline
+      );
+
+      if(!match.Success)
+      {
+         return false;
+      }
+
+      var candidate = match.Groups["row"].Value;
+
+      if(candidate.Count(character => character == '|') < 2)
+      {
+         return false;
+      }
+
+      row = candidate;
+      return true;
+   }
+
+   private static Regex BuildFindTermRegex(
+      IReadOnlyCollection<string> terms
+   )
+   {
+      return new Regex(
+         string.Join("|", terms.Select(Regex.Escape)),
+         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+      );
    }
 
    private static bool ContainsAnyTerm(
