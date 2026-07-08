@@ -13,6 +13,14 @@
    <div>
       <h1>@ViewData["Title"]</h1>
    </div>
+   @if(Model.Entity.Id is not null)
+   {
+      <a class="button"
+         asp-page="./Merge"
+         asp-route-sourceId="@Model.Entity.Id">
+         Merge duplicate
+      </a>
+   }
 </section>
 
 @if (Model.LoadError is not null)

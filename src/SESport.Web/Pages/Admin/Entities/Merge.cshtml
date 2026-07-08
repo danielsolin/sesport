@@ -1,0 +1,187 @@
+@page "{sourceId:guid}"
+@model SESport.Web.Pages.Admin.Entities.MergeModel
+@{
+   ViewData["Title"] = "Merge Entity";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <h1>Merge Entity</h1>
+   </div>
+   <a class="button"
+      asp-page="./Edit"
+      asp-route-id="@Model.SourceId">
+      Back to source
+   </a>
+</section>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">@Model.LoadError</div>
+}
+
+@if(Model.Source is not null)
+{
+   <section class="form-section">
+      <h2>Source entity</h2>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-compact">
+            <tbody>
+               <tr>
+                  <th>Name</th>
+                  <td>@Model.Source.CanonicalName</td>
+               </tr>
+               <tr>
+                  <th>Type</th>
+                  <td>@Model.Source.EntityTypeId</td>
+               </tr>
+               <tr>
+                  <th>Sport</th>
+                  <td>@Model.Source.SportId</td>
+               </tr>
+               <tr>
+                  <th>Country</th>
+                  <td>@Model.Source.CountryId</td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+   </section>
+}
+
+<section class="form-section">
+   <h2>Target entity</h2>
+   <form method="get" class="edit-form">
+      <label>
+         <span>Merge source into</span>
+         <select asp-for="TargetEntityId" asp-items="Model.TargetOptions">
+            <option value="">Select target entity</option>
+         </select>
+         <span asp-validation-for="TargetEntityId"></span>
+      </label>
+      <div class="form-actions">
+         <button class="button button-primary" type="submit">
+            Preview merge
+         </button>
+      </div>
+   </form>
+</section>
+
+@if(Model.Preview is not null)
+{
+   <section class="form-section">
+      <h2>Preview</h2>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-compact">
+            <thead>
+               <tr>
+                  <th>Field</th>
+                  <th>Source deleted</th>
+                  <th>Target kept</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td>Name</td>
+                  <td>@Model.Preview.Source.CanonicalName</td>
+                  <td>@Model.Preview.Target.CanonicalName</td>
+               </tr>
+               <tr>
+                  <td>Type</td>
+                  <td>@Model.Preview.Source.EntityTypeId</td>
+                  <td>@Model.Preview.Target.EntityTypeId</td>
+               </tr>
+               <tr>
+                  <td>Sport</td>
+                  <td>@Model.Preview.Source.SportId</td>
+                  <td>@Model.Preview.Target.SportId</td>
+               </tr>
+               <tr>
+                  <td>Country</td>
+                  <td>@Model.Preview.Source.CountryId</td>
+                  <td>@Model.Preview.Target.CountryId</td>
+               </tr>
+               <tr>
+                  <td>Gender</td>
+                  <td>@Model.Preview.Source.PersonGenderId</td>
+                  <td>@Model.Preview.Target.PersonGenderId</td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+   </section>
+
+   <section class="form-section">
+      <h2>References moved from source</h2>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-compact">
+            <thead>
+               <tr>
+                  <th>Reference</th>
+                  <th>Count</th>
+               </tr>
+            </thead>
+            <tbody>
+               @foreach(var count in Model.Preview.ReferenceCounts)
+               {
+                  <tr>
+                     <td>@count.Label</td>
+                     <td>@count.Count</td>
+                  </tr>
+               }
+            </tbody>
+         </table>
+      </div>
+   </section>
+
+   <section class="form-section">
+      <h2>Linked entities</h2>
+      @if(Model.Preview.LinkPreviews.Count == 0)
+      {
+         <div class="notice">No linked entities.</div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact">
+               <thead>
+                  <tr>
+                     <th>Linked entity</th>
+                     <th>Type</th>
+                     <th>Action</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var link in Model.Preview.LinkPreviews)
+                  {
+                     <tr>
+                        <td>@link.RelatedEntityName</td>
+                        <td>@link.RelatedEntityType</td>
+                        <td>@link.Action</td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+
+   <section class="form-section">
+      <h2>Confirm</h2>
+      <form method="post" class="edit-form">
+         <input asp-for="TargetEntityId" type="hidden" />
+         <label class="filter-checkbox">
+            <input asp-for="ConfirmMerge" />
+            <span>
+               Merge source into target and delete source entity.
+            </span>
+         </label>
+         <span asp-validation-for="ConfirmMerge"></span>
+         <div class="form-actions">
+            <button class="button button-primary" type="submit">
+               Merge into target
+            </button>
+         </div>
+      </form>
+   </section>
+}

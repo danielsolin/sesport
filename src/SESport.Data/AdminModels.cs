@@ -167,6 +167,47 @@ public sealed record EntityActivityListItem(
       : $"{ActivityDate:yyyy-MM-dd} {LocalStartTime.Value:HH:mm}";
 }
 
+public sealed record EntityMergeEntitySummary(
+   Guid Id,
+   string CanonicalName,
+   string EntityTypeId,
+   string SportId,
+   string CountryId,
+   string WatchPriorityId,
+   string ExpectedStabilityId,
+   string? PersonGenderId,
+   string? AliasName
+);
+
+public sealed record EntityMergeReferenceCount(
+   string Label,
+   int Count
+);
+
+public sealed record EntityMergeLinkPreview(
+   string RelatedEntityName,
+   string RelatedEntityType,
+   string Action
+);
+
+public sealed record EntityMergePreview(
+   EntityMergeEntitySummary Source,
+   EntityMergeEntitySummary Target,
+   IReadOnlyList<EntityMergeReferenceCount> ReferenceCounts,
+   IReadOnlyList<EntityMergeLinkPreview> LinkPreviews
+);
+
+public sealed record EntityMergeResult(
+   int ActivityEntityLinksMoved,
+   int ActivityOrganizationLinksMoved,
+   int ActivityProposalLinksMoved,
+   int AiActivitySearchItemsMoved,
+   int BroadcastsMoved,
+   int DuplicateActivityEntityLinksDeleted,
+   int DuplicateEntityLinksDeleted,
+   int EntityLinksMoved
+);
+
 public sealed class EntityEditModel
 {
    public Guid? Id { get; set; }

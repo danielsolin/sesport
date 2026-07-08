@@ -800,6 +800,28 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void FormatPageContentTextOmitsEmptyHighlightedRows()
+   {
+      var output = LlamaServerClient.FormatPageContentText(
+         "Page URL",
+         "https://example.test/entry-list",
+         "Entry List",
+         "https://example.test/entry-list",
+         null,
+         null,
+         null,
+         null,
+         "Detected rows for Target",
+         [],
+         "Full page text."
+      );
+
+      Assert.DoesNotContain("Detected rows for Target", output);
+      Assert.DoesNotContain("Count: 0", output);
+      Assert.Contains("Page text:", output);
+   }
+
+   [Fact]
    public void ExtractMatchingRowsReturnsCompactMatchingRows()
    {
       var body =

@@ -589,6 +589,166 @@ public sealed class AdminRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task GetEntityMergePreviewReturnsCountsAndLinkActions()
+   {
+      var sourceId = Guid.NewGuid();
+      var targetId = Guid.NewGuid();
+      var linkedId = Guid.NewGuid();
+      var sourceActivityId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, sourceId, $"Merge Source {sourceId}");
+      await InsertEntityAsync(dataSource, targetId, $"Merge Target {targetId}");
+      await InsertRelatedEntityAsync(
+         dataSource,
+         linkedId,
+         $"Merge Linked {linkedId}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertActivityAsync(
+         dataSource,
+         sourceActivityId,
+         "Merge Preview Activity",
+         new DateOnly(2026, 7, 8),
+         new TimeOnly(12, 0),
+         "Draft"
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         sourceActivityId,
+         sourceId
+      );
+      await InsertLinkAsync(dataSource, sourceId, linkedId);
+      await InsertLinkAsync(dataSource, linkedId, targetId);
+
+      try
+      {
+         var preview = await repository.GetEntityMergePreviewAsync(
+            sourceId,
+            targetId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(preview);
+         Assert.Equal(sourceId, preview.Source.Id);
+         Assert.Equal(targetId, preview.Target.Id);
+         Assert.Contains(
+            preview.ReferenceCounts,
+            count => count.Label == "Activity participants" &&
+               count.Count == 1
+         );
+         Assert.Contains(
+            preview.LinkPreviews,
+            link => link.RelatedEntityName.StartsWith(
+               "Merge Linked",
+               StringComparison.Ordinal
+            ) && link.Action == "Drop duplicate"
+         );
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, sourceActivityId);
+         await DeleteActivityAsync(dataSource, sourceActivityId);
+         await DeleteLinksAsync(dataSource, sourceId);
+         await DeleteLinksAsync(dataSource, targetId);
+         await DeleteLinksAsync(dataSource, linkedId);
+         await DeleteEntityAsync(dataSource, sourceId);
+         await DeleteEntityAsync(dataSource, targetId);
+         await DeleteEntityAsync(dataSource, linkedId);
+      }
+   }
+
+   [Fact]
+   public async Task MergeEntityMovesReferencesAndDeletesSource()
+   {
+      var sourceId = Guid.NewGuid();
+      var targetId = Guid.NewGuid();
+      var linkedId = Guid.NewGuid();
+      var sourceActivityId = Guid.NewGuid();
+      var targetActivityId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, sourceId, $"Merge Source {sourceId}");
+      await InsertEntityAsync(dataSource, targetId, $"Merge Target {targetId}");
+      await InsertRelatedEntityAsync(
+         dataSource,
+         linkedId,
+         $"Merge Linked {linkedId}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertActivityAsync(
+         dataSource,
+         sourceActivityId,
+         "Merge Source Activity",
+         new DateOnly(2026, 7, 8),
+         new TimeOnly(12, 0),
+         "Draft"
+      );
+      await InsertActivityAsync(
+         dataSource,
+         targetActivityId,
+         "Merge Target Activity",
+         new DateOnly(2026, 7, 9),
+         new TimeOnly(12, 0),
+         "Draft"
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         sourceActivityId,
+         sourceId
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         targetActivityId,
+         targetId
+      );
+      await InsertLinkAsync(dataSource, sourceId, linkedId);
+      await InsertLinkAsync(dataSource, linkedId, targetId);
+
+      try
+      {
+         var result = await repository.MergeEntityAsync(
+            sourceId,
+            targetId,
+            CancellationToken.None
+         );
+
+         Assert.Equal(1, result.ActivityEntityLinksMoved);
+         Assert.Equal(1, result.DuplicateEntityLinksDeleted);
+         Assert.Equal(0, result.EntityLinksMoved);
+         Assert.False(await EntityExistsAsync(dataSource, sourceId));
+         Assert.True(await EntityExistsAsync(dataSource, targetId));
+         Assert.Equal(
+            2,
+            await CountActivityEntityLinksAsync(dataSource, targetId)
+         );
+         Assert.Equal(
+            1,
+            await CountEntityLinksAsync(dataSource, targetId, linkedId)
+         );
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, sourceActivityId);
+         await DeleteActivityEntityLinksAsync(dataSource, targetActivityId);
+         await DeleteActivityAsync(dataSource, sourceActivityId);
+         await DeleteActivityAsync(dataSource, targetActivityId);
+         await DeleteLinksAsync(dataSource, sourceId);
+         await DeleteLinksAsync(dataSource, targetId);
+         await DeleteLinksAsync(dataSource, linkedId);
+         await DeleteEntityAsync(dataSource, sourceId);
+         await DeleteEntityAsync(dataSource, targetId);
+         await DeleteEntityAsync(dataSource, linkedId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();
@@ -863,5 +1023,67 @@ public sealed class AdminRepositoryTests
       command.Parameters.AddWithValue("id", entityId);
 
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<bool> EntityExistsAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         select exists (
+            select 1
+            from entities
+            where id = @id
+         )
+         """;
+      command.Parameters.AddWithValue("id", entityId);
+
+      return (bool)(await command.ExecuteScalarAsync())!;
+   }
+
+   private static async Task<int> CountActivityEntityLinksAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         select count(*)::int
+         from activity_entity_links
+         where entity_id = @id
+         """;
+      command.Parameters.AddWithValue("id", entityId);
+
+      return (int)(await command.ExecuteScalarAsync())!;
+   }
+
+   private static async Task<int> CountEntityLinksAsync(
+      NpgsqlDataSource dataSource,
+      Guid firstEntityId,
+      Guid secondEntityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         select count(*)::int
+         from entity_to_entity_links
+         where (
+               source_entity_id = @first_entity_id
+               and target_entity_id = @second_entity_id
+            )
+            or (
+               source_entity_id = @second_entity_id
+               and target_entity_id = @first_entity_id
+            )
+         """;
+      command.Parameters.AddWithValue("first_entity_id", firstEntityId);
+      command.Parameters.AddWithValue("second_entity_id", secondEntityId);
+
+      return (int)(await command.ExecuteScalarAsync())!;
    }
 }
