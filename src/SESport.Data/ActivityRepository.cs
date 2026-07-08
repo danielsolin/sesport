@@ -201,16 +201,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             e.canonical_name,
             e.entity_type_id,
             s.name,
-            coalesce(org.organization_names, '') as organization_names,
+            coalesce(org.alias_name, org.canonical_name) as organization_names,
             p.sort_order,
             e.person_gender_id,
             e.alias_name
          from entities e
+         join entities org
+            on org.id = @organization_entity_id
          join sports s
             on s.id = e.sport_id
          join entity_watch_priorities p
             on p.id = e.watch_priority_id
-         {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
          where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
             and exists (
                select 1
@@ -265,16 +266,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                e.canonical_name,
                e.entity_type_id,
                s.name,
-               coalesce(org.organization_names, '') as organization_names,
+               coalesce(
+                  org.alias_name,
+                  org.canonical_name
+               ) as organization_names,
                p.sort_order,
                e.person_gender_id,
                e.alias_name
             from entities e
+            join entities org
+               on org.id = @organization_entity_id
             join sports s
                on s.id = e.sport_id
             join entity_watch_priorities p
                on p.id = e.watch_priority_id
-            {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
             where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
                and exists (
                   select 1
@@ -405,7 +410,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await reader.DisposeAsync();
 
       const string linkSql = """
-         select entity_id
+         select entity_id, organization_entity_id
          from activity_entity_links
          where activity_id = @id
          order by id
@@ -420,6 +425,22 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       while (await linkReader.ReadAsync(cancellationToken))
       {
          model.LinkedEntityIds.Add(linkReader.GetGuid(0));
+
+         if(linkReader.IsDBNull(1))
+         {
+            continue;
+         }
+
+         var organizationEntityId = linkReader.GetGuid(1);
+
+         if(model.OrganizationEntityId is null)
+         {
+            model.OrganizationEntityId = organizationEntityId;
+         }
+         else if(model.OrganizationEntityId != organizationEntityId)
+         {
+            model.OrganizationEntityId = null;
+         }
       }
 
       return model;
@@ -483,6 +504,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          transaction,
          id,
          model.LinkedEntityIds,
+         model.OrganizationEntityId,
          cancellationToken
       );
       await ReplaceEvidenceAsync(
@@ -678,6 +700,26 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   ) as related_organization_entities")
          .AppendLine("   from (")
          .AppendLine("      select distinct")
+         .AppendLine("         coalesce(context.alias_name,")
+         .AppendLine("            context.canonical_name) as organization_name")
+         .AppendLine("      from activity_entity_links al")
+         .AppendLine("      join entities p on p.id = al.entity_id")
+         .AppendLine("      join entities context")
+         .AppendLine("         on context.id = al.organization_entity_id")
+         .AppendLine("      where al.activity_id = a.id")
+         .AppendLine(
+            $$"""
+               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            """
+         )
+         .AppendLine(
+            "         and " +
+            BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+               "context.entity_type_id"
+            )
+         )
+         .AppendLine("      union")
+         .AppendLine("      select distinct")
          .AppendLine("         coalesce(entity.alias_name,")
          .AppendLine("            entity.canonical_name) as organization_name")
          .AppendLine("      from activity_entity_links al")
@@ -692,6 +734,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("            else el.source_entity_id")
          .AppendLine("         end")
          .AppendLine("      where al.activity_id = a.id")
+         .AppendLine("         and al.organization_entity_id is null")
          .AppendLine(
             $$"""
                and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
@@ -825,6 +868,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       NpgsqlTransaction transaction,
       Guid activityId,
       IEnumerable<Guid> entityIds,
+      Guid? organizationEntityId,
       CancellationToken cancellationToken
    )
    {
@@ -846,9 +890,29 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          return;
       }
 
-      const string sql = """
-         insert into activity_entity_links (id, activity_id, entity_id)
-         values (@id, @activity_id, @entity_id)
+      const string sql = $$"""
+         insert into activity_entity_links (
+            id,
+            activity_id,
+            entity_id,
+            organization_entity_id
+         )
+         values (
+            @id,
+            @activity_id,
+            @entity_id,
+            case
+               when exists (
+                  select 1
+                  from entities e
+                  where e.id = @entity_id
+                     and e.entity_type_id =
+                        '{{TrackedEntityTypeIds.Person}}'
+               )
+                  then @organization_entity_id
+               else null
+            end
+         )
          """;
 
       foreach (var entityId in distinctEntityIds)
@@ -861,6 +925,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          command.Parameters.AddWithValue("id", Guid.NewGuid());
          command.Parameters.AddWithValue("activity_id", activityId);
          command.Parameters.AddWithValue("entity_id", entityId);
+         command.Parameters.AddWithValue(
+            "organization_entity_id",
+            organizationEntityId ?? (object)DBNull.Value
+         );
          await command.ExecuteNonQueryAsync(cancellationToken);
       }
    }

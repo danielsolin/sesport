@@ -136,6 +136,83 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetActivitiesAsyncPrefersActivityOrganizationContext()
+   {
+      var now = DateTimeOffset.UtcNow;
+      var selectedDate = SportDay.Today(now).StartDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var firstSeriesId = Guid.NewGuid();
+      var secondSeriesId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt
+      );
+      await InsertEntityAsync(
+         dataSource,
+         personId,
+         "Test Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertEntityAsync(
+         dataSource,
+         firstSeriesId,
+         "First Series",
+         TrackedEntityTypeIds.Series
+      );
+      await InsertEntityAsync(
+         dataSource,
+         secondSeriesId,
+         "Second Series",
+         TrackedEntityTypeIds.Series
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         personId,
+         firstSeriesId
+      );
+      await InsertEntityLinkAsync(dataSource, personId, firstSeriesId);
+      await InsertEntityLinkAsync(dataSource, personId, secondSeriesId);
+
+      try
+      {
+         var activities = await repository.GetActivitiesAsync(
+            selectedDate,
+            ActivityListStatusIds.All,
+            [],
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         Assert.Equal("First Series", activity.RelatedOrganizationEntities);
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, secondSeriesId);
+         await DeleteEntityAsync(dataSource, firstSeriesId);
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedForDateAsyncOrdersParticipantsByWatchPriority()
    {
       var now = DateTimeOffset.UtcNow;
@@ -180,9 +257,17 @@ public sealed class ActivityRepositoryTests
          TrackedEntityTypeIds.Person,
          "review"
       );
-      await InsertActivityEntityLinkAsync(dataSource, activityId, reviewBravoId);
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         reviewBravoId
+      );
       await InsertActivityEntityLinkAsync(dataSource, activityId, tierOneId);
-      await InsertActivityEntityLinkAsync(dataSource, activityId, reviewAlphaId);
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         reviewAlphaId
+      );
 
       try
       {
@@ -325,7 +410,8 @@ public sealed class ActivityRepositoryTests
    private static async Task InsertActivityEntityLinkAsync(
       NpgsqlDataSource dataSource,
       Guid activityId,
-      Guid entityId
+      Guid entityId,
+      Guid? organizationEntityId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -334,17 +420,23 @@ public sealed class ActivityRepositoryTests
          insert into activity_entity_links (
             id,
             activity_id,
-            entity_id
+            entity_id,
+            organization_entity_id
          )
          values (
             @id,
             @activity_id,
-            @entity_id
+            @entity_id,
+            @organization_entity_id
          )
          """;
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         organizationEntityId ?? (object)DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
    }

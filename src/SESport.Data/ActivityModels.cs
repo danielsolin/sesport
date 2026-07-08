@@ -69,6 +69,8 @@ public sealed class ActivityEditModel
 
    public List<Guid> LinkedEntityIds { get; set; } = [];
 
+   public Guid? OrganizationEntityId { get; set; }
+
    public string? EvidenceUri { get; set; }
 
    public string? EvidenceTitle { get; set; }

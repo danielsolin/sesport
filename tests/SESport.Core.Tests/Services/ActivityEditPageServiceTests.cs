@@ -144,6 +144,7 @@ public sealed class ActivityEditPageServiceTests
          );
 
          Assert.Equal([broadcastId], activity.BroadcastIds);
+         Assert.Equal(organizationId, activity.OrganizationEntityId);
          Assert.Equal([personId], activity.LinkedEntityIds);
       }
       finally

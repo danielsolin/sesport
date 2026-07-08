@@ -120,6 +120,7 @@ public sealed class ActivityEditPageService(
          );
 
       activity.BroadcastIds = [firstBroadcast.Id];
+      activity.OrganizationEntityId = firstBroadcast.EntityId;
       activity.TvChannelName = firstBroadcast.ChannelName;
       activity.Title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
          firstBroadcast,
