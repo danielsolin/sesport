@@ -152,6 +152,58 @@ public sealed class EntityModelTests
    }
 
    [Fact]
+   public async Task OnGetAsyncOrganizationOnlySearchesAliasName()
+   {
+      var organizationId = Guid.NewGuid();
+      var queryToken = Guid.NewGuid().ToString("N")[..8];
+      var aliasToken = Guid.NewGuid().ToString("N")[..8];
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var model = new EntityModel(repository);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Global Champions Tour {queryToken}",
+         TrackedEntityTypeIds.Tour,
+         "equestrian",
+         $"Horse alias {aliasToken}"
+      );
+
+      try
+      {
+         var result = await model.OnGetAsync(
+            aliasToken,
+            null,
+            CancellationToken.None,
+            sortAsc: true,
+            organizationOnly: true
+         );
+
+         var jsonResult = Assert.IsType<JsonResult>(result);
+         using var document = JsonDocument.Parse(
+            JsonSerializer.Serialize(jsonResult.Value)
+         );
+         var results = document.RootElement.GetProperty("results");
+
+         Assert.Single(results.EnumerateArray());
+         Assert.Contains(
+            organizationId.ToString(),
+            results.ToString()
+         );
+         Assert.Contains(
+            $"Global Champions Tour {queryToken}",
+            results.ToString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task OnGetAsyncReturnsEmptyResultsForBlankTerm()
    {
       await using var dataSource = CreateDataSource();
@@ -186,7 +238,8 @@ public sealed class EntityModelTests
       Guid entityId,
       string entityName,
       string entityTypeId,
-      string sportId
+      string sportId,
+      string? aliasName = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -201,7 +254,8 @@ public sealed class EntityModelTests
             country_relevance_kind_id,
             country_relevance_reason,
             watch_priority_id,
-            expected_stability_id
+            expected_stability_id,
+            alias_name
          )
          values (
             @id,
@@ -212,13 +266,18 @@ public sealed class EntityModelTests
             'NationalityOrSportingIdentity',
             'Test coverage',
             'review',
-            'short_term'
+            'short_term',
+            @alias_name
          )
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
+      command.Parameters.AddWithValue(
+         "alias_name",
+         (object?)aliasName ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
    }

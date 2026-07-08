@@ -951,6 +951,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             """
             (
                e.canonical_name ilike @term escape '\'
+               or coalesce(e.alias_name, '') ilike @term escape '\'
                or coalesce(linked.related_entity_names, '') ilike @term
                   escape '\'
             )
