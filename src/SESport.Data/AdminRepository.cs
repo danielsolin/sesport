@@ -1118,6 +1118,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             a.id,
             a.activity_date,
             a.local_start_time,
+            coalesce(org.organization_name, '') as organization_name,
             a.title,
             s.name,
             at.label,
@@ -1126,6 +1127,18 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          join activities a on a.id = l.activity_id
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
+         left join lateral (
+            select string_agg(
+               distinct coalesce(org_entity.alias_name,
+                  org_entity.canonical_name),
+               ', ' order by coalesce(org_entity.alias_name,
+                  org_entity.canonical_name)
+            ) as organization_name
+            from activity_entity_links org_link
+            join entities org_entity
+               on org_entity.id = org_link.organization_entity_id
+            where org_link.activity_id = a.id
+         ) org on true
          where l.entity_id = @entity_id
          order by
             a.activity_date desc,
@@ -1152,7 +1165,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(3),
                reader.GetString(4),
                reader.GetString(5),
-               reader.GetString(6)
+               reader.GetString(6),
+               reader.GetString(7)
             )
          );
       }

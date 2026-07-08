@@ -155,6 +155,7 @@ public sealed record EntityActivityListItem(
    Guid Id,
    DateOnly ActivityDate,
    TimeOnly? LocalStartTime,
+   string Organization,
    string Title,
    string Sport,
    string ActivityType,

@@ -103,14 +103,14 @@
                         Activity @Model.GetSortIndicator("Activity")
                      </a>
                   </th>
+                  <th>Org</th>
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Entities")'>
-                        Entities @Model.GetSortIndicator("Entities")
+                        Participants @Model.GetSortIndicator("Entities")
                      </a>
                   </th>
-                  <th>Teaser</th>
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
@@ -131,17 +131,12 @@
                            asp-route-id="@activity.Id"
                            asp-route-returnUrl="@returnUrl">
                            <strong>
-                              @activity.RelatedOrganizationEntities
-                               -
                               @activity.Title
                            </strong>
                         </a>
-                        <span>
-                           @activity.SportName / @activity.ActivityType
-                        </span>
                      </td>
-                     <td>@activity.RelatedPersonEntities</td>
-                     <td>@activity.Teaser</td>
+                     <td>@activity.RelatedOrganizationEntities</td>
+                     <td>@activity.RelatedPersonEntityIds.Length</td>
                      <td>
                         <span class="status-pill">
                            @activity.PublicationStatus
