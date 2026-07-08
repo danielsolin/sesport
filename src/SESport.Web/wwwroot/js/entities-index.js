@@ -210,6 +210,7 @@
          };
 
          field.addEventListener("input", scheduleSearch);
+         field.addEventListener("change", scheduleSearch);
          initialTypeFilter?.addEventListener("change", scheduleSearch);
 
          const initialQuery = currentQuery();
@@ -245,13 +246,30 @@
          return;
       }
 
-      const selectedSet = new Set(selectedValues);
+      const availableValues = new Set(
+         Array.from(select.options)
+            .map(option => option.value)
+      );
+      const selectedSet = new Set(
+         selectedValues.filter(value => availableValues.has(value))
+      );
 
       Array.from(select.options).forEach(option => {
          option.selected = selectedSet.has(option.value);
       });
 
-      select._multiSelect?.setValues(selectedValues);
+      if(selectedSet.size === 0)
+      {
+         return;
+      }
+
+      const selectedOptions = Array.from(selectedSet);
+      const multiSelect = select._multiSelect;
+
+      if(multiSelect && typeof multiSelect.setValues === "function")
+      {
+         multiSelect.setValues(selectedOptions);
+      }
    }
 
    function renderEntityRowHtml(
