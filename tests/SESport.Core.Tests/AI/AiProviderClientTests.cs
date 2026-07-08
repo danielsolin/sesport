@@ -696,7 +696,10 @@ public class AiProviderClientTests
       var body = string.Join(
          " ",
          Enumerable.Range(0, 25).Select(index =>
-            $"chunk-{index}-before Sweden chunk-{index}-after")
+            $"chunk-{index}-before " +
+            $"{new string('x', 70)} id-{index} Sweden " +
+            $"{new string('y', 70)} " +
+            $"chunk-{index}-after")
       );
       var matches = InvokeFindPageMatches(
          new WebPageContent(
@@ -712,6 +715,64 @@ public class AiProviderClientTests
       );
 
       Assert.Equal(20, matches.Count);
+   }
+
+   [Fact]
+   public void FindPageMatchesSkipsOverlappingTextSnippets()
+   {
+      var body =
+         "Norway Add Favourite | Sweden | Sweden TOWNSEND, Hugo | " +
+         "Stockholms GK | 16 Norway Add Favourite | Sweden | Sweden " +
+         "JONSSON, Tobias | Haninge Strand GK";
+      var matches = InvokeFindPageMatches(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            [],
+            body,
+            true,
+            body
+         ),
+         "Sweden"
+      );
+
+      Assert.Equal(2, matches.Count);
+      Assert.All(
+         matches.Cast<object>(),
+         match =>
+         {
+            var snippet = match.GetType()
+               .GetProperty("Snippet")!
+               .GetValue(match)!
+               .ToString();
+
+            Assert.NotNull(snippet);
+            Assert.True(snippet!.Length < 180);
+         }
+      );
+   }
+
+   [Fact]
+   public void FormatPageContentTextBreaksLongPipeSeparatedRows()
+   {
+      var output = LlamaServerClient.FormatPageContentText(
+         "Page URL",
+         "https://example.test/entry-list",
+         "Entry List",
+         "https://example.test/entry-list",
+         null,
+         null,
+         null,
+         null,
+         "Sweden | LAGERGREN, Joakim | Black Mountain GC | 24"
+      );
+
+      Assert.Contains(
+         "Sweden |\nLAGERGREN, Joakim |\nBlack Mountain GC |",
+         output,
+         StringComparison.Ordinal
+      );
    }
 
    [Fact]

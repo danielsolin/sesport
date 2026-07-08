@@ -114,6 +114,11 @@ internal static class WebPageContentFetchSupport
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
          RegexOptions.Compiled
    );
+   private static readonly Regex GluedGolfClubRegex = new(
+      @"(?<=[\p{Ll}])(?=[\p{Lu}][\p{L}'’&.\- ]*" +
+      @"\s+(?:GC|G&CC|G&SC|GK|CC|Club|Links|Estate|Resort)\b)",
+      RegexOptions.CultureInvariant | RegexOptions.Compiled
+   );
 
    internal static async Task<string> GetBrowserUserAgentAsync()
    {
@@ -170,6 +175,8 @@ internal static class WebPageContentFetchSupport
       {
          return string.Empty;
       }
+
+      text = GluedGolfClubRegex.Replace(text, " | ");
 
       var normalizedLines = text.Replace("\r", "\n", StringComparison.Ordinal)
          .Split('\n', StringSplitOptions.RemoveEmptyEntries)
@@ -1538,7 +1545,7 @@ internal static class WebPageContentFetchSupport
 
       var pattern =
          $@"\b(?<country>{string.Join("|", countryNames)})\b" +
-         @"(?:\s+\k<country>\b)+";
+         @"(?:(?:\s+\|\s+|\s+)\k<country>\b)+";
 
       return new Regex(
          pattern,

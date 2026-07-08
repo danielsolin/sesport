@@ -243,7 +243,41 @@ internal static class WebPageNormalizationScript
             ).forEach((element) => element.remove());
 
             function normalizeText(text) {
-               return (text || '').replace(/\s+/g, ' ').trim();
+               const gluedGolfClubPattern = new RegExp(
+                  '(?<=[a-zåäöéáíóúüñ])' +
+                  '(?=[A-ZÅÄÖÉÁÍÓÚÜÑ][\\p{L}&.\\- ]*\\s+' +
+                  '(?:GC|G&CC|G&SC|GK|CC|Club|Links|Estate|Resort)\\b)',
+                  'gu'
+               );
+
+               return (text || '')
+                  .replace(
+                     gluedGolfClubPattern,
+                     ' | '
+                  )
+                  .replace(/\s+/g, ' ')
+                  .trim();
+            }
+
+            function normalizeComparisonText(text) {
+               return normalizeText(text).toLocaleLowerCase('en-US');
+            }
+
+            function appendCellPart(parts, cellText) {
+               if(cellText === '') {
+                  return;
+               }
+
+               const previous = parts.length > 0
+                  ? parts[parts.length - 1]
+                  : '';
+
+               if(normalizeComparisonText(previous) ===
+                  normalizeComparisonText(cellText)) {
+                  return;
+               }
+
+               parts.push(cellText);
             }
 
             function flattenTableElement(tableElement) {
@@ -263,9 +297,7 @@ internal static class WebPageNormalizationScript
                         cell.textContent || ''
                      );
 
-                     if(cellText !== '') {
-                        parts.push(cellText);
-                     }
+                     appendCellPart(parts, cellText);
                   });
 
                   const rowText = parts.join(' | ').trim();

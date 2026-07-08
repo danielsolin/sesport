@@ -2287,7 +2287,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static IEnumerable<string> ExtractTextSnippets(
       string text,
       string find,
-      int contextLength = 120,
+      int contextLength = 60,
       int maxMatches = 20
    )
    {
@@ -2328,7 +2328,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          yield return snippet;
 
-         searchIndex = index + Math.Max(find.Length, 1);
+         searchIndex = end;
          matches++;
       }
    }
@@ -2404,7 +2404,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       if(!string.IsNullOrWhiteSpace(mainText))
       {
          builder.AppendLine("Page text:");
-         builder.AppendLine(mainText.Trim());
+         builder.AppendLine(FormatPageTextForToolResult(mainText));
       }
       else if(!string.IsNullOrWhiteSpace(fetchErrorMessage))
       {
@@ -2427,6 +2427,13 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
 
       return builder.ToString().Trim();
+   }
+
+   private static string FormatPageTextForToolResult(string text)
+   {
+      return text
+         .Replace(" | ", " |" + Environment.NewLine, StringComparison.Ordinal)
+         .Trim();
    }
 
    private static string FormatFetchErrorText(

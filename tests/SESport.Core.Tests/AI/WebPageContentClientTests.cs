@@ -692,9 +692,30 @@ public class WebPageContentClientTests
          WebPageContentFetchSupport.NormalizeText("Sweden Sweden")
       );
       Assert.Equal(
+         "Sweden",
+         WebPageContentFetchSupport.NormalizeText("Sweden | Sweden")
+      );
+      Assert.Equal(
          "South Africa",
          WebPageContentFetchSupport.NormalizeText(
             "South Africa\nSouth Africa"
+         )
+      );
+   }
+
+   [Fact]
+   public void NormalizeTextSeparatesGolfPlayerNameFromClub()
+   {
+      Assert.Equal(
+         "Sweden LAGERGREN, Joakim | Black Mountain GC",
+         WebPageContentFetchSupport.NormalizeText(
+            "Sweden LAGERGREN, JoakimBlack Mountain GC"
+         )
+      );
+      Assert.Equal(
+         "Sweden TOWNSEND, Hugo | Stockholms GK",
+         WebPageContentFetchSupport.NormalizeText(
+            "Sweden TOWNSEND, HugoStockholms GK"
          )
       );
    }
@@ -909,6 +930,44 @@ public class WebPageContentClientTests
 
       Assert.Equal("Sweden", normalizedText);
       Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
+   }
+
+   [Fact]
+   public async Task NormalizeTableRowsDeduplicatesFlagCountryCells()
+   {
+      var html = """
+         <html>
+            <body>
+               <table>
+                  <tr>
+                     <td class="table__cell--country">
+                        <div>
+                           <img
+                              src="/Images/Flags/SWE_18x18_1x.png"
+                              alt="Flag for SWE"
+                              class="flag flag--outline" />
+                        </div>
+                     </td>
+                     <td>Sweden</td>
+                     <td>LAGERGREN, JoakimBlack Mountain GC</td>
+                     <td>Black Mountain GC</td>
+                  </tr>
+               </table>
+            </body>
+         </html>
+         """;
+      var normalizedText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Contains(
+         "Sweden | LAGERGREN, Joakim | Black Mountain GC",
+         normalizedText,
+         StringComparison.Ordinal
+      );
+      Assert.DoesNotContain(
+         "Sweden | Sweden",
+         normalizedText,
+         StringComparison.Ordinal
+      );
    }
 
    [Fact]
