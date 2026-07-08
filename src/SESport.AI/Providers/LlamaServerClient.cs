@@ -18,7 +18,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 {
    // Rough character budget for the in-memory chat history.
    // Keep this comfortably below the llama-server token limit.
-   private const int MaxConversationContextCharacters = 100000;
+   private const int MaxConversationContextCharacters = 250000;
    private const int MaxTransientRetryAttempts = 12;
    private const int MaxFormatRepairAttempts = 3;
    private static readonly JsonSerializerOptions JsonOptions = new(
