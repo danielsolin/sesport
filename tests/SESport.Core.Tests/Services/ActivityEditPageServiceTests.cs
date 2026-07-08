@@ -77,6 +77,41 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task LoadOptionsAsyncWithoutOrganizationDoesNotShowAllPersons()
+   {
+      var personId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+
+      try
+      {
+         var options = await fixture.Service.LoadOptionsAsync(
+            [],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.DoesNotContain(
+            options.Entities,
+            option => option.Value == personId.ToString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncUsesDirectOrgPersons()
    {
       var organizationId = Guid.NewGuid();

@@ -28,7 +28,8 @@ public sealed class ActivityEditPageService(
       try
       {
          var selectedIds = selectedEntityIds.ToHashSet();
-         var entities = await GetSelectableEntitiesAsync(
+         var entities = await GetEntityPickerOptionsAsync(
+            selectedIds,
             organizationEntityId,
             cancellationToken
          );
@@ -219,6 +220,37 @@ public sealed class ActivityEditPageService(
       }
 
       return new ActivityTeaserResult(result.Prompt, teaser, null, null, null);
+   }
+
+   private async Task<
+      IReadOnlyList<BroadcastEntityOption>
+   > GetEntityPickerOptionsAsync(
+      IReadOnlySet<Guid> selectedEntityIds,
+      Guid? organizationEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(organizationEntityId is not null)
+      {
+         return await GetSelectableEntitiesAsync(
+            organizationEntityId,
+            cancellationToken
+         );
+      }
+
+      if(selectedEntityIds.Count == 0)
+      {
+         return [];
+      }
+
+      var entities = await repository.GetEntityOptionsAsync(
+         cancellationToken
+      );
+
+      return entities
+         .Where(entity => selectedEntityIds.Contains(entity.Id))
+         .Select(ToBroadcastEntityOption)
+         .ToList();
    }
 
    private async Task<

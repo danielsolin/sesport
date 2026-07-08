@@ -61,7 +61,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       }
 
       await LoadEntitiesAsync(
-         organizationEntityId,
+         Activity.OrganizationEntityId,
          Activity.LinkedEntityIds ?? [],
          cancellationToken
       );
@@ -110,7 +110,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       if(!ModelState.IsValid)
       {
          await LoadEntitiesAsync(
-            null,
+            Activity.OrganizationEntityId,
             Activity.LinkedEntityIds ?? [],
             cancellationToken
          );
