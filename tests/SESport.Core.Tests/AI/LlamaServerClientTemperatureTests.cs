@@ -1,4 +1,5 @@
-using SESport.AI.Providers;
+using SESport.AI.Clients;
+using SESport.AI.Llama;
 using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AI;
@@ -8,7 +9,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void GetEffectiveTemperatureReturnsBaseTemperatureWhenStable()
    {
-      var temperature = LlamaServerClient.GetEffectiveTemperature(
+      var temperature = LlamaTemperature.GetEffectiveTemperature(
          0.0m,
          0
       );
@@ -19,7 +20,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void GetEffectiveTemperatureBoostsWhenToolCallsRepeat()
    {
-      var temperature = LlamaServerClient.GetEffectiveTemperature(
+      var temperature = LlamaTemperature.GetEffectiveTemperature(
          0.0m,
          1
       );
@@ -30,7 +31,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void GetEffectiveTemperatureKeepsIncreasingForRepeatingTurns()
    {
-      var temperature = LlamaServerClient.GetEffectiveTemperature(
+      var temperature = LlamaTemperature.GetEffectiveTemperature(
          0.0m,
          3
       );
@@ -41,7 +42,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void GetEffectiveTemperatureKeepsHigherBaseTemperature()
    {
-      var temperature = LlamaServerClient.GetEffectiveTemperature(
+      var temperature = LlamaTemperature.GetEffectiveTemperature(
          0.25m,
          1
       );
@@ -52,7 +53,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void GetEffectiveTemperatureReturnsNullWhenBaseIsNull()
    {
-      var temperature = LlamaServerClient.GetEffectiveTemperature(
+      var temperature = LlamaTemperature.GetEffectiveTemperature(
          null,
          1
       );
@@ -63,7 +64,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void GetEffectiveTemperatureCapsAtReasonableUpperBound()
    {
-      var temperature = LlamaServerClient.GetEffectiveTemperature(
+      var temperature = LlamaTemperature.GetEffectiveTemperature(
          0.0m,
          20
       );
@@ -74,7 +75,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void CreateRepeatedToolResultMessageIsShort()
    {
-      var message = LlamaServerClient.CreateRepeatedToolResultMessage(
+      var message = LlamaToolCallHistory.CreateRepeatedToolResultMessage(
          "web_get_page"
       );
 
@@ -87,7 +88,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void CreateRepeatedToolReplayMessageIncludesCachedResult()
    {
-      var message = LlamaServerClient.CreateRepeatedToolReplayMessage(
+      var message = LlamaToolCallHistory.CreateRepeatedToolReplayMessage(
          "web_get_page",
          "Page URL: https://example.test/roster"
       );
@@ -102,7 +103,7 @@ public sealed class LlamaServerClientTemperatureTests
    [Fact]
    public void SummarizeToolResultCompactsPageContent()
    {
-      var summary = LlamaServerClient.SummarizeToolResult(
+      var summary = LlamaConversationTrimmer.SummarizeToolResult(
          WebToolNames.GetPage,
          """
          Page URL: https://example.test/roster

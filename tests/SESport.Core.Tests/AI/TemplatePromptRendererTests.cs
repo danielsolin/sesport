@@ -1,5 +1,5 @@
 using SESport.AI.Models;
-using SESport.AI.Rendering;
+using SESport.AI.Prompts;
 
 namespace SESport.Core.Tests.AI;
 

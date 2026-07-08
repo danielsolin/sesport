@@ -6,7 +6,10 @@ using Microsoft.Extensions.Logging;
 
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
-using SESport.AI.Providers;
+using SESport.AI.Clients;
+using SESport.AI.Llama;
+using SESport.AI.WebPages;
+using SESport.AI.WebSearch;
 
 namespace SESport.Core.Tests.AI;
 

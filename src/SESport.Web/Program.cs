@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
-using SESport.AI;
+using SESport.AI.Jobs;
 using SESport.Core.Configuration;
 using SESport.Web.Extensions;
 using SESport.Web.Services;

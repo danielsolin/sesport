@@ -3,7 +3,8 @@ using System.Text.Json;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
-using SESport.AI.Providers;
+using SESport.AI.Llama;
+using SESport.AI.WebPages;
 using SESport.Core.Domain;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.Core;

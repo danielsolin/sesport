@@ -5,8 +5,8 @@ using Npgsql;
 
 using NpgsqlTypes;
 
-using SESport.AI;
 using SESport.AI.Interfaces;
+using SESport.AI.Jobs;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;

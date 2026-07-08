@@ -121,7 +121,7 @@ public class IndexModel(
       return DetailsModel.BuildExecutionEnvironmentOptions(
          ExecutionEnvironmentValues,
          selectedExecutionEnvironment,
-         SESport.AI.ExecutionEnvironment.Current,
+         SESport.AI.Jobs.ExecutionEnvironment.Current,
          includeUnsetOption: false
       );
    }

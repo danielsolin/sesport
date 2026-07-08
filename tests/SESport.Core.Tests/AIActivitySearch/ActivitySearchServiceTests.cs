@@ -1,4 +1,5 @@
 using SESport.AI.ActivitySearch;
+using SESport.AI.Interfaces;
 
 namespace SESport.Core.Tests.AIActivitySearch;
 

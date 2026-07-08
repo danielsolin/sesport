@@ -1,6 +1,6 @@
 using Npgsql;
 
-using SESport.AI;
+using SESport.AI.Jobs;
 using SESport.AI.Models;
 using SESport.Data.AI;
 using SESport.Core.Configuration;

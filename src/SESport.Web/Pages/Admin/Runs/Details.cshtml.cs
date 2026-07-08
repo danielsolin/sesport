@@ -187,7 +187,7 @@ public class DetailsModel(
       ExecutionEnvironmentOptions = BuildExecutionEnvironmentOptions(
          executionEnvironments,
          selectedExecutionEnvironment,
-         SESport.AI.ExecutionEnvironment.Current
+         SESport.AI.Jobs.ExecutionEnvironment.Current
       );
       KnownExecutionEnvironmentValues = ExecutionEnvironmentOptions
          .Select(option => option.Value ?? string.Empty)

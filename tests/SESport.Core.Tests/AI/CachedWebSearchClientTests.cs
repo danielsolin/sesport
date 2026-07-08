@@ -1,5 +1,5 @@
 using SESport.AI.Interfaces;
-using SESport.AI.Providers;
+using SESport.AI.WebSearch;
 
 namespace SESport.Core.Tests.AI;
 

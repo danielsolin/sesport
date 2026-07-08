@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 
-using SESport.AI;
 using SESport.AI.Interfaces;
+using SESport.AI.Jobs;
 using SESport.AI.Models;
 
 namespace SESport.Core.Tests.AI;
@@ -15,7 +15,7 @@ public class AiJobRunnerTests
       var promptRenderer = new RecordingPromptRenderer();
       var providerClient = new ThrowingProviderClient();
       var runRepository = new RecordingRunRepository();
-      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
+      var executionGate = new AiJobExecutionGate();
 
       var runner = new AiJobRunner(
          jobRepository,
@@ -62,7 +62,7 @@ public class AiJobRunnerTests
       var promptRenderer = new RecordingPromptRenderer();
       var providerClient = new SuccessfulProviderClient();
       var runRepository = new RecordingRunRepository();
-      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
+      var executionGate = new AiJobExecutionGate();
 
       var runner = new AiJobRunner(
          jobRepository,
@@ -96,7 +96,7 @@ public class AiJobRunnerTests
       var promptRenderer = new RecordingPromptRenderer();
       var providerClient = new ProgressReportingProviderClient();
       var runRepository = new RecordingRunRepository();
-      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
+      var executionGate = new AiJobExecutionGate();
 
       var runner = new AiJobRunner(
          jobRepository,
@@ -123,7 +123,7 @@ public class AiJobRunnerTests
       var promptRenderer = new RecordingPromptRenderer();
       var providerClient = new SuccessfulProviderClient();
       var runRepository = new RecordingRunRepository();
-      var executionGate = new SESport.AI.Services.AiJobExecutionGate();
+      var executionGate = new AiJobExecutionGate();
 
       var runner = new AiJobRunner(
          jobRepository,

@@ -1,5 +1,5 @@
 using SESport.AI.Interfaces;
-using SESport.AI.Services;
+using SESport.AI.Jobs;
 
 namespace SESport.Web.Services;
 
