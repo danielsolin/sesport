@@ -893,7 +893,7 @@ public class WebPageContentClientTests
    [Fact]
    public void FormatPageContentTextPlacesRelevantLinksBeforePageText()
    {
-      var output = LlamaServerClient.FormatPageContentText(
+      var output = LlamaPageToolFormatter.FormatPageContentText(
          "Page URL",
          "https://example.test/article",
          "Title",

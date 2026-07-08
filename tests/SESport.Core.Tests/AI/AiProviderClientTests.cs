@@ -674,7 +674,7 @@ public class AiProviderClientTests
    [Fact]
    public void FindPageMatchesIgnoresTitleAndHeadings()
    {
-      var matches = InvokeFindPageMatches(
+      var matches = LlamaPageToolFormatter.FindPageMatches(
          new WebPageContent(
             "Sweden Title",
             "https://example.test/roster",
@@ -701,7 +701,7 @@ public class AiProviderClientTests
             $"{new string('y', 70)} " +
             $"chunk-{index}-after")
       );
-      var matches = InvokeFindPageMatches(
+      var matches = LlamaPageToolFormatter.FindPageMatches(
          new WebPageContent(
             "Article Title",
             "https://example.test/roster",
@@ -724,7 +724,7 @@ public class AiProviderClientTests
          "Entry action | Target | Target TOWNSEND, Hugo | " +
          "Stockholms GK | 16 Entry action | Target | Target " +
          "JONSSON, Tobias | Haninge Strand GK";
-      var matches = InvokeFindPageMatches(
+      var matches = LlamaPageToolFormatter.FindPageMatches(
          new WebPageContent(
             "Article Title",
             "https://example.test/roster",
@@ -739,24 +739,15 @@ public class AiProviderClientTests
 
       Assert.Equal(2, matches.Count);
       Assert.All(
-         matches.Cast<object>(),
-         match =>
-         {
-            var snippet = match.GetType()
-               .GetProperty("Snippet")!
-               .GetValue(match)!
-               .ToString();
-
-            Assert.NotNull(snippet);
-            Assert.True(snippet!.Length < 180);
-         }
+         matches,
+         match => Assert.True(match.Snippet.Length < 180)
       );
    }
 
    [Fact]
    public void FormatPageContentTextBreaksLongPipeSeparatedRows()
    {
-      var output = LlamaServerClient.FormatPageContentText(
+      var output = LlamaPageToolFormatter.FormatPageContentText(
          "Page URL",
          "https://example.test/entry-list",
          "Entry List",
@@ -780,7 +771,7 @@ public class AiProviderClientTests
    [Fact]
    public void FormatPageContentTextIncludesHighlightedRows()
    {
-      var output = LlamaServerClient.FormatPageContentText(
+      var output = LlamaPageToolFormatter.FormatPageContentText(
          "Page URL",
          "https://example.test/entry-list",
          "Entry List",
@@ -802,7 +793,7 @@ public class AiProviderClientTests
    [Fact]
    public void FormatPageContentTextOmitsEmptyHighlightedRows()
    {
-      var output = LlamaServerClient.FormatPageContentText(
+      var output = LlamaPageToolFormatter.FormatPageContentText(
          "Page URL",
          "https://example.test/entry-list",
          "Entry List",
@@ -830,7 +821,11 @@ public class AiProviderClientTests
          "Target DANTORP, Jens | Hills G&SC | 85\n" +
          "Target NOREN, AlexTroon | Troon | 60\n" +
          "Target FORSSTRÖM, SimonGamebook | Gamebook | 11";
-      var rows = InvokeExtractMatchingRows(body, "Target", 50);
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
+         body,
+         "Target",
+         50
+      );
 
       Assert.Equal(4, rows.Count);
       Assert.Contains(
@@ -858,7 +853,7 @@ public class AiProviderClientTests
          $"{PrimaryCountry.DisplayName} Player One | Club A | 1\n" +
          $"{PrimaryCountry.LocalDisplayName} Player Two | Club B | 2\n" +
          "Other Player Three | Club C | 3";
-      var rows = InvokeExtractMatchingRows(
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
          [
             PrimaryCountry.DisplayName,
@@ -887,7 +882,11 @@ public class AiProviderClientTests
          "6 Action | United States GUMBERG, Jordan | Club C | " +
          "8 Action | Sweden SVENSSON, Jesper | Upsala GC | " +
          "48 Action | Japan HOSHINO, Rikuya | Club D | 50";
-      var rows = InvokeExtractMatchingRows(body, "Sweden", 50);
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
+         body,
+         "Sweden",
+         50
+      );
 
       Assert.Equal(2, rows.Count);
       Assert.Contains(
@@ -911,7 +910,7 @@ public class AiProviderClientTests
          "COLLET Thibaut | 5.88 | 5.95 SWE | " +
          "DUPLANTIS Armand | 6.13 | 6.30 FRA | " +
          "MARSCHALL Kurtis | 5.95 | 6.05";
-      var rows = InvokeExtractMatchingRows(
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
          [
             PrimaryCountry.DisplayName,
@@ -935,7 +934,7 @@ public class AiProviderClientTests
    {
       var body =
          "SWEET weather note | strong winds expected | 12";
-      var rows = InvokeExtractMatchingRows(
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
          [PrimaryCountry.ThreeLetterCode],
          50
@@ -1826,81 +1825,6 @@ public class AiProviderClientTests
          count++;
          index += pattern.Length;
       }
-   }
-
-   private static System.Collections.ICollection InvokeFindPageMatches(
-      WebPageContent pageContent,
-      string find
-   )
-   {
-      var method = typeof(LlamaServerClient).GetMethod(
-         "FindPageMatches",
-         System.Reflection.BindingFlags.NonPublic |
-         System.Reflection.BindingFlags.Static
-      );
-
-      if(method is null)
-      {
-         throw new InvalidOperationException(
-            "Unable to find FindPageMatches via reflection."
-         );
-      }
-
-      var matches = method.Invoke(null, [pageContent, find]);
-
-      if(matches is not System.Collections.ICollection collection)
-      {
-         throw new InvalidOperationException(
-            "FindPageMatches did not return a collection."
-         );
-      }
-
-      return collection;
-   }
-
-   private static IReadOnlyList<string> InvokeExtractMatchingRows(
-      string text,
-      string find,
-      int maxRows
-   )
-   {
-      return InvokeExtractMatchingRows(text, [find], maxRows);
-   }
-
-   private static IReadOnlyList<string> InvokeExtractMatchingRows(
-      string text,
-      IReadOnlyCollection<string> findTerms,
-      int maxRows
-   )
-   {
-      var method = typeof(LlamaServerClient).GetMethod(
-         "ExtractMatchingRows",
-         System.Reflection.BindingFlags.NonPublic |
-         System.Reflection.BindingFlags.Static,
-         [
-            typeof(string),
-            typeof(IReadOnlyCollection<string>),
-            typeof(int)
-         ]
-      );
-
-      if(method is null)
-      {
-         throw new InvalidOperationException(
-            "Unable to find ExtractMatchingRows via reflection."
-         );
-      }
-
-      var rows = method.Invoke(null, [text, findTerms, maxRows]);
-
-      if(rows is not IReadOnlyList<string> collection)
-      {
-         throw new InvalidOperationException(
-            "ExtractMatchingRows did not return string rows."
-         );
-      }
-
-      return collection;
    }
 
    private sealed class RecordingHandler : HttpMessageHandler
