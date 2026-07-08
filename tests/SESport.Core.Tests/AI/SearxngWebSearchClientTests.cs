@@ -180,7 +180,8 @@ public class SearxngWebSearchClientTests
          {
             Timeout = TimeSpan.FromMilliseconds(50)
          },
-         new SearxngWebSearchClientOptions()
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
       );
 
       var response = await client.SearchAsync(
@@ -192,6 +193,86 @@ public class SearxngWebSearchClientTests
       Assert.Equal(2, handler.RequestCount);
       Assert.Single(response.Results);
       Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+   }
+
+   [Fact]
+   public async Task SearchWaitsAndRetriesWhenRateLimited()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.TooManyRequests,
+            "too many requests"
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Single(response.Results);
+      Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+   }
+
+   [Fact]
+   public async Task SearchRetriesCaptchaResponseWithoutReturningEmpty()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateCaptchaResponseJson()
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Single(response.Results);
+      Assert.Equal("Tre Kronor roster", response.Results[0].Title);
+   }
+
+   [Fact]
+   public async Task SearchReturnsEmptyWhenSearxngReturnsNoResults()
+   {
+      var handler = new RecordingHandler(CreateEmptyResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Empty(response.Results);
+      Assert.NotNull(handler.RequestUri);
    }
 
    private static string CreateResponseJson()
@@ -270,6 +351,53 @@ public class SearxngWebSearchClientTests
          suggestions = Array.Empty<string>(),
          unresponsive_engines = Array.Empty<object>()
       });
+   }
+
+   private static string CreateEmptyResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         query = "Tre Kronor",
+         results = Array.Empty<object>(),
+         answers = Array.Empty<object>(),
+         corrections = Array.Empty<string>(),
+         infoboxes = Array.Empty<object>(),
+         suggestions = Array.Empty<string>(),
+         unresponsive_engines = Array.Empty<object>()
+      });
+   }
+
+   private static string CreateCaptchaResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         query = "Tre Kronor",
+         results = Array.Empty<object>(),
+         answers = Array.Empty<object>(),
+         corrections = Array.Empty<string>(),
+         infoboxes = Array.Empty<object>(),
+         suggestions = Array.Empty<string>(),
+         unresponsive_engines = new[]
+         {
+            new
+            {
+               engine = "google",
+               error = "CAPTCHA"
+            }
+         }
+      });
+   }
+
+   private static SearchRateLimiter CreateFastRateLimiter()
+   {
+      return new SearchRateLimiter(
+         new WebSearchRateLimitOptions
+         {
+            MinimumRequestInterval = TimeSpan.Zero,
+            RateLimitedCooldown = TimeSpan.FromMilliseconds(1),
+            TransientFailureCooldown = TimeSpan.FromMilliseconds(1)
+         }
+      );
    }
 
    private static async Task AssertRequestUsesEngine(
@@ -361,6 +489,41 @@ public class SearxngWebSearchClientTests
             )
          };
       }
+   }
+
+   private sealed class SequenceHandler : HttpMessageHandler
+   {
+      private readonly Queue<ResponseSpec> responses;
+
+      public SequenceHandler(params ResponseSpec[] responses)
+      {
+         this.responses = new Queue<ResponseSpec>(responses);
+      }
+
+      public int RequestCount { get; private set; }
+
+      protected override Task<HttpResponseMessage> SendAsync(
+         HttpRequestMessage request,
+         CancellationToken cancellationToken
+      )
+      {
+         _ = request;
+         _ = cancellationToken;
+         RequestCount++;
+         var response = responses.Count == 0
+            ? new ResponseSpec(HttpStatusCode.OK, CreateResponseJson())
+            : responses.Dequeue();
+
+         return Task.FromResult(new HttpResponseMessage(response.StatusCode)
+         {
+            Content = new StringContent(response.Body)
+         });
+      }
+
+      public sealed record ResponseSpec(
+         HttpStatusCode StatusCode,
+         string Body
+      );
    }
 
 }

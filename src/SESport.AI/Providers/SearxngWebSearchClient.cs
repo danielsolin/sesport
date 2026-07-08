@@ -7,7 +7,6 @@ namespace SESport.AI.Providers;
 
 public sealed class SearxngWebSearchClient : IWebSearchClient
 {
-   private const int MaxTransientRetryAttempts = 3;
    private static readonly Uri DefaultBaseAddress = new(
       "http://127.0.0.1:8088/"
    );
@@ -35,11 +34,13 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    public SearxngWebSearchClient(
       HttpClient httpClient,
       SearxngWebSearchClientOptions options,
+      SearchRateLimiter? rateLimiter = null,
       ILogger<SearxngWebSearchClient>? logger = null
    )
    {
       HttpClient = httpClient;
       Options = options;
+      RateLimiter = rateLimiter ?? new SearchRateLimiter();
       Logger = logger;
       BaseAddress = BuildBaseAddress(options.BaseUrl);
       SearchUri = new Uri(BaseAddress, "search");
@@ -48,6 +49,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    private HttpClient HttpClient { get; }
 
    private SearxngWebSearchClientOptions Options { get; }
+
+   private SearchRateLimiter RateLimiter { get; }
 
    private ILogger<SearxngWebSearchClient>? Logger { get; }
 
@@ -82,48 +85,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       int searchAttempt
    )
    {
-      for(var attempt = 1; attempt <= MaxTransientRetryAttempts; attempt++)
-      {
-         try
-         {
-            return await SearchOnceAsync(
-               query,
-               maxResults,
-               cancellationToken,
-               searchAttempt
-            );
-         }
-         catch(OperationCanceledException)
-            when(cancellationToken.IsCancellationRequested)
-         {
-            throw;
-         }
-         catch(Exception exception) when (
-            IsTransientFailure(exception) &&
-            attempt < MaxTransientRetryAttempts
-         )
-         {
-            await DelayTransientRetryAsync(
-               attempt,
-               query,
-               exception.Message,
-               cancellationToken
-            );
-         }
-      }
-
-      throw new InvalidOperationException(
-         "SearXNG search retry loop exhausted."
-      );
-   }
-
-   private async Task<WebSearchResponse> SearchOnceAsync(
-      string query,
-      int maxResults,
-      CancellationToken cancellationToken,
-      int searchAttempt
-   )
-   {
       var engines = SearxngSearchEngineRotation.NormalizeEngines(
          Options.Engines
       );
@@ -132,6 +93,54 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          searchAttempt
       );
 
+      while(true)
+      {
+         await RateLimiter.WaitAsync(engine, cancellationToken);
+
+         try
+         {
+            return await SearchOnceAsync(
+               query,
+               maxResults,
+               cancellationToken,
+               engine
+            );
+         }
+         catch(OperationCanceledException)
+            when(cancellationToken.IsCancellationRequested)
+         {
+            throw;
+         }
+         catch(Exception exception) when(IsRateLimitedFailure(exception))
+         {
+            RateLimiter.RegisterRateLimitedFailure(engine);
+            LogRetryWait(
+               engine,
+               query,
+               exception.Message,
+               "rate-limited"
+            );
+         }
+         catch(Exception exception) when(IsTransientFailure(exception))
+         {
+            RateLimiter.RegisterTransientFailure(engine);
+            LogRetryWait(
+               engine,
+               query,
+               exception.Message,
+               "transient"
+            );
+         }
+      }
+   }
+
+   private async Task<WebSearchResponse> SearchOnceAsync(
+      string query,
+      int maxResults,
+      CancellationToken cancellationToken,
+      string engine
+   )
+   {
       Logger?.LogDebug(
          "Sending SearXNG search request to {SearchUri} using {Engine}",
          SearchUri,
@@ -169,11 +178,37 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
+      var results = ParseResults(rawResponse, maxResults);
+
+      if(results.Count == 0 && ContainsRateLimitSignal(rawResponse))
+      {
+         throw new SearxngRateLimitedException(
+            "SearXNG response reported rate limiting or CAPTCHA."
+         );
+      }
+
       return new WebSearchResponse(
-         ParseResults(rawResponse, maxResults),
+         results,
          $"SearXNG/{engine}",
          $"engines={engine}"
       );
+   }
+
+   private static bool IsRateLimitedFailure(Exception exception)
+   {
+      if(exception is SearxngRateLimitedException)
+      {
+         return true;
+      }
+
+      if(exception is not HttpRequestException httpRequestException)
+      {
+         return false;
+      }
+
+      return httpRequestException.StatusCode is
+         System.Net.HttpStatusCode.TooManyRequests or
+         System.Net.HttpStatusCode.Forbidden;
    }
 
    private static bool IsTransientFailure(Exception exception)
@@ -187,41 +222,54 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    {
       return code is null ||
          code is System.Net.HttpStatusCode.RequestTimeout ||
-         code is System.Net.HttpStatusCode.TooManyRequests ||
          code is System.Net.HttpStatusCode.BadGateway ||
          code is System.Net.HttpStatusCode.ServiceUnavailable ||
          code is System.Net.HttpStatusCode.GatewayTimeout;
    }
 
-   private async Task DelayTransientRetryAsync(
-      int attempt,
+   private void LogRetryWait(
+      string engine,
       string query,
       string reason,
-      CancellationToken cancellationToken
+      string failureType
    )
    {
-      var delay = GetTransientRetryDelay(attempt);
-
       Logger?.LogWarning(
-         "SearXNG search attempt {Attempt} failed for {Query} with " +
-         "{Reason}. Retrying in {Delay}.",
-         attempt,
+         "SearXNG search failed for {Query} using {Engine} with " +
+         "{FailureType}: {Reason}. Waiting before retrying.",
          query,
-         reason,
-         delay
+         engine,
+         failureType,
+         reason
       );
-
-      await Task.Delay(delay, cancellationToken);
    }
 
-   private static TimeSpan GetTransientRetryDelay(int attempt)
+   private static bool ContainsRateLimitSignal(string rawResponse)
    {
-      return attempt switch
-      {
-         1 => TimeSpan.FromSeconds(2),
-         2 => TimeSpan.FromSeconds(5),
-         _ => TimeSpan.FromSeconds(10)
-      };
+      return rawResponse.Contains(
+            "captcha",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         rawResponse.Contains(
+            "too many requests",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         rawResponse.Contains(
+            "rate limit",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         rawResponse.Contains(
+            "rate-limit",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         rawResponse.Contains(
+            "ratelimit",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         rawResponse.Contains(
+            "suspended",
+            StringComparison.OrdinalIgnoreCase
+         );
    }
 
    private IReadOnlyList<WebSearchResult> ParseResults(
@@ -374,5 +422,13 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
       return $"searxng search failed with {(int)statusCode} {statusCode}: " +
          preview;
+   }
+
+   private sealed class SearxngRateLimitedException : Exception
+   {
+      public SearxngRateLimitedException(string message)
+         : base(message)
+      {
+      }
    }
 }

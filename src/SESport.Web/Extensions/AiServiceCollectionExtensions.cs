@@ -25,6 +25,8 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<AiAdminRepository>();
       services.AddSingleton<AiJobExecutionGate>();
       services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
+      services.AddSingleton<SearchRateLimiter>();
+      services.AddSingleton<WebSearchCache>();
       services.AddScoped<IAiJobRunner, AiJobRunner>();
       services.AddScoped<IAiJobProcessor, AiJobRunner>();
       services.AddHttpClient<
@@ -41,11 +43,18 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = TimeSpan.FromMinutes(20);
       });
-      services.AddHttpClient<IWebSearchClient, SearxngWebSearchClient>(
+      services.AddHttpClient<SearxngWebSearchClient>(
          client =>
          {
             client.Timeout = TimeSpan.FromSeconds(60);
          }
+      );
+      services.AddScoped<IWebSearchClient>(serviceProvider =>
+         new CachedWebSearchClient(
+            serviceProvider.GetRequiredService<SearxngWebSearchClient>(),
+            serviceProvider.GetRequiredService<WebSearchCache>(),
+            serviceProvider.GetRequiredService<SearxngWebSearchClientOptions>()
+         )
       );
       services.AddHttpClient<GoogleWebSearchClient>(
          client =>
