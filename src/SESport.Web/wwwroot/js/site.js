@@ -27,6 +27,7 @@
    const runRowSelector = "[data-ai-run-id]";
    const runStatusCellSelector = "[data-ai-run-status-cell]";
    const runStatusTextSelector = "[data-ai-run-status-text]";
+   const runPayloadCellSelector = "[data-ai-run-payload-cell]";
    const runRoundsCellSelector = "[data-ai-run-rounds-cell]";
    const runDurationCellSelector = "[data-ai-run-duration-cell]";
    const runInlineEditCellSelector = "[data-run-inline-edit-field]";
@@ -2429,6 +2430,9 @@
       const rounds = typeof result.rounds === "number"
          ? result.rounds.toString()
          : "";
+      const maxPayloadChars = typeof result.maxPayloadChars === "number"
+         ? result.maxPayloadChars.toString()
+         : "";
       const duration = typeof result.duration === "string"
          ? result.duration.trim()
          : "";
@@ -2436,6 +2440,13 @@
       row.dataset.aiRunStatus = statusId;
       updateRunStatusRow(row, statusId);
       updateRunStatusCell(row, statusId);
+
+      const payloadCell = row.querySelector(runPayloadCellSelector);
+
+      if(payloadCell instanceof HTMLElement && maxPayloadChars !== "")
+      {
+         payloadCell.textContent = maxPayloadChars;
+      }
 
       const roundsCell = row.querySelector(runRoundsCellSelector);
 

@@ -196,6 +196,114 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunsAsyncReturnsMaxPayloadCharacterCount()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: AiJobRunStatusIds.Running,
+         conversationCharacterCount: 12345,
+         toolTraceJson: """
+            [
+              {
+                "kind": "budget",
+                "turn": 2,
+                "payload_chars": 45678
+              }
+            ]
+            """
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            jobId,
+            null,
+            CancellationToken.None
+         );
+
+         var run = Assert.Single(runs, item => item.Id == runId);
+         Assert.Equal(45678, run.MaxPayloadCharacterCount);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task GetRunsAsyncUsesConversationCharacterCountAsPayloadFloor()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: AiJobRunStatusIds.Running,
+         conversationCharacterCount: 50000,
+         toolTraceJson: """
+            [
+              {
+                "kind": "budget",
+                "turn": 1,
+                "payload_chars": 20000
+              }
+            ]
+            """
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            jobId,
+            null,
+            CancellationToken.None
+         );
+
+         var run = Assert.Single(runs, item => item.Id == runId);
+         Assert.Equal(50000, run.MaxPayloadCharacterCount);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task GetRunsAsyncLimitsResultsToFiftyRows()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -794,6 +902,7 @@ public sealed class AiRepositoryTests
       string? correlationId = null,
       string statusId = "running",
       int toolRoundCount = 0,
+      int conversationCharacterCount = 0,
       decimal? durationSeconds = null,
       string? toolTraceJson = null
    )
@@ -848,7 +957,7 @@ public sealed class AiRepositoryTests
             null,
             null,
             @tool_round_count,
-            0,
+            @conversation_character_count,
             @execution_environment
          )
          """;
@@ -878,6 +987,10 @@ public sealed class AiRepositoryTests
          (object?)durationSeconds ?? DBNull.Value
       );
       command.Parameters.AddWithValue("tool_round_count", toolRoundCount);
+      command.Parameters.AddWithValue(
+         "conversation_character_count",
+         conversationCharacterCount
+      );
       await command.ExecuteNonQueryAsync();
    }
 

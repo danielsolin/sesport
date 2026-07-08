@@ -59,9 +59,10 @@
          <col class="ai-runs-col-started" />
          <col class="ai-runs-col-env-job-prov" />
          <col class="ai-runs-col-event" />
-         <col class="ai-runs-col-status" />
+         <col class="ai-runs-col-payload" />
          <col class="ai-runs-col-rounds" />
          <col class="ai-runs-col-duration" />
+         <col class="ai-runs-col-status" />
          <col class="ai-runs-col-actions" />
       </colgroup>
       <thead>
@@ -69,9 +70,10 @@
             <th>Started</th>
             <th>ENV/JOB/PROV</th>
             <th>Event</th>
-            <th>Status</th>
+            <th>Max Payload</th>
             <th>Rounds</th>
             <th>Duration</th>
+            <th>Status</th>
             <th></th>
          </tr>
       </thead>
@@ -125,14 +127,17 @@
                   </select>
                </td>
                <td>@run.EventName</td>
-               <td data-ai-run-status-cell>
-                  <code data-ai-run-status-text>@run.StatusId</code>
+               <td data-ai-run-payload-cell>
+                  @run.MaxPayloadCharacterCount
                </td>
                <td data-ai-run-rounds-cell>
                   @run.ToolRoundCount
                </td>
                <td data-ai-run-duration-cell>
                   @DetailsModel.FormatDuration(run)
+               </td>
+               <td data-ai-run-status-cell>
+                  <code data-ai-run-status-text>@run.StatusId</code>
                </td>
                <td class="table-actions">
                   <div class="ai-runs-table-actions">

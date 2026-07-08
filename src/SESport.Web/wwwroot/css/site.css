@@ -762,6 +762,10 @@ h2 {
    width: 82px;
 }
 
+.ai-runs-col-payload {
+   width: 96px;
+}
+
 .ai-runs-col-rounds {
    width: 54px;
 }

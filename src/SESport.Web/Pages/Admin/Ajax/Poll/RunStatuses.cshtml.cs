@@ -35,6 +35,7 @@ public sealed class RunStatusesModel(AiRepository repository) : PageModel
             {
                id = run.Id,
                statusId = run.StatusId,
+               maxPayloadChars = run.MaxPayloadCharacterCount,
                rounds = run.ToolRoundCount,
                duration = DetailsModel.FormatDuration(run)
             })

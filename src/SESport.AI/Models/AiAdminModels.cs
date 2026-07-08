@@ -82,6 +82,7 @@ public sealed record AiRunListItem(
    string? ProviderModel,
    string StatusId,
    int ToolRoundCount,
+   int MaxPayloadCharacterCount,
    DateTimeOffset StartedAt,
    decimal? DurationSeconds
 );

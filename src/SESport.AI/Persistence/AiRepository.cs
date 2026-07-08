@@ -53,17 +53,29 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       }
 
       var sql = new StringBuilder()
+         .AppendLine("with selected_runs as (")
          .AppendLine("select")
          .AppendLine("   r.id,")
          .AppendLine("   r.execution_environment,")
-         .AppendLine("   j.label,")
-         .AppendLine("   r.input_payload->>'event_name',")
-         .AppendLine("   p.label,")
+         .AppendLine("   j.label as job_label,")
+         .AppendLine("   r.input_payload->>'event_name' as event_name,")
+         .AppendLine("   p.label as provider_label,")
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
          .AppendLine("   r.tool_round_count,")
          .AppendLine("   r.started_at,")
-         .AppendLine("   r.duration_seconds")
+         .AppendLine("   r.duration_seconds,")
+         .AppendLine("   r.conversation_character_count,")
+         .AppendLine("   r.tool_trace,")
+         .AppendLine("   case r.status_id")
+         .AppendLine(
+            $"      when '{AiJobRunStatusIds.Running}' then 0"
+         )
+         .AppendLine(
+            $"      when '{AiJobRunStatusIds.Pending}' then 1"
+         )
+         .AppendLine("      else 2")
+         .AppendLine("   end as status_sort_order")
          .AppendLine("from ai_job_runs r")
          .AppendLine("join ai_jobs j on j.id = r.job_id")
          .AppendLine("join ai_providers p on p.id = r.provider_id");
@@ -74,18 +86,40 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       }
 
       sql.AppendLine("order by")
-         .AppendLine("   case r.status_id")
-         .AppendLine(
-            $"      when '{AiJobRunStatusIds.Running}' then 0"
-         )
-         .AppendLine(
-            $"      when '{AiJobRunStatusIds.Pending}' then 1"
-         )
-         .AppendLine("      else 2")
-         .AppendLine("   end,")
+         .AppendLine("   status_sort_order,")
          .AppendLine("   r.started_at desc,")
          .AppendLine("   r.id desc")
-         .AppendLine("limit 50");
+         .AppendLine("limit 50")
+         .AppendLine(")")
+         .AppendLine("select")
+         .AppendLine("   sr.id,")
+         .AppendLine("   sr.execution_environment,")
+         .AppendLine("   sr.job_label,")
+         .AppendLine("   sr.event_name,")
+         .AppendLine("   sr.provider_label,")
+         .AppendLine("   sr.provider_model,")
+         .AppendLine("   sr.status_id,")
+         .AppendLine("   sr.tool_round_count,")
+         .AppendLine("   sr.started_at,")
+         .AppendLine("   sr.duration_seconds,")
+         .AppendLine("   greatest(")
+         .AppendLine("      sr.conversation_character_count,")
+         .AppendLine("      coalesce(trace.max_payload_chars, 0)")
+         .AppendLine("   ) as max_payload_chars")
+         .AppendLine("from selected_runs sr")
+         .AppendLine("left join lateral (")
+         .AppendLine("   select max((entry.value->>'payload_chars')::int)")
+         .AppendLine("      as max_payload_chars")
+         .AppendLine("   from jsonb_array_elements(")
+         .AppendLine("      coalesce(sr.tool_trace, '[]'::jsonb)")
+         .AppendLine("   ) entry(value)")
+         .AppendLine("   where entry.value ? 'payload_chars'")
+         .AppendLine("      and entry.value->>'payload_chars' ~ '^[0-9]+$'")
+         .AppendLine(") trace on true")
+         .AppendLine("order by")
+         .AppendLine("   sr.status_sort_order,")
+         .AppendLine("   sr.started_at desc,")
+         .AppendLine("   sr.id desc");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
       if(date is not null)
@@ -124,6 +158,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 5),
                reader.GetString(6),
                reader.GetInt32(7),
+               reader.GetInt32(10),
                reader.GetFieldValue<DateTimeOffset>(8),
                ReadNullableDecimal(reader, 9)
             )
@@ -188,10 +223,23 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.status_id,
             r.tool_round_count,
             r.started_at,
-            r.duration_seconds
+            r.duration_seconds,
+            greatest(
+               r.conversation_character_count,
+               coalesce(trace.max_payload_chars, 0)
+            ) as max_payload_chars
          from ai_job_runs r
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
+         left join lateral (
+            select max((entry.value->>'payload_chars')::int)
+               as max_payload_chars
+            from jsonb_array_elements(
+               coalesce(r.tool_trace, '[]'::jsonb)
+            ) entry(value)
+            where entry.value ? 'payload_chars'
+               and entry.value->>'payload_chars' ~ '^[0-9]+$'
+         ) trace on true
          where r.id = any(@ids)
             and r.status_id <> 'archived'
          order by r.started_at desc
@@ -216,6 +264,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 5),
                reader.GetString(6),
                reader.GetInt32(7),
+               reader.GetInt32(10),
                reader.GetFieldValue<DateTimeOffset>(8),
                ReadNullableDecimal(reader, 9)
             )
