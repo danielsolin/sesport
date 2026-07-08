@@ -43,7 +43,12 @@ public sealed class ActivityRepositoryTests
          "Test Series",
          TrackedEntityTypeIds.Series
       );
-      await InsertActivityEntityLinkAsync(dataSource, activityId, personId);
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         personId,
+         seriesId
+      );
       await InsertEntityLinkAsync(dataSource, personId, seriesId);
 
       try
@@ -107,7 +112,12 @@ public sealed class ActivityRepositoryTests
          TrackedEntityTypeIds.Series,
          aliasName: "Series Alias"
       );
-      await InsertActivityEntityLinkAsync(dataSource, activityId, personId);
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         personId,
+         seriesId
+      );
       await InsertEntityLinkAsync(dataSource, personId, seriesId);
 
       try
@@ -208,6 +218,69 @@ public sealed class ActivityRepositoryTests
          await DeleteActivityAsync(dataSource, activityId);
          await DeleteEntityAsync(dataSource, secondSeriesId);
          await DeleteEntityAsync(dataSource, firstSeriesId);
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
+   public async Task GetActivitiesAsyncDoesNotInferOrganizationContext()
+   {
+      var now = DateTimeOffset.UtcNow;
+      var selectedDate = SportDay.Today(now).StartDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var seriesId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt
+      );
+      await InsertEntityAsync(
+         dataSource,
+         personId,
+         "Test Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertEntityAsync(
+         dataSource,
+         seriesId,
+         "Test Series",
+         TrackedEntityTypeIds.Series
+      );
+      await InsertActivityEntityLinkAsync(dataSource, activityId, personId);
+      await InsertEntityLinkAsync(dataSource, personId, seriesId);
+
+      try
+      {
+         var activities = await repository.GetActivitiesAsync(
+            selectedDate,
+            ActivityListStatusIds.All,
+            [],
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         Assert.Equal(string.Empty, activity.RelatedOrganizationEntities);
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, seriesId);
          await DeleteEntityAsync(dataSource, personId);
       }
    }

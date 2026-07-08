@@ -718,34 +718,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                "context.entity_type_id"
             )
          )
-         .AppendLine("      union")
-         .AppendLine("      select distinct")
-         .AppendLine("         coalesce(entity.alias_name,")
-         .AppendLine("            entity.canonical_name) as organization_name")
-         .AppendLine("      from activity_entity_links al")
-         .AppendLine("      join entities p on p.id = al.entity_id")
-         .AppendLine("      join entity_to_entity_links el")
-         .AppendLine("         on el.source_entity_id = p.id")
-         .AppendLine("         or el.target_entity_id = p.id")
-         .AppendLine("      join entities entity")
-         .AppendLine("         on entity.id = case")
-         .AppendLine("            when el.source_entity_id = p.id")
-         .AppendLine("               then el.target_entity_id")
-         .AppendLine("            else el.source_entity_id")
-         .AppendLine("         end")
-         .AppendLine("      where al.activity_id = a.id")
-         .AppendLine("         and al.organization_entity_id is null")
-         .AppendLine(
-            $$"""
-               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-            """
-         )
-         .AppendLine(
-            "         and " +
-            BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
-               "entity.entity_type_id"
-            )
-         )
          .AppendLine("   ) organizations")
          .AppendLine(") ro on true")
          .AppendLine(whereClause)
