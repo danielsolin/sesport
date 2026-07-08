@@ -35,7 +35,7 @@ internal static class WebPageContentFetchSupport
       """;
 
    internal const string CutoffMarker = "[CUTOFF]";
-   internal const int MaxResponseCharacters = 30000;
+   internal const int MaxResponseCharacters = 50000;
 
    internal static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
