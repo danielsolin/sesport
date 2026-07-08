@@ -1,4 +1,4 @@
-using SESport.AI.Providers;
+using SESport.AI.WebPages;
 
 namespace SESport.AI.Interfaces;
 
