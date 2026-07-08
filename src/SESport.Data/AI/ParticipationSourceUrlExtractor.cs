@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace SESport.AI.Persistence;
+namespace SESport.Data.AI;
 
 public static class ParticipationSourceUrlExtractor
 {

@@ -1,6 +1,8 @@
 using Npgsql;
 
-namespace SESport.AI.Persistence;
+using SESport.Core.Identifiers;
+
+namespace SESport.Data.AI;
 
 public sealed class AiActivitySearchRunRepository : IAsyncDisposable
 {

@@ -1,8 +1,11 @@
 using Npgsql;
 
 using SESport.AI.ActivitySearch;
+using SESport.Core.Domain;
+using SESport.Core.Identifiers;
+using SESport.Core.Ingestion;
 
-namespace SESport.AI.Persistence;
+namespace SESport.Data.AI;
 
 public sealed class ActivitySearchEntityRepository : IAsyncDisposable
 {

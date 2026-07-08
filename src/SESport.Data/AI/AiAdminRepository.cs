@@ -2,7 +2,7 @@ using Npgsql;
 using NpgsqlTypes;
 using SESport.AI.Models;
 
-namespace SESport.AI.Persistence;
+namespace SESport.Data.AI;
 
 public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 {

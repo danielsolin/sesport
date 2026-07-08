@@ -21,6 +21,8 @@
    <ItemGroup>
       <ProjectReference Include="..\..\src\SESport.Core\SESport.Core.csproj" />
       <ProjectReference Include="..\..\src\SESport.AI\SESport.AI.csproj" />
+      <ProjectReference
+         Include="..\..\src\SESport.Data\SESport.Data.csproj" />
       <ProjectReference Include="..\..\src\SESport.Web\SESport.Web.csproj" />
    </ItemGroup>
 

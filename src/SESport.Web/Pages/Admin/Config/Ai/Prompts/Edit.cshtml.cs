@@ -2,7 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.AI.Models;
-using SESport.AI.Persistence;
+using SESport.Data.AI;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Prompts;
 

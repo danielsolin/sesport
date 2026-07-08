@@ -5,12 +5,14 @@ using Npgsql;
 
 using NpgsqlTypes;
 
+using SESport.AI;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
-namespace SESport.AI.Persistence;
+namespace SESport.Data.AI;
 
 public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository

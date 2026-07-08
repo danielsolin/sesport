@@ -1,4 +1,4 @@
-using SESport.AI.Persistence;
+using SESport.Data.AI;
 
 namespace SESport.Core.Tests.AI;
 

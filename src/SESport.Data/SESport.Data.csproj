@@ -8,6 +8,7 @@
 
    <ItemGroup>
       <ProjectReference Include="..\SESport.Core\SESport.Core.csproj" />
+      <ProjectReference Include="..\SESport.AI\SESport.AI.csproj" />
    </ItemGroup>
 
    <ItemGroup>

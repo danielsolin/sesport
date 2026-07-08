@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using SESport.AI.Models;
-using SESport.AI.Persistence;
+using SESport.Data.AI;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Web.Services;
