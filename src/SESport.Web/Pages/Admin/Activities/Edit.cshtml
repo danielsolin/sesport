@@ -7,6 +7,9 @@
    var generateTeaserUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityTeaser"
    );
+   var participantSearchUrl = Url.Page(
+      "/Admin/Ajax/Search/ActivityParticipant"
+   );
 }
 
 <section class="page-heading page-heading-row">
@@ -35,25 +38,89 @@
    }
    <section class="form-section">
       <h2>Participants</h2>
-      <label>
-         <div class="multi-select-row">
-            <select asp-for="Activity.LinkedEntityIds"
-                    asp-items="Model.Entities"
-                    multiple
-                    class="ses-multiselect"
-                    data-multi-select
-                    data-placeholder="Select entities"
-                    data-select-all="true"
-                    data-dropdown-height="140px">
-            </select>
-            <button type="button"
-                    class="multi-select-clear"
-                    data-multi-select-clear>
-               Clear
-            </button>
-         </div>
-         <span asp-validation-for="Activity.LinkedEntityIds"></span>
-      </label>
+      <div class="activity-participant-picker"
+           data-activity-participant-picker
+           data-activity-participant-search-url="@participantSearchUrl"
+           data-activity-id="@Model.Activity.Id"
+           data-organization-entity-id=
+              "@Model.Activity.OrganizationEntityId">
+         <input class="broadcast-org-entity-input"
+                type="text"
+                aria-label="Participant"
+                placeholder="Add participant"
+                autocomplete="off"
+                spellcheck="false"
+                data-activity-participant-input />
+         <input type="hidden"
+                data-activity-participant-id />
+         <div class="broadcast-org-entity-suggestions"
+              data-activity-participant-suggestions
+              hidden></div>
+      </div>
+      <div data-activity-participant-hidden-inputs>
+         @foreach(var participant in Model.Participants)
+         {
+            <input type="hidden"
+                   name="Activity.LinkedEntityIds"
+                   value="@participant.Id"
+                   data-activity-participant-hidden-id />
+         }
+      </div>
+      <span asp-validation-for="Activity.LinkedEntityIds"></span>
+      <div data-activity-participant-grid>
+         @if(Model.Participants.Count == 0)
+         {
+            <div class="notice"
+                 data-activity-participant-empty>
+               No participants.
+            </div>
+         }
+         else
+         {
+            <div class="admin-table-wrap">
+               <table class="admin-table admin-table-compact">
+                  <thead>
+                     <tr>
+                        <th>Name</th>
+                        <th>Related (orgs)</th>
+                        <th>Watch Priority</th>
+                        <th>Gender</th>
+                        <th>Alias</th>
+                        <th></th>
+                     </tr>
+                  </thead>
+                  <tbody data-activity-participant-rows>
+                     @foreach(var participant in Model.Participants)
+                     {
+                        var deleteFormId =
+                           $"delete-participant-{participant.Id:N}";
+                        <tr data-activity-participant-row="@participant.Id">
+                           <td>
+                              <a asp-page="/Admin/Entities/Edit"
+                                 asp-route-id="@participant.Id">
+                                 @participant.Name
+                              </a>
+                           </td>
+                           <td>@participant.RelatedOrganizations</td>
+                           <td>@participant.WatchPriority</td>
+                           <td>@participant.Gender</td>
+                           <td>@participant.Alias</td>
+                           <td class="table-actions">
+                              @if(Model.Activity.Id is not null)
+                              {
+                                 <button type="submit"
+                                         form="@deleteFormId">
+                                    Delete
+                                 </button>
+                              }
+                           </td>
+                        </tr>
+                     }
+                  </tbody>
+               </table>
+            </div>
+         }
+      </div>
    </section>
 
    <section class="form-section">
@@ -165,3 +232,37 @@
       </button>
    </section>
 </form>
+
+@if(Model.Activity.Id is not null)
+{
+   <form id="add-participant-form"
+         method="post"
+         asp-page-handler="AddParticipant"
+         asp-route-id="@Model.Activity.Id">
+      <input asp-for="ReturnUrl" type="hidden" />
+      <input type="hidden"
+             name="organizationEntityId"
+             value="@Model.Activity.OrganizationEntityId" />
+      <input type="hidden"
+             name="entityId"
+             data-add-participant-entity-id />
+   </form>
+
+   @foreach(var participant in Model.Participants)
+   {
+      var deleteFormId = $"delete-participant-{participant.Id:N}";
+      <form id="@deleteFormId"
+            method="post"
+            asp-page-handler="DeleteParticipant"
+            asp-route-id="@Model.Activity.Id"
+            asp-route-entityId="@participant.Id"
+            onsubmit="return confirm('Sure?');">
+         <input asp-for="ReturnUrl" type="hidden" />
+      </form>
+   }
+}
+
+@section Scripts {
+   <script src="~/js/activity-participants.js"
+           asp-append-version="true"></script>
+}

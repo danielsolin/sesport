@@ -537,6 +537,18 @@ h2 {
    min-width: 0;
 }
 
+.activity-participant-picker {
+   position: relative;
+   width: min(280px, 100%);
+   margin-bottom: 8px;
+}
+
+.activity-participant-picker .broadcast-org-entity-input {
+   padding: 3px 6px;
+   font-size: 12px;
+   line-height: 1.25;
+}
+
 .broadcast-org-entity-input {
    width: 100%;
    min-width: 0;

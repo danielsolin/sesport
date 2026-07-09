@@ -69,6 +69,63 @@ public sealed class ActivityEditPageService(
       return await repository.GetForEditAsync(id, cancellationToken);
    }
 
+   public async Task<IReadOnlyList<ActivityParticipantListItem>>
+      LoadParticipantsAsync(
+         ActivityEditModel activity,
+         CancellationToken cancellationToken
+      )
+   {
+      return await repository.GetParticipantsForEditAsync(
+         activity.Id,
+         activity.LinkedEntityIds ?? [],
+         cancellationToken
+      );
+   }
+
+   public async Task DeleteParticipantAsync(
+      Guid activityId,
+      Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      await repository.DeleteParticipantAsync(
+         activityId,
+         entityId,
+         cancellationToken
+      );
+   }
+
+   public async Task AddParticipantAsync(
+      Guid activityId,
+      Guid entityId,
+      Guid organizationEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      await repository.AddParticipantAsync(
+         activityId,
+         entityId,
+         organizationEntityId,
+         cancellationToken
+      );
+   }
+
+   public async Task<IReadOnlyList<ActivityParticipantListItem>>
+      SearchParticipantCandidatesAsync(
+         Guid organizationEntityId,
+         string term,
+         IReadOnlyCollection<Guid> excludedEntityIds,
+         CancellationToken cancellationToken
+      )
+   {
+      return await repository.SearchParticipantCandidatesAsync(
+         organizationEntityId,
+         term,
+         excludedEntityIds,
+         cancellationToken
+      );
+   }
+
    public async Task SaveAsync(
       ActivityEditModel activity,
       CancellationToken cancellationToken

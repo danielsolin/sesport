@@ -20,6 +20,12 @@ public class EditModel(ActivityEditPageService editService) : PageModel
 
    public IReadOnlyList<LookupOption> Sports { get; private set; } = [];
 
+   public IReadOnlyList<ActivityParticipantListItem> Participants
+   {
+      get;
+      private set;
+   } = [];
+
    public string? LoadError { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -47,6 +53,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
             Activity.LinkedEntityIds ?? [],
             cancellationToken
          );
+         await LoadParticipantsAsync(cancellationToken);
          return Page();
       }
 
@@ -65,6 +72,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
          Activity.LinkedEntityIds ?? [],
          cancellationToken
       );
+      await LoadParticipantsAsync(cancellationToken);
 
       return Page();
    }
@@ -81,6 +89,53 @@ public class EditModel(ActivityEditPageService editService) : PageModel
    )
    {
       return await SaveAsync(cancellationToken);
+   }
+
+   public async Task<IActionResult> OnPostDeleteParticipantAsync(
+      Guid id,
+      Guid entityId,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      await editService.DeleteParticipantAsync(id, entityId, cancellationToken);
+
+      return RedirectToPage(
+         "./Edit",
+         new
+         {
+            id,
+            returnUrl = GetLocalReturnUrl(returnUrl)
+         }
+      );
+   }
+
+   public async Task<IActionResult> OnPostAddParticipantAsync(
+      Guid id,
+      Guid entityId,
+      Guid? organizationEntityId,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      if(organizationEntityId is not null)
+      {
+         await editService.AddParticipantAsync(
+            id,
+            entityId,
+            organizationEntityId.Value,
+            cancellationToken
+         );
+      }
+
+      return RedirectToPage(
+         "./Edit",
+         new
+         {
+            id,
+            returnUrl = GetLocalReturnUrl(returnUrl)
+         }
+      );
    }
 
    private async Task LoadEntitiesAsync(
@@ -114,6 +169,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
             Activity.LinkedEntityIds ?? [],
             cancellationToken
          );
+         await LoadParticipantsAsync(cancellationToken);
          return Page();
       }
 
@@ -125,6 +181,16 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       }
 
       return RedirectToPage("./Index");
+   }
+
+   private async Task LoadParticipantsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      Participants = await editService.LoadParticipantsAsync(
+         Activity,
+         cancellationToken
+      );
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)

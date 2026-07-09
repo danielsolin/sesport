@@ -45,6 +45,15 @@ public sealed record EntityOption(
 
 public sealed record LookupOption(string Id, string Label);
 
+public sealed record ActivityParticipantListItem(
+   Guid Id,
+   string Name,
+   string RelatedOrganizations,
+   string WatchPriority,
+   string Gender,
+   string Alias
+);
+
 public sealed class ActivityEditModel
 {
    public Guid? Id { get; set; }
