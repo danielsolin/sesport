@@ -1,0 +1,9 @@
+[Unit]
+Description=SESport database cleanup
+
+[Service]
+Type=oneshot
+User=daniel
+WorkingDirectory=/home/daniel/sesport
+ExecStart=/usr/bin/flock -n /tmp/sesport-db-cleanup.lock \
+   /home/daniel/sesport/bin/db-cleanup.sh

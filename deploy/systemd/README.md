@@ -14,6 +14,8 @@ services or timer you want active.
 - `sesport-dev.service`
 - `sesport-db-backup.service`
 - `sesport-db-backup.timer`
+- `sesport-db-cleanup.service`
+- `sesport-db-cleanup.timer`
 
 ## Install Example
 
