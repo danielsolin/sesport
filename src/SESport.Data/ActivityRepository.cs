@@ -821,6 +821,47 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await transaction.CommitAsync(cancellationToken);
    }
 
+   public async Task UpdateTeaserAsync(
+      Guid id,
+      string teaser,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activities
+         set
+            teaser = @teaser,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("teaser", teaser.Trim());
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task<bool> UpdateEmptyTeaserAsync(
+      Guid id,
+      string teaser,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activities
+         set
+            teaser = @teaser,
+            updated_at = now()
+         where id = @id
+            and coalesce(teaser, '') = ''
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("teaser", teaser.Trim());
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
    private async Task<IReadOnlyList<ActivityListItem>> GetActivityListAsync(
       string whereClause,
       CancellationToken cancellationToken

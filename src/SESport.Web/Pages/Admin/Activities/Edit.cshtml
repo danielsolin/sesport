@@ -161,12 +161,15 @@
       </div>
       <label>
          <span>Description</span>
-         <textarea asp-for="Activity.Description" rows="3"></textarea>
+         <textarea asp-for="Activity.Description"
+                   class="medium-textarea"
+                   rows="3"></textarea>
       </label>
       <label>
          <span>Teaser</span>
          <textarea asp-for="Activity.Teaser"
-                   rows="2"
+                   class="medium-textarea"
+                   rows="3"
                    data-teaser-output></textarea>
       </label>
       <div class="button-row">

@@ -57,7 +57,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.id,")
          .AppendLine("   r.execution_environment,")
          .AppendLine("   j.label as job_label,")
-         .AppendLine("   r.input_payload->>'event_name' as event_name,")
+         .AppendLine("   coalesce(")
+         .AppendLine("      r.input_payload->>'event_name',")
+         .AppendLine("      r.input_payload->>'title',")
+         .AppendLine("      a.title")
+         .AppendLine("   ) as event_name,")
          .AppendLine("   p.label as provider_label,")
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
@@ -77,7 +81,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   end as status_sort_order")
          .AppendLine("from ai_job_runs r")
          .AppendLine("join ai_jobs j on j.id = r.job_id")
-         .AppendLine("join ai_providers p on p.id = r.provider_id");
+         .AppendLine("join ai_providers p on p.id = r.provider_id")
+         .AppendLine("left join activities a")
+         .AppendLine("   on a.id::text = r.correlation_id")
+         .AppendLine("      and r.job_id = 'generate-activity-teaser'");
 
       if(where.Count > 0)
       {
@@ -216,7 +223,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.id,
             r.execution_environment,
             j.label,
-            r.input_payload->>'event_name',
+            coalesce(
+               r.input_payload->>'event_name',
+               r.input_payload->>'title',
+               a.title
+            ),
             p.label,
             r.provider_model,
             r.status_id,
@@ -230,6 +241,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          from ai_job_runs r
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
+         left join activities a
+            on a.id::text = r.correlation_id
+               and r.job_id = 'generate-activity-teaser'
          left join lateral (
             select max((entry.value->>'payload_chars')::int)
                as max_payload_chars

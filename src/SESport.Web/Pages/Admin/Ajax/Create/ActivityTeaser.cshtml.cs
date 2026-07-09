@@ -23,39 +23,23 @@ public sealed class ActivityTeaserModel(ActivityEditPageService editService)
          });
       }
 
-      var result = await editService.GenerateTeaserAsync(
+      if(Activity.Id is null)
+      {
+         return BadRequest(new
+         {
+            error = "Save the activity before queueing a teaser job."
+         });
+      }
+
+      var runId = await editService.QueueTeaserAsync(
          Activity,
          cancellationToken
       );
 
-      if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
-      {
-         if(string.Equals(
-            result.ErrorMessage,
-            "The model returned invalid teaser JSON.",
-            StringComparison.Ordinal
-         ))
-         {
-            return BadRequest(new
-            {
-               error = result.ErrorMessage,
-               prompt = result.Prompt,
-               teaser = result.RawOutputText,
-               teaserPreview = result.TeaserPreview
-            });
-         }
-
-         return BadRequest(new
-         {
-            error = result.ErrorMessage,
-            prompt = result.Prompt
-         });
-      }
-
       return new JsonResult(new
       {
-         prompt = result.Prompt,
-         teaser = result.Teaser
+         runId,
+         status = "queued"
       });
    }
 }

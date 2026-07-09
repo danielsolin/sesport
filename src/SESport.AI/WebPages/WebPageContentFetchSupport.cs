@@ -299,7 +299,7 @@ internal static class WebPageContentFetchSupport
 
       if(IsPrimaryCountryCode(normalizedCode))
       {
-         return PrimaryCountry.DisplayName;
+         return PrimaryCountry.CountryName;
       }
 
       if(normalizedCode.Length == 3 &&
@@ -761,7 +761,7 @@ internal static class WebPageContentFetchSupport
    {
       if(IsPrimaryCountryCode(label))
       {
-         return PrimaryCountry.DisplayName;
+         return PrimaryCountry.CountryName;
       }
 
       return CountryNamesByCode.TryGetValue(label, out var displayName)
@@ -1526,9 +1526,9 @@ internal static class WebPageContentFetchSupport
       }
 
       countryNames[PrimaryCountry.TwoLetterCode] =
-         PrimaryCountry.DisplayName;
+         PrimaryCountry.CountryName;
       countryNames[PrimaryCountry.ThreeLetterCode] =
-         PrimaryCountry.DisplayName;
+         PrimaryCountry.CountryName;
 
       return countryNames;
    }
@@ -1566,7 +1566,7 @@ internal static class WebPageContentFetchSupport
       }
 
       countryNames[PrimaryCountry.ThreeLetterCode] =
-         PrimaryCountry.DisplayName;
+         PrimaryCountry.CountryName;
 
       return countryNames;
    }

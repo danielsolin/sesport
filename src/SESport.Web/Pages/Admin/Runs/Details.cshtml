@@ -204,6 +204,19 @@
                         </summary>
 
                         @if(!string.IsNullOrWhiteSpace(
+                           turn.AssistantReasoningContent))
+                        {
+                           <div class="tool-trace-block">
+                              <div class="tool-trace-block-label">
+                                 Reasoning
+                              </div>
+                              <pre class="prompt-details-pre">
+@turn.AssistantReasoningContent
+                              </pre>
+                           </div>
+                        }
+
+                        @if(!string.IsNullOrWhiteSpace(
                            turn.AssistantContent))
                         {
                            <div class="tool-trace-block">
@@ -239,7 +252,8 @@
                                  Repair prompts
                               </div>
                               <div class="tool-trace-items">
-                                 @foreach(var repairPrompt in turn.RepairPrompts)
+                                 @foreach(var repairPrompt in
+                                    turn.RepairPrompts)
                                  {
                                     <div class="tool-trace-item">
                                        <pre class="prompt-details-pre">

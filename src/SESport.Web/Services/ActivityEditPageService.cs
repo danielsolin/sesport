@@ -225,12 +225,12 @@ public sealed class ActivityEditPageService(
       return firstBroadcast.EntityId;
    }
 
-   public async Task<ActivityTeaserResult> GenerateTeaserAsync(
+   public async Task<Guid> QueueTeaserAsync(
       ActivityEditModel activity,
       CancellationToken cancellationToken
    )
    {
-      var result = await aiJobRunner.RunAsync(
+      return await aiJobRunner.QueueAsync(
          new AiJobRequest(
             TeaserJobId,
             await CreateTeaserInputJsonAsync(activity, cancellationToken),
@@ -238,45 +238,6 @@ public sealed class ActivityEditPageService(
          ),
          cancellationToken
       );
-
-      if(!string.IsNullOrWhiteSpace(result.ErrorMessage))
-      {
-         return new ActivityTeaserResult(
-            result.Prompt,
-            null,
-            result.ErrorMessage,
-            null,
-            null
-         );
-      }
-
-      var teaser = ExtractGeneratedTeaser(result.OutputText);
-
-      if(teaser is null)
-      {
-         return new ActivityTeaserResult(
-            result.Prompt,
-            null,
-            "The model returned invalid teaser JSON.",
-            CreateTeaserPreview(result.OutputText),
-            result.OutputText
-         );
-      }
-
-      var validationError = ValidateGeneratedTeaser(teaser);
-
-      if(validationError is not null)
-      {
-         return new ActivityTeaserResult(
-            result.Prompt,
-            teaser,
-            $"{validationError} Preview: \"{CreateTeaserPreview(teaser)}\"",
-            CreateTeaserPreview(teaser),
-            teaser
-         );
-      }
-
-      return new ActivityTeaserResult(result.Prompt, teaser, null, null, null);
    }
 
    private async Task<
@@ -425,7 +386,7 @@ public sealed class ActivityEditPageService(
          cancellationToken
       );
 
-      var selectedEntityNames = entityNames
+      var selectedParticipantNames = entityNames
          .Where(entity => selectedIds.Contains(entity.Id))
          .Select(entity => entity.Name)
          .ToList();
@@ -439,6 +400,7 @@ public sealed class ActivityEditPageService(
       return JsonSerializer.Serialize(
          new
          {
+            event_name = activity.Title,
             title = activity.Title,
             description = activity.Description,
             activity_type = activity.ActivityType,
@@ -446,56 +408,20 @@ public sealed class ActivityEditPageService(
             activity_date = DateDisplay.Format(activity.ActivityDate),
             local_start_time = activity.LocalStartTime?.ToString("HH:mm"),
             time_zone_id = activity.TimeZoneId,
-            entities = selectedEntityNames,
+            participants = CreatePromptListText(selectedParticipantNames),
             related_entities = Array.Empty<string>()
          }
       );
    }
 
-   private static string? ValidateGeneratedTeaser(string teaser)
+   private static string CreatePromptListText(IReadOnlyList<string> values)
    {
-      if(string.IsNullOrWhiteSpace(teaser))
-      {
-         return "The model returned an empty teaser.";
-      }
-
-      return null;
-   }
-
-   private static string? ExtractGeneratedTeaser(string outputText)
-   {
-      try
-      {
-         using var document = JsonDocument.Parse(outputText);
-         var root = document.RootElement;
-
-         if(
-            root.TryGetProperty("teaser", out var teaser) &&
-            teaser.ValueKind == JsonValueKind.String
-         )
-         {
-            return teaser.GetString();
-         }
-      }
-      catch(JsonException)
-      {
-      }
-
-      return outputText;
-   }
-
-   private static string CreateTeaserPreview(string teaser)
-   {
-      var preview = teaser
-         .ReplaceLineEndings(" ")
-         .Trim();
-
-      if(preview.Length <= 180)
-      {
-         return preview;
-      }
-
-      return preview[..180] + "...";
+      return values.Count == 0
+         ? string.Empty
+         : string.Join(
+            Environment.NewLine,
+            values.Select(value => $"  - {value}")
+         );
    }
 
    private static List<Guid> NormalizeBroadcastIds(
@@ -554,12 +480,4 @@ public sealed record ActivityEditOptions(
    IReadOnlyList<LookupOption> ActivityTypes,
    IReadOnlyList<LookupOption> Sports,
    string? LoadError
-);
-
-public sealed record ActivityTeaserResult(
-   string Prompt,
-   string? Teaser,
-   string? ErrorMessage,
-   string? TeaserPreview,
-   string? RawOutputText
 );

@@ -294,6 +294,70 @@ public sealed class ActivityEditPageServiceTests
       }
    }
 
+   [Fact]
+   public async Task QueueTeaserAsyncFormatsParticipantsLikeCandidates()
+   {
+      var firstPersonId = Guid.NewGuid();
+      var secondPersonId = Guid.NewGuid();
+      var firstPersonName = $"First {Guid.NewGuid():N}";
+      var secondPersonName = $"Second {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         firstPersonId,
+         firstPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         secondPersonId,
+         secondPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel
+         {
+            Title = "Activity title",
+            ActivityType = "Match",
+            SportId = "football",
+            ActivityDate = new DateOnly(2026, 7, 10),
+            LinkedEntityIds = [firstPersonId, secondPersonId]
+         };
+
+         await fixture.Service.QueueTeaserAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var request = Assert.Single(fixture.JobRunner.Requests);
+         using var document = System.Text.Json.JsonDocument.Parse(
+            request.InputPayloadJson
+         );
+
+         Assert.Equal(
+            "Activity title",
+            document.RootElement.GetProperty("event_name").GetString()
+         );
+         Assert.Equal(
+            $"  - {firstPersonName}{Environment.NewLine}" +
+               $"  - {secondPersonName}",
+            document.RootElement.GetProperty("participants").GetString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, firstPersonId);
+         await DeleteEntityAsync(dataSource, secondPersonId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       return new NpgsqlDataSourceBuilder(
@@ -323,21 +387,26 @@ public sealed class ActivityEditPageServiceTests
             broadcastRepository,
             participationService,
             jobRunner
-         )
+         ),
+         jobRunner
       );
    }
 
    private sealed record ActivityEditPageServiceFixture(
-      ActivityEditPageService Service
+      ActivityEditPageService Service,
+      CapturingAiJobRunner JobRunner
    );
 
    private sealed class CapturingAiJobRunner : IAiJobRunner
    {
+      public List<AiJobRequest> Requests { get; } = [];
+
       public Task<Guid> QueueAsync(
          AiJobRequest request,
          CancellationToken cancellationToken
       )
       {
+         Requests.Add(request);
          return Task.FromResult(Guid.NewGuid());
       }
 
@@ -346,7 +415,27 @@ public sealed class ActivityEditPageServiceTests
          CancellationToken cancellationToken
       )
       {
-         throw new NotSupportedException();
+         Requests.Add(request);
+
+         return Task.FromResult(
+            new AiJobResult(
+               Guid.NewGuid(),
+               request.JobId,
+               "test-provider",
+               "test-model",
+               "prompt",
+               "{}",
+               """{"teaser":"Kort teaser."}""",
+               null,
+               null,
+               0,
+               0,
+               null,
+               null,
+               null,
+               null
+            )
+         );
       }
    }
 

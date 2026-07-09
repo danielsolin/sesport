@@ -35,12 +35,13 @@ public class PostgresMigrationTests
          "create unique index entity_to_entity_links_entity_pair_unique",
          baseline
       );
-      Assert.Contains("openrouter:web_search", baseline);
       Assert.DoesNotContain("tracked_entities", baseline);
       Assert.DoesNotContain("alter table", baseline);
       Assert.DoesNotContain("drop column", baseline);
       Assert.DoesNotContain("rename to", baseline);
       Assert.DoesNotContain("delete from", baseline);
+      Assert.DoesNotContain("openrouter:web_search", baseline);
+      Assert.DoesNotContain("generate-activity-teaser", baseline);
    }
 
    private static string FindRepositoryRoot()

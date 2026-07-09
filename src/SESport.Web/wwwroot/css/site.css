@@ -1169,6 +1169,11 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    height: 48px !important;
 }
 
+.medium-textarea {
+   min-height: 64px !important;
+   height: 64px !important;
+}
+
 .proposal-summary {
    display: grid;
    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);

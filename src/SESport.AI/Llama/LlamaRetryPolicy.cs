@@ -9,6 +9,11 @@ internal static class LlamaRetryPolicy
       string rawResponse
    )
    {
+      if(IsStructuredOutputFormatFailure(rawResponse))
+      {
+         return false;
+      }
+
       return statusCode == HttpStatusCode.ServiceUnavailable ||
          rawResponse.Contains(
             "Loading model",
@@ -22,6 +27,12 @@ internal static class LlamaRetryPolicy
       CancellationToken cancellationToken
    )
    {
+      if(IsStructuredOutputFormatFailure(rawResponse) ||
+         IsStructuredOutputFormatFailure(exception.Message))
+      {
+         return false;
+      }
+
       if(exception is HttpRequestException httpRequestException)
       {
          if(httpRequestException.StatusCode is not null)
@@ -48,6 +59,14 @@ internal static class LlamaRetryPolicy
 
       return rawResponse.Contains(
          "Loading model",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static bool IsStructuredOutputFormatFailure(string value)
+   {
+      return value.Contains(
+         "peg-native format",
          StringComparison.OrdinalIgnoreCase
       );
    }

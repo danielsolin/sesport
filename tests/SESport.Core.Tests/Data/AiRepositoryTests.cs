@@ -195,6 +195,54 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunsAsyncUsesPayloadTitleWhenEventNameIsMissing()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      const string eventTitle = "Activity title";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         inputPayloadJson: $$"""
+            {
+              "title": "{{eventTitle}}"
+            }
+            """
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            jobId,
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal(eventTitle, Assert.Single(runs).EventName);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task GetRunsAsyncReturnsMaxPayloadCharacterCount()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -903,7 +951,8 @@ public sealed class AiRepositoryTests
       int toolRoundCount = 0,
       int conversationCharacterCount = 0,
       decimal? durationSeconds = null,
-      string? toolTraceJson = null
+      string? toolTraceJson = null,
+      string inputPayloadJson = "{}"
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -942,7 +991,7 @@ public sealed class AiRepositoryTests
             @status_id,
             @correlation_id,
             'gpt',
-            '{}'::jsonb,
+            @input_payload::jsonb,
             'Rendered',
             null,
             null,
@@ -981,6 +1030,7 @@ public sealed class AiRepositoryTests
          "tool_trace",
          (object?)toolTraceJson ?? DBNull.Value
       );
+      command.Parameters.AddWithValue("input_payload", inputPayloadJson);
       command.Parameters.AddWithValue(
          "duration_seconds",
          (object?)durationSeconds ?? DBNull.Value

@@ -5,6 +5,7 @@ using SESport.AI.Prompts;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Data.AI;
+using SESport.Web.Services;
 
 namespace SESport.Web.Extensions;
 
@@ -28,8 +29,11 @@ public static class AiServiceCollectionExtensions
       services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
       services.AddSingleton<SearchRateLimiter>();
       services.AddSingleton<WebSearchCache>();
-      services.AddScoped<IAiJobRunner, AiJobRunner>();
-      services.AddScoped<IAiJobProcessor, AiJobRunner>();
+      services.AddScoped<AiJobRunner>();
+      services.AddScoped<IAiJobRunner>(
+         serviceProvider => serviceProvider.GetRequiredService<AiJobRunner>()
+      );
+      services.AddScoped<IAiJobProcessor, ActivityTeaserJobProcessor>();
       services.AddHttpClient<
          IAiProviderClient,
          OpenRouterClient

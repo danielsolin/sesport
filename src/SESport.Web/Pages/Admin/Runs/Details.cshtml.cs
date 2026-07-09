@@ -654,6 +654,8 @@ public class DetailsModel(
             {
                builder.FinishReason = GetString(entry, "finish_reason");
                builder.AssistantContent = GetString(entry, "content");
+               builder.AssistantReasoningContent =
+                  GetString(entry, "reasoning_content");
                builder.AssistantValidationStatus =
                   GetString(entry, "validation_status");
                builder.AssistantValidationError =
@@ -1048,6 +1050,7 @@ public class DetailsModel(
       decimal? Temperature,
       string? FinishReason,
       string? AssistantContent,
+      string? AssistantReasoningContent,
       string? AssistantValidationStatus,
       string? AssistantValidationError,
       IReadOnlyList<string> RepairPrompts,
@@ -1069,6 +1072,8 @@ public class DetailsModel(
 
       public string? AssistantContent { get; set; }
 
+      public string? AssistantReasoningContent { get; set; }
+
       public string? AssistantValidationStatus { get; set; }
 
       public string? AssistantValidationError { get; set; }
@@ -1087,6 +1092,7 @@ public class DetailsModel(
             Temperature,
             FinishReason,
             AssistantContent,
+            AssistantReasoningContent,
             AssistantValidationStatus,
             AssistantValidationError,
             RepairPrompts,
@@ -1125,6 +1131,11 @@ public class DetailsModel(
          if(!string.IsNullOrWhiteSpace(AssistantContent))
          {
             badges.Add(new("Assistant", "tool-trace-badge-assistant"));
+         }
+
+         if(!string.IsNullOrWhiteSpace(AssistantReasoningContent))
+         {
+            badges.Add(new("Reasoning", "tool-trace-badge-assistant"));
          }
 
          if(!string.IsNullOrWhiteSpace(AssistantValidationStatus))

@@ -4134,7 +4134,7 @@
          return;
       }
 
-      setTeaserStatus(status, "Generating teaser...");
+      setTeaserStatus(status, "Queueing teaser job...");
       button.disabled = true;
 
       try
@@ -4153,8 +4153,14 @@
             throw new Error(payload.error || "Teaser generation failed.");
          }
 
-         output.value = payload.teaser || "";
-         setTeaserStatus(status, "Teaser generated.");
+         const runId = typeof payload.runId === "string"
+            ? payload.runId
+            : "";
+         const message = runId === ""
+            ? "Teaser job queued."
+            : `Teaser job queued: ${runId}`;
+
+         setTeaserStatus(status, message);
       }
       catch(error)
       {

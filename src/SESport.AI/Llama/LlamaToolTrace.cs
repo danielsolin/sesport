@@ -22,6 +22,8 @@ internal static class LlamaToolTrace
          ["content"] = LlamaResponseReader.NormalizeOutput(
             LlamaResponseReader.ExtractFinalText(response, jsonOptions)
          ),
+         ["reasoning_content"] =
+            LlamaResponseReader.ExtractReasoningContent(response),
          ["validation_status"] = validationStatus,
          ["validation_error"] = validationError,
          ["tool_calls"] = JsonSerializer.SerializeToNode(

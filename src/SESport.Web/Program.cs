@@ -25,6 +25,7 @@ builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
 builder.Services.AddScoped<BroadcastRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
+builder.Services.AddHostedService<ActivityTeaserCatchUpWorker>();
 builder.Services.AddHostedService<AiPendingRunWorker>();
 builder.Services.AddHostedService<AiRunTimeoutWorker>();
 builder.Services

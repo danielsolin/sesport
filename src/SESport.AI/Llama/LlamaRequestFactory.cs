@@ -1,4 +1,3 @@
-using SESport.AI.Clients;
 using SESport.AI.Models;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -7,6 +6,9 @@ namespace SESport.AI.Llama;
 
 internal static class LlamaRequestFactory
 {
+   private const string StructuredOutputPromptMarker =
+      "Output format instructions:";
+
    public static JsonObject CreateInitial(
       AiProviderDefinition provider,
       AiJobDefinition job,
@@ -43,13 +45,7 @@ internal static class LlamaRequestFactory
       var finalRequest = (JsonObject)request.DeepClone();
       finalRequest.Remove("tools");
       finalRequest.Remove("tool_choice");
-
-      ResponsesRequestFormat.Apply(
-         finalRequest,
-         job.OutputMode,
-         prompt.OutputSchemaJson,
-         $"prompt_{prompt.Id:N}"
-      );
+      ApplyStructuredOutputPrompt(finalRequest, job, prompt);
 
       return finalRequest;
    }
@@ -119,12 +115,7 @@ internal static class LlamaRequestFactory
 
       if(!includeTools)
       {
-         ResponsesRequestFormat.Apply(
-            payload,
-            job.OutputMode,
-            prompt.OutputSchemaJson,
-            $"prompt_{prompt.Id:N}"
-         );
+         ApplyStructuredOutputPrompt(payload, job, prompt);
       }
 
       return payload;
@@ -157,6 +148,89 @@ internal static class LlamaRequestFactory
       );
 
       return messages;
+   }
+
+   private static void ApplyStructuredOutputPrompt(
+      JsonObject payload,
+      AiJobDefinition job,
+      AiPromptDefinition prompt
+   )
+   {
+      if(!ShouldRequestStructuredOutput(job, prompt))
+      {
+         return;
+      }
+
+      if(payload["messages"] is not JsonArray messages)
+      {
+         return;
+      }
+
+      if(HasStructuredOutputPrompt(messages))
+      {
+         return;
+      }
+
+      messages.Add(
+         new JsonObject
+         {
+            ["role"] = "system",
+            ["content"] = CreateStructuredOutputPrompt(prompt)
+         }
+      );
+   }
+
+   private static bool ShouldRequestStructuredOutput(
+      AiJobDefinition job,
+      AiPromptDefinition prompt
+   )
+   {
+      return !string.IsNullOrWhiteSpace(prompt.OutputSchemaJson) ||
+         string.Equals(
+            job.OutputMode,
+            "json_object",
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
+   private static bool HasStructuredOutputPrompt(JsonArray messages)
+   {
+      foreach(var message in messages.OfType<JsonObject>())
+      {
+         if(message["content"] is JsonValue value &&
+            value.TryGetValue<string>(out var content) &&
+            content.Contains(
+               StructuredOutputPromptMarker,
+               StringComparison.Ordinal
+            ))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static string CreateStructuredOutputPrompt(AiPromptDefinition prompt)
+   {
+      var instruction = """
+         Output format instructions:
+         Return only one raw object literal.
+         The first character must be { and the last character must be }.
+         Do not use markdown, code fences, commentary, explanations, tool
+         calls, channel markers, constraint markers, or special tokens.
+         """.Trim();
+
+      if(string.IsNullOrWhiteSpace(prompt.OutputSchemaJson))
+      {
+         return instruction;
+      }
+
+      return
+         instruction +
+         $"{Environment.NewLine}{Environment.NewLine}" +
+         "Object shape definition:" +
+         $"{Environment.NewLine}{prompt.OutputSchemaJson.Trim()}";
    }
 
    private static JsonArray CreateToolsArray(string? toolsJson)

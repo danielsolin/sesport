@@ -931,7 +931,7 @@ public class WebPageContentClientTests
          """;
       var normalizedText = await EvaluateNormalizationScriptAsync(html);
 
-      Assert.Equal(PrimaryCountry.DisplayName, normalizedText);
+      Assert.Equal(PrimaryCountry.CountryName, normalizedText);
       Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
    }
 
@@ -947,7 +947,7 @@ public class WebPageContentClientTests
          """;
       var normalizedText = await EvaluateNormalizationScriptAsync(html);
 
-      Assert.Equal(PrimaryCountry.DisplayName, normalizedText);
+      Assert.Equal(PrimaryCountry.CountryName, normalizedText);
       Assert.DoesNotContain("icon", normalizedText, StringComparison.Ordinal);
    }
 
@@ -967,7 +967,7 @@ public class WebPageContentClientTests
                               class="flag flag--outline" />
                         </div>
                      </td>
-                     <td>{{PrimaryCountry.DisplayName}}</td>
+                     <td>{{PrimaryCountry.CountryName}}</td>
                      <td>LAGERGREN, JoakimBlack Mountain GC</td>
                      <td>Black Mountain GC</td>
                   </tr>
@@ -978,13 +978,13 @@ public class WebPageContentClientTests
       var normalizedText = await EvaluateNormalizationScriptAsync(html);
 
       Assert.Contains(
-         $"{PrimaryCountry.DisplayName} | LAGERGREN, Joakim | " +
+         $"{PrimaryCountry.CountryName} | LAGERGREN, Joakim | " +
          "Black Mountain GC",
          normalizedText,
          StringComparison.Ordinal
       );
       Assert.DoesNotContain(
-         $"{PrimaryCountry.DisplayName} | {PrimaryCountry.DisplayName}",
+         $"{PrimaryCountry.CountryName} | {PrimaryCountry.CountryName}",
          normalizedText,
          StringComparison.Ordinal
       );
@@ -1015,7 +1015,7 @@ public class WebPageContentClientTests
          .ExtractHtmlTextWithEmbeddedState(html);
 
       Assert.Equal(
-         $"{PrimaryCountry.DisplayName}\nHanna Karlsson",
+         $"{PrimaryCountry.CountryName}\nHanna Karlsson",
          text
       );
    }
@@ -1104,13 +1104,13 @@ public class WebPageContentClientTests
    public void GetCountryDisplayNameUsesNetRegionInfo()
    {
       Assert.Equal(
-         PrimaryCountry.DisplayName,
+         PrimaryCountry.CountryName,
          WebPageContentClient.GetCountryDisplayName(
             PrimaryCountry.TwoLetterCode
          )
       );
       Assert.Equal(
-         PrimaryCountry.DisplayName,
+         PrimaryCountry.CountryName,
          WebPageContentClient.GetCountryDisplayName(
             PrimaryCountry.ThreeLetterCode
          )

@@ -117,6 +117,34 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncStoresReasoningInToolTrace()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaFinalResponseJsonWithReasoning("Need JSON.")
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", requiresWebSearch: false, null),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Contains(
+         "\"reasoning_content\":\"Need JSON.\"",
+         result.ToolTraceJson
+      );
+   }
+
+   [Fact]
    public async Task
       LlamaServerGenerateAsyncRetriesWhenStructuredOutputFormatFails()
    {
@@ -152,7 +180,11 @@ public class AiProviderClientTests
 
       Assert.Equal(2, handler.RequestBodies.Count);
       Assert.Contains(
-         "Return only the raw JSON object",
+         "Return only one raw object literal",
+         handler.RequestBodies[1]
+      );
+      Assert.DoesNotContain(
+         "\"response_format\"",
          handler.RequestBodies[1]
       );
       Assert.Contains("\"kind\":\"repair_prompt\"", result.ToolTraceJson);
@@ -211,13 +243,64 @@ public class AiProviderClientTests
 
       Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains(
-         "Return only the raw JSON object",
+         "Return only one raw object literal",
+         handler.RequestBodies[1]
+      );
+      Assert.DoesNotContain(
+         "\"response_format\"",
          handler.RequestBodies[1]
       );
       Assert.Contains(
-         "Return only the raw JSON object",
+         "Return only one raw object literal",
          handler.RequestBodies[2]
       );
+      Assert.DoesNotContain(
+         "\"response_format\"",
+         handler.RequestBodies[2]
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesToolFormatFailureWithoutRepairPrompt()
+   {
+      var handler = new RecordingHandler(
+         CreatePegNativeFormatError(),
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", requiresWebSearch: true, CreateToolsJson()),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.Equal(handler.RequestBodies[0], handler.RequestBodies[1]);
+      Assert.DoesNotContain(
+         handler.RequestBodies,
+         body => body.Contains(
+            "The previous response was rejected",
+            StringComparison.Ordinal
+         )
+      );
+      Assert.DoesNotContain("repair_prompt", result.ToolTraceJson);
       Assert.Equal(
          "{\"Participation\":\"Yes\","
          + "\"Participants\":[\"Dino Beganovic\"],"
@@ -851,13 +934,13 @@ public class AiProviderClientTests
    public void ExtractMatchingRowsAcceptsMultipleMatchingTerms()
    {
       var body =
-         $"{PrimaryCountry.DisplayName} Player One | Club A | 1\n" +
+         $"{PrimaryCountry.CountryName} Player One | Club A | 1\n" +
          $"{PrimaryCountry.LocalDisplayName} Player Two | Club B | 2\n" +
          "Other Player Three | Club C | 3";
       var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
          [
-            PrimaryCountry.DisplayName,
+            PrimaryCountry.CountryName,
             PrimaryCountry.LocalDisplayName
          ],
          50
@@ -865,7 +948,7 @@ public class AiProviderClientTests
 
       Assert.Equal(2, rows.Count);
       Assert.Contains(
-         $"{PrimaryCountry.DisplayName} Player One | Club A | 1",
+         $"{PrimaryCountry.CountryName} Player One | Club A | 1",
          rows
       );
       Assert.Contains(
@@ -914,7 +997,7 @@ public class AiProviderClientTests
       var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
          [
-            PrimaryCountry.DisplayName,
+            PrimaryCountry.CountryName,
             PrimaryCountry.LocalDisplayName,
             PrimaryCountry.ThreeLetterCode
          ],
@@ -977,12 +1060,13 @@ public class AiProviderClientTests
          result.OutputText
       );
       Assert.Single(handler.RequestBodies);
+      Assert.DoesNotContain("\"response_format\"", handler.RequestBodies[0]);
       Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
+         "Output format instructions:",
          handler.RequestBodies[0]
       );
       Assert.Contains(
-         "\"schema\":{\"type\":\"object\"",
+         "\\u0022type\\u0022: \\u0022object\\u0022",
          handler.RequestBodies[0]
       );
    }
@@ -1092,7 +1176,7 @@ public class AiProviderClientTests
       );
       Assert.Equal(2, handler.RequestBodies.Count);
       Assert.Contains(
-         "Return only the raw JSON object required by the schema.",
+         "Return only one raw object literal.",
          handler.RequestBodies[1]
       );
       Assert.NotNull(result.ToolTraceJson);
@@ -1115,8 +1199,53 @@ public class AiProviderClientTests
          )
       );
       Assert.Contains(
-         "Return only the raw JSON object required by the schema.",
+         "Return only one raw object literal.",
          result.ToolTraceJson
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesWhenFinalOutputViolatesSchema()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaFinalResponseJson(
+            "{\"Participation\":\"Unknown\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[]}"
+         ),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("json_schema", requiresWebSearch: false, null),
+         CreatePrompt(CreateParticipationSchemaJsonWithRequiredSource()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains(
+         "Return only one raw object literal.",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
       );
    }
 
@@ -1732,6 +1861,36 @@ public class AiProviderClientTests
       );
    }
 
+   private static string CreateLlamaFinalResponseJsonWithReasoning(
+      string reasoningContent
+   )
+   {
+      var content =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}";
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            choices = new[]
+            {
+               new
+               {
+                  message = new
+                  {
+                     role = "assistant",
+                     content,
+                     reasoning_content = reasoningContent
+                  },
+                  finish_reason = "stop"
+               }
+            },
+            model = "openai/gpt-4o-2024-08-06"
+         }
+      );
+   }
+
    private static string CreateLlamaInvalidFinalResponseJson()
    {
       var content =
@@ -1772,6 +1931,21 @@ public class AiProviderClientTests
       """;
    }
 
+   private static RecordingHandler.ResponseSpec CreatePegNativeFormatError()
+   {
+      return new RecordingHandler.ResponseSpec(
+         HttpStatusCode.InternalServerError,
+         "{"
+         + "\"error\":{"
+         + "\"code\":500,"
+         + "\"message\":\"The model produced output that does not " +
+         "match the expected peg-native format\","
+         + "\"type\":\"server_error\""
+         + "}"
+         + "}"
+      );
+   }
+
    private static string CreateParticipationSchemaJson()
    {
       return """
@@ -1793,6 +1967,40 @@ public class AiProviderClientTests
               "type": "string",
               "format": "uri"
             }
+          }
+        },
+        "required": [
+          "Participation",
+          "Participants",
+          "Sources"
+        ],
+        "additionalProperties": false
+      }
+      """;
+   }
+
+   private static string CreateParticipationSchemaJsonWithRequiredSource()
+   {
+      return """
+      {
+        "type": "object",
+        "properties": {
+          "Participation": {
+            "type": "string"
+          },
+          "Participants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "Sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1
           }
         },
         "required": [

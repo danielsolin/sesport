@@ -19,6 +19,10 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const int MaxConversationContextCharacters = 250000;
    private const int MaxTransientRetryAttempts = 12;
    private const int MaxFormatRepairAttempts = 3;
+   private const int DefaultMaxToolRounds = 10;
+   private const int DefaultToolCallMaxTokens = 512;
+   private const int DefaultFinalMaxTokens = 2048;
+   private const int DefaultUnconstrainedRepairMaxTokens = 1024;
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -97,6 +101,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolBudgetExhausted = false;
       var repeatedToolCallStreak = 0;
       var formatRepairAttempts = 0;
+      var maxToolRounds = job.RequiresWebSearch
+         ? prompt.MaxToolRounds ?? DefaultMaxToolRounds
+         : prompt.MaxToolRounds;
 
       try
       {
@@ -125,7 +132,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             LlamaRequestFactory.ApplyToolBudgetPrompt(
                messages,
                baseSystemPrompt,
-               prompt.MaxToolRounds,
+               maxToolRounds,
                toolRoundCount
             );
             var payloadCharacterCount =
@@ -136,7 +143,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             toolTrace.Add(
                LlamaToolTrace.CreateToolBudgetTraceEntry(
                   turn,
-                  prompt.MaxToolRounds,
+                  maxToolRounds,
                   toolRoundCount,
                   payloadCharacterCount,
                   LlamaTemperature.GetRequestTemperature(request)
@@ -151,7 +158,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             LogToolBudget(
                turn,
-               prompt.MaxToolRounds,
+               maxToolRounds,
                toolRoundCount
             );
             rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
@@ -165,6 +172,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                job.OutputMode,
                prompt,
                formatRepairAttempts,
+               0,
                cancellationToken,
                () => formatRepairAttempts++
             );
@@ -275,8 +283,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                JsonOptions
             );
 
-            if(prompt.MaxToolRounds is not null &&
-               toolRoundCount >= prompt.MaxToolRounds.Value)
+            if(maxToolRounds is not null &&
+               toolRoundCount >= maxToolRounds.Value)
             {
                toolBudgetExhausted = true;
                break;
@@ -288,8 +296,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             LlamaRequestFactory.ApplyToolBudgetPrompt(
                messages,
                baseSystemPrompt,
-               prompt.MaxToolRounds,
-               prompt.MaxToolRounds ?? 0
+               maxToolRounds,
+               maxToolRounds ?? 0
             );
             var payloadCharacterCount =
                LlamaConversationTrimmer.EstimateRequestPayloadSize(
@@ -299,8 +307,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             toolTrace.Add(
                LlamaToolTrace.CreateToolBudgetTraceEntry(
                   turn + 1,
-                  prompt.MaxToolRounds,
-                  prompt.MaxToolRounds ?? 0,
+                  maxToolRounds,
+                  maxToolRounds ?? 0,
                   payloadCharacterCount,
                   LlamaTemperature.GetRequestTemperature(request)
                )
@@ -314,8 +322,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             );
             LogToolBudget(
                turn + 1,
-               prompt.MaxToolRounds,
-               prompt.MaxToolRounds ?? 0
+               maxToolRounds,
+               maxToolRounds ?? 0
             );
 
             request = LlamaRequestFactory.CreateFinal(
@@ -335,6 +343,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                job.OutputMode,
                prompt,
                formatRepairAttempts,
+               0,
                cancellationToken,
                () => formatRepairAttempts++
             );
@@ -469,6 +478,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   job.OutputMode,
                   prompt,
                   formatRepairAttempts,
+                  0,
                   cancellationToken,
                   () => formatRepairAttempts++
                );
@@ -540,12 +550,14 @@ public sealed class LlamaServerClient : IAiProviderClient
       string outputMode,
       AiPromptDefinition prompt,
       int formatRepairAttempts,
+      int toolFormatRetryAttempts,
       CancellationToken cancellationToken,
       Action incrementFormatRepairAttempts
    )
    {
       try
       {
+         ApplyDefaultMaxTokens(request);
          var responseEnvelope = await SendWithRetryAsync(
             provider,
             request,
@@ -554,28 +566,20 @@ public sealed class LlamaServerClient : IAiProviderClient
             cancellationToken
          );
 
-         if(LlamaStructuredOutputRepair.ShouldRepair(stage, outputMode, prompt))
-         {
-            LlamaStructuredOutputRepair.ValidateStructuredOutput(
-               responseEnvelope.ResponseJson,
-               outputMode,
-               prompt,
-               JsonOptions
-            );
-         }
-
          return responseEnvelope;
       }
       catch(HttpRequestException exception) when(
-      formatRepairAttempts < MaxFormatRepairAttempts &&
-      LlamaStructuredOutputRepair.IsPegNativeFormatFailure(exception) &&
-      LlamaStructuredOutputRepair.CanRepair(outputMode, prompt)
-   )
+         toolFormatRetryAttempts < MaxTransientRetryAttempts &&
+         LlamaStructuredOutputRepair.IsPegNativeFormatFailure(exception) &&
+         RequestUsesTools(request)
+      )
       {
-         incrementFormatRepairAttempts();
-         LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
-         toolTrace.Add(
-            LlamaStructuredOutputRepair.CreateRepairPromptTraceEntry(turn)
+         await DelayTransientRetryAsync(
+            stage,
+            turn,
+            toolFormatRetryAttempts + 1,
+            exception.Message,
+            cancellationToken
          );
          return await SendWithStructuredOutputRepairAsync(
             provider,
@@ -586,25 +590,28 @@ public sealed class LlamaServerClient : IAiProviderClient
             stage,
             outputMode,
             prompt,
-            formatRepairAttempts + 1,
+            formatRepairAttempts,
+            toolFormatRetryAttempts + 1,
             cancellationToken,
             incrementFormatRepairAttempts
          );
       }
-      catch(InvalidOperationException exception) when(
+      catch(HttpRequestException exception) when(
          formatRepairAttempts < MaxFormatRepairAttempts &&
-         LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
-            exception
-         ) &&
+         LlamaStructuredOutputRepair.IsPegNativeFormatFailure(exception) &&
          LlamaStructuredOutputRepair.CanRepair(outputMode, prompt) &&
-         string.Equals(stage, "final", StringComparison.Ordinal)
+         !RequestUsesTools(request)
       )
       {
          incrementFormatRepairAttempts();
          LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
-         var repairedEnvelope = await SendWithStructuredOutputRepairAsync(
+         toolTrace.Add(
+            LlamaStructuredOutputRepair.CreateRepairPromptTraceEntry(turn)
+         );
+         var repairRequest = CreateUnconstrainedRepairRequest(request);
+         return await SendWithStructuredOutputRepairAsync(
             provider,
-            request,
+            repairRequest,
             messages,
             toolTrace,
             turn,
@@ -612,22 +619,43 @@ public sealed class LlamaServerClient : IAiProviderClient
             outputMode,
             prompt,
             formatRepairAttempts + 1,
+            toolFormatRetryAttempts,
             cancellationToken,
             incrementFormatRepairAttempts
          );
-
-         if(LlamaStructuredOutputRepair.ShouldRepair(stage, outputMode, prompt))
-         {
-            LlamaStructuredOutputRepair.ValidateStructuredOutput(
-               repairedEnvelope.ResponseJson,
-               outputMode,
-               prompt,
-               JsonOptions
-            );
-         }
-
-         return repairedEnvelope;
       }
+   }
+
+   private static bool RequestUsesTools(JsonObject request)
+   {
+      return request["tools"] is JsonArray tools && tools.Count > 0;
+   }
+
+   private static JsonObject CreateUnconstrainedRepairRequest(
+      JsonObject request
+   )
+   {
+      var repairRequest = (JsonObject)request.DeepClone();
+      repairRequest.Remove("response_format");
+
+      if(!repairRequest.ContainsKey("max_tokens"))
+      {
+         repairRequest["max_tokens"] = DefaultUnconstrainedRepairMaxTokens;
+      }
+
+      return repairRequest;
+   }
+
+   private static void ApplyDefaultMaxTokens(JsonObject request)
+   {
+      if(request.ContainsKey("max_tokens"))
+      {
+         return;
+      }
+
+      request["max_tokens"] = RequestUsesTools(request)
+         ? DefaultToolCallMaxTokens
+         : DefaultFinalMaxTokens;
    }
 
    private async Task<ResponseEnvelope> SendWithRetryAsync(
@@ -1087,11 +1115,11 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageContent.PublishedAt,
             pageContent.Headings,
             pageContent.RelevantLinks,
-            $"Detected rows for {PrimaryCountry.DisplayName}",
+            $"Detected rows for {PrimaryCountry.CountryName}",
             LlamaPageToolFormatter.ExtractMatchingRows(
                pageContent.MainTextFull,
                [
-                  PrimaryCountry.DisplayName,
+                  PrimaryCountry.CountryName,
                   PrimaryCountry.LocalDisplayName,
                   PrimaryCountry.ThreeLetterCode
                ]

@@ -1,30 +1,10 @@
-using SESport.AI.Clients;
 using SESport.AI.Models;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace SESport.AI.Llama;
 
 internal static class LlamaStructuredOutputRepair
 {
-   public static void ValidateStructuredOutput(
-      JsonObject response,
-      string outputMode,
-      AiPromptDefinition prompt,
-      JsonSerializerOptions jsonOptions
-   )
-   {
-      var outputText = LlamaResponseReader.NormalizeOutput(
-         LlamaResponseReader.ExtractFinalText(response, jsonOptions)
-      );
-
-      ResponsesOutputValidator.ValidateStructuredOutput(
-         outputText,
-         outputMode,
-         prompt.OutputSchemaJson
-      );
-   }
-
    public static bool CanRepair(
       string outputMode,
       AiPromptDefinition prompt
@@ -104,10 +84,11 @@ internal static class LlamaStructuredOutputRepair
    public static string GetRepairPrompt()
    {
       return """
-         The previous response was rejected because it was not valid JSON.
-         Return only the raw JSON object required by the schema.
-         Do not use markdown, fences, tool calls, commentary, or
-         explanations.
+         The previous response was rejected because it was not a valid object.
+         Return only one raw object literal.
+         The first character must be { and the last character must be }.
+         Do not use markdown, fences, tool calls, commentary, explanations,
+         channel markers, constraint markers, or special tokens.
          """.Trim();
    }
 }
