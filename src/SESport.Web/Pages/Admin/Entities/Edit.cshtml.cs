@@ -51,7 +51,7 @@ public class EditModel(AdminRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
-      if (id is null)
+      if(id is null)
       {
          await LoadOptionsAsync(null, cancellationToken);
          return Page();
@@ -73,7 +73,7 @@ public class EditModel(AdminRepository repository) : PageModel
    {
       ValidateEntity();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          await LoadOptionsAsync(Entity.Id, cancellationToken);
          return Page();
@@ -83,7 +83,7 @@ public class EditModel(AdminRepository repository) : PageModel
       {
          await repository.SaveEntityAsync(Entity, cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
          await LoadOptionsAsync(Entity.Id, cancellationToken);
@@ -143,7 +143,7 @@ public class EditModel(AdminRepository repository) : PageModel
                cancellationToken
             );
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }
@@ -151,7 +151,7 @@ public class EditModel(AdminRepository repository) : PageModel
 
    private void ValidateEntity()
    {
-      if (string.IsNullOrWhiteSpace(Entity.CanonicalName))
+      if(string.IsNullOrWhiteSpace(Entity.CanonicalName))
       {
          ModelState.AddModelError(
             "Entity.CanonicalName",
@@ -159,7 +159,7 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.EntityTypeId))
+      if(string.IsNullOrWhiteSpace(Entity.EntityTypeId))
       {
          ModelState.AddModelError(
             "Entity.EntityTypeId",
@@ -167,12 +167,12 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.SportId))
+      if(string.IsNullOrWhiteSpace(Entity.SportId))
       {
          ModelState.AddModelError("Entity.SportId", "Sport is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.WatchPriorityId))
+      if(string.IsNullOrWhiteSpace(Entity.WatchPriorityId))
       {
          ModelState.AddModelError(
             "Entity.WatchPriorityId",
@@ -180,7 +180,7 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.ExpectedStabilityId))
+      if(string.IsNullOrWhiteSpace(Entity.ExpectedStabilityId))
       {
          ModelState.AddModelError(
             "Entity.ExpectedStabilityId",
@@ -188,7 +188,7 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.CountryId))
+      if(string.IsNullOrWhiteSpace(Entity.CountryId))
       {
          ModelState.AddModelError(
             "Entity.CountryId",
@@ -196,7 +196,7 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.CountryRelevanceKindId))
+      if(string.IsNullOrWhiteSpace(Entity.CountryRelevanceKindId))
       {
          ModelState.AddModelError(
             "Entity.CountryRelevanceKindId",
@@ -204,7 +204,7 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Entity.CountryRelevanceReason))
+      if(string.IsNullOrWhiteSpace(Entity.CountryRelevanceReason))
       {
          ModelState.AddModelError(
             "Entity.CountryRelevanceReason",
@@ -212,7 +212,7 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
 
-      if (!string.IsNullOrWhiteSpace(Entity.PersonGenderId) &&
+      if(!string.IsNullOrWhiteSpace(Entity.PersonGenderId) &&
          !string.Equals(
             Entity.EntityTypeId,
             "Person",

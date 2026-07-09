@@ -64,7 +64,7 @@ public class IndexModel(AdminRepository repository) : PageModel
             cancellationToken
          );
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }
@@ -77,7 +77,7 @@ public class IndexModel(AdminRepository repository) : PageModel
 
    public string GetSortIndicator(string sortColumn)
    {
-      if (!string.Equals(SortColumn, sortColumn, StringComparison.Ordinal))
+      if(!string.Equals(SortColumn, sortColumn, StringComparison.Ordinal))
       {
          return string.Empty;
       }

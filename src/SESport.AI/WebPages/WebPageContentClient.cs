@@ -110,7 +110,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          {
             throw;
          }
-         catch(Exception exception) when (
+         catch(Exception exception) when(
             IsTransientFailure(exception) &&
             attempt < MaxTransientRetryAttempts
          )
@@ -169,7 +169,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          throw;
       }
-      catch(Exception exception) when (
+      catch(Exception exception) when(
          exception is not TaskCanceledException &&
          exception is not TimeoutException
       )

@@ -1,7 +1,7 @@
+using SESport.AI.Clients;
+using SESport.AI.Models;
 using System.Net;
 using System.Net.Http.Json;
-using SESport.AI.Models;
-using SESport.AI.Clients;
 
 namespace SESport.Core.Tests.AI;
 

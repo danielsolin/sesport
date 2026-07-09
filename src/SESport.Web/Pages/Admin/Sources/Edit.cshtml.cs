@@ -16,7 +16,7 @@ public class EditModel(AdminRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
-      if (string.IsNullOrWhiteSpace(id))
+      if(string.IsNullOrWhiteSpace(id))
       {
          return Page();
       }
@@ -35,7 +35,7 @@ public class EditModel(AdminRepository repository) : PageModel
    {
       ValidateSource();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          return Page();
       }
@@ -44,7 +44,7 @@ public class EditModel(AdminRepository repository) : PageModel
       {
          await repository.SaveSourceAsync(Source, cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
          return Page();
@@ -55,12 +55,12 @@ public class EditModel(AdminRepository repository) : PageModel
 
    private void ValidateSource()
    {
-      if (string.IsNullOrWhiteSpace(Source.Id))
+      if(string.IsNullOrWhiteSpace(Source.Id))
       {
          ModelState.AddModelError("Source.Id", "ID is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Source.Name))
+      if(string.IsNullOrWhiteSpace(Source.Name))
       {
          ModelState.AddModelError("Source.Name", "Name is required.");
       }

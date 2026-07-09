@@ -1,8 +1,6 @@
-using System.Text.Json;
-
 using Microsoft.Extensions.Logging;
-
 using SESport.AI.Interfaces;
+using System.Text.Json;
 
 namespace SESport.AI.WebSearch;
 

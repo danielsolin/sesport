@@ -1,8 +1,8 @@
 using Npgsql;
+using SESport.Core.Formatting;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using SESport.Core.Formatting;
 
 namespace SESport.Data;
 
@@ -53,7 +53,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
       );
       var proposals = new List<ActivityProposalAuditItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          proposals.Add(
             new ActivityProposalAuditItem(
@@ -104,7 +104,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
       );
       var links = new List<ActivityProposalLinkAuditItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          links.Add(
             new ActivityProposalLinkAuditItem(
@@ -271,7 +271,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
       );
       var evidence = new List<ActivityProposalEvidenceAuditItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          evidence.Add(
             new ActivityProposalEvidenceAuditItem(

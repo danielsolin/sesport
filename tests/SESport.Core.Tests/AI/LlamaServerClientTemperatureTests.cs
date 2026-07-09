@@ -1,6 +1,4 @@
-using SESport.AI.Clients;
 using SESport.AI.Llama;
-using SESport.Core.Domain;
 
 namespace SESport.Core.Tests.AI;
 

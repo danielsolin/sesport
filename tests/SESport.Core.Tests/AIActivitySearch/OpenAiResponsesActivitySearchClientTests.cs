@@ -1,8 +1,7 @@
+using SESport.AI.ActivitySearch;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
-using SESport.AI.ActivitySearch;
 
 namespace SESport.Core.Tests.AIActivitySearch;
 
@@ -212,7 +211,7 @@ public class OpenAiResponsesActivitySearchClientTests
       """;
       var output = new List<object>();
 
-      if (includeReasoning)
+      if(includeReasoning)
       {
          output.Add(new
          {

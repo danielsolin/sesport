@@ -1,8 +1,8 @@
+using Microsoft.Playwright;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Microsoft.Playwright;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
@@ -304,7 +304,7 @@ internal static class WebPageContentFetchSupport
 
       if(normalizedCode.Length == 3 &&
          CountryNamesByThreeLetterCode is
-            { } threeLetterCountryNames &&
+         { } threeLetterCountryNames &&
          threeLetterCountryNames.TryGetValue(
             normalizedCode,
             out var threeLetterDisplayName
@@ -361,7 +361,7 @@ internal static class WebPageContentFetchSupport
       var result = new List<string>();
       var bufferedLines = lines.ToList();
 
-      for(var index = 0; index < bufferedLines.Count; )
+      for(var index = 0; index < bufferedLines.Count;)
       {
          var currentLine = bufferedLines[index];
 

@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using SESport.AI.Models;
+using System.Text.Json.Nodes;
 
 namespace SESport.AI.Interfaces;
 

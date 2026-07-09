@@ -145,7 +145,7 @@ public static class ResponsesOutputValidator
             return;
          }
       }
-      catch (JsonException exception)
+      catch(JsonException exception)
       {
          throw CreateInvalidOutputException(mode, outputText, exception);
       }
@@ -175,7 +175,7 @@ public static class ResponsesOutputValidator
          using var schemaDocument = JsonDocument.Parse(outputSchemaJson);
          schemaRoot = schemaDocument.RootElement.Clone();
       }
-      catch (JsonException exception)
+      catch(JsonException exception)
       {
          throw new InvalidOperationException(
             "AI prompt output schema is not valid JSON.",
@@ -188,7 +188,7 @@ public static class ResponsesOutputValidator
          using var document = JsonDocument.Parse(outputText);
          ValidateSchema(document.RootElement, schemaRoot, "$");
       }
-      catch (JsonException exception)
+      catch(JsonException exception)
       {
          throw CreateInvalidOutputException(
             "json_schema",

@@ -31,7 +31,7 @@ public class IndexModel(
       CancellationToken cancellationToken
    )
    {
-      if (string.IsNullOrWhiteSpace(table))
+      if(string.IsNullOrWhiteSpace(table))
       {
          return Page();
       }
@@ -43,7 +43,7 @@ public class IndexModel(
             cancellationToken
          );
 
-         if (CurrentTable is null)
+         if(CurrentTable is null)
          {
             return NotFound();
          }
@@ -56,7 +56,7 @@ public class IndexModel(
             return Page();
          }
 
-         if (CurrentTable.Kind == ReferenceTableKind.Sports)
+         if(CurrentTable.Kind == ReferenceTableKind.Sports)
          {
             SportRows = await repository.GetSportReferenceRowsAsync(
                cancellationToken
@@ -69,7 +69,7 @@ public class IndexModel(
             cancellationToken
          );
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }
@@ -94,7 +94,7 @@ public class IndexModel(
          return RedirectToPage("./Index", new { table });
       }
 
-      if (tableInfo?.Kind == ReferenceTableKind.Sports)
+      if(tableInfo?.Kind == ReferenceTableKind.Sports)
       {
          await repository.DeleteSportAsync(id, cancellationToken);
          return RedirectToPage("./Index", new { table });

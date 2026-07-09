@@ -16,7 +16,7 @@ public class IndexModel(AdminRepository repository) : PageModel
       {
          Sources = await repository.GetSourcesAsync(cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }

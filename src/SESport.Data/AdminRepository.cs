@@ -224,7 +224,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    {
       var table = GetTable(tableKey);
 
-      if (table.Kind == ReferenceTableKind.Sports)
+      if(table.Kind == ReferenceTableKind.Sports)
       {
          return (await GetSportReferenceRowsAsync(cancellationToken))
             .Select(row => new ReferenceRow(
@@ -255,7 +255,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var rows = new List<ReferenceRow>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          rows.Add(
             new ReferenceRow(
@@ -318,7 +318,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var rows = new List<CountryReferenceRow>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          rows.Add(
             new CountryReferenceRow(
@@ -385,7 +385,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -417,7 +417,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -527,14 +527,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          $"{table.LabelColumn} = @label"
       };
 
-      if (table.HasSortOrder)
+      if(table.HasSortOrder)
       {
          columns.Add("sort_order");
          values.Add("@sort_order");
          assignments.Add("sort_order = @sort_order");
       }
 
-      if (table.HasIsActive)
+      if(table.HasIsActive)
       {
          columns.Add("is_active");
          values.Add("@is_active");
@@ -560,7 +560,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          model.OriginalId ?? string.Empty
       );
 
-      if (table.HasSortOrder)
+      if(table.HasSortOrder)
       {
          command.Parameters.AddWithValue(
             "sort_order",
@@ -568,7 +568,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          );
       }
 
-      if (table.HasIsActive)
+      if(table.HasIsActive)
       {
          command.Parameters.AddWithValue("is_active", model.IsActive);
       }
@@ -805,7 +805,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var sources = new List<SourceListItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          sources.Add(
             new SourceListItem(
@@ -836,7 +836,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -1063,7 +1063,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -1100,7 +1100,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      while (await linkReader.ReadAsync(cancellationToken))
+      while(await linkReader.ReadAsync(cancellationToken))
       {
          model.LinkedEntityIds.Add(linkReader.GetGuid(0));
       }
@@ -1186,7 +1186,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -1232,7 +1232,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      while (await linkReader.ReadAsync(cancellationToken))
+      while(await linkReader.ReadAsync(cancellationToken))
       {
          model.LinkedEntityIds.Add(linkReader.GetGuid(0));
       }
@@ -1272,7 +1272,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
 
-      if (excludeEntityId is not null)
+      if(excludeEntityId is not null)
       {
          command.Parameters.AddWithValue("exclude_entity_id", excludeEntityId);
       }
@@ -1282,7 +1282,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var options = new List<EntityLinkOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          options.Add(
             new EntityLinkOption(
@@ -1323,7 +1323,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var options = new List<EntityLinkOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          options.Add(
             new EntityLinkOption(
@@ -1449,7 +1449,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var options = new List<EntityNameOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          options.Add(
             new EntityNameOption(
@@ -1544,7 +1544,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       );
       var options = new List<LookupOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          options.Add(
             new LookupOption(reader.GetString(0), reader.GetString(1))
@@ -1880,7 +1880,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             or target_entity_id = @source_entity_id
          """;
 
-      await using (var deleteCommand = new NpgsqlCommand(
+      await using(var deleteCommand = new NpgsqlCommand(
          deleteSql,
          connection,
          transaction
@@ -1907,9 +1907,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          on conflict do nothing
          """;
 
-      foreach (var targetEntityId in (targetEntityIds ?? []).Distinct())
+      foreach(var targetEntityId in (targetEntityIds ?? []).Distinct())
       {
-         if (targetEntityId == sourceEntityId)
+         if(targetEntityId == sourceEntityId)
          {
             continue;
          }
@@ -2475,7 +2475,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
    private static ReferenceTable GetTable(string tableKey)
    {
-      if (TryGetTable(tableKey, out var table))
+      if(TryGetTable(tableKey, out var table))
       {
          return table;
       }
@@ -2490,7 +2490,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
    private static void EnsureLookupTable(ReferenceTable table)
    {
-      if (table.Kind != ReferenceTableKind.Lookup)
+      if(table.Kind != ReferenceTableKind.Lookup)
       {
          throw new InvalidOperationException("Reference view is not editable.");
       }

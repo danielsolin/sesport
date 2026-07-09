@@ -1,7 +1,7 @@
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SESport.AI.Prompts;
 

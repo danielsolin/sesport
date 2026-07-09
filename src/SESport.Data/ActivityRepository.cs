@@ -1,10 +1,10 @@
-using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
+using Npgsql;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
-using Npgsql;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SESport.Data;
 
@@ -170,7 +170,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       var entities = new List<EntityOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          entities.Add(
             new EntityOption(
@@ -306,7 +306,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       var entities = new List<EntityOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          entities.Add(
             new EntityOption(
@@ -383,7 +383,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }
@@ -422,7 +422,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      while (await linkReader.ReadAsync(cancellationToken))
+      while(await linkReader.ReadAsync(cancellationToken))
       {
          model.LinkedEntityIds.Add(linkReader.GetGuid(0));
 
@@ -713,7 +713,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if (model.Id is null)
+      if(model.Id is null)
       {
          await InsertActivityAsync(
             connection,
@@ -1098,7 +1098,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .Distinct()
          .ToList();
 
-      if (distinctEntityIds.Count == 0)
+      if(distinctEntityIds.Count == 0)
       {
          return;
       }
@@ -1128,7 +1128,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          """;
 
-      foreach (var entityId in distinctEntityIds)
+      foreach(var entityId in distinctEntityIds)
       {
          await using var command = new NpgsqlCommand(
             sql,
@@ -1162,7 +1162,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       deleteCommand.Parameters.AddWithValue("activity_id", activityId);
       await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-      if (
+      if(
          string.IsNullOrWhiteSpace(model.EvidenceUri) &&
          string.IsNullOrWhiteSpace(model.EvidenceTitle) &&
          string.IsNullOrWhiteSpace(model.EvidenceComment)
@@ -1282,7 +1282,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static DateTimeOffset? GetStartsAt(ActivityEditModel model)
    {
-      if (model.ActivityDate is null || model.LocalStartTime is null)
+      if(model.ActivityDate is null || model.LocalStartTime is null)
       {
          return null;
       }
@@ -1305,7 +1305,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       var options = new List<LookupOption>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          options.Add(
             new LookupOption(reader.GetString(0), reader.GetString(1))
@@ -1317,7 +1317,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static (string Id, string Name) GetSource(string? uri)
    {
-      if (
+      if(
          !string.IsNullOrWhiteSpace(uri) &&
          Uri.TryCreate(uri, UriKind.Absolute, out var parsedUri)
       )
@@ -1371,7 +1371,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          return baseSlug;
       }
 
-      for(var suffix = 2;; suffix++)
+      for(var suffix = 2; ; suffix++)
       {
          var candidate = $"{baseSlug}-{suffix}";
          if(!existingSlugs.Contains(candidate))
@@ -1397,10 +1397,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       var normalized = value.Normalize(NormalizationForm.FormD);
       var builder = new StringBuilder();
 
-      foreach (var character in normalized)
+      foreach(var character in normalized)
       {
          var category = CharUnicodeInfo.GetUnicodeCategory(character);
-         if (category != UnicodeCategory.NonSpacingMark)
+         if(category != UnicodeCategory.NonSpacingMark)
          {
             builder.Append(character);
          }
@@ -1517,7 +1517,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    private static string? GetSportIconPath(string? iconId)
    {
-      if (string.IsNullOrWhiteSpace(iconId))
+      if(string.IsNullOrWhiteSpace(iconId))
       {
          return null;
       }

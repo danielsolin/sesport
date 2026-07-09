@@ -1,6 +1,5 @@
-using System.Text.Json;
-
 using SESport.AI.WebSearch;
+using System.Text.Json;
 
 namespace SESport.AI.Llama;
 

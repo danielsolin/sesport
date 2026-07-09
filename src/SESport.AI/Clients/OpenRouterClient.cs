@@ -1,10 +1,10 @@
+using SESport.AI.Interfaces;
+using SESport.AI.Models;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SESport.AI.Interfaces;
-using SESport.AI.Models;
 
 namespace SESport.AI.Clients;
 
@@ -320,7 +320,7 @@ public sealed class OpenRouterClient : IAiProviderClient
             payload[property.Key] = property.Value?.DeepClone();
          }
       }
-      catch (JsonException)
+      catch(JsonException)
       {
       }
    }

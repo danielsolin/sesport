@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Npgsql;
 using SESport.AI.Jobs;
 using SESport.Core.Configuration;
+using SESport.Data;
 using SESport.Web.Extensions;
 using SESport.Web.Services;
-using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 var adminPassword = builder.Configuration["Admin:Password"];
@@ -73,7 +73,7 @@ app.Logger.LogInformation(
    builder.Configuration["SearXNG:BaseUrl"] ?? "<default>"
 );
 
-if (!app.Environment.IsDevelopment())
+if(!app.Environment.IsDevelopment())
 {
    app.UseExceptionHandler("/Error");
    app.UseHsts();

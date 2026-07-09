@@ -1,10 +1,10 @@
+using SESport.AI.Clients;
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
-using SESport.Data.AI;
-using SESport.AI.Clients;
 using SESport.AI.Prompts;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
+using SESport.Data.AI;
 
 namespace SESport.Web.Extensions;
 

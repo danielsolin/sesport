@@ -1,7 +1,6 @@
 using Npgsql;
-
-using CoreBroadcast = SESport.Core.Broadcast.Broadcast;
 using SESport.Core.Broadcast;
+using CoreBroadcast = SESport.Core.Broadcast.Broadcast;
 
 namespace SESport.Data.Broadcast;
 

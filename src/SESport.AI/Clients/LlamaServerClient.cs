@@ -1,16 +1,14 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-
 using Microsoft.Extensions.Logging;
-
 using SESport.AI.Interfaces;
 using SESport.AI.Llama;
 using SESport.AI.Models;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace SESport.AI.Clients;
 
@@ -422,7 +420,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   null
                );
             }
-            catch(InvalidOperationException exception) when (
+            catch(InvalidOperationException exception) when(
                structuredOutputRepairAttempts < MaxFormatRepairAttempts &&
                LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
                   exception
@@ -568,11 +566,11 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          return responseEnvelope;
       }
-         catch(HttpRequestException exception) when (
-         formatRepairAttempts < MaxFormatRepairAttempts &&
-         LlamaStructuredOutputRepair.IsPegNativeFormatFailure(exception) &&
-         LlamaStructuredOutputRepair.CanRepair(outputMode, prompt)
-      )
+      catch(HttpRequestException exception) when(
+      formatRepairAttempts < MaxFormatRepairAttempts &&
+      LlamaStructuredOutputRepair.IsPegNativeFormatFailure(exception) &&
+      LlamaStructuredOutputRepair.CanRepair(outputMode, prompt)
+   )
       {
          incrementFormatRepairAttempts();
          LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
@@ -593,7 +591,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             incrementFormatRepairAttempts
          );
       }
-      catch(InvalidOperationException exception) when (
+      catch(InvalidOperationException exception) when(
          formatRepairAttempts < MaxFormatRepairAttempts &&
          LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
             exception
@@ -699,7 +697,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
             return new ResponseEnvelope(responseJson, rawResponse);
          }
-         catch(Exception exception) when (
+         catch(Exception exception) when(
             LlamaRetryPolicy.IsTransientFailure(
                exception,
                rawResponse,

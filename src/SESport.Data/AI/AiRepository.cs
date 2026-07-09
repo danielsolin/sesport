@@ -1,16 +1,13 @@
-using System.Text;
-using System.Text.Json;
-
 using Npgsql;
-
 using NpgsqlTypes;
-
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.AI.Models;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using System.Text;
+using System.Text.Json;
 
 namespace SESport.Data.AI;
 
@@ -148,7 +145,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
       var runs = new List<AiRunListItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          runs.Add(
             new AiRunListItem(
@@ -673,19 +670,19 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-         return new AiPromptDefinition(
-         reader.GetGuid(0),
-         reader.GetString(1),
-         reader.GetInt32(2),
-         reader.GetString(3),
-         reader.GetString(4),
-         ReadNullableString(reader, 5),
-         ReadNullableString(reader, 6) ?? "{}",
-         ReadNullableDecimal(reader, 7),
-         ReadNullableInt32(reader, 8),
-         ReadNullableInt32(reader, 9),
-         reader.GetBoolean(10)
-      );
+      return new AiPromptDefinition(
+      reader.GetGuid(0),
+      reader.GetString(1),
+      reader.GetInt32(2),
+      reader.GetString(3),
+      reader.GetString(4),
+      ReadNullableString(reader, 5),
+      ReadNullableString(reader, 6) ?? "{}",
+      ReadNullableDecimal(reader, 7),
+      ReadNullableInt32(reader, 8),
+      ReadNullableInt32(reader, 9),
+      reader.GetBoolean(10)
+   );
    }
 
    public async Task<AiProviderDefinition?> GetProviderAsync(

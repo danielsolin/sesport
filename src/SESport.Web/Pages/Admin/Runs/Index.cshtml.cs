@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-
 using SESport.AI.Models;
-using SESport.Data.AI;
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using SESport.Data.AI;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Runs;
@@ -95,7 +93,7 @@ public class IndexModel(
             cancellationToken
          );
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }

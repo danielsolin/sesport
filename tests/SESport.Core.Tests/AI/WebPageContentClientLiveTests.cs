@@ -1,7 +1,7 @@
-using System.Diagnostics;
-using System.Text.Json;
 using Microsoft.Playwright;
 using SESport.AI.WebPages;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace SESport.Core.Tests.AI;
 

@@ -11,7 +11,7 @@ internal static class ActivitySearchResponseParser
    {
       var content = ExtractJsonObject(StripJsonFence(rawContent));
 
-      if (content is null)
+      if(content is null)
       {
          return [];
       }
@@ -25,12 +25,12 @@ internal static class ActivitySearchResponseParser
             jsonOptions
          );
       }
-      catch (JsonException)
+      catch(JsonException)
       {
          return [];
       }
 
-      if (document?.Proposals is null)
+      if(document?.Proposals is null)
       {
          return [];
       }
@@ -90,7 +90,7 @@ internal static class ActivitySearchResponseParser
    {
       var trimmed = value.Trim();
 
-      if (!trimmed.StartsWith("```"))
+      if(!trimmed.StartsWith("```"))
       {
          return trimmed;
       }
@@ -98,7 +98,7 @@ internal static class ActivitySearchResponseParser
       var firstNewLine = trimmed.IndexOf('\n');
       var lastFence = trimmed.LastIndexOf("```", StringComparison.Ordinal);
 
-      if (firstNewLine < 0 || lastFence <= firstNewLine)
+      if(firstNewLine < 0 || lastFence <= firstNewLine)
       {
          return trimmed;
       }
@@ -111,7 +111,7 @@ internal static class ActivitySearchResponseParser
       var start = value.IndexOf('{');
       var end = value.LastIndexOf('}');
 
-      if (start < 0 || end <= start)
+      if(start < 0 || end <= start)
       {
          return null;
       }

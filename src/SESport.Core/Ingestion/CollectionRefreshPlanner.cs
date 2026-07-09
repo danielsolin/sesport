@@ -21,7 +21,7 @@ public sealed class CollectionRefreshPlanner(
          .OfType<DateTimeOffset>()
          .ToList();
 
-      if (startsAt.Count == 0)
+      if(startsAt.Count == 0)
       {
          return null;
       }

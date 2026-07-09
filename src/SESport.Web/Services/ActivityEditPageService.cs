@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Interfaces;
 using SESport.AI.Models;
@@ -6,6 +5,7 @@ using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
+using System.Text.Json;
 
 namespace SESport.Web.Services;
 

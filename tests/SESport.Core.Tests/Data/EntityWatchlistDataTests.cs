@@ -44,9 +44,9 @@ public class EntityWatchlistDataTests
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);
 
-      while (directory is not null)
+      while(directory is not null)
       {
-         if (File.Exists(Path.Combine(directory.FullName, "SESport.sln")))
+         if(File.Exists(Path.Combine(directory.FullName, "SESport.sln")))
          {
             return directory.FullName;
          }

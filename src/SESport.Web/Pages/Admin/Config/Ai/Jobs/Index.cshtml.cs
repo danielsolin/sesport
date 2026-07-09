@@ -16,7 +16,7 @@ public class IndexModel(AiAdminRepository repository) : PageModel
       {
          Jobs = await repository.GetJobsAsync(cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }

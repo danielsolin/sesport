@@ -1,8 +1,8 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.AI.Models;
 using SESport.Data.AI;
+using System.Text.Json;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Prompts;
 
@@ -22,7 +22,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
    {
       await LoadJobsAsync(cancellationToken);
 
-      if (string.IsNullOrWhiteSpace(id))
+      if(string.IsNullOrWhiteSpace(id))
       {
          Prompt.Id = Guid.NewGuid().ToString();
          return Page();
@@ -50,7 +50,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       await LoadJobsAsync(cancellationToken);
       ValidatePrompt();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          return Page();
       }
@@ -59,7 +59,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       {
          await repository.SavePromptAsync(Prompt, cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
          return Page();
@@ -75,22 +75,22 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
    private void ValidatePrompt()
    {
-      if (string.IsNullOrWhiteSpace(Prompt.Id))
+      if(string.IsNullOrWhiteSpace(Prompt.Id))
       {
          ModelState.AddModelError("Prompt.Id", "ID is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Prompt.JobId))
+      if(string.IsNullOrWhiteSpace(Prompt.JobId))
       {
          ModelState.AddModelError("Prompt.JobId", "Job is required.");
       }
 
-      if (Prompt.Version < 1)
+      if(Prompt.Version < 1)
       {
          ModelState.AddModelError("Prompt.Version", "Version is required.");
       }
 
-      if (Prompt.MaxToolRounds is not null && Prompt.MaxToolRounds < 1)
+      if(Prompt.MaxToolRounds is not null && Prompt.MaxToolRounds < 1)
       {
          ModelState.AddModelError(
             "Prompt.MaxToolRounds",
@@ -98,7 +98,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Prompt.SystemPrompt))
+      if(string.IsNullOrWhiteSpace(Prompt.SystemPrompt))
       {
          ModelState.AddModelError(
             "Prompt.SystemPrompt",
@@ -106,7 +106,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
-      if (string.IsNullOrWhiteSpace(Prompt.UserPromptTemplate))
+      if(string.IsNullOrWhiteSpace(Prompt.UserPromptTemplate))
       {
          ModelState.AddModelError(
             "Prompt.UserPromptTemplate",
@@ -120,7 +120,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
    private void ValidateJson(string fieldName, string? json)
    {
-      if (string.IsNullOrWhiteSpace(json))
+      if(string.IsNullOrWhiteSpace(json))
       {
          return;
       }
@@ -129,7 +129,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       {
          JsonDocument.Parse(json);
       }
-      catch (JsonException)
+      catch(JsonException)
       {
          ModelState.AddModelError(fieldName, "Must be valid JSON.");
       }

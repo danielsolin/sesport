@@ -1,8 +1,7 @@
-using System.Text.Json.Nodes;
-
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.AI.Models;
+using System.Text.Json.Nodes;
 
 namespace SESport.Core.Tests.AI;
 
@@ -188,21 +187,21 @@ public class AiJobRunnerTests
          CancellationToken cancellationToken
       )
       {
-      return Task.FromResult<AiPromptDefinition?>(
-            new AiPromptDefinition(
-               Guid.Parse("11111111-1111-1111-1111-111111111111"),
-               "job",
-               1,
-               "System",
-               "User",
-               """{"type":"object"}""",
-               "{}",
-               null,
-               null,
-               null,
-               true
-            )
-         );
+         return Task.FromResult<AiPromptDefinition?>(
+               new AiPromptDefinition(
+                  Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                  "job",
+                  1,
+                  "System",
+                  "User",
+                  """{"type":"object"}""",
+                  "{}",
+                  null,
+                  null,
+                  null,
+                  true
+               )
+            );
       }
 
       public Task<AiProviderDefinition?> GetProviderAsync(

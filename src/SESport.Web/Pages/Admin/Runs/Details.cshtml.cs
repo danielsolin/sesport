@@ -1,14 +1,14 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using SESport.AI.Models;
-using SESport.Data.AI;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using SESport.Data.AI;
 using SESport.Web.Services;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SESport.Web.Pages.Admin.Runs;
 
@@ -30,8 +30,11 @@ public class DetailsModel(
 
    public string RenderedPromptText { get; private set; } = string.Empty;
 
-   public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns { get; private
-      set; } = [];
+   public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns
+   {
+      get; private
+      set;
+   } = [];
 
    public IReadOnlyList<SelectListItem> ExecutionEnvironmentOptions
    {

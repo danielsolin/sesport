@@ -1,8 +1,8 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.AI.Models;
 using SESport.Data.AI;
+using System.Text.Json;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Providers;
 
@@ -18,7 +18,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       CancellationToken cancellationToken
    )
    {
-      if (string.IsNullOrWhiteSpace(id))
+      if(string.IsNullOrWhiteSpace(id))
       {
          return Page();
       }
@@ -37,7 +37,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
    {
       ValidateProvider();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          return Page();
       }
@@ -46,7 +46,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       {
          await repository.SaveProviderAsync(Provider, cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
          return Page();
@@ -57,17 +57,17 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
    private void ValidateProvider()
    {
-      if (string.IsNullOrWhiteSpace(Provider.Id))
+      if(string.IsNullOrWhiteSpace(Provider.Id))
       {
          ModelState.AddModelError("Provider.Id", "ID is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Provider.Label))
+      if(string.IsNullOrWhiteSpace(Provider.Label))
       {
          ModelState.AddModelError("Provider.Label", "Label is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Provider.Kind))
+      if(string.IsNullOrWhiteSpace(Provider.Kind))
       {
          ModelState.AddModelError("Provider.Kind", "Kind is required.");
       }
@@ -77,7 +77,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
    private void ValidateJson(string fieldName, string? json)
    {
-      if (string.IsNullOrWhiteSpace(json))
+      if(string.IsNullOrWhiteSpace(json))
       {
          return;
       }
@@ -86,7 +86,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       {
          JsonDocument.Parse(json);
       }
-      catch (JsonException)
+      catch(JsonException)
       {
          ModelState.AddModelError(fieldName, "Must be valid JSON.");
       }

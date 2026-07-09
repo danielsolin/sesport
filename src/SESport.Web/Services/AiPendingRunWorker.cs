@@ -17,8 +17,8 @@ public sealed class AiPendingRunWorker(
       {
          Guid? runId = null;
 
-        try
-        {
+         try
+         {
             using var scope = scopeFactory.CreateScope();
             var runRepository = scope.ServiceProvider.GetRequiredService<
                IAiJobRunRepository

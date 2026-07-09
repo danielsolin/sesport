@@ -1,7 +1,7 @@
+using SESport.AI.Models;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SESport.AI.Models;
 
 namespace SESport.AI.Clients;
 
@@ -83,7 +83,7 @@ internal static class ResponsesRequestBuilder
             payload[property.Key] = property.Value?.DeepClone();
          }
       }
-      catch (JsonException)
+      catch(JsonException)
       {
       }
    }

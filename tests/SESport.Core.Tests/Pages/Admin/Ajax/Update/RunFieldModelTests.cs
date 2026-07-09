@@ -1,16 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
-
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.AI.Models;
-using SESport.Data.AI;
 using SESport.Core.Configuration;
-using SESport.Core.Domain;
 using SESport.Data;
+using SESport.Data.AI;
 using SESport.Web.Pages.Admin.Ajax.Update;
 using SESport.Web.Services;
-
 using AdminBroadcastRepository = SESport.Data.BroadcastRepository;
 
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Update;

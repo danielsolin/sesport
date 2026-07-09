@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using SESport.AI.Interfaces;
 using SESport.Core.Formatting;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SESport.AI.ActivitySearch;
 
@@ -100,7 +100,7 @@ public sealed class ActivitySearchService(
       ActivityProposalDraft draft
    )
    {
-      if (draft.LocalStartTime is null)
+      if(draft.LocalStartTime is null)
       {
          return ActivityTime.OnDate(
             draft.ActivityDate,
@@ -201,7 +201,7 @@ public sealed class ActivitySearchService(
 
    private static string CreateSourceId(string? sourceName)
    {
-      if (string.IsNullOrWhiteSpace(sourceName))
+      if(string.IsNullOrWhiteSpace(sourceName))
       {
          return "source:ai-web-search";
       }
@@ -209,7 +209,7 @@ public sealed class ActivitySearchService(
       var normalized = sourceName.Trim().ToLowerInvariant();
       var builder = new StringBuilder("source:ai:");
 
-      foreach (var character in normalized)
+      foreach(var character in normalized)
       {
          builder.Append(char.IsLetterOrDigit(character) ? character : '-');
       }

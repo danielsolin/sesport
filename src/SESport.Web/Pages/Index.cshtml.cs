@@ -67,7 +67,7 @@ public class IndexModel(
          UntimedActivities = timeline.UntimedActivities;
          TotalParticipantsCount = CountParticipants(activities);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
       }

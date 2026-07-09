@@ -22,7 +22,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       var items = new List<AiProviderListItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          items.Add(
             new AiProviderListItem(
@@ -156,7 +156,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       var items = new List<AiJobListItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          items.Add(
             new AiJobListItem(
@@ -309,7 +309,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       var items = new List<AiPromptListItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          items.Add(
             new AiPromptListItem(
@@ -356,7 +356,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       var items = new List<AiPromptListItem>();
 
-      while (await reader.ReadAsync(cancellationToken))
+      while(await reader.ReadAsync(cancellationToken))
       {
          items.Add(
             new AiPromptListItem(

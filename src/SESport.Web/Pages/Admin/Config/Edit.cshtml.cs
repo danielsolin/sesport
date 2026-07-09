@@ -30,12 +30,12 @@ public class EditModel(AdminRepository repository) : PageModel
          cancellationToken
       );
 
-      if (CurrentTable is null)
+      if(CurrentTable is null)
       {
          return NotFound();
       }
 
-      if (string.IsNullOrWhiteSpace(id))
+      if(string.IsNullOrWhiteSpace(id))
       {
          return Page();
       }
@@ -50,7 +50,7 @@ public class EditModel(AdminRepository repository) : PageModel
          return Country.OriginalId is null ? NotFound() : Page();
       }
 
-      if (CurrentTable.Kind == ReferenceTableKind.Sports)
+      if(CurrentTable.Kind == ReferenceTableKind.Sports)
       {
          Sport = await repository.GetSportForEditAsync(
             id,
@@ -79,7 +79,7 @@ public class EditModel(AdminRepository repository) : PageModel
          cancellationToken
       );
 
-      if (CurrentTable is null)
+      if(CurrentTable is null)
       {
          return NotFound();
       }
@@ -106,11 +106,11 @@ public class EditModel(AdminRepository repository) : PageModel
          return RedirectToPage("./Index", new { table });
       }
 
-      if (CurrentTable.Kind == ReferenceTableKind.Sports)
+      if(CurrentTable.Kind == ReferenceTableKind.Sports)
       {
          ValidateSport();
 
-         if (!ModelState.IsValid)
+         if(!ModelState.IsValid)
          {
             return Page();
          }
@@ -119,7 +119,7 @@ public class EditModel(AdminRepository repository) : PageModel
          {
             await repository.SaveSportAsync(Sport, cancellationToken);
          }
-         catch (Exception exception)
+         catch(Exception exception)
          {
             LoadError = exception.Message;
             return Page();
@@ -130,7 +130,7 @@ public class EditModel(AdminRepository repository) : PageModel
 
       ValidateRow();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          return Page();
       }
@@ -143,7 +143,7 @@ public class EditModel(AdminRepository repository) : PageModel
             cancellationToken
          );
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
          return Page();
@@ -154,12 +154,12 @@ public class EditModel(AdminRepository repository) : PageModel
 
    private void ValidateRow()
    {
-      if (string.IsNullOrWhiteSpace(Row.Id))
+      if(string.IsNullOrWhiteSpace(Row.Id))
       {
          ModelState.AddModelError("Row.Id", "ID is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Row.Label))
+      if(string.IsNullOrWhiteSpace(Row.Label))
       {
          ModelState.AddModelError("Row.Label", "Label is required.");
       }
@@ -185,12 +185,12 @@ public class EditModel(AdminRepository repository) : PageModel
 
    private void ValidateSport()
    {
-      if (string.IsNullOrWhiteSpace(Sport.Id))
+      if(string.IsNullOrWhiteSpace(Sport.Id))
       {
          ModelState.AddModelError("Sport.Id", "ID is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Sport.Name))
+      if(string.IsNullOrWhiteSpace(Sport.Name))
       {
          ModelState.AddModelError("Sport.Name", "Name is required.");
       }

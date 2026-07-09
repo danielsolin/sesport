@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 
 using SESport.Core.Configuration;
-using SESport.Core.Domain;
 using SESport.Data;
 using SESport.Web.Pages.Admin.Entities;
 

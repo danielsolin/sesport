@@ -1,8 +1,8 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.AI.Models;
 using SESport.Data.AI;
+using System.Text.Json;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Jobs;
 
@@ -26,7 +26,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
    {
       await LoadProvidersAsync(cancellationToken);
 
-      if (string.IsNullOrWhiteSpace(id))
+      if(string.IsNullOrWhiteSpace(id))
       {
          await LoadPromptsAsync(cancellationToken);
          return Page();
@@ -52,7 +52,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       await LoadPromptsAsync(cancellationToken);
       ValidateJob();
 
-      if (!ModelState.IsValid)
+      if(!ModelState.IsValid)
       {
          return Page();
       }
@@ -61,7 +61,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       {
          await repository.SaveJobAsync(Job, cancellationToken);
       }
-      catch (Exception exception)
+      catch(Exception exception)
       {
          LoadError = exception.Message;
          return Page();
@@ -88,27 +88,27 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
    private void ValidateJob()
    {
-      if (string.IsNullOrWhiteSpace(Job.Id))
+      if(string.IsNullOrWhiteSpace(Job.Id))
       {
          ModelState.AddModelError("Job.Id", "ID is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Job.Label))
+      if(string.IsNullOrWhiteSpace(Job.Label))
       {
          ModelState.AddModelError("Job.Label", "Label is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Job.ProviderId))
+      if(string.IsNullOrWhiteSpace(Job.ProviderId))
       {
          ModelState.AddModelError("Job.ProviderId", "Provider is required.");
       }
 
-      if (string.IsNullOrWhiteSpace(Job.OutputMode))
+      if(string.IsNullOrWhiteSpace(Job.OutputMode))
       {
          ModelState.AddModelError("Job.OutputMode", "Output mode is required.");
       }
 
-      if (!string.IsNullOrWhiteSpace(Job.OutputMode)
+      if(!string.IsNullOrWhiteSpace(Job.OutputMode)
          && Job.OutputMode is not ("text" or "json_object"))
       {
          ModelState.AddModelError(
@@ -130,7 +130,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
          }
       }
 
-      if (!string.IsNullOrWhiteSpace(Job.ActivePromptId)
+      if(!string.IsNullOrWhiteSpace(Job.ActivePromptId)
          && !Prompts.Any(prompt =>
             string.Equals(
                prompt.Id,
