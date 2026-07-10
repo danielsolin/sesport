@@ -2,6 +2,7 @@
 @model SESport.Web.Pages.Admin.Activities.IndexModel
 @{
    ViewData["Title"] = "Activities";
+   const int descriptionPreviewLength = 20;
    var returnUrl = Model.GetReturnUrl();
    var findFactsUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityFacts"
@@ -115,9 +116,12 @@
                      <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Entities")'>
-                        Participants @Model.GetSortIndicator("Entities")
+                        <span title="Participants">
+                           # @Model.GetSortIndicator("Entities")
+                        </span>
                      </a>
                   </th>
+                  <th>Description</th>
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
@@ -144,6 +148,17 @@
                      </td>
                      <td>@activity.RelatedOrganizationEntities</td>
                      <td>@activity.RelatedPersonEntityIds.Length</td>
+                     <td>
+                        @if(!string.IsNullOrEmpty(activity.Description))
+                        {
+                           var description = activity.Description;
+                           var descriptionPreview = description.Length >
+                              descriptionPreviewLength
+                              ? description[..descriptionPreviewLength] + "..."
+                              : description;
+                           @descriptionPreview
+                        }
+                     </td>
                      <td>
                         <span class="status-pill">
                            @activity.PublicationStatus
