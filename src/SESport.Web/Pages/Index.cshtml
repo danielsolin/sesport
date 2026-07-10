@@ -162,6 +162,16 @@ else
                            ? string.Empty
                            : $"{activity.RelatedOrganizationEntities} ")
                      </h3>
+                     <div class="activity-meta activity-sport">
+                        @if(activity.SportIconPath is not null)
+                        {
+                           <img class="activity-sport-icon"
+                                src="@activity.SportIconPath"
+                                alt=""
+                                aria-hidden="true" />
+                        }
+                        <span>@activity.SportName</span>
+                     </div>
                      <h2 class="activity-entry-title">
                         @activity.Title
                      </h2>

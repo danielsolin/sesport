@@ -334,6 +334,12 @@
    gap: 4px;
 }
 
+.activity-sport-icon {
+   width: 18px;
+   height: 18px;
+   object-fit: contain;
+}
+
 .activity-time-channel {
    color: var(--muted);
    font-size: 12px;
