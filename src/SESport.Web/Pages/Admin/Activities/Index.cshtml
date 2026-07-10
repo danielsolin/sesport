@@ -3,6 +3,12 @@
 @{
    ViewData["Title"] = "Activities";
    var returnUrl = Model.GetReturnUrl();
+   var findFactsUrl = Url.Page(
+      "/Admin/Ajax/Create/ActivityFacts"
+   );
+   var runStatusesUrl = Url.Page(
+      "/Admin/Ajax/Poll/RunStatuses"
+   );
 }
 
 <section class="page-heading page-heading-row">
@@ -70,7 +76,8 @@
    </form>
 </section>
 
-<div data-activity-results>
+<div data-activity-results
+     data-run-statuses-url="@runStatusesUrl">
    @if(Model.LoadError is not null)
    {
       <div class="notice notice-warning">
@@ -143,6 +150,23 @@
                         </span>
                      </td>
                      <td class="table-actions">
+                        <form method="post"
+                              data-activity-facts-check>
+                           @Html.AntiForgeryToken()
+                           <input type="hidden"
+                                  name="Activity.Id"
+                                  value="@activity.Id" />
+                           <input type="hidden"
+                                  name="Activity.Title"
+                                  value="@activity.Title" />
+                           <button class="broadcast-participation-check-link"
+                                   type="submit"
+                                   data-facts-url="@findFactsUrl">
+                              Check
+                           </button>
+                           <span class="form-status"
+                                 data-facts-check-status></span>
+                        </form>
                         <form method="post"
                               asp-page-handler="Delete"
                               asp-route-id="@activity.Id"

@@ -1574,6 +1574,12 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    display: inline-block;
 }
 
+.table-actions .form-status {
+   min-height: 0;
+   font-size: 11px;
+   line-height: 1.2;
+}
+
 .table-actions button {
    display: inline-block;
    padding: 0;

@@ -15,6 +15,8 @@
       "[data-entity-inline-edit-input]";
    const generateTeaserSelector = "[data-generate-teaser]";
    const findFactsSelector = "[data-find-facts]";
+   const activityFactsCheckSelector =
+      "[data-activity-facts-check]";
    const checkParticipationRowSelector =
       "[data-check-participation-row]";
    const participationRunsToggleSelector =
@@ -28,6 +30,8 @@
    const runRowSelector = "[data-ai-run-id]";
    const runStatusCellSelector = "[data-ai-run-status-cell]";
    const runStatusTextSelector = "[data-ai-run-status-text]";
+   const activityFactsCheckStatusSelector =
+      "[data-facts-check-status]";
    const runPayloadCellSelector = "[data-ai-run-payload-cell]";
    const runRoundsCellSelector = "[data-ai-run-rounds-cell]";
    const runDurationCellSelector = "[data-ai-run-duration-cell]";
@@ -84,6 +88,7 @@
    initializeEntityInlineEditing();
    window.initializeEntityInlineEditing = initializeEntityInlineEditing;
    initializeTeaserGeneration();
+   initializeActivityFactsChecks();
    initializeParticipationRowChecks();
    void initializeParticipationRunsAsync();
    initializeBroadcastInlineEditing();
@@ -1052,6 +1057,94 @@
          button.addEventListener("click", async () => {
             await findFactsAsync(button);
          });
+      });
+   }
+
+   function initializeActivityFactsChecks()
+   {
+      if(document.documentElement.dataset.activityFactsChecksInitialized
+         === "true")
+      {
+         return;
+      }
+
+      document.documentElement.dataset.activityFactsChecksInitialized =
+         "true";
+
+      document.addEventListener("submit", async event => {
+         const form = event.target;
+
+         if(!(form instanceof HTMLFormElement)
+            || !form.matches(activityFactsCheckSelector))
+         {
+            return;
+         }
+
+         event.preventDefault();
+
+         const button = form.querySelector("button[type='submit']");
+         const status = form.querySelector("[data-facts-check-status]");
+         const url = button instanceof HTMLButtonElement
+            ? button.dataset.factsUrl
+            : "";
+
+         if(!(button instanceof HTMLButtonElement)
+            || !url
+            || !(status instanceof HTMLElement))
+         {
+            return;
+         }
+
+         button.disabled = true;
+         status.textContent = "Queueing...";
+         status.classList.remove("form-status-error");
+
+         try
+         {
+            const response = await fetch(url, {
+               method: "post",
+               body: new FormData(form),
+               headers: {
+                  Accept: "application/json"
+               }
+            });
+            const payload = await response.json();
+
+            if(!response.ok)
+            {
+               throw new Error(payload.error || "Facts check failed.");
+            }
+
+            const runId = typeof payload.runId === "string"
+               ? payload.runId.trim()
+               : "";
+
+            if(runId !== "")
+            {
+               const row = form.closest("tr");
+
+               if(row instanceof HTMLElement)
+               {
+                  row.dataset.aiRunId = runId;
+                  row.dataset.aiRunStatus = "pending";
+                  pendingRunIds.add(runId);
+                  startRunPolling();
+               }
+            }
+
+            status.textContent = "Queued";
+         }
+         catch(error)
+         {
+            status.textContent = error instanceof Error
+               ? error.message
+               : "Facts check failed.";
+            status.classList.add("form-status-error");
+         }
+         finally
+         {
+            button.disabled = false;
+         }
       });
    }
 
@@ -2454,6 +2547,7 @@
       row.dataset.aiRunStatus = statusId;
       updateRunStatusRow(row, statusId);
       updateRunStatusCell(row, statusId);
+      updateActivityFactsCheckStatus(row, statusId);
 
       const payloadCell = row.querySelector(runPayloadCellSelector);
 
@@ -2475,6 +2569,33 @@
       {
          durationCell.textContent = duration;
       }
+   }
+
+   function updateActivityFactsCheckStatus(row, statusId)
+   {
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const status = row.querySelector(
+         activityFactsCheckStatusSelector
+      );
+
+      if(!(status instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const normalizedStatusId = typeof statusId === "string"
+         ? statusId.trim().toLowerCase()
+         : "";
+
+      status.textContent = normalizedStatusId === "running"
+         ? "Running"
+         : normalizedStatusId === "pending"
+            ? "Queued"
+            : "";
    }
 
    function updateRunInlineEditCell(cell, payload)
