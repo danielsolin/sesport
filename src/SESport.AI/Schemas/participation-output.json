@@ -19,9 +19,9 @@
       "Participation": {
          "enum": [ "Yes", "No", "Unknown" ],
          "type": "string",
-         "description": "Whether any participants from the target country are in the broadcast event."
+         "description": "Whether any participants from the target country are in the event."
       }
    },
-   "description": "Structured assessment of whether the target-country participation is present in the broadcast event, which participants are involved, and supporting source URLs.",
+   "description": "Structured assessment of whether target-country participation is present in the event, which participants are involved, and supporting source URLs.",
    "additionalProperties": false
 }
