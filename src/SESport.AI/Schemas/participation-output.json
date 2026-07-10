@@ -5,7 +5,6 @@
    "properties": {
       "Sources": {
          "type": "array",
-         "minItems": 1,
          "items": {
             "type": "string",
             "format": "uri"
