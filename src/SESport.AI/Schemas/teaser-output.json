@@ -1,0 +1,12 @@
+{
+   "type": "object",
+   "required": [
+      "teaser"
+   ],
+   "properties": {
+      "teaser": {
+         "type": "string"
+      }
+   },
+   "additionalProperties": false
+}
