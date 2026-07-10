@@ -345,6 +345,7 @@
 }
 
 .activity-time-channel {
+   padding-left: 4px;
    color: var(--muted);
    font-size: 12px;
    font-weight: 700;
