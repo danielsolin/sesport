@@ -42,6 +42,12 @@
                <td>@provider.Enabled</td>
                <td class="table-actions">
                   <a asp-page="./Edit" asp-route-id="@provider.Id">Edit</a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-id="@provider.Id"
+                        onsubmit="return confirm('Are you sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
                </td>
             </tr>
          }

@@ -83,6 +83,21 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       };
    }
 
+   public async Task DeleteProviderAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from ai_providers
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task SaveProviderAsync(
       AiProviderEditModel model,
       CancellationToken cancellationToken
