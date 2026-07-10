@@ -328,16 +328,20 @@
    text-transform: uppercase;
 }
 
-.activity-sport {
-   display: inline-flex;
-   align-items: center;
-   gap: 4px;
-}
-
-.activity-sport-icon {
+.activity-time-icon {
+   display: inline-block;
    width: 18px;
    height: 18px;
-   object-fit: contain;
+   margin-right: 5px;
+   background-color: #ffcc00;
+   mask-image: var(--sport-icon-url);
+   mask-position: center;
+   mask-repeat: no-repeat;
+   mask-size: contain;
+   -webkit-mask-image: var(--sport-icon-url);
+   -webkit-mask-position: center;
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-size: contain;
 }
 
 .activity-time-channel {

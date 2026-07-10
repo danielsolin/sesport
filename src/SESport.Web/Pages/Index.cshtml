@@ -86,10 +86,18 @@ else
 
             <section class="activity-agenda-section">
                <div class="activity-agenda-time">
-                  <div class="activity-time-row">
-                     <div class="activity-time-badge">
-                        @agendaSection.TimeLabel
-                     </div>
+                     <div class="activity-time-row">
+                        <div class="activity-time-badge">
+                           @if(activity.SportIconPath is not null)
+                           {
+                              <span class="activity-time-icon"
+                                    role="img"
+                                    aria-label="@activity.SportName"
+                                    style="--sport-icon-url: url('@activity.SportIconPath');">
+                              </span>
+                           }
+                           @agendaSection.TimeLabel
+                        </div>
                      @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
                      {
                         <span class="activity-time-channel">
@@ -162,16 +170,6 @@ else
                            ? string.Empty
                            : $"{activity.RelatedOrganizationEntities} ")
                      </h3>
-                     <div class="activity-meta activity-sport">
-                        @if(activity.SportIconPath is not null)
-                        {
-                           <img class="activity-sport-icon"
-                                src="@activity.SportIconPath"
-                                alt=""
-                                aria-hidden="true" />
-                        }
-                        <span>@activity.SportName</span>
-                     </div>
                      <h2 class="activity-entry-title">
                         @activity.Title
                      </h2>
