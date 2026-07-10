@@ -1060,7 +1060,10 @@ public class AiProviderClientTests
          result.OutputText
       );
       Assert.Single(handler.RequestBodies);
-      Assert.DoesNotContain("\"response_format\"", handler.RequestBodies[0]);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[0]
+      );
       Assert.Contains(
          "Output format instructions:",
          handler.RequestBodies[0]
@@ -1142,6 +1145,10 @@ public class AiProviderClientTests
          handler.RequestBodies[1]);
       Assert.DoesNotContain("\"tool_choice\"",
          handler.RequestBodies[1]);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[1]
+      );
    }
 
    [Fact]
@@ -1179,6 +1186,10 @@ public class AiProviderClientTests
          "Return only one raw object literal.",
          handler.RequestBodies[1]
       );
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[1]
+      );
       Assert.NotNull(result.ToolTraceJson);
       Assert.Equal(
          3,
@@ -1201,6 +1212,64 @@ public class AiProviderClientTests
       Assert.Contains(
          "Return only one raw object literal.",
          result.ToolTraceJson
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncUsesResponseFormatForToolRepairFinalRequest()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaInvalidFinalResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("json_schema", true, CreateToolsJson()),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.DoesNotContain(
+         "\"response_format\"",
+         handler.RequestBodies[0]
+      );
+      Assert.DoesNotContain(
+         "\"response_format\"",
+         handler.RequestBodies[1]
+      );
+      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[2]);
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[2]
+      );
+      Assert.Contains(
+         "The previous response was rejected",
+         handler.RequestBodies[2]
       );
    }
 

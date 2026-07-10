@@ -1,3 +1,4 @@
+using SESport.AI.Clients;
 using SESport.Core.AI;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -33,6 +34,11 @@ internal static class LlamaRequestFactory
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
       MergeRequestOptions(payload, prompt.RequestOptionsJson);
+      if(includeTools)
+      {
+         RemoveStructuredResponseFormat(payload);
+      }
+
       return payload;
    }
 
@@ -46,6 +52,7 @@ internal static class LlamaRequestFactory
       finalRequest.Remove("tools");
       finalRequest.Remove("tool_choice");
       ApplyStructuredOutputPrompt(finalRequest, job, prompt);
+      ApplyStructuredResponseFormat(finalRequest, job, prompt);
 
       return finalRequest;
    }
@@ -116,6 +123,7 @@ internal static class LlamaRequestFactory
       if(!includeTools)
       {
          ApplyStructuredOutputPrompt(payload, job, prompt);
+         ApplyStructuredResponseFormat(payload, job, prompt);
       }
 
       return payload;
@@ -191,6 +199,32 @@ internal static class LlamaRequestFactory
             "json_object",
             StringComparison.OrdinalIgnoreCase
          );
+   }
+
+   private static void ApplyStructuredResponseFormat(
+      JsonObject payload,
+      AiJobDefinition job,
+      AiPromptDefinition prompt
+   )
+   {
+      if(!ShouldRequestStructuredOutput(job, prompt))
+      {
+         return;
+      }
+
+      ResponsesRequestFormat.Apply(
+         payload,
+         job.OutputMode,
+         prompt.OutputSchemaJson,
+         $"prompt_{prompt.Id:N}"
+      );
+   }
+
+   private static void RemoveStructuredResponseFormat(JsonObject payload)
+   {
+      payload.Remove("response_format");
+      payload.Remove("json_schema");
+      payload.Remove("grammar");
    }
 
    private static bool HasStructuredOutputPrompt(JsonArray messages)
