@@ -14,6 +14,7 @@
    const entityInlineEditInputSelector =
       "[data-entity-inline-edit-input]";
    const generateTeaserSelector = "[data-generate-teaser]";
+   const findFactsSelector = "[data-find-facts]";
    const checkParticipationRowSelector =
       "[data-check-participation-row]";
    const participationRunsToggleSelector =
@@ -1037,6 +1038,19 @@
          button.dataset.generateTeaserInitialized = "true";
          button.addEventListener("click", async () => {
             await generateTeaserAsync(button);
+         });
+      });
+
+      root.querySelectorAll(findFactsSelector).forEach(button => {
+         if(!(button instanceof HTMLButtonElement)
+            || button.dataset.findFactsInitialized === "true")
+         {
+            return;
+         }
+
+         button.dataset.findFactsInitialized = "true";
+         button.addEventListener("click", async () => {
+            await findFactsAsync(button);
          });
       });
    }
@@ -4167,6 +4181,60 @@
          const message = error instanceof Error
             ? error.message
             : "Teaser generation failed.";
+
+         setTeaserStatus(status, message, true);
+      }
+      finally
+      {
+         button.disabled = false;
+      }
+   }
+
+   async function findFactsAsync(button)
+   {
+      const form = button.form;
+      const url = button.dataset.factsUrl;
+      const output = form?.querySelector("[data-facts-output]");
+      const status = form?.querySelector("[data-facts-status]");
+
+      if(!form || !url || !(output instanceof HTMLTextAreaElement))
+      {
+         return;
+      }
+
+      setTeaserStatus(status, "Queueing facts job...");
+      button.disabled = true;
+
+      try
+      {
+         const response = await fetch(url, {
+            method: "post",
+            body: new FormData(form),
+            headers: {
+               Accept: "application/json"
+            }
+         });
+         const payload = await response.json();
+
+         if(!response.ok)
+         {
+            throw new Error(payload.error || "Finding facts failed.");
+         }
+
+         const runId = typeof payload.runId === "string"
+            ? payload.runId
+            : "";
+         const message = runId === ""
+            ? "Facts job queued."
+            : `Facts job queued: ${runId}`;
+
+         setTeaserStatus(status, message);
+      }
+      catch(error)
+      {
+         const message = error instanceof Error
+            ? error.message
+            : "Finding facts failed.";
 
          setTeaserStatus(status, message, true);
       }

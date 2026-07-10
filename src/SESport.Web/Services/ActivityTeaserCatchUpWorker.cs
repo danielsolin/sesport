@@ -26,6 +26,12 @@ public sealed class ActivityTeaserCatchUpWorker(
                stoppingToken
             );
 
+         var factsRuns = await aiRepository
+            .GetCompletedActivityFactsRunsWithEmptyActivityFactsAsync(
+               MaxRuns,
+               stoppingToken
+            );
+
          foreach(var run in runs)
          {
             var teaser = ActivityTeaserJobProcessor.ExtractGeneratedTeaser(
@@ -47,6 +53,32 @@ public sealed class ActivityTeaserCatchUpWorker(
             {
                logger.LogInformation(
                   "Saved missed activity teaser from AI run {RunId}.",
+                  run.RunId
+               );
+            }
+         }
+
+         foreach(var run in factsRuns)
+         {
+            var facts = ActivityTeaserJobProcessor.ExtractGeneratedFacts(
+               run.OutputText
+            );
+
+            if(string.IsNullOrWhiteSpace(facts))
+            {
+               continue;
+            }
+
+            var updated = await activityRepository.UpdateEmptyFactsAsync(
+               run.ActivityId,
+               facts,
+               stoppingToken
+            );
+
+            if(updated)
+            {
+               logger.LogInformation(
+                  "Saved missed activity facts from AI run {RunId}.",
                   run.RunId
                );
             }

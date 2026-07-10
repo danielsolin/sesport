@@ -434,6 +434,57 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       return runs;
    }
 
+   public async Task<IReadOnlyList<CompletedActivityFactsRun>>
+      GetCompletedActivityFactsRunsWithEmptyActivityFactsAsync(
+         int maxRuns,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            r.id,
+            a.id,
+            r.output_text
+         from ai_job_runs r
+         join activities a on a.id::text = r.correlation_id
+         where r.job_id = @job_id
+            and r.status_id = @status_id
+            and coalesce(a.facts, '') = ''
+            and coalesce(r.output_text, '') <> ''
+         order by r.completed_at desc, r.id desc
+         limit @limit
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "job_id",
+         AiJobIds.FindActivityFacts
+      );
+      command.Parameters.AddWithValue(
+         "status_id",
+         AiJobRunStatusIds.Completed
+      );
+      command.Parameters.AddWithValue("limit", maxRuns);
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var runs = new List<CompletedActivityFactsRun>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         runs.Add(
+            new CompletedActivityFactsRun(
+               reader.GetGuid(0),
+               reader.GetGuid(1),
+               reader.GetString(2)
+            )
+         );
+      }
+
+      return runs;
+   }
+
    public async Task<IReadOnlyDictionary<Guid, BroadcastParticipationCheck>>
       GetParticipationChecksAsync(
          IReadOnlyCollection<Guid> broadcastIds,
@@ -1468,6 +1519,12 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 }
 
 public sealed record CompletedActivityTeaserRun(
+   Guid RunId,
+   Guid ActivityId,
+   string OutputText
+);
+
+public sealed record CompletedActivityFactsRun(
    Guid RunId,
    Guid ActivityId,
    string OutputText

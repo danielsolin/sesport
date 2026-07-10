@@ -19,10 +19,10 @@ public sealed class ActivityTeaserJobProcessor(
    )
    {
       await inner.ProcessRunAsync(runId, cancellationToken);
-      await SaveCompletedTeaserAsync(runId, cancellationToken);
+      await SaveCompletedActivityTextAsync(runId, cancellationToken);
    }
 
-   private async Task SaveCompletedTeaserAsync(
+   private async Task SaveCompletedActivityTextAsync(
       Guid runId,
       CancellationToken cancellationToken
    )
@@ -30,11 +30,8 @@ public sealed class ActivityTeaserJobProcessor(
       var run = await runRepository.GetRunAsync(runId, cancellationToken);
 
       if(run is null ||
-         !string.Equals(
-            run.JobId,
-            AiJobIds.GenerateActivityTeaser,
-            StringComparison.Ordinal
-         ) ||
+         (run.JobId != AiJobIds.GenerateActivityTeaser &&
+            run.JobId != AiJobIds.FindActivityFacts) ||
          !string.Equals(
             run.StatusId,
             AiJobRunStatusIds.Completed,
@@ -47,28 +44,41 @@ public sealed class ActivityTeaserJobProcessor(
       if(!Guid.TryParse(run.CorrelationId, out var activityId))
       {
          logger.LogWarning(
-            "Activity teaser run {RunId} has invalid correlation id.",
+            "Activity text run {RunId} has invalid correlation id.",
             runId
          );
          return;
       }
 
-      var teaser = ExtractGeneratedTeaser(run.OutputText ?? string.Empty);
+      var output = run.JobId == AiJobIds.GenerateActivityTeaser
+         ? ExtractGeneratedTeaser(run.OutputText ?? string.Empty)
+         : ExtractGeneratedFacts(run.OutputText ?? string.Empty);
 
-      if(string.IsNullOrWhiteSpace(teaser))
+      if(string.IsNullOrWhiteSpace(output))
       {
          logger.LogWarning(
-            "Activity teaser run {RunId} completed without teaser output.",
+            "Activity text run {RunId} completed without output.",
             runId
          );
          return;
       }
 
-      await activityRepository.UpdateTeaserAsync(
-         activityId,
-         teaser,
-         cancellationToken
-      );
+      if(run.JobId == AiJobIds.GenerateActivityTeaser)
+      {
+         await activityRepository.UpdateTeaserAsync(
+            activityId,
+            output,
+            cancellationToken
+         );
+      }
+      else
+      {
+         await activityRepository.UpdateFactsAsync(
+            activityId,
+            output,
+            cancellationToken
+         );
+      }
    }
 
    internal static string? ExtractGeneratedTeaser(string outputText)
@@ -82,6 +92,26 @@ public sealed class ActivityTeaserJobProcessor(
             teaser.ValueKind == JsonValueKind.String)
          {
             return teaser.GetString();
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return outputText;
+   }
+
+   internal static string? ExtractGeneratedFacts(string outputText)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         var root = document.RootElement;
+
+         if(root.TryGetProperty("facts", out var facts) &&
+            facts.ValueKind == JsonValueKind.String)
+         {
+            return facts.GetString();
          }
       }
       catch(JsonException)

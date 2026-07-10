@@ -233,7 +233,28 @@ public sealed class ActivityEditPageService(
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
             AiJobIds.GenerateActivityTeaser,
-            await CreateTeaserInputJsonAsync(activity, cancellationToken),
+            await CreateActivityAiInputJsonAsync(
+               activity,
+               cancellationToken
+            ),
+            activity.Id?.ToString()
+         ),
+         cancellationToken
+      );
+   }
+
+   public async Task<Guid> QueueFactsAsync(
+      ActivityEditModel activity,
+      CancellationToken cancellationToken
+   )
+   {
+      return await aiJobRunner.QueueAsync(
+         new AiJobRequest(
+            AiJobIds.FindActivityFacts,
+            await CreateActivityAiInputJsonAsync(
+               activity,
+               cancellationToken
+            ),
             activity.Id?.ToString()
          ),
          cancellationToken
@@ -375,7 +396,7 @@ public sealed class ActivityEditPageService(
       return linkedEntityIds;
    }
 
-   private async Task<string> CreateTeaserInputJsonAsync(
+   private async Task<string> CreateActivityAiInputJsonAsync(
       ActivityEditModel activity,
       CancellationToken cancellationToken
    )

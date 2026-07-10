@@ -64,6 +64,8 @@ public sealed class ActivityEditModel
 
    public string? Teaser { get; set; }
 
+   public string? Facts { get; set; }
+
    public string ActivityType { get; set; } = string.Empty;
 
    public string SportId { get; set; } = string.Empty;
