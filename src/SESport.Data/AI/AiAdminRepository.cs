@@ -130,9 +130,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       const string updateSql = """
          update ai_providers
          set
-            id = @id,
             label = @label,
-            kind = @kind,
             base_address = @base_address,
             model = @model,
             api_key_source = @api_key_source,
@@ -280,7 +278,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       const string updateSql = """
          update ai_jobs
          set
-            id = @id,
             label = @label,
             description = @description,
             provider_id = @provider_id,
@@ -474,9 +471,6 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       const string updateSql = """
          update ai_job_prompts
          set
-            id = @id,
-            job_id = @job_id,
-            version = @version,
             system_prompt = @system_prompt,
             user_prompt_template = @user_prompt_template,
             output_schema = @output_schema,

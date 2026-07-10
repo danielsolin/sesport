@@ -29,7 +29,8 @@
       <div class="form-grid">
          <label>
             <span>ID</span>
-            <input asp-for="Provider.Id" />
+            <input asp-for="Provider.Id"
+                   readonly="@(Model.Provider.OriginalId is not null)" />
             <span asp-validation-for="Provider.Id"></span>
          </label>
          <label>
@@ -39,7 +40,8 @@
          </label>
          <label>
             <span>Kind</span>
-            <input asp-for="Provider.Kind" />
+            <input asp-for="Provider.Kind"
+                   readonly="@(Model.Provider.OriginalId is not null)" />
             <span asp-validation-for="Provider.Kind"></span>
          </label>
          <label>

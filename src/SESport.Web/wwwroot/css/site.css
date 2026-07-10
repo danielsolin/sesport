@@ -1711,6 +1711,14 @@ textarea {
    line-height: 1.25;
 }
 
+input[readonly],
+select:disabled {
+   background: #eceff0;
+   color: #687276;
+   cursor: not-allowed;
+   opacity: 0.8;
+}
+
 textarea {
    min-height: 88px;
    resize: vertical;

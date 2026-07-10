@@ -29,7 +29,14 @@
       <div class="form-grid">
          <label>
             <span>ID</span>
-            <input asp-for="Job.Id" />
+            @if (Model.Job.OriginalId is null)
+            {
+               <input asp-for="Job.Id" />
+            }
+            else
+            {
+               <input asp-for="Job.Id" readonly />
+            }
             <span asp-validation-for="Job.Id"></span>
          </label>
          <label>

@@ -29,23 +29,32 @@
       <div class="form-grid">
          <label>
             <span>ID</span>
-            <input asp-for="Prompt.Id" />
+            <input asp-for="Prompt.Id"
+                   readonly="@(Model.Prompt.OriginalId is not null)" />
             <span asp-validation-for="Prompt.Id"></span>
          </label>
          <label>
             <span>Job</span>
-            <select asp-for="Prompt.JobId">
+            <select asp-for="Prompt.JobId"
+                    disabled="@(Model.Prompt.OriginalId is not null)">
                <option value="">Select job</option>
                @foreach (var job in Model.Jobs)
                {
                   <option value="@job.Id">@job.Label</option>
                }
             </select>
+            @if (Model.Prompt.OriginalId is not null)
+            {
+               <input asp-for="Prompt.JobId" type="hidden" />
+            }
             <span asp-validation-for="Prompt.JobId"></span>
          </label>
          <label>
             <span>Version</span>
-            <input asp-for="Prompt.Version" type="number" min="1" />
+            <input asp-for="Prompt.Version"
+                   type="number"
+                   min="1"
+                   readonly="@(Model.Prompt.OriginalId is not null)" />
             <span asp-validation-for="Prompt.Version"></span>
          </label>
          <label>
