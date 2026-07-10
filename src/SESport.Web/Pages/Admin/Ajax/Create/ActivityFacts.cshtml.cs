@@ -31,8 +31,21 @@ public sealed class ActivityFactsModel(ActivityEditPageService editService)
          });
       }
 
+      var savedActivity = await editService.LoadActivityAsync(
+         Activity.Id.Value,
+         cancellationToken
+      );
+
+      if(savedActivity is null)
+      {
+         return NotFound(new
+         {
+            error = "Activity not found."
+         });
+      }
+
       var runId = await editService.QueueFactsAsync(
-         Activity,
+         savedActivity,
          cancellationToken
       );
 
