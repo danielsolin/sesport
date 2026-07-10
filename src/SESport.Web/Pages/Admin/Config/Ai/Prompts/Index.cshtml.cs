@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Data.AI;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Prompts;

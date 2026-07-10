@@ -45,7 +45,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          ["country-relevance-kinds"] = new(
             "country-relevance-kinds",
             "Country relevance kinds",
-            "Allowed explanations for why an entity is relevant to Sweden.",
+            "Allowed explanations for why an entity is relevant to " +
+            PrimaryCountry.CountryName + ".",
             "country_relevance_kinds",
             "label",
             true,

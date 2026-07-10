@@ -104,7 +104,9 @@ public sealed class GeminiGenerateContentActivitySearchClient
          }
       }
 
-      throw new InvalidOperationException("Gemini search request was not sent.");
+      throw new InvalidOperationException(
+         "Gemini search request was not sent."
+      );
    }
 
    private Uri CreateGenerateContentUri()

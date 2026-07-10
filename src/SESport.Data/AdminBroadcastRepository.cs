@@ -5,7 +5,7 @@ using SESport.Core.Formatting;
 
 namespace SESport.Data;
 
-public sealed class BroadcastRepository(NpgsqlDataSource dataSource)
+public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 {
    public async Task<BroadcastListItem?> GetByIdAsync(
       Guid id,

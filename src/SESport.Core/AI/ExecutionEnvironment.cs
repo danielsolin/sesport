@@ -1,4 +1,4 @@
-namespace SESport.AI.Jobs;
+namespace SESport.Core.AI;
 
 public static class ExecutionEnvironment
 {

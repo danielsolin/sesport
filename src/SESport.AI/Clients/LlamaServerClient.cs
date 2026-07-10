@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SESport.AI.Interfaces;
 using SESport.AI.Llama;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using System.Net.Http.Headers;

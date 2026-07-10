@@ -1,5 +1,5 @@
 using SESport.AI.Interfaces;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;

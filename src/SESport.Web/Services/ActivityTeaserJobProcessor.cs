@@ -1,6 +1,7 @@
 using System.Text.Json;
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
+using SESport.Core.AI;
 using SESport.Data;
 
 namespace SESport.Web.Services;
@@ -12,8 +13,6 @@ public sealed class ActivityTeaserJobProcessor(
    ILogger<ActivityTeaserJobProcessor> logger
 ) : IAiJobProcessor
 {
-   private const string TeaserJobId = "generate-activity-teaser";
-
    public async Task ProcessRunAsync(
       Guid runId,
       CancellationToken cancellationToken
@@ -31,8 +30,16 @@ public sealed class ActivityTeaserJobProcessor(
       var run = await runRepository.GetRunAsync(runId, cancellationToken);
 
       if(run is null ||
-         !string.Equals(run.JobId, TeaserJobId, StringComparison.Ordinal) ||
-         !string.Equals(run.StatusId, "completed", StringComparison.Ordinal))
+         !string.Equals(
+            run.JobId,
+            AiJobIds.GenerateActivityTeaser,
+            StringComparison.Ordinal
+         ) ||
+         !string.Equals(
+            run.StatusId,
+            AiJobRunStatusIds.Completed,
+            StringComparison.Ordinal
+         ))
       {
          return;
       }

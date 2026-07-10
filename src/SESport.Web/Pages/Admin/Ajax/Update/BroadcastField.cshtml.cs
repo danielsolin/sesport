@@ -6,7 +6,7 @@ using SESport.Data;
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
 public sealed class BroadcastFieldModel(
-   BroadcastRepository repository,
+   AdminBroadcastRepository repository,
    AdminRepository adminRepository
 ) : PageModel
 {

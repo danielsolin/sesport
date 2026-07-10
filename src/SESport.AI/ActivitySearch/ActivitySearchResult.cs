@@ -1,3 +1,5 @@
+using SESport.Core.AI;
+
 namespace SESport.AI.ActivitySearch;
 
 public sealed record ActivitySearchResult(

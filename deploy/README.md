@@ -13,19 +13,19 @@ This folder contains the non-code deployment assets for SESport.
 
 ## Role Split
 
-- VPS/database host:
+- Web/database host:
   - runs the public web services
-  - runs PostgreSQL with `docker compose up -d postgres`
+  - may operate the single PostgreSQL database referenced by `.env`
   - does not run SearXNG for this project
 - Local AI-run machine:
   - runs local SearXNG with `docker compose up -d searxng`
   - may run LLM services and AI workers
-  - does not run PostgreSQL for this project
+  - does not start a second PostgreSQL database for this project
 
 ## Docker
 
 Docker is required on local AI-run machines for SearXNG, and on the
-VPS/database host only if it operates the PostgreSQL container.
+database host only if that host operates the PostgreSQL container.
 
 On Ubuntu:
 
@@ -44,7 +44,8 @@ Start local SearXNG on an AI-run machine:
 docker compose up -d searxng
 ```
 
-Start PostgreSQL only on the VPS/database host:
+Start PostgreSQL only on the machine that intentionally operates the
+database referenced by `.env`:
 
 ```bash
 docker compose up -d postgres
@@ -61,4 +62,5 @@ docker compose up -d postgres
 - The SearXNG override is mounted directly from the repo by `compose.yaml`
 - SearXNG is intended to run locally on the machine that runs AI jobs.
   It is not exposed through the public `*.sesport.se` sites.
-- PostgreSQL is intended to run only on the VPS/database host.
+- PostgreSQL connection settings come from `.env`. There is one active
+  project database; do not start another one for local AI-run machines.

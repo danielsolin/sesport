@@ -1,5 +1,5 @@
 using SESport.AI.Interfaces;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Data;
 using SESport.Data.AI;
@@ -11,13 +11,10 @@ public sealed class BroadcastParticipationService(
    ActivityRepository activityRepository,
    AiRepository aiRepository,
    AdminRepository adminRepository,
-   BroadcastRepository broadcastRepository,
+   AdminBroadcastRepository broadcastRepository,
    IAiJobRunner aiJobRunner
 )
 {
-   private const string ParticipationJobId =
-      "decide-swedish-participation";
-
    public async Task<BroadcastParticipationCheck?>
       GetParticipationCheckAsync(
          Guid broadcastId,
@@ -108,7 +105,7 @@ public sealed class BroadcastParticipationService(
 
          await aiJobRunner.QueueAsync(
             new AiJobRequest(
-               ParticipationJobId,
+               AiJobIds.DecidePrimaryCountryParticipation,
                CreateParticipationInputJson(
                   broadcast,
                   CreateCandidatesText(candidateOptions)
@@ -306,7 +303,7 @@ public sealed class BroadcastParticipationService(
    )
    {
       var localDate = DateOnly.FromDateTime(
-         BroadcastRepository.ToLocal(broadcast.StartsAt).Date
+         AdminBroadcastRepository.ToLocal(broadcast.StartsAt).Date
       );
 
       return JsonSerializer.Serialize(

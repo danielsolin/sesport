@@ -1,5 +1,5 @@
 using SESport.AI.Interfaces;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 

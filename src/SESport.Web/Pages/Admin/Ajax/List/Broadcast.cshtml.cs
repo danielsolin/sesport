@@ -7,7 +7,7 @@ using SESport.Web.Services;
 namespace SESport.Web.Pages.Admin.Ajax.List;
 
 public sealed class BroadcastModel(
-   BroadcastRepository repository,
+   AdminBroadcastRepository repository,
    BroadcastParticipationService participationService
 ) : PageModel
 {

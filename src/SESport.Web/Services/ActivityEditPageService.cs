@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Interfaces;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -12,13 +12,11 @@ namespace SESport.Web.Services;
 public sealed class ActivityEditPageService(
    ActivityRepository repository,
    AdminRepository adminRepository,
-   BroadcastRepository broadcastRepository,
+   AdminBroadcastRepository broadcastRepository,
    BroadcastParticipationService participationService,
    IAiJobRunner aiJobRunner
 )
 {
-   private const string TeaserJobId = "generate-activity-teaser";
-
    public async Task<ActivityEditOptions> LoadOptionsAsync(
       IEnumerable<Guid> selectedEntityIds,
       Guid? organizationEntityId,
@@ -163,7 +161,9 @@ public sealed class ActivityEditPageService(
       }
 
       var firstBroadcast = broadcasts[0];
-      var localStart = BroadcastRepository.ToLocal(firstBroadcast.StartsAt);
+      var localStart = AdminBroadcastRepository.ToLocal(
+         firstBroadcast.StartsAt
+      );
       var participationCheck =
          await participationService.GetParticipationCheckAsync(
             firstBroadcast.Id,
@@ -232,7 +232,7 @@ public sealed class ActivityEditPageService(
    {
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
-            TeaserJobId,
+            AiJobIds.GenerateActivityTeaser,
             await CreateTeaserInputJsonAsync(activity, cancellationToken),
             activity.Id?.ToString()
          ),

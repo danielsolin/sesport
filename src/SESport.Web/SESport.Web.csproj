@@ -12,8 +12,4 @@
       <ProjectReference Include="..\SESport.AI\SESport.AI.csproj" />
    </ItemGroup>
 
-   <ItemGroup>
-      <PackageReference Include="Npgsql" Version="9.0.3" />
-   </ItemGroup>
-
 </Project>

@@ -5,8 +5,6 @@ using SESport.Core.Configuration;
 using SESport.Data;
 using SESport.Web.Pages.Admin.Ajax.Update;
 
-using AdminBroadcastRepository = SESport.Data.BroadcastRepository;
-
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Update;
 
 public sealed class BroadcastFieldModelTests

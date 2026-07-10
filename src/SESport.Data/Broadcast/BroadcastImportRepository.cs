@@ -1,20 +1,21 @@
 using Npgsql;
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
 using CoreBroadcast = SESport.Core.Broadcast.Broadcast;
 
 namespace SESport.Data.Broadcast;
 
-public sealed class BroadcastRepository : IAsyncDisposable
+public sealed class BroadcastImportRepository : IAsyncDisposable
 {
    private readonly NpgsqlDataSource dataSource;
    private readonly bool ownsDataSource;
 
-   public BroadcastRepository(NpgsqlDataSource dataSource)
+   public BroadcastImportRepository(NpgsqlDataSource dataSource)
    {
       this.dataSource = dataSource;
    }
 
-   private BroadcastRepository(
+   private BroadcastImportRepository(
       NpgsqlDataSource dataSource,
       bool ownsDataSource
    )
@@ -23,9 +24,9 @@ public sealed class BroadcastRepository : IAsyncDisposable
       this.ownsDataSource = ownsDataSource;
    }
 
-   public static BroadcastRepository Connect(string connectionString)
+   public static BroadcastImportRepository Connect(string connectionString)
    {
-      return new BroadcastRepository(
+      return new BroadcastImportRepository(
          NpgsqlDataSource.Create(connectionString),
          ownsDataSource: true
       );
@@ -155,7 +156,7 @@ public sealed class BroadcastRepository : IAsyncDisposable
                          ) = rule.value
                          or regexp_replace(
                             replace(broadcast.channel_name, '\u0026', '&'),
-                            '^SE - ',
+                            @channel_prefix_regex,
                             ''
                          ) = rule.value
                       )
@@ -177,6 +178,10 @@ public sealed class BroadcastRepository : IAsyncDisposable
       );
       await using var command = new NpgsqlCommand(sql, connection);
       command.Parameters.AddWithValue("source_key", sourceKey);
+      command.Parameters.AddWithValue(
+         "channel_prefix_regex",
+         PrimaryCountry.BroadcastChannelPrefixRegex
+      );
 
       return await command.ExecuteNonQueryAsync(cancellationToken);
    }

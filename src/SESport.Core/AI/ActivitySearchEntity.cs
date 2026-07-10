@@ -1,4 +1,7 @@
-namespace SESport.AI.ActivitySearch;
+using SESport.Core.Identifiers;
+using SESport.Core.Ingestion;
+
+namespace SESport.Core.AI;
 
 public sealed record ActivitySearchEntity(
    ExternalEntityId WatchlistId,
@@ -10,5 +13,5 @@ public sealed record ActivitySearchEntity(
    IReadOnlyCollection<string> LikelyActivityTypes,
    string? SuggestedEvidenceSources,
    string? Notes,
-   string Country = "Sweden"
+   string Country = PrimaryCountry.CountryName
 );

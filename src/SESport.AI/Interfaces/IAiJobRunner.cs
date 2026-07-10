@@ -1,4 +1,4 @@
-using SESport.AI.Models;
+using SESport.Core.AI;
 
 namespace SESport.AI.Interfaces;
 

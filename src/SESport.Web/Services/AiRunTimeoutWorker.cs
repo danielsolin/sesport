@@ -1,4 +1,4 @@
-using SESport.AI.Interfaces;
+using SESport.Core.AI;
 
 namespace SESport.Web.Services;
 

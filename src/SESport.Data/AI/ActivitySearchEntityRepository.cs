@@ -1,6 +1,6 @@
 using Npgsql;
 
-using SESport.AI.ActivitySearch;
+using SESport.Core.AI;
 using SESport.Core.Identifiers;
 using SESport.Core.Ingestion;
 

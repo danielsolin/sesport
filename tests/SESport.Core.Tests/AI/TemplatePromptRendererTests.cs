@@ -1,4 +1,4 @@
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.AI.Prompts;
 
 namespace SESport.Core.Tests.AI;

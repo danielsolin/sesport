@@ -24,7 +24,8 @@ Use this as a recurring clean-up pass for the repo.
 
 ## Docs Drift
 
-- Keep `docs/TODO.md` focused on current work.
+- Keep temporary TODO notes out of long-lived documentation unless they are
+  still actionable.
 - Move recurring checklists and long-lived guidance into dedicated docs.
 - Remove notes that only describe already-finished cleanup work.
 

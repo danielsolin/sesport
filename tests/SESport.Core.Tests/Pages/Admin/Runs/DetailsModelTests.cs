@@ -69,7 +69,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void BuildExecutionEnvironmentOptionsIncludesCurrentEnvironment()
    {
-      var currentExecutionEnvironment = SESport.AI.Jobs.ExecutionEnvironment.Current;
+      var currentExecutionEnvironment = SESport.Core.AI.ExecutionEnvironment.Current;
       var options = DetailsModel.BuildExecutionEnvironmentOptions(
          ["Worker-A"],
          null,
@@ -92,7 +92,7 @@ public sealed class DetailsModelTests
       var options = DetailsModel.BuildExecutionEnvironmentOptions(
          ["Worker-A", "Worker-B"],
          "Worker-B",
-         SESport.AI.Jobs.ExecutionEnvironment.Current,
+         SESport.Core.AI.ExecutionEnvironment.Current,
          includeUnsetOption: false
       );
 
@@ -141,7 +141,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void GetMaxPayloadCharacterCountUsesRoundPeak()
    {
-      var run = new SESport.AI.Models.AiRunDetail(
+      var run = new SESport.Core.AI.AiRunDetail(
          Id: Guid.NewGuid(),
          JobId: "job",
          JobLabel: "Job",
@@ -190,7 +190,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatTemperatureUsesRawRequestValue()
    {
-      var run = new SESport.AI.Models.AiRunDetail(
+      var run = new SESport.Core.AI.AiRunDetail(
          Id: Guid.NewGuid(),
          JobId: "job",
          JobLabel: "Job",

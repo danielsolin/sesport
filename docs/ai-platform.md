@@ -50,37 +50,62 @@ Stores each execution.
 
 - `id`: immutable UUID
 - `job_id`, `prompt_id`, `provider_id`: execution references
-- `status_id`: `pending`, `running`, `completed`, `failed`
+- `status_id`: `pending`, `running`, `completed`, `failed`, or `archived`
 - `correlation_id`: optional caller-supplied trace id
 - `input_payload`: raw JSON input
+- `execution_environment`: worker identity for pending/running ownership
 - `rendered_prompt`: final prompt text
 - `raw_response`: raw provider response JSON
 - `output_text`: parsed output text
 - `error_message`: error detail if the run failed
 - `started_at`, `completed_at`, `duration_seconds`: timing
 - `input_tokens`, `output_tokens`, `reasoning_tokens`: usage metadata
+- `tool_trace`, `tool_round_count`, `conversation_character_count`: web/tool
+  execution diagnostics
 
 ## Project Structure
+
+### `src/SESport.Core/AI`
+
+- AI job, provider, prompt, rendered prompt, and run models
+- `AiJobRunStatusIds` and `AiJobIds`
+- repository contracts used by the AI runtime and Data implementation
+- execution-environment helper
+- `ActivitySearchEntity`, shared by AI clients and Data repositories
 
 ### `src/SESport.AI`
 
 - `ActivitySearch/`
+- `Clients/`
 - `Interfaces/`
-- `Models/`
-- `Persistence/`
-- `Providers/`
-- `Rendering/`
-- `Services/`
-- `Validation/`
+- `Jobs/`
+- `Llama/`
+- `Prompts/`
+- `WebPages/`
+- `WebSearch/`
 
-The active AI code lives in `src/SESport.AI`, and the web project consumes it
-through a project reference to `SESport.AI`.
+`SESport.AI` owns provider clients, prompt rendering, web-search/page-fetch
+clients, activity-search orchestration, and job execution. It depends on
+`SESport.Core` and does not contain PostgreSQL access.
 
-### `src/SESport.Web/Pages/Admin/AI`
+### `src/SESport.Data/AI`
+
+- `AiRepository`: run/job/prompt/provider reads and writes
+- `AiAdminRepository`: admin CRUD for AI configuration
+- activity-search proposal and run repositories
+- SQL for AI-related database access
+
+`SESport.Data` owns the Npgsql implementation. It depends on `SESport.Core`
+and does not depend on `SESport.AI`.
+
+### `src/SESport.Web/Pages/Admin/Config/Ai`
 
 - admin UI for providers
 - admin UI for jobs
 - admin UI for prompt versions
+
+### `src/SESport.Web/Pages/Admin/Runs`
+
 - run history and run details
 
 ## Runtime Ownership
@@ -88,10 +113,7 @@ through a project reference to `SESport.AI`.
 AI background workers run in both the development and production web
 services.
 
-- `sesport-dev.service` sets `Ai:EnableBackgroundWorkers=true`
-- `sesport.service` sets `Ai:EnableBackgroundWorkers=true`
-
 The web application registers the AI pending-run and timeout workers at
-startup. Deployment scripts should keep the worker setting enabled for both
-services so either environment can claim pending runs from the shared
-database.
+startup. Both services use the single PostgreSQL database defined by `.env`.
+The current worker-registration behavior is intentionally shared between
+development and production services.

@@ -5,7 +5,7 @@ using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Ajax.Toggle;
 
-public sealed class BroadcastVisibilityModel(BroadcastRepository repository)
+public sealed class BroadcastVisibilityModel(AdminBroadcastRepository repository)
    : PageModel
 {
    public async Task<IActionResult> OnPostAsync(

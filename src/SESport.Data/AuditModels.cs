@@ -1,4 +1,4 @@
-using SESport.Data.Formatting;
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 

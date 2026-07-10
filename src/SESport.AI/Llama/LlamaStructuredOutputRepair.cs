@@ -1,4 +1,4 @@
-using SESport.AI.Models;
+using SESport.Core.AI;
 using System.Text.Json.Nodes;
 
 namespace SESport.AI.Llama;

@@ -1,6 +1,6 @@
 using Npgsql;
 using SESport.AI.Interfaces;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Data;
@@ -455,7 +455,7 @@ public sealed class BroadcastParticipationServiceTests
             new ActivityRepository(dataSource),
             new AiRepository(dataSource),
             new AdminRepository(dataSource),
-            new BroadcastRepository(dataSource),
+            new AdminBroadcastRepository(dataSource),
             jobRunner
          ),
          jobRunner

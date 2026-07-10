@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "<Pending>", Scope = "member", Target = "~M:SESport.AI.Jobs.AiJobRunner.RunAsync(SESport.AI.Models.AiJobRequest,System.Threading.CancellationToken)~System.Threading.Tasks.Task{SESport.AI.Models.AiJobResult}")]
+[assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "<Pending>", Scope = "member", Target = "~M:SESport.AI.Jobs.AiJobRunner.RunAsync(SESport.Core.AI.AiJobRequest,System.Threading.CancellationToken)~System.Threading.Tasks.Task{SESport.Core.AI.AiJobResult}")]

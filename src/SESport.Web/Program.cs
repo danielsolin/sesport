@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Npgsql;
-using SESport.AI.Jobs;
-using SESport.Core.Configuration;
+using SESport.Core.AI;
 using SESport.Data;
 using SESport.Web.Extensions;
 using SESport.Web.Services;
@@ -9,9 +7,8 @@ using SESport.Web.Services;
 var builder = WebApplication.CreateBuilder(args);
 var adminPassword = builder.Configuration["Admin:Password"];
 builder.Services.AddSingleton(
-   _ => NpgsqlDataSource.Create(
-      builder.Configuration.GetConnectionString("Default") ??
-      PostgresConnectionStrings.ResolveDefault()
+   _ => PostgresDataSourceFactory.CreateDefault(
+      builder.Configuration.GetConnectionString("Default")
    )
 );
 builder.Services.AddAiPlatform(builder.Configuration);
@@ -23,7 +20,7 @@ builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<PublicActivityTimelineBuilder>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();
-builder.Services.AddScoped<BroadcastRepository>();
+builder.Services.AddScoped<AdminBroadcastRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
 builder.Services.AddHostedService<ActivityTeaserCatchUpWorker>();
 builder.Services.AddHostedService<AiPendingRunWorker>();

@@ -3,8 +3,8 @@ using Npgsql;
 using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 
-using AdminBroadcastRepository = SESport.Data.BroadcastRepository;
-using ImportBroadcastRepository = SESport.Data.Broadcast.BroadcastRepository;
+using SESport.Data;
+using SESport.Data.Broadcast;
 
 namespace SESport.Core.Tests.Data;
 
@@ -20,7 +20,7 @@ public sealed class BroadcastRepositoryTests
       var uniqueSuffix = Guid.NewGuid().ToString("N");
 
       await using var dataSource = CreateDataSource();
-      var repository = new ImportBroadcastRepository(dataSource);
+      var repository = new BroadcastImportRepository(dataSource);
 
       await InsertBroadcastAsync(
          dataSource,
@@ -140,7 +140,7 @@ public sealed class BroadcastRepositoryTests
       var uniqueSuffix = Guid.NewGuid().ToString("N");
 
       await using var dataSource = CreateDataSource();
-      var repository = new ImportBroadcastRepository(dataSource);
+      var repository = new BroadcastImportRepository(dataSource);
       var existingCategories = new[] { "Handboll", "U20 VM" };
       var broadcast = new global::SESport.Core.Broadcast.Broadcast(
          broadcastId,

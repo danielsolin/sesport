@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Formatting;
 using SESport.Data.AI;
 using SESport.Web.Services;
@@ -119,7 +119,7 @@ public class IndexModel(
       return DetailsModel.BuildExecutionEnvironmentOptions(
          ExecutionEnvironmentValues,
          selectedExecutionEnvironment,
-         SESport.AI.Jobs.ExecutionEnvironment.Current,
+         SESport.Core.AI.ExecutionEnvironment.Current,
          includeUnsetOption: false
       );
    }

@@ -12,22 +12,22 @@ variables, in this order:
 4. `SESPORT_POSTGRES_USER`
 5. `SESPORT_POSTGRES_PASSWORD`
 
-The active development and service database is the shared PostgreSQL
-instance at `207.2.120.181:15285`. Keep the repository-root `.env` pointed
-at that host unless you are deliberately running an isolated replacement.
+The repository-root `.env` file is the source of truth for the active
+PostgreSQL database. The project has one active database; do not document or
+assume a second local, development, or service database.
 
 If no variables are set, the code still falls back to the legacy local
-defaults for `sesport` on `localhost:5432`.
+defaults for `sesport` on `localhost:5432`. Treat that only as a defensive
+fallback. Normal application, script, and test runs should use `.env`.
 
 The helper scripts in `bin/` and the integration-test bootstrap read these
-values from the repository-root `.env` file, so they target the shared
-database by design when that file contains the standard host and port.
+values from the repository-root `.env` file, so they target the same
+database by design.
 
 The `postgres` and `searxng` containers in `compose.yaml` are deliberately
-started by service name. Start `postgres` only on the VPS/database host.
-Start `searxng` only on machines that run AI jobs. The Postgres service binds
-to
-`207.2.120.181:${SESPORT_POSTGRES_PORT:-15285}:5432`.
+started by service name. Start `postgres` only on the machine that is
+intentionally operating the database referenced by `.env`. Start `searxng`
+only on machines that run AI jobs.
 
 To connect with `psql`, source the variables into your shell first, or pass
 them explicitly:
@@ -51,8 +51,8 @@ the reference rows needed by the application.
 Future schema changes should be added as new numbered SQL files after the
 baseline.
 
-Start an interactive PostgreSQL session in the Docker container when you are
-operating the Compose-hosted database:
+Start an interactive PostgreSQL session in the Docker container only when
+this machine is operating the database referenced by `.env`:
 
 ```bash
 docker compose exec -it postgres psql -U sesport -d sesport
@@ -71,8 +71,8 @@ docker compose exec -it postgres env \
   psql -h localhost -U "$SESPORT_POSTGRES_USER" -d "$SESPORT_POSTGRES_DB"
 ```
 
-Start PostgreSQL with Docker Compose only when operating the VPS/database
-host:
+Start PostgreSQL with Docker Compose only when this machine is intentionally
+operating the database referenced by `.env`:
 
 ```bash
 docker compose up -d postgres
@@ -90,7 +90,7 @@ Run migrations from a Linux or WSL shell:
 ./bin/db-run-migrations.sh
 ```
 
-If you already have a local database with the current schema and want to
+If the active database already has the current schema and you want to
 start using the new migration history without changing the schema, mark the
 baseline as applied:
 
@@ -98,8 +98,8 @@ baseline as applied:
 ./bin/db-mark-baseline-applied.sh
 ```
 
-If the database-host Postgres volume drifted from the baseline, recreate the
-volume before rerunning migrations.
+If the Postgres volume for the active database drifted from the baseline,
+recreate the volume before rerunning migrations.
 
 On Windows, run the bash script from WSL if Docker is only available there.
 

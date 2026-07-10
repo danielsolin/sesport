@@ -1,4 +1,4 @@
-namespace SESport.AI.Models;
+namespace SESport.Core.AI;
 
 public sealed record AiProviderDefinition(
    string Id,

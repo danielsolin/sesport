@@ -6,6 +6,9 @@ Copy only the units that belong on the target machine to
 `/etc/systemd/system/` with `sudo`, then reload systemd and enable the
 services or timer you want active.
 
+The SESport web services load `/home/daniel/sesport/.env` through
+`EnvironmentFile`. Keep the single active PostgreSQL connection there.
+
 ## Units
 
 - `llama-server.service`
@@ -26,8 +29,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now sesport.service
 ```
 
-Do not enable `searxng.service` on the VPS/database host unless that machine
-also runs AI jobs locally.
+Do not enable `searxng.service` on a web or database host unless that
+machine also runs AI jobs locally.
 
 ## Backup Switch
 

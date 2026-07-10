@@ -34,9 +34,11 @@ https://localhost:7156
 http://localhost:5109
 ```
 
-The web app reads the database connection from environment variables. Copy
-`.env.example` to `.env`, then load it into your shell before starting the
-app. The app does not auto-read `.env`.
+The repository-root `.env` file is the source of truth for the single
+PostgreSQL database. The web app reads the database connection from process
+environment variables. Copy `.env.example` to `.env`, then load it into your
+shell before starting the app. The app does not auto-read `.env`; systemd
+loads it through `EnvironmentFile` in deployed services.
 
 The relevant keys are the `SESPORT_POSTGRES_*` variables. A simple Bash
 example is:

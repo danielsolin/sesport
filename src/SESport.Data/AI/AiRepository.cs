@@ -1,8 +1,6 @@
 using Npgsql;
 using NpgsqlTypes;
-using SESport.AI.Interfaces;
-using SESport.AI.Jobs;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -84,7 +82,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("join ai_providers p on p.id = r.provider_id")
          .AppendLine("left join activities a")
          .AppendLine("   on a.id::text = r.correlation_id")
-         .AppendLine("      and r.job_id = 'generate-activity-teaser'");
+         .AppendLine("      and r.job_id = @teaser_job_id");
 
       if(where.Count > 0)
       {
@@ -128,6 +126,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   sr.id desc");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
+      command.Parameters.AddWithValue(
+         "teaser_job_id",
+         AiJobIds.GenerateActivityTeaser
+      );
+
       if(date is not null)
       {
          command.Parameters.AddWithValue("start", GetDateStart(date.Value));
@@ -243,7 +246,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          join ai_providers p on p.id = r.provider_id
          left join activities a
             on a.id::text = r.correlation_id
-               and r.job_id = 'generate-activity-teaser'
+               and r.job_id = @teaser_job_id
          left join lateral (
             select max((entry.value->>'payload_chars')::int)
                as max_payload_chars
@@ -260,6 +263,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("ids", ids.ToArray());
+      command.Parameters.AddWithValue(
+         "teaser_job_id",
+         AiJobIds.GenerateActivityTeaser
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -376,6 +383,57 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<IReadOnlyList<CompletedActivityTeaserRun>>
+      GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
+         int maxRuns,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            r.id,
+            a.id,
+            r.output_text
+         from ai_job_runs r
+         join activities a on a.id::text = r.correlation_id
+         where r.job_id = @job_id
+            and r.status_id = @status_id
+            and coalesce(a.teaser, '') = ''
+            and coalesce(r.output_text, '') <> ''
+         order by r.completed_at desc, r.id desc
+         limit @limit
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "job_id",
+         AiJobIds.GenerateActivityTeaser
+      );
+      command.Parameters.AddWithValue(
+         "status_id",
+         AiJobRunStatusIds.Completed
+      );
+      command.Parameters.AddWithValue("limit", maxRuns);
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var runs = new List<CompletedActivityTeaserRun>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         runs.Add(
+            new CompletedActivityTeaserRun(
+               reader.GetGuid(0),
+               reader.GetGuid(1),
+               reader.GetString(2)
+            )
+         );
+      }
+
+      return runs;
+   }
+
    public async Task<IReadOnlyDictionary<Guid, BroadcastParticipationCheck>>
       GetParticipationChecksAsync(
          IReadOnlyCollection<Guid> broadcastIds,
@@ -427,7 +485,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue(
          "job_id",
-         "decide-swedish-participation"
+         AiJobIds.DecidePrimaryCountryParticipation
       );
       command.Parameters.AddWithValue(
          "correlation_ids",
@@ -1247,7 +1305,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          if(!TryGetStringProperty(
             root,
             "Participation",
-            "SwedishParticipation",
+            PrimaryCountry.LanguageName + "Participation",
             out var participation
          ))
          {
@@ -1261,7 +1319,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          if(TryGetArrayProperty(
             root,
             "Participants",
-            "SwedishParticipants",
+            PrimaryCountry.LanguageName + "Participants",
             out var participantsElement
          ))
          {
@@ -1408,3 +1466,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
    }
 }
+
+public sealed record CompletedActivityTeaserRun(
+   Guid RunId,
+   Guid ActivityId,
+   string OutputText
+);

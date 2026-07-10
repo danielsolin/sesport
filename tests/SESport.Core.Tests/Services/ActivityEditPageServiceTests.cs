@@ -1,6 +1,6 @@
 using Npgsql;
 using SESport.AI.Interfaces;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Data;
 using SESport.Data.AI;
@@ -370,7 +370,7 @@ public sealed class ActivityEditPageServiceTests
    )
    {
       var activityRepository = new ActivityRepository(dataSource);
-      var broadcastRepository = new BroadcastRepository(dataSource);
+      var broadcastRepository = new AdminBroadcastRepository(dataSource);
       var jobRunner = new CapturingAiJobRunner();
       var participationService = new BroadcastParticipationService(
          activityRepository,

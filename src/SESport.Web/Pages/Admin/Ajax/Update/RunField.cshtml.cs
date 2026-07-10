@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Core.AI;
 using SESport.Data.AI;
 using SESport.Web.Pages.Admin.Runs;
 using SESport.Web.Services;
@@ -54,7 +55,11 @@ public sealed class RunFieldModel(
             return NotFound();
          }
 
-         if(!string.Equals(run.StatusId, "pending", StringComparison.Ordinal))
+         if(!string.Equals(
+            run.StatusId,
+            AiJobRunStatusIds.Pending,
+            StringComparison.Ordinal
+         ))
          {
             return BadRequest(new
             {

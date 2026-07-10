@@ -1,6 +1,4 @@
-using SESport.AI.Models;
-
-namespace SESport.AI.Interfaces;
+namespace SESport.Core.AI;
 
 public interface IAiJobDefinitionRepository
 {

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using SESport.AI.Models;
+using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.AI;
@@ -190,7 +190,7 @@ public class DetailsModel(
       ExecutionEnvironmentOptions = BuildExecutionEnvironmentOptions(
          executionEnvironments,
          selectedExecutionEnvironment,
-         SESport.AI.Jobs.ExecutionEnvironment.Current
+         SESport.Core.AI.ExecutionEnvironment.Current
       );
       KnownExecutionEnvironmentValues = ExecutionEnvironmentOptions
          .Select(option => option.Value ?? string.Empty)

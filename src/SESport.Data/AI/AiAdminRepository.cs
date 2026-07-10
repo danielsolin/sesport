@@ -1,6 +1,6 @@
 using Npgsql;
 using NpgsqlTypes;
-using SESport.AI.Models;
+using SESport.Core.AI;
 
 namespace SESport.Data.AI;
 

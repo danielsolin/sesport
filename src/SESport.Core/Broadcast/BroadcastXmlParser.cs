@@ -297,15 +297,9 @@ public sealed partial class BroadcastXmlParser
 
    private static string NormalizeChannelName(string value)
    {
-      const string swedishPrefix = "SE - ";
       var channelName = NormalizeText(value);
 
-      return channelName.StartsWith(
-         swedishPrefix,
-         StringComparison.OrdinalIgnoreCase
-      )
-         ? channelName[swedishPrefix.Length..]
-         : channelName;
+      return PrimaryCountry.RemoveBroadcastChannelPrefix(channelName);
    }
 
    [GeneratedRegex(@"\s+")]

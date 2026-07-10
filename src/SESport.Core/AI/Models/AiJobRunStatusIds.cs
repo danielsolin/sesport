@@ -1,4 +1,4 @@
-namespace SESport.AI.Models;
+namespace SESport.Core.AI;
 
 public static class AiJobRunStatusIds
 {

@@ -50,7 +50,7 @@ internal static class ActivitySearchPrompt
       {
         "proposals": [
           {
-            "title": "Sweden vs Finland",
+            "title": "{{PrimaryCountry.CountryName}} vs Finland",
             "description": "Short factual explanation.",
             "activityType": "{{ActivityType.Match}}",
             "activityDate": "2026-06-01",
