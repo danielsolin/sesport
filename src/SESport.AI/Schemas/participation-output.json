@@ -1,7 +1,12 @@
 {
    "type": "object",
    "title": "Participation",
-   "required": [ "Participation", "Participants", "Sources" ],
+   "required": [
+      "Participation",
+      "Participants",
+      "Sources",
+      "EvidenceType"
+   ],
    "properties": {
       "Sources": {
          "type": "array",
@@ -21,6 +26,16 @@
          "enum": [ "Yes", "No", "Unknown" ],
          "type": "string",
          "description": "Whether target-country participants are in the event."
+      },
+      "EvidenceType": {
+         "enum": [
+            "ParticipantList",
+            "TeamRoster",
+            "EventInfoOnly",
+            "SearchOnly"
+         ],
+         "type": "string",
+         "description": "The strongest evidence type behind the conclusion."
       }
    },
    "description": "Assessment of target-country event participation.",

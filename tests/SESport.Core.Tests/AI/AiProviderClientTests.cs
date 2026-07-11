@@ -3,6 +3,7 @@ using SESport.AI.Clients;
 using SESport.AI.Interfaces;
 using SESport.AI.Llama;
 using SESport.Core.AI;
+using SESport.Core.Domain;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using System.Net;
@@ -25,7 +26,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var webPageContentClient = new RecordingWebPageContentClient(
@@ -369,7 +370,7 @@ public class AiProviderClientTests
             new WebSearchResult(
                "Tre Kronor roster",
                "https://example.test/roster",
-               "Sweden lineup info."
+               $"{PrimaryCountry.CountryName} lineup info."
             )
          ),
          new RecordingWebPageContentClient(null),
@@ -409,7 +410,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var hugePageText = string.Join(
@@ -544,7 +545,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/direct-page",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var webPageContentClient = new RecordingWebPageContentClient(
@@ -664,7 +665,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var client = new LlamaServerClient(
@@ -711,7 +712,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var webPageContentClient = new RecordingWebPageContentClient(
@@ -772,15 +773,15 @@ public class AiProviderClientTests
    {
       var matches = LlamaPageToolFormatter.FindPageMatches(
          new WebPageContent(
-            "Sweden Title",
+            $"{PrimaryCountry.CountryName} Title",
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
-            ["Sweden Heading"],
+            [$"{PrimaryCountry.CountryName} Heading"],
             "No relevant mention here.",
             true,
             "No relevant mention here."
          ),
-         "Sweden"
+         PrimaryCountry.CountryName
       );
 
       Assert.Empty(matches);
@@ -793,7 +794,8 @@ public class AiProviderClientTests
          " ",
          Enumerable.Range(0, 25).Select(index =>
             $"chunk-{index}-before " +
-            $"{new string('x', 70)} id-{index} Sweden " +
+            $"{new string('x', 70)} id-{index} " +
+            $"{PrimaryCountry.CountryName} " +
             $"{new string('y', 70)} " +
             $"chunk-{index}-after")
       );
@@ -807,7 +809,7 @@ public class AiProviderClientTests
             true,
             body
          ),
-         "Sweden"
+         PrimaryCountry.CountryName
       );
 
       Assert.Equal(20, matches.Count);
@@ -854,11 +856,13 @@ public class AiProviderClientTests
          null,
          null,
          null,
-         "Sweden | LAGERGREN, Joakim | Black Mountain GC | 24"
+         $"{PrimaryCountry.CountryName} | LAGERGREN, Joakim | " +
+         "Black Mountain GC | 24"
       );
 
       Assert.Contains(
-         "Sweden |\nLAGERGREN, Joakim |\nBlack Mountain GC |",
+         $"{PrimaryCountry.CountryName} |\nLAGERGREN, Joakim |\n" +
+         "Black Mountain GC |",
          output,
          StringComparison.Ordinal
       );
@@ -973,24 +977,28 @@ public class AiProviderClientTests
    public void ExtractMatchingRowsClipsLongPipeDelimitedRows()
    {
       var body =
-         "Action | Sweden LINDBERG, Mikael | Svartinge GC | " +
+         $"Action | {PrimaryCountry.CountryName} LINDBERG, Mikael | " +
+         "Svartinge GC | " +
          "5 Action | Austria WIESBERGER, Bernd | Club B | " +
          "6 Action | United States GUMBERG, Jordan | Club C | " +
-         "8 Action | Sweden SVENSSON, Jesper | Upsala GC | " +
+         $"8 Action | {PrimaryCountry.CountryName} SVENSSON, Jesper | " +
+         "Upsala GC | " +
          "48 Action | Japan HOSHINO, Rikuya | Club D | 50";
       var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
-         "Sweden",
+         PrimaryCountry.CountryName,
          50
       );
 
       Assert.Equal(2, rows.Count);
       Assert.Contains(
-         "Sweden LINDBERG, Mikael | Svartinge GC | 5",
+         $"{PrimaryCountry.CountryName} LINDBERG, Mikael | " +
+         "Svartinge GC | 5",
          rows
       );
       Assert.Contains(
-         "Sweden SVENSSON, Jesper | Upsala GC | 48",
+         $"{PrimaryCountry.CountryName} SVENSSON, Jesper | " +
+         "Upsala GC | 48",
          rows
       );
       Assert.DoesNotContain(
@@ -1003,7 +1011,7 @@ public class AiProviderClientTests
    public void ExtractMatchingRowsAcceptsStructuredCountryCodeRows()
    {
       var body =
-         "COLLET Thibaut | 5.88 | 5.95 SWE | " +
+         $"COLLET Thibaut | 5.88 | 5.95 {PrimaryCountry.ThreeLetterCode} | " +
          "DUPLANTIS Armand | 6.13 | 6.30 FRA | " +
          "MARSCHALL Kurtis | 5.95 | 6.05";
       var rows = LlamaPageToolFormatter.ExtractMatchingRows(
@@ -1018,7 +1026,7 @@ public class AiProviderClientTests
 
       Assert.Single(rows);
       Assert.Contains(
-         "SWE | DUPLANTIS Armand | 6.13",
+         $"{PrimaryCountry.ThreeLetterCode} | DUPLANTIS Armand | 6.13",
          rows[0],
          StringComparison.Ordinal
       );
@@ -1029,7 +1037,8 @@ public class AiProviderClientTests
    public void ExtractMatchingRowsIgnoresCountryCodeInsideWords()
    {
       var body =
-         "SWEET weather note | strong winds expected | 12";
+         PrimaryCountry.ThreeLetterCode +
+         "ET weather note | strong winds expected | 12";
       var rows = LlamaPageToolFormatter.ExtractMatchingRows(
          body,
          [PrimaryCountry.ThreeLetterCode],
@@ -1097,7 +1106,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var webPageContentClient = new RecordingWebPageContentClient(
@@ -1240,7 +1249,7 @@ public class AiProviderClientTests
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var client = new LlamaServerClient(
@@ -1338,9 +1347,10 @@ public class AiProviderClientTests
          CreateLlamaFinalResponseWithContentJson(
             "{\"Participation\":\"Yes\","
             + "\"Participants\":[],"
-            + "\"Sources\":[\"https://example.test/roster\"]}"
+            + "\"Sources\":[\"https://example.test/roster\"],"
+            + "\"EvidenceType\":\"EventInfoOnly\"}"
          ),
-         CreateLlamaFinalResponseJson()
+         CreateLlamaParticipationFinalResponseJson()
       );
       var client = new LlamaServerClient(
          new HttpClient(handler),
@@ -1357,7 +1367,7 @@ public class AiProviderClientTests
             toolsJson: null,
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -1371,7 +1381,8 @@ public class AiProviderClientTests
       Assert.Equal(
          "{\"Participation\":\"Yes\","
          + "\"Participants\":[\"Dino Beganovic\"],"
-         + "\"Sources\":[\"https://example.test/roster\"]}",
+         + "\"Sources\":[\"https://example.test/roster\"],"
+         + "\"EvidenceType\":\"ParticipantList\"}",
          result.OutputText
       );
    }
@@ -1383,14 +1394,16 @@ public class AiProviderClientTests
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson(),
-         CreateLlamaFinalResponseJson("https://example.test/other"),
-         CreateLlamaFinalResponseJson()
+         CreateLlamaParticipationFinalResponseJson(
+            "https://example.test/other"
+         ),
+         CreateLlamaParticipationFinalResponseJson()
       );
       var webSearchClient = new RecordingWebSearchClient(
          new WebSearchResult(
             "Tre Kronor roster",
             "https://example.test/roster",
-            "Sweden lineup info."
+            $"{PrimaryCountry.CountryName} lineup info."
          )
       );
       var webPageContentClient = new RecordingWebPageContentClient(
@@ -1418,7 +1431,7 @@ public class AiProviderClientTests
             toolsJson: CreateToolsJson(),
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -1432,7 +1445,207 @@ public class AiProviderClientTests
       Assert.Equal(
          "{\"Participation\":\"Yes\","
          + "\"Participants\":[\"Dino Beganovic\"],"
-         + "\"Sources\":[\"https://example.test/roster\"]}",
+         + "\"Sources\":[\"https://example.test/roster\"],"
+         + "\"EvidenceType\":\"ParticipantList\"}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesWhenNoUsesWeakEvidence()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson("https://example.test/participants"),
+         CreateLlamaFindPageCallResponseJson(
+            "https://example.test/participants"
+         ),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"No\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[\"https://example.test/participants\"],"
+            + "\"EvidenceType\":\"ParticipantList\"}"
+         ),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"Unknown\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[\"https://example.test/participants\"],"
+            + "\"EvidenceType\":\"EventInfoOnly\"}"
+         )
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor event info",
+            "https://example.test/participants",
+            "Event timetable info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Event Timetable",
+            "https://example.test/participants",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Schedule"],
+            "Local time. Programme. Timetable.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(5, handler.RequestBodies.Count);
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(
+         1,
+         CountOccurrences(
+            result.ToolTraceJson!,
+            "\"validation_status\":\"rejected\""
+         )
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Unknown\","
+         + "\"Participants\":[],"
+         + "\"Sources\":[\"https://example.test/participants\"],"
+         + "\"EvidenceType\":\"EventInfoOnly\"}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRejectsUnknownWithoutTargetCountryCheck()
+   {
+      var unknownOutput =
+         "{\"Participation\":\"Unknown\","
+         + "\"Participants\":[],"
+         + "\"Sources\":[\"https://example.test/participants\"],"
+         + "\"EvidenceType\":\"EventInfoOnly\"}";
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson("https://example.test/participants"),
+         CreateLlamaFinalResponseWithContentJson(unknownOutput),
+         CreateLlamaFinalResponseWithContentJson(unknownOutput),
+         CreateLlamaFinalResponseWithContentJson(unknownOutput),
+         CreateLlamaFinalResponseWithContentJson(unknownOutput)
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor event info",
+            "https://example.test/participants",
+            "Event timetable info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Event Timetable",
+            "https://example.test/participants",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Schedule"],
+            "Local time. Programme. Timetable.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var exception = await Assert.ThrowsAsync<AiProviderExecutionException>(
+         () => client.GenerateAsync(
+            CreateProvider("llama-server"),
+            CreateJob(
+               "json_schema",
+               requiresWebSearch: true,
+               toolsJson: CreateToolsJson(),
+               jobId: AiJobIds.DecidePrimaryCountryParticipation
+            ),
+            CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+            CreateRenderedPrompt(),
+            "{}",
+            CancellationToken.None
+         )
+      );
+
+      Assert.Contains("target-country", exception.Message);
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncAcceptsUnknownWithSearchOnlyEvidence()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(
+            $"Tre Kronor {PrimaryCountry.CountryName}"
+         ),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"Unknown\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[\"https://example.test/search-result\"],"
+            + "\"EvidenceType\":\"SearchOnly\"}"
+         )
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor event info",
+            "https://example.test/search-result",
+            "Search result only."
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.DoesNotContain(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Unknown\","
+         + "\"Participants\":[],"
+         + "\"Sources\":[\"https://example.test/search-result\"],"
+         + "\"EvidenceType\":\"SearchOnly\"}",
          result.OutputText
       );
    }
@@ -1697,32 +1910,43 @@ public class AiProviderClientTests
       });
    }
 
-   private static string CreateLlamaToolCallResponseJson()
+   private static string CreateLlamaToolCallResponseJson(
+      string query = "Tre Kronor"
+   )
    {
-      return $$"""
+      return JsonSerializer.Serialize(new
       {
-        "choices": [
-          {
-            "message": {
-              "role": "assistant",
-              "content": "",
-              "tool_calls": [
-                {
-                  "id": "call_1",
-                  "type": "function",
-                  "function": {
-                    "name": "{{WebToolNames.Search}}",
-                    "arguments": "{\"query\":\"Tre Kronor\",\"limit\":10}"
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_1",
+                        type = "function",
+                        function = new
+                        {
+                           name = WebToolNames.Search,
+                           arguments = JsonSerializer.Serialize(new
+                           {
+                              query,
+                              limit = 10
+                           })
+                        }
+                     }
                   }
-                }
-              ]
+               },
+               finish_reason = "tool_calls"
             },
-            "finish_reason": "tool_calls"
-          }
-        ],
-        "model": "openai/gpt-4o-2024-08-06"
-      }
-      """;
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
    }
 
    private static string CreateLlamaToolCallResponseJsonWithContent(
@@ -1761,33 +1985,44 @@ public class AiProviderClientTests
       });
    }
 
-   private static string CreateLlamaPageCallResponseJson()
+   private static string CreateLlamaPageCallResponseJson(
+      string url = "https://example.test/roster"
+   )
    {
-      return $$"""
-      {
-        "choices": [
-          {
-            "message": {
-              "role": "assistant",
-              "content": "",
-              "tool_calls": [
-                {
-                  "id": "call_2",
-                  "type": "function",
-                  "function": {
-                    "name": "{{WebToolNames.GetPage}}",
-                    "arguments":
-                      "{\"url\":\"https://example.test/roster\"}"
-                  }
-                }
-              ]
+      return JsonSerializer.Serialize(
+         new
+         {
+            choices = new[]
+            {
+               new
+               {
+                  message = new
+                  {
+                     role = "assistant",
+                     content = "",
+                     tool_calls = new[]
+                     {
+                        new
+                        {
+                           id = "call_2",
+                           type = "function",
+                           function = new
+                           {
+                              name = WebToolNames.GetPage,
+                              arguments = JsonSerializer.Serialize(new
+                              {
+                                 url
+                              })
+                           }
+                        }
+                     }
+                  },
+                  finish_reason = "tool_calls"
+               }
             },
-            "finish_reason": "tool_calls"
-          }
-        ],
-        "model": "openai/gpt-4o-2024-08-06"
-      }
-      """;
+            model = "openai/gpt-4o-2024-08-06"
+         }
+      );
    }
 
    private static string CreateLlamaToolCallWithUrlResponseJson()
@@ -1869,9 +2104,11 @@ public class AiProviderClientTests
                         function = new
                         {
                            name = WebToolNames.FindInPage,
-                           arguments =
-                              "{\"url\":\"https://example.test/direct-page\"," +
-                              "\"find\":\"Sweden\"}"
+                           arguments = JsonSerializer.Serialize(new
+                           {
+                              url = "https://example.test/direct-page",
+                              find = PrimaryCountry.CountryName
+                           })
                         }
                      }
                   }
@@ -1885,32 +2122,39 @@ public class AiProviderClientTests
 
    private static string CreateLlamaPageCallWithFindResponseJson()
    {
-      return $$"""
+      return JsonSerializer.Serialize(new
       {
-        "choices": [
-          {
-            "message": {
-              "role": "assistant",
-              "content": "",
-              "tool_calls": [
-                {
-                  "id": "call_2",
-                  "type": "function",
-                  "function": {
-                    "name": "{{WebToolNames.GetPage}}",
-                    "arguments":
-                      "{\"url\":\"https://example.test/roster\"," +
-                      "\"find\":\"Sweden\"}"
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_2",
+                        type = "function",
+                        function = new
+                        {
+                           name = WebToolNames.GetPage,
+                           arguments = JsonSerializer.Serialize(new
+                           {
+                              url = "https://example.test/roster",
+                              find = PrimaryCountry.CountryName
+                           })
+                        }
+                     }
                   }
-                }
-              ]
+               },
+               finish_reason = "tool_calls"
             },
-            "finish_reason": "tool_calls"
-          }
-        ],
-        "model": "openai/gpt-4o-2024-08-06"
-      }
-      """;
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
    }
 
    private static string CreateLlamaPageCallWithFindExtraTokenResponseJson()
@@ -1948,7 +2192,10 @@ public class AiProviderClientTests
       });
    }
 
-   private static string CreateLlamaFindPageCallResponseJson()
+   private static string CreateLlamaFindPageCallResponseJson(
+      string url = "https://example.test/roster",
+      string find = PrimaryCountry.CountryName
+   )
    {
       return JsonSerializer.Serialize(new
       {
@@ -1969,9 +2216,11 @@ public class AiProviderClientTests
                         function = new
                         {
                            name = WebToolNames.FindInPage,
-                           arguments =
-                              "{\"url\":\"https://example.test/roster\"," +
-                              "\"find\":\"Sweden\"}"
+                           arguments = JsonSerializer.Serialize(new
+                           {
+                              url,
+                              find
+                           })
                         }
                      }
                   }
@@ -2029,6 +2278,26 @@ public class AiProviderClientTests
          "{\"Participation\":\"Yes\","
          + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"" + sourceUrl + "\"]}";
+
+      return CreateLlamaFinalResponseWithContentJson(content);
+   }
+
+   private static string CreateLlamaParticipationFinalResponseJson()
+   {
+      return CreateLlamaParticipationFinalResponseJson(
+         "https://example.test/roster"
+      );
+   }
+
+   private static string CreateLlamaParticipationFinalResponseJson(
+      string sourceUrl
+   )
+   {
+      var content =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"" + sourceUrl + "\"],"
+         + "\"EvidenceType\":\"ParticipantList\"}";
 
       return CreateLlamaFinalResponseWithContentJson(content);
    }
@@ -2203,6 +2472,44 @@ public class AiProviderClientTests
           "Participation",
           "Participants",
           "Sources"
+        ],
+        "additionalProperties": false
+      }
+      """;
+   }
+
+   private static string CreateParticipationSchemaJsonWithEvidenceType()
+   {
+      return """
+      {
+        "type": "object",
+        "properties": {
+          "Participation": {
+            "type": "string"
+          },
+          "Participants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "Sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1
+          },
+          "EvidenceType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Participation",
+          "Participants",
+          "Sources",
+          "EvidenceType"
         ],
         "additionalProperties": false
       }
