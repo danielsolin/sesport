@@ -105,11 +105,33 @@ internal static class LlamaRequestFactory
    {
       var prompt =
          "The previous final answer was rejected by validation: " +
-         TruncateValidationError(validationError) +
+         TruncateFeedback(validationError) +
          $"{Environment.NewLine}{Environment.NewLine}" +
          "Tools are still available. Continue researching with tool calls " +
          "until the validation issue is resolved. Do not return another " +
          "final answer with the same unsupported evidence.";
+
+      messages.Add(
+         new JsonObject
+         {
+            ["role"] = "system",
+            ["content"] = prompt
+         }
+      );
+   }
+
+   public static void AddToolFormatFeedbackPrompt(
+      JsonArray messages,
+      string formatError
+   )
+   {
+      var prompt =
+         "The previous tool-call attempt could not be parsed by " +
+         "llama-server: " +
+         TruncateFeedback(formatError) +
+         $"{Environment.NewLine}{Environment.NewLine}" +
+         "Tools are still available. Continue with a valid tool call. " +
+         "Do not return a final answer yet.";
 
       messages.Add(
          new JsonObject
@@ -143,9 +165,9 @@ internal static class LlamaRequestFactory
       messages[systemIndex] = systemMessage;
    }
 
-   private static string TruncateValidationError(string validationError)
+   private static string TruncateFeedback(string value)
    {
-      var preview = validationError.ReplaceLineEndings(" ").Trim();
+      var preview = value.ReplaceLineEndings(" ").Trim();
 
       return preview.Length <= 500 ? preview : preview[..500] + "...";
    }

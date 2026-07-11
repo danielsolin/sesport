@@ -135,7 +135,8 @@ internal static class LlamaToolTrace
 
    public static JsonObject CreateToolFormatFallbackTraceEntry(
       int turn,
-      string reason
+      string reason,
+      bool willContinueWithTools
    )
    {
       var preview = reason.ReplaceLineEndings(" ").Trim();
@@ -145,14 +146,18 @@ internal static class LlamaToolTrace
          preview = preview[..240] + "...";
       }
 
+      var content =
+         "Tool request failed in llama-server structured output parsing. " +
+         (willContinueWithTools
+            ? "Retrying with tools."
+            : "Continuing without tools.");
+
       return new JsonObject
       {
          ["kind"] = "tool_format_fallback",
          ["turn"] = turn,
          ["reason"] = preview,
-         ["content"] =
-            "Tool request failed in llama-server structured output parsing. " +
-            "Continuing without tools."
+         ["content"] = content
       };
    }
 

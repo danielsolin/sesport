@@ -78,9 +78,9 @@ public class AiProviderClientTests
          handler.RequestBodies[0]);
       Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[0]);
-      Assert.Contains("\"tool_choice\":\"auto\"",
+      Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[1]);
-      Assert.Contains("\"tool_choice\":\"auto\"",
+      Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[2]);
       Assert.Contains(
          $"\"name\":\"{WebToolNames.GetPage}\"",
@@ -101,10 +101,6 @@ public class AiProviderClientTests
       Assert.DoesNotContain(
          "\"response_format\"",
          handler.RequestBodies[0]
-      );
-      Assert.DoesNotContain(
-         "\"tool_choice\":\"required\"",
-         handler.RequestBodies[1]
       );
       Assert.Contains("\"search_engine\":\"google\"", result.ToolTraceJson);
       Assert.Single(webSearchClient.Queries);
@@ -270,10 +266,11 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncFinalizesWhenToolFormatFails()
+      LlamaServerGenerateAsyncContinuesToolsAfterToolFormatFailure()
    {
       var handler = new RecordingHandler(
          CreatePegNativeFormatError(),
+         CreateLlamaToolCallResponseJson("Tre Kronor roster"),
          CreateLlamaFinalResponseJson()
       );
       var client = new LlamaServerClient(
@@ -292,18 +289,15 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains("\"tools\":[", handler.RequestBodies[0]);
       Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[0]);
-      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[1]);
-      Assert.DoesNotContain("\"tool_choice\"", handler.RequestBodies[1]);
+      Assert.Contains("\"tools\":[", handler.RequestBodies[1]);
+      Assert.Contains("\"tool_choice\":\"required\"",
+         handler.RequestBodies[1]);
       Assert.Contains(
-         "No more tool calls are available",
-         handler.RequestBodies[1]
-      );
-      Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
+         "previous tool-call attempt could not be parsed",
          handler.RequestBodies[1]
       );
       Assert.DoesNotContain(
@@ -314,6 +308,7 @@ public class AiProviderClientTests
          )
       );
       Assert.Contains("tool_format_fallback", result.ToolTraceJson);
+      Assert.Contains("Retrying with tools", result.ToolTraceJson);
       Assert.DoesNotContain("repair_prompt", result.ToolTraceJson);
       Assert.Equal(
          "{\"Participation\":\"Yes\","

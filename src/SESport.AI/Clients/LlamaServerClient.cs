@@ -19,6 +19,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const int MaxConversationContextCharacters = 250000;
    private const int MaxTransientRetryAttempts = 12;
    private const int MaxFormatRepairAttempts = 3;
+   private const int MaxToolFormatFallbackAttempts = 5;
    private const int DefaultMaxToolRounds = 10;
    private const int DefaultToolCallMaxTokens = 512;
    private const int DefaultFinalMaxTokens = 2048;
@@ -101,6 +102,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolBudgetExhausted = false;
       var finalizeWithoutTools = false;
       var repeatedToolCallStreak = 0;
+      var toolFormatFallbackStreak = 0;
       var formatRepairAttempts = 0;
       var validationContinuationAttempts = 0;
       var maxToolRounds = job.RequiresWebSearch
@@ -126,6 +128,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          while(true)
          {
             var continueWithTools = false;
+            finalizeWithoutTools = false;
 
             while(true)
             {
@@ -193,11 +196,18 @@ public sealed class LlamaServerClient : IAiProviderClient
                   )
                )
                {
-                  finalizeWithoutTools = true;
+                  var continueAfterToolFormatFailure =
+                     ShouldContinueWithToolsAfterToolFormatFailure(
+                        request,
+                        maxToolRounds,
+                        toolRoundCount,
+                        toolFormatFallbackStreak
+                     );
                   toolTrace.Add(
                      LlamaToolTrace.CreateToolFormatFallbackTraceEntry(
                         turn,
-                        exception.Message
+                        exception.Message,
+                        continueAfterToolFormatFailure
                      )
                   );
                   await LlamaToolTrace.ReportProgressAsync(
@@ -207,11 +217,31 @@ public sealed class LlamaServerClient : IAiProviderClient
                      toolTraceUpdated,
                      cancellationToken
                   );
+
+                  if(continueAfterToolFormatFailure)
+                  {
+                     toolFormatFallbackStreak++;
+                     LlamaRequestFactory.AddToolFormatFeedbackPrompt(
+                        messages,
+                        exception.Message
+                     );
+                     request["tool_choice"] = "required";
+                     LlamaConversationTrimmer.TrimMessages(
+                        request,
+                        messages,
+                        MaxConversationContextCharacters,
+                        JsonOptions
+                     );
+                     continue;
+                  }
+
+                  finalizeWithoutTools = true;
                   break;
                }
 
                responseJson = responseEnvelope.ResponseJson;
                rawResponse = responseEnvelope.RawResponseJson;
+               toolFormatFallbackStreak = 0;
 
                LogResponse("turn", turn, responseJson);
 
@@ -310,7 +340,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                if(job.RequiresWebSearch)
                {
-                  request["tool_choice"] = "auto";
+                  request["tool_choice"] = "required";
                }
 
                LlamaConversationTrimmer.TrimMessages(
@@ -745,6 +775,22 @@ public sealed class LlamaServerClient : IAiProviderClient
          LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
             exception
          );
+   }
+
+   private static bool ShouldContinueWithToolsAfterToolFormatFailure(
+      JsonObject request,
+      int? maxToolRounds,
+      int toolRoundCount,
+      int toolFormatFallbackStreak
+   )
+   {
+      if(!RequestUsesTools(request) ||
+         toolFormatFallbackStreak >= MaxToolFormatFallbackAttempts)
+      {
+         return false;
+      }
+
+      return maxToolRounds is null || toolRoundCount < maxToolRounds.Value;
    }
 
    private static int GetRemainingValidationContinuationBudget(
