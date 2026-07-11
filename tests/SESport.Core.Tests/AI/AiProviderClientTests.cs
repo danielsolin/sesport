@@ -9,6 +9,7 @@ using SESport.AI.WebSearch;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SESport.Core.Tests.AI;
 
@@ -1345,10 +1346,11 @@ public class AiProviderClientTests
    {
       var handler = new RecordingHandler(
          CreateLlamaFinalResponseWithContentJson(
-            "{\"Participation\":\"Yes\","
-            + "\"Participants\":[],"
-            + "\"Sources\":[\"https://example.test/roster\"],"
-            + "\"EvidenceType\":\"EventInfoOnly\"}"
+            CreateParticipationCheckedOutput(
+               "Yes",
+               "https://example.test/roster",
+               AiParticipationEvidenceTypeIds.EventInfoOnly
+            )
          ),
          CreateLlamaParticipationFinalResponseJson()
       );
@@ -1379,10 +1381,7 @@ public class AiProviderClientTests
          result.ToolTraceJson
       );
       Assert.Equal(
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[\"Dino Beganovic\"],"
-         + "\"Sources\":[\"https://example.test/roster\"],"
-         + "\"EvidenceType\":\"ParticipantList\"}",
+         CreateParticipationYesOutput("https://example.test/roster"),
          result.OutputText
       );
    }
@@ -1412,7 +1411,13 @@ public class AiProviderClientTests
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
             ["Article heading"],
-            "Full article content.",
+            $$"""
+            Entry list
+            Bib | Name | Country
+            1 | Dino Beganovic | {{PrimaryCountry.CountryName}}
+            2 | Alex Driver | Nation A
+            3 | Casey Rider | Nation B
+            """,
             true
          )
       );
@@ -1443,10 +1448,7 @@ public class AiProviderClientTests
          result.ToolTraceJson
       );
       Assert.Equal(
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[\"Dino Beganovic\"],"
-         + "\"Sources\":[\"https://example.test/roster\"],"
-         + "\"EvidenceType\":\"ParticipantList\"}",
+         CreateParticipationYesOutput("https://example.test/roster"),
          result.OutputText
       );
    }
@@ -1462,16 +1464,18 @@ public class AiProviderClientTests
             "https://example.test/participants"
          ),
          CreateLlamaFinalResponseWithContentJson(
-            "{\"Participation\":\"No\","
-            + "\"Participants\":[],"
-            + "\"Sources\":[\"https://example.test/participants\"],"
-            + "\"EvidenceType\":\"ParticipantList\"}"
+            CreateParticipationCheckedOutput(
+               "No",
+               "https://example.test/participants",
+               AiParticipationEvidenceTypeIds.ParticipantList
+            )
          ),
          CreateLlamaFinalResponseWithContentJson(
-            "{\"Participation\":\"Unknown\","
-            + "\"Participants\":[],"
-            + "\"Sources\":[\"https://example.test/participants\"],"
-            + "\"EvidenceType\":\"EventInfoOnly\"}"
+            CreateParticipationCheckedOutput(
+               "Unknown",
+               "https://example.test/participants",
+               AiParticipationEvidenceTypeIds.EventInfoOnly
+            )
          )
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -1525,10 +1529,11 @@ public class AiProviderClientTests
          )
       );
       Assert.Equal(
-         "{\"Participation\":\"Unknown\","
-         + "\"Participants\":[],"
-         + "\"Sources\":[\"https://example.test/participants\"],"
-         + "\"EvidenceType\":\"EventInfoOnly\"}",
+         CreateParticipationCheckedOutput(
+            "Unknown",
+            "https://example.test/participants",
+            AiParticipationEvidenceTypeIds.EventInfoOnly
+         ),
          result.OutputText
       );
    }
@@ -1538,10 +1543,11 @@ public class AiProviderClientTests
       LlamaServerGenerateAsyncRejectsUnknownWithoutTargetCountryCheck()
    {
       var unknownOutput =
-         "{\"Participation\":\"Unknown\","
-         + "\"Participants\":[],"
-         + "\"Sources\":[\"https://example.test/participants\"],"
-         + "\"EvidenceType\":\"EventInfoOnly\"}";
+         CreateParticipationCheckedOutput(
+            "Unknown",
+            "https://example.test/participants",
+            AiParticipationEvidenceTypeIds.EventInfoOnly
+         );
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson("https://example.test/participants"),
@@ -1604,16 +1610,18 @@ public class AiProviderClientTests
          CreateLlamaPageCallResponseJson(sourceUrl),
          CreateLlamaFindPageCallResponseJson(sourceUrl),
          CreateLlamaFinalResponseWithContentJson(
-            "{\"Participation\":\"No\","
-            + "\"Participants\":[],"
-            + "\"Sources\":[\"" + sourceUrl + "\"],"
-            + "\"EvidenceType\":\"ParticipantList\"}"
+            CreateParticipationCheckedOutput(
+               "No",
+               sourceUrl,
+               AiParticipationEvidenceTypeIds.ParticipantList
+            )
          ),
          CreateLlamaFinalResponseWithContentJson(
-            "{\"Participation\":\"Unknown\","
-            + "\"Participants\":[],"
-            + "\"Sources\":[\"" + sourceUrl + "\"],"
-            + "\"EvidenceType\":\"EventInfoOnly\"}"
+            CreateParticipationCheckedOutput(
+               "Unknown",
+               sourceUrl,
+               AiParticipationEvidenceTypeIds.EventInfoOnly
+            )
          )
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -1675,10 +1683,11 @@ public class AiProviderClientTests
       );
       Assert.Contains("PDF links:", result.ToolTraceJson);
       Assert.Equal(
-         "{\"Participation\":\"Unknown\","
-         + "\"Participants\":[],"
-         + "\"Sources\":[\"" + sourceUrl + "\"],"
-         + "\"EvidenceType\":\"EventInfoOnly\"}",
+         CreateParticipationCheckedOutput(
+            "Unknown",
+            sourceUrl,
+            AiParticipationEvidenceTypeIds.EventInfoOnly
+         ),
          result.OutputText
       );
    }
@@ -1689,10 +1698,11 @@ public class AiProviderClientTests
    {
       var sourceUrl = "https://example.test/final-start-list";
       var output =
-         "{\"Participation\":\"No\","
-         + "\"Participants\":[],"
-         + "\"Sources\":[\"" + sourceUrl + "\"],"
-         + "\"EvidenceType\":\"ParticipantList\"}";
+         CreateParticipationCheckedOutput(
+            "No",
+            sourceUrl,
+            AiParticipationEvidenceTypeIds.ParticipantList
+         );
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson(sourceUrl),
@@ -1753,6 +1763,129 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncRejectsParticipantListForArticleMention()
+   {
+      var sourceUrl =
+         "https://example.test/news/line-up-is-getting-stronger";
+      var participantName = "Thobias Montler";
+      var correctedOutput =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(sourceUrl),
+         CreateLlamaFindPageCallResponseJson(sourceUrl),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"Yes\","
+            + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+            + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+            + "\"EvidenceType\":\"ParticipantList\"}]}],"
+            + "\"CheckedSources\":[]}"
+         ),
+         CreateLlamaFinalResponseWithContentJson(correctedOutput)
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Line-up announcement",
+            sourceUrl,
+            "Article mentioning one target-country athlete."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "The line-up is getting stronger",
+            sourceUrl,
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            [],
+            $$"""
+            The long jump field has added several athletes.
+            It will include Jamaican jumpers, alongside
+            {{PrimaryCountry.CountryName}}'s {{participantName}}.
+            More announcements will follow.
+            """,
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(5, handler.RequestBodies.Count);
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(correctedOutput, result.OutputText);
+   }
+
+   [Fact]
+   public void AiJobOutputValidatorAcceptsParticipantMention()
+   {
+      var sourceUrl = "https://example.test/news/line-up";
+      var participantName = "Thobias Montler";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
+         + "\"CheckedSources\":[]}";
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         CreateArticleMentionToolTrace(sourceUrl, participantName)
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
+   public void AiJobOutputValidatorRejectsParticipantListForArticleMention()
+   {
+      var sourceUrl = "https://example.test/news/line-up";
+      var participantName = "Thobias Montler";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
+
+      var exception = Assert.Throws<InvalidOperationException>(() =>
+         AiJobOutputValidator.Validate(
+            output,
+            CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+            true,
+            CreateArticleMentionToolTrace(sourceUrl, participantName)
+         )
+      );
+
+      Assert.Contains("Participant source EvidenceType", exception.Message);
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncAcceptsUnknownWithSearchOnlyEvidence()
    {
       var handler = new RecordingHandler(
@@ -1760,10 +1893,11 @@ public class AiProviderClientTests
             $"Tre Kronor {PrimaryCountry.CountryName}"
          ),
          CreateLlamaFinalResponseWithContentJson(
-            "{\"Participation\":\"Unknown\","
-            + "\"Participants\":[],"
-            + "\"Sources\":[\"https://example.test/search-result\"],"
-            + "\"EvidenceType\":\"SearchOnly\"}"
+            CreateParticipationCheckedOutput(
+               "Unknown",
+               "https://example.test/search-result",
+               AiParticipationEvidenceTypeIds.SearchOnly
+            )
          )
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -1800,10 +1934,11 @@ public class AiProviderClientTests
          result.ToolTraceJson
       );
       Assert.Equal(
-         "{\"Participation\":\"Unknown\","
-         + "\"Participants\":[],"
-         + "\"Sources\":[\"https://example.test/search-result\"],"
-         + "\"EvidenceType\":\"SearchOnly\"}",
+         CreateParticipationCheckedOutput(
+            "Unknown",
+            "https://example.test/search-result",
+            AiParticipationEvidenceTypeIds.SearchOnly
+         ),
          result.OutputText
       );
    }
@@ -2007,6 +2142,31 @@ public class AiProviderClientTests
          "System",
          "User"
       );
+   }
+
+   private static JsonArray CreateArticleMentionToolTrace(
+      string sourceUrl,
+      string participantName
+   )
+   {
+      return
+      [
+         new JsonObject
+         {
+            ["name"] = WebToolNames.GetPage,
+            ["url"] = sourceUrl,
+            ["result"] = $$"""
+               Page URL: {{sourceUrl}}
+               Title: Line-up announcement
+               URL: {{sourceUrl}}
+               Page text:
+               The long jump field has added several athletes.
+               It will include Jamaican jumpers, alongside
+               {{PrimaryCountry.CountryName}}'s {{participantName}}.
+               More announcements will follow.
+               """
+         }
+      ];
    }
 
    private static string CreateReasoningResponseJson(string finalContent)
@@ -2451,13 +2611,37 @@ public class AiProviderClientTests
       string sourceUrl
    )
    {
-      var content =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[\"Dino Beganovic\"],"
-         + "\"Sources\":[\"" + sourceUrl + "\"],"
-         + "\"EvidenceType\":\"ParticipantList\"}";
+      return CreateLlamaFinalResponseWithContentJson(
+         CreateParticipationYesOutput(sourceUrl)
+      );
+   }
 
-      return CreateLlamaFinalResponseWithContentJson(content);
+   private static string CreateParticipationYesOutput(
+      string sourceUrl,
+      string evidenceType = AiParticipationEvidenceTypeIds.ParticipantList,
+      string participantName = "Dino Beganovic"
+   )
+   {
+      return
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"" + evidenceType + "\"}]}],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"" + evidenceType + "\"}]}";
+   }
+
+   private static string CreateParticipationCheckedOutput(
+      string participation,
+      string sourceUrl,
+      string evidenceType
+   )
+   {
+      return
+         "{\"Participation\":\"" + participation + "\","
+         + "\"Participants\":[],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"" + evidenceType + "\"}]}";
    }
 
    private static string CreateLlamaFinalResponseWithContentJson(
@@ -2646,28 +2830,16 @@ public class AiProviderClientTests
             "type": "string"
           },
           "Participants": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "array"
           },
-          "Sources": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uri"
-            },
-            "minItems": 1
-          },
-          "EvidenceType": {
-            "type": "string"
+          "CheckedSources": {
+            "type": "array"
           }
         },
         "required": [
           "Participation",
           "Participants",
-          "Sources",
-          "EvidenceType"
+          "CheckedSources"
         ],
         "additionalProperties": false
       }

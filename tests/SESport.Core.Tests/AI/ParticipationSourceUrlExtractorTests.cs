@@ -12,7 +12,8 @@ public class ParticipationSourceUrlExtractorTests
             "choices":[
                {
                   "message":{
-                     "content":"See https://example.test/a and https://example.test/a."
+                     "content":"See https://example.test/a.",
+                     "more":"See https://example.test/a."
                   }
                }
             ],
@@ -52,6 +53,47 @@ public class ParticipationSourceUrlExtractorTests
          [
             "https://example.test/a",
             "https://example.test/b"
+         ],
+         urls
+      );
+   }
+
+   [Fact]
+   public void ExtractFromOutput_ReturnsNestedParticipantSources()
+   {
+      var outputText = """
+         {
+            "Participation": "Yes",
+            "Participants": [
+               {
+                  "Name": "Dino Beganovic",
+                  "Sources": [
+                     {
+                        "Url": "https://example.test/participant",
+                        "EvidenceType": "ParticipantList"
+                     }
+                  ]
+               }
+            ],
+            "CheckedSources": [
+               {
+                  "Url": "https://example.test/checked",
+                  "EvidenceType": "ParticipantList"
+               },
+               {
+                  "Url": "https://example.test/participant",
+                  "EvidenceType": "ParticipantList"
+               }
+            ]
+         }
+         """;
+
+      var urls = ParticipationSourceUrlExtractor.ExtractFromOutput(outputText);
+
+      Assert.Equal(
+         [
+            "https://example.test/checked",
+            "https://example.test/participant"
          ],
          urls
       );

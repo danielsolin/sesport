@@ -81,57 +81,9 @@ public static class ParticipationSourceUrlExtractor
          var urls = new List<string>();
          var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-         if(!root.TryGetProperty("Sources", out var sources) &&
-            !root.TryGetProperty("sources", out sources))
-         {
-            return [];
-         }
-
-         if(sources.ValueKind != JsonValueKind.Array)
-         {
-            return [];
-         }
-
-         foreach(var item in sources.EnumerateArray())
-         {
-            if(item.ValueKind != JsonValueKind.String)
-            {
-               continue;
-            }
-
-            var candidate = item.GetString();
-
-            if(string.IsNullOrWhiteSpace(candidate))
-            {
-               continue;
-            }
-
-            if(!Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
-            {
-               continue;
-            }
-
-            if(!string.Equals(
-               uri.Scheme,
-               Uri.UriSchemeHttp,
-               StringComparison.OrdinalIgnoreCase
-            ) &&
-            !string.Equals(
-               uri.Scheme,
-               Uri.UriSchemeHttps,
-               StringComparison.OrdinalIgnoreCase
-            ))
-            {
-               continue;
-            }
-
-            var url = uri.AbsoluteUri;
-
-            if(seen.Add(url))
-            {
-               urls.Add(url);
-            }
-         }
+         AddSourceUrls(root, "CheckedSources", urls, seen);
+         AddSourceUrls(root, "Sources", urls, seen);
+         AddParticipantSourceUrls(root, urls, seen);
 
          return urls;
       }
@@ -139,6 +91,106 @@ public static class ParticipationSourceUrlExtractor
       {
          return [];
       }
+   }
+
+   private static void AddParticipantSourceUrls(
+      JsonElement root,
+      List<string> urls,
+      HashSet<string> seen
+   )
+   {
+      if(!root.TryGetProperty("Participants", out var participants) ||
+         participants.ValueKind != JsonValueKind.Array)
+      {
+         return;
+      }
+
+      foreach(var participant in participants.EnumerateArray())
+      {
+         if(participant.ValueKind != JsonValueKind.Object)
+         {
+            continue;
+         }
+
+         AddSourceUrls(participant, "Sources", urls, seen);
+      }
+   }
+
+   private static void AddSourceUrls(
+      JsonElement root,
+      string propertyName,
+      List<string> urls,
+      HashSet<string> seen
+   )
+   {
+      if(!root.TryGetProperty(propertyName, out var sources) &&
+         !root.TryGetProperty(
+            char.ToLowerInvariant(propertyName[0]) + propertyName[1..],
+            out sources
+         ))
+      {
+         return;
+      }
+
+      if(sources.ValueKind != JsonValueKind.Array)
+      {
+         return;
+      }
+
+      foreach(var item in sources.EnumerateArray())
+      {
+         var candidate = ReadSourceUrl(item);
+
+         if(string.IsNullOrWhiteSpace(candidate))
+         {
+            continue;
+         }
+
+         candidate = Normalize(candidate);
+
+         if(!Uri.TryCreate(candidate, UriKind.Absolute, out var uri) ||
+            !IsHttpUrl(uri))
+         {
+            continue;
+         }
+
+         var url = uri.AbsoluteUri;
+
+         if(seen.Add(url))
+         {
+            urls.Add(url);
+         }
+      }
+   }
+
+   private static string? ReadSourceUrl(JsonElement item)
+   {
+      if(item.ValueKind == JsonValueKind.String)
+      {
+         return item.GetString();
+      }
+
+      if(item.ValueKind == JsonValueKind.Object &&
+         item.TryGetProperty("Url", out var url) &&
+         url.ValueKind == JsonValueKind.String)
+      {
+         return url.GetString();
+      }
+
+      return null;
+   }
+
+   private static bool IsHttpUrl(Uri uri)
+   {
+      return string.Equals(
+         uri.Scheme,
+         Uri.UriSchemeHttp,
+         StringComparison.OrdinalIgnoreCase
+      ) || string.Equals(
+         uri.Scheme,
+         Uri.UriSchemeHttps,
+         StringComparison.OrdinalIgnoreCase
+      );
    }
 
    private static string Normalize(string value)

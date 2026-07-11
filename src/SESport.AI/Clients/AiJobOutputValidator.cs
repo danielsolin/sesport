@@ -88,42 +88,54 @@ internal static class AiJobOutputValidator
          "Participation",
          PrimaryCountry.LanguageName + "Participation"
       );
-      var evidenceType = ReadStringProperty(root, "EvidenceType");
-      var participantCount = CountArrayItems(
+      var legacyEvidenceType = ReadStringProperty(root, "EvidenceType");
+      var participantEvidence = ReadParticipantEvidenceArray(
          root,
-         "Participants",
-         PrimaryCountry.LanguageName + "Participants"
+         legacyEvidenceType
       );
-      var sources = ReadStringArray(root, "Sources");
+      var checkedSources = ReadSourceEvidenceArray(
+         root,
+         "CheckedSources",
+         legacyEvidenceType
+      );
+
+      if(checkedSources.Count == 0)
+      {
+         checkedSources = ReadSourceEvidenceArray(
+            root,
+            "Sources",
+            legacyEvidenceType
+         );
+      }
 
       ValidateParticipationShape(
          outputText,
          participation,
-         evidenceType,
-         participantCount,
-         sources
+         participantEvidence,
+         checkedSources
       );
 
       if(requireFetchedSources)
       {
          var sourceEvidence = ExtractSourceEvidence(toolTrace);
-         ValidateSources(
+         ValidateParticipantSources(
             outputText,
-            sources,
-            evidenceType!,
+            participantEvidence,
+            sourceEvidence
+         );
+         ValidateCheckedSources(
+            outputText,
+            checkedSources,
             sourceEvidence
          );
          ValidateConclusionEvidence(
             outputText,
             participation!,
-            evidenceType!,
-            sources,
-            sourceEvidence
+            checkedSources
          );
          ValidateUnknownEvidence(
             outputText,
             participation!,
-            evidenceType!,
             sourceEvidence
          );
       }
@@ -132,9 +144,8 @@ internal static class AiJobOutputValidator
    private static void ValidateParticipationShape(
       string outputText,
       string? participation,
-      string? evidenceType,
-      int participantCount,
-      IReadOnlyList<string> sources
+      IReadOnlyList<ParticipantEvidence> participants,
+      IReadOnlyList<SourceEvidenceReference> checkedSources
    )
    {
       if(!IsKnownParticipationValue(participation))
@@ -145,17 +156,42 @@ internal static class AiJobOutputValidator
          );
       }
 
-      if(!IsKnownEvidenceType(evidenceType))
+      ValidateSourceEvidenceTypes(
+         outputText,
+         participants.SelectMany(participant => participant.Sources)
+            .Concat(checkedSources)
+      );
+
+      foreach(var participant in participants)
       {
-         throw CreateInvalidOutputException(
-            "EvidenceType must be ParticipantList, TeamRoster, " +
-            "EventInfoOnly, or SearchOnly.",
-            outputText
-         );
+         if(string.IsNullOrWhiteSpace(participant.Name))
+         {
+            throw CreateInvalidOutputException(
+               "Participant Name is required.",
+               outputText
+            );
+         }
+
+         if(participant.Sources.Count == 0)
+         {
+            throw CreateInvalidOutputException(
+               "Each participant requires at least one source.",
+               outputText
+            );
+         }
+
+         if(participant.Sources.Any(source =>
+            !IsParticipantEvidenceType(source.EvidenceType)))
+         {
+            throw CreateInvalidOutputException(
+               "Participant sources must use participant evidence.",
+               outputText
+            );
+         }
       }
 
       if(string.Equals(participation, "Yes", StringComparison.Ordinal) &&
-         participantCount == 0)
+         participants.Count == 0)
       {
          throw CreateInvalidOutputException(
             "Participation Yes requires at least one participant.",
@@ -167,94 +203,30 @@ internal static class AiJobOutputValidator
          participation,
          "Yes",
          StringComparison.Ordinal
-      ) && string.Equals(
-         evidenceType,
-         AiParticipationEvidenceTypeIds.SearchOnly,
-         StringComparison.Ordinal
       ))
-      {
-         throw CreateInvalidOutputException(
-            "Participation Yes requires fetched page evidence.",
-            outputText
-         );
-      }
-
-      if(string.Equals(
-         participation,
-         "Unknown",
-         StringComparison.Ordinal
-      ) && IsStrongEvidenceType(evidenceType))
-      {
-         throw CreateInvalidOutputException(
-            "Participation Unknown must use weak evidence.",
-            outputText
-         );
-      }
-
-      if(sources.Count == 0)
-      {
-         throw CreateInvalidOutputException(
-            "Participation output requires at least one source URL.",
-            outputText
-         );
-      }
-   }
-
-   private static void ValidateSources(
-      string outputText,
-      IReadOnlyList<string> sources,
-      string evidenceType,
-      SourceEvidence sourceEvidence
-   )
-   {
-      foreach(var source in sources)
-      {
-         var normalizedSource = NormalizeUrl(source);
-
-         if(string.Equals(
-            evidenceType,
-            AiParticipationEvidenceTypeIds.SearchOnly,
-            StringComparison.Ordinal
-         ))
-         {
-            if(sourceEvidence.SearchSources.Contains(normalizedSource))
-            {
-               continue;
-            }
-
-            throw CreateInvalidOutputException(
-               "SearchOnly sources must come from web_search results.",
-               outputText
-            );
-         }
-
-         if(sourceEvidence.FetchedSources.ContainsKey(normalizedSource))
-         {
-            continue;
-         }
-
-         throw CreateInvalidOutputException(
-            "Sources must only include URLs fetched with web_get_page or " +
-            "web_find_in_page.",
-            outputText
-         );
-      }
-   }
-
-   private static void ValidateConclusionEvidence(
-      string outputText,
-      string participation,
-      string evidenceType,
-      IReadOnlyList<string> sources,
-      SourceEvidence sourceEvidence
-   )
-   {
-      if(!string.Equals(participation, "No", StringComparison.Ordinal))
       {
          return;
       }
 
-      if(!IsStrongEvidenceType(evidenceType))
+      if(participants.Count > 0)
+      {
+         throw CreateInvalidOutputException(
+            "Participation No or Unknown requires no participants.",
+            outputText
+         );
+      }
+
+      if(checkedSources.Count == 0)
+      {
+         throw CreateInvalidOutputException(
+            "Participation No or Unknown requires checked sources.",
+            outputText
+         );
+      }
+
+      if(string.Equals(participation, "No", StringComparison.Ordinal) &&
+         !checkedSources.Any(source =>
+            IsAbsenceEvidenceType(source.EvidenceType)))
       {
          throw CreateInvalidOutputException(
             "Participation No requires participant-list or team-roster " +
@@ -263,11 +235,219 @@ internal static class AiJobOutputValidator
          );
       }
 
-      if(sources.Any(source => SourceMatchesEvidenceType(
-         source,
+      if(string.Equals(participation, "Unknown", StringComparison.Ordinal) &&
+         checkedSources.Any(source =>
+            IsConclusiveEvidenceType(source.EvidenceType)))
+      {
+         throw CreateInvalidOutputException(
+            "Participation Unknown must use weak evidence.",
+            outputText
+         );
+      }
+   }
+
+   private static void ValidateSourceEvidenceTypes(
+      string outputText,
+      IEnumerable<SourceEvidenceReference> sources
+   )
+   {
+      foreach(var source in sources)
+      {
+         if(string.IsNullOrWhiteSpace(source.Url))
+         {
+            throw CreateInvalidOutputException(
+               "Source Url is required.",
+               outputText
+            );
+         }
+
+         if(!IsKnownEvidenceType(source.EvidenceType))
+         {
+            throw CreateInvalidOutputException(
+               "Source EvidenceType must be ParticipantList, " +
+               "ParticipantMention, TeamRoster, EventInfoOnly, or " +
+               "SearchOnly.",
+               outputText
+            );
+         }
+      }
+   }
+
+   private static bool IsParticipantEvidenceType(string evidenceType)
+   {
+      return string.Equals(
          evidenceType,
-         sourceEvidence
-      )))
+         AiParticipationEvidenceTypeIds.ParticipantList,
+         StringComparison.Ordinal
+      ) || string.Equals(
+         evidenceType,
+         AiParticipationEvidenceTypeIds.ParticipantMention,
+         StringComparison.Ordinal
+      ) || string.Equals(
+         evidenceType,
+         AiParticipationEvidenceTypeIds.TeamRoster,
+         StringComparison.Ordinal
+      );
+   }
+
+   private static void ValidateParticipantSources(
+      string outputText,
+      IReadOnlyList<ParticipantEvidence> participants,
+      SourceEvidence sourceEvidence
+   )
+   {
+      foreach(var participant in participants)
+      {
+         foreach(var source in participant.Sources)
+         {
+            ValidateParticipantSource(
+               outputText,
+               participant.Name,
+               source,
+               sourceEvidence
+            );
+         }
+      }
+   }
+
+   private static void ValidateParticipantSource(
+      string outputText,
+      string participantName,
+      SourceEvidenceReference source,
+      SourceEvidence sourceEvidence
+   )
+   {
+      if(!sourceEvidence.FetchedSources.TryGetValue(
+         NormalizeUrl(source.Url),
+         out var fetchedSource
+      ))
+      {
+         throw CreateInvalidOutputException(
+            "Participant sources must be fetched with web_get_page or " +
+            "web_find_in_page.",
+            outputText
+         );
+      }
+
+      if(string.Equals(
+         source.EvidenceType,
+         AiParticipationEvidenceTypeIds.ParticipantMention,
+         StringComparison.Ordinal
+      ))
+      {
+         if(ContainsParticipantMention(
+            fetchedSource.EvidenceText,
+            participantName
+         ))
+         {
+            return;
+         }
+
+         throw CreateInvalidOutputException(
+            "ParticipantMention source must name the participant and " +
+            "target country.",
+            outputText
+         );
+      }
+
+      if(!string.Equals(
+         fetchedSource.EvidenceType,
+         source.EvidenceType,
+         StringComparison.Ordinal
+      ))
+      {
+         throw CreateInvalidOutputException(
+            "Participant source EvidenceType must match fetched source.",
+            outputText
+         );
+      }
+
+      if(ContainsAnyEvidenceTerm(fetchedSource.EvidenceText, [participantName]))
+      {
+         return;
+      }
+
+      throw CreateInvalidOutputException(
+         "Participant source must name the participant.",
+         outputText
+      );
+   }
+
+   private static void ValidateCheckedSources(
+      string outputText,
+      IReadOnlyList<SourceEvidenceReference> sources,
+      SourceEvidence sourceEvidence
+   )
+   {
+      foreach(var source in sources)
+      {
+         ValidateCheckedSource(outputText, source, sourceEvidence);
+      }
+   }
+
+   private static void ValidateCheckedSource(
+      string outputText,
+      SourceEvidenceReference source,
+      SourceEvidence sourceEvidence
+   )
+   {
+      if(string.Equals(
+         source.EvidenceType,
+         AiParticipationEvidenceTypeIds.SearchOnly,
+         StringComparison.Ordinal
+      ))
+      {
+         if(sourceEvidence.SearchSources.Contains(NormalizeUrl(source.Url)))
+         {
+            return;
+         }
+
+         throw CreateInvalidOutputException(
+            "SearchOnly sources must come from web_search results.",
+            outputText
+         );
+      }
+
+      if(!sourceEvidence.FetchedSources.TryGetValue(
+         NormalizeUrl(source.Url),
+         out var fetchedSource
+      ))
+      {
+         throw CreateInvalidOutputException(
+            "Checked sources must be fetched with web_get_page or " +
+            "web_find_in_page.",
+            outputText
+         );
+      }
+
+      if(string.Equals(
+         fetchedSource.EvidenceType,
+         source.EvidenceType,
+         StringComparison.Ordinal
+      ))
+      {
+         return;
+      }
+
+      throw CreateInvalidOutputException(
+         "Checked source EvidenceType must match fetched source.",
+         outputText
+      );
+   }
+
+   private static void ValidateConclusionEvidence(
+      string outputText,
+      string participation,
+      IReadOnlyList<SourceEvidenceReference> checkedSources
+   )
+   {
+      if(!string.Equals(participation, "No", StringComparison.Ordinal))
+      {
+         return;
+      }
+
+      if(checkedSources.Any(source =>
+         IsAbsenceEvidenceType(source.EvidenceType)))
       {
          return;
       }
@@ -282,12 +462,10 @@ internal static class AiJobOutputValidator
    private static void ValidateUnknownEvidence(
       string outputText,
       string participation,
-      string evidenceType,
       SourceEvidence sourceEvidence
    )
    {
-      if(!string.Equals(participation, "Unknown", StringComparison.Ordinal) ||
-         IsStrongEvidenceType(evidenceType))
+      if(!string.Equals(participation, "Unknown", StringComparison.Ordinal))
       {
          return;
       }
@@ -302,23 +480,6 @@ internal static class AiJobOutputValidator
          "web_find_in_page check.",
          outputText
       );
-   }
-
-   private static bool SourceMatchesEvidenceType(
-      string source,
-      string evidenceType,
-      SourceEvidence sourceEvidence
-   )
-   {
-      if(!sourceEvidence.FetchedSources.TryGetValue(
-         NormalizeUrl(source),
-         out var sourceType
-      ))
-      {
-         return false;
-      }
-
-      return string.Equals(sourceType, evidenceType, StringComparison.Ordinal);
    }
 
    private static bool ContainsPrimaryCountryTerm(string? value)
@@ -426,26 +587,33 @@ internal static class AiJobOutputValidator
          return;
       }
 
-      var evidenceType = ClassifyFetchedSource(result);
+      var evidenceLines = ExtractClassifiableEvidenceLines(result);
+      var evidenceText = string.Join(' ', evidenceLines);
+      var evidenceType = ClassifyFetchedSource(evidenceLines, evidenceText);
+      var fetchedSource = new FetchedSourceEvidence(
+         evidenceType,
+         evidenceText
+      );
 
       AddFetchedUrl(
          sourceEvidence,
          ReadString(entry, "url"),
-         evidenceType
+         fetchedSource
       );
       AddFetchedUrl(
          sourceEvidence,
          ReadResultUrl(result),
-         evidenceType
+         fetchedSource
       );
    }
 
-   private static string ClassifyFetchedSource(string? result)
+   private static string ClassifyFetchedSource(
+      IReadOnlyList<string> evidenceLines,
+      string evidenceText
+   )
    {
-      var evidenceLines = ExtractClassifiableEvidenceLines(result);
-      var evidenceText = string.Join(' ', evidenceLines);
-
-      if(ContainsAnyEvidenceTerm(evidenceText, TeamRosterTerms))
+      if(ContainsAnyEvidenceTerm(evidenceText, TeamRosterTerms) &&
+         HasParticipantListRows(evidenceLines))
       {
          return AiParticipationEvidenceTypeIds.TeamRoster;
       }
@@ -462,6 +630,20 @@ internal static class AiJobOutputValidator
       }
 
       return AiParticipationEvidenceTypeIds.EventInfoOnly;
+   }
+
+   private static bool ContainsParticipantMention(
+      string evidenceText,
+      string participantName
+   )
+   {
+      if(string.IsNullOrWhiteSpace(participantName) ||
+         !ContainsPrimaryCountryTerm(evidenceText))
+      {
+         return false;
+      }
+
+      return ContainsAnyEvidenceTerm(evidenceText, [participantName]);
    }
 
    private static bool IsParticipantListIndexPage(string evidenceText)
@@ -616,6 +798,7 @@ internal static class AiJobOutputValidator
          if(IsKnownEvidenceSectionHeader(line))
          {
             skippedSection = "";
+            continue;
          }
 
          if(skippedSection.Length > 0 || IsIgnoredEvidenceLine(line))
@@ -780,7 +963,7 @@ internal static class AiJobOutputValidator
    private static void AddFetchedUrl(
       SourceEvidence sourceEvidence,
       string? url,
-      string evidenceType
+      FetchedSourceEvidence fetchedSource
    )
    {
       if(string.IsNullOrWhiteSpace(url))
@@ -792,13 +975,16 @@ internal static class AiJobOutputValidator
 
       if(sourceEvidence.FetchedSources.TryGetValue(
          normalizedUrl,
-         out var existingType
-      ) && IsStrongerEvidenceType(existingType, evidenceType))
+         out var existingSource
+      ) && IsStrongerEvidenceType(
+         existingSource.EvidenceType,
+         fetchedSource.EvidenceType
+      ))
       {
          return;
       }
 
-      sourceEvidence.FetchedSources[normalizedUrl] = evidenceType;
+      sourceEvidence.FetchedSources[normalizedUrl] = fetchedSource;
    }
 
    private static bool IsKnownParticipationValue(string? value)
@@ -816,6 +1002,10 @@ internal static class AiJobOutputValidator
          StringComparison.Ordinal
       ) || string.Equals(
          value,
+         AiParticipationEvidenceTypeIds.ParticipantMention,
+         StringComparison.Ordinal
+      ) || string.Equals(
+         value,
          AiParticipationEvidenceTypeIds.TeamRoster,
          StringComparison.Ordinal
       ) || string.Equals(
@@ -829,7 +1019,24 @@ internal static class AiJobOutputValidator
       );
    }
 
-   private static bool IsStrongEvidenceType(string? value)
+   private static bool IsConclusiveEvidenceType(string? value)
+   {
+      return string.Equals(
+         value,
+         AiParticipationEvidenceTypeIds.ParticipantList,
+         StringComparison.Ordinal
+      ) || string.Equals(
+         value,
+         AiParticipationEvidenceTypeIds.ParticipantMention,
+         StringComparison.Ordinal
+      ) || string.Equals(
+         value,
+         AiParticipationEvidenceTypeIds.TeamRoster,
+         StringComparison.Ordinal
+      );
+   }
+
+   private static bool IsAbsenceEvidenceType(string? value)
    {
       return string.Equals(
          value,
@@ -854,8 +1061,9 @@ internal static class AiJobOutputValidator
    {
       return evidenceType switch
       {
-         AiParticipationEvidenceTypeIds.TeamRoster => 3,
-         AiParticipationEvidenceTypeIds.ParticipantList => 2,
+         AiParticipationEvidenceTypeIds.TeamRoster => 4,
+         AiParticipationEvidenceTypeIds.ParticipantList => 3,
+         AiParticipationEvidenceTypeIds.ParticipantMention => 2,
          AiParticipationEvidenceTypeIds.EventInfoOnly => 1,
          _ => 0
       };
@@ -1011,29 +1219,87 @@ internal static class AiJobOutputValidator
       return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
    }
 
-   private static int CountArrayItems(
+   private static bool TryGetArrayProperty(
       JsonElement element,
-      params string[] propertyNames
+      string propertyName,
+      string fallbackPropertyName,
+      out JsonElement property
    )
    {
-      foreach(var propertyName in propertyNames)
+      if(element.TryGetProperty(propertyName, out property) &&
+         property.ValueKind == JsonValueKind.Array)
       {
-         if(!element.TryGetProperty(propertyName, out var property) ||
-            property.ValueKind != JsonValueKind.Array)
+         return true;
+      }
+
+      if(element.TryGetProperty(fallbackPropertyName, out property) &&
+         property.ValueKind == JsonValueKind.Array)
+      {
+         return true;
+      }
+
+      property = default;
+      return false;
+   }
+
+   private static IReadOnlyList<ParticipantEvidence>
+      ReadParticipantEvidenceArray(
+         JsonElement element,
+         string? legacyEvidenceType
+      )
+   {
+      if(!TryGetArrayProperty(
+         element,
+         "Participants",
+         PrimaryCountry.LanguageName + "Participants",
+         out var property
+      ))
+      {
+         return [];
+      }
+
+      var participants = new List<ParticipantEvidence>();
+
+      foreach(var item in property.EnumerateArray())
+      {
+         if(item.ValueKind == JsonValueKind.String)
+         {
+            var legacyName = item.GetString();
+
+            if(!string.IsNullOrWhiteSpace(legacyName))
+            {
+               participants.Add(
+                  new ParticipantEvidence(legacyName.Trim(), [])
+               );
+            }
+
+            continue;
+         }
+
+         if(item.ValueKind != JsonValueKind.Object)
          {
             continue;
          }
 
-         return property.GetArrayLength();
+         var name = ReadString(item, "Name") ?? "";
+         var sources = ReadSourceEvidenceArray(
+            item,
+            "Sources",
+            legacyEvidenceType
+         );
+
+         participants.Add(new ParticipantEvidence(name, sources));
       }
 
-      return 0;
+      return participants;
    }
 
-   private static IReadOnlyList<string> ReadStringArray(
-      JsonElement element,
-      string propertyName
-   )
+   private static IReadOnlyList<SourceEvidenceReference>
+      ReadSourceEvidenceArray(
+         JsonElement element,
+         string propertyName,
+         string? legacyEvidenceType
+      )
    {
       if(!element.TryGetProperty(propertyName, out var property) ||
          property.ValueKind != JsonValueKind.Array)
@@ -1041,24 +1307,39 @@ internal static class AiJobOutputValidator
          return [];
       }
 
-      var values = new List<string>();
+      var sources = new List<SourceEvidenceReference>();
 
       foreach(var item in property.EnumerateArray())
       {
-         if(item.ValueKind != JsonValueKind.String)
+         if(item.ValueKind == JsonValueKind.String)
+         {
+            if(!string.IsNullOrWhiteSpace(legacyEvidenceType))
+            {
+               sources.Add(
+                  new SourceEvidenceReference(
+                     item.GetString() ?? "",
+                     legacyEvidenceType
+                  )
+               );
+            }
+
+            continue;
+         }
+
+         if(item.ValueKind != JsonValueKind.Object)
          {
             continue;
          }
 
-         var value = item.GetString();
-
-         if(!string.IsNullOrWhiteSpace(value))
-         {
-            values.Add(value.Trim());
-         }
+         sources.Add(
+            new SourceEvidenceReference(
+               ReadString(item, "Url") ?? "",
+               ReadString(item, "EvidenceType") ?? ""
+            )
+         );
       }
 
-      return values;
+      return sources;
    }
 
    private static string NormalizeUrl(string url)
@@ -1103,9 +1384,24 @@ internal static class AiJobOutputValidator
       public HashSet<string> SearchSources { get; } =
          new(StringComparer.OrdinalIgnoreCase);
 
-      public Dictionary<string, string> FetchedSources { get; } =
+      public Dictionary<string, FetchedSourceEvidence> FetchedSources { get; } =
          new(StringComparer.OrdinalIgnoreCase);
 
       public bool HasPrimaryCountryCheck { get; set; }
    }
+
+   private sealed record FetchedSourceEvidence(
+      string EvidenceType,
+      string EvidenceText
+   );
+
+   private sealed record ParticipantEvidence(
+      string Name,
+      IReadOnlyList<SourceEvidenceReference> Sources
+   );
+
+   private sealed record SourceEvidenceReference(
+      string Url,
+      string EvidenceType
+   );
 }

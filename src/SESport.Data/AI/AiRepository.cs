@@ -1381,12 +1381,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          {
             foreach(var participant in participantsElement.EnumerateArray())
             {
-               if(participant.ValueKind != JsonValueKind.String)
-               {
-                  continue;
-               }
-
-               var name = participant.GetString();
+               var name = ReadParticipantName(participant);
 
                if(!string.IsNullOrWhiteSpace(name))
                {
@@ -1417,6 +1412,23 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             errorMessage ?? "The model returned invalid JSON."
          );
       }
+   }
+
+   private static string? ReadParticipantName(JsonElement participant)
+   {
+      if(participant.ValueKind == JsonValueKind.String)
+      {
+         return participant.GetString();
+      }
+
+      if(participant.ValueKind == JsonValueKind.Object &&
+         participant.TryGetProperty("Name", out var name) &&
+         name.ValueKind == JsonValueKind.String)
+      {
+         return name.GetString();
+      }
+
+      return null;
    }
 
    private static string ToStatusId(AiJobRunStatus status)

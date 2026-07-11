@@ -653,7 +653,21 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue(
          "output_text",
          $$"""
-         {"Participation":"Yes","Participants":["{{participantName}}"]}
+         {
+            "Participation": "Yes",
+            "Participants": [
+               {
+                  "Name": "{{participantName}}",
+                  "Sources": [
+                     {
+                        "Url": "https://example.test/participant",
+                        "EvidenceType": "ParticipantMention"
+                     }
+                  ]
+               }
+            ],
+            "CheckedSources": []
+         }
          """
       );
       await command.ExecuteNonQueryAsync();
