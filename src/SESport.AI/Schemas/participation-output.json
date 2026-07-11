@@ -9,6 +9,7 @@
             "type": "string",
             "format": "uri"
          },
+         "minItems": 1,
          "description": "Source URLs that support the conclusion."
       },
       "Participants": {
