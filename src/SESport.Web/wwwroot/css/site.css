@@ -759,11 +759,21 @@ h2 {
 }
 
 .ai-runs-col-started {
-   width: 100px;
+   width: 140px;
+}
+
+.ai-runs-started-cell {
+   white-space: nowrap;
+   overflow: hidden;
+}
+
+.ai-runs-job-cell {
+   white-space: nowrap;
+   overflow: hidden;
 }
 
 .ai-runs-col-job {
-   width: 140px;
+   width: 40px;
 }
 
 .ai-runs-col-event {
@@ -775,7 +785,7 @@ h2 {
 }
 
 .ai-runs-col-payload {
-   width: 96px;
+   width: 70px;
 }
 
 .ai-runs-col-rounds {

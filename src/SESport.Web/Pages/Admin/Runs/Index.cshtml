@@ -69,7 +69,7 @@
             <th>Started</th>
             <th>JOB</th>
             <th>For</th>
-            <th>Max Payload</th>
+            <th>MAX-P</th>
             <th>Rounds</th>
             <th>Duration</th>
             <th>Status</th>
@@ -90,17 +90,14 @@
             );
             <tr data-ai-run-id="@run.Id"
                 data-ai-run-status="@run.StatusId">
-               <td>
-                  <div class="ai-runs-cell-stack">
-                     <span>@TimeDisplay.FormatLocalDate(run.StartedAt)</span>
-                     <span class="ai-runs-cell-secondary">
-                        @TimeDisplay.FormatLocalTime(run.StartedAt)
-                     </span>
-                  </div>
+               <td class="ai-runs-started-cell">
+                  @TimeDisplay.FormatLocalDate(run.StartedAt)
+                  @TimeDisplay.FormatLocalTime(run.StartedAt)
                </td>
-               <td title="@run.JobLabel">@jobCode</td>
+               <td class="ai-runs-job-cell"
+                   title="@run.JobLabel">@jobCode</td>
                <td>
-                  @runTarget: @run.EventName
+                  <strong>@runTarget:</strong> @run.EventName
                </td>
                <td data-ai-run-payload-cell>
                   @run.MaxPayloadCharacterCount
