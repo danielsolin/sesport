@@ -1,9 +1,9 @@
 @page
 @model SESport.Web.Pages.Admin.Runs.IndexModel
+@using SESport.Core.AI
 @{
    ViewData["Title"] = "Runs";
    var runStatusesUrl = Url.Page("/Admin/Ajax/Poll/RunStatuses");
-   var runFieldUrl = Url.Page("/Admin/Ajax/Update/RunField");
 }
 
 <section class="page-heading page-heading-row">
@@ -52,12 +52,11 @@
 }
 
 <div class="admin-table-wrap"
-     data-run-statuses-url="@runStatusesUrl"
-     data-run-inline-edit-url="@runFieldUrl">
+     data-run-statuses-url="@runStatusesUrl">
    <table class="admin-table admin-table-hover ai-runs-table">
       <colgroup>
          <col class="ai-runs-col-started" />
-         <col class="ai-runs-col-env-job-prov" />
+         <col class="ai-runs-col-job" />
          <col class="ai-runs-col-event" />
          <col class="ai-runs-col-payload" />
          <col class="ai-runs-col-rounds" />
@@ -68,8 +67,8 @@
       <thead>
          <tr>
             <th>Started</th>
-            <th>ENV/JOB/PROV</th>
-            <th>Event</th>
+            <th>JOB</th>
+            <th>For</th>
             <th>Max Payload</th>
             <th>Rounds</th>
             <th>Duration</th>
@@ -80,10 +79,14 @@
       <tbody>
          @foreach (var run in Model.Runs)
          {
-            var canEditExecutionEnvironment = string.Equals(
-               run.StatusId,
-               "pending",
-               StringComparison.Ordinal
+            var runTarget = AiJobIds.GetTargetType(run.JobId) ==
+               AiJobTargetType.Broadcast
+               ? "Broadcast"
+               : "Activity";
+            var jobCode = string.Concat(
+               run.JobLabel
+                  .Split('-', StringSplitOptions.RemoveEmptyEntries)
+                  .Select(part => char.ToLowerInvariant(part[0]))
             );
             <tr data-ai-run-id="@run.Id"
                 data-ai-run-status="@run.StatusId">
@@ -95,38 +98,10 @@
                      </span>
                   </div>
                </td>
-               <td class="ai-runs-inline-edit-cell"
-                   data-run-inline-edit-field="execution-environment"
-                   data-run-inline-edit-value="@run.ExecutionEnvironment"
-                   title="@(canEditExecutionEnvironment
-                              ? "Double-click to edit"
-                              : null)">
-                  <div class="ai-runs-cell-stack" data-run-inline-edit-display>
-                     <span class="ai-runs-environment"
-                           title="@run.ExecutionEnvironment">
-                        @DetailsModel.FormatExecutionEnvironmentDisplayName(
-                           run.ExecutionEnvironment
-                        )
-                     </span>
-                     <span>@run.JobLabel</span>
-                     <span class="ai-runs-cell-secondary">
-                        @run.ProviderLabel
-                        @if(!string.IsNullOrWhiteSpace(run.ProviderModel))
-                        {
-                           <span> (@run.ProviderModel)</span>
-                        }
-                     </span>
-                  </div>
-                  <select class="ai-runs-inline-edit-input"
-                          data-run-inline-edit-input
-                          asp-items=
-                             "Model.GetExecutionEnvironmentOptions(
-                                run.ExecutionEnvironment
-                             )"
-                          hidden>
-                  </select>
+               <td title="@run.JobLabel">@jobCode</td>
+               <td>
+                  @runTarget: @run.EventName
                </td>
-               <td>@run.EventName</td>
                <td data-ai-run-payload-cell>
                   @run.MaxPayloadCharacterCount
                </td>

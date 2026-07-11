@@ -1,5 +1,12 @@
 namespace SESport.Core.AI;
 
+public enum AiJobTargetType
+{
+   Unknown,
+   Activity,
+   Broadcast
+}
+
 public static class AiJobIds
 {
    public const string GenerateActivityTeaser =
@@ -10,4 +17,16 @@ public static class AiJobIds
 
    public const string FindActivityFacts =
       "find-activity-facts";
+
+   public static AiJobTargetType GetTargetType(string jobId)
+   {
+      return jobId switch
+      {
+         GenerateActivityTeaser or FindActivityFacts =>
+            AiJobTargetType.Activity,
+         DecidePrimaryCountryParticipation =>
+            AiJobTargetType.Broadcast,
+         _ => AiJobTargetType.Unknown
+      };
+   }
 }

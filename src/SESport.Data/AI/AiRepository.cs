@@ -53,6 +53,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("with selected_runs as (")
          .AppendLine("select")
          .AppendLine("   r.id,")
+         .AppendLine("   r.job_id,")
          .AppendLine("   r.execution_environment,")
          .AppendLine("   j.label as job_label,")
          .AppendLine("   coalesce(")
@@ -97,6 +98,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine(")")
          .AppendLine("select")
          .AppendLine("   sr.id,")
+         .AppendLine("   sr.job_id,")
          .AppendLine("   sr.execution_environment,")
          .AppendLine("   sr.job_label,")
          .AppendLine("   sr.event_name,")
@@ -160,16 +162,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          runs.Add(
             new AiRunListItem(
                reader.GetGuid(0),
-               ReadNullableString(reader, 1),
-               reader.GetString(2),
-               ReadNullableString(reader, 3),
-               reader.GetString(4),
-               ReadNullableString(reader, 5),
-               reader.GetString(6),
-               reader.GetInt32(7),
-               reader.GetInt32(10),
-               reader.GetFieldValue<DateTimeOffset>(8),
-               ReadNullableDecimal(reader, 9)
+               reader.GetString(1),
+               ReadNullableString(reader, 2),
+               reader.GetString(3),
+               ReadNullableString(reader, 4),
+               reader.GetString(5),
+               ReadNullableString(reader, 6),
+               reader.GetString(7),
+               reader.GetInt32(8),
+               reader.GetInt32(11),
+               reader.GetFieldValue<DateTimeOffset>(9),
+               ReadNullableDecimal(reader, 10)
             )
          );
       }
@@ -224,6 +227,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       const string sql = """
          select
             r.id,
+            r.job_id,
             r.execution_environment,
             j.label,
             coalesce(
@@ -277,16 +281,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          runs.Add(
             new AiRunListItem(
                reader.GetGuid(0),
-               ReadNullableString(reader, 1),
-               reader.GetString(2),
-               ReadNullableString(reader, 3),
-               reader.GetString(4),
-               ReadNullableString(reader, 5),
-               reader.GetString(6),
-               reader.GetInt32(7),
-               reader.GetInt32(10),
-               reader.GetFieldValue<DateTimeOffset>(8),
-               ReadNullableDecimal(reader, 9)
+               reader.GetString(1),
+               ReadNullableString(reader, 2),
+               reader.GetString(3),
+               ReadNullableString(reader, 4),
+               reader.GetString(5),
+               ReadNullableString(reader, 6),
+               reader.GetString(7),
+               reader.GetInt32(8),
+               reader.GetInt32(11),
+               reader.GetFieldValue<DateTimeOffset>(9),
+               ReadNullableDecimal(reader, 10)
             )
          );
       }
