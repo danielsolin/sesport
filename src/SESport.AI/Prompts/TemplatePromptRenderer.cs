@@ -1,5 +1,6 @@
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
+using SESport.Core.Domain;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -18,15 +19,19 @@ public sealed class TemplatePromptRenderer : IAiPromptRenderer
    )
    {
       using var document = JsonDocument.Parse(inputPayloadJson);
+      var systemPrompt = string.IsNullOrWhiteSpace(prompt.SystemPrompt)
+         ? null
+         : ReplaceTokens(
+            prompt.SystemPrompt,
+            document.RootElement
+         ).Trim();
       var userPrompt = ReplaceTokens(
          prompt.UserPromptTemplate,
          document.RootElement
       );
 
       return new AiRenderedPrompt(
-         string.IsNullOrWhiteSpace(prompt.SystemPrompt)
-            ? null
-            : prompt.SystemPrompt.Trim(),
+         systemPrompt,
          userPrompt.Trim()
       );
    }
@@ -39,8 +44,33 @@ public sealed class TemplatePromptRenderer : IAiPromptRenderer
       return TokenRegex.Replace(template, match =>
       {
          var path = match.Groups["path"].Value;
-         return ResolvePath(root, path);
+         return TryResolvePrimaryCountryPath(path, out var value)
+            ? value
+            : ResolvePath(root, path);
       });
+   }
+
+   private static bool TryResolvePrimaryCountryPath(
+      string path,
+      out string value
+   )
+   {
+      value = path switch
+      {
+         "PrimaryCountry.TwoLetterCode" or "TwoLetterCode" =>
+            PrimaryCountry.TwoLetterCode,
+         "PrimaryCountry.ThreeLetterCode" or "ThreeLetterCode" =>
+            PrimaryCountry.ThreeLetterCode,
+         "PrimaryCountry.CountryName" or "CountryName" =>
+            PrimaryCountry.CountryName,
+         "PrimaryCountry.LocalDisplayName" or "LocalDisplayName" =>
+            PrimaryCountry.LocalDisplayName,
+         "PrimaryCountry.LanguageName" or "LanguageName" =>
+            PrimaryCountry.LanguageName,
+         _ => string.Empty
+      };
+
+      return value.Length > 0;
    }
 
    private static string ResolvePath(JsonElement root, string path)

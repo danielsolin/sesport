@@ -147,6 +147,41 @@ public class AiJobRunnerTests
       );
    }
 
+   [Fact]
+   public async Task ProcessRunAsyncRendersSystemPromptForStoredRun()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new PrefixingPromptRenderer();
+      var providerClient = new CapturingProviderClient();
+      var runRepository = new RecordingRunRepository();
+      var executionGate = new AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var runId = await runner.QueueAsync(
+         new AiJobRequest("job", """{"event":"test"}"""),
+         CancellationToken.None
+      );
+
+      await runner.ProcessRunAsync(runId, CancellationToken.None);
+
+      Assert.NotNull(providerClient.RenderedPrompt);
+      Assert.Equal(
+         "Rendered System",
+         providerClient.RenderedPrompt!.SystemPrompt
+      );
+      Assert.Equal(
+         "Rendered User",
+         providerClient.RenderedPrompt.UserPrompt
+      );
+   }
+
    private sealed class RecordingJobDefinitionRepository
       : IAiJobDefinitionRepository
    {
@@ -233,6 +268,20 @@ public class AiJobRunnerTests
          return new AiRenderedPrompt(
             prompt.SystemPrompt,
             prompt.UserPromptTemplate
+         );
+      }
+   }
+
+   private sealed class PrefixingPromptRenderer : IAiPromptRenderer
+   {
+      public AiRenderedPrompt Render(
+         AiPromptDefinition prompt,
+         string inputPayloadJson
+      )
+      {
+         return new AiRenderedPrompt(
+            $"Rendered {prompt.SystemPrompt}",
+            $"Rendered {prompt.UserPromptTemplate}"
          );
       }
    }
@@ -333,6 +382,64 @@ public class AiJobRunnerTests
                null
          )
       );
+      }
+   }
+
+   private sealed class CapturingProviderClient : IAiProviderClient
+   {
+      public string Kind => "llama-server";
+
+      public AiRenderedPrompt? RenderedPrompt { get; private set; }
+
+      public JsonObject CreateRequestPayload(
+         AiProviderDefinition provider,
+         AiJobDefinition job,
+         AiPromptDefinition prompt,
+         AiRenderedPrompt renderedPrompt
+      )
+      {
+         return new JsonObject
+         {
+            ["model"] = provider.Model,
+            ["messages"] = new JsonArray()
+         };
+      }
+
+      public Task<AiJobResult> GenerateAsync(
+         AiProviderDefinition provider,
+         AiJobDefinition job,
+         AiPromptDefinition prompt,
+         AiRenderedPrompt renderedPrompt,
+         string inputPayloadJson,
+         CancellationToken cancellationToken,
+         Func<string?, int, CancellationToken, Task>? toolTraceUpdated = null
+      )
+      {
+         RenderedPrompt = renderedPrompt;
+
+         return Task.FromResult(
+            new AiJobResult(
+               Guid.NewGuid(),
+               job.Id,
+               provider.Id,
+               provider.Model,
+               renderedPrompt.ToPromptText(),
+               """{"request":"payload"}""",
+               "Completed run",
+               """
+               {
+                  "output_text": "Completed run"
+               }
+               """,
+               null,
+               0,
+               48,
+               null,
+               null,
+               null,
+               null
+            )
+         );
       }
    }
 

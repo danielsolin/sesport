@@ -1,4 +1,5 @@
 using SESport.Core.AI;
+using SESport.Core.Domain;
 using SESport.AI.Prompts;
 
 namespace SESport.Core.Tests.AI;
@@ -93,6 +94,69 @@ public class TemplatePromptRendererTests
 
       Assert.Equal(
          "Description: Olympic qualifier",
+         rendered.UserPrompt
+      );
+   }
+
+   [Fact]
+   public void RenderReplacesPrimaryCountryMarkersInSystemPrompt()
+   {
+      var renderer = new TemplatePromptRenderer();
+      var prompt = new AiPromptDefinition(
+         Guid.Parse("44444444-4444-4444-4444-444444444444"),
+         "job",
+         1,
+         "Find {{LanguageName}} participants from {{CountryName}}.",
+         "Use code {{ThreeLetterCode}}.",
+         null,
+         "{}",
+         null,
+         null,
+         null,
+         true
+      );
+
+      var rendered = renderer.Render(prompt, "{}");
+
+      Assert.Equal(
+         $"Find {PrimaryCountry.LanguageName} participants from " +
+         $"{PrimaryCountry.CountryName}.",
+         rendered.SystemPrompt
+      );
+      Assert.Equal(
+         $"Use code {PrimaryCountry.ThreeLetterCode}.",
+         rendered.UserPrompt
+      );
+   }
+
+   [Fact]
+   public void RenderReplacesNamespacedPrimaryCountryMarkers()
+   {
+      var renderer = new TemplatePromptRenderer();
+      var prompt = new AiPromptDefinition(
+         Guid.Parse("55555555-5555-5555-5555-555555555555"),
+         "job",
+         1,
+         "Country: {{PrimaryCountry.CountryName}}",
+         "Local: {{PrimaryCountry.LocalDisplayName}}, " +
+         "{{PrimaryCountry.TwoLetterCode}}",
+         null,
+         "{}",
+         null,
+         null,
+         null,
+         true
+      );
+
+      var rendered = renderer.Render(prompt, "{}");
+
+      Assert.Equal(
+         $"Country: {PrimaryCountry.CountryName}",
+         rendered.SystemPrompt
+      );
+      Assert.Equal(
+         $"Local: {PrimaryCountry.LocalDisplayName}, " +
+         PrimaryCountry.TwoLetterCode,
          rendered.UserPrompt
       );
    }

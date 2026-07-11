@@ -437,8 +437,12 @@ public sealed class AiJobRunner(
       }
 
       var providerClient = GetProviderClient(provider.Kind);
+      var renderedSystemPrompt = promptRenderer.Render(
+         prompt,
+         run.InputPayloadJson
+      ).SystemPrompt;
       var renderedPrompt = new AiRenderedPrompt(
-         prompt.SystemPrompt,
+         renderedSystemPrompt,
          run.RenderedPrompt
       );
 
