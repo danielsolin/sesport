@@ -19,6 +19,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const int MaxConversationContextCharacters = 250000;
    private const int MaxTransientRetryAttempts = 12;
    private const int MaxFormatRepairAttempts = 3;
+   private const int MaxValidationContinuationAttempts = 3;
    private const int DefaultMaxToolRounds = 10;
    private const int DefaultToolCallMaxTokens = 512;
    private const int DefaultFinalMaxTokens = 2048;
@@ -102,6 +103,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var finalizeWithoutTools = false;
       var repeatedToolCallStreak = 0;
       var formatRepairAttempts = 0;
+      var validationContinuationAttempts = 0;
       var maxToolRounds = job.RequiresWebSearch
          ? prompt.MaxToolRounds ?? DefaultMaxToolRounds
          : prompt.MaxToolRounds;
@@ -124,73 +126,34 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          while(true)
          {
-            turn++;
-            LlamaTemperature.ApplyTemperature(
-               request,
-               prompt.Temperature,
-               repeatedToolCallStreak
-            );
-            LlamaRequestFactory.ApplyToolBudgetPrompt(
-               messages,
-               baseSystemPrompt,
-               maxToolRounds,
-               toolRoundCount
-            );
-            var payloadCharacterCount =
-               LlamaConversationTrimmer.EstimateRequestPayloadSize(
-                  request,
-                  JsonOptions
-               );
-            toolTrace.Add(
-               LlamaToolTrace.CreateToolBudgetTraceEntry(
-                  turn,
-                  maxToolRounds,
-                  toolRoundCount,
-                  payloadCharacterCount,
-                  LlamaTemperature.GetRequestTemperature(request)
-               )
-            );
-            await LlamaToolTrace.ReportProgressAsync(
-               toolTrace,
-               toolRoundCount,
-               JsonOptions,
-               toolTraceUpdated,
-               cancellationToken
-            );
-            LogToolBudget(
-               turn,
-               maxToolRounds,
-               toolRoundCount
-            );
-            rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
-            ResponseEnvelope responseEnvelope;
+            var continueWithTools = false;
 
-            try
+            while(true)
             {
-               responseEnvelope = await SendWithStructuredOutputRepairAsync(
-                  provider,
+               turn++;
+               LlamaTemperature.ApplyTemperature(
                   request,
-                  messages,
-                  toolTrace,
-                  turn,
-                  "turn",
-                  job.OutputMode,
-                  prompt,
-                  formatRepairAttempts,
-                  cancellationToken,
-                  () => formatRepairAttempts++
+                  prompt.Temperature,
+                  repeatedToolCallStreak
                );
-            }
-            catch(HttpRequestException exception) when(
-               RequestUsesTools(request) &&
-               LlamaStructuredOutputRepair.IsPegNativeFormatFailure(exception)
-            )
-            {
-               finalizeWithoutTools = true;
+               LlamaRequestFactory.ApplyToolBudgetPrompt(
+                  messages,
+                  baseSystemPrompt,
+                  maxToolRounds,
+                  toolRoundCount
+               );
+               var payloadCharacterCount =
+                  LlamaConversationTrimmer.EstimateRequestPayloadSize(
+                     request,
+                     JsonOptions
+                  );
                toolTrace.Add(
-                  LlamaToolTrace.CreateToolFormatFallbackTraceEntry(
+                  LlamaToolTrace.CreateToolBudgetTraceEntry(
                      turn,
-                     exception.Message
+                     maxToolRounds,
+                     toolRoundCount,
+                     payloadCharacterCount,
+                     LlamaTemperature.GetRequestTemperature(request)
                   )
                );
                await LlamaToolTrace.ReportProgressAsync(
@@ -200,89 +163,83 @@ public sealed class LlamaServerClient : IAiProviderClient
                   toolTraceUpdated,
                   cancellationToken
                );
-               break;
-            }
+               LogToolBudget(
+                  turn,
+                  maxToolRounds,
+                  toolRoundCount
+               );
+               rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
+               ResponseEnvelope responseEnvelope;
 
-            responseJson = responseEnvelope.ResponseJson;
-            rawResponse = responseEnvelope.RawResponseJson;
+               try
+               {
+                  responseEnvelope = await SendWithStructuredOutputRepairAsync(
+                     provider,
+                     request,
+                     messages,
+                     toolTrace,
+                     turn,
+                     "turn",
+                     job.OutputMode,
+                     prompt,
+                     formatRepairAttempts,
+                     cancellationToken,
+                     () => formatRepairAttempts++
+                  );
+               }
+               catch(HttpRequestException exception) when(
+                  RequestUsesTools(request) &&
+                  LlamaStructuredOutputRepair.IsPegNativeFormatFailure(
+                     exception
+                  )
+               )
+               {
+                  finalizeWithoutTools = true;
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateToolFormatFallbackTraceEntry(
+                        turn,
+                        exception.Message
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+                  break;
+               }
 
-            LogResponse("turn", turn, responseJson);
+               responseJson = responseEnvelope.ResponseJson;
+               rawResponse = responseEnvelope.RawResponseJson;
 
-            if(!LlamaResponseReader.TryGetToolCalls(
-               responseJson,
-               out var toolCalls
-            ))
-            {
-               repeatedToolCallStreak = 0;
+               LogResponse("turn", turn, responseJson);
+
+               if(!LlamaResponseReader.TryGetToolCalls(
+                  responseJson,
+                  out var toolCalls
+               ))
+               {
+                  repeatedToolCallStreak = 0;
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        [],
+                        JsonOptions
+                     )
+                  );
+                  break;
+               }
+
+               toolRoundCount++;
                toolTrace.Add(
                   LlamaToolTrace.CreateAssistantTraceEntry(
                      turn,
                      responseJson,
-                     [],
+                     toolCalls,
                      JsonOptions
-                  )
-               );
-               break;
-            }
-
-            toolRoundCount++;
-            toolTrace.Add(
-               LlamaToolTrace.CreateAssistantTraceEntry(
-                  turn,
-                  responseJson,
-                  toolCalls,
-                  JsonOptions
-               )
-            );
-            await LlamaToolTrace.ReportProgressAsync(
-               toolTrace,
-               toolRoundCount,
-               JsonOptions,
-               toolTraceUpdated,
-               cancellationToken
-            );
-            LlamaResponseReader.AppendAssistantMessage(
-               messages,
-               responseJson,
-               JsonOptions
-            );
-
-            var repeatedToolCallDetectedThisTurn = false;
-            var repeatedToolCallCountThisTurn = 0;
-            foreach(var toolCall in toolCalls)
-            {
-               LogToolCall(turn, toolCall);
-
-               if(LlamaToolCallHistory.TryGetRepeatedToolResult(
-                  toolCall,
-                  toolState.ToolCallHistory,
-                  out _
-               ))
-               {
-                  repeatedToolCallDetectedThisTurn = true;
-                  repeatedToolCallCountThisTurn++;
-               }
-
-               var toolResult = await ExecuteToolCallAsync(
-                  toolCall,
-                  toolState,
-                  turn,
-                  cancellationToken
-               );
-
-               messages.Add(
-                  LlamaResponseReader.CreateToolMessage(toolCall.Id, toolResult)
-               );
-
-               toolTrace.Add(
-                  LlamaToolTrace.CreateToolTraceEntry(
-                     turn,
-                     toolCall,
-                     toolResult,
-                     toolState.LastSearchProvider,
-                     toolState.LastSearchProviderDetails,
-                     toolState.LastSearchEngine,
-                     toolState.LastPageFetcher
                   )
                );
                await LlamaToolTrace.ReportProgressAsync(
@@ -292,30 +249,84 @@ public sealed class LlamaServerClient : IAiProviderClient
                   toolTraceUpdated,
                   cancellationToken
                );
-            }
+               LlamaResponseReader.AppendAssistantMessage(
+                  messages,
+                  responseJson,
+                  JsonOptions
+               );
 
-            repeatedToolCallStreak = repeatedToolCallDetectedThisTurn
-               ? repeatedToolCallStreak + repeatedToolCallCountThisTurn
-               : 0;
+               var repeatedToolCallDetectedThisTurn = false;
+               var repeatedToolCallCountThisTurn = 0;
+               foreach(var toolCall in toolCalls)
+               {
+                  LogToolCall(turn, toolCall);
 
-            if(job.RequiresWebSearch)
-            {
-               request["tool_choice"] = "auto";
-            }
+                  if(LlamaToolCallHistory.TryGetRepeatedToolResult(
+                     toolCall,
+                     toolState.ToolCallHistory,
+                     out _
+                  ))
+                  {
+                     repeatedToolCallDetectedThisTurn = true;
+                     repeatedToolCallCountThisTurn++;
+                  }
 
-            LlamaConversationTrimmer.TrimMessages(
-               request,
-               messages,
-               MaxConversationContextCharacters,
-               JsonOptions
-            );
+                  var toolResult = await ExecuteToolCallAsync(
+                     toolCall,
+                     toolState,
+                     turn,
+                     cancellationToken
+                  );
 
-            if(maxToolRounds is not null &&
-               toolRoundCount >= maxToolRounds.Value)
-            {
-               toolBudgetExhausted = true;
-               break;
-            }
+                  messages.Add(
+                     LlamaResponseReader.CreateToolMessage(
+                        toolCall.Id,
+                        toolResult
+                     )
+                  );
+
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateToolTraceEntry(
+                        turn,
+                        toolCall,
+                        toolResult,
+                        toolState.LastSearchProvider,
+                        toolState.LastSearchProviderDetails,
+                        toolState.LastSearchEngine,
+                        toolState.LastPageFetcher
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+               }
+
+               repeatedToolCallStreak = repeatedToolCallDetectedThisTurn
+                  ? repeatedToolCallStreak + repeatedToolCallCountThisTurn
+                  : 0;
+
+               if(job.RequiresWebSearch)
+               {
+                  request["tool_choice"] = "auto";
+               }
+
+               LlamaConversationTrimmer.TrimMessages(
+                  request,
+                  messages,
+                  MaxConversationContextCharacters,
+                  JsonOptions
+               );
+
+               if(maxToolRounds is not null &&
+                  toolRoundCount >= maxToolRounds.Value)
+               {
+                  toolBudgetExhausted = true;
+                  break;
+               }
          }
 
          if(toolBudgetExhausted || finalizeWithoutTools)
@@ -471,7 +482,62 @@ public sealed class LlamaServerClient : IAiProviderClient
                   null
                );
             }
+            catch(AiJobOutputValidationException exception) when(
+               ShouldContinueWithToolsAfterValidationFailure(
+                  request,
+                  maxToolRounds,
+                  toolRoundCount,
+                  validationContinuationAttempts
+               )
+            )
+            {
+               validationContinuationAttempts++;
+               toolTrace.Add(
+                  LlamaToolTrace.CreateAssistantTraceEntry(
+                     turn,
+                     responseJson,
+                     [],
+                     JsonOptions,
+                     validationStatus: "rejected",
+                     validationError: exception.Message
+                  )
+               );
+               toolTrace.Add(
+                  LlamaToolTrace.CreateValidationFeedbackTraceEntry(
+                     turn,
+                     exception.Message
+                  )
+               );
+               await LlamaToolTrace.ReportProgressAsync(
+                  toolTrace,
+                  toolRoundCount,
+                  JsonOptions,
+                  toolTraceUpdated,
+                  cancellationToken
+               );
+               LlamaResponseReader.AppendAssistantMessage(
+                  messages,
+                  responseJson,
+                  JsonOptions
+               );
+               LlamaRequestFactory.AddValidationFeedbackPrompt(
+                  messages,
+                  exception.Message
+               );
+
+               if(job.RequiresWebSearch)
+               {
+                  request["tool_choice"] = "auto";
+               }
+
+               continueWithTools = true;
+               break;
+            }
             catch(InvalidOperationException exception) when(
+               (
+                  exception is not AiJobOutputValidationException ||
+                  !job.RequiresWebSearch
+               ) &&
                structuredOutputRepairAttempts < MaxFormatRepairAttempts &&
                LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
                   exception
@@ -527,6 +593,12 @@ public sealed class LlamaServerClient : IAiProviderClient
                rawResponse = finalEnvelope.RawResponseJson;
             }
          }
+
+         if(continueWithTools)
+         {
+            continue;
+         }
+      }
       }
       catch(OperationCanceledException)
          when(cancellationToken.IsCancellationRequested)
@@ -640,6 +712,22 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static bool RequestUsesTools(JsonObject request)
    {
       return request["tools"] is JsonArray tools && tools.Count > 0;
+   }
+
+   private static bool ShouldContinueWithToolsAfterValidationFailure(
+      JsonObject request,
+      int? maxToolRounds,
+      int toolRoundCount,
+      int validationContinuationAttempts
+   )
+   {
+      if(!RequestUsesTools(request) ||
+         validationContinuationAttempts >= MaxValidationContinuationAttempts)
+      {
+         return false;
+      }
+
+      return maxToolRounds is null || toolRoundCount < maxToolRounds.Value;
    }
 
    private static JsonObject CreateUnconstrainedRepairRequest(

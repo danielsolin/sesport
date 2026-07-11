@@ -156,6 +156,29 @@ internal static class LlamaToolTrace
       };
    }
 
+   public static JsonObject CreateValidationFeedbackTraceEntry(
+      int turn,
+      string validationError
+   )
+   {
+      var preview = validationError.ReplaceLineEndings(" ").Trim();
+
+      if(preview.Length > 240)
+      {
+         preview = preview[..240] + "...";
+      }
+
+      return new JsonObject
+      {
+         ["kind"] = "validation_feedback",
+         ["turn"] = turn,
+         ["validation_error"] = preview,
+         ["content"] =
+            "Final answer rejected while tools remained. Continuing tool " +
+            "loop with validation feedback."
+      };
+   }
+
    public static async Task ReportProgressAsync(
       JsonArray toolTrace,
       int toolRoundCount,

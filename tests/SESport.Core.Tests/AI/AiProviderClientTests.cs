@@ -1605,6 +1605,7 @@ public class AiProviderClientTests
    {
       var sourceUrl =
          "https://example.test/final-start-lists-event-index";
+      var pdfUrl = "https://example.test/files/men-pole-vault.pdf";
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson(sourceUrl),
@@ -1616,6 +1617,7 @@ public class AiProviderClientTests
                AiParticipationEvidenceTypeIds.ParticipantList
             )
          ),
+         CreateLlamaPageCallResponseJson(pdfUrl),
          CreateLlamaFinalResponseWithContentJson(
             CreateParticipationCheckedOutput(
                "Unknown",
@@ -1650,7 +1652,7 @@ public class AiProviderClientTests
             [
                new WebPageRelevantLink(
                   "Pole Vault- men",
-                  "https://example.test/files/men-pole-vault.pdf"
+                  pdfUrl
                )
             ]
          )
@@ -1676,12 +1678,19 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(5, handler.RequestBodies.Count);
+      Assert.Equal(6, handler.RequestBodies.Count);
       Assert.Contains(
          "\"validation_status\":\"rejected\"",
          result.ToolTraceJson
       );
+      Assert.Contains("\"kind\":\"validation_feedback\"", result.ToolTraceJson);
       Assert.Contains("PDF links:", result.ToolTraceJson);
+      Assert.Contains(pdfUrl, webPageContentClient.Urls);
+      Assert.Contains("\"tools\":[", handler.RequestBodies[4]);
+      Assert.Contains(
+         "previous final answer was rejected",
+         handler.RequestBodies[4]
+      );
       Assert.Equal(
          CreateParticipationCheckedOutput(
             "Unknown",
@@ -1872,7 +1881,7 @@ public class AiProviderClientTests
          + "\"EvidenceType\":\"ParticipantList\"}]}],"
          + "\"CheckedSources\":[]}";
 
-      var exception = Assert.Throws<InvalidOperationException>(() =>
+      var exception = Assert.ThrowsAny<InvalidOperationException>(() =>
          AiJobOutputValidator.Validate(
             output,
             CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),

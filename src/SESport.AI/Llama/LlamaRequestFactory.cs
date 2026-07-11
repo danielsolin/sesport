@@ -98,6 +98,28 @@ internal static class LlamaRequestFactory
       UpsertPrimarySystemMessage(messages, systemPrompt);
    }
 
+   public static void AddValidationFeedbackPrompt(
+      JsonArray messages,
+      string validationError
+   )
+   {
+      var prompt =
+         "The previous final answer was rejected by validation: " +
+         TruncateValidationError(validationError) +
+         $"{Environment.NewLine}{Environment.NewLine}" +
+         "Tools are still available. Continue researching with tool calls " +
+         "until the validation issue is resolved. Do not return another " +
+         "final answer with the same unsupported evidence.";
+
+      messages.Add(
+         new JsonObject
+         {
+            ["role"] = "system",
+            ["content"] = prompt
+         }
+      );
+   }
+
    private static void UpsertPrimarySystemMessage(
       JsonArray messages,
       string content
@@ -119,6 +141,13 @@ internal static class LlamaRequestFactory
       }
 
       messages[systemIndex] = systemMessage;
+   }
+
+   private static string TruncateValidationError(string validationError)
+   {
+      var preview = validationError.ReplaceLineEndings(" ").Trim();
+
+      return preview.Length <= 500 ? preview : preview[..500] + "...";
    }
 
    private static JsonObject CreateBaseRequestPayload(

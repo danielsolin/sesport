@@ -2,12 +2,18 @@ using SESport.Core.AI;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace SESport.AI.Clients;
 
 internal static class AiJobOutputValidator
 {
    private const int MinimumParticipantListRowCount = 3;
+   private static readonly Regex UrlRegex = new(
+      @"https?://[^\s<>""]+",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
 
    private static readonly string[] ParticipantListTerms =
    [
@@ -136,6 +142,7 @@ internal static class AiJobOutputValidator
          ValidateUnknownEvidence(
             outputText,
             participation!,
+            checkedSources,
             sourceEvidence
          );
       }
@@ -462,6 +469,7 @@ internal static class AiJobOutputValidator
    private static void ValidateUnknownEvidence(
       string outputText,
       string participation,
+      IReadOnlyList<SourceEvidenceReference> checkedSources,
       SourceEvidence sourceEvidence
    )
    {
@@ -470,16 +478,81 @@ internal static class AiJobOutputValidator
          return;
       }
 
-      if(sourceEvidence.HasPrimaryCountryCheck)
+      if(!sourceEvidence.HasPrimaryCountryCheck)
       {
-         return;
+         throw CreateInvalidOutputException(
+            "Participation Unknown requires a target-country web_search or " +
+            "web_find_in_page check.",
+            outputText
+         );
       }
 
-      throw CreateInvalidOutputException(
-         "Participation Unknown requires a target-country web_search or " +
-         "web_find_in_page check.",
-         outputText
-      );
+      var checkedSourceUrls = checkedSources
+         .Select(source => NormalizeUrl(source.Url))
+         .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+      foreach(var source in sourceEvidence.FetchedSources)
+      {
+         if(!ShouldCheckUnfollowedParticipantListLeads(
+            source.Key,
+            source.Value,
+            checkedSourceUrls,
+            checkedSources
+         ))
+         {
+            continue;
+         }
+
+         if(HasUnfetchedParticipantListLead(source.Value, sourceEvidence))
+         {
+            throw CreateInvalidOutputException(
+               "Participation Unknown must follow participant-list links " +
+               "before returning.",
+               outputText
+            );
+         }
+      }
+   }
+
+   private static bool ShouldCheckUnfollowedParticipantListLeads(
+      string sourceUrl,
+      FetchedSourceEvidence fetchedSource,
+      HashSet<string> checkedSourceUrls,
+      IReadOnlyList<SourceEvidenceReference> checkedSources
+   )
+   {
+      if(!fetchedSource.HasParticipantListLead)
+      {
+         return false;
+      }
+
+      return checkedSourceUrls.Contains(sourceUrl) ||
+         checkedSources.Any(source => string.Equals(
+            source.EvidenceType,
+            AiParticipationEvidenceTypeIds.SearchOnly,
+            StringComparison.Ordinal
+         ));
+   }
+
+   private static bool HasUnfetchedParticipantListLead(
+      FetchedSourceEvidence fetchedSource,
+      SourceEvidence sourceEvidence
+   )
+   {
+      if(fetchedSource.ParticipantListLeadUrls.Count == 0)
+      {
+         return true;
+      }
+
+      foreach(var url in fetchedSource.ParticipantListLeadUrls)
+      {
+         if(!sourceEvidence.FetchedSources.ContainsKey(NormalizeUrl(url)))
+         {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    private static bool ContainsPrimaryCountryTerm(string? value)
@@ -589,10 +662,14 @@ internal static class AiJobOutputValidator
 
       var evidenceLines = ExtractClassifiableEvidenceLines(result);
       var evidenceText = string.Join(' ', evidenceLines);
+      var participantListLeadUrls = ExtractParticipantListLeadUrls(result);
       var evidenceType = ClassifyFetchedSource(evidenceLines, evidenceText);
       var fetchedSource = new FetchedSourceEvidence(
          evidenceType,
-         evidenceText
+         evidenceText,
+         IsParticipantListIndexPage(evidenceText) ||
+            participantListLeadUrls.Count > 0,
+         participantListLeadUrls
       );
 
       AddFetchedUrl(
@@ -660,6 +737,63 @@ internal static class AiJobOutputValidator
          "view the final start lists below",
          StringComparison.Ordinal
       );
+   }
+
+   private static IReadOnlyList<string> ExtractParticipantListLeadUrls(
+      string? result
+   )
+   {
+      if(string.IsNullOrWhiteSpace(result))
+      {
+         return [];
+      }
+
+      var urls = new List<string>();
+      var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      var insideRelevantLinkSection = false;
+
+      foreach(var rawLine in result.Split('\n'))
+      {
+         var line = rawLine.Trim();
+
+         if(IsRelevantLinkSectionHeader(line))
+         {
+            insideRelevantLinkSection = true;
+            continue;
+         }
+
+         if(IsKnownEvidenceSectionHeader(line))
+         {
+            insideRelevantLinkSection = false;
+            continue;
+         }
+
+         if(!insideRelevantLinkSection)
+         {
+            continue;
+         }
+
+         AddUrlsFromLine(line, urls, seenUrls);
+      }
+
+      return urls;
+   }
+
+   private static void AddUrlsFromLine(
+      string line,
+      List<string> urls,
+      HashSet<string> seenUrls
+   )
+   {
+      foreach(Match match in UrlRegex.Matches(line))
+      {
+         var url = match.Value.TrimEnd('.', ',', ';', ')', ']');
+
+         if(seenUrls.Add(NormalizeUrl(url)))
+         {
+            urls.Add(url);
+         }
+      }
    }
 
    private static IReadOnlyList<string> ExtractClassifiableEvidenceLines(
@@ -935,6 +1069,19 @@ internal static class AiJobOutputValidator
          "Search snippet:",
          StringComparison.Ordinal
       ) || string.Equals(
+         line,
+         "PDF links:",
+         StringComparison.Ordinal
+      ) || string.Equals(
+         line,
+         "Relevant links:",
+         StringComparison.Ordinal
+      );
+   }
+
+   private static bool IsRelevantLinkSectionHeader(string line)
+   {
+      return string.Equals(
          line,
          "PDF links:",
          StringComparison.Ordinal
@@ -1374,7 +1521,7 @@ internal static class AiJobOutputValidator
          preview = preview[..240] + "...";
       }
 
-      return new InvalidOperationException(
+      return new AiJobOutputValidationException(
          $"AI job returned invalid json_schema output: {preview}. {reason}"
       );
    }
@@ -1392,7 +1539,9 @@ internal static class AiJobOutputValidator
 
    private sealed record FetchedSourceEvidence(
       string EvidenceType,
-      string EvidenceText
+      string EvidenceText,
+      bool HasParticipantListLead,
+      IReadOnlyList<string> ParticipantListLeadUrls
    );
 
    private sealed record ParticipantEvidence(
