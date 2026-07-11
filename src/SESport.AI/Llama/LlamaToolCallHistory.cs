@@ -26,7 +26,10 @@ internal static class LlamaToolCallHistory
 
    public static string CreateRepeatedToolResultMessage(string toolName)
    {
-      return $"Repeated {toolName} call detected. No new information.";
+      return $"Repeated {toolName} call detected. This call returned only " +
+         "the cached result and consumed research budget without adding " +
+         "evidence. Do not make this identical call again. Use a different " +
+         "query, URL, or find value that has not already been tried.";
    }
 
    public static string CreateRepeatedToolReplayMessage(

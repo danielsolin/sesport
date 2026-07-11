@@ -120,6 +120,30 @@ internal static class LlamaRequestFactory
       );
    }
 
+   public static void AddFinalReportCorrectionPrompt(
+      JsonArray messages,
+      string validationError
+   )
+   {
+      var prompt =
+         "The previous final report was rejected by validation: " +
+         TruncateFeedback(validationError) +
+         $"{Environment.NewLine}{Environment.NewLine}" +
+         "The research tool budget is exhausted. Correct the report using " +
+         "only evidence already present in this conversation. Preserve all " +
+         "participants supported by that evidence, correct the rejected " +
+         "fields, and return the complete final answer again. No tool call " +
+         "is available.";
+
+      messages.Add(
+         new JsonObject
+         {
+            ["role"] = "system",
+            ["content"] = prompt
+         }
+      );
+   }
+
    public static void AddToolFormatFeedbackPrompt(
       JsonArray messages,
       string formatError

@@ -19,6 +19,7 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const int MaxConversationContextCharacters = 250000;
    private const int MaxTransientRetryAttempts = 12;
    private const int MaxFormatRepairAttempts = 3;
+   private const int MaxFinalReportCorrectionAttempts = 3;
    private const int MaxToolFormatFallbackAttempts = 5;
    private const int DefaultMaxToolRounds = 10;
    private const int DefaultToolCallMaxTokens = 512;
@@ -408,6 +409,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                job,
                prompt
             );
+            messages = (JsonArray)request["messages"]!;
             rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
             turn++;
             var finalEnvelope = await SendWithStructuredOutputRepairAsync(
@@ -428,6 +430,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          }
 
          var structuredOutputRepairAttempts = 0;
+         var finalReportCorrectionAttempts = 0;
 
          while(true)
          {
@@ -510,6 +513,73 @@ public sealed class LlamaServerClient : IAiProviderClient
                   null,
                   null
                );
+            }
+            catch(InvalidOperationException exception) when(
+               exception is AiJobOutputValidationException &&
+               job.RequiresWebSearch &&
+               !RequestUsesTools(request) &&
+               finalReportCorrectionAttempts <
+                  MaxFinalReportCorrectionAttempts
+            )
+            {
+               finalReportCorrectionAttempts++;
+               toolTrace.Add(
+                  LlamaToolTrace.CreateAssistantTraceEntry(
+                     turn,
+                     responseJson,
+                     [],
+                     JsonOptions,
+                     validationStatus: "rejected",
+                     validationError: exception.Message
+                  )
+               );
+               toolTrace.Add(
+                  LlamaToolTrace.CreateValidationFeedbackTraceEntry(
+                     turn,
+                     exception.Message
+                  )
+               );
+               await LlamaToolTrace.ReportProgressAsync(
+                  toolTrace,
+                  toolRoundCount,
+                  JsonOptions,
+                  toolTraceUpdated,
+                  cancellationToken
+               );
+               LlamaResponseReader.AppendAssistantMessage(
+                  messages,
+                  responseJson,
+                  JsonOptions
+               );
+               LlamaRequestFactory.AddFinalReportCorrectionPrompt(
+                  messages,
+                  exception.Message
+               );
+               request = LlamaRequestFactory.CreateFinal(
+                  request,
+                  job,
+                  prompt
+               );
+               messages = (JsonArray)request["messages"]!;
+               rawFinalRequestJson = AiRequestJsonSerializer.Serialize(
+                  request
+               );
+               turn++;
+               var finalEnvelope = await SendWithStructuredOutputRepairAsync(
+                  provider,
+                  request,
+                  messages,
+                  toolTrace,
+                  turn,
+                  "final",
+                  job.OutputMode,
+                  prompt,
+                  formatRepairAttempts,
+                  cancellationToken,
+                  () => formatRepairAttempts++
+               );
+               responseJson = finalEnvelope.ResponseJson;
+               rawResponse = finalEnvelope.RawResponseJson;
             }
             catch(InvalidOperationException exception) when(
                ShouldContinueWithToolsAfterValidationFailure(
@@ -604,6 +674,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   job,
                   prompt
                );
+               messages = (JsonArray)request["messages"]!;
                rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
                turn++;
                var finalEnvelope = await SendWithStructuredOutputRepairAsync(

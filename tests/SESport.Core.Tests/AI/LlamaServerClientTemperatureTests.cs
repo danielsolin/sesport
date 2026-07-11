@@ -71,16 +71,15 @@ public sealed class LlamaServerClientTemperatureTests
    }
 
    [Fact]
-   public void CreateRepeatedToolResultMessageIsShort()
+   public void CreateRepeatedToolResultMessageRedirectsResearch()
    {
       var message = LlamaToolCallHistory.CreateRepeatedToolResultMessage(
          "web_get_page"
       );
 
-      Assert.Equal(
-         "Repeated web_get_page call detected. No new information.",
-         message
-      );
+      Assert.Contains("Repeated web_get_page call detected.", message);
+      Assert.Contains("consumed research budget", message);
+      Assert.Contains("different query, URL, or find value", message);
    }
 
    [Fact]
@@ -92,7 +91,7 @@ public sealed class LlamaServerClientTemperatureTests
       );
 
       Assert.Contains(
-         "Repeated web_get_page call detected. No new information.",
+         "Repeated web_get_page call detected.",
          message
       );
       Assert.Contains("Page URL: https://example.test/roster", message);

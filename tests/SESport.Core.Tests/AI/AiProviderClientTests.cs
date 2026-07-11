@@ -1785,7 +1785,7 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncRejectsParticipantListForArticleMention()
+      LlamaServerGenerateAsyncCorrectsFinalReportAfterToolBudget()
    {
       var sourceUrl =
          "https://example.test/news/line-up-is-getting-stronger";
@@ -1846,7 +1846,10 @@ public class AiProviderClientTests
             toolsJson: CreateToolsJson(),
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreatePrompt(
+            CreateParticipationSchemaJsonWithEvidenceType(),
+            maxToolRounds: 3
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -1856,6 +1859,16 @@ public class AiProviderClientTests
       Assert.Contains(
          "\"validation_status\":\"rejected\"",
          result.ToolTraceJson
+      );
+      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[3]);
+      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[4]);
+      Assert.Contains(
+         "previous final report was rejected",
+         handler.RequestBodies[4]
+      );
+      Assert.Contains(
+         "Preserve all participants",
+         handler.RequestBodies[4]
       );
       Assert.Equal(correctedOutput, result.OutputText);
    }
