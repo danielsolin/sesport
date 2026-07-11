@@ -77,10 +77,36 @@ internal static class LlamaRequestFactory
          ? budgetPrompt
          : $"{baseSystemPrompt}{Environment.NewLine}{Environment.NewLine}" +
             budgetPrompt;
+
+      UpsertPrimarySystemMessage(messages, systemPrompt);
+   }
+
+   public static void ApplyNoMoreToolsPrompt(
+      JsonArray messages,
+      string? baseSystemPrompt
+   )
+   {
+      var finalPrompt =
+         "No more tool calls are available. Use only the web research " +
+         "already present in this conversation and return the final answer " +
+         "now.";
+      var systemPrompt = string.IsNullOrWhiteSpace(baseSystemPrompt)
+         ? finalPrompt
+         : $"{baseSystemPrompt}{Environment.NewLine}{Environment.NewLine}" +
+            finalPrompt;
+
+      UpsertPrimarySystemMessage(messages, systemPrompt);
+   }
+
+   private static void UpsertPrimarySystemMessage(
+      JsonArray messages,
+      string content
+   )
+   {
       var systemMessage = new JsonObject
       {
          ["role"] = "system",
-         ["content"] = systemPrompt
+         ["content"] = content
       };
 
       var systemIndex =

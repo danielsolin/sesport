@@ -133,6 +133,29 @@ internal static class LlamaToolTrace
       };
    }
 
+   public static JsonObject CreateToolFormatFallbackTraceEntry(
+      int turn,
+      string reason
+   )
+   {
+      var preview = reason.ReplaceLineEndings(" ").Trim();
+
+      if(preview.Length > 240)
+      {
+         preview = preview[..240] + "...";
+      }
+
+      return new JsonObject
+      {
+         ["kind"] = "tool_format_fallback",
+         ["turn"] = turn,
+         ["reason"] = preview,
+         ["content"] =
+            "Tool request failed in llama-server structured output parsing. " +
+            "Continuing without tools."
+      };
+   }
+
    public static async Task ReportProgressAsync(
       JsonArray toolTrace,
       int toolRoundCount,

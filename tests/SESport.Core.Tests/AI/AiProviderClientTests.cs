@@ -268,11 +268,10 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncRetriesToolFormatFailureWithoutRepairPrompt()
+      LlamaServerGenerateAsyncFinalizesWhenToolFormatFails()
    {
       var handler = new RecordingHandler(
          CreatePegNativeFormatError(),
-         CreateLlamaToolCallResponseJson(),
          CreateLlamaFinalResponseJson()
       );
       var client = new LlamaServerClient(
@@ -291,8 +290,20 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(3, handler.RequestBodies.Count);
-      Assert.Equal(handler.RequestBodies[0], handler.RequestBodies[1]);
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains("\"tools\":[", handler.RequestBodies[0]);
+      Assert.Contains("\"tool_choice\":\"required\"",
+         handler.RequestBodies[0]);
+      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[1]);
+      Assert.DoesNotContain("\"tool_choice\"", handler.RequestBodies[1]);
+      Assert.Contains(
+         "No more tool calls are available",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         "\"response_format\":{\"type\":\"json_schema\"",
+         handler.RequestBodies[1]
+      );
       Assert.DoesNotContain(
          handler.RequestBodies,
          body => body.Contains(
@@ -300,6 +311,7 @@ public class AiProviderClientTests
             StringComparison.Ordinal
          )
       );
+      Assert.Contains("tool_format_fallback", result.ToolTraceJson);
       Assert.DoesNotContain("repair_prompt", result.ToolTraceJson);
       Assert.Equal(
          "{\"Participation\":\"Yes\","
