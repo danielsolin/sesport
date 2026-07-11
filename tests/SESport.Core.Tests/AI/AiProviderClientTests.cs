@@ -1239,11 +1239,12 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncUsesResponseFormatForToolRepairFinalRequest()
+      LlamaServerGenerateAsyncContinuesToolsAfterInvalidToolFinal()
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaInvalidFinalResponseJson(),
+         CreateLlamaPageCallResponseJson(),
          CreateLlamaFinalResponseJson()
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -1256,7 +1257,16 @@ public class AiProviderClientTests
       var client = new LlamaServerClient(
          new HttpClient(handler),
          webSearchClient,
-         new RecordingWebPageContentClient(null),
+         new RecordingWebPageContentClient(
+            new WebPageContent(
+               "Roster",
+               "https://example.test/roster",
+               null,
+               [],
+               $"{PrimaryCountry.CountryName} roster text.",
+               true
+            )
+         ),
          new NoopLogger<LlamaServerClient>()
       );
 
@@ -1275,7 +1285,7 @@ public class AiProviderClientTests
          + "\"Sources\":[\"https://example.test/roster\"]}",
          result.OutputText
       );
-      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.Equal(4, handler.RequestBodies.Count);
       Assert.DoesNotContain(
          "\"response_format\"",
          handler.RequestBodies[0]
@@ -1284,15 +1294,13 @@ public class AiProviderClientTests
          "\"response_format\"",
          handler.RequestBodies[1]
       );
-      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[2]);
+      Assert.Contains("\"tools\":[", handler.RequestBodies[2]);
+      Assert.Contains("\"tool_choice\":\"required\"", handler.RequestBodies[2]);
       Assert.Contains(
-         "\"response_format\":{\"type\":\"json_schema\"",
+         "previous final answer was rejected",
          handler.RequestBodies[2]
       );
-      Assert.Contains(
-         "The previous response was rejected",
-         handler.RequestBodies[2]
-      );
+      Assert.Contains("\"kind\":\"validation_feedback\"", result.ToolTraceJson);
    }
 
    [Fact]
@@ -1589,7 +1597,10 @@ public class AiProviderClientTests
                toolsJson: CreateToolsJson(),
                jobId: AiJobIds.DecidePrimaryCountryParticipation
             ),
-            CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+            CreatePrompt(
+               CreateParticipationSchemaJsonWithEvidenceType(),
+               maxToolRounds: 4
+            ),
             CreateRenderedPrompt(),
             "{}",
             CancellationToken.None
@@ -1597,6 +1608,13 @@ public class AiProviderClientTests
       );
 
       Assert.Contains("target-country", exception.Message);
+      Assert.Equal(
+         2,
+         CountOccurrences(
+            exception.ToolTraceJson!,
+            "\"kind\":\"validation_feedback\""
+         )
+      );
    }
 
    [Fact]

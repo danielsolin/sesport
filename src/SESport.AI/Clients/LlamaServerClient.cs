@@ -19,7 +19,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const int MaxConversationContextCharacters = 250000;
    private const int MaxTransientRetryAttempts = 12;
    private const int MaxFormatRepairAttempts = 3;
-   private const int MaxValidationContinuationAttempts = 3;
    private const int DefaultMaxToolRounds = 10;
    private const int DefaultToolCallMaxTokens = 512;
    private const int DefaultFinalMaxTokens = 2048;
@@ -482,12 +481,13 @@ public sealed class LlamaServerClient : IAiProviderClient
                   null
                );
             }
-            catch(AiJobOutputValidationException exception) when(
+            catch(InvalidOperationException exception) when(
                ShouldContinueWithToolsAfterValidationFailure(
                   request,
                   maxToolRounds,
                   toolRoundCount,
-                  validationContinuationAttempts
+                  validationContinuationAttempts,
+                  exception
                )
             )
             {
@@ -527,7 +527,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                if(job.RequiresWebSearch)
                {
-                  request["tool_choice"] = "auto";
+                  request["tool_choice"] = "required";
                }
 
                continueWithTools = true;
@@ -718,16 +718,46 @@ public sealed class LlamaServerClient : IAiProviderClient
       JsonObject request,
       int? maxToolRounds,
       int toolRoundCount,
-      int validationContinuationAttempts
+      int validationContinuationAttempts,
+      Exception exception
    )
    {
-      if(!RequestUsesTools(request) ||
-         validationContinuationAttempts >= MaxValidationContinuationAttempts)
+      if(!RequestUsesTools(request))
       {
          return false;
       }
 
-      return maxToolRounds is null || toolRoundCount < maxToolRounds.Value;
+      if(maxToolRounds is not null && toolRoundCount >= maxToolRounds.Value)
+      {
+         return false;
+      }
+
+      if(validationContinuationAttempts >=
+         GetRemainingValidationContinuationBudget(
+            maxToolRounds,
+            toolRoundCount
+         ))
+      {
+         return false;
+      }
+
+      return exception is AiJobOutputValidationException ||
+         LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
+            exception
+         );
+   }
+
+   private static int GetRemainingValidationContinuationBudget(
+      int? maxToolRounds,
+      int toolRoundCount
+   )
+   {
+      if(maxToolRounds is null)
+      {
+         return DefaultMaxToolRounds;
+      }
+
+      return Math.Max(maxToolRounds.Value - toolRoundCount, 0);
    }
 
    private static JsonObject CreateUnconstrainedRepairRequest(
