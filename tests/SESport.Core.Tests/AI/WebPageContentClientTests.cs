@@ -55,6 +55,48 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchMergesPrimaryHtmlRelevantLinksIntoBrowserContent()
+   {
+      var href =
+         "/userfiles/files/Continental%20Tour/" +
+         "men-pole-vault-istvan-memorial.pdf";
+      var pdfUrl =
+         "https://www.watchathletics.com/userfiles/files/" +
+         "Continental%20Tour/men-pole-vault-istvan-memorial.pdf";
+      var html =
+         "<html><body><table><tr><td>" +
+         $"<a href=\"{href}\">Pole Vault- men</a>" +
+         "</td></tr></table></body></html>";
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(html)),
+         (_, _) => Task.FromResult<WebPageContent?>(
+            new WebPageContent(
+               "Browser Title",
+               "https://www.watchathletics.com/article/13438/start-lists",
+               null,
+               [],
+               "View the final start lists below.",
+               true,
+               "View the final start lists below.",
+               Fetcher: "browser"
+            )
+         )
+      );
+
+      var page = await client.FetchAsync(
+         "https://www.watchathletics.com/article/13438/start-lists",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains(
+         page!.RelevantLinks ?? [],
+         link => link.Label == "Pole Vault- men" &&
+            link.Url == pdfUrl
+      );
+   }
+
+   [Fact]
    public async Task FetchReturnsNullForInvalidUrl()
    {
       var browserCalls = 0;
@@ -925,6 +967,36 @@ public class WebPageContentClientTests
       Assert.Equal("Pole Vault- men", links[0].Label);
       Assert.Equal(
          "https://www.example.test/files/men-pole-vault.pdf",
+         links[0].Url
+      );
+   }
+
+   [Fact]
+   public void ExtractRelevantLinksFromHtmlIncludesPdfLinksWithoutMainElement()
+   {
+      var href =
+         "/userfiles/files/Continental%20Tour/" +
+         "men-pole-vault-istvan-memorial.pdf";
+      var html =
+         "<html><body><div class=\"page-description\"><table>" +
+         "<tr><th>TIME</th><th>EVENT START LISTS PDF</th></tr>" +
+         "<tr><td>16:30</td><td>" +
+         $"<a href=\"{href}\">Pole Vault- men</a>" +
+         "</td></tr></table></div></body></html>";
+
+      var links = WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+         html,
+         new Uri(
+            "https://www.watchathletics.com/article/13438/" +
+            "final-start-lists"
+         )
+      );
+
+      Assert.Single(links);
+      Assert.Equal("Pole Vault- men", links[0].Label);
+      Assert.Equal(
+         "https://www.watchathletics.com/userfiles/files/" +
+         "Continental%20Tour/men-pole-vault-istvan-memorial.pdf",
          links[0].Url
       );
    }

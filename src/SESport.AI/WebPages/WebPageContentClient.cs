@@ -244,11 +244,25 @@ public sealed class WebPageContentClient : IWebPageContentClient
       CancellationToken cancellationToken
    )
    {
+      var primaryHtml = await response.Content.ReadAsStringAsync(
+         cancellationToken
+      );
+      var primaryRelevantLinks =
+         WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+            primaryHtml,
+            absoluteUrl
+         );
+
       try
       {
-         return await this.browserPageFetcher(
+         var renderedContent = await this.browserPageFetcher(
             absoluteUrl,
             cancellationToken
+         );
+
+         return MergePrimaryRelevantLinks(
+            renderedContent,
+            primaryRelevantLinks
          );
       }
       catch(WebPageFetchException exception)
@@ -259,10 +273,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchAsync(
+         return await WebPageHtmlPageFetcher.FetchHtmlAsync(
             this.logger,
             this.curlPageFetcher,
-            response,
+            primaryHtml,
             absoluteUrl,
             cancellationToken,
             exception.ErrorKind
@@ -281,10 +295,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchAsync(
+         return await WebPageHtmlPageFetcher.FetchHtmlAsync(
             this.logger,
             this.curlPageFetcher,
-            response,
+            primaryHtml,
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.Timeout
@@ -298,10 +312,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchAsync(
+         return await WebPageHtmlPageFetcher.FetchHtmlAsync(
             this.logger,
             this.curlPageFetcher,
-            response,
+            primaryHtml,
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.BrowserBlocked
@@ -386,6 +400,25 @@ public sealed class WebPageContentClient : IWebPageContentClient
          $"Could not retrieve page content from {absoluteUrl}.",
          "curl"
       );
+   }
+
+   private static WebPageContent? MergePrimaryRelevantLinks(
+      WebPageContent? renderedContent,
+      IReadOnlyList<WebPageRelevantLink> primaryRelevantLinks
+   )
+   {
+      if(renderedContent is null || primaryRelevantLinks.Count == 0)
+      {
+         return renderedContent;
+      }
+
+      return renderedContent with
+      {
+         RelevantLinks = WebPageContentFetchSupport.MergeRelevantLinks(
+            primaryRelevantLinks,
+            renderedContent.RelevantLinks
+         )
+      };
    }
 
    private static bool IsTransientFailure(Exception exception)

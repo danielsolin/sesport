@@ -15,10 +15,47 @@ internal static class WebPageHtmlPageFetcher
    {
       try
       {
-         var absoluteUrlString = absoluteUrl.ToString();
          var html = await response.Content.ReadAsStringAsync(
             cancellationToken
          );
+
+         return await FetchHtmlAsync(
+            logger,
+            curlPageFetcher,
+            html,
+            absoluteUrl,
+            cancellationToken,
+            browserFailureKind
+         );
+      }
+      catch(OperationCanceledException)
+      {
+         throw;
+      }
+      catch(Exception)
+      {
+         return WebPageContentFetchSupport.BuildFailureContent(
+            absoluteUrl,
+            null,
+            browserFailureKind,
+            "Unable to extract HTML fallback.",
+            "html"
+         );
+      }
+   }
+
+   internal static async Task<WebPageContent?> FetchHtmlAsync(
+      ILogger logger,
+      Func<Uri, CancellationToken, Task<WebPageContent?>> curlPageFetcher,
+      string html,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken,
+      WebPageFetchErrorKind? browserFailureKind = null
+   )
+   {
+      try
+      {
+         var absoluteUrlString = absoluteUrl.ToString();
 
          if(string.IsNullOrWhiteSpace(html))
          {

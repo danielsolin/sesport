@@ -92,6 +92,12 @@ internal static class WebPageBrowserPageFetcher
          cancellationToken.ThrowIfCancellationRequested();
 
          var title = await page.TitleAsync();
+         var renderedHtml = await page.ContentAsync();
+         var renderedRelevantLinks =
+            WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+               renderedHtml,
+               absoluteUrl
+            );
          await page.EvaluateAsync(
             WebPageNormalizationScript.Build(),
             JsonSerializer.Serialize(
@@ -117,9 +123,12 @@ internal static class WebPageBrowserPageFetcher
             normalizedText,
             Fetcher: "browser",
             RelevantLinks:
-               WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
-                  bodyHtml,
-                  absoluteUrl
+               WebPageContentFetchSupport.MergeRelevantLinks(
+                  renderedRelevantLinks,
+                  WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+                     bodyHtml,
+                     absoluteUrl
+                  )
                )
          );
       }

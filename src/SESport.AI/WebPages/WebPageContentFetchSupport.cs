@@ -65,6 +65,11 @@ internal static class WebPageContentFetchSupport
       @"""(?<value>[^""]*)""|'(?<value>[^']*)')",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
+   private static readonly Regex HtmlHrefRegex = new(
+      @"\bhref\s*=\s*(?:""(?<value>[^""]*)""|" +
+      @"'(?<value>[^']*)')",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
    private static readonly Regex HtmlBoilerplateBlockRegex = new(
       @"<(?:header|nav|footer|aside|script|style|noscript)\b[^>]*>.*?</" +
       @"(?:header|nav|footer|aside|script|style|noscript)>",
@@ -513,21 +518,57 @@ internal static class WebPageContentFetchSupport
             continue;
          }
 
-         var linkKey = $"{linkLabel}\n{linkUrl}";
+         AddRelevantLink(
+            linkLabel,
+            linkUrl,
+            scoredLinks,
+            seenLinks
+         );
+      }
 
-         if(!seenLinks.Add(linkKey))
+      AddPdfHrefLinks(
+         candidateHtml,
+         absoluteUrl,
+         scoredLinks,
+         seenLinks
+      );
+
+      return scoredLinks
+         .OrderByDescending(link => link.Score)
+         .Select(link => link.Link)
+         .Take(MaxRelevantLinkCount)
+         .ToArray();
+   }
+
+   internal static IReadOnlyList<WebPageRelevantLink> MergeRelevantLinks(
+      params IReadOnlyList<WebPageRelevantLink>?[] linkSets
+   )
+   {
+      var mergedLinks = new List<(WebPageRelevantLink Link, int Index)>();
+      var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(var linkSet in linkSets)
+      {
+         if(linkSet is null)
          {
             continue;
          }
 
-         scoredLinks.Add((
-            new WebPageRelevantLink(linkLabel, linkUrl),
-            ScoreRelevantLink(linkLabel, linkUrl)
-         ));
+         foreach(var link in linkSet)
+         {
+            if(string.IsNullOrWhiteSpace(link.Url) ||
+               !seenUrls.Add(link.Url.Trim()))
+            {
+               continue;
+            }
+
+            mergedLinks.Add((link, mergedLinks.Count));
+         }
       }
 
-      return scoredLinks
-         .OrderByDescending(link => link.Score)
+      return mergedLinks
+         .OrderByDescending(link => IsPdfUrl(link.Link.Url))
+         .ThenBy(link => link.Index)
          .Select(link => link.Link)
          .Take(MaxRelevantLinkCount)
          .ToArray();
@@ -881,7 +922,7 @@ internal static class WebPageContentFetchSupport
          return false;
       }
 
-      linkUrl = strippedFragmentUri.ToString();
+      linkUrl = strippedFragmentUri.AbsoluteUri;
       return true;
    }
 
@@ -913,6 +954,59 @@ internal static class WebPageContentFetchSupport
       }
 
       return isPdfLink || IsParticipationListLink(label, url);
+   }
+
+   private static void AddPdfHrefLinks(
+      string html,
+      Uri absoluteUrl,
+      List<(WebPageRelevantLink Link, int Score)> scoredLinks,
+      HashSet<string> seenLinks
+   )
+   {
+      foreach(Match match in HtmlHrefRegex.Matches(html))
+      {
+         var href = WebUtility.HtmlDecode(
+            match.Groups["value"].Value.Trim()
+         );
+
+         if(!TryBuildRelevantLinkUrl(absoluteUrl, href, out var linkUrl) ||
+            !IsPdfUrl(linkUrl))
+         {
+            continue;
+         }
+
+         var linkLabel = ExtractRelevantLinkLabel(string.Empty, linkUrl);
+
+         if(!ShouldCaptureRelevantLink(linkLabel, linkUrl))
+         {
+            continue;
+         }
+
+         AddRelevantLink(
+            linkLabel,
+            linkUrl,
+            scoredLinks,
+            seenLinks
+         );
+      }
+   }
+
+   private static void AddRelevantLink(
+      string linkLabel,
+      string linkUrl,
+      List<(WebPageRelevantLink Link, int Score)> scoredLinks,
+      HashSet<string> seenLinks
+   )
+   {
+      if(!seenLinks.Add(linkUrl.Trim()))
+      {
+         return;
+      }
+
+      scoredLinks.Add((
+         new WebPageRelevantLink(linkLabel, linkUrl),
+         ScoreRelevantLink(linkLabel, linkUrl)
+      ));
    }
 
    private static string ExtractRelevantLinkLabel(
