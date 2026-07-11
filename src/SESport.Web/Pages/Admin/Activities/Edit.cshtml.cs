@@ -16,6 +16,12 @@ public class EditModel(ActivityEditPageService editService) : PageModel
 
    public IReadOnlyList<SelectListItem> Entities { get; private set; } = [];
 
+   public IReadOnlyList<SelectListItem> OrganizationEntities
+   {
+      get;
+      private set;
+   } = [];
+
    public IReadOnlyList<LookupOption> ActivityTypes { get; private set; } = [];
 
    public IReadOnlyList<LookupOption> Sports { get; private set; } = [];
@@ -51,7 +57,8 @@ public class EditModel(ActivityEditPageService editService) : PageModel
          await LoadEntitiesAsync(
             organizationEntityId,
             Activity.LinkedEntityIds ?? [],
-            cancellationToken
+            cancellationToken,
+            Activity.SportId
          );
          await LoadParticipantsAsync(cancellationToken);
          return Page();
@@ -70,7 +77,8 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       await LoadEntitiesAsync(
          Activity.OrganizationEntityId,
          Activity.LinkedEntityIds ?? [],
-         cancellationToken
+         cancellationToken,
+         Activity.SportId
       );
       await LoadParticipantsAsync(cancellationToken);
 
@@ -141,16 +149,19 @@ public class EditModel(ActivityEditPageService editService) : PageModel
    private async Task LoadEntitiesAsync(
       Guid? organizationEntityId,
       IEnumerable<Guid> selectedEntityIds,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      string? sportId = null
    )
    {
       var options = await editService.LoadOptionsAsync(
          selectedEntityIds,
          organizationEntityId,
-         cancellationToken
+         cancellationToken,
+         sportId
       );
 
       Entities = options.Entities;
+      OrganizationEntities = options.OrganizationEntities;
       ActivityTypes = options.ActivityTypes;
       Sports = options.Sports;
       LoadError = options.LoadError;
@@ -167,7 +178,8 @@ public class EditModel(ActivityEditPageService editService) : PageModel
          await LoadEntitiesAsync(
             Activity.OrganizationEntityId,
             Activity.LinkedEntityIds ?? [],
-            cancellationToken
+            cancellationToken,
+            Activity.SportId
          );
          await LoadParticipantsAsync(cancellationToken);
          return Page();

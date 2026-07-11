@@ -30,7 +30,6 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Activity.Id" type="hidden" />
-   <input asp-for="Activity.OrganizationEntityId" type="hidden" />
    <input asp-for="ReturnUrl" type="hidden" />
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
    @foreach (var broadcastId in Model.Activity.BroadcastIds)
@@ -128,6 +127,13 @@
 
    <section class="form-section">
       <h2>Activity</h2>
+      <label>
+         <span>Related organization</span>
+         <select asp-for="Activity.OrganizationEntityId"
+                 asp-items="Model.OrganizationEntities">
+            <option value="">Select organization</option>
+         </select>
+      </label>
       <div class="form-grid">
          <label>
             <span>Title</span>

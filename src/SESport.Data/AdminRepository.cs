@@ -276,7 +276,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = """
+      var sql = $"""
          select kind, value, source_key, reason, is_active
          from broadcast_ignore
          order by kind, value, source_key nulls first
@@ -1276,6 +1276,58 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(excludeEntityId is not null)
       {
          command.Parameters.AddWithValue("exclude_entity_id", excludeEntityId);
+      }
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityLinkOption>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityLinkOption(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3)
+            )
+         );
+      }
+
+      return options;
+   }
+
+   public async Task<IReadOnlyList<EntityLinkOption>>
+      GetOrganizationEntityOptionsAsync(
+         CancellationToken cancellationToken,
+         string? sportId = null
+      )
+   {
+      var sportFilter = string.IsNullOrWhiteSpace(sportId)
+         ? string.Empty
+         : "and e.sport_id = @sport_id";
+      var sql = $"""
+         select
+            e.id,
+            e.canonical_name,
+            et.label,
+            s.name
+         from entities e
+         join entity_types et on et.id = e.entity_type_id
+         join sports s on s.id = e.sport_id
+         where {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+            "e.entity_type_id"
+         )}
+            {sportFilter}
+         order by e.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+
+      if(!string.IsNullOrWhiteSpace(sportId))
+      {
+         command.Parameters.AddWithValue("sport_id", sportId);
       }
 
       await using var reader = await command.ExecuteReaderAsync(

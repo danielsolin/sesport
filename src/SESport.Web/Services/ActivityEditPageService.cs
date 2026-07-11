@@ -20,7 +20,8 @@ public sealed class ActivityEditPageService(
    public async Task<ActivityEditOptions> LoadOptionsAsync(
       IEnumerable<Guid> selectedEntityIds,
       Guid? organizationEntityId,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      string? sportId = null
    )
    {
       try
@@ -41,6 +42,18 @@ public sealed class ActivityEditPageService(
             })
             .ToList();
 
+         var organizationOptions = (
+            await adminRepository.GetOrganizationEntityOptionsAsync(
+               cancellationToken,
+               sportId
+            )
+         )
+            .Select(entity => new SelectListItem(
+               $"{entity.Name} ({entity.Sport})",
+               entity.Id.ToString()
+            ))
+            .ToList();
+
          var activityTypes = await repository.GetActivityTypeOptionsAsync(
             cancellationToken
          );
@@ -48,6 +61,7 @@ public sealed class ActivityEditPageService(
 
          return new ActivityEditOptions(
             entityOptions,
+            organizationOptions,
             activityTypes,
             sports,
             null
@@ -55,7 +69,13 @@ public sealed class ActivityEditPageService(
       }
       catch(Exception exception)
       {
-         return new ActivityEditOptions([], [], [], exception.Message);
+         return new ActivityEditOptions(
+            [],
+            [],
+            [],
+            [],
+            exception.Message
+         );
       }
    }
 
@@ -498,6 +518,7 @@ public sealed class ActivityEditPageService(
 
 public sealed record ActivityEditOptions(
    IReadOnlyList<SelectListItem> Entities,
+   IReadOnlyList<SelectListItem> OrganizationEntities,
    IReadOnlyList<LookupOption> ActivityTypes,
    IReadOnlyList<LookupOption> Sports,
    string? LoadError
