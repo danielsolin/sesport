@@ -20,9 +20,9 @@
       "Participation": {
          "enum": [ "Yes", "No", "Unknown" ],
          "type": "string",
-         "description": "Whether any participants from the target country are in the event."
+         "description": "Whether target-country participants are in the event."
       }
    },
-   "description": "Structured assessment of whether target-country participation is present in the event, which participants are involved, and supporting source URLs.",
+   "description": "Assessment of target-country event participation.",
    "additionalProperties": false
 }

@@ -1331,6 +1331,113 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesWhenParticipationYesHasNoParticipants()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"Yes\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[\"https://example.test/roster\"]}"
+         ),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: false,
+            toolsJson: null,
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesWhenParticipationSourceWasNotFetched()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(),
+         CreateLlamaFinalResponseJson("https://example.test/other"),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            "Sweden lineup info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Article Title",
+            "https://example.test/roster",
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Article heading"],
+            "Full article content.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
    public async Task OpenRouterGenerateAsyncUsesChatCompletionsEnvelope()
    {
       var handler = new RecordingHandler(
@@ -1398,11 +1505,12 @@ public class AiProviderClientTests
    private static AiJobDefinition CreateJob(
       string outputMode = "json_object",
       bool requiresWebSearch = true,
-      string? toolsJson = null
+      string? toolsJson = null,
+      string jobId = "job"
    )
    {
       return new AiJobDefinition(
-         "job",
+         jobId,
          "Job",
          null,
          "provider",
@@ -1922,6 +2030,13 @@ public class AiProviderClientTests
          + "\"Participants\":[\"Dino Beganovic\"],"
          + "\"Sources\":[\"" + sourceUrl + "\"]}";
 
+      return CreateLlamaFinalResponseWithContentJson(content);
+   }
+
+   private static string CreateLlamaFinalResponseWithContentJson(
+      string content
+   )
+   {
       return JsonSerializer.Serialize(
          new
          {

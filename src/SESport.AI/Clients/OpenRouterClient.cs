@@ -8,6 +8,8 @@ using System.Text.Json.Serialization;
 
 namespace SESport.AI.Clients;
 
+// Dormant provider adapter. The active job runtime is llama-server, and this
+// client is not kept in feature parity with LlamaServerClient.
 public sealed class OpenRouterClient : IAiProviderClient
 {
    private static readonly JsonSerializerOptions JsonOptions = new(

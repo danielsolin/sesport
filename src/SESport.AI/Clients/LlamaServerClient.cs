@@ -410,6 +410,12 @@ public sealed class LlamaServerClient : IAiProviderClient
                      job.OutputMode,
                      prompt.OutputSchemaJson
                   );
+               finalOutputText = AiJobOutputValidator.Validate(
+                  finalOutputText,
+                  job,
+                  job.RequiresWebSearch,
+                  toolTrace
+               );
 
                LogResponse("final", turn, responseJson);
                if(LlamaResponseReader.TryGetToolCalls(

@@ -35,6 +35,8 @@ public static class AiServiceCollectionExtensions
          serviceProvider => serviceProvider.GetRequiredService<AiJobRunner>()
       );
       services.AddScoped<IAiJobProcessor, ActivityTeaserJobProcessor>();
+      // OpenRouter is dormant for AI jobs. Keep registration available for
+      // archived configs, but do not assume LlamaServerClient feature parity.
       services.AddHttpClient<
          IAiProviderClient,
          OpenRouterClient
