@@ -72,6 +72,62 @@ internal static class AiJobOutputValidator
       return outputText;
    }
 
+   public static IReadOnlyList<string> ReadParticipantNames(
+      string outputText
+   )
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+
+         if(document.RootElement.ValueKind != JsonValueKind.Object)
+         {
+            return [];
+         }
+
+         return ReadParticipantEvidenceArray(
+            document.RootElement,
+            ReadStringProperty(document.RootElement, "EvidenceType")
+         )
+            .Select(participant => participant.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToArray();
+      }
+      catch(JsonException)
+      {
+         return [];
+      }
+   }
+
+   public static void ValidateRetainedParticipants(
+      string outputText,
+      IReadOnlySet<string> retainedParticipantNames
+   )
+   {
+      if(retainedParticipantNames.Count == 0)
+      {
+         return;
+      }
+
+      var reportedNames = ReadParticipantNames(outputText)
+         .Select(NormalizeEvidenceText)
+         .ToHashSet(StringComparer.Ordinal);
+      var removedNames = retainedParticipantNames
+         .Where(name => !reportedNames.Contains(NormalizeEvidenceText(name)))
+         .ToArray();
+
+      if(removedNames.Length == 0)
+      {
+         return;
+      }
+
+      throw CreateInvalidOutputException(
+         "Final report correction must preserve previously reported " +
+         $"participants: {string.Join(", ", removedNames)}.",
+         outputText
+      );
+   }
+
    private static void ValidateParticipationOutput(
       string outputText,
       bool requireFetchedSources,
@@ -720,7 +776,26 @@ internal static class AiJobOutputValidator
          return false;
       }
 
-      return ContainsAnyEvidenceTerm(evidenceText, [participantName]);
+      return ContainsParticipantName(evidenceText, participantName);
+   }
+
+   private static bool ContainsParticipantName(
+      string evidenceText,
+      string participantName
+   )
+   {
+      if(ContainsAnyEvidenceTerm(evidenceText, [participantName]))
+      {
+         return true;
+      }
+
+      var normalizedEvidence = $" {NormalizeEvidenceText(evidenceText)} ";
+      var nameTokens = NormalizeEvidenceText(participantName)
+         .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+      return nameTokens.Length > 1 && nameTokens.All(token =>
+         normalizedEvidence.Contains($" {token} ", StringComparison.Ordinal)
+      );
    }
 
    private static bool IsParticipantListIndexPage(string evidenceText)
@@ -988,6 +1063,12 @@ internal static class AiJobOutputValidator
          return ContainsLetter(trimmedLine);
       }
 
+      if(ContainsCountryCodeLikeToken(trimmedLine) &&
+         CountWordLikeTokens(trimmedLine) >= 3)
+      {
+         return true;
+      }
+
       if(ContainsSentencePunctuation(trimmedLine))
       {
          return false;
@@ -999,6 +1080,25 @@ internal static class AiJobOutputValidator
       }
 
       return CountWordLikeTokens(trimmedLine) is >= 2 and <= 5;
+   }
+
+   private static bool ContainsCountryCodeLikeToken(string line)
+   {
+      foreach(var rawToken in line.Split(
+         ' ',
+         StringSplitOptions.RemoveEmptyEntries
+      ))
+      {
+         var token = rawToken.Trim(',', ';', ':', '(', ')', '[', ']');
+
+         if(token.Length == 3 && token.All(character =>
+            char.IsLetter(character) && char.IsUpper(character)))
+         {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    private static bool IsParticipantListIndexLine(string line)

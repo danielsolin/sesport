@@ -1136,6 +1136,42 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task NormalizeTableRowsPreservesCompetitorBoundaries()
+   {
+      var html = CreateCompetitorTableHtml();
+      var normalizedText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Contains(
+         $"{PrimaryCountry.ThreeLetterCode} | FREDRICSON, Peder\n" +
+         "ANDERSSON, Petronella\nBARYARD-JOHNSSON, Malin",
+         normalizedText,
+         StringComparison.Ordinal
+      );
+      Assert.DoesNotContain(
+         "Peder ANDERSSON",
+         normalizedText,
+         StringComparison.Ordinal
+      );
+   }
+
+   [Fact]
+   public void HtmlTextPreservesNativeTableRowsWithoutFlatDuplicate()
+   {
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(CreateCompetitorTableHtml());
+
+      Assert.Contains(
+         $"{PrimaryCountry.ThreeLetterCode} | FREDRICSON, Peder\n" +
+         "ANDERSSON, Petronella\nBARYARD-JOHNSSON, Malin",
+         text,
+         StringComparison.Ordinal
+      );
+      Assert.Equal(1, CountText(text, "FREDRICSON, Peder"));
+      Assert.Equal(1, CountText(text, "ANDERSSON, Petronella"));
+      Assert.Equal(1, CountText(text, "BARYARD-JOHNSSON, Malin"));
+   }
+
+   [Fact]
    public void ExtractHtmlTextKeepsFlagImageCountryLabel()
    {
       var html = $$"""
@@ -1288,6 +1324,48 @@ public class WebPageContentClientTests
       page.AddText("First PDF line.", 12, new PdfPoint(72, 720), font);
       page.AddText("Second PDF line.", 12, new PdfPoint(72, 700), font);
       return builder.Build();
+   }
+
+   private static string CreateCompetitorTableHtml()
+   {
+      return $$"""
+         <html>
+            <body>
+               <table>
+                  <tr>
+                     <td>{{PrimaryCountry.ThreeLetterCode}}</td>
+                     <td>FREDRICSON, Peder</td>
+                  </tr>
+                  <tr>
+                     <td></td>
+                     <td>ANDERSSON, Petronella</td>
+                  </tr>
+                  <tr>
+                     <td></td>
+                     <td>BARYARD-JOHNSSON, Malin</td>
+                  </tr>
+               </table>
+            </body>
+         </html>
+         """;
+   }
+
+   private static int CountText(string text, string value)
+   {
+      var count = 0;
+      var startIndex = 0;
+
+      while((startIndex = text.IndexOf(
+         value,
+         startIndex,
+         StringComparison.Ordinal
+      )) >= 0)
+      {
+         count++;
+         startIndex += value.Length;
+      }
+
+      return count;
    }
 
    private static WebPageBlockSource ParseBlockSource(string sourceKind)

@@ -16,6 +16,97 @@ namespace SESport.Core.Tests.AI;
 public class AiProviderClientTests
 {
    [Fact]
+   public async Task
+      LlamaServerGenerateAsyncAcceptsEarlyReportWithParticipant()
+   {
+      var sourceUrl = "https://example.test/news/line-up";
+      var participantName = "Armand Duplantis";
+      var acceptedOutput =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var emptyOutput =
+         "{\"Participation\":\"Unknown\","
+         + "\"Participants\":[],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"EventInfoOnly\"}]}";
+      var handler = new RecordingHandler(
+         CreateLlamaSubmitReportResponseJson(emptyOutput),
+         CreateLlamaToolCallResponseJson("first research query"),
+         CreateLlamaSubmitReportResponseJson(emptyOutput),
+         CreateLlamaToolCallResponseJson("second research query"),
+         CreateLlamaSubmitReportResponseJson(emptyOutput),
+         CreateLlamaPageCallResponseJson(sourceUrl),
+         CreateLlamaSubmitReportResponseJson(acceptedOutput)
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Line-up announcement",
+            sourceUrl,
+            null,
+            [],
+            $"{participantName} is officially confirmed to compete. " +
+               $"The {PrimaryCountry.LanguageName} athlete will start.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(
+            CreateParticipationSchemaJsonWithEvidenceType(),
+            maxToolRounds: 4
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(acceptedOutput, result.OutputText);
+      Assert.Equal(3, result.ToolRoundCount);
+      Assert.Equal(7, handler.RequestBodies.Count);
+      Assert.Contains(
+         $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
+         handler.RequestBodies[0]);
+      var initialRequest = JsonNode.Parse(handler.RequestBodies[0]);
+      var reportTool = initialRequest?["tools"]?
+         .AsArray()
+         .OfType<JsonObject>()
+         .Single(tool => string.Equals(
+            tool["function"]?["name"]?.GetValue<string>(),
+            LlamaReportSubmission.ToolName,
+            StringComparison.Ordinal
+         ));
+      Assert.Equal(
+         1,
+         reportTool?["function"]?["parameters"]?["properties"]?
+            ["Participants"]?["minItems"]?.GetValue<int>()
+      );
+      Assert.DoesNotContain(
+         $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
+         handler.RequestBodies[1]);
+      Assert.Contains(
+         $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
+         handler.RequestBodies[6]);
+      Assert.Contains("requires at least one supported participant",
+         result.ToolTraceJson);
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesModelDrivenToolLoop()
    {
       var handler = new RecordingHandler(
@@ -1807,6 +1898,12 @@ public class AiProviderClientTests
             + "\"EvidenceType\":\"ParticipantList\"}]}],"
             + "\"CheckedSources\":[]}"
          ),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"Unknown\","
+            + "\"Participants\":[],"
+            + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+            + "\"EvidenceType\":\"EventInfoOnly\"}]}"
+         ),
          CreateLlamaFinalResponseWithContentJson(correctedOutput)
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -1855,13 +1952,14 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(5, handler.RequestBodies.Count);
+      Assert.Equal(6, handler.RequestBodies.Count);
       Assert.Contains(
          "\"validation_status\":\"rejected\"",
          result.ToolTraceJson
       );
       Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[3]);
       Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[4]);
+      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[5]);
       Assert.Contains(
          "previous final report was rejected",
          handler.RequestBodies[4]
@@ -1869,6 +1967,10 @@ public class AiProviderClientTests
       Assert.Contains(
          "Preserve all participants",
          handler.RequestBodies[4]
+      );
+      Assert.Contains(
+         "must preserve previously reported participants",
+         handler.RequestBodies[5]
       );
       Assert.Equal(correctedOutput, result.OutputText);
    }
@@ -1890,6 +1992,69 @@ public class AiProviderClientTests
          CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
          true,
          CreateArticleMentionToolTrace(sourceUrl, participantName)
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
+   public void AiJobOutputValidatorAcceptsNicknameInParticipantMention()
+   {
+      var sourceUrl = "https://example.test/news/line-up";
+      var participantName = "Armand Duplantis";
+      var evidenceName = "Armand Mondo Duplantis";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
+         + "\"CheckedSources\":[]}";
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         CreateArticleMentionToolTrace(sourceUrl, evidenceName)
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
+   public void AiJobOutputValidatorAcceptsTimedParticipantListRows()
+   {
+      var sourceUrl = "https://example.test/start-list.pdf";
+      var participantName = "Kramer Andreas";
+      var countryCode = PrimaryCountry.ThreeLetterCode;
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var toolTrace = new JsonArray
+      {
+         new JsonObject
+         {
+            ["name"] = WebToolNames.GetPage,
+            ["url"] = sourceUrl,
+            ["result"] = $$"""
+               Page URL: {{sourceUrl}}
+               Title: official_entry_list.xlsx
+               URL: {{sourceUrl}}
+               Page text:
+               Chapple Samuel NED 1:44.88 1:44.88
+               {{participantName}} {{countryCode}} 1:43.13 1:43.73
+               Pattison Ben GBR 1:42.27 1:46.08
+               """
+         }
+      };
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         toolTrace
       );
 
       Assert.Equal(output, result);
@@ -2297,6 +2462,39 @@ public class AiProviderClientTests
                },
                finish_reason = "tool_calls"
             },
+         },
+         model = "openai/gpt-4o-2024-08-06"
+      });
+   }
+
+   private static string CreateLlamaSubmitReportResponseJson(string report)
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_report",
+                        type = "function",
+                        function = new
+                        {
+                           name = LlamaReportSubmission.ToolName,
+                           arguments = report
+                        }
+                     }
+                  }
+               },
+               finish_reason = "tool_calls"
+            }
          },
          model = "openai/gpt-4o-2024-08-06"
       });

@@ -460,7 +460,11 @@ internal static class WebPageContentFetchSupport
    {
       var tableText = ExtractStructuredTableText(html);
       var embeddedText = ExtractEmbeddedStateText(html);
-      var visibleText = ExtractHtmlText(html);
+      var visibleText = ExtractHtmlText(
+         string.IsNullOrWhiteSpace(tableText)
+            ? html
+            : RemoveNativeTableElements(html)
+      );
 
       return NormalizeText(
          string.Join(
@@ -1158,9 +1162,17 @@ internal static class WebPageContentFetchSupport
 
    internal static string ExtractStructuredTableText(string html)
    {
+      var nativeTexts = new List<string>();
       var preferredTexts = new List<string>();
       var otherTexts = new List<string>();
       var seenTexts = new HashSet<string>(StringComparer.Ordinal);
+
+      ExtractNativeTableRows(
+         html,
+         nativeTexts,
+         seenTexts
+      );
+
       var tableMatches = Regex.Matches(
          html,
          @"<(?<tag>[a-zA-Z0-9:-]+)(?<attrs>[^>]*)\brole=""" +
@@ -1193,8 +1205,91 @@ internal static class WebPageContentFetchSupport
          }
       }
 
-      var texts = preferredTexts.Count > 0 ? preferredTexts : otherTexts;
+      var roleTexts = preferredTexts.Count > 0
+         ? preferredTexts
+         : otherTexts;
+      var texts = nativeTexts.Concat(roleTexts);
       return NormalizeText(string.Join(Environment.NewLine, texts));
+   }
+
+   private static void ExtractNativeTableRows(
+      string html,
+      ICollection<string> texts,
+      ISet<string> seenTexts
+   )
+   {
+      var tableMatches = Regex.Matches(
+         html,
+         @"<table\b[^>]*>(?<content>.*?)</table>",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
+
+      foreach(Match tableMatch in tableMatches)
+      {
+         var rowMatches = Regex.Matches(
+            tableMatch.Groups["content"].Value,
+            @"<tr\b[^>]*>(?<content>.*?)</tr>",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline
+         );
+
+         foreach(Match rowMatch in rowMatches)
+         {
+            var cells = ExtractNativeTableCells(
+               rowMatch.Groups["content"].Value
+            );
+
+            if(cells.Count == 0)
+            {
+               continue;
+            }
+
+            var rowText = string.Join(" | ", cells);
+
+            if(seenTexts.Add(rowText))
+            {
+               texts.Add(rowText);
+            }
+         }
+      }
+   }
+
+   private static IReadOnlyList<string> ExtractNativeTableCells(
+      string rowHtml
+   )
+   {
+      var cells = new List<string>();
+      var cellMatches = Regex.Matches(
+         rowHtml,
+         @"<(?:th|td)\b[^>]*>(?<content>.*?)</(?:th|td)>",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
+
+      foreach(Match cellMatch in cellMatches)
+      {
+         var cellHtml = ReplaceFlagImagesWithCountryLabels(
+            cellMatch.Groups["content"].Value
+         );
+         var cellText = NormalizeText(
+            WebUtility.HtmlDecode(StripTags(cellHtml))
+         );
+
+         if(!string.IsNullOrWhiteSpace(cellText))
+         {
+            cells.Add(cellText);
+         }
+      }
+
+      return cells;
+   }
+
+   private static string RemoveNativeTableElements(string html)
+   {
+      return Regex.Replace(
+         html,
+         @"<table\b[^>]*>.*?</table>",
+         " ",
+         RegexOptions.IgnoreCase | RegexOptions.Singleline
+      );
    }
 
    internal static string ExtractPdfText(PdfDocument pdfDocument)

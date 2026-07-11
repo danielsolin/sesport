@@ -327,9 +327,15 @@ internal static class WebPageNormalizationScript
                });
 
                if(lines.length > 0) {
-                  tableElement.replaceWith(
-                     document.createTextNode(` ${lines.join('\n')} `)
-                  );
+                  const rowContainer = document.createElement('div');
+
+                  lines.forEach((line) => {
+                     const rowElement = document.createElement('div');
+                     rowElement.textContent = line;
+                     rowContainer.appendChild(rowElement);
+                  });
+
+                  tableElement.replaceWith(rowContainer);
                }
             }
 

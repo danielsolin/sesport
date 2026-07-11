@@ -29,6 +29,19 @@ internal static class LlamaRequestFactory
       if(includeTools)
       {
          payload["tools"] = CreateToolsArray(job.ToolsJson);
+
+         if(string.Equals(
+            job.Id,
+            AiJobIds.DecidePrimaryCountryParticipation,
+            StringComparison.Ordinal
+         ))
+         {
+            LlamaReportSubmission.AddTool(
+               payload,
+               prompt.OutputSchemaJson
+            );
+         }
+
          payload["tool_choice"] = "required";
       }
 

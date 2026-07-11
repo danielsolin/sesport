@@ -106,6 +106,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var toolFormatFallbackStreak = 0;
       var formatRepairAttempts = 0;
       var validationContinuationAttempts = 0;
+      var reportSubmissionPending = false;
       var maxToolRounds = job.RequiresWebSearch
          ? prompt.MaxToolRounds ?? DefaultMaxToolRounds
          : prompt.MaxToolRounds;
@@ -263,6 +264,19 @@ public sealed class LlamaServerClient : IAiProviderClient
                   break;
                }
 
+               if(LlamaReportSubmission.TryGetSubmission(
+                  toolCalls,
+                  out var reportSubmission
+               ))
+               {
+                  reportSubmissionPending = true;
+                  responseJson = LlamaReportSubmission.CreateFinalResponse(
+                     responseJson,
+                     reportSubmission
+                  );
+                  break;
+               }
+
                toolRoundCount++;
                toolTrace.Add(
                   LlamaToolTrace.CreateAssistantTraceEntry(
@@ -338,6 +352,23 @@ public sealed class LlamaServerClient : IAiProviderClient
                repeatedToolCallStreak = repeatedToolCallDetectedThisTurn
                   ? repeatedToolCallStreak + repeatedToolCallCountThisTurn
                   : 0;
+
+               if(repeatedToolCallCountThisTurn < toolCalls.Count)
+               {
+                  validationContinuationAttempts = 0;
+               }
+
+               if(string.Equals(
+                  job.Id,
+                  AiJobIds.DecidePrimaryCountryParticipation,
+                  StringComparison.Ordinal
+               ))
+               {
+                  LlamaReportSubmission.AddTool(
+                     request,
+                     prompt.OutputSchemaJson
+                  );
+               }
 
                if(job.RequiresWebSearch)
                {
@@ -431,6 +462,9 @@ public sealed class LlamaServerClient : IAiProviderClient
 
          var structuredOutputRepairAttempts = 0;
          var finalReportCorrectionAttempts = 0;
+         var retainedFinalReportParticipants = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase
+         );
 
          while(true)
          {
@@ -453,6 +487,27 @@ public sealed class LlamaServerClient : IAiProviderClient
                      job.OutputMode,
                      prompt.OutputSchemaJson
                   );
+
+               if(reportSubmissionPending &&
+                  string.Equals(
+                     job.Id,
+                     AiJobIds.DecidePrimaryCountryParticipation,
+                     StringComparison.Ordinal
+                  ) &&
+                  AiJobOutputValidator.ReadParticipantNames(
+                     finalOutputText
+                  ).Count == 0)
+               {
+                  throw new AiJobOutputValidationException(
+                     "submit_report requires at least one supported " +
+                     "participant while research tools remain available."
+                  );
+               }
+
+               AiJobOutputValidator.ValidateRetainedParticipants(
+                  finalOutputText,
+                  retainedFinalReportParticipants
+               );
                finalOutputText = AiJobOutputValidator.Validate(
                   finalOutputText,
                   job,
@@ -522,6 +577,12 @@ public sealed class LlamaServerClient : IAiProviderClient
                   MaxFinalReportCorrectionAttempts
             )
             {
+               foreach(var participantName in
+                  AiJobOutputValidator.ReadParticipantNames(finalOutputText))
+               {
+                  retainedFinalReportParticipants.Add(participantName);
+               }
+
                finalReportCorrectionAttempts++;
                toolTrace.Add(
                   LlamaToolTrace.CreateAssistantTraceEntry(
@@ -592,6 +653,13 @@ public sealed class LlamaServerClient : IAiProviderClient
             )
             {
                validationContinuationAttempts++;
+
+               if(reportSubmissionPending)
+               {
+                  LlamaReportSubmission.RemoveTool(request);
+                  reportSubmissionPending = false;
+               }
+
                toolTrace.Add(
                   LlamaToolTrace.CreateAssistantTraceEntry(
                      turn,
