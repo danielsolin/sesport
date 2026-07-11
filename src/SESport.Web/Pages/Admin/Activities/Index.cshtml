@@ -135,7 +135,12 @@
             <tbody>
                @foreach(var activity in Model.Activities)
                {
-                  <tr>
+                  var missingDescription = string.IsNullOrWhiteSpace(
+                     activity.Description
+                  );
+                  <tr class="@(missingDescription
+                     ? "activity-description-missing"
+                     : string.Empty)">
                      <td>@activity.TimeText</td>
                      <td>
                         <a asp-page="./Edit"

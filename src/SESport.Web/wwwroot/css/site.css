@@ -678,6 +678,11 @@ h2 {
    background: #edf3ee;
 }
 
+.admin-table-hover tbody tr.activity-description-missing > td,
+.admin-table-hover tbody tr.activity-description-missing:hover > td {
+   background: var(--warning-bg);
+}
+
 .admin-table-hover tbody tr[data-participation-status="running"] > td {
    background: #fff6d9;
 }
