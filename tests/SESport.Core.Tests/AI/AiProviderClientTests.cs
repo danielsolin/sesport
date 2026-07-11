@@ -1595,6 +1595,164 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncRejectsNoWithStartListIndexPage()
+   {
+      var sourceUrl =
+         "https://example.test/final-start-lists-event-index";
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(sourceUrl),
+         CreateLlamaFindPageCallResponseJson(sourceUrl),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"No\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[\"" + sourceUrl + "\"],"
+            + "\"EvidenceType\":\"ParticipantList\"}"
+         ),
+         CreateLlamaFinalResponseWithContentJson(
+            "{\"Participation\":\"Unknown\","
+            + "\"Participants\":[],"
+            + "\"Sources\":[\"" + sourceUrl + "\"],"
+            + "\"EvidenceType\":\"EventInfoOnly\"}"
+         )
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Final start lists event index",
+            sourceUrl,
+            "Links to event-specific start lists."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Final Start Lists: Grand Prix",
+            sourceUrl,
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["START LISTS"],
+            """
+            Final Start Lists: Grand Prix
+            View the final start lists below.
+            START LISTS
+            TIME | EVENT START LISTS PDF 16:00 | Hammer Throw
+            16:05 | Long Jump
+            16:30 | Pole Vault
+            """,
+            true,
+            RelevantLinks:
+            [
+               new WebPageRelevantLink(
+                  "Pole Vault- men",
+                  "https://example.test/files/men-pole-vault.pdf"
+               )
+            ]
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(5, handler.RequestBodies.Count);
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains("PDF links:", result.ToolTraceJson);
+      Assert.Equal(
+         "{\"Participation\":\"Unknown\","
+         + "\"Participants\":[],"
+         + "\"Sources\":[\"" + sourceUrl + "\"],"
+         + "\"EvidenceType\":\"EventInfoOnly\"}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncAcceptsNoWithParticipantRows()
+   {
+      var sourceUrl = "https://example.test/final-start-list";
+      var output =
+         "{\"Participation\":\"No\","
+         + "\"Participants\":[],"
+         + "\"Sources\":[\"" + sourceUrl + "\"],"
+         + "\"EvidenceType\":\"ParticipantList\"}";
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(sourceUrl),
+         CreateLlamaFindPageCallResponseJson(sourceUrl),
+         CreateLlamaFinalResponseWithContentJson(output)
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Final start list",
+            sourceUrl,
+            "Participant rows."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Final Start List",
+            sourceUrl,
+            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
+            ["Entry List"],
+            """
+            Entry list
+            Bib | Name | Country
+            1 | Alex Runner | Nation A
+            2 | Blake Jumper | Nation B
+            3 | Casey Thrower | Nation C
+            """,
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.DoesNotContain(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Equal(output, result.OutputText);
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncAcceptsUnknownWithSearchOnlyEvidence()
    {
       var handler = new RecordingHandler(

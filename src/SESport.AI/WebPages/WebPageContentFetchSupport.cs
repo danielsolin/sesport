@@ -36,6 +36,7 @@ internal static class WebPageContentFetchSupport
 
    internal const string CutoffMarker = "[CUTOFF]";
    internal const int MaxResponseCharacters = 50000;
+   private const int MaxRelevantLinkCount = 20;
 
    internal static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
@@ -502,10 +503,9 @@ internal static class WebPageContentFetchSupport
             continue;
          }
 
-         var linkLabel = NormalizeText(
-            WebUtility.HtmlDecode(
-               StripTags(match.Groups["content"].Value)
-            )
+         var linkLabel = ExtractRelevantLinkLabel(
+            match.Groups["content"].Value,
+            linkUrl
          );
 
          if(!ShouldCaptureRelevantLink(linkLabel, linkUrl))
@@ -522,14 +522,14 @@ internal static class WebPageContentFetchSupport
 
          scoredLinks.Add((
             new WebPageRelevantLink(linkLabel, linkUrl),
-            ScoreRelevantLink(linkLabel)
+            ScoreRelevantLink(linkLabel, linkUrl)
          ));
       }
 
       return scoredLinks
          .OrderByDescending(link => link.Score)
          .Select(link => link.Link)
-         .Take(10)
+         .Take(MaxRelevantLinkCount)
          .ToArray();
    }
 
@@ -890,6 +890,8 @@ internal static class WebPageContentFetchSupport
       string url
    )
    {
+      var isPdfLink = IsPdfUrl(url);
+
       if(string.IsNullOrWhiteSpace(label))
       {
          return false;
@@ -905,12 +907,39 @@ internal static class WebPageContentFetchSupport
          return false;
       }
 
-      if(GenericLinkTextRegex.IsMatch(label))
+      if(GenericLinkTextRegex.IsMatch(label) && !isPdfLink)
       {
          return false;
       }
 
-      return IsParticipationListLink(label, url);
+      return isPdfLink || IsParticipationListLink(label, url);
+   }
+
+   private static string ExtractRelevantLinkLabel(
+      string htmlContent,
+      string linkUrl
+   )
+   {
+      var label = NormalizeText(
+         WebUtility.HtmlDecode(StripTags(htmlContent))
+      );
+
+      if(!string.IsNullOrWhiteSpace(label))
+      {
+         return label;
+      }
+
+      if(!IsPdfUrl(linkUrl) ||
+         !Uri.TryCreate(linkUrl, UriKind.Absolute, out var uri))
+      {
+         return label;
+      }
+
+      var fileName = Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+
+      return NormalizeText(
+         WebUtility.UrlDecode(fileName).Replace('-', ' ')
+      );
    }
 
    private static bool IsParticipationListLink(string label, string url)
@@ -948,9 +977,17 @@ internal static class WebPageContentFetchSupport
          value.Contains("startlista", StringComparison.OrdinalIgnoreCase);
    }
 
-   private static int ScoreRelevantLink(string label)
+   private static int ScoreRelevantLink(
+      string label,
+      string url
+   )
    {
       var score = 0;
+
+      if(IsPdfUrl(url))
+      {
+         score += 6;
+      }
 
       if(RelevantLinkLabelBoostRegex.IsMatch(label))
       {
@@ -969,6 +1006,19 @@ internal static class WebPageContentFetchSupport
       }
 
       return score;
+   }
+
+   private static bool IsPdfUrl(string url)
+   {
+      if(!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+      {
+         return false;
+      }
+
+      return uri.AbsolutePath.EndsWith(
+         ".pdf",
+         StringComparison.OrdinalIgnoreCase
+      );
    }
 
    internal static string ExtractEmbeddedStateText(string html)

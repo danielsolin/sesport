@@ -7,6 +7,8 @@ namespace SESport.AI.Clients;
 
 internal static class AiJobOutputValidator
 {
+   private const int MinimumParticipantListRowCount = 3;
+
    private static readonly string[] ParticipantListTerms =
    [
       "entry list",
@@ -440,14 +442,21 @@ internal static class AiJobOutputValidator
 
    private static string ClassifyFetchedSource(string? result)
    {
-      var evidenceText = ExtractClassifiableEvidenceText(result);
+      var evidenceLines = ExtractClassifiableEvidenceLines(result);
+      var evidenceText = string.Join(' ', evidenceLines);
 
       if(ContainsAnyEvidenceTerm(evidenceText, TeamRosterTerms))
       {
          return AiParticipationEvidenceTypeIds.TeamRoster;
       }
 
-      if(ContainsAnyEvidenceTerm(evidenceText, ParticipantListTerms))
+      if(IsParticipantListIndexPage(evidenceText))
+      {
+         return AiParticipationEvidenceTypeIds.EventInfoOnly;
+      }
+
+      if(ContainsAnyEvidenceTerm(evidenceText, ParticipantListTerms) &&
+         HasParticipantListRows(evidenceLines))
       {
          return AiParticipationEvidenceTypeIds.ParticipantList;
       }
@@ -455,34 +464,52 @@ internal static class AiJobOutputValidator
       return AiParticipationEvidenceTypeIds.EventInfoOnly;
    }
 
-   private static string ExtractClassifiableEvidenceText(string? result)
+   private static bool IsParticipantListIndexPage(string evidenceText)
+   {
+      var normalizedText = NormalizeEvidenceText(evidenceText);
+
+      return normalizedText.Contains(
+         "start lists pdf",
+         StringComparison.Ordinal
+      ) || normalizedText.Contains(
+         "event start lists",
+         StringComparison.Ordinal
+      ) || normalizedText.Contains(
+         "view the final start lists below",
+         StringComparison.Ordinal
+      );
+   }
+
+   private static IReadOnlyList<string> ExtractClassifiableEvidenceLines(
+      string? result
+   )
    {
       if(string.IsNullOrWhiteSpace(result))
       {
-         return "";
+         return [];
       }
 
-      if(TryExtractJsonEvidenceText(result, out var jsonEvidenceText))
+      if(TryExtractJsonEvidenceLines(result, out var jsonEvidenceLines))
       {
-         return jsonEvidenceText;
+         return jsonEvidenceLines;
       }
 
-      return ExtractTextPageEvidenceText(result);
+      return ExtractTextPageEvidenceLines(result);
    }
 
-   private static bool TryExtractJsonEvidenceText(
+   private static bool TryExtractJsonEvidenceLines(
       string result,
-      out string evidenceText
+      out IReadOnlyList<string> evidenceLines
    )
    {
-      evidenceText = "";
+      evidenceLines = [];
 
       try
       {
          using var document = JsonDocument.Parse(result);
-         var builder = new StringBuilder();
-         AppendJsonEvidenceText(builder, document.RootElement, null);
-         evidenceText = builder.ToString();
+         var lines = new List<string>();
+         AppendJsonEvidenceLines(lines, document.RootElement, null);
+         evidenceLines = lines;
          return true;
       }
       catch(JsonException)
@@ -491,8 +518,8 @@ internal static class AiJobOutputValidator
       }
    }
 
-   private static void AppendJsonEvidenceText(
-      StringBuilder builder,
+   private static void AppendJsonEvidenceLines(
+      List<string> lines,
       JsonElement element,
       string? propertyName
    )
@@ -506,8 +533,8 @@ internal static class AiJobOutputValidator
       {
          foreach(var property in element.EnumerateObject())
          {
-            AppendJsonEvidenceText(
-               builder,
+            AppendJsonEvidenceLines(
+               lines,
                property.Value,
                property.Name
             );
@@ -520,7 +547,7 @@ internal static class AiJobOutputValidator
       {
          foreach(var item in element.EnumerateArray())
          {
-            AppendJsonEvidenceText(builder, item, propertyName);
+            AppendJsonEvidenceLines(lines, item, propertyName);
          }
 
          return;
@@ -528,8 +555,28 @@ internal static class AiJobOutputValidator
 
       if(element.ValueKind == JsonValueKind.String)
       {
-         builder.Append(' ');
-         builder.Append(element.GetString());
+         AddEvidenceLines(lines, element.GetString());
+      }
+   }
+
+   private static void AddEvidenceLines(
+      List<string> lines,
+      string? value
+   )
+   {
+      if(string.IsNullOrWhiteSpace(value))
+      {
+         return;
+      }
+
+      foreach(var line in value.Split('\n'))
+      {
+         var trimmedLine = line.Trim();
+
+         if(!string.IsNullOrWhiteSpace(trimmedLine))
+         {
+            lines.Add(trimmedLine);
+         }
       }
    }
 
@@ -549,9 +596,11 @@ internal static class AiJobOutputValidator
          string.Equals(propertyName, "published_at", StringComparison.Ordinal);
    }
 
-   private static string ExtractTextPageEvidenceText(string result)
+   private static IReadOnlyList<string> ExtractTextPageEvidenceLines(
+      string result
+   )
    {
-      var builder = new StringBuilder(result.Length);
+      var lines = new List<string>();
       var skippedSection = "";
 
       foreach(var rawLine in result.Split('\n'))
@@ -574,11 +623,126 @@ internal static class AiJobOutputValidator
             continue;
          }
 
-         builder.Append(' ');
-         builder.Append(line);
+         if(!string.IsNullOrWhiteSpace(line))
+         {
+            lines.Add(line);
+         }
       }
 
-      return builder.ToString();
+      return lines;
+   }
+
+   private static bool HasParticipantListRows(
+      IReadOnlyList<string> lines
+   )
+   {
+      var rowCount = 0;
+
+      foreach(var line in lines)
+      {
+         if(!IsParticipantListRow(line))
+         {
+            continue;
+         }
+
+         rowCount++;
+
+         if(rowCount >= MinimumParticipantListRowCount)
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool IsParticipantListRow(string line)
+   {
+      var trimmedLine = line.Trim();
+
+      if(trimmedLine.Length == 0 ||
+         IsParticipantListIndexLine(trimmedLine))
+      {
+         return false;
+      }
+
+      if(trimmedLine.Contains(" | ", StringComparison.Ordinal))
+      {
+         return ContainsLetter(trimmedLine);
+      }
+
+      if(ContainsSentencePunctuation(trimmedLine))
+      {
+         return false;
+      }
+
+      if(StartsWithDigit(trimmedLine) && CountWordLikeTokens(trimmedLine) >= 2)
+      {
+         return true;
+      }
+
+      return CountWordLikeTokens(trimmedLine) is >= 2 and <= 5;
+   }
+
+   private static bool IsParticipantListIndexLine(string line)
+   {
+      var normalizedLine = NormalizeEvidenceText(line);
+
+      return normalizedLine.Contains(
+         "start list",
+         StringComparison.Ordinal
+      ) || normalizedLine.Contains(
+         "start lists pdf",
+         StringComparison.Ordinal
+      ) || normalizedLine.Contains(
+         "event start lists",
+         StringComparison.Ordinal
+      ) || normalizedLine.Contains(
+         "view the final start lists below",
+         StringComparison.Ordinal
+      ) || normalizedLine.Equals("start lists", StringComparison.Ordinal) ||
+         normalizedLine.Equals("results", StringComparison.Ordinal) ||
+         normalizedLine.Equals("share", StringComparison.Ordinal) ||
+         normalizedLine.StartsWith("posted by ", StringComparison.Ordinal) ||
+         normalizedLine.StartsWith("time event ", StringComparison.Ordinal) ||
+         StartsWithClockTime(line);
+   }
+
+   private static bool StartsWithClockTime(string value)
+   {
+      return value.Length >= 5 &&
+         char.IsDigit(value[0]) &&
+         char.IsDigit(value[1]) &&
+         value[2] == ':' &&
+         char.IsDigit(value[3]) &&
+         char.IsDigit(value[4]);
+   }
+
+   private static bool ContainsSentencePunctuation(string value)
+   {
+      return value.Contains('.', StringComparison.Ordinal) ||
+         value.Contains('?', StringComparison.Ordinal) ||
+         value.Contains('!', StringComparison.Ordinal);
+   }
+
+   private static bool ContainsLetter(string value)
+   {
+      return value.Any(char.IsLetter);
+   }
+
+   private static bool StartsWithDigit(string value)
+   {
+      return value.Length > 0 && char.IsDigit(value[0]);
+   }
+
+   private static int CountWordLikeTokens(string value)
+   {
+      return value
+         .Split(
+            [' ', '\t', '|', ',', ';', ':', '-', '–', '—', '/', '(', ')'],
+            StringSplitOptions.RemoveEmptyEntries
+         )
+         .Count(token => token.Any(char.IsLetter));
    }
 
    private static bool IsSkippedEvidenceSectionHeader(string line)
@@ -586,6 +750,10 @@ internal static class AiJobOutputValidator
       return string.Equals(
          line,
          "Search snippet:",
+         StringComparison.Ordinal
+      ) || string.Equals(
+         line,
+         "PDF links:",
          StringComparison.Ordinal
       ) || string.Equals(
          line,

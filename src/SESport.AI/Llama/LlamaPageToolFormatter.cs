@@ -49,11 +49,28 @@ internal static class LlamaPageToolFormatter
          }
       }
 
-      if(relevantLinks is not null && relevantLinks.Count > 0)
+      var pdfLinks = relevantLinks?
+         .Where(link => IsPdfUrl(link.Url))
+         .ToArray() ?? [];
+      var otherRelevantLinks = relevantLinks?
+         .Where(link => !IsPdfUrl(link.Url))
+         .ToArray() ?? [];
+
+      if(pdfLinks.Length > 0)
+      {
+         builder.AppendLine("PDF links:");
+
+         foreach(var link in pdfLinks)
+         {
+            builder.AppendLine($"- {link.Label}: {link.Url}");
+         }
+      }
+
+      if(otherRelevantLinks.Length > 0)
       {
          builder.AppendLine("Relevant links:");
 
-         foreach(var link in relevantLinks)
+         foreach(var link in otherRelevantLinks)
          {
             builder.AppendLine($"- {link.Label}: {link.Url}");
          }
@@ -98,6 +115,19 @@ internal static class LlamaPageToolFormatter
       }
 
       return builder.ToString().Trim();
+   }
+
+   private static bool IsPdfUrl(string url)
+   {
+      if(!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+      {
+         return false;
+      }
+
+      return uri.AbsolutePath.EndsWith(
+         ".pdf",
+         StringComparison.OrdinalIgnoreCase
+      );
    }
 
    internal static IReadOnlyList<PageMatch> FindPageMatches(

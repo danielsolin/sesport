@@ -890,6 +890,46 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractRelevantLinksFromHtmlIncludesPdfLinks()
+   {
+      var html = """
+         <html>
+            <body>
+               <main>
+                  <h1>Final Start Lists</h1>
+                  <table>
+                     <tr>
+                        <th>TIME</th>
+                        <th>EVENT START LISTS PDF</th>
+                     </tr>
+                     <tr>
+                        <td>16:30</td>
+                        <td>
+                           <a href="/files/men-pole-vault.pdf">
+                              Pole Vault- men
+                           </a>
+                        </td>
+                     </tr>
+                  </table>
+               </main>
+            </body>
+         </html>
+         """;
+
+      var links = WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+         html,
+         new Uri("https://www.example.test/article/start-lists")
+      );
+
+      Assert.Single(links);
+      Assert.Equal("Pole Vault- men", links[0].Label);
+      Assert.Equal(
+         "https://www.example.test/files/men-pole-vault.pdf",
+         links[0].Url
+      );
+   }
+
+   [Fact]
    public void FormatPageContentTextPlacesRelevantLinksBeforePageText()
    {
       var output = LlamaPageToolFormatter.FormatPageContentText(
@@ -915,6 +955,39 @@ public class WebPageContentClientTests
       Assert.Contains("- Entry list: https://example.test/entries", output);
       Assert.True(
          output.IndexOf("Relevant links:", StringComparison.Ordinal) <
+         output.IndexOf("Page text:", StringComparison.Ordinal)
+      );
+   }
+
+   [Fact]
+   public void FormatPageContentTextPlacesPdfLinksBeforePageText()
+   {
+      var output = LlamaPageToolFormatter.FormatPageContentText(
+         "Page URL",
+         "https://example.test/article",
+         "Title",
+         "https://example.test/article",
+         null,
+         null,
+         [],
+         [
+            new WebPageRelevantLink(
+               "Pole Vault- men",
+               "https://example.test/files/men-pole-vault.pdf"
+            )
+         ],
+         null,
+         null,
+         "Page body text."
+      );
+
+      Assert.Contains("PDF links:", output);
+      Assert.Contains(
+         "- Pole Vault- men: https://example.test/files/men-pole-vault.pdf",
+         output
+      );
+      Assert.True(
+         output.IndexOf("PDF links:", StringComparison.Ordinal) <
          output.IndexOf("Page text:", StringComparison.Ordinal)
       );
    }

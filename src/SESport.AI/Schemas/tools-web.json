@@ -35,7 +35,7 @@
             },
             "additionalProperties": false
          },
-         "description": "Fetch page text from a URL."
+         "description": "Fetch text and relevant page/PDF links from a URL."
       }
    },
    {
