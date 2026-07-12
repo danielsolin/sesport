@@ -611,6 +611,17 @@ public class DetailsModel(
       return $"{toolName} x {toolCallCount} ({uniqueToolCallCount})";
    }
 
+   public static string GetToolBadgeCssClass(string toolName)
+   {
+      return string.Equals(
+         toolName,
+         WebToolNames.SubmitReport,
+         StringComparison.Ordinal
+      )
+         ? "tool-trace-badge tool-trace-badge-submit-report"
+         : "tool-trace-badge tool-trace-badge-tool";
+   }
+
    private static IReadOnlyList<ToolTraceTurnViewModel> ParseToolTrace(
       string? toolTraceJson
    )
@@ -734,7 +745,7 @@ public class DetailsModel(
                toolCallGroup.Count(),
                uniqueToolCallCount
             ),
-            "tool-trace-badge-tool"
+            GetToolBadgeCssClass(toolCallGroup.Key)
          ));
       }
 
@@ -1152,7 +1163,7 @@ public class DetailsModel(
          {
             badges.Add(new(
                $"{toolCallGroup.Key} × {toolCallGroup.Count()}",
-               "tool-trace-badge-tool"
+               GetToolBadgeCssClass(toolCallGroup.Key)
             ));
          }
 

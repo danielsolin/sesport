@@ -58,6 +58,15 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void GetToolBadgeCssClassHighlightsSubmitReport()
+   {
+      Assert.Equal(
+         "tool-trace-badge tool-trace-badge-submit-report",
+         DetailsModel.GetToolBadgeCssClass(WebToolNames.SubmitReport)
+      );
+   }
+
+   [Fact]
    public void GetToolRoundCountUsesStoredValueOnly()
    {
       Assert.Equal(

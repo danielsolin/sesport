@@ -1042,6 +1042,11 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    color: #284e8d;
 }
 
+.tool-trace-badge-submit-report {
+   background: #f2ecff;
+   color: #5e3fb3;
+}
+
 .tool-trace-badge-result {
    background: #edf7ee;
    color: #2c6b38;
