@@ -1,3 +1,4 @@
+using SESport.Core.AI;
 using SESport.Web.Pages.Admin.Runs;
 using SESport.Web.Services;
 
@@ -39,6 +40,39 @@ public sealed class IndexModelTests
       Assert.Equal(runId.ToString(), routeValues["id"]);
       Assert.Equal("running", routeValues["status[0]"]);
       Assert.Equal("pending", routeValues["status[1]"]);
+   }
+
+   [Theory]
+   [InlineData(
+      "generate-activity-teaser",
+      "A 2026-07-12"
+   )]
+   [InlineData(
+      "decide-swedish-participation",
+      "B 2026-07-12"
+   )]
+   public void FormatRunTargetLabelIncludesDate(
+      string jobId,
+      string expected
+   )
+   {
+      var run = new AiRunListItem(
+         Guid.NewGuid(),
+         jobId,
+         null,
+         "Job label",
+         "Event",
+         new DateOnly(2026, 7, 12),
+         "Provider",
+         null,
+         "completed",
+         0,
+         0,
+         DateTimeOffset.UtcNow,
+         null
+      );
+
+      Assert.Equal(expected, IndexModel.FormatRunTargetLabel(run));
    }
 
    private static IndexModel CreateModel()

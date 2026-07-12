@@ -142,6 +142,19 @@ public class IndexModel(
       return routeValues;
    }
 
+   public static string FormatRunTargetLabel(AiRunListItem run)
+   {
+      var targetLabel = AiJobIds.GetTargetType(run.JobId) ==
+         AiJobTargetType.Broadcast
+         ? "B"
+         : "A";
+      var dateText = DateDisplay.Format(run.EventDate);
+
+      return string.IsNullOrWhiteSpace(dateText)
+         ? targetLabel
+         : $"{targetLabel} {dateText}";
+   }
+
    private string? ResolveJobId()
    {
       if(Request.Query.ContainsKey(RouteKeys.JobId))

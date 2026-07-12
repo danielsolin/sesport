@@ -12,6 +12,15 @@ namespace SESport.Data.AI;
 public sealed class AiRepository(NpgsqlDataSource dataSource)
    : IAiJobDefinitionRepository, IAiJobRunRepository
 {
+   private static readonly string[] ActivityJobIds =
+   [
+      AiJobIds.GenerateActivityTeaser,
+      AiJobIds.FindActivityFacts
+   ];
+
+   private const string BroadcastJobId =
+      AiJobIds.DecidePrimaryCountryParticipation;
+
    public async Task<IReadOnlyList<AiRunListItem>> GetRunsAsync(
       DateOnly? date,
       string? jobId,
@@ -59,8 +68,13 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   coalesce(")
          .AppendLine("      r.input_payload->>'event_name',")
          .AppendLine("      r.input_payload->>'title',")
-         .AppendLine("      a.title")
+         .AppendLine("      a.title,")
+         .AppendLine("      b.title")
          .AppendLine("   ) as event_name,")
+         .AppendLine("   coalesce(")
+         .AppendLine("      a.activity_date,")
+         .AppendLine("      (b.starts_at at time zone @time_zone)::date")
+         .AppendLine("   ) as event_date,")
          .AppendLine("   p.label as provider_label,")
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
@@ -83,7 +97,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("join ai_providers p on p.id = r.provider_id")
          .AppendLine("left join activities a")
          .AppendLine("   on a.id::text = r.correlation_id")
-         .AppendLine("      and r.job_id = @teaser_job_id");
+         .AppendLine("      and r.job_id = any(@activity_job_ids)")
+         .AppendLine("left join broadcasts b")
+         .AppendLine("   on b.id::text = r.correlation_id")
+         .AppendLine("      and r.job_id = @broadcast_job_id");
 
       if(where.Count > 0)
       {
@@ -102,6 +119,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   sr.execution_environment,")
          .AppendLine("   sr.job_label,")
          .AppendLine("   sr.event_name,")
+         .AppendLine("   sr.event_date,")
          .AppendLine("   sr.provider_label,")
          .AppendLine("   sr.provider_model,")
          .AppendLine("   sr.status_id,")
@@ -128,10 +146,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   sr.id desc");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
-      command.Parameters.AddWithValue(
-         "teaser_job_id",
-         AiJobIds.GenerateActivityTeaser
-      );
+      command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);
+      command.Parameters.AddWithValue("broadcast_job_id", BroadcastJobId);
+      command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
 
       if(date is not null)
       {
@@ -166,13 +183,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 2),
                reader.GetString(3),
                ReadNullableString(reader, 4),
-               reader.GetString(5),
-               ReadNullableString(reader, 6),
-               reader.GetString(7),
-               reader.GetInt32(8),
-               reader.GetInt32(11),
-               reader.GetFieldValue<DateTimeOffset>(9),
-               ReadNullableDecimal(reader, 10)
+               ReadNullableDateOnly(reader, 5),
+               reader.GetString(6),
+               ReadNullableString(reader, 7),
+               reader.GetString(8),
+               reader.GetInt32(9),
+               reader.GetInt32(12),
+               reader.GetFieldValue<DateTimeOffset>(10),
+               ReadNullableDecimal(reader, 11)
             )
          );
       }
@@ -233,7 +251,12 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             coalesce(
                r.input_payload->>'event_name',
                r.input_payload->>'title',
-               a.title
+               a.title,
+               b.title
+            ),
+            coalesce(
+               a.activity_date,
+               (b.starts_at at time zone @time_zone)::date
             ),
             p.label,
             r.provider_model,
@@ -250,7 +273,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          join ai_providers p on p.id = r.provider_id
          left join activities a
             on a.id::text = r.correlation_id
-               and r.job_id = @teaser_job_id
+               and r.job_id = any(@activity_job_ids)
+         left join broadcasts b
+            on b.id::text = r.correlation_id
+               and r.job_id = @broadcast_job_id
          left join lateral (
             select max((entry.value->>'payload_chars')::int)
                as max_payload_chars
@@ -267,10 +293,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("ids", ids.ToArray());
-      command.Parameters.AddWithValue(
-         "teaser_job_id",
-         AiJobIds.GenerateActivityTeaser
-      );
+      command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);
+      command.Parameters.AddWithValue("broadcast_job_id", BroadcastJobId);
+      command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -285,13 +310,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                ReadNullableString(reader, 2),
                reader.GetString(3),
                ReadNullableString(reader, 4),
-               reader.GetString(5),
-               ReadNullableString(reader, 6),
-               reader.GetString(7),
-               reader.GetInt32(8),
-               reader.GetInt32(11),
-               reader.GetFieldValue<DateTimeOffset>(9),
-               ReadNullableDecimal(reader, 10)
+               ReadNullableDateOnly(reader, 5),
+               reader.GetString(6),
+               ReadNullableString(reader, 7),
+               reader.GetString(8),
+               reader.GetInt32(9),
+               reader.GetInt32(12),
+               reader.GetFieldValue<DateTimeOffset>(10),
+               ReadNullableDecimal(reader, 11)
             )
          );
       }
@@ -1506,6 +1532,16 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    )
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
+   }
+
+   private static DateOnly? ReadNullableDateOnly(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? null
+         : reader.GetFieldValue<DateOnly>(ordinal);
    }
 
    private static decimal? ReadNullableDecimal(

@@ -79,15 +79,12 @@
       <tbody>
          @foreach (var run in Model.Runs)
          {
-            var runTarget = AiJobIds.GetTargetType(run.JobId) ==
-               AiJobTargetType.Broadcast
-               ? "Broadcast"
-               : "Activity";
             var jobCode = string.Concat(
                run.JobLabel
                   .Split('-', StringSplitOptions.RemoveEmptyEntries)
                   .Select(part => char.ToLowerInvariant(part[0]))
             );
+            var runTarget = IndexModel.FormatRunTargetLabel(run);
             <tr data-ai-run-id="@run.Id"
                 data-ai-run-status="@run.StatusId">
                <td class="ai-runs-started-cell">

@@ -37,6 +37,9 @@ Several console applications live in `tools/legacy/` for occasional use:
   There is only one active project database. Code paths that fall back to
   localhost defaults are legacy guards and should not be treated as another
   active database.
+- There is no separate test database. Any database-backed test or script
+  talks to the live PostgreSQL database referenced by `.env` unless it is
+  explicitly isolated in some other way.
 - SearXNG is a local dependency for AI-run machines and defaults to
   `http://127.0.0.1:8088/`.
 - Docker is required only for the local SearXNG container or when operating

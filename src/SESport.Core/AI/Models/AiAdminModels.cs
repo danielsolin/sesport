@@ -79,6 +79,7 @@ public sealed record AiRunListItem(
    string? ExecutionEnvironment,
    string JobLabel,
    string? EventName,
+   DateOnly? EventDate,
    string ProviderLabel,
    string? ProviderModel,
    string StatusId,
