@@ -27,6 +27,7 @@ internal static class AiJobOutputValidator
       "startlists",
       "start resultat",
       "players",
+      "spelare",
       "riders",
       "drivers",
       "athletes",
@@ -765,6 +766,12 @@ internal static class AiJobOutputValidator
          return AiParticipationEvidenceTypeIds.ParticipantList;
       }
 
+      if(HasParticipantListTitle(evidenceLines) &&
+         HasParticipantListRows(evidenceLines, 1))
+      {
+         return AiParticipationEvidenceTypeIds.ParticipantList;
+      }
+
       return AiParticipationEvidenceTypeIds.EventInfoOnly;
    }
 
@@ -1028,7 +1035,8 @@ internal static class AiJobOutputValidator
    }
 
    private static bool HasParticipantListRows(
-      IReadOnlyList<string> lines
+      IReadOnlyList<string> lines,
+      int minimumRowCount = MinimumParticipantListRowCount
    )
    {
       var rowCount = 0;
@@ -1042,7 +1050,27 @@ internal static class AiJobOutputValidator
 
          rowCount++;
 
-         if(rowCount >= MinimumParticipantListRowCount)
+         if(rowCount >= minimumRowCount)
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool HasParticipantListTitle(
+      IReadOnlyList<string> lines
+   )
+   {
+      foreach(var line in lines)
+      {
+         if(!line.StartsWith("Title:", StringComparison.Ordinal))
+         {
+            continue;
+         }
+
+         if(ContainsAnyEvidenceTerm(line, ParticipantListTerms))
          {
             return true;
          }

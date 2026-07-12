@@ -2100,6 +2100,44 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void AiJobOutputValidatorAcceptsSingleRowParticipantListPage()
+   {
+      var sourceUrl = "https://example.test/players";
+      var participantName = "Max Dahlin";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var toolTrace = new JsonArray
+      {
+         new JsonObject
+         {
+            ["name"] = WebToolNames.GetPage,
+            ["url"] = sourceUrl,
+            ["result"] = $$"""
+               Page URL: {{sourceUrl}}
+               Title: Spelare - Nordea Open
+               URL: {{sourceUrl}}
+               Page text:
+               {{participantName}}
+               SWE
+               """
+         }
+      };
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         toolTrace
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
    public void AiJobOutputValidatorRejectsParticipantListForArticleMention()
    {
       var sourceUrl = "https://example.test/news/line-up";
