@@ -368,7 +368,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          channelName,
          reader.GetString(4),
          ReadString(reader, 5),
-         string.Join(", ", reader.GetFieldValue<string[]>(6)),
+         reader.GetFieldValue<string[]>(6),
          reader.GetBoolean(7),
          reader.IsDBNull(8) ? null : reader.GetFieldValue<DateOnly>(8),
          reader.IsDBNull(11) == false,

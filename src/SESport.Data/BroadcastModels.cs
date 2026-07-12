@@ -8,7 +8,7 @@ public sealed record BroadcastListItem(
    string ChannelName,
    string Title,
    string? Description,
-   string Categories,
+   IReadOnlyList<string> Categories,
    bool IsReplay,
    DateOnly? OriginalAirDate,
    bool IsHidden,
@@ -16,6 +16,8 @@ public sealed record BroadcastListItem(
    string? OrganizationEntityName
 )
 {
+   public string CategoriesText => string.Join(", ", Categories);
+
    public BroadcastParticipationCheck? ParticipationCheck { get; init; }
 
    public IReadOnlyList<BroadcastParticipationCheck>

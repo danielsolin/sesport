@@ -545,7 +545,7 @@
       const timeOnlyText = normalizeString(broadcast.timeOnlyText);
       const channelName = normalizeString(broadcast.channelName);
       const description = normalizeNullableString(broadcast.description);
-      const categories = normalizeString(broadcast.categories);
+      const categories = normalizeBroadcastCategories(broadcast.categories);
       const originalAirDate = normalizeNullableString(
          broadcast.originalAirDate
       );
@@ -690,7 +690,10 @@
          "broadcasts-col-categories broadcast-inline-editable";
       categoriesCell.dataset.broadcastId = broadcastId;
       categoriesCell.dataset.broadcastInlineEditField = "categories";
-      categoriesCell.dataset.broadcastInlineEditValue = categories;
+      categoriesCell.dataset.broadcastInlineEditValue =
+         categories.join(", ");
+      categoriesCell.dataset.broadcastCategoriesJson =
+         JSON.stringify(categories);
       categoriesCell.title = "Double-click to edit";
       const categoriesDisplay = document.createElement("div");
       categoriesDisplay.dataset.broadcastInlineEditDisplay = "true";
@@ -706,7 +709,7 @@
       categoriesInput.className = "broadcast-inline-edit-input";
       categoriesInput.dataset.broadcastInlineEditInput = "true";
       categoriesInput.type = "text";
-      categoriesInput.value = categories;
+      categoriesInput.value = categories.join(", ");
       categoriesInput.autocomplete = "off";
       categoriesInput.spellcheck = false;
       categoriesInput.setAttribute("aria-label", "Edit categories");
@@ -895,6 +898,63 @@
       }
 
       return value.trim();
+   }
+
+   function normalizeBroadcastCategories(categories)
+   {
+      if(Array.isArray(categories))
+      {
+         return categories
+            .map(item => typeof item === "string" ? item.trim() : "")
+            .filter(item => item !== "");
+      }
+
+      if(typeof categories === "string")
+      {
+         const trimmed = categories.trim();
+
+         if(trimmed === "")
+         {
+            return [];
+         }
+
+         try
+         {
+            const parsed = JSON.parse(trimmed);
+
+            if(Array.isArray(parsed))
+            {
+               return parsed
+                  .map(item => typeof item === "string" ? item.trim() : "")
+                  .filter(item => item !== "");
+            }
+         }
+         catch
+         {
+            // Fall back to the legacy comma-separated representation.
+         }
+
+         return trimmed
+            .split(",")
+            .map(item => item.trim())
+            .filter(item => item !== "");
+      }
+
+      return [];
+   }
+
+   function getBroadcastCategoriesFromCell(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return [];
+      }
+
+      return normalizeBroadcastCategories(
+         cell.dataset.broadcastCategoriesJson
+            ?? cell.dataset.broadcastInlineEditValue
+            ?? ""
+      );
    }
 
    function initializeCheckboxToggles(root = document)
@@ -1245,8 +1305,8 @@
       root.querySelectorAll(broadcastCategoriesListSelector).forEach(list => {
          const cell = list.closest(broadcastInlineEditCellSelector);
          const value = cell instanceof HTMLElement
-            ? (cell.dataset.broadcastInlineEditValue ?? "")
-            : "";
+            ? getBroadcastCategoriesFromCell(cell)
+            : [];
 
          if(typeof renderBroadcastCategories === "function")
          {

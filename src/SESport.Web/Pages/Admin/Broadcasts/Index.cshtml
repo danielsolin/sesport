@@ -246,7 +246,11 @@
                          data-broadcast-id="@broadcast.Id"
                          data-broadcast-inline-edit-field="categories"
                          data-broadcast-inline-edit-value=
-                            "@broadcast.Categories"
+                            "@broadcast.CategoriesText"
+                         data-broadcast-categories-json=
+                            "@System.Text.Json.JsonSerializer.Serialize(
+                               broadcast.Categories
+                            )"
                          title="Double-click to edit">
                         <div data-broadcast-inline-edit-display>
                            <div class="broadcast-categories-list"
@@ -255,7 +259,7 @@
                         <input class="broadcast-inline-edit-input"
                                data-broadcast-inline-edit-input
                                type="text"
-                               value="@broadcast.Categories"
+                               value="@broadcast.CategoriesText"
                                autocomplete="off"
                                spellcheck="false"
                                aria-label="Edit categories"

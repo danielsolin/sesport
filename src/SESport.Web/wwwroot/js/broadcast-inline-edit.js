@@ -150,15 +150,12 @@
 
       if(field === broadcastInlineEditCategoriesField)
       {
-         const categories = Array.isArray(payload.value)
-            ? payload.value
-               .map(item => typeof item === "string" ? item.trim() : "")
-               .filter(value => value !== "")
-            : [];
+         const categories = normalizeBroadcastCategories(payload.value);
          const list = cell.querySelector(broadcastCategoriesListSelector);
          const input = cell.querySelector(broadcastInlineEditInputSelector);
 
          cell.dataset.broadcastInlineEditValue = categories.join(", ");
+         cell.dataset.broadcastCategoriesJson = JSON.stringify(categories);
 
          if(input instanceof HTMLInputElement)
          {
@@ -222,16 +219,7 @@
          return;
       }
 
-      const items = Array.isArray(categories)
-         ? categories
-            .map(item => typeof item === "string" ? item.trim() : "")
-            .filter(item => item !== "")
-         : typeof categories === "string"
-            ? categories
-               .split(",")
-               .map(item => item.trim())
-               .filter(item => item !== "")
-            : [];
+      const items = normalizeBroadcastCategories(categories);
 
       list.replaceChildren();
 
@@ -240,6 +228,49 @@
          span.textContent = category;
          list.append(span);
       });
+   }
+
+   function normalizeBroadcastCategories(categories)
+   {
+      if(Array.isArray(categories))
+      {
+         return categories
+            .map(item => typeof item === "string" ? item.trim() : "")
+            .filter(item => item !== "");
+      }
+
+      if(typeof categories === "string")
+      {
+         const trimmed = categories.trim();
+
+         if(trimmed === "")
+         {
+            return [];
+         }
+
+         try
+         {
+            const parsed = JSON.parse(trimmed);
+
+            if(Array.isArray(parsed))
+            {
+               return parsed
+                  .map(item => typeof item === "string" ? item.trim() : "")
+                  .filter(item => item !== "");
+            }
+         }
+         catch
+         {
+            // Fall back to the legacy comma-separated representation.
+         }
+
+         return trimmed
+            .split(",")
+            .map(item => item.trim())
+            .filter(item => item !== "");
+      }
+
+      return [];
    }
 
    function getAntiForgeryToken()
