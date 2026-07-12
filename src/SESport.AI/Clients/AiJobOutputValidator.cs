@@ -407,10 +407,10 @@ internal static class AiJobOutputValidator
          }
 
          throw CreateInvalidOutputException(
-            "ParticipantMention source must name the participant and " +
-            "target country.",
-            outputText
-         );
+         "ParticipantMention source must name the participant and " +
+         "target country.",
+         outputText
+      );
       }
 
       if(!string.Equals(
@@ -421,11 +421,14 @@ internal static class AiJobOutputValidator
       {
          throw CreateInvalidOutputException(
             "Participant source EvidenceType must match fetched source.",
-            outputText
-         );
+         outputText
+      );
       }
 
-      if(ContainsAnyEvidenceTerm(fetchedSource.EvidenceText, [participantName]))
+      if(ContainsParticipantName(
+         fetchedSource.EvidenceText,
+         participantName
+      ))
       {
          return;
       }

@@ -2061,6 +2061,45 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void AiJobOutputValidatorAcceptsParticipantListWithReversedNameOrder()
+   {
+      var sourceUrl = "https://example.test/start-list.html";
+      var participantName = "Peder Fredricson";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var toolTrace = new JsonArray
+      {
+         new JsonObject
+         {
+            ["name"] = WebToolNames.GetPage,
+            ["url"] = sourceUrl,
+            ["result"] = $$"""
+               Page URL: {{sourceUrl}}
+               Title: Start list
+               URL: {{sourceUrl}}
+               Page text:
+               SWE | FREDRICSON, Peder
+               SWE | VON ECKERMANN, Henrik
+               SWE | ROSLUND, Anita
+               """
+         }
+      };
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         toolTrace
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
    public void AiJobOutputValidatorRejectsParticipantListForArticleMention()
    {
       var sourceUrl = "https://example.test/news/line-up";
