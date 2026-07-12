@@ -892,7 +892,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       string? term,
       CancellationToken cancellationToken,
       bool excludePersonAndPair = false,
-      IReadOnlyCollection<string>? entityTypeIds = null
+      IReadOnlyCollection<string>? entityTypeIds = null,
+      Guid? excludeEntityId = null,
+      int? maxResults = null
    )
    {
       return await QueryEntitiesAsync(
@@ -900,14 +902,18 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          true,
          cancellationToken,
          excludePersonAndPair,
-         entityTypeIds
+         entityTypeIds,
+         excludeEntityId,
+         maxResults
       );
    }
 
    public async Task<IReadOnlyList<EntityListItem>> GetEntitiesAsync(
       CancellationToken cancellationToken,
       bool excludePersonAndPair = false,
-      IReadOnlyCollection<string>? entityTypeIds = null
+      IReadOnlyCollection<string>? entityTypeIds = null,
+      Guid? excludeEntityId = null,
+      int? maxResults = null
    )
    {
       return await QueryEntitiesAsync(
@@ -915,7 +921,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          false,
          cancellationToken,
          excludePersonAndPair,
-         entityTypeIds
+         entityTypeIds,
+         excludeEntityId,
+         maxResults
       );
    }
 
@@ -924,7 +932,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       bool applyTermFilter,
       CancellationToken cancellationToken,
       bool excludePersonAndPair,
-      IReadOnlyCollection<string>? entityTypeIds
+      IReadOnlyCollection<string>? entityTypeIds,
+      Guid? excludeEntityId,
+      int? maxResults
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -972,6 +982,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          );
       }
 
+      if(excludeEntityId is not null)
+      {
+         whereClauses.Add("e.id <> @exclude_entity_id");
+      }
+
       if(normalizedEntityTypeIds.Length > 0)
       {
          whereClauses.Add("e.entity_type_id = any(@entity_type_ids)");
@@ -1010,6 +1025,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          ) linked on true
          {whereSql}
          order by e.canonical_name
+         {GetLimitSql(maxResults)}
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -1025,6 +1041,19 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "entity_type_ids",
             normalizedEntityTypeIds
          );
+      }
+
+      if(excludeEntityId is not null)
+      {
+         command.Parameters.AddWithValue(
+            "exclude_entity_id",
+            excludeEntityId.Value
+         );
+      }
+
+      if(maxResults is > 0)
+      {
+         command.Parameters.AddWithValue("max_results", maxResults.Value);
       }
 
       await using var reader = await command.ExecuteReaderAsync(
@@ -1049,6 +1078,66 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       }
 
       return entities;
+   }
+
+   public async Task<IReadOnlyList<EntityLinkOption>>
+      GetEntityLinkOptionsByIdsAsync(
+         IReadOnlyCollection<Guid> ids,
+         Guid? excludeEntityId,
+         CancellationToken cancellationToken
+      )
+   {
+      if(ids.Count == 0)
+      {
+         return [];
+      }
+
+      var sql = $"""
+         select
+            e.id,
+            e.canonical_name,
+            et.label,
+            s.name
+         from entities e
+         join entity_types et on et.id = e.entity_type_id
+         join sports s on s.id = e.sport_id
+         where e.id = any(@ids)
+            and {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+               "e.entity_type_id"
+            )}
+            {GetExcludeEntitySql(excludeEntityId)}
+         order by e.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("ids", ids.ToArray());
+
+      if(excludeEntityId is not null)
+      {
+         command.Parameters.AddWithValue(
+            "exclude_entity_id",
+            excludeEntityId.Value
+         );
+      }
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityLinkOption>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityLinkOption(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3)
+            )
+         );
+      }
+
+      return options;
    }
 
    public async Task<EntityEditModel?> GetEntityForEditAsync(
@@ -1297,6 +1386,20 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       return options;
    }
+
+   private static string GetExcludeEntitySql(Guid? excludeEntityId) =>
+      excludeEntityId is null
+         ? string.Empty
+         : """
+            and e.id <> @exclude_entity_id
+            """;
+
+   private static string GetLimitSql(int? maxResults) =>
+      maxResults is > 0
+         ? """
+            limit @max_results
+            """
+         : string.Empty;
 
    public async Task<IReadOnlyList<EntityLinkOption>>
       GetOrganizationEntityOptionsAsync(

@@ -13,11 +13,14 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       bool? sortAsc = null,
       bool includeAll = false,
       bool organizationOnly = false,
-      string[]? entityTypeIds = null
+      string[]? entityTypeIds = null,
+      Guid? excludeEntityId = null,
+      int? maxResults = null
    )
    {
       term = term?.Trim() ?? string.Empty;
       var normalizedEntityTypeIds = NormalizeEntityTypeIds(entityTypeIds);
+      var normalizedMaxResults = maxResults is > 0 ? maxResults : null;
 
       if(term == string.Empty &&
          normalizedEntityTypeIds.Count == 0 &&
@@ -30,13 +33,17 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
          ? await repository.GetEntitiesAsync(
             cancellationToken,
             organizationOnly,
-            normalizedEntityTypeIds
+            normalizedEntityTypeIds,
+            excludeEntityId,
+            normalizedMaxResults
          )
          : await repository.SearchEntitiesAsync(
             term,
             cancellationToken,
             organizationOnly,
-            normalizedEntityTypeIds
+            normalizedEntityTypeIds,
+            excludeEntityId,
+            normalizedMaxResults
          );
       results = SortEntities(
          results,

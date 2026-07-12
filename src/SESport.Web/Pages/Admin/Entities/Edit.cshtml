@@ -2,6 +2,7 @@
 @model SESport.Web.Pages.Admin.Entities.EditModel
 @{
    ViewData["Title"] = Model.Entity.Id is null ? "New Entity" : "Edit Entity";
+   var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
    var isPersonEntity = string.Equals(
       Model.Entity.EntityTypeId,
       "Person",
@@ -107,25 +108,52 @@
 
    <section class="form-section">
       <h2>Linked entities</h2>
-      <label>
+      <div class="entity-linked-entities-field">
          <span>Connections</span>
-         <div class="multi-select-row">
-            <select asp-for="Entity.LinkedEntityIds"
-                    asp-items="Model.EntityLinkOptions"
-                    multiple
-                    class="ses-multiselect"
-                    data-multi-select
-                    data-placeholder="Select linked entities"
-                    data-select-all="false"
-                    data-dropdown-height="140px">
-            </select>
-            <button type="button"
-                    class="multi-select-clear"
-                    data-multi-select-clear>
-               Clear
-            </button>
+         <div class="entity-linked-entities-picker broadcast-org-autocomplete"
+              data-entity-linked-entities-picker
+              data-entity-linked-entities-search-url="@entitySearchUrl"
+              data-entity-id="@(Model.Entity.Id?.ToString() ?? string.Empty)"
+              data-organization-only="true"
+              data-max-results="20">
+            <div class="entity-linked-entities-input-wrap">
+               <input class="broadcast-org-entity-input
+                            entity-linked-entities-input"
+                      type="text"
+                      placeholder="Search linked entities"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-label="Search linked entities"
+                      data-entity-linked-entities-input />
+               <div class="broadcast-org-entity-suggestions"
+                    hidden
+                    data-entity-linked-entities-suggestions></div>
+            </div>
+            <div class="entity-linked-entities-selected"
+                 data-entity-linked-entities-selected>
+               @foreach(var option in Model.LinkedEntityOptions)
+               {
+                  <span class="entity-linked-entities-chip"
+                        data-entity-linked-entities-chip
+                        data-entity-id="@option.Id">
+                     <input type="hidden"
+                            name="Entity.LinkedEntityIds"
+                            value="@option.Id"
+                            data-entity-linked-entities-hidden-id />
+                     <span>
+                        @option.Name (@option.EntityType, @option.Sport)
+                     </span>
+                     <button type="button"
+                             class="entity-linked-entities-chip-remove"
+                             data-entity-linked-entities-chip-remove
+                             aria-label="@($"Remove {option.Name}")">
+                        ×
+                     </button>
+                  </span>
+               }
+            </div>
          </div>
-      </label>
+      </div>
 
       <h3 class="subgrid-heading">Activities</h3>
       @if(Model.Activities.Count == 0)
@@ -207,3 +235,8 @@
       <button class="button button-primary" type="submit">Save</button>
    </section>
 </form>
+
+@section Scripts {
+   <script src="~/js/entity-linked-entities.js"
+           asp-append-version="true"></script>
+}

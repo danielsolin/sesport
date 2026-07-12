@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Entities;
@@ -32,7 +31,7 @@ public class EditModel(AdminRepository repository) : PageModel
 
    public IReadOnlyList<LookupOption> PersonGenders { get; private set; } = [];
 
-   public IReadOnlyList<SelectListItem> EntityLinkOptions
+   public IReadOnlyList<EntityLinkOption> LinkedEntityOptions
    {
       get;
       private set;
@@ -53,7 +52,7 @@ public class EditModel(AdminRepository repository) : PageModel
    {
       if(id is null)
       {
-         await LoadOptionsAsync(null, cancellationToken);
+         await LoadOptionsAsync(cancellationToken);
          return Page();
       }
 
@@ -62,7 +61,7 @@ public class EditModel(AdminRepository repository) : PageModel
          cancellationToken
       ) ?? new EntityEditModel();
 
-      await LoadOptionsAsync(Entity.Id, cancellationToken);
+      await LoadOptionsAsync(cancellationToken);
 
       return Entity.Id is null ? NotFound() : Page();
    }
@@ -75,7 +74,7 @@ public class EditModel(AdminRepository repository) : PageModel
 
       if(!ModelState.IsValid)
       {
-         await LoadOptionsAsync(Entity.Id, cancellationToken);
+         await LoadOptionsAsync(cancellationToken);
          return Page();
       }
 
@@ -86,17 +85,14 @@ public class EditModel(AdminRepository repository) : PageModel
       catch(Exception exception)
       {
          LoadError = exception.Message;
-         await LoadOptionsAsync(Entity.Id, cancellationToken);
+         await LoadOptionsAsync(cancellationToken);
          return Page();
       }
 
       return RedirectToPage("./Index");
    }
 
-   private async Task LoadOptionsAsync(
-      Guid? entityId,
-      CancellationToken cancellationToken
-   )
+   private async Task LoadOptionsAsync(CancellationToken cancellationToken)
    {
       try
       {
@@ -126,20 +122,29 @@ public class EditModel(AdminRepository repository) : PageModel
          PersonGenders = await repository.GetPersonGenderOptionsAsync(
             cancellationToken
          );
-         var entityLinkOptions = await repository.GetEntityLinkOptionsAsync(
-            entityId,
-            cancellationToken
-         );
-         EntityLinkOptions = entityLinkOptions
-            .Select(entity => new SelectListItem(
-               $"{entity.Name} ({entity.EntityType}, {entity.Sport})",
-               entity.Id.ToString()
-            ))
+         var entityLinkOptions =
+            await repository.GetEntityLinkOptionsByIdsAsync(
+               Entity.LinkedEntityIds,
+               Entity.Id,
+               cancellationToken
+            );
+         var entityLinkOptionsById = entityLinkOptions
+            .ToDictionary(option => option.Id);
+         LinkedEntityOptions = Entity.LinkedEntityIds
+            .Distinct()
+            .Select(id => entityLinkOptionsById.TryGetValue(
+               id,
+               out var option
+            )
+               ? option
+               : null)
+            .Where(option => option is not null)
+            .Select(option => option!)
             .ToList();
-         Activities = entityId is null
+         Activities = Entity.Id is null
             ? []
             : await repository.GetEntityActivitiesAsync(
-               entityId.Value,
+               Entity.Id.Value,
                cancellationToken
             );
       }

@@ -154,6 +154,48 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task GetEntityLinkOptionsByIdsAsyncReturnsOnlyRequestedIds()
+   {
+      var requestedId = Guid.NewGuid();
+      var otherId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         requestedId,
+         $"Requested Entity {requestedId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         otherId,
+         $"Other Entity {otherId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+
+      try
+      {
+         var options = await repository.GetEntityLinkOptionsByIdsAsync(
+            [requestedId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Single(options);
+         Assert.Equal(requestedId, options[0].Id);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, requestedId);
+         await DeleteEntityAsync(dataSource, otherId);
+      }
+   }
+
+   [Fact]
    public async Task GetEntityActivitiesAsyncReturnsLinkedActivities()
    {
       var entityId = Guid.NewGuid();
