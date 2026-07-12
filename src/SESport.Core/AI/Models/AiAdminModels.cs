@@ -97,6 +97,7 @@ public sealed record AiRunDetail(
    int PromptVersion,
    string SystemPrompt,
    string UserPromptTemplate,
+   decimal? PromptTemperature,
    string ProviderId,
    string ProviderLabel,
    string? ProviderModel,

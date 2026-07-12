@@ -445,7 +445,7 @@ public class DetailsModel(
 
    public static string FormatTemperature(AiRunDetail run)
    {
-      var temperature = GetTemperature(run.RawRequestJson);
+      var temperature = run.PromptTemperature;
 
       return temperature is null
          ? "Not set"
@@ -988,46 +988,6 @@ public class DetailsModel(
       catch(JsonException)
       {
          return false;
-      }
-   }
-
-   private static decimal? GetTemperature(string? rawRequestJson)
-   {
-      if(string.IsNullOrWhiteSpace(rawRequestJson))
-      {
-         return null;
-      }
-
-      try
-      {
-         using var document = JsonDocument.Parse(rawRequestJson);
-
-         if(document.RootElement.ValueKind != JsonValueKind.Object ||
-            !document.RootElement.TryGetProperty(
-               "temperature",
-               out var temperatureProperty
-            ))
-         {
-            return null;
-         }
-
-         return temperatureProperty.ValueKind switch
-         {
-            JsonValueKind.Number when temperatureProperty.TryGetDecimal(
-               out var value
-            ) => value,
-            JsonValueKind.String when decimal.TryParse(
-               temperatureProperty.GetString(),
-               NumberStyles.Number,
-               CultureInfo.InvariantCulture,
-               out var parsed
-            ) => parsed,
-            _ => null
-         };
-      }
-      catch(JsonException)
-      {
-         return null;
       }
    }
 

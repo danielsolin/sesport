@@ -78,7 +78,8 @@ public sealed class DetailsModelTests
    [Fact]
    public void BuildExecutionEnvironmentOptionsIncludesCurrentEnvironment()
    {
-      var currentExecutionEnvironment = SESport.Core.AI.ExecutionEnvironment.Current;
+      var currentExecutionEnvironment =
+         SESport.Core.AI.ExecutionEnvironment.Current;
       var options = DetailsModel.BuildExecutionEnvironmentOptions(
          ["Worker-A"],
          null,
@@ -158,6 +159,7 @@ public sealed class DetailsModelTests
          PromptVersion: 1,
          SystemPrompt: "System",
          UserPromptTemplate: "User",
+         PromptTemperature: null,
          ProviderId: "provider",
          ProviderLabel: "Provider",
          ProviderModel: "Model",
@@ -197,7 +199,7 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
-   public void FormatTemperatureUsesRawRequestValue()
+   public void FormatTemperatureUsesPromptTemperature()
    {
       var run = new SESport.Core.AI.AiRunDetail(
          Id: Guid.NewGuid(),
@@ -207,6 +209,45 @@ public sealed class DetailsModelTests
          PromptVersion: 1,
          SystemPrompt: "System",
          UserPromptTemplate: "User",
+         PromptTemperature: 0.73m,
+         ProviderId: "provider",
+         ProviderLabel: "Provider",
+         ProviderModel: "Model",
+         StatusId: "completed",
+         CorrelationId: null,
+         InputPayloadJson: "{}",
+         RenderedPrompt: "Rendered",
+         RawRequestJson: null,
+         RawResponseJson: null,
+         ToolTraceJson: null,
+         ToolRoundCount: 0,
+         ConversationCharacterCount: 0,
+         OutputText: null,
+         ErrorMessage: null,
+         StartedAt: DateTimeOffset.UtcNow,
+         CompletedAt: DateTimeOffset.UtcNow,
+         DurationSeconds: 1m,
+         InputTokens: null,
+         OutputTokens: null,
+         ReasoningTokens: null,
+         ExecutionEnvironment: null
+      );
+
+      Assert.Equal("0.73", DetailsModel.FormatTemperature(run));
+   }
+
+   [Fact]
+   public void FormatTemperatureReturnsNotSetWhenPromptTemperatureIsNull()
+   {
+      var run = new SESport.Core.AI.AiRunDetail(
+         Id: Guid.NewGuid(),
+         JobId: "job",
+         JobLabel: "Job",
+         PromptId: Guid.NewGuid(),
+         PromptVersion: 1,
+         SystemPrompt: "System",
+         UserPromptTemplate: "User",
+         PromptTemperature: null,
          ProviderId: "provider",
          ProviderLabel: "Provider",
          ProviderModel: "Model",
@@ -235,6 +276,6 @@ public sealed class DetailsModelTests
          ExecutionEnvironment: null
       );
 
-      Assert.Equal("0.73", DetailsModel.FormatTemperature(run));
+      Assert.Equal("Not set", DetailsModel.FormatTemperature(run));
    }
 }

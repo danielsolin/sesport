@@ -546,6 +546,7 @@ public class AiJobRunnerTests
                run.PromptVersion,
                run.PromptSystemPrompt,
                run.PromptUserPromptTemplate,
+               null,
                run.ProviderId,
                "Provider",
                run.ProviderModel,
