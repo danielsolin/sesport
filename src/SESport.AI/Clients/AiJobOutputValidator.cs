@@ -65,12 +65,11 @@ internal static class AiJobOutputValidator
          return outputText;
       }
 
-      ValidateParticipationOutput(
+      return ValidateParticipationOutput(
          outputText,
          requireFetchedSources,
          toolTrace
       );
-      return outputText;
    }
 
    public static IReadOnlyList<string> ReadParticipantNames(
@@ -129,7 +128,7 @@ internal static class AiJobOutputValidator
       );
    }
 
-   private static void ValidateParticipationOutput(
+   private static string ValidateParticipationOutput(
       string outputText,
       bool requireFetchedSources,
       JsonArray? toolTrace
@@ -161,6 +160,7 @@ internal static class AiJobOutputValidator
          "CheckedSources",
          legacyEvidenceType
       );
+      var checkedSourcesFromCheckedSourcesProperty = checkedSources.Count > 0;
 
       if(checkedSources.Count == 0)
       {
@@ -169,40 +169,65 @@ internal static class AiJobOutputValidator
             "Sources",
             legacyEvidenceType
          );
+         checkedSourcesFromCheckedSourcesProperty = false;
+      }
+
+      var checkedSourcesForValidation = checkedSources;
+      var rewriteCheckedSources = false;
+      SourceEvidence? sourceEvidence = null;
+
+      if(requireFetchedSources)
+      {
+         sourceEvidence = ExtractSourceEvidence(toolTrace);
+         checkedSourcesForValidation = NormalizeCheckedSources(
+            checkedSources,
+            sourceEvidence,
+            out rewriteCheckedSources
+         );
       }
 
       ValidateParticipationShape(
          outputText,
          participation,
          participantEvidence,
-         checkedSources
+         checkedSourcesForValidation
       );
 
       if(requireFetchedSources)
       {
-         var sourceEvidence = ExtractSourceEvidence(toolTrace);
          ValidateParticipantSources(
             outputText,
             participantEvidence,
-            sourceEvidence
+            sourceEvidence!
          );
          ValidateCheckedSources(
             outputText,
-            checkedSources,
-            sourceEvidence
+            checkedSourcesForValidation,
+            sourceEvidence!
          );
          ValidateConclusionEvidence(
             outputText,
             participation!,
-            checkedSources
+            checkedSourcesForValidation
          );
          ValidateUnknownEvidence(
             outputText,
             participation!,
-            checkedSources,
-            sourceEvidence
+            checkedSourcesForValidation,
+            sourceEvidence!
          );
+
+         if(checkedSourcesFromCheckedSourcesProperty &&
+            rewriteCheckedSources)
+         {
+            return RewriteCheckedSources(
+               outputText,
+               checkedSourcesForValidation
+            );
+         }
       }
+
+      return outputText;
    }
 
    private static void ValidateParticipationShape(
@@ -399,7 +424,7 @@ internal static class AiJobOutputValidator
          StringComparison.Ordinal
       ))
       {
-         if(ContainsParticipantMention(
+        if(ContainsParticipantMention(
             fetchedSource.EvidenceText,
             participantName
          ))
@@ -408,10 +433,10 @@ internal static class AiJobOutputValidator
          }
 
          throw CreateInvalidOutputException(
-         "ParticipantMention source must name the participant and " +
-         "target country.",
-         outputText
-      );
+            "ParticipantMention source must name the participant and " +
+            "target country.",
+            outputText
+         );
       }
 
       if(!string.Equals(
@@ -422,8 +447,8 @@ internal static class AiJobOutputValidator
       {
          throw CreateInvalidOutputException(
             "Participant source EvidenceType must match fetched source.",
-         outputText
-      );
+            outputText
+         );
       }
 
       if(ContainsParticipantName(
@@ -477,7 +502,7 @@ internal static class AiJobOutputValidator
 
       if(!sourceEvidence.FetchedSources.TryGetValue(
          NormalizeUrl(source.Url),
-         out var fetchedSource
+         out _
       ))
       {
          throw CreateInvalidOutputException(
@@ -486,20 +511,88 @@ internal static class AiJobOutputValidator
             outputText
          );
       }
+   }
 
-      if(string.Equals(
-         fetchedSource.EvidenceType,
-         source.EvidenceType,
-         StringComparison.Ordinal
-      ))
+   private static IReadOnlyList<SourceEvidenceReference>
+      NormalizeCheckedSources(
+         IReadOnlyList<SourceEvidenceReference> sources,
+         SourceEvidence sourceEvidence,
+         out bool changed
+      )
+   {
+      var normalizedSources = new List<SourceEvidenceReference>(
+         sources.Count
+      );
+      changed = false;
+
+      foreach(var source in sources)
       {
-         return;
+         if(string.Equals(
+            source.EvidenceType,
+            AiParticipationEvidenceTypeIds.SearchOnly,
+            StringComparison.Ordinal
+         ))
+         {
+            normalizedSources.Add(source);
+            continue;
+         }
+
+         if(!sourceEvidence.FetchedSources.TryGetValue(
+            NormalizeUrl(source.Url),
+            out var fetchedSource
+         ))
+         {
+            normalizedSources.Add(source);
+            continue;
+         }
+
+         if(string.Equals(
+            source.EvidenceType,
+            fetchedSource.EvidenceType,
+            StringComparison.Ordinal
+         ))
+         {
+            normalizedSources.Add(source);
+            continue;
+         }
+
+         normalizedSources.Add(
+            source with
+            {
+               EvidenceType = fetchedSource.EvidenceType
+            }
+         );
+         changed = true;
       }
 
-      throw CreateInvalidOutputException(
-         "Checked source EvidenceType must match fetched source.",
-         outputText
-      );
+      return changed ? normalizedSources : sources;
+   }
+
+   private static string RewriteCheckedSources(
+      string outputText,
+      IReadOnlyList<SourceEvidenceReference> checkedSources
+   )
+   {
+      var root = JsonNode.Parse(outputText) as JsonObject;
+
+      if(root is null)
+      {
+         return outputText;
+      }
+
+      var rewrittenCheckedSources = new JsonArray();
+
+      foreach(var source in checkedSources)
+      {
+         rewrittenCheckedSources.Add(new JsonObject
+         {
+            ["Url"] = source.Url,
+            ["EvidenceType"] = source.EvidenceType
+         });
+      }
+
+      root["CheckedSources"] = rewrittenCheckedSources;
+      return root.ToJsonString();
    }
 
    private static void ValidateConclusionEvidence(

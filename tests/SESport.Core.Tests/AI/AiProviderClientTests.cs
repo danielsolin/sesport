@@ -1998,6 +1998,42 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void AiJobOutputValidatorNormalizesCheckedSourceEvidenceType()
+   {
+      var sourceUrl = "https://example.test/news/line-up";
+      var participantName = "Thobias Montler";
+      var output = CreateParticipationYesOutput(
+         sourceUrl,
+         AiParticipationEvidenceTypeIds.ParticipantMention,
+         participantName
+      );
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         CreateArticleMentionToolTrace(sourceUrl, participantName)
+      );
+
+      using var document = JsonDocument.Parse(result);
+      Assert.Equal(
+         AiParticipationEvidenceTypeIds.ParticipantMention,
+         document.RootElement
+            .GetProperty("Participants")[0]
+            .GetProperty("Sources")[0]
+            .GetProperty("EvidenceType")
+            .GetString()
+      );
+      Assert.Equal(
+         AiParticipationEvidenceTypeIds.EventInfoOnly,
+         document.RootElement
+            .GetProperty("CheckedSources")[0]
+            .GetProperty("EvidenceType")
+            .GetString()
+      );
+   }
+
+   [Fact]
    public void AiJobOutputValidatorAcceptsNicknameInParticipantMention()
    {
       var sourceUrl = "https://example.test/news/line-up";
