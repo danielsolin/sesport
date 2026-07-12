@@ -1,0 +1,82 @@
+{
+   "Participants": [
+      {
+         "Name": "Max Dahlin",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/this-is-bastad/tournament/players/",
+               "EvidenceType": "ParticipantList"
+            },
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "William Rejchtman Vinciguerra",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Olle Wallin",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Adam Heinonen",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Erik Grevelius",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Nikola Slavic",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Oliver Johansson",
+         "Sources": [
+            {
+               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      }
+   ],
+   "Participation": "Yes",
+   "CheckedSources": [
+      {
+         "Url": "https://nordeaopen.se/this-is-bastad/tournament/players/",
+         "EvidenceType": "ParticipantList"
+      },
+      {
+         "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+         "EvidenceType": "ParticipantList"
+      }
+   ]
+}
