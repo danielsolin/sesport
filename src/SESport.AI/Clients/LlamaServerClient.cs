@@ -529,8 +529,9 @@ public sealed class LlamaServerClient : IAiProviderClient
                   ).Count == 0)
                {
                   throw new AiJobOutputValidationException(
-                     "submit_report requires at least one supported " +
-                     "participant while research tools remain available."
+                     AiJobValidationMessages
+                        .SubmitReportRequiresSupportedParticipantMessage +
+                     " while research tools remain available."
                   );
                }
 

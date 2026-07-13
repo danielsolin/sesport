@@ -413,8 +413,8 @@ internal static class AiJobOutputValidator
       ))
       {
          throw CreateInvalidOutputException(
-            "Participant sources must be fetched with web_get_page or " +
-            "web_find_in_page.",
+            AiJobValidationMessages
+               .ParticipantSourcesMustBeFetchedMessage,
             outputText
          );
       }
@@ -434,8 +434,8 @@ internal static class AiJobOutputValidator
          }
 
          throw CreateInvalidOutputException(
-            "ParticipantMention source must name the participant and " +
-            "target country.",
+            AiJobValidationMessages
+               .ParticipantMentionSourceTargetCountryMessage,
             outputText
          );
       }
@@ -452,7 +452,8 @@ internal static class AiJobOutputValidator
          ))
          {
             throw CreateInvalidOutputException(
-               "Participant source EvidenceType must match fetched source.",
+               AiJobValidationMessages
+                  .ParticipantSourceEvidenceTypeMismatch,
                outputText
             );
          }
@@ -467,7 +468,7 @@ internal static class AiJobOutputValidator
       }
 
       throw CreateInvalidOutputException(
-         "Participant source must name the participant.",
+         AiJobValidationMessages.ParticipantSourceMustNameParticipant,
          outputText
       );
    }

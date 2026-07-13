@@ -1,5 +1,6 @@
 using SESport.AI.Clients;
 using SESport.Core.AI;
+using SESport.Core.Domain;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,6 +16,68 @@ internal static class LlamaRequestFactory
 {
    private const string StructuredOutputPromptMarker =
       "Output format instructions:";
+   private const string StructuredOutputPromptInstruction =
+      StructuredOutputPromptMarker + "\n" +
+      "Return only one raw object literal.\n" +
+      "The first character must be { and the last character must be }.\n" +
+      "Do not use markdown, code fences, commentary, explanations, tool\n" +
+      "calls, channel markers, constraint markers, or special tokens.";
+
+   private const string JsonPropertyContent = "content";
+   private const string JsonPropertyFunction = "function";
+   private const string JsonPropertyGrammar = "grammar";
+   private const string JsonPropertyJsonSchema = "json_schema";
+   private const string JsonPropertyMessages = "messages";
+   private const string JsonPropertyMaxTokens = "max_tokens";
+   private const string JsonPropertyModel = "model";
+   private const string JsonPropertyName = "name";
+   private const string JsonPropertyResponseFormat = "response_format";
+   private const string JsonPropertyRole = "role";
+   private const string JsonPropertyTemperature = "temperature";
+   private const string JsonPropertyToolChoice = "tool_choice";
+   private const string JsonPropertyTools = "tools";
+   private const string JsonValueJsonObject = "json_object";
+   private const string JsonValueRequired = "required";
+   private const string JsonValueSystem = "system";
+   private const string JsonValueUser = "user";
+
+   private const string ConfiguredToolsJsonMustBeArrayMessage =
+      "Configured tools JSON must be a JSON array.";
+   private const string FinalAnswerRejectedPrefix =
+      "The previous final answer was rejected by validation: ";
+   private const string FinalReportRejectedPrefix =
+      "The previous final report was rejected by validation: ";
+   private const string NoMoreToolsPrompt =
+      "No more tool calls are available. Use only the web research " +
+      "already present in this conversation and return the final answer " +
+      "now.";
+   private const string ObjectShapeDefinitionLabel =
+      "Object shape definition:";
+   private const string ReportBudgetExhaustedPrompt =
+      "The research tool budget is exhausted. Correct the report " +
+      "using only evidence already present in this conversation. " +
+      "Preserve all participants supported by that evidence, correct " +
+      "the rejected fields, and return the complete final answer " +
+      "again. No tool call is available.";
+   private const string ReportFailureLabel = "Why it failed:";
+   private const string ReportSubmissionAttemptNotice =
+      "This happened after a " + WebToolNames.SubmitReport + " attempt.";
+   private const string ReportToolsAvailablePrompt =
+      "Tools are still available. Continue researching with tool " +
+      "calls until the validation issue is resolved. Do not return " +
+      "another final answer with the same unsupported evidence.";
+   private const string ToolCallsRemainingPrefix =
+      "Tool calls remaining: ";
+   private const string ToolCallsRemainingSeparator = " of ";
+   private const string ToolFormatFeedbackContinuePrompt =
+      "Tools are still available. Continue with a valid tool call. " +
+      "Do not return a final answer yet.";
+   private const string ToolFormatFeedbackPrefix =
+      "The previous tool-call attempt could not be parsed by ";
+   private const string ToolFormatFeedbackSource = "llama-server: ";
+   private const string ToolUsageRequiresConfiguredToolsMessage =
+      "Tool usage is enabled but no tools JSON was configured.";
+   private const string PromptRequestNamePrefix = "prompt_";
 
    public static LlamaRequestState CreateInitial(
       AiProviderDefinition provider,
@@ -45,14 +108,14 @@ internal static class LlamaRequestFactory
       if(includeTools && requestTools.Count == 0)
       {
          throw new InvalidOperationException(
-            "Tool usage is enabled but no tools JSON was configured."
+            ToolUsageRequiresConfiguredToolsMessage
          );
       }
 
       if(requestTools.Count > 0)
       {
-         payload["tools"] = requestTools;
-         payload["tool_choice"] = "required";
+         payload[JsonPropertyTools] = requestTools;
+         payload[JsonPropertyToolChoice] = JsonValueRequired;
       }
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
@@ -72,8 +135,8 @@ internal static class LlamaRequestFactory
    )
    {
       var finalRequest = (JsonObject)request.DeepClone();
-      finalRequest.Remove("tools");
-      finalRequest.Remove("tool_choice");
+      finalRequest.Remove(JsonPropertyTools);
+      finalRequest.Remove(JsonPropertyToolChoice);
       ApplyStructuredOutputPrompt(finalRequest, job, prompt);
       ApplyStructuredResponseFormat(finalRequest, job, prompt);
 
@@ -92,10 +155,12 @@ internal static class LlamaRequestFactory
          return;
       }
 
-      var remainingToolCalls = Math.Max(maxToolRounds.Value - toolRoundCount,
-         0);
-      var budgetPrompt = $"Tool calls remaining: {remainingToolCalls} of " +
-         $"{maxToolRounds.Value}.";
+      var remainingToolCalls = Math.Max(
+         maxToolRounds.Value - toolRoundCount,
+         0
+      );
+      var budgetPrompt = $"{ToolCallsRemainingPrefix}{remainingToolCalls}" +
+         $"{ToolCallsRemainingSeparator}{maxToolRounds.Value}.";
       var systemPrompt = string.IsNullOrWhiteSpace(baseSystemPrompt)
          ? budgetPrompt
          : $"{baseSystemPrompt}{Environment.NewLine}{Environment.NewLine}" +
@@ -109,10 +174,7 @@ internal static class LlamaRequestFactory
       string? baseSystemPrompt
    )
    {
-      var finalPrompt =
-         "No more tool calls are available. Use only the web research " +
-         "already present in this conversation and return the final answer " +
-         "now.";
+      var finalPrompt = NoMoreToolsPrompt;
       var systemPrompt = string.IsNullOrWhiteSpace(baseSystemPrompt)
          ? finalPrompt
          : $"{baseSystemPrompt}{Environment.NewLine}{Environment.NewLine}" +
@@ -133,13 +195,7 @@ internal static class LlamaRequestFactory
          toolsStillAvailable: true
       );
 
-      messages.Add(
-         new JsonObject
-         {
-            ["role"] = "system",
-            ["content"] = prompt
-         }
-      );
+      messages.Add(CreateSystemMessage(prompt));
    }
 
    public static void AddFinalReportCorrectionPrompt(
@@ -154,13 +210,7 @@ internal static class LlamaRequestFactory
          toolsStillAvailable: false
       );
 
-      messages.Add(
-         new JsonObject
-         {
-            ["role"] = "system",
-            ["content"] = prompt
-         }
-      );
+      messages.Add(CreateSystemMessage(prompt));
    }
 
    public static void AddToolFormatFeedbackPrompt(
@@ -169,20 +219,13 @@ internal static class LlamaRequestFactory
    )
    {
       var prompt =
-         "The previous tool-call attempt could not be parsed by " +
-         "llama-server: " +
+         ToolFormatFeedbackPrefix +
+         ToolFormatFeedbackSource +
          TruncateFeedback(formatError) +
          $"{Environment.NewLine}{Environment.NewLine}" +
-         "Tools are still available. Continue with a valid tool call. " +
-         "Do not return a final answer yet.";
+         ToolFormatFeedbackContinuePrompt;
 
-      messages.Add(
-         new JsonObject
-         {
-            ["role"] = "system",
-            ["content"] = prompt
-         }
-      );
+      messages.Add(CreateSystemMessage(prompt));
    }
 
    private static void UpsertPrimarySystemMessage(
@@ -190,11 +233,7 @@ internal static class LlamaRequestFactory
       string content
    )
    {
-      var systemMessage = new JsonObject
-      {
-         ["role"] = "system",
-         ["content"] = content
-      };
+      var systemMessage = CreateSystemMessage(content);
 
       var systemIndex =
          LlamaConversationTrimmer.FindPrimarySystemMessageIndex(messages);
@@ -206,6 +245,20 @@ internal static class LlamaRequestFactory
       }
 
       messages[systemIndex] = systemMessage;
+   }
+
+   private static JsonObject CreateSystemMessage(string content)
+   {
+      return CreateMessage(JsonValueSystem, content);
+   }
+
+   private static JsonObject CreateMessage(string role, string content)
+   {
+      return new JsonObject
+      {
+         [JsonPropertyRole] = role,
+         [JsonPropertyContent] = content
+      };
    }
 
    private static string TruncateFeedback(string value)
@@ -221,12 +274,12 @@ internal static class LlamaRequestFactory
       bool toolsStillAvailable
    )
    {
-     var builder = new StringBuilder();
+      var builder = new StringBuilder();
 
       builder.Append(
          toolsStillAvailable
-            ? "The previous final answer was rejected by validation: "
-            : "The previous final report was rejected by validation: "
+            ? FinalAnswerRejectedPrefix
+            : FinalReportRejectedPrefix
       );
       builder.Append(TruncateFeedback(validationError));
       builder.AppendLine();
@@ -234,9 +287,7 @@ internal static class LlamaRequestFactory
 
       if(reportSubmissionAttempt)
       {
-         builder.AppendLine(
-            "This happened after a submit_report attempt."
-         );
+         builder.AppendLine(ReportSubmissionAttemptNotice);
          builder.AppendLine();
       }
 
@@ -244,28 +295,18 @@ internal static class LlamaRequestFactory
 
       if(!string.IsNullOrWhiteSpace(validationHint))
       {
-         builder.AppendLine("Why it failed:");
+         builder.AppendLine(ReportFailureLabel);
          builder.AppendLine(validationHint);
          builder.AppendLine();
       }
 
       if(toolsStillAvailable)
       {
-         builder.Append(
-            "Tools are still available. Continue researching with tool " +
-            "calls until the validation issue is resolved. Do not return " +
-            "another final answer with the same unsupported evidence."
-         );
+         builder.Append(ReportToolsAvailablePrompt);
       }
       else
       {
-         builder.Append(
-            "The research tool budget is exhausted. Correct the report " +
-            "using only evidence already present in this conversation. " +
-            "Preserve all participants supported by that evidence, correct " +
-            "the rejected fields, and return the complete final answer " +
-            "again. No tool call is available."
-         );
+         builder.Append(ReportBudgetExhaustedPrompt);
       }
 
       return builder.ToString();
@@ -274,18 +315,23 @@ internal static class LlamaRequestFactory
    private static string GetReportValidationHint(string validationError)
    {
       if(validationError.Contains(
-         "Participant source EvidenceType must match fetched source.",
+         AiJobValidationMessages.ParticipantSourceEvidenceTypeMismatch,
          StringComparison.Ordinal
       ))
       {
          return "A participant source was rejected because its " +
             "EvidenceType did not match the fetched page classification. " +
-            "For roster or list pages, use ParticipantList or TeamRoster. " +
-            "For mention pages, use ParticipantMention.";
+            "For roster or list pages, use " +
+            AiParticipationEvidenceTypeIds.ParticipantList +
+            " or " +
+            AiParticipationEvidenceTypeIds.TeamRoster +
+            ". For mention pages, use " +
+            AiParticipationEvidenceTypeIds.ParticipantMention +
+            ".";
       }
 
       if(validationError.Contains(
-         "Participant source must name the participant.",
+         AiJobValidationMessages.ParticipantSourceMustNameParticipant,
          StringComparison.Ordinal
       ))
       {
@@ -293,17 +339,19 @@ internal static class LlamaRequestFactory
       }
 
       if(validationError.Contains(
-         "ParticipantMention source must name the participant and target " +
-         "country.",
+         AiJobValidationMessages
+            .ParticipantMentionSourceTargetCountryMessage,
          StringComparison.Ordinal
       ))
       {
-         return "ParticipantMention requires the participant name and " +
-            "target country to appear on the fetched page.";
+         return AiParticipationEvidenceTypeIds.ParticipantMention +
+            " requires the participant name and target country to " +
+            "appear on the fetched page.";
       }
 
       if(validationError.Contains(
-         "submit_report requires at least one supported participant",
+         AiJobValidationMessages
+            .SubmitReportRequiresSupportedParticipantMessage,
          StringComparison.Ordinal
       ))
       {
@@ -312,8 +360,8 @@ internal static class LlamaRequestFactory
       }
 
       if(validationError.Contains(
-         "Participant sources must be fetched with web_get_page or " +
-         "web_find_in_page.",
+         AiJobValidationMessages
+            .ParticipantSourcesMustBeFetchedMessage,
          StringComparison.Ordinal
       ))
       {
@@ -334,19 +382,19 @@ internal static class LlamaRequestFactory
    {
       var payload = new JsonObject
       {
-         ["model"] = provider.Model
+         [JsonPropertyModel] = provider.Model
       };
 
-      payload["messages"] = CreateMessages(renderedPrompt);
+      payload[JsonPropertyMessages] = CreateMessages(renderedPrompt);
 
       if(prompt.MaxOutputTokens is not null)
       {
-         payload["max_tokens"] = prompt.MaxOutputTokens.Value;
+         payload[JsonPropertyMaxTokens] = prompt.MaxOutputTokens.Value;
       }
 
       if(prompt.Temperature is not null)
       {
-         payload["temperature"] = prompt.Temperature.Value;
+         payload[JsonPropertyTemperature] = prompt.Temperature.Value;
       }
 
       if(!includeTools)
@@ -367,21 +415,14 @@ internal static class LlamaRequestFactory
 
       if(!string.IsNullOrWhiteSpace(systemPrompt))
       {
-         messages.Add(
-            new JsonObject
-            {
-               ["role"] = "system",
-               ["content"] = systemPrompt
-            }
-         );
+         messages.Add(CreateSystemMessage(systemPrompt));
       }
 
       messages.Add(
-         new JsonObject
-         {
-            ["role"] = "user",
-            ["content"] = renderedPrompt.UserPrompt.Trim()
-         }
+         CreateMessage(
+            JsonValueUser,
+            renderedPrompt.UserPrompt.Trim()
+         )
       );
 
       return messages;
@@ -398,7 +439,7 @@ internal static class LlamaRequestFactory
          return;
       }
 
-      if(payload["messages"] is not JsonArray messages)
+      if(payload[JsonPropertyMessages] is not JsonArray messages)
       {
          return;
       }
@@ -408,13 +449,7 @@ internal static class LlamaRequestFactory
          return;
       }
 
-      messages.Add(
-         new JsonObject
-         {
-            ["role"] = "system",
-            ["content"] = CreateStructuredOutputPrompt(prompt)
-         }
-      );
+      messages.Add(CreateSystemMessage(CreateStructuredOutputPrompt(prompt)));
    }
 
    private static bool ShouldRequestStructuredOutput(
@@ -425,7 +460,7 @@ internal static class LlamaRequestFactory
       return !string.IsNullOrWhiteSpace(prompt.OutputSchemaJson) ||
          string.Equals(
             job.OutputMode,
-            "json_object",
+            JsonValueJsonObject,
             StringComparison.OrdinalIgnoreCase
          );
    }
@@ -445,22 +480,22 @@ internal static class LlamaRequestFactory
          payload,
          job.OutputMode,
          prompt.OutputSchemaJson,
-         $"prompt_{prompt.Id:N}"
+         $"{PromptRequestNamePrefix}{prompt.Id:N}"
       );
    }
 
    private static void RemoveStructuredResponseFormat(JsonObject payload)
    {
-      payload.Remove("response_format");
-      payload.Remove("json_schema");
-      payload.Remove("grammar");
+      payload.Remove(JsonPropertyResponseFormat);
+      payload.Remove(JsonPropertyJsonSchema);
+      payload.Remove(JsonPropertyGrammar);
    }
 
    private static bool HasStructuredOutputPrompt(JsonArray messages)
    {
       foreach(var message in messages.OfType<JsonObject>())
       {
-         if(message["content"] is JsonValue value &&
+         if(message[JsonPropertyContent] is JsonValue value &&
             value.TryGetValue<string>(out var content) &&
             content.Contains(
                StructuredOutputPromptMarker,
@@ -476,13 +511,7 @@ internal static class LlamaRequestFactory
 
    private static string CreateStructuredOutputPrompt(AiPromptDefinition prompt)
    {
-      var instruction = """
-         Output format instructions:
-         Return only one raw object literal.
-         The first character must be { and the last character must be }.
-         Do not use markdown, code fences, commentary, explanations, tool
-         calls, channel markers, constraint markers, or special tokens.
-         """.Trim();
+      var instruction = StructuredOutputPromptInstruction;
 
       if(string.IsNullOrWhiteSpace(prompt.OutputSchemaJson))
       {
@@ -492,7 +521,7 @@ internal static class LlamaRequestFactory
       return
          instruction +
          $"{Environment.NewLine}{Environment.NewLine}" +
-         "Object shape definition:" +
+         ObjectShapeDefinitionLabel +
          $"{Environment.NewLine}{prompt.OutputSchemaJson.Trim()}";
    }
 
@@ -511,7 +540,7 @@ internal static class LlamaRequestFactory
          if(configuredTools is null)
          {
             throw new InvalidOperationException(
-               "Configured tools JSON must be a JSON array."
+               ConfiguredToolsJsonMustBeArrayMessage
             );
          }
 
@@ -544,8 +573,8 @@ internal static class LlamaRequestFactory
 
    private static string GetToolName(JsonObject tool)
    {
-      return tool["function"] is JsonObject function &&
-         function.TryGetPropertyValue("name", out var name) &&
+      return tool[JsonPropertyFunction] is JsonObject function &&
+         function.TryGetPropertyValue(JsonPropertyName, out var name) &&
          name is JsonValue jsonValue &&
          jsonValue.TryGetValue<string>(out var text)
          ? text
