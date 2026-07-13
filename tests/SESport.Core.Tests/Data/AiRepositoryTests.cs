@@ -758,6 +758,52 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunAsyncReturnsPromptMaxOutputTokens()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(
+         dataSource,
+         promptId,
+         jobId,
+         maxOutputTokens: 8192
+      );
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId
+      );
+
+      try
+      {
+         var run = await repository.GetRunAsync(
+            runId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(run);
+         Assert.Equal(8192, run!.PromptMaxOutputTokens);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task UpdateRunExecutionEnvironmentAsyncUpdatesStoredRun()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -893,7 +939,8 @@ public sealed class AiRepositoryTests
       NpgsqlDataSource dataSource,
       Guid promptId,
       string jobId,
-      int version = 1
+      int version = 1,
+      int? maxOutputTokens = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -922,7 +969,7 @@ public sealed class AiRepositoryTests
             'User',
             null,
             null,
-            null,
+            @max_output_tokens,
             true,
             now(),
             now(),
@@ -933,6 +980,10 @@ public sealed class AiRepositoryTests
       command.Parameters.AddWithValue("id", promptId);
       command.Parameters.AddWithValue("job_id", jobId);
       command.Parameters.AddWithValue("version", version);
+      command.Parameters.AddWithValue(
+         "max_output_tokens",
+         (object?)maxOutputTokens ?? DBNull.Value
+      );
       await command.ExecuteNonQueryAsync();
    }
 

@@ -576,7 +576,8 @@ public class AiJobRunnerTests
                run.InputTokens,
                run.OutputTokens,
                run.ReasoningTokens,
-               run.ExecutionEnvironment
+               run.ExecutionEnvironment,
+               null
             )
          );
       }

@@ -452,6 +452,15 @@ public class DetailsModel(
          : temperature.Value.ToString(CultureInfo.InvariantCulture);
    }
 
+   public static string FormatMaxOutputTokens(AiRunDetail run)
+   {
+      var maxOutputTokens = run.PromptMaxOutputTokens;
+
+      return maxOutputTokens is null
+         ? "Not set"
+         : maxOutputTokens.Value.ToString(CultureInfo.InvariantCulture);
+   }
+
    public static int GetToolRoundCount(AiRunDetail run)
    {
       return run.ToolRoundCount;

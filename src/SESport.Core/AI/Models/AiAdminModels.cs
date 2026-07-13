@@ -122,7 +122,8 @@ public sealed record AiRunDetail(
    int? InputTokens,
    int? OutputTokens,
    int? ReasoningTokens,
-   string? ExecutionEnvironment
+   string? ExecutionEnvironment,
+   int? PromptMaxOutputTokens
 );
 
 public sealed class AiPromptEditModel

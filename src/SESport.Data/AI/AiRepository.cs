@@ -364,7 +364,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.input_tokens,
             r.output_tokens,
             r.reasoning_tokens,
-            r.execution_environment
+            r.execution_environment,
+            pr.max_output_tokens
          from ai_job_runs r
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
@@ -412,7 +413,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableInt32(reader, 25),
          ReadNullableInt32(reader, 26),
          ReadNullableInt32(reader, 27),
-         ReadNullableString(reader, 28)
+         ReadNullableString(reader, 28),
+         ReadNullableInt32(reader, 29)
       );
    }
 

@@ -192,7 +192,8 @@ public sealed class DetailsModelTests
          InputTokens: null,
          OutputTokens: null,
          ReasoningTokens: null,
-         ExecutionEnvironment: null
+         ExecutionEnvironment: null,
+         PromptMaxOutputTokens: null
       );
 
       Assert.Equal(20012, DetailsModel.GetMaxPayloadCharacterCount(run));
@@ -230,10 +231,50 @@ public sealed class DetailsModelTests
          InputTokens: null,
          OutputTokens: null,
          ReasoningTokens: null,
-         ExecutionEnvironment: null
+         ExecutionEnvironment: null,
+         PromptMaxOutputTokens: null
       );
 
       Assert.Equal("0.73", DetailsModel.FormatTemperature(run));
+   }
+
+   [Fact]
+   public void FormatMaxOutputTokensUsesPromptSetting()
+   {
+      var run = new SESport.Core.AI.AiRunDetail(
+         Id: Guid.NewGuid(),
+         JobId: "job",
+         JobLabel: "Job",
+         PromptId: Guid.NewGuid(),
+         PromptVersion: 1,
+         SystemPrompt: "System",
+         UserPromptTemplate: "User",
+         PromptTemperature: null,
+         ProviderId: "provider",
+         ProviderLabel: "Provider",
+         ProviderModel: "Model",
+         StatusId: "completed",
+         CorrelationId: null,
+         InputPayloadJson: "{}",
+         RenderedPrompt: "Rendered",
+         RawRequestJson: null,
+         RawResponseJson: null,
+         ToolTraceJson: null,
+         ToolRoundCount: 0,
+         ConversationCharacterCount: 0,
+         OutputText: null,
+         ErrorMessage: null,
+         StartedAt: DateTimeOffset.UtcNow,
+         CompletedAt: DateTimeOffset.UtcNow,
+         DurationSeconds: 1m,
+         InputTokens: null,
+         OutputTokens: null,
+         ReasoningTokens: null,
+         ExecutionEnvironment: null,
+         PromptMaxOutputTokens: 8192
+      );
+
+      Assert.Equal("8192", DetailsModel.FormatMaxOutputTokens(run));
    }
 
    [Fact]
@@ -273,9 +314,49 @@ public sealed class DetailsModelTests
          InputTokens: null,
          OutputTokens: null,
          ReasoningTokens: null,
-         ExecutionEnvironment: null
+         ExecutionEnvironment: null,
+         PromptMaxOutputTokens: null
       );
 
       Assert.Equal("Not set", DetailsModel.FormatTemperature(run));
+   }
+
+   [Fact]
+   public void FormatMaxOutputTokensReturnsNotSet()
+   {
+      var run = new SESport.Core.AI.AiRunDetail(
+         Id: Guid.NewGuid(),
+         JobId: "job",
+         JobLabel: "Job",
+         PromptId: Guid.NewGuid(),
+         PromptVersion: 1,
+         SystemPrompt: "System",
+         UserPromptTemplate: "User",
+         PromptTemperature: null,
+         ProviderId: "provider",
+         ProviderLabel: "Provider",
+         ProviderModel: "Model",
+         StatusId: "completed",
+         CorrelationId: null,
+         InputPayloadJson: "{}",
+         RenderedPrompt: "Rendered",
+         RawRequestJson: null,
+         RawResponseJson: null,
+         ToolTraceJson: null,
+         ToolRoundCount: 0,
+         ConversationCharacterCount: 0,
+         OutputText: null,
+         ErrorMessage: null,
+         StartedAt: DateTimeOffset.UtcNow,
+         CompletedAt: DateTimeOffset.UtcNow,
+         DurationSeconds: 1m,
+         InputTokens: null,
+         OutputTokens: null,
+         ReasoningTokens: null,
+         ExecutionEnvironment: null,
+         PromptMaxOutputTokens: null
+      );
+
+      Assert.Equal("Not set", DetailsModel.FormatMaxOutputTokens(run));
    }
 }
