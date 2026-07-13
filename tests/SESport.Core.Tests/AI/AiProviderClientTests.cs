@@ -2143,6 +2143,85 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public void AiJobOutputValidatorAcceptsAccentedParticipantName()
+   {
+      var sourceUrl = "https://example.test/start-list.pdf";
+      var participantName = "David Bonneviér";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var toolTrace = new JsonArray
+      {
+         new JsonObject
+         {
+            ["name"] = WebToolNames.GetPage,
+            ["url"] = sourceUrl,
+            ["result"] = $$"""
+               Page URL: {{sourceUrl}}
+               Title: Start list
+               URL: {{sourceUrl}}
+               Page text:
+               SWE BONNEVIER David 17/05/2010 55.37 55.37
+               SWE ANDERSSON Eliah 11/07/2009 10.45 10.45
+               SWE PETTERSSON Oliver 10/04/2009 21.95 21.95
+               """
+         }
+      };
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         toolTrace
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
+   public void AiJobOutputValidatorAcceptsParticipantListForTeamRosterPage()
+   {
+      var sourceUrl = "https://example.test/team-roster.pdf";
+      var participantName = "Eliah Andersson";
+      var output =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
+      var toolTrace = new JsonArray
+      {
+         new JsonObject
+         {
+            ["name"] = WebToolNames.GetPage,
+            ["url"] = sourceUrl,
+            ["result"] = $$"""
+               Page URL: {{sourceUrl}}
+               Title: Team roster
+               URL: {{sourceUrl}}
+               Page text:
+               Team roster
+               SWE | ANDERSSON, Eliah
+               SWE | PETTERSSON, Oliver
+               SWE | JANSSON, Erik
+               """
+         }
+      };
+
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         toolTrace
+      );
+
+      Assert.Equal(output, result);
+   }
+
+   [Fact]
    public void AiJobOutputValidatorAcceptsSingleRowParticipantListPage()
    {
       var sourceUrl = "https://example.test/players";

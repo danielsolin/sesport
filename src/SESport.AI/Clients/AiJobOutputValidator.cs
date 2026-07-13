@@ -1,4 +1,5 @@
 using SESport.Core.AI;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -445,10 +446,16 @@ internal static class AiJobOutputValidator
          StringComparison.Ordinal
       ))
       {
-         throw CreateInvalidOutputException(
-            "Participant source EvidenceType must match fetched source.",
-            outputText
-         );
+         if(!AreEquivalentParticipantListEvidenceTypes(
+            fetchedSource.EvidenceType,
+            source.EvidenceType
+         ))
+         {
+            throw CreateInvalidOutputException(
+               "Participant source EvidenceType must match fetched source.",
+               outputText
+            );
+         }
       }
 
       if(ContainsParticipantName(
@@ -462,6 +469,31 @@ internal static class AiJobOutputValidator
       throw CreateInvalidOutputException(
          "Participant source must name the participant.",
          outputText
+      );
+   }
+
+   private static bool AreEquivalentParticipantListEvidenceTypes(
+      string fetchedEvidenceType,
+      string sourceEvidenceType
+   )
+   {
+      return IsParticipantListOrTeamRosterEvidenceType(
+         fetchedEvidenceType
+      ) && IsParticipantListOrTeamRosterEvidenceType(sourceEvidenceType);
+   }
+
+   private static bool IsParticipantListOrTeamRosterEvidenceType(
+      string evidenceType
+   )
+   {
+      return string.Equals(
+         evidenceType,
+         AiParticipationEvidenceTypeIds.ParticipantList,
+         StringComparison.Ordinal
+      ) || string.Equals(
+         evidenceType,
+         AiParticipationEvidenceTypeIds.TeamRoster,
+         StringComparison.Ordinal
       );
    }
 
@@ -1465,8 +1497,15 @@ internal static class AiJobOutputValidator
    {
       var builder = new StringBuilder(value.Length);
 
-      foreach(var character in value.ToLowerInvariant())
+      foreach(var character in value.Normalize(NormalizationForm.FormD)
+         .ToLowerInvariant())
       {
+         if(CharUnicodeInfo.GetUnicodeCategory(character) ==
+            UnicodeCategory.NonSpacingMark)
+         {
+            continue;
+         }
+
          builder.Append(char.IsLetterOrDigit(character) ? character : ' ');
       }
 
