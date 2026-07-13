@@ -2,6 +2,7 @@ using Npgsql;
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
 using SESport.Core.Configuration;
+using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Data.AI;
 using SESport.Web.Services;
@@ -184,6 +185,70 @@ public sealed class ActivityEditPageServiceTests
          await DeleteLinksAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task PrefillFromBroadcastsAsyncCopiesActivityGroupId()
+   {
+      var broadcastId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var title = "Broadcast title";
+      var startDate = new DateOnly(2026, 7, 15);
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         title,
+         "football",
+         startDate,
+         startDate
+      );
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         null,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         title,
+         ["football"],
+         TimeZoneHelper.ToUtc(
+            startDate,
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         ),
+         TimeZoneHelper.ToUtc(
+            startDate,
+            new TimeOnly(14, 0),
+            SportDay.TimeZoneId
+         ),
+         activityGroupId
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal(activityGroupId, activity.ActivityGroupId);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
       }
    }
 
@@ -451,7 +516,8 @@ public sealed class ActivityEditPageServiceTests
       string title,
       string[] categories,
       DateTimeOffset startsAt,
-      DateTimeOffset endsAt
+      DateTimeOffset endsAt,
+      Guid? activityGroupId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -472,6 +538,7 @@ public sealed class ActivityEditPageServiceTests
             original_air_date,
             starts_at,
             ends_at,
+            activity_group_id,
             time_zone_id,
             raw_programme_xml
          )
@@ -490,6 +557,7 @@ public sealed class ActivityEditPageServiceTests
             null,
             @starts_at,
             @ends_at,
+            @activity_group_id,
             'Europe/Stockholm',
             null
          )
@@ -508,6 +576,46 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("categories", categories);
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue("ends_at", endsAt);
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         (object?)activityGroupId ?? DBNull.Value
+      );
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId,
+      string title,
+      string sportId,
+      DateOnly startDate,
+      DateOnly endDate
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into activity_groups (
+            id,
+            title,
+            sport_id,
+            start_date,
+            end_date
+         )
+         values (
+            @id,
+            @title,
+            @sport_id,
+            @start_date,
+            @end_date
+         )
+         """;
+      command.Parameters.AddWithValue("id", activityGroupId);
+      command.Parameters.AddWithValue("title", title);
+      command.Parameters.AddWithValue("sport_id", sportId);
+      command.Parameters.AddWithValue("start_date", startDate);
+      command.Parameters.AddWithValue("end_date", endDate);
 
       await command.ExecuteNonQueryAsync();
    }
@@ -736,6 +844,22 @@ public sealed class ActivityEditPageServiceTests
          where id = @id
          """;
       command.Parameters.AddWithValue("id", broadcastId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from activity_groups
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityGroupId);
 
       await command.ExecuteNonQueryAsync();
    }

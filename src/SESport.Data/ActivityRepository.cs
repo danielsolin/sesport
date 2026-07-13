@@ -364,6 +364,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.time_zone_id,
             a.publication_status_id,
             a.tv_channel_name,
+            a.activity_group_id,
             e.uri,
             e.title,
             e.comment
@@ -404,9 +405,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          IsPublished =
             reader.GetString(10) == ActivityPublicationStatusIds.Published,
          TvChannelName = ReadString(reader, 11),
-         EvidenceUri = ReadString(reader, 12),
-         EvidenceTitle = ReadString(reader, 13),
-         EvidenceComment = ReadString(reader, 14)
+         ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
+         EvidenceUri = ReadString(reader, 13),
+         EvidenceTitle = ReadString(reader, 14),
+         EvidenceComment = ReadString(reader, 15)
       };
 
       await reader.DisposeAsync();
@@ -1088,6 +1090,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             time_zone_id,
             publication_status_id,
             tv_channel_name,
+            activity_group_id,
             slug,
             published_at
          )
@@ -1105,6 +1108,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @time_zone_id,
             @publication_status_id,
             @tv_channel_name,
+            @activity_group_id,
             @slug,
             case
                when @publication_status_id =
@@ -1145,6 +1149,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             time_zone_id = @time_zone_id,
             publication_status_id = @publication_status_id,
             tv_channel_name = @tv_channel_name,
+            activity_group_id = @activity_group_id,
             slug = @slug,
             published_at = case
                when @publication_status_id =
@@ -1367,6 +1372,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "tv_channel_name",
          BlankToDbNull(model.TvChannelName)
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         model.ActivityGroupId ?? (object)DBNull.Value
       );
       command.Parameters.AddWithValue("slug", slug);
    }

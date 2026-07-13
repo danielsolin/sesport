@@ -90,5 +90,7 @@ public sealed class ActivityEditModel
 
    public List<Guid> BroadcastIds { get; set; } = [];
 
+   public Guid? ActivityGroupId { get; set; }
+
    public string? TvChannelName { get; set; }
 }

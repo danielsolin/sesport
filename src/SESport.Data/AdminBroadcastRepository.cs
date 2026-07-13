@@ -175,7 +175,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             description,
             categories,
             starts_at,
-            ends_at
+            ends_at,
+            activity_group_id
          from broadcasts
          where id = any(@ids)
          order by starts_at, channel_name nulls last, channel_id, title
@@ -203,7 +204,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
                reader.GetFieldValue<string[]>(6),
                reader.GetFieldValue<DateTimeOffset>(7),
                reader.GetFieldValue<DateTimeOffset>(8),
-               reader.IsDBNull(1) ? null : reader.GetGuid(1)
+               reader.IsDBNull(1) ? null : reader.GetGuid(1),
+               reader.IsDBNull(9) ? null : reader.GetGuid(9)
             )
          );
       }

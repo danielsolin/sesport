@@ -8,5 +8,6 @@ public sealed record BroadcastActivitySource(
    IReadOnlyList<string> Categories,
    DateTimeOffset StartsAt,
    DateTimeOffset EndsAt,
-   Guid? EntityId = null
+   Guid? EntityId = null,
+   Guid? ActivityGroupId = null
 );

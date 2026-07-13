@@ -21,6 +21,14 @@ public class PostgresMigrationTests
             "002_rename_tv_sport_to_broadcasts.sql"
          )
       );
+      var activityGroupMigration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "026_add_activity_groups.sql"
+         )
+      );
 
       Assert.Contains("create table sports", baseline);
       Assert.Contains("create table entities", baseline);
@@ -29,6 +37,11 @@ public class PostgresMigrationTests
       Assert.Contains("create table tv_sport_broadcasts", baseline);
       Assert.Contains("create table ai_job_runs", baseline);
       Assert.Contains("create table ai_activity_search_runs", baseline);
+      Assert.Contains("create table activity_groups", activityGroupMigration);
+      Assert.Contains(
+         "add column if not exists activity_group_id",
+         activityGroupMigration
+      );
       Assert.Contains("alter table tv_sport_broadcasts", renameMigration);
       Assert.Contains("rename to broadcasts", renameMigration);
       Assert.Contains(
