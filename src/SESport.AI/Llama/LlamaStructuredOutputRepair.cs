@@ -27,6 +27,14 @@ internal static class LlamaStructuredOutputRepair
       );
    }
 
+   public static bool IsToolCallArgumentsParseFailure(Exception exception)
+   {
+      return exception.Message.Contains(
+         "Failed to parse tool call arguments as JSON",
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
    public static bool IsInvalidStructuredOutputFailure(
       Exception exception
    )

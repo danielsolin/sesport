@@ -227,8 +227,12 @@ public sealed class LlamaServerClient : IAiProviderClient
                }
                catch(HttpRequestException exception) when(
                   RequestUsesTools(request) &&
-                  LlamaStructuredOutputRepair.IsPegNativeFormatFailure(
-                     exception
+                  (
+                     LlamaStructuredOutputRepair.IsPegNativeFormatFailure(
+                        exception
+                     ) ||
+                     LlamaStructuredOutputRepair
+                        .IsToolCallArgumentsParseFailure(exception)
                   )
                )
                {
@@ -513,7 +517,10 @@ public sealed class LlamaServerClient : IAiProviderClient
                }
 
                var finalOutputText = LlamaResponseReader.NormalizeOutput(
-                  LlamaResponseReader.ExtractFinalText(responseJson, JsonOptions)
+                  LlamaResponseReader.ExtractFinalText(
+                     responseJson,
+                     JsonOptions
+                  )
                );
 
                try
@@ -777,7 +784,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      prompt
                   );
                   messages = (JsonArray)request["messages"]!;
-                  rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
+                  rawFinalRequestJson =
+                     AiRequestJsonSerializer.Serialize(request);
                   turn++;
                   var finalEnvelope = await SendWithStructuredOutputRepairAsync(
                      provider,

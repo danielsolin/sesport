@@ -425,6 +425,47 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncContinuesToolsAfterToolArgumentsParseFailure()
+   {
+      var handler = new RecordingHandler(
+         CreateToolCallArgumentsParseError(),
+         CreateLlamaToolCallResponseJson("Tre Kronor roster"),
+         CreateLlamaPageCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", requiresWebSearch: true, CreateToolsJson()),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.Contains(
+         "previous tool-call attempt could not be parsed",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains("tool_format_fallback", result.ToolTraceJson);
+      Assert.Contains("Retrying with tools", result.ToolTraceJson);
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncOmitsAssistantContentForToolCalls()
    {
       var handler = new RecordingHandler(
@@ -3230,6 +3271,25 @@ public class AiProviderClientTests
          + "\"type\":\"server_error\""
          + "}"
          + "}"
+      );
+   }
+
+   private static RecordingHandler.ResponseSpec
+      CreateToolCallArgumentsParseError()
+   {
+      return new RecordingHandler.ResponseSpec(
+         HttpStatusCode.InternalServerError,
+         JsonSerializer.Serialize(new
+         {
+            error = new
+            {
+               code = 500,
+               message =
+                  "Failed to parse tool call arguments as JSON: missing " +
+                  "closing quote",
+               type = "server_error"
+            }
+         })
       );
    }
 
