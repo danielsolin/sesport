@@ -638,7 +638,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                );
                LlamaRequestFactory.AddFinalReportCorrectionPrompt(
                   messages,
-                  exception.Message
+                  exception.Message,
+                  reportSubmissionPending
                );
                request = LlamaRequestFactory.CreateFinal(
                   request,
@@ -677,6 +678,7 @@ public sealed class LlamaServerClient : IAiProviderClient
             )
             {
                validationContinuationAttempts++;
+               var reportSubmissionAttempt = reportSubmissionPending;
 
                if(reportSubmissionPending)
                {
@@ -718,7 +720,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                );
                LlamaRequestFactory.AddValidationFeedbackPrompt(
                   messages,
-                  exception.Message
+                  exception.Message,
+                  reportSubmissionAttempt
                );
 
                if(job.RequiresWebSearch)

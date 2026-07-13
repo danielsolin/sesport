@@ -1,5 +1,6 @@
 using SESport.AI.Clients;
 using SESport.Core.AI;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -122,16 +123,15 @@ internal static class LlamaRequestFactory
 
    public static void AddValidationFeedbackPrompt(
       JsonArray messages,
-      string validationError
+      string validationError,
+      bool reportSubmissionAttempt = false
    )
    {
-      var prompt =
-         "The previous final answer was rejected by validation: " +
-         TruncateFeedback(validationError) +
-         $"{Environment.NewLine}{Environment.NewLine}" +
-         "Tools are still available. Continue researching with tool calls " +
-         "until the validation issue is resolved. Do not return another " +
-         "final answer with the same unsupported evidence.";
+      var prompt = CreateReportValidationPrompt(
+         validationError,
+         reportSubmissionAttempt,
+         toolsStillAvailable: true
+      );
 
       messages.Add(
          new JsonObject
@@ -144,18 +144,15 @@ internal static class LlamaRequestFactory
 
    public static void AddFinalReportCorrectionPrompt(
       JsonArray messages,
-      string validationError
+      string validationError,
+      bool reportSubmissionAttempt = false
    )
    {
-      var prompt =
-         "The previous final report was rejected by validation: " +
-         TruncateFeedback(validationError) +
-         $"{Environment.NewLine}{Environment.NewLine}" +
-         "The research tool budget is exhausted. Correct the report using " +
-         "only evidence already present in this conversation. Preserve all " +
-         "participants supported by that evidence, correct the rejected " +
-         "fields, and return the complete final answer again. No tool call " +
-         "is available.";
+      var prompt = CreateReportValidationPrompt(
+         validationError,
+         reportSubmissionAttempt,
+         toolsStillAvailable: false
+      );
 
       messages.Add(
          new JsonObject
@@ -216,6 +213,115 @@ internal static class LlamaRequestFactory
       var preview = value.ReplaceLineEndings(" ").Trim();
 
       return preview.Length <= 500 ? preview : preview[..500] + "...";
+   }
+
+   private static string CreateReportValidationPrompt(
+      string validationError,
+      bool reportSubmissionAttempt,
+      bool toolsStillAvailable
+   )
+   {
+     var builder = new StringBuilder();
+
+      builder.Append(
+         toolsStillAvailable
+            ? "The previous final answer was rejected by validation: "
+            : "The previous final report was rejected by validation: "
+      );
+      builder.Append(TruncateFeedback(validationError));
+      builder.AppendLine();
+      builder.AppendLine();
+
+      if(reportSubmissionAttempt)
+      {
+         builder.AppendLine(
+            "This happened after a submit_report attempt."
+         );
+         builder.AppendLine();
+      }
+
+      var validationHint = GetReportValidationHint(validationError);
+
+      if(!string.IsNullOrWhiteSpace(validationHint))
+      {
+         builder.AppendLine("Why it failed:");
+         builder.AppendLine(validationHint);
+         builder.AppendLine();
+      }
+
+      if(toolsStillAvailable)
+      {
+         builder.Append(
+            "Tools are still available. Continue researching with tool " +
+            "calls until the validation issue is resolved. Do not return " +
+            "another final answer with the same unsupported evidence."
+         );
+      }
+      else
+      {
+         builder.Append(
+            "The research tool budget is exhausted. Correct the report " +
+            "using only evidence already present in this conversation. " +
+            "Preserve all participants supported by that evidence, correct " +
+            "the rejected fields, and return the complete final answer " +
+            "again. No tool call is available."
+         );
+      }
+
+      return builder.ToString();
+   }
+
+   private static string GetReportValidationHint(string validationError)
+   {
+      if(validationError.Contains(
+         "Participant source EvidenceType must match fetched source.",
+         StringComparison.Ordinal
+      ))
+      {
+         return "A participant source was rejected because its " +
+            "EvidenceType did not match the fetched page classification. " +
+            "For roster or list pages, use ParticipantList or TeamRoster. " +
+            "For mention pages, use ParticipantMention.";
+      }
+
+      if(validationError.Contains(
+         "Participant source must name the participant.",
+         StringComparison.Ordinal
+      ))
+      {
+         return "The cited source must explicitly name the participant.";
+      }
+
+      if(validationError.Contains(
+         "ParticipantMention source must name the participant and target " +
+         "country.",
+         StringComparison.Ordinal
+      ))
+      {
+         return "ParticipantMention requires the participant name and " +
+            "target country to appear on the fetched page.";
+      }
+
+      if(validationError.Contains(
+         "submit_report requires at least one supported participant",
+         StringComparison.Ordinal
+      ))
+      {
+         return "Do not submit yet. Add at least one participant supported " +
+            "by fetched evidence.";
+      }
+
+      if(validationError.Contains(
+         "Participant sources must be fetched with web_get_page or " +
+         "web_find_in_page.",
+         StringComparison.Ordinal
+      ))
+      {
+         return "Cite only sources that were actually fetched in the " +
+            "conversation.";
+      }
+
+      return string.Empty;
    }
 
    private static JsonObject CreateBaseRequestPayload(
