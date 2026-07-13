@@ -607,12 +607,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                   MaxFinalReportCorrectionAttempts
             )
             {
-               foreach(var participantName in
-                  AiJobOutputValidator.ReadParticipantNames(finalOutputText))
-               {
-                  retainedFinalReportParticipants.Add(participantName);
-               }
-
                finalReportCorrectionAttempts++;
                toolTrace.Add(
                   LlamaToolTrace.CreateAssistantTraceEntry(

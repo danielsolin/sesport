@@ -1895,12 +1895,11 @@ public class AiProviderClientTests
       var sourceUrl =
          "https://example.test/news/line-up-is-getting-stronger";
       var participantName = "Thobias Montler";
-      var correctedOutput =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
-         + "\"CheckedSources\":[]}";
+      var acceptedOutput =
+         "{\"Participation\":\"Unknown\","
+         + "\"Participants\":[],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"EventInfoOnly\"}]}";
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson(sourceUrl),
@@ -1917,8 +1916,7 @@ public class AiProviderClientTests
             + "\"Participants\":[],"
             + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
             + "\"EvidenceType\":\"EventInfoOnly\"}]}"
-         ),
-         CreateLlamaFinalResponseWithContentJson(correctedOutput)
+         )
       );
       var webSearchClient = new RecordingWebSearchClient(
          new WebSearchResult(
@@ -1966,14 +1964,13 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(6, handler.RequestBodies.Count);
+      Assert.Equal(5, handler.RequestBodies.Count);
       Assert.Contains(
          "\"validation_status\":\"rejected\"",
          result.ToolTraceJson
       );
       Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[3]);
       Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[4]);
-      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[5]);
       Assert.Contains(
          "previous final report was rejected",
          handler.RequestBodies[4]
@@ -1982,11 +1979,7 @@ public class AiProviderClientTests
          "Preserve all participants",
          handler.RequestBodies[4]
       );
-      Assert.Contains(
-         "must preserve previously reported participants",
-         handler.RequestBodies[5]
-      );
-      Assert.Equal(correctedOutput, result.OutputText);
+      Assert.Equal(acceptedOutput, result.OutputText);
    }
 
    [Fact]
