@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Ajax.Search;

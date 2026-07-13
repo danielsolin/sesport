@@ -1,6 +1,7 @@
+using System.Globalization;
+
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
-using System.Globalization;
 
 namespace SESport.Web.Services;
 

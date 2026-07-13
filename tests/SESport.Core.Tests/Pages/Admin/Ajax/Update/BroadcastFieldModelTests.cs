@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+
 using Npgsql;
 
 using SESport.Core.Configuration;

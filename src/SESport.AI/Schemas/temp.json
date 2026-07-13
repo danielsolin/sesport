@@ -1,68 +1,73 @@
 {
    "Participants": [
       {
+         "Name": "Grace Bernstein",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "June Bjork",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Tiana Tian Deng",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Caijsa Hennemann",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Lea Nilsson",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Kaisa Rinaldo Persson",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
+         "Name": "Lisa Zaar",
+         "Sources": [
+            {
+               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
+               "EvidenceType": "ParticipantList"
+            }
+         ]
+      },
+      {
          "Name": "Max Dahlin",
          "Sources": [
             {
-               "Url": "https://nordeaopen.se/this-is-bastad/tournament/players/",
-               "EvidenceType": "ParticipantList"
-            },
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "William Rejchtman Vinciguerra",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Olle Wallin",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Adam Heinonen",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Erik Grevelius",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Nikola Slavic",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Oliver Johansson",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+               "Url": "https://nordeaopen.se/tavlingen/spelare/",
                "EvidenceType": "ParticipantList"
             }
          ]
@@ -71,11 +76,11 @@
    "Participation": "Yes",
    "CheckedSources": [
       {
-         "Url": "https://nordeaopen.se/this-is-bastad/tournament/players/",
+         "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
          "EvidenceType": "ParticipantList"
       },
       {
-         "Url": "https://nordeaopen.se/en/news/svenska-wild-cards-klara-till-nordea-open-atp-2/",
+         "Url": "https://nordeaopen.se/tavlingen/spelare/",
          "EvidenceType": "ParticipantList"
       }
    ]

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
+
 using SESport.Core.Domain;
 using SESport.Data;
 

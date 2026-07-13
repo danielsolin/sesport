@@ -1,10 +1,12 @@
-using Npgsql;
-using SESport.Core.Broadcast;
-using SESport.Core.Domain;
-using SESport.Core.Formatting;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+
+using Npgsql;
+
+using SESport.Core.Broadcast;
+using SESport.Core.Domain;
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 

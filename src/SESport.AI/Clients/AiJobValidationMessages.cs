@@ -1,5 +1,4 @@
 using SESport.Core.AI;
-using SESport.Core.Domain;
 
 namespace SESport.AI.Clients;
 

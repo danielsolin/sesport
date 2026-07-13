@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
 using SESport.Core.AI;
 using SESport.Data.AI;
 

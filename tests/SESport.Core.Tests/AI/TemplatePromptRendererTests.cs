@@ -1,5 +1,3 @@
-using SESport.Core.AI;
-using SESport.Core.Domain;
 using SESport.AI.Prompts;
 
 namespace SESport.Core.Tests.AI;

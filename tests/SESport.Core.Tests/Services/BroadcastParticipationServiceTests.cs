@@ -1,13 +1,14 @@
+using System.Reflection;
+using System.Text.Json;
+
 using Npgsql;
+
 using SESport.AI.Interfaces;
-using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Data;
 using SESport.Data.AI;
 using SESport.Web.Services;
-using System.Reflection;
-using System.Text.Json;
 
 namespace SESport.Core.Tests.Services;
 

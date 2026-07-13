@@ -1,8 +1,10 @@
-using Npgsql;
-using SESport.Core.Formatting;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+
+using Npgsql;
+
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 

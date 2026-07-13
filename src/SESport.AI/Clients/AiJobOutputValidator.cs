@@ -1,9 +1,10 @@
-using SESport.Core.AI;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+
+using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 
@@ -425,10 +426,10 @@ internal static class AiJobOutputValidator
          StringComparison.Ordinal
       ))
       {
-        if(ContainsParticipantMention(
-            fetchedSource.EvidenceText,
-            participantName
-         ))
+         if(ContainsParticipantMention(
+             fetchedSource.EvidenceText,
+             participantName
+          ))
          {
             return;
          }

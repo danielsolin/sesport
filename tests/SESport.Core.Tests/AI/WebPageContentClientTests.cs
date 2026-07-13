@@ -1,9 +1,12 @@
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Playwright;
-using SESport.AI.Llama;
-using SESport.AI.WebPages;
 using System.Net;
 using System.Text.Json;
+
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Playwright;
+
+using SESport.AI.Llama;
+using SESport.AI.WebPages;
+
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.Fonts.Standard14Fonts;

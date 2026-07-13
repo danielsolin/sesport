@@ -1,6 +1,7 @@
+using System.Text.Json;
+
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
-using System.Text.Json;
 
 namespace SESport.AI.Jobs;
 

@@ -1,5 +1,6 @@
-using SESport.Core.Broadcast;
 using System.Text;
+
+using SESport.Core.Broadcast;
 
 namespace SESport.Core.Tests.Broadcast;
 

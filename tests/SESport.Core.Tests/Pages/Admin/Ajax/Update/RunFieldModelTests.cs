@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+
 using Npgsql;
+
 using SESport.AI.Interfaces;
 using SESport.Core.Configuration;
 using SESport.Data;

@@ -1,9 +1,9 @@
-using SESport.AI.Clients;
-using SESport.Core.AI;
-using SESport.Core.Domain;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+
+using SESport.AI.Clients;
+using SESport.Core.AI;
 
 namespace SESport.AI.Llama;
 

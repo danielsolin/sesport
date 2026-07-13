@@ -1,8 +1,10 @@
-using Microsoft.Playwright;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+
+using Microsoft.Playwright;
+
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 

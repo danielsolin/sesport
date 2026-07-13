@@ -1,7 +1,8 @@
-using SESport.AI.Interfaces;
-using SESport.Core.Formatting;
 using System.Security.Cryptography;
 using System.Text;
+
+using SESport.AI.Interfaces;
+using SESport.Core.Formatting;
 
 namespace SESport.AI.ActivitySearch;
 

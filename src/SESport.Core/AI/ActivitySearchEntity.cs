@@ -1,4 +1,3 @@
-using SESport.Core.Identifiers;
 using SESport.Core.Ingestion;
 
 namespace SESport.Core.AI;

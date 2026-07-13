@@ -1,6 +1,8 @@
-using Microsoft.Playwright;
-using SESport.AI.Interfaces;
 using System.Net;
+
+using Microsoft.Playwright;
+
+using SESport.AI.Interfaces;
 
 namespace SESport.AI.WebSearch;
 

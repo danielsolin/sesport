@@ -1,8 +1,10 @@
+using System.Text.Json;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
 using SESport.Core.AI;
 using SESport.Data.AI;
-using System.Text.Json;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Jobs;
 

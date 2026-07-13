@@ -1,11 +1,14 @@
+using System.Text;
+using System.Text.Json;
+
 using Npgsql;
+
 using NpgsqlTypes;
+
 using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
-using System.Text;
-using System.Text.Json;
 
 namespace SESport.Data.AI;
 

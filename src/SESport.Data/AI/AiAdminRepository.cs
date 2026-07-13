@@ -1,5 +1,7 @@
 using Npgsql;
+
 using NpgsqlTypes;
+
 using SESport.Core.AI;
 
 namespace SESport.Data.AI;

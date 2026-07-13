@@ -1,7 +1,8 @@
-using SESport.AI.ActivitySearch;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+
+using SESport.AI.ActivitySearch;
 
 namespace SESport.Core.Tests.AIActivitySearch;
 

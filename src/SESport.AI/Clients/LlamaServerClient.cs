@@ -1,14 +1,16 @@
-using Microsoft.Extensions.Logging;
-using SESport.AI.Interfaces;
-using SESport.AI.Llama;
-using SESport.Core.AI;
-using SESport.AI.WebPages;
-using SESport.AI.WebSearch;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+
+using Microsoft.Extensions.Logging;
+
+using SESport.AI.Interfaces;
+using SESport.AI.Llama;
+using SESport.AI.WebPages;
+using SESport.AI.WebSearch;
+using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 
@@ -422,353 +424,54 @@ public sealed class LlamaServerClient : IAiProviderClient
                   toolBudgetExhausted = true;
                   break;
                }
-         }
+            }
 
-         if(toolBudgetExhausted || finalizeWithoutTools)
-         {
-            if(toolBudgetExhausted)
+            if(toolBudgetExhausted || finalizeWithoutTools)
             {
-               LlamaRequestFactory.ApplyToolBudgetPrompt(
-                  messages,
-                  baseSystemPrompt,
-                  maxToolRounds,
-                  maxToolRounds ?? 0
-               );
-               var payloadCharacterCount =
-                  LlamaConversationTrimmer.EstimateRequestPayloadSize(
-                     request,
-                     JsonOptions
+               if(toolBudgetExhausted)
+               {
+                  LlamaRequestFactory.ApplyToolBudgetPrompt(
+                     messages,
+                     baseSystemPrompt,
+                     maxToolRounds,
+                     maxToolRounds ?? 0
                   );
-               toolTrace.Add(
-                  LlamaToolTrace.CreateToolBudgetTraceEntry(
+                  var payloadCharacterCount =
+                     LlamaConversationTrimmer.EstimateRequestPayloadSize(
+                        request,
+                        JsonOptions
+                     );
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateToolBudgetTraceEntry(
+                        turn + 1,
+                        maxToolRounds,
+                        maxToolRounds ?? 0,
+                        payloadCharacterCount,
+                        LlamaTemperature.GetRequestTemperature(request),
+                        conditionalTools
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+                  LogToolBudget(
                      turn + 1,
                      maxToolRounds,
-                     maxToolRounds ?? 0,
-                     payloadCharacterCount,
-                     LlamaTemperature.GetRequestTemperature(request),
-                     conditionalTools
-                  )
-               );
-               await LlamaToolTrace.ReportProgressAsync(
-                  toolTrace,
-                  toolRoundCount,
-                  JsonOptions,
-                  toolTraceUpdated,
-                  cancellationToken
-               );
-               LogToolBudget(
-                  turn + 1,
-                  maxToolRounds,
-                  maxToolRounds ?? 0
-               );
-            }
-            else
-            {
-               LlamaRequestFactory.ApplyNoMoreToolsPrompt(
-                  messages,
-                  baseSystemPrompt
-               );
-            }
-
-            request = LlamaRequestFactory.CreateFinal(
-               request,
-               job,
-               prompt
-            );
-            messages = (JsonArray)request["messages"]!;
-            rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
-            turn++;
-            var finalEnvelope = await SendWithStructuredOutputRepairAsync(
-               provider,
-               request,
-               messages,
-               toolTrace,
-               turn,
-               "final",
-               job.OutputMode,
-               prompt,
-               formatRepairAttempts,
-               cancellationToken,
-               () => formatRepairAttempts++
-            );
-            responseJson = finalEnvelope.ResponseJson;
-            rawResponse = finalEnvelope.RawResponseJson;
-         }
-
-         var structuredOutputRepairAttempts = 0;
-         var finalReportCorrectionAttempts = 0;
-         var retainedFinalReportParticipants = new HashSet<string>(
-            StringComparer.OrdinalIgnoreCase
-         );
-
-         while(true)
-         {
-            if(responseJson is null)
-            {
-               throw new InvalidOperationException(
-                  "llama-server returned no response."
-               );
-            }
-
-            var finalOutputText = LlamaResponseReader.NormalizeOutput(
-               LlamaResponseReader.ExtractFinalText(responseJson, JsonOptions)
-            );
-
-            try
-            {
-               finalOutputText =
-                  ResponsesOutputValidator.ValidateStructuredOutput(
-                     finalOutputText,
-                     job.OutputMode,
-                     prompt.OutputSchemaJson
-                  );
-
-               if(reportSubmissionPending &&
-                  AiJobOutputValidator.ReadParticipantNames(
-                     finalOutputText
-                  ).Count == 0)
-               {
-                  throw new AiJobOutputValidationException(
-                     AiJobValidationMessages
-                        .SubmitReportRequiresSupportedParticipantMessage +
-                     " while research tools remain available."
-                  );
-               }
-
-               AiJobOutputValidator.ValidateRetainedParticipants(
-                  finalOutputText,
-                  retainedFinalReportParticipants
-               );
-               finalOutputText = AiJobOutputValidator.Validate(
-                  finalOutputText,
-                  job,
-                  job.RequiresWebSearch,
-                  toolTrace
-               );
-
-               LogResponse("final", turn, responseJson);
-               if(LlamaResponseReader.TryGetToolCalls(
-                  responseJson,
-                  out var finalToolCalls
-               ))
-               {
-                  toolTrace.Add(
-                     LlamaToolTrace.CreateAssistantTraceEntry(
-                        turn,
-                        responseJson,
-                        finalToolCalls,
-                        JsonOptions,
-                        validationStatus: "accepted"
-                     )
+                     maxToolRounds ?? 0
                   );
                }
                else
                {
-                  toolTrace.Add(
-                     LlamaToolTrace.CreateAssistantTraceEntry(
-                        turn,
-                        responseJson,
-                        [],
-                        JsonOptions,
-                        validationStatus: "accepted"
-                     )
+                  LlamaRequestFactory.ApplyNoMoreToolsPrompt(
+                     messages,
+                     baseSystemPrompt
                   );
                }
 
-               var toolTraceJson = toolTrace.Count == 0
-                  ? null
-                  : JsonSerializer.Serialize(toolTrace, JsonOptions);
-
-               return new AiJobResult(
-                  Guid.NewGuid(),
-                  job.Id,
-                  provider.Id,
-                  provider.Model,
-                  renderedPrompt.ToPromptText(),
-                  rawFinalRequestJson ?? string.Empty,
-                  finalOutputText,
-                  rawResponse,
-                  toolTraceJson,
-                  toolRoundCount,
-                  LlamaConversationTrimmer.EstimateRequestPayloadSize(
-                     request,
-                     JsonOptions
-                  ),
-                  null,
-                  null,
-                  null,
-                  null
-               );
-            }
-            catch(InvalidOperationException exception) when(
-               exception is AiJobOutputValidationException &&
-               job.RequiresWebSearch &&
-               !RequestUsesTools(request) &&
-               finalReportCorrectionAttempts <
-                  MaxFinalReportCorrectionAttempts
-            )
-            {
-               finalReportCorrectionAttempts++;
-               toolTrace.Add(
-                  LlamaToolTrace.CreateAssistantTraceEntry(
-                     turn,
-                     responseJson,
-                     [],
-                     JsonOptions,
-                     validationStatus: "rejected",
-                     validationError: exception.Message
-                  )
-               );
-               toolTrace.Add(
-                  LlamaToolTrace.CreateValidationFeedbackTraceEntry(
-                     turn,
-                     exception.Message
-                  )
-               );
-               await LlamaToolTrace.ReportProgressAsync(
-                  toolTrace,
-                  toolRoundCount,
-                  JsonOptions,
-                  toolTraceUpdated,
-                  cancellationToken
-               );
-               LlamaResponseReader.AppendAssistantMessage(
-                  messages,
-                  responseJson,
-                  JsonOptions
-               );
-               LlamaRequestFactory.AddFinalReportCorrectionPrompt(
-                  messages,
-                  exception.Message,
-                  reportSubmissionPending
-               );
-               request = LlamaRequestFactory.CreateFinal(
-                  request,
-                  job,
-                  prompt
-               );
-               messages = (JsonArray)request["messages"]!;
-               rawFinalRequestJson = AiRequestJsonSerializer.Serialize(
-                  request
-               );
-               turn++;
-               var finalEnvelope = await SendWithStructuredOutputRepairAsync(
-                  provider,
-                  request,
-                  messages,
-                  toolTrace,
-                  turn,
-                  "final",
-                  job.OutputMode,
-                  prompt,
-                  formatRepairAttempts,
-                  cancellationToken,
-                  () => formatRepairAttempts++
-               );
-               responseJson = finalEnvelope.ResponseJson;
-               rawResponse = finalEnvelope.RawResponseJson;
-            }
-            catch(InvalidOperationException exception) when(
-               ShouldContinueWithToolsAfterValidationFailure(
-                  request,
-                  maxToolRounds,
-                  toolRoundCount,
-                  validationContinuationAttempts,
-                  exception
-               )
-            )
-            {
-               validationContinuationAttempts++;
-               var reportSubmissionAttempt = reportSubmissionPending;
-
-               if(reportSubmissionPending)
-               {
-                  foreach(var toolName in submissionToolNames)
-                  {
-                     LlamaReportSubmission.RemoveTool(request, toolName);
-                  }
-
-                  reportSubmissionPending = false;
-               }
-
-               toolTrace.Add(
-                  LlamaToolTrace.CreateAssistantTraceEntry(
-                     turn,
-                     responseJson,
-                     [],
-                     JsonOptions,
-                     validationStatus: "rejected",
-                     validationError: exception.Message
-                  )
-               );
-               toolTrace.Add(
-                  LlamaToolTrace.CreateValidationFeedbackTraceEntry(
-                     turn,
-                     exception.Message
-                  )
-               );
-               await LlamaToolTrace.ReportProgressAsync(
-                  toolTrace,
-                  toolRoundCount,
-                  JsonOptions,
-                  toolTraceUpdated,
-                  cancellationToken
-               );
-               LlamaResponseReader.AppendAssistantMessage(
-                  messages,
-                  responseJson,
-                  JsonOptions
-               );
-               LlamaRequestFactory.AddValidationFeedbackPrompt(
-                  messages,
-                  exception.Message,
-                  reportSubmissionAttempt
-               );
-
-               if(job.RequiresWebSearch)
-               {
-                  request["tool_choice"] = "required";
-               }
-
-               continueWithTools = true;
-               break;
-            }
-            catch(InvalidOperationException exception) when(
-               (
-                  exception is not AiJobOutputValidationException ||
-                  !job.RequiresWebSearch
-               ) &&
-               structuredOutputRepairAttempts < MaxFormatRepairAttempts &&
-               LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
-                  exception
-               ) &&
-               LlamaStructuredOutputRepair.CanRepair(job.OutputMode, prompt)
-            )
-            {
-               structuredOutputRepairAttempts++;
-               toolTrace.Add(
-                  LlamaToolTrace.CreateAssistantTraceEntry(
-                     turn,
-                     responseJson,
-                     [],
-                     JsonOptions,
-                     validationStatus: "rejected",
-                     validationError: exception.Message
-                  )
-               );
-               toolTrace.Add(
-                  LlamaStructuredOutputRepair.CreateRepairPromptTraceEntry(
-                     turn
-                  )
-               );
-               await LlamaToolTrace.ReportProgressAsync(
-                  toolTrace,
-                  toolRoundCount,
-                  JsonOptions,
-                  toolTraceUpdated,
-                  cancellationToken
-               );
-               LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
                request = LlamaRequestFactory.CreateFinal(
                   request,
                   job,
@@ -793,13 +496,312 @@ public sealed class LlamaServerClient : IAiProviderClient
                responseJson = finalEnvelope.ResponseJson;
                rawResponse = finalEnvelope.RawResponseJson;
             }
-         }
 
-         if(continueWithTools)
-         {
-            continue;
+            var structuredOutputRepairAttempts = 0;
+            var finalReportCorrectionAttempts = 0;
+            var retainedFinalReportParticipants = new HashSet<string>(
+               StringComparer.OrdinalIgnoreCase
+            );
+
+            while(true)
+            {
+               if(responseJson is null)
+               {
+                  throw new InvalidOperationException(
+                     "llama-server returned no response."
+                  );
+               }
+
+               var finalOutputText = LlamaResponseReader.NormalizeOutput(
+                  LlamaResponseReader.ExtractFinalText(responseJson, JsonOptions)
+               );
+
+               try
+               {
+                  finalOutputText =
+                     ResponsesOutputValidator.ValidateStructuredOutput(
+                        finalOutputText,
+                        job.OutputMode,
+                        prompt.OutputSchemaJson
+                     );
+
+                  if(reportSubmissionPending &&
+                     AiJobOutputValidator.ReadParticipantNames(
+                        finalOutputText
+                     ).Count == 0)
+                  {
+                     throw new AiJobOutputValidationException(
+                        AiJobValidationMessages
+                           .SubmitReportRequiresSupportedParticipantMessage +
+                        " while research tools remain available."
+                     );
+                  }
+
+                  AiJobOutputValidator.ValidateRetainedParticipants(
+                     finalOutputText,
+                     retainedFinalReportParticipants
+                  );
+                  finalOutputText = AiJobOutputValidator.Validate(
+                     finalOutputText,
+                     job,
+                     job.RequiresWebSearch,
+                     toolTrace
+                  );
+
+                  LogResponse("final", turn, responseJson);
+                  if(LlamaResponseReader.TryGetToolCalls(
+                     responseJson,
+                     out var finalToolCalls
+                  ))
+                  {
+                     toolTrace.Add(
+                        LlamaToolTrace.CreateAssistantTraceEntry(
+                           turn,
+                           responseJson,
+                           finalToolCalls,
+                           JsonOptions,
+                           validationStatus: "accepted"
+                        )
+                     );
+                  }
+                  else
+                  {
+                     toolTrace.Add(
+                        LlamaToolTrace.CreateAssistantTraceEntry(
+                           turn,
+                           responseJson,
+                           [],
+                           JsonOptions,
+                           validationStatus: "accepted"
+                        )
+                     );
+                  }
+
+                  var toolTraceJson = toolTrace.Count == 0
+                     ? null
+                     : JsonSerializer.Serialize(toolTrace, JsonOptions);
+
+                  return new AiJobResult(
+                     Guid.NewGuid(),
+                     job.Id,
+                     provider.Id,
+                     provider.Model,
+                     renderedPrompt.ToPromptText(),
+                     rawFinalRequestJson ?? string.Empty,
+                     finalOutputText,
+                     rawResponse,
+                     toolTraceJson,
+                     toolRoundCount,
+                     LlamaConversationTrimmer.EstimateRequestPayloadSize(
+                        request,
+                        JsonOptions
+                     ),
+                     null,
+                     null,
+                     null,
+                     null
+                  );
+               }
+               catch(InvalidOperationException exception) when(
+                  exception is AiJobOutputValidationException &&
+                  job.RequiresWebSearch &&
+                  !RequestUsesTools(request) &&
+                  finalReportCorrectionAttempts <
+                     MaxFinalReportCorrectionAttempts
+               )
+               {
+                  finalReportCorrectionAttempts++;
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        [],
+                        JsonOptions,
+                        validationStatus: "rejected",
+                        validationError: exception.Message
+                     )
+                  );
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateValidationFeedbackTraceEntry(
+                        turn,
+                        exception.Message
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+                  LlamaResponseReader.AppendAssistantMessage(
+                     messages,
+                     responseJson,
+                     JsonOptions
+                  );
+                  LlamaRequestFactory.AddFinalReportCorrectionPrompt(
+                     messages,
+                     exception.Message,
+                     reportSubmissionPending
+                  );
+                  request = LlamaRequestFactory.CreateFinal(
+                     request,
+                     job,
+                     prompt
+                  );
+                  messages = (JsonArray)request["messages"]!;
+                  rawFinalRequestJson = AiRequestJsonSerializer.Serialize(
+                     request
+                  );
+                  turn++;
+                  var finalEnvelope = await SendWithStructuredOutputRepairAsync(
+                     provider,
+                     request,
+                     messages,
+                     toolTrace,
+                     turn,
+                     "final",
+                     job.OutputMode,
+                     prompt,
+                     formatRepairAttempts,
+                     cancellationToken,
+                     () => formatRepairAttempts++
+                  );
+                  responseJson = finalEnvelope.ResponseJson;
+                  rawResponse = finalEnvelope.RawResponseJson;
+               }
+               catch(InvalidOperationException exception) when(
+                  ShouldContinueWithToolsAfterValidationFailure(
+                     request,
+                     maxToolRounds,
+                     toolRoundCount,
+                     validationContinuationAttempts,
+                     exception
+                  )
+               )
+               {
+                  validationContinuationAttempts++;
+                  var reportSubmissionAttempt = reportSubmissionPending;
+
+                  if(reportSubmissionPending)
+                  {
+                     foreach(var toolName in submissionToolNames)
+                     {
+                        LlamaReportSubmission.RemoveTool(request, toolName);
+                     }
+
+                     reportSubmissionPending = false;
+                  }
+
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        [],
+                        JsonOptions,
+                        validationStatus: "rejected",
+                        validationError: exception.Message
+                     )
+                  );
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateValidationFeedbackTraceEntry(
+                        turn,
+                        exception.Message
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+                  LlamaResponseReader.AppendAssistantMessage(
+                     messages,
+                     responseJson,
+                     JsonOptions
+                  );
+                  LlamaRequestFactory.AddValidationFeedbackPrompt(
+                     messages,
+                     exception.Message,
+                     reportSubmissionAttempt
+                  );
+
+                  if(job.RequiresWebSearch)
+                  {
+                     request["tool_choice"] = "required";
+                  }
+
+                  continueWithTools = true;
+                  break;
+               }
+               catch(InvalidOperationException exception) when(
+                  (
+                     exception is not AiJobOutputValidationException ||
+                     !job.RequiresWebSearch
+                  ) &&
+                  structuredOutputRepairAttempts < MaxFormatRepairAttempts &&
+                  LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
+                     exception
+                  ) &&
+                  LlamaStructuredOutputRepair.CanRepair(job.OutputMode, prompt)
+               )
+               {
+                  structuredOutputRepairAttempts++;
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        [],
+                        JsonOptions,
+                        validationStatus: "rejected",
+                        validationError: exception.Message
+                     )
+                  );
+                  toolTrace.Add(
+                     LlamaStructuredOutputRepair.CreateRepairPromptTraceEntry(
+                        turn
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+                  LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
+                  request = LlamaRequestFactory.CreateFinal(
+                     request,
+                     job,
+                     prompt
+                  );
+                  messages = (JsonArray)request["messages"]!;
+                  rawFinalRequestJson = AiRequestJsonSerializer.Serialize(request);
+                  turn++;
+                  var finalEnvelope = await SendWithStructuredOutputRepairAsync(
+                     provider,
+                     request,
+                     messages,
+                     toolTrace,
+                     turn,
+                     "final",
+                     job.OutputMode,
+                     prompt,
+                     formatRepairAttempts,
+                     cancellationToken,
+                     () => formatRepairAttempts++
+                  );
+                  responseJson = finalEnvelope.ResponseJson;
+                  rawResponse = finalEnvelope.RawResponseJson;
+               }
+            }
+
+            if(continueWithTools)
+            {
+               continue;
+            }
          }
-      }
       }
       catch(OperationCanceledException)
          when(cancellationToken.IsCancellationRequested)

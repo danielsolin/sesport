@@ -1,6 +1,6 @@
 using Npgsql;
+
 using SESport.AI.Interfaces;
-using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data;
