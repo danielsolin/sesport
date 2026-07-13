@@ -4,59 +4,9 @@ namespace SESport.AI.Llama;
 
 internal static class LlamaReportSubmission
 {
-   private const int MinimumParticipantCount = 1;
    public const string ToolName = "submit_report";
 
-   public static void AddTool(
-      JsonObject request,
-      string? outputSchemaJson
-   )
-   {
-      if(string.IsNullOrWhiteSpace(outputSchemaJson) ||
-         request["tools"] is not JsonArray tools ||
-         tools.OfType<JsonObject>().Any(IsReportTool))
-      {
-         return;
-      }
-
-      var parameters = JsonNode.Parse(outputSchemaJson) as JsonObject;
-
-      if(parameters is null)
-      {
-         return;
-      }
-
-      RequireParticipant(parameters);
-
-      tools.Add(
-         new JsonObject
-         {
-            ["type"] = "function",
-            ["function"] = new JsonObject
-            {
-               ["name"] = ToolName,
-               ["description"] =
-                  "Submit the complete final report when research has " +
-                  "identified at least one supported participant. Use web " +
-                  "tools instead if no participant has been identified.",
-               ["parameters"] = parameters
-            }
-         }
-      );
-   }
-
-   private static void RequireParticipant(JsonObject parameters)
-   {
-      if(parameters["properties"] is not JsonObject properties ||
-         properties["Participants"] is not JsonObject participants)
-      {
-         return;
-      }
-
-      participants["minItems"] = MinimumParticipantCount;
-   }
-
-   public static void RemoveTool(JsonObject request)
+   public static void RemoveTool(JsonObject request, string toolName)
    {
       if(request["tools"] is not JsonArray tools)
       {
@@ -65,7 +15,8 @@ internal static class LlamaReportSubmission
 
       for(var index = tools.Count - 1; index >= 0; index--)
       {
-         if(tools[index] is JsonObject tool && IsReportTool(tool))
+         if(tools[index] is JsonObject tool &&
+            IsNamedTool(tool, toolName))
          {
             tools.RemoveAt(index);
          }
@@ -74,14 +25,13 @@ internal static class LlamaReportSubmission
 
    public static bool TryGetSubmission(
       IReadOnlyList<LlamaToolCall> toolCalls,
+      ISet<string> submissionToolNames,
       out LlamaToolCall submission
    )
    {
-      submission = toolCalls.FirstOrDefault(toolCall => string.Equals(
-         toolCall.Name,
-         ToolName,
-         StringComparison.Ordinal
-      )) ?? new LlamaToolCall("", "", "");
+      submission = toolCalls.FirstOrDefault(toolCall =>
+         submissionToolNames.Contains(toolCall.Name)
+      ) ?? new LlamaToolCall("", "", "");
 
       return !string.IsNullOrWhiteSpace(submission.Id);
    }
@@ -109,12 +59,12 @@ internal static class LlamaReportSubmission
       return finalResponse;
    }
 
-   private static bool IsReportTool(JsonObject tool)
+   private static bool IsNamedTool(JsonObject tool, string toolName)
    {
       return tool["function"] is JsonObject function &&
          string.Equals(
             function["name"]?.GetValue<string>(),
-            ToolName,
+            toolName,
             StringComparison.Ordinal
          );
    }

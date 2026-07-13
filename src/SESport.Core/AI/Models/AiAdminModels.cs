@@ -27,6 +27,8 @@ public sealed class AiProviderEditModel
 
    public string RequestOptionsJson { get; set; } = "{}";
 
+   public string? ConditionalToolsJson { get; set; }
+
    public bool Enabled { get; set; } = true;
 }
 
@@ -56,6 +58,8 @@ public sealed class AiJobEditModel
    public string? ActivePromptId { get; set; }
 
    public string? ToolsJson { get; set; }
+
+   public string? ConditionalToolsJson { get; set; }
 
    public bool RequiresWebSearch { get; set; } = true;
 

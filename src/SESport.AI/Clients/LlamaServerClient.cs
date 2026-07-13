@@ -66,6 +66,21 @@ public sealed class LlamaServerClient : IAiProviderClient
       AiRenderedPrompt renderedPrompt
    )
    {
+      return CreateRequestState(
+         provider,
+         job,
+         prompt,
+         renderedPrompt
+      ).Request;
+   }
+
+   private LlamaRequestState CreateRequestState(
+      AiProviderDefinition provider,
+      AiJobDefinition job,
+      AiPromptDefinition prompt,
+      AiRenderedPrompt renderedPrompt
+   )
+   {
       return LlamaRequestFactory.CreateInitial(
          provider,
          job,
@@ -85,12 +100,28 @@ public sealed class LlamaServerClient : IAiProviderClient
       Func<string?, int, CancellationToken, Task>? toolTraceUpdated = null
    )
    {
-      var request = CreateRequestPayload(
+      var requestState = CreateRequestState(
          provider,
          job,
          prompt,
          renderedPrompt
       );
+      var request = requestState.Request;
+      var conditionalTools = requestState.ConditionalTools;
+      var submissionToolNames = conditionalTools
+         .Where(tool => string.Equals(
+            tool.Behavior,
+            LlamaReportSubmission.ToolName,
+            StringComparison.Ordinal
+         ))
+         .Select(tool => tool.Name)
+         .ToHashSet(StringComparer.Ordinal);
+
+      if(submissionToolNames.Count == 0)
+      {
+         submissionToolNames.Add(LlamaReportSubmission.ToolName);
+      }
+
       string? rawFinalRequestJson = null;
       JsonObject? responseJson = null;
       var rawResponse = "";
@@ -157,7 +188,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      maxToolRounds,
                      toolRoundCount,
                      payloadCharacterCount,
-                     LlamaTemperature.GetRequestTemperature(request)
+                     LlamaTemperature.GetRequestTemperature(request),
+                     conditionalTools
                   )
                );
                await LlamaToolTrace.ReportProgressAsync(
@@ -266,10 +298,24 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                if(LlamaReportSubmission.TryGetSubmission(
                   toolCalls,
+                  submissionToolNames,
                   out var reportSubmission
                ))
                {
                   reportSubmissionPending = true;
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateToolSubmissionTraceEntry(
+                        turn,
+                        reportSubmission
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
                   responseJson = LlamaReportSubmission.CreateFinalResponse(
                      responseJson,
                      reportSubmission
@@ -358,18 +404,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                   validationContinuationAttempts = 0;
                }
 
-               if(string.Equals(
-                  job.Id,
-                  AiJobIds.DecidePrimaryCountryParticipation,
-                  StringComparison.Ordinal
-               ))
-               {
-                  LlamaReportSubmission.AddTool(
-                     request,
-                     prompt.OutputSchemaJson
-                  );
-               }
-
                if(job.RequiresWebSearch)
                {
                   request["tool_choice"] = "required";
@@ -411,7 +445,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      maxToolRounds,
                      maxToolRounds ?? 0,
                      payloadCharacterCount,
-                     LlamaTemperature.GetRequestTemperature(request)
+                     LlamaTemperature.GetRequestTemperature(request),
+                     conditionalTools
                   )
                );
                await LlamaToolTrace.ReportProgressAsync(
@@ -489,11 +524,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                   );
 
                if(reportSubmissionPending &&
-                  string.Equals(
-                     job.Id,
-                     AiJobIds.DecidePrimaryCountryParticipation,
-                     StringComparison.Ordinal
-                  ) &&
                   AiJobOutputValidator.ReadParticipantNames(
                      finalOutputText
                   ).Count == 0)
@@ -656,7 +686,11 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                if(reportSubmissionPending)
                {
-                  LlamaReportSubmission.RemoveTool(request);
+                  foreach(var toolName in submissionToolNames)
+                  {
+                     LlamaReportSubmission.RemoveTool(request, toolName);
+                  }
+
                   reportSubmissionPending = false;
                }
 

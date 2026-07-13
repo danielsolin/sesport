@@ -65,6 +65,7 @@ public class AiProviderClientTests
             "json_schema",
             requiresWebSearch: true,
             toolsJson: CreateToolsJson(),
+            conditionalToolsJson: CreateConditionalToolsJson(),
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
          CreatePrompt(
@@ -99,11 +100,24 @@ public class AiProviderClientTests
       Assert.DoesNotContain(
          $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
          handler.RequestBodies[1]);
-      Assert.Contains(
-         $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
-         handler.RequestBodies[6]);
       Assert.Contains("requires at least one supported participant",
          result.ToolTraceJson);
+      Assert.Contains(
+         "\"conditional_tools\":[{\"name\":\"submit_report\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains(
+         "\"kind\":\"submission\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains(
+         "\"tool_call_id\"",
+         result.ToolTraceJson
+      );
+      Assert.DoesNotContain(
+         "\"tool\":{\"type\":\"function\"",
+         result.ToolTraceJson
+      );
    }
 
    [Fact]
@@ -2325,6 +2339,7 @@ public class AiProviderClientTests
       string outputMode = "json_object",
       bool requiresWebSearch = true,
       string? toolsJson = null,
+      string? conditionalToolsJson = null,
       string jobId = "job"
    )
    {
@@ -2335,6 +2350,7 @@ public class AiProviderClientTests
          "provider",
          outputMode,
          toolsJson,
+         conditionalToolsJson,
          requiresWebSearch,
          true,
          null
@@ -2422,6 +2438,52 @@ public class AiProviderClientTests
                      },
                      required = new[] { "find", "url" },
                      additionalProperties = false
+                  }
+               }
+            }
+         }
+      );
+   }
+
+   private static string CreateConditionalToolsJson()
+   {
+      return JsonSerializer.Serialize(
+         new JsonArray
+         {
+            new JsonObject
+            {
+               ["when"] = new JsonObject
+               {
+                  ["prompt_output_schema_present"] = true
+               },
+               ["behavior"] = LlamaReportSubmission.ToolName,
+               ["tools"] = new JsonArray
+               {
+                  new JsonObject
+                  {
+                     ["type"] = "function",
+                     ["function"] = new JsonObject
+                     {
+                        ["name"] = LlamaReportSubmission.ToolName,
+                        ["description"] =
+                           "Submit the complete final report when research " +
+                           "has identified at least one supported " +
+                           "participant. Use web tools instead if no " +
+                           "participant has been identified.",
+                        ["parameters"] = new JsonObject
+                        {
+                           ["$ref"] = "prompt.output_schema"
+                        }
+                     }
+                  }
+               },
+               ["tool_patches"] = new JsonArray
+               {
+                  new JsonObject
+                  {
+                     ["path"] =
+                        "function.parameters.properties.Participants.minItems",
+                     ["value"] = 1
                   }
                }
             }

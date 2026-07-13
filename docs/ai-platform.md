@@ -28,6 +28,9 @@ Defines a reusable job.
 - `provider_id`: default provider
 - `output_mode`: `text`, `json_object`, or `json_schema`
 - `requires_web_search`: whether web search is required, default `true`
+- `tools_json`: base tool definitions for the request
+- `conditional_tools_json`: conditional tool rules evaluated against the
+  job and prompt before each request
 - `enabled`: feature flag
 
 ### `ai_job_prompts`

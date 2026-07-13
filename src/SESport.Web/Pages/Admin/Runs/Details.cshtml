@@ -288,6 +288,67 @@
                            </div>
                         }
 
+                        @if(turn.Submissions.Count > 0)
+                        {
+                           <div class="tool-trace-block">
+                              <div class="tool-trace-block-label">
+                                 Report submission
+                              </div>
+                              <div class="tool-trace-items">
+                                 @foreach(var submission in turn.Submissions)
+                                 {
+                                    <div class="tool-trace-item">
+                                       <div class="tool-trace-item-title">
+                                          <code>
+                                             @submission.Name
+                                          </code>
+                                          <span>@submission.ToolCallId</span>
+                                       </div>
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          submission.Arguments))
+                                       {
+                                          <pre class="prompt-details-pre">
+@DetailsModel.FormatJson(submission.Arguments)
+                                          </pre>
+                                       }
+                                    </div>
+                                 }
+                              </div>
+                           </div>
+                        }
+
+                        @if(turn.ConditionalTools.Count > 0)
+                        {
+                           <div class="tool-trace-block">
+                              <div class="tool-trace-block-label">
+                                 Conditional tools
+                              </div>
+                              <div class="tool-trace-items">
+                                 @foreach(var conditionalTool in
+                                    turn.ConditionalTools)
+                                 {
+                                    <div class="tool-trace-item">
+                                       <div class="tool-trace-item-title">
+                                          <code>
+                                             @conditionalTool.Name
+                                          </code>
+                                          @if(
+                                             !string.IsNullOrWhiteSpace(
+                                                conditionalTool.Behavior
+                                             ))
+                                          {
+                                             <span>
+                                                Behavior:
+                                                @conditionalTool.Behavior
+                                             </span>
+                                          }
+                                       </div>
+                                    </div>
+                                 }
+                              </div>
+                           </div>
+                        }
+
                         @if(turn.ToolResults.Count > 0)
                         {
                            <div class="tool-trace-block">

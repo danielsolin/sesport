@@ -687,6 +687,22 @@ public class DetailsModel(
                continue;
             }
 
+            if(string.Equals(kind, "submission", StringComparison.Ordinal))
+            {
+               builder.Submissions.Add(ParseToolSubmission(entry));
+               continue;
+            }
+
+            if(string.Equals(
+               kind,
+               "conditional_tools",
+               StringComparison.Ordinal
+            ))
+            {
+               builder.ConditionalTools.AddRange(ParseConditionalTools(entry));
+               continue;
+            }
+
             if(string.Equals(kind, "repair_prompt", StringComparison.Ordinal))
             {
                var repairPrompt = GetString(entry, "content");
@@ -749,6 +765,38 @@ public class DetailsModel(
          ));
       }
 
+      var submissions = turns
+         .SelectMany(turn => turn.Submissions)
+         .GroupBy(submission => submission.Name, StringComparer.Ordinal)
+         .OrderBy(group => group.Key, StringComparer.Ordinal)
+         .ToArray();
+
+      foreach(var submissionGroup in submissions)
+      {
+         badges.Add(new(
+            FormatSubmissionBadgeText(
+               submissionGroup.Key,
+               submissionGroup.Count()
+            ),
+            GetToolBadgeCssClass(submissionGroup.Key)
+         ));
+      }
+
+      var conditionalTools = turns
+         .SelectMany(turn => turn.ConditionalTools)
+         .GroupBy(tool => (tool.Name, tool.Behavior))
+         .OrderBy(group => group.Key.Name, StringComparer.Ordinal)
+         .Select(group => group.First())
+         .ToArray();
+
+      if(conditionalTools.Length > 0)
+      {
+         badges.Add(new(
+            BuildConditionalToolsBadgeText(conditionalTools),
+            GetConditionalToolBadgeCssClass(conditionalTools)
+         ));
+      }
+
       var totalToolResults = turns.Sum(turn => turn.ToolResults.Count);
       if(totalToolResults > 0)
       {
@@ -769,6 +817,52 @@ public class DetailsModel(
       }
 
       return badges;
+   }
+
+   private static string BuildConditionalToolsBadgeText(
+      IReadOnlyList<ToolTraceConditionalToolViewModel> conditionalTools
+   )
+   {
+      var toolNames = conditionalTools
+         .Select(tool => string.IsNullOrWhiteSpace(tool.Behavior) ||
+               string.Equals(
+                  tool.Behavior,
+                  tool.Name,
+                  StringComparison.Ordinal
+               )
+            ? tool.Name
+            : $"{tool.Name} ({tool.Behavior})")
+         .ToArray();
+
+      return $"Conditional: {string.Join(", ", toolNames)}";
+   }
+
+   private static string FormatSubmissionBadgeText(
+      string name,
+      int count
+   )
+   {
+      return count == 1
+         ? name
+         : $"{name} × {count}";
+   }
+
+   private static string GetConditionalToolBadgeCssClass(
+      IReadOnlyList<ToolTraceConditionalToolViewModel> conditionalTools
+   )
+   {
+      return conditionalTools.Any(tool =>
+         string.Equals(
+            tool.Behavior,
+            WebToolNames.SubmitReport,
+            StringComparison.Ordinal
+         ) || string.Equals(
+            tool.Name,
+            WebToolNames.SubmitReport,
+            StringComparison.Ordinal
+         ))
+         ? "tool-trace-badge tool-trace-badge-submit-report"
+         : "tool-trace-badge tool-trace-badge-tool";
    }
 
    private static ToolTraceTurnBuilder GetOrCreateTurn(
@@ -804,6 +898,24 @@ public class DetailsModel(
          .ToArray();
    }
 
+   private static IReadOnlyList<ToolTraceConditionalToolViewModel>
+      ParseConditionalTools(JsonElement entry)
+   {
+      if(!TryGetArray(entry, "conditional_tools", out var conditionalTools))
+      {
+         return [];
+      }
+
+      return conditionalTools
+         .Where(tool => tool.ValueKind == JsonValueKind.Object)
+         .Select(tool => new ToolTraceConditionalToolViewModel(
+            GetString(tool, "name") ?? "",
+            GetString(tool, "behavior")
+         ))
+         .Where(tool => !string.IsNullOrWhiteSpace(tool.Name))
+         .ToArray();
+   }
+
    private static ToolTraceToolResultViewModel ParseToolResult(
       JsonElement entry
    )
@@ -819,6 +931,17 @@ public class DetailsModel(
          GetString(entry, "search_engine"),
          GetString(entry, "fetcher"),
          FormatDisplayValue(GetProperty(entry, "result"))
+      );
+   }
+
+   private static ToolTraceSubmissionViewModel ParseToolSubmission(
+      JsonElement entry
+   )
+   {
+      return new ToolTraceSubmissionViewModel(
+         GetString(entry, "tool_call_id") ?? "",
+         GetString(entry, "name") ?? "",
+         GetString(entry, "arguments")
       );
    }
 
@@ -1015,10 +1138,22 @@ public class DetailsModel(
       string Result
    );
 
+   public sealed record ToolTraceSubmissionViewModel(
+      string ToolCallId,
+      string Name,
+      string? Arguments
+   );
+
+   public sealed record ToolTraceConditionalToolViewModel(
+      string Name,
+      string? Behavior
+   );
+
    public sealed record ToolTraceTurnViewModel(
       int Turn,
       int? RoundPayloadCharacterCount,
       decimal? Temperature,
+      IReadOnlyList<ToolTraceConditionalToolViewModel> ConditionalTools,
       string? FinishReason,
       string? AssistantContent,
       string? AssistantReasoningContent,
@@ -1026,6 +1161,7 @@ public class DetailsModel(
       string? AssistantValidationError,
       IReadOnlyList<string> RepairPrompts,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
+      IReadOnlyList<ToolTraceSubmissionViewModel> Submissions,
       IReadOnlyList<ToolTraceToolResultViewModel> ToolResults,
       IReadOnlyList<ToolTraceBadgeViewModel> CompactBadges,
       string? AssistantPreview
@@ -1038,6 +1174,9 @@ public class DetailsModel(
       public int? RoundPayloadCharacterCount { get; set; }
 
       public decimal? Temperature { get; set; }
+
+      public List<ToolTraceConditionalToolViewModel> ConditionalTools
+      { get; } = [];
 
       public string? FinishReason { get; set; }
 
@@ -1053,6 +1192,8 @@ public class DetailsModel(
 
       public List<ToolTraceCallViewModel> ToolCalls { get; } = [];
 
+      public List<ToolTraceSubmissionViewModel> Submissions { get; } = [];
+
       public List<ToolTraceToolResultViewModel> ToolResults { get; } = [];
 
       public ToolTraceTurnViewModel ToViewModel()
@@ -1061,6 +1202,7 @@ public class DetailsModel(
             Turn,
             RoundPayloadCharacterCount,
             Temperature,
+            ConditionalTools,
             FinishReason,
             AssistantContent,
             AssistantReasoningContent,
@@ -1068,6 +1210,7 @@ public class DetailsModel(
             AssistantValidationError,
             RepairPrompts,
             ToolCalls,
+            Submissions,
             ToolResults,
             BuildCompactBadges(),
             BuildAssistantPreview()
@@ -1099,6 +1242,14 @@ public class DetailsModel(
             ));
          }
 
+         if(ConditionalTools.Count > 0)
+         {
+            badges.Add(new(
+               BuildConditionalToolsBadgeText(ConditionalTools),
+               GetConditionalToolBadgeCssClass(ConditionalTools)
+            ));
+         }
+
          if(!string.IsNullOrWhiteSpace(AssistantContent))
          {
             badges.Add(new("Assistant", "tool-trace-badge-assistant"));
@@ -1124,6 +1275,19 @@ public class DetailsModel(
             badges.Add(new(
                $"{toolCallGroup.Key} × {toolCallGroup.Count()}",
                GetToolBadgeCssClass(toolCallGroup.Key)
+            ));
+         }
+
+         foreach(var submissionGroup in Submissions
+            .GroupBy(submission => submission.Name, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.Ordinal))
+         {
+            badges.Add(new(
+               FormatSubmissionBadgeText(
+                  submissionGroup.Key,
+                  submissionGroup.Count()
+               ),
+               GetToolBadgeCssClass(submissionGroup.Key)
             ));
          }
 

@@ -38,6 +38,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       ) ?? new AiJobEditModel();
 
       Job.ToolsJson = PrettyPrintJson(Job.ToolsJson);
+      Job.ConditionalToolsJson = PrettyPrintJson(Job.ConditionalToolsJson);
 
       await LoadPromptsAsync(cancellationToken);
 
@@ -118,6 +119,10 @@ public class EditModel(AiAdminRepository repository) : PageModel
       }
 
       ValidateJson("Job.ToolsJson", Job.ToolsJson);
+      ValidateJson(
+         "Job.ConditionalToolsJson",
+         Job.ConditionalToolsJson
+      );
 
       if(Job.RequiresWebSearch)
       {

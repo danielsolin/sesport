@@ -43,9 +43,28 @@ internal static class LlamaToolTrace
       int? maxToolRounds,
       int toolRoundCount,
       int payloadCharacterCount,
-      decimal? temperature
+      decimal? temperature,
+      IReadOnlyList<LlamaConditionalTool>? conditionalTools = null
    )
    {
+      var conditionalToolTrace = new JsonArray();
+
+      if(conditionalTools is not null)
+      {
+         foreach(var tool in conditionalTools)
+         {
+            conditionalToolTrace.Add(
+               new JsonObject
+               {
+                  ["name"] = tool.Name,
+                  ["behavior"] = tool.Behavior
+               }
+            );
+         }
+      }
+
+      var hasConditionalTools = conditionalToolTrace.Count > 0;
+
       if(maxToolRounds is null)
       {
          return new JsonObject
@@ -53,7 +72,10 @@ internal static class LlamaToolTrace
             ["kind"] = "budget",
             ["turn"] = turn,
             ["enabled"] = false,
-            ["temperature"] = temperature
+            ["temperature"] = temperature,
+            ["conditional_tools"] = hasConditionalTools
+               ? conditionalToolTrace
+               : null
          };
       }
 
@@ -69,8 +91,26 @@ internal static class LlamaToolTrace
          ["max"] = maxToolRounds.Value,
          ["payload_chars"] = payloadCharacterCount,
          ["temperature"] = temperature,
+         ["conditional_tools"] = hasConditionalTools
+            ? conditionalToolTrace
+            : null,
          ["content"] = $"Tool calls remaining: {remainingToolCalls} of " +
             $"{maxToolRounds.Value}."
+      };
+   }
+
+   public static JsonObject CreateToolSubmissionTraceEntry(
+      int turn,
+      LlamaToolCall submission
+   )
+   {
+      return new JsonObject
+      {
+         ["kind"] = "submission",
+         ["turn"] = turn,
+         ["tool_call_id"] = submission.Id,
+         ["name"] = submission.Name,
+         ["arguments"] = submission.Arguments
       };
    }
 

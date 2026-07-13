@@ -88,6 +88,13 @@
                    class="tall-textarea"></textarea>
          <span asp-validation-for="Job.ToolsJson"></span>
       </label>
+      <label>
+         <span>Conditional Tools JSON</span>
+         <textarea asp-for="Job.ConditionalToolsJson"
+                   rows="10"
+                   class="tall-textarea"></textarea>
+         <span asp-validation-for="Job.ConditionalToolsJson"></span>
+      </label>
       <label class="check-row">
          <input asp-for="Job.RequiresWebSearch" type="checkbox" />
          <span>Requires Web Search</span>

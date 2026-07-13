@@ -5,12 +5,17 @@ using System.Text.Json.Nodes;
 
 namespace SESport.AI.Llama;
 
+internal sealed record LlamaRequestState(
+   JsonObject Request,
+   IReadOnlyList<LlamaConditionalTool> ConditionalTools
+);
+
 internal static class LlamaRequestFactory
 {
    private const string StructuredOutputPromptMarker =
       "Output format instructions:";
 
-   public static JsonObject CreateInitial(
+   public static LlamaRequestState CreateInitial(
       AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
@@ -18,6 +23,11 @@ internal static class LlamaRequestFactory
       bool includeTools
    )
    {
+      var conditionalTools = LlamaConditionalTools.Resolve(
+         job.ConditionalToolsJson,
+         job,
+         prompt
+      );
       var payload = CreateBaseRequestPayload(
          provider,
          job,
@@ -26,33 +36,32 @@ internal static class LlamaRequestFactory
          includeTools
       );
 
-      if(includeTools)
+      var requestTools = CreateToolsArray(
+         job.ToolsJson,
+         conditionalTools
+      );
+
+      if(includeTools && requestTools.Count == 0)
       {
-         payload["tools"] = CreateToolsArray(job.ToolsJson);
+         throw new InvalidOperationException(
+            "Tool usage is enabled but no tools JSON was configured."
+         );
+      }
 
-         if(string.Equals(
-            job.Id,
-            AiJobIds.DecidePrimaryCountryParticipation,
-            StringComparison.Ordinal
-         ))
-         {
-            LlamaReportSubmission.AddTool(
-               payload,
-               prompt.OutputSchemaJson
-            );
-         }
-
+      if(requestTools.Count > 0)
+      {
+         payload["tools"] = requestTools;
          payload["tool_choice"] = "required";
       }
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
       MergeRequestOptions(payload, prompt.RequestOptionsJson);
-      if(includeTools)
+      if(requestTools.Count > 0)
       {
          RemoveStructuredResponseFormat(payload);
       }
 
-      return payload;
+      return new LlamaRequestState(payload, conditionalTools);
    }
 
    public static JsonObject CreateFinal(
@@ -381,25 +390,60 @@ internal static class LlamaRequestFactory
          $"{Environment.NewLine}{prompt.OutputSchemaJson.Trim()}";
    }
 
-   private static JsonArray CreateToolsArray(string? toolsJson)
+   private static JsonArray CreateToolsArray(
+      string? toolsJson,
+      IReadOnlyList<LlamaConditionalTool> conditionalTools
+   )
    {
-      if(string.IsNullOrWhiteSpace(toolsJson))
+      var tools = new JsonArray();
+      var toolNames = new HashSet<string>(StringComparer.Ordinal);
+
+      if(!string.IsNullOrWhiteSpace(toolsJson))
       {
-         throw new InvalidOperationException(
-            "Tool usage is enabled but no tools JSON was configured."
-         );
+         var configuredTools = JsonNode.Parse(toolsJson) as JsonArray;
+
+         if(configuredTools is null)
+         {
+            throw new InvalidOperationException(
+               "Configured tools JSON must be a JSON array."
+            );
+         }
+
+         foreach(var tool in configuredTools.OfType<JsonObject>())
+         {
+            var toolName = GetToolName(tool);
+
+            if(string.IsNullOrWhiteSpace(toolName) ||
+               !toolNames.Add(toolName))
+            {
+               continue;
+            }
+
+            tools.Add(tool.DeepClone());
+         }
       }
 
-      var tools = JsonNode.Parse(toolsJson) as JsonArray;
-
-      if(tools is null)
+      foreach(var conditionalTool in conditionalTools)
       {
-         throw new InvalidOperationException(
-            "Configured tools JSON must be a JSON array."
-         );
+         if(!toolNames.Add(conditionalTool.Name))
+         {
+            continue;
+         }
+
+         tools.Add(conditionalTool.Tool.DeepClone());
       }
 
       return tools;
+   }
+
+   private static string GetToolName(JsonObject tool)
+   {
+      return tool["function"] is JsonObject function &&
+         function.TryGetPropertyValue("name", out var name) &&
+         name is JsonValue jsonValue &&
+         jsonValue.TryGetValue<string>(out var text)
+         ? text
+         : "";
    }
 
    private static void MergeRequestOptions(

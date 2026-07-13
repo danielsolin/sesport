@@ -198,6 +198,7 @@ public class AiJobRunnerTests
                "provider",
                "json_object",
                null,
+               null,
                true,
                true,
                null
