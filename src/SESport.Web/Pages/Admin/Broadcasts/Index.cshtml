@@ -134,6 +134,9 @@
                      <th class="broadcasts-col-organization">
                         Organization
                      </th>
+                     <th class="broadcasts-col-group">
+                        Group
+                     </th>
                      <th class="broadcasts-col-categories">
                         <a asp-page="./Index"
                            asp-all-route-data=
@@ -241,6 +244,11 @@
                                 hidden></div>
                         </div>
                      </td>
+                     <td class="broadcasts-col-group"
+                         data-broadcast-group-text="@broadcast.GroupText"
+                         title="@broadcast.GroupText">
+                        @broadcast.GroupText
+                     </td>
                      <td class="broadcasts-col-categories
                                 broadcast-inline-editable"
                          data-broadcast-id="@broadcast.Id"
@@ -336,7 +344,7 @@
                          "@broadcast.ParticipationCheck?.StatusId">
                      <td class="broadcast-participation-spacer"></td>
                      <td class="broadcast-participation-runs-cell"
-                         colspan="5"
+                         colspan="6"
                          data-participation-cell
                          data-broadcast-id="@broadcast.Id"
                          data-participation-run-id=

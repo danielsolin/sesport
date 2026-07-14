@@ -30,7 +30,9 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.starts_at,
             broadcasts.ends_at,
             broadcasts.hidden_at,
-            org.canonical_name as organization_name
+            org.canonical_name as organization_name,
+            broadcasts.activity_group_source_kind_id,
+            broadcasts.activity_group_source_activity_id
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
          where broadcasts.id = @id
@@ -81,7 +83,9 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.starts_at,
             broadcasts.ends_at,
             broadcasts.hidden_at,
-            org.canonical_name as organization_name
+            org.canonical_name as organization_name,
+            broadcasts.activity_group_source_kind_id,
+            broadcasts.activity_group_source_activity_id
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
          where broadcasts.starts_at >= @start
@@ -427,7 +431,9 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(8) ? null : reader.GetFieldValue<DateOnly>(8),
          reader.IsDBNull(11) == false,
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
-         reader.IsDBNull(12) ? null : reader.GetString(12)
+         reader.IsDBNull(12) ? null : reader.GetString(12),
+         reader.IsDBNull(13) ? null : reader.GetString(13),
+         reader.IsDBNull(14) ? null : reader.GetGuid(14)
       );
    }
 

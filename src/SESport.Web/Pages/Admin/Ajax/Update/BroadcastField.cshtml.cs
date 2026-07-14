@@ -95,11 +95,17 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
+            var broadcast = await repository.GetByIdAsync(
+               id,
+               cancellationToken
+            );
+
             return new JsonResult(new
             {
                updated = true,
                field = "organization",
-               value = organizationEntityId?.ToString() ?? string.Empty
+               value = organizationEntityId?.ToString() ?? string.Empty,
+               groupText = broadcast?.GroupText ?? "-"
             });
          }
 

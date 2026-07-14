@@ -53,6 +53,11 @@ public sealed class BroadcastModel(
             organizationEntityId =
                refreshedBroadcast.OrganizationEntityId?.ToString(),
             organizationEntityName = refreshedBroadcast.OrganizationEntityName,
+            activityGroupSourceKindId =
+               refreshedBroadcast.ActivityGroupSourceKindId,
+            activityGroupSourceActivityId =
+               refreshedBroadcast.ActivityGroupSourceActivityId?.ToString(),
+            groupText = refreshedBroadcast.GroupText,
             participationStatusId =
                refreshedBroadcast.ParticipationCheck?.StatusId
          }

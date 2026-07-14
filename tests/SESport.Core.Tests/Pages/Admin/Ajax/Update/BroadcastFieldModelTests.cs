@@ -61,7 +61,12 @@ public sealed class BroadcastFieldModelTests
             CancellationToken.None
          );
 
-         Assert.IsType<JsonResult>(updateResult);
+         var updatePayload = Assert.IsType<JsonResult>(updateResult).Value!;
+         var groupText = (string?)updatePayload.GetType()
+            .GetProperty("groupText")
+            ?.GetValue(updatePayload);
+
+         Assert.False(string.IsNullOrWhiteSpace(groupText));
          AssertBroadcastEntityId(
             dataSource,
             broadcastId,

@@ -14,6 +14,7 @@
       "[data-broadcast-title-search-link]";
    const broadcastCategoriesListSelector =
       "[data-broadcast-categories-list]";
+   const broadcastGroupTextSelector = "[data-broadcast-group-text]";
    const broadcastOrganizationInputSelector = "[data-org-entity-input]";
    const broadcastOrganizationIdSelector = "[data-org-entity-id]";
 
@@ -195,7 +196,37 @@
          }
 
          window.setBroadcastOrganizationLockState?.(cell, nextValue !== "");
+         updateBroadcastGroupCell(cell, payload);
       }
+   }
+
+   function updateBroadcastGroupCell(cell, payload)
+   {
+      if(!(cell instanceof HTMLElement) || !payload)
+      {
+         return;
+      }
+
+      const nextValue = typeof payload.groupText === "string"
+         ? payload.groupText.trim()
+         : "";
+
+      if(nextValue === "")
+      {
+         return;
+      }
+
+      const row = cell.closest("tr[data-broadcast-row='true']");
+      const groupCell = row?.querySelector(broadcastGroupTextSelector);
+
+      if(!(groupCell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      groupCell.dataset.broadcastGroupText = nextValue;
+      groupCell.textContent = nextValue;
+      groupCell.title = nextValue;
    }
 
    function getBroadcastSearchUrlBase()

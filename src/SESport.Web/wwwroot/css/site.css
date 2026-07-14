@@ -532,6 +532,10 @@ h2 {
    width: 240px;
 }
 
+.broadcasts-col-group {
+   width: 200px;
+}
+
 .broadcast-org-autocomplete {
    position: relative;
    min-width: 0;

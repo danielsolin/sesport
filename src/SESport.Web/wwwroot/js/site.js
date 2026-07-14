@@ -555,6 +555,7 @@
       const organizationEntityName = normalizeNullableString(
          broadcast.organizationEntityName
       );
+      const groupText = normalizeNullableString(broadcast.groupText) || "-";
       const participationStatusId = normalizeNullableString(
          broadcast.participationStatusId
       );
@@ -685,6 +686,12 @@
       );
       organizationCell.append(organizationWrap);
 
+      const groupCell = document.createElement("td");
+      groupCell.className = "broadcasts-col-group";
+      groupCell.dataset.broadcastGroupText = groupText;
+      groupCell.title = groupText;
+      groupCell.textContent = groupText;
+
       const categoriesCell = document.createElement("td");
       categoriesCell.className =
          "broadcasts-col-categories broadcast-inline-editable";
@@ -767,6 +774,7 @@
          timeCell,
          titleCell,
          organizationCell,
+         groupCell,
          categoriesCell,
          actionsCell
       );
@@ -781,7 +789,7 @@
 
       const runsCell = document.createElement("td");
       runsCell.className = "broadcast-participation-runs-cell";
-      runsCell.colSpan = 5;
+      runsCell.colSpan = 6;
       runsCell.dataset.participationCell = "true";
       runsCell.dataset.broadcastId = broadcastId;
       runsCell.dataset.participationRunId = "";
