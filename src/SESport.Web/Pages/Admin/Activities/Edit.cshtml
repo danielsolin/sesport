@@ -207,14 +207,15 @@
          </button>
          <span class="form-status" data-facts-status></span>
       </div>
-      <label>
+      <label style="display: none;">
          <span>Teaser</span>
          <textarea asp-for="Activity.Teaser"
                    class="medium-textarea"
                    rows="3"
+                   style="display: none;"
                    data-teaser-output></textarea>
       </label>
-      <div class="button-row">
+      <div class="button-row" style="display: none;">
          <button class="button"
                  type="button"
                  data-generate-teaser
