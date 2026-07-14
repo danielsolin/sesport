@@ -865,6 +865,10 @@ h2 {
    width: auto;
 }
 
+.ai-runs-col-summary {
+   width: 180px;
+}
+
 .ai-runs-col-status {
    width: 82px;
 }
@@ -906,6 +910,10 @@ h2 {
    color: var(--muted);
    font-size: 12px;
    line-height: 1.1;
+   overflow-wrap: anywhere;
+}
+
+.ai-runs-result-cell {
    overflow-wrap: anywhere;
 }
 

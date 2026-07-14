@@ -67,6 +67,7 @@ public sealed class IndexModelTests
          "completed",
          0,
          0,
+         null,
          DateTimeOffset.UtcNow,
          null
       );

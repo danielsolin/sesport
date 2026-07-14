@@ -86,6 +86,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.duration_seconds,")
          .AppendLine("   r.conversation_character_count,")
          .AppendLine("   r.tool_trace,")
+         .AppendLine("   r.output_text,")
          .AppendLine("   case r.status_id")
          .AppendLine(
             $"      when '{AiJobRunStatusIds.Running}' then 0"
@@ -132,7 +133,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   greatest(")
          .AppendLine("      sr.conversation_character_count,")
          .AppendLine("      coalesce(trace.max_payload_chars, 0)")
-         .AppendLine("   ) as max_payload_chars")
+         .AppendLine("   ) as max_payload_chars,")
+         .AppendLine("   sr.output_text")
          .AppendLine("from selected_runs sr")
          .AppendLine("left join lateral (")
          .AppendLine("   select max((entry.value->>'payload_chars')::int)")
@@ -192,6 +194,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetString(8),
                reader.GetInt32(9),
                reader.GetInt32(12),
+               AiRunSummaryFormatter.Format(ReadNullableString(reader, 13)),
                reader.GetFieldValue<DateTimeOffset>(10),
                ReadNullableDecimal(reader, 11)
             )
@@ -270,7 +273,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             greatest(
                r.conversation_character_count,
                coalesce(trace.max_payload_chars, 0)
-            ) as max_payload_chars
+            ) as max_payload_chars,
+            r.output_text
          from ai_job_runs r
          join ai_jobs j on j.id = r.job_id
          join ai_providers p on p.id = r.provider_id
@@ -319,6 +323,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetString(8),
                reader.GetInt32(9),
                reader.GetInt32(12),
+               AiRunSummaryFormatter.Format(ReadNullableString(reader, 13)),
                reader.GetFieldValue<DateTimeOffset>(10),
                ReadNullableDecimal(reader, 11)
             )

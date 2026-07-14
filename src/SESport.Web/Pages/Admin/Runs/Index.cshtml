@@ -58,6 +58,7 @@
          <col class="ai-runs-col-started" />
          <col class="ai-runs-col-job" />
          <col class="ai-runs-col-event" />
+         <col class="ai-runs-col-summary" />
          <col class="ai-runs-col-payload" />
          <col class="ai-runs-col-rounds" />
          <col class="ai-runs-col-duration" />
@@ -69,6 +70,7 @@
             <th>Started</th>
             <th>JOB</th>
             <th>For</th>
+            <th>Summary</th>
             <th>MAX-CHARS</th>
             <th>Rounds</th>
             <th>Duration</th>
@@ -95,6 +97,11 @@
                    title="@run.JobLabel">@jobCode</td>
                <td>
                   <strong>@runTarget:</strong> @run.EventName
+               </td>
+               <td class="ai-runs-result-cell">
+                  @(string.IsNullOrWhiteSpace(run.ResultSummary)
+                     ? "-"
+                     : run.ResultSummary)
                </td>
                <td data-ai-run-payload-cell>
                   @run.MaxPayloadCharacterCount

@@ -242,6 +242,62 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunsAsyncUsesShortSummaryForJsonOutput()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         outputText: """
+            {
+              "Participants": [
+                {
+                  "Name": "Alice"
+                },
+                {
+                  "Name": "Bob"
+                }
+              ],
+              "CheckedSources": [],
+              "Participation": "Yes"
+            }
+            """
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            jobId,
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal("2 participants", Assert.Single(runs).ResultSummary);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task GetRunsAsyncReturnsMaxPayloadCharacterCount()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -1002,7 +1058,8 @@ public sealed class AiRepositoryTests
       int conversationCharacterCount = 0,
       decimal? durationSeconds = null,
       string? toolTraceJson = null,
-      string inputPayloadJson = "{}"
+      string inputPayloadJson = "{}",
+      string? outputText = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1046,7 +1103,7 @@ public sealed class AiRepositoryTests
             null,
             null,
             @tool_trace::jsonb,
-            null,
+            @output_text,
             null,
             @started_at,
             null,
@@ -1079,6 +1136,10 @@ public sealed class AiRepositoryTests
       command.Parameters.AddWithValue(
          "tool_trace",
          (object?)toolTraceJson ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "output_text",
+         (object?)outputText ?? DBNull.Value
       );
       command.Parameters.AddWithValue("input_payload", inputPayloadJson);
       command.Parameters.AddWithValue(
