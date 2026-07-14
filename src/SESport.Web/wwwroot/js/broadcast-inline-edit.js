@@ -7,8 +7,11 @@
    const broadcastInlineEditTitleField = "title";
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
+   const broadcastInlineEditGroupField = "group";
    const broadcastInlineEditInputSelector =
       "[data-broadcast-inline-edit-input]";
+   const broadcastInlineEditDisplaySelector =
+      "[data-broadcast-inline-edit-display]";
    const broadcastTitleTextSelector = "[data-broadcast-title-text]";
    const broadcastTitleSearchLinkSelector =
       "[data-broadcast-title-search-link]";
@@ -197,21 +200,18 @@
 
          window.setBroadcastOrganizationLockState?.(cell, nextValue !== "");
          updateBroadcastGroupCell(cell, payload);
+         return;
+      }
+
+      if(field === broadcastInlineEditGroupField)
+      {
+         updateBroadcastGroupCell(cell, payload);
       }
    }
 
    function updateBroadcastGroupCell(cell, payload)
    {
       if(!(cell instanceof HTMLElement) || !payload)
-      {
-         return;
-      }
-
-      const nextValue = typeof payload.groupText === "string"
-         ? payload.groupText.trim()
-         : "";
-
-      if(nextValue === "")
       {
          return;
       }
@@ -224,9 +224,117 @@
          return;
       }
 
-      groupCell.dataset.broadcastGroupText = nextValue;
-      groupCell.textContent = nextValue;
-      groupCell.title = nextValue;
+      const activityGroupId = typeof payload.activityGroupId === "string"
+         ? payload.activityGroupId.trim()
+         : "";
+      const activityGroupTitle = typeof payload.activityGroupTitle === "string"
+         ? payload.activityGroupTitle.trim()
+         : "";
+      const payloadValue = typeof payload.value === "string"
+         ? payload.value.trim()
+         : "";
+      const groupText = typeof payload.groupText === "string"
+         ? payload.groupText.trim()
+         : "";
+      const nextValue = activityGroupId !== ""
+         ? activityGroupTitle || payloadValue || groupText
+         : groupText || "-";
+
+      syncBroadcastGroupCell(groupCell, nextValue, activityGroupId);
+
+      if(activityGroupId === "")
+      {
+         return;
+      }
+
+      document
+         .querySelectorAll(broadcastGroupTextSelector)
+         .forEach(otherCell => {
+            if(!(otherCell instanceof HTMLElement))
+            {
+               return;
+            }
+
+            if((otherCell.dataset.broadcastActivityGroupId ?? "").trim() !==
+               activityGroupId)
+            {
+               return;
+            }
+
+            syncBroadcastGroupCell(otherCell, nextValue, activityGroupId);
+         });
+   }
+
+   function syncBroadcastGroupCell(cell, nextValue, activityGroupId)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const editable = activityGroupId !== "";
+
+      cell.dataset.broadcastGroupText = nextValue;
+
+      if(!editable)
+      {
+         cell.classList.remove("broadcast-inline-editable");
+         delete cell.dataset.broadcastInlineEditField;
+         delete cell.dataset.broadcastInlineEditValue;
+         delete cell.dataset.broadcastActivityGroupId;
+         cell.title = nextValue;
+         cell.textContent = nextValue;
+         return;
+      }
+
+      cell.classList.add("broadcast-inline-editable");
+      const broadcastRow = cell.closest("tr[data-broadcast-row='true']");
+      const broadcastId = (
+         cell.dataset.broadcastId
+         ?? broadcastRow?.dataset.broadcastId
+         ?? ""
+      ).trim();
+
+      if(broadcastId !== "")
+      {
+         cell.dataset.broadcastId = broadcastId;
+      }
+
+      cell.dataset.broadcastInlineEditField = broadcastInlineEditGroupField;
+      cell.dataset.broadcastInlineEditValue = nextValue;
+      cell.dataset.broadcastActivityGroupId = activityGroupId;
+      cell.title = "Double-click to edit";
+
+      let display = cell.querySelector(broadcastInlineEditDisplaySelector);
+      let input = cell.querySelector(broadcastInlineEditInputSelector);
+
+      if(!(display instanceof HTMLElement) ||
+         !(input instanceof HTMLInputElement))
+      {
+         cell.replaceChildren();
+
+         display = document.createElement("div");
+         display.dataset.broadcastInlineEditDisplay = "true";
+
+         input = document.createElement("input");
+         input.className = "broadcast-inline-edit-input";
+         input.dataset.broadcastInlineEditInput = "true";
+         input.type = "text";
+         input.autocomplete = "off";
+         input.spellcheck = false;
+         input.setAttribute("aria-label", "Edit group title");
+         input.hidden = true;
+         input.tabIndex = -1;
+
+         cell.append(display, input);
+      }
+
+      display.textContent = nextValue;
+      display.hidden = false;
+      input.value = nextValue;
+      input.dataset.broadcastInlineEditOriginalValue = nextValue;
+      input.hidden = true;
+      input.disabled = false;
    }
 
    function getBroadcastSearchUrlBase()

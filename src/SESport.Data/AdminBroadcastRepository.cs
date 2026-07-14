@@ -31,6 +31,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.ends_at,
             broadcasts.hidden_at,
             org.canonical_name as organization_name,
+            source_group.id as activity_group_id,
             source_group.title as activity_group_title,
             broadcasts.activity_group_source_kind_id,
             broadcasts.activity_group_source_activity_id
@@ -89,6 +90,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.ends_at,
             broadcasts.hidden_at,
             org.canonical_name as organization_name,
+            source_group.id as activity_group_id,
             source_group.title as activity_group_title,
             broadcasts.activity_group_source_kind_id,
             broadcasts.activity_group_source_activity_id
@@ -442,10 +444,44 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(11) == false,
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
          reader.IsDBNull(12) ? null : reader.GetString(12),
-         reader.IsDBNull(13) ? null : reader.GetString(13),
+         reader.IsDBNull(13) ? null : reader.GetGuid(13),
          reader.IsDBNull(14) ? null : reader.GetString(14),
-         reader.IsDBNull(15) ? null : reader.GetGuid(15)
+         reader.IsDBNull(15) ? null : reader.GetString(15),
+         reader.IsDBNull(16) ? null : reader.GetGuid(16)
       );
+   }
+
+   public async Task<bool> UpdateActivityGroupTitleAsync(
+      Guid broadcastId,
+      string title,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         with broadcast_group as (
+            select source_group.id
+            from broadcasts b
+            join activities source_activity
+               on source_activity.id = b.activity_group_source_activity_id
+            join activity_groups source_group
+               on source_group.id = source_activity.activity_group_id
+            where b.id = @id
+         )
+         update activity_groups ag
+         set title = @title,
+            updated_at = now()
+         from broadcast_group
+         where ag.id = broadcast_group.id
+         returning ag.id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", broadcastId);
+      command.Parameters.AddWithValue("title", title);
+
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+
+      return result is not null && result is not DBNull;
    }
 
    private async Task<BroadcastActivitySource?>

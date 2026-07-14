@@ -105,7 +105,50 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "organization",
                value = organizationEntityId?.ToString() ?? string.Empty,
+               activityGroupId =
+                  broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
+               activityGroupTitle =
+                  broadcast?.ActivityGroupTitle ?? string.Empty,
                groupText = broadcast?.GroupText ?? "-"
+            });
+         }
+
+         if(string.Equals(field, "group", StringComparison.Ordinal))
+         {
+            if(string.IsNullOrWhiteSpace(value))
+            {
+               return BadRequest(new { error = "Group cannot be empty." });
+            }
+
+            var updated = await repository.UpdateActivityGroupTitleAsync(
+               id,
+               value,
+               cancellationToken
+            );
+
+            if(!updated)
+            {
+               return BadRequest(new
+               {
+                  error = "ActivityGroup is not editable yet."
+               });
+            }
+
+            var broadcast = await repository.GetByIdAsync(
+               id,
+               cancellationToken
+            );
+
+            return new JsonResult(new
+            {
+               updated = true,
+               field = "group",
+               value,
+               activityGroupId =
+                  broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
+               activityGroupTitle =
+                  broadcast?.ActivityGroupTitle ?? string.Empty,
+               groupText = broadcast?.GroupText ?? value
             });
          }
 

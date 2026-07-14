@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 
 using Npgsql;
 
+using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
+using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Pages.Admin.Ajax.Update;
 
@@ -106,6 +109,89 @@ public sealed class BroadcastFieldModelTests
       }
    }
 
+   [Fact]
+   public async Task OnPostAsyncUpdatesActivityGroupTitle()
+   {
+      var broadcastId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Broadcast {uniqueSuffix}";
+      var updatedGroupTitle = $"Updated group {uniqueSuffix}";
+      var activityTitle = $"Activity {uniqueSuffix}";
+      var activityDate = new DateOnly(2026, 7, 17);
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         $"Original group {uniqueSuffix}",
+         "football",
+         activityDate,
+         activityDate
+      );
+
+      var activityId = await InsertActivityAsync(
+         dataSource,
+         activityGroupId,
+         activityTitle,
+         "football",
+         activityDate
+      );
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         broadcastTitle,
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2),
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+         activityId
+      );
+
+      try
+      {
+         var updateResult = await model.OnPostAsync(
+            broadcastId,
+            "group",
+            updatedGroupTitle,
+            CancellationToken.None
+         );
+
+         var updatePayload = Assert.IsType<JsonResult>(updateResult).Value!;
+         var groupText = (string?)updatePayload.GetType()
+            .GetProperty("groupText")
+            ?.GetValue(updatePayload);
+         var returnedActivityGroupId = (string?)updatePayload.GetType()
+            .GetProperty("activityGroupId")
+            ?.GetValue(updatePayload);
+
+         Assert.Equal(updatedGroupTitle, groupText);
+         Assert.Equal(activityGroupId.ToString(), returnedActivityGroupId);
+         AssertActivityGroupTitle(
+            dataSource,
+            activityGroupId,
+            updatedGroupTitle
+         );
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();
@@ -124,7 +210,9 @@ public sealed class BroadcastFieldModelTests
       string title,
       string[] categories,
       DateTimeOffset startsAt,
-      DateTimeOffset endsAt
+      DateTimeOffset endsAt,
+      string? activityGroupSourceKindId = null,
+      Guid? activityGroupSourceActivityId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -145,6 +233,8 @@ public sealed class BroadcastFieldModelTests
             starts_at,
             ends_at,
             time_zone_id,
+            activity_group_source_kind_id,
+            activity_group_source_activity_id,
             raw_programme_xml
          )
          values (
@@ -162,6 +252,8 @@ public sealed class BroadcastFieldModelTests
             @starts_at,
             @ends_at,
             'Europe/Stockholm',
+            @activity_group_source_kind_id,
+            @activity_group_source_activity_id,
             null
          )
          """;
@@ -175,6 +267,76 @@ public sealed class BroadcastFieldModelTests
       command.Parameters.AddWithValue("categories", categories);
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue("ends_at", endsAt);
+      command.Parameters.AddWithValue(
+         "activity_group_source_kind_id",
+         (object?)activityGroupSourceKindId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_source_activity_id",
+         (object?)activityGroupSourceActivityId ?? DBNull.Value
+      );
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<Guid> InsertActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId,
+      string title,
+      string sportId,
+      DateOnly activityDate
+   )
+   {
+      var repository = new ActivityRepository(dataSource);
+
+      return await repository.SaveAsync(
+         new ActivityEditModel
+         {
+            Title = title,
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = sportId,
+            ActivityDate = activityDate,
+            LocalStartTime = new TimeOnly(12, 0),
+            TimeZoneId = SportDay.TimeZoneId,
+            LinkedEntityIds = [],
+            ActivityGroupId = activityGroupId
+         },
+         CancellationToken.None
+      );
+   }
+
+   private static async Task InsertActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId,
+      string title,
+      string sportId,
+      DateOnly startDate,
+      DateOnly endDate
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into activity_groups (
+            id,
+            title,
+            sport_id,
+            start_date,
+            end_date
+         )
+         values (
+            @id,
+            @title,
+            @sport_id,
+            @start_date,
+            @end_date
+         )
+         """;
+      command.Parameters.AddWithValue("id", activityGroupId);
+      command.Parameters.AddWithValue("title", title);
+      command.Parameters.AddWithValue("sport_id", sportId);
+      command.Parameters.AddWithValue("start_date", startDate);
+      command.Parameters.AddWithValue("end_date", endDate);
 
       await command.ExecuteNonQueryAsync();
    }
@@ -248,6 +410,50 @@ public sealed class BroadcastFieldModelTests
          expectedEntityId,
          actualValue is Guid actualGuid ? actualGuid : null
       );
+   }
+
+   private static void AssertActivityGroupTitle(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId,
+      string expectedTitle
+   )
+   {
+      using var connection = dataSource.OpenConnection();
+      using var command = connection.CreateCommand();
+      command.CommandText = """
+         select title
+         from activity_groups
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityGroupId);
+
+      var actualValue = command.ExecuteScalar();
+      Assert.Equal(expectedTitle, actualValue as string);
+   }
+
+   private static async Task DeleteActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      var repository = new ActivityRepository(dataSource);
+      await repository.DeleteAsync(activityId, CancellationToken.None);
+   }
+
+   private static async Task DeleteActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from activity_groups
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityGroupId);
+
+      await command.ExecuteNonQueryAsync();
    }
 
    private static async Task DeleteBroadcastAsync(

@@ -53,6 +53,7 @@
    const broadcastInlineEditTitleField = "title";
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
+   const broadcastInlineEditGroupField = "group";
    const getBroadcastInlineEditUrl =
       window.getBroadcastInlineEditUrl;
    const postBroadcastInlineEditAsync =
@@ -555,6 +556,12 @@
       const organizationEntityName = normalizeNullableString(
          broadcast.organizationEntityName
       );
+      const activityGroupId = normalizeNullableString(
+         broadcast.activityGroupId
+      );
+      const activityGroupTitle = normalizeNullableString(
+         broadcast.activityGroupTitle
+      );
       const groupText = normalizeNullableString(broadcast.groupText) || "-";
       const participationStatusId = normalizeNullableString(
          broadcast.participationStatusId
@@ -687,10 +694,45 @@
       organizationCell.append(organizationWrap);
 
       const groupCell = document.createElement("td");
-      groupCell.className = "broadcasts-col-group";
+      const groupEditable = activityGroupId !== "";
+      const groupValue = activityGroupTitle || title;
+
+      groupCell.className = groupEditable
+         ? "broadcasts-col-group broadcast-inline-editable"
+         : "broadcasts-col-group";
       groupCell.dataset.broadcastGroupText = groupText;
-      groupCell.title = groupText;
-      groupCell.textContent = groupText;
+
+      if(groupEditable)
+      {
+         groupCell.dataset.broadcastId = broadcastId;
+         groupCell.dataset.broadcastInlineEditField =
+            broadcastInlineEditGroupField;
+         groupCell.dataset.broadcastInlineEditValue = groupValue;
+         groupCell.dataset.broadcastActivityGroupId = activityGroupId;
+         groupCell.title = "Double-click to edit";
+
+         const groupDisplay = document.createElement("div");
+         groupDisplay.dataset.broadcastInlineEditDisplay = "true";
+         groupDisplay.textContent = groupValue;
+
+         const groupInput = document.createElement("input");
+         groupInput.className = "broadcast-inline-edit-input";
+         groupInput.dataset.broadcastInlineEditInput = "true";
+         groupInput.type = "text";
+         groupInput.value = groupValue;
+         groupInput.autocomplete = "off";
+         groupInput.spellcheck = false;
+         groupInput.setAttribute("aria-label", "Edit group title");
+         groupInput.hidden = true;
+         groupInput.tabIndex = -1;
+
+         groupCell.append(groupDisplay, groupInput);
+      }
+      else
+      {
+         groupCell.title = groupText;
+         groupCell.textContent = groupText;
+      }
 
       const categoriesCell = document.createElement("td");
       categoriesCell.className =

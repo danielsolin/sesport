@@ -14,6 +14,7 @@ public sealed record BroadcastListItem(
    bool IsHidden,
    Guid? OrganizationEntityId,
    string? OrganizationEntityName,
+   Guid? ActivityGroupId,
    string? ActivityGroupTitle,
    string? ActivityGroupSourceKindId,
    Guid? ActivityGroupSourceActivityId
@@ -21,20 +22,24 @@ public sealed record BroadcastListItem(
 {
    public string CategoriesText => string.Join(", ", Categories);
 
+   public string GroupValue => ActivityGroupTitle ?? Title;
+
    public string GroupText
    {
       get
       {
-         if(string.IsNullOrWhiteSpace(ActivityGroupSourceKindId))
+         if(!string.Equals(
+            ActivityGroupSourceKindId,
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            StringComparison.Ordinal
+         ))
          {
             return "-";
          }
 
-         var groupTitle = ActivityGroupTitle ?? Title;
-
-         return ActivityGroupSourceActivityId is null
-            ? $"NEW: {groupTitle}"
-            : groupTitle;
+         return ActivityGroupId is null
+            ? $"NEW: {GroupValue}"
+            : GroupValue;
       }
    }
 

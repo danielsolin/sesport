@@ -160,8 +160,11 @@
                         "/Admin/Activities/Edit",
                         Model.GetActivityRouteValues(broadcast.Id)
                      );
-                  var organizationAutocompleteClass =
-                     "broadcast-org-autocomplete is-locked";
+                     var groupEditable = broadcast.ActivityGroupId is not null;
+                     var groupValue = broadcast.GroupValue;
+                     var groupText = broadcast.GroupText;
+                     var organizationAutocompleteClass =
+                        "broadcast-org-autocomplete is-locked";
                   <tr class="broadcast-participation-main-row"
                       data-broadcast-row="true"
                       data-broadcast-id="@broadcast.Id"
@@ -244,11 +247,38 @@
                                 hidden></div>
                         </div>
                      </td>
-                     <td class="broadcasts-col-group"
-                         data-broadcast-group-text="@broadcast.GroupText"
-                         title="@broadcast.GroupText">
-                        @broadcast.GroupText
-                     </td>
+                     @if(groupEditable)
+                     {
+                        <td class="broadcasts-col-group
+                                   broadcast-inline-editable"
+                            data-broadcast-id="@broadcast.Id"
+                            data-broadcast-group-text="@groupText"
+                            data-broadcast-inline-edit-field="group"
+                            data-broadcast-inline-edit-value="@groupValue"
+                            data-broadcast-activity-group-id=
+                               "@broadcast.ActivityGroupId"
+                            title="Double-click to edit">
+                           <div data-broadcast-inline-edit-display>
+                              @groupValue
+                           </div>
+                           <input class="broadcast-inline-edit-input"
+                                  data-broadcast-inline-edit-input
+                                  type="text"
+                                  value="@groupValue"
+                                  autocomplete="off"
+                                  spellcheck="false"
+                                  aria-label="Edit group title"
+                                  hidden />
+                        </td>
+                     }
+                     else
+                     {
+                        <td class="broadcasts-col-group"
+                            data-broadcast-group-text="@groupText"
+                            title="@groupText">
+                           @groupText
+                        </td>
+                     }
                      <td class="broadcasts-col-categories
                                 broadcast-inline-editable"
                          data-broadcast-id="@broadcast.Id"
