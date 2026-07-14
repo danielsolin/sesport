@@ -1,5 +1,4 @@
 using SESport.Core.Broadcast;
-using SESport.Core.Domain;
 
 namespace SESport.Data;
 
@@ -31,19 +30,10 @@ public sealed record BroadcastListItem(
             return "-";
          }
 
-         if(!string.Equals(
-            ActivityGroupSourceKindId,
-            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
-            StringComparison.Ordinal
-         ))
-         {
-            return ActivityGroupTitle ?? Title;
-         }
-
          var groupTitle = ActivityGroupTitle ?? Title;
 
          return ActivityGroupSourceActivityId is null
-            ? $"{groupTitle} (new)"
+            ? $"NEW: {groupTitle}"
             : groupTitle;
       }
    }

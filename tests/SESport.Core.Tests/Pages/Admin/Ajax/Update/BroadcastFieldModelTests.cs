@@ -67,7 +67,7 @@ public sealed class BroadcastFieldModelTests
             .GetProperty("groupText")
             ?.GetValue(updatePayload);
 
-         Assert.Equal($"{broadcastTitle} (new)", groupText);
+         Assert.Equal($"NEW: {broadcastTitle}", groupText);
          AssertBroadcastEntityId(
             dataSource,
             broadcastId,
