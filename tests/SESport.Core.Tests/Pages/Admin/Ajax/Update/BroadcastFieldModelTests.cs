@@ -18,6 +18,7 @@ public sealed class BroadcastFieldModelTests
       var personId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Broadcast {uniqueSuffix}";
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminBroadcastRepository(dataSource);
@@ -32,7 +33,7 @@ public sealed class BroadcastFieldModelTests
          $"fingerprint-{uniqueSuffix}",
          "channel-1",
          "Viaplay",
-         "Old title",
+         broadcastTitle,
          ["Old", "Categories"],
          DateTimeOffset.UtcNow,
          DateTimeOffset.UtcNow.AddHours(2)
@@ -66,7 +67,7 @@ public sealed class BroadcastFieldModelTests
             .GetProperty("groupText")
             ?.GetValue(updatePayload);
 
-         Assert.False(string.IsNullOrWhiteSpace(groupText));
+         Assert.Equal($"{broadcastTitle} (new)", groupText);
          AssertBroadcastEntityId(
             dataSource,
             broadcastId,

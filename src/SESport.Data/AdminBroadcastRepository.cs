@@ -31,10 +31,15 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.ends_at,
             broadcasts.hidden_at,
             org.canonical_name as organization_name,
+            source_group.title as activity_group_title,
             broadcasts.activity_group_source_kind_id,
             broadcasts.activity_group_source_activity_id
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
+         left join activities source_activity
+            on source_activity.id = broadcasts.activity_group_source_activity_id
+         left join activity_groups source_group
+            on source_group.id = source_activity.activity_group_id
          where broadcasts.id = @id
          """;
 
@@ -84,10 +89,15 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.ends_at,
             broadcasts.hidden_at,
             org.canonical_name as organization_name,
+            source_group.title as activity_group_title,
             broadcasts.activity_group_source_kind_id,
             broadcasts.activity_group_source_activity_id
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
+         left join activities source_activity
+            on source_activity.id = broadcasts.activity_group_source_activity_id
+         left join activity_groups source_group
+            on source_group.id = source_activity.activity_group_id
          where broadcasts.starts_at >= @start
             and broadcasts.starts_at < @end
             {{hiddenFilterSql}}
@@ -433,7 +443,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
          reader.IsDBNull(12) ? null : reader.GetString(12),
          reader.IsDBNull(13) ? null : reader.GetString(13),
-         reader.IsDBNull(14) ? null : reader.GetGuid(14)
+         reader.IsDBNull(14) ? null : reader.GetString(14),
+         reader.IsDBNull(15) ? null : reader.GetGuid(15)
       );
    }
 

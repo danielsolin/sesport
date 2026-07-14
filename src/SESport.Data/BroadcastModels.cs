@@ -15,6 +15,7 @@ public sealed record BroadcastListItem(
    bool IsHidden,
    Guid? OrganizationEntityId,
    string? OrganizationEntityName,
+   string? ActivityGroupTitle,
    string? ActivityGroupSourceKindId,
    Guid? ActivityGroupSourceActivityId
 )
@@ -36,12 +37,14 @@ public sealed record BroadcastListItem(
             StringComparison.Ordinal
          ))
          {
-            return ActivityGroupSourceKindId;
+            return ActivityGroupTitle ?? Title;
          }
 
+         var groupTitle = ActivityGroupTitle ?? Title;
+
          return ActivityGroupSourceActivityId is null
-            ? "Will create new ActivityGroup"
-            : "Will reuse existing ActivityGroup";
+            ? $"{groupTitle} (new)"
+            : groupTitle;
       }
    }
 
