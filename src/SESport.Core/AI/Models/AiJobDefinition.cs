@@ -8,6 +8,7 @@ public sealed record AiJobDefinition(
    string OutputMode,
    string? ToolsJson,
    string? ConditionalToolsJson,
+   int? ToolCallMaxTokens,
    bool RequiresWebSearch,
    bool Enabled,
    Guid? ActivePromptId

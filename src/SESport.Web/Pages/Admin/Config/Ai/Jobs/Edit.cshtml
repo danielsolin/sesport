@@ -76,6 +76,11 @@
             </select>
             <span asp-validation-for="Job.OutputMode"></span>
          </label>
+         <label>
+            <span>Tool call max tokens</span>
+            <input asp-for="Job.ToolCallMaxTokens" type="number" min="1" />
+            <span asp-validation-for="Job.ToolCallMaxTokens"></span>
+         </label>
       </div>
       <label>
          <span>Description</span>

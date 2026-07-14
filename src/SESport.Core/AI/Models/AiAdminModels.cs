@@ -61,6 +61,8 @@ public sealed class AiJobEditModel
 
    public string? ConditionalToolsJson { get; set; }
 
+   public int? ToolCallMaxTokens { get; set; }
+
    public bool RequiresWebSearch { get; set; } = true;
 
    public bool Enabled { get; set; } = true;

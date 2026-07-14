@@ -207,6 +207,7 @@ public class AiProviderClientTests
          "\"response_format\"",
          handler.RequestBodies[0]
       );
+      Assert.Contains("\"max_tokens\":1024", handler.RequestBodies[0]);
       Assert.Contains("\"search_engine\":\"google\"", result.ToolTraceJson);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
@@ -216,6 +217,63 @@ public class AiProviderClientTests
       Assert.Equal(
          "https://example.test/roster",
          webPageContentClient.Urls[0]
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncUsesJobToolCallMaxTokensForToolRoundsOnly()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaPageCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            $"{PrimaryCountry.CountryName} lineup info."
+         )
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Roster",
+            "https://example.test/roster",
+            null,
+            [],
+            $"{PrimaryCountry.CountryName} roster text.",
+            true
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "text",
+            true,
+            CreateToolsJson(),
+            toolCallMaxTokens: 2048
+         ),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            maxOutputTokens: 8192
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.All(
+         handler.RequestBodies,
+         body => Assert.Contains("\"max_tokens\":2048", body)
       );
    }
 
@@ -1273,10 +1331,12 @@ public class AiProviderClientTests
          CreateJob(
             "text",
             true,
-            CreateToolsJson()
+            CreateToolsJson(),
+            toolCallMaxTokens: 2048
          ),
          CreatePrompt(
             CreateParticipationSchemaJson(),
+            maxOutputTokens: 8192,
             maxToolRounds: 1
          ),
          CreateRenderedPrompt(),
@@ -1300,6 +1360,10 @@ public class AiProviderClientTests
          "Tool calls remaining: 0 of 1.",
          handler.RequestBodies[1]
       );
+      Assert.Contains("\"max_tokens\":2048",
+         handler.RequestBodies[0]);
+      Assert.Contains("\"max_tokens\":8192",
+         handler.RequestBodies[1]);
       Assert.Contains("\"tool_choice\":\"required\"",
          handler.RequestBodies[0]);
       Assert.Contains("\"tools\":[",
@@ -2453,6 +2517,7 @@ public class AiProviderClientTests
       bool requiresWebSearch = true,
       string? toolsJson = null,
       string? conditionalToolsJson = null,
+      int? toolCallMaxTokens = null,
       string jobId = "job"
    )
    {
@@ -2464,6 +2529,7 @@ public class AiProviderClientTests
          outputMode,
          toolsJson,
          conditionalToolsJson,
+         toolCallMaxTokens,
          requiresWebSearch,
          true,
          null
@@ -2606,6 +2672,7 @@ public class AiProviderClientTests
 
    private static AiPromptDefinition CreatePrompt(
       string? outputSchemaJson = """{"type":"object"}""",
+      int? maxOutputTokens = null,
       int? maxToolRounds = null
    )
    {
@@ -2618,7 +2685,7 @@ public class AiProviderClientTests
          outputSchemaJson,
          "{}",
          null,
-         null,
+         maxOutputTokens,
          maxToolRounds,
          true
       );

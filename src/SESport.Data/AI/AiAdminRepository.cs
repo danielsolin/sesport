@@ -202,6 +202,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             output_mode,
             tools_json::text,
             conditional_tools_json::text,
+            tool_call_max_tokens,
             active_prompt_id,
             requires_web_search,
             enabled
@@ -230,9 +231,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          OutputMode = reader.GetString(4),
          ToolsJson = ReadNullableString(reader, 5),
          ConditionalToolsJson = ReadNullableString(reader, 6),
-         ActivePromptId = ReadNullableGuid(reader, 7)?.ToString(),
-         RequiresWebSearch = reader.GetBoolean(8),
-         Enabled = reader.GetBoolean(9)
+         ToolCallMaxTokens = ReadNullableInt32(reader, 7),
+         ActivePromptId = ReadNullableGuid(reader, 8)?.ToString(),
+         RequiresWebSearch = reader.GetBoolean(9),
+         Enabled = reader.GetBoolean(10)
       };
    }
 
@@ -257,6 +259,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             output_mode,
             tools_json,
             conditional_tools_json,
+            tool_call_max_tokens,
             active_prompt_id,
             requires_web_search,
             enabled
@@ -269,6 +272,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             @output_mode,
             @tools_json,
             @conditional_tools_json,
+            @tool_call_max_tokens,
             @active_prompt_id,
             @requires_web_search,
             @enabled
@@ -290,6 +294,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             output_mode = @output_mode,
             tools_json = @tools_json,
             conditional_tools_json = @conditional_tools_json,
+            tool_call_max_tokens = @tool_call_max_tokens,
             active_prompt_id = @active_prompt_id,
             requires_web_search = @requires_web_search,
             enabled = @enabled,
@@ -547,6 +552,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          command,
          "conditional_tools_json",
          model.ConditionalToolsJson
+      );
+      command.Parameters.AddWithValue(
+         "tool_call_max_tokens",
+         (object?)model.ToolCallMaxTokens ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "active_prompt_id",

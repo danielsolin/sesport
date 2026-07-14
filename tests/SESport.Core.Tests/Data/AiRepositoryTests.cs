@@ -861,6 +861,40 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetJobAsyncReturnsToolCallMaxTokens()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(
+         dataSource,
+         jobId,
+         providerId,
+         toolCallMaxTokens: 2048
+      );
+
+      try
+      {
+         var job = await repository.GetJobAsync(
+            jobId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(job);
+         Assert.Equal(2048, job!.ToolCallMaxTokens);
+      }
+      finally
+      {
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task UpdateRunExecutionEnvironmentAsyncUpdatesStoredRun()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -958,7 +992,8 @@ public sealed class AiRepositoryTests
    private static async Task InsertJobAsync(
       NpgsqlDataSource dataSource,
       string jobId,
-      string providerId
+      string providerId,
+      int? toolCallMaxTokens = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -969,6 +1004,7 @@ public sealed class AiRepositoryTests
             label,
             provider_id,
             output_mode,
+            tool_call_max_tokens,
             enabled,
             created_at,
             updated_at,
@@ -979,6 +1015,7 @@ public sealed class AiRepositoryTests
             @label,
             @provider_id,
             'json_object',
+            @tool_call_max_tokens,
             true,
             now(),
             now(),
@@ -989,6 +1026,10 @@ public sealed class AiRepositoryTests
       command.Parameters.AddWithValue("id", jobId);
       command.Parameters.AddWithValue("label", "Test job");
       command.Parameters.AddWithValue("provider_id", providerId);
+      command.Parameters.AddWithValue(
+         "tool_call_max_tokens",
+         (object?)toolCallMaxTokens ?? DBNull.Value
+      );
       await command.ExecuteNonQueryAsync();
    }
 

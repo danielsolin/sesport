@@ -31,6 +31,7 @@ Defines a reusable job.
 - `tools_json`: base tool definitions for the request
 - `conditional_tools_json`: conditional tool rules evaluated against the
   job and prompt before each request
+- `tool_call_max_tokens`: optional tool-round cap, defaulting to 1024
 - `enabled`: feature flag
 
 ### `ai_job_prompts`

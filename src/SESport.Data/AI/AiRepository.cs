@@ -645,6 +645,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             output_mode,
             tools_json::text,
             conditional_tools_json::text,
+            tool_call_max_tokens,
             requires_web_search,
             active_prompt_id,
             enabled
@@ -671,9 +672,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          reader.GetString(4),
          ReadNullableString(reader, 5),
          ReadNullableString(reader, 6),
-         reader.GetBoolean(7),
-         reader.GetBoolean(9),
-         ReadNullableGuid(reader, 8)
+         ReadNullableInt32(reader, 7),
+         reader.GetBoolean(8),
+         reader.GetBoolean(10),
+         ReadNullableGuid(reader, 9)
       );
    }
 

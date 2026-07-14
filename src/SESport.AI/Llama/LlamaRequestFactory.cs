@@ -9,7 +9,8 @@ namespace SESport.AI.Llama;
 
 internal sealed record LlamaRequestState(
    JsonObject Request,
-   IReadOnlyList<LlamaConditionalTool> ConditionalTools
+   IReadOnlyList<LlamaConditionalTool> ConditionalTools,
+   JsonNode? ConfiguredMaxTokens
 );
 
 internal static class LlamaRequestFactory
@@ -40,6 +41,7 @@ internal static class LlamaRequestFactory
    private const string JsonValueRequired = "required";
    private const string JsonValueSystem = "system";
    private const string JsonValueUser = "user";
+   private const int DefaultToolCallMaxTokens = 1024;
 
    private const string ConfiguredToolsJsonMustBeArrayMessage =
       "Configured tools JSON must be a JSON array.";
@@ -120,16 +122,31 @@ internal static class LlamaRequestFactory
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
       MergeRequestOptions(payload, prompt.RequestOptionsJson);
+
+      var configuredMaxTokens = payload.TryGetPropertyValue(
+         JsonPropertyMaxTokens,
+         out var maxTokensNode
+      )
+         ? maxTokensNode?.DeepClone()
+         : null;
+
       if(requestTools.Count > 0)
       {
+         payload[JsonPropertyMaxTokens] = job.ToolCallMaxTokens
+            ?? DefaultToolCallMaxTokens;
          RemoveStructuredResponseFormat(payload);
       }
 
-      return new LlamaRequestState(payload, conditionalTools);
+      return new LlamaRequestState(
+         payload,
+         conditionalTools,
+         configuredMaxTokens
+      );
    }
 
    public static JsonObject CreateFinal(
       JsonObject request,
+      JsonNode? configuredMaxTokens,
       AiJobDefinition job,
       AiPromptDefinition prompt
    )
@@ -137,6 +154,16 @@ internal static class LlamaRequestFactory
       var finalRequest = (JsonObject)request.DeepClone();
       finalRequest.Remove(JsonPropertyTools);
       finalRequest.Remove(JsonPropertyToolChoice);
+
+      if(configuredMaxTokens is null)
+      {
+         finalRequest.Remove(JsonPropertyMaxTokens);
+      }
+      else
+      {
+         finalRequest[JsonPropertyMaxTokens] = configuredMaxTokens.DeepClone();
+      }
+
       ApplyStructuredOutputPrompt(finalRequest, job, prompt);
       ApplyStructuredResponseFormat(finalRequest, job, prompt);
 

@@ -24,7 +24,6 @@ public sealed class LlamaServerClient : IAiProviderClient
    private const int MaxFinalReportCorrectionAttempts = 3;
    private const int MaxToolFormatFallbackAttempts = 5;
    private const int DefaultMaxToolRounds = 10;
-   private const int DefaultToolCallMaxTokens = 512;
    private const int DefaultFinalMaxTokens = 2048;
    private const int DefaultUnconstrainedRepairMaxTokens = 1024;
    private static readonly JsonSerializerOptions JsonOptions = new(
@@ -478,6 +477,7 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                request = LlamaRequestFactory.CreateFinal(
                   request,
+                  requestState.ConfiguredMaxTokens,
                   job,
                   prompt
                );
@@ -653,6 +653,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   );
                   request = LlamaRequestFactory.CreateFinal(
                      request,
+                     requestState.ConfiguredMaxTokens,
                      job,
                      prompt
                   );
@@ -780,6 +781,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
                   request = LlamaRequestFactory.CreateFinal(
                      request,
+                     requestState.ConfiguredMaxTokens,
                      job,
                      prompt
                   );
@@ -1009,9 +1011,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          return;
       }
 
-      request["max_tokens"] = RequestUsesTools(request)
-         ? DefaultToolCallMaxTokens
-         : DefaultFinalMaxTokens;
+      request["max_tokens"] = DefaultFinalMaxTokens;
    }
 
    private async Task<ResponseEnvelope> SendWithRetryAsync(
