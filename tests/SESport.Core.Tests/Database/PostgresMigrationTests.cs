@@ -29,6 +29,14 @@ public class PostgresMigrationTests
             "026_add_activity_groups.sql"
          )
       );
+      var dropTrackedEntitiesMigration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "029_drop_tracked_entities.sql"
+         )
+      );
       var broadcastActivityGroupSourceMigration = File.ReadAllText(
          Path.Combine(
             FindRepositoryRoot(),
@@ -73,6 +81,10 @@ public class PostgresMigrationTests
       Assert.Contains(
          "drop column if exists activity_group_id",
          broadcastActivityGroupSourceMigration
+      );
+      Assert.Contains(
+         "drop table if exists tracked_entities",
+         dropTrackedEntitiesMigration
       );
       Assert.Contains("alter table tv_sport_broadcasts", renameMigration);
       Assert.Contains("rename to broadcasts", renameMigration);
