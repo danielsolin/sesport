@@ -4,6 +4,7 @@
    ViewData["Title"] = "Activities";
    const int descriptionPreviewLength = 20;
    var returnUrl = Model.GetReturnUrl();
+   var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
    var findFactsUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityFacts"
    );
@@ -138,6 +139,10 @@
                   var missingDescription = string.IsNullOrWhiteSpace(
                      activity.Description
                   );
+                  var activitySearchUrl =
+                     $"{searchUrlBase}{System.Uri.EscapeDataString(
+                        activity.Title
+                     )}";
                   <tr class="@(missingDescription
                      ? "activity-description-missing"
                      : string.Empty)">
@@ -149,6 +154,11 @@
                            <strong>
                               @activity.Title
                            </strong>
+                        </a>
+                        <a class="ses-entity-search-link"
+                           href="@activitySearchUrl"
+                           target="_blank">
+                           <span class="ses-icon-search"></span>
                         </a>
                      </td>
                      <td>@activity.RelatedOrganizationEntities</td>
