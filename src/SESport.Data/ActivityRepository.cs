@@ -452,6 +452,26 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return model;
    }
 
+   public async Task<Guid?> GetActivityGroupIdAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select activity_group_id
+         from activities
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+
+      return result is null || result is DBNull
+         ? null
+         : (Guid)result;
+   }
+
    public async Task<IReadOnlyList<ActivityParticipantListItem>>
       GetParticipantsForEditAsync(
          Guid? activityId,
@@ -716,6 +736,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          transaction,
          model,
          id,
+         cancellationToken
+      );
+
+      await EnsureActivityGroupAsync(
+         connection,
+         transaction,
+         model,
          cancellationToken
       );
 
@@ -1330,6 +1357,61 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", sourceId);
       command.Parameters.AddWithValue("name", sourceName);
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   private static async Task EnsureActivityGroupAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      ActivityEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      if(model.ActivityGroupId is not null)
+      {
+         model.ActivityGroupCreationRequired = false;
+         return;
+      }
+
+      if(!model.ActivityGroupCreationRequired)
+      {
+         return;
+      }
+
+      if(model.ActivityDate is null)
+      {
+         throw new InvalidOperationException(
+            "Activity date is required to create an activity group."
+         );
+      }
+
+      var activityGroupId = Guid.NewGuid();
+      const string sql = """
+         insert into activity_groups (
+            id,
+            title,
+            sport_id,
+            start_date,
+            end_date
+         )
+         values (
+            @id,
+            @title,
+            @sport_id,
+            @start_date,
+            @end_date
+         )
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("id", activityGroupId);
+      command.Parameters.AddWithValue("title", model.Title.Trim());
+      command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
+      command.Parameters.AddWithValue("start_date", model.ActivityDate.Value);
+      command.Parameters.AddWithValue("end_date", model.ActivityDate.Value);
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+      model.ActivityGroupId = activityGroupId;
+      model.ActivityGroupCreationRequired = false;
    }
 
    private static void AddActivityParameters(

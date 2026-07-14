@@ -92,5 +92,7 @@ public sealed class ActivityEditModel
 
    public Guid? ActivityGroupId { get; set; }
 
+   public bool ActivityGroupCreationRequired { get; set; }
+
    public string? TvChannelName { get; set; }
 }

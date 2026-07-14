@@ -31,8 +31,24 @@
 <form method="post" class="edit-form">
    <input asp-for="Activity.Id" type="hidden" />
    <input asp-for="Activity.ActivityGroupId" type="hidden" />
+   <input asp-for="Activity.ActivityGroupCreationRequired"
+          type="hidden" />
    <input asp-for="ReturnUrl" type="hidden" />
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
+   @if (Model.Activity.ActivityGroupCreationRequired)
+   {
+      <div class="notice notice-warning">
+         A new ActivityGroup will be created when you save this activity.
+      </div>
+   }
+   else if (Model.Activity.Id is null &&
+            Model.Activity.BroadcastIds.Count > 0 &&
+            Model.Activity.ActivityGroupId is not null)
+   {
+      <div class="notice">
+         This activity will reuse an existing ActivityGroup.
+      </div>
+   }
    @foreach (var broadcastId in Model.Activity.BroadcastIds)
    {
       <input type="hidden"

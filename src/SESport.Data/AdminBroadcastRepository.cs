@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 using Npgsql;
 
 using SESport.Core.Broadcast;
@@ -177,7 +180,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             categories,
             starts_at,
             ends_at,
-            activity_group_id
+            activity_group_source_kind_id,
+            activity_group_source_activity_id
          from broadcasts
          where id = any(@ids)
          order by starts_at, channel_name nulls last, channel_id, title
@@ -206,7 +210,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
                reader.GetFieldValue<DateTimeOffset>(7),
                reader.GetFieldValue<DateTimeOffset>(8),
                reader.IsDBNull(1) ? null : reader.GetGuid(1),
-               reader.IsDBNull(9) ? null : reader.GetGuid(9)
+               ReadString(reader, 9),
+               reader.IsDBNull(10) ? null : reader.GetGuid(10)
             )
          );
       }
@@ -290,21 +295,67 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      string? activitySourceKindId = null;
+      Guid? activitySourceActivityId = null;
+
+      if(organizationEntityId is not null)
+      {
+         activitySourceKindId =
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity;
+
+         var broadcast = await LoadBroadcastActivitySourceAsync(
+            connection,
+            transaction,
+            id,
+            cancellationToken
+         );
+
+         if(broadcast is not null)
+         {
+            activitySourceActivityId = await FindMatchingActivityIdAsync(
+               connection,
+               transaction,
+               organizationEntityId.Value,
+               broadcast,
+               cancellationToken
+            );
+         }
+      }
+
       const string sql = """
          update broadcasts
          set entity_id = @entity_id,
+            activity_group_source_kind_id = @activity_group_source_kind_id,
+            activity_group_source_activity_id =
+               @activity_group_source_activity_id,
             updated_at = now()
          where id = @id
          """;
 
-      await using var command = dataSource.CreateCommand(sql);
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue(
          "entity_id",
          (object?)organizationEntityId ?? DBNull.Value
       );
+      command.Parameters.AddWithValue(
+         "activity_group_source_kind_id",
+         (object?)activitySourceKindId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_source_activity_id",
+         (object?)activitySourceActivityId ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync(cancellationToken);
+      await transaction.CommitAsync(cancellationToken);
    }
 
    public async Task HideAsync(
@@ -378,5 +429,250 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
          reader.IsDBNull(12) ? null : reader.GetString(12)
       );
+   }
+
+   private async Task<BroadcastActivitySource?>
+      LoadBroadcastActivitySourceAsync(
+         NpgsqlConnection connection,
+         NpgsqlTransaction transaction,
+         Guid id,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            id,
+            entity_id,
+            channel_id,
+            channel_name,
+            title,
+            description,
+            categories,
+            starts_at,
+            ends_at,
+            activity_group_source_kind_id,
+            activity_group_source_activity_id
+         from broadcasts
+         where id = @id
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      var channelId = reader.GetString(2);
+      var channelName = ReadString(reader, 3) ?? channelId;
+
+      return new BroadcastActivitySource(
+         reader.GetGuid(0),
+         channelName,
+         reader.GetString(4),
+         ReadString(reader, 5),
+         reader.GetFieldValue<string[]>(6),
+         reader.GetFieldValue<DateTimeOffset>(7),
+         reader.GetFieldValue<DateTimeOffset>(8),
+         reader.IsDBNull(1) ? null : reader.GetGuid(1),
+         ReadString(reader, 9),
+         reader.IsDBNull(10) ? null : reader.GetGuid(10)
+      );
+   }
+
+   private async Task<Guid?> FindMatchingActivityIdAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid organizationEntityId,
+      BroadcastActivitySource broadcast,
+      CancellationToken cancellationToken
+   )
+   {
+      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
+         broadcast.Categories
+      );
+
+      if(string.IsNullOrWhiteSpace(sportId) ||
+         string.IsNullOrWhiteSpace(broadcast.Title))
+      {
+         return null;
+      }
+
+      var broadcastDate = ToLocal(broadcast.StartsAt).Date;
+      var startDate = DateOnly.FromDateTime(broadcastDate).AddDays(-14);
+      var endDate = DateOnly.FromDateTime(ToLocal(broadcast.EndsAt).Date)
+         .AddDays(14);
+      var normalizedBroadcastTitle = NormalizeMatchText(broadcast.Title);
+
+      const string sql = """
+         select
+            a.id,
+            a.title,
+            a.activity_date
+         from activities a
+         where a.sport_id = @sport_id
+            and a.activity_group_id is not null
+            and a.activity_date between @start_date and @end_date
+            and exists (
+               select 1
+               from activity_entity_links al
+               where al.activity_id = a.id
+                  and al.organization_entity_id = @organization_entity_id
+            )
+         order by a.activity_date, a.local_start_time nulls last, a.title
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("sport_id", sportId);
+      command.Parameters.AddWithValue("start_date", startDate);
+      command.Parameters.AddWithValue("end_date", endDate);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         organizationEntityId
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var bestCandidateId = (Guid?)null;
+      var bestCandidateScore = 0;
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         var candidateId = reader.GetGuid(0);
+         var candidateTitle = reader.GetString(1);
+         var candidateDate = reader.GetFieldValue<DateOnly>(2);
+         var candidateScore = GetMatchScore(
+            normalizedBroadcastTitle,
+            NormalizeMatchText(candidateTitle),
+            broadcastDate,
+            candidateDate
+         );
+
+         if(candidateScore <= bestCandidateScore)
+         {
+            continue;
+         }
+
+         bestCandidateScore = candidateScore;
+         bestCandidateId = candidateId;
+      }
+
+      return bestCandidateScore > 0 ? bestCandidateId : null;
+   }
+
+   private static int GetMatchScore(
+      string broadcastTitle,
+      string activityTitle,
+      DateTime broadcastDate,
+      DateOnly activityDate
+   )
+   {
+      if(string.IsNullOrWhiteSpace(broadcastTitle) ||
+         string.IsNullOrWhiteSpace(activityTitle))
+      {
+         return 0;
+      }
+
+      var titleScore = 0;
+
+      if(string.Equals(
+         broadcastTitle,
+         activityTitle,
+         StringComparison.Ordinal
+      ))
+      {
+         titleScore = 100;
+      }
+      else if(broadcastTitle.Contains(
+         activityTitle,
+         StringComparison.Ordinal
+      ) || activityTitle.Contains(
+         broadcastTitle,
+         StringComparison.Ordinal
+      ))
+      {
+         titleScore = 80;
+      }
+      else
+      {
+         var broadcastTokens = GetMatchTokens(broadcastTitle);
+         var activityTokens = GetMatchTokens(activityTitle);
+
+         if(broadcastTokens.Count == 0 || activityTokens.Count == 0)
+         {
+            return 0;
+         }
+
+         var overlap = broadcastTokens.Intersect(activityTokens).Count();
+
+         if(overlap == 0)
+         {
+            return 0;
+         }
+
+         titleScore = 40 + overlap * 5;
+      }
+
+      var dayDistance = Math.Abs(
+         DateOnly.FromDateTime(broadcastDate).DayNumber - activityDate.DayNumber
+      );
+      var dateScore = Math.Max(0, 14 - dayDistance);
+
+      return titleScore * 100 + dateScore;
+   }
+
+   private static IReadOnlyCollection<string> GetMatchTokens(string value)
+   {
+      var normalized = NormalizeMatchText(value);
+
+      if(string.IsNullOrWhiteSpace(normalized))
+      {
+         return [];
+      }
+
+      return normalized
+         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+         .Distinct(StringComparer.Ordinal)
+         .ToArray();
+   }
+
+   private static string NormalizeMatchText(string value)
+   {
+      var normalized = value.Normalize(NormalizationForm.FormD);
+      var builder = new StringBuilder();
+      var lastWasSeparator = false;
+
+      foreach(var character in normalized)
+      {
+         var category = CharUnicodeInfo.GetUnicodeCategory(character);
+
+         if(category == UnicodeCategory.NonSpacingMark)
+         {
+            continue;
+         }
+
+         if(char.IsLetterOrDigit(character))
+         {
+            builder.Append(char.ToLowerInvariant(character));
+            lastWasSeparator = false;
+            continue;
+         }
+
+         if(!lastWasSeparator)
+         {
+            builder.Append(' ');
+            lastWasSeparator = true;
+         }
+      }
+
+      return builder
+         .ToString()
+         .Normalize(NormalizationForm.FormC)
+         .Trim();
    }
 }

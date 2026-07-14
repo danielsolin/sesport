@@ -1,6 +1,7 @@
 using Npgsql;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Domain;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -189,8 +190,10 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
-   public async Task PrefillFromBroadcastsAsyncCopiesActivityGroupId()
+   public async Task PrefillFromBroadcastsAsyncReusesExistingActivityGroup()
    {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
@@ -199,7 +202,23 @@ public sealed class ActivityEditPageServiceTests
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
+      var broadcastRepository = new AdminBroadcastRepository(dataSource);
 
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
       await InsertActivityGroupAsync(
          dataSource,
          activityGroupId,
@@ -208,11 +227,20 @@ public sealed class ActivityEditPageServiceTests
          startDate,
          startDate
       );
+      var activityId = await InsertActivityAsync(
+         dataSource,
+         activityGroupId,
+         organizationId,
+         personId,
+         title,
+         "football",
+         startDate
+      );
       await InsertBroadcastAsync(
          dataSource,
          broadcastId,
          sourceKey,
-         null,
+         organizationId,
          $"external-{Guid.NewGuid():N}",
          $"fingerprint-{Guid.NewGuid():N}",
          "channel-1",
@@ -228,9 +256,25 @@ public sealed class ActivityEditPageServiceTests
             startDate,
             new TimeOnly(14, 0),
             SportDay.TimeZoneId
-         ),
-         activityGroupId
+         )
       );
+      await broadcastRepository.UpdateOrganizationAsync(
+         broadcastId,
+         organizationId,
+         CancellationToken.None
+      );
+      var broadcastSource = Assert.Single(
+         await broadcastRepository.GetActivitySourcesAsync(
+            [broadcastId],
+            CancellationToken.None
+         )
+      );
+
+      Assert.Equal(
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+         broadcastSource.ActivityGroupSourceKindId
+      );
+      Assert.Equal(activityId, broadcastSource.ActivityGroupSourceActivityId);
 
       try
       {
@@ -244,11 +288,177 @@ public sealed class ActivityEditPageServiceTests
          );
 
          Assert.Equal(activityGroupId, activity.ActivityGroupId);
+         Assert.False(activity.ActivityGroupCreationRequired);
       }
       finally
       {
          await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteActivityAsync(dataSource, activityId);
          await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task PrefillFromBroadcastsAsyncRequiresNewActivityGroup()
+   {
+      var organizationId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var broadcastRepository = new AdminBroadcastRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         "Broadcast title",
+         ["football"],
+         TimeZoneHelper.ToUtc(
+            new DateOnly(2026, 7, 15),
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         ),
+         TimeZoneHelper.ToUtc(
+            new DateOnly(2026, 7, 15),
+            new TimeOnly(14, 0),
+            SportDay.TimeZoneId
+         )
+      );
+      await broadcastRepository.UpdateOrganizationAsync(
+         broadcastId,
+         organizationId,
+         CancellationToken.None
+      );
+      var broadcastSource = Assert.Single(
+         await broadcastRepository.GetActivitySourcesAsync(
+            [broadcastId],
+            CancellationToken.None
+         )
+      );
+
+      Assert.Equal(
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+         broadcastSource.ActivityGroupSourceKindId
+      );
+      Assert.Null(broadcastSource.ActivityGroupSourceActivityId);
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Null(activity.ActivityGroupId);
+         Assert.True(activity.ActivityGroupCreationRequired);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task SaveAsyncCreatesActivityGroupWhenRequired()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
+
+      Guid? savedActivityId = null;
+      Guid? savedActivityGroupId = null;
+
+      try
+      {
+         var model = new ActivityEditModel
+         {
+            Title = "Broadcast title",
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = new DateOnly(2026, 7, 15),
+            LocalStartTime = new TimeOnly(12, 0),
+            TimeZoneId = SportDay.TimeZoneId,
+            LinkedEntityIds = [personId],
+            OrganizationEntityId = organizationId,
+            ActivityGroupCreationRequired = true
+         };
+
+         savedActivityId = await repository.SaveAsync(
+            model,
+            CancellationToken.None
+         );
+         var savedActivity = await repository.GetForEditAsync(
+            savedActivityId.Value,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(savedActivity);
+         Assert.NotNull(savedActivity!.ActivityGroupId);
+         Assert.Equal(savedActivity.ActivityGroupId, model.ActivityGroupId);
+         Assert.False(model.ActivityGroupCreationRequired);
+         savedActivityGroupId = savedActivity.ActivityGroupId;
+      }
+      finally
+      {
+         if(savedActivityId is not null)
+         {
+            await repository.DeleteAsync(
+               savedActivityId.Value,
+               CancellationToken.None
+            );
+         }
+
+         if(savedActivityGroupId is not null)
+         {
+            await DeleteActivityGroupAsync(
+               dataSource,
+               savedActivityGroupId.Value
+            );
+         }
+
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
       }
    }
 
@@ -516,8 +726,7 @@ public sealed class ActivityEditPageServiceTests
       string title,
       string[] categories,
       DateTimeOffset startsAt,
-      DateTimeOffset endsAt,
-      Guid? activityGroupId = null
+      DateTimeOffset endsAt
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -538,7 +747,6 @@ public sealed class ActivityEditPageServiceTests
             original_air_date,
             starts_at,
             ends_at,
-            activity_group_id,
             time_zone_id,
             raw_programme_xml
          )
@@ -557,7 +765,6 @@ public sealed class ActivityEditPageServiceTests
             null,
             @starts_at,
             @ends_at,
-            @activity_group_id,
             'Europe/Stockholm',
             null
          )
@@ -576,10 +783,6 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("categories", categories);
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue("ends_at", endsAt);
-      command.Parameters.AddWithValue(
-         "activity_group_id",
-         (object?)activityGroupId ?? DBNull.Value
-      );
 
       await command.ExecuteNonQueryAsync();
    }
@@ -618,6 +821,35 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("end_date", endDate);
 
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<Guid> InsertActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId,
+      Guid organizationEntityId,
+      Guid personId,
+      string title,
+      string sportId,
+      DateOnly activityDate
+   )
+   {
+      var repository = new ActivityRepository(dataSource);
+
+      return await repository.SaveAsync(
+         new ActivityEditModel
+         {
+            Title = title,
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = sportId,
+            ActivityDate = activityDate,
+            LocalStartTime = new TimeOnly(12, 0),
+            TimeZoneId = SportDay.TimeZoneId,
+            LinkedEntityIds = [personId],
+            OrganizationEntityId = organizationEntityId,
+            ActivityGroupId = activityGroupId
+         },
+         CancellationToken.None
+      );
    }
 
    private static async Task InsertRelatedEntityAsync(
@@ -862,6 +1094,15 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("id", activityGroupId);
 
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      var repository = new ActivityRepository(dataSource);
+      await repository.DeleteAsync(activityId, CancellationToken.None);
    }
 
    private static async Task DeleteEntityAsync(

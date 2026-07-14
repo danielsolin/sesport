@@ -29,6 +29,14 @@ public class PostgresMigrationTests
             "026_add_activity_groups.sql"
          )
       );
+      var broadcastActivityGroupSourceMigration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "027_move_broadcast_activity_groups_to_activity_sources.sql"
+         )
+      );
 
       Assert.Contains("create table sports", baseline);
       Assert.Contains("create table entities", baseline);
@@ -41,6 +49,18 @@ public class PostgresMigrationTests
       Assert.Contains(
          "add column if not exists activity_group_id",
          activityGroupMigration
+      );
+      Assert.Contains(
+         "activity_group_source_kind_id",
+         broadcastActivityGroupSourceMigration
+      );
+      Assert.Contains(
+         "activity_group_source_activity_id",
+         broadcastActivityGroupSourceMigration
+      );
+      Assert.Contains(
+         "drop column if exists activity_group_id",
+         broadcastActivityGroupSourceMigration
       );
       Assert.Contains("alter table tv_sport_broadcasts", renameMigration);
       Assert.Contains("rename to broadcasts", renameMigration);

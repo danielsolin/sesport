@@ -200,9 +200,25 @@ public sealed class ActivityEditPageService(
          );
 
       activity.BroadcastIds = [firstBroadcast.Id];
-      activity.ActivityGroupId = firstBroadcast.ActivityGroupId;
       activity.OrganizationEntityId = firstBroadcast.EntityId;
       activity.TvChannelName = firstBroadcast.ChannelName;
+
+      if(firstBroadcast.ActivityGroupSourceActivityId is not null)
+      {
+         activity.ActivityGroupId = await repository.GetActivityGroupIdAsync(
+            firstBroadcast.ActivityGroupSourceActivityId.Value,
+            cancellationToken
+         );
+      }
+
+      activity.ActivityGroupCreationRequired =
+         string.Equals(
+            firstBroadcast.ActivityGroupSourceKindId,
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            StringComparison.Ordinal
+         ) &&
+         activity.ActivityGroupId is null;
+
       activity.Title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
          firstBroadcast,
          selectableEntities,
