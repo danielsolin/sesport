@@ -203,6 +203,22 @@ insert into countries (id, code, name)
 values ('se', 'SE', 'Sweden')
 on conflict (id) do nothing;
 
+create table activity_groups
+(
+   id uuid primary key,
+   title text not null,
+   sport_id text not null references sports(id),
+   start_date date not null,
+   end_date date not null,
+   created_at timestamptz not null default now(),
+   updated_at timestamptz not null default now(),
+   constraint activity_groups_date_check
+      check (end_date >= start_date)
+);
+
+create index activity_groups_sport_title_date_idx
+   on activity_groups(sport_id, title, start_date, end_date);
+
 create table entities
 (
    id uuid primary key,
@@ -216,7 +232,18 @@ create table entities
    watch_priority_id text not null references entity_watch_priorities(id),
    expected_stability_id text not null references entity_stability_kinds(id),
    created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
+   updated_at timestamptz not null default now(),
+   person_gender_id text null,
+   alias_name text null,
+   constraint entities_person_gender_id_valid
+      check (
+         person_gender_id is null or
+         person_gender_id in ('female', 'male', 'non_binary')
+      ),
+   constraint entities_person_gender_only_for_persons
+      check (
+         entity_type_id = 'Person' or person_gender_id is null
+      )
 );
 
 create table activities
@@ -236,6 +263,9 @@ create table activities
    tv_channel_name text null,
    slug text null,
    published_at timestamptz null,
+   facts text null,
+   activity_group_id uuid null references activity_groups(id)
+      on delete set null,
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now(),
    constraint activities_time_shape_check
@@ -251,6 +281,9 @@ create unique index activities_slug_unique
 
 create index activities_publication_listing_idx
    on activities(publication_status_id, activity_date, local_start_time);
+
+create index activities_activity_group_id_idx
+   on activities(activity_group_id);
 
 create table activity_proposals
 (
@@ -327,8 +360,19 @@ create table activity_entity_links
 (
    id uuid primary key,
    activity_id uuid not null references activities(id),
-   entity_id uuid not null references entities(id)
+   entity_id uuid not null references entities(id),
+   organization_entity_id uuid null references entities(id)
+      on delete set null
 );
+
+create index activity_entity_links_activity_id_idx
+   on activity_entity_links(activity_id);
+
+create index activity_entity_links_entity_id_idx
+   on activity_entity_links(entity_id);
+
+create index activity_entity_links_organization_entity_id_idx
+   on activity_entity_links(organization_entity_id);
 
 create table activity_evidence
 (
@@ -370,7 +414,7 @@ create unique index entity_to_entity_links_entity_pair_unique
       greatest(source_entity_id, target_entity_id)
    );
 
-create table tv_sport_import_runs
+create table broadcast_import_runs
 (
    id uuid primary key,
    source_key text not null,
@@ -382,10 +426,10 @@ create table tv_sport_import_runs
    created_at timestamptz not null default now()
 );
 
-create table tv_sport_broadcasts
+create table broadcasts
 (
    id uuid primary key,
-   import_run_id uuid null references tv_sport_import_runs(id),
+   import_run_id uuid null references broadcast_import_runs(id),
    source_key text not null,
    external_id text not null,
    fingerprint text not null,
@@ -401,25 +445,44 @@ create table tv_sport_broadcasts
    time_zone_id text not null default 'Europe/Stockholm',
    raw_programme_xml text null,
    hidden_at timestamptz null,
+   entity_id uuid null references entities(id) on delete set null,
+   activity_group_source_kind_id text null,
+   activity_group_source_activity_id uuid null references activities(id)
+      on delete set null,
+   activity_group_draft_title text null,
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now(),
-   constraint tv_sport_broadcasts_time_check
+   constraint broadcasts_activity_group_source_kind_check
+      check (
+         activity_group_source_kind_id is null or
+         activity_group_source_kind_id = 'ActivityGroupForActivity'
+      ),
+   constraint broadcasts_time_check
       check (ends_at > starts_at),
-   constraint tv_sport_broadcasts_fingerprint_unique
+   constraint broadcasts_fingerprint_unique
       unique (fingerprint)
 );
 
-create index tv_sport_broadcasts_starts_at_idx
-   on tv_sport_broadcasts (starts_at);
+create index broadcasts_starts_at_idx
+   on broadcasts (starts_at);
 
-create index tv_sport_broadcasts_channel_id_idx
-   on tv_sport_broadcasts (channel_id);
+create index broadcasts_channel_id_idx
+   on broadcasts (channel_id);
 
-create index tv_sport_broadcasts_visible_starts_at_idx
-   on tv_sport_broadcasts (starts_at)
+create index broadcasts_visible_starts_at_idx
+   on broadcasts (starts_at)
    where hidden_at is null;
 
-create table tv_sport_ignore
+create index broadcasts_entity_id_idx
+   on broadcasts(entity_id);
+
+create index broadcasts_activity_group_source_activity_id_idx
+   on broadcasts(activity_group_source_activity_id);
+
+create index broadcasts_categories_gin_idx
+   on broadcasts using gin (categories);
+
+create table broadcast_ignore
 (
    id uuid primary key,
    kind text not null,
@@ -428,15 +491,15 @@ create table tv_sport_ignore
    reason text null,
    is_active boolean not null default true,
    created_at timestamptz not null default now(),
-   constraint tv_sport_ignore_kind_value_source_unique
+   constraint broadcast_ignore_kind_value_source_unique
       unique nulls not distinct (kind, value, source_key)
 );
 
-create index tv_sport_ignore_active_kind_idx
-   on tv_sport_ignore (kind, source_key)
+create index broadcast_ignore_active_kind_idx
+   on broadcast_ignore (kind, source_key)
    where is_active = true;
 
-insert into tv_sport_ignore (
+insert into broadcast_ignore (
    id,
    kind,
    value,
@@ -504,7 +567,11 @@ create table ai_jobs
    output_mode text not null,
    enabled boolean not null default true,
    created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
+   updated_at timestamptz not null default now(),
+   requires_web_search boolean not null default true,
+   active_prompt_id uuid null,
+   tools_json jsonb null,
+   conditional_tools_json jsonb null
 );
 
 create table ai_job_prompts
@@ -521,8 +588,15 @@ create table ai_job_prompts
    enabled boolean not null default true,
    created_at timestamptz not null default now(),
    updated_at timestamptz not null default now(),
+   max_tool_rounds integer null,
    unique(job_id, version)
 );
+
+alter table ai_jobs
+   add constraint ai_jobs_active_prompt_id_fkey
+      foreign key (active_prompt_id)
+      references ai_job_prompts(id)
+      on delete set null;
 
 create table ai_job_runs
 (
@@ -545,7 +619,14 @@ create table ai_job_runs
    input_tokens integer null,
    output_tokens integer null,
    reasoning_tokens integer null,
-   created_at timestamptz not null default now()
+   created_at timestamptz not null default now(),
+   tool_trace jsonb null,
+   tool_round_count integer not null default 0,
+   conversation_character_count integer not null default 0,
+   prompt_version integer null,
+   prompt_system_prompt text null,
+   prompt_user_prompt_template text null,
+   execution_environment text null
 );
 
 create index ai_job_prompts_job_id_enabled_version_idx
@@ -559,6 +640,27 @@ create index ai_job_runs_provider_id_started_at_idx
 
 create index ai_job_runs_status_id_started_at_idx
    on ai_job_runs(status_id, started_at desc);
+
+create index ai_job_runs_started_at_desc_idx
+   on ai_job_runs(started_at desc);
+
+create index ai_job_runs_job_corr_started_idx
+   on ai_job_runs(job_id, correlation_id, started_at desc);
+
+create index ai_job_runs_exec_claim_idx
+   on ai_job_runs(
+      execution_environment,
+      status_id desc,
+      started_at asc,
+      created_at asc,
+      id asc
+   )
+   where status_id in ('pending', 'running');
+
+create index ai_job_runs_exec_env_idx
+   on ai_job_runs(execution_environment)
+   where execution_environment is not null
+      and btrim(execution_environment) <> '';
 
 create table ai_activity_search_runs
 (

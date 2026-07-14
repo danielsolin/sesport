@@ -45,7 +45,7 @@ PGPASSWORD="$SESPORT_POSTGRES_PASSWORD" \
 ```
 
 `001_baseline.sql` defines the current schema from scratch, including the
-lookup tables, entity model, activity model, TV sport imports, AI jobs, and
+lookup tables, entity model, activity model, broadcast imports, AI jobs, and
 the reference rows needed by the application.
 
 Future schema changes should be added as new numbered SQL files after the
