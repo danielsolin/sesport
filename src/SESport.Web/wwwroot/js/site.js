@@ -562,6 +562,16 @@
       const activityGroupTitle = normalizeNullableString(
          broadcast.activityGroupTitle
       );
+      const activityGroupDraftTitle = normalizeNullableString(
+         broadcast.activityGroupDraftTitle
+      );
+      const activityGroupSourceKindId = normalizeNullableString(
+         broadcast.activityGroupSourceKindId
+      );
+      const groupValue = normalizeNullableString(broadcast.groupValue)
+         || activityGroupTitle
+         || activityGroupDraftTitle
+         || title;
       const groupText = normalizeNullableString(broadcast.groupText) || "-";
       const participationStatusId = normalizeNullableString(
          broadcast.participationStatusId
@@ -694,8 +704,7 @@
       organizationCell.append(organizationWrap);
 
       const groupCell = document.createElement("td");
-      const groupEditable = activityGroupId !== "";
-      const groupValue = activityGroupTitle || title;
+      const groupEditable = activityGroupSourceKindId !== "";
 
       groupCell.className = groupEditable
          ? "broadcasts-col-group broadcast-inline-editable"
@@ -708,12 +717,14 @@
          groupCell.dataset.broadcastInlineEditField =
             broadcastInlineEditGroupField;
          groupCell.dataset.broadcastInlineEditValue = groupValue;
+         groupCell.dataset.broadcastActivityGroupSourceKindId =
+            activityGroupSourceKindId;
          groupCell.dataset.broadcastActivityGroupId = activityGroupId;
          groupCell.title = "Double-click to edit";
 
          const groupDisplay = document.createElement("div");
          groupDisplay.dataset.broadcastInlineEditDisplay = "true";
-         groupDisplay.textContent = groupValue;
+         groupDisplay.textContent = groupText;
 
          const groupInput = document.createElement("input");
          groupInput.className = "broadcast-inline-edit-input";

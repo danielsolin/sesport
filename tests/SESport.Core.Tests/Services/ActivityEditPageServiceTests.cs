@@ -381,6 +381,122 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task SaveAsyncUsesBroadcastDraftActivityGroupTitle()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Broadcast {uniqueSuffix}";
+      var groupTitle = $"Draft group {uniqueSuffix}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         broadcastTitle,
+         ["football"],
+         TimeZoneHelper.ToUtc(
+            new DateOnly(2026, 7, 15),
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         ),
+         TimeZoneHelper.ToUtc(
+            new DateOnly(2026, 7, 15),
+            new TimeOnly(14, 0),
+            SportDay.TimeZoneId
+         ),
+         groupTitle,
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity
+      );
+
+      Guid? savedActivityId = null;
+      Guid? savedActivityGroupId = null;
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.True(activity.ActivityGroupCreationRequired);
+
+         await fixture.Service.SaveAsync(activity, CancellationToken.None);
+
+         var activityInfo = await GetActivityInfoAsync(
+            dataSource,
+            activity.Title,
+            activity.ActivityDate!.Value,
+            activity.SportId
+         );
+
+         savedActivityId = activityInfo.ActivityId == Guid.Empty
+            ? null
+            : activityInfo.ActivityId;
+         savedActivityGroupId = activityInfo.ActivityGroupId;
+
+         Assert.NotEqual(Guid.Empty, activityInfo.ActivityId);
+         Assert.NotNull(activityInfo.ActivityGroupId);
+         Assert.Equal(groupTitle, activity.ActivityGroupTitle);
+         Assert.False(activity.ActivityGroupCreationRequired);
+         AssertActivityGroupTitle(
+            dataSource,
+            activityInfo.ActivityGroupId!.Value,
+            groupTitle
+         );
+      }
+      finally
+      {
+         if(savedActivityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, savedActivityId.Value);
+         }
+
+         if(savedActivityGroupId is not null)
+         {
+            await DeleteActivityGroupAsync(
+               dataSource,
+               savedActivityGroupId.Value
+            );
+         }
+
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task SaveAsyncCreatesActivityGroupWhenRequired()
    {
       var organizationId = Guid.NewGuid();
@@ -667,6 +783,61 @@ public sealed class ActivityEditPageServiceTests
       );
    }
 
+   private static async Task<(Guid ActivityId, Guid? ActivityGroupId)>
+      GetActivityInfoAsync(
+         NpgsqlDataSource dataSource,
+         string title,
+         DateOnly activityDate,
+         string sportId
+      )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         select id, activity_group_id
+         from activities
+         where title = @title
+            and activity_date = @activity_date
+            and sport_id = @sport_id
+         order by id
+         limit 1
+         """;
+      command.Parameters.AddWithValue("title", title);
+      command.Parameters.AddWithValue("activity_date", activityDate);
+      command.Parameters.AddWithValue("sport_id", sportId);
+
+      await using var reader = await command.ExecuteReaderAsync();
+
+      if(!await reader.ReadAsync())
+      {
+         return (Guid.Empty, null);
+      }
+
+      return (
+         reader.GetGuid(0),
+         reader.IsDBNull(1) ? null : reader.GetGuid(1)
+      );
+   }
+
+   private static void AssertActivityGroupTitle(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId,
+      string expectedTitle
+   )
+   {
+      using var connection = dataSource.OpenConnection();
+      using var command = connection.CreateCommand();
+      command.CommandText = """
+         select title
+         from activity_groups
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityGroupId);
+
+      var actualValue = command.ExecuteScalar();
+      Assert.Equal(expectedTitle, actualValue as string);
+   }
+
    private sealed record ActivityEditPageServiceFixture(
       ActivityEditPageService Service,
       CapturingAiJobRunner JobRunner
@@ -726,7 +897,10 @@ public sealed class ActivityEditPageServiceTests
       string title,
       string[] categories,
       DateTimeOffset startsAt,
-      DateTimeOffset endsAt
+      DateTimeOffset endsAt,
+      string? activityGroupDraftTitle = null,
+      string? activityGroupSourceKindId = null,
+      Guid? activityGroupSourceActivityId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -748,6 +922,9 @@ public sealed class ActivityEditPageServiceTests
             starts_at,
             ends_at,
             time_zone_id,
+            activity_group_source_kind_id,
+            activity_group_source_activity_id,
+            activity_group_draft_title,
             raw_programme_xml
          )
          values (
@@ -766,6 +943,9 @@ public sealed class ActivityEditPageServiceTests
             @starts_at,
             @ends_at,
             'Europe/Stockholm',
+            @activity_group_source_kind_id,
+            @activity_group_source_activity_id,
+            @activity_group_draft_title,
             null
          )
          """;
@@ -783,6 +963,18 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("categories", categories);
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue("ends_at", endsAt);
+      command.Parameters.AddWithValue(
+         "activity_group_source_kind_id",
+         (object?)activityGroupSourceKindId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_source_activity_id",
+         (object?)activityGroupSourceActivityId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_draft_title",
+         (object?)activityGroupDraftTitle ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
    }

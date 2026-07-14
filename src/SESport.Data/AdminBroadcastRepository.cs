@@ -33,6 +33,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             org.canonical_name as organization_name,
             source_group.id as activity_group_id,
             source_group.title as activity_group_title,
+            broadcasts.activity_group_draft_title,
             broadcasts.activity_group_source_kind_id,
             broadcasts.activity_group_source_activity_id
          from broadcasts
@@ -92,6 +93,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             org.canonical_name as organization_name,
             source_group.id as activity_group_id,
             source_group.title as activity_group_title,
+            broadcasts.activity_group_draft_title,
             broadcasts.activity_group_source_kind_id,
             broadcasts.activity_group_source_activity_id
          from broadcasts
@@ -197,7 +199,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             starts_at,
             ends_at,
             activity_group_source_kind_id,
-            activity_group_source_activity_id
+            activity_group_source_activity_id,
+            activity_group_draft_title
          from broadcasts
          where id = any(@ids)
          order by starts_at, channel_name nulls last, channel_id, title
@@ -227,7 +230,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
                reader.GetFieldValue<DateTimeOffset>(8),
                reader.IsDBNull(1) ? null : reader.GetGuid(1),
                ReadString(reader, 9),
-               reader.IsDBNull(10) ? null : reader.GetGuid(10)
+               reader.IsDBNull(10) ? null : reader.GetGuid(10),
+               ReadString(reader, 11)
             )
          );
       }
@@ -447,7 +451,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(13) ? null : reader.GetGuid(13),
          reader.IsDBNull(14) ? null : reader.GetString(14),
          reader.IsDBNull(15) ? null : reader.GetString(15),
-         reader.IsDBNull(16) ? null : reader.GetGuid(16)
+         reader.IsDBNull(16) ? null : reader.GetString(16),
+         reader.IsDBNull(17) ? null : reader.GetGuid(17)
       );
    }
 
@@ -457,31 +462,105 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
-         with broadcast_group as (
-            select source_group.id
-            from broadcasts b
-            join activities source_activity
-               on source_activity.id = b.activity_group_source_activity_id
-            join activity_groups source_group
-               on source_group.id = source_activity.activity_group_id
-            where b.id = @id
-         )
-         update activity_groups ag
-         set title = @title,
-            updated_at = now()
-         from broadcast_group
-         where ag.id = broadcast_group.id
-         returning ag.id
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      const string loadSql = """
+         select
+            source_group.id,
+            b.activity_group_source_kind_id
+         from broadcasts b
+         left join activities source_activity
+            on source_activity.id = b.activity_group_source_activity_id
+         left join activity_groups source_group
+            on source_group.id = source_activity.activity_group_id
+         where b.id = @id
          """;
 
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", broadcastId);
-      command.Parameters.AddWithValue("title", title);
+      Guid? activityGroupId = null;
+      string? sourceKindId = null;
 
-      var result = await command.ExecuteScalarAsync(cancellationToken);
+      await using (
+         var command = new NpgsqlCommand(loadSql, connection, transaction)
+      )
+      {
+         command.Parameters.AddWithValue("id", broadcastId);
 
-      return result is not null && result is not DBNull;
+         await using var reader = await command.ExecuteReaderAsync(
+            cancellationToken
+         );
+
+         if(!await reader.ReadAsync(cancellationToken))
+         {
+            return false;
+         }
+
+         activityGroupId = reader.IsDBNull(0) ? null : reader.GetGuid(0);
+         sourceKindId = ReadString(reader, 1);
+      }
+
+      if(!string.Equals(
+         sourceKindId,
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+         StringComparison.Ordinal
+      ))
+      {
+         return false;
+      }
+
+      if(activityGroupId is not null)
+      {
+         const string groupSql = """
+            update activity_groups
+            set title = @title,
+               updated_at = now()
+            where id = @activity_group_id
+            """;
+
+         await using var groupCommand = new NpgsqlCommand(
+            groupSql,
+            connection,
+            transaction
+         );
+         groupCommand.Parameters.AddWithValue(
+            "activity_group_id",
+            activityGroupId.Value
+         );
+         groupCommand.Parameters.AddWithValue("title", title);
+
+         var updated = await groupCommand.ExecuteNonQueryAsync(
+            cancellationToken
+         );
+
+         await transaction.CommitAsync(cancellationToken);
+         return updated > 0;
+      }
+
+      const string broadcastSql = """
+         update broadcasts
+         set activity_group_draft_title = @title,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var broadcastCommand = new NpgsqlCommand(
+         broadcastSql,
+         connection,
+         transaction
+      );
+      broadcastCommand.Parameters.AddWithValue("id", broadcastId);
+      broadcastCommand.Parameters.AddWithValue("title", title);
+
+      var broadcastUpdated = await broadcastCommand.ExecuteNonQueryAsync(
+         cancellationToken
+      );
+
+      await transaction.CommitAsync(cancellationToken);
+      return broadcastUpdated > 0;
    }
 
    private async Task<BroadcastActivitySource?>

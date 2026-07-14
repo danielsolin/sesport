@@ -53,9 +53,12 @@ public sealed class BroadcastModel(
             organizationEntityId =
                refreshedBroadcast.OrganizationEntityId?.ToString(),
             organizationEntityName = refreshedBroadcast.OrganizationEntityName,
+            groupValue = refreshedBroadcast.GroupValue,
             activityGroupId =
                refreshedBroadcast.ActivityGroupId?.ToString(),
             activityGroupTitle = refreshedBroadcast.ActivityGroupTitle,
+            activityGroupDraftTitle =
+               refreshedBroadcast.ActivityGroupDraftTitle,
             activityGroupSourceKindId =
                refreshedBroadcast.ActivityGroupSourceKindId,
             activityGroupSourceActivityId =

@@ -230,17 +230,43 @@
       const activityGroupTitle = typeof payload.activityGroupTitle === "string"
          ? payload.activityGroupTitle.trim()
          : "";
+      const activityGroupDraftTitle =
+         typeof payload.activityGroupDraftTitle === "string"
+            ? payload.activityGroupDraftTitle.trim()
+            : "";
+      const activityGroupSourceKindId = typeof payload.activityGroupSourceKindId
+         === "string"
+         ? payload.activityGroupSourceKindId.trim()
+         : "";
       const payloadValue = typeof payload.value === "string"
          ? payload.value.trim()
+         : "";
+      const groupValue = typeof payload.groupValue === "string"
+         ? payload.groupValue.trim()
          : "";
       const groupText = typeof payload.groupText === "string"
          ? payload.groupText.trim()
          : "";
-      const nextValue = activityGroupId !== ""
-         ? activityGroupTitle || payloadValue || groupText
-         : groupText || "-";
+      const editableValue = groupValue
+         || activityGroupTitle
+         || activityGroupDraftTitle
+         || payloadValue
+         || groupText;
+      const displayValue = groupText || (
+         activityGroupSourceKindId !== ""
+            ? (activityGroupId !== ""
+               ? editableValue
+               : `NEW: ${editableValue}`)
+            : "-"
+      );
 
-      syncBroadcastGroupCell(groupCell, nextValue, activityGroupId);
+      syncBroadcastGroupCell(
+         groupCell,
+         displayValue,
+         editableValue,
+         activityGroupId,
+         activityGroupSourceKindId
+      );
 
       if(activityGroupId === "")
       {
@@ -261,20 +287,44 @@
                return;
             }
 
-            syncBroadcastGroupCell(otherCell, nextValue, activityGroupId);
+            syncBroadcastGroupCell(
+               otherCell,
+               displayValue,
+               editableValue,
+               activityGroupId,
+               activityGroupSourceKindId
+            );
          });
    }
 
-   function syncBroadcastGroupCell(cell, nextValue, activityGroupId)
+   function syncBroadcastGroupCell(
+      cell,
+      displayValue,
+      editableValue,
+      activityGroupId,
+      activityGroupSourceKindId
+   )
    {
       if(!(cell instanceof HTMLElement))
       {
          return;
       }
 
-      const editable = activityGroupId !== "";
+      const sourceKindId = typeof activityGroupSourceKindId === "string"
+         ? activityGroupSourceKindId.trim()
+         : "";
+      const editable = sourceKindId !== "";
+      const nextDisplayValue = typeof displayValue === "string"
+         ? displayValue.trim()
+         : "";
+      const nextEditableValue = typeof editableValue === "string"
+         ? editableValue.trim()
+         : "";
+      const nextActivityGroupId = typeof activityGroupId === "string"
+         ? activityGroupId.trim()
+         : "";
 
-      cell.dataset.broadcastGroupText = nextValue;
+      cell.dataset.broadcastGroupText = nextDisplayValue;
 
       if(!editable)
       {
@@ -282,8 +332,9 @@
          delete cell.dataset.broadcastInlineEditField;
          delete cell.dataset.broadcastInlineEditValue;
          delete cell.dataset.broadcastActivityGroupId;
-         cell.title = nextValue;
-         cell.textContent = nextValue;
+         delete cell.dataset.broadcastActivityGroupSourceKindId;
+         cell.title = nextDisplayValue;
+         cell.textContent = nextDisplayValue;
          return;
       }
 
@@ -301,8 +352,18 @@
       }
 
       cell.dataset.broadcastInlineEditField = broadcastInlineEditGroupField;
-      cell.dataset.broadcastInlineEditValue = nextValue;
-      cell.dataset.broadcastActivityGroupId = activityGroupId;
+      cell.dataset.broadcastInlineEditValue = nextEditableValue;
+      cell.dataset.broadcastActivityGroupSourceKindId = sourceKindId;
+
+      if(nextActivityGroupId !== "")
+      {
+         cell.dataset.broadcastActivityGroupId = nextActivityGroupId;
+      }
+      else
+      {
+         delete cell.dataset.broadcastActivityGroupId;
+      }
+
       cell.title = "Double-click to edit";
 
       let display = cell.querySelector(broadcastInlineEditDisplaySelector);
@@ -329,10 +390,10 @@
          cell.append(display, input);
       }
 
-      display.textContent = nextValue;
+      display.textContent = nextDisplayValue;
       display.hidden = false;
-      input.value = nextValue;
-      input.dataset.broadcastInlineEditOriginalValue = nextValue;
+      input.value = nextEditableValue;
+      input.dataset.broadcastInlineEditOriginalValue = nextEditableValue;
       input.hidden = true;
       input.disabled = false;
    }

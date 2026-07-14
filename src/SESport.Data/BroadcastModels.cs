@@ -1,5 +1,7 @@
 using SESport.Core.Broadcast;
 
+using SESport.Core.Domain;
+
 namespace SESport.Data;
 
 public sealed record BroadcastListItem(
@@ -16,13 +18,15 @@ public sealed record BroadcastListItem(
    string? OrganizationEntityName,
    Guid? ActivityGroupId,
    string? ActivityGroupTitle,
+   string? ActivityGroupDraftTitle,
    string? ActivityGroupSourceKindId,
    Guid? ActivityGroupSourceActivityId
 )
 {
    public string CategoriesText => string.Join(", ", Categories);
 
-   public string GroupValue => ActivityGroupTitle ?? Title;
+   public string GroupValue =>
+      ActivityGroupTitle ?? ActivityGroupDraftTitle ?? Title;
 
    public string GroupText
    {

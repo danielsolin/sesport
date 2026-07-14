@@ -155,6 +155,7 @@ public sealed class BroadcastFieldModelTests
          ["Old", "Categories"],
          DateTimeOffset.UtcNow,
          DateTimeOffset.UtcNow.AddHours(2),
+         null,
          BroadcastActivitySourceKindIds.ActivityGroupForActivity,
          activityId
       );
@@ -192,6 +193,94 @@ public sealed class BroadcastFieldModelTests
       }
    }
 
+   [Fact]
+   public async Task OnPostAsyncUpdatesDraftActivityGroupTitle()
+   {
+      var broadcastId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Broadcast {uniqueSuffix}";
+      var updatedGroupTitle = $"Updated group {uniqueSuffix}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         broadcastTitle,
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+
+      try
+      {
+         var organizationResult = await model.OnPostAsync(
+            broadcastId,
+            "organization",
+            organizationId.ToString(),
+            CancellationToken.None
+         );
+
+         Assert.IsType<JsonResult>(organizationResult);
+
+         var updateResult = await model.OnPostAsync(
+            broadcastId,
+            "group",
+            updatedGroupTitle,
+            CancellationToken.None
+         );
+
+         var updatePayload = Assert.IsType<JsonResult>(updateResult).Value!;
+         var groupText = (string?)updatePayload.GetType()
+            .GetProperty("groupText")
+            ?.GetValue(updatePayload);
+         var groupValue = (string?)updatePayload.GetType()
+            .GetProperty("groupValue")
+            ?.GetValue(updatePayload);
+         var activityGroupIdValue = (string?)updatePayload.GetType()
+            .GetProperty("activityGroupId")
+            ?.GetValue(updatePayload);
+         var activityGroupSourceKindId = (string?)updatePayload.GetType()
+            .GetProperty("activityGroupSourceKindId")
+            ?.GetValue(updatePayload);
+
+         Assert.Equal($"NEW: {updatedGroupTitle}", groupText);
+         Assert.Equal(updatedGroupTitle, groupValue);
+         Assert.Equal(string.Empty, activityGroupIdValue);
+         Assert.Equal(
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            activityGroupSourceKindId
+         );
+         AssertBroadcastActivityGroupDraftTitle(
+            dataSource,
+            broadcastId,
+            updatedGroupTitle
+         );
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();
@@ -211,6 +300,7 @@ public sealed class BroadcastFieldModelTests
       string[] categories,
       DateTimeOffset startsAt,
       DateTimeOffset endsAt,
+      string? activityGroupDraftTitle = null,
       string? activityGroupSourceKindId = null,
       Guid? activityGroupSourceActivityId = null
    )
@@ -235,6 +325,7 @@ public sealed class BroadcastFieldModelTests
             time_zone_id,
             activity_group_source_kind_id,
             activity_group_source_activity_id,
+            activity_group_draft_title,
             raw_programme_xml
          )
          values (
@@ -254,6 +345,7 @@ public sealed class BroadcastFieldModelTests
             'Europe/Stockholm',
             @activity_group_source_kind_id,
             @activity_group_source_activity_id,
+            @activity_group_draft_title,
             null
          )
          """;
@@ -274,6 +366,10 @@ public sealed class BroadcastFieldModelTests
       command.Parameters.AddWithValue(
          "activity_group_source_activity_id",
          (object?)activityGroupSourceActivityId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_draft_title",
+         (object?)activityGroupDraftTitle ?? DBNull.Value
       );
 
       await command.ExecuteNonQueryAsync();
@@ -426,6 +522,25 @@ public sealed class BroadcastFieldModelTests
          where id = @id
          """;
       command.Parameters.AddWithValue("id", activityGroupId);
+
+      var actualValue = command.ExecuteScalar();
+      Assert.Equal(expectedTitle, actualValue as string);
+   }
+
+   private static void AssertBroadcastActivityGroupDraftTitle(
+      NpgsqlDataSource dataSource,
+      Guid broadcastId,
+      string expectedTitle
+   )
+   {
+      using var connection = dataSource.OpenConnection();
+      using var command = connection.CreateCommand();
+      command.CommandText = """
+         select activity_group_draft_title
+         from broadcasts
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", broadcastId);
 
       var actualValue = command.ExecuteScalar();
       Assert.Equal(expectedTitle, actualValue as string);

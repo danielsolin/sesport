@@ -151,6 +151,15 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
+      if(activity.ActivityGroupCreationRequired &&
+         activity.ActivityGroupId is null)
+      {
+         activity.ActivityGroupTitle = await ResolveActivityGroupTitleAsync(
+            activity.BroadcastIds,
+            cancellationToken
+         ) ?? activity.ActivityGroupTitle;
+      }
+
       _ = await repository.SaveAsync(activity, cancellationToken);
       await broadcastRepository.HideAsync(
          NormalizeBroadcastIds(activity.BroadcastIds),
@@ -262,6 +271,41 @@ public sealed class ActivityEditPageService(
       }
 
       return firstBroadcast.EntityId;
+   }
+
+   private async Task<string?> ResolveActivityGroupTitleAsync(
+      IReadOnlyCollection<Guid> broadcastIds,
+      CancellationToken cancellationToken
+   )
+   {
+      var normalizedIds = NormalizeBroadcastIds(broadcastIds);
+
+      if(normalizedIds.Count == 0)
+      {
+         return null;
+      }
+
+      var broadcasts = await broadcastRepository.GetActivitySourcesAsync(
+         normalizedIds,
+         cancellationToken
+      );
+
+      if(broadcasts.Count == 0)
+      {
+         return null;
+      }
+
+      var draftBroadcast = broadcasts.FirstOrDefault(
+         broadcast =>
+            !string.IsNullOrWhiteSpace(broadcast.ActivityGroupDraftTitle)
+      );
+
+      if(draftBroadcast is not null)
+      {
+         return draftBroadcast.ActivityGroupDraftTitle;
+      }
+
+      return broadcasts[0].Title;
    }
 
    public async Task<Guid> QueueTeaserAsync(

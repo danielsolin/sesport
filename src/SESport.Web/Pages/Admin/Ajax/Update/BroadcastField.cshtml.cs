@@ -105,10 +105,15 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "organization",
                value = organizationEntityId?.ToString() ?? string.Empty,
+               groupValue = broadcast?.GroupValue ?? string.Empty,
                activityGroupId =
                   broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
                activityGroupTitle =
                   broadcast?.ActivityGroupTitle ?? string.Empty,
+               activityGroupDraftTitle =
+                  broadcast?.ActivityGroupDraftTitle ?? string.Empty,
+               activityGroupSourceKindId =
+                  broadcast?.ActivityGroupSourceKindId ?? string.Empty,
                groupText = broadcast?.GroupText ?? "-"
             });
          }
@@ -144,10 +149,15 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "group",
                value,
+               groupValue = broadcast?.GroupValue ?? value,
                activityGroupId =
                   broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
                activityGroupTitle =
                   broadcast?.ActivityGroupTitle ?? string.Empty,
+               activityGroupDraftTitle =
+                  broadcast?.ActivityGroupDraftTitle ?? string.Empty,
+               activityGroupSourceKindId =
+                  broadcast?.ActivityGroupSourceKindId ?? string.Empty,
                groupText = broadcast?.GroupText ?? value
             });
          }

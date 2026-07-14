@@ -10,5 +10,6 @@ public sealed record BroadcastActivitySource(
    DateTimeOffset EndsAt,
    Guid? EntityId = null,
    string? ActivityGroupSourceKindId = null,
-   Guid? ActivityGroupSourceActivityId = null
+   Guid? ActivityGroupSourceActivityId = null,
+   string? ActivityGroupDraftTitle = null
 );

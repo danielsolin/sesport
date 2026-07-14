@@ -1384,6 +1384,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          );
       }
 
+      var activityGroupTitle = string.IsNullOrWhiteSpace(
+         model.ActivityGroupTitle
+      )
+         ? model.Title.Trim()
+         : model.ActivityGroupTitle.Trim();
+
       var activityGroupId = Guid.NewGuid();
       const string sql = """
          insert into activity_groups (
@@ -1404,7 +1410,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", activityGroupId);
-      command.Parameters.AddWithValue("title", model.Title.Trim());
+      command.Parameters.AddWithValue("title", activityGroupTitle);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
       command.Parameters.AddWithValue("start_date", model.ActivityDate.Value);
       command.Parameters.AddWithValue("end_date", model.ActivityDate.Value);

@@ -160,7 +160,11 @@
                         "/Admin/Activities/Edit",
                         Model.GetActivityRouteValues(broadcast.Id)
                      );
-                     var groupEditable = broadcast.ActivityGroupId is not null;
+                     var groupEditable = string.Equals(
+                        broadcast.ActivityGroupSourceKindId,
+                        BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+                        StringComparison.Ordinal
+                     );
                      var groupValue = broadcast.GroupValue;
                      var groupText = broadcast.GroupText;
                      var organizationAutocompleteClass =
@@ -253,13 +257,15 @@
                                    broadcast-inline-editable"
                             data-broadcast-id="@broadcast.Id"
                             data-broadcast-group-text="@groupText"
-                            data-broadcast-inline-edit-field="group"
-                            data-broadcast-inline-edit-value="@groupValue"
-                            data-broadcast-activity-group-id=
-                               "@broadcast.ActivityGroupId"
-                            title="Double-click to edit">
+                        data-broadcast-inline-edit-field="group"
+                        data-broadcast-inline-edit-value="@groupValue"
+                        data-broadcast-activity-group-source-kind-id=
+                           "@broadcast.ActivityGroupSourceKindId"
+                        data-broadcast-activity-group-id=
+                           "@broadcast.ActivityGroupId"
+                        title="Double-click to edit">
                            <div data-broadcast-inline-edit-display>
-                              @groupValue
+                              @groupText
                            </div>
                            <input class="broadcast-inline-edit-input"
                                   data-broadcast-inline-edit-input
