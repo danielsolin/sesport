@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace SESport.Core.Tests;
+namespace SESport.TestSupport;
 
 public static class TestEnvironmentBootstrap
 {
