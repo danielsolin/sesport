@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
 
@@ -45,7 +46,7 @@ public sealed class BroadcastVisibilityModel(AdminBroadcastRepository repository
       {
          var routeValues = new Dictionary<string, object?>
          {
-            [RouteKeys.Date] = date?.ToString("yyyy-MM-dd"),
+            [RouteKeys.Date] = DateDisplay.Format(date),
             [RouteKeys.SortColumn] = sortColumn,
             [RouteKeys.SortAsc] = sortAsc,
             [RouteKeys.ShowHidden] = showHidden

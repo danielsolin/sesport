@@ -5,6 +5,9 @@ namespace SESport.Core.Formatting;
 public static class DateDisplay
 {
    public const string DateOnlyFormat = "yyyy-MM-dd";
+   public const string TimeOnlyFormat = "HH:mm:ss";
+   public const string DateTimeMinutesFormat = "yyyy-MM-dd HH:mm";
+   public const string DateTimeSecondsFormat = "yyyy-MM-dd HH:mm:ss";
 
    public static string Format(DateOnly value)
    {

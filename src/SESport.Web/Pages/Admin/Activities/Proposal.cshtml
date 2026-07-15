@@ -150,7 +150,11 @@
                      }
                   </td>
                   <td>@evidence.Summary</td>
-                  <td>@evidence.ObservedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                  <td>
+                     @evidence.ObservedAt.ToString(
+                        DateDisplay.DateTimeMinutesFormat
+                     )
+                  </td>
                </tr>
             }
          </tbody>

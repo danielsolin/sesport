@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
 
@@ -46,8 +47,8 @@ public sealed class BroadcastModel(
             description = refreshedBroadcast.Description,
             categories = refreshedBroadcast.Categories,
             isReplay = refreshedBroadcast.IsReplay,
-            originalAirDate = refreshedBroadcast.OriginalAirDate?.ToString(
-               "yyyy-MM-dd"
+            originalAirDate = DateDisplay.Format(
+               refreshedBroadcast.OriginalAirDate
             ),
             isHidden = refreshedBroadcast.IsHidden,
             organizationEntityId =

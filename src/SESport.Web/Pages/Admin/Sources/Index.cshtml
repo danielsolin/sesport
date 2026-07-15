@@ -43,7 +43,11 @@ else
                <tr>
                   <td><code>@source.Id</code></td>
                   <td>@source.Name</td>
-                  <td>@source.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                  <td>
+                     @source.UpdatedAt.ToString(
+                        DateDisplay.DateTimeMinutesFormat
+                     )
+                  </td>
                   <td class="table-actions">
                      <a asp-page="./Edit" asp-route-id="@source.Id">Edit</a>
                      <form method="post"

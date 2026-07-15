@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
@@ -9,20 +11,29 @@ public static class TimeDisplay
    {
       var localValue = TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
 
-      return localValue.ToString("yyyy-MM-dd");
+      return localValue.ToString(
+         DateDisplay.DateOnlyFormat,
+         CultureInfo.InvariantCulture
+      );
    }
 
    public static string FormatLocalTime(DateTimeOffset value)
    {
       var localValue = TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
 
-      return localValue.ToString("HH:mm:ss");
+      return localValue.ToString(
+         DateDisplay.TimeOnlyFormat,
+         CultureInfo.InvariantCulture
+      );
    }
 
    public static string FormatLocalTimestamp(DateTimeOffset value)
    {
       var localValue = TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
 
-      return localValue.ToString("yyyy-MM-dd HH:mm:ss");
+      return localValue.ToString(
+         DateDisplay.DateTimeSecondsFormat,
+         CultureInfo.InvariantCulture
+      );
    }
 }
