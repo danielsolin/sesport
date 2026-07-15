@@ -105,12 +105,21 @@ public sealed record AiRunDetail(
    string SystemPrompt,
    string UserPromptTemplate,
    decimal? PromptTemperature,
+   int? PromptMaxOutputTokens,
+   int? PromptMaxToolRounds,
+   string? PromptOutputSchemaJson,
+   string PromptRequestOptionsJson,
    string ProviderId,
    string ProviderLabel,
+   string ProviderKind,
+   string? ProviderBaseAddress,
    string? ProviderModel,
+   string? ProviderApiKeySource,
+   string ProviderRequestOptionsJson,
    string StatusId,
    string? CorrelationId,
    string InputPayloadJson,
+   string? RenderedSystemPrompt,
    string RenderedPrompt,
    string? RawRequestJson,
    string? RawResponseJson,
@@ -126,7 +135,11 @@ public sealed record AiRunDetail(
    int? OutputTokens,
    int? ReasoningTokens,
    string? ExecutionEnvironment,
-   int? PromptMaxOutputTokens
+   string JobOutputMode,
+   bool JobRequiresWebSearch,
+   string? JobToolsJson,
+   string? JobConditionalToolsJson,
+   int? JobToolCallMaxTokens
 );
 
 public sealed class AiPromptEditModel

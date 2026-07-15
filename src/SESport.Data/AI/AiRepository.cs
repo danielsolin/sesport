@@ -67,7 +67,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.id,")
          .AppendLine("   r.job_id,")
          .AppendLine("   r.execution_environment,")
-         .AppendLine("   j.label as job_label,")
+         .AppendLine(
+            "   coalesce(r.job_label, j.label, '') as job_label,"
+         )
          .AppendLine("   coalesce(")
          .AppendLine("      r.input_payload->>'event_name',")
          .AppendLine("      r.input_payload->>'title',")
@@ -78,7 +80,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("      a.activity_date,")
          .AppendLine("      (b.starts_at at time zone @time_zone)::date")
          .AppendLine("   ) as event_date,")
-         .AppendLine("   p.label as provider_label,")
+         .AppendLine(
+            "   coalesce(r.provider_label, p.label, '') as provider_label,"
+         )
          .AppendLine("   r.provider_model,")
          .AppendLine("   r.status_id,")
          .AppendLine("   r.tool_round_count,")
@@ -97,8 +101,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("      else 2")
          .AppendLine("   end as status_sort_order")
          .AppendLine("from ai_job_runs r")
-         .AppendLine("join ai_jobs j on j.id = r.job_id")
-         .AppendLine("join ai_providers p on p.id = r.provider_id")
+         .AppendLine("left join ai_jobs j on j.id = r.job_id")
+         .AppendLine("left join ai_providers p on p.id = r.provider_id")
          .AppendLine("left join activities a")
          .AppendLine("   on a.id::text = r.correlation_id")
          .AppendLine("      and r.job_id = any(@activity_job_ids)")
@@ -253,7 +257,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.id,
             r.job_id,
             r.execution_environment,
-            j.label,
+            coalesce(r.job_label, j.label, ''),
             coalesce(
                r.input_payload->>'event_name',
                r.input_payload->>'title',
@@ -264,7 +268,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                a.activity_date,
                (b.starts_at at time zone @time_zone)::date
             ),
-            p.label,
+            coalesce(r.provider_label, p.label, ''),
             r.provider_model,
             r.status_id,
             r.tool_round_count,
@@ -276,8 +280,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             ) as max_payload_chars,
             r.output_text
          from ai_job_runs r
-         join ai_jobs j on j.id = r.job_id
-         join ai_providers p on p.id = r.provider_id
+         left join ai_jobs j on j.id = r.job_id
+         left join ai_providers p on p.id = r.provider_id
          left join activities a
             on a.id::text = r.correlation_id
                and r.job_id = any(@activity_job_ids)
@@ -342,7 +346,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          select
             r.id,
             r.job_id,
-            j.label,
+            coalesce(r.job_label, j.label, ''),
             r.prompt_id,
             coalesce(r.prompt_version, pr.version, 0),
             coalesce(r.prompt_system_prompt, pr.system_prompt, ''),
@@ -351,13 +355,28 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                pr.user_prompt_template,
                ''
             ),
-            pr.temperature,
+            coalesce(r.prompt_temperature, pr.temperature),
+            coalesce(r.prompt_max_output_tokens, pr.max_output_tokens),
+            coalesce(r.prompt_max_tool_rounds, pr.max_tool_rounds),
+            coalesce(r.prompt_output_schema_json, pr.output_schema)::text,
+            coalesce(
+               r.prompt_request_options_json,
+               pr.request_options
+            )::text,
             r.provider_id,
-            p.label,
+            coalesce(r.provider_label, p.label, ''),
+            coalesce(r.provider_kind, p.kind, ''),
+            coalesce(r.provider_base_address, p.base_address),
             r.provider_model,
+            coalesce(r.provider_api_key_source, p.api_key_source),
+            coalesce(
+               r.provider_request_options_json,
+               p.request_options
+            )::text,
             r.status_id,
             r.correlation_id,
             r.input_payload::text,
+            r.rendered_system_prompt,
             r.rendered_prompt,
             r.raw_request::text,
             r.raw_response::text,
@@ -373,10 +392,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.output_tokens,
             r.reasoning_tokens,
             r.execution_environment,
-            pr.max_output_tokens
+            coalesce(r.job_output_mode, j.output_mode, ''),
+            coalesce(r.job_requires_web_search, j.requires_web_search),
+            coalesce(r.job_tools_json, j.tools_json)::text,
+            coalesce(
+               r.job_conditional_tools_json,
+               j.conditional_tools_json
+            )::text,
+            coalesce(r.job_tool_call_max_tokens, j.tool_call_max_tokens)
          from ai_job_runs r
-         join ai_jobs j on j.id = r.job_id
-         join ai_providers p on p.id = r.provider_id
+         left join ai_jobs j on j.id = r.job_id
+         left join ai_providers p on p.id = r.provider_id
          left join ai_job_prompts pr on pr.id = r.prompt_id
          where r.id = @id
          """;
@@ -393,36 +419,49 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       }
 
       return new AiRunDetail(
-         reader.GetGuid(0),
-         reader.GetString(1),
-         reader.GetString(2),
-         reader.GetGuid(3),
-         reader.GetInt32(4),
-         reader.GetString(5),
-         reader.GetString(6),
-         ReadNullableDecimal(reader, 7),
-         reader.GetString(8),
-         reader.GetString(9),
-         ReadNullableString(reader, 10),
-         reader.GetString(11),
-         ReadNullableString(reader, 12),
-         reader.GetString(13),
-         reader.GetString(14),
-         ReadNullableString(reader, 15),
-         ReadNullableString(reader, 16),
-         ReadNullableString(reader, 17),
-         reader.GetInt32(18),
-         reader.GetInt32(19),
-         ReadNullableString(reader, 20),
-         ReadNullableString(reader, 21),
-         reader.GetFieldValue<DateTimeOffset>(22),
-         ReadNullableDateTimeOffset(reader, 23),
-         ReadNullableDecimal(reader, 24),
-         ReadNullableInt32(reader, 25),
-         ReadNullableInt32(reader, 26),
-         ReadNullableInt32(reader, 27),
-         ReadNullableString(reader, 28),
-         ReadNullableInt32(reader, 29)
+         Id: reader.GetGuid(0),
+         JobId: reader.GetString(1),
+         JobLabel: reader.GetString(2),
+         PromptId: reader.GetGuid(3),
+         PromptVersion: reader.GetInt32(4),
+         SystemPrompt: reader.GetString(5),
+         UserPromptTemplate: reader.GetString(6),
+         PromptTemperature: ReadNullableDecimal(reader, 7),
+         PromptMaxOutputTokens: ReadNullableInt32(reader, 8),
+         PromptMaxToolRounds: ReadNullableInt32(reader, 9),
+         PromptOutputSchemaJson: ReadNullableString(reader, 10),
+         PromptRequestOptionsJson: reader.GetString(11),
+         ProviderId: reader.GetString(12),
+         ProviderLabel: reader.GetString(13),
+         ProviderKind: reader.GetString(14),
+         ProviderBaseAddress: ReadNullableString(reader, 15),
+         ProviderModel: ReadNullableString(reader, 16),
+         ProviderApiKeySource: ReadNullableString(reader, 17),
+         ProviderRequestOptionsJson: reader.GetString(18),
+         StatusId: reader.GetString(19),
+         CorrelationId: ReadNullableString(reader, 20),
+         InputPayloadJson: reader.GetString(21),
+         RenderedSystemPrompt: ReadNullableString(reader, 22),
+         RenderedPrompt: reader.GetString(23),
+         RawRequestJson: ReadNullableString(reader, 24),
+         RawResponseJson: ReadNullableString(reader, 25),
+         ToolTraceJson: ReadNullableString(reader, 26),
+         ToolRoundCount: reader.GetInt32(27),
+         ConversationCharacterCount: reader.GetInt32(28),
+         OutputText: ReadNullableString(reader, 29),
+         ErrorMessage: ReadNullableString(reader, 30),
+         StartedAt: reader.GetFieldValue<DateTimeOffset>(31),
+         CompletedAt: ReadNullableDateTimeOffset(reader, 32),
+         DurationSeconds: ReadNullableDecimal(reader, 33),
+         InputTokens: ReadNullableInt32(reader, 34),
+         OutputTokens: ReadNullableInt32(reader, 35),
+         ReasoningTokens: ReadNullableInt32(reader, 36),
+         ExecutionEnvironment: ReadNullableString(reader, 37),
+         JobOutputMode: reader.GetString(38),
+         JobRequiresWebSearch: reader.GetBoolean(39),
+         JobToolsJson: ReadNullableString(reader, 40),
+         JobConditionalToolsJson: ReadNullableString(reader, 41),
+         JobToolCallMaxTokens: ReadNullableInt32(reader, 42)
       );
    }
 
@@ -904,23 +943,39 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          insert into ai_job_runs (
-            id, job_id, prompt_id, prompt_version, prompt_system_prompt,
-            prompt_user_prompt_template, provider_id, status_id,
-            correlation_id, provider_model, input_payload, rendered_prompt,
+            id, job_id, job_label, job_output_mode,
+            job_requires_web_search, job_tools_json,
+            job_conditional_tools_json, job_tool_call_max_tokens,
+            prompt_id, prompt_version, prompt_system_prompt,
+            prompt_user_prompt_template, prompt_output_schema_json,
+            prompt_request_options_json, prompt_temperature,
+            prompt_max_output_tokens, prompt_max_tool_rounds,
+            provider_id, provider_label, provider_kind,
+            provider_base_address, provider_model, provider_api_key_source,
+            provider_request_options_json, status_id, correlation_id,
+            input_payload, rendered_prompt, rendered_system_prompt,
             raw_request, raw_response, tool_trace, output_text, error_message,
             started_at, completed_at, duration_seconds, input_tokens,
             output_tokens, reasoning_tokens, tool_round_count,
             conversation_character_count, execution_environment
          )
          values (
-            @id, @job_id, @prompt_id, @prompt_version, @prompt_system_prompt,
-            @prompt_user_prompt_template, @provider_id, @status_id,
-            @correlation_id, @provider_model, @input_payload,
-            @rendered_prompt, @raw_request, @raw_response, @tool_trace,
-            @output_text, @error_message, @started_at, @completed_at,
-            @duration_seconds, @input_tokens, @output_tokens,
-            @reasoning_tokens, @tool_round_count,
-            @conversation_character_count, @execution_environment
+            @id, @job_id, @job_label, @job_output_mode,
+            @job_requires_web_search, @job_tools_json,
+            @job_conditional_tools_json, @job_tool_call_max_tokens,
+            @prompt_id, @prompt_version, @prompt_system_prompt,
+            @prompt_user_prompt_template, @prompt_output_schema_json,
+            @prompt_request_options_json, @prompt_temperature,
+            @prompt_max_output_tokens, @prompt_max_tool_rounds,
+            @provider_id, @provider_label, @provider_kind,
+            @provider_base_address, @provider_model, @provider_api_key_source,
+            @provider_request_options_json, @status_id, @correlation_id,
+            @input_payload, @rendered_prompt, @rendered_system_prompt,
+            @raw_request, @raw_response, @tool_trace, @output_text,
+            @error_message, @started_at, @completed_at, @duration_seconds,
+            @input_tokens, @output_tokens, @reasoning_tokens,
+            @tool_round_count, @conversation_character_count,
+            @execution_environment
          )
          """;
 
@@ -1215,6 +1270,22 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       command.Parameters.AddWithValue("id", run.Id);
       command.Parameters.AddWithValue("job_id", run.JobId);
+      AddNullableStringParameter(command, "job_label", run.JobLabel);
+      command.Parameters.AddWithValue("job_output_mode", run.JobOutputMode);
+      command.Parameters.AddWithValue(
+         "job_requires_web_search",
+         run.JobRequiresWebSearch
+      );
+      AddJsonbParameter(command, "job_tools_json", run.JobToolsJson);
+      AddJsonbParameter(
+         command,
+         "job_conditional_tools_json",
+         run.JobConditionalToolsJson
+      );
+      command.Parameters.AddWithValue(
+         "job_tool_call_max_tokens",
+         (object?)run.JobToolCallMaxTokens ?? DBNull.Value
+      );
       command.Parameters.AddWithValue("prompt_id", run.PromptId);
       command.Parameters.AddWithValue("prompt_version", run.PromptVersion);
       command.Parameters.AddWithValue(
@@ -1225,8 +1296,47 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          "prompt_user_prompt_template",
          run.PromptUserPromptTemplate
       );
+      AddJsonbParameter(
+         command,
+         "prompt_output_schema_json",
+         run.PromptOutputSchemaJson
+      );
+      AddJsonbParameter(
+         command,
+         "prompt_request_options_json",
+         run.PromptRequestOptionsJson
+      );
+      command.Parameters.AddWithValue(
+         "prompt_temperature",
+         (object?)run.PromptTemperature ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "prompt_max_output_tokens",
+         (object?)run.PromptMaxOutputTokens ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "prompt_max_tool_rounds",
+         (object?)run.PromptMaxToolRounds ?? DBNull.Value
+      );
       command.Parameters.AddWithValue("provider_id", run.ProviderId);
+      AddNullableStringParameter(command, "provider_label", run.ProviderLabel);
+      command.Parameters.AddWithValue("provider_kind", run.ProviderKind);
+      AddNullableStringParameter(
+         command,
+         "provider_base_address",
+         run.ProviderBaseAddress
+      );
       AddNullableStringParameter(command, "provider_model", run.ProviderModel);
+      AddNullableStringParameter(
+         command,
+         "provider_api_key_source",
+         run.ProviderApiKeySource
+      );
+      AddJsonbParameter(
+         command,
+         "provider_request_options_json",
+         run.ProviderRequestOptionsJson
+      );
       command.Parameters.AddWithValue("status_id", ToStatusId(run.Status));
       command.Parameters.AddWithValue(
          "correlation_id",
@@ -1234,6 +1344,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
       AddJsonbParameter(command, "input_payload", run.InputPayloadJson);
       command.Parameters.AddWithValue("rendered_prompt", run.RenderedPrompt);
+      AddNullableStringParameter(
+         command,
+         "rendered_system_prompt",
+         run.RenderedSystemPrompt
+      );
       AddJsonbParameter(command, "raw_request", run.RawRequestJson);
       AddJsonbParameter(command, "raw_response", run.RawResponseJson);
       AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);

@@ -275,6 +275,11 @@ public class DetailsModel(
 
    internal static string GetRenderedSystemPromptText(AiRunDetail run)
    {
+      if(!string.IsNullOrWhiteSpace(run.RenderedSystemPrompt))
+      {
+         return run.RenderedSystemPrompt.Trim();
+      }
+
       try
       {
          var prompt = new AiPromptDefinition(

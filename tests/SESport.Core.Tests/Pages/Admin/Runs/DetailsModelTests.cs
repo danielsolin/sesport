@@ -79,38 +79,12 @@ public sealed class DetailsModelTests
    [Fact]
    public void GetRenderedSystemPromptTextRendersPrimaryCountryTokens()
    {
-      var run = new SESport.Core.AI.AiRunDetail(
-         Id: Guid.NewGuid(),
-         JobId: "job",
-         JobLabel: "Job",
-         PromptId: Guid.NewGuid(),
-         PromptVersion: 1,
-         SystemPrompt: "Process {{CountryName}} athletes.",
-         UserPromptTemplate: "User",
-         PromptTemperature: null,
-         ProviderId: "provider",
-         ProviderLabel: "Provider",
-         ProviderModel: "Model",
-         StatusId: "completed",
-         CorrelationId: null,
-         InputPayloadJson: "{}",
-         RenderedPrompt: "Rendered",
-         RawRequestJson: null,
-         RawResponseJson: null,
-         ToolTraceJson: null,
-         ToolRoundCount: 0,
-         ConversationCharacterCount: 0,
-         OutputText: null,
-         ErrorMessage: null,
-         StartedAt: DateTimeOffset.UtcNow,
-         CompletedAt: DateTimeOffset.UtcNow,
-         DurationSeconds: 1m,
-         InputTokens: null,
-         OutputTokens: null,
-         ReasoningTokens: null,
-         ExecutionEnvironment: null,
-         PromptMaxOutputTokens: null
-      );
+      var run = CreateRun() with
+      {
+         SystemPrompt = "Process {{CountryName}} athletes.",
+         RenderedSystemPrompt =
+            $"Process {PrimaryCountry.CountryName} athletes."
+      };
 
       Assert.Equal(
          $"Process {PrimaryCountry.CountryName} athletes.",
@@ -194,25 +168,9 @@ public sealed class DetailsModelTests
    [Fact]
    public void GetMaxPayloadCharacterCountUsesRoundPeak()
    {
-      var run = new SESport.Core.AI.AiRunDetail(
-         Id: Guid.NewGuid(),
-         JobId: "job",
-         JobLabel: "Job",
-         PromptId: Guid.NewGuid(),
-         PromptVersion: 1,
-         SystemPrompt: "System",
-         UserPromptTemplate: "User",
-         PromptTemperature: null,
-         ProviderId: "provider",
-         ProviderLabel: "Provider",
-         ProviderModel: "Model",
-         StatusId: "completed",
-         CorrelationId: null,
-         InputPayloadJson: "{}",
-         RenderedPrompt: "Rendered",
-         RawRequestJson: null,
-         RawResponseJson: null,
-         ToolTraceJson: """
+      var run = CreateRun() with
+      {
+         ToolTraceJson = """
             [
               {
                 "kind": "budget",
@@ -225,19 +183,9 @@ public sealed class DetailsModelTests
               }
             ]
             """,
-         ToolRoundCount: 16,
-         ConversationCharacterCount: 9886,
-         OutputText: null,
-         ErrorMessage: null,
-         StartedAt: DateTimeOffset.UtcNow,
-         CompletedAt: DateTimeOffset.UtcNow,
-         DurationSeconds: 1m,
-         InputTokens: null,
-         OutputTokens: null,
-         ReasoningTokens: null,
-         ExecutionEnvironment: null,
-         PromptMaxOutputTokens: null
-      );
+         ToolRoundCount = 16,
+         ConversationCharacterCount = 9886
+      };
 
       Assert.Equal(20012, DetailsModel.GetMaxPayloadCharacterCount(run));
    }
@@ -245,38 +193,10 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatTemperatureUsesPromptTemperature()
    {
-      var run = new SESport.Core.AI.AiRunDetail(
-         Id: Guid.NewGuid(),
-         JobId: "job",
-         JobLabel: "Job",
-         PromptId: Guid.NewGuid(),
-         PromptVersion: 1,
-         SystemPrompt: "System",
-         UserPromptTemplate: "User",
-         PromptTemperature: 0.73m,
-         ProviderId: "provider",
-         ProviderLabel: "Provider",
-         ProviderModel: "Model",
-         StatusId: "completed",
-         CorrelationId: null,
-         InputPayloadJson: "{}",
-         RenderedPrompt: "Rendered",
-         RawRequestJson: null,
-         RawResponseJson: null,
-         ToolTraceJson: null,
-         ToolRoundCount: 0,
-         ConversationCharacterCount: 0,
-         OutputText: null,
-         ErrorMessage: null,
-         StartedAt: DateTimeOffset.UtcNow,
-         CompletedAt: DateTimeOffset.UtcNow,
-         DurationSeconds: 1m,
-         InputTokens: null,
-         OutputTokens: null,
-         ReasoningTokens: null,
-         ExecutionEnvironment: null,
-         PromptMaxOutputTokens: null
-      );
+      var run = CreateRun() with
+      {
+         PromptTemperature = 0.73m
+      };
 
       Assert.Equal("0.73", DetailsModel.FormatTemperature(run));
    }
@@ -284,38 +204,10 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatMaxOutputTokensUsesPromptSetting()
    {
-      var run = new SESport.Core.AI.AiRunDetail(
-         Id: Guid.NewGuid(),
-         JobId: "job",
-         JobLabel: "Job",
-         PromptId: Guid.NewGuid(),
-         PromptVersion: 1,
-         SystemPrompt: "System",
-         UserPromptTemplate: "User",
-         PromptTemperature: null,
-         ProviderId: "provider",
-         ProviderLabel: "Provider",
-         ProviderModel: "Model",
-         StatusId: "completed",
-         CorrelationId: null,
-         InputPayloadJson: "{}",
-         RenderedPrompt: "Rendered",
-         RawRequestJson: null,
-         RawResponseJson: null,
-         ToolTraceJson: null,
-         ToolRoundCount: 0,
-         ConversationCharacterCount: 0,
-         OutputText: null,
-         ErrorMessage: null,
-         StartedAt: DateTimeOffset.UtcNow,
-         CompletedAt: DateTimeOffset.UtcNow,
-         DurationSeconds: 1m,
-         InputTokens: null,
-         OutputTokens: null,
-         ReasoningTokens: null,
-         ExecutionEnvironment: null,
-         PromptMaxOutputTokens: 8192
-      );
+      var run = CreateRun() with
+      {
+         PromptMaxOutputTokens = 8192
+      };
 
       Assert.Equal("8192", DetailsModel.FormatMaxOutputTokens(run));
    }
@@ -323,43 +215,16 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatTemperatureReturnsNotSetWhenPromptTemperatureIsNull()
    {
-      var run = new SESport.Core.AI.AiRunDetail(
-         Id: Guid.NewGuid(),
-         JobId: "job",
-         JobLabel: "Job",
-         PromptId: Guid.NewGuid(),
-         PromptVersion: 1,
-         SystemPrompt: "System",
-         UserPromptTemplate: "User",
-         PromptTemperature: null,
-         ProviderId: "provider",
-         ProviderLabel: "Provider",
-         ProviderModel: "Model",
-         StatusId: "completed",
-         CorrelationId: null,
-         InputPayloadJson: "{}",
-         RenderedPrompt: "Rendered",
-         RawRequestJson: """
+      var run = CreateRun() with
+      {
+         RawRequestJson = """
             {
               "model": "test",
               "temperature": 0.73
             }
             """,
-         RawResponseJson: null,
-         ToolTraceJson: null,
-         ToolRoundCount: 0,
-         ConversationCharacterCount: 0,
-         OutputText: null,
-         ErrorMessage: null,
-         StartedAt: DateTimeOffset.UtcNow,
-         CompletedAt: DateTimeOffset.UtcNow,
-         DurationSeconds: 1m,
-         InputTokens: null,
-         OutputTokens: null,
-         ReasoningTokens: null,
-         ExecutionEnvironment: null,
-         PromptMaxOutputTokens: null
-      );
+         PromptTemperature = null
+      };
 
       Assert.Equal("Not set", DetailsModel.FormatTemperature(run));
    }
@@ -367,7 +232,14 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatMaxOutputTokensReturnsNotSet()
    {
-      var run = new SESport.Core.AI.AiRunDetail(
+      var run = CreateRun();
+
+      Assert.Equal("Not set", DetailsModel.FormatMaxOutputTokens(run));
+   }
+
+   private static SESport.Core.AI.AiRunDetail CreateRun()
+   {
+      return new SESport.Core.AI.AiRunDetail(
          Id: Guid.NewGuid(),
          JobId: "job",
          JobLabel: "Job",
@@ -376,12 +248,21 @@ public sealed class DetailsModelTests
          SystemPrompt: "System",
          UserPromptTemplate: "User",
          PromptTemperature: null,
+         PromptMaxOutputTokens: null,
+         PromptMaxToolRounds: null,
+         PromptOutputSchemaJson: null,
+         PromptRequestOptionsJson: "{}",
          ProviderId: "provider",
          ProviderLabel: "Provider",
+         ProviderKind: "llama-server",
+         ProviderBaseAddress: null,
          ProviderModel: "Model",
+         ProviderApiKeySource: null,
+         ProviderRequestOptionsJson: "{}",
          StatusId: "completed",
          CorrelationId: null,
          InputPayloadJson: "{}",
+         RenderedSystemPrompt: "Rendered System",
          RenderedPrompt: "Rendered",
          RawRequestJson: null,
          RawResponseJson: null,
@@ -397,9 +278,11 @@ public sealed class DetailsModelTests
          OutputTokens: null,
          ReasoningTokens: null,
          ExecutionEnvironment: null,
-         PromptMaxOutputTokens: null
+         JobOutputMode: "text",
+         JobRequiresWebSearch: true,
+         JobToolsJson: null,
+         JobConditionalToolsJson: null,
+         JobToolCallMaxTokens: null
       );
-
-      Assert.Equal("Not set", DetailsModel.FormatMaxOutputTokens(run));
    }
 }

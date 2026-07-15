@@ -207,7 +207,10 @@ public sealed class AiJobRunner(
             run.JobId,
             run.ProviderId,
             run.ProviderModel,
-            run.RenderedPrompt,
+            GetRenderedPromptText(
+               run.RenderedSystemPrompt,
+               run.RenderedPrompt
+            ),
             providerResult.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
@@ -251,7 +254,10 @@ public sealed class AiJobRunner(
             run.JobId,
             run.ProviderId,
             run.ProviderModel,
-            run.RenderedPrompt,
+            GetRenderedPromptText(
+               run.RenderedSystemPrompt,
+               run.RenderedPrompt
+            ),
             run.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
@@ -283,7 +289,10 @@ public sealed class AiJobRunner(
             run.JobId,
             run.ProviderId,
             run.ProviderModel,
-            run.RenderedPrompt,
+            GetRenderedPromptText(
+               run.RenderedSystemPrompt,
+               run.RenderedPrompt
+            ),
             run.RawRequestJson,
             run.OutputText ?? string.Empty,
             run.RawResponseJson,
@@ -357,6 +366,7 @@ public sealed class AiJobRunner(
          request.CorrelationId,
          request.InputPayloadJson,
          renderedPrompt.UserPrompt.Trim(),
+         renderedPrompt.SystemPrompt?.Trim(),
          null!,
          null,
          null,
@@ -370,7 +380,23 @@ public sealed class AiJobRunner(
          null,
          null,
          null,
-         ExecutionEnvironment.Current
+         ExecutionEnvironment.Current,
+         job.Label,
+         provider.Label,
+         job.OutputMode,
+         job.RequiresWebSearch,
+         job.ToolsJson,
+         job.ConditionalToolsJson,
+         job.ToolCallMaxTokens,
+         provider.Kind,
+         provider.BaseAddress,
+         provider.ApiKeySource,
+         provider.RequestOptionsJson,
+         prompt.OutputSchemaJson,
+         prompt.RequestOptionsJson,
+         prompt.Temperature,
+         prompt.MaxOutputTokens,
+         prompt.MaxToolRounds
       );
 
       return new ExecutionContext(
@@ -401,54 +427,23 @@ public sealed class AiJobRunner(
          );
       }
 
-      var job = await definitionRepository.GetJobAsync(
-         run.JobId,
-         cancellationToken
-      );
-
-      if(job is null || !job.Enabled)
-      {
-         throw new InvalidOperationException(
-            $"AI job '{run.JobId}' does not exist."
-         );
-      }
-
-      var prompt = await definitionRepository.GetPromptAsync(
-         run.PromptId,
-         cancellationToken
-      );
-
-      if(prompt is null || !prompt.Enabled)
-      {
-         throw new InvalidOperationException(
-            $"AI prompt '{run.PromptId}' does not exist."
-         );
-      }
-
-      var provider = await definitionRepository.GetProviderAsync(
-         run.ProviderId,
-         cancellationToken
-      );
-
-      if(provider is null || !provider.Enabled)
-      {
-         throw new InvalidOperationException(
-            $"AI provider '{run.ProviderId}' does not exist."
-         );
-      }
-
+      var job = CreateJobDefinition(run);
+      var prompt = CreatePromptDefinition(run);
+      var provider = CreateProviderDefinition(run);
       var providerClient = GetProviderClient(provider.Kind);
-      var renderedSystemPrompt = promptRenderer.Render(
-         prompt,
-         run.InputPayloadJson
-      ).SystemPrompt;
-      var renderedPrompt = new AiRenderedPrompt(
-         renderedSystemPrompt,
-         run.RenderedPrompt
-      );
+      var renderedPrompt = CreateRenderedPrompt(run, prompt);
+      var runForExecution = run.ToAiJobRun();
+
+      if(string.IsNullOrWhiteSpace(runForExecution.RenderedSystemPrompt))
+      {
+         runForExecution = runForExecution with
+         {
+            RenderedSystemPrompt = renderedPrompt.SystemPrompt?.Trim()
+         };
+      }
 
       return new ExecutionContext(
-         run.ToAiJobRun(),
+         runForExecution,
          job,
          prompt,
          provider,
@@ -494,7 +489,10 @@ public sealed class AiJobRunner(
          run.JobId,
          run.ProviderId,
          run.ProviderModel,
-         run.RenderedPrompt,
+         GetRenderedPromptText(
+            run.RenderedSystemPrompt,
+            run.RenderedPrompt
+         ),
          run.RawRequestJson ?? string.Empty,
          run.OutputText ?? string.Empty,
          run.RawResponseJson,
@@ -612,6 +610,84 @@ public sealed class AiJobRunner(
       AiRenderedPrompt RenderedPrompt,
       string InputPayloadJson
    );
+
+   private AiRenderedPrompt CreateRenderedPrompt(
+      AiRunDetail run,
+      AiPromptDefinition prompt
+   )
+   {
+      var renderedSystemPrompt = string.IsNullOrWhiteSpace(
+         run.RenderedSystemPrompt
+      )
+         ? promptRenderer.Render(prompt, run.InputPayloadJson).SystemPrompt
+         : run.RenderedSystemPrompt.Trim();
+
+      return new AiRenderedPrompt(
+         renderedSystemPrompt,
+         run.RenderedPrompt
+      );
+   }
+
+   private static AiJobDefinition CreateJobDefinition(AiRunDetail run)
+   {
+      return new AiJobDefinition(
+         run.JobId,
+         run.JobLabel,
+         null,
+         run.ProviderId,
+         run.JobOutputMode,
+         run.JobToolsJson,
+         run.JobConditionalToolsJson,
+         run.JobToolCallMaxTokens,
+         run.JobRequiresWebSearch,
+         true,
+         null
+      );
+   }
+
+   private static AiPromptDefinition CreatePromptDefinition(AiRunDetail run)
+   {
+      return new AiPromptDefinition(
+         run.PromptId,
+         run.JobId,
+         run.PromptVersion,
+         run.SystemPrompt,
+         run.UserPromptTemplate,
+         run.PromptOutputSchemaJson,
+         run.PromptRequestOptionsJson,
+         run.PromptTemperature,
+         run.PromptMaxOutputTokens,
+         run.PromptMaxToolRounds,
+         true
+      );
+   }
+
+   private static AiProviderDefinition CreateProviderDefinition(
+      AiRunDetail run
+   )
+   {
+      return new AiProviderDefinition(
+         run.ProviderId,
+         run.ProviderLabel,
+         run.ProviderKind,
+         run.ProviderBaseAddress,
+         run.ProviderModel,
+         run.ProviderApiKeySource,
+         run.ProviderRequestOptionsJson,
+         true
+      );
+   }
+
+   private static string GetRenderedPromptText(
+      string? renderedSystemPrompt,
+      string renderedPrompt
+   )
+   {
+      return new AiRenderedPrompt(
+         renderedSystemPrompt,
+         renderedPrompt
+      ).ToPromptText();
+   }
 }
 
 internal static class AiRunDetailExtensions
@@ -631,6 +707,7 @@ internal static class AiRunDetailExtensions
          run.CorrelationId,
          run.InputPayloadJson,
          run.RenderedPrompt,
+         run.RenderedSystemPrompt,
          run.RawRequestJson ?? string.Empty,
          run.RawResponseJson,
          run.ToolTraceJson,
@@ -644,7 +721,23 @@ internal static class AiRunDetailExtensions
          run.InputTokens,
          run.OutputTokens,
          run.ReasoningTokens,
-         ExecutionEnvironment.Current
+         ExecutionEnvironment.Current,
+         run.JobLabel,
+         run.ProviderLabel,
+         run.JobOutputMode,
+         run.JobRequiresWebSearch,
+         run.JobToolsJson,
+         run.JobConditionalToolsJson,
+         run.JobToolCallMaxTokens,
+         run.ProviderKind,
+         run.ProviderBaseAddress,
+         run.ProviderApiKeySource,
+         run.ProviderRequestOptionsJson,
+         run.PromptOutputSchemaJson,
+         run.PromptRequestOptionsJson,
+         run.PromptTemperature,
+         run.PromptMaxOutputTokens,
+         run.PromptMaxToolRounds
       );
    }
 

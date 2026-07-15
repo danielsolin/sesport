@@ -39,6 +39,10 @@ public class AiJobRunnerTests
          "User",
          runRepository.StoredRun!.RenderedPrompt
       );
+      Assert.Equal(
+         "System",
+         runRepository.StoredRun.RenderedSystemPrompt
+      );
       Assert.NotNull(runRepository.UpdatedRun);
       Assert.Equal(AiJobRunStatus.Failed, runRepository.UpdatedRun!.Status);
       Assert.Contains(
@@ -142,6 +146,7 @@ public class AiJobRunnerTests
       Assert.Equal(AiJobRunStatus.Pending, runRepository.StoredRun!.Status);
       Assert.Equal(runId, runRepository.StoredRun.Id);
       Assert.Null(runRepository.StoredRun.RawRequestJson);
+      Assert.Equal("System", runRepository.StoredRun.RenderedSystemPrompt);
       Assert.Equal(
          ExecutionEnvironment.Current,
          runRepository.StoredRun.ExecutionEnvironment
@@ -152,33 +157,42 @@ public class AiJobRunnerTests
    public async Task ProcessRunAsyncRendersSystemPromptForStoredRun()
    {
       var jobRepository = new RecordingJobDefinitionRepository();
-      var promptRenderer = new PrefixingPromptRenderer();
+      var queuePromptRenderer = new RecordingPromptRenderer();
+      var processPromptRenderer = new PrefixingPromptRenderer();
       var providerClient = new CapturingProviderClient();
       var runRepository = new RecordingRunRepository();
       var executionGate = new AiJobExecutionGate();
 
-      var runner = new AiJobRunner(
+      var queueRunner = new AiJobRunner(
          jobRepository,
-         promptRenderer,
+         queuePromptRenderer,
          [providerClient],
          runRepository,
          executionGate
       );
 
-      var runId = await runner.QueueAsync(
+      var processRunner = new AiJobRunner(
+         jobRepository,
+         processPromptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var runId = await queueRunner.QueueAsync(
          new AiJobRequest("job", """{"event":"test"}"""),
          CancellationToken.None
       );
 
-      await runner.ProcessRunAsync(runId, CancellationToken.None);
+      await processRunner.ProcessRunAsync(runId, CancellationToken.None);
 
       Assert.NotNull(providerClient.RenderedPrompt);
       Assert.Equal(
-         "Rendered System",
+         "System",
          providerClient.RenderedPrompt!.SystemPrompt
       );
       Assert.Equal(
-         "Rendered User",
+         "User",
          providerClient.RenderedPrompt.UserPrompt
       );
    }
@@ -542,18 +556,26 @@ public class AiJobRunnerTests
 
          return Task.FromResult<AiRunDetail?>(
             new AiRunDetail(
-               run.Id,
-               run.JobId,
-               "Job",
-               run.PromptId,
-               run.PromptVersion,
-               run.PromptSystemPrompt,
-               run.PromptUserPromptTemplate,
-               null,
-               run.ProviderId,
-               "Provider",
-               run.ProviderModel,
-               run.Status switch
+               Id: run.Id,
+               JobId: run.JobId,
+               JobLabel: run.JobLabel,
+               PromptId: run.PromptId,
+               PromptVersion: run.PromptVersion,
+               SystemPrompt: run.PromptSystemPrompt,
+               UserPromptTemplate: run.PromptUserPromptTemplate,
+               PromptTemperature: run.PromptTemperature,
+               PromptMaxOutputTokens: run.PromptMaxOutputTokens,
+               PromptMaxToolRounds: run.PromptMaxToolRounds,
+               PromptOutputSchemaJson: run.PromptOutputSchemaJson,
+               PromptRequestOptionsJson: run.PromptRequestOptionsJson,
+               ProviderId: run.ProviderId,
+               ProviderLabel: run.ProviderLabel,
+               ProviderKind: run.ProviderKind,
+               ProviderBaseAddress: run.ProviderBaseAddress,
+               ProviderModel: run.ProviderModel,
+               ProviderApiKeySource: run.ProviderApiKeySource,
+               ProviderRequestOptionsJson: run.ProviderRequestOptionsJson,
+               StatusId: run.Status switch
                {
                   AiJobRunStatus.Pending => "pending",
                   AiJobRunStatus.Running => "running",
@@ -562,24 +584,29 @@ public class AiJobRunnerTests
                   AiJobRunStatus.Archived => "archived",
                   _ => "pending"
                },
-               run.CorrelationId,
-               run.InputPayloadJson,
-               run.RenderedPrompt,
-               run.RawRequestJson,
-               run.RawResponseJson,
-               run.ToolTraceJson,
-               run.ToolRoundCount,
-               run.ConversationCharacterCount,
-               run.OutputText,
-               run.ErrorMessage,
-               run.StartedAt,
-               run.CompletedAt,
-               run.DurationSeconds,
-               run.InputTokens,
-               run.OutputTokens,
-               run.ReasoningTokens,
-               run.ExecutionEnvironment,
-               null
+               CorrelationId: run.CorrelationId,
+               InputPayloadJson: run.InputPayloadJson,
+               RenderedSystemPrompt: run.RenderedSystemPrompt,
+               RenderedPrompt: run.RenderedPrompt,
+               RawRequestJson: run.RawRequestJson,
+               RawResponseJson: run.RawResponseJson,
+               ToolTraceJson: run.ToolTraceJson,
+               ToolRoundCount: run.ToolRoundCount,
+               ConversationCharacterCount: run.ConversationCharacterCount,
+               OutputText: run.OutputText,
+               ErrorMessage: run.ErrorMessage,
+               StartedAt: run.StartedAt,
+               CompletedAt: run.CompletedAt,
+               DurationSeconds: run.DurationSeconds,
+               InputTokens: run.InputTokens,
+               OutputTokens: run.OutputTokens,
+               ReasoningTokens: run.ReasoningTokens,
+               ExecutionEnvironment: run.ExecutionEnvironment,
+               JobOutputMode: run.JobOutputMode,
+               JobRequiresWebSearch: run.JobRequiresWebSearch,
+               JobToolsJson: run.JobToolsJson,
+               JobConditionalToolsJson: run.JobConditionalToolsJson,
+               JobToolCallMaxTokens: run.JobToolCallMaxTokens
             )
          );
       }
