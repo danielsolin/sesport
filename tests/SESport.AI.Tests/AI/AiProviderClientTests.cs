@@ -1753,7 +1753,7 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncRejectsUnknownWithoutTargetCountryCheck()
+      LlamaServerGenerateAsyncAcceptsUnknownWithoutTargetCountryCheck()
    {
       var unknownOutput =
          CreateParticipationCheckedOutput(
@@ -1764,7 +1764,6 @@ public class AiProviderClientTests
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson("https://example.test/participants"),
-         CreateLlamaFinalResponseWithContentJson(unknownOutput),
          CreateLlamaFinalResponseWithContentJson(unknownOutput),
          CreateLlamaFinalResponseWithContentJson(unknownOutput),
          CreateLlamaFinalResponseWithContentJson(unknownOutput)
@@ -1793,33 +1792,32 @@ public class AiProviderClientTests
          new NoopLogger<LlamaServerClient>()
       );
 
-      var exception = await Assert.ThrowsAsync<AiProviderExecutionException>(
-         () => client.GenerateAsync(
-            CreateProvider("llama-server"),
-            CreateJob(
-               "json_schema",
-               requiresWebSearch: true,
-               toolsJson: CreateToolsJson(),
-               jobId: AiJobIds.DecidePrimaryCountryParticipation
-            ),
-            CreatePrompt(
-               CreateParticipationSchemaJsonWithEvidenceType(),
-               maxToolRounds: 4
-            ),
-            CreateRenderedPrompt(),
-            "{}",
-            CancellationToken.None
-         )
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(
+            CreateParticipationSchemaJsonWithEvidenceType(),
+            maxToolRounds: 4
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
       );
 
-      Assert.Contains("target-country", exception.Message);
+      Assert.Equal(5, handler.RequestBodies.Count);
       Assert.Equal(
          2,
          CountOccurrences(
-            exception.ToolTraceJson!,
+            result.ToolTraceJson!,
             "\"kind\":\"validation_feedback\""
          )
       );
+      Assert.Equal(unknownOutput, result.OutputText);
    }
 
    [Fact]
