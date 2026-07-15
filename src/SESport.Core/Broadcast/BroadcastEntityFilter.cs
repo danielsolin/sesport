@@ -58,11 +58,18 @@ public static class BroadcastEntityFilter
       var personEntities = FilterSelectableEntities(entities)
          .Where(entity => entity.Type == TrackedEntityTypeIds.Person)
          .ToList();
-      var entityByName = personEntities
-         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-         .GroupBy(entity => NormalizeName(entity.Name))
-         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-         .ToDictionary(group => group.Key, group => group.First().Id);
+      var entityByName = CreateNameLookup(
+         personEntities,
+         entity => entity.Name,
+         entity => entity.Id
+      );
+      var aliasByName = CreateNameLookup(
+         personEntities.Where(entity =>
+            !string.IsNullOrWhiteSpace(entity.AliasName)
+         ),
+         entity => entity.AliasName,
+         entity => entity.Id
+      );
       var matchedEntityIds = new List<Guid>();
 
       foreach(var participantName in participantNames)
@@ -74,24 +81,10 @@ public static class BroadcastEntityFilter
             continue;
          }
 
-         if(!entityByName.TryGetValue(normalizedName, out var entityId))
+         if(!entityByName.TryGetValue(normalizedName, out var entityId) &&
+            !aliasByName.TryGetValue(normalizedName, out entityId))
          {
-            var aliasMatch = personEntities
-               .Where(entity => !string.IsNullOrWhiteSpace(entity.AliasName))
-               .FirstOrDefault(entity =>
-                  string.Equals(
-                     NormalizeName(entity.AliasName!),
-                     normalizedName,
-                     StringComparison.OrdinalIgnoreCase
-                  )
-               );
-
-            if(aliasMatch is null)
-            {
-               continue;
-            }
-
-            entityId = aliasMatch.Id;
+            continue;
          }
 
          if(!matchedEntityIds.Contains(entityId))
@@ -138,8 +131,94 @@ public static class BroadcastEntityFilter
       );
    }
 
+   public static string NormalizeLooseName(string value)
+   {
+      var normalized = NormalizeName(value);
+      var builder = new StringBuilder(normalized.Length);
+      var previousLetter = '\0';
+
+      foreach(var character in normalized)
+      {
+         if(char.IsLetter(character))
+         {
+            if(character == previousLetter)
+            {
+               continue;
+            }
+
+            previousLetter = character;
+         }
+         else
+         {
+            previousLetter = '\0';
+         }
+
+         builder.Append(character);
+      }
+
+      return builder.ToString();
+   }
+
    public static string NormalizeParticipantName(string value)
    {
       return NormalizeName(BroadcastParticipantNameFormatter.Format(value));
+   }
+
+   public static IReadOnlyDictionary<string, Guid> CreateNameLookup<T>(
+      IEnumerable<T> items,
+      Func<T, string?> nameSelector,
+      Func<T, Guid> idSelector
+   )
+   {
+      var itemList = items.ToList();
+      var lookup = new Dictionary<string, Guid>(
+         StringComparer.OrdinalIgnoreCase
+      );
+
+      AddNameVariants(
+         lookup,
+         itemList,
+         nameSelector,
+         idSelector,
+         NormalizeName
+      );
+      AddNameVariants(
+         lookup,
+         itemList,
+         nameSelector,
+         idSelector,
+         NormalizeLooseName
+      );
+
+      return lookup;
+   }
+
+   private static void AddNameVariants<T>(
+      IDictionary<string, Guid> lookup,
+      IEnumerable<T> items,
+      Func<T, string?> nameSelector,
+      Func<T, Guid> idSelector,
+      Func<string, string> normalizer
+   )
+   {
+      foreach(var item in items)
+      {
+         var name = nameSelector(item);
+
+         if(string.IsNullOrWhiteSpace(name))
+         {
+            continue;
+         }
+
+         var normalizedName = normalizer(name);
+
+         if(string.IsNullOrWhiteSpace(normalizedName) ||
+            lookup.ContainsKey(normalizedName))
+         {
+            continue;
+         }
+
+         lookup[normalizedName] = idSelector(item);
+      }
    }
 }

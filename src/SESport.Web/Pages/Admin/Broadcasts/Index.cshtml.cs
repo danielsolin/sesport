@@ -333,13 +333,13 @@ public class IndexModel(
                organizationEntityId,
                cancellationToken
             );
-         participantEntityIdsByOrganizationEntityId[organizationEntityId] =
-            entityOptions
-               .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-               .GroupBy(entity =>
-                  BroadcastEntityFilter.NormalizeName(entity.Name))
-               .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-               .ToDictionary(group => group.Key, group => group.First().Id);
+         participantEntityIdsByOrganizationEntityId[
+            organizationEntityId
+         ] = BroadcastEntityFilter.CreateNameLookup(
+            entityOptions,
+            entity => entity.Name,
+            entity => entity.Id
+         );
       }
 
       return participantEntityIdsByOrganizationEntityId;

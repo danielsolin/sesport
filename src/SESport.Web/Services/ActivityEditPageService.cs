@@ -408,16 +408,16 @@ public sealed class ActivityEditPageService(
          .Where(entity => entity.Type == TrackedEntityTypeIds.Person)
          .Select(entity => entity.Id)
          .ToHashSet();
-      var entityIdsByName = (
+      var entityOptions =
          await adminRepository.GetParticipantEntityNameOptionsAsync(
             organizationEntityId.Value,
             cancellationToken
-         )
-      )
-         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-         .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
-         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-         .ToDictionary(group => group.Key, group => group.First().Id);
+         );
+      var entityIdsByName = BroadcastEntityFilter.CreateNameLookup(
+         entityOptions,
+         entity => entity.Name,
+         entity => entity.Id
+      );
       var linkedEntityIds = new List<Guid>();
       var seenEntityIds = new HashSet<Guid>();
 

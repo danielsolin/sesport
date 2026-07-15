@@ -215,12 +215,11 @@ public sealed class BroadcastParticipationService(
             organizationEntityId.Value,
             cancellationToken
          );
-
-      var entityIdsByName = entityOptions
-         .Where(entity => !string.IsNullOrWhiteSpace(entity.Name))
-         .GroupBy(entity => BroadcastEntityFilter.NormalizeName(entity.Name))
-         .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-         .ToDictionary(group => group.Key, group => group.First().Id);
+      var entityIdsByName = BroadcastEntityFilter.CreateNameLookup(
+         entityOptions,
+         entity => entity.Name,
+         entity => entity.Id
+      );
 
       cache[organizationEntityId.Value] = entityIdsByName;
       return entityIdsByName;
