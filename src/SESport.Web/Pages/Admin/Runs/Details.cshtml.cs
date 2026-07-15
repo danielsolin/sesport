@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using SESport.AI.Prompts;
 using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -105,7 +106,7 @@ public class DetailsModel(
          ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
          ConversationHistorySummaryText =
             GetConversationHistorySummaryText(Run.RawRequestJson);
-         SystemPromptText = Run.SystemPrompt;
+         SystemPromptText = GetRenderedSystemPromptText(Run);
          UserPromptTemplateText = Run.UserPromptTemplate;
          RenderedPromptText = Run.RenderedPrompt;
       }
@@ -270,6 +271,37 @@ public class DetailsModel(
       }
 
       return value.Trim();
+   }
+
+   internal static string GetRenderedSystemPromptText(AiRunDetail run)
+   {
+      try
+      {
+         var prompt = new AiPromptDefinition(
+            run.PromptId,
+            run.JobId,
+            run.PromptVersion,
+            run.SystemPrompt,
+            run.UserPromptTemplate,
+            null,
+            string.Empty,
+            run.PromptTemperature,
+            run.PromptMaxOutputTokens,
+            null,
+            true
+         );
+
+         var renderedPrompt = new TemplatePromptRenderer().Render(
+            prompt,
+            run.InputPayloadJson
+         );
+
+         return renderedPrompt.SystemPrompt ?? string.Empty;
+      }
+      catch(JsonException)
+      {
+         return run.SystemPrompt.Trim();
+      }
    }
 
    public static string FormatExecutionEnvironmentDisplayName(

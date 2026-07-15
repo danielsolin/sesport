@@ -1,3 +1,4 @@
+using SESport.Core.Domain;
 using SESport.Web.Pages.Admin.Runs;
 
 namespace SESport.Core.Tests.Pages.Admin.Runs;
@@ -72,6 +73,48 @@ public sealed class DetailsModelTests
       Assert.Equal(
          1,
          DetailsModel.GetToolRoundCount(1)
+      );
+   }
+
+   [Fact]
+   public void GetRenderedSystemPromptTextRendersPrimaryCountryTokens()
+   {
+      var run = new SESport.Core.AI.AiRunDetail(
+         Id: Guid.NewGuid(),
+         JobId: "job",
+         JobLabel: "Job",
+         PromptId: Guid.NewGuid(),
+         PromptVersion: 1,
+         SystemPrompt: "Process {{CountryName}} athletes.",
+         UserPromptTemplate: "User",
+         PromptTemperature: null,
+         ProviderId: "provider",
+         ProviderLabel: "Provider",
+         ProviderModel: "Model",
+         StatusId: "completed",
+         CorrelationId: null,
+         InputPayloadJson: "{}",
+         RenderedPrompt: "Rendered",
+         RawRequestJson: null,
+         RawResponseJson: null,
+         ToolTraceJson: null,
+         ToolRoundCount: 0,
+         ConversationCharacterCount: 0,
+         OutputText: null,
+         ErrorMessage: null,
+         StartedAt: DateTimeOffset.UtcNow,
+         CompletedAt: DateTimeOffset.UtcNow,
+         DurationSeconds: 1m,
+         InputTokens: null,
+         OutputTokens: null,
+         ReasoningTokens: null,
+         ExecutionEnvironment: null,
+         PromptMaxOutputTokens: null
+      );
+
+      Assert.Equal(
+         $"Process {PrimaryCountry.CountryName} athletes.",
+         DetailsModel.GetRenderedSystemPromptText(run)
       );
    }
 
