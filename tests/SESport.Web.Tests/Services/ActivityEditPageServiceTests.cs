@@ -497,6 +497,103 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task SaveAsyncSkipsActivityGroupWhenDraftIsCleared()
+   {
+      var organizationId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Broadcast {uniqueSuffix}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var broadcastRepository = new AdminBroadcastRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         broadcastTitle,
+         ["football"],
+         TimeZoneHelper.ToUtc(
+            new DateOnly(2026, 7, 15),
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         ),
+         TimeZoneHelper.ToUtc(
+            new DateOnly(2026, 7, 15),
+            new TimeOnly(14, 0),
+            SportDay.TimeZoneId
+         )
+      );
+      await broadcastRepository.UpdateOrganizationAsync(
+         broadcastId,
+         organizationId,
+         CancellationToken.None
+      );
+      await broadcastRepository.UpdateActivityGroupTitleAsync(
+         broadcastId,
+         string.Empty,
+         CancellationToken.None
+      );
+
+      Guid? savedActivityId = null;
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Null(activity.ActivityGroupId);
+         Assert.False(activity.ActivityGroupCreationRequired);
+
+         await fixture.Service.SaveAsync(activity, CancellationToken.None);
+
+         var activityInfo = await GetActivityInfoAsync(
+            dataSource,
+            activity.Title,
+            activity.ActivityDate!.Value,
+            activity.SportId
+         );
+
+         savedActivityId = activityInfo.ActivityId == Guid.Empty
+            ? null
+            : activityInfo.ActivityId;
+
+         Assert.NotEqual(Guid.Empty, activityInfo.ActivityId);
+         Assert.Null(activityInfo.ActivityGroupId);
+      }
+      finally
+      {
+         if(savedActivityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, savedActivityId.Value);
+         }
+
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task SaveAsyncCreatesActivityGroupWhenRequired()
    {
       var organizationId = Guid.NewGuid();

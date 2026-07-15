@@ -499,6 +499,34 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          return false;
       }
 
+      var normalizedTitle = title.Trim();
+
+      if(string.IsNullOrWhiteSpace(normalizedTitle))
+      {
+         const string clearSql = """
+            update broadcasts
+            set activity_group_source_kind_id = null,
+               activity_group_source_activity_id = null,
+               activity_group_draft_title = null,
+               updated_at = now()
+            where id = @id
+            """;
+
+         await using var clearCommand = new NpgsqlCommand(
+            clearSql,
+            connection,
+            transaction
+         );
+         clearCommand.Parameters.AddWithValue("id", broadcastId);
+
+         var cleared = await clearCommand.ExecuteNonQueryAsync(
+            cancellationToken
+         );
+
+         await transaction.CommitAsync(cancellationToken);
+         return cleared > 0;
+      }
+
       if(activityGroupId is not null)
       {
          const string groupSql = """
@@ -517,7 +545,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             "activity_group_id",
             activityGroupId.Value
          );
-         groupCommand.Parameters.AddWithValue("title", title);
+         groupCommand.Parameters.AddWithValue("title", normalizedTitle);
 
          var updated = await groupCommand.ExecuteNonQueryAsync(
             cancellationToken
@@ -540,7 +568,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          transaction
       );
       broadcastCommand.Parameters.AddWithValue("id", broadcastId);
-      broadcastCommand.Parameters.AddWithValue("title", title);
+      broadcastCommand.Parameters.AddWithValue("title", normalizedTitle);
 
       var broadcastUpdated = await broadcastCommand.ExecuteNonQueryAsync(
          cancellationToken

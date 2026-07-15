@@ -281,6 +281,101 @@ public sealed class BroadcastFieldModelTests
       }
    }
 
+   [Fact]
+   public async Task OnPostAsyncClearsDraftActivityGroupTitle()
+   {
+      var broadcastId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Broadcast {uniqueSuffix}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         broadcastTitle,
+         ["Old", "Categories"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+
+      try
+      {
+         var organizationResult = await model.OnPostAsync(
+            broadcastId,
+            "organization",
+            organizationId.ToString(),
+            CancellationToken.None
+         );
+
+         Assert.IsType<JsonResult>(organizationResult);
+
+         var clearResult = await model.OnPostAsync(
+            broadcastId,
+            "group",
+            string.Empty,
+            CancellationToken.None
+         );
+
+         var clearPayload = Assert.IsType<JsonResult>(clearResult).Value!;
+         var groupText = (string?)clearPayload.GetType()
+            .GetProperty("groupText")
+            ?.GetValue(clearPayload);
+         var activityGroupId = (string?)clearPayload.GetType()
+            .GetProperty("activityGroupId")
+            ?.GetValue(clearPayload);
+         var activityGroupTitle = (string?)clearPayload.GetType()
+            .GetProperty("activityGroupTitle")
+            ?.GetValue(clearPayload);
+         var activityGroupDraftTitle = (string?)clearPayload.GetType()
+            .GetProperty("activityGroupDraftTitle")
+            ?.GetValue(clearPayload);
+         var activityGroupSourceKindId = (string?)clearPayload.GetType()
+            .GetProperty("activityGroupSourceKindId")
+            ?.GetValue(clearPayload);
+
+         Assert.Equal("-", groupText);
+         Assert.Equal(string.Empty, activityGroupId);
+         Assert.Equal(string.Empty, activityGroupTitle);
+         Assert.Equal(string.Empty, activityGroupDraftTitle);
+         Assert.Equal(string.Empty, activityGroupSourceKindId);
+
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(broadcast);
+         Assert.Null(broadcast!.ActivityGroupId);
+         Assert.Null(broadcast.ActivityGroupTitle);
+         Assert.Null(broadcast.ActivityGroupDraftTitle);
+         Assert.Null(broadcast.ActivityGroupSourceKindId);
+         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();

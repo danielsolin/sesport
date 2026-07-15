@@ -134,14 +134,9 @@ public sealed class BroadcastFieldModel(
 
          if(string.Equals(field, "group", StringComparison.Ordinal))
          {
-            if(string.IsNullOrWhiteSpace(value))
-            {
-               return BadRequest(new { error = "Group cannot be empty." });
-            }
-
             var updated = await repository.UpdateActivityGroupTitleAsync(
                id,
-               value,
+               value ?? string.Empty,
                cancellationToken
             );
 
