@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 
 using SESport.AI.Interfaces;
-using SESport.Data.Configuration;
+using SESport.Core.Configuration;
 using SESport.Data;
 using SESport.Data.AI;
 using SESport.Web.Pages.Admin.Ajax.Update;

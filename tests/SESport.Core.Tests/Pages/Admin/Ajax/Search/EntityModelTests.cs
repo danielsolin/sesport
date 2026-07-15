@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Npgsql;
 
-using SESport.Data.Configuration;
+using SESport.Core.Configuration;
 using SESport.Data;
 using SESport.Web.Pages.Admin.Ajax.Search;
 
