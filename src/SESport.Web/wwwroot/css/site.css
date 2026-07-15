@@ -1284,8 +1284,8 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 }
 
 .medium-textarea {
-   min-height: 64px !important;
-   height: 64px !important;
+   min-height: 95px !important;
+   height: 95px !important;
 }
 
 .proposal-summary {
