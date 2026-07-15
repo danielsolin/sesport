@@ -22,6 +22,12 @@ Use this for recurring repo clean-up.
 - Keep logic in one place whenever practical.
 - Keep repeated text and fixed values in shared constants or helpers.
 
+## Keep Queries Tight
+
+- In `SESport.Data`, only `SELECT` columns that the consumers actually read.
+- Remove joins, counts, and extra projections that exist only to feed unused
+  fields.
+
 ## Check Drift
 
 - Re-run tests after file moves, renamed constants, or date changes.
