@@ -502,8 +502,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                when '{{PersonGenderIds.NonBinary}}' then 'Non-binary'
                else ''
             end,
-            coalesce(e.alias_name, ''),
-            wp.sort_order
+            coalesce(e.alias_name, '')
          from entities e
          join entity_watch_priorities wp on wp.id = e.watch_priority_id
          {{activityLinkJoin}}
@@ -656,8 +655,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                when '{{PersonGenderIds.NonBinary}}' then 'Non-binary'
                else ''
             end,
-            coalesce(e.alias_name, ''),
-            wp.sort_order
+            coalesce(e.alias_name, '')
          from entities e
          join entity_watch_priorities wp on wp.id = e.watch_priority_id
          {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}

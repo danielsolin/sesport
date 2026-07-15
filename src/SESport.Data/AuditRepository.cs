@@ -21,30 +21,18 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.id,
             p.title,
             coalesce(nullif(p.producer, ''), pt.label),
-            s.name,
             ps.label,
-            prr.label,
-            p.reject_comment,
             at.label,
             sp.name,
             p.activity_date,
             p.local_start_time,
-            p.confidence,
-            p.activity_id,
-            count(distinct l.id) as entity_link_count,
-            count(distinct e.id) as evidence_count,
             p.created_at
          from activity_proposals p
          join producer_types pt on pt.id = p.producer_type_id
-         join sources s on s.id = p.source_id
          join proposal_statuses ps on ps.id = p.status_id
-         left join proposal_reject_reasons prr on prr.id = p.reject_reason_id
          join activity_types at on at.id = p.activity_type_id
          join sports sp on sp.id = p.sport_id
-         left join activity_proposal_entity_links l on l.proposal_id = p.id
-         left join activity_proposal_evidence e on e.proposal_id = p.id
          where ps.id = @proposal_status
-         group by p.id, pt.label, s.name, ps.label, prr.label, at.label, sp.name
          order by p.activity_date, p.local_start_time nulls last, p.title
          """;
 
@@ -64,67 +52,17 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               ReadString(reader, 5),
-               ReadString(reader, 6),
-               reader.GetString(7),
-               reader.GetString(8),
+               reader.GetString(5),
                DateDisplay.Format(
-                  reader.GetFieldValue<DateOnly>(9),
-                  ReadTimeOnly(reader, 10)
+                  reader.GetFieldValue<DateOnly>(6),
+                  ReadTimeOnly(reader, 7)
                ),
-               ReadDecimal(reader, 11),
-               ReadGuid(reader, 12),
-               reader.GetInt32(13),
-               reader.GetInt32(14),
-               reader.GetDateTime(15)
+               reader.GetDateTime(8)
             )
          );
       }
 
       return proposals;
-   }
-
-   public async Task<IReadOnlyList<ActivityProposalLinkAuditItem>>
-      GetProposalLinksAsync(CancellationToken cancellationToken)
-   {
-      const string sql = """
-         select
-            p.id,
-            p.title,
-            te.canonical_name,
-            r.label,
-            l.explanation,
-            l.context_name,
-            l.confidence
-         from activity_proposal_entity_links l
-         join activity_proposals p on p.id = l.proposal_id
-         join entities te on te.id = l.entity_id
-         join activity_entity_link_roles r on r.id = l.proposed_role_id
-         order by p.activity_date, p.title, te.canonical_name
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var links = new List<ActivityProposalLinkAuditItem>();
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         links.Add(
-            new ActivityProposalLinkAuditItem(
-               reader.GetString(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetString(3),
-               reader.GetString(4),
-               ReadString(reader, 5),
-               ReadDecimal(reader, 6)
-            )
-         );
-      }
-
-      return links;
    }
 
    public async Task<ActivityProposalDetail?> GetProposalAsync(
@@ -145,12 +83,9 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             prr.label,
             p.reject_comment,
             at.label,
-            p.activity_type_id,
             sp.name,
-             p.sport_id,
             p.activity_date,
             p.local_start_time,
-            p.time_zone_id,
             p.confidence,
             p.activity_id,
             p.prompt
@@ -175,9 +110,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      var activityDate = reader.GetFieldValue<DateOnly>(14);
-      var localStartTime = ReadTimeOnly(reader, 15);
-
       return new ActivityProposalDetail(
          reader.GetString(0),
          reader.GetString(1),
@@ -191,15 +123,13 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          ReadString(reader, 9),
          reader.GetString(10),
          reader.GetString(11),
-         reader.GetString(12),
-         reader.GetString(13),
-         DateDisplay.Format(activityDate, localStartTime),
-         activityDate,
-         localStartTime,
-         reader.GetString(16),
-         ReadDecimal(reader, 17),
-         ReadGuid(reader, 18),
-         ReadString(reader, 19)
+         DateDisplay.Format(
+            reader.GetFieldValue<DateOnly>(12),
+            ReadTimeOnly(reader, 13)
+         ),
+         ReadDecimal(reader, 14),
+         ReadGuid(reader, 15),
+         ReadString(reader, 16)
       );
    }
 
@@ -211,18 +141,15 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          select
-            p.id,
-            p.title,
             te.canonical_name,
             r.label,
             l.explanation,
             l.context_name,
             l.confidence
          from activity_proposal_entity_links l
-         join activity_proposals p on p.id = l.proposal_id
          join entities te on te.id = l.entity_id
          join activity_entity_link_roles r on r.id = l.proposed_role_id
-         where p.id = @proposal_id
+         where l.proposal_id = @proposal_id
          order by te.canonical_name
          """;
 
@@ -241,58 +168,12 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                reader.GetString(1),
                reader.GetString(2),
                reader.GetString(3),
-               reader.GetString(4),
-               ReadString(reader, 5),
-               ReadDecimal(reader, 6)
+               ReadDecimal(reader, 4)
             )
          );
       }
 
       return links;
-   }
-
-   public async Task<IReadOnlyList<ActivityProposalEvidenceAuditItem>>
-      GetProposalEvidenceAsync(CancellationToken cancellationToken)
-   {
-      const string sql = """
-         select
-            p.id,
-            p.title,
-            s.name,
-            e.uri,
-            e.title,
-            e.observed_at,
-            e.summary,
-            e.raw_excerpt
-         from activity_proposal_evidence e
-         join activity_proposals p on p.id = e.proposal_id
-         join sources s on s.id = e.source_id
-         order by p.activity_date, p.title, e.observed_at desc
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var evidence = new List<ActivityProposalEvidenceAuditItem>();
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         evidence.Add(
-            new ActivityProposalEvidenceAuditItem(
-               reader.GetString(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               ReadString(reader, 3),
-               ReadString(reader, 4),
-               reader.GetFieldValue<DateTimeOffset>(5),
-               reader.GetString(6),
-               ReadString(reader, 7)
-            )
-         );
-      }
-
-      return evidence;
    }
 
    public async Task<IReadOnlyList<ActivityProposalEvidenceAuditItem>>
@@ -303,18 +184,14 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          select
-            p.id,
-            p.title,
             s.name,
             e.uri,
             e.title,
             e.observed_at,
-            e.summary,
-            e.raw_excerpt
+            e.summary
          from activity_proposal_evidence e
-         join activity_proposals p on p.id = e.proposal_id
          join sources s on s.id = e.source_id
-         where p.id = @proposal_id
+         where e.proposal_id = @proposal_id
          order by e.observed_at desc
          """;
 
@@ -330,13 +207,10 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          evidence.Add(
             new ActivityProposalEvidenceAuditItem(
                reader.GetString(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               ReadString(reader, 3),
-               ReadString(reader, 4),
-               reader.GetFieldValue<DateTimeOffset>(5),
-               reader.GetString(6),
-               ReadString(reader, 7)
+               ReadString(reader, 1),
+               ReadString(reader, 2),
+               reader.GetFieldValue<DateTimeOffset>(3),
+               reader.GetString(4)
             )
          );
       }
