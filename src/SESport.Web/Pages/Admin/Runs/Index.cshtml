@@ -98,7 +98,8 @@
                <td>
                   <strong>@runTarget:</strong> @run.EventName
                </td>
-               <td class="ai-runs-result-cell">
+               <td class="ai-runs-result-cell"
+                   data-ai-run-summary-cell>
                   @(string.IsNullOrWhiteSpace(run.ResultSummary)
                      ? "-"
                      : run.ResultSummary)

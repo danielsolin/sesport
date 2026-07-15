@@ -30,6 +30,7 @@
    const runRowSelector = "[data-ai-run-id]";
    const runStatusCellSelector = "[data-ai-run-status-cell]";
    const runStatusTextSelector = "[data-ai-run-status-text]";
+   const runSummaryCellSelector = "[data-ai-run-summary-cell]";
    const activityFactsCheckStatusSelector =
       "[data-facts-check-status]";
    const runPayloadCellSelector = "[data-ai-run-payload-cell]";
@@ -2664,6 +2665,9 @@
       const duration = typeof result.duration === "string"
          ? result.duration.trim()
          : "";
+      const summary = typeof result.resultSummary === "string"
+         ? result.resultSummary.trim()
+         : "";
 
       row.dataset.aiRunStatus = statusId;
       updateRunStatusRow(row, statusId);
@@ -2689,6 +2693,13 @@
       if(durationCell instanceof HTMLElement && duration !== "")
       {
          durationCell.textContent = duration;
+      }
+
+      const summaryCell = row.querySelector(runSummaryCellSelector);
+
+      if(summaryCell instanceof HTMLElement)
+      {
+         summaryCell.textContent = summary !== "" ? summary : "-";
       }
    }
 
