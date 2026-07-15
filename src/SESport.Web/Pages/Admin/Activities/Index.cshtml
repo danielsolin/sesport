@@ -139,11 +139,14 @@
                   var missingDescription = string.IsNullOrWhiteSpace(
                      activity.Description
                   );
+                  var noParticipants =
+                     activity.RelatedPersonEntityIds.Length < 1;
+                  var highlightRow = missingDescription || noParticipants;
                   var activitySearchUrl =
                      $"{searchUrlBase}{System.Uri.EscapeDataString(
                         activity.Title
                      )}";
-                  <tr class="@(missingDescription
+                  <tr class="@(highlightRow
                      ? "activity-description-missing"
                      : string.Empty)">
                      <td>@activity.TimeText</td>
