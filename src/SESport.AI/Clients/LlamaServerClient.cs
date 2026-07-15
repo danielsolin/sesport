@@ -503,10 +503,6 @@ public sealed class LlamaServerClient : IAiProviderClient
             }
 
             var structuredOutputRepairAttempts = 0;
-            var retainedFinalReportParticipants = new HashSet<string>(
-               StringComparer.OrdinalIgnoreCase
-            );
-
             AiJobResult BuildAcceptedResult(string finalOutputText)
             {
                LogResponse("final", turn, responseJson);
@@ -595,33 +591,12 @@ public sealed class LlamaServerClient : IAiProviderClient
                         job.OutputMode,
                         prompt.OutputSchemaJson
                      );
-
-                  if(reportSubmissionPending &&
-                     AiJobOutputValidator.ReadParticipantNames(
-                        finalOutputText
-                     ).Count == 0)
-                  {
-                     throw new AiJobOutputValidationException(
-                        AiJobValidationMessages
-                           .SubmitReportRequiresSupportedParticipantMessage +
-                        " while research tools remain available."
-                     );
-                  }
-
-                  AiJobOutputValidator.ValidateRetainedParticipants(
-                     finalOutputText,
-                     retainedFinalReportParticipants
-                  );
-                  finalOutputText = AiJobOutputValidator.Validate(
-                     finalOutputText,
-                     job,
-                     job.RequiresWebSearch,
-                     toolTrace
-                  );
                   return BuildAcceptedResult(finalOutputText);
                }
                catch(InvalidOperationException exception) when(
-                  exception is AiJobOutputValidationException &&
+                  LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
+                     exception
+                  ) &&
                   job.RequiresWebSearch &&
                   (
                      !RequestUsesTools(request) ||
@@ -767,7 +742,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                }
                catch(InvalidOperationException exception) when(
                   (
-                     exception is not AiJobOutputValidationException ||
+                     !LlamaStructuredOutputRepair
+                        .IsInvalidStructuredOutputFailure(exception) ||
                      !job.RequiresWebSearch
                   ) &&
                   structuredOutputRepairAttempts < MaxFormatRepairAttempts &&
@@ -842,18 +818,9 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
       catch(Exception exception)
       {
-         var validationFeedbackCount = toolTrace.Count(entry =>
-            entry is JsonObject traceEntry &&
-            string.Equals(
-               traceEntry["kind"]?.GetValue<string>(),
-               "validation_feedback",
-               StringComparison.Ordinal
-            )
-         );
-
-         if(exception is AiJobOutputValidationException &&
-            validationFeedbackCount >=
-               MaxFinalReportCorrectionAttempts - 1 &&
+         if(LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
+               exception
+            ) &&
             responseJson is not null)
          {
             var finalOutputText = LlamaResponseReader.NormalizeOutput(
@@ -1022,10 +989,9 @@ public sealed class LlamaServerClient : IAiProviderClient
          return false;
       }
 
-      return exception is AiJobOutputValidationException ||
-         LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
-            exception
-         );
+      return LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
+         exception
+      );
    }
 
    private static bool ShouldContinueWithToolsAfterToolFormatFailure(

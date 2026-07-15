@@ -7,21 +7,21 @@ namespace SESport.Core.Tests.AI;
 public sealed class LlamaRequestFactoryTests
 {
    [Fact]
-   public void AddValidationFeedbackPromptExplainsRejectedSubmitReport()
+   public void AddValidationFeedbackPromptExplainsSchemaFailure()
    {
       var messages = new JsonArray();
 
       LlamaRequestFactory.AddValidationFeedbackPrompt(
          messages,
          "AI job returned invalid json_schema output: " +
-         "Participant source EvidenceType must match fetched source.",
+         "Expected a JSON object.",
          reportSubmissionAttempt: true
       );
 
       var prompt = messages[0]!["content"]!.GetValue<string>();
 
       Assert.Contains(
-         "The previous final answer was rejected by validation:",
+         "The previous final answer was rejected by schema validation:",
          prompt
       );
       Assert.Contains(
@@ -29,12 +29,10 @@ public sealed class LlamaRequestFactoryTests
          prompt
       );
       Assert.Contains(
-         "EvidenceType did not match the fetched page classification",
+         "AI job returned invalid json_schema output:",
          prompt
       );
-      Assert.Contains(
-         "ParticipantList or TeamRoster",
-         prompt
-      );
+      Assert.DoesNotContain("EvidenceType", prompt);
+      Assert.DoesNotContain("participant source", prompt);
    }
 }

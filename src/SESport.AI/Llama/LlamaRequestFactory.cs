@@ -46,9 +46,9 @@ internal static class LlamaRequestFactory
    private const string ConfiguredToolsJsonMustBeArrayMessage =
       "Configured tools JSON must be a JSON array.";
    private const string FinalAnswerRejectedPrefix =
-      "The previous final answer was rejected by validation: ";
+      "The previous final answer was rejected by schema validation: ";
    private const string FinalReportRejectedPrefix =
-      "The previous final report was rejected by validation: ";
+      "The previous final report was rejected by schema validation: ";
    private const string NoMoreToolsPrompt =
       "No more tool calls are available. Use only the web research " +
       "already present in this conversation and return the final answer " +
@@ -57,17 +57,15 @@ internal static class LlamaRequestFactory
       "Object shape definition:";
    private const string ReportBudgetExhaustedPrompt =
       "The research tool budget is exhausted. Correct the report " +
-      "using only evidence already present in this conversation. " +
-      "Preserve all participants supported by that evidence, correct " +
-      "the rejected fields, and return the complete final answer " +
-      "again. No tool call is available.";
-   private const string ReportFailureLabel = "Why it failed:";
+      "using only evidence already present in this conversation and " +
+      "return the complete final answer again. No tool call is " +
+      "available.";
    private const string ReportSubmissionAttemptNotice =
       "This happened after a " + WebToolNames.SubmitReport + " attempt.";
    private const string ReportToolsAvailablePrompt =
       "Tools are still available. Continue researching with tool " +
-      "calls until the validation issue is resolved. Do not return " +
-      "another final answer with the same unsupported evidence.";
+      "calls until the output matches the required schema. Do not " +
+      "return another final answer yet.";
    private const string ToolCallsRemainingPrefix =
       "Tool calls remaining: ";
    private const string ToolCallsRemainingSeparator = " of ";
@@ -318,15 +316,6 @@ internal static class LlamaRequestFactory
          builder.AppendLine();
       }
 
-      var validationHint = GetReportValidationHint(validationError);
-
-      if(!string.IsNullOrWhiteSpace(validationHint))
-      {
-         builder.AppendLine(ReportFailureLabel);
-         builder.AppendLine(validationHint);
-         builder.AppendLine();
-      }
-
       if(toolsStillAvailable)
       {
          builder.Append(ReportToolsAvailablePrompt);
@@ -337,66 +326,6 @@ internal static class LlamaRequestFactory
       }
 
       return builder.ToString();
-   }
-
-   private static string GetReportValidationHint(string validationError)
-   {
-      if(validationError.Contains(
-         AiJobValidationMessages.ParticipantSourceEvidenceTypeMismatch,
-         StringComparison.Ordinal
-      ))
-      {
-         return "A participant source was rejected because its " +
-            "EvidenceType did not match the fetched page classification. " +
-            "For roster or list pages, use " +
-            AiParticipationEvidenceTypeIds.ParticipantList +
-            " or " +
-            AiParticipationEvidenceTypeIds.TeamRoster +
-            ". For mention pages, use " +
-            AiParticipationEvidenceTypeIds.ParticipantMention +
-            ".";
-      }
-
-      if(validationError.Contains(
-         AiJobValidationMessages.ParticipantSourceMustNameParticipant,
-         StringComparison.Ordinal
-      ))
-      {
-         return "The cited source must explicitly name the participant.";
-      }
-
-      if(validationError.Contains(
-         AiJobValidationMessages
-            .ParticipantMentionSourceTargetCountryMessage,
-         StringComparison.Ordinal
-      ))
-      {
-         return AiParticipationEvidenceTypeIds.ParticipantMention +
-            " requires the participant name and target country to " +
-            "appear on the fetched page.";
-      }
-
-      if(validationError.Contains(
-         AiJobValidationMessages
-            .SubmitReportRequiresSupportedParticipantMessage,
-         StringComparison.Ordinal
-      ))
-      {
-         return "Do not submit yet. Add at least one participant supported " +
-            "by fetched evidence.";
-      }
-
-      if(validationError.Contains(
-         AiJobValidationMessages
-            .ParticipantSourcesMustBeFetchedMessage,
-         StringComparison.Ordinal
-      ))
-      {
-         return "Cite only sources that were actually fetched in the " +
-            "conversation.";
-      }
-
-      return string.Empty;
    }
 
    private static JsonObject CreateBaseRequestPayload(

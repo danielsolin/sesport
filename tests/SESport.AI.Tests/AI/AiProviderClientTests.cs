@@ -17,29 +17,17 @@ public class AiProviderClientTests
 {
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncAcceptsEarlyReportWithParticipant()
+      LlamaServerGenerateAsyncAcceptsEarlySubmitReportWithoutRetry()
    {
       var sourceUrl = "https://example.test/news/line-up";
       var participantName = "Armand Duplantis";
-      var acceptedOutput =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
-         + "\"CheckedSources\":[]}";
       var emptyOutput =
          "{\"Participation\":\"Unknown\","
          + "\"Participants\":[],"
          + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
          + "\"EvidenceType\":\"EventInfoOnly\"}]}";
       var handler = new RecordingHandler(
-         CreateLlamaSubmitReportResponseJson(emptyOutput),
-         CreateLlamaToolCallResponseJson("first research query"),
-         CreateLlamaSubmitReportResponseJson(emptyOutput),
-         CreateLlamaToolCallResponseJson("second research query"),
-         CreateLlamaSubmitReportResponseJson(emptyOutput),
-         CreateLlamaPageCallResponseJson(sourceUrl),
-         CreateLlamaSubmitReportResponseJson(acceptedOutput)
+         CreateLlamaSubmitReportResponseJson(emptyOutput)
       );
       var webPageContentClient = new RecordingWebPageContentClient(
          new WebPageContent(
@@ -77,31 +65,24 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(acceptedOutput, result.OutputText);
-      Assert.Equal(3, result.ToolRoundCount);
-      Assert.Equal(7, handler.RequestBodies.Count);
+      Assert.Equal(emptyOutput, result.OutputText);
+      Assert.Equal(0, result.ToolRoundCount);
+      Assert.Single(handler.RequestBodies);
       Assert.Contains(
          $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
          handler.RequestBodies[0]);
-      var initialRequest = JsonNode.Parse(handler.RequestBodies[0]);
-      var reportTool = initialRequest?["tools"]?
-         .AsArray()
-         .OfType<JsonObject>()
-         .Single(tool => string.Equals(
-            tool["function"]?["name"]?.GetValue<string>(),
-            LlamaReportSubmission.ToolName,
-            StringComparison.Ordinal
-         ));
       Assert.Equal(
          1,
-         reportTool?["function"]?["parameters"]?["properties"]?
+         JsonNode.Parse(handler.RequestBodies[0])?["tools"]?
+            .AsArray()
+            .OfType<JsonObject>()
+            .Single(tool => string.Equals(
+               tool["function"]?["name"]?.GetValue<string>(),
+               LlamaReportSubmission.ToolName,
+               StringComparison.Ordinal
+            ))?["function"]?["parameters"]?["properties"]?
             ["Participants"]?["minItems"]?.GetValue<int>()
       );
-      Assert.DoesNotContain(
-         $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
-         handler.RequestBodies[1]);
-      Assert.Contains("requires at least one supported participant",
-         result.ToolTraceJson);
       Assert.Contains(
          "\"conditional_tools\":[{\"name\":\"submit_report\"",
          result.ToolTraceJson
@@ -111,11 +92,11 @@ public class AiProviderClientTests
          result.ToolTraceJson
       );
       Assert.Contains(
-         "\"tool_call_id\"",
+         "\"validation_status\":\"accepted\"",
          result.ToolTraceJson
       );
       Assert.DoesNotContain(
-         "\"tool\":{\"type\":\"function\"",
+         "\"kind\":\"validation_feedback\"",
          result.ToolTraceJson
       );
    }
@@ -1555,204 +1536,6 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncRetriesWhenParticipationYesHasNoParticipants()
-   {
-      var handler = new RecordingHandler(
-         CreateLlamaFinalResponseWithContentJson(
-            CreateParticipationCheckedOutput(
-               "Yes",
-               "https://example.test/roster",
-               AiParticipationEvidenceTypeIds.EventInfoOnly
-            )
-         ),
-         CreateLlamaParticipationFinalResponseJson()
-      );
-      var client = new LlamaServerClient(
-         new HttpClient(handler),
-         new RecordingWebSearchClient(),
-         new RecordingWebPageContentClient(null),
-         new NoopLogger<LlamaServerClient>()
-      );
-
-      var result = await client.GenerateAsync(
-         CreateProvider("llama-server"),
-         CreateJob(
-            "json_schema",
-            requiresWebSearch: false,
-            toolsJson: null,
-            jobId: AiJobIds.DecidePrimaryCountryParticipation
-         ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Equal(2, handler.RequestBodies.Count);
-      Assert.Contains(
-         "\"validation_status\":\"rejected\"",
-         result.ToolTraceJson
-      );
-      Assert.Equal(
-         CreateParticipationYesOutput("https://example.test/roster"),
-         result.OutputText
-      );
-   }
-
-   [Fact]
-   public async Task
-      LlamaServerGenerateAsyncRetriesWhenParticipationSourceWasNotFetched()
-   {
-      var handler = new RecordingHandler(
-         CreateLlamaToolCallResponseJson(),
-         CreateLlamaPageCallResponseJson(),
-         CreateLlamaParticipationFinalResponseJson(
-            "https://example.test/other"
-         ),
-         CreateLlamaParticipationFinalResponseJson()
-      );
-      var webSearchClient = new RecordingWebSearchClient(
-         new WebSearchResult(
-            "Tre Kronor roster",
-            "https://example.test/roster",
-            $"{PrimaryCountry.CountryName} lineup info."
-         )
-      );
-      var webPageContentClient = new RecordingWebPageContentClient(
-         new WebPageContent(
-            "Article Title",
-            "https://example.test/roster",
-            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
-            ["Article heading"],
-            $$"""
-            Entry list
-            Bib | Name | Country
-            1 | Dino Beganovic | {{PrimaryCountry.CountryName}}
-            2 | Alex Driver | Nation A
-            3 | Casey Rider | Nation B
-            """,
-            true
-         )
-      );
-      var client = new LlamaServerClient(
-         new HttpClient(handler),
-         webSearchClient,
-         webPageContentClient,
-         new NoopLogger<LlamaServerClient>()
-      );
-
-      var result = await client.GenerateAsync(
-         CreateProvider("llama-server"),
-         CreateJob(
-            "json_schema",
-            requiresWebSearch: true,
-            toolsJson: CreateToolsJson(),
-            jobId: AiJobIds.DecidePrimaryCountryParticipation
-         ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Equal(4, handler.RequestBodies.Count);
-      Assert.Contains(
-         "\"validation_status\":\"rejected\"",
-         result.ToolTraceJson
-      );
-      Assert.Equal(
-         CreateParticipationYesOutput("https://example.test/roster"),
-         result.OutputText
-      );
-   }
-
-   [Fact]
-   public async Task
-      LlamaServerGenerateAsyncRetriesWhenNoUsesWeakEvidence()
-   {
-      var handler = new RecordingHandler(
-         CreateLlamaToolCallResponseJson(),
-         CreateLlamaPageCallResponseJson("https://example.test/participants"),
-         CreateLlamaFindPageCallResponseJson(
-            "https://example.test/participants"
-         ),
-         CreateLlamaFinalResponseWithContentJson(
-            CreateParticipationCheckedOutput(
-               "No",
-               "https://example.test/participants",
-               AiParticipationEvidenceTypeIds.ParticipantList
-            )
-         ),
-         CreateLlamaFinalResponseWithContentJson(
-            CreateParticipationCheckedOutput(
-               "Unknown",
-               "https://example.test/participants",
-               AiParticipationEvidenceTypeIds.EventInfoOnly
-            )
-         )
-      );
-      var webSearchClient = new RecordingWebSearchClient(
-         new WebSearchResult(
-            "Tre Kronor event info",
-            "https://example.test/participants",
-            "Event timetable info."
-         )
-      );
-      var webPageContentClient = new RecordingWebPageContentClient(
-         new WebPageContent(
-            "Event Timetable",
-            "https://example.test/participants",
-            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
-            ["Schedule"],
-            "Local time. Programme. Timetable.",
-            true
-         )
-      );
-      var client = new LlamaServerClient(
-         new HttpClient(handler),
-         webSearchClient,
-         webPageContentClient,
-         new NoopLogger<LlamaServerClient>()
-      );
-
-      var result = await client.GenerateAsync(
-         CreateProvider("llama-server"),
-         CreateJob(
-            "json_schema",
-            requiresWebSearch: true,
-            toolsJson: CreateToolsJson(),
-            jobId: AiJobIds.DecidePrimaryCountryParticipation
-         ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Equal(5, handler.RequestBodies.Count);
-      Assert.Contains(
-         "\"validation_status\":\"rejected\"",
-         result.ToolTraceJson
-      );
-      Assert.Equal(
-         1,
-         CountOccurrences(
-            result.ToolTraceJson!,
-            "\"validation_status\":\"rejected\""
-         )
-      );
-      Assert.Equal(
-         CreateParticipationCheckedOutput(
-            "Unknown",
-            "https://example.test/participants",
-            AiParticipationEvidenceTypeIds.EventInfoOnly
-         ),
-         result.OutputText
-      );
-   }
-
-   [Fact]
-   public async Task
       LlamaServerGenerateAsyncAcceptsUnknownWithoutTargetCountryCheck()
    {
       var unknownOutput =
@@ -1809,117 +1592,16 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(5, handler.RequestBodies.Count);
-      Assert.Equal(
-         2,
-         CountOccurrences(
-            result.ToolTraceJson!,
-            "\"kind\":\"validation_feedback\""
-         )
-      );
-      Assert.Equal(unknownOutput, result.OutputText);
-   }
-
-   [Fact]
-   public async Task
-      LlamaServerGenerateAsyncRejectsNoWithStartListIndexPage()
-   {
-      var sourceUrl =
-         "https://example.test/final-start-lists-event-index";
-      var pdfUrl = "https://example.test/files/men-pole-vault.pdf";
-      var handler = new RecordingHandler(
-         CreateLlamaToolCallResponseJson(),
-         CreateLlamaPageCallResponseJson(sourceUrl),
-         CreateLlamaFindPageCallResponseJson(sourceUrl),
-         CreateLlamaFinalResponseWithContentJson(
-            CreateParticipationCheckedOutput(
-               "No",
-               sourceUrl,
-               AiParticipationEvidenceTypeIds.ParticipantList
-            )
-         ),
-         CreateLlamaPageCallResponseJson(pdfUrl),
-         CreateLlamaFinalResponseWithContentJson(
-            CreateParticipationCheckedOutput(
-               "Unknown",
-               sourceUrl,
-               AiParticipationEvidenceTypeIds.EventInfoOnly
-            )
-         )
-      );
-      var webSearchClient = new RecordingWebSearchClient(
-         new WebSearchResult(
-            "Final start lists event index",
-            sourceUrl,
-            "Links to event-specific start lists."
-         )
-      );
-      var webPageContentClient = new RecordingWebPageContentClient(
-         new WebPageContent(
-            "Final Start Lists: Grand Prix",
-            sourceUrl,
-            DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
-            ["START LISTS"],
-            """
-            Final Start Lists: Grand Prix
-            View the final start lists below.
-            START LISTS
-            TIME | EVENT START LISTS PDF 16:00 | Hammer Throw
-            16:05 | Long Jump
-            16:30 | Pole Vault
-            """,
-            true,
-            RelevantLinks:
-            [
-               new WebPageRelevantLink(
-                  "Pole Vault- men",
-                  pdfUrl
-               )
-            ]
-         )
-      );
-      var client = new LlamaServerClient(
-         new HttpClient(handler),
-         webSearchClient,
-         webPageContentClient,
-         new NoopLogger<LlamaServerClient>()
-      );
-
-      var result = await client.GenerateAsync(
-         CreateProvider("llama-server"),
-         CreateJob(
-            "json_schema",
-            requiresWebSearch: true,
-            toolsJson: CreateToolsJson(),
-            jobId: AiJobIds.DecidePrimaryCountryParticipation
-         ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Equal(6, handler.RequestBodies.Count);
-      Assert.Contains(
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.DoesNotContain(
          "\"validation_status\":\"rejected\"",
          result.ToolTraceJson
       );
-      Assert.Contains("\"kind\":\"validation_feedback\"", result.ToolTraceJson);
-      Assert.Contains("PDF links:", result.ToolTraceJson);
-      Assert.Contains(pdfUrl, webPageContentClient.Urls);
-      Assert.Contains("\"tools\":[", handler.RequestBodies[4]);
-      Assert.Contains(
-         "previous final answer was rejected",
-         handler.RequestBodies[4]
+      Assert.DoesNotContain(
+         "\"kind\":\"validation_feedback\"",
+         result.ToolTraceJson
       );
-      Assert.Equal(
-         CreateParticipationCheckedOutput(
-            "Unknown",
-            sourceUrl,
-            AiParticipationEvidenceTypeIds.EventInfoOnly
-         ),
-         result.OutputText
-      );
+      Assert.Equal(unknownOutput, result.OutputText);
    }
 
    [Fact]
@@ -2074,305 +1756,6 @@ public class AiProviderClientTests
          result.ToolTraceJson
       );
       Assert.Equal(acceptedOutput, result.OutputText);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsParticipantMention()
-   {
-      var sourceUrl = "https://example.test/news/line-up";
-      var participantName = "Thobias Montler";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
-         + "\"CheckedSources\":[]}";
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         CreateArticleMentionToolTrace(sourceUrl, participantName)
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorNormalizesCheckedSourceEvidenceType()
-   {
-      var sourceUrl = "https://example.test/news/line-up";
-      var participantName = "Thobias Montler";
-      var output = CreateParticipationYesOutput(
-         sourceUrl,
-         AiParticipationEvidenceTypeIds.ParticipantMention,
-         participantName
-      );
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         CreateArticleMentionToolTrace(sourceUrl, participantName)
-      );
-
-      using var document = JsonDocument.Parse(result);
-      Assert.Equal(
-         AiParticipationEvidenceTypeIds.ParticipantMention,
-         document.RootElement
-            .GetProperty("Participants")[0]
-            .GetProperty("Sources")[0]
-            .GetProperty("EvidenceType")
-            .GetString()
-      );
-      Assert.Equal(
-         AiParticipationEvidenceTypeIds.EventInfoOnly,
-         document.RootElement
-            .GetProperty("CheckedSources")[0]
-            .GetProperty("EvidenceType")
-            .GetString()
-      );
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsNicknameInParticipantMention()
-   {
-      var sourceUrl = "https://example.test/news/line-up";
-      var participantName = "Armand Duplantis";
-      var evidenceName = "Armand Mondo Duplantis";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
-         + "\"CheckedSources\":[]}";
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         CreateArticleMentionToolTrace(sourceUrl, evidenceName)
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsTimedParticipantListRows()
-   {
-      var sourceUrl = "https://example.test/start-list.pdf";
-      var participantName = "Kramer Andreas";
-      var countryCode = PrimaryCountry.ThreeLetterCode;
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
-         + "\"CheckedSources\":[]}";
-      var toolTrace = new JsonArray
-      {
-         new JsonObject
-         {
-            ["name"] = WebToolNames.GetPage,
-            ["url"] = sourceUrl,
-            ["result"] = $$"""
-               Page URL: {{sourceUrl}}
-               Title: official_entry_list.xlsx
-               URL: {{sourceUrl}}
-               Page text:
-               Chapple Samuel NED 1:44.88 1:44.88
-               {{participantName}} {{countryCode}} 1:43.13 1:43.73
-               Pattison Ben GBR 1:42.27 1:46.08
-               """
-         }
-      };
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         toolTrace
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsParticipantListWithReversedNameOrder()
-   {
-      var sourceUrl = "https://example.test/start-list.html";
-      var participantName = "Peder Fredricson";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
-         + "\"CheckedSources\":[]}";
-      var toolTrace = new JsonArray
-      {
-         new JsonObject
-         {
-            ["name"] = WebToolNames.GetPage,
-            ["url"] = sourceUrl,
-            ["result"] = $$"""
-               Page URL: {{sourceUrl}}
-               Title: Start list
-               URL: {{sourceUrl}}
-               Page text:
-               SWE | FREDRICSON, Peder
-               SWE | VON ECKERMANN, Henrik
-               SWE | ROSLUND, Anita
-               """
-         }
-      };
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         toolTrace
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsAccentedParticipantName()
-   {
-      var sourceUrl = "https://example.test/start-list.pdf";
-      var participantName = "David Bonneviér";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
-         + "\"CheckedSources\":[]}";
-      var toolTrace = new JsonArray
-      {
-         new JsonObject
-         {
-            ["name"] = WebToolNames.GetPage,
-            ["url"] = sourceUrl,
-            ["result"] = $$"""
-               Page URL: {{sourceUrl}}
-               Title: Start list
-               URL: {{sourceUrl}}
-               Page text:
-               SWE BONNEVIER David 17/05/2010 55.37 55.37
-               SWE ANDERSSON Eliah 11/07/2009 10.45 10.45
-               SWE PETTERSSON Oliver 10/04/2009 21.95 21.95
-               """
-         }
-      };
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         toolTrace
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsParticipantListForTeamRosterPage()
-   {
-      var sourceUrl = "https://example.test/team-roster.pdf";
-      var participantName = "Eliah Andersson";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
-         + "\"CheckedSources\":[]}";
-      var toolTrace = new JsonArray
-      {
-         new JsonObject
-         {
-            ["name"] = WebToolNames.GetPage,
-            ["url"] = sourceUrl,
-            ["result"] = $$"""
-               Page URL: {{sourceUrl}}
-               Title: Team roster
-               URL: {{sourceUrl}}
-               Page text:
-               Team roster
-               SWE | ANDERSSON, Eliah
-               SWE | PETTERSSON, Oliver
-               SWE | JANSSON, Erik
-               """
-         }
-      };
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         toolTrace
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsSingleRowParticipantListPage()
-   {
-      var sourceUrl = "https://example.test/players";
-      var participantName = "Max Dahlin";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
-         + "\"CheckedSources\":[]}";
-      var toolTrace = new JsonArray
-      {
-         new JsonObject
-         {
-            ["name"] = WebToolNames.GetPage,
-            ["url"] = sourceUrl,
-            ["result"] = $$"""
-               Page URL: {{sourceUrl}}
-               Title: Spelare - Nordea Open
-               URL: {{sourceUrl}}
-               Page text:
-               {{participantName}}
-               SWE
-               """
-         }
-      };
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         toolTrace
-      );
-
-      Assert.Equal(output, result);
-   }
-
-   [Fact]
-   public void AiJobOutputValidatorAcceptsParticipantListForArticleMention()
-   {
-      var sourceUrl = "https://example.test/news/line-up";
-      var participantName = "Thobias Montler";
-      var output =
-         "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
-         + "\"CheckedSources\":[]}";
-
-      var result = AiJobOutputValidator.Validate(
-         output,
-         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-         true,
-         CreateArticleMentionToolTrace(sourceUrl, participantName)
-      );
-
-      Assert.Equal(output, result);
    }
 
    [Fact]
@@ -2684,31 +2067,6 @@ public class AiProviderClientTests
          "System",
          "User"
       );
-   }
-
-   private static JsonArray CreateArticleMentionToolTrace(
-      string sourceUrl,
-      string participantName
-   )
-   {
-      return
-      [
-         new JsonObject
-         {
-            ["name"] = WebToolNames.GetPage,
-            ["url"] = sourceUrl,
-            ["result"] = $$"""
-               Page URL: {{sourceUrl}}
-               Title: Line-up announcement
-               URL: {{sourceUrl}}
-               Page text:
-               The long jump field has added several athletes.
-               It will include Jamaican jumpers, alongside
-               {{PrimaryCountry.CountryName}}'s {{participantName}}.
-               More announcements will follow.
-               """
-         }
-      ];
    }
 
    private static string CreateReasoningResponseJson(string finalContent)
