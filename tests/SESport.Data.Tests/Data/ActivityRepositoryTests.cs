@@ -368,6 +368,80 @@ public sealed class ActivityRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task GetParticipantsForEditAsyncOrdersDistinctRows()
+   {
+      var activityId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var alphaId = Guid.NewGuid();
+      var betaId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization
+      );
+      await InsertEntityAsync(
+         dataSource,
+         alphaId,
+         "Alpha Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertEntityAsync(
+         dataSource,
+         betaId,
+         "Beta Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         SportDay.Today(DateTimeOffset.UtcNow).StartDate,
+         DateTimeOffset.UtcNow
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         alphaId,
+         organizationId
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         betaId,
+         organizationId
+      );
+
+      try
+      {
+         var participants = await repository.GetParticipantsForEditAsync(
+            null,
+            [alphaId, betaId],
+            CancellationToken.None
+         );
+
+         Assert.Collection(
+            participants,
+            participant => Assert.Equal("Alpha Person", participant.Name),
+            participant => Assert.Equal("Beta Person", participant.Name)
+         );
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteLinksAsync(dataSource, alphaId);
+         await DeleteLinksAsync(dataSource, betaId);
+         await DeleteEntityAsync(dataSource, betaId);
+         await DeleteEntityAsync(dataSource, alphaId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
    private static NpgsqlDataSource CreateDataSource()
    {
       var connectionString = PostgresConnectionStrings.ResolveDefault();

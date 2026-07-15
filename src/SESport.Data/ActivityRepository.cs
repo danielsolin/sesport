@@ -502,13 +502,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                when '{{PersonGenderIds.NonBinary}}' then 'Non-binary'
                else ''
             end,
-            coalesce(e.alias_name, '')
+            coalesce(e.alias_name, ''),
+            wp.sort_order as sort_order
          from entities e
          join entity_watch_priorities wp on wp.id = e.watch_priority_id
          {{activityLinkJoin}}
          {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
          {{whereClause}}
-         order by wp.sort_order, e.canonical_name
+         order by sort_order, e.canonical_name
          """;
 
       await using var command = dataSource.CreateCommand(sql);
