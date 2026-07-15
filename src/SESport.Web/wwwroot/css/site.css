@@ -325,26 +325,6 @@ h2 {
    min-height: inherit;
 }
 
-.admin-card-grid {
-   display: grid;
-   grid-template-columns: repeat(2, minmax(0, 1fr));
-   gap: 14px;
-}
-
-.admin-card {
-   display: grid;
-   gap: 6px;
-   padding: 18px;
-   border: 1px solid var(--line);
-   border-radius: 8px;
-   background: var(--surface);
-   color: var(--text);
-}
-
-.admin-card span {
-   color: var(--muted);
-}
-
 .admin-layout {
    display: grid;
    grid-template-columns: 220px minmax(0, 1fr);
@@ -893,30 +873,6 @@ h2 {
    width: 72px;
 }
 
-.ai-runs-provider {
-   white-space: normal;
-   overflow-wrap: anywhere;
-   word-break: break-word;
-}
-
-.ai-runs-cell-stack {
-   display: grid;
-   gap: 2px;
-   min-width: 0;
-}
-
-.ai-runs-table .ai-runs-cell-stack > span {
-   min-width: 0;
-   overflow-wrap: anywhere;
-}
-
-.ai-runs-cell-secondary {
-   color: var(--muted);
-   font-size: 12px;
-   line-height: 1.1;
-   overflow-wrap: anywhere;
-}
-
 .ai-runs-result-cell {
    overflow-wrap: anywhere;
 }
@@ -926,20 +882,6 @@ h2 {
    overflow: hidden;
    text-overflow: ellipsis;
    white-space: nowrap;
-}
-
-.ai-runs-inline-edit-cell {
-   cursor: default;
-}
-
-tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
-   cursor: text;
-}
-
-.ai-runs-inline-edit-input {
-   box-sizing: border-box;
-   min-width: 0;
-   width: 100%;
 }
 
 .ai-runs-table th,
@@ -983,12 +925,6 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
 .admin-table input[type="checkbox"] {
    width: 16px;
    height: 16px;
-}
-
-.table-select {
-   text-align: center !important;
-   vertical-align: middle !important;
-   width: 1%;
 }
 
 .audit-id {
@@ -1278,11 +1214,6 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    height: 200px;
 }
 
-.short-textarea {
-   min-height: 48px !important;
-   height: 48px !important;
-}
-
 .medium-textarea {
    min-height: 95px !important;
    height: 95px !important;
@@ -1523,7 +1454,6 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    margin: 0;
 }
 
-.broadcast-ai-check-action-link,
 .broadcast-ai-check-archive-link {
    display: inline-block;
    padding: 0;
@@ -1538,7 +1468,6 @@ tr[data-ai-run-status="pending"] .ai-runs-inline-edit-cell {
    white-space: nowrap;
 }
 
-.broadcast-ai-check-action-link:hover,
 .broadcast-ai-check-archive-link:hover {
    color: var(--accent-strong);
    text-decoration: underline;
@@ -1937,7 +1866,6 @@ textarea {
       gap: 8px;
    }
 
-   .admin-card-grid,
    .admin-layout,
    .proposal-summary,
    .form-grid {
