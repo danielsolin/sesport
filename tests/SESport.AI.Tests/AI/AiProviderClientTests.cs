@@ -2001,10 +2001,11 @@ public class AiProviderClientTests
          "https://example.test/news/line-up-is-getting-stronger";
       var participantName = "Thobias Montler";
       var acceptedOutput =
-         "{\"Participation\":\"Unknown\","
-         + "\"Participants\":[],"
-         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"EventInfoOnly\"}]}";
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"CheckedSources\":[]}";
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
          CreateLlamaPageCallResponseJson(sourceUrl),
@@ -2069,20 +2070,10 @@ public class AiProviderClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(5, handler.RequestBodies.Count);
+      Assert.Equal(4, handler.RequestBodies.Count);
       Assert.Contains(
-         "\"validation_status\":\"rejected\"",
+         "\"validation_status\":\"accepted\"",
          result.ToolTraceJson
-      );
-      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[3]);
-      Assert.DoesNotContain("\"tools\":[", handler.RequestBodies[4]);
-      Assert.Contains(
-         "previous final report was rejected",
-         handler.RequestBodies[4]
-      );
-      Assert.Contains(
-         "Preserve all participants",
-         handler.RequestBodies[4]
       );
       Assert.Equal(acceptedOutput, result.OutputText);
    }
@@ -2365,7 +2356,7 @@ public class AiProviderClientTests
    }
 
    [Fact]
-   public void AiJobOutputValidatorRejectsParticipantListForArticleMention()
+   public void AiJobOutputValidatorAcceptsParticipantListForArticleMention()
    {
       var sourceUrl = "https://example.test/news/line-up";
       var participantName = "Thobias Montler";
@@ -2376,16 +2367,14 @@ public class AiProviderClientTests
          + "\"EvidenceType\":\"ParticipantList\"}]}],"
          + "\"CheckedSources\":[]}";
 
-      var exception = Assert.ThrowsAny<InvalidOperationException>(() =>
-         AiJobOutputValidator.Validate(
-            output,
-            CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
-            true,
-            CreateArticleMentionToolTrace(sourceUrl, participantName)
-         )
+      var result = AiJobOutputValidator.Validate(
+         output,
+         CreateJob(jobId: AiJobIds.DecidePrimaryCountryParticipation),
+         true,
+         CreateArticleMentionToolTrace(sourceUrl, participantName)
       );
 
-      Assert.Contains("Participant source EvidenceType", exception.Message);
+      Assert.Equal(output, result);
    }
 
    [Fact]

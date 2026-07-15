@@ -441,25 +441,6 @@ internal static class AiJobOutputValidator
          );
       }
 
-      if(!string.Equals(
-         fetchedSource.EvidenceType,
-         source.EvidenceType,
-         StringComparison.Ordinal
-      ))
-      {
-         if(!AreEquivalentParticipantListEvidenceTypes(
-            fetchedSource.EvidenceType,
-            source.EvidenceType
-         ))
-         {
-            throw CreateInvalidOutputException(
-               AiJobValidationMessages
-                  .ParticipantSourceEvidenceTypeMismatch,
-               outputText
-            );
-         }
-      }
-
       if(ContainsParticipantName(
          fetchedSource.EvidenceText,
          participantName
@@ -471,31 +452,6 @@ internal static class AiJobOutputValidator
       throw CreateInvalidOutputException(
          AiJobValidationMessages.ParticipantSourceMustNameParticipant,
          outputText
-      );
-   }
-
-   private static bool AreEquivalentParticipantListEvidenceTypes(
-      string fetchedEvidenceType,
-      string sourceEvidenceType
-   )
-   {
-      return IsParticipantListOrTeamRosterEvidenceType(
-         fetchedEvidenceType
-      ) && IsParticipantListOrTeamRosterEvidenceType(sourceEvidenceType);
-   }
-
-   private static bool IsParticipantListOrTeamRosterEvidenceType(
-      string evidenceType
-   )
-   {
-      return string.Equals(
-         evidenceType,
-         AiParticipationEvidenceTypeIds.ParticipantList,
-         StringComparison.Ordinal
-      ) || string.Equals(
-         evidenceType,
-         AiParticipationEvidenceTypeIds.TeamRoster,
-         StringComparison.Ordinal
       );
    }
 

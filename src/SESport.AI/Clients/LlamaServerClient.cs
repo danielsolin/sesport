@@ -507,6 +507,64 @@ public sealed class LlamaServerClient : IAiProviderClient
                StringComparer.OrdinalIgnoreCase
             );
 
+            AiJobResult BuildAcceptedResult(string finalOutputText)
+            {
+               LogResponse("final", turn, responseJson);
+
+               if(LlamaResponseReader.TryGetToolCalls(
+                  responseJson,
+                  out var finalToolCalls
+               ))
+               {
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        finalToolCalls,
+                        JsonOptions,
+                        validationStatus: "accepted"
+                     )
+                  );
+               }
+               else
+               {
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        [],
+                        JsonOptions,
+                        validationStatus: "accepted"
+                     )
+                  );
+               }
+
+               var toolTraceJson = toolTrace.Count == 0
+                  ? null
+                  : JsonSerializer.Serialize(toolTrace, JsonOptions);
+
+               return new AiJobResult(
+                  Guid.NewGuid(),
+                  job.Id,
+                  provider.Id,
+                  provider.Model,
+                  renderedPrompt.ToPromptText(),
+                  rawFinalRequestJson ?? string.Empty,
+                  finalOutputText,
+                  rawResponse,
+                  toolTraceJson,
+                  toolRoundCount,
+                  LlamaConversationTrimmer.EstimateRequestPayloadSize(
+                     request,
+                     JsonOptions
+                  ),
+                  null,
+                  null,
+                  null,
+                  null
+               );
+            }
+
             while(true)
             {
                if(responseJson is null)
@@ -522,6 +580,15 @@ public sealed class LlamaServerClient : IAiProviderClient
                      JsonOptions
                   )
                );
+
+               if(finalReportCorrectionAttempts >=
+                  MaxFinalReportCorrectionAttempts)
+               {
+                  finalOutputText = ValidateFinalOutputJsonObject(
+                     finalOutputText
+                  );
+                  return BuildAcceptedResult(finalOutputText);
+               }
 
                try
                {
@@ -554,60 +621,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                      job.RequiresWebSearch,
                      toolTrace
                   );
-
-                  LogResponse("final", turn, responseJson);
-                  if(LlamaResponseReader.TryGetToolCalls(
-                     responseJson,
-                     out var finalToolCalls
-                  ))
-                  {
-                     toolTrace.Add(
-                        LlamaToolTrace.CreateAssistantTraceEntry(
-                           turn,
-                           responseJson,
-                           finalToolCalls,
-                           JsonOptions,
-                           validationStatus: "accepted"
-                        )
-                     );
-                  }
-                  else
-                  {
-                     toolTrace.Add(
-                        LlamaToolTrace.CreateAssistantTraceEntry(
-                           turn,
-                           responseJson,
-                           [],
-                           JsonOptions,
-                           validationStatus: "accepted"
-                        )
-                     );
-                  }
-
-                  var toolTraceJson = toolTrace.Count == 0
-                     ? null
-                     : JsonSerializer.Serialize(toolTrace, JsonOptions);
-
-                  return new AiJobResult(
-                     Guid.NewGuid(),
-                     job.Id,
-                     provider.Id,
-                     provider.Model,
-                     renderedPrompt.ToPromptText(),
-                     rawFinalRequestJson ?? string.Empty,
-                     finalOutputText,
-                     rawResponse,
-                     toolTraceJson,
-                     toolRoundCount,
-                     LlamaConversationTrimmer.EstimateRequestPayloadSize(
-                        request,
-                        JsonOptions
-                     ),
-                     null,
-                     null,
-                     null,
-                     null
-                  );
+                  return BuildAcceptedResult(finalOutputText);
                }
                catch(InvalidOperationException exception) when(
                   exception is AiJobOutputValidationException &&
@@ -958,6 +972,35 @@ public sealed class LlamaServerClient : IAiProviderClient
          LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
             exception
          );
+   }
+
+   private static string ValidateFinalOutputJsonObject(
+      string outputText
+   )
+   {
+      outputText = ResponsesOutputValidator.NormalizeStructuredJsonOutput(
+         outputText
+      );
+
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+
+         if(document.RootElement.ValueKind == JsonValueKind.Object)
+         {
+            return outputText;
+         }
+      }
+      catch(JsonException)
+      {
+         throw new AiJobOutputValidationException(
+            "Final report must be a JSON object."
+         );
+      }
+
+      throw new AiJobOutputValidationException(
+         "Final report must be a JSON object."
+      );
    }
 
    private static bool ShouldContinueWithToolsAfterToolFormatFailure(
