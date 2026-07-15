@@ -1,6 +1,6 @@
-using SESport.Data.AI;
+using SESport.Core.Broadcast;
 
-namespace SESport.Core.Tests.AI;
+namespace SESport.Core.Tests.Broadcast;
 
 public class ParticipationSourceUrlExtractorTests
 {

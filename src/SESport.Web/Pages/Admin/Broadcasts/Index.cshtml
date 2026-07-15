@@ -165,8 +165,28 @@
                         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
                         StringComparison.Ordinal
                      );
-                     var groupValue = broadcast.GroupValue;
-                     var groupText = broadcast.GroupText;
+                     var timeOnlyText =
+                        TimeTextFormatter.FormatTimeOnlyText(
+                           broadcast.TimeText
+                        );
+                     var groupValue =
+                        BroadcastListDisplayFormatter.FormatGroupValue(
+                           broadcast.Title,
+                           broadcast.ActivityGroupTitle,
+                           broadcast.ActivityGroupDraftTitle
+                        );
+                     var groupText =
+                        BroadcastListDisplayFormatter.FormatGroupText(
+                           broadcast.Title,
+                           broadcast.ActivityGroupSourceKindId,
+                           broadcast.ActivityGroupId,
+                           broadcast.ActivityGroupTitle,
+                           broadcast.ActivityGroupDraftTitle
+                        );
+                     var categoriesText =
+                        BroadcastListDisplayFormatter.FormatCategoriesText(
+                           broadcast.Categories
+                        );
                      var organizationAutocompleteClass =
                         "broadcast-org-autocomplete is-locked";
                   <tr class="broadcast-participation-main-row"
@@ -181,7 +201,7 @@
                      </td>
                      <td class="broadcasts-col-time">
                         <strong class="ses-nowrap">
-                           @broadcast.TimeOnlyText
+                           @timeOnlyText
                         </strong>
                      </td>
                      <td class="broadcasts-col-broadcast
@@ -287,11 +307,11 @@
                      }
                      <td class="broadcasts-col-categories
                                 broadcast-inline-editable"
-                         data-broadcast-id="@broadcast.Id"
-                         data-broadcast-inline-edit-field="categories"
-                         data-broadcast-inline-edit-value=
-                            "@broadcast.CategoriesText"
-                         data-broadcast-categories-json=
+                        data-broadcast-id="@broadcast.Id"
+                        data-broadcast-inline-edit-field="categories"
+                        data-broadcast-inline-edit-value=
+                            "@categoriesText"
+                        data-broadcast-categories-json=
                             "@System.Text.Json.JsonSerializer.Serialize(
                                broadcast.Categories
                             )"
@@ -303,7 +323,7 @@
                         <input class="broadcast-inline-edit-input"
                                data-broadcast-inline-edit-input
                                type="text"
-                               value="@broadcast.CategoriesText"
+                               value="@categoriesText"
                                autocomplete="off"
                                spellcheck="false"
                                aria-label="Edit categories"

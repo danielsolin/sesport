@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 
 using SESport.Core.Broadcast;
-using SESport.Core.Configuration;
+using SESport.Data.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;

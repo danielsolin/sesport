@@ -1,7 +1,7 @@
 using Npgsql;
 
 using SESport.Core.Broadcast;
-using SESport.Core.Configuration;
+using SESport.Data.Configuration;
 
 using SESport.Data;
 using SESport.Data.Broadcast;

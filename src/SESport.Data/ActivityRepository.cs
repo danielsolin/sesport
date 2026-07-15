@@ -1607,16 +1607,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .Trim('-');
    }
 
-   private static string FormatTime(NpgsqlDataReader reader)
-   {
-      var activityDate = reader.GetFieldValue<DateOnly>(8);
-      var localStartTime = ReadTimeOnly(reader, 9);
-
-      return localStartTime is null
-         ? DateDisplay.Format(activityDate)
-         : $"{DateDisplay.Format(activityDate)} {localStartTime:HH:mm}";
-   }
-
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
@@ -1645,7 +1635,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(5),
                reader.GetString(6),
                GetSportIconPath(ReadString(reader, 7)),
-               FormatTime(reader),
+               DateDisplay.Format(
+                  reader.GetFieldValue<DateOnly>(8),
+                  ReadTimeOnly(reader, 9)
+               ),
                ReadDateTimeOffset(reader, 10),
                ReadString(reader, 12),
                reader.GetString(11),

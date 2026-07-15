@@ -68,7 +68,10 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                ReadString(reader, 6),
                reader.GetString(7),
                reader.GetString(8),
-               FormatTime(reader, 9, 10),
+               DateDisplay.Format(
+                  reader.GetFieldValue<DateOnly>(9),
+                  ReadTimeOnly(reader, 10)
+               ),
                ReadDecimal(reader, 11),
                ReadGuid(reader, 12),
                reader.GetInt32(13),
@@ -190,7 +193,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          reader.GetString(11),
          reader.GetString(12),
          reader.GetString(13),
-         FormatTime(activityDate, localStartTime),
+         DateDisplay.Format(activityDate, localStartTime),
          activityDate,
          localStartTime,
          reader.GetString(16),
@@ -623,32 +626,6 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
          reader.GetString(0),
          reader.GetFieldValue<DateOnly>(1)
       );
-   }
-
-   private static string FormatTime(
-      NpgsqlDataReader reader,
-      int dateOrdinal,
-      int timeOrdinal
-   )
-   {
-      var activityDate = reader.GetFieldValue<DateOnly>(dateOrdinal);
-      TimeOnly? localStartTime = reader.IsDBNull(timeOrdinal)
-         ? null
-         : reader.GetFieldValue<TimeOnly>(timeOrdinal);
-
-      return localStartTime is null
-         ? FormatTime(activityDate, null)
-         : FormatTime(activityDate, localStartTime);
-   }
-
-   private static string FormatTime(
-      DateOnly activityDate,
-      TimeOnly? localStartTime
-   )
-   {
-      return localStartTime is null
-         ? DateDisplay.Format(activityDate)
-         : $"{DateDisplay.Format(activityDate)} {localStartTime:HH:mm}";
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)

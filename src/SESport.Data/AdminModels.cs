@@ -1,14 +1,5 @@
 namespace SESport.Data;
 
-public sealed record AdminArea(string Title, string Description, string Href);
-
-public sealed record AdminNavItem(string Title, string Href);
-
-public sealed record AdminNavGroup(
-   string Title,
-   IReadOnlyList<AdminNavItem> Items
-);
-
 public enum ReferenceTableKind
 {
    Lookup,
@@ -22,11 +13,6 @@ public sealed record ReferenceTableInfo(
    string Title,
    string Description,
    ReferenceTableKind Kind = ReferenceTableKind.Lookup
-);
-
-public sealed record ReferenceNavigationItem(
-   string Title,
-   string Href
 );
 
 public sealed record ReferenceRow(
@@ -160,12 +146,7 @@ public sealed record EntityActivityListItem(
    string Sport,
    string ActivityType,
    string PublicationStatus
-)
-{
-   public string DateTimeText => LocalStartTime is null
-      ? $"{ActivityDate:yyyy-MM-dd}"
-      : $"{ActivityDate:yyyy-MM-dd} {LocalStartTime.Value:HH:mm}";
-}
+);
 
 public sealed record EntityMergeEntitySummary(
    Guid Id,

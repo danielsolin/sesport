@@ -265,7 +265,10 @@ public class IndexModel(
          ),
          CategoriesSortColumn => OrderByDirection(
             broadcasts,
-            broadcast => broadcast.CategoriesText,
+            broadcast =>
+               BroadcastListDisplayFormatter.FormatCategoriesText(
+                  broadcast.Categories
+               ),
             sortAsc
          ),
          _ => OrderByDirection(

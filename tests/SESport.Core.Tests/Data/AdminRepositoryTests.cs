@@ -1,7 +1,9 @@
 using Npgsql;
 
-using SESport.Core.Configuration;
+using SESport.Core.Formatting;
+using SESport.Data.Configuration;
 using SESport.Data;
+using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Data;
 
@@ -275,7 +277,13 @@ public sealed class AdminRepositoryTests
          Assert.Equal([newerActivityId, olderActivityId], activities
             .Select(activity => activity.Id)
             .ToArray());
-         Assert.Equal("2026-07-02 13:30", activities[0].DateTimeText);
+         Assert.Equal(
+            "2026-07-02 13:30",
+            DateDisplay.Format(
+               activities[0].ActivityDate,
+               activities[0].LocalStartTime
+            )
+         );
          Assert.Equal("Football", activities[0].Sport);
          Assert.Equal("Match", activities[0].ActivityType);
          Assert.Equal("Published", activities[0].PublicationStatus);
@@ -507,12 +515,27 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
-   public void GetConfigNavigationGroupsPlacesActivityProposalsInLegacy()
+   public void BuildConfigNavigationGroupsPlacesActivityProposalsInLegacy()
    {
-      using var dataSource = CreateDataSource();
-      var repository = new AdminRepository(dataSource);
+      var referenceTables =
+         new[]
+         {
+            new ReferenceTableInfo(
+               "sports",
+               "Sports",
+               "Sports available when creating activities and entities.",
+               ReferenceTableKind.Sports
+            ),
+            new ReferenceTableInfo(
+               "activity-types",
+               "Activity types",
+               "Small controlled vocabulary for activity classification."
+            )
+         };
 
-      var groups = repository.GetConfigNavigationGroups();
+      var groups = AdminNavigationBuilder.BuildConfigNavigationGroups(
+         referenceTables
+      );
       var legacyGroup = Assert.Single(
          groups,
          group => string.Equals(
@@ -526,6 +549,24 @@ public sealed class AdminRepositoryTests
       Assert.Equal("Activity Proposals", legacyItem.Title);
       Assert.Equal("/Admin/Activities/Proposals", legacyItem.Href);
       Assert.Equal("Legacy", groups[^1].Title);
+
+      var referenceGroup = Assert.Single(
+         groups,
+         group => string.Equals(
+            group.Title,
+            "Reference tables",
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+
+      Assert.Equal(
+         [
+            "Activity types",
+            "Broadcast Ignore Rules",
+            "Sports"
+         ],
+         referenceGroup.Items.Select(item => item.Title)
+      );
    }
 
    [Fact]

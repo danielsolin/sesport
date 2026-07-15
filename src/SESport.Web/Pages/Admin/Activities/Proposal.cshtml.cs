@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Ingestion;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Activities;
@@ -34,6 +35,13 @@ public class ProposalModel(AuditRepository repository) : PageModel
    public string? RejectComment { get; set; }
 
    public string? LoadError { get; private set; }
+
+   public bool HasAiPrompt =>
+      Proposal is not null &&
+      ActivityProposalDisplayFormatter.HasAiPrompt(
+         Proposal.ProducerTypeId,
+         Proposal.Prompt
+      );
 
    public async Task<IActionResult> OnGetAsync(
       string id,

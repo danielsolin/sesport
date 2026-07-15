@@ -401,25 +401,9 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   public static DateTimeOffset ToLocal(DateTimeOffset value)
-   {
-      return TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
-   }
-
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
    {
       return TimeZoneHelper.ToUtc(date, time, SportDay.TimeZoneId);
-   }
-
-   private static string FormatTime(
-      DateTimeOffset startsAt,
-      DateTimeOffset endsAt
-   )
-   {
-      var localStart = TimeZoneHelper.ToLocal(startsAt, SportDay.TimeZoneId);
-      var localEnd = TimeZoneHelper.ToLocal(endsAt, SportDay.TimeZoneId);
-
-      return $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}";
    }
 
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
@@ -438,7 +422,10 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       return new BroadcastListItem(
          reader.GetGuid(0),
-         FormatTime(startsAt, endsAt),
+         BroadcastListDisplayFormatter.FormatTimeText(
+            startsAt,
+            endsAt
+         ),
          channelName,
          reader.GetString(4),
          ReadString(reader, 5),
@@ -634,10 +621,17 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      var broadcastDate = ToLocal(broadcast.StartsAt).Date;
+      var broadcastDate = TimeZoneHelper.ToLocal(
+         broadcast.StartsAt,
+         SportDay.TimeZoneId
+      ).Date;
       var startDate = DateOnly.FromDateTime(broadcastDate).AddDays(-14);
-      var endDate = DateOnly.FromDateTime(ToLocal(broadcast.EndsAt).Date)
-         .AddDays(14);
+      var endDate = DateOnly.FromDateTime(
+         TimeZoneHelper.ToLocal(
+            broadcast.EndsAt,
+            SportDay.TimeZoneId
+         ).Date
+      ).AddDays(14);
       var normalizedBroadcastTitle = NormalizeMatchText(broadcast.Title);
 
       const string sql = """

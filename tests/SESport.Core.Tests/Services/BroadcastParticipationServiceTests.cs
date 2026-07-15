@@ -5,7 +5,7 @@ using Npgsql;
 
 using SESport.AI.Interfaces;
 using SESport.Core.Broadcast;
-using SESport.Core.Configuration;
+using SESport.Data.Configuration;
 using SESport.Data;
 using SESport.Data.AI;
 using SESport.Web.Services;

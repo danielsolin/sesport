@@ -3,7 +3,9 @@
 @{
    Layout = "/Pages/Shared/_Layout.cshtml";
    var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
-   var groups = AdminRepository.GetConfigNavigationGroups();
+   var groups = AdminNavigationBuilder.BuildConfigNavigationGroups(
+      AdminRepository.GetReferenceTables()
+   );
    var adminMenuLink = "admin-sidebar-link";
    string GetLinkClass(string href)
    {

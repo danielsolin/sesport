@@ -105,7 +105,13 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "organization",
                value = organizationEntityId?.ToString() ?? string.Empty,
-               groupValue = broadcast?.GroupValue ?? string.Empty,
+               groupValue = broadcast is null
+                  ? string.Empty
+                  : BroadcastListDisplayFormatter.FormatGroupValue(
+                     broadcast.Title,
+                     broadcast.ActivityGroupTitle,
+                     broadcast.ActivityGroupDraftTitle
+                  ),
                activityGroupId =
                   broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
                activityGroupTitle =
@@ -114,7 +120,15 @@ public sealed class BroadcastFieldModel(
                   broadcast?.ActivityGroupDraftTitle ?? string.Empty,
                activityGroupSourceKindId =
                   broadcast?.ActivityGroupSourceKindId ?? string.Empty,
-               groupText = broadcast?.GroupText ?? "-"
+               groupText = broadcast is null
+                  ? "-"
+                  : BroadcastListDisplayFormatter.FormatGroupText(
+                     broadcast.Title,
+                     broadcast.ActivityGroupSourceKindId,
+                     broadcast.ActivityGroupId,
+                     broadcast.ActivityGroupTitle,
+                     broadcast.ActivityGroupDraftTitle
+                  )
             });
          }
 
@@ -149,7 +163,13 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "group",
                value,
-               groupValue = broadcast?.GroupValue ?? value,
+               groupValue = broadcast is null
+                  ? value
+                  : BroadcastListDisplayFormatter.FormatGroupValue(
+                     broadcast.Title,
+                     broadcast.ActivityGroupTitle,
+                     broadcast.ActivityGroupDraftTitle
+                  ),
                activityGroupId =
                   broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
                activityGroupTitle =
@@ -158,7 +178,15 @@ public sealed class BroadcastFieldModel(
                   broadcast?.ActivityGroupDraftTitle ?? string.Empty,
                activityGroupSourceKindId =
                   broadcast?.ActivityGroupSourceKindId ?? string.Empty,
-               groupText = broadcast?.GroupText ?? value
+               groupText = broadcast is null
+                  ? value
+                  : BroadcastListDisplayFormatter.FormatGroupText(
+                     broadcast.Title,
+                     broadcast.ActivityGroupSourceKindId,
+                     broadcast.ActivityGroupId,
+                     broadcast.ActivityGroupTitle,
+                     broadcast.ActivityGroupDraftTitle
+                  )
             });
          }
 

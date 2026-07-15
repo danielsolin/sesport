@@ -180,7 +180,12 @@
                   @foreach(var activity in Model.Activities)
                   {
                      <tr>
-                        <td>@activity.DateTimeText</td>
+                        <td>
+                           @DateDisplay.Format(
+                              activity.ActivityDate,
+                              activity.LocalStartTime
+                           )
+                        </td>
                         <td>
                            <a asp-page="/Admin/Activities/Edit"
                               asp-route-id="@activity.Id">

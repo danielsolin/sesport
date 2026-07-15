@@ -1,5 +1,3 @@
-using SESport.Core.Formatting;
-
 namespace SESport.Data;
 
 public sealed record ActivityProposalAuditItem(
@@ -28,13 +26,7 @@ public sealed record ActivityProposalLinkAuditItem(
    string Explanation,
    string? ContextName,
    decimal? Confidence
-)
-{
-   public string ConfidencePercentString =>
-         Confidence.HasValue
-            ? Math.Floor(Confidence.Value * 100).ToString()
-            : string.Empty;
-};
+);
 
 public sealed record ActivityProposalEvidenceAuditItem(
    string ProposalId,
@@ -45,16 +37,7 @@ public sealed record ActivityProposalEvidenceAuditItem(
    DateTimeOffset ObservedAt,
    string Summary,
    string? RawExcerpt
-)
-{
-   public string UrlShort
-   {
-      get
-      {
-         return UrlDisplayFormatter.ToShortDisplayUrl(Uri);
-      }
-   }
-};
+);
 
 public sealed record ActivityProposalDetail(
    string Id,
@@ -78,15 +61,6 @@ public sealed record ActivityProposalDetail(
    decimal? Confidence,
    Guid? ActivityId,
    string? Prompt
-)
-{
-   public bool HasAiPrompt =>
-      ProducerTypeId == "AiSearch" && !string.IsNullOrWhiteSpace(Prompt);
-
-   public string ConfidencePercentString =>
-         Confidence.HasValue
-            ? Math.Floor(Confidence.Value * 100).ToString()
-            : string.Empty;
-};
+);
 
 public sealed record RejectReasonOption(string Id, string Label);

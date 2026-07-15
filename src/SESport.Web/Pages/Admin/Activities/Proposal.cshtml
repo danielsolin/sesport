@@ -27,7 +27,7 @@
          {
             <p class="relevance">@Model.Proposal.Context</p>
          }
-         @if (Model.Proposal.HasAiPrompt)
+         @if (Model.HasAiPrompt)
          {
             <details class="prompt-details">
                <summary>View prompt</summary>
@@ -63,7 +63,9 @@
          </div>
          <div>
             <dt>Confidence</dt>
-            <dd>@Model.Proposal.ConfidencePercentString%</dd>
+            <dd>@PercentageDisplayFormatter.FormatWholePercent(
+               Model.Proposal.Confidence
+            )%</dd>
          </div>
          @if (Model.Proposal.ActivityId is not null)
          {
@@ -115,7 +117,9 @@
                   <td>@link.Explanation</td>
                   <td>@link.ContextName</td>
                   <td>
-                     @link.ConfidencePercentString%
+                     @PercentageDisplayFormatter.FormatWholePercent(
+                        link.Confidence
+                     )%
                   </td>
                </tr>
             }
@@ -145,7 +149,9 @@
                      @if (!string.IsNullOrWhiteSpace(evidence.Uri))
                      {
                         <a target="_blank" href="@evidence.Uri">
-                           @evidence.UrlShort
+                           @UrlDisplayFormatter.ToShortDisplayUrl(
+                              evidence.Uri
+                           )
                         </a>
                      }
                   </td>

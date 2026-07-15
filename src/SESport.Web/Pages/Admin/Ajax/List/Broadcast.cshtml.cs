@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
@@ -41,7 +42,9 @@ public sealed class BroadcastModel(
          {
             id = refreshedBroadcast.Id.ToString(),
             timeText = refreshedBroadcast.TimeText,
-            timeOnlyText = refreshedBroadcast.TimeOnlyText,
+            timeOnlyText = TimeTextFormatter.FormatTimeOnlyText(
+               refreshedBroadcast.TimeText
+            ),
             channelName = refreshedBroadcast.ChannelName,
             title = refreshedBroadcast.Title,
             description = refreshedBroadcast.Description,
@@ -54,7 +57,11 @@ public sealed class BroadcastModel(
             organizationEntityId =
                refreshedBroadcast.OrganizationEntityId?.ToString(),
             organizationEntityName = refreshedBroadcast.OrganizationEntityName,
-            groupValue = refreshedBroadcast.GroupValue,
+            groupValue = BroadcastListDisplayFormatter.FormatGroupValue(
+               refreshedBroadcast.Title,
+               refreshedBroadcast.ActivityGroupTitle,
+               refreshedBroadcast.ActivityGroupDraftTitle
+            ),
             activityGroupId =
                refreshedBroadcast.ActivityGroupId?.ToString(),
             activityGroupTitle = refreshedBroadcast.ActivityGroupTitle,
@@ -64,7 +71,13 @@ public sealed class BroadcastModel(
                refreshedBroadcast.ActivityGroupSourceKindId,
             activityGroupSourceActivityId =
                refreshedBroadcast.ActivityGroupSourceActivityId?.ToString(),
-            groupText = refreshedBroadcast.GroupText,
+            groupText = BroadcastListDisplayFormatter.FormatGroupText(
+               refreshedBroadcast.Title,
+               refreshedBroadcast.ActivityGroupSourceKindId,
+               refreshedBroadcast.ActivityGroupId,
+               refreshedBroadcast.ActivityGroupTitle,
+               refreshedBroadcast.ActivityGroupDraftTitle
+            ),
             participationStatusId =
                refreshedBroadcast.ParticipationCheck?.StatusId
          }

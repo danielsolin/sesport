@@ -89,7 +89,7 @@ public sealed class PublicActivityTimelineBuilder
    )
    {
       return new ActivityAgendaSection(
-         activity.TimeOnlyText,
+         TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
          [activity],
          activity.RelatedOrganizationEntities
       );

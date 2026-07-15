@@ -1,4 +1,4 @@
-namespace SESport.Core.Configuration;
+namespace SESport.Data.Configuration;
 
 public static class PostgresConnectionStrings
 {

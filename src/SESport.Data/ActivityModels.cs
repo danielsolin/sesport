@@ -18,19 +18,7 @@ public sealed record ActivityListItem(
    string RelatedPersonEntities,
    Guid[] RelatedPersonEntityIds,
    string RelatedOrganizationEntities
-)
-{
-   public string TimeOnlyText
-   {
-      get
-      {
-         if(TimeText.Contains(" "))
-            return TimeText.Split(' ')[1];
-
-         return TimeText;
-      }
-   }
-};
+);
 
 public sealed record EntityOption(
    Guid Id,

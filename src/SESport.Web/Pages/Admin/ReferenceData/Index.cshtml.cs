@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Data;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.ReferenceData;
 
@@ -9,7 +10,7 @@ public class IndexModel(
    AdminRepository repository
 ) : PageModel
 {
-   public IReadOnlyList<ReferenceNavigationItem> NavigationItems
+   public IReadOnlyList<AdminNavItem> NavigationItems
    {
       get;
       private set;
@@ -40,8 +41,11 @@ public class IndexModel(
       CancellationToken cancellationToken
    )
    {
-      NavigationItems = repository.GetReferenceNavigationItems();
-      Tables = repository.GetReferenceTables();
+      var referenceTables = repository.GetReferenceTables();
+      NavigationItems = AdminNavigationBuilder.BuildReferenceNavigationItems(
+         referenceTables
+      );
+      Tables = referenceTables;
 
       if(string.IsNullOrWhiteSpace(table))
       {

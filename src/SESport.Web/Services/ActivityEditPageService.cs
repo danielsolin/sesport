@@ -192,8 +192,9 @@ public sealed class ActivityEditPageService(
       }
 
       var firstBroadcast = broadcasts[0];
-      var localStart = AdminBroadcastRepository.ToLocal(
-         firstBroadcast.StartsAt
+      var localStart = TimeZoneHelper.ToLocal(
+         firstBroadcast.StartsAt,
+         SportDay.TimeZoneId
       );
       var participationCheck =
          await participationService.GetParticipationCheckAsync(

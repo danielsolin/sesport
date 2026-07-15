@@ -3,6 +3,8 @@ using System.Text.Json;
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Data.AI;
 
@@ -303,7 +305,10 @@ public sealed class BroadcastParticipationService(
    )
    {
       var localDate = DateOnly.FromDateTime(
-         AdminBroadcastRepository.ToLocal(broadcast.StartsAt).Date
+         TimeZoneHelper.ToLocal(
+            broadcast.StartsAt,
+            SportDay.TimeZoneId
+         ).Date
       );
 
       return JsonSerializer.Serialize(
