@@ -5,23 +5,17 @@ using SESport.AI.Prompts;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.AI;
-using SESport.Data.AI;
 using SESport.Web.Services;
+using SESport.Data.AI;
 
 namespace SESport.Web.Extensions;
 
 public static class AiServiceCollectionExtensions
 {
    public static IServiceCollection AddAiPlatform(
-      this IServiceCollection services,
-      IConfiguration configuration
+      this IServiceCollection services
    )
    {
-      services.AddSingleton(
-         _ => configuration.GetSection("SearXNG")
-            .Get<SearxngWebSearchClientOptions>() ??
-            new SearxngWebSearchClientOptions()
-      );
       services.AddScoped<AiRepository>();
       services.AddScoped<IAiJobDefinitionRepository, AiRepository>();
       services.AddScoped<IAiJobRunRepository, AiRepository>();

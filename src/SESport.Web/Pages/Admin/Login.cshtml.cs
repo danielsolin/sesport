@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace SESport.Web.Pages.Admin;
 
-public class LoginModel(IConfiguration configuration) : PageModel
+public class LoginModel(AdminLoginOptions adminOptions) : PageModel
 {
    [BindProperty]
    public string Password { get; set; } = string.Empty;
@@ -20,7 +20,7 @@ public class LoginModel(IConfiguration configuration) : PageModel
 
    public async Task<IActionResult> OnPostAsync()
    {
-      var configuredPassword = configuration["Admin:Password"];
+      var configuredPassword = adminOptions.Password;
 
       if(string.IsNullOrWhiteSpace(configuredPassword))
       {

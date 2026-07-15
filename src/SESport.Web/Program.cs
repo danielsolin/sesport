@@ -6,13 +6,20 @@ using SESport.Web.Extensions;
 using SESport.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-var adminPassword = builder.Configuration["Admin:Password"];
+var adminOptions = builder.Configuration.GetSection("Admin")
+   .Get<AdminLoginOptions>() ??
+   new AdminLoginOptions();
+var searxngOptions = builder.Configuration.GetSection("SearXNG")
+   .Get<SearxngWebSearchClientOptions>() ??
+   new SearxngWebSearchClientOptions();
 builder.Services.AddSingleton(
    _ => PostgresDataSourceFactory.CreateDefault(
       builder.Configuration.GetConnectionString("Default")
    )
 );
-builder.Services.AddAiPlatform(builder.Configuration);
+builder.Services.AddSingleton(adminOptions);
+builder.Services.AddSingleton(searxngOptions);
+builder.Services.AddAiPlatform();
 builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddSingleton<RunDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
@@ -69,7 +76,7 @@ app.Logger.LogInformation(
 );
 app.Logger.LogInformation(
    "SearXNG config bound: baseUrl={BaseUrl}",
-   builder.Configuration["SearXNG:BaseUrl"] ?? "<default>"
+   searxngOptions.BaseUrl ?? "<default>"
 );
 
 if(!app.Environment.IsDevelopment())

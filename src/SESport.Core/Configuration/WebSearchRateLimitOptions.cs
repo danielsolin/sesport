@@ -1,4 +1,4 @@
-namespace SESport.AI.WebSearch;
+namespace SESport.Core.Configuration;
 
 public sealed record WebSearchRateLimitOptions
 {

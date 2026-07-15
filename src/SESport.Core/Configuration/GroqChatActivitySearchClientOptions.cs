@@ -1,4 +1,4 @@
-namespace SESport.AI.ActivitySearch;
+namespace SESport.Core.Configuration;
 
 public sealed record GroqChatActivitySearchClientOptions(
    Uri BaseAddress,
