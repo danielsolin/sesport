@@ -1,87 +1,14 @@
 {
-   "Participants": [
-      {
-         "Name": "Grace Bernstein",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "June Bjork",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Tiana Tian Deng",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Caijsa Hennemann",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Lea Nilsson",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Kaisa Rinaldo Persson",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Lisa Zaar",
-         "Sources": [
-            {
-               "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      },
-      {
-         "Name": "Max Dahlin",
-         "Sources": [
-            {
-               "Url": "https://nordeaopen.se/tavlingen/spelare/",
-               "EvidenceType": "ParticipantList"
-            }
-         ]
-      }
-   ],
-   "Participation": "Yes",
+   "Participants": [],
+   "Participation": "Unknown",
    "CheckedSources": [
       {
-         "Url": "https://www.wtatennis.com/tournaments/2003/bastad-125/2026/player-list",
-         "EvidenceType": "ParticipantList"
+         "Url": "https://www.friidrott.se/tavling-landslag/guide-till-u18-em-2026/",
+         "EvidenceType": "EventInfoOnly"
       },
       {
-         "Url": "https://nordeaopen.se/tavlingen/spelare/",
-         "EvidenceType": "ParticipantList"
+         "Url": "https://www.friidrott.se/tavling-landslag/startlista-u18-em-2026",
+         "EvidenceType": "EventInfoOnly"
       }
    ]
 }
