@@ -120,14 +120,6 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
-      if(Job.ToolCallMaxTokens is not null && Job.ToolCallMaxTokens < 1)
-      {
-         ModelState.AddModelError(
-            "Job.ToolCallMaxTokens",
-            "Tool call max tokens must be at least 1."
-         );
-      }
-
       ValidateJson("Job.ToolsJson", Job.ToolsJson);
       ValidateJson(
          "Job.ConditionalToolsJson",

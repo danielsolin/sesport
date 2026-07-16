@@ -23,6 +23,7 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Job.OriginalId" type="hidden" />
+   <input asp-for="Job.ToolCallMaxTokens" type="hidden" />
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
    <section class="form-section">
       <h2>Job</h2>
@@ -75,11 +76,6 @@
                <option value="json_object">json_object</option>
             </select>
             <span asp-validation-for="Job.OutputMode"></span>
-         </label>
-         <label>
-            <span>Tool call max tokens</span>
-            <input asp-for="Job.ToolCallMaxTokens" type="number" min="1" />
-            <span asp-validation-for="Job.ToolCallMaxTokens"></span>
          </label>
       </div>
       <label>
