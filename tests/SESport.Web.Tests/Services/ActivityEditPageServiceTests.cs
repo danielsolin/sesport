@@ -189,6 +189,88 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task PrefillFromBroadcastsAsyncLinksFuzzyOrgPersons()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var personName = "Johan Grönvall";
+      var aiParticipantName = "Johan Görnvall";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var jobContext = await LoadParticipationJobContextAsync(
+         dataSource,
+         "decide-swedish-participation"
+      );
+      var runId = Guid.NewGuid();
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         personName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{Guid.NewGuid():N}",
+         $"fingerprint-{Guid.NewGuid():N}",
+         "channel-1",
+         "Viaplay",
+         "Broadcast title",
+         ["football"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2)
+      );
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         "decide-swedish-participation",
+         jobContext.PromptId,
+         jobContext.ProviderId,
+         broadcastId.ToString(),
+         aiParticipantName
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal([broadcastId], activity.BroadcastIds);
+         Assert.Equal(organizationId, activity.OrganizationEntityId);
+         Assert.Equal([personId], activity.LinkedEntityIds);
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, runId);
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncReusesExistingActivityGroup()
    {
       var organizationId = Guid.NewGuid();

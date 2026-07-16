@@ -257,13 +257,11 @@ public sealed class BroadcastParticipationService(
 
       foreach(var participantName in participantNames)
       {
-         var normalizedName =
-            BroadcastEntityFilter.NormalizeParticipantName(participantName);
-
-         if(participantEntityIdsByName.TryGetValue(
-            normalizedName,
-            out var entityId
-         ))
+         if(BroadcastEntityFilter.TryGetNameMatch(
+               participantEntityIdsByName,
+               participantName,
+               out var entityId
+            ))
          {
             templateEntityId = entityId;
             break;
@@ -274,14 +272,17 @@ public sealed class BroadcastParticipationService(
          .Select(name =>
          {
             var displayName = BroadcastParticipantNameFormatter.Format(name);
-            var normalizedName = BroadcastEntityFilter.NormalizeParticipantName(
-               name
-            );
 
-            if(participantEntityIdsByName.TryGetValue(
-               normalizedName,
-               out var entityId
-            ))
+            if(BroadcastEntityFilter.TryGetNameMatch(
+                  participantEntityIdsByName,
+                  name,
+                  out var entityId
+               ) ||
+               BroadcastEntityFilter.TryGetFuzzyNameMatch(
+                  participantEntityIdsByName,
+                  name,
+                  out entityId
+               ))
             {
                return new BroadcastParticipantDisplayItem(
                   displayName,

@@ -71,6 +71,25 @@ public sealed class BroadcastParticipationServiceTests
    }
 
    [Fact]
+   public void GetParticipantDisplayItemsLinksFuzzyExistingEntities()
+   {
+      var entityId = Guid.NewGuid();
+      var entityIdsByName = new Dictionary<string, Guid>
+      {
+         [BroadcastEntityFilter.NormalizeName("Johan Grönvall")] = entityId
+      };
+
+      var result = BroadcastParticipationService.GetParticipantDisplayItems(
+         ["Johan Görnvall"],
+         entityIdsByName
+      );
+
+      Assert.Equal("Johan Görnvall", result[0].Name);
+      Assert.Equal($"/Admin/Entities/Edit/{entityId}", result[0].EditUrl);
+      Assert.Null(result[0].TemplateEntityId);
+   }
+
+   [Fact]
    public async Task GetParticipationCheckResultsAsyncLinksPairEntities()
    {
       var organizationId = Guid.NewGuid();

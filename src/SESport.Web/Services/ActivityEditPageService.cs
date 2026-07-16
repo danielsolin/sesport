@@ -424,16 +424,16 @@ public sealed class ActivityEditPageService(
 
       foreach(var participantName in participantNames)
       {
-         var normalizedName = BroadcastEntityFilter.NormalizeParticipantName(
-            participantName
-         );
-
-         if(string.IsNullOrWhiteSpace(normalizedName))
-         {
-            continue;
-         }
-
-         if(!entityIdsByName.TryGetValue(normalizedName, out var entityId))
+         if(!BroadcastEntityFilter.TryGetNameMatch(
+               entityIdsByName,
+               participantName,
+               out var entityId
+            ) &&
+            !BroadcastEntityFilter.TryGetFuzzyNameMatch(
+               entityIdsByName,
+               participantName,
+               out entityId
+            ))
          {
             continue;
          }
