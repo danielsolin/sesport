@@ -79,7 +79,9 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected
+            selected,
+            updateUrl,
+            isExistingEntity
          );
       });
 
@@ -95,7 +97,9 @@
                excludeEntityId,
                organizationOnly,
                maxResults,
-               selected
+               selected,
+               updateUrl,
+               isExistingEntity
             );
          }
       });
@@ -172,7 +176,9 @@
       excludeEntityId,
       organizationOnly,
       maxResults,
-      selected
+      selected,
+      updateUrl,
+      isExistingEntity
    )
    {
       if(state.timerId !== null)
@@ -191,7 +197,9 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected
+            selected,
+            updateUrl,
+            isExistingEntity
          );
       }, debounceMs);
    }
@@ -205,7 +213,9 @@
       excludeEntityId,
       organizationOnly,
       maxResults,
-      selected
+      selected,
+      updateUrl,
+      isExistingEntity
    )
    {
       const query = input.value.trim();
@@ -273,7 +283,7 @@
             results,
             excludeEntityId,
             updateUrl,
-            excludeEntityId !== ""
+            isExistingEntity
          );
       }
       catch
@@ -635,7 +645,9 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected
+            selected,
+            updateUrl,
+            isExistingEntity
          );
       }
    }
