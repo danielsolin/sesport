@@ -1,7 +1,5 @@
 using System.Text.Json;
 
-using SESport.Core.Domain;
-
 namespace SESport.Core.Broadcast;
 
 public static class BroadcastParticipationCheckParser

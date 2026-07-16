@@ -1,7 +1,3 @@
-using System.Globalization;
-
-using SESport.Core.Domain;
-using SESport.Core.Configuration;
 using SESport.Web.Pages.Admin.Runs;
 
 namespace SESport.Core.Tests.Pages.Admin.Runs;
@@ -205,14 +201,14 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
-   public void FormatMaxOutputTokensUsesStoredValue()
+   public void FormatMaxOutputTokensUsesPromptSetting()
    {
       var run = CreateRun() with
       {
-         MaxOutputTokens = 4096
+         PromptMaxOutputTokens = 8192
       };
 
-      Assert.Equal("4096", DetailsModel.FormatMaxOutputTokens(run));
+      Assert.Equal("8192", DetailsModel.FormatMaxOutputTokens(run));
    }
 
    [Fact]
@@ -233,16 +229,11 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
-   public void FormatMaxOutputTokensUsesStoredDefaultValue()
+   public void FormatMaxOutputTokensReturnsNotSet()
    {
       var run = CreateRun();
 
-      Assert.Equal(
-         AiDefaults.DefaultMaxOutputTokens.ToString(
-            CultureInfo.InvariantCulture
-         ),
-         DetailsModel.FormatMaxOutputTokens(run)
-      );
+      Assert.Equal("Not set", DetailsModel.FormatMaxOutputTokens(run));
    }
 
    private static SESport.Core.AI.AiRunDetail CreateRun()
@@ -258,7 +249,6 @@ public sealed class DetailsModelTests
          PromptTemperature: null,
          PromptMaxOutputTokens: null,
          PromptMaxToolRounds: null,
-         MaxOutputTokens: AiDefaults.DefaultMaxOutputTokens,
          PromptOutputSchemaJson: null,
          PromptRequestOptionsJson: "{}",
          ProviderId: "provider",

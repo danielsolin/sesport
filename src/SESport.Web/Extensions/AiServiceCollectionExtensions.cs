@@ -5,9 +5,8 @@ using SESport.AI.Prompts;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.AI;
-using SESport.Core.Configuration;
-using SESport.Web.Services;
 using SESport.Data.AI;
+using SESport.Web.Services;
 
 namespace SESport.Web.Extensions;
 
@@ -37,19 +36,19 @@ public static class AiServiceCollectionExtensions
          OpenRouterClient
       >(client =>
       {
-         client.Timeout = AiDefaults.OpenRouterHttpClientTimeout;
+         client.Timeout = TimeSpan.FromSeconds(300);
       });
       services.AddHttpClient<
          IAiProviderClient,
          LlamaServerClient
       >(client =>
       {
-         client.Timeout = AiDefaults.LlamaServerHttpClientTimeout;
+         client.Timeout = TimeSpan.FromMinutes(20);
       });
       services.AddHttpClient<SearxngWebSearchClient>(
          client =>
          {
-            client.Timeout = AiDefaults.SearxngHttpClientTimeout;
+            client.Timeout = TimeSpan.FromSeconds(60);
          }
       );
       services.AddScoped<IWebSearchClient>(serviceProvider =>
@@ -62,7 +61,7 @@ public static class AiServiceCollectionExtensions
       services.AddHttpClient<GoogleWebSearchClient>(
          client =>
          {
-            client.Timeout = AiDefaults.GoogleWebSearchHttpClientTimeout;
+            client.Timeout = TimeSpan.FromSeconds(30);
          }
       );
       services.AddHttpClient<
@@ -70,7 +69,7 @@ public static class AiServiceCollectionExtensions
          WebPageContentClient
       >(client =>
       {
-         client.Timeout = AiDefaults.WebPageContentHttpClientTimeout;
+         client.Timeout = TimeSpan.FromSeconds(30);
       });
 
       return services;

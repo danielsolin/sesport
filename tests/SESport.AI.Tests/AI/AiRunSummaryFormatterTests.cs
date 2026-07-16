@@ -1,5 +1,3 @@
-using SESport.Core.AI;
-
 namespace SESport.Core.Tests.AI;
 
 public sealed class AiRunSummaryFormatterTests

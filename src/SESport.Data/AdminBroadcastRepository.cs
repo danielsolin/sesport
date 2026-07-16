@@ -471,7 +471,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       Guid? activityGroupId = null;
       string? sourceKindId = null;
 
-      await using (
+      await using(
          var command = new NpgsqlCommand(loadSql, connection, transaction)
       )
       {
