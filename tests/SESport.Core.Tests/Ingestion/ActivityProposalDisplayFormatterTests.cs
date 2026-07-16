@@ -1,5 +1,3 @@
-using SESport.Core.Ingestion;
-
 namespace SESport.Core.Tests.Ingestion;
 
 public class ActivityProposalDisplayFormatterTests

@@ -4,7 +4,6 @@ using System.Text.Json.Nodes;
 
 using SESport.AI.Clients;
 using SESport.Core.AI;
-using SESport.Core.Configuration;
 
 namespace SESport.AI.Llama;
 

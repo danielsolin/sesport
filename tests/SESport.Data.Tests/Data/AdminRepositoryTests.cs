@@ -1,7 +1,7 @@
 using Npgsql;
 
-using SESport.Core.Formatting;
 using SESport.Core.Configuration;
+using SESport.Core.Formatting;
 using SESport.Data;
 
 namespace SESport.Core.Tests.Data;
