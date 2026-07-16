@@ -60,6 +60,25 @@ public sealed class CachedWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchStoresFallbackResponseUnderActualEngine()
+   {
+      var innerClient = new RecordingWebSearchClient(
+         "SearXNG/brave",
+         new WebSearchResult(
+            "Tre Kronor roster",
+            "https://example.test/roster",
+            null
+         )
+      );
+      var client = CreateClient(innerClient);
+
+      await client.SearchAsync("Tre Kronor", 3, CancellationToken.None, 0);
+      await client.SearchAsync("Tre Kronor", 3, CancellationToken.None, 1);
+
+      Assert.Single(innerClient.Queries);
+   }
+
+   [Fact]
    public async Task SearchReusesEmptyResults()
    {
       var innerClient = new RecordingWebSearchClient();
@@ -85,10 +104,20 @@ public sealed class CachedWebSearchClientTests
    private sealed class RecordingWebSearchClient : IWebSearchClient
    {
       private readonly IReadOnlyList<WebSearchResult> results;
+      private readonly string? provider;
 
       public RecordingWebSearchClient(params WebSearchResult[] results)
+         : this(null, results)
+      {
+      }
+
+      public RecordingWebSearchClient(
+         string? provider,
+         params WebSearchResult[] results
+      )
       {
          this.results = results;
+         this.provider = provider;
       }
 
       public List<string> Queries { get; } = [];
@@ -104,7 +133,7 @@ public sealed class CachedWebSearchClientTests
          _ = cancellationToken;
          _ = searchAttempt;
          Queries.Add(query);
-         return Task.FromResult(new WebSearchResponse(results));
+         return Task.FromResult(new WebSearchResponse(results, provider));
       }
    }
 }

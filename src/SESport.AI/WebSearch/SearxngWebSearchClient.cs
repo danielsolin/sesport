@@ -66,13 +66,15 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       var engines = SearxngSearchEngineRotation.NormalizeEngines(
          Options.Engines
       );
-      var engine = SearxngSearchEngineRotation.GetEngineForAttempt(
-         engines,
-         searchAttempt
-      );
+      var retryAttempt = searchAttempt;
 
       while(true)
       {
+         var engine = SearxngSearchEngineRotation.GetEngineForAttempt(
+            engines,
+            retryAttempt
+         );
+
          await RateLimiter.WaitAsync(engine, cancellationToken);
 
          try
@@ -109,6 +111,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                "transient"
             );
          }
+
+         retryAttempt++;
       }
    }
 

@@ -38,10 +38,7 @@ public sealed class CachedWebSearchClient : IWebSearchClient
       var cacheKey = new WebSearchCacheKey(
          normalizedQuery,
          maxResults,
-         SearxngSearchEngineRotation.GetEngineForAttempt(
-            SearxngOptions.Engines,
-            searchAttempt
-         )
+         GetRequestedEngine(searchAttempt)
       );
 
       if(Cache.TryGet(cacheKey, out var cachedResponse))
@@ -55,7 +52,52 @@ public sealed class CachedWebSearchClient : IWebSearchClient
          cancellationToken,
          searchAttempt
       );
-      Cache.Store(cacheKey, response);
+      var cacheEngine = ResolveCacheEngine(
+         response,
+         cacheKey.Engine
+      );
+
+      Cache.Store(
+         new WebSearchCacheKey(
+            normalizedQuery,
+            maxResults,
+            cacheEngine
+         ),
+         response
+      );
       return response;
+   }
+
+   private string GetRequestedEngine(int searchAttempt)
+   {
+      return SearxngSearchEngineRotation.GetEngineForAttempt(
+         SearxngOptions.Engines,
+         searchAttempt
+      );
+   }
+
+   private static string ResolveCacheEngine(
+      WebSearchResponse response,
+      string requestedEngine
+   )
+   {
+      return TryGetEngineFromValue(response.Provider, "SearXNG/") ??
+         TryGetEngineFromValue(response.Details, "engines=") ??
+         requestedEngine;
+   }
+
+   private static string? TryGetEngineFromValue(
+      string? value,
+      string prefix
+   )
+   {
+      if(string.IsNullOrWhiteSpace(value) ||
+         !value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+      {
+         return null;
+      }
+
+      var engine = value[prefix.Length..].Trim();
+      return string.IsNullOrWhiteSpace(engine) ? null : engine;
    }
 }

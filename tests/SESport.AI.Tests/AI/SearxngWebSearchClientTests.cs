@@ -221,6 +221,8 @@ public class SearxngWebSearchClientTests
       );
 
       Assert.Equal(2, handler.RequestCount);
+      Assert.Contains("engines=google", handler.RequestBodies[0]);
+      Assert.Contains("engines=brave", handler.RequestBodies[1]);
       Assert.Single(response.Results);
       Assert.Equal("Tre Kronor roster", response.Results[0].Title);
    }
@@ -502,22 +504,27 @@ public class SearxngWebSearchClientTests
 
       public int RequestCount { get; private set; }
 
-      protected override Task<HttpResponseMessage> SendAsync(
+      public List<string> RequestBodies { get; } = [];
+
+      protected override async Task<HttpResponseMessage> SendAsync(
          HttpRequestMessage request,
          CancellationToken cancellationToken
       )
       {
-         _ = request;
-         _ = cancellationToken;
          RequestCount++;
+         var body = request.Content is null
+            ? string.Empty
+            : await request.Content.ReadAsStringAsync(cancellationToken);
+         RequestBodies.Add(body);
+
          var response = responses.Count == 0
             ? new ResponseSpec(HttpStatusCode.OK, CreateResponseJson())
             : responses.Dequeue();
 
-         return Task.FromResult(new HttpResponseMessage(response.StatusCode)
+         return new HttpResponseMessage(response.StatusCode)
          {
             Content = new StringContent(response.Body)
-         });
+         };
       }
 
       public sealed record ResponseSpec(
