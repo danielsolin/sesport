@@ -30,10 +30,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       LlamaServerDefaults.MaxToolFormatFallbackAttempts;
    private const int DefaultMaxToolRounds =
       LlamaServerDefaults.DefaultMaxToolRounds;
-   private const int DefaultFinalMaxTokens =
-      LlamaServerDefaults.DefaultFinalMaxTokens;
-   private const int DefaultUnconstrainedRepairMaxTokens =
-      LlamaServerDefaults.DefaultUnconstrainedRepairMaxTokens;
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -486,7 +482,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                request = LlamaRequestFactory.CreateFinal(
                   request,
-                  requestState.ConfiguredMaxTokens,
                   job,
                   prompt
                );
@@ -658,7 +653,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                   );
                   request = LlamaRequestFactory.CreateFinal(
                      request,
-                     requestState.ConfiguredMaxTokens,
                      job,
                      prompt
                   );
@@ -787,7 +781,6 @@ public sealed class LlamaServerClient : IAiProviderClient
                   LlamaStructuredOutputRepair.ApplyRepairPrompt(messages);
                   request = LlamaRequestFactory.CreateFinal(
                      request,
-                     requestState.ConfiguredMaxTokens,
                      job,
                      prompt
                   );
@@ -1038,11 +1031,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       var repairRequest = (JsonObject)request.DeepClone();
       repairRequest.Remove("response_format");
 
-      if(!repairRequest.ContainsKey("max_tokens"))
-      {
-         repairRequest["max_tokens"] = DefaultUnconstrainedRepairMaxTokens;
-      }
-
       return repairRequest;
    }
 
@@ -1053,7 +1041,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          return;
       }
 
-      request["max_tokens"] = DefaultFinalMaxTokens;
+      request["max_tokens"] = AiDefaults.DefaultMaxOutputTokens;
    }
 
    private async Task<ResponseEnvelope> SendWithRetryAsync(

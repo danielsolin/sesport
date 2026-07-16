@@ -2,6 +2,7 @@ namespace SESport.Core.Configuration;
 
 public static class AiDefaults
 {
+   public const int DefaultMaxOutputTokens = 4096;
    public const int MalformedResponseAttempts = 3;
    public const double ActivitySearchTemperature = 0.1;
    public const string GoogleApiKeyHeader = "x-goog-api-key";

@@ -52,6 +52,12 @@ internal static class ResponsesRequestBuilder
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
       MergeRequestOptions(payload, prompt.RequestOptionsJson);
+
+      if(!payload.ContainsKey("max_output_tokens"))
+      {
+         payload["max_output_tokens"] = AiDefaults.DefaultMaxOutputTokens;
+      }
+
       return payload;
    }
 

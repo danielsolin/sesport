@@ -188,7 +188,10 @@ public class AiProviderClientTests
          "\"response_format\"",
          handler.RequestBodies[0]
       );
-      Assert.Contains("\"max_tokens\":1024", handler.RequestBodies[0]);
+      Assert.Contains(
+         $"\"max_tokens\":{AiDefaults.DefaultMaxOutputTokens}",
+         handler.RequestBodies[0]
+      );
       Assert.Contains("\"search_engine\":\"google\"", result.ToolTraceJson);
       Assert.Single(webSearchClient.Queries);
       Assert.Equal("Tre Kronor", webSearchClient.Queries[0].Query);
@@ -203,7 +206,7 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncUsesJobToolCallMaxTokensForToolRoundsOnly()
+      LlamaServerGenerateAsyncUsesPromptMaxOutputTokensForAllRequests()
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
@@ -254,7 +257,7 @@ public class AiProviderClientTests
       Assert.Equal(3, handler.RequestBodies.Count);
       Assert.All(
          handler.RequestBodies,
-         body => Assert.Contains("\"max_tokens\":2048", body)
+         body => Assert.Contains("\"max_tokens\":8192", body)
       );
    }
 
@@ -1271,6 +1274,10 @@ public class AiProviderClientTests
          handler.RequestBodies[0]
       );
       Assert.Contains(
+         $"\"max_tokens\":{AiDefaults.DefaultMaxOutputTokens}",
+         handler.RequestBodies[0]
+      );
+      Assert.Contains(
          "\\u0022type\\u0022: \\u0022object\\u0022",
          handler.RequestBodies[0]
       );
@@ -1341,7 +1348,7 @@ public class AiProviderClientTests
          "Tool calls remaining: 0 of 1.",
          handler.RequestBodies[1]
       );
-      Assert.Contains("\"max_tokens\":2048",
+      Assert.Contains("\"max_tokens\":8192",
          handler.RequestBodies[0]);
       Assert.Contains("\"max_tokens\":8192",
          handler.RequestBodies[1]);
@@ -1843,6 +1850,10 @@ public class AiProviderClientTests
          handler.RequestBody);
       Assert.Contains("\"plugins\":[{\"id\":\"web\"}]",
          handler.RequestBody);
+      Assert.Contains(
+         $"\"max_output_tokens\":{AiDefaults.DefaultMaxOutputTokens}",
+         handler.RequestBody
+      );
       Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody);
    }
@@ -1866,6 +1877,10 @@ public class AiProviderClientTests
 
       Assert.Contains("\"response_format\":{\"type\":\"json_schema\"",
          handler.RequestBody);
+      Assert.Contains(
+         $"\"max_output_tokens\":{AiDefaults.DefaultMaxOutputTokens}",
+         handler.RequestBody
+      );
    }
 
    private static AiProviderDefinition CreateProvider(string kind)

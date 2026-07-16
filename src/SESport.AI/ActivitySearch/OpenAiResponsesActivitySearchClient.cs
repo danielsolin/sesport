@@ -124,6 +124,7 @@ public sealed class OpenAiResponsesActivitySearchClient
       {
          model = options.Model,
          input = prompt,
+         max_output_tokens = AiDefaults.DefaultMaxOutputTokens,
          tools = new object[] { new { type = options.WebSearchToolType } },
          tool_choice = "auto"
       };

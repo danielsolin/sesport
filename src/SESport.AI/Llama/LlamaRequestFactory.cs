@@ -4,13 +4,13 @@ using System.Text.Json.Nodes;
 
 using SESport.AI.Clients;
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.Llama;
 
 internal sealed record LlamaRequestState(
    JsonObject Request,
-   IReadOnlyList<LlamaConditionalTool> ConditionalTools,
-   JsonNode? ConfiguredMaxTokens
+   IReadOnlyList<LlamaConditionalTool> ConditionalTools
 );
 
 internal static class LlamaRequestFactory
@@ -41,8 +41,6 @@ internal static class LlamaRequestFactory
    private const string JsonValueRequired = "required";
    private const string JsonValueSystem = "system";
    private const string JsonValueUser = "user";
-   private const int DefaultToolCallMaxTokens =
-      LlamaServerDefaults.DefaultToolCallMaxTokens;
 
    private const string ConfiguredToolsJsonMustBeArrayMessage =
       "Configured tools JSON must be a JSON array.";
@@ -122,30 +120,21 @@ internal static class LlamaRequestFactory
       MergeRequestOptions(payload, provider.RequestOptionsJson);
       MergeRequestOptions(payload, prompt.RequestOptionsJson);
 
-      var configuredMaxTokens = payload.TryGetPropertyValue(
-         JsonPropertyMaxTokens,
-         out var maxTokensNode
-      )
-         ? maxTokensNode?.DeepClone()
-         : null;
+      ApplyDefaultMaxTokens(payload);
 
       if(requestTools.Count > 0)
       {
-         payload[JsonPropertyMaxTokens] = job.ToolCallMaxTokens
-            ?? DefaultToolCallMaxTokens;
          RemoveStructuredResponseFormat(payload);
       }
 
       return new LlamaRequestState(
          payload,
-         conditionalTools,
-         configuredMaxTokens
+         conditionalTools
       );
    }
 
    public static JsonObject CreateFinal(
       JsonObject request,
-      JsonNode? configuredMaxTokens,
       AiJobDefinition job,
       AiPromptDefinition prompt
    )
@@ -153,15 +142,6 @@ internal static class LlamaRequestFactory
       var finalRequest = (JsonObject)request.DeepClone();
       finalRequest.Remove(JsonPropertyTools);
       finalRequest.Remove(JsonPropertyToolChoice);
-
-      if(configuredMaxTokens is null)
-      {
-         finalRequest.Remove(JsonPropertyMaxTokens);
-      }
-      else
-      {
-         finalRequest[JsonPropertyMaxTokens] = configuredMaxTokens.DeepClone();
-      }
 
       ApplyStructuredOutputPrompt(finalRequest, job, prompt);
       ApplyStructuredResponseFormat(finalRequest, job, prompt);
@@ -361,6 +341,16 @@ internal static class LlamaRequestFactory
       }
 
       return payload;
+   }
+
+   private static void ApplyDefaultMaxTokens(JsonObject payload)
+   {
+      if(payload.ContainsKey(JsonPropertyMaxTokens))
+      {
+         return;
+      }
+
+      payload[JsonPropertyMaxTokens] = AiDefaults.DefaultMaxOutputTokens;
    }
 
    private static JsonArray CreateMessages(
