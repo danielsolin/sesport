@@ -5,6 +5,7 @@ using SESport.AI.Prompts;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 using SESport.Data.AI;
 using SESport.Web.Services;
 
