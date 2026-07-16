@@ -1,5 +1,7 @@
 using System.Net;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.Llama;
 
 internal static class LlamaRetryPolicy
@@ -73,17 +75,14 @@ internal static class LlamaRetryPolicy
 
    public static TimeSpan GetRetryDelay(int attempt)
    {
-      var seconds = attempt switch
-      {
-         1 => 1,
-         2 => 2,
-         3 => 4,
-         4 => 8,
-         5 => 16,
-         _ => 30
-      };
+      var retryDelays = LlamaServerDefaults.TransientRetryDelays;
 
-      return TimeSpan.FromSeconds(seconds);
+      if(attempt < 1 || attempt > retryDelays.Count)
+      {
+         return retryDelays[^1];
+      }
+
+      return retryDelays[attempt - 1];
    }
 
    public static string CreateFailureMessage(
@@ -95,9 +94,10 @@ internal static class LlamaRetryPolicy
          .ReplaceLineEndings(" ")
          .Trim();
 
-      if(preview.Length > 240)
+      if(preview.Length > LlamaServerDefaults.PreviewSnippetCharacters)
       {
-         preview = preview[..240] + "...";
+         preview = preview[..LlamaServerDefaults.PreviewSnippetCharacters] +
+            "...";
       }
 
       return

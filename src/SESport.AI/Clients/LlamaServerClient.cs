@@ -18,14 +18,22 @@ public sealed class LlamaServerClient : IAiProviderClient
 {
    // Rough character budget for the in-memory chat history.
    // Keep this comfortably below the llama-server token limit.
-   private const int MaxConversationContextCharacters = 250000;
-   private const int MaxTransientRetryAttempts = 12;
-   private const int MaxFormatRepairAttempts = 3;
-   private const int MaxFinalReportCorrectionAttempts = 3;
-   private const int MaxToolFormatFallbackAttempts = 5;
-   private const int DefaultMaxToolRounds = 10;
-   private const int DefaultFinalMaxTokens = 2048;
-   private const int DefaultUnconstrainedRepairMaxTokens = 1024;
+   private const int MaxConversationContextCharacters =
+      LlamaServerDefaults.MaxConversationContextCharacters;
+   private const int MaxTransientRetryAttempts =
+      LlamaServerDefaults.MaxTransientRetryAttempts;
+   private const int MaxFormatRepairAttempts =
+      LlamaServerDefaults.MaxFormatRepairAttempts;
+   private const int MaxFinalReportCorrectionAttempts =
+      LlamaServerDefaults.MaxFinalReportCorrectionAttempts;
+   private const int MaxToolFormatFallbackAttempts =
+      LlamaServerDefaults.MaxToolFormatFallbackAttempts;
+   private const int DefaultMaxToolRounds =
+      LlamaServerDefaults.DefaultMaxToolRounds;
+   private const int DefaultFinalMaxTokens =
+      LlamaServerDefaults.DefaultFinalMaxTokens;
+   private const int DefaultUnconstrainedRepairMaxTokens =
+      LlamaServerDefaults.DefaultUnconstrainedRepairMaxTokens;
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -1211,7 +1219,10 @@ public sealed class LlamaServerClient : IAiProviderClient
          "limit={Limit} find={Find}",
          step,
          toolCall.Name,
-         LlamaLogFormatting.Truncate(query, 240),
+         LlamaLogFormatting.Truncate(
+            query,
+            LlamaServerDefaults.PreviewSnippetCharacters
+         ),
          limit,
          LlamaLogFormatting.Truncate(find, 120)
       );
@@ -1239,10 +1250,16 @@ public sealed class LlamaServerClient : IAiProviderClient
          string.IsNullOrWhiteSpace(searchProvider)
             ? "unknown"
             : searchProvider,
-         LlamaLogFormatting.Truncate(query, 240),
+         LlamaLogFormatting.Truncate(
+            query,
+            LlamaServerDefaults.PreviewSnippetCharacters
+         ),
          limit,
          searchResults.Count,
-         LlamaLogFormatting.Truncate(firstResult, 240)
+         LlamaLogFormatting.Truncate(
+            firstResult,
+            LlamaServerDefaults.PreviewSnippetCharacters
+         )
       );
    }
 

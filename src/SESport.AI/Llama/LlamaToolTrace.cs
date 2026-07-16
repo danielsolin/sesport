@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.Llama;
 
 internal static class LlamaToolTrace
@@ -181,9 +183,10 @@ internal static class LlamaToolTrace
    {
       var preview = reason.ReplaceLineEndings(" ").Trim();
 
-      if(preview.Length > 240)
+      if(preview.Length > LlamaServerDefaults.PreviewSnippetCharacters)
       {
-         preview = preview[..240] + "...";
+         preview = preview[..LlamaServerDefaults.PreviewSnippetCharacters] +
+            "...";
       }
 
       var content =
@@ -208,9 +211,10 @@ internal static class LlamaToolTrace
    {
       var preview = validationError.ReplaceLineEndings(" ").Trim();
 
-      if(preview.Length > 240)
+      if(preview.Length > LlamaServerDefaults.PreviewSnippetCharacters)
       {
-         preview = preview[..240] + "...";
+         preview = preview[..LlamaServerDefaults.PreviewSnippetCharacters] +
+            "...";
       }
 
       return new JsonObject

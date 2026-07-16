@@ -4,13 +4,6 @@ namespace SESport.AI.WebSearch;
 
 internal static class SearxngSearchEngineRotation
 {
-   internal static readonly IReadOnlyList<string> DefaultEngines =
-   [
-      "google",
-      "brave",
-      "duckduckgo"
-   ];
-
    internal static IReadOnlyList<string> NormalizeEngines(
       IReadOnlyList<string>? engines
    )
@@ -23,7 +16,7 @@ internal static class SearxngSearchEngineRotation
 
       if(normalizedEngines is null || normalizedEngines.Count == 0)
       {
-         return DefaultEngines;
+         return SearxngWebSearchClientOptions.DefaultEngines;
       }
 
       return new ReadOnlyCollection<string>(normalizedEngines);
@@ -38,7 +31,7 @@ internal static class SearxngSearchEngineRotation
 
       if(normalizedEngines.Count == 0)
       {
-         return DefaultEngines[0];
+         return SearxngWebSearchClientOptions.DefaultEngines[0];
       }
 
       var index = searchAttempt % normalizedEngines.Count;

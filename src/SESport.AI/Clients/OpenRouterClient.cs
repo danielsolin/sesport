@@ -195,8 +195,8 @@ public sealed class OpenRouterClient : IAiProviderClient
       if(string.Equals(provider.Kind, "openrouter", StringComparison.Ordinal))
       {
          requestMessage.Headers.TryAddWithoutValidation(
-            "X-OpenRouter-Experimental-Metadata",
-            "enabled"
+            AiDefaults.OpenRouterMetadataHeader,
+            AiDefaults.OpenRouterMetadataValue
          );
       }
 

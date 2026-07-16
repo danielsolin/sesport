@@ -41,7 +41,8 @@ internal static class LlamaRequestFactory
    private const string JsonValueRequired = "required";
    private const string JsonValueSystem = "system";
    private const string JsonValueUser = "user";
-   private const int DefaultToolCallMaxTokens = 1024;
+   private const int DefaultToolCallMaxTokens =
+      LlamaServerDefaults.DefaultToolCallMaxTokens;
 
    private const string ConfiguredToolsJsonMustBeArrayMessage =
       "Configured tools JSON must be a JSON array.";

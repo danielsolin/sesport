@@ -1,4 +1,5 @@
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 
 namespace SESport.Web.Services;
 
@@ -7,16 +8,15 @@ public sealed class AiRunTimeoutWorker(
    ILogger<AiRunTimeoutWorker> logger
 ) : BackgroundService
 {
-   private static readonly TimeSpan StaleRunAge = TimeSpan.FromHours(1);
-   private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(10);
-
    protected override async Task ExecuteAsync(
       CancellationToken stoppingToken
    )
    {
       await SweepAsync(stoppingToken);
 
-      using var timer = new PeriodicTimer(SweepInterval);
+      using var timer = new PeriodicTimer(
+         AiWorkerDefaults.RunTimeoutSweepInterval
+      );
 
       while(await timer.WaitForNextTickAsync(stoppingToken))
       {
@@ -34,7 +34,7 @@ public sealed class AiRunTimeoutWorker(
          >();
 
          var updatedCount = await repository.FailStaleRunningRunsAsync(
-            StaleRunAge,
+            AiWorkerDefaults.RunTimeoutStaleAge,
             cancellationToken
          );
 

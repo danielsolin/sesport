@@ -3,44 +3,12 @@ using System.Net;
 using Microsoft.Playwright;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.WebSearch;
 
 public sealed class GoogleWebSearchClient : IWebSearchClient
 {
-   private const string GoogleSearchBaseUrl =
-      "https://www.google.com/search";
-
-   private const string BrowserUserAgent =
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-      "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
-
-   private static readonly string[] DeniedHostSuffixes =
-   [
-      "instagram.com",
-      "www.instagram.com",
-      "facebook.com",
-      "www.facebook.com",
-      "x.com",
-      "www.x.com",
-      "twitter.com",
-      "www.twitter.com",
-      "tiktok.com",
-      "www.tiktok.com",
-      "youtube.com",
-      "www.youtube.com",
-      "youtu.be",
-      "www.youtu.be",
-      "threads.net",
-      "www.threads.net"
-   ];
-
-   private static readonly TimeSpan BrowserNavigationTimeout =
-      TimeSpan.FromSeconds(30);
-
-   private static readonly TimeSpan BrowserLoadStateTimeout =
-      TimeSpan.FromSeconds(30);
-
    private readonly Func<Uri, int, CancellationToken,
       Task<GoogleSearchAttempt>> searchFetcher;
 
@@ -94,17 +62,21 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
          new Dictionary<string, string>
          {
             ["q"] = query,
-            ["hl"] = "en",
-            ["gl"] = "us",
-            ["pws"] = "0",
-            ["num"] = Math.Clamp(maxResults, 1, 20).ToString()
+            ["hl"] = WebSearchDefaults.GoogleSearchLanguage,
+            ["gl"] = WebSearchDefaults.GoogleSearchCountry,
+            ["pws"] = WebSearchDefaults.GoogleSearchPersonalization,
+            ["num"] = Math.Clamp(
+               maxResults,
+               1,
+               WebSearchDefaults.MaxSearchResults
+            ).ToString()
          }.Select(pair =>
             $"{WebUtility.UrlEncode(pair.Key)}=" +
             $"{WebUtility.UrlEncode(pair.Value)}"
          )
       );
 
-      return new Uri($"{GoogleSearchBaseUrl}?{queryString}");
+      return new Uri($"{WebSearchDefaults.GoogleSearchBaseUrl}?{queryString}");
    }
 
    private static async Task<GoogleSearchAttempt>
@@ -127,12 +99,12 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
          await using var context = await browser.NewContextAsync(
             new BrowserNewContextOptions
             {
-               UserAgent = BrowserUserAgent,
-               Locale = "en-US",
+               UserAgent = WebPageFetchDefaults.BrowserUserAgentFallback,
+               Locale = WebPageFetchDefaults.BrowserLocale,
                ViewportSize = new ViewportSize
                {
-                  Width = 1440,
-                  Height = 2400
+                  Width = WebPageFetchDefaults.BrowserViewportWidth,
+                  Height = WebPageFetchDefaults.BrowserViewportHeight
                }
             }
          );
@@ -143,7 +115,9 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
             new PageGotoOptions
             {
                WaitUntil = WaitUntilState.DOMContentLoaded,
-               Timeout = (float)BrowserNavigationTimeout.TotalMilliseconds
+               Timeout = (float)
+                  WebPageFetchDefaults.BrowserNavigationTimeout
+                     .TotalMilliseconds
             }
          );
 
@@ -153,7 +127,9 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
                LoadState.NetworkIdle,
                new PageWaitForLoadStateOptions
                {
-                  Timeout = (float)BrowserLoadStateTimeout.TotalMilliseconds
+                  Timeout = (float)
+                     WebPageFetchDefaults.BrowserLoadStateTimeout
+                        .TotalMilliseconds
                }
             );
          }
@@ -170,7 +146,9 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
                "a:has(h3)",
                new PageWaitForSelectorOptions
                {
-                  Timeout = (float)BrowserLoadStateTimeout.TotalMilliseconds
+                  Timeout = (float)
+                     WebPageFetchDefaults.BrowserLoadStateTimeout
+                        .TotalMilliseconds
                }
             );
          }
@@ -240,7 +218,11 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
             )
          );
 
-         if(items.Count >= Math.Clamp(maxResults, 1, 20))
+         if(items.Count >= Math.Clamp(
+            maxResults,
+            1,
+            WebSearchDefaults.MaxSearchResults
+         ))
          {
             break;
          }
@@ -325,7 +307,7 @@ public sealed class GoogleWebSearchClient : IWebSearchClient
 
       var host = uri.Host;
 
-      foreach(var deniedHostSuffix in DeniedHostSuffixes)
+      foreach(var deniedHostSuffix in WebSearchDefaults.DeniedHostSuffixes)
       {
          if(host.EndsWith(
             deniedHostSuffix,

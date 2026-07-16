@@ -1262,14 +1262,14 @@ public class WebPageContentClientTests
    {
       var text = new string(
          'x',
-         WebPageContentClient.MaxResponseCharacters + 1
+         WebPageFetchDefaults.MaxResponseCharacters + 1
       );
 
       var result = WebPageContentClient.ApplyResponseCutoff(text);
 
-      Assert.EndsWith("[CUTOFF]", result);
+      Assert.EndsWith(WebPageFetchDefaults.CutoffMarker, result);
       Assert.Equal(
-         WebPageContentClient.MaxResponseCharacters,
+         WebPageFetchDefaults.MaxResponseCharacters,
          result.Length
       );
    }

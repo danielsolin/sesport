@@ -3,35 +3,12 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.WebSearch;
 
 public sealed class SearxngWebSearchClient : IWebSearchClient
 {
-   private static readonly Uri DefaultBaseAddress = new(
-      "http://127.0.0.1:8088/"
-   );
-
-   private static readonly string[] DeniedHostSuffixes =
-   [
-      "instagram.com",
-      "www.instagram.com",
-      "facebook.com",
-      "www.facebook.com",
-      "x.com",
-      "www.x.com",
-      "twitter.com",
-      "www.twitter.com",
-      "tiktok.com",
-      "www.tiktok.com",
-      "youtube.com",
-      "www.youtube.com",
-      "youtu.be",
-      "www.youtu.be",
-      "threads.net",
-      "www.threads.net"
-   ];
-
    public SearxngWebSearchClient(
       HttpClient httpClient,
       SearxngWebSearchClientOptions options,
@@ -315,7 +292,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             )
          );
 
-         if(items.Count >= Math.Clamp(maxResults, 1, 20))
+         if(items.Count >= Math.Clamp(
+            maxResults,
+            1,
+            WebSearchDefaults.MaxSearchResults
+         ))
          {
             break;
          }
@@ -355,7 +336,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
       var host = uri.Host;
 
-      foreach(var deniedHostSuffix in DeniedHostSuffixes)
+      foreach(var deniedHostSuffix in WebSearchDefaults.DeniedHostSuffixes)
       {
          if(host.EndsWith(
             deniedHostSuffix,
@@ -399,7 +380,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       if(string.IsNullOrWhiteSpace(baseUrl) ||
          !Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
       {
-         return DefaultBaseAddress;
+         return new Uri(SearxngWebSearchClientOptions.DefaultBaseUrl);
       }
 
       var uriString = uri.ToString();

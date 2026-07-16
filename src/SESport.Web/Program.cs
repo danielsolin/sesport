@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+using SESport.Core.Configuration;
 using SESport.Core.AI;
 using SESport.Data;
 using SESport.Web.Extensions;
@@ -76,7 +77,8 @@ app.Logger.LogInformation(
 );
 app.Logger.LogInformation(
    "SearXNG config bound: baseUrl={BaseUrl}",
-   searxngOptions.BaseUrl ?? "<default>"
+   searxngOptions.BaseUrl ??
+      SearxngWebSearchClientOptions.DefaultBaseUrl
 );
 
 if(!app.Environment.IsDevelopment())

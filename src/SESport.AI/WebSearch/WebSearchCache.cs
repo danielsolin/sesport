@@ -1,9 +1,9 @@
+using SESport.Core.Configuration;
+
 namespace SESport.AI.WebSearch;
 
 public sealed class WebSearchCache
 {
-   private static readonly TimeSpan DefaultTtl = TimeSpan.FromMinutes(30);
-
    private readonly Lock stateLock = new();
    private readonly Dictionary<WebSearchCacheKey, CacheEntry> entries = [];
    private readonly TimeProvider timeProvider;
@@ -49,7 +49,7 @@ public sealed class WebSearchCache
       {
          entries[key] = new CacheEntry(
             response,
-            timeProvider.GetUtcNow() + DefaultTtl
+            timeProvider.GetUtcNow() + WebSearchCacheDefaults.DefaultTtl
          );
       }
    }

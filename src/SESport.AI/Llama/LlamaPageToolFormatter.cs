@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
+using SESport.Core.Configuration;
 using SESport.AI.WebPages;
 
 namespace SESport.AI.Llama;
@@ -358,7 +359,11 @@ internal static class LlamaPageToolFormatter
 
       if(matches.Count <= 1)
       {
-         yield return ExtractTextAroundMatch(line, matches[0].Index, 240);
+         yield return ExtractTextAroundMatch(
+            line,
+            matches[0].Index,
+            LlamaServerDefaults.PreviewSnippetCharacters
+         );
          yield break;
       }
 

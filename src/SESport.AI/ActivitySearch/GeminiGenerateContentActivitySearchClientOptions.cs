@@ -1,4 +1,4 @@
-namespace SESport.Core.Configuration;
+namespace SESport.AI.ActivitySearch;
 
 public sealed record GeminiGenerateContentActivitySearchClientOptions(
    Uri BaseAddress,

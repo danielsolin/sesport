@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.Clients;
 
 public static class ResponsesOutputValidator
@@ -402,9 +404,10 @@ public static class ResponsesOutputValidator
    {
       var preview = outputText.ReplaceLineEndings(" ").Trim();
 
-      if(preview.Length > 240)
+      if(preview.Length > LlamaServerDefaults.PreviewSnippetCharacters)
       {
-         preview = preview[..240] + "...";
+         preview = preview[..LlamaServerDefaults.PreviewSnippetCharacters] +
+            "...";
       }
 
       return new InvalidOperationException(

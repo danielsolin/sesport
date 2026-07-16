@@ -3,16 +3,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.WebPages;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {
-   private const int MaxTransientRetryAttempts = 3;
-   internal const string CutoffMarker =
-      WebPageContentFetchSupport.CutoffMarker;
-   internal const int MaxResponseCharacters =
-      WebPageContentFetchSupport.MaxResponseCharacters;
+   private const int MaxTransientRetryAttempts =
+      WebPageFetchDefaults.MaxTransientRetryAttempts;
 
    private readonly HttpClient httpClient;
    private readonly ILogger<WebPageContentClient> logger;
@@ -449,11 +447,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static TimeSpan GetTransientRetryDelay(int attempt)
    {
-      return attempt switch
+      var retryDelays = WebPageFetchDefaults.TransientRetryDelays;
+
+      if(attempt < 1 || attempt > retryDelays.Count)
       {
-         1 => TimeSpan.FromSeconds(2),
-         2 => TimeSpan.FromSeconds(5),
-         _ => TimeSpan.FromSeconds(10)
-      };
+         return retryDelays[^1];
+      }
+
+      return retryDelays[attempt - 1];
    }
 }

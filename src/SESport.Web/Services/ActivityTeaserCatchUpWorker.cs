@@ -1,5 +1,6 @@
 using SESport.Data;
 using SESport.Data.AI;
+using SESport.Core.Configuration;
 
 namespace SESport.Web.Services;
 
@@ -8,8 +9,6 @@ public sealed class ActivityTeaserCatchUpWorker(
    ILogger<ActivityTeaserCatchUpWorker> logger
 ) : BackgroundService
 {
-   private const int MaxRuns = 50;
-
    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
    {
       try
@@ -21,14 +20,14 @@ public sealed class ActivityTeaserCatchUpWorker(
             .GetRequiredService<ActivityRepository>();
 
          var runs = await aiRepository
-            .GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
-               MaxRuns,
+               .GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
+               AiWorkerDefaults.ActivityTeaserCatchUpMaxRuns,
                stoppingToken
             );
 
          var factsRuns = await aiRepository
-            .GetCompletedActivityFactsRunsWithEmptyActivityFactsAsync(
-               MaxRuns,
+               .GetCompletedActivityFactsRunsWithEmptyActivityFactsAsync(
+               AiWorkerDefaults.ActivityTeaserCatchUpMaxRuns,
                stoppingToken
             );
 

@@ -2,6 +2,8 @@ using System.Diagnostics;
 
 using Microsoft.Extensions.Logging;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.WebPages;
 
 internal static class WebPageCurlPageFetcher
@@ -62,7 +64,9 @@ internal static class WebPageCurlPageFetcher
       processStartInfo.ArgumentList.Add("--location");
       processStartInfo.ArgumentList.Add("--compressed");
       processStartInfo.ArgumentList.Add("--max-time");
-      processStartInfo.ArgumentList.Add("30");
+      processStartInfo.ArgumentList.Add(
+         WebPageFetchDefaults.CurlMaxTimeSeconds.ToString()
+      );
       processStartInfo.ArgumentList.Add("--output");
       processStartInfo.ArgumentList.Add("-");
       processStartInfo.ArgumentList.Add("--write-out");

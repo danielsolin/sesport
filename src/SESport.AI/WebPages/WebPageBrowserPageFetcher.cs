@@ -2,6 +2,8 @@ using System.Text.Json;
 
 using Microsoft.Playwright;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.WebPages;
 
 internal static class WebPageBrowserPageFetcher
@@ -32,31 +34,18 @@ internal static class WebPageBrowserPageFetcher
             new BrowserNewContextOptions
             {
                UserAgent = browserUserAgent,
-               Locale = "en-US",
+               Locale = WebPageFetchDefaults.BrowserLocale,
                ExtraHTTPHeaders = browserLikeHeaders,
                ViewportSize = new ViewportSize
                {
-                  Width = 1440,
-                  Height = 2400
+                  Width = WebPageFetchDefaults.BrowserViewportWidth,
+                  Height = WebPageFetchDefaults.BrowserViewportHeight
                }
             }
          );
 
          await context.AddInitScriptAsync(
-            """
-            Object.defineProperty(navigator, 'webdriver', {
-               get: () => undefined
-            });
-            Object.defineProperty(navigator, 'languages', {
-               get: () => ['en-US', 'en']
-            });
-            Object.defineProperty(navigator, 'platform', {
-               get: () => 'Linux x86_64'
-            });
-            Object.defineProperty(navigator, 'vendor', {
-               get: () => 'Google Inc.'
-            });
-            """
+            WebPageFetchDefaults.BrowserFingerprintScript
          );
 
          await using var page = await context.NewPageAsync();
@@ -66,8 +55,8 @@ internal static class WebPageBrowserPageFetcher
             {
                WaitUntil = WaitUntilState.DOMContentLoaded,
                Timeout = (float)
-                  WebPageContentFetchSupport.BrowserNavigationTimeout
-                  .TotalMilliseconds
+                  WebPageFetchDefaults.BrowserNavigationTimeout
+                     .TotalMilliseconds
             }
          );
 
@@ -78,8 +67,8 @@ internal static class WebPageBrowserPageFetcher
                new PageWaitForLoadStateOptions
                {
                   Timeout = (float)
-                     WebPageContentFetchSupport.BrowserLoadStateTimeout
-                     .TotalMilliseconds
+                     WebPageFetchDefaults.BrowserLoadStateTimeout
+                        .TotalMilliseconds
                }
             );
          }

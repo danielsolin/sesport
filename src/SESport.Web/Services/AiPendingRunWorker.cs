@@ -1,6 +1,7 @@
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 
 namespace SESport.Web.Services;
 
@@ -10,8 +11,6 @@ public sealed class AiPendingRunWorker(
    ILogger<AiPendingRunWorker> logger
 ) : BackgroundService
 {
-   private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
-
    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
    {
       while(!stoppingToken.IsCancellationRequested)
@@ -65,7 +64,10 @@ public sealed class AiPendingRunWorker(
          {
             try
             {
-               await Task.Delay(PollInterval, stoppingToken);
+               await Task.Delay(
+                  AiWorkerDefaults.PendingRunPollInterval,
+                  stoppingToken
+               );
             }
             catch(OperationCanceledException)
                when(stoppingToken.IsCancellationRequested)

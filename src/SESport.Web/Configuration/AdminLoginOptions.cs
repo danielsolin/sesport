@@ -1,4 +1,4 @@
-namespace SESport.Core.Configuration;
+namespace SESport.Web.Configuration;
 
 public sealed record AdminLoginOptions
 {

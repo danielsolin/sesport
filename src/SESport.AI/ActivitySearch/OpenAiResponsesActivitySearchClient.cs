@@ -4,14 +4,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.ActivitySearch;
 
 public sealed class OpenAiResponsesActivitySearchClient
    : IActivitySearchModelClient
 {
-   private const int MaxMalformedResponseAttempts = 3;
-
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -39,8 +38,8 @@ public sealed class OpenAiResponsesActivitySearchClient
       if(IsOpenRouterBaseAddress())
       {
          httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-            "X-OpenRouter-Experimental-Metadata",
-            "enabled"
+            AiDefaults.OpenRouterMetadataHeader,
+            AiDefaults.OpenRouterMetadataValue
          );
       }
    }
@@ -53,7 +52,9 @@ public sealed class OpenAiResponsesActivitySearchClient
       var prompt = ActivitySearchPrompt.Create(request);
       var requestPayload = CreateRequestPayload(request, prompt);
 
-      for(var attempt = 1; attempt <= MaxMalformedResponseAttempts; attempt++)
+      for(var attempt = 1;
+         attempt <= AiDefaults.MalformedResponseAttempts;
+         attempt++)
       {
          var response = await httpClient.PostAsJsonAsync(
             new Uri(options.BaseAddress, "responses"),
@@ -94,7 +95,7 @@ public sealed class OpenAiResponsesActivitySearchClient
          }
          catch(JsonException exception)
          {
-            if(attempt == MaxMalformedResponseAttempts)
+            if(attempt == AiDefaults.MalformedResponseAttempts)
             {
                throw CreateMalformedResponseException(
                   response,

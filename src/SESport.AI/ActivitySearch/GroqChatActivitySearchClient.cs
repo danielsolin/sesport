@@ -4,13 +4,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.ActivitySearch;
 
 public sealed class GroqChatActivitySearchClient : IActivitySearchModelClient
 {
-   private const int MaxMalformedResponseAttempts = 3;
-
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -44,7 +43,9 @@ public sealed class GroqChatActivitySearchClient : IActivitySearchModelClient
       var prompt = ActivitySearchPrompt.Create(request);
       var requestPayload = CreateRequestPayload(prompt);
 
-      for(var attempt = 1; attempt <= MaxMalformedResponseAttempts; attempt++)
+      for(var attempt = 1;
+         attempt <= AiDefaults.MalformedResponseAttempts;
+         attempt++)
       {
          var response = await httpClient.PostAsJsonAsync(
             new Uri(options.BaseAddress, "chat/completions"),
@@ -86,7 +87,7 @@ public sealed class GroqChatActivitySearchClient : IActivitySearchModelClient
          }
          catch(JsonException exception)
          {
-            if(attempt == MaxMalformedResponseAttempts)
+            if(attempt == AiDefaults.MalformedResponseAttempts)
             {
                throw CreateMalformedResponseException(
                   response,
@@ -116,7 +117,7 @@ public sealed class GroqChatActivitySearchClient : IActivitySearchModelClient
                content = prompt
             }
          },
-         temperature = 0.1,
+         temperature = AiDefaults.ActivitySearchTemperature,
          compound_custom = new
          {
             tools = new
@@ -126,7 +127,7 @@ public sealed class GroqChatActivitySearchClient : IActivitySearchModelClient
          },
          search_settings = new
          {
-            country = "sweden"
+            country = PrimaryCountry.CountryName.ToLowerInvariant()
          }
       };
    }

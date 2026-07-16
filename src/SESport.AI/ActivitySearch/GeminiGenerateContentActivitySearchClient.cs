@@ -3,14 +3,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using SESport.AI.Interfaces;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.ActivitySearch;
 
 public sealed class GeminiGenerateContentActivitySearchClient
    : IActivitySearchModelClient
 {
-   private const int MaxMalformedResponseAttempts = 3;
-
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -32,7 +31,7 @@ public sealed class GeminiGenerateContentActivitySearchClient
       if(!string.IsNullOrWhiteSpace(options.ApiKey))
       {
          httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-            "x-goog-api-key",
+            AiDefaults.GoogleApiKeyHeader,
             options.ApiKey
          );
       }
@@ -46,7 +45,9 @@ public sealed class GeminiGenerateContentActivitySearchClient
       var prompt = ActivitySearchPrompt.Create(request);
       var requestPayload = CreateRequestPayload(prompt);
 
-      for(var attempt = 1; attempt <= MaxMalformedResponseAttempts; attempt++)
+      for(var attempt = 1;
+         attempt <= AiDefaults.MalformedResponseAttempts;
+         attempt++)
       {
          var response = await httpClient.PostAsJsonAsync(
             CreateGenerateContentUri(),
@@ -88,7 +89,7 @@ public sealed class GeminiGenerateContentActivitySearchClient
          }
          catch(JsonException exception)
          {
-            if(attempt == MaxMalformedResponseAttempts)
+            if(attempt == AiDefaults.MalformedResponseAttempts)
             {
                throw CreateMalformedResponseException(
                   response,
@@ -142,7 +143,7 @@ public sealed class GeminiGenerateContentActivitySearchClient
          },
          generationConfig = new
          {
-            temperature = 0.1
+            temperature = AiDefaults.ActivitySearchTemperature
          }
       };
    }

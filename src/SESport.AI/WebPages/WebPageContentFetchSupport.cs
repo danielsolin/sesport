@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.Playwright;
 
+using SESport.Core.Configuration;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
@@ -12,38 +13,6 @@ namespace SESport.AI.WebPages;
 
 internal static class WebPageContentFetchSupport
 {
-   private const string BrowserUserAgentFallback =
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-      "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
-   private const string BrowserAcceptHeader =
-      "text/html,application/xhtml+xml,application/xml;q=0.9," +
-      "image/avif,image/webp,*/*;q=0.8";
-   private const string BrowserAcceptLanguageHeader = "en-US,en;q=0.9";
-   private const string BrowserLocale = "en-US";
-   private const string BrowserPlatform = "Linux";
-   private const string BrowserFingerprintScript = """
-      Object.defineProperty(navigator, 'webdriver', {
-         get: () => undefined
-      });
-      Object.defineProperty(navigator, 'languages', {
-         get: () => ['en-US', 'en']
-      });
-      Object.defineProperty(navigator, 'platform', {
-         get: () => 'Linux x86_64'
-      });
-      Object.defineProperty(navigator, 'vendor', {
-         get: () => 'Google Inc.'
-      });
-      """;
-
-   internal const string CutoffMarker = "[CUTOFF]";
-   internal const int MaxResponseCharacters = 50000;
-   private const int MaxRelevantLinkCount = 20;
-
-   internal static readonly TimeSpan BrowserNavigationTimeout =
-      TimeSpan.FromSeconds(30);
-   internal static readonly TimeSpan BrowserLoadStateTimeout =
-      TimeSpan.FromSeconds(30);
    internal static readonly IReadOnlyDictionary<string, string>
       CountryNamesByCode = BuildCountryNamesByCode();
    internal static readonly IReadOnlyDictionary<string, string>
@@ -146,7 +115,7 @@ internal static class WebPageContentFetchSupport
       }
       catch
       {
-         return BrowserUserAgentFallback;
+         return WebPageFetchDefaults.BrowserUserAgentFallback;
       }
    }
 
@@ -165,12 +134,13 @@ internal static class WebPageContentFetchSupport
          ) ||
          majorVersion <= 0)
       {
-         return BrowserUserAgentFallback;
+         return WebPageFetchDefaults.BrowserUserAgentFallback;
       }
 
       return
-         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-         $"(KHTML, like Gecko) Chrome/{majorVersion}.0.0.0 Safari/537.36";
+         WebPageFetchDefaults.BrowserUserAgentPrefix +
+         majorVersion +
+         WebPageFetchDefaults.BrowserUserAgentSuffix;
    }
 
    internal static IReadOnlyDictionary<string, string>
@@ -178,12 +148,13 @@ internal static class WebPageContentFetchSupport
    {
       return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
       {
-         ["Accept"] = BrowserAcceptHeader,
-         ["Accept-Language"] = BrowserAcceptLanguageHeader,
+         ["Accept"] = WebPageFetchDefaults.BrowserAcceptHeader,
+         ["Accept-Language"] = WebPageFetchDefaults
+            .BrowserAcceptLanguageHeader,
          ["Upgrade-Insecure-Requests"] = "1",
          ["Sec-CH-UA"] = BuildSecChUaHeader(browserUserAgent),
          ["Sec-CH-UA-Mobile"] = "?0",
-         ["Sec-CH-UA-Platform"] = $"\"{BrowserPlatform}\""
+         ["Sec-CH-UA-Platform"] = $"\"{WebPageFetchDefaults.BrowserPlatform}\""
       };
    }
 
@@ -226,19 +197,21 @@ internal static class WebPageContentFetchSupport
    internal static string ApplyResponseCutoff(string text)
    {
       if(string.IsNullOrWhiteSpace(text) ||
-         text.Length <= MaxResponseCharacters)
+         text.Length <= WebPageFetchDefaults.MaxResponseCharacters)
       {
          return text;
       }
 
-      var cutoffLength = MaxResponseCharacters - CutoffMarker.Length;
+      var cutoffLength = WebPageFetchDefaults.MaxResponseCharacters -
+         WebPageFetchDefaults.CutoffMarker.Length;
 
       if(cutoffLength <= 0)
       {
-         return CutoffMarker;
+         return WebPageFetchDefaults.CutoffMarker;
       }
 
-      return text[..cutoffLength].TrimEnd() + CutoffMarker;
+      return text[..cutoffLength].TrimEnd() +
+         WebPageFetchDefaults.CutoffMarker;
    }
 
    internal static bool IsPdfResponse(
@@ -542,7 +515,7 @@ internal static class WebPageContentFetchSupport
       return scoredLinks
          .OrderByDescending(link => link.Score)
          .Select(link => link.Link)
-         .Take(MaxRelevantLinkCount)
+         .Take(WebPageFetchDefaults.MaxRelevantLinkCount)
          .ToArray();
    }
 
@@ -576,7 +549,7 @@ internal static class WebPageContentFetchSupport
          .OrderByDescending(link => IsPdfUrl(link.Link.Url))
          .ThenBy(link => link.Index)
          .Select(link => link.Link)
-         .Take(MaxRelevantLinkCount)
+         .Take(WebPageFetchDefaults.MaxRelevantLinkCount)
          .ToArray();
    }
 
@@ -1826,7 +1799,7 @@ internal static class WebPageContentFetchSupport
             out var parsedMajorVersion
          )
          ? parsedMajorVersion
-         : 125;
+         : WebPageFetchDefaults.BrowserUserAgentFallbackMajorVersion;
 
       return
          $"\"Chromium\";v=\"{majorVersion}\", " +
@@ -1871,7 +1844,7 @@ internal static class WebPageContentFetchSupport
       }
       catch
       {
-         return BrowserUserAgentFallback;
+         return WebPageFetchDefaults.BrowserUserAgentFallback;
       }
    }
 }

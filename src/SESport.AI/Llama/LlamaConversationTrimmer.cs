@@ -2,6 +2,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.Llama;
 
 internal static class LlamaConversationTrimmer
@@ -416,7 +418,10 @@ internal static class LlamaConversationTrimmer
          toolCalls.Select(FormatConversationToolCall)
       );
 
-      return TruncateForSummary(summary, 240);
+      return TruncateForSummary(
+         summary,
+         LlamaServerDefaults.PreviewSnippetCharacters
+      );
    }
 
    private static string SummarizeSearchToolResult(string toolContent)
@@ -715,7 +720,7 @@ internal static class LlamaConversationTrimmer
 
    private static string TruncateForSummary(
       string value,
-      int maxLength = 220
+      int maxLength = LlamaServerDefaults.DefaultConversationSummaryCharacters
    )
    {
       if(string.IsNullOrWhiteSpace(value))
