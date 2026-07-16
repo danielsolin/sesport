@@ -17,7 +17,14 @@ public sealed class SearxngWebSearchClientOptionsTests
          [
             "google",
             "brave",
-            "duckduckgo"
+            "duckduckgo",
+            "bing",
+            "mojeek",
+            "privacywall",
+            "seznam",
+            "naver",
+            "boardreader",
+            "yep"
          ],
          options.Engines
       );

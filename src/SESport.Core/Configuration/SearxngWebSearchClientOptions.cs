@@ -8,7 +8,14 @@ public sealed record SearxngWebSearchClientOptions
    [
       "google",
       "brave",
-      "duckduckgo"
+      "duckduckgo",
+      "bing",
+      "mojeek",
+      "privacywall",
+      "seznam",
+      "naver",
+      "boardreader",
+      "yep"
    ];
 
    public string? BaseUrl { get; init; } = DefaultBaseUrl;

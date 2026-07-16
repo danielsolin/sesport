@@ -70,7 +70,17 @@ public sealed class CachedWebSearchClientTests
             null
          )
       );
-      var client = CreateClient(innerClient);
+      var client = CreateClient(
+         innerClient,
+         new SearxngWebSearchClientOptions
+         {
+            Engines =
+            [
+               "bing",
+               "brave"
+            ]
+         }
+      );
 
       await client.SearchAsync("Tre Kronor", 3, CancellationToken.None, 0);
       await client.SearchAsync("Tre Kronor", 3, CancellationToken.None, 1);
@@ -91,13 +101,14 @@ public sealed class CachedWebSearchClientTests
    }
 
    private static CachedWebSearchClient CreateClient(
-      RecordingWebSearchClient innerClient
+      RecordingWebSearchClient innerClient,
+      SearxngWebSearchClientOptions? options = null
    )
    {
       return new CachedWebSearchClient(
          innerClient,
          new WebSearchCache(),
-         new SearxngWebSearchClientOptions()
+         options ?? new SearxngWebSearchClientOptions()
       );
    }
 

@@ -63,11 +63,18 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchRotatesConfiguredEngines()
+   public async Task SearchRotatesDefaultEngines()
    {
       await AssertRequestUsesEngine(0, "google");
       await AssertRequestUsesEngine(1, "brave");
       await AssertRequestUsesEngine(2, "duckduckgo");
+      await AssertRequestUsesEngine(3, "bing");
+      await AssertRequestUsesEngine(4, "mojeek");
+      await AssertRequestUsesEngine(5, "privacywall");
+      await AssertRequestUsesEngine(6, "seznam");
+      await AssertRequestUsesEngine(7, "naver");
+      await AssertRequestUsesEngine(8, "boardreader");
+      await AssertRequestUsesEngine(9, "yep");
    }
 
    [Fact]

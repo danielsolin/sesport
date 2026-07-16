@@ -856,7 +856,16 @@ public class AiProviderClientTests
          new HttpClient(handler),
          webSearchClient,
          new RecordingWebPageContentClient(null),
-         new NoopLogger<LlamaServerClient>()
+         new NoopLogger<LlamaServerClient>(),
+         new SearxngWebSearchClientOptions
+         {
+            Engines =
+            [
+               "google",
+               "brave",
+               "duckduckgo"
+            ]
+         }
       );
 
       await client.GenerateAsync(
