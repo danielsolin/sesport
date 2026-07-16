@@ -972,11 +972,11 @@ public class AiProviderClientTests
    }
 
    [Fact]
-   public void FindPageMatchesLimitsTextSnippetsToTwenty()
+   public void FindPageMatchesLimitsTextSnippetsToConfiguredMaximum()
    {
       var body = string.Join(
          " ",
-         Enumerable.Range(0, 25).Select(index =>
+         Enumerable.Range(0, 60).Select(index =>
             $"chunk-{index}-before " +
             $"{new string('x', 70)} id-{index} " +
             $"{PrimaryCountry.CountryName} " +
@@ -996,7 +996,10 @@ public class AiProviderClientTests
          PrimaryCountry.CountryName
       );
 
-      Assert.Equal(20, matches.Count);
+      Assert.Equal(
+         LlamaServerDefaults.MaxFindInPageSnippetCount,
+         matches.Count
+      );
    }
 
    [Fact]

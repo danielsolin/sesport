@@ -10,6 +10,7 @@ public static class LlamaServerDefaults
    public const int DefaultMaxToolRounds = 10;
    public const int DefaultConversationSummaryCharacters = 220;
    public const int PreviewSnippetCharacters = 240;
+   public const int MaxFindInPageSnippetCount = 50;
    public static readonly IReadOnlyList<TimeSpan> TransientRetryDelays =
    [
       TimeSpan.FromSeconds(1),

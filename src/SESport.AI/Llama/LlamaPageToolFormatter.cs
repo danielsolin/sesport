@@ -152,7 +152,7 @@ internal static class LlamaPageToolFormatter
    internal static IReadOnlyList<string> ExtractMatchingRows(
       string text,
       string find,
-      int maxRows = 50
+      int maxRows = LlamaServerDefaults.MaxFindInPageSnippetCount
    )
    {
       return ExtractMatchingRows(text, [find], maxRows);
@@ -161,7 +161,7 @@ internal static class LlamaPageToolFormatter
    internal static IReadOnlyList<string> ExtractMatchingRows(
       string text,
       IReadOnlyCollection<string> findTerms,
-      int maxRows = 50
+      int maxRows = LlamaServerDefaults.MaxFindInPageSnippetCount
    )
    {
       if(string.IsNullOrWhiteSpace(text) ||
@@ -260,7 +260,7 @@ internal static class LlamaPageToolFormatter
       string text,
       string find,
       int contextLength = 60,
-      int maxMatches = 20
+      int maxMatches = LlamaServerDefaults.MaxFindInPageSnippetCount
    )
    {
       if(string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(find))

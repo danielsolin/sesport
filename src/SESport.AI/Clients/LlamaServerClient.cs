@@ -1635,7 +1635,9 @@ public sealed class LlamaServerClient : IAiProviderClient
             find,
             int.MaxValue
          );
-         var returnedRows = allRows.Take(50).ToList();
+         var returnedRows = allRows
+            .Take(LlamaServerDefaults.MaxFindInPageSnippetCount)
+            .ToList();
          var hasRows = returnedRows.Count > 0;
 
          result = JsonSerializer.Serialize(
