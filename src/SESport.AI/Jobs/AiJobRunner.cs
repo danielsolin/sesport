@@ -353,6 +353,8 @@ public sealed class AiJobRunner(
          prompt,
          request.InputPayloadJson
       );
+      var maxOutputTokens = prompt.MaxOutputTokens ??
+         AiDefaults.DefaultMaxOutputTokens;
       var run = new AiJobRun(
          Guid.NewGuid(),
          job.Id,
@@ -396,7 +398,8 @@ public sealed class AiJobRunner(
          prompt.RequestOptionsJson,
          prompt.Temperature,
          prompt.MaxOutputTokens,
-         prompt.MaxToolRounds
+         prompt.MaxToolRounds,
+         maxOutputTokens
       );
 
       return new ExecutionContext(
@@ -656,7 +659,7 @@ public sealed class AiJobRunner(
          run.PromptOutputSchemaJson,
          run.PromptRequestOptionsJson,
          run.PromptTemperature,
-         run.PromptMaxOutputTokens,
+         run.MaxOutputTokens,
          run.PromptMaxToolRounds,
          true
       );
@@ -737,7 +740,8 @@ internal static class AiRunDetailExtensions
          run.PromptRequestOptionsJson,
          run.PromptTemperature,
          run.PromptMaxOutputTokens,
-         run.PromptMaxToolRounds
+         run.PromptMaxToolRounds,
+         run.MaxOutputTokens
       );
    }
 

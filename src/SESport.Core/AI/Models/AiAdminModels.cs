@@ -107,6 +107,7 @@ public sealed record AiRunDetail(
    decimal? PromptTemperature,
    int? PromptMaxOutputTokens,
    int? PromptMaxToolRounds,
+   int MaxOutputTokens,
    string? PromptOutputSchemaJson,
    string PromptRequestOptionsJson,
    string ProviderId,

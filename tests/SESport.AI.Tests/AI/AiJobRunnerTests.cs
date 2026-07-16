@@ -148,6 +148,10 @@ public class AiJobRunnerTests
       Assert.Null(runRepository.StoredRun.RawRequestJson);
       Assert.Equal("System", runRepository.StoredRun.RenderedSystemPrompt);
       Assert.Equal(
+         AiDefaults.DefaultMaxOutputTokens,
+         runRepository.StoredRun.MaxOutputTokens
+      );
+      Assert.Equal(
          ExecutionEnvironment.Current,
          runRepository.StoredRun.ExecutionEnvironment
       );
@@ -566,6 +570,7 @@ public class AiJobRunnerTests
                PromptTemperature: run.PromptTemperature,
                PromptMaxOutputTokens: run.PromptMaxOutputTokens,
                PromptMaxToolRounds: run.PromptMaxToolRounds,
+               MaxOutputTokens: run.MaxOutputTokens,
                PromptOutputSchemaJson: run.PromptOutputSchemaJson,
                PromptRequestOptionsJson: run.PromptRequestOptionsJson,
                ProviderId: run.ProviderId,

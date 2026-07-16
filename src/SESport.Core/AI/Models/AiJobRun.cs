@@ -43,5 +43,6 @@ public sealed record AiJobRun(
    string PromptRequestOptionsJson,
    decimal? PromptTemperature,
    int? PromptMaxOutputTokens,
-   int? PromptMaxToolRounds
+   int? PromptMaxToolRounds,
+   int MaxOutputTokens
 );

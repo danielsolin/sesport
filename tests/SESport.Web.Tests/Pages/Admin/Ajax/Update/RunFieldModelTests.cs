@@ -277,7 +277,8 @@ public sealed class RunFieldModelTests
       string? correlationId = null,
       string statusId = "running",
       int toolRoundCount = 0,
-      decimal? durationSeconds = null
+      decimal? durationSeconds = null,
+      int maxOutputTokens = AiDefaults.DefaultMaxOutputTokens
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -293,6 +294,7 @@ public sealed class RunFieldModelTests
             provider_model,
             input_payload,
             rendered_prompt,
+            max_output_tokens,
             raw_request,
             raw_response,
             tool_trace,
@@ -318,6 +320,7 @@ public sealed class RunFieldModelTests
             'gpt',
             '{}'::jsonb,
             'Rendered',
+            @max_output_tokens,
             null,
             null,
             null,
@@ -355,6 +358,7 @@ public sealed class RunFieldModelTests
          "duration_seconds",
          (object?)durationSeconds ?? DBNull.Value
       );
+      command.Parameters.AddWithValue("max_output_tokens", maxOutputTokens);
       command.Parameters.AddWithValue("tool_round_count", toolRoundCount);
       await command.ExecuteNonQueryAsync();
    }

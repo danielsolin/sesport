@@ -815,7 +815,7 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
-   public async Task GetRunAsyncReturnsPromptMaxOutputTokens()
+   public async Task GetRunAsyncReturnsStoredMaxOutputTokens()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
       var jobId = $"test-job-{Guid.NewGuid():N}";
@@ -831,7 +831,7 @@ public sealed class AiRepositoryTests
          dataSource,
          promptId,
          jobId,
-         maxOutputTokens: 8192
+         maxOutputTokens: null
       );
       await InsertRunAsync(
          dataSource,
@@ -849,7 +849,11 @@ public sealed class AiRepositoryTests
          );
 
          Assert.NotNull(run);
-         Assert.Equal(8192, run!.PromptMaxOutputTokens);
+         Assert.Null(run!.PromptMaxOutputTokens);
+         Assert.Equal(
+            AiDefaults.DefaultMaxOutputTokens,
+            run.MaxOutputTokens
+         );
       }
       finally
       {
@@ -1100,7 +1104,8 @@ public sealed class AiRepositoryTests
       decimal? durationSeconds = null,
       string? toolTraceJson = null,
       string inputPayloadJson = "{}",
-      string? outputText = null
+      string? outputText = null,
+      int maxOutputTokens = AiDefaults.DefaultMaxOutputTokens
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1129,7 +1134,8 @@ public sealed class AiRepositoryTests
             reasoning_tokens,
             tool_round_count,
             conversation_character_count,
-            execution_environment
+            execution_environment,
+            max_output_tokens
          )
          values (
             @id,
@@ -1154,7 +1160,8 @@ public sealed class AiRepositoryTests
             null,
             @tool_round_count,
             @conversation_character_count,
-            @execution_environment
+            @execution_environment,
+            @max_output_tokens
          )
          """;
       command.Parameters.AddWithValue("id", runId);
@@ -1183,6 +1190,7 @@ public sealed class AiRepositoryTests
          (object?)outputText ?? DBNull.Value
       );
       command.Parameters.AddWithValue("input_payload", inputPayloadJson);
+      command.Parameters.AddWithValue("max_output_tokens", maxOutputTokens);
       command.Parameters.AddWithValue(
          "duration_seconds",
          (object?)durationSeconds ?? DBNull.Value

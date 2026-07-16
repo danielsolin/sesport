@@ -493,11 +493,7 @@ public class DetailsModel(
 
    public static string FormatMaxOutputTokens(AiRunDetail run)
    {
-      var maxOutputTokens = run.PromptMaxOutputTokens;
-
-      return maxOutputTokens is null
-         ? "Not set"
-         : maxOutputTokens.Value.ToString(CultureInfo.InvariantCulture);
+      return run.MaxOutputTokens.ToString(CultureInfo.InvariantCulture);
    }
 
    public static int GetToolRoundCount(AiRunDetail run)
