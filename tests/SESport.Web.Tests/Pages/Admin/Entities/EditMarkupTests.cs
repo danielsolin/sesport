@@ -21,10 +21,12 @@ public sealed class EditMarkupTests
 
       Assert.Contains("data-entity-linked-entities-picker", html);
       Assert.Contains("data-entity-linked-entities-search-url", html);
+      Assert.Contains("data-entity-linked-entities-update-url", html);
       Assert.Contains("data-entity-linked-entities-selected", html);
       Assert.Contains("data-entity-linked-entities-suggestions", html);
       Assert.Contains("data-entity-linked-entities-chip-remove", html);
       Assert.Contains("Entity.LinkedEntityIds", html);
+      Assert.Contains("data-organization-only=\"false\"", html);
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);
       Assert.DoesNotContain("data-multi-select", html);
       Assert.Contains("entity-linked-entities.js", html);

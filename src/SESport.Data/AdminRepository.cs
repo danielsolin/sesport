@@ -1037,9 +1037,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          where e.id = any(@ids)
-            and {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
-               "e.entity_type_id"
-            )}
             {GetExcludeEntitySql(excludeEntityId)}
          order by e.canonical_name
          """;
@@ -1849,16 +1846,81 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       AddEntityParameters(command, model);
       await command.ExecuteNonQueryAsync(cancellationToken);
 
-      await SaveEntityLinksAsync(
-         connection,
-         transaction,
-         id,
-         model.LinkedEntityIds,
-         cancellationToken
-      );
+      if(isNew)
+      {
+         await SaveEntityLinksAsync(
+            connection,
+            transaction,
+            id,
+            model.LinkedEntityIds,
+            cancellationToken
+         );
+      }
 
       await transaction.CommitAsync(cancellationToken);
       model.Id = id;
+   }
+
+   public async Task<bool> AddEntityLinkAsync(
+      Guid sourceEntityId,
+      Guid targetEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(sourceEntityId == targetEntityId)
+      {
+         return false;
+      }
+
+      const string sql = """
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         values (
+            md5(@source_entity_id::text || @target_entity_id::text)::uuid,
+            @source_entity_id,
+            @target_entity_id
+         )
+         on conflict do nothing
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("source_entity_id", sourceEntityId);
+      command.Parameters.AddWithValue("target_entity_id", targetEntityId);
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
+   public async Task<bool> RemoveEntityLinkAsync(
+      Guid sourceEntityId,
+      Guid targetEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(sourceEntityId == targetEntityId)
+      {
+         return false;
+      }
+
+      const string sql = """
+         delete from entity_to_entity_links
+         where (
+               source_entity_id = @source_entity_id
+               and target_entity_id = @target_entity_id
+            )
+            or (
+               source_entity_id = @target_entity_id
+               and target_entity_id = @source_entity_id
+            )
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("source_entity_id", sourceEntityId);
+      command.Parameters.AddWithValue("target_entity_id", targetEntityId);
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
    public async Task DeleteEntityAsync(

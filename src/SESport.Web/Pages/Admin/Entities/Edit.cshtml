@@ -3,6 +3,7 @@
 @{
    ViewData["Title"] = Model.Entity.Id is null ? "New Entity" : "Edit Entity";
    var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
+   var entityLinkUpdateUrl = Url.Page("/Admin/Ajax/Update/EntityLink");
    var isPersonEntity = string.Equals(
       Model.Entity.EntityTypeId,
       "Person",
@@ -113,8 +114,9 @@
          <div class="entity-linked-entities-picker broadcast-org-autocomplete"
               data-entity-linked-entities-picker
               data-entity-linked-entities-search-url="@entitySearchUrl"
+              data-entity-linked-entities-update-url="@entityLinkUpdateUrl"
               data-entity-id="@(Model.Entity.Id?.ToString() ?? string.Empty)"
-              data-organization-only="true"
+              data-organization-only="false"
               data-max-results="20">
             <div class="entity-linked-entities-input-wrap">
                <input class="broadcast-org-entity-input

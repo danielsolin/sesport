@@ -197,6 +197,39 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task GetEntityLinkOptionsByIdsAsyncReturnsPersonEntities()
+   {
+      var personId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+
+      try
+      {
+         var options = await repository.GetEntityLinkOptionsByIdsAsync(
+            [personId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Single(options);
+         Assert.Equal(personId, options[0].Id);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task GetEntityActivitiesAsyncReturnsLinkedActivities()
    {
       var entityId = Guid.NewGuid();
@@ -557,6 +590,66 @@ public sealed class AdminRepositoryTests
          {
             await DeleteEntityAsync(dataSource, model.Id.Value);
          }
+      }
+   }
+
+   [Fact]
+   public async Task SaveEntityAsyncPreservesExistingLinks()
+   {
+      var entityId = Guid.NewGuid();
+      var linkedEntityId = Guid.NewGuid();
+      var entityName = $"Linked Entity {entityId:N}";
+      var linkedEntityName = $"Related Entity {linkedEntityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         entityId,
+         entityName,
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         linkedEntityId,
+         linkedEntityName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertLinkAsync(dataSource, entityId, linkedEntityId);
+
+      try
+      {
+         var model = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(model);
+
+         model!.CanonicalName = $"{model.CanonicalName} Updated";
+
+         await repository.SaveEntityAsync(model, CancellationToken.None);
+
+         Assert.Equal(
+            1,
+            await CountEntityLinksAsync(dataSource, entityId, linkedEntityId)
+         );
+
+         var reloaded = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(reloaded);
+         Assert.Contains(linkedEntityId, reloaded!.LinkedEntityIds);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+         await DeleteEntityAsync(dataSource, linkedEntityId);
       }
    }
 

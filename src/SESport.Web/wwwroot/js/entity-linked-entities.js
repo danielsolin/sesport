@@ -39,7 +39,10 @@
       const selected = picker.querySelector(selectedSelector);
       const searchUrl = (picker.dataset.entityLinkedEntitiesSearchUrl ?? "")
          .trim();
+      const updateUrl = (picker.dataset.entityLinkedEntitiesUpdateUrl ?? "")
+         .trim();
       const excludeEntityId = (picker.dataset.entityId ?? "").trim();
+      const isExistingEntity = excludeEntityId !== "";
       const organizationOnly = (
          picker.dataset.organizationOnly ?? "true"
       ).trim().toLowerCase() !== "false";
@@ -62,7 +65,8 @@
          timerId: null,
          requestId: 0,
          selectedIndex: -1,
-         items: []
+         items: [],
+         pendingEntityIds: new Set()
       };
 
       input.addEventListener("input", () => {
@@ -107,7 +111,9 @@
             searchUrl,
             excludeEntityId,
             organizationOnly,
-            maxResults
+            maxResults,
+            updateUrl,
+            isExistingEntity
          );
       });
 
@@ -140,22 +146,20 @@
             return;
          }
 
-         chip.remove();
-
-         if(input.value.trim() !== "")
-         {
-            scheduleSearch(
-               state,
-               picker,
-               input,
-               suggestions,
-               searchUrl,
-               excludeEntityId,
-               organizationOnly,
-               maxResults,
-               selected
-            );
-         }
+         void removeChipAsync(
+            state,
+            chip,
+            picker,
+            input,
+            suggestions,
+            searchUrl,
+            excludeEntityId,
+            organizationOnly,
+            maxResults,
+            selected,
+            updateUrl,
+            isExistingEntity
+         );
       });
    }
 
@@ -251,6 +255,9 @@
          }
 
          const selectedIds = new Set(getSelectedEntityIds(selected));
+         state.pendingEntityIds.forEach(id => {
+            selectedIds.add(id);
+         });
          const results = Array.isArray(payload.results)
             ? payload.results
                .map(normalizeResult)
@@ -258,7 +265,16 @@
                .filter(item => !selectedIds.has(item.id))
             : [];
 
-         renderSuggestions(state, picker, suggestions, input, results);
+         renderSuggestions(
+            state,
+            picker,
+            suggestions,
+            input,
+            results,
+            excludeEntityId,
+            updateUrl,
+            excludeEntityId !== ""
+         );
       }
       catch
       {
@@ -269,7 +285,16 @@
       }
    }
 
-   function renderSuggestions(state, picker, suggestions, input, items)
+   function renderSuggestions(
+      state,
+      picker,
+      suggestions,
+      input,
+      items,
+      entityId,
+      updateUrl,
+      isExistingEntity
+   )
    {
       suggestions.replaceChildren();
       state.items = items;
@@ -294,7 +319,15 @@
 
          option.addEventListener("click", event => {
             event.preventDefault();
-            void selectSuggestion(item, picker, suggestions, state);
+            void selectSuggestionAsync(
+               item,
+               picker,
+               suggestions,
+               state,
+               entityId,
+               updateUrl,
+               isExistingEntity
+            );
          });
 
          option.addEventListener("mousedown", event => {
@@ -324,7 +357,9 @@
       searchUrl,
       excludeEntityId,
       organizationOnly,
-      maxResults
+      maxResults,
+      updateUrl,
+      isExistingEntity
    )
    {
       if(event.key === "Backspace"
@@ -332,11 +367,13 @@
          && getSelectedEntityCount(selected) > 0)
       {
          event.preventDefault();
-         removeLastChip(selected);
-         if(input.value.trim() !== "")
+         const chip = getLastChip(selected);
+
+         if(chip instanceof HTMLElement)
          {
-            scheduleSearch(
+            void removeChipAsync(
                state,
+               chip,
                picker,
                input,
                suggestions,
@@ -344,9 +381,12 @@
                excludeEntityId,
                organizationOnly,
                maxResults,
-               selected
+               selected,
+               updateUrl,
+               isExistingEntity
             );
          }
+
          return;
       }
 
@@ -384,7 +424,15 @@
 
          if(item)
          {
-            void selectSuggestion(item, picker, suggestions, state);
+            void selectSuggestionAsync(
+               item,
+               picker,
+               suggestions,
+               state,
+               excludeEntityId,
+               updateUrl,
+               isExistingEntity
+            );
          }
       }
    }
@@ -408,7 +456,15 @@
       });
    }
 
-   function selectSuggestion(item, picker, suggestions, state)
+   async function selectSuggestionAsync(
+      item,
+      picker,
+      suggestions,
+      state,
+      entityId,
+      updateUrl,
+      isExistingEntity
+   )
    {
       const selected = picker.querySelector(selectedSelector);
       const input = picker.querySelector(inputSelector);
@@ -419,11 +475,49 @@
          return;
       }
 
-      if(getSelectedEntityIds(selected).includes(item.id))
+      if(getSelectedEntityIds(selected).includes(item.id)
+         || state.pendingEntityIds.has(item.id))
       {
          closeSuggestions(state, suggestions);
          input.value = "";
          input.focus();
+         return;
+      }
+
+      if(isExistingEntity && updateUrl !== "" && entityId !== "")
+      {
+         state.pendingEntityIds.add(item.id);
+
+         try
+         {
+            await postEntityLinkAsync(updateUrl, entityId, "add", item.id);
+         }
+         catch(error)
+         {
+            window.alert(
+               error instanceof Error
+                  ? error.message
+                  : "Linked entity update failed."
+            );
+            return;
+         }
+         finally
+         {
+            state.pendingEntityIds.delete(item.id);
+         }
+      }
+
+      appendSelectedChip(selected, item);
+
+      input.value = "";
+      closeSuggestions(state, suggestions);
+      input.focus();
+   }
+
+   function appendSelectedChip(selected, item)
+   {
+      if(!(selected instanceof HTMLElement))
+      {
          return;
       }
 
@@ -450,21 +544,13 @@
 
       chip.append(hidden, label, removeButton);
       selected.append(chip);
-
-      input.value = "";
-      closeSuggestions(state, suggestions);
-      input.focus();
    }
 
-   function removeLastChip(selected)
+   function getLastChip(selected)
    {
       const chips = Array.from(selected.querySelectorAll(chipSelector));
-      const lastChip = chips[chips.length - 1];
 
-      if(lastChip instanceof HTMLElement)
-      {
-         lastChip.remove();
-      }
+      return chips[chips.length - 1] ?? null;
    }
 
    function getSelectedEntityCount(selected)
@@ -478,6 +564,148 @@
          .map(input => input instanceof HTMLInputElement ? input.value : "")
          .map(value => value.trim())
          .filter(value => value !== "");
+   }
+
+   async function removeChipAsync(
+      state,
+      chip,
+      picker,
+      input,
+      suggestions,
+      searchUrl,
+      excludeEntityId,
+      organizationOnly,
+      maxResults,
+      selected,
+      updateUrl,
+      isExistingEntity
+   )
+   {
+      const entityId = (chip.dataset.entityId ?? "").trim();
+
+      if(entityId === "")
+      {
+         chip.remove();
+         return;
+      }
+
+      if(state.pendingEntityIds.has(entityId))
+      {
+         return;
+      }
+
+      if(isExistingEntity && updateUrl !== "" && excludeEntityId !== "")
+      {
+         state.pendingEntityIds.add(entityId);
+
+         try
+         {
+            await postEntityLinkAsync(
+               updateUrl,
+               excludeEntityId,
+               "remove",
+               entityId
+            );
+         }
+         catch(error)
+         {
+            window.alert(
+               error instanceof Error
+                  ? error.message
+                  : "Linked entity update failed."
+            );
+            return;
+         }
+         finally
+         {
+            state.pendingEntityIds.delete(entityId);
+         }
+      }
+
+      chip.remove();
+
+      if(input.value.trim() !== "")
+      {
+         scheduleSearch(
+            state,
+            picker,
+            input,
+            suggestions,
+            searchUrl,
+            excludeEntityId,
+            organizationOnly,
+            maxResults,
+            selected
+         );
+      }
+   }
+
+   async function postEntityLinkAsync(
+      url,
+      entityId,
+      action,
+      linkedEntityId
+   )
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      formData.append("id", entityId);
+      formData.append("action", action);
+      formData.append("linkedEntityId", linkedEntityId);
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(
+            payload?.error ||
+               trimmedResponseText ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return payload ?? {};
+   }
+
+   function getAntiForgeryToken()
+   {
+      const tokenInput = document.querySelector(
+         "input[name='__RequestVerificationToken']"
+      );
+
+      if(!(tokenInput instanceof HTMLInputElement))
+      {
+         return "";
+      }
+
+      return tokenInput.value;
    }
 
    function closeSuggestions(state, suggestions)
