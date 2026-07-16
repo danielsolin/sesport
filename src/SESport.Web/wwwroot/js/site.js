@@ -89,6 +89,8 @@
    initializeDateSelect();
    initializeEntityInlineEditing();
    window.initializeEntityInlineEditing = initializeEntityInlineEditing;
+   window.initializeBroadcastInlineEditing =
+      initializeBroadcastInlineEditing;
    initializeTeaserGeneration();
    initializeActivityFactsChecks();
    initializeParticipationRowChecks();

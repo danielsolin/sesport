@@ -396,6 +396,8 @@
       input.dataset.broadcastInlineEditOriginalValue = nextEditableValue;
       input.hidden = true;
       input.disabled = false;
+
+      window.initializeBroadcastInlineEditing?.(cell);
    }
 
    function getBroadcastSearchUrlBase()
