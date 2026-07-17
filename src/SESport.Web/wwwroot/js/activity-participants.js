@@ -7,10 +7,12 @@
    const hiddenIdSelector = "[data-activity-participant-hidden-id]";
    const gridSelector = "[data-activity-participant-grid]";
    const rowsSelector = "[data-activity-participant-rows]";
+   const removeButtonSelector = "[data-activity-participant-remove]";
    const addFormSelector = "#add-participant-form";
    const addEntityIdSelector = "[data-add-participant-entity-id]";
 
    document.addEventListener("DOMContentLoaded", () => {
+      document.addEventListener("click", handleRemoveParticipantClick);
       document.querySelectorAll(pickerSelector).forEach(initializePicker);
    });
 
@@ -344,7 +346,7 @@
          createCell(document.createTextNode(item.watchPriority)),
          createCell(document.createTextNode(item.gender)),
          createCell(document.createTextNode(item.alias)),
-         createCell(document.createTextNode(""))
+         createActionCell()
       );
       rows.append(row);
    }
@@ -383,6 +385,20 @@
       return cell;
    }
 
+   function createActionCell()
+   {
+      const cell = document.createElement("td");
+      cell.className = "table-actions";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Delete";
+      button.dataset.activityParticipantRemove = "true";
+
+      cell.append(button);
+      return cell;
+   }
+
    function createEntityLink(item)
    {
       const link = document.createElement("a");
@@ -406,6 +422,85 @@
          .map(input => input instanceof HTMLInputElement ? input.value : "")
          .map(value => value.trim())
          .filter(value => value !== "");
+   }
+
+   function handleRemoveParticipantClick(event)
+   {
+      if(!(event.target instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const button = event.target.closest(removeButtonSelector);
+
+      if(!(button instanceof HTMLButtonElement))
+      {
+         return;
+      }
+
+      const row = button.closest("[data-activity-participant-row]");
+
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const entityId = (row.dataset.activityParticipantRow ?? "").trim();
+
+      if(entityId === "")
+      {
+         return;
+      }
+
+      removeParticipantRow(entityId, row);
+   }
+
+   function removeParticipantRow(entityId, row)
+   {
+      const rows = row.parentElement;
+      const grid = rows instanceof HTMLElement ? rows.closest(gridSelector)
+         : null;
+
+      removeHiddenParticipantInput(entityId);
+      row.remove();
+
+      if(!(grid instanceof HTMLElement))
+      {
+         return;
+      }
+
+      if(rows instanceof HTMLElement && rows.children.length > 0)
+      {
+         return;
+      }
+
+      renderEmptyParticipantsNotice(grid);
+   }
+
+   function removeHiddenParticipantInput(entityId)
+   {
+      document.querySelectorAll(hiddenIdSelector).forEach(input => {
+         if(!(input instanceof HTMLInputElement))
+         {
+            return;
+         }
+
+         if(input.value.trim() !== entityId)
+         {
+            return;
+         }
+
+         input.remove();
+      });
+   }
+
+   function renderEmptyParticipantsNotice(grid)
+   {
+      const notice = document.createElement("div");
+      notice.className = "notice";
+      notice.dataset.activityParticipantEmpty = "true";
+      notice.textContent = "No participants.";
+      grid.replaceChildren(notice);
    }
 
    function closeSuggestions(state, suggestions)
