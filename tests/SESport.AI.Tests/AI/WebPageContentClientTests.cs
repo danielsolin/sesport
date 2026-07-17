@@ -610,6 +610,27 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchKeepsPdfTableRowsHorizontallyAligned()
+   {
+      var handler = new PdfRecordingHandler(CreateAlignedPdfBytes());
+      var client = CreateClient(
+         new HttpClient(handler),
+         (_, _) => Task.FromResult<WebPageContent?>(null)
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/aligned.pdf",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal(
+         "GUS GREENSMITH | GBR\nJonas ANDERSSON | SWE",
+         page!.MainTextFull.ReplaceLineEndings("\n").Trim()
+      );
+   }
+
+   [Fact]
    public async Task FetchPassesHtmlUrlToBrowserFetcher()
    {
       Uri? seenUrl = null;
@@ -1326,6 +1347,19 @@ public class WebPageContentClientTests
       builder.DocumentInformation.Title = "Multi Line PDF";
       page.AddText("First PDF line.", 12, new PdfPoint(72, 720), font);
       page.AddText("Second PDF line.", 12, new PdfPoint(72, 700), font);
+      return builder.Build();
+   }
+
+   private static byte[] CreateAlignedPdfBytes()
+   {
+      var builder = new PdfDocumentBuilder();
+      var page = builder.AddPage(PageSize.A4);
+      var font = builder.AddStandard14Font(Standard14Font.Helvetica);
+      builder.DocumentInformation.Title = "Aligned PDF";
+      page.AddText("GUS GREENSMITH", 12, new PdfPoint(72, 720), font);
+      page.AddText("Jonas ANDERSSON", 12, new PdfPoint(72, 700), font);
+      page.AddText("GBR", 12, new PdfPoint(240, 720), font);
+      page.AddText("SWE", 12, new PdfPoint(240, 700), font);
       return builder.Build();
    }
 
