@@ -108,14 +108,15 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncFallsBackToGroupWithoutOrgLink()
+   public async Task OnPostAsyncMatchesExistingGroupWhenOrganizationMatches()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
       var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var uniqueSuffix = Guid.NewGuid().ToString("N");
-      var broadcastTitle = $"Broadcast {uniqueSuffix}";
+      var title = $"Austrian Open {uniqueSuffix}";
       var activityDate = new DateOnly(2026, 7, 17);
 
       await using var dataSource = CreateDataSource();
@@ -126,18 +127,34 @@ public sealed class BroadcastFieldModelTests
       await InsertActivityGroupAsync(
          dataSource,
          activityGroupId,
-         broadcastTitle,
-         "football",
+         title,
+         "tennis",
          activityDate,
          activityDate
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "tennis"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "tennis"
       );
 
       var activityId = await InsertActivityAsync(
          dataSource,
          activityGroupId,
-         broadcastTitle,
-         "football",
-         activityDate
+         title,
+         "tennis",
+         activityDate,
+         organizationEntityId: organizationId,
+         linkedEntityIds: [personId]
       );
 
       await InsertBroadcastAsync(
@@ -148,8 +165,8 @@ public sealed class BroadcastFieldModelTests
          $"fingerprint-{uniqueSuffix}",
          "channel-1",
          "Viaplay",
-         broadcastTitle,
-         ["football"],
+         title,
+         ["tennis"],
          TimeZoneHelper.ToUtc(
             activityDate,
             new TimeOnly(12, 0),
@@ -160,13 +177,6 @@ public sealed class BroadcastFieldModelTests
             new TimeOnly(14, 0),
             SportDay.TimeZoneId
          )
-      );
-      await InsertRelatedEntityAsync(
-         dataSource,
-         organizationId,
-         $"Organization {organizationId:N}",
-         TrackedEntityTypeIds.Organization,
-         "football"
       );
 
       try
@@ -187,7 +197,7 @@ public sealed class BroadcastFieldModelTests
             CancellationToken.None
          );
 
-         Assert.Equal(broadcastTitle, groupText);
+         Assert.Equal(title, groupText);
          Assert.NotNull(broadcast);
          Assert.Equal(activityGroupId, broadcast!.ActivityGroupId);
          Assert.Equal(activityId, broadcast.ActivityGroupSourceActivityId);
@@ -197,6 +207,208 @@ public sealed class BroadcastFieldModelTests
          await DeleteBroadcastAsync(dataSource, broadcastId);
          await DeleteActivityAsync(dataSource, activityId);
          await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task OnPostAsyncDoesNotMatchGroupWithoutOrgLink()
+   {
+      var broadcastId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var title = $"Austrian Open {uniqueSuffix}";
+      var activityDate = new DateOnly(2026, 7, 17);
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         title,
+         "tennis",
+         activityDate,
+         activityDate
+      );
+
+      var activityId = await InsertActivityAsync(
+         dataSource,
+         activityGroupId,
+         title,
+         "tennis",
+         activityDate
+      );
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         title,
+         ["tennis"],
+         TimeZoneHelper.ToUtc(
+            activityDate,
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         ),
+         TimeZoneHelper.ToUtc(
+            activityDate,
+            new TimeOnly(14, 0),
+            SportDay.TimeZoneId
+         )
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "tennis"
+      );
+
+      try
+      {
+         var updateResult = await model.OnPostAsync(
+            broadcastId,
+            "organization",
+            organizationId.ToString(),
+            CancellationToken.None
+         );
+
+         var updatePayload = Assert.IsType<JsonResult>(updateResult).Value!;
+         var groupText = (string?)updatePayload.GetType()
+            .GetProperty("groupText")
+            ?.GetValue(updatePayload);
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+
+         Assert.Equal($"NEW: {title}", groupText);
+         Assert.NotNull(broadcast);
+         Assert.Null(broadcast!.ActivityGroupId);
+         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task OnPostAsyncDoesNotMatchSimilarTitle()
+   {
+      var broadcastId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var broadcastSuffix = Guid.NewGuid().ToString("N");
+      var activitySuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Austrian Open {broadcastSuffix}";
+      var activityTitle = $"Nordea Open Båstad {activitySuffix}";
+      var activityDate = new DateOnly(2026, 7, 17);
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         activityTitle,
+         "tennis",
+         activityDate,
+         activityDate
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "tennis"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "tennis"
+      );
+
+      var activityId = await InsertActivityAsync(
+         dataSource,
+         activityGroupId,
+         activityTitle,
+         "tennis",
+         activityDate,
+         organizationEntityId: organizationId,
+         linkedEntityIds: [personId]
+      );
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{broadcastSuffix}",
+         $"fingerprint-{broadcastSuffix}",
+         "channel-1",
+         "Viaplay",
+         broadcastTitle,
+         ["tennis"],
+         TimeZoneHelper.ToUtc(
+            activityDate,
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         ),
+         TimeZoneHelper.ToUtc(
+            activityDate,
+            new TimeOnly(14, 0),
+            SportDay.TimeZoneId
+         )
+      );
+
+      try
+      {
+         var updateResult = await model.OnPostAsync(
+            broadcastId,
+            "organization",
+            organizationId.ToString(),
+            CancellationToken.None
+         );
+
+         var updatePayload = Assert.IsType<JsonResult>(updateResult).Value!;
+         var groupText = (string?)updatePayload.GetType()
+            .GetProperty("groupText")
+            ?.GetValue(updatePayload);
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+
+         Assert.Equal($"NEW: {broadcastTitle}", groupText);
+         Assert.NotNull(broadcast);
+         Assert.Null(broadcast!.ActivityGroupId);
+         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, organizationId);
       }
    }
@@ -567,7 +779,9 @@ public sealed class BroadcastFieldModelTests
       Guid activityGroupId,
       string title,
       string sportId,
-      DateOnly activityDate
+      DateOnly activityDate,
+      Guid? organizationEntityId = null,
+      Guid[]? linkedEntityIds = null
    )
    {
       var repository = new ActivityRepository(dataSource);
@@ -581,7 +795,10 @@ public sealed class BroadcastFieldModelTests
             ActivityDate = activityDate,
             LocalStartTime = new TimeOnly(12, 0),
             TimeZoneId = SportDay.TimeZoneId,
-            LinkedEntityIds = [],
+            LinkedEntityIds = linkedEntityIds is null
+               ? []
+               : [.. linkedEntityIds],
+            OrganizationEntityId = organizationEntityId,
             ActivityGroupId = activityGroupId
          },
          CancellationToken.None

@@ -345,15 +345,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
                   transaction,
                   organizationEntityId.Value,
                   broadcast,
-                  cancellationToken,
-                  requireOrganizationMatch: true
-               ) ?? await FindMatchingActivityIdAsync(
-                  connection,
-                  transaction,
-                  organizationEntityId.Value,
-                  broadcast,
-                  cancellationToken,
-                  requireOrganizationMatch: false
+                  cancellationToken
                );
          }
       }
@@ -645,8 +637,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       NpgsqlTransaction transaction,
       Guid organizationEntityId,
       BroadcastActivitySource broadcast,
-      CancellationToken cancellationToken,
-      bool requireOrganizationMatch
+      CancellationToken cancellationToken
    )
    {
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
@@ -672,17 +663,6 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       ).AddDays(14);
       var normalizedBroadcastTitle = NormalizeMatchText(broadcast.Title);
 
-      var organizationFilterSql = requireOrganizationMatch
-         ? """
-            and exists (
-               select 1
-               from activity_entity_links al
-               where al.activity_id = a.id
-                  and al.organization_entity_id = @organization_entity_id
-            )
-            """
-         : string.Empty;
-
       var sql = $$"""
          select
             a.id,
@@ -692,7 +672,12 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          where a.sport_id = @sport_id
             and a.activity_group_id is not null
             and a.activity_date between @start_date and @end_date
-            {{organizationFilterSql}}
+            and exists (
+               select 1
+               from activity_entity_links al
+               where al.activity_id = a.id
+                  and al.organization_entity_id = @organization_entity_id
+            )
          order by a.activity_date, a.local_start_time nulls last, a.title
          """;
 
@@ -700,14 +685,10 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("sport_id", sportId);
       command.Parameters.AddWithValue("start_date", startDate);
       command.Parameters.AddWithValue("end_date", endDate);
-
-      if(requireOrganizationMatch)
-      {
-         command.Parameters.AddWithValue(
-            "organization_entity_id",
-            organizationEntityId
-         );
-      }
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         organizationEntityId
+      );
 
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -762,34 +743,37 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       {
          titleScore = 100;
       }
-      else if(broadcastTitle.Contains(
-         activityTitle,
-         StringComparison.Ordinal
-      ) || activityTitle.Contains(
-         broadcastTitle,
-         StringComparison.Ordinal
-      ))
-      {
-         titleScore = 80;
-      }
       else
       {
          var broadcastTokens = GetMatchTokens(broadcastTitle);
          var activityTokens = GetMatchTokens(activityTitle);
 
-         if(broadcastTokens.Count == 0 || activityTokens.Count == 0)
+         if(broadcastTokens.Count < 2 || activityTokens.Count < 2)
          {
             return 0;
          }
 
-         var overlap = broadcastTokens.Intersect(activityTokens).Count();
-
-         if(overlap == 0)
+         if(broadcastTitle.Contains(
+            activityTitle,
+            StringComparison.Ordinal
+         ) || activityTitle.Contains(
+            broadcastTitle,
+            StringComparison.Ordinal
+         ))
          {
-            return 0;
+            titleScore = 80;
          }
+         else
+         {
+            var overlap = broadcastTokens.Intersect(activityTokens).Count();
 
-         titleScore = 40 + overlap * 5;
+            if(overlap < 2)
+            {
+               return 0;
+            }
+
+            titleScore = 40 + overlap * 5;
+         }
       }
 
       var dayDistance = Math.Abs(
@@ -811,8 +795,25 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       return normalized
          .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+         .Where(token => !IsYearToken(token))
          .Distinct(StringComparer.Ordinal)
          .ToArray();
+   }
+
+   private static bool IsYearToken(string token)
+   {
+      if(token.Length != 4 ||
+         !int.TryParse(
+            token,
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out var year
+         ))
+      {
+         return false;
+      }
+
+      return year is >= 1900 and <= 2100;
    }
 
    private static string NormalizeMatchText(string value)
