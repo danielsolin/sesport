@@ -412,7 +412,12 @@
          }, 120);
       });
 
-      container.addEventListener("dblclick", event => {
+      const handleUnlockForEdit = event => {
+         if(event.type === "click" && !window.isTouchEditInteraction?.())
+         {
+            return;
+         }
+
          if(!(event.target instanceof Element))
          {
             return;
@@ -431,7 +436,10 @@
          event.preventDefault();
          event.stopPropagation();
          unlockForEdit();
-      });
+      };
+
+      container.addEventListener("dblclick", handleUnlockForEdit);
+      container.addEventListener("click", handleUnlockForEdit);
 
       container.addEventListener("mousedown", event => {
          if(!(event.target instanceof Element))

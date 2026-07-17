@@ -78,6 +78,7 @@
    const exclusiveEmptySelectStates = new WeakMap();
    const multiSelectScrollPositions = new WeakMap();
    window.submitFilterForm = submitFilterForm;
+   window.isTouchEditInteraction = isTouchEditInteraction;
    initializeExclusiveEmptySelects();
    initializeMultiSelectScrollRetention();
    initializeMultiSelectClearButtons();
@@ -1326,7 +1327,12 @@
          document.documentElement.dataset
             .broadcastInlineEditingInitialized = "true";
 
-         document.addEventListener("dblclick", event => {
+         const handleInlineEditActivation = event => {
+            if(event.type === "click" && !isTouchEditInteraction())
+            {
+               return;
+            }
+
             const target = event.target;
 
             if(!(target instanceof Element))
@@ -1345,6 +1351,7 @@
 
             if(broadcastCell instanceof HTMLElement)
             {
+               event.preventDefault();
                openBroadcastInlineEditCell(broadcastCell);
                return;
             }
@@ -1356,8 +1363,12 @@
                return;
             }
 
+            event.preventDefault();
             openRunInlineEditCell(runCell);
-         });
+         };
+
+         document.addEventListener("dblclick", handleInlineEditActivation);
+         document.addEventListener("click", handleInlineEditActivation);
       }
 
       root.querySelectorAll("[data-broadcast-inline-edit-input]").forEach(
@@ -1835,6 +1846,15 @@
       {
          delete cell.dataset.broadcastInlineEditing;
       }
+   }
+
+   function isTouchEditInteraction()
+   {
+      const mediaQuery = window.matchMedia?.(
+         "(hover: none) and (pointer: coarse)"
+      );
+
+      return mediaQuery?.matches ?? false;
    }
 
    function initializeCurrentMarkerScroll()
@@ -4000,7 +4020,12 @@
          document.documentElement.dataset
             .entityInlineEditingInitialized = "true";
 
-         document.addEventListener("dblclick", event => {
+         const handleInlineEditActivation = event => {
+            if(event.type === "click" && !isTouchEditInteraction())
+            {
+               return;
+            }
+
             const target = event.target;
 
             if(!(target instanceof Element))
@@ -4017,9 +4042,13 @@
 
             if(entityCell instanceof HTMLElement)
             {
+               event.preventDefault();
                openEntityInlineEditCell(entityCell);
             }
-         });
+         };
+
+         document.addEventListener("dblclick", handleInlineEditActivation);
+         document.addEventListener("click", handleInlineEditActivation);
       }
 
       root.querySelectorAll(entityInlineEditInputSelector).forEach(input => {
