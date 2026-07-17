@@ -33,6 +33,7 @@ public sealed class DetailsMarkupTests
       Assert.Contains("<dt>Temperature</dt>", html);
       Assert.Contains("Final payload chars", html);
       Assert.Contains("Max payload chars", html);
+      Assert.Contains("DetailsModel.FormatJson(Model.Run.OutputText)", html);
       Assert.Contains("asp-for=\"ExecutionEnvironment\"", html);
       Assert.Contains("tool-trace-turn-header-main", html);
       Assert.DoesNotContain("Full trace", html);

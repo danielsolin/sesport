@@ -438,7 +438,7 @@
       <details class="run-data-details">
          <summary>Output</summary>
          <pre class="prompt-details-pre">
-@((Model.Run.OutputText ?? string.Empty).Trim())
+@DetailsModel.FormatJson(Model.Run.OutputText)
          </pre>
       </details>
    </section>
