@@ -112,7 +112,6 @@
                         Activity @Model.GetSortIndicator("Activity")
                      </a>
                   </th>
-                  <th>Org</th>
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
@@ -154,9 +153,18 @@
                         <a asp-page="./Edit"
                            asp-route-id="@activity.Id"
                            asp-route-returnUrl="@returnUrl">
-                           <strong>
-                              @activity.Title
-                           </strong>
+                           @if(string.IsNullOrWhiteSpace(
+                                 activity.RelatedOrganizationEntities))
+                           {
+                              <strong>@activity.Title</strong>
+                           }
+                           else
+                           {
+                              <span>
+                                 @activity.RelatedOrganizationEntities:
+                              </span>
+                              <strong>@activity.Title</strong>
+                           }
                         </a>
                         <a class="ses-entity-search-link"
                            href="@activitySearchUrl"
@@ -164,7 +172,6 @@
                            <span class="ses-icon-search"></span>
                         </a>
                      </td>
-                     <td>@activity.RelatedOrganizationEntities</td>
                      <td>@activity.RelatedPersonEntityIds.Length</td>
                      <td>
                         @if(!string.IsNullOrEmpty(activity.Description))
