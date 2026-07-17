@@ -339,13 +339,22 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
          if(broadcast is not null)
          {
-            activitySourceActivityId = await FindMatchingActivityIdAsync(
-               connection,
-               transaction,
-               organizationEntityId.Value,
-               broadcast,
-               cancellationToken
-            );
+            activitySourceActivityId =
+               await FindMatchingActivityIdAsync(
+                  connection,
+                  transaction,
+                  organizationEntityId.Value,
+                  broadcast,
+                  cancellationToken,
+                  requireOrganizationMatch: true
+               ) ?? await FindMatchingActivityIdAsync(
+                  connection,
+                  transaction,
+                  organizationEntityId.Value,
+                  broadcast,
+                  cancellationToken,
+                  requireOrganizationMatch: false
+               );
          }
       }
 
@@ -636,7 +645,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       NpgsqlTransaction transaction,
       Guid organizationEntityId,
       BroadcastActivitySource broadcast,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      bool requireOrganizationMatch
    )
    {
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
@@ -662,7 +672,18 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       ).AddDays(14);
       var normalizedBroadcastTitle = NormalizeMatchText(broadcast.Title);
 
-      const string sql = """
+      var organizationFilterSql = requireOrganizationMatch
+         ? """
+            and exists (
+               select 1
+               from activity_entity_links al
+               where al.activity_id = a.id
+                  and al.organization_entity_id = @organization_entity_id
+            )
+            """
+         : string.Empty;
+
+      var sql = $$"""
          select
             a.id,
             a.title,
@@ -671,12 +692,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          where a.sport_id = @sport_id
             and a.activity_group_id is not null
             and a.activity_date between @start_date and @end_date
-            and exists (
-               select 1
-               from activity_entity_links al
-               where al.activity_id = a.id
-                  and al.organization_entity_id = @organization_entity_id
-            )
+            {{organizationFilterSql}}
          order by a.activity_date, a.local_start_time nulls last, a.title
          """;
 
@@ -684,10 +700,14 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("sport_id", sportId);
       command.Parameters.AddWithValue("start_date", startDate);
       command.Parameters.AddWithValue("end_date", endDate);
-      command.Parameters.AddWithValue(
-         "organization_entity_id",
-         organizationEntityId
-      );
+
+      if(requireOrganizationMatch)
+      {
+         command.Parameters.AddWithValue(
+            "organization_entity_id",
+            organizationEntityId
+         );
+      }
 
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
