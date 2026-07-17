@@ -81,7 +81,7 @@ public class WebPageContentClientTests
                "View the final start lists below.",
                true,
                "View the final start lists below.",
-               Fetcher: "browser"
+               Fetcher: "playwright"
             )
          )
       );

@@ -111,7 +111,7 @@ internal static class WebPageBrowserPageFetcher
             ),
             !string.IsNullOrWhiteSpace(visibleText),
             normalizedText,
-            Fetcher: "browser",
+            Fetcher: "playwright",
             RelevantLinks:
                WebPageContentFetchSupport.MergeRelevantLinks(
                   renderedRelevantLinks,
