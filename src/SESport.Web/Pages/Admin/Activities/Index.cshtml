@@ -2,7 +2,6 @@
 @model SESport.Web.Pages.Admin.Activities.IndexModel
 @{
    ViewData["Title"] = "Activities";
-   const int descriptionPreviewLength = 20;
    var returnUrl = Model.GetReturnUrl();
    var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
    var findFactsUrl = Url.Page(
@@ -176,12 +175,7 @@
                      <td>
                         @if(!string.IsNullOrEmpty(activity.Description))
                         {
-                           var description = activity.Description;
-                           var descriptionPreview = description.Length >
-                              descriptionPreviewLength
-                              ? description[..descriptionPreviewLength] + "..."
-                              : description;
-                           @descriptionPreview
+                           @activity.Description
                         }
                      </td>
                      <td>
