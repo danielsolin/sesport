@@ -1,4 +1,5 @@
 using Npgsql;
+using System.Text.Json;
 
 using SESport.AI.Interfaces;
 using SESport.Core.Configuration;
@@ -104,6 +105,57 @@ public sealed class ActivityEditPageServiceTests
       finally
       {
          await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
+   public async Task QueueFactsAsyncIncludesOrganizationType()
+   {
+      var organizationId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         "Diamond League",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel
+         {
+            Title = "Friidrott - London",
+            Description = "Description",
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = new DateOnly(2026, 7, 15),
+            OrganizationEntityId = organizationId
+         };
+
+         await fixture.Service.QueueFactsAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var request = Assert.Single(fixture.JobRunner.Requests);
+         using var document = JsonDocument.Parse(request.InputPayloadJson);
+
+         Assert.Equal(
+            "Diamond League",
+            document.RootElement.GetProperty("type").GetString()
+         );
+         Assert.Equal(
+            "Friidrott - London",
+            document.RootElement.GetProperty("title").GetString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, organizationId);
       }
    }
 

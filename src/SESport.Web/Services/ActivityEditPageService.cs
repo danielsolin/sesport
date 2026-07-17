@@ -501,12 +501,17 @@ public sealed class ActivityEditPageService(
       ))
          .FirstOrDefault(sport => sport.Id == activity.SportId)
          ?.Label ?? activity.SportId;
+      var organizationName = await GetOrganizationEntityNameAsync(
+         activity.OrganizationEntityId,
+         cancellationToken
+      );
 
       return JsonSerializer.Serialize(
          new
          {
             event_name = activity.Title,
             title = activity.Title,
+            type = organizationName,
             description = activity.Description,
             activity_type = activity.ActivityType,
             sport = sportName,
@@ -517,6 +522,24 @@ public sealed class ActivityEditPageService(
             related_entities = Array.Empty<string>()
          }
       );
+   }
+
+   private async Task<string> GetOrganizationEntityNameAsync(
+      Guid? organizationEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(organizationEntityId is null)
+      {
+         return string.Empty;
+      }
+
+      var entity = await adminRepository.GetEntityForEditAsync(
+         organizationEntityId.Value,
+         cancellationToken
+      );
+
+      return entity?.CanonicalName ?? string.Empty;
    }
 
    private static string CreatePromptListText(IReadOnlyList<string> values)
