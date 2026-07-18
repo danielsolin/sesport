@@ -3,7 +3,6 @@ using System.Net;
 using Microsoft.Playwright;
 
 using SESport.AI.Interfaces;
-using SESport.Core.Configuration;
 
 namespace SESport.AI.WebSearch;
 
