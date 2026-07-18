@@ -30,6 +30,9 @@ public class WebPageContentClientLiveTests
    private static readonly Uri WikipediaSupercupLiveTestUri = new(
       "https://en.wikipedia.org/wiki/2026_Porsche_Supercup"
    );
+   private static readonly Uri HugoTownsendLiveTestUri = new(
+      "https://en.wikipedia.org/wiki/Hugo_Townsend"
+   );
 
    [Fact]
    public async Task FetchPlayerListPageKeepsCountryCodes()
@@ -221,6 +224,30 @@ public class WebPageContentClientLiveTests
       Assert.Contains(
          "Argentina",
          page.MainTextFull,
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   [Fact]
+   public async Task FetchWikipediaHugoTownsendPageShowsBirthDate()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         HugoTownsendLiveTestUri.ToString(),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains(
+         "18 January 1999",
+         page!.MainTextFull,
          StringComparison.OrdinalIgnoreCase
       );
    }
