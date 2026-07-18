@@ -367,6 +367,21 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       return items;
    }
 
+   public async Task DeletePromptAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from ai_job_prompts
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", Guid.Parse(id));
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task<IReadOnlyList<AiPromptListItem>> GetJobPromptsAsync(
       string jobId,
       CancellationToken cancellationToken

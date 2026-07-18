@@ -5,9 +5,6 @@ public static class WebSearchDefaults
    public const string GoogleSearchBaseUrl =
       "https://www.google.com/search";
 
-   public const string GoogleSearchLanguage = "en";
-   public const string GoogleSearchCountry = "us";
-   public const string GoogleSearchPersonalization = "0";
    public const int MaxSearchResults = 20;
 
    public static readonly IReadOnlyList<string> DeniedHostSuffixes =

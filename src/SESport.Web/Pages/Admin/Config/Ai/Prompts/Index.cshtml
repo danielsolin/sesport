@@ -46,6 +46,12 @@
                <td>@prompt.Temperature</td>
                <td class="table-actions">
                   <a asp-page="./Edit" asp-route-id="@prompt.Id">Edit</a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-id="@prompt.Id"
+                        onsubmit="return confirm('Are you sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
                </td>
             </tr>
          }

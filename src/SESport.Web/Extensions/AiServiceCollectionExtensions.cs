@@ -59,12 +59,6 @@ public static class AiServiceCollectionExtensions
             serviceProvider.GetRequiredService<SearxngWebSearchClientOptions>()
          )
       );
-      services.AddHttpClient<GoogleWebSearchClient>(
-         client =>
-         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-         }
-      );
       services.AddHttpClient<
          IWebPageContentClient,
          WebPageContentClient

@@ -1,0 +1,3 @@
+# Do not leave persistent build servers running after CLI builds.
+-nr:false
+-p:UseSharedCompilation=false

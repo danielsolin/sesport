@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
@@ -21,6 +22,15 @@ public class IndexModel(AiAdminRepository repository) : PageModel
       {
          LoadError = exception.Message;
       }
+   }
+
+   public async Task<IActionResult> OnPostDeleteAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      await repository.DeletePromptAsync(id, cancellationToken);
+      return RedirectToPage("./Index");
    }
 
    public static string Truncate(string value, int maxLength)
