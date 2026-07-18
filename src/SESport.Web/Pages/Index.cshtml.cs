@@ -1,9 +1,7 @@
 using System.Globalization;
 
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.FileProviders;
 
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -14,8 +12,7 @@ namespace SESport.Web.Pages;
 
 public class IndexModel(
    ActivityRepository repository,
-   PublicActivityTimelineBuilder timelineBuilder,
-   IWebHostEnvironment webHostEnvironment
+   PublicActivityTimelineBuilder timelineBuilder
 ) : PageModel
 {
    public IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries
@@ -42,29 +39,12 @@ public class IndexModel(
 
    public string? LoadError { get; private set; }
 
-   public IFileProvider WebRootFileProvider =>
-      webHostEnvironment.WebRootFileProvider;
-
    public bool ShowLoadErrorDetails =>
       string.Equals(
          HttpContext.Request.Host.Host,
          "dev.sesport.se",
          StringComparison.OrdinalIgnoreCase
       );
-
-   public static bool HasSportIconPath(
-      IFileProvider fileProvider,
-      string? sportIconPath
-   )
-   {
-      if(fileProvider is null || string.IsNullOrWhiteSpace(sportIconPath))
-      {
-         return false;
-      }
-
-      var relativePath = sportIconPath.TrimStart('/');
-      return fileProvider.GetFileInfo(relativePath).Exists;
-   }
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
