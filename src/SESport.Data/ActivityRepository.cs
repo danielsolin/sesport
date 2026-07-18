@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 using Npgsql;
 
@@ -12,6 +13,12 @@ namespace SESport.Data;
 
 public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 {
+   private const string StaticWebAssetsManifestFileName =
+      "SESport.Web.staticwebassets.runtime.json";
+
+   private static readonly Lazy<HashSet<string>> KnownSportIconFileNames =
+      new(LoadKnownSportIconFileNames);
+
    private const string TimedOrderClause = """
       order by
          a.starts_at nulls last,
@@ -1711,6 +1718,118 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .Trim('-');
 
-      return $"/icons/sports/{fileName}.svg";
+      return KnownSportIconFileNames.Value.Contains(fileName)
+         ? $"/icons/sports/{fileName}.svg"
+         : null;
+   }
+
+   private static HashSet<string> LoadKnownSportIconFileNames()
+   {
+      var manifestPath = LocateStaticWebAssetsManifestPath();
+
+      if(manifestPath is null)
+      {
+         return [];
+      }
+
+      try
+      {
+         using var stream = File.OpenRead(manifestPath);
+         using var document = JsonDocument.Parse(stream);
+
+         if(!TryGetChild(document.RootElement, "Root", out var root) ||
+            !TryGetChild(root, "Children", out var rootChildren) ||
+            !TryGetChild(rootChildren, "icons", out var iconsNode) ||
+            !TryGetChild(iconsNode, "Children", out var iconsChildren) ||
+            !TryGetChild(iconsChildren, "sports", out var sportsNode) ||
+            !TryGetChild(sportsNode, "Children", out var sportsChildren))
+         {
+            return [];
+         }
+
+         var fileNames = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase
+         );
+
+         foreach(var icon in sportsChildren.EnumerateObject())
+         {
+            if(!icon.Name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+            {
+               continue;
+            }
+
+            fileNames.Add(Path.GetFileNameWithoutExtension(icon.Name));
+         }
+
+         return fileNames;
+      }
+      catch(JsonException)
+      {
+         return [];
+      }
+      catch(IOException)
+      {
+         return [];
+      }
+   }
+
+   private static string? LocateStaticWebAssetsManifestPath()
+   {
+      var directPath = Path.Combine(
+         AppContext.BaseDirectory,
+         StaticWebAssetsManifestFileName
+      );
+
+      if(File.Exists(directPath))
+      {
+         return directPath;
+      }
+
+      var repositoryRoot = FindRepositoryRoot();
+
+      if(repositoryRoot is null)
+      {
+         return null;
+      }
+
+      return Directory.EnumerateFiles(
+            repositoryRoot,
+            StaticWebAssetsManifestFileName,
+            SearchOption.AllDirectories
+         )
+         .FirstOrDefault();
+   }
+
+   private static string? FindRepositoryRoot()
+   {
+      var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+      while(directory is not null)
+      {
+         if(File.Exists(Path.Combine(directory.FullName, "SESport.sln")))
+         {
+            return directory.FullName;
+         }
+
+         directory = directory.Parent;
+      }
+
+      return null;
+   }
+
+   private static bool TryGetChild(
+      JsonElement element,
+      string propertyName,
+      out JsonElement child
+   )
+   {
+      if(element.ValueKind == JsonValueKind.Object &&
+         element.TryGetProperty(propertyName, out child))
+      {
+         return true;
+      }
+
+      child = default;
+      return false;
    }
 }

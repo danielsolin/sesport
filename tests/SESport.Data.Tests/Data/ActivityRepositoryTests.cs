@@ -1,3 +1,5 @@
+using System.Reflection;
+
 using Npgsql;
 
 using SESport.Core.Configuration;
@@ -8,6 +10,22 @@ namespace SESport.Core.Tests.Data;
 
 public sealed class ActivityRepositoryTests
 {
+   [Fact]
+   public void GetSportIconPathReturnsNullForMissingAsset()
+   {
+      var path = InvokeGetSportIconPath("boat-racing");
+
+      Assert.Null(path);
+   }
+
+   [Fact]
+   public void GetSportIconPathReturnsPathForKnownAsset()
+   {
+      var path = InvokeGetSportIconPath("motorsport");
+
+      Assert.Equal("/icons/sports/motorsport.svg", path);
+   }
+
    [Fact]
    public async Task GetActivitiesAsyncIncludesSeriesOrganizations()
    {
@@ -678,5 +696,22 @@ public sealed class ActivityRepositoryTests
       command.Parameters.AddWithValue("id", entityId);
 
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static string? InvokeGetSportIconPath(string? iconId)
+   {
+      var method = typeof(ActivityRepository).GetMethod(
+         "GetSportIconPath",
+         BindingFlags.NonPublic | BindingFlags.Static
+      );
+
+      if(method is null)
+      {
+         throw new InvalidOperationException(
+            "Could not find GetSportIconPath."
+         );
+      }
+
+      return (string?)method.Invoke(null, [iconId]);
    }
 }
