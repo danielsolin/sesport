@@ -46,6 +46,12 @@
                </td>
                <td class="table-actions">
                   <a asp-page="./Edit" asp-route-id="@job.Id">Edit</a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-id="@job.Id"
+                        onsubmit="return confirm('Are you sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
                </td>
             </tr>
          }

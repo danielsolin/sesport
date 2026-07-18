@@ -188,6 +188,21 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       return items;
    }
 
+   public async Task DeleteJobAsync(
+      string id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from ai_jobs
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task<AiJobEditModel?> GetJobForEditAsync(
       string id,
       CancellationToken cancellationToken
