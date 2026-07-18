@@ -11,11 +11,11 @@ namespace SESport.Core.Tests.Data;
 public sealed class ActivityRepositoryTests
 {
    [Fact]
-   public void GetSportIconPathReturnsNullForMissingAsset()
+   public void GetSportIconPathNormalizesBoatRacing()
    {
       var path = InvokeGetSportIconPath("boat-racing");
 
-      Assert.Null(path);
+      Assert.Equal("/icons/sports/boat-racing.svg", path);
    }
 
    [Fact]

@@ -1,5 +1,7 @@
 using System.Reflection;
 
+using Microsoft.Extensions.FileProviders;
+
 using SESport.Data;
 using SESport.Web.Pages;
 
@@ -7,6 +9,44 @@ namespace SESport.Core.Tests.Pages;
 
 public sealed class IndexModelTests
 {
+   [Fact]
+   public void HasSportIconPath_ReturnsFalseWhenFileMissing()
+   {
+      using var tempDirectory = TempDirectory.Create();
+      var fileProvider = new PhysicalFileProvider(tempDirectory.FullName);
+
+      var hasIcon = IndexModel.HasSportIconPath(
+         fileProvider,
+         "/icons/sports/boat-racing.svg"
+      );
+
+      Assert.False(hasIcon);
+   }
+
+   [Fact]
+   public void HasSportIconPath_ReturnsTrueWhenFileExists()
+   {
+      using var tempDirectory = TempDirectory.Create();
+      var iconDirectory = Path.Combine(
+         tempDirectory.FullName,
+         "icons",
+         "sports"
+      );
+      Directory.CreateDirectory(iconDirectory);
+      File.WriteAllText(
+         Path.Combine(iconDirectory, "motorsport.svg"),
+         string.Empty
+      );
+
+      var fileProvider = new PhysicalFileProvider(tempDirectory.FullName);
+      var hasIcon = IndexModel.HasSportIconPath(
+         fileProvider,
+         "/icons/sports/motorsport.svg"
+      );
+
+      Assert.True(hasIcon);
+   }
+
    [Fact]
    public void CountParticipants_CountsUniqueEntityIds()
    {
@@ -83,5 +123,37 @@ public sealed class IndexModelTests
          participantIds,
          string.Empty
       );
+   }
+
+   private static DirectoryInfo CreateTempDirectory()
+   {
+      var path = Path.Combine(
+         Path.GetTempPath(),
+         $"sesport-index-{Guid.NewGuid():N}"
+      );
+
+      return Directory.CreateDirectory(path);
+   }
+
+   private sealed class TempDirectory : IDisposable
+   {
+      public TempDirectory(DirectoryInfo directory)
+      {
+         Directory = directory;
+      }
+
+      public DirectoryInfo Directory { get; }
+
+      public string FullName => Directory.FullName;
+
+      public static TempDirectory Create()
+      {
+         return new TempDirectory(CreateTempDirectory());
+      }
+
+      public void Dispose()
+      {
+         Directory.Delete(true);
+      }
    }
 }
