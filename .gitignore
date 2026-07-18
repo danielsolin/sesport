@@ -11,3 +11,4 @@ artifacts/publish-dev/
 .worktale/
 ./artifacts/screenshots/*
 android/keys/
+data/db-backups/
