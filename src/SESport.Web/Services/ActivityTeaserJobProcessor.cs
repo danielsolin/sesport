@@ -12,6 +12,7 @@ public sealed class ActivityTeaserJobProcessor(
    IAiJobRunRepository runRepository,
    ActivityRepository activityRepository,
    AdminRepository adminRepository,
+   TextTranslationService textTranslationService,
    ILogger<ActivityTeaserJobProcessor> logger
 ) : IAiJobProcessor
 {
@@ -23,6 +24,7 @@ public sealed class ActivityTeaserJobProcessor(
       await inner.ProcessRunAsync(runId, cancellationToken);
       await SaveCompletedActivityTextAsync(runId, cancellationToken);
       await SaveCompletedPersonBioAsync(runId, cancellationToken);
+      await SaveCompletedTranslationAsync(runId, cancellationToken);
    }
 
    private async Task SaveCompletedActivityTextAsync(
@@ -122,9 +124,56 @@ public sealed class ActivityTeaserJobProcessor(
          return;
       }
 
+      await textTranslationService.QueueAsync(
+         "English",
+         "Swedish",
+         bio,
+         entityId.ToString(),
+         cancellationToken
+      );
+   }
+
+   private async Task SaveCompletedTranslationAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      var run = await runRepository.GetRunAsync(runId, cancellationToken);
+
+      if(run is null ||
+         run.JobId != AiJobIds.TranslateText ||
+         !string.Equals(
+            run.StatusId,
+            AiJobRunStatusIds.Completed,
+            StringComparison.Ordinal
+         ))
+      {
+         return;
+      }
+
+      if(!Guid.TryParse(run.CorrelationId, out var entityId))
+      {
+         logger.LogWarning(
+            "Translation run {RunId} has invalid correlation id.",
+            runId
+         );
+         return;
+      }
+
+      var translatedText = run.OutputText?.Trim();
+
+      if(string.IsNullOrWhiteSpace(translatedText))
+      {
+         logger.LogWarning(
+            "Translation run {RunId} completed without output.",
+            runId
+         );
+         return;
+      }
+
       await adminRepository.UpdateEntityBioAsync(
          entityId,
-         bio,
+         translatedText,
          cancellationToken
       );
    }

@@ -1895,6 +1895,27 @@ public class AiProviderClientTests
       );
    }
 
+   [Fact]
+   public async Task OpenRouterGenerateAsyncOmitsWebPluginWhenNotRequired()
+   {
+      var handler = new RecordingHandler(
+         CreateChatResponseJson("Translated text")
+      );
+      var client = new OpenRouterClient(new HttpClient(handler));
+
+      await client.GenerateAsync(
+         CreateProvider("openrouter"),
+         CreateJob("text", requiresWebSearch: false, null),
+         CreatePrompt(null),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.DoesNotContain("\"plugins\":[{\"id\":\"web\"}]",
+         handler.RequestBody);
+   }
+
    private static AiProviderDefinition CreateProvider(string kind)
    {
       return new AiProviderDefinition(

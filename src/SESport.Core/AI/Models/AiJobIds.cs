@@ -22,6 +22,9 @@ public static class AiJobIds
    public const string WritePersonBio =
       "write-person-bio";
 
+   public const string TranslateText =
+      "translate-text";
+
    public static AiJobTargetType GetTargetType(string jobId)
    {
       return jobId switch

@@ -39,15 +39,19 @@ public sealed class OpenRouterClient : IAiProviderClient
       var payload = new JsonObject
       {
          ["model"] = provider.Model,
-         ["messages"] = CreateMessages(renderedPrompt),
-         ["plugins"] = new JsonArray
+         ["messages"] = CreateMessages(renderedPrompt)
+      };
+
+      if(job.RequiresWebSearch)
+      {
+         payload["plugins"] = new JsonArray
          {
             new JsonObject
             {
                ["id"] = "web"
             }
-         }
-      };
+         };
+      }
 
       if(prompt.MaxOutputTokens is not null)
       {
