@@ -552,6 +552,7 @@ public sealed class AdminRepositoryTests
       var entityKey = Guid.NewGuid();
       var entityName = $"Alias Entity {entityKey:N}";
       var aliasName = $"Alias {entityKey:N}";
+      var bio = $"Bio {entityKey:N}";
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
@@ -561,6 +562,7 @@ public sealed class AdminRepositoryTests
          Id = null,
          CanonicalName = entityName,
          AliasName = aliasName,
+         Bio = bio,
          EntityTypeId = TrackedEntityTypeIds.Person,
          SportId = "football",
          CountryId = "se",
@@ -583,6 +585,7 @@ public sealed class AdminRepositoryTests
 
          Assert.NotNull(loaded);
          Assert.Equal(aliasName, loaded!.AliasName);
+         Assert.Equal(bio, loaded.Bio);
       }
       finally
       {

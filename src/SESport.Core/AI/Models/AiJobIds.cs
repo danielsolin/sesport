@@ -4,7 +4,8 @@ public enum AiJobTargetType
 {
    Unknown,
    Activity,
-   Broadcast
+   Broadcast,
+   Person
 }
 
 public static class AiJobIds
@@ -18,6 +19,9 @@ public static class AiJobIds
    public const string FindActivityFacts =
       "find-activity-facts";
 
+   public const string WritePersonBio =
+      "write-person-bio";
+
    public static AiJobTargetType GetTargetType(string jobId)
    {
       return jobId switch
@@ -26,6 +30,7 @@ public static class AiJobIds
             AiJobTargetType.Activity,
          DecidePrimaryCountryParticipation =>
             AiJobTargetType.Broadcast,
+         WritePersonBio => AiJobTargetType.Person,
          _ => AiJobTargetType.Unknown
       };
    }

@@ -23,6 +23,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private const string BroadcastJobId =
       AiJobIds.DecidePrimaryCountryParticipation;
 
+   private const string PersonJobId = AiJobIds.WritePersonBio;
+
    public async Task<IReadOnlyList<AiRunListItem>> GetRunsAsync(
       DateOnly? date,
       string? jobId,
@@ -73,7 +75,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("      r.input_payload->>'event_name',")
          .AppendLine("      r.input_payload->>'title',")
          .AppendLine("      a.title,")
-         .AppendLine("      b.title")
+         .AppendLine("      b.title,")
+         .AppendLine("      person.canonical_name")
          .AppendLine("   ) as event_name,")
          .AppendLine("   coalesce(")
          .AppendLine("      a.activity_date,")
@@ -107,7 +110,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("      and r.job_id = any(@activity_job_ids)")
          .AppendLine("left join broadcasts b")
          .AppendLine("   on b.id::text = r.correlation_id")
-         .AppendLine("      and r.job_id = @broadcast_job_id");
+         .AppendLine("      and r.job_id = @broadcast_job_id")
+         .AppendLine("left join entities person")
+         .AppendLine("   on person.id::text = r.correlation_id")
+         .AppendLine("      and r.job_id = @person_job_id");
 
       if(where.Count > 0)
       {
@@ -156,6 +162,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql.ToString());
       command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);
       command.Parameters.AddWithValue("broadcast_job_id", BroadcastJobId);
+      command.Parameters.AddWithValue("person_job_id", PersonJobId);
       command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
 
       if(date is not null)
@@ -261,7 +268,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                r.input_payload->>'event_name',
                r.input_payload->>'title',
                a.title,
-               b.title
+               b.title,
+               person.canonical_name
             ),
             coalesce(
                a.activity_date,
@@ -287,6 +295,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          left join broadcasts b
             on b.id::text = r.correlation_id
                and r.job_id = @broadcast_job_id
+         left join entities person
+            on person.id::text = r.correlation_id
+               and r.job_id = @person_job_id
          left join lateral (
             select max((entry.value->>'payload_chars')::int)
                as max_payload_chars
@@ -305,6 +316,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("ids", ids.ToArray());
       command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);
       command.Parameters.AddWithValue("broadcast_job_id", BroadcastJobId);
+      command.Parameters.AddWithValue("person_job_id", PersonJobId);
       command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken

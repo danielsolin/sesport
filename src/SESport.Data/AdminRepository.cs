@@ -1102,7 +1102,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          WatchPriorityId = reader.GetString(7),
          ExpectedStabilityId = reader.GetString(8),
          AliasName = reader.IsDBNull(9) ? null : reader.GetString(9),
-         PersonGenderId = reader.IsDBNull(10) ? null : reader.GetString(10)
+         Bio = reader.IsDBNull(10) ? null : reader.GetString(10),
+         PersonGenderId = reader.IsDBNull(11) ? null : reader.GetString(11)
       };
 
       await reader.DisposeAsync();
@@ -1225,7 +1226,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          WatchPriorityId = reader.GetString(7),
          ExpectedStabilityId = reader.GetString(8),
          AliasName = reader.IsDBNull(9) ? null : reader.GetString(9),
-         PersonGenderId = reader.IsDBNull(10) ? null : reader.GetString(10)
+         Bio = reader.IsDBNull(10) ? null : reader.GetString(10),
+         PersonGenderId = reader.IsDBNull(11) ? null : reader.GetString(11)
       };
 
       await reader.DisposeAsync();
@@ -1694,6 +1696,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                watch_priority_id,
                expected_stability_id,
                alias_name,
+               bio,
                person_gender_id
             from entities
             where id = @id
@@ -1710,6 +1713,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                watch_priority_id,
                expected_stability_id,
                alias_name,
+               bio,
                null::text as person_gender_id
             from entities
             where id = @id
@@ -1740,6 +1744,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                watch_priority_id,
                expected_stability_id,
                alias_name,
+               bio,
                person_gender_id
             )
             values (
@@ -1753,6 +1758,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @watch_priority_id,
                @expected_stability_id,
                @alias_name,
+               @bio,
                @person_gender_id
             )
             """
@@ -1767,7 +1773,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                country_relevance_reason,
                watch_priority_id,
                expected_stability_id,
-               alias_name
+               alias_name,
+               bio
             )
             values (
                @id,
@@ -1779,7 +1786,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @country_relevance_reason,
                @watch_priority_id,
                @expected_stability_id,
-               @alias_name
+               @alias_name,
+               @bio
             )
             """;
    }
@@ -1799,6 +1807,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                watch_priority_id = @watch_priority_id,
                expected_stability_id = @expected_stability_id,
                alias_name = @alias_name,
+               bio = @bio,
                person_gender_id = @person_gender_id,
                updated_at = now()
             where id = @id
@@ -1815,6 +1824,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                watch_priority_id = @watch_priority_id,
                expected_stability_id = @expected_stability_id,
                alias_name = @alias_name,
+               bio = @bio,
                updated_at = now()
             where id = @id
             """;
@@ -1859,6 +1869,26 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       await transaction.CommitAsync(cancellationToken);
       model.Id = id;
+   }
+
+   public async Task<bool> UpdateEntityBioAsync(
+      Guid entityId,
+      string bio,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update entities
+         set bio = @bio,
+             updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", entityId);
+      command.Parameters.AddWithValue("bio", bio.Trim());
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
    public async Task<bool> AddEntityLinkAsync(
@@ -1991,6 +2021,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          (object?)NormalizeAliasName(model.AliasName) ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
+         "bio",
+         (object?)NormalizeBio(model.Bio) ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
          "person_gender_id",
          (object?)NormalizePersonGenderId(model) ?? DBNull.Value
       );
@@ -2001,6 +2035,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return string.IsNullOrWhiteSpace(aliasName)
          ? null
          : aliasName.Trim();
+   }
+
+   private static string? NormalizeBio(string? bio)
+   {
+      return string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
    }
 
    private static string? NormalizePersonGenderId(EntityEditModel model)

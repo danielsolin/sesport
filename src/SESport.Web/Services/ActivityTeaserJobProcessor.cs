@@ -11,6 +11,7 @@ public sealed class ActivityTeaserJobProcessor(
    AiJobRunner inner,
    IAiJobRunRepository runRepository,
    ActivityRepository activityRepository,
+   AdminRepository adminRepository,
    ILogger<ActivityTeaserJobProcessor> logger
 ) : IAiJobProcessor
 {
@@ -21,6 +22,7 @@ public sealed class ActivityTeaserJobProcessor(
    {
       await inner.ProcessRunAsync(runId, cancellationToken);
       await SaveCompletedActivityTextAsync(runId, cancellationToken);
+      await SaveCompletedPersonBioAsync(runId, cancellationToken);
    }
 
    private async Task SaveCompletedActivityTextAsync(
@@ -82,6 +84,51 @@ public sealed class ActivityTeaserJobProcessor(
       }
    }
 
+   private async Task SaveCompletedPersonBioAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      var run = await runRepository.GetRunAsync(runId, cancellationToken);
+
+      if(run is null ||
+         run.JobId != AiJobIds.WritePersonBio ||
+         !string.Equals(
+            run.StatusId,
+            AiJobRunStatusIds.Completed,
+            StringComparison.Ordinal
+         ))
+      {
+         return;
+      }
+
+      if(!Guid.TryParse(run.CorrelationId, out var entityId))
+      {
+         logger.LogWarning(
+            "Person bio run {RunId} has invalid correlation id.",
+            runId
+         );
+         return;
+      }
+
+      var bio = ExtractGeneratedBio(run.OutputText ?? string.Empty);
+
+      if(string.IsNullOrWhiteSpace(bio))
+      {
+         logger.LogWarning(
+            "Person bio run {RunId} completed without output.",
+            runId
+         );
+         return;
+      }
+
+      await adminRepository.UpdateEntityBioAsync(
+         entityId,
+         bio,
+         cancellationToken
+      );
+   }
+
    internal static string? ExtractGeneratedTeaser(string outputText)
    {
       try
@@ -113,6 +160,26 @@ public sealed class ActivityTeaserJobProcessor(
             facts.ValueKind == JsonValueKind.String)
          {
             return facts.GetString();
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return outputText;
+   }
+
+   internal static string? ExtractGeneratedBio(string outputText)
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         var root = document.RootElement;
+
+         if(root.TryGetProperty("bio", out var bio) &&
+            bio.ValueKind == JsonValueKind.String)
+         {
+            return bio.GetString();
          }
       }
       catch(JsonException)

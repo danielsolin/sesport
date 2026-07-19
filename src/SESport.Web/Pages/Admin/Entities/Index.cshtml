@@ -4,6 +4,7 @@
    ViewData["Title"] = "Entities";
    var entityFieldUrl = Url.Page("/Admin/Ajax/Update/EntityField");
    var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
+   var personBioUrl = Url.Page("/Admin/Ajax/Create/PersonBio");
    var entityEditUrl = Url.Page("./Edit");
    var entityDeleteUrl = Url.Page("./Index");
    var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
@@ -59,6 +60,7 @@ else
 {
    <div data-entity-list-container
         data-entity-search-url="@entitySearchUrl"
+        data-person-bio-url="@personBioUrl"
         data-entity-edit-url="@entityEditUrl"
         data-entity-delete-url="@entityDeleteUrl"
         data-entity-filter-cookie-name=

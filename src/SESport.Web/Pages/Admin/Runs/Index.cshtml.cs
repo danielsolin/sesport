@@ -148,7 +148,9 @@ public class IndexModel(
       var targetLabel = AiJobIds.GetTargetType(run.JobId) ==
          AiJobTargetType.Broadcast
          ? "B"
-         : "A";
+         : AiJobIds.GetTargetType(run.JobId) == AiJobTargetType.Person
+            ? "P"
+            : "A";
       var dateText = DateDisplay.Format(run.EventDate);
 
       return string.IsNullOrWhiteSpace(dateText)

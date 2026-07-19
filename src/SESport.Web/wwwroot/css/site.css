@@ -693,37 +693,58 @@ h2 {
 
 .entities-table th:nth-child(1),
 .entities-table td:nth-child(1) {
-   width: 240px;
+   width: 20%;
 }
 
 .entities-table th:nth-child(2),
 .entities-table td:nth-child(2) {
-   width: 220px;
+   width: 20%;
 }
 
 .entities-table th:nth-child(3),
 .entities-table td:nth-child(3) {
-   width: 140px;
+   width: 12%;
 }
 
 .entities-table th:nth-child(4),
 .entities-table td:nth-child(4) {
-   width: 120px;
+   width: 10%;
 }
 
 .entities-table th:nth-child(5),
 .entities-table td:nth-child(5) {
-   width: 132px;
+   width: 14%;
 }
 
 .entities-table th:nth-child(6),
 .entities-table td:nth-child(6) {
-   width: 108px;
+   width: 10%;
 }
 
 .entities-table th:nth-child(7),
 .entities-table td:nth-child(7) {
-   width: 72px;
+   width: 14%;
+}
+
+.entities-table td {
+   min-width: 0;
+   overflow-wrap: anywhere;
+}
+
+.entities-table .table-actions {
+   white-space: normal;
+}
+
+.entities-table .table-actions form {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 4px;
+}
+
+.entities-table .table-actions .form-status {
+   max-width: 100%;
+   overflow-wrap: anywhere;
 }
 
 .admin-table th,

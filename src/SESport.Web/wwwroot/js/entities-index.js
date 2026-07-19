@@ -30,6 +30,7 @@
          const searchUrl = getDataValue(container, "entitySearchUrl");
          const editUrlBase = getDataValue(container, "entityEditUrl");
          const deleteUrlBase = getDataValue(container, "entityDeleteUrl");
+         const personBioUrl = getDataValue(container, "personBioUrl");
          const searchUrlBase = getDataValue(
             container,
             "entitySearchUrlBase"
@@ -110,12 +111,14 @@
                   searchUrlBase,
                   editUrlBase,
                   deleteUrlBase,
-                  template
+                  template,
+                  personBioUrl
                ))
                .join("");
 
             listBody.innerHTML = rowsHtml;
             window.initializeEntityInlineEditing?.(listBody);
+            initializePersonBioTriggers(listBody);
             setEmptyState(entities.length > 0);
          };
 
@@ -277,7 +280,8 @@
       searchUrlBase,
       editUrlBase,
       deleteUrlBase,
-      watchPriorityTemplate
+      watchPriorityTemplate,
+      personBioUrl
    )
    {
       const token = getAntiForgeryToken();
@@ -301,6 +305,25 @@
       editUrl.pathname = entityPath;
       deleteUrl.searchParams.set("handler", "Delete");
       deleteUrl.searchParams.set("id", entity.id ?? "");
+
+      const isPerson = (entity.entityType ?? "")
+         .trim()
+         .toLowerCase() === "person";
+      const bioButton = isPerson && personBioUrl !== ""
+         ? `
+               <form method="post" data-person-bio-form>
+                  ${renderAntiForgeryTokenInputHtml(token)}
+                  <input type="hidden" name="id" value="${entityId}" />
+                  <button class="broadcast-participation-check-link"
+                          type="submit"
+                          data-person-bio-url="${escapeHtml(personBioUrl)}">
+                     Bio
+                  </button>
+                  <span class="form-status"
+                        data-person-bio-status></span>
+               </form>
+            `
+         : "";
 
       return `
          <tr data-entity-row-id="${entityId}"
@@ -341,6 +364,7 @@
             </td>
             <td>${country}</td>
             <td class="table-actions">
+               ${bioButton}
                <form method="post"
                      action="${deleteUrl.toString()}"
                      onsubmit='return confirm("Sure?");'>
@@ -350,6 +374,70 @@
             </td>
          </tr>
       `;
+   }
+
+   function initializePersonBioTriggers(root)
+   {
+      root.querySelectorAll("[data-person-bio-form]").forEach(form => {
+         if(!(form instanceof HTMLFormElement)
+            || form.dataset.personBioInitialized === "true")
+         {
+            return;
+         }
+
+         form.dataset.personBioInitialized = "true";
+         form.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const button = form.querySelector("button[type='submit']");
+            const status = form.querySelector("[data-person-bio-status]");
+            const url = button instanceof HTMLButtonElement
+               ? button.dataset.personBioUrl
+               : "";
+
+            if(!(button instanceof HTMLButtonElement)
+               || !url
+               || !(status instanceof HTMLElement))
+            {
+               return;
+            }
+
+            button.disabled = true;
+            status.textContent = "Queueing...";
+            status.classList.remove("form-status-error");
+
+            try
+            {
+               const response = await fetch(url, {
+                  method: "post",
+                  body: new FormData(form),
+                  headers: {
+                     Accept: "application/json"
+                  }
+               });
+               const payload = await response.json();
+
+               if(!response.ok)
+               {
+                  throw new Error(payload.error || "Bio job failed.");
+               }
+
+               status.textContent = "Queued";
+            }
+            catch(error)
+            {
+               const message = error instanceof Error
+                  ? error.message
+                  : "Bio job failed.";
+               status.textContent = message;
+               status.classList.add("form-status-error");
+            }
+            finally
+            {
+               button.disabled = false;
+            }
+         });
+      });
    }
 
    function renderAntiForgeryTokenInputHtml(token)

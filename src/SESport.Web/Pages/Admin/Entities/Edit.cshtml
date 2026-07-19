@@ -104,6 +104,14 @@
             </select>
             <span asp-validation-for="Entity.PersonGenderId"></span>
          </label>
+         <label data-person-bio-field
+                style="@(isPersonEntity ? "" : "display: none;")">
+            <span>Bio</span>
+            <textarea asp-for="Entity.Bio"
+                      class="medium-textarea"
+                      rows="6"></textarea>
+            <span asp-validation-for="Entity.Bio"></span>
+         </label>
       </div>
    </section>
 
