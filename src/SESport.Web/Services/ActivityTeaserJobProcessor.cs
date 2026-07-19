@@ -124,6 +124,12 @@ public sealed class ActivityTeaserJobProcessor(
          return;
       }
 
+      await adminRepository.UpdateEntityBioEngAsync(
+         entityId,
+         bio,
+         cancellationToken
+      );
+
       await textTranslationService.QueueAsync(
          "English",
          "Swedish",

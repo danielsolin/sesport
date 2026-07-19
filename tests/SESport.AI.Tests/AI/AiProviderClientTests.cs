@@ -1980,6 +1980,40 @@ public class AiProviderClientTests
       Assert.Equal(2, handler.RequestBodies.Count);
    }
 
+   [Fact]
+   public async Task GoogleTranslateGenerateAsyncTranslatesText()
+   {
+      var requestUrl = string.Empty;
+      var client = new GoogleTranslateClient(
+         new HttpClient(),
+         (url, cancellationToken) =>
+         {
+            requestUrl = url;
+            return Task.FromResult("tresteg");
+         }
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("google-translate"),
+         CreateJob("text", requiresWebSearch: false, null),
+         CreatePrompt(null),
+         CreateRenderedPrompt(),
+         """
+         {
+            "from_language": "English",
+            "to_language": "Swedish",
+            "text": "triple jump"
+         }
+         """,
+         CancellationToken.None
+      );
+
+      Assert.Equal("tresteg", result.OutputText);
+      Assert.Contains("sl=en", requestUrl);
+      Assert.Contains("tl=sv", requestUrl);
+      Assert.Contains("text=triple%20jump", requestUrl);
+   }
+
    private static AiProviderDefinition CreateProvider(string kind)
    {
       return new AiProviderDefinition(

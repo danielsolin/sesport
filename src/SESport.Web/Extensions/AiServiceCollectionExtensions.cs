@@ -48,6 +48,13 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = TimeSpan.FromMinutes(20);
       });
+      services.AddHttpClient<
+         IAiProviderClient,
+         GoogleTranslateClient
+      >(client =>
+      {
+         client.Timeout = TimeSpan.FromSeconds(60);
+      });
       services.AddHttpClient<SearxngWebSearchClient>(
          client =>
          {

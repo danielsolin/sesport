@@ -1891,6 +1891,26 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
+   public async Task<bool> UpdateEntityBioEngAsync(
+      Guid entityId,
+      string bio,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update entities
+         set bio_eng = @bio_eng,
+             updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", entityId);
+      command.Parameters.AddWithValue("bio_eng", bio.Trim());
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
    public async Task<bool> AddEntityLinkAsync(
       Guid sourceEntityId,
       Guid targetEntityId,
