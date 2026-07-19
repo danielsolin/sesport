@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 
 using Npgsql;
 
@@ -1481,10 +1482,24 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       string? value
    )
    {
+      var jsonValue = (object?)value ?? DBNull.Value;
+
+      if(!string.IsNullOrWhiteSpace(value))
+      {
+         try
+         {
+            using var document = JsonDocument.Parse(value);
+         }
+         catch(JsonException)
+         {
+            jsonValue = DBNull.Value;
+         }
+      }
+
       command.Parameters.Add(
          new NpgsqlParameter(name, NpgsqlDbType.Jsonb)
          {
-            Value = (object?)value ?? DBNull.Value
+            Value = jsonValue
          }
       );
    }

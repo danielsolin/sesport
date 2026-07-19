@@ -1916,6 +1916,36 @@ public class AiProviderClientTests
          handler.RequestBody);
    }
 
+   [Fact]
+   public async Task OpenRouterGenerateAsyncPreservesProviderErrorPayload()
+   {
+      var handler = new RecordingHandler(
+         new RecordingHandler.ResponseSpec(
+            HttpStatusCode.TooManyRequests,
+            "{\"error\":\"rate limited\"}"
+         )
+      );
+      var client = new OpenRouterClient(new HttpClient(handler));
+
+      var exception = await Assert.ThrowsAsync<
+         AiProviderExecutionException
+      >(() => client.GenerateAsync(
+         CreateProvider("openrouter"),
+         CreateJob("text", requiresWebSearch: false, null),
+         CreatePrompt(null),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      ));
+
+      Assert.Contains("429", exception.Message);
+      Assert.NotNull(exception.RawRequestJson);
+      Assert.Equal(
+         "{\"error\":\"rate limited\"}",
+         exception.RawResponseJson
+      );
+   }
+
    private static AiProviderDefinition CreateProvider(string kind)
    {
       return new AiProviderDefinition(

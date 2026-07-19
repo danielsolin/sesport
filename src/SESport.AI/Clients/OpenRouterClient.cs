@@ -118,10 +118,11 @@ public sealed class OpenRouterClient : IAiProviderClient
 
       if(!response.IsSuccessStatusCode)
       {
-         throw new HttpRequestException(
+         throw new AiProviderExecutionException(
             CreateFailureMessage(response.StatusCode, rawResponse),
             null,
-            response.StatusCode
+            requestJson,
+            rawResponse
          );
       }
 
