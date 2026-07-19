@@ -5,6 +5,7 @@
       <Nullable>enable</Nullable>
       <ImplicitUsings>enable</ImplicitUsings>
       <BuildInParallel>false</BuildInParallel>
+      <UseAppHost>false</UseAppHost>
    </PropertyGroup>
 
    <ItemGroup>
