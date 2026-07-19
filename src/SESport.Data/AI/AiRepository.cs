@@ -702,6 +702,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             description,
             provider_id,
             model,
+            queue_priority,
             output_mode,
             tools_json::text,
             conditional_tools_json::text,
@@ -729,14 +730,15 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          reader.GetString(1),
          ReadNullableString(reader, 2),
          reader.GetString(3),
-         reader.GetString(5),
-         ReadNullableString(reader, 6),
+         reader.GetString(6),
          ReadNullableString(reader, 7),
-         ReadNullableInt32(reader, 8),
-         reader.GetBoolean(9),
-         reader.GetBoolean(11),
-         ReadNullableGuid(reader, 10),
-         ReadNullableString(reader, 4)
+         ReadNullableString(reader, 8),
+         ReadNullableInt32(reader, 9),
+         reader.GetBoolean(10),
+         reader.GetBoolean(12),
+         ReadNullableGuid(reader, 11),
+         ReadNullableString(reader, 4),
+         reader.GetInt32(5)
       );
    }
 
@@ -1051,15 +1053,18 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          with next_run as (
-            select id
+            select ai_job_runs.id
             from ai_job_runs
-            where status_id in ('pending', 'running')
-               and execution_environment = @execution_environment
+            join ai_jobs j on j.id = ai_job_runs.job_id
+            where ai_job_runs.status_id in ('pending', 'running')
+               and ai_job_runs.execution_environment =
+                  @execution_environment
             order by
-               status_id desc,
-               started_at asc,
-               created_at asc,
-               id asc
+               ai_job_runs.status_id desc,
+               j.queue_priority desc,
+               ai_job_runs.started_at asc,
+               ai_job_runs.created_at asc,
+               ai_job_runs.id asc
             for update skip locked
             limit 1
          )

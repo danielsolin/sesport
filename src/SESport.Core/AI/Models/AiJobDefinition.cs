@@ -12,5 +12,6 @@ public sealed record AiJobDefinition(
    bool RequiresWebSearch,
    bool Enabled,
    Guid? ActivePromptId,
-   string? Model = null
+   string? Model = null,
+   int QueuePriority = 0
 );

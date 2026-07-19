@@ -215,6 +215,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description,
             provider_id,
             model,
+            queue_priority,
             output_mode,
             tools_json::text,
             conditional_tools_json::text,
@@ -245,13 +246,14 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Description = ReadNullableString(reader, 2),
          ProviderId = reader.GetString(3),
          Model = ReadNullableString(reader, 4),
-         OutputMode = reader.GetString(5),
-         ToolsJson = ReadNullableString(reader, 6),
-         ConditionalToolsJson = ReadNullableString(reader, 7),
-         ToolCallMaxTokens = ReadNullableInt32(reader, 8),
-         ActivePromptId = ReadNullableGuid(reader, 9)?.ToString(),
-         RequiresWebSearch = reader.GetBoolean(10),
-         Enabled = reader.GetBoolean(11)
+         QueuePriority = reader.GetInt32(5),
+         OutputMode = reader.GetString(6),
+         ToolsJson = ReadNullableString(reader, 7),
+         ConditionalToolsJson = ReadNullableString(reader, 8),
+         ToolCallMaxTokens = ReadNullableInt32(reader, 9),
+         ActivePromptId = ReadNullableGuid(reader, 10)?.ToString(),
+         RequiresWebSearch = reader.GetBoolean(11),
+         Enabled = reader.GetBoolean(12)
       };
    }
 
@@ -274,6 +276,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description,
             provider_id,
             model,
+            queue_priority,
             output_mode,
             tools_json,
             conditional_tools_json,
@@ -288,6 +291,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             @description,
             @provider_id,
             @model,
+            @queue_priority,
             @output_mode,
             @tools_json,
             @conditional_tools_json,
@@ -311,6 +315,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             description = @description,
             provider_id = @provider_id,
             model = @model,
+            queue_priority = @queue_priority,
             output_mode = @output_mode,
             tools_json = @tools_json,
             conditional_tools_json = @conditional_tools_json,
@@ -586,6 +591,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
       command.Parameters.AddWithValue("model", BlankToDbNull(model.Model));
+      command.Parameters.AddWithValue("queue_priority", model.QueuePriority);
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
       AddJsonbParameter(command, "tools_json", model.ToolsJson);
       AddJsonbParameter(

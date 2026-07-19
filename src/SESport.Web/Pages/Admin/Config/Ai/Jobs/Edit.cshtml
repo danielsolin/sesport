@@ -63,6 +63,11 @@
             <span asp-validation-for="Job.Model"></span>
          </label>
          <label>
+            <span>Queue priority</span>
+            <input asp-for="Job.QueuePriority" type="number" />
+            <span asp-validation-for="Job.QueuePriority"></span>
+         </label>
+         <label>
             <span>Active prompt</span>
             <select asp-for="Job.ActivePromptId">
                <option value="">Select prompt</option>
