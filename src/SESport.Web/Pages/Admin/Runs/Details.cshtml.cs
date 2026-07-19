@@ -496,6 +496,13 @@ public class DetailsModel(
       return run.MaxOutputTokens.ToString(CultureInfo.InvariantCulture);
    }
 
+   public static string FormatMaxToolRounds(AiRunDetail run)
+   {
+      return run.PromptMaxToolRounds?.ToString(
+         CultureInfo.InvariantCulture
+      ) ?? "Not set";
+   }
+
    public static int GetToolRoundCount(AiRunDetail run)
    {
       return run.ToolRoundCount;

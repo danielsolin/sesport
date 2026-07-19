@@ -244,6 +244,26 @@ public sealed class DetailsModelTests
       );
    }
 
+   [Fact]
+   public void FormatMaxToolRoundsUsesStoredValue()
+   {
+      var run = CreateRun() with
+      {
+         PromptMaxToolRounds = 4
+      };
+
+      Assert.Equal("4", DetailsModel.FormatMaxToolRounds(run));
+   }
+
+   [Fact]
+   public void FormatMaxToolRoundsReturnsNotSetWhenNull()
+   {
+      Assert.Equal(
+         "Not set",
+         DetailsModel.FormatMaxToolRounds(CreateRun())
+      );
+   }
+
    private static SESport.Core.AI.AiRunDetail CreateRun()
    {
       return new SESport.Core.AI.AiRunDetail(
