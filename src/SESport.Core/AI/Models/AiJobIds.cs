@@ -33,7 +33,7 @@ public static class AiJobIds
             AiJobTargetType.Activity,
          DecidePrimaryCountryParticipation =>
             AiJobTargetType.Broadcast,
-         WritePersonBio => AiJobTargetType.Person,
+         WritePersonBio or TranslateText => AiJobTargetType.Person,
          _ => AiJobTargetType.Unknown
       };
    }

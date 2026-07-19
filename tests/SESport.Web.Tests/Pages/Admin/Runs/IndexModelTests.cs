@@ -50,6 +50,10 @@ public sealed class IndexModelTests
       "decide-swedish-participation",
       "B 2026-07-12"
    )]
+   [InlineData(
+      "translate-text",
+      "P 2026-07-12"
+   )]
    public void FormatRunTargetLabelIncludesDate(
       string jobId,
       string expected
