@@ -503,6 +503,13 @@ public class DetailsModel(
       ) ?? "Not set";
    }
 
+   public static string FormatMinToolRounds(AiRunDetail run)
+   {
+      return run.PromptMinToolRounds?.ToString(
+         CultureInfo.InvariantCulture
+      ) ?? "Not set";
+   }
+
    public static int GetToolRoundCount(AiRunDetail run)
    {
       return run.ToolRoundCount;

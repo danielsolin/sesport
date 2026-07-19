@@ -264,6 +264,26 @@ public sealed class DetailsModelTests
       );
    }
 
+   [Fact]
+   public void FormatMinToolRoundsUsesStoredValue()
+   {
+      var run = CreateRun() with
+      {
+         PromptMinToolRounds = 15
+      };
+
+      Assert.Equal("15", DetailsModel.FormatMinToolRounds(run));
+   }
+
+   [Fact]
+   public void FormatMinToolRoundsReturnsNotSetWhenNull()
+   {
+      Assert.Equal(
+         "Not set",
+         DetailsModel.FormatMinToolRounds(CreateRun())
+      );
+   }
+
    private static SESport.Core.AI.AiRunDetail CreateRun()
    {
       return new SESport.Core.AI.AiRunDetail(
