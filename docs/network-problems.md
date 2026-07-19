@@ -30,3 +30,10 @@ Recommended follow-up if the problem returns:
 The SSH log also showed an automated failed login for invalid user `admin`.
 This appears unrelated to the web availability issue. Fail2ban should be
 enabled for repeated SSH authentication failures if it is not already active.
+
+## Follow-up: Caddy access logging
+
+After the provider network has stabilized, enable structured JSON access logs
+for `sesport.se` in `deploy/caddy/Caddyfile`. Write them to a rotated file so
+that request counts, status codes, paths, response times, and timeout patterns
+can be analyzed without relying only on application logs.
