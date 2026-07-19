@@ -1984,6 +1984,10 @@ public class AiProviderClientTests
    public async Task GoogleTranslateGenerateAsyncTranslatesText()
    {
       var requestUrl = string.Empty;
+      var provider = CreateProvider("google-translate") with
+      {
+         BaseAddress = "https://translate.google.com/"
+      };
       var client = new GoogleTranslateClient(
          new HttpClient(),
          (url, cancellationToken) =>
@@ -1994,7 +1998,7 @@ public class AiProviderClientTests
       );
 
       var result = await client.GenerateAsync(
-         CreateProvider("google-translate"),
+         provider,
          CreateJob("text", requiresWebSearch: false, null),
          CreatePrompt(null),
          CreateRenderedPrompt(),
@@ -2009,6 +2013,7 @@ public class AiProviderClientTests
       );
 
       Assert.Equal("tresteg", result.OutputText);
+      Assert.StartsWith("https://translate.google.com/?", requestUrl);
       Assert.Contains("sl=en", requestUrl);
       Assert.Contains("tl=sv", requestUrl);
       Assert.Contains("text=triple%20jump", requestUrl);

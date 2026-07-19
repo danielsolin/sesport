@@ -11,9 +11,6 @@ namespace SESport.AI.Clients;
 
 public sealed class GoogleTranslateClient : IAiProviderClient
 {
-   private const string TranslateUrl =
-      "https://translate.google.com/";
-
    private readonly Func<string, CancellationToken, Task<string>>
       translationFetcher;
 
@@ -57,7 +54,7 @@ public sealed class GoogleTranslateClient : IAiProviderClient
    )
    {
       var translation = ParseInput(inputPayloadJson);
-      var url = BuildTranslationUrl(translation);
+      var url = BuildTranslationUrl(provider.BaseAddress, translation);
       var requestJson = JsonSerializer.Serialize(
          new
          {
@@ -92,13 +89,29 @@ public sealed class GoogleTranslateClient : IAiProviderClient
    }
 
    private static string BuildTranslationUrl(
+      string? baseAddress,
       (string FromLanguage, string ToLanguage, string Text) translation
    )
    {
+      if(string.IsNullOrWhiteSpace(baseAddress) ||
+         !Uri.TryCreate(
+            baseAddress,
+            UriKind.Absolute,
+            out var parsedBaseAddress
+         ) ||
+         (parsedBaseAddress.Scheme != Uri.UriSchemeHttp &&
+          parsedBaseAddress.Scheme != Uri.UriSchemeHttps))
+      {
+         throw new InvalidOperationException(
+            "Google Translate provider requires an HTTP base address."
+         );
+      }
+
       var source = ResolveLanguageCode(translation.FromLanguage);
       var target = ResolveLanguageCode(translation.ToLanguage);
+      var url = parsedBaseAddress.ToString().TrimEnd('/') + "/?";
 
-      return TranslateUrl + "?sl=" + Uri.EscapeDataString(source)
+      return url + "sl=" + Uri.EscapeDataString(source)
          + "&tl=" + Uri.EscapeDataString(target)
          + "&text=" + Uri.EscapeDataString(translation.Text)
          + "&op=translate";
