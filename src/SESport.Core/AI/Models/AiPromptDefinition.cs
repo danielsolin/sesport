@@ -11,5 +11,6 @@ public sealed record AiPromptDefinition(
    decimal? Temperature,
    int? MaxOutputTokens,
    int? MaxToolRounds,
-   bool Enabled
+   bool Enabled,
+   int? MinToolRounds = null
 );

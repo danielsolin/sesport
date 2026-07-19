@@ -374,6 +374,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             coalesce(r.prompt_temperature, pr.temperature),
             coalesce(r.prompt_max_output_tokens, pr.max_output_tokens),
             coalesce(r.prompt_max_tool_rounds, pr.max_tool_rounds),
+            coalesce(r.prompt_min_tool_rounds, pr.min_tool_rounds),
             r.max_output_tokens,
             coalesce(r.prompt_output_schema_json, pr.output_schema)::text,
             coalesce(
@@ -446,40 +447,41 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          PromptTemperature: ReadNullableDecimal(reader, 7),
          PromptMaxOutputTokens: ReadNullableInt32(reader, 8),
          PromptMaxToolRounds: ReadNullableInt32(reader, 9),
-         MaxOutputTokens: reader.GetInt32(10),
-         PromptOutputSchemaJson: ReadNullableString(reader, 11),
-         PromptRequestOptionsJson: reader.GetString(12),
-         ProviderId: reader.GetString(13),
-         ProviderLabel: reader.GetString(14),
-         ProviderKind: reader.GetString(15),
-         ProviderBaseAddress: ReadNullableString(reader, 16),
-         ProviderModel: ReadNullableString(reader, 17),
-         ProviderApiKeySource: ReadNullableString(reader, 18),
-         ProviderRequestOptionsJson: reader.GetString(19),
-         StatusId: reader.GetString(20),
-         CorrelationId: ReadNullableString(reader, 21),
-         InputPayloadJson: reader.GetString(22),
-         RenderedSystemPrompt: ReadNullableString(reader, 23),
-         RenderedPrompt: reader.GetString(24),
-         RawRequestJson: ReadNullableString(reader, 25),
-         RawResponseJson: ReadNullableString(reader, 26),
-         ToolTraceJson: ReadNullableString(reader, 27),
-         ToolRoundCount: reader.GetInt32(28),
-         ConversationCharacterCount: reader.GetInt32(29),
-         OutputText: ReadNullableString(reader, 30),
-         ErrorMessage: ReadNullableString(reader, 31),
-         StartedAt: reader.GetFieldValue<DateTimeOffset>(32),
-         CompletedAt: ReadNullableDateTimeOffset(reader, 33),
-         DurationSeconds: ReadNullableDecimal(reader, 34),
-         InputTokens: ReadNullableInt32(reader, 35),
-         OutputTokens: ReadNullableInt32(reader, 36),
-         ReasoningTokens: ReadNullableInt32(reader, 37),
-         ExecutionEnvironment: ReadNullableString(reader, 38),
-         JobOutputMode: reader.GetString(39),
-         JobRequiresWebSearch: reader.GetBoolean(40),
-         JobToolsJson: ReadNullableString(reader, 41),
-         JobConditionalToolsJson: ReadNullableString(reader, 42),
-         JobToolCallMaxTokens: ReadNullableInt32(reader, 43)
+         MaxOutputTokens: reader.GetInt32(11),
+         PromptOutputSchemaJson: ReadNullableString(reader, 12),
+         PromptRequestOptionsJson: reader.GetString(13),
+         ProviderId: reader.GetString(14),
+         ProviderLabel: reader.GetString(15),
+         ProviderKind: reader.GetString(16),
+         ProviderBaseAddress: ReadNullableString(reader, 17),
+         ProviderModel: ReadNullableString(reader, 18),
+         ProviderApiKeySource: ReadNullableString(reader, 19),
+         ProviderRequestOptionsJson: reader.GetString(20),
+         StatusId: reader.GetString(21),
+         CorrelationId: ReadNullableString(reader, 22),
+         InputPayloadJson: reader.GetString(23),
+         RenderedSystemPrompt: ReadNullableString(reader, 24),
+         RenderedPrompt: reader.GetString(25),
+         RawRequestJson: ReadNullableString(reader, 26),
+         RawResponseJson: ReadNullableString(reader, 27),
+         ToolTraceJson: ReadNullableString(reader, 28),
+         ToolRoundCount: reader.GetInt32(29),
+         ConversationCharacterCount: reader.GetInt32(30),
+         OutputText: ReadNullableString(reader, 31),
+         ErrorMessage: ReadNullableString(reader, 32),
+         StartedAt: reader.GetFieldValue<DateTimeOffset>(33),
+         CompletedAt: ReadNullableDateTimeOffset(reader, 34),
+         DurationSeconds: ReadNullableDecimal(reader, 35),
+         InputTokens: ReadNullableInt32(reader, 36),
+         OutputTokens: ReadNullableInt32(reader, 37),
+         ReasoningTokens: ReadNullableInt32(reader, 38),
+         ExecutionEnvironment: ReadNullableString(reader, 39),
+         JobOutputMode: reader.GetString(40),
+         JobRequiresWebSearch: reader.GetBoolean(41),
+         JobToolsJson: ReadNullableString(reader, 42),
+         JobConditionalToolsJson: ReadNullableString(reader, 43),
+         JobToolCallMaxTokens: ReadNullableInt32(reader, 44),
+         PromptMinToolRounds: ReadNullableInt32(reader, 10)
       );
    }
 
@@ -781,6 +783,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             temperature,
             max_output_tokens,
             max_tool_rounds,
+            min_tool_rounds,
             enabled
          from ai_job_prompts
          where id = @id
@@ -811,7 +814,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableDecimal(promptReader, 7),
          ReadNullableInt32(promptReader, 8),
          ReadNullableInt32(promptReader, 9),
-         promptReader.GetBoolean(10)
+         promptReader.GetBoolean(11),
+         ReadNullableInt32(promptReader, 10)
       );
    }
 
@@ -832,6 +836,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             temperature,
             max_output_tokens,
             max_tool_rounds,
+            min_tool_rounds,
             enabled
          from ai_job_prompts
          where id = @id
@@ -859,7 +864,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableDecimal(reader, 7),
          ReadNullableInt32(reader, 8),
          ReadNullableInt32(reader, 9),
-         reader.GetBoolean(10)
+         reader.GetBoolean(11),
+         ReadNullableInt32(reader, 10)
       );
    }
 
@@ -880,6 +886,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             temperature,
             max_output_tokens,
             max_tool_rounds,
+            min_tool_rounds,
             enabled
          from ai_job_prompts
          where job_id = @job_id
@@ -910,7 +917,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       ReadNullableDecimal(reader, 7),
       ReadNullableInt32(reader, 8),
       ReadNullableInt32(reader, 9),
-      reader.GetBoolean(10)
+      reader.GetBoolean(11),
+      ReadNullableInt32(reader, 10)
    );
    }
 
@@ -970,6 +978,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             prompt_user_prompt_template, prompt_output_schema_json,
             prompt_request_options_json, prompt_temperature,
             prompt_max_output_tokens, prompt_max_tool_rounds,
+            prompt_min_tool_rounds,
             max_output_tokens,
             provider_id, provider_label, provider_kind,
             provider_base_address, provider_model, provider_api_key_source,
@@ -988,6 +997,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             @prompt_user_prompt_template, @prompt_output_schema_json,
             @prompt_request_options_json, @prompt_temperature,
             @prompt_max_output_tokens, @prompt_max_tool_rounds,
+            @prompt_min_tool_rounds,
             @max_output_tokens,
             @provider_id, @provider_label, @provider_kind,
             @provider_base_address, @provider_model, @provider_api_key_source,
@@ -1339,6 +1349,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "prompt_max_tool_rounds",
          (object?)run.PromptMaxToolRounds ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "prompt_min_tool_rounds",
+         (object?)run.PromptMinToolRounds ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "max_output_tokens",

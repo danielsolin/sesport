@@ -140,7 +140,10 @@ public class AiProviderClientTests
             true,
             CreateToolsJson()
          ),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -277,7 +280,10 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("text", requiresWebSearch: false, null),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -317,7 +323,10 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("text", requiresWebSearch: false, null),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -380,7 +389,10 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("text", requiresWebSearch: false, null),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -430,7 +442,10 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("text", requiresWebSearch: true, CreateToolsJson()),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -1296,6 +1311,37 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerGenerateAsyncAllowsToolsToBeOptional()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", true, CreateToolsJson()),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.NotEmpty(result.OutputText);
+      Assert.Single(handler.RequestBodies);
+      Assert.Contains("\"tools\":[", handler.RequestBodies[0]);
+      Assert.Contains(
+         "\"tool_choice\":\"auto\"",
+         handler.RequestBodies[0]
+      );
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncFallsBackAfterMaxToolRounds()
    {
       var handler = new RecordingHandler(
@@ -1337,7 +1383,8 @@ public class AiProviderClientTests
          CreatePrompt(
             CreateParticipationSchemaJson(),
             maxOutputTokens: 8192,
-            maxToolRounds: 1
+            maxToolRounds: 1,
+            minToolRounds: 1
          ),
          CreateRenderedPrompt(),
          "{}",
@@ -1396,7 +1443,10 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("json_schema", requiresWebSearch: false, null),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -1478,7 +1528,10 @@ public class AiProviderClientTests
       var result = await client.GenerateAsync(
          CreateProvider("llama-server"),
          CreateJob("json_schema", true, CreateToolsJson()),
-         CreatePrompt(CreateParticipationSchemaJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -2194,7 +2247,8 @@ public class AiProviderClientTests
    private static AiPromptDefinition CreatePrompt(
       string? outputSchemaJson = """{"type":"object"}""",
       int? maxOutputTokens = null,
-      int? maxToolRounds = null
+      int? maxToolRounds = null,
+      int? minToolRounds = null
    )
    {
       return new AiPromptDefinition(
@@ -2208,7 +2262,8 @@ public class AiProviderClientTests
          null,
          maxOutputTokens,
          maxToolRounds,
-         true
+         true,
+         minToolRounds
       );
    }
 

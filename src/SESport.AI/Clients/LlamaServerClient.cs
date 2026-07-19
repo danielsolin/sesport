@@ -147,6 +147,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var maxToolRounds = job.RequiresWebSearch
          ? prompt.MaxToolRounds ?? DefaultMaxToolRounds
          : prompt.MaxToolRounds;
+      var minToolRounds = prompt.MinToolRounds ?? 0;
 
       try
       {
@@ -414,10 +415,11 @@ public sealed class LlamaServerClient : IAiProviderClient
                   validationContinuationAttempts = 0;
                }
 
-               if(job.RequiresWebSearch)
-               {
-                  request["tool_choice"] = "required";
-               }
+               LlamaRequestFactory.ApplyToolChoice(
+                  request,
+                  minToolRounds,
+                  toolRoundCount
+               );
 
                LlamaConversationTrimmer.TrimMessages(
                   request,
@@ -734,10 +736,11 @@ public sealed class LlamaServerClient : IAiProviderClient
                      reportSubmissionAttempt
                   );
 
-                  if(job.RequiresWebSearch)
-                  {
-                     request["tool_choice"] = "required";
-                  }
+                  LlamaRequestFactory.ApplyToolChoice(
+                     request,
+                     minToolRounds,
+                     toolRoundCount
+                  );
 
                   continueWithTools = true;
                   break;

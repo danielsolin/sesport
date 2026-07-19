@@ -451,6 +451,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             temperature,
             max_output_tokens,
             max_tool_rounds,
+            min_tool_rounds,
             enabled
          from ai_job_prompts
          where id = @id
@@ -480,7 +481,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Temperature = ReadNullableDecimal(reader, 7),
          MaxOutputTokens = ReadNullableInt32(reader, 8),
          MaxToolRounds = ReadNullableInt32(reader, 9),
-         Enabled = reader.GetBoolean(10)
+         MinToolRounds = ReadNullableInt32(reader, 10),
+         Enabled = reader.GetBoolean(11)
       };
    }
 
@@ -500,12 +502,13 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             insert into ai_job_prompts (
                id, job_id, version, system_prompt, user_prompt_template,
                output_schema, request_options, temperature,
-               max_output_tokens, max_tool_rounds, enabled
+               max_output_tokens, max_tool_rounds, min_tool_rounds, enabled
             )
             values (
                @id, @job_id, @version, @system_prompt,
                @user_prompt_template, @output_schema, @request_options,
-               @temperature, @max_output_tokens, @max_tool_rounds, @enabled
+               @temperature, @max_output_tokens, @max_tool_rounds,
+               @min_tool_rounds, @enabled
             )
             """;
 
@@ -525,6 +528,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             temperature = @temperature,
             max_output_tokens = @max_output_tokens,
             max_tool_rounds = @max_tool_rounds,
+            min_tool_rounds = @min_tool_rounds,
             enabled = @enabled,
             updated_at = now()
          where id = @original_id
@@ -642,6 +646,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "max_tool_rounds",
          (object?)model.MaxToolRounds ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "min_tool_rounds",
+         (object?)model.MinToolRounds ?? DBNull.Value
       );
       command.Parameters.AddWithValue("enabled", model.Enabled);
    }

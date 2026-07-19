@@ -142,7 +142,8 @@ public sealed record AiRunDetail(
    bool JobRequiresWebSearch,
    string? JobToolsJson,
    string? JobConditionalToolsJson,
-   int? JobToolCallMaxTokens
+   int? JobToolCallMaxTokens,
+   int? PromptMinToolRounds = null
 );
 
 public sealed class AiPromptEditModel
@@ -168,6 +169,8 @@ public sealed class AiPromptEditModel
    public int? MaxOutputTokens { get; set; }
 
    public int? MaxToolRounds { get; set; }
+
+   public int? MinToolRounds { get; set; }
 
    public bool Enabled { get; set; } = true;
 }

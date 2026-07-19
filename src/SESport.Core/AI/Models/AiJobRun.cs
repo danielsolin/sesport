@@ -44,5 +44,6 @@ public sealed record AiJobRun(
    decimal? PromptTemperature,
    int? PromptMaxOutputTokens,
    int? PromptMaxToolRounds,
-   int MaxOutputTokens
+   int MaxOutputTokens,
+   int? PromptMinToolRounds = null
 );

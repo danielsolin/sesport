@@ -37,6 +37,7 @@ internal static class LlamaRequestFactory
    private const string JsonPropertyToolChoice = "tool_choice";
    private const string JsonPropertyTools = "tools";
    private const string JsonValueJsonObject = "json_object";
+   private const string JsonValueAuto = "auto";
    private const string JsonValueRequired = "required";
    private const string JsonValueSystem = "system";
    private const string JsonValueUser = "user";
@@ -113,7 +114,7 @@ internal static class LlamaRequestFactory
       if(requestTools.Count > 0)
       {
          payload[JsonPropertyTools] = requestTools;
-         payload[JsonPropertyToolChoice] = JsonValueRequired;
+         ApplyToolChoice(payload, prompt.MinToolRounds, 0);
       }
 
       MergeRequestOptions(payload, provider.RequestOptionsJson);
@@ -130,6 +131,23 @@ internal static class LlamaRequestFactory
          payload,
          conditionalTools
       );
+   }
+
+   public static void ApplyToolChoice(
+      JsonObject request,
+      int? minToolRounds,
+      int toolRoundCount
+   )
+   {
+      if(!request.ContainsKey(JsonPropertyTools))
+      {
+         return;
+      }
+
+      request[JsonPropertyToolChoice] =
+         minToolRounds is not null && toolRoundCount < minToolRounds.Value
+            ? JsonValueRequired
+            : JsonValueAuto;
    }
 
    public static JsonObject CreateFinal(

@@ -100,6 +100,24 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
+      if(Prompt.MinToolRounds is not null && Prompt.MinToolRounds < 1)
+      {
+         ModelState.AddModelError(
+            "Prompt.MinToolRounds",
+            "Min tool rounds must be at least 1."
+         );
+      }
+
+      if(Prompt.MinToolRounds is not null &&
+         Prompt.MaxToolRounds is not null &&
+         Prompt.MinToolRounds > Prompt.MaxToolRounds)
+      {
+         ModelState.AddModelError(
+            "Prompt.MinToolRounds",
+            "Min tool rounds cannot exceed max tool rounds."
+         );
+      }
+
       if(string.IsNullOrWhiteSpace(Prompt.SystemPrompt))
       {
          ModelState.AddModelError(

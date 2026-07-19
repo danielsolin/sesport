@@ -403,7 +403,8 @@ public sealed class AiJobRunner(
          prompt.Temperature,
          prompt.MaxOutputTokens,
          prompt.MaxToolRounds,
-         maxOutputTokens
+         maxOutputTokens,
+         prompt.MinToolRounds
       );
 
       return new ExecutionContext(
@@ -665,7 +666,8 @@ public sealed class AiJobRunner(
          run.PromptTemperature,
          run.MaxOutputTokens,
          run.PromptMaxToolRounds,
-         true
+         true,
+         run.PromptMinToolRounds
       );
    }
 
@@ -745,7 +747,8 @@ internal static class AiRunDetailExtensions
          run.PromptTemperature,
          run.PromptMaxOutputTokens,
          run.PromptMaxToolRounds,
-         run.MaxOutputTokens
+         run.MaxOutputTokens,
+         run.PromptMinToolRounds
       );
    }
 
