@@ -468,6 +468,48 @@ h2 {
    min-width: 0;
 }
 
+.entities-col-bio {
+   width: 22%;
+}
+
+.entities-col-name {
+   width: 16%;
+}
+
+.entities-col-related {
+   width: 16%;
+}
+
+.entities-col-type {
+   width: 10%;
+}
+
+.entities-col-sport {
+   width: 8%;
+}
+
+.entities-col-watch-priority {
+   width: 14%;
+}
+
+.entities-col-country {
+   width: 8%;
+}
+
+.entities-col-actions {
+   width: 6%;
+}
+
+.entities-cell-bio {
+   display: -webkit-box;
+   max-height: 4.5em;
+   overflow: hidden;
+   -webkit-box-orient: vertical;
+   -webkit-line-clamp: 3;
+   line-height: 1.5;
+   overflow-wrap: anywhere;
+}
+
 .entity-inline-editable {
    cursor: pointer;
 }
@@ -689,41 +731,6 @@ h2 {
 
 .broadcasts-col-actions {
    width: 64px;
-}
-
-.entities-table th:nth-child(1),
-.entities-table td:nth-child(1) {
-   width: 20%;
-}
-
-.entities-table th:nth-child(2),
-.entities-table td:nth-child(2) {
-   width: 20%;
-}
-
-.entities-table th:nth-child(3),
-.entities-table td:nth-child(3) {
-   width: 12%;
-}
-
-.entities-table th:nth-child(4),
-.entities-table td:nth-child(4) {
-   width: 10%;
-}
-
-.entities-table th:nth-child(5),
-.entities-table td:nth-child(5) {
-   width: 14%;
-}
-
-.entities-table th:nth-child(6),
-.entities-table td:nth-child(6) {
-   width: 10%;
-}
-
-.entities-table th:nth-child(7),
-.entities-table td:nth-child(7) {
-   width: 14%;
 }
 
 .entities-table td {

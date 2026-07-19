@@ -85,6 +85,7 @@ else
          <table class="admin-table admin-table-hover entities-table">
             <colgroup>
                <col class="entities-col-name" />
+               <col class="entities-col-bio" />
                <col class="entities-col-related" />
                <col class="entities-col-type" />
                <col class="entities-col-sport" />
@@ -100,6 +101,7 @@ else
                         Name @Model.GetSortIndicator("Name")
                      </a>
                   </th>
+                  <th>Bio</th>
                   <th>
                      <a asp-page="./Index" asp-route-sortColumn="Related"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Related")'>

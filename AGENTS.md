@@ -65,6 +65,8 @@ Several console applications live in `tools/legacy/` for occasional use:
   normalization, or extraction rule.
 - Hard rule: No lines in any file should exceed 80 characters wide unless it's
   required for the file to work.
+- Hard rule: Do not use `nth-child` selectors in CSS. Use semantic classes
+  or other explicit selectors instead.
 - Hard rule: All conversations/chats in Swedish, but everything produced for
   the project in English. If the user starts speaking English, respond in
   Swedish and remind them of this rule.

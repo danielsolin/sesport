@@ -287,6 +287,7 @@
       const token = getAntiForgeryToken();
       const entityId = escapeHtml(entity.id ?? "");
       const name = escapeHtml(entity.name ?? "");
+      const bio = escapeHtml(entity.bio ?? "");
       const relatedEntityNames = escapeHtml(entity.relatedEntityNames ?? "");
       const entityType = escapeHtml(entity.entityType ?? "");
       const sport = escapeHtml(entity.sport ?? "");
@@ -339,6 +340,9 @@
                   rel="noreferrer">
                   <span class="ses-icon-search"></span>
                </a>
+            </td>
+            <td title="${bio}">
+               <div class="entities-cell-bio">${bio}</div>
             </td>
             <td>${relatedEntityNames}</td>
             <td>${entityType}</td>

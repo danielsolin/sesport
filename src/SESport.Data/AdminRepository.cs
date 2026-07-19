@@ -934,6 +934,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          select
             e.id,
             e.canonical_name,
+            e.bio,
             et.label,
             s.name,
             p.id,
@@ -1002,12 +1003,13 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             new EntityListItem(
                reader.GetGuid(0),
                reader.GetString(1),
-               reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
                reader.GetString(5),
                reader.GetString(6),
-               reader.GetString(7)
+               reader.GetString(7),
+               reader.GetString(8),
+               reader.IsDBNull(2) ? null : reader.GetString(2)
             )
          );
       }
