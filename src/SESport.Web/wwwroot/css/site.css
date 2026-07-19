@@ -1248,7 +1248,7 @@ h2 {
 
 .detail-grid {
    display: grid;
-   grid-template-columns: repeat(2, minmax(0, 1fr));
+   grid-template-columns: repeat(3, minmax(0, 1fr));
    gap: 12px 18px;
    margin: 0;
 }
@@ -1889,7 +1889,8 @@ textarea {
 
    .admin-layout,
    .proposal-summary,
-   .form-grid {
+   .form-grid,
+   .detail-grid {
       grid-template-columns: 1fr;
    }
 
