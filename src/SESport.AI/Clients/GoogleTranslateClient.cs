@@ -228,9 +228,15 @@ public sealed class GoogleTranslateClient : IAiProviderClient
             Timeout = 60000
          }
       );
+      await page.WaitForTimeoutAsync(500);
 
       cancellationToken.ThrowIfCancellationRequested();
-      var translatedText = (await result.InnerTextAsync()).Trim();
+      var translatedText = string.Join(
+         " ",
+         (await page.Locator("span[jsname='W297wb']").AllInnerTextsAsync())
+            .Select(text => text.Trim())
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+      );
 
       if(string.IsNullOrWhiteSpace(translatedText))
       {
