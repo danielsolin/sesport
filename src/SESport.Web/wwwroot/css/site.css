@@ -867,11 +867,11 @@ h2 {
 }
 
 .ai-runs-col-event {
-   width: auto;
+   width: 180px;
 }
 
 .ai-runs-col-summary {
-   width: 180px;
+   width: auto;
 }
 
 .ai-runs-col-status {
