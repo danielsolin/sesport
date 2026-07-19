@@ -57,6 +57,12 @@
             <span asp-validation-for="Job.ProviderId"></span>
          </label>
          <label>
+            <span>Model override</span>
+            <input asp-for="Job.Model"
+                   placeholder="Use provider default" />
+            <span asp-validation-for="Job.Model"></span>
+         </label>
+         <label>
             <span>Active prompt</span>
             <select asp-for="Job.ActivePromptId">
                <option value="">Select prompt</option>

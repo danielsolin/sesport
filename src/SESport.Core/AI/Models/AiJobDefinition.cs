@@ -11,5 +11,6 @@ public sealed record AiJobDefinition(
    int? ToolCallMaxTokens,
    bool RequiresWebSearch,
    bool Enabled,
-   Guid? ActivePromptId
+   Guid? ActivePromptId,
+   string? Model = null
 );

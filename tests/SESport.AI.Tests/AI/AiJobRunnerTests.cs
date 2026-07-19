@@ -158,6 +158,33 @@ public class AiJobRunnerTests
    }
 
    [Fact]
+   public async Task QueueAsyncUsesJobModelOverride()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository
+      {
+         JobModel = "translation-model"
+      };
+      var runRepository = new RecordingRunRepository();
+      var runner = new AiJobRunner(
+         jobRepository,
+         new RecordingPromptRenderer(),
+         [new SuccessfulProviderClient()],
+         runRepository,
+         new AiJobExecutionGate()
+      );
+
+      await runner.QueueAsync(
+         new AiJobRequest("job", "{}"),
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         "translation-model",
+         runRepository.StoredRun!.ProviderModel
+      );
+   }
+
+   [Fact]
    public async Task ProcessRunAsyncRendersSystemPromptForStoredRun()
    {
       var jobRepository = new RecordingJobDefinitionRepository();
@@ -204,6 +231,8 @@ public class AiJobRunnerTests
    private sealed class RecordingJobDefinitionRepository
       : IAiJobDefinitionRepository
    {
+      public string? JobModel { get; set; }
+
       public Task<AiJobDefinition?> GetJobAsync(
          string jobId,
          CancellationToken cancellationToken
@@ -221,7 +250,8 @@ public class AiJobRunnerTests
                null,
                true,
                true,
-               null
+               null,
+               JobModel
             )
          );
       }

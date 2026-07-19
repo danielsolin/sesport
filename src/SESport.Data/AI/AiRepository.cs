@@ -694,6 +694,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             label,
             description,
             provider_id,
+            model,
             output_mode,
             tools_json::text,
             conditional_tools_json::text,
@@ -721,13 +722,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          reader.GetString(1),
          ReadNullableString(reader, 2),
          reader.GetString(3),
-         reader.GetString(4),
-         ReadNullableString(reader, 5),
+         reader.GetString(5),
          ReadNullableString(reader, 6),
-         ReadNullableInt32(reader, 7),
-         reader.GetBoolean(8),
-         reader.GetBoolean(10),
-         ReadNullableGuid(reader, 9)
+         ReadNullableString(reader, 7),
+         ReadNullableInt32(reader, 8),
+         reader.GetBoolean(9),
+         reader.GetBoolean(11),
+         ReadNullableGuid(reader, 10),
+         ReadNullableString(reader, 4)
       );
    }
 

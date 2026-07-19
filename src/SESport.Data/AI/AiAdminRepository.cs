@@ -214,6 +214,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             label,
             description,
             provider_id,
+            model,
             output_mode,
             tools_json::text,
             conditional_tools_json::text,
@@ -243,13 +244,14 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Label = reader.GetString(1),
          Description = ReadNullableString(reader, 2),
          ProviderId = reader.GetString(3),
-         OutputMode = reader.GetString(4),
-         ToolsJson = ReadNullableString(reader, 5),
-         ConditionalToolsJson = ReadNullableString(reader, 6),
-         ToolCallMaxTokens = ReadNullableInt32(reader, 7),
-         ActivePromptId = ReadNullableGuid(reader, 8)?.ToString(),
-         RequiresWebSearch = reader.GetBoolean(9),
-         Enabled = reader.GetBoolean(10)
+         Model = ReadNullableString(reader, 4),
+         OutputMode = reader.GetString(5),
+         ToolsJson = ReadNullableString(reader, 6),
+         ConditionalToolsJson = ReadNullableString(reader, 7),
+         ToolCallMaxTokens = ReadNullableInt32(reader, 8),
+         ActivePromptId = ReadNullableGuid(reader, 9)?.ToString(),
+         RequiresWebSearch = reader.GetBoolean(10),
+         Enabled = reader.GetBoolean(11)
       };
    }
 
@@ -271,6 +273,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                label,
             description,
             provider_id,
+            model,
             output_mode,
             tools_json,
             conditional_tools_json,
@@ -284,6 +287,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                @label,
             @description,
             @provider_id,
+            @model,
             @output_mode,
             @tools_json,
             @conditional_tools_json,
@@ -306,6 +310,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             label = @label,
             description = @description,
             provider_id = @provider_id,
+            model = @model,
             output_mode = @output_mode,
             tools_json = @tools_json,
             conditional_tools_json = @conditional_tools_json,
@@ -576,6 +581,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          BlankToDbNull(model.Description)
       );
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
+      command.Parameters.AddWithValue("model", BlankToDbNull(model.Model));
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
       AddJsonbParameter(command, "tools_json", model.ToolsJson);
       AddJsonbParameter(

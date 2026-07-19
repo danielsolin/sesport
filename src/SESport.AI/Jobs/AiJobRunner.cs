@@ -348,6 +348,10 @@ public sealed class AiJobRunner(
          );
       }
 
+      var effectiveModel = string.IsNullOrWhiteSpace(job.Model)
+         ? provider.Model
+         : job.Model.Trim();
+      var effectiveProvider = provider with { Model = effectiveModel };
       var providerClient = GetProviderClient(provider.Kind);
       var renderedPrompt = promptRenderer.Render(
          prompt,
@@ -363,7 +367,7 @@ public sealed class AiJobRunner(
          prompt.SystemPrompt,
          prompt.UserPromptTemplate,
          provider.Id,
-         provider.Model,
+         effectiveModel,
          AiJobRunStatus.Pending,
          request.CorrelationId,
          request.InputPayloadJson,
@@ -406,7 +410,7 @@ public sealed class AiJobRunner(
          run,
          job,
          prompt,
-         provider,
+         effectiveProvider,
          providerClient,
          renderedPrompt,
          request.InputPayloadJson

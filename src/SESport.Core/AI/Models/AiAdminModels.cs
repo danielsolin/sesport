@@ -53,6 +53,8 @@ public sealed class AiJobEditModel
 
    public string ProviderId { get; set; } = string.Empty;
 
+   public string? Model { get; set; }
+
    public string OutputMode { get; set; } = "text";
 
    public string? ActivePromptId { get; set; }
