@@ -167,7 +167,10 @@ a:hover {
 
 .entity-filter-grid {
    display: grid;
-   grid-template-columns: minmax(180px, 220px) minmax(260px, 340px);
+   grid-template-columns:
+      minmax(180px, 220px)
+      minmax(260px, 340px)
+      minmax(160px, 180px);
    align-items: end;
    gap: 12px;
 }

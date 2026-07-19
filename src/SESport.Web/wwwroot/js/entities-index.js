@@ -35,6 +35,7 @@
             container,
             "entitySearchUrlBase"
          );
+         const activityDate = getDataValue(container, "entityDate");
          const cookieName = getDataValue(
             container,
             "entityFilterCookieName"
@@ -147,6 +148,11 @@
 
                url.searchParams.set("includeAll", "true");
 
+               if(activityDate !== "")
+               {
+                  url.searchParams.set("date", activityDate);
+               }
+
                typeIds.forEach(typeId => {
                   url.searchParams.append("entityTypeIds", typeId);
                });
@@ -202,7 +208,8 @@
                setCookie(cookieName, query);
                setCookie(typeCookieName, typeIds.join(","));
 
-               if(query === "" && typeIds.length === 0)
+               if(query === "" && typeIds.length === 0 &&
+                  activityDate === "")
                {
                   clearRows();
                   return;
@@ -219,7 +226,8 @@
          const initialQuery = currentQuery();
          const initialTypeIds = getSelectedTypeIds();
 
-         if(initialQuery === "" && initialTypeIds.length === 0)
+         if(initialQuery === "" && initialTypeIds.length === 0 &&
+            activityDate === "")
          {
             listBody.replaceChildren();
             setEmptyState(false);

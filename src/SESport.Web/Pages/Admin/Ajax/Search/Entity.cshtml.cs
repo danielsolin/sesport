@@ -16,7 +16,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       bool organizationOnly = false,
       string[]? entityTypeIds = null,
       Guid? excludeEntityId = null,
-      int? maxResults = null
+      int? maxResults = null,
+      DateOnly? date = null
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -36,7 +37,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
             organizationOnly,
             normalizedEntityTypeIds,
             excludeEntityId,
-            normalizedMaxResults
+            normalizedMaxResults,
+            activityDate: date
          )
          : await repository.SearchEntitiesAsync(
             term,
@@ -44,7 +46,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
             organizationOnly,
             normalizedEntityTypeIds,
             excludeEntityId,
-            normalizedMaxResults
+            normalizedMaxResults,
+            activityDate: date
          );
       results = SortEntities(
          results,

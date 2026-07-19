@@ -22,7 +22,7 @@
 </section>
 
 <section class="form-section">
-   <div class="entity-filter-grid">
+   <form method="get" class="entity-filter-grid">
       <label>
          <span>Filter</span>
          <input type="text"
@@ -47,7 +47,15 @@
             </select>
          </div>
       </label>
-   </div>
+      <label>
+         <span>Date</span>
+         <input type="date"
+                name="@RouteKeys.Date"
+                value="@Model.DateText"
+                data-entity-date-filter
+                onchange="this.form.submit();" />
+      </label>
+   </form>
 </section>
 
 @if(Model.LoadError is not null)
@@ -69,6 +77,7 @@ else
            "@IndexModel.TypeFilterCookieName"
         data-entity-sort-column="@Model.SortColumn"
         data-entity-sort-asc="@Model.SortAsc.ToString().ToLowerInvariant()"
+        data-entity-date="@Model.DateText"
         data-entity-search-url-base="@searchUrlBase">
       <div class="notice" data-entity-empty-state hidden>
          No matching entities.

@@ -2,6 +2,7 @@ using Npgsql;
 
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 
@@ -829,7 +830,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       bool excludePersonAndPair = false,
       IReadOnlyCollection<string>? entityTypeIds = null,
       Guid? excludeEntityId = null,
-      int? maxResults = null
+      int? maxResults = null,
+      DateOnly? activityDate = null
    )
    {
       return await QueryEntitiesAsync(
@@ -839,7 +841,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          excludePersonAndPair,
          entityTypeIds,
          excludeEntityId,
-         maxResults
+         maxResults,
+         activityDate
       );
    }
 
@@ -848,7 +851,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       bool excludePersonAndPair = false,
       IReadOnlyCollection<string>? entityTypeIds = null,
       Guid? excludeEntityId = null,
-      int? maxResults = null
+      int? maxResults = null,
+      DateOnly? activityDate = null
    )
    {
       return await QueryEntitiesAsync(
@@ -858,7 +862,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          excludePersonAndPair,
          entityTypeIds,
          excludeEntityId,
-         maxResults
+         maxResults,
+         activityDate
       );
    }
 
@@ -869,7 +874,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       bool excludePersonAndPair,
       IReadOnlyCollection<string>? entityTypeIds,
       Guid? excludeEntityId,
-      int? maxResults
+      int? maxResults,
+      DateOnly? activityDate
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -925,6 +931,48 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(normalizedEntityTypeIds.Length > 0)
       {
          whereClauses.Add("e.entity_type_id = any(@entity_type_ids)");
+      }
+
+      DateTimeOffset? activityStart = null;
+      DateTimeOffset? activityEnd = null;
+
+      if(activityDate is not null)
+      {
+         var window = SportDay.ForDate(activityDate.Value);
+         activityStart = TimeZoneHelper.ToUtc(
+            window.StartDate,
+            window.Cutoff,
+            SportDay.TimeZoneId
+         );
+         activityEnd = TimeZoneHelper.ToUtc(
+            window.EndDateExclusive,
+            window.Cutoff,
+            SportDay.TimeZoneId
+         );
+         whereClauses.Add(
+            $$"""
+            exists (
+               select 1
+               from activity_entity_links activity_link
+               join activities linked_activity
+                  on linked_activity.id = activity_link.activity_id
+               where activity_link.entity_id = e.id
+                  and linked_activity.publication_status_id =
+                     '{{ActivityPublicationStatusIds.Published}}'
+                  and (
+                     (
+                        linked_activity.starts_at is not null
+                        and linked_activity.starts_at >= @activity_start
+                        and linked_activity.starts_at < @activity_end
+                     )
+                     or (
+                        linked_activity.starts_at is null
+                        and linked_activity.activity_date = @activity_date
+                     )
+                  )
+            )
+            """
+         );
       }
 
       var whereSql = whereClauses.Count == 0
@@ -990,6 +1038,13 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(maxResults is > 0)
       {
          command.Parameters.AddWithValue("max_results", maxResults.Value);
+      }
+
+      if(activityDate is not null)
+      {
+         command.Parameters.AddWithValue("activity_date", activityDate);
+         command.Parameters.AddWithValue("activity_start", activityStart);
+         command.Parameters.AddWithValue("activity_end", activityEnd);
       }
 
       await using var reader = await command.ExecuteReaderAsync(

@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using SESport.Core.Formatting;
 using SESport.Data;
+using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Entities;
 
@@ -39,6 +41,11 @@ public class IndexModel(AdminRepository repository) : PageModel
    public string Filter { get; private set; } = string.Empty;
 
    public bool HasFilter => !string.IsNullOrWhiteSpace(Filter);
+
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
+   public DateOnly? Date { get; set; }
+
+   public string? DateText => DateDisplay.Format(Date);
 
    public string? LoadError { get; private set; }
 
