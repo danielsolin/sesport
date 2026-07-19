@@ -34,27 +34,27 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<IAiJobProcessor, ActivityTeaserJobProcessor>();
       // OpenRouter is dormant for AI jobs. Keep registration available for
       // archived configs, but do not assume LlamaServerClient feature parity.
-      services.AddHttpClient<
-         IAiProviderClient,
-         OpenRouterClient
-      >(client =>
+      services.AddHttpClient<OpenRouterClient>(client =>
       {
          client.Timeout = TimeSpan.FromSeconds(300);
       });
-      services.AddHttpClient<
-         IAiProviderClient,
-         LlamaServerClient
-      >(client =>
+      services.AddHttpClient<LlamaServerClient>(client =>
       {
          client.Timeout = TimeSpan.FromMinutes(20);
       });
-      services.AddHttpClient<
-         IAiProviderClient,
-         GoogleTranslateClient
-      >(client =>
+      services.AddHttpClient<GoogleTranslateClient>(client =>
       {
          client.Timeout = TimeSpan.FromSeconds(60);
       });
+      services.AddTransient<IAiProviderClient>(serviceProvider =>
+         serviceProvider.GetRequiredService<OpenRouterClient>()
+      );
+      services.AddTransient<IAiProviderClient>(serviceProvider =>
+         serviceProvider.GetRequiredService<LlamaServerClient>()
+      );
+      services.AddTransient<IAiProviderClient>(serviceProvider =>
+         serviceProvider.GetRequiredService<GoogleTranslateClient>()
+      );
       services.AddHttpClient<SearxngWebSearchClient>(
          client =>
          {
