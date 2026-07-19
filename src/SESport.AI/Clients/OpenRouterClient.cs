@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -13,6 +14,8 @@ namespace SESport.AI.Clients;
 // client is not kept in feature parity with LlamaServerClient.
 public sealed class OpenRouterClient : IAiProviderClient
 {
+   private const int MaxRateLimitRetries = 5;
+
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -107,17 +110,37 @@ public sealed class OpenRouterClient : IAiProviderClient
 
       var request = CreateRequestPayload(provider, job, prompt, renderedPrompt);
       var requestJson = AiRequestJsonSerializer.Serialize(request);
-      var response = await SendAsync(
-         provider,
-         request,
-         cancellationToken
-      );
-      var rawResponse = await response.Content.ReadAsStringAsync(
-         cancellationToken
-      );
-
-      if(!response.IsSuccessStatusCode)
+      for(var retry = 0; ; retry++)
       {
+         using var response = await SendAsync(
+            provider,
+            request,
+            cancellationToken
+         );
+         var rawResponse = await response.Content.ReadAsStringAsync(
+            cancellationToken
+         );
+
+         if(response.IsSuccessStatusCode)
+         {
+            return CreateResult(
+               provider,
+               job,
+               prompt,
+               renderedPrompt,
+               requestJson,
+               rawResponse
+            );
+         }
+
+         if(response.StatusCode == HttpStatusCode.TooManyRequests &&
+            retry < MaxRateLimitRetries)
+         {
+            var retryAfter = GetRetryAfter(response, rawResponse);
+            await Task.Delay(retryAfter, cancellationToken);
+            continue;
+         }
+
          throw new AiProviderExecutionException(
             CreateFailureMessage(response.StatusCode, rawResponse),
             null,
@@ -125,7 +148,17 @@ public sealed class OpenRouterClient : IAiProviderClient
             rawResponse
          );
       }
+   }
 
+   private static AiJobResult CreateResult(
+      AiProviderDefinition provider,
+      AiJobDefinition job,
+      AiPromptDefinition prompt,
+      AiRenderedPrompt renderedPrompt,
+      string requestJson,
+      string rawResponse
+   )
+   {
       var outputText = ResponsesOutputValidator.ValidateStructuredOutput(
          NormalizeOutput(ExtractFinalText(rawResponse)),
          job.OutputMode,
@@ -212,6 +245,58 @@ public sealed class OpenRouterClient : IAiProviderClient
       }
 
       return await HttpClient.SendAsync(requestMessage, cancellationToken);
+   }
+
+   private static TimeSpan GetRetryAfter(
+      HttpResponseMessage response,
+      string rawResponse
+   )
+   {
+      if(TryGetRetryAfterFromJson(rawResponse, out var seconds))
+      {
+         return TimeSpan.FromSeconds(Math.Max(0, seconds));
+      }
+
+      var retryAfter = response.Headers.RetryAfter;
+      if(retryAfter?.Delta is not null)
+      {
+         return retryAfter.Delta.Value < TimeSpan.Zero
+            ? TimeSpan.Zero
+            : retryAfter.Delta.Value;
+      }
+
+      return TimeSpan.FromSeconds(10);
+   }
+
+   private static bool TryGetRetryAfterFromJson(
+      string rawResponse,
+      out double seconds
+   )
+   {
+      seconds = 0;
+
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponse);
+         var value = document.RootElement
+            .GetProperty("error")
+            .GetProperty("metadata")
+            .GetProperty("retry_after_seconds");
+
+         return value.TryGetDouble(out seconds);
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
+      catch(InvalidOperationException)
+      {
+         return false;
+      }
+      catch(KeyNotFoundException)
+      {
+         return false;
+      }
    }
 
    private static string NormalizeOutput(string value)

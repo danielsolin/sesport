@@ -1919,11 +1919,18 @@ public class AiProviderClientTests
    [Fact]
    public async Task OpenRouterGenerateAsyncPreservesProviderErrorPayload()
    {
+      var rateLimitResponse = new RecordingHandler.ResponseSpec(
+         HttpStatusCode.TooManyRequests,
+         "{\"error\":{\"message\":\"rate limited\","
+            + "\"metadata\":{\"retry_after_seconds\":0}}}"
+      );
       var handler = new RecordingHandler(
-         new RecordingHandler.ResponseSpec(
-            HttpStatusCode.TooManyRequests,
-            "{\"error\":\"rate limited\"}"
-         )
+         rateLimitResponse,
+         rateLimitResponse,
+         rateLimitResponse,
+         rateLimitResponse,
+         rateLimitResponse,
+         rateLimitResponse
       );
       var client = new OpenRouterClient(new HttpClient(handler));
 
@@ -1941,9 +1948,36 @@ public class AiProviderClientTests
       Assert.Contains("429", exception.Message);
       Assert.NotNull(exception.RawRequestJson);
       Assert.Equal(
-         "{\"error\":\"rate limited\"}",
+         "{\"error\":{\"message\":\"rate limited\","
+            + "\"metadata\":{\"retry_after_seconds\":0}}}",
          exception.RawResponseJson
       );
+   }
+
+   [Fact]
+   public async Task OpenRouterGenerateAsyncRetriesRateLimit()
+   {
+      var handler = new RecordingHandler(
+         new RecordingHandler.ResponseSpec(
+            HttpStatusCode.TooManyRequests,
+            "{\"error\":{\"metadata\":{"
+               + "\"retry_after_seconds\":0}}}"
+         ),
+         CreateChatResponseJson("Translated text")
+      );
+      var client = new OpenRouterClient(new HttpClient(handler));
+
+      var result = await client.GenerateAsync(
+         CreateProvider("openrouter"),
+         CreateJob("text", requiresWebSearch: false, null),
+         CreatePrompt(null),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal("Translated text", result.OutputText);
+      Assert.Equal(2, handler.RequestBodies.Count);
    }
 
    private static AiProviderDefinition CreateProvider(string kind)
