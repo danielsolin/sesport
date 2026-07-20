@@ -1179,7 +1179,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          ExpectedStabilityId = reader.GetString(8),
          AliasName = reader.IsDBNull(9) ? null : reader.GetString(9),
          Bio = reader.IsDBNull(10) ? null : reader.GetString(10),
-         PersonGenderId = reader.IsDBNull(11) ? null : reader.GetString(11)
+         Birthdate = reader.IsDBNull(11)
+            ? null
+            : reader.GetFieldValue<DateOnly>(11),
+         PersonGenderId = reader.IsDBNull(12) ? null : reader.GetString(12)
       };
 
       await reader.DisposeAsync();
@@ -1303,7 +1306,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          ExpectedStabilityId = reader.GetString(8),
          AliasName = reader.IsDBNull(9) ? null : reader.GetString(9),
          Bio = reader.IsDBNull(10) ? null : reader.GetString(10),
-         PersonGenderId = reader.IsDBNull(11) ? null : reader.GetString(11)
+         Birthdate = reader.IsDBNull(11)
+            ? null
+            : reader.GetFieldValue<DateOnly>(11),
+         PersonGenderId = reader.IsDBNull(12) ? null : reader.GetString(12)
       };
 
       await reader.DisposeAsync();
@@ -1773,6 +1779,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                expected_stability_id,
                alias_name,
                bio,
+               birthdate,
                person_gender_id
             from entities
             where id = @id
@@ -1790,6 +1797,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                expected_stability_id,
                alias_name,
                bio,
+               birthdate,
                null::text as person_gender_id
             from entities
             where id = @id
@@ -1821,6 +1829,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                expected_stability_id,
                alias_name,
                bio,
+               birthdate,
                person_gender_id
             )
             values (
@@ -1835,6 +1844,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @expected_stability_id,
                @alias_name,
                @bio,
+               @birthdate,
                @person_gender_id
             )
             """
@@ -1850,7 +1860,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                watch_priority_id,
                expected_stability_id,
                alias_name,
-               bio
+               bio,
+               birthdate
             )
             values (
                @id,
@@ -1863,7 +1874,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @watch_priority_id,
                @expected_stability_id,
                @alias_name,
-               @bio
+               @bio,
+               @birthdate
             )
             """;
    }
@@ -1884,6 +1896,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                expected_stability_id = @expected_stability_id,
                alias_name = @alias_name,
                bio = @bio,
+               birthdate = @birthdate,
                person_gender_id = @person_gender_id,
                updated_at = now()
             where id = @id
@@ -1901,6 +1914,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                expected_stability_id = @expected_stability_id,
                alias_name = @alias_name,
                bio = @bio,
+               birthdate = @birthdate,
                updated_at = now()
             where id = @id
             """;
@@ -2136,6 +2150,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "bio",
          (object?)NormalizeBio(model.Bio) ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "birthdate",
+         (object?)model.Birthdate ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "person_gender_id",

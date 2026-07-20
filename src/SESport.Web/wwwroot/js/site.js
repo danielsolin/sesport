@@ -6,7 +6,8 @@
    const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
    const entityTypeSelectSelector = "[data-entity-type-select]";
    const personGenderFieldSelector = "[data-person-gender-field]";
-   const personBioFieldSelector = "[data-person-bio-field]";
+   const personBirthdateFieldSelector =
+      "[data-person-birthdate-field]";
    const entityInlineEditUrlSelector = "[data-entity-inline-edit-url]";
    const entityInlineEditCellSelector =
       "[data-entity-inline-edit-field]";
@@ -1096,10 +1097,12 @@
 
          const form = select.closest("form");
          const genderField = form?.querySelector(personGenderFieldSelector);
-         const bioField = form?.querySelector(personBioFieldSelector);
+         const birthdateField = form?.querySelector(
+            personBirthdateFieldSelector
+         );
 
          if(!(genderField instanceof HTMLElement)
-            || !(bioField instanceof HTMLElement))
+            || !(birthdateField instanceof HTMLElement))
          {
             return;
          }
@@ -1111,7 +1114,7 @@
                select.value.trim().toLowerCase() === "person"
                   ? ""
                   : "none";
-            bioField.style.display =
+            birthdateField.style.display =
                select.value.trim().toLowerCase() === "person"
                   ? ""
                   : "none";

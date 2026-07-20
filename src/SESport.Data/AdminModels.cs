@@ -214,6 +214,8 @@ public sealed class EntityEditModel
 
    public string? Bio { get; set; }
 
+   public DateOnly? Birthdate { get; set; }
+
    public string? PersonGenderId { get; set; }
 
    public List<Guid> LinkedEntityIds { get; set; } = [];
