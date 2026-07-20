@@ -1,5 +1,5 @@
 [Unit]
-Description=SESport database cleanup
+Description=SESport database maintenance
 
 [Service]
 Type=oneshot

@@ -1,5 +1,5 @@
 [Unit]
-Description=Run SESport database cleanup daily
+Description=Run SESport database maintenance daily
 
 [Timer]
 OnCalendar=*-*-* 03:20:00
