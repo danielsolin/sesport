@@ -2,6 +2,7 @@ using Npgsql;
 
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 using SESport.Data;
 
 namespace SESport.Core.Tests.Data;
@@ -34,6 +35,53 @@ public sealed class AdminRepositoryTests
       }
       finally
       {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
+   public async Task DeleteEntityAsyncDeletesItsSourceReferences()
+   {
+      var entityId = Guid.NewGuid();
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, entityId, "Source reference test");
+      await sourceRepository.CreateAsync(
+         SourceCorrelationTypes.Entity,
+         entityId.ToString(),
+         SourceKinds.Bio,
+         "https://example.test/entity",
+         null,
+         null,
+         null,
+         CancellationToken.None
+      );
+
+      try
+      {
+         await repository.DeleteEntityAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         var sources = await sourceRepository.GetByCorrelationAsync(
+            SourceCorrelationTypes.Entity,
+            entityId.ToString(),
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Empty(sources);
+      }
+      finally
+      {
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Entity,
+            entityId.ToString(),
+            CancellationToken.None
+         );
          await DeleteEntityAsync(dataSource, entityId);
       }
    }
@@ -814,7 +862,6 @@ public sealed class AdminRepositoryTests
       );
       await InsertLinkAsync(dataSource, sourceId, linkedId);
       await InsertLinkAsync(dataSource, linkedId, targetId);
-
       try
       {
          var preview = await repository.GetEntityMergePreviewAsync(
@@ -863,6 +910,7 @@ public sealed class AdminRepositoryTests
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
 
       await InsertEntityAsync(dataSource, sourceId, $"Merge Source {sourceId}");
       await InsertEntityAsync(dataSource, targetId, $"Merge Target {targetId}");
@@ -901,6 +949,16 @@ public sealed class AdminRepositoryTests
       );
       await InsertLinkAsync(dataSource, sourceId, linkedId);
       await InsertLinkAsync(dataSource, linkedId, targetId);
+      await sourceRepository.CreateAsync(
+         SourceCorrelationTypes.Entity,
+         sourceId.ToString(),
+         SourceKinds.Bio,
+         "https://example.test/merge",
+         null,
+         null,
+         null,
+         CancellationToken.None
+      );
 
       try
       {
@@ -923,9 +981,34 @@ public sealed class AdminRepositoryTests
             1,
             await CountEntityLinksAsync(dataSource, targetId, linkedId)
          );
+         var movedSources = await sourceRepository.GetByCorrelationAsync(
+            SourceCorrelationTypes.Entity,
+            targetId.ToString(),
+            SourceKinds.Bio,
+            CancellationToken.None
+         );
+         Assert.Single(movedSources);
+         Assert.Empty(
+            await sourceRepository.GetByCorrelationAsync(
+               SourceCorrelationTypes.Entity,
+               sourceId.ToString(),
+               null,
+               CancellationToken.None
+            )
+         );
       }
       finally
       {
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Entity,
+            sourceId.ToString(),
+            CancellationToken.None
+         );
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Entity,
+            targetId.ToString(),
+            CancellationToken.None
+         );
          await DeleteActivityEntityLinksAsync(dataSource, sourceActivityId);
          await DeleteActivityEntityLinksAsync(dataSource, targetActivityId);
          await DeleteActivityAsync(dataSource, sourceActivityId);

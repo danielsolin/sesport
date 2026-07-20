@@ -2,7 +2,7 @@ namespace SESport.Core.Ingestion;
 
 public interface IActivityProposalSourceImporter
 {
-   Source Source { get; }
+   IngestionSource Source { get; }
 
    Task<ImportRun> ImportActivityProposalsAsync(
       ImportRequest request,

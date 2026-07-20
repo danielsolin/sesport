@@ -13,8 +13,8 @@ public sealed class ActivitySearchService(
 {
    private readonly string? producer = producer;
 
-   private static readonly Source Source = new(
-      new SourceId("source:ai-activity-search"),
+   private static readonly IngestionSource Source = new(
+      new IngestionSourceId("source:ai-activity-search"),
       "AI activity search"
    );
 
@@ -122,8 +122,8 @@ public sealed class ActivitySearchService(
       ActivityProposalEvidenceDraft draft
    )
    {
-      var source = new Source(
-         new SourceId(CreateSourceId(draft.SourceName)),
+      var source = new IngestionSource(
+         new IngestionSourceId(CreateSourceId(draft.SourceName)),
          draft.SourceName ?? "AI web search result"
       );
 

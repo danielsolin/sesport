@@ -26,6 +26,7 @@ builder.Services.AddSingleton<RunDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();
 builder.Services.AddScoped<ActivityRepository>();
+builder.Services.AddScoped<SourceReferenceRepository>();
 builder.Services.AddScoped<PublicActivityTimelineBuilder>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AuditRepository>();

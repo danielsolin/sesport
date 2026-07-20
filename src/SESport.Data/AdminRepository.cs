@@ -3,6 +3,7 @@ using Npgsql;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 
 namespace SESport.Data;
 
@@ -18,7 +19,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             ReferenceTableKind.Sports
          ),
          ["sources"] = new(
-            "sources",
+            "ingestion_sources",
             "Sources",
             "Source names used by proposals and evidence records.",
             "sources",
@@ -732,7 +733,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          select id, name, updated_at
-         from sources
+         from ingestion_sources
          order by name
          """;
 
@@ -763,7 +764,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          select id, name
-         from sources
+         from ingestion_sources
          where id = @id
          """;
 
@@ -794,11 +795,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       var isNew = string.IsNullOrWhiteSpace(model.OriginalId);
       var sql = isNew
          ? """
-            insert into sources (id, name)
+            insert into ingestion_sources (id, name)
             values (@id, @name)
             """
          : """
-            update sources
+            update ingestion_sources
             set name = @name, updated_at = now()
             where id = @original_id
             """;
@@ -818,7 +819,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = "delete from sources where id = @id";
+      const string sql =
+         "delete from ingestion_sources where id = @id";
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
@@ -2052,8 +2054,25 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = "delete from entities where id = @id";
-      await using var command = dataSource.CreateCommand(sql);
+      const string sql = """
+         delete from sources
+         where correlation_type = @correlation_type
+            and correlation_id = @correlation_id
+         """;
+      await using var sourceCommand = dataSource.CreateCommand(sql);
+      sourceCommand.Parameters.AddWithValue(
+         "correlation_type",
+         SourceCorrelationTypes.Entity
+      );
+      sourceCommand.Parameters.AddWithValue(
+         "correlation_id",
+         id.ToString()
+      );
+      await sourceCommand.ExecuteNonQueryAsync(cancellationToken);
+
+      const string deleteEntitySql =
+         "delete from entities where id = @id";
+      await using var command = dataSource.CreateCommand(deleteEntitySql);
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
@@ -2358,6 +2377,20 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
              updated_at = now()
          where entity_id = @source_entity_id
          """,
+         sourceEntityId,
+         targetEntityId,
+         cancellationToken
+      );
+      var sourceReferenceSql = $"""
+         update sources
+         set correlation_id = @target_entity_id::text
+         where correlation_type = '{SourceCorrelationTypes.Entity}'
+            and correlation_id = @source_entity_id::text
+         """;
+      await ExecuteMergeCommandAsync(
+         connection,
+         transaction,
+         sourceReferenceSql,
          sourceEntityId,
          targetEntityId,
          cancellationToken

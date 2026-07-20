@@ -2,8 +2,8 @@ namespace SESport.Core.Tests.Ingestion;
 
 public class ActivityProposalTests
 {
-   private static readonly Source Source =
-      new(new SourceId("source:test"), "Test source");
+   private static readonly IngestionSource Source =
+      new(new IngestionSourceId("source:test"), "Test source");
 
    private static readonly ImportedSport IceHockey =
       new(new ExternalEntityId("ice-hockey"), "Ice hockey");

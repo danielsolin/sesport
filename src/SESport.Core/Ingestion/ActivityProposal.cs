@@ -3,7 +3,7 @@ namespace SESport.Core.Ingestion;
 public sealed record ActivityProposal(
    ActivityProposalId Id,
    ActivityProposalProducerType ProducerType,
-   Source Source,
+   IngestionSource Source,
    ExternalEntityId? ExternalId,
    string Fingerprint,
    string Title,

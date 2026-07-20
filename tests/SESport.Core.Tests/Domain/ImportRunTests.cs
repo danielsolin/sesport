@@ -5,8 +5,8 @@ public class ImportRunTests
    [Fact]
    public void ImportRunCanKeepActivityProposalsAndIssuesTogether()
    {
-      var source = new Source(
-         new SourceId("source:test-iihf"),
+      var source = new IngestionSource(
+         new IngestionSourceId("source:test-iihf"),
          "Test IIHF source"
       );
       var proposal = CreateActivityProposal(source);
@@ -41,7 +41,9 @@ public class ImportRunTests
       );
    }
 
-   private static ActivityProposal CreateActivityProposal(Source source)
+   private static ActivityProposal CreateActivityProposal(
+      IngestionSource source
+   )
    {
       var iceHockey = new ImportedSport(
          new ExternalEntityId("ice-hockey"),

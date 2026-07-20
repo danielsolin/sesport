@@ -5,8 +5,8 @@ public class ActivityProposalSourceImporterTests
    [Fact]
    public async Task ActivityProposalSourceImporterCanProduceProposalImportRun()
    {
-      var source = new Source(
-         new SourceId("source:test-iihf"),
+      var source = new IngestionSource(
+         new IngestionSourceId("source:test-iihf"),
          "Test IIHF source"
       );
       var importer = new FakeActivityProposalSourceImporter(source);
@@ -27,10 +27,10 @@ public class ActivityProposalSourceImporterTests
    }
 
    private sealed class FakeActivityProposalSourceImporter(
-      Source source
+      IngestionSource source
    ) : IActivityProposalSourceImporter
    {
-      public Source Source { get; } = source;
+      public IngestionSource Source { get; } = source;
 
       public Task<ImportRun> ImportActivityProposalsAsync(
          ImportRequest request,
@@ -51,7 +51,7 @@ public class ActivityProposalSourceImporterTests
       }
 
       private static ActivityProposal CreateActivityProposal(
-         Source source,
+         IngestionSource source,
          DateTimeOffset startsAt
       )
       {

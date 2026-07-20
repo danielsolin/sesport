@@ -1,7 +1,7 @@
 namespace SESport.Core.Domain;
 
 public sealed record ActivityEvidence(
-   Source Source,
+   IngestionSource Source,
    Uri? Uri,
    string? Title,
    DateTimeOffset ObservedAt,

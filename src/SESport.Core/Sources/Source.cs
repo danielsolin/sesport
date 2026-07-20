@@ -1,6 +1,6 @@
 namespace SESport.Core.Sources;
 
-public sealed record Source(
-   SourceId Id,
+public sealed record IngestionSource(
+   IngestionSourceId Id,
    string Name
 );

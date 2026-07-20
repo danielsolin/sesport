@@ -5,7 +5,10 @@ public class ExternalMappingTests
    [Fact]
    public void NhlPlayerIdCanMapToInternalPersonId()
    {
-      var nhl = new Source(new SourceId("source:nhl"), "NHL");
+      var nhl = new IngestionSource(
+         new IngestionSourceId("source:nhl"),
+         "NHL"
+      );
       var mapping = new ExternalMapping(
          nhl,
          new ExternalEntityId("player:external-william-karlsson"),

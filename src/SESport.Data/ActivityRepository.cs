@@ -1295,7 +1295,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          insert into activity_evidence (
             id,
             activity_id,
-            source_id,
+            ingestion_source_id,
             uri,
             title,
             observed_at,
@@ -1304,7 +1304,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          values (
             @id,
             @activity_id,
-            @source_id,
+            @ingestion_source_id,
             @uri,
             @title,
             now(),
@@ -1324,7 +1324,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue("source_id", source.Id);
+      command.Parameters.AddWithValue(
+         "ingestion_source_id",
+         source.Id
+      );
       command.Parameters.AddWithValue("uri", BlankToDbNull(model.EvidenceUri));
       command.Parameters.AddWithValue(
          "title",
@@ -1346,7 +1349,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         insert into sources (id, name)
+         insert into ingestion_sources (id, name)
          values (@id, @name)
          on conflict (id) do update
          set name = excluded.name

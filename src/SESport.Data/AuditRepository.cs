@@ -91,7 +91,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             p.prompt
          from activity_proposals p
          join producer_types pt on pt.id = p.producer_type_id
-         join sources s on s.id = p.source_id
+         join ingestion_sources s on s.id = p.ingestion_source_id
          join proposal_statuses ps on ps.id = p.status_id
          left join proposal_reject_reasons prr on prr.id = p.reject_reason_id
          join activity_types at on at.id = p.activity_type_id
@@ -190,7 +190,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             e.observed_at,
             e.summary
          from activity_proposal_evidence e
-         join sources s on s.id = e.source_id
+         join ingestion_sources s on s.id = e.ingestion_source_id
          where e.proposal_id = @proposal_id
          order by e.observed_at desc
          """;
@@ -414,7 +414,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             id,
             activity_id,
             proposal_id,
-            source_id,
+            ingestion_source_id,
             uri,
             title,
             observed_at,
@@ -429,7 +429,7 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
             )::uuid,
             @activity_id,
             proposal_id,
-            source_id,
+            ingestion_source_id,
             uri,
             title,
             observed_at,

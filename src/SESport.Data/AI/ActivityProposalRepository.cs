@@ -107,12 +107,12 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
    private static async Task UpsertSourceAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
-      Source source,
+      IngestionSource source,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
-         insert into sources (id, name)
+         insert into ingestion_sources (id, name)
          values (@id, @name)
          on conflict (id) do update
          set
@@ -140,14 +140,16 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
    {
       const string sql = """
          insert into activity_proposals (
-            id, producer_type_id, producer, source_id, external_id,
+            id, producer_type_id, producer, ingestion_source_id,
+            external_id,
             fingerprint, title, description, raw_content, activity_type_id,
             sport_id, context, activity_date, local_start_time, starts_at,
             time_zone_id, confidence, status_id, reject_reason_id,
             reject_comment, activity_id, prompt
          )
          values (
-            @id, @producer_type_id, @producer, @source_id, @external_id,
+            @id, @producer_type_id, @producer, @ingestion_source_id,
+            @external_id,
             @fingerprint, @title, @description, @raw_content,
             @activity_type_id, @sport_id, @context, @activity_date,
             @local_start_time, @starts_at, @time_zone_id, @confidence,
@@ -158,7 +160,7 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
          set
             producer_type_id = excluded.producer_type_id,
             producer = excluded.producer,
-            source_id = excluded.source_id,
+            ingestion_source_id = excluded.ingestion_source_id,
             external_id = excluded.external_id,
             fingerprint = excluded.fingerprint,
             title = excluded.title,
@@ -199,7 +201,10 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
          "producer",
          (object?)ap.Producer ?? DBNull.Value
       );
-      cmd.Parameters.AddWithValue("source_id", ap.Source.Id.Value);
+      cmd.Parameters.AddWithValue(
+         "ingestion_source_id",
+         ap.Source.Id.Value
+      );
       cmd.Parameters.AddWithValue(
          "external_id",
          (object?)ap.ExternalId?.Value ?? DBNull.Value
@@ -331,11 +336,13 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
 
       const string sql = """
          insert into activity_proposal_evidence (
-            id, proposal_id, source_id, uri, title, observed_at, summary,
+            id, proposal_id, ingestion_source_id, uri, title, observed_at,
+            summary,
             raw_excerpt
          )
          values (
-            @id, @proposal_id, @source_id, @uri, @title, @observed_at,
+            @id, @proposal_id, @ingestion_source_id, @uri, @title,
+            @observed_at,
             @summary, @raw_excerpt
          )
          """;
@@ -349,7 +356,10 @@ public sealed class ActivityProposalRepository : IAsyncDisposable
             CreateGuid($"proposal-evidence:{ap.Id.Value}:{index}")
          );
          command.Parameters.AddWithValue("proposal_id", ap.Id.Value);
-         command.Parameters.AddWithValue("source_id", pe.Source.Id.Value);
+         command.Parameters.AddWithValue(
+            "ingestion_source_id",
+            pe.Source.Id.Value
+         );
          command.Parameters.AddWithValue(
             "uri",
             (object?)pe.Uri?.ToString() ?? DBNull.Value

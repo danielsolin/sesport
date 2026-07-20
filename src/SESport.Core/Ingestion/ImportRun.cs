@@ -2,7 +2,7 @@ namespace SESport.Core.Ingestion;
 
 public sealed record ImportRun(
    ImportRunId Id,
-   Source Source,
+   IngestionSource Source,
    ImportRunStatus Status,
    DateTimeOffset StartedAt,
    DateTimeOffset? FinishedAt,

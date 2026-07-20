@@ -59,7 +59,10 @@ public class CollectionRefreshPlannerTests
    {
       return new ImportRun(
          new ImportRunId("import-run:test"),
-         new Source(new SourceId("source:test"), "Test"),
+         new IngestionSource(
+            new IngestionSourceId("source:test"),
+            "Test"
+         ),
          ImportRunStatus.Completed,
          DateTimeOffset.UtcNow,
          DateTimeOffset.UtcNow,
@@ -87,7 +90,10 @@ public class CollectionRefreshPlannerTests
       return new ActivityProposal(
          new ActivityProposalId($"activity-proposal:{startsAt:yyyyMMddHHmmss}"),
          ActivityProposalProducerType.WebImport,
-         new Source(new SourceId("source:test"), "Test"),
+         new IngestionSource(
+            new IngestionSourceId("source:test"),
+            "Test"
+         ),
          new ExternalEntityId($"activity:{startsAt:yyyyMMddHHmmss}"),
          $"test:{startsAt:yyyyMMddHHmmss}",
          "Test activity",
