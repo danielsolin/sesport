@@ -24,6 +24,7 @@ public sealed class ActivityTeaserJobProcessor(
       await inner.ProcessRunAsync(runId, cancellationToken);
       await SaveCompletedActivityTextAsync(runId, cancellationToken);
       await SaveCompletedPersonBioAsync(runId, cancellationToken);
+      await SaveCompletedPersonFactsAsync(runId, cancellationToken);
       await SaveCompletedTranslationAsync(runId, cancellationToken);
    }
 
@@ -139,6 +140,55 @@ public sealed class ActivityTeaserJobProcessor(
       );
    }
 
+   private async Task SaveCompletedPersonFactsAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      var run = await runRepository.GetRunAsync(runId, cancellationToken);
+
+      if(run is null ||
+         run.JobId != AiJobIds.FindPersonFacts ||
+         !string.Equals(
+            run.StatusId,
+            AiJobRunStatusIds.Completed,
+            StringComparison.Ordinal
+         ))
+      {
+         return;
+      }
+
+      if(!Guid.TryParse(run.CorrelationId, out var entityId))
+      {
+         logger.LogWarning(
+            "Person facts run {RunId} has invalid correlation id.",
+            runId
+         );
+         return;
+      }
+
+      var facts = ExtractGeneratedPersonFacts(
+         run.OutputText ?? string.Empty
+      );
+
+      if(facts is null)
+      {
+         logger.LogWarning(
+            "Person facts run {RunId} completed without valid output.",
+            runId
+         );
+         return;
+      }
+
+      await adminRepository.UpdateEntityPersonFactsAsync(
+         entityId,
+         facts.Birthdate,
+         facts.Height,
+         facts.Weight,
+         cancellationToken
+      );
+   }
+
    private async Task SaveCompletedTranslationAsync(
       Guid runId,
       CancellationToken cancellationToken
@@ -223,6 +273,61 @@ public sealed class ActivityTeaserJobProcessor(
 
       return outputText;
    }
+
+   internal static PersonFactsOutput? ExtractGeneratedPersonFacts(
+      string outputText
+   )
+   {
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         var root = document.RootElement;
+
+         if(root.ValueKind != JsonValueKind.Object)
+         {
+            return null;
+         }
+
+         DateOnly? birthdate = null;
+         if(root.TryGetProperty("birthdate", out var birthdateValue) &&
+            birthdateValue.ValueKind == JsonValueKind.String &&
+            DateOnly.TryParseExact(
+               birthdateValue.GetString(),
+               "yyyy-MM-dd",
+               out var parsedBirthdate
+            ))
+         {
+            birthdate = parsedBirthdate;
+         }
+
+         int? height = ReadNullableInt32(root, "height");
+         int? weight = ReadNullableInt32(root, "weight");
+
+         return new PersonFactsOutput(birthdate, height, weight);
+      }
+      catch(JsonException)
+      {
+         return null;
+      }
+   }
+
+   private static int? ReadNullableInt32(
+      JsonElement root,
+      string propertyName
+   )
+   {
+      return root.TryGetProperty(propertyName, out var value) &&
+         value.ValueKind == JsonValueKind.Number &&
+         value.TryGetInt32(out var result)
+            ? result
+            : null;
+   }
+
+   internal sealed record PersonFactsOutput(
+      DateOnly? Birthdate,
+      int? Height,
+      int? Weight
+   );
 
    internal static string? ExtractGeneratedBio(string outputText)
    {

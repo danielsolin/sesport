@@ -991,7 +991,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          select
             e.id,
             e.canonical_name,
-            e.bio,
             et.label,
             s.name,
             p.id,
@@ -1077,13 +1076,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             new EntityListItem(
                reader.GetGuid(0),
                reader.GetString(1),
+               reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
                reader.GetString(5),
                reader.GetString(6),
-               reader.GetString(7),
-               reader.GetString(8),
-               reader.IsDBNull(2) ? null : reader.GetString(2)
+               reader.GetString(7)
             )
          );
       }
@@ -1997,6 +1995,41 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("bio", bio.Trim());
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
+   public async Task<bool> UpdateEntityPersonFactsAsync(
+      Guid entityId,
+      DateOnly? birthdate,
+      int? height,
+      int? weight,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update entities
+         set birthdate = coalesce(@birthdate, birthdate),
+             height = coalesce(@height, height),
+             weight = coalesce(@weight, weight),
+             updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", entityId);
+      command.Parameters.AddWithValue(
+         "birthdate",
+         (object?)birthdate ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "height",
+         (object?)height ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "weight",
+         (object?)weight ?? DBNull.Value
+      );
 
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }

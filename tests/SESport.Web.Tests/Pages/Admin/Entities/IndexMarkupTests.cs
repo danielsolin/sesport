@@ -21,7 +21,7 @@ public sealed class IndexMarkupTests
 
       Assert.Contains("data-entity-inline-edit-url", html);
       Assert.Contains("data-entity-search-url", html);
-      Assert.Contains("data-person-bio-url", html);
+      Assert.Contains("data-person-facts-url", html);
       Assert.Contains("data-entity-list-body", html);
       Assert.Contains("data-entity-count", html);
       Assert.Contains("data-entity-watch-priority-template", html);
@@ -29,9 +29,9 @@ public sealed class IndexMarkupTests
       Assert.Contains("entities-index.js", html);
       Assert.Contains("renderEntityRowHtml", script);
       Assert.Contains("count.textContent = value", script);
-      Assert.Contains("data-person-bio-form", script);
+      Assert.Contains("data-person-facts-form", script);
       Assert.Contains("broadcast-participation-check-link", script);
-      Assert.Contains("Bio", script);
+      Assert.Contains("Facts", script);
       Assert.Contains("data-entity-inline-edit-field", script);
       Assert.Contains("data-entity-inline-edit-display", script);
       Assert.Contains("data-entity-inline-edit-input", script);

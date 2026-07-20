@@ -30,6 +30,7 @@ public static class AiServiceCollectionExtensions
          serviceProvider => serviceProvider.GetRequiredService<AiJobRunner>()
       );
       services.AddScoped<PersonBioService>();
+      services.AddScoped<PersonFactsService>();
       services.AddScoped<TextTranslationService>();
       services.AddScoped<IAiJobProcessor, ActivityTeaserJobProcessor>();
       // OpenRouter is dormant for AI jobs. Keep registration available for

@@ -122,8 +122,7 @@ public sealed record EntityListItem(
    string WatchPriorityId,
    string WatchPriority,
    string Country,
-   string RelatedEntityNames,
-   string? Bio = null
+   string RelatedEntityNames
 );
 
 public sealed record EntityLinkOption(

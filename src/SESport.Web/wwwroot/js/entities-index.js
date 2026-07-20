@@ -33,7 +33,7 @@
          const searchUrl = getDataValue(container, "entitySearchUrl");
          const editUrlBase = getDataValue(container, "entityEditUrl");
          const deleteUrlBase = getDataValue(container, "entityDeleteUrl");
-         const personBioUrl = getDataValue(container, "personBioUrl");
+         const personFactsUrl = getDataValue(container, "personFactsUrl");
          const searchUrlBase = getDataValue(
             container,
             "entitySearchUrlBase"
@@ -123,13 +123,13 @@
                   editUrlBase,
                   deleteUrlBase,
                   template,
-                  personBioUrl
+                  personFactsUrl
                ))
                .join("");
 
             listBody.innerHTML = rowsHtml;
             window.initializeEntityInlineEditing?.(listBody);
-            initializePersonBioTriggers(listBody);
+            initializePersonFactsTriggers(listBody);
             setEmptyState(entities.length > 0);
             setEntityCount(entities.length);
          };
@@ -301,13 +301,12 @@
       editUrlBase,
       deleteUrlBase,
       watchPriorityTemplate,
-      personBioUrl
+      personFactsUrl
    )
    {
       const token = getAntiForgeryToken();
       const entityId = escapeHtml(entity.id ?? "");
       const name = escapeHtml(entity.name ?? "");
-      const bio = escapeHtml(entity.bio ?? "");
       const relatedEntityNames = escapeHtml(entity.relatedEntityNames ?? "");
       const entityType = escapeHtml(entity.entityType ?? "");
       const sport = escapeHtml(entity.sport ?? "");
@@ -330,18 +329,20 @@
       const isPerson = (entity.entityType ?? "")
          .trim()
          .toLowerCase() === "person";
-      const bioButton = isPerson && personBioUrl !== ""
+      const factsButton = isPerson && personFactsUrl !== ""
          ? `
-               <form method="post" data-person-bio-form>
+               <form method="post" data-person-facts-form>
                   ${renderAntiForgeryTokenInputHtml(token)}
                   <input type="hidden" name="id" value="${entityId}" />
                   <button class="broadcast-participation-check-link"
                           type="submit"
-                          data-person-bio-url="${escapeHtml(personBioUrl)}">
-                     Bio
+                          data-person-facts-url="${escapeHtml(
+                             personFactsUrl
+                          )}">
+                     Facts
                   </button>
                   <span class="form-status"
-                        data-person-bio-status></span>
+                        data-person-facts-status></span>
                </form>
             `
          : "";
@@ -360,9 +361,6 @@
                   rel="noreferrer">
                   <span class="ses-icon-search"></span>
                </a>
-            </td>
-            <td title="${bio}">
-               <div class="entities-cell-bio">${bio}</div>
             </td>
             <td>${relatedEntityNames}</td>
             <td>${entityType}</td>
@@ -388,7 +386,7 @@
             </td>
             <td>${country}</td>
             <td class="table-actions">
-               ${bioButton}
+               ${factsButton}
                <form method="post"
                      action="${deleteUrl.toString()}"
                      onsubmit='return confirm("Sure?");'>
@@ -400,23 +398,25 @@
       `;
    }
 
-   function initializePersonBioTriggers(root)
+   function initializePersonFactsTriggers(root)
    {
-      root.querySelectorAll("[data-person-bio-form]").forEach(form => {
+      root.querySelectorAll("[data-person-facts-form]").forEach(form => {
          if(!(form instanceof HTMLFormElement)
-            || form.dataset.personBioInitialized === "true")
+            || form.dataset.personFactsInitialized === "true")
          {
             return;
          }
 
-         form.dataset.personBioInitialized = "true";
+         form.dataset.personFactsInitialized = "true";
          form.addEventListener("submit", async event => {
             event.preventDefault();
 
             const button = form.querySelector("button[type='submit']");
-            const status = form.querySelector("[data-person-bio-status]");
+            const status = form.querySelector(
+               "[data-person-facts-status]"
+            );
             const url = button instanceof HTMLButtonElement
-               ? button.dataset.personBioUrl
+               ? button.dataset.personFactsUrl
                : "";
 
             if(!(button instanceof HTMLButtonElement)
@@ -443,7 +443,7 @@
 
                if(!response.ok)
                {
-                  throw new Error(payload.error || "Bio job failed.");
+                  throw new Error(payload.error || "Facts job failed.");
                }
 
                status.textContent = "Queued";
@@ -452,7 +452,7 @@
             {
                const message = error instanceof Error
                   ? error.message
-                  : "Bio job failed.";
+                  : "Facts job failed.";
                status.textContent = message;
                status.classList.add("form-status-error");
             }

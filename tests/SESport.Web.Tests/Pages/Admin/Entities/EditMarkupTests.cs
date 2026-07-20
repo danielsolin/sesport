@@ -27,8 +27,8 @@ public sealed class EditMarkupTests
       Assert.Contains("data-entity-linked-entities-chip-remove", html);
       Assert.Contains("Entity.LinkedEntityIds", html);
       Assert.Contains("data-organization-only=\"false\"", html);
-      Assert.Contains("data-person-bio-field", html);
-      Assert.Contains("Entity.Bio", html);
+      Assert.Contains("data-person-birthdate-field", html);
+      Assert.Contains("Entity.Birthdate", html);
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);
       Assert.DoesNotContain("data-multi-select", html);
       Assert.Contains("entity-linked-entities.js", html);

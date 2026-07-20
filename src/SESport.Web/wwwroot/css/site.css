@@ -486,10 +486,6 @@ h2 {
    min-width: 0;
 }
 
-.entities-col-bio {
-   width: 22%;
-}
-
 .entities-col-name {
    width: 16%;
 }
@@ -516,16 +512,6 @@ h2 {
 
 .entities-col-actions {
    width: 6%;
-}
-
-.entities-cell-bio {
-   display: -webkit-box;
-   max-height: 4.5em;
-   overflow: hidden;
-   -webkit-box-orient: vertical;
-   -webkit-line-clamp: 3;
-   line-height: 1.5;
-   overflow-wrap: anywhere;
 }
 
 .entity-inline-editable {

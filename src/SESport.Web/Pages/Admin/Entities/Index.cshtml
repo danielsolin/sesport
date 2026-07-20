@@ -4,7 +4,7 @@
    ViewData["Title"] = "Entities";
    var entityFieldUrl = Url.Page("/Admin/Ajax/Update/EntityField");
    var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
-   var personBioUrl = Url.Page("/Admin/Ajax/Create/PersonBio");
+   var personFactsUrl = Url.Page("/Admin/Ajax/Create/PersonFacts");
    var entityEditUrl = Url.Page("./Edit");
    var entityDeleteUrl = Url.Page("./Index");
    var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
@@ -71,7 +71,7 @@ else
 {
    <div data-entity-list-container
         data-entity-search-url="@entitySearchUrl"
-        data-person-bio-url="@personBioUrl"
+        data-person-facts-url="@personFactsUrl"
         data-entity-edit-url="@entityEditUrl"
         data-entity-delete-url="@entityDeleteUrl"
         data-entity-filter-cookie-name=
@@ -97,7 +97,6 @@ else
          <table class="admin-table admin-table-hover entities-table">
             <colgroup>
                <col class="entities-col-name" />
-               <col class="entities-col-bio" />
                <col class="entities-col-related" />
                <col class="entities-col-type" />
                <col class="entities-col-sport" />
@@ -113,7 +112,6 @@ else
                         Name @Model.GetSortIndicator("Name")
                      </a>
                   </th>
-                  <th>Bio</th>
                   <th>
                      <a asp-page="./Index" asp-route-sortColumn="Related"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Related")'>

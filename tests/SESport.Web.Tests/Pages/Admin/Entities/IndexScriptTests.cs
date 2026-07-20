@@ -16,7 +16,7 @@ public sealed class IndexScriptTests
 
       Assert.Contains("__RequestVerificationToken", js);
       Assert.Contains("getAntiForgeryToken", js);
-      Assert.Contains("data-person-bio-status", js);
-      Assert.Contains("Bio job failed.", js);
+      Assert.Contains("data-person-facts-status", js);
+      Assert.Contains("Facts job failed.", js);
    }
 }

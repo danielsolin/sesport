@@ -22,6 +22,9 @@ public static class AiJobIds
    public const string WritePersonBio =
       "write-person-bio";
 
+   public const string FindPersonFacts =
+      "find-person-facts";
+
    public const string TranslateText =
       "translate-text";
 
@@ -33,7 +36,8 @@ public static class AiJobIds
             AiJobTargetType.Activity,
          DecidePrimaryCountryParticipation =>
             AiJobTargetType.Broadcast,
-         WritePersonBio or TranslateText => AiJobTargetType.Person,
+         WritePersonBio or FindPersonFacts or TranslateText =>
+            AiJobTargetType.Person,
          _ => AiJobTargetType.Unknown
       };
    }
