@@ -126,7 +126,7 @@
    </section>
 
    <section class="form-section">
-      <h2>Linked entities</h2>
+      <h2>Linked Entities</h2>
       <div class="entity-linked-entities-field">
          <span>Connections</span>
          <div class="entity-linked-entities-picker broadcast-org-autocomplete"
@@ -174,8 +174,10 @@
             </div>
          </div>
       </div>
+   </section>
 
-      <h3 class="subgrid-heading">Activities</h3>
+   <section class="form-section">
+      <h2>Activities</h2>
       @if(Model.Activities.Count == 0)
       {
          <div class="notice">
@@ -224,7 +226,64 @@
    </section>
 
    <section class="form-section">
-      <h2>Country relevance</h2>
+      <h2>Sources</h2>
+      @if(Model.Sources.Count == 0)
+      {
+         <div class="notice">
+            No related sources.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact
+                          entity-sources-table">
+               <colgroup>
+                  <col class="source-observed-column" />
+                  <col class="source-kind-column" />
+                  <col class="source-url-column" />
+                  <col class="source-title-column" />
+                  <col class="source-excerpt-column" />
+               </colgroup>
+               <thead>
+                  <tr>
+                     <th>Observed at</th>
+                     <th>Kind</th>
+                     <th>Source</th>
+                     <th>Title</th>
+                     <th>Excerpt</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var source in Model.Sources)
+                  {
+                     <tr>
+                        <td>
+                           @TimeDisplay.FormatLocalTimestamp(
+                              source.ObservedAt
+                           )
+                        </td>
+                        <td>@source.Kind</td>
+                        <td>
+                           <a class="source-url"
+                              href="@source.Url"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              @source.Url
+                           </a>
+                        </td>
+                        <td>@source.Title</td>
+                        <td>@source.Excerpt</td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+
+   <section class="form-section">
+      <h2>Relevance</h2>
       <div class="form-grid">
          <label>
             <span>Country</span>
@@ -254,49 +313,6 @@
          <textarea asp-for="Entity.CountryRelevanceReason" rows="3"></textarea>
          <span asp-validation-for="Entity.CountryRelevanceReason"></span>
       </label>
-   </section>
-
-   <section class="form-section">
-      <h2>Sources</h2>
-      @if(Model.Sources.Count == 0)
-      {
-         <div class="notice">
-            No related sources.
-         </div>
-      }
-      else
-      {
-         <div class="admin-table-wrap">
-            <table class="admin-table admin-table-compact
-                          entity-sources-table">
-               <thead>
-                  <tr>
-                     <th>Kind</th>
-                     <th>Source</th>
-                     <th>Title</th>
-                     <th>Excerpt</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  @foreach(var source in Model.Sources)
-                  {
-                     <tr>
-                        <td>@source.Kind</td>
-                        <td>
-                           <a href="@source.Url"
-                              target="_blank"
-                              rel="noopener noreferrer">
-                              @source.Url
-                           </a>
-                        </td>
-                        <td>@source.Title</td>
-                        <td>@source.Excerpt</td>
-                     </tr>
-                  }
-               </tbody>
-            </table>
-         </div>
-      }
    </section>
 
    <section class="form-actions">

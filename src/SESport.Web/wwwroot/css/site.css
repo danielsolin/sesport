@@ -452,6 +452,30 @@ h2 {
    table-layout: fixed;
 }
 
+.entity-sources-table .source-observed-column {
+   width: 17%;
+}
+
+.entity-sources-table .source-kind-column {
+   width: 10%;
+}
+
+.entity-sources-table .source-url-column {
+   width: 45%;
+}
+
+.entity-sources-table .source-title-column {
+   width: 14%;
+}
+
+.entity-sources-table .source-excerpt-column {
+   width: 14%;
+}
+
+.entity-sources-table .source-url {
+   overflow-wrap: anywhere;
+}
+
 .broadcasts-table {
    table-layout: fixed;
    min-width: 0;
