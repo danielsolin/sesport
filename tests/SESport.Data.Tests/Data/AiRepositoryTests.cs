@@ -406,7 +406,7 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
-   public async Task GetRunsAsyncLimitsResultsToFiftyRows()
+   public async Task GetRunsAsyncReturnsAllMatchingRows()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
       var jobId = $"test-job-{Guid.NewGuid():N}";
@@ -445,9 +445,9 @@ public sealed class AiRepositoryTests
             CancellationToken.None
          );
 
-         Assert.Equal(50, runs.Count);
+         Assert.Equal(51, runs.Count);
          Assert.Equal(runIds[0], runs.First().Id);
-         Assert.DoesNotContain(runIds[^1], runs.Select(run => run.Id));
+         Assert.Contains(runIds[^1], runs.Select(run => run.Id));
       }
       finally
       {
