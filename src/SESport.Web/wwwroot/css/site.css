@@ -170,7 +170,8 @@ a:hover {
    grid-template-columns:
       minmax(180px, 220px)
       minmax(260px, 340px)
-      minmax(160px, 180px);
+      minmax(160px, 180px)
+      auto;
    align-items: end;
    gap: 12px;
 }
@@ -183,6 +184,20 @@ a:hover {
    min-height: 32px;
    padding-top: 5px;
    padding-bottom: 5px;
+}
+
+.entity-filter-count {
+   align-self: end;
+   justify-self: end;
+   padding-bottom: 8px;
+   font-size: 12px;
+   font-weight: 700;
+   line-height: 1.2;
+   white-space: nowrap;
+}
+
+.entity-filter-count strong {
+   font-weight: 800;
 }
 
 .eyebrow {

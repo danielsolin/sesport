@@ -4,6 +4,7 @@
    const typeFilterSelector = "[data-entity-type-filter]";
    const listBodySelector = "[data-entity-list-body]";
    const emptyStateSelector = "[data-entity-empty-state]";
+   const countSelector = "[data-entity-count]";
    const watchPriorityTemplateSelector =
       "[data-entity-watch-priority-template]";
    const initializedFlag = "entitySearchInitialized";
@@ -22,8 +23,10 @@
 
          const container = field.closest(containerSelector)
             || document.querySelector(containerSelector);
+         const filterForm = field.closest(".entity-filter-grid");
          const listBody = container?.querySelector(listBodySelector);
          const emptyState = container?.querySelector(emptyStateSelector);
+         const count = filterForm?.querySelector(countSelector);
          const template = container?.querySelector(
             watchPriorityTemplateSelector
          );
@@ -105,6 +108,13 @@
             emptyState.hidden = hasMatches;
          };
 
+         const setEntityCount = value => {
+            if(count instanceof HTMLElement)
+            {
+               count.textContent = value;
+            }
+         };
+
          const renderRows = entities => {
             const rowsHtml = entities
                .map(entity => renderEntityRowHtml(
@@ -121,11 +131,13 @@
             window.initializeEntityInlineEditing?.(listBody);
             initializePersonBioTriggers(listBody);
             setEmptyState(entities.length > 0);
+            setEntityCount(entities.length);
          };
 
          const clearRows = () => {
             listBody.replaceChildren();
             setEmptyState(false);
+            setEntityCount(0);
          };
 
          const fetchAndRenderAsync = async (query, typeIds) => {

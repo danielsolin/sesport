@@ -23,10 +23,12 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-entity-search-url", html);
       Assert.Contains("data-person-bio-url", html);
       Assert.Contains("data-entity-list-body", html);
+      Assert.Contains("data-entity-count", html);
       Assert.Contains("data-entity-watch-priority-template", html);
       Assert.Contains("AntiForgeryToken", html);
       Assert.Contains("entities-index.js", html);
       Assert.Contains("renderEntityRowHtml", script);
+      Assert.Contains("count.textContent = value", script);
       Assert.Contains("data-person-bio-form", script);
       Assert.Contains("broadcast-participation-check-link", script);
       Assert.Contains("Bio", script);
