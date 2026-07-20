@@ -7,6 +7,7 @@ using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 using SESport.Data;
 
 namespace SESport.Web.Services;
@@ -242,8 +243,19 @@ public sealed class ActivityEditPageService(
             firstBroadcast.Categories
          )?.ToString() ?? ActivityType.Match.ToString();
       activity.IsPublished = true;
-      activity.EvidenceComment = BroadcastActivityPrefillBuilder
+      var evidenceExcerpt = BroadcastActivityPrefillBuilder
          .CreateEvidenceComment(firstBroadcast, participationCheck);
+      activity.Sources = participationCheck?.SourceUrls
+         .Select(
+            url => new ActivitySourceEditModel
+            {
+               Kind = SourceKinds.ParticipationEvidence,
+               Url = url,
+               Title = firstBroadcast.Title,
+               Excerpt = evidenceExcerpt
+            }
+         )
+         .ToList() ?? [];
 
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
          broadcasts.SelectMany(broadcast => broadcast.Categories)
@@ -257,7 +269,6 @@ public sealed class ActivityEditPageService(
       activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
       activity.TimeZoneId = SportDay.TimeZoneId;
-      activity.EvidenceTitle = firstBroadcast.Title;
 
       if(participationCheck is not null)
       {

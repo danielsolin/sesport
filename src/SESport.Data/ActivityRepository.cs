@@ -7,6 +7,7 @@ using Npgsql;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 
 namespace SESport.Data;
 
@@ -366,18 +367,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.time_zone_id,
             a.publication_status_id,
             a.tv_channel_name,
-            a.activity_group_id,
-            e.uri,
-            e.title,
-            e.comment
+            a.activity_group_id
          from activities a
-         left join lateral (
-            select uri, title, comment
-            from activity_evidence
-            where activity_id = a.id
-            order by created_at desc
-            limit 1
-         ) e on true
          where a.id = @id
          """;
 
@@ -407,10 +398,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          IsPublished =
             reader.GetString(10) == ActivityPublicationStatusIds.Published,
          TvChannelName = ReadString(reader, 11),
-         ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
-         EvidenceUri = ReadString(reader, 13),
-         EvidenceTitle = ReadString(reader, 14),
-         EvidenceComment = ReadString(reader, 15)
+         ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12)
       };
 
       await reader.DisposeAsync();
@@ -447,6 +435,34 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          {
             model.OrganizationEntityId = null;
          }
+      }
+
+      var sourceSql = $"""
+         select id, kind, url, title, excerpt
+         from sources
+         where correlation_type = '{SourceCorrelationTypes.Activity}'
+            and correlation_id = @id
+         order by observed_at desc, created_at desc, id desc
+         """;
+
+      await using var sourceCommand = dataSource.CreateCommand(sourceSql);
+      sourceCommand.Parameters.AddWithValue("id", id.ToString());
+      await using var sourceReader = await sourceCommand.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      while(await sourceReader.ReadAsync(cancellationToken))
+      {
+         model.Sources.Add(
+            new ActivitySourceEditModel
+            {
+               Id = sourceReader.GetGuid(0),
+               Kind = sourceReader.GetString(1),
+               Url = sourceReader.GetString(2),
+               Title = ReadString(sourceReader, 3),
+               Excerpt = ReadString(sourceReader, 4)
+            }
+         );
       }
 
       return model;
@@ -780,7 +796,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          model.OrganizationEntityId,
          cancellationToken
       );
-      await ReplaceEvidenceAsync(
+      await ReplaceSourcesAsync(
          connection,
          transaction,
          id,
@@ -820,14 +836,25 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          await proposalCommand.ExecuteNonQueryAsync(cancellationToken);
       }
 
-      await using(var evidenceCommand = new NpgsqlCommand(
-         "delete from activity_evidence where activity_id = @activity_id",
+      await using(var sourceCommand = new NpgsqlCommand(
+         """
+         delete from sources
+         where correlation_type = @correlation_type
+            and correlation_id = @correlation_id
+         """,
          connection,
          transaction
       ))
       {
-         evidenceCommand.Parameters.AddWithValue("activity_id", id);
-         await evidenceCommand.ExecuteNonQueryAsync(cancellationToken);
+         sourceCommand.Parameters.AddWithValue(
+            "correlation_type",
+            SourceCorrelationTypes.Activity
+         );
+         sourceCommand.Parameters.AddWithValue(
+            "correlation_id",
+            id.ToString()
+         );
+         await sourceCommand.ExecuteNonQueryAsync(cancellationToken);
       }
 
       await using(var linkCommand = new NpgsqlCommand(
@@ -1266,7 +1293,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
    }
 
-   private static async Task ReplaceEvidenceAsync(
+   private static async Task ReplaceSourcesAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid activityId,
@@ -1274,91 +1301,68 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      await using var deleteCommand = new NpgsqlCommand(
-         "delete from activity_evidence where activity_id = @activity_id",
-         connection,
-         transaction
-      );
-      deleteCommand.Parameters.AddWithValue("activity_id", activityId);
-      await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
-
-      if(
-         string.IsNullOrWhiteSpace(model.EvidenceUri) &&
-         string.IsNullOrWhiteSpace(model.EvidenceTitle) &&
-         string.IsNullOrWhiteSpace(model.EvidenceComment)
-      )
-      {
-         return;
-      }
-
       const string sql = """
-         insert into activity_evidence (
+         insert into sources (
             id,
-            activity_id,
-            ingestion_source_id,
-            uri,
+            correlation_type,
+            correlation_id,
+            kind,
+            url,
             title,
-            observed_at,
-            comment
+            excerpt,
+            observed_at
          )
          values (
             @id,
-            @activity_id,
-            @ingestion_source_id,
-            @uri,
+            @correlation_type,
+            @correlation_id,
+            @kind,
+            @url,
             @title,
-            now(),
-            @comment
+            @excerpt,
+            @observed_at
          )
          """;
 
-      var source = GetSource(model.EvidenceUri);
-      await EnsureSourceAsync(
-         connection,
-         transaction,
-         source.Id,
-         source.Name,
-         cancellationToken
-      );
+      foreach(var source in model.Sources)
+      {
+         if(string.IsNullOrWhiteSpace(source.Url))
+         {
+            continue;
+         }
 
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("id", Guid.NewGuid());
-      command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue(
-         "ingestion_source_id",
-         source.Id
-      );
-      command.Parameters.AddWithValue("uri", BlankToDbNull(model.EvidenceUri));
-      command.Parameters.AddWithValue(
-         "title",
-         BlankToDbNull(model.EvidenceTitle)
-      );
-      command.Parameters.AddWithValue(
-         "comment",
-         BlankToDbNull(model.EvidenceComment)
-      );
-      await command.ExecuteNonQueryAsync(cancellationToken);
-   }
-
-   private static async Task EnsureSourceAsync(
-      NpgsqlConnection connection,
-      NpgsqlTransaction transaction,
-      string sourceId,
-      string sourceName,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         insert into ingestion_sources (id, name)
-         values (@id, @name)
-         on conflict (id) do update
-         set name = excluded.name
-         """;
-
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("id", sourceId);
-      command.Parameters.AddWithValue("name", sourceName);
-      await command.ExecuteNonQueryAsync(cancellationToken);
+         await using var command = new NpgsqlCommand(
+            sql,
+            connection,
+            transaction
+         );
+         command.Parameters.AddWithValue("id", source.Id ?? Guid.NewGuid());
+         command.Parameters.AddWithValue(
+            "correlation_type",
+            SourceCorrelationTypes.Activity
+         );
+         command.Parameters.AddWithValue(
+            "correlation_id",
+            activityId.ToString()
+         );
+         command.Parameters.AddWithValue(
+            "kind",
+            string.IsNullOrWhiteSpace(source.Kind)
+               ? SourceKinds.ActivityEvidence
+               : source.Kind.Trim()
+         );
+         command.Parameters.AddWithValue("url", source.Url.Trim());
+         command.Parameters.AddWithValue(
+            "title",
+            BlankToDbNull(source.Title)
+         );
+         command.Parameters.AddWithValue(
+            "excerpt",
+            BlankToDbNull(source.Excerpt)
+         );
+         command.Parameters.AddWithValue("observed_at", DateTimeOffset.UtcNow);
+         await command.ExecuteNonQueryAsync(cancellationToken);
+      }
    }
 
    private static async Task EnsureActivityGroupAsync(
@@ -1505,20 +1509,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
 
       return options;
-   }
-
-   private static (string Id, string Name) GetSource(string? uri)
-   {
-      if(
-         !string.IsNullOrWhiteSpace(uri) &&
-         Uri.TryCreate(uri, UriKind.Absolute, out var parsedUri)
-      )
-      {
-         var host = parsedUri.Host.ToLowerInvariant();
-         return ($"source:{host}", host);
-      }
-
-      return ("source:manual", "Manual");
    }
 
    private static async Task<string> CreateSlugAsync(

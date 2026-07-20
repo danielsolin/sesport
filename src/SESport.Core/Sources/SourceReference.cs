@@ -17,6 +17,8 @@ public static class SourceKinds
 {
    public const string Bio = "Bio";
 
+   public const string ActivityEvidence = "ActivityEvidence";
+
    public const string ParticipationEvidence = "ParticipationEvidence";
 }
 

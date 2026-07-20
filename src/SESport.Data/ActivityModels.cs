@@ -42,6 +42,19 @@ public sealed record ActivityParticipantListItem(
    string Alias
 );
 
+public sealed class ActivitySourceEditModel
+{
+   public Guid? Id { get; set; }
+
+   public string Kind { get; set; } = string.Empty;
+
+   public string Url { get; set; } = string.Empty;
+
+   public string? Title { get; set; }
+
+   public string? Excerpt { get; set; }
+}
+
 public sealed class ActivityEditModel
 {
    public Guid? Id { get; set; }
@@ -70,11 +83,7 @@ public sealed class ActivityEditModel
 
    public Guid? OrganizationEntityId { get; set; }
 
-   public string? EvidenceUri { get; set; }
-
-   public string? EvidenceTitle { get; set; }
-
-   public string? EvidenceComment { get; set; }
+   public List<ActivitySourceEditModel> Sources { get; set; } = [];
 
    public List<Guid> BroadcastIds { get; set; } = [];
 

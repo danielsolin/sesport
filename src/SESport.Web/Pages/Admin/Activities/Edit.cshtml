@@ -255,22 +255,43 @@
 
    <section class="form-section">
       <h2>Evidence</h2>
-      <div class="form-grid">
+      @if (Model.Activity.Sources.Count == 0)
+      {
+         <div class="notice">No sources have been added.</div>
+         <input type="hidden" name="Activity.Sources[0].Kind"
+                value="ActivityEvidence" />
+         <input type="hidden" name="Activity.Sources[0].Url"
+                value="" />
+      }
+      @for (var index = 0; index < Model.Activity.Sources.Count; index++)
+      {
+         var source = Model.Activity.Sources[index];
+         <div class="form-grid">
+            <input type="hidden"
+                   name="Activity.Sources[@index].Id"
+                   value="@source.Id" />
+            <input type="hidden"
+                   name="Activity.Sources[@index].Kind"
+                   value="@source.Kind" />
+            <label>
+               <span>Source URL</span>
+               <input name="Activity.Sources[@index].Url"
+                      type="url"
+                      value="@source.Url" />
+            </label>
+            <label>
+               <span>Source title</span>
+               <input name="Activity.Sources[@index].Title"
+                      value="@source.Title" />
+            </label>
+         </div>
          <label>
-            <span>Source URL</span>
-            <input asp-for="Activity.EvidenceUri" type="url" />
+            <span>Source excerpt</span>
+            <textarea name="Activity.Sources[@index].Excerpt"
+                      rows="2"
+                      style="height: 120px;">@source.Excerpt</textarea>
          </label>
-         <label>
-            <span>Source title</span>
-            <input asp-for="Activity.EvidenceTitle" />
-         </label>
-      </div>
-      <label>
-         <span>Evidence comment</span>
-         <textarea asp-for="Activity.EvidenceComment"
-                   rows="2"
-                   style="height: 200px;"></textarea>
-      </label>
+      }
    </section>
 
    <section class="form-actions">

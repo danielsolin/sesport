@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Npgsql;
 
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 
 namespace SESport.Data;
 
@@ -410,15 +411,15 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         insert into activity_evidence (
+         insert into sources (
             id,
-            activity_id,
-            proposal_id,
-            ingestion_source_id,
-            uri,
+            correlation_type,
+            correlation_id,
+            kind,
+            url,
             title,
-            observed_at,
-            comment
+            excerpt,
+            observed_at
          )
          select
             md5(
@@ -427,19 +428,29 @@ public sealed class AuditRepository(NpgsqlDataSource dataSource)
                coalesce(uri, '') ||
                observed_at::text
             )::uuid,
-            @activity_id,
-            proposal_id,
-            ingestion_source_id,
+            @correlation_type,
+            @activity_id::text,
+            @kind,
             uri,
             title,
             observed_at,
             summary
          from activity_proposal_evidence
          where proposal_id = @proposal_id
+            and uri is not null
+            and btrim(uri) <> ''
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue(
+         "correlation_type",
+         SourceCorrelationTypes.Activity
+      );
+      command.Parameters.AddWithValue(
+         "kind",
+         SourceKinds.ActivityEvidence
+      );
       command.Parameters.AddWithValue("proposal_id", proposalId);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
