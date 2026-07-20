@@ -32,7 +32,7 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<PersonBioService>();
       services.AddScoped<PersonFactsService>();
       services.AddScoped<TextTranslationService>();
-      services.AddScoped<IAiJobProcessor, ActivityTeaserJobProcessor>();
+      services.AddScoped<IAiJobProcessor, AiJobPostProcessor>();
       // OpenRouter is dormant for AI jobs. Keep registration available for
       // archived configs, but do not assume LlamaServerClient feature parity.
       services.AddHttpClient<OpenRouterClient>(client =>

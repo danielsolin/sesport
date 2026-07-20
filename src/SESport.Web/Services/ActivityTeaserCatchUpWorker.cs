@@ -33,7 +33,7 @@ public sealed class ActivityTeaserCatchUpWorker(
 
          foreach(var run in runs)
          {
-            var teaser = ActivityTeaserJobProcessor.ExtractGeneratedTeaser(
+            var teaser = AiJobPostProcessor.ExtractGeneratedTeaser(
                run.OutputText
             );
 
@@ -59,7 +59,7 @@ public sealed class ActivityTeaserCatchUpWorker(
 
          foreach(var run in factsRuns)
          {
-            var facts = ActivityTeaserJobProcessor.ExtractGeneratedFacts(
+            var facts = AiJobPostProcessor.ExtractGeneratedFacts(
                run.OutputText
             );
 

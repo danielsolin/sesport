@@ -175,20 +175,27 @@ public sealed class SourceReferenceRepository(NpgsqlDataSource dataSource)
    public async Task DeleteByCorrelationAsync(
       string correlationType,
       string correlationId,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      string? kind = null
    )
    {
-      const string sql = """
+      var sql = """
          delete from sources
          where correlation_type = @correlation_type
             and correlation_id = @correlation_id
          """;
+
+      if(!string.IsNullOrWhiteSpace(kind))
+      {
+         sql += " and kind = @kind";
+      }
+
       await using var command = dataSource.CreateCommand(sql);
       AddCorrelationParameters(
          command,
          correlationType,
          correlationId,
-         null
+         kind
       );
       await command.ExecuteNonQueryAsync(cancellationToken);
    }

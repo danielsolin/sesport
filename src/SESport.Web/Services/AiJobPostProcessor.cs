@@ -4,16 +4,18 @@ using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Data;
+using SESport.Core.Sources;
 
 namespace SESport.Web.Services;
 
-public sealed class ActivityTeaserJobProcessor(
+public sealed class AiJobPostProcessor(
    AiJobRunner inner,
    IAiJobRunRepository runRepository,
    ActivityRepository activityRepository,
    AdminRepository adminRepository,
+   SourceReferenceRepository sourceRepository,
    TextTranslationService textTranslationService,
-   ILogger<ActivityTeaserJobProcessor> logger
+   ILogger<AiJobPostProcessor> logger
 ) : IAiJobProcessor
 {
    public async Task ProcessRunAsync(
@@ -187,6 +189,27 @@ public sealed class ActivityTeaserJobProcessor(
          facts.Weight,
          cancellationToken
       );
+
+      await sourceRepository.DeleteByCorrelationAsync(
+         SourceCorrelationTypes.Entity,
+         entityId.ToString(),
+         cancellationToken,
+         SourceKinds.PersonFacts
+      );
+
+      foreach(var source in facts.Sources)
+      {
+         await sourceRepository.CreateAsync(
+            SourceCorrelationTypes.Entity,
+            entityId.ToString(),
+            SourceKinds.PersonFacts,
+            source.Url,
+            source.Title,
+            source.Excerpt,
+            null,
+            cancellationToken
+         );
+      }
    }
 
    private async Task SaveCompletedTranslationAsync(
@@ -302,8 +325,14 @@ public sealed class ActivityTeaserJobProcessor(
 
          int? height = ReadNullableInt32(root, "height");
          int? weight = ReadNullableInt32(root, "weight");
+         var sources = ReadPersonFactSources(root);
 
-         return new PersonFactsOutput(birthdate, height, weight);
+         return new PersonFactsOutput(
+            birthdate,
+            height,
+            weight,
+            sources
+         );
       }
       catch(JsonException)
       {
@@ -323,10 +352,72 @@ public sealed class ActivityTeaserJobProcessor(
             : null;
    }
 
+   private static IReadOnlyList<PersonFactSource> ReadPersonFactSources(
+      JsonElement root
+   )
+   {
+      if(!root.TryGetProperty("sources", out var sources) ||
+         sources.ValueKind != JsonValueKind.Array)
+      {
+         return [];
+      }
+
+      var result = new List<PersonFactSource>();
+      var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(var source in sources.EnumerateArray())
+      {
+         if(source.ValueKind != JsonValueKind.Object ||
+            !source.TryGetProperty("url", out var urlValue) ||
+            urlValue.ValueKind != JsonValueKind.String)
+         {
+            continue;
+         }
+
+         var url = urlValue.GetString()?.Trim();
+         if(string.IsNullOrWhiteSpace(url) ||
+            !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp &&
+               uri.Scheme != Uri.UriSchemeHttps) ||
+            !urls.Add(url))
+         {
+            continue;
+         }
+
+         result.Add(
+            new PersonFactSource(
+               url,
+               ReadNullableString(source, "title"),
+               ReadNullableString(source, "excerpt")
+            )
+         );
+      }
+
+      return result;
+   }
+
+   private static string? ReadNullableString(
+      JsonElement source,
+      string propertyName
+   )
+   {
+      return source.TryGetProperty(propertyName, out var value) &&
+         value.ValueKind == JsonValueKind.String
+            ? value.GetString()?.Trim()
+            : null;
+   }
+
    internal sealed record PersonFactsOutput(
       DateOnly? Birthdate,
       int? Height,
-      int? Weight
+      int? Weight,
+      IReadOnlyList<PersonFactSource> Sources
+   );
+
+   internal sealed record PersonFactSource(
+      string Url,
+      string? Title,
+      string? Excerpt
    );
 
    internal static string? ExtractGeneratedBio(string outputText)
