@@ -69,6 +69,34 @@ public class ResponsesOutputValidatorTests
    }
 
    [Fact]
+   public void ValidateStructuredOutputSupportsNullableSchemaTypes()
+   {
+      var schema = """
+         {
+            "type": "object",
+            "required": ["birthdate", "height", "weight"],
+            "properties": {
+               "birthdate": { "type": ["string", "null"] },
+               "height": { "type": ["integer", "null"] },
+               "weight": { "type": ["integer", "null"] }
+            },
+            "additionalProperties": false
+         }
+         """;
+
+      var validated = ResponsesOutputValidator.ValidateStructuredOutput(
+         "{\"birthdate\":null,\"height\":201,\"weight\":null}",
+         "json_schema",
+         schema
+      );
+
+      Assert.Equal(
+         "{\"birthdate\":null,\"height\":201,\"weight\":null}",
+         validated
+      );
+   }
+
+   [Fact]
    public void ValidateStructuredOutputRejectsEmptyArrayWhenMinItemsSet()
    {
       var exception = Assert.Throws<InvalidOperationException>(() =>

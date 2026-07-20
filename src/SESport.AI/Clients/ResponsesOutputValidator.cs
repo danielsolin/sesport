@@ -206,7 +206,7 @@ public static class ResponsesOutputValidator
       string path
    )
    {
-      if(!TryGetSchemaType(schema, out var schemaType))
+      if(!TryGetSchemaType(schema, value, out var schemaType))
       {
          ValidateObjectShape(value, schema, path);
          return;
@@ -368,21 +368,65 @@ public static class ResponsesOutputValidator
 
    private static bool TryGetSchemaType(
       JsonElement schema,
+      JsonElement value,
       out string schemaType
    )
    {
       schemaType = "";
 
-      if(
-         !schema.TryGetProperty("type", out var type) ||
-         type.ValueKind != JsonValueKind.String
-      )
+      if(!schema.TryGetProperty("type", out var type))
       {
          return false;
       }
 
-      schemaType = type.GetString() ?? "";
-      return schemaType.Length > 0;
+      if(type.ValueKind == JsonValueKind.String)
+      {
+         schemaType = type.GetString() ?? "";
+         return schemaType.Length > 0;
+      }
+
+      if(type.ValueKind != JsonValueKind.Array)
+      {
+         return false;
+      }
+
+      foreach(var typeItem in type.EnumerateArray())
+      {
+         if(typeItem.ValueKind != JsonValueKind.String)
+         {
+            continue;
+         }
+
+         var candidate = typeItem.GetString() ?? "";
+         if(IsSchemaTypeMatch(value, candidate))
+         {
+            schemaType = candidate;
+            return true;
+         }
+      }
+
+      schemaType = "unsupported";
+      return true;
+   }
+
+   private static bool IsSchemaTypeMatch(
+      JsonElement value,
+      string schemaType
+   )
+   {
+      return schemaType switch
+      {
+         "null" => value.ValueKind == JsonValueKind.Null,
+         "object" => value.ValueKind == JsonValueKind.Object,
+         "string" => value.ValueKind == JsonValueKind.String,
+         "number" => value.ValueKind == JsonValueKind.Number,
+         "integer" => value.ValueKind == JsonValueKind.Number &&
+            IsInteger(value),
+         "boolean" => value.ValueKind == JsonValueKind.True ||
+            value.ValueKind == JsonValueKind.False,
+         "array" => value.ValueKind == JsonValueKind.Array,
+         _ => false
+      };
    }
 
    private static bool IsInteger(JsonElement value)
