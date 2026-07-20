@@ -194,6 +194,87 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task GetRunsAsyncOrdersPendingRunsByQueuePriority()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var highPriorityJobId = $"test-job-{Guid.NewGuid():N}";
+      var lowPriorityJobId = $"test-job-{Guid.NewGuid():N}";
+      var highPriorityPromptId = Guid.NewGuid();
+      var lowPriorityPromptId = Guid.NewGuid();
+      var highPriorityRunId = Guid.NewGuid();
+      var lowPriorityRunId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(
+         dataSource,
+         highPriorityJobId,
+         providerId,
+         queuePriority: 100
+      );
+      await InsertJobAsync(
+         dataSource,
+         lowPriorityJobId,
+         providerId,
+         queuePriority: 10
+      );
+      await InsertPromptAsync(
+         dataSource,
+         highPriorityPromptId,
+         highPriorityJobId
+      );
+      await InsertPromptAsync(
+         dataSource,
+         lowPriorityPromptId,
+         lowPriorityJobId
+      );
+      await InsertRunAsync(
+         dataSource,
+         highPriorityRunId,
+         highPriorityJobId,
+         highPriorityPromptId,
+         providerId,
+         statusId: AiJobRunStatusIds.Pending
+      );
+      await InsertRunAsync(
+         dataSource,
+         lowPriorityRunId,
+         lowPriorityJobId,
+         lowPriorityPromptId,
+         providerId,
+         statusId: AiJobRunStatusIds.Pending
+      );
+
+      try
+      {
+         var runs = await repository.GetRunsAsync(
+            null,
+            null,
+            [AiJobRunStatusIds.Pending],
+            CancellationToken.None
+         );
+         var runIds = runs.Select(run => run.Id).ToList();
+
+         Assert.True(
+            runIds.IndexOf(highPriorityRunId)
+               < runIds.IndexOf(lowPriorityRunId)
+         );
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, lowPriorityRunId);
+         await DeleteRunAsync(dataSource, highPriorityRunId);
+         await DeletePromptAsync(dataSource, lowPriorityPromptId);
+         await DeletePromptAsync(dataSource, highPriorityPromptId);
+         await DeleteJobAsync(dataSource, lowPriorityJobId);
+         await DeleteJobAsync(dataSource, highPriorityJobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task GetRunsAsyncUsesPayloadTitleWhenEventNameIsMissing()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
@@ -446,8 +527,8 @@ public sealed class AiRepositoryTests
          );
 
          Assert.Equal(51, runs.Count);
-         Assert.Equal(runIds[0], runs.First().Id);
-         Assert.Contains(runIds[^1], runs.Select(run => run.Id));
+         Assert.Equal(runIds[^1], runs.First().Id);
+         Assert.Contains(runIds[0], runs.Select(run => run.Id));
       }
       finally
       {
@@ -997,7 +1078,8 @@ public sealed class AiRepositoryTests
       NpgsqlDataSource dataSource,
       string jobId,
       string providerId,
-      int? toolCallMaxTokens = null
+      int? toolCallMaxTokens = null,
+      int queuePriority = 0
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1009,6 +1091,7 @@ public sealed class AiRepositoryTests
             provider_id,
             output_mode,
             tool_call_max_tokens,
+            queue_priority,
             enabled,
             created_at,
             updated_at,
@@ -1020,6 +1103,7 @@ public sealed class AiRepositoryTests
             @provider_id,
             'json_object',
             @tool_call_max_tokens,
+            @queue_priority,
             true,
             now(),
             now(),
@@ -1034,6 +1118,7 @@ public sealed class AiRepositoryTests
          "tool_call_max_tokens",
          (object?)toolCallMaxTokens ?? DBNull.Value
       );
+      command.Parameters.AddWithValue("queue_priority", queuePriority);
       await command.ExecuteNonQueryAsync();
    }
 
