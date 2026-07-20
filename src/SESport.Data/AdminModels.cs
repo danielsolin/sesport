@@ -216,6 +216,10 @@ public sealed class EntityEditModel
 
    public DateOnly? Birthdate { get; set; }
 
+   public int? Height { get; set; }
+
+   public int? Weight { get; set; }
+
    public string? PersonGenderId { get; set; }
 
    public List<Guid> LinkedEntityIds { get; set; } = [];

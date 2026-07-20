@@ -660,6 +660,8 @@ public sealed class AdminRepositoryTests
       var aliasName = $"Alias {entityKey:N}";
       var bio = $"Bio {entityKey:N}";
       var birthdate = new DateOnly(1995, 10, 9);
+      var height = 185;
+      var weight = 82;
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
@@ -671,6 +673,8 @@ public sealed class AdminRepositoryTests
          AliasName = aliasName,
          Bio = bio,
          Birthdate = birthdate,
+         Height = height,
+         Weight = weight,
          EntityTypeId = TrackedEntityTypeIds.Person,
          SportId = "football",
          CountryId = "se",
@@ -695,6 +699,8 @@ public sealed class AdminRepositoryTests
          Assert.Equal(aliasName, loaded!.AliasName);
          Assert.Equal(bio, loaded.Bio);
          Assert.Equal(birthdate, loaded.Birthdate);
+         Assert.Equal(height, loaded.Height);
+         Assert.Equal(weight, loaded.Weight);
       }
       finally
       {

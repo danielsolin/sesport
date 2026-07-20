@@ -48,7 +48,7 @@
             <span asp-validation-for="Entity.AliasName"></span>
          </label>
          <label>
-            <span>Entity type</span>
+            <span>Type</span>
             <select asp-for="Entity.EntityTypeId"
                     data-entity-type-select>
                <option value="">Select entity type</option>
@@ -94,7 +94,7 @@
          </label>
          <label data-person-gender-field
                 style="@(isPersonEntity ? "" : "display: none;")">
-            <span>Person gender</span>
+            <span>Gender</span>
             <select asp-for="Entity.PersonGenderId">
                <option value="">Select gender</option>
                @foreach (var gender in Model.PersonGenders)
@@ -109,6 +109,18 @@
             <span>Birthdate</span>
             <input asp-for="Entity.Birthdate" type="date" />
             <span asp-validation-for="Entity.Birthdate"></span>
+         </label>
+         <label data-person-height-field
+                style="@(isPersonEntity ? "" : "display: none;")">
+            <span>Height (cm)</span>
+            <input asp-for="Entity.Height" type="number" min="0" />
+            <span asp-validation-for="Entity.Height"></span>
+         </label>
+         <label data-person-weight-field
+                style="@(isPersonEntity ? "" : "display: none;")">
+            <span>Weight (kg)</span>
+            <input asp-for="Entity.Weight" type="number" min="0" />
+            <span asp-validation-for="Entity.Weight"></span>
          </label>
       </div>
    </section>

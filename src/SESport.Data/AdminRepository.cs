@@ -1182,7 +1182,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          Birthdate = reader.IsDBNull(11)
             ? null
             : reader.GetFieldValue<DateOnly>(11),
-         PersonGenderId = reader.IsDBNull(12) ? null : reader.GetString(12)
+         Height = reader.IsDBNull(12) ? null : reader.GetInt32(12),
+         Weight = reader.IsDBNull(13) ? null : reader.GetInt32(13),
+         PersonGenderId = reader.IsDBNull(14) ? null : reader.GetString(14)
       };
 
       await reader.DisposeAsync();
@@ -1309,7 +1311,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          Birthdate = reader.IsDBNull(11)
             ? null
             : reader.GetFieldValue<DateOnly>(11),
-         PersonGenderId = reader.IsDBNull(12) ? null : reader.GetString(12)
+         Height = reader.IsDBNull(12) ? null : reader.GetInt32(12),
+         Weight = reader.IsDBNull(13) ? null : reader.GetInt32(13),
+         PersonGenderId = reader.IsDBNull(14) ? null : reader.GetString(14)
       };
 
       await reader.DisposeAsync();
@@ -1780,6 +1784,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                alias_name,
                bio,
                birthdate,
+               height,
+               weight,
                person_gender_id
             from entities
             where id = @id
@@ -1798,6 +1804,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                alias_name,
                bio,
                birthdate,
+               height,
+               weight,
                null::text as person_gender_id
             from entities
             where id = @id
@@ -1830,6 +1838,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                alias_name,
                bio,
                birthdate,
+               height,
+               weight,
                person_gender_id
             )
             values (
@@ -1845,6 +1855,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @alias_name,
                @bio,
                @birthdate,
+               @height,
+               @weight,
                @person_gender_id
             )
             """
@@ -1861,7 +1873,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                expected_stability_id,
                alias_name,
                bio,
-               birthdate
+               birthdate,
+               height,
+               weight
             )
             values (
                @id,
@@ -1875,7 +1889,9 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @expected_stability_id,
                @alias_name,
                @bio,
-               @birthdate
+               @birthdate,
+               @height,
+               @weight
             )
             """;
    }
@@ -1897,6 +1913,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                alias_name = @alias_name,
                bio = @bio,
                birthdate = @birthdate,
+               height = @height,
+               weight = @weight,
                person_gender_id = @person_gender_id,
                updated_at = now()
             where id = @id
@@ -1915,6 +1933,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                alias_name = @alias_name,
                bio = @bio,
                birthdate = @birthdate,
+               height = @height,
+               weight = @weight,
                updated_at = now()
             where id = @id
             """;
@@ -2154,6 +2174,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "birthdate",
          (object?)model.Birthdate ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "height",
+         (object?)model.Height ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "weight",
+         (object?)model.Weight ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "person_gender_id",

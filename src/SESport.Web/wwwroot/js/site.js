@@ -8,6 +8,8 @@
    const personGenderFieldSelector = "[data-person-gender-field]";
    const personBirthdateFieldSelector =
       "[data-person-birthdate-field]";
+   const personHeightFieldSelector = "[data-person-height-field]";
+   const personWeightFieldSelector = "[data-person-weight-field]";
    const entityInlineEditUrlSelector = "[data-entity-inline-edit-url]";
    const entityInlineEditCellSelector =
       "[data-entity-inline-edit-field]";
@@ -1100,9 +1102,13 @@
          const birthdateField = form?.querySelector(
             personBirthdateFieldSelector
          );
+         const heightField = form?.querySelector(personHeightFieldSelector);
+         const weightField = form?.querySelector(personWeightFieldSelector);
 
          if(!(genderField instanceof HTMLElement)
-            || !(birthdateField instanceof HTMLElement))
+            || !(birthdateField instanceof HTMLElement)
+            || !(heightField instanceof HTMLElement)
+            || !(weightField instanceof HTMLElement))
          {
             return;
          }
@@ -1115,6 +1121,14 @@
                   ? ""
                   : "none";
             birthdateField.style.display =
+               select.value.trim().toLowerCase() === "person"
+                  ? ""
+                  : "none";
+            heightField.style.display =
+               select.value.trim().toLowerCase() === "person"
+                  ? ""
+                  : "none";
+            weightField.style.display =
                select.value.trim().toLowerCase() === "person"
                   ? ""
                   : "none";
