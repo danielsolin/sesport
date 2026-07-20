@@ -25,7 +25,8 @@ public sealed class CachedWebSearchClient : IWebSearchClient
       string query,
       int maxResults,
       CancellationToken cancellationToken,
-      int searchAttempt = 0
+      int searchAttempt = 0,
+      bool includeSocialMedia = false
    )
    {
       var normalizedQuery = query.Trim();
@@ -38,7 +39,8 @@ public sealed class CachedWebSearchClient : IWebSearchClient
       var cacheKey = new WebSearchCacheKey(
          normalizedQuery,
          maxResults,
-         GetRequestedEngine(searchAttempt)
+         GetRequestedEngine(searchAttempt),
+         includeSocialMedia
       );
 
       if(Cache.TryGet(cacheKey, out var cachedResponse))
@@ -50,7 +52,8 @@ public sealed class CachedWebSearchClient : IWebSearchClient
          normalizedQuery,
          maxResults,
          cancellationToken,
-         searchAttempt
+         searchAttempt,
+         includeSocialMedia
       );
       var cacheEngine = ResolveCacheEngine(
          response,
@@ -61,7 +64,8 @@ public sealed class CachedWebSearchClient : IWebSearchClient
          new WebSearchCacheKey(
             normalizedQuery,
             maxResults,
-            cacheEngine
+            cacheEngine,
+            includeSocialMedia
          ),
          response
       );

@@ -376,7 +376,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      toolCall,
                      toolState,
                      turn,
-                     cancellationToken
+                     cancellationToken,
+                     job.IncludeSocialMedia
                   );
 
                   messages.Add(
@@ -1284,7 +1285,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       LlamaToolCall toolCall,
       ToolLoopState toolState,
       int turn,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      bool includeSocialMedia
    )
    {
       if(string.Equals(
@@ -1297,7 +1299,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             toolCall,
             toolState,
             turn,
-            cancellationToken
+            cancellationToken,
+            includeSocialMedia
          );
       }
 
@@ -1369,7 +1372,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       LlamaToolCall toolCall,
       ToolLoopState toolState,
       int turn,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      bool includeSocialMedia
    )
    {
       var query = LlamaToolArguments.ExtractQuery(toolCall.Arguments);
@@ -1403,7 +1407,8 @@ public sealed class LlamaServerClient : IAiProviderClient
          query,
          limit,
          cancellationToken,
-         searchAttempt
+         searchAttempt,
+         includeSocialMedia
       );
       var searchResults = searchResponse.Results;
       toolState.LastSearchProvider = searchResponse.Provider;

@@ -3113,9 +3113,12 @@ public class AiProviderClientTests
          string query,
          int maxResults,
          CancellationToken cancellationToken,
-         int searchAttempt = 0
+         int searchAttempt = 0,
+         bool includeSocialMedia = false
       )
       {
+         _ = cancellationToken;
+         _ = includeSocialMedia;
          Queries.Add((query, maxResults));
          SearchAttempts.Add(searchAttempt);
          return Task.FromResult(new WebSearchResponse(

@@ -69,6 +69,8 @@ public sealed class AiJobEditModel
 
    public bool RequiresWebSearch { get; set; } = true;
 
+   public bool IncludeSocialMedia { get; set; }
+
    public bool Enabled { get; set; } = true;
 }
 
@@ -145,7 +147,8 @@ public sealed record AiRunDetail(
    string? JobToolsJson,
    string? JobConditionalToolsJson,
    int? JobToolCallMaxTokens,
-   int? PromptMinToolRounds = null
+   int? PromptMinToolRounds = null,
+   bool JobIncludeSocialMedia = false
 );
 
 public sealed class AiPromptEditModel

@@ -40,7 +40,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       string query,
       int maxResults,
       CancellationToken cancellationToken,
-      int searchAttempt = 0
+      int searchAttempt = 0,
+      bool includeSocialMedia = false
    )
    {
       if(string.IsNullOrWhiteSpace(query))
@@ -52,7 +53,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          query,
          maxResults,
          cancellationToken,
-         searchAttempt
+         searchAttempt,
+         includeSocialMedia
       );
    }
 
@@ -60,7 +62,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       string query,
       int maxResults,
       CancellationToken cancellationToken,
-      int searchAttempt
+      int searchAttempt,
+      bool includeSocialMedia
    )
    {
       var engines = SearxngSearchEngineRotation.NormalizeEngines(
@@ -83,7 +86,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                query,
                maxResults,
                cancellationToken,
-               engine
+               engine,
+               includeSocialMedia
             );
          }
          catch(OperationCanceledException)
@@ -120,7 +124,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       string query,
       int maxResults,
       CancellationToken cancellationToken,
-      string engine
+      string engine,
+      bool includeSocialMedia
    )
    {
       Logger?.LogDebug(
@@ -160,7 +165,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
-      var results = ParseResults(rawResponse, maxResults);
+      var results = ParseResults(
+         rawResponse,
+         maxResults,
+         includeSocialMedia
+      );
 
       if(results.Count == 0 && ContainsRateLimitSignal(rawResponse))
       {
@@ -256,7 +265,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
    private IReadOnlyList<WebSearchResult> ParseResults(
       string rawResponse,
-      int maxResults
+      int maxResults,
+      bool includeSocialMedia
    )
    {
       using var document = JsonDocument.Parse(rawResponse);
@@ -282,7 +292,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             continue;
          }
 
-         if(IsDeniedDomain(url))
+         if(!includeSocialMedia && IsDeniedDomain(url))
          {
             continue;
          }

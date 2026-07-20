@@ -98,6 +98,26 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchIncludesSocialDomainsWhenEnabled()
+   {
+      var handler = new RecordingHandler(CreateMixedResponseJson());
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions()
+      );
+
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         5,
+         CancellationToken.None,
+         includeSocialMedia: true
+      );
+
+      Assert.Equal(2, response.Results.Count);
+      Assert.Equal("Instagram post", response.Results[0].Title);
+   }
+
+   [Fact]
    public async Task SearchReturnsMetadataOnlyResults()
    {
       var handler = new RecordingHandler(CreateResponseJson());

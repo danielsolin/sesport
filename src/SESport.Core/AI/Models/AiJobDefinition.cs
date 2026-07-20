@@ -13,5 +13,6 @@ public sealed record AiJobDefinition(
    bool Enabled,
    Guid? ActivePromptId,
    string? Model = null,
-   int QueuePriority = 0
+   int QueuePriority = 0,
+   bool IncludeSocialMedia = false
 );

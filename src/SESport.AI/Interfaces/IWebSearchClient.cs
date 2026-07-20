@@ -8,6 +8,7 @@ public interface IWebSearchClient
       string query,
       int maxResults,
       CancellationToken cancellationToken,
-      int searchAttempt = 0
+      int searchAttempt = 0,
+      bool includeSocialMedia = false
    );
 }

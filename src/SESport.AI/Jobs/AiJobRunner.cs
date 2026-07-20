@@ -404,7 +404,8 @@ public sealed class AiJobRunner(
          prompt.MaxOutputTokens,
          prompt.MaxToolRounds,
          maxOutputTokens,
-         prompt.MinToolRounds
+         prompt.MinToolRounds,
+         job.IncludeSocialMedia
       );
 
       return new ExecutionContext(
@@ -649,7 +650,8 @@ public sealed class AiJobRunner(
          run.JobToolCallMaxTokens,
          run.JobRequiresWebSearch,
          true,
-         null
+         null,
+         IncludeSocialMedia: run.JobIncludeSocialMedia
       );
    }
 

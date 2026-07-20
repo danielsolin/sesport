@@ -63,5 +63,6 @@ public sealed class WebSearchCache
 public sealed record WebSearchCacheKey(
    string Query,
    int MaxResults,
-   string Engine
+   string Engine,
+   bool IncludeSocialMedia = false
 );

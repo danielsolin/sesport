@@ -123,6 +123,10 @@
             <dt>Max payload chars</dt>
             <dd>@DetailsModel.GetMaxPayloadCharacterCount(Model.Run)</dd>
          </div>
+         <div>
+            <dt>Include Social Media</dt>
+            <dd>@Model.Run.JobIncludeSocialMedia</dd>
+         </div>
          @if(Model.Run.InputTokens is not null)
          {
             <div>

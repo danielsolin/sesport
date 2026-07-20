@@ -137,12 +137,14 @@ public sealed class CachedWebSearchClientTests
          string query,
          int maxResults,
          CancellationToken cancellationToken,
-         int searchAttempt = 0
+         int searchAttempt = 0,
+         bool includeSocialMedia = false
       )
       {
          _ = maxResults;
          _ = cancellationToken;
          _ = searchAttempt;
+         _ = includeSocialMedia;
          Queries.Add(query);
          return Task.FromResult(new WebSearchResponse(results, provider));
       }

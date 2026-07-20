@@ -411,6 +411,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.execution_environment,
             coalesce(r.job_output_mode, j.output_mode, ''),
             coalesce(r.job_requires_web_search, j.requires_web_search),
+            coalesce(
+               r.job_include_social_media,
+               j.include_social_media,
+               false
+            ),
             coalesce(r.job_tools_json, j.tools_json)::text,
             coalesce(
                r.job_conditional_tools_json,
@@ -477,9 +482,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ExecutionEnvironment: ReadNullableString(reader, 39),
          JobOutputMode: reader.GetString(40),
          JobRequiresWebSearch: reader.GetBoolean(41),
-         JobToolsJson: ReadNullableString(reader, 42),
-         JobConditionalToolsJson: ReadNullableString(reader, 43),
-         JobToolCallMaxTokens: ReadNullableInt32(reader, 44),
+         JobIncludeSocialMedia: reader.GetBoolean(42),
+         JobToolsJson: ReadNullableString(reader, 43),
+         JobConditionalToolsJson: ReadNullableString(reader, 44),
+         JobToolCallMaxTokens: ReadNullableInt32(reader, 45),
          PromptMinToolRounds: ReadNullableInt32(reader, 10)
       );
    }
@@ -707,6 +713,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             conditional_tools_json::text,
             tool_call_max_tokens,
             requires_web_search,
+            include_social_media,
             active_prompt_id,
             enabled
          from ai_jobs
@@ -734,10 +741,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableString(reader, 8),
          ReadNullableInt32(reader, 9),
          reader.GetBoolean(10),
-         reader.GetBoolean(12),
-         ReadNullableGuid(reader, 11),
+         reader.GetBoolean(13),
+         ReadNullableGuid(reader, 12),
          ReadNullableString(reader, 4),
-         reader.GetInt32(5)
+         reader.GetInt32(5),
+         reader.GetBoolean(11)
       );
    }
 
@@ -974,7 +982,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          insert into ai_job_runs (
             id, job_id, job_label, job_output_mode,
             job_requires_web_search, job_tools_json,
-            job_conditional_tools_json, job_tool_call_max_tokens,
+            job_include_social_media, job_conditional_tools_json,
+            job_tool_call_max_tokens,
             prompt_id, prompt_version, prompt_system_prompt,
             prompt_user_prompt_template, prompt_output_schema_json,
             prompt_request_options_json, prompt_temperature,
@@ -993,7 +1002,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          values (
             @id, @job_id, @job_label, @job_output_mode,
             @job_requires_web_search, @job_tools_json,
-            @job_conditional_tools_json, @job_tool_call_max_tokens,
+            @job_include_social_media, @job_conditional_tools_json,
+            @job_tool_call_max_tokens,
             @prompt_id, @prompt_version, @prompt_system_prompt,
             @prompt_user_prompt_template, @prompt_output_schema_json,
             @prompt_request_options_json, @prompt_temperature,
@@ -1311,6 +1321,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "job_requires_web_search",
          run.JobRequiresWebSearch
+      );
+      command.Parameters.AddWithValue(
+         "job_include_social_media",
+         run.JobIncludeSocialMedia
       );
       AddJsonbParameter(command, "job_tools_json", run.JobToolsJson);
       AddJsonbParameter(

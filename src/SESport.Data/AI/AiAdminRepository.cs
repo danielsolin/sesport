@@ -222,6 +222,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             tool_call_max_tokens,
             active_prompt_id,
             requires_web_search,
+            include_social_media,
             enabled
          from ai_jobs
          where id = @id
@@ -253,7 +254,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          ToolCallMaxTokens = ReadNullableInt32(reader, 9),
          ActivePromptId = ReadNullableGuid(reader, 10)?.ToString(),
          RequiresWebSearch = reader.GetBoolean(11),
-         Enabled = reader.GetBoolean(12)
+         IncludeSocialMedia = reader.GetBoolean(12),
+         Enabled = reader.GetBoolean(13)
       };
    }
 
@@ -283,6 +285,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             tool_call_max_tokens,
             active_prompt_id,
             requires_web_search,
+            include_social_media,
             enabled
          )
          values (
@@ -298,6 +301,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             @tool_call_max_tokens,
             @active_prompt_id,
             @requires_web_search,
+            @include_social_media,
             @enabled
          )
          """;
@@ -322,6 +326,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             tool_call_max_tokens = @tool_call_max_tokens,
             active_prompt_id = @active_prompt_id,
             requires_web_search = @requires_web_search,
+            include_social_media = @include_social_media,
             enabled = @enabled,
             updated_at = now()
          where id = @original_id
@@ -610,6 +615,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "requires_web_search",
          model.RequiresWebSearch
+      );
+      command.Parameters.AddWithValue(
+         "include_social_media",
+         model.IncludeSocialMedia
       );
       command.Parameters.AddWithValue("enabled", model.Enabled);
    }
