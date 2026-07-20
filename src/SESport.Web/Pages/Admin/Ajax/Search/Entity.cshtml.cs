@@ -17,7 +17,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       string[]? entityTypeIds = null,
       Guid? excludeEntityId = null,
       int? maxResults = null,
-      DateOnly? date = null
+      DateOnly? date = null,
+      bool includeRelatedEntityNames = true
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -47,7 +48,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
             normalizedEntityTypeIds,
             excludeEntityId,
             normalizedMaxResults,
-            activityDate: date
+            activityDate: date,
+            includeRelatedEntityNames: includeRelatedEntityNames
          );
       results = SortEntities(
          results,

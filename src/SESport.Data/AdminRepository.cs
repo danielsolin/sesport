@@ -831,7 +831,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       IReadOnlyCollection<string>? entityTypeIds = null,
       Guid? excludeEntityId = null,
       int? maxResults = null,
-      DateOnly? activityDate = null
+      DateOnly? activityDate = null,
+      bool includeRelatedEntityNames = true
    )
    {
       return await QueryEntitiesAsync(
@@ -842,7 +843,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          entityTypeIds,
          excludeEntityId,
          maxResults,
-         activityDate
+         activityDate,
+         includeRelatedEntityNames
       );
    }
 
@@ -863,7 +865,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          entityTypeIds,
          excludeEntityId,
          maxResults,
-         activityDate
+         activityDate,
+         true
       );
    }
 
@@ -875,7 +878,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       IReadOnlyCollection<string>? entityTypeIds,
       Guid? excludeEntityId,
       int? maxResults,
-      DateOnly? activityDate
+      DateOnly? activityDate,
+      bool includeRelatedEntityNames
    )
    {
       term = term?.Trim() ?? string.Empty;
@@ -904,8 +908,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             (
                e.canonical_name ilike @term escape '\'
                or coalesce(e.alias_name, '') ilike @term escape '\'
-               or coalesce(linked.related_entity_names, '') ilike @term
-                  escape '\'
+               or (
+                  @include_related_entity_names
+                  and coalesce(linked.related_entity_names, '') ilike @term
+                     escape '\'
+               )
             )
             """
          );
@@ -1017,6 +1024,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(applyTermFilter)
       {
          command.Parameters.AddWithValue("term", term);
+         command.Parameters.AddWithValue(
+            "include_related_entity_names",
+            includeRelatedEntityNames
+         );
       }
 
       if(normalizedEntityTypeIds.Length > 0)

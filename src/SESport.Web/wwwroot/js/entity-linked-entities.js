@@ -233,6 +233,7 @@
          "organizationOnly",
          organizationOnly ? "true" : "false"
       );
+      url.searchParams.set("includeRelatedEntityNames", "false");
 
       if(excludeEntityId !== "")
       {

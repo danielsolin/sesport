@@ -155,6 +155,64 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task SearchEntitiesAsyncCanExcludeRelatedEntityNames()
+   {
+      var sourceId = Guid.NewGuid();
+      var relatedId = Guid.NewGuid();
+      var searchTerm = $"landslag-{Guid.NewGuid():N}";
+      var sourceName = $"Connection Search Source {Guid.NewGuid():N}";
+      var relatedName = $"Connection Search {searchTerm}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         sourceId,
+         sourceName,
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         relatedId,
+         relatedName,
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertLinkAsync(dataSource, sourceId, relatedId);
+
+      try
+      {
+         var ownNameResults = await repository.SearchEntitiesAsync(
+            searchTerm,
+            CancellationToken.None,
+            includeRelatedEntityNames: false
+         );
+         var relatedNameResults = await repository.SearchEntitiesAsync(
+            searchTerm,
+            CancellationToken.None
+         );
+
+         Assert.Contains(ownNameResults, entity => entity.Id == relatedId);
+         Assert.DoesNotContain(
+            ownNameResults,
+            entity => entity.Id == sourceId
+         );
+         Assert.Contains(
+            relatedNameResults,
+            entity => entity.Id == sourceId
+         );
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, sourceId);
+         await DeleteEntityAsync(dataSource, relatedId);
+         await DeleteEntityAsync(dataSource, sourceId);
+      }
+   }
+
+   [Fact]
    public async Task GetEntityLinkOptionsByIdsAsyncReturnsOnlyRequestedIds()
    {
       var requestedId = Guid.NewGuid();
