@@ -17,3 +17,32 @@ server:
   limiter: false
   public_instance: false
   image_proxy: false
+
+outgoing:
+  proxies:
+    all://:
+      - "http://2mXDuiaO:YoZe3aPbZl@1.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@2.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@3.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@4.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@5.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@6.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@7.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@8.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@9.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@10.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@11.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@12.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@13.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@14.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@15.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@16.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@17.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@18.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@19.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@20.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@21.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@22.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@23.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@24.proxy.proxying.io:8080"
+      - "http://2mXDuiaO:YoZe3aPbZl@25.proxy.proxying.io:8080"
