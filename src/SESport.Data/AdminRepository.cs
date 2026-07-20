@@ -933,8 +933,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          whereClauses.Add("e.entity_type_id = any(@entity_type_ids)");
       }
 
-      DateTimeOffset? activityStart = null;
-      DateTimeOffset? activityEnd = null;
+      DateTimeOffset activityStart = default;
+      DateTimeOffset activityEnd = default;
 
       if(activityDate is not null)
       {
@@ -1043,8 +1043,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(activityDate is not null)
       {
          command.Parameters.AddWithValue("activity_date", activityDate);
-         command.Parameters.AddWithValue("activity_start", activityStart);
-         command.Parameters.AddWithValue("activity_end", activityEnd);
+         command.Parameters.AddWithValue(
+            "activity_start",
+            activityStart
+         );
+         command.Parameters.AddWithValue(
+            "activity_end",
+            activityEnd
+         );
       }
 
       await using var reader = await command.ExecuteReaderAsync(
