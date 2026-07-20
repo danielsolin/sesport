@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.AI.Prompts;
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.AI;
@@ -498,7 +499,13 @@ public class DetailsModel(
 
    public static string FormatMaxToolRounds(AiRunDetail run)
    {
-      return run.PromptMaxToolRounds?.ToString(
+      var maxToolRounds = run.PromptMaxToolRounds ?? (
+         run.JobRequiresWebSearch
+            ? LlamaServerDefaults.DefaultMaxToolRounds
+            : null
+      );
+
+      return maxToolRounds?.ToString(
          CultureInfo.InvariantCulture
       ) ?? "Not set";
    }

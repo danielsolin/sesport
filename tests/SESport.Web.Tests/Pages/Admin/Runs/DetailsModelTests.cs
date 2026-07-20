@@ -256,12 +256,20 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
-   public void FormatMaxToolRoundsReturnsNotSetWhenNull()
+   public void FormatMaxToolRoundsUsesDefaultForWebSearchWhenNull()
    {
-      Assert.Equal(
-         "Not set",
-         DetailsModel.FormatMaxToolRounds(CreateRun())
-      );
+      Assert.Equal("10", DetailsModel.FormatMaxToolRounds(CreateRun()));
+   }
+
+   [Fact]
+   public void FormatMaxToolRoundsReturnsNotSetWithoutWebSearch()
+   {
+      var run = CreateRun() with
+      {
+         JobRequiresWebSearch = false
+      };
+
+      Assert.Equal("Not set", DetailsModel.FormatMaxToolRounds(run));
    }
 
    [Fact]

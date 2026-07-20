@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.Jobs;
 
@@ -359,6 +360,9 @@ public sealed class AiJobRunner(
       );
       var maxOutputTokens = prompt.MaxOutputTokens ??
          AiDefaults.DefaultMaxOutputTokens;
+      var maxToolRounds = job.RequiresWebSearch
+         ? prompt.MaxToolRounds ?? LlamaServerDefaults.DefaultMaxToolRounds
+         : prompt.MaxToolRounds;
       var run = new AiJobRun(
          Guid.NewGuid(),
          job.Id,
@@ -402,7 +406,7 @@ public sealed class AiJobRunner(
          prompt.RequestOptionsJson,
          prompt.Temperature,
          prompt.MaxOutputTokens,
-         prompt.MaxToolRounds,
+         maxToolRounds,
          maxOutputTokens,
          prompt.MinToolRounds,
          job.IncludeSocialMedia
