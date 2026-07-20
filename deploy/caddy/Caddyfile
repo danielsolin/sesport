@@ -1,11 +1,22 @@
 sesport.se {
-   encode zstd gzip
+	encode zstd gzip
 
-   reverse_proxy 127.0.0.1:5000
+	log {
+		output file /var/log/caddy/sesport.access.log {
+			mode 0640
+			roll_size 100MiB
+			roll_interval 24h
+			roll_keep 14
+			roll_keep_for 336h
+		}
+		format json
+	}
+
+	reverse_proxy 127.0.0.1:5000
 }
 
 dev.sesport.se {
-   encode zstd gzip
+	encode zstd gzip
 
-   reverse_proxy 127.0.0.1:5001
+	reverse_proxy 127.0.0.1:5001
 }
