@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Sources;
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Entities;
 
-public class EditModel(AdminRepository repository) : PageModel
+public class EditModel(
+   AdminRepository repository,
+   SourceReferenceRepository sourceRepository
+) : PageModel
 {
    [BindProperty]
    public EntityEditModel Entity { get; set; } = new();
@@ -39,6 +43,12 @@ public class EditModel(AdminRepository repository) : PageModel
    } = [];
 
    public IReadOnlyList<EntityActivityListItem> Activities
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<SourceReference> Sources
    {
       get;
       private set;
@@ -146,6 +156,14 @@ public class EditModel(AdminRepository repository) : PageModel
             ? []
             : await repository.GetEntityActivitiesAsync(
                Entity.Id.Value,
+               cancellationToken
+            );
+         Sources = Entity.Id is null
+            ? []
+            : await sourceRepository.GetByCorrelationAsync(
+               SourceCorrelationTypes.Entity,
+               Entity.Id.Value.ToString(),
+               null,
                cancellationToken
             );
       }

@@ -19,7 +19,8 @@ public sealed class EditModelTests
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
-      var model = new EditModel(repository)
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var model = new EditModel(repository, sourceRepository)
       {
          Entity = new EntityEditModel
          {

@@ -448,6 +448,10 @@ h2 {
    table-layout: fixed;
 }
 
+.entity-sources-table {
+   table-layout: fixed;
+}
+
 .broadcasts-table {
    table-layout: fixed;
    min-width: 0;
