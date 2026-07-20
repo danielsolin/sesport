@@ -215,7 +215,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetString(8),
                reader.GetInt32(9),
                reader.GetInt32(12),
-               AiRunSummaryFormatter.Format(ReadNullableString(reader, 13)),
+               AiRunSummaryFormatter.Format(
+                  ReadNullableString(reader, 13),
+                  reader.GetString(1)
+               ),
                reader.GetFieldValue<DateTimeOffset>(10),
                ReadNullableDecimal(reader, 11)
             )
@@ -349,7 +352,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetString(8),
                reader.GetInt32(9),
                reader.GetInt32(12),
-               AiRunSummaryFormatter.Format(ReadNullableString(reader, 13)),
+               AiRunSummaryFormatter.Format(
+                  ReadNullableString(reader, 13),
+                  reader.GetString(1)
+               ),
                reader.GetFieldValue<DateTimeOffset>(10),
                ReadNullableDecimal(reader, 11)
             )

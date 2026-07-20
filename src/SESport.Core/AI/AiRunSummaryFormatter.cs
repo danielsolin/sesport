@@ -8,11 +8,23 @@ public static class AiRunSummaryFormatter
    private const int MaxSummaryLength = 96;
    private const int MaxValueLength = 48;
 
-   public static string Format(string? outputText)
+   public static string Format(
+      string? outputText,
+      string? jobId = null
+   )
    {
       if(string.IsNullOrWhiteSpace(outputText))
       {
          return string.Empty;
+      }
+
+      if(string.Equals(
+         jobId,
+         AiJobIds.FindPersonFacts,
+         StringComparison.Ordinal
+      ) && TryFormatPersonFactsSummary(outputText, out var factsSummary))
+      {
+         return factsSummary;
       }
 
       if(TryFormatJsonSummary(outputText, out var jsonSummary))
@@ -21,6 +33,46 @@ public static class AiRunSummaryFormatter
       }
 
       return FormatPlainTextSummary(outputText);
+   }
+
+   private static bool TryFormatPersonFactsSummary(
+      string outputText,
+      out string summary
+   )
+   {
+      summary = string.Empty;
+
+      try
+      {
+         using var document = JsonDocument.Parse(outputText);
+         if(document.RootElement.ValueKind != JsonValueKind.Object)
+         {
+            return false;
+         }
+
+         var fragments = new List<string>();
+         foreach(var name in new[] { "birthdate", "height", "weight" })
+         {
+            if(!document.RootElement.TryGetProperty(name, out var value) ||
+               value.ValueKind == JsonValueKind.Null)
+            {
+               continue;
+            }
+
+            var fragment = FormatJsonProperty(name, value);
+            if(!string.IsNullOrWhiteSpace(fragment))
+            {
+               fragments.Add(fragment);
+            }
+         }
+
+         summary = TruncateSummary(string.Join(", ", fragments));
+         return summary.Length > 0;
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
    }
 
    private static bool TryFormatJsonSummary(
