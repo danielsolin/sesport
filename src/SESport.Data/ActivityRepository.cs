@@ -819,23 +819,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      await using(var proposalCommand = new NpgsqlCommand(
-         """
-         update activity_proposals
-         set
-            status_id = 'Pending',
-            activity_id = null,
-            updated_at = now()
-         where activity_id = @activity_id
-         """,
-         connection,
-         transaction
-      ))
-      {
-         proposalCommand.Parameters.AddWithValue("activity_id", id);
-         await proposalCommand.ExecuteNonQueryAsync(cancellationToken);
-      }
-
       await using(var sourceCommand = new NpgsqlCommand(
          """
          delete from sources

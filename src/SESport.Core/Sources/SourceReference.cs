@@ -8,8 +8,6 @@ public static class SourceCorrelationTypes
 
    public const string Broadcast = "Broadcast";
 
-   public const string ActivityProposal = "ActivityProposal";
-
    public const string AiJobRun = "AiJobRun";
 }
 

@@ -18,15 +18,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "Sports available when creating activities and entities.",
             ReferenceTableKind.Sports
          ),
-         ["sources"] = new(
-            "ingestion_sources",
-            "Sources",
-            "Source names used by proposals and evidence records.",
-            "sources",
-            "name",
-            false,
-            false
-         ),
          ["activity-types"] = new(
             "activity-types",
             "Activity types",
@@ -84,33 +75,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "Activity entity link roles",
             "Proposal-time roles for suggested entity links.",
             "activity_entity_link_roles",
-            "label",
-            true,
-            false
-         ),
-         ["producer-types"] = new(
-            "producer-types",
-            "Producer types",
-            "Origins allowed for activity proposals.",
-            "producer_types",
-            "label",
-            true,
-            false
-         ),
-         ["proposal-statuses"] = new(
-            "proposal-statuses",
-            "Proposal statuses",
-            "Review statuses for activity proposals.",
-            "proposal_statuses",
-            "label",
-            true,
-            false
-         ),
-         ["proposal-reject-reasons"] = new(
-            "proposal-reject-reasons",
-            "Proposal reject reasons",
-            "Controlled reasons for rejected activity proposals.",
-            "proposal_reject_reasons",
             "label",
             true,
             false
@@ -725,105 +689,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    private static string? NormalizeNullable(string? value)
    {
       return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-   }
-
-   public async Task<IReadOnlyList<SourceListItem>> GetSourcesAsync(
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         select id, name, updated_at
-         from ingestion_sources
-         order by name
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var sources = new List<SourceListItem>();
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         sources.Add(
-            new SourceListItem(
-               reader.GetString(0),
-               reader.GetString(1),
-               reader.GetFieldValue<DateTimeOffset>(2)
-            )
-         );
-      }
-
-      return sources;
-   }
-
-   public async Task<SourceEditModel?> GetSourceForEditAsync(
-      string id,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         select id, name
-         from ingestion_sources
-         where id = @id
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", id);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-
-      if(!await reader.ReadAsync(cancellationToken))
-      {
-         return null;
-      }
-
-      return new SourceEditModel
-      {
-         OriginalId = reader.GetString(0),
-         Id = reader.GetString(0),
-         Name = reader.GetString(1)
-      };
-   }
-
-   public async Task SaveSourceAsync(
-      SourceEditModel model,
-      CancellationToken cancellationToken
-   )
-   {
-      var isNew = string.IsNullOrWhiteSpace(model.OriginalId);
-      var sql = isNew
-         ? """
-            insert into ingestion_sources (id, name)
-            values (@id, @name)
-            """
-         : """
-            update ingestion_sources
-            set name = @name, updated_at = now()
-            where id = @original_id
-            """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", NormalizeId(model.Id));
-      command.Parameters.AddWithValue("name", model.Name.Trim());
-      command.Parameters.AddWithValue(
-         "original_id",
-         model.OriginalId ?? string.Empty
-      );
-      await command.ExecuteNonQueryAsync(cancellationToken);
-   }
-
-   public async Task DeleteSourceAsync(
-      string id,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql =
-         "delete from ingestion_sources where id = @id";
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", id);
-      await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
    public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(
@@ -2423,30 +2288,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          targetEntityId,
          cancellationToken
       );
-      var proposalLinksMoved = await ExecuteMergeCommandAsync(
-         connection,
-         transaction,
-         """
-         update activity_proposal_entity_links
-         set entity_id = @target_entity_id
-         where entity_id = @source_entity_id
-         """,
-         sourceEntityId,
-         targetEntityId,
-         cancellationToken
-      );
-      var aiItemsMoved = await ExecuteMergeCommandAsync(
-         connection,
-         transaction,
-         """
-         update ai_activity_search_run_items
-         set entity_id = @target_entity_id
-         where entity_id = @source_entity_id
-         """,
-         sourceEntityId,
-         targetEntityId,
-         cancellationToken
-      );
       var broadcastsMoved = await ExecuteMergeCommandAsync(
          connection,
          transaction,
@@ -2514,8 +2355,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return new EntityMergeResult(
          activityLinksMoved,
          activityOrganizationLinksMoved,
-         proposalLinksMoved,
-         aiItemsMoved,
          broadcastsMoved,
          duplicateActivityLinksDeleted,
          duplicateEntityLinksDeleted,
@@ -2613,18 +2452,6 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                count(*)::int
             from activity_entity_links
             where organization_entity_id = @source_entity_id
-            union all
-            select
-               'Activity proposal entity links',
-               count(*)::int
-            from activity_proposal_entity_links
-            where entity_id = @source_entity_id
-            union all
-            select
-               'AI activity search items',
-               count(*)::int
-            from ai_activity_search_run_items
-            where entity_id = @source_entity_id
             union all
             select
                'Broadcasts',

@@ -28,7 +28,6 @@
 Several console applications live in `tools/legacy/` for occasional use:
 - `SESport.ImportEntities`: Imports entities from (AI-)curated JSON data
 - `SESport.ImportEpg`: Imports TV broadcast data from iptv-epg.org
-- `SESport.AIActivitySearch`: Performs AI-assisted activity search
 - Run with: `dotnet run --project tools/legacy/<tool-folder>`
 
 ## Notes

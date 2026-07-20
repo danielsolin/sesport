@@ -12,9 +12,6 @@
    var isActivities = requestPath.StartsWith(
       "/Admin/Activities",
       StringComparison.OrdinalIgnoreCase
-   ) && !requestPath.StartsWith(
-      "/Admin/Activities/Proposal",
-      StringComparison.OrdinalIgnoreCase
    );
    var selectedDate = ViewContext.HttpContext.Request.Query[
       RouteKeys.Date
@@ -41,10 +38,6 @@
    );
    var isEntities = requestPath.StartsWith(
       "/Admin/Entities",
-      StringComparison.OrdinalIgnoreCase
-   );
-   var isActivityProposals = requestPath.StartsWith(
-      "/Admin/Activities/Proposal",
       StringComparison.OrdinalIgnoreCase
    );
    var isConfig = requestPath.StartsWith(

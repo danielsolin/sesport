@@ -62,15 +62,6 @@ public static class AdminNavigationBuilder
          new AdminNavGroup(
             "Reference tables",
             referenceItems
-         ),
-         new AdminNavGroup(
-            "Legacy",
-            [
-               new AdminNavItem(
-                  "Activity Proposals",
-                  "/Admin/Activities/Proposals"
-               )
-            ]
          )
       ];
    }

@@ -22,7 +22,6 @@ public class PostgresMigrationTests
       Assert.Contains("create table activities", baseline);
       Assert.Contains("create table ai_jobs", baseline);
       Assert.Contains("create table ai_job_runs", baseline);
-      Assert.Contains("create table ai_activity_search_runs", baseline);
       Assert.Contains("entities_person_gender_id_valid", baseline);
       Assert.Contains("requires_web_search boolean not null default true",
          baseline);

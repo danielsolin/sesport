@@ -3,7 +3,6 @@ namespace SESport.Data;
 public enum ReferenceTableKind
 {
    Lookup,
-   ActivityAudit,
    Countries,
    Sports
 }
@@ -99,21 +98,6 @@ public sealed class SportReferenceEditModel
    public string IconId { get; set; } = string.Empty;
 }
 
-public sealed record SourceListItem(
-   string Id,
-   string Name,
-   DateTimeOffset UpdatedAt
-);
-
-public sealed class SourceEditModel
-{
-   public string? OriginalId { get; set; }
-
-   public string Id { get; set; } = string.Empty;
-
-   public string Name { get; set; } = string.Empty;
-}
-
 public sealed record EntityListItem(
    Guid Id,
    string Name,
@@ -181,8 +165,6 @@ public sealed record EntityMergePreview(
 public sealed record EntityMergeResult(
    int ActivityEntityLinksMoved,
    int ActivityOrganizationLinksMoved,
-   int ActivityProposalLinksMoved,
-   int AiActivitySearchItemsMoved,
    int BroadcastsMoved,
    int DuplicateActivityEntityLinksDeleted,
    int DuplicateEntityLinksDeleted,

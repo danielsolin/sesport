@@ -29,7 +29,6 @@ builder.Services.AddScoped<ActivityRepository>();
 builder.Services.AddScoped<SourceReferenceRepository>();
 builder.Services.AddScoped<PublicActivityTimelineBuilder>();
 builder.Services.AddScoped<AdminRepository>();
-builder.Services.AddScoped<AuditRepository>();
 builder.Services.AddScoped<AdminBroadcastRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
 builder.Services.AddHostedService<ActivityTeaserCatchUpWorker>();
