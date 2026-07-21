@@ -1731,9 +1731,15 @@ h2 {
 }
 
 .ai-runs-filter-grid {
-   grid-template-columns: 160px minmax(220px, 280px) 160px;
+   grid-template-columns:
+      160px minmax(220px, 280px) 160px minmax(0, 1fr);
    align-items: end;
    justify-content: start;
+   gap: 12px;
+}
+
+.ai-runs-filter-grid label {
+   margin-bottom: 0;
 }
 
 .ai-runs-status-select {

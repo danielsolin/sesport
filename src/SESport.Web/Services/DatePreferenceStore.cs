@@ -13,9 +13,34 @@ public abstract class DatePreferenceStore(string cookieName)
          TryReadDate(context.Request) ??
          SportDay.Today(DateTimeOffset.UtcNow).StartDate;
 
+      WriteDateCookie(context, selectedDate);
+
+      return selectedDate;
+   }
+
+   public DateOnly? ResolveOptionalDate(
+      HttpContext context,
+      DateOnly? requestedDate
+   )
+   {
+      var selectedDate = context.Request.Query.ContainsKey(RouteKeys.Date)
+         ? requestedDate
+         : TryReadDate(context.Request);
+
+      WriteDateCookie(context, selectedDate);
+      return selectedDate;
+   }
+
+   private void WriteDateCookie(
+      HttpContext context,
+      DateOnly? selectedDate
+   )
+   {
       context.Response.Cookies.Append(
          cookieName,
-         DateDisplay.Format(selectedDate),
+         selectedDate is null
+            ? string.Empty
+            : DateDisplay.Format(selectedDate.Value),
          new CookieOptions
          {
             Expires = DateTimeOffset.UtcNow.AddYears(1),
@@ -25,8 +50,6 @@ public abstract class DatePreferenceStore(string cookieName)
             SameSite = SameSiteMode.Lax
          }
       );
-
-      return selectedDate;
    }
 
    private DateOnly? TryReadDate(HttpRequest request)

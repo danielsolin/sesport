@@ -168,7 +168,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   case when sr.status_sort_order < 2")
          .AppendLine("      then sr.id end asc nulls last,")
          .AppendLine("   sr.started_at desc,")
-         .AppendLine("   sr.id desc");
+         .AppendLine("   sr.id desc")
+         .AppendLine("limit 500");
 
       await using var command = dataSource.CreateCommand(sql.ToString());
       command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);

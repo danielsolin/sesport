@@ -60,7 +60,7 @@ public class IndexModel(
    {
       try
       {
-         Date = datePreferenceStore.ResolveDate(HttpContext, Date);
+         Date = datePreferenceStore.ResolveOptionalDate(HttpContext, Date);
          JobId = ResolveJobId();
          StatusIds = ResolveStatusIds();
 
@@ -87,12 +87,15 @@ public class IndexModel(
          StatusIds = NormalizeStatusIds(StatusIds);
          WriteFilterCookies();
          StatusOptions = BuildStatusOptions(StatusIds);
-         Runs = await repository.GetRunsAsync(
-            Date,
-            JobId,
-            StatusIds,
-            cancellationToken
-         );
+         if(HasAnyFilter())
+         {
+            Runs = await repository.GetRunsAsync(
+               Date,
+               JobId,
+               StatusIds,
+               cancellationToken
+            );
+         }
       }
       catch(Exception exception)
       {
@@ -206,6 +209,13 @@ public class IndexModel(
       );
    }
 
+   private bool HasAnyFilter()
+   {
+      return Date is not null ||
+         !string.IsNullOrWhiteSpace(JobId) ||
+         StatusIds is { Length: > 0 };
+   }
+
    private void WriteCookie(string name, string value)
    {
       Response.Cookies.Append(
@@ -310,9 +320,7 @@ public class IndexModel(
          .ToList()
          ?? [];
 
-      return normalizedStatusIds.Count > 0
-         ? normalizedStatusIds.ToArray()
-         : AiJobRunStatusIds.DefaultRunListStatuses;
+      return normalizedStatusIds.ToArray();
    }
 
    private static void AddStatusRouteValues(

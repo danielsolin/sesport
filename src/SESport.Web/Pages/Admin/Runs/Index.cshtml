@@ -14,7 +14,6 @@
 
 <form method="get" class="edit-form">
    <section class="form-section">
-      <h2>Filters</h2>
       <div class="form-grid ai-runs-filter-grid">
          <label>
             <span>Date</span>
@@ -32,6 +31,9 @@
          </label>
          <label>
             <span>Status</span>
+            <input type="hidden"
+                   name="@RouteKeys.Status"
+                   value="" />
             <select name="@RouteKeys.Status"
                     class="ai-runs-status-select"
                     multiple="multiple"
@@ -40,6 +42,9 @@
                     asp-items="Model.StatusOptions">
             </select>
          </label>
+         <span class="entity-filter-count">
+            Runs: <strong>@Model.Runs.Count</strong>
+         </span>
       </div>
    </section>
 </form>

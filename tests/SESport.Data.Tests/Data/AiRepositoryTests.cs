@@ -487,7 +487,7 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
-   public async Task GetRunsAsyncReturnsAllMatchingRows()
+   public async Task GetRunsAsyncReturnsFirst500MatchingRows()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
       var jobId = $"test-job-{Guid.NewGuid():N}";
@@ -501,7 +501,7 @@ public sealed class AiRepositoryTests
       await InsertJobAsync(dataSource, jobId, providerId);
       await InsertPromptAsync(dataSource, promptId, jobId);
 
-      for(var index = 0; index < 51; index++)
+      for(var index = 0; index < 501; index++)
       {
          var runId = Guid.NewGuid();
          runIds.Add(runId);
@@ -526,9 +526,9 @@ public sealed class AiRepositoryTests
             CancellationToken.None
          );
 
-         Assert.Equal(51, runs.Count);
+         Assert.Equal(500, runs.Count);
          Assert.Equal(runIds[^1], runs.First().Id);
-         Assert.Contains(runIds[0], runs.Select(run => run.Id));
+         Assert.DoesNotContain(runIds[0], runs.Select(run => run.Id));
       }
       finally
       {
