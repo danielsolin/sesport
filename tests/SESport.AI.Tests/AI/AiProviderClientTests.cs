@@ -1494,6 +1494,47 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncFailsAfterInvalidOutputRetries()
+   {
+      var invalidResponse = CreateLlamaInvalidFinalResponseJson();
+      var handler = new RecordingHandler(
+         invalidResponse,
+         invalidResponse,
+         invalidResponse,
+         invalidResponse
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var exception = await Assert.ThrowsAsync<
+         AiProviderExecutionException
+      >(() => client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("json_schema", requiresWebSearch: false, null),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      ));
+
+      Assert.Contains(
+         "invalid json_schema output",
+         exception.Message
+      );
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.NotNull(exception.RawResponseJson);
+      Assert.NotNull(exception.ToolTraceJson);
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncContinuesToolsAfterInvalidToolFinal()
    {
       var handler = new RecordingHandler(

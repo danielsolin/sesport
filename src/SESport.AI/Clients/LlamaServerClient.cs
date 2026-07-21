@@ -586,7 +586,10 @@ public sealed class LlamaServerClient : IAiProviderClient
                if(finalReportCorrectionAttempts >=
                   MaxFinalReportCorrectionAttempts)
                {
-                  return BuildAcceptedResult(finalOutputText);
+                  throw new InvalidOperationException(
+                     "Final AI output remained invalid after the maximum " +
+                     "number of correction attempts."
+                  );
                }
 
                try
@@ -641,7 +644,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   if(finalReportCorrectionAttempts >=
                      MaxFinalReportCorrectionAttempts)
                   {
-                     return BuildAcceptedResult(finalOutputText);
+                     throw;
                   }
 
                   LlamaResponseReader.AppendAssistantMessage(
@@ -823,43 +826,6 @@ public sealed class LlamaServerClient : IAiProviderClient
       }
       catch(Exception exception)
       {
-         if(LlamaStructuredOutputRepair.IsInvalidStructuredOutputFailure(
-               exception
-            ) &&
-            responseJson is not null)
-         {
-            var finalOutputText = LlamaResponseReader.NormalizeOutput(
-               LlamaResponseReader.ExtractFinalText(
-                  responseJson,
-                  JsonOptions
-               )
-            );
-            var acceptedToolTraceJson = toolTrace.Count == 0
-               ? null
-               : JsonSerializer.Serialize(toolTrace, JsonOptions);
-
-            return new AiJobResult(
-               Guid.NewGuid(),
-               job.Id,
-               provider.Id,
-               provider.Model,
-               renderedPrompt.ToPromptText(),
-               rawFinalRequestJson ?? string.Empty,
-               finalOutputText,
-               rawResponse,
-               acceptedToolTraceJson,
-               toolRoundCount,
-               LlamaConversationTrimmer.EstimateRequestPayloadSize(
-                  request,
-                  JsonOptions
-               ),
-               null,
-               null,
-               null,
-               null
-            );
-         }
-
          var toolTraceJson = toolTrace.Count == 0
             ? null
             : JsonSerializer.Serialize(toolTrace, JsonOptions);
