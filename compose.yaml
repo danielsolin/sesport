@@ -24,7 +24,7 @@ services:
       image: docker.io/searxng/searxng:latest
       container_name: sesport-searxng
       ports:
-         - "127.0.0.1:${SEARXNG_PORT:-8088}:8080"
+         - "0.0.0.0:${SEARXNG_PORT:-8088}:8080"
       volumes:
          - ./deploy/searxng:/etc/searxng:ro
          - sesport-searxng:/var/cache/searxng
