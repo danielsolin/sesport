@@ -29,7 +29,6 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<IAiJobRunner>(
          serviceProvider => serviceProvider.GetRequiredService<AiJobRunner>()
       );
-      services.AddScoped<PersonBioService>();
       services.AddScoped<PersonFactsService>();
       services.AddScoped<TextTranslationService>();
       services.AddScoped<IAiJobProcessor, AiJobPostProcessor>();

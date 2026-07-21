@@ -26,7 +26,6 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
    private static readonly string[] PersonJobIds =
    [
-      AiJobIds.WritePersonBio,
       AiJobIds.FindPersonFacts,
       AiJobIds.TranslateText
    ];
