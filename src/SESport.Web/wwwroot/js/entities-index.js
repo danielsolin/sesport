@@ -2,6 +2,7 @@
    const containerSelector = "[data-entity-list-container]";
    const filterSelector = "[data-entity-name-filter]";
    const typeFilterSelector = "[data-entity-type-filter]";
+   const sportFilterSelector = "[data-entity-sport-filter]";
    const listBodySelector = "[data-entity-list-body]";
    const emptyStateSelector = "[data-entity-empty-state]";
    const countSelector = "[data-entity-count]";
@@ -47,6 +48,10 @@
             container,
             "entityTypeFilterCookieName"
          );
+         const sportCookieName = getDataValue(
+            container,
+            "entitySportFilterCookieName"
+         );
          const sortColumn = getDataValue(container, "entitySortColumn")
             || "Name";
          const sortAsc = getDataValue(container, "entitySortAsc")
@@ -74,13 +79,27 @@
             return filter instanceof HTMLSelectElement ? filter : null;
          };
 
+         const getSportFilter = () => {
+            const filter = document.querySelector(sportFilterSelector);
+            return filter instanceof HTMLSelectElement ? filter : null;
+         };
+
          const initialTypeFilter = getTypeFilter();
+         const initialSportFilter = getSportFilter();
 
          if(initialTypeFilter instanceof HTMLSelectElement)
          {
             applyTypeFilterCookie(
                initialTypeFilter,
                getCookie(typeCookieName)
+            );
+         }
+
+         if(initialSportFilter instanceof HTMLSelectElement)
+         {
+            applyTypeFilterCookie(
+               initialSportFilter,
+               getCookie(sportCookieName)
             );
          }
 
@@ -95,6 +114,18 @@
                ? Array.from(typeFilter.options)
                   .filter(option =>
                      option.selected && option.value.trim() !== "")
+                  .map(option => option.value.trim())
+               : [];
+         };
+
+         const getSelectedSportIds = () => {
+            const sportFilter = getSportFilter();
+
+            return sportFilter instanceof HTMLSelectElement
+               ? Array.from(sportFilter.options)
+                  .filter(option =>
+                     option.selected && option.value.trim() !== ""
+                  )
                   .map(option => option.value.trim())
                : [];
          };
@@ -140,7 +171,11 @@
             setEntityCount(0);
          };
 
-         const fetchAndRenderAsync = async (query, typeIds) => {
+         const fetchAndRenderAsync = async (
+            query,
+            typeIds,
+            sportIds
+         ) => {
             if(activeController instanceof AbortController)
             {
                activeController.abort();
@@ -167,6 +202,10 @@
 
                typeIds.forEach(typeId => {
                   url.searchParams.append("entityTypeIds", typeId);
+               });
+
+               sportIds.forEach(sportId => {
+                  url.searchParams.append("sportIds", sportId);
                });
 
                url.searchParams.set("sortColumn", sortColumn);
@@ -216,29 +255,35 @@
             debounceTimer = window.setTimeout(() => {
                const query = currentQuery();
                const typeIds = getSelectedTypeIds();
+               const sportIds = getSelectedSportIds();
 
                setCookie(cookieName, query);
                setCookie(typeCookieName, typeIds.join(","));
+               setCookie(sportCookieName, sportIds.join(","));
 
                if(query === "" && typeIds.length === 0 &&
+                  sportIds.length === 0 &&
                   activityDate === "")
                {
                   clearRows();
                   return;
                }
 
-               void fetchAndRenderAsync(query, typeIds);
+               void fetchAndRenderAsync(query, typeIds, sportIds);
             }, debounceMs);
          };
 
          field.addEventListener("input", scheduleSearch);
          field.addEventListener("change", scheduleSearch);
          initialTypeFilter?.addEventListener("change", scheduleSearch);
+         initialSportFilter?.addEventListener("change", scheduleSearch);
 
          const initialQuery = currentQuery();
          const initialTypeIds = getSelectedTypeIds();
+         const initialSportIds = getSelectedSportIds();
 
          if(initialQuery === "" && initialTypeIds.length === 0 &&
+            initialSportIds.length === 0 &&
             activityDate === "")
          {
             listBody.replaceChildren();
@@ -246,7 +291,11 @@
             return;
          }
 
-         void fetchAndRenderAsync(initialQuery, initialTypeIds);
+         void fetchAndRenderAsync(
+            initialQuery,
+            initialTypeIds,
+            initialSportIds
+         );
       });
    }
 

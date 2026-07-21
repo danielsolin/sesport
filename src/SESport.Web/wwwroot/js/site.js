@@ -1169,7 +1169,8 @@
    {
       const restore = () => {
          document.querySelectorAll(getFormSelector).forEach(form => {
-            if(form instanceof HTMLFormElement)
+            if(form instanceof HTMLFormElement &&
+               !form.hasAttribute("data-preserve-get-form-state"))
             {
                form.reset();
             }
