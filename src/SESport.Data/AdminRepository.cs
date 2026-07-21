@@ -699,7 +699,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       Guid? excludeEntityId = null,
       int? maxResults = null,
       DateOnly? activityDate = null,
-      bool includeRelatedEntityNames = true
+      bool includeRelatedEntityNames = true,
+      IReadOnlyCollection<string>? sportIds = null
    )
    {
       return await QueryEntitiesAsync(
@@ -711,7 +712,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          excludeEntityId,
          maxResults,
          activityDate,
-         includeRelatedEntityNames
+         includeRelatedEntityNames,
+         sportIds
       );
    }
 
@@ -721,7 +723,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       IReadOnlyCollection<string>? entityTypeIds = null,
       Guid? excludeEntityId = null,
       int? maxResults = null,
-      DateOnly? activityDate = null
+      DateOnly? activityDate = null,
+      IReadOnlyCollection<string>? sportIds = null
    )
    {
       return await QueryEntitiesAsync(
@@ -733,7 +736,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          excludeEntityId,
          maxResults,
          activityDate,
-         true
+         true,
+         sportIds
       );
    }
 
@@ -746,13 +750,19 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       Guid? excludeEntityId,
       int? maxResults,
       DateOnly? activityDate,
-      bool includeRelatedEntityNames
+      bool includeRelatedEntityNames,
+      IReadOnlyCollection<string>? sportIds
    )
    {
       term = term?.Trim() ?? string.Empty;
       var normalizedEntityTypeIds = entityTypeIds?
          .Where(entityTypeId => !string.IsNullOrWhiteSpace(entityTypeId))
          .Select(entityTypeId => entityTypeId.Trim())
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray() ?? [];
+      var normalizedSportIds = sportIds?
+         .Where(sportId => !string.IsNullOrWhiteSpace(sportId))
+         .Select(sportId => sportId.Trim())
          .Distinct(StringComparer.OrdinalIgnoreCase)
          .ToArray() ?? [];
 
@@ -805,6 +815,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       if(normalizedEntityTypeIds.Length > 0)
       {
          whereClauses.Add("e.entity_type_id = any(@entity_type_ids)");
+      }
+
+      if(normalizedSportIds.Length > 0)
+      {
+         whereClauses.Add("e.sport_id = any(@sport_ids)");
       }
 
       DateTimeOffset activityStart = default;
@@ -902,6 +917,11 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             "entity_type_ids",
             normalizedEntityTypeIds
          );
+      }
+
+      if(normalizedSportIds.Length > 0)
+      {
+         command.Parameters.AddWithValue("sport_ids", normalizedSportIds);
       }
 
       if(excludeEntityId is not null)

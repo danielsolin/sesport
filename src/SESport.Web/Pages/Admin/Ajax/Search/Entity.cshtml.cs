@@ -15,6 +15,7 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
       bool includeAll = false,
       bool organizationOnly = false,
       string[]? entityTypeIds = null,
+      string[]? sportIds = null,
       Guid? excludeEntityId = null,
       int? maxResults = null,
       DateOnly? date = null,
@@ -23,10 +24,12 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
    {
       term = term?.Trim() ?? string.Empty;
       var normalizedEntityTypeIds = NormalizeEntityTypeIds(entityTypeIds);
+      var normalizedSportIds = NormalizeEntityTypeIds(sportIds);
       var normalizedMaxResults = maxResults is > 0 ? maxResults : null;
 
       if(term == string.Empty &&
          normalizedEntityTypeIds.Count == 0 &&
+         normalizedSportIds.Count == 0 &&
          !includeAll)
       {
          return new JsonResult(new { results = Array.Empty<object>() });
@@ -39,7 +42,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
             normalizedEntityTypeIds,
             excludeEntityId,
             normalizedMaxResults,
-            activityDate: date
+            activityDate: date,
+            sportIds: normalizedSportIds
          )
          : await repository.SearchEntitiesAsync(
             term,
@@ -49,7 +53,8 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
             excludeEntityId,
             normalizedMaxResults,
             activityDate: date,
-            includeRelatedEntityNames: includeRelatedEntityNames
+            includeRelatedEntityNames: includeRelatedEntityNames,
+            sportIds: normalizedSportIds
          );
       results = SortEntities(
          results,

@@ -13,6 +13,8 @@ public class IndexModel(AdminRepository repository) : PageModel
    public const string FilterCookieName = "sesport.admin.entities.filter";
    public const string TypeFilterCookieName =
       "sesport.admin.entities.type-filter";
+   public const string SportFilterCookieName =
+      "sesport.admin.entities.sport-filter";
    public const string NameSortColumn = "Name";
    public const string TypeSortColumn = "Type";
    public const string SportSortColumn = "Sport";
@@ -29,6 +31,12 @@ public class IndexModel(AdminRepository repository) : PageModel
    } = [];
 
    public IReadOnlyList<ReferenceRow> EntityTypes
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<ReferenceRow> Sports
    {
       get;
       private set;
@@ -69,6 +77,10 @@ public class IndexModel(AdminRepository repository) : PageModel
          );
          EntityTypes = await repository.GetReferenceRowsAsync(
             "entity-types",
+            cancellationToken
+         );
+         Sports = await repository.GetReferenceRowsAsync(
+            "sports",
             cancellationToken
          );
       }
@@ -123,6 +135,13 @@ public class IndexModel(AdminRepository repository) : PageModel
    {
       return EntityTypes
          .Select(type => new SelectListItem(type.Label, type.Id))
+         .ToList();
+   }
+
+   public IReadOnlyList<SelectListItem> GetSportOptions()
+   {
+      return Sports
+         .Select(sport => new SelectListItem(sport.Label, sport.Id))
          .ToList();
    }
 

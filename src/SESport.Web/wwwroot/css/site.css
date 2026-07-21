@@ -156,21 +156,27 @@ a:hover {
 }
 
 .entity-name-filter {
-   width: 220px;
+   width: 154px;
    max-width: 100%;
 }
 
 .entity-type-filter {
-   width: 280px;
+   width: 168px;
+   max-width: 100%;
+}
+
+.entity-sport-filter {
+   width: 168px;
    max-width: 100%;
 }
 
 .entity-filter-grid {
    display: grid;
    grid-template-columns:
-      minmax(180px, 220px)
-      minmax(260px, 340px)
-      minmax(160px, 180px)
+      154px
+      144px
+      168px
+      168px
       auto;
    align-items: end;
    gap: 12px;

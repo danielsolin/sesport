@@ -22,7 +22,9 @@
 </section>
 
 <section class="form-section">
-   <form method="get" class="entity-filter-grid">
+   <form method="get"
+         class="entity-filter-grid"
+         data-preserve-get-form-state>
       <label>
          <span>Filter</span>
          <input type="text"
@@ -33,6 +35,14 @@
             aria-label="Filter entities by name"
             data-entity-name-filter
          />
+      </label>
+      <label>
+         <span>Date</span>
+         <input type="date"
+                name="@RouteKeys.Date"
+                value="@Model.DateText"
+                data-entity-date-filter
+                onchange="this.form.submit();" />
       </label>
       <label>
          <span>Type</span>
@@ -48,12 +58,17 @@
          </div>
       </label>
       <label>
-         <span>Date</span>
-         <input type="date"
-                name="@RouteKeys.Date"
-                value="@Model.DateText"
-                data-entity-date-filter
-                onchange="this.form.submit();" />
+         <span>Sport</span>
+         <div class="multi-select-row">
+            <select asp-items="Model.GetSportOptions()"
+                    multiple
+                    class="ses-multiselect entity-sport-filter"
+                    data-multi-select
+                    data-placeholder="All"
+                    data-list-all="false"
+                    data-entity-sport-filter>
+            </select>
+         </div>
       </label>
       <span class="entity-filter-count">
          Entities: <strong data-entity-count>0</strong>
@@ -78,6 +93,8 @@ else
            "@IndexModel.FilterCookieName"
         data-entity-type-filter-cookie-name=
            "@IndexModel.TypeFilterCookieName"
+        data-entity-sport-filter-cookie-name=
+           "@IndexModel.SportFilterCookieName"
         data-entity-sort-column="@Model.SortColumn"
         data-entity-sort-asc="@Model.SortAsc.ToString().ToLowerInvariant()"
         data-entity-date="@Model.DateText"
