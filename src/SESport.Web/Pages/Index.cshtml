@@ -96,8 +96,14 @@ else
                                  style="--sport-icon-url: url('@activity.SportIconPath');">
                            </span>
                         }
-                        @agendaSection.TimeLabel
+                        <time class="activity-time-value">
+                           @agendaSection.TimeLabel
+                        </time>
                      </div>
+                     <span class="activity-time-connector"
+                           aria-hidden="true">
+                        <span class="activity-time-point"></span>
+                     </span>
                   </div>
                   @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
                   {

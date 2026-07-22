@@ -147,17 +147,36 @@
 }
 
 .activity-agenda {
+   --activity-time-column: 160px;
+   --activity-time-gap: 14px;
    display: grid;
    gap: 24px;
+   position: relative;
    width: min(974px, 100%);
    margin-left: auto;
    margin-right: auto;
+}
+
+.activity-agenda::before {
+   position: absolute;
+   z-index: 0;
+   top: 15px;
+   bottom: 15px;
+   left: calc(
+      var(--activity-time-column) + var(--activity-time-gap)
+   );
+   width: 2px;
+   background: rgba(0, 106, 168, 0.28);
+   content: "";
+   transform: translateX(-2px);
 }
 
 .activity-now-marker {
    display: flex;
    align-items: center;
    gap: 12px;
+   position: relative;
+   z-index: 2;
    margin: 4px 0 2px;
    scroll-margin-top: 24px;
 }
@@ -193,9 +212,12 @@
 
 .activity-agenda-section {
    display: grid;
-   grid-template-columns: 160px minmax(0, 1fr);
-   gap: 14px;
+   grid-template-columns:
+      var(--activity-time-column) minmax(0, 1fr);
+   gap: var(--activity-time-gap);
    align-items: stretch;
+   position: relative;
+   z-index: 1;
 }
 
 .activity-agenda-time {
@@ -209,22 +231,58 @@
 .activity-time-row {
    display: flex;
    align-items: center;
-   gap: 8px;
-   flex-wrap: wrap;
+   width: calc(100% + var(--activity-time-gap));
 }
 
 .activity-time-badge {
    display: inline-flex;
    align-items: center;
-   min-height: 30px;
-   padding: 0 12px;
+   gap: 7px;
+   min-height: 34px;
+   padding: 0 14px;
    border-radius: 999px;
    background: var(--accent);
    color: #ffcc00;
-   font-size: 12px;
    font-weight: 800;
    letter-spacing: 0.02em;
    white-space: nowrap;
+}
+
+.activity-time-value {
+   font-size: 15px;
+   font-variant-numeric: tabular-nums;
+   letter-spacing: 0.04em;
+}
+
+.activity-time-badge .activity-time-icon {
+   width: 15px;
+   height: 15px;
+   margin-right: 0;
+   opacity: 0.78;
+}
+
+.activity-time-connector {
+   display: flex;
+   flex: 1;
+   align-items: center;
+   min-width: 12px;
+}
+
+.activity-time-connector::before {
+   width: 100%;
+   height: 1px;
+   background: rgba(0, 106, 168, 0.42);
+   content: "";
+}
+
+.activity-time-point {
+   flex: 0 0 10px;
+   width: 10px;
+   height: 10px;
+   border: 2px solid #f7f9f7;
+   border-radius: 50%;
+   background: var(--accent);
+   box-shadow: 0 0 0 2px rgba(0, 106, 168, 0.22);
 }
 
 .activity-time-badge-muted {
@@ -252,7 +310,6 @@
    gap: 10px;
    align-self: stretch;
    padding-left: 14px;
-   border-left: 2px solid var(--line);
    max-width: 800px;
 }
 
@@ -388,9 +445,12 @@
       width: 100%;
    }
 
+   .activity-agenda {
+      --activity-time-column: 125px;
+      --activity-time-gap: 8px;
+   }
+
    .activity-agenda-section {
-      grid-template-columns: 125px minmax(0, 1fr);
-      gap: 8px;
       align-items: start;
    }
 
