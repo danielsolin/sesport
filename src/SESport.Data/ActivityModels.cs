@@ -53,6 +53,8 @@ public sealed class ActivitySourceEditModel
    public string? Title { get; set; }
 
    public string? Excerpt { get; set; }
+
+   public DateTimeOffset ObservedAt { get; set; }
 }
 
 public sealed class ActivityEditModel

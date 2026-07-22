@@ -438,7 +438,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
 
       var sourceSql = $"""
-         select id, kind, url, title, excerpt
+         select id, kind, url, title, excerpt, observed_at
          from sources
          where correlation_type = '{SourceCorrelationTypes.Activity}'
             and correlation_id = @id
@@ -460,7 +460,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                Kind = sourceReader.GetString(1),
                Url = sourceReader.GetString(2),
                Title = ReadString(sourceReader, 3),
-               Excerpt = ReadString(sourceReader, 4)
+               Excerpt = ReadString(sourceReader, 4),
+               ObservedAt = sourceReader.GetFieldValue<DateTimeOffset>(5)
             }
          );
       }

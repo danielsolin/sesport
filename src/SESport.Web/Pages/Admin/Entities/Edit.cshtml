@@ -273,7 +273,9 @@
                            </a>
                         </td>
                         <td>@source.Title</td>
-                        <td>@source.Excerpt</td>
+                        <td title="@source.Excerpt">
+                           @SourceDisplay.FormatExcerpt(source.Excerpt)
+                        </td>
                      </tr>
                   }
                </tbody>

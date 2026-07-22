@@ -254,43 +254,61 @@
    </section>
 
    <section class="form-section">
-      <h2>Evidence</h2>
-      @if (Model.Activity.Sources.Count == 0)
+      <h2>Sources</h2>
+      @if(Model.Activity.Sources.Count == 0)
       {
-         <div class="notice">No sources have been added.</div>
-         <input type="hidden" name="Activity.Sources[0].Kind"
-                value="ActivityEvidence" />
-         <input type="hidden" name="Activity.Sources[0].Url"
-                value="" />
-      }
-      @for (var index = 0; index < Model.Activity.Sources.Count; index++)
-      {
-         var source = Model.Activity.Sources[index];
-         <div class="form-grid">
-            <input type="hidden"
-                   name="Activity.Sources[@index].Id"
-                   value="@source.Id" />
-            <input type="hidden"
-                   name="Activity.Sources[@index].Kind"
-                   value="@source.Kind" />
-            <label>
-               <span>Source URL</span>
-               <input name="Activity.Sources[@index].Url"
-                      type="url"
-                      value="@source.Url" />
-            </label>
-            <label>
-               <span>Source title</span>
-               <input name="Activity.Sources[@index].Title"
-                      value="@source.Title" />
-            </label>
+         <div class="notice">
+            No related sources.
          </div>
-         <label>
-            <span>Source excerpt</span>
-            <textarea name="Activity.Sources[@index].Excerpt"
-                      rows="2"
-                      style="height: 120px;">@source.Excerpt</textarea>
-         </label>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact
+                          entity-sources-table">
+               <colgroup>
+                  <col class="source-observed-column" />
+                  <col class="source-kind-column" />
+                  <col class="source-url-column" />
+                  <col class="source-title-column" />
+                  <col class="source-excerpt-column" />
+               </colgroup>
+               <thead>
+                  <tr>
+                     <th>Observed at</th>
+                     <th>Kind</th>
+                     <th>Source</th>
+                     <th>Title</th>
+                     <th>Excerpt</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var source in Model.Activity.Sources)
+                  {
+                     <tr>
+                        <td>
+                           @TimeDisplay.FormatLocalTimestamp(
+                              source.ObservedAt
+                           )
+                        </td>
+                        <td>@source.Kind</td>
+                        <td>
+                           <a class="source-url"
+                              href="@source.Url"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              @source.Url
+                           </a>
+                        </td>
+                        <td>@source.Title</td>
+                        <td title="@source.Excerpt">
+                           @SourceDisplay.FormatExcerpt(source.Excerpt)
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
       }
    </section>
 
