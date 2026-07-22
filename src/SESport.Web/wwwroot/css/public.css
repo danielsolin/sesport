@@ -288,8 +288,9 @@
    width: 18px;
    height: 18px;
    border-radius: 50%;
-   background: #f7f9f7;
-   transform: translateX(7px);
+   background: #006aa8;
+   box-shadow: 0 0 0 2px #f7f9f7;
+   transform: translateX(8px);
 }
 
 .activity-time-point::before {
@@ -299,10 +300,8 @@
 }
 
 .activity-time-point::before {
-   inset: 3px;
-   background: var(--activity-phase-color);
-   box-shadow: 0 0 7px var(--activity-phase-glow);
-   transform: translateX(1px);
+   inset: 4px;
+   background: #ffcc00;
 }
 
 .activity-time-badge-muted {
@@ -430,9 +429,11 @@
    top: 2px;
    bottom: 2px;
    left: 0;
-   width: 3px;
+   width: 4px;
+   border: 1px solid #006aa8;
    border-radius: 999px;
    background: var(--activity-phase-color);
+   box-sizing: border-box;
    content: "";
 }
 
