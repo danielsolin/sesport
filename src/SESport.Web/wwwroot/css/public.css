@@ -348,7 +348,8 @@
    bottom: 50%;
    left: 50%;
    border-radius: 999px;
-   background: #006aa8;
+   background: #f2c91f;
+   box-shadow: 0 0 0 1px rgba(0, 79, 128, 0.32);
    transform-origin: 50% 100%;
 }
 
@@ -372,9 +373,9 @@
    left: 50%;
    width: 7px;
    height: 7px;
-   border: 2px solid #f7f9f7;
+   border: 2px solid #006aa8;
    border-radius: 50%;
-   background: #006aa8;
+   background: #f2c91f;
    transform: translate(-50%, -50%);
 }
 
