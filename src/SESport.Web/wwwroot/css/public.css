@@ -245,6 +245,7 @@
    display: flex;
    align-items: center;
    width: calc(100% + var(--activity-time-gap));
+   transform: translateY(4px);
 }
 
 .activity-time-badge {
@@ -289,7 +290,7 @@
    height: 18px;
    border-radius: 50%;
    background: #f7f9f7;
-   transform: translate(7px, 4px);
+   transform: translateX(7px);
 }
 
 .activity-time-point::before {
