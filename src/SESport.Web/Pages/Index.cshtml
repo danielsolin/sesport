@@ -86,14 +86,14 @@ else
             var dayPhaseClass = agendaSection.DayPhase switch
             {
                ActivityDayPhase.Morning =>
-                  "activity-time-point-morning",
-               ActivityDayPhase.Day => "activity-time-point-day",
+                  "activity-day-phase-morning",
+               ActivityDayPhase.Day => "activity-day-phase-day",
                ActivityDayPhase.Evening =>
-                  "activity-time-point-evening",
-               _ => "activity-time-point-night"
+                  "activity-day-phase-evening",
+               _ => "activity-day-phase-night"
             };
 
-            <section class="activity-agenda-section">
+            <section class="activity-agenda-section @dayPhaseClass">
                <div class="activity-agenda-time">
                   @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
                   {
@@ -109,9 +109,7 @@ else
                      </div>
                      <span class="activity-time-connector"
                            aria-hidden="true">
-                        <span class=
-                                 "activity-time-point @dayPhaseClass">
-                        </span>
+                        <span class="activity-time-point"></span>
                      </span>
                   </div>
                   <div class="activity-analog-clock"

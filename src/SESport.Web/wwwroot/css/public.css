@@ -211,6 +211,8 @@
 }
 
 .activity-agenda-section {
+   --activity-phase-color: rgba(255, 204, 0, 0.72);
+   --activity-phase-glow: rgba(255, 204, 0, 0.32);
    display: grid;
    grid-template-columns:
       var(--activity-time-column) minmax(0, 1fr);
@@ -218,6 +220,17 @@
    align-items: stretch;
    position: relative;
    z-index: 1;
+}
+
+.activity-day-phase-morning,
+.activity-day-phase-evening {
+   --activity-phase-color: rgba(255, 204, 0, 0.72);
+   --activity-phase-glow: rgba(255, 204, 0, 0.32);
+}
+
+.activity-day-phase-night {
+   --activity-phase-color: rgba(255, 204, 0, 0.72);
+   --activity-phase-glow: rgba(255, 204, 0, 0.32);
 }
 
 .activity-agenda-time {
@@ -285,32 +298,11 @@
    content: "";
 }
 
-.activity-time-point-morning::before,
-.activity-time-point-day::before,
-.activity-time-point-evening::before,
-.activity-time-point-night::before {
+.activity-time-point::before {
    inset: 3px;
+   background: var(--activity-phase-color);
+   box-shadow: 0 0 7px var(--activity-phase-glow);
    transform: translateX(1px);
-}
-
-.activity-time-point-morning::before {
-   background: #e9953f;
-   box-shadow: 0 0 7px rgba(233, 149, 63, 0.5);
-}
-
-.activity-time-point-day::before {
-   background: #f2c91f;
-   box-shadow: 0 0 7px rgba(242, 201, 31, 0.58);
-}
-
-.activity-time-point-evening::before {
-   background: #e9953f;
-   box-shadow: 0 0 7px rgba(233, 149, 63, 0.5);
-}
-
-.activity-time-point-night::before {
-   background: #52618f;
-   box-shadow: 0 0 7px rgba(82, 97, 143, 0.55);
 }
 
 .activity-time-badge-muted {
@@ -412,6 +404,40 @@
 .activity-entry-organization,
 .activity-entry-title {
    padding-right: 42px;
+}
+
+.activity-entry-organization {
+   color: #397293;
+   font-size: 12px;
+   font-weight: 700;
+   letter-spacing: 0.025em;
+   line-height: 1.2;
+}
+
+.activity-entry-title {
+   position: relative;
+   margin-top: 4px;
+   padding-left: 11px;
+   color: #004f80;
+   font-size: 19px;
+   font-weight: 850;
+   letter-spacing: -0.01em;
+   line-height: 1.16;
+}
+
+.activity-entry-title::before {
+   position: absolute;
+   top: 2px;
+   bottom: 2px;
+   left: 0;
+   width: 3px;
+   border-radius: 999px;
+   background: var(--activity-phase-color);
+   content: "";
+}
+
+.activity-entry-title + p {
+   margin-top: 4px;
 }
 
 .activity-entry .activity-meta {
