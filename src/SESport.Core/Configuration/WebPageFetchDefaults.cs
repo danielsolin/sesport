@@ -50,6 +50,17 @@ public static class WebPageFetchDefaults
       TimeSpan.FromSeconds(30);
    public static readonly TimeSpan BrowserLoadStateTimeout =
       TimeSpan.FromSeconds(30);
+   public static readonly TimeSpan BrowserContentStabilityTimeout =
+      TimeSpan.FromSeconds(15);
+   public static readonly TimeSpan BrowserContentStabilityInterval =
+      TimeSpan.FromMilliseconds(500);
+   public const int BrowserStableContentSampleCount = 3;
+   public static readonly TimeSpan BrowserScrollTimeout =
+      TimeSpan.FromSeconds(15);
+   public static readonly TimeSpan BrowserScrollInterval =
+      TimeSpan.FromMilliseconds(500);
+   public const int BrowserScrollMaxSteps = 20;
+   public const int BrowserStableScrollSampleCount = 2;
    public const int BrowserViewportWidth = 1440;
    public const int BrowserViewportHeight = 2400;
 }

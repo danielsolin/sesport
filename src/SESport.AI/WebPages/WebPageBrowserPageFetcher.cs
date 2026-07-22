@@ -80,6 +80,8 @@ internal static class WebPageBrowserPageFetcher
          }
 
          cancellationToken.ThrowIfCancellationRequested();
+         await ScrollThroughPageAsync(page, cancellationToken);
+         await WaitForContentStabilityAsync(page, cancellationToken);
 
          var title = await page.TitleAsync();
          var renderedHtml = await page.ContentAsync();
@@ -139,6 +141,104 @@ internal static class WebPageBrowserPageFetcher
             WebPageFetchErrorKind.BrowserBlocked,
             "Playwright failed."
          );
+      }
+   }
+
+   private static async Task ScrollThroughPageAsync(
+      IPage page,
+      CancellationToken cancellationToken
+   )
+   {
+      var timeoutAt = DateTimeOffset.UtcNow.Add(
+         WebPageFetchDefaults.BrowserScrollTimeout
+      );
+      var previousHeight = await GetDocumentHeightAsync(page);
+      var stableSampleCount = 0;
+
+      for(var step = 0;
+         step < WebPageFetchDefaults.BrowserScrollMaxSteps &&
+         DateTimeOffset.UtcNow < timeoutAt;
+         step++)
+      {
+         cancellationToken.ThrowIfCancellationRequested();
+         await page.EvaluateAsync(
+            "window.scrollBy(0, window.innerHeight * 0.75)"
+         );
+         await Task.Delay(
+            WebPageFetchDefaults.BrowserScrollInterval,
+            cancellationToken
+         );
+
+         var currentHeight = await GetDocumentHeightAsync(page);
+         var isAtBottom = await page.EvaluateAsync<bool>(
+            "window.scrollY + window.innerHeight >= " +
+            "document.documentElement.scrollHeight - 1"
+         );
+         if(isAtBottom && currentHeight == previousHeight)
+         {
+            stableSampleCount++;
+            if(stableSampleCount >=
+               WebPageFetchDefaults.BrowserStableScrollSampleCount)
+            {
+               break;
+            }
+         }
+         else
+         {
+            stableSampleCount = 0;
+         }
+
+         previousHeight = currentHeight;
+      }
+
+      await page.EvaluateAsync("window.scrollTo(0, 0)");
+   }
+
+   private static Task<double> GetDocumentHeightAsync(IPage page)
+   {
+      return page.EvaluateAsync<double>(
+         "document.documentElement.scrollHeight"
+      );
+   }
+
+   private static async Task WaitForContentStabilityAsync(
+      IPage page,
+      CancellationToken cancellationToken
+   )
+   {
+      var timeoutAt = DateTimeOffset.UtcNow.Add(
+         WebPageFetchDefaults.BrowserContentStabilityTimeout
+      );
+      string? previousText = null;
+      var stableSampleCount = 0;
+
+      while(DateTimeOffset.UtcNow < timeoutAt)
+      {
+         cancellationToken.ThrowIfCancellationRequested();
+         await Task.Delay(
+            WebPageFetchDefaults.BrowserContentStabilityInterval,
+            cancellationToken
+         );
+
+         var currentText = await page.Locator("body").InnerTextAsync();
+         if(string.Equals(
+            currentText,
+            previousText,
+            StringComparison.Ordinal
+         ))
+         {
+            stableSampleCount++;
+            if(stableSampleCount >=
+               WebPageFetchDefaults.BrowserStableContentSampleCount)
+            {
+               return;
+            }
+         }
+         else
+         {
+            previousText = currentText;
+            stableSampleCount = 0;
+         }
       }
    }
 }
