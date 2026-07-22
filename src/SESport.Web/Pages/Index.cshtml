@@ -85,6 +85,8 @@ else
             var activity = agendaSection.Activities[0];
             var dayPhaseClass = agendaSection.DayPhase switch
             {
+               ActivityDayPhase.Morning =>
+                  "activity-time-point-morning",
                ActivityDayPhase.Day => "activity-time-point-day",
                ActivityDayPhase.Evening =>
                   "activity-time-point-evening",

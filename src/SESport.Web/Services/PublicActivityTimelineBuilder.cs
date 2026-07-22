@@ -105,7 +105,8 @@ public sealed class PublicActivityTimelineBuilder
    {
       return hour switch
       {
-         >= 6 and < 18 => ActivityDayPhase.Day,
+         >= 6 and < 10 => ActivityDayPhase.Morning,
+         >= 10 and < 18 => ActivityDayPhase.Day,
          >= 18 and < 22 => ActivityDayPhase.Evening,
          _ => ActivityDayPhase.Night
       };

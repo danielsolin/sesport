@@ -292,11 +292,17 @@
    content: "";
 }
 
+.activity-time-point-morning::before,
 .activity-time-point-day::before,
 .activity-time-point-evening::before,
 .activity-time-point-night::before {
    inset: 3px;
    transform: translateX(1px);
+}
+
+.activity-time-point-morning::before {
+   background: #e9953f;
+   box-shadow: 0 0 7px rgba(233, 149, 63, 0.5);
 }
 
 .activity-time-point-day::before {
@@ -305,8 +311,8 @@
 }
 
 .activity-time-point-evening::before {
-   background: #d9a62e;
-   box-shadow: 0 0 7px rgba(217, 166, 46, 0.52);
+   background: #e9953f;
+   box-shadow: 0 0 7px rgba(233, 149, 63, 0.5);
 }
 
 .activity-time-point-night::before {
