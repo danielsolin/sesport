@@ -8,7 +8,10 @@ using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Entities;
 
-public class IndexModel(AdminRepository repository) : PageModel
+public class IndexModel(
+   AdminRepository repository,
+   EntityDatePreferenceStore datePreferenceStore
+) : PageModel
 {
    public const string FilterCookieName = "sesport.admin.entities.filter";
    public const string TypeFilterCookieName =
@@ -65,6 +68,7 @@ public class IndexModel(AdminRepository repository) : PageModel
    {
       SortColumn = NormalizeSortColumn(sortColumn);
       SortAsc = sortAsc;
+      Date = datePreferenceStore.ResolveOptionalDate(HttpContext, Date);
       Filter = Request.Cookies.TryGetValue(FilterCookieName, out var cookie)
          ? cookie?.Trim() ?? string.Empty
          : string.Empty;

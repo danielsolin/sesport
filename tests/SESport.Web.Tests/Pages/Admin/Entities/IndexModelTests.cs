@@ -6,6 +6,7 @@ using Npgsql;
 using SESport.Core.Configuration;
 using SESport.Data;
 using SESport.Web.Pages.Admin.Entities;
+using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Pages.Admin.Entities;
 
@@ -20,7 +21,10 @@ public sealed class IndexModelTests
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
-      var model = new IndexModel(repository)
+      var model = new IndexModel(
+         repository,
+         new EntityDatePreferenceStore()
+      )
       {
          PageContext = new PageContext
          {
@@ -71,7 +75,10 @@ public sealed class IndexModelTests
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
-      var model = new IndexModel(repository)
+      var model = new IndexModel(
+         repository,
+         new EntityDatePreferenceStore()
+      )
       {
          PageContext = new PageContext
          {
@@ -103,6 +110,31 @@ public sealed class IndexModelTests
       {
          await DeleteEntityAsync(dataSource, entityId);
       }
+   }
+
+   [Fact]
+   public async Task OnGetAsyncRestoresActivityDateFromCookie()
+   {
+      var expectedDate = new DateOnly(2026, 7, 22);
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var model = new IndexModel(
+         repository,
+         new EntityDatePreferenceStore()
+      )
+      {
+         PageContext = new PageContext
+         {
+            HttpContext = CreateContext(
+               "sesport.admin.entities.date=2026-07-22"
+            )
+         }
+      };
+
+      await model.OnGetAsync(null, true, CancellationToken.None);
+
+      Assert.Equal(expectedDate, model.Date);
+      Assert.Equal("2026-07-22", model.DateText);
    }
 
    private static DefaultHttpContext CreateContext(string cookieHeader)

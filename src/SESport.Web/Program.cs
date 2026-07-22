@@ -23,6 +23,7 @@ builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddAiPlatform();
 builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddSingleton<RunDatePreferenceStore>();
+builder.Services.AddSingleton<EntityDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();
 builder.Services.AddScoped<ActivityRepository>();
