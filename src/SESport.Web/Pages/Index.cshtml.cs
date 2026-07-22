@@ -121,6 +121,14 @@ public class IndexModel(
       return age;
    }
 
+   internal static string FormatBirthday(DateOnly? birthdate)
+   {
+      return birthdate?.ToString(
+         "d MMMM, yyyy",
+         CultureInfo.GetCultureInfo("sv-SE")
+      ) ?? string.Empty;
+   }
+
    private static DateOnly? ParseDate(string? date)
    {
       return DateOnly.TryParseExact(

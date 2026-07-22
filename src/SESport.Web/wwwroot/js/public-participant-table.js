@@ -107,6 +107,8 @@
             return row.dataset.participantBirthdate ?? "";
          case "height":
             return row.dataset.participantHeight ?? "";
+         case "club":
+            return row.dataset.participantClub ?? "";
          default:
             return "";
       }
