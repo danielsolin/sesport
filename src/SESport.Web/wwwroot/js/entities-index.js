@@ -366,8 +366,36 @@
       const sport = escapeHtml(entity.sport ?? "");
       const gender = formatGender(entity.personGenderId);
       const age = formatAge(entity.birthdate);
-      const height = formatMeasurement(entity.height, "cm");
-      const weight = formatMeasurement(entity.weight, "kg");
+      const heightValue = formatMeasurement(entity.height, "cm");
+      const heightSearchQuery = encodeURIComponent(
+         `${entity.name ?? ""} ${entity.sport ?? ""} längd`
+      );
+      const heightSearchUrl = `${searchUrlBase}${heightSearchQuery}`;
+      const height = heightValue !== ""
+         ? heightValue
+         : `
+               <a class="ses-entity-search-link"
+                  href="${heightSearchUrl}"
+                  target="_blank"
+                  rel="noreferrer">
+                  <span class="ses-icon-search"></span>
+               </a>
+            `;
+      const weightValue = formatMeasurement(entity.weight, "kg");
+      const weightSearchQuery = encodeURIComponent(
+         `${entity.name ?? ""} ${entity.sport ?? ""} vikt`
+      );
+      const weightSearchUrl = `${searchUrlBase}${weightSearchQuery}`;
+      const weight = weightValue !== ""
+         ? weightValue
+         : `
+               <a class="ses-entity-search-link"
+                  href="${weightSearchUrl}"
+                  target="_blank"
+                  rel="noreferrer">
+                  <span class="ses-icon-search"></span>
+               </a>
+            `;
       const formativeClub = escapeHtml(entity.formativeClub ?? "");
       const firstClubSearchQuery = encodeURIComponent(
          `${entity.name ?? ""} ${entity.sport ?? ""} moderklubb`

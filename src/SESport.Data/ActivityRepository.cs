@@ -974,7 +974,101 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       configureCommand?.Invoke(command);
-      return await ReadActivityListAsync(command, cancellationToken);
+      var activities = await ReadActivityListAsync(
+         command,
+         cancellationToken
+      );
+      var participantsByActivity = await GetPublicParticipantsAsync(
+         activities.Select(activity => activity.Id).ToArray(),
+         cancellationToken
+      );
+
+      return activities
+         .Select(activity => activity with
+         {
+            Participants = participantsByActivity.GetValueOrDefault(
+               activity.Id,
+               []
+            )
+         })
+         .ToArray();
+   }
+
+   private async Task<IReadOnlyDictionary<
+      Guid,
+      IReadOnlyList<PublicActivityParticipant>
+   >> GetPublicParticipantsAsync(
+      Guid[] activityIds,
+      CancellationToken cancellationToken
+   )
+   {
+      if(activityIds.Length == 0)
+      {
+         return new Dictionary<
+            Guid,
+            IReadOnlyList<PublicActivityParticipant>
+         >();
+      }
+
+      var sql = $$"""
+         select distinct
+            al.activity_id,
+            person.id,
+            person.canonical_name,
+            person.birthdate,
+            person.height,
+            coalesce(person.formative_club, '') as club,
+            priority.sort_order
+         from activity_entity_links al
+         join entities person on person.id = al.entity_id
+         join entity_watch_priorities priority
+            on priority.id = person.watch_priority_id
+         where al.activity_id = any(@activity_ids)
+            and person.entity_type_id =
+               '{{TrackedEntityTypeIds.Person}}'
+         order by
+            al.activity_id,
+            priority.sort_order,
+            person.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("activity_ids", activityIds);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var participants = new Dictionary<
+         Guid,
+         List<PublicActivityParticipant>
+      >();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         var activityId = reader.GetGuid(0);
+
+         if(!participants.TryGetValue(activityId, out var activityRows))
+         {
+            activityRows = [];
+            participants[activityId] = activityRows;
+         }
+
+         activityRows.Add(
+            new PublicActivityParticipant(
+               reader.GetGuid(1),
+               reader.GetString(2),
+               reader.IsDBNull(3)
+                  ? null
+                  : reader.GetFieldValue<DateOnly>(3),
+               reader.IsDBNull(4) ? null : reader.GetInt32(4),
+               reader.GetString(5)
+            )
+         );
+      }
+
+      return participants.ToDictionary(
+         pair => pair.Key,
+         pair => (IReadOnlyList<PublicActivityParticipant>)pair.Value
+      );
    }
 
    private static string CreateActivityListSql(

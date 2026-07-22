@@ -113,51 +113,14 @@ else
                            activity.RelatedPersonEntities
                         );
                      <div class="activity-time-participants">
-                        @if(participantNames.Count <= 5)
+                        @for(var i = 0; i < participantNames.Count; i++)
                         {
-                           @for(var i = 0; i < participantNames.Count; i++)
+                           <span>- @participantNames[i]</span>
+
+                           @if(i < participantNames.Count - 1)
                            {
-                              <span>- @participantNames[i]</span>
-
-                              @if(i < participantNames.Count - 1)
-                              {
-                                 <br />
-                              }
+                              <br />
                            }
-                        }
-                        else
-                        {
-                           <details class="activity-participants-toggle">
-                              <summary class="activity-participants-summary">
-                                 @for(var i = 0; i < 5; i++)
-                                 {
-                                    <span>- @participantNames[i]</span>
-
-                                    @if(i < 4)
-                                    {
-                                       <br />
-                                    }
-                                 }
-                                 <span class="activity-participants-more">
-                                    + @(participantNames.Count - 5) till
-                                 </span>
-                              </summary>
-                              <div class="activity-participants-expanded">
-                                 @for(
-                                    var i = 0;
-                                    i < participantNames.Count;
-                                    i++
-                                 )
-                                 {
-                                    <span>- @participantNames[i]</span>
-
-                                    @if(i < participantNames.Count - 1)
-                                    {
-                                       <br />
-                                    }
-                                 }
-                              </div>
-                           </details>
                         }
                      </div>
                   }
@@ -176,6 +139,45 @@ else
                      @if(!string.IsNullOrWhiteSpace(activity.Description))
                      {
                         <p style="margin-bottom: 0px;">@activity.Description</p>
+                     }
+                     @if(activity.Participants.Count > 0)
+                     {
+                        <div class="activity-participant-table-wrap">
+                           <table class="activity-participant-table">
+                              <thead>
+                                 <tr>
+                                    <th>Namn</th>
+                                    <th>Ålder</th>
+                                    <th>Födelsedatum</th>
+                                    <th>Längd</th>
+                                    <th>Moderklubb/Klubb</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 @foreach(var participant in
+                                    activity.Participants)
+                                 {
+                                    var age = IndexModel.CalculateAge(
+                                       participant.Birthdate,
+                                       Model.CurrentDate
+                                    );
+                                    <tr>
+                                       <td>@participant.Name</td>
+                                       <td>@(age is null
+                                          ? string.Empty
+                                          : $"{age} år")</td>
+                                       <td>@participant.Birthdate?.ToString(
+                                          DateDisplay.DateOnlyFormat
+                                       )</td>
+                                       <td>@(participant.Height is null
+                                          ? string.Empty
+                                          : $"{participant.Height} cm")</td>
+                                       <td>@participant.Club</td>
+                                    </tr>
+                                 }
+                              </tbody>
+                           </table>
+                        </div>
                      }
                   </article>
                </div>

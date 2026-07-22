@@ -247,40 +247,6 @@
    line-height: 1.25;
 }
 
-.activity-participants-toggle {
-   display: grid;
-   gap: 4px;
-   margin: 0;
-}
-
-.activity-participants-toggle > summary {
-   position: relative;
-   display: block;
-   padding-right: 16px;
-   cursor: pointer;
-   list-style: none;
-}
-
-.activity-participants-toggle > summary::-webkit-details-marker {
-   display: none;
-}
-
-.activity-participants-toggle[open] > summary {
-   display: none;
-}
-
-.activity-participants-more {
-   margin-left: 6px;
-   color: var(--muted);
-   font-weight: 700;
-   white-space: nowrap;
-}
-
-.activity-participants-expanded {
-   display: block;
-   padding-left: 0;
-}
-
 .activity-agenda-items {
    display: grid;
    gap: 10px;
@@ -313,6 +279,32 @@
 
 .activity-entry .activity-meta {
    color: #004f80;
+}
+
+.activity-participant-table-wrap {
+   margin-top: 12px;
+   overflow-x: auto;
+}
+
+.activity-participant-table {
+   width: 100%;
+   min-width: 540px;
+   border-collapse: collapse;
+   color: inherit;
+   font-size: 12px;
+}
+
+.activity-participant-table th,
+.activity-participant-table td {
+   padding: 5px 8px;
+   border-bottom: 1px solid rgba(0, 106, 168, 0.22);
+   text-align: left;
+   vertical-align: top;
+}
+
+.activity-participant-table th {
+   font-size: 11px;
+   text-transform: uppercase;
 }
 
 .activity-meta {

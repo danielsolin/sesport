@@ -18,6 +18,21 @@ public sealed record ActivityListItem(
    string RelatedPersonEntities,
    Guid[] RelatedPersonEntityIds,
    string RelatedOrganizationEntities
+)
+{
+   public IReadOnlyList<PublicActivityParticipant> Participants
+   {
+      get;
+      init;
+   } = [];
+}
+
+public sealed record PublicActivityParticipant(
+   Guid Id,
+   string Name,
+   DateOnly? Birthdate,
+   int? Height,
+   string Club
 );
 
 public sealed record EntityOption(

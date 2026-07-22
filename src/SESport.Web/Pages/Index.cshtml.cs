@@ -35,6 +35,8 @@ public class IndexModel(
 
    public bool IsSportToday { get; private set; }
 
+   public DateOnly CurrentDate { get; private set; }
+
    public int? TotalParticipantsCount { get; private set; }
 
    public string? LoadError { get; private set; }
@@ -49,6 +51,9 @@ public class IndexModel(
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       var now = DateTimeOffset.UtcNow;
+      CurrentDate = DateOnly.FromDateTime(
+         TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId).DateTime
+      );
       var sportToday = SportDay.Today(now).StartDate;
       SelectedDate = ParseDate(Date) ?? sportToday;
       IsSportToday = SelectedDate == sportToday;
@@ -97,6 +102,23 @@ public class IndexModel(
                StringSplitOptions.RemoveEmptyEntries |
                StringSplitOptions.TrimEntries
             );
+   }
+
+   internal static int? CalculateAge(DateOnly? birthdate, DateOnly today)
+   {
+      if(birthdate is null)
+      {
+         return null;
+      }
+
+      var age = today.Year - birthdate.Value.Year;
+
+      if(birthdate.Value > today.AddYears(-age))
+      {
+         age--;
+      }
+
+      return age;
    }
 
    private static DateOnly? ParseDate(string? date)
