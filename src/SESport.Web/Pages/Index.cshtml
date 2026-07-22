@@ -207,7 +207,9 @@ else
                                            "@participant.Height"
                                         data-participant-club=
                                            "@participant.Club">
-                                       <td>@participant.Name</td>
+                                       <td class="activity-participant-name">
+                                          @participant.Name
+                                       </td>
                                        <td>@(age is null
                                           ? string.Empty
                                           : $"{age} år")</td>

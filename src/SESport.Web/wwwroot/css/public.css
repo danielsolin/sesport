@@ -435,6 +435,10 @@
    overflow-x: auto;
 }
 
+.activity-participant-name {
+   font-weight: 750;
+}
+
 .activity-participant-table {
    width: 100%;
    min-width: 540px;
