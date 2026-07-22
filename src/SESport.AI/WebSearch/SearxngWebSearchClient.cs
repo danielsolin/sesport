@@ -271,6 +271,17 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
+      if(SearchResultRelevanceGuard.IsCatastrophicallyIrrelevant(
+         query,
+         results
+      ))
+      {
+         throw new SearxngEngineUnavailableException(
+            $"SearXNG engine '{engine}' returned results with no " +
+            "meaningful overlap with the query."
+         );
+      }
+
       return new WebSearchResponse(
          results,
          $"SearXNG/{engine}",

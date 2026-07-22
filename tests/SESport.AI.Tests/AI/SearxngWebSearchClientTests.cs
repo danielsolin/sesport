@@ -348,6 +348,65 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchRetriesCatastrophicallyIrrelevantResults()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateIrrelevantResponseJson()
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions
+         {
+            Engines = ["bing", "mojeek"]
+         },
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchAsync(
+         "2026 LIV Golf United Kingdom roster",
+         10,
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Contains("engines=bing", handler.RequestBodies[0]);
+      Assert.Contains("engines=mojeek", handler.RequestBodies[1]);
+      Assert.Single(response.Results);
+   }
+
+   [Fact]
+   public async Task SearchKeepsBatchWithOneClearlyRelevantResult()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateMostlyIrrelevantResponseJson()
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchAsync(
+         "2026 LIV Golf United Kingdom roster",
+         10,
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, handler.RequestCount);
+      Assert.Equal(10, response.Results.Count);
+   }
+
+   [Fact]
    public async Task SearchReturnsEmptyWhenSearxngReturnsNoResults()
    {
       var handler = new RecordingHandler(CreateEmptyResponseJson());
@@ -496,6 +555,53 @@ public class SearxngWebSearchClientTests
          corrections = Array.Empty<string>(),
          infoboxes = Array.Empty<object>(),
          suggestions = Array.Empty<string>(),
+         unresponsive_engines = Array.Empty<object>()
+      });
+   }
+
+   private static string CreateIrrelevantResponseJson()
+   {
+      return CreateSearchResponseJson(
+         Enumerable.Range(1, 10)
+            .Select(index => (
+               $"Calendar page {index}",
+               $"https://example.test/calendar/{index}",
+               "Dates, holidays and week numbers."
+            ))
+            .ToArray()
+      );
+   }
+
+   private static string CreateMostlyIrrelevantResponseJson()
+   {
+      var results = Enumerable.Range(1, 9)
+         .Select(index => (
+            $"Calendar page {index}",
+            $"https://example.test/calendar/{index}",
+            "Dates, holidays and week numbers."
+         ))
+         .Append((
+            "LIV Golf field announced",
+            "https://example.test/field",
+            "The tournament roster is now available."
+         ))
+         .ToArray();
+
+      return CreateSearchResponseJson(results);
+   }
+
+   private static string CreateSearchResponseJson(
+      params (string Title, string Url, string Content)[] results
+   )
+   {
+      return JsonSerializer.Serialize(new
+      {
+         results = results.Select(result => new
+         {
+            title = result.Title,
+            url = result.Url,
+            content = result.Content
+         }),
          unresponsive_engines = Array.Empty<object>()
       });
    }
