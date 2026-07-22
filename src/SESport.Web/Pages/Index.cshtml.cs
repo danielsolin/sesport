@@ -172,7 +172,9 @@ public sealed record ActivityAgendaSection(
    string TimeLabel,
    IReadOnlyList<ActivityListItem> Activities,
    string RelatedOrganizationEntities,
-   ActivityDayPhase DayPhase
+   ActivityDayPhase DayPhase,
+   string ClockHourAngle,
+   string ClockMinuteAngle
 );
 
 public enum ActivityDayPhase

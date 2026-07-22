@@ -97,8 +97,18 @@ public sealed class PublicActivityTimelineBuilder
          TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
          [activity],
          activity.RelatedOrganizationEntities,
-         GetDayPhase(localStart.Hour)
+         GetDayPhase(localStart.Hour),
+         GetHourHandAngle(localStart),
+         $"{localStart.Minute * 6}deg"
       );
+   }
+
+   private static string GetHourHandAngle(DateTimeOffset localStart)
+   {
+      var angle = (localStart.Hour % 12 * 30) +
+         (localStart.Minute * 0.5);
+
+      return FormattableString.Invariant($"{angle:0.#}deg");
    }
 
    private static ActivityDayPhase GetDayPhase(int hour)

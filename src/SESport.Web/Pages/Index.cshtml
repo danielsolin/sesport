@@ -95,16 +95,14 @@ else
 
             <section class="activity-agenda-section">
                <div class="activity-agenda-time">
+                  @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
+                  {
+                     <span class="activity-time-channel">
+                        @activity.TvChannelName
+                     </span>
+                  }
                   <div class="activity-time-row">
                      <div class="activity-time-badge">
-                        @if(activity.SportIconPath is not null)
-                        {
-                           <span class="activity-time-icon"
-                                 role="img"
-                                 aria-label="@activity.SportName"
-                                 style="--sport-icon-url: url('@activity.SportIconPath');">
-                           </span>
-                        }
                         <time class="activity-time-value">
                            @agendaSection.TimeLabel
                         </time>
@@ -116,34 +114,28 @@ else
                         </span>
                      </span>
                   </div>
-                  @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
-                  {
-                     <span class="activity-time-channel">
-                        @activity.TvChannelName
-                     </span>
-                  }
-                  @if(!string.IsNullOrWhiteSpace(
-                     activity.RelatedPersonEntities))
-                  {
-                     var participantNames =
-                        IndexModel.SplitParticipantNames(
-                           activity.RelatedPersonEntities
-                        );
-                     <div class="activity-time-participants">
-                        @for(var i = 0; i < participantNames.Count; i++)
-                        {
-                           <span>- @participantNames[i]</span>
-
-                           @if(i < participantNames.Count - 1)
-                           {
-                              <br />
-                           }
-                        }
-                     </div>
-                  }
+                  <div class="activity-analog-clock"
+                       style="--clock-hour-angle:
+                                 @agendaSection.ClockHourAngle;
+                              --clock-minute-angle:
+                                 @agendaSection.ClockMinuteAngle;"
+                       aria-hidden="true">
+                     <span class="activity-clock-hour-hand"></span>
+                     <span class="activity-clock-minute-hand"></span>
+                     <span class="activity-clock-center"></span>
+                  </div>
                </div>
                <div class="activity-agenda-items">
                   <article class="activity-entry">
+                     @if(activity.SportIconPath is not null)
+                     {
+                        <span class="activity-entry-sport-icon"
+                              role="img"
+                              aria-label="@activity.SportName"
+                              style="--sport-icon-url:
+                                        url('@activity.SportIconPath');">
+                        </span>
+                     }
                      <h3 class="activity-entry-organization">
                         #@(string.IsNullOrEmpty(
                            activity.RelatedOrganizationEntities)

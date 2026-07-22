@@ -254,13 +254,6 @@
    letter-spacing: 0.04em;
 }
 
-.activity-time-badge .activity-time-icon {
-   width: 15px;
-   height: 15px;
-   margin-right: 0;
-   opacity: 0.78;
-}
-
 .activity-time-connector {
    display: flex;
    flex: 1;
@@ -332,12 +325,57 @@
    font-weight: 700;
 }
 
-.activity-time-participants {
-   padding-left: 4px;
-   color: var(--text);
-   font-size: 12px;
-   font-weight: 600;
-   line-height: 1.25;
+.activity-analog-clock {
+   position: relative;
+   width: 62px;
+   height: 62px;
+   margin: 8px 0 0 8px;
+   border: 2px solid rgba(0, 106, 168, 0.72);
+   border-radius: 50%;
+   background:
+      radial-gradient(circle, #f7f9f7 60%, transparent 61%),
+      repeating-conic-gradient(
+         from -1deg,
+         rgba(0, 106, 168, 0.62) 0 2deg,
+         transparent 2deg 30deg
+      );
+   box-shadow: 0 3px 10px rgba(0, 79, 128, 0.1);
+}
+
+.activity-clock-hour-hand,
+.activity-clock-minute-hand {
+   position: absolute;
+   bottom: 50%;
+   left: 50%;
+   border-radius: 999px;
+   background: #006aa8;
+   transform-origin: 50% 100%;
+}
+
+.activity-clock-hour-hand {
+   width: 3px;
+   height: 17px;
+   transform:
+      translateX(-50%) rotate(var(--clock-hour-angle));
+}
+
+.activity-clock-minute-hand {
+   width: 2px;
+   height: 23px;
+   transform:
+      translateX(-50%) rotate(var(--clock-minute-angle));
+}
+
+.activity-clock-center {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   width: 7px;
+   height: 7px;
+   border: 2px solid #f7f9f7;
+   border-radius: 50%;
+   background: #006aa8;
+   transform: translate(-50%, -50%);
 }
 
 .activity-agenda-items {
@@ -353,6 +391,7 @@
 }
 
 .activity-entry {
+   position: relative;
    padding: 12px 14px;
    border: 2px solid #006aa8;
    border-radius: 12px;
@@ -367,6 +406,11 @@
 .activity-entry p,
 .activity-entry span {
    color: inherit;
+}
+
+.activity-entry-organization,
+.activity-entry-title {
+   padding-right: 42px;
 }
 
 .activity-entry .activity-meta {
@@ -443,12 +487,14 @@
    text-transform: uppercase;
 }
 
-.activity-time-icon {
+.activity-entry-sport-icon {
    display: inline-block;
-   width: 18px;
-   height: 18px;
-   margin-right: 5px;
-   background-color: #ffcc00;
+   position: absolute;
+   top: 13px;
+   right: 14px;
+   width: 32px;
+   height: 32px;
+   background-color: #006aa8;
    mask-image: var(--sport-icon-url);
    mask-position: center;
    mask-repeat: no-repeat;
