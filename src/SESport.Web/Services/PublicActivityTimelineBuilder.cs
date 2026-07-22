@@ -88,11 +88,24 @@ public sealed class PublicActivityTimelineBuilder
       ActivityListItem activity
    )
    {
+      var localStart = TimeZoneHelper.ToLocal(
+         activity.StartsAt!.Value,
+         SportDay.TimeZoneId
+      );
+
       return new ActivityAgendaSection(
          TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
          [activity],
-         activity.RelatedOrganizationEntities
+         activity.RelatedOrganizationEntities,
+         GetDayPhase(localStart.Hour)
       );
+   }
+
+   private static ActivityDayPhase GetDayPhase(int hour)
+   {
+      return hour >= 5 && hour < 22
+         ? ActivityDayPhase.Day
+         : ActivityDayPhase.Night;
    }
 }
 

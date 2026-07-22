@@ -276,13 +276,34 @@
 }
 
 .activity-time-point {
-   flex: 0 0 10px;
-   width: 10px;
-   height: 10px;
-   border: 2px solid #f7f9f7;
+   display: block;
+   flex: 0 0 18px;
+   position: relative;
+   width: 18px;
+   height: 18px;
    border-radius: 50%;
-   background: var(--accent);
-   box-shadow: 0 0 0 2px rgba(0, 106, 168, 0.22);
+   background: #f7f9f7;
+   transform: translateX(7px);
+}
+
+.activity-time-point::before {
+   position: absolute;
+   border-radius: 50%;
+   content: "";
+}
+
+.activity-time-point-day::before {
+   inset: 3px;
+   background: #f2c91f;
+   box-shadow: 0 0 7px rgba(242, 201, 31, 0.58);
+   transform: translateX(1px);
+}
+
+.activity-time-point-night::before {
+   inset: 3px;
+   background: #52618f;
+   box-shadow: 0 0 7px rgba(82, 97, 143, 0.55);
+   transform: translateX(1px);
 }
 
 .activity-time-badge-muted {

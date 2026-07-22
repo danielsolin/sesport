@@ -82,7 +82,12 @@ else
          else if(timelineEntry.Section is not null)
          {
             var agendaSection = timelineEntry.Section;
-               var activity = agendaSection.Activities[0];
+            var activity = agendaSection.Activities[0];
+            var dayPhaseClass = agendaSection.DayPhase switch
+            {
+               ActivityDayPhase.Day => "activity-time-point-day",
+               _ => "activity-time-point-night"
+            };
 
             <section class="activity-agenda-section">
                <div class="activity-agenda-time">
@@ -102,7 +107,9 @@ else
                      </div>
                      <span class="activity-time-connector"
                            aria-hidden="true">
-                        <span class="activity-time-point"></span>
+                        <span class=
+                                 "activity-time-point @dayPhaseClass">
+                        </span>
                      </span>
                   </div>
                   @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))

@@ -171,8 +171,15 @@ public class IndexModel(
 public sealed record ActivityAgendaSection(
    string TimeLabel,
    IReadOnlyList<ActivityListItem> Activities,
-   string RelatedOrganizationEntities
+   string RelatedOrganizationEntities,
+   ActivityDayPhase DayPhase
 );
+
+public enum ActivityDayPhase
+{
+   Day,
+   Night
+}
 
 public sealed record DateOption(
    string Value,
