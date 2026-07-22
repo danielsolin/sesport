@@ -365,7 +365,21 @@
       const entityType = escapeHtml(entity.entityType ?? "");
       const sport = escapeHtml(entity.sport ?? "");
       const gender = formatGender(entity.personGenderId);
-      const age = formatAge(entity.birthdate);
+      const ageValue = formatAge(entity.birthdate);
+      const ageSearchQuery = encodeURIComponent(
+         `${entity.name ?? ""} ${entity.sport ?? ""} ålder`
+      );
+      const ageSearchUrl = `${searchUrlBase}${ageSearchQuery}`;
+      const age = ageValue !== ""
+         ? ageValue
+         : `
+               <a class="ses-entity-search-link"
+                  href="${ageSearchUrl}"
+                  target="_blank"
+                  rel="noreferrer">
+                  <span class="ses-icon-search"></span>
+               </a>
+            `;
       const heightValue = formatMeasurement(entity.height, "cm");
       const heightSearchQuery = encodeURIComponent(
          `${entity.name ?? ""} ${entity.sport ?? ""} längd`
