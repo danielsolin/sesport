@@ -24,9 +24,24 @@ public sealed class SearxngWebSearchClientOptionsTests
             "seznam",
             "naver",
             "boardreader",
-            "yep"
+            "yep",
+            "yahoo",
+            "google_cse",
+            "gmx",
+            "resulthunter"
          ],
          options.Engines
+      );
+      Assert.Equal(
+         [
+            "yahoo",
+            "privacywall",
+            "duckduckgo",
+            "mojeek",
+            "resulthunter",
+            "gmx"
+         ],
+         options.RecentEngines
       );
    }
 }

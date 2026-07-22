@@ -54,7 +54,64 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          maxResults,
          cancellationToken,
          searchAttempt,
-         includeSocialMedia
+         includeSocialMedia,
+         null,
+         Options.Engines
+      );
+   }
+
+   public async Task<WebSearchResponse> SearchRecentAsync(
+      string query,
+      int maxResults,
+      CancellationToken cancellationToken,
+      bool includeSocialMedia = false
+   )
+   {
+      if(string.IsNullOrWhiteSpace(query))
+      {
+         return new WebSearchResponse([]);
+      }
+
+      var dayResponse = await SearchWithRetryAsync(
+         query,
+         maxResults,
+         cancellationToken,
+         0,
+         includeSocialMedia,
+         "day",
+         Options.RecentEngines
+      );
+      var resultLimit = Math.Clamp(
+         maxResults,
+         1,
+         WebSearchDefaults.MaxSearchResults
+      );
+
+      if(dayResponse.Results.Count >= resultLimit)
+      {
+         return dayResponse;
+      }
+
+      var weekResponse = await SearchWithRetryAsync(
+         query,
+         maxResults,
+         cancellationToken,
+         0,
+         includeSocialMedia,
+         "week",
+         Options.RecentEngines
+      );
+      var mergedResults = dayResponse.Results
+         .Concat(weekResponse.Results)
+         .GroupBy(result => result.Url, StringComparer.OrdinalIgnoreCase)
+         .Select(group => group.First())
+         .Take(resultLimit)
+         .ToList();
+
+      return new WebSearchResponse(
+         mergedResults,
+         "SearXNG/recent",
+         "time_range=day,week"
       );
    }
 
@@ -63,16 +120,20 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       int maxResults,
       CancellationToken cancellationToken,
       int searchAttempt,
-      bool includeSocialMedia
+      bool includeSocialMedia,
+      string? timeRange,
+      IReadOnlyList<string> configuredEngines
    )
    {
       var engines = SearxngSearchEngineRotation.NormalizeEngines(
-         Options.Engines
+         configuredEngines
       );
-      var retryAttempt = searchAttempt;
 
-      while(true)
+      for(var attemptOffset = 0;
+         attemptOffset < engines.Count;
+         attemptOffset++)
       {
+         var retryAttempt = searchAttempt + attemptOffset;
          var engine = SearxngSearchEngineRotation.GetEngineForAttempt(
             engines,
             retryAttempt
@@ -87,7 +148,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                maxResults,
                cancellationToken,
                engine,
-               includeSocialMedia
+               includeSocialMedia,
+               timeRange
             );
          }
          catch(OperationCanceledException)
@@ -98,6 +160,12 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          catch(Exception exception) when(IsRateLimitedFailure(exception))
          {
             RateLimiter.RegisterRateLimitedFailure(engine);
+
+            if(attemptOffset == engines.Count - 1)
+            {
+               throw;
+            }
+
             LogRetryWait(
                engine,
                query,
@@ -108,6 +176,12 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          catch(Exception exception) when(IsTransientFailure(exception))
          {
             RateLimiter.RegisterTransientFailure(engine);
+
+            if(attemptOffset == engines.Count - 1)
+            {
+               throw;
+            }
+
             LogRetryWait(
                engine,
                query,
@@ -116,8 +190,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             );
          }
 
-         retryAttempt++;
       }
+
+      throw new InvalidOperationException(
+         "SearXNG search exhausted all configured engines."
+      );
    }
 
    private async Task<WebSearchResponse> SearchOnceAsync(
@@ -125,7 +202,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       int maxResults,
       CancellationToken cancellationToken,
       string engine,
-      bool includeSocialMedia
+      bool includeSocialMedia,
+      string? timeRange
    )
    {
       Logger?.LogDebug(
@@ -134,17 +212,21 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          engine
       );
 
+      var formValues = new Dictionary<string, string>
+      {
+         ["q"] = query,
+         ["format"] = "json",
+         ["engines"] = engine
+      };
+
+      if(!string.IsNullOrWhiteSpace(timeRange))
+      {
+         formValues["time_range"] = timeRange;
+      }
+
       using var request = new HttpRequestMessage(HttpMethod.Post, SearchUri)
       {
-         Content = new FormUrlEncodedContent(
-            new Dictionary<string, string>
-            {
-               ["q"] = query,
-               ["format"] = "json",
-               ["categories"] = "general",
-               ["engines"] = engine
-            }
-         )
+         Content = new FormUrlEncodedContent(formValues)
       };
 
       request.Headers.Accept.ParseAdd("application/json");
@@ -171,10 +253,21 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          includeSocialMedia
       );
 
-      if(results.Count == 0 && ContainsRateLimitSignal(rawResponse))
+      var engineFailure = results.Count == 0
+         ? ReadEngineFailure(rawResponse, engine)
+         : null;
+
+      if(engineFailure is not null && IsRateLimitSignal(engineFailure))
       {
          throw new SearxngRateLimitedException(
-            "SearXNG response reported rate limiting or CAPTCHA."
+            $"SearXNG engine '{engine}' reported: {engineFailure}."
+         );
+      }
+
+      if(engineFailure is not null)
+      {
+         throw new SearxngEngineUnavailableException(
+            $"SearXNG engine '{engine}' reported: {engineFailure}."
          );
       }
 
@@ -204,6 +297,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
    private static bool IsTransientFailure(Exception exception)
    {
+      if(exception is SearxngEngineUnavailableException)
+      {
+         return true;
+      }
+
       return exception is HttpRequestException httpRequestException
          ? IsTransientStatusCode(httpRequestException.StatusCode)
          : exception is TaskCanceledException or TimeoutException;
@@ -235,32 +333,104 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       );
    }
 
-   private static bool ContainsRateLimitSignal(string rawResponse)
+   private static bool IsRateLimitSignal(string error)
    {
-      return rawResponse.Contains(
+      return error.Contains(
             "captcha",
             StringComparison.OrdinalIgnoreCase
          ) ||
-         rawResponse.Contains(
+         error.Contains(
             "too many requests",
             StringComparison.OrdinalIgnoreCase
          ) ||
-         rawResponse.Contains(
+         error.Contains(
             "rate limit",
             StringComparison.OrdinalIgnoreCase
          ) ||
-         rawResponse.Contains(
+         error.Contains(
             "rate-limit",
             StringComparison.OrdinalIgnoreCase
          ) ||
-         rawResponse.Contains(
+         error.Contains(
             "ratelimit",
             StringComparison.OrdinalIgnoreCase
-         ) ||
-         rawResponse.Contains(
-            "suspended",
-            StringComparison.OrdinalIgnoreCase
          );
+   }
+
+   private static string? ReadEngineFailure(
+      string rawResponse,
+      string requestedEngine
+   )
+   {
+      using var document = JsonDocument.Parse(rawResponse);
+      var root = document.RootElement;
+
+      if(!root.TryGetProperty(
+         "unresponsive_engines",
+         out var failures
+      ) || failures.ValueKind != JsonValueKind.Array)
+      {
+         return null;
+      }
+
+      foreach(var failure in failures.EnumerateArray())
+      {
+         var engine = ReadFailureValue(failure, 0, "engine");
+         var error = ReadFailureValue(failure, 1, "error");
+
+         if(EngineNamesMatch(engine, requestedEngine) &&
+            !string.IsNullOrWhiteSpace(error))
+         {
+            return error;
+         }
+      }
+
+      return null;
+   }
+
+   private static string? ReadFailureValue(
+      JsonElement failure,
+      int index,
+      string propertyName
+   )
+   {
+      if(failure.ValueKind == JsonValueKind.Object)
+      {
+         return ReadString(failure, propertyName);
+      }
+
+      if(failure.ValueKind != JsonValueKind.Array ||
+         failure.GetArrayLength() <= index)
+      {
+         return null;
+      }
+
+      var value = failure[index];
+      return value.ValueKind == JsonValueKind.String
+         ? value.GetString()
+         : null;
+   }
+
+   private static bool EngineNamesMatch(
+      string? responseEngine,
+      string requestedEngine
+   )
+   {
+      if(string.IsNullOrWhiteSpace(responseEngine))
+      {
+         return false;
+      }
+
+      return string.Equals(
+         NormalizeEngineName(responseEngine),
+         NormalizeEngineName(requestedEngine),
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+
+   private static string NormalizeEngineName(string engine)
+   {
+      return engine.Trim().Replace('_', ' ');
    }
 
    private IReadOnlyList<WebSearchResult> ParseResults(
@@ -423,6 +593,14 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    private sealed class SearxngRateLimitedException : Exception
    {
       public SearxngRateLimitedException(string message)
+         : base(message)
+      {
+      }
+   }
+
+   private sealed class SearxngEngineUnavailableException : Exception
+   {
+      public SearxngEngineUnavailableException(string message)
          : base(message)
       {
       }

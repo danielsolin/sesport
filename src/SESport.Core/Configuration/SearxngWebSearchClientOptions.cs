@@ -15,10 +15,27 @@ public sealed record SearxngWebSearchClientOptions
       "seznam",
       "naver",
       "boardreader",
-      "yep"
+      "yep",
+      "yahoo",
+      "google_cse",
+      "gmx",
+      "resulthunter"
+   ];
+
+   public static readonly IReadOnlyList<string> DefaultRecentEngines =
+   [
+      "yahoo",
+      "privacywall",
+      "duckduckgo",
+      "mojeek",
+      "resulthunter",
+      "gmx"
    ];
 
    public string? BaseUrl { get; init; } = DefaultBaseUrl;
 
    public IReadOnlyList<string> Engines { get; init; } = DefaultEngines;
+
+   public IReadOnlyList<string> RecentEngines { get; init; } =
+      DefaultRecentEngines;
 }

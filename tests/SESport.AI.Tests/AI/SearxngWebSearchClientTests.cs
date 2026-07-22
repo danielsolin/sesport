@@ -29,7 +29,7 @@ public class SearxngWebSearchClientTests
       );
       Assert.Contains("q=Tre+Kronor", handler.RequestBody);
       Assert.Contains("format=json", handler.RequestBody);
-      Assert.Contains("categories=general", handler.RequestBody);
+      Assert.DoesNotContain("categories=", handler.RequestBody);
       Assert.Contains("engines=google", handler.RequestBody);
       Assert.Equal("application/json", handler.AcceptHeader);
       Assert.Single(response.Results);
@@ -75,6 +75,10 @@ public class SearxngWebSearchClientTests
       await AssertRequestUsesEngine(7, "naver");
       await AssertRequestUsesEngine(8, "boardreader");
       await AssertRequestUsesEngine(9, "yep");
+      await AssertRequestUsesEngine(10, "yahoo");
+      await AssertRequestUsesEngine(11, "google_cse");
+      await AssertRequestUsesEngine(12, "gmx");
+      await AssertRequestUsesEngine(13, "resulthunter");
    }
 
    [Fact]
@@ -285,6 +289,65 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchIgnoresCaptchaReportedForDifferentEngine()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateCaptchaResponseJson("duckduckgo")
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, handler.RequestCount);
+      Assert.Empty(response.Results);
+   }
+
+   [Fact]
+   public async Task SearchStopsAfterOneConfiguredEngineCycle()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateCaptchaResponseJson("google")
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateCaptchaResponseJson("brave")
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions
+         {
+            Engines = ["google", "brave"]
+         },
+         CreateFastRateLimiter()
+      );
+
+      var exception = await Record.ExceptionAsync(
+         () => client.SearchAsync(
+            "Tre Kronor",
+            3,
+            CancellationToken.None
+         )
+      );
+
+      Assert.NotNull(exception);
+      Assert.Equal(2, handler.RequestCount);
+   }
+
+   [Fact]
    public async Task SearchReturnsEmptyWhenSearxngReturnsNoResults()
    {
       var handler = new RecordingHandler(CreateEmptyResponseJson());
@@ -302,6 +365,47 @@ public class SearxngWebSearchClientTests
 
       Assert.Empty(response.Results);
       Assert.NotNull(handler.RequestUri);
+   }
+
+   [Fact]
+   public async Task SearchRecentCombinesDayAndWeekResults()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateRecentResponseJson(
+               ("Today", "https://example.test/today")
+            )
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateRecentResponseJson(
+               ("Today", "https://example.test/today"),
+               ("This week", "https://example.test/week")
+            )
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions(),
+         CreateFastRateLimiter()
+      );
+
+      var response = await client.SearchRecentAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Contains("time_range=day", handler.RequestBodies[0]);
+      Assert.Contains("time_range=week", handler.RequestBodies[1]);
+      Assert.Contains("engines=yahoo", handler.RequestBodies[0]);
+      Assert.Contains("engines=yahoo", handler.RequestBodies[1]);
+      Assert.Equal(
+         ["Today", "This week"],
+         response.Results.Select(result => result.Title)
+      );
    }
 
    private static string CreateResponseJson()
@@ -396,7 +500,30 @@ public class SearxngWebSearchClientTests
       });
    }
 
-   private static string CreateCaptchaResponseJson()
+   private static string CreateRecentResponseJson(
+      params (string Title, string Url)[] results
+   )
+   {
+      return JsonSerializer.Serialize(new
+      {
+         query = "Tre Kronor",
+         results = results.Select(result => new
+         {
+            title = result.Title,
+            url = result.Url,
+            content = result.Title
+         }),
+         answers = Array.Empty<object>(),
+         corrections = Array.Empty<string>(),
+         infoboxes = Array.Empty<object>(),
+         suggestions = Array.Empty<string>(),
+         unresponsive_engines = Array.Empty<object>()
+      });
+   }
+
+   private static string CreateCaptchaResponseJson(
+      string engine = "google"
+   )
    {
       return JsonSerializer.Serialize(new
       {
@@ -408,11 +535,7 @@ public class SearxngWebSearchClientTests
          suggestions = Array.Empty<string>(),
          unresponsive_engines = new[]
          {
-            new
-            {
-               engine = "google",
-               error = "CAPTCHA"
-            }
+            new[] { engine, "CAPTCHA" }
          }
       });
    }
