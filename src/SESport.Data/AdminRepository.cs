@@ -1067,7 +1067,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             : reader.GetFieldValue<DateOnly>(11),
          Height = reader.IsDBNull(12) ? null : reader.GetInt32(12),
          Weight = reader.IsDBNull(13) ? null : reader.GetInt32(13),
-         PersonGenderId = reader.IsDBNull(14) ? null : reader.GetString(14)
+         FormativeClub = reader.IsDBNull(14)
+            ? null
+            : reader.GetString(14),
+         PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15)
       };
 
       await reader.DisposeAsync();
@@ -1196,7 +1199,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             : reader.GetFieldValue<DateOnly>(11),
          Height = reader.IsDBNull(12) ? null : reader.GetInt32(12),
          Weight = reader.IsDBNull(13) ? null : reader.GetInt32(13),
-         PersonGenderId = reader.IsDBNull(14) ? null : reader.GetString(14)
+         FormativeClub = reader.IsDBNull(14)
+            ? null
+            : reader.GetString(14),
+         PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15)
       };
 
       await reader.DisposeAsync();
@@ -1669,6 +1675,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                birthdate,
                height,
                weight,
+               formative_club,
                person_gender_id
             from entities
             where id = @id
@@ -1689,6 +1696,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                birthdate,
                height,
                weight,
+               formative_club,
                null::text as person_gender_id
             from entities
             where id = @id
@@ -1723,6 +1731,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                birthdate,
                height,
                weight,
+               formative_club,
                person_gender_id
             )
             values (
@@ -1740,6 +1749,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @birthdate,
                @height,
                @weight,
+               @formative_club,
                @person_gender_id
             )
             """
@@ -1758,7 +1768,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                bio,
                birthdate,
                height,
-               weight
+               weight,
+               formative_club
             )
             values (
                @id,
@@ -1774,7 +1785,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                @bio,
                @birthdate,
                @height,
-               @weight
+               @weight,
+               @formative_club
             )
             """;
    }
@@ -1798,6 +1810,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                birthdate = @birthdate,
                height = @height,
                weight = @weight,
+               formative_club = @formative_club,
                person_gender_id = @person_gender_id,
                updated_at = now()
             where id = @id
@@ -1818,6 +1831,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                birthdate = @birthdate,
                height = @height,
                weight = @weight,
+               formative_club = @formative_club,
                updated_at = now()
             where id = @id
             """;
@@ -1889,6 +1903,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       DateOnly? birthdate,
       int? height,
       int? weight,
+      string? formativeClub,
       CancellationToken cancellationToken
    )
    {
@@ -1897,6 +1912,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          set birthdate = coalesce(@birthdate, birthdate),
              height = coalesce(@height, height),
              weight = coalesce(@weight, weight),
+             formative_club = coalesce(
+                @formative_club,
+                formative_club
+             ),
              updated_at = now()
          where id = @id
          """;
@@ -1914,6 +1933,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "weight",
          (object?)weight ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "formative_club",
+         (object?)NormalizeNullable(formativeClub) ?? DBNull.Value
       );
 
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
@@ -2080,6 +2103,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "weight",
          (object?)model.Weight ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "formative_club",
+         (object?)NormalizeNullable(model.FormativeClub) ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "person_gender_id",

@@ -51,7 +51,13 @@ public static class AiRunSummaryFormatter
          }
 
          var fragments = new List<string>();
-         foreach(var name in new[] { "birthdate", "height", "weight" })
+         foreach(var name in new[]
+         {
+            "birthdate",
+            "height",
+            "weight",
+            "formative_club"
+         })
          {
             if(!document.RootElement.TryGetProperty(name, out var value) ||
                value.ValueKind == JsonValueKind.Null)

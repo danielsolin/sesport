@@ -132,6 +132,7 @@ public sealed class AiJobPostProcessor(
          facts.Birthdate,
          facts.Height,
          facts.Weight,
+         facts.FormativeClub,
          cancellationToken
       );
 
@@ -270,12 +271,17 @@ public sealed class AiJobPostProcessor(
 
          int? height = ReadNullableInt32(root, "height");
          int? weight = ReadNullableInt32(root, "weight");
+         var formativeClub = ReadNullableString(
+            root,
+            "formative_club"
+         );
          var sources = ReadPersonFactSources(root);
 
          return new PersonFactsOutput(
             birthdate,
             height,
             weight,
+            formativeClub,
             sources
          );
       }
@@ -356,6 +362,7 @@ public sealed class AiJobPostProcessor(
       DateOnly? Birthdate,
       int? Height,
       int? Weight,
+      string? FormativeClub,
       IReadOnlyList<PersonFactSource> Sources
    );
 

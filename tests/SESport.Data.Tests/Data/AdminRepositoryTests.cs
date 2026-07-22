@@ -662,6 +662,7 @@ public sealed class AdminRepositoryTests
       var birthdate = new DateOnly(1995, 10, 9);
       var height = 185;
       var weight = 82;
+      var formativeClub = $"Formative Club {entityKey:N}";
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
@@ -675,6 +676,7 @@ public sealed class AdminRepositoryTests
          Birthdate = birthdate,
          Height = height,
          Weight = weight,
+         FormativeClub = formativeClub,
          EntityTypeId = TrackedEntityTypeIds.Person,
          SportId = "football",
          CountryId = "se",
@@ -701,6 +703,7 @@ public sealed class AdminRepositoryTests
          Assert.Equal(birthdate, loaded.Birthdate);
          Assert.Equal(height, loaded.Height);
          Assert.Equal(weight, loaded.Weight);
+         Assert.Equal(formativeClub, loaded.FormativeClub);
       }
       finally
       {

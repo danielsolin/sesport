@@ -122,6 +122,12 @@
             <input asp-for="Entity.Weight" type="number" min="0" />
             <span asp-validation-for="Entity.Weight"></span>
          </label>
+         <label data-person-formative-club-field
+                style="@(isPersonEntity ? "" : "display: none;")">
+            <span>Formative Club</span>
+            <input asp-for="Entity.FormativeClub" />
+            <span asp-validation-for="Entity.FormativeClub"></span>
+         </label>
       </div>
    </section>
 

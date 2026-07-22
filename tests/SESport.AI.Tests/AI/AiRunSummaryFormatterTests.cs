@@ -41,6 +41,7 @@ public sealed class AiRunSummaryFormatterTests
          {
            "height": 201,
            "weight": 105,
+           "formative_club": "Malmö FF",
            "birthdate": "2000-10-12",
            "sources": []
          }
@@ -49,7 +50,8 @@ public sealed class AiRunSummaryFormatterTests
       );
 
       Assert.Equal(
-         "birthdate: 2000-10-12, height: 201, weight: 105",
+         "birthdate: 2000-10-12, height: 201, weight: 105, " +
+         "formative club: Malmö FF",
          summary
       );
    }
