@@ -143,14 +143,37 @@ else
                      @if(activity.Participants.Count > 0)
                      {
                         <div class="activity-participant-table-wrap">
-                           <table class="activity-participant-table">
+                           <table class="activity-participant-table"
+                                  data-participant-table>
                               <thead>
                                  <tr>
-                                    <th>Namn</th>
-                                    <th>Ålder</th>
-                                    <th>Födelsedatum</th>
-                                    <th>Längd</th>
+                                    <th aria-sort="none">
+                                       <button type="button"
+                                               data-participant-sort="name">
+                                          Namn
+                                       </button>
+                                    </th>
+                                    <th aria-sort="none">
+                                       <button type="button"
+                                               data-participant-sort="age">
+                                          Ålder
+                                       </button>
+                                    </th>
+                                    <th aria-sort="none">
+                                       <button type="button"
+                                               data-participant-sort=
+                                                  "birthdate">
+                                          Födelsedatum
+                                       </button>
+                                    </th>
+                                    <th aria-sort="none">
+                                       <button type="button"
+                                               data-participant-sort="height">
+                                          Längd
+                                       </button>
+                                    </th>
                                     <th>Moderklubb/Klubb</th>
+                                    <th></th>
                                  </tr>
                               </thead>
                               <tbody>
@@ -161,7 +184,15 @@ else
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
-                                    <tr>
+                                    <tr data-participant-name=
+                                           "@participant.Name"
+                                        data-participant-age="@age"
+                                        data-participant-birthdate=
+                                           "@participant.Birthdate?.ToString(
+                                              DateDisplay.DateOnlyFormat
+                                           )"
+                                        data-participant-height=
+                                           "@participant.Height">
                                        <td>@participant.Name</td>
                                        <td>@(age is null
                                           ? string.Empty
@@ -173,6 +204,12 @@ else
                                           ? string.Empty
                                           : $"{participant.Height} cm")</td>
                                        <td>@participant.Club</td>
+                                       <td>
+                                          <img class=
+                                                  "participant-country-flag"
+                                               src="~/images/flags/se.svg"
+                                               alt="Sverige" />
+                                       </td>
                                     </tr>
                                  }
                               </tbody>
@@ -185,4 +222,9 @@ else
          }
       }
    </div>
+}
+
+@section Scripts {
+   <script src="~/js/public-participant-table.js"
+           asp-append-version="true"></script>
 }

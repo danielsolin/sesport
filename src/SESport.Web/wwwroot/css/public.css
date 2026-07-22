@@ -307,6 +307,37 @@
    text-transform: uppercase;
 }
 
+.activity-participant-table th button {
+   padding: 0;
+   border: 0;
+   background: transparent;
+   color: inherit;
+   font: inherit;
+   text-transform: inherit;
+   cursor: pointer;
+}
+
+.activity-participant-table th button::after {
+   content: " ↕";
+   opacity: 0.55;
+}
+
+.activity-participant-table th[aria-sort="ascending"] button::after {
+   content: " ↑";
+   opacity: 1;
+}
+
+.activity-participant-table th[aria-sort="descending"] button::after {
+   content: " ↓";
+   opacity: 1;
+}
+
+.participant-country-flag {
+   display: block;
+   width: 16px;
+   height: auto;
+}
+
 .activity-meta {
    display: flex;
    flex-wrap: wrap;
