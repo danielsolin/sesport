@@ -1873,6 +1873,54 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncExpandsTruncatedFinalCorrectionBudget()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateChatResponseJson("", finishReason: "length"),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(
+            new WebSearchResult(
+               "Tre Kronor roster",
+               "https://example.test/roster",
+               "Sweden lineup info."
+            )
+         ),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson()
+         ),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            maxOutputTokens: 1024,
+            maxToolRounds: 1
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(3, handler.RequestBodies.Count);
+      Assert.Contains("\"max_tokens\":1024", handler.RequestBodies[1]);
+      Assert.Contains("\"max_tokens\":8192", handler.RequestBodies[2]);
+      Assert.Contains("\"validation_status\":\"rejected\"",
+         result.ToolTraceJson);
+      Assert.Contains("\"validation_status\":\"accepted\"",
+         result.ToolTraceJson);
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncAcceptsUnknownWithSearchOnlyEvidence()
    {
       var handler = new RecordingHandler(

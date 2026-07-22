@@ -662,6 +662,10 @@ public sealed class LlamaServerClient : IAiProviderClient
                      job,
                      prompt
                   );
+                  ExpandTruncatedFinalCorrectionBudget(
+                     request,
+                     responseJson
+                  );
                   messages = (JsonArray)request["messages"]!;
                   rawFinalRequestJson = AiRequestJsonSerializer.Serialize(
                      request
@@ -931,6 +935,27 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static bool RequestUsesTools(JsonObject request)
    {
       return request["tools"] is JsonArray tools && tools.Count > 0;
+   }
+
+   private static void ExpandTruncatedFinalCorrectionBudget(
+      JsonObject request,
+      JsonObject response
+   )
+   {
+      if(!string.Equals(
+         LlamaResponseReader.GetFinishReason(response),
+         "length",
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return;
+      }
+
+      var currentMaxTokens = request["max_tokens"]?.GetValue<int>() ?? 0;
+      if(currentMaxTokens < AiDefaults.DefaultMaxOutputTokens)
+      {
+         request["max_tokens"] = AiDefaults.DefaultMaxOutputTokens;
+      }
    }
 
    private static bool ShouldContinueWithToolsAfterValidationFailure(
