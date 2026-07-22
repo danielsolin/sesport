@@ -207,6 +207,7 @@ public sealed class AdminRepositoryTests
    {
       var sourceId = Guid.NewGuid();
       var relatedId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
       var searchTerm = $"landslag-{Guid.NewGuid():N}";
       var sourceName = $"Connection Search Source {Guid.NewGuid():N}";
       var relatedName = $"Connection Search {searchTerm}";
@@ -229,6 +230,14 @@ public sealed class AdminRepositoryTests
          "football"
       );
       await InsertLinkAsync(dataSource, sourceId, relatedId);
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Related Person {Guid.NewGuid():N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertLinkAsync(dataSource, sourceId, personId);
 
       try
       {
@@ -251,10 +260,17 @@ public sealed class AdminRepositoryTests
             relatedNameResults,
             entity => entity.Id == sourceId
          );
+         var source = Assert.Single(
+            relatedNameResults,
+            entity => entity.Id == sourceId
+         );
+         Assert.Equal(relatedName, source.RelatedEntityNames);
+         Assert.Equal(1, source.RelatedPersonCount);
       }
       finally
       {
          await DeleteLinksAsync(dataSource, sourceId);
+         await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, relatedId);
          await DeleteEntityAsync(dataSource, sourceId);
       }
@@ -683,7 +699,7 @@ public sealed class AdminRepositoryTests
          CountryRelevanceKindId =
             "NationalityOrSportingIdentity",
          CountryRelevanceReason = "Test coverage",
-         WatchPriorityId = "review",
+         WatchPriorityId = "tier_3",
          ExpectedStabilityId = "short_term",
          PersonGenderId = PersonGenderIds.Female
       };
@@ -1071,7 +1087,7 @@ public sealed class AdminRepositoryTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            'tier_3',
             'short_term',
             @alias_name
          )
@@ -1116,7 +1132,7 @@ public sealed class AdminRepositoryTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            'tier_3',
             'short_term'
          )
          """;

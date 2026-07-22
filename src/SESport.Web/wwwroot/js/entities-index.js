@@ -357,11 +357,35 @@
       const entityId = escapeHtml(entity.id ?? "");
       const name = escapeHtml(entity.name ?? "");
       const relatedEntityNames = escapeHtml(entity.relatedEntityNames ?? "");
+      const relatedPersonCount = Number(entity.relatedPersonCount ?? 0);
+      const relatedDisplay = [
+         relatedEntityNames,
+         relatedPersonCount > 0 ? `P:${relatedPersonCount}` : ""
+      ].filter(value => value !== "").join(", ");
       const entityType = escapeHtml(entity.entityType ?? "");
       const sport = escapeHtml(entity.sport ?? "");
+      const gender = formatGender(entity.personGenderId);
+      const age = formatAge(entity.birthdate);
+      const height = formatMeasurement(entity.height, "cm");
+      const weight = formatMeasurement(entity.weight, "kg");
+      const formativeClub = escapeHtml(entity.formativeClub ?? "");
+      const firstClubSearchQuery = encodeURIComponent(
+         `${entity.name ?? ""} ${entity.sport ?? ""} moderklubb`
+      );
+      const firstClubSearchUrl =
+         `${searchUrlBase}${firstClubSearchQuery}`;
+      const firstClub = formativeClub !== ""
+         ? formativeClub
+         : `
+               <a class="ses-entity-search-link"
+                  href="${firstClubSearchUrl}"
+                  target="_blank"
+                  rel="noreferrer">
+                  <span class="ses-icon-search"></span>
+               </a>
+            `;
       const watchPriorityId = escapeHtml(entity.watchPriorityId ?? "");
       const watchPriority = escapeHtml(entity.watchPriority ?? "");
-      const country = escapeHtml(entity.country ?? "");
       const searchQuery = encodeURIComponent(
          `${entity.name ?? ""} ${entity.sport ?? ""}`.trim()
       );
@@ -402,6 +426,7 @@
              data-entity-row-related="${relatedEntityNames}">
             <td>
                <a href="${editUrl.toString()}">
+                  <span class="entity-list-type">${entityType}</span>
                   <strong>${name}</strong>
                </a>
                <a class="ses-entity-search-link"
@@ -411,9 +436,13 @@
                   <span class="ses-icon-search"></span>
                </a>
             </td>
-            <td>${relatedEntityNames}</td>
-            <td>${entityType}</td>
+            <td>${relatedDisplay}</td>
             <td>${sport}</td>
+            <td>${gender}</td>
+            <td>${age}</td>
+            <td>${height}</td>
+            <td>${weight}</td>
+            <td>${firstClub}</td>
             <td class="entity-inline-editable"
                 data-entity-inline-edit-field="watch-priority"
                 data-entity-inline-edit-value="${watchPriorityId}"
@@ -433,7 +462,6 @@
                   )}
                </select>
             </td>
-            <td>${country}</td>
             <td class="table-actions">
                ${factsButton}
                <form method="post"
@@ -445,6 +473,60 @@
             </td>
          </tr>
       `;
+   }
+
+   function formatGender(personGenderId)
+   {
+      if(personGenderId === "female")
+      {
+         return "F";
+      }
+
+      if(personGenderId === "male")
+      {
+         return "M";
+      }
+
+      return "";
+   }
+
+   function formatAge(birthdate)
+   {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthdate ?? "");
+
+      if(match === null)
+      {
+         return "";
+      }
+
+      const birthYear = Number(match[1]);
+      const birthMonth = Number(match[2]);
+      const birthDay = Number(match[3]);
+      const today = new Date();
+      let age = today.getFullYear() - birthYear;
+
+      if(today.getMonth() + 1 < birthMonth ||
+         (today.getMonth() + 1 === birthMonth &&
+            today.getDate() < birthDay))
+      {
+         age--;
+      }
+
+      return `${age} (${escapeHtml(birthdate)})`;
+   }
+
+   function formatMeasurement(value, unit)
+   {
+      if(value === null || value === undefined || value === "")
+      {
+         return "";
+      }
+
+      const measurement = Number(value);
+
+      return Number.isFinite(measurement)
+         ? `${measurement}${unit}`
+         : "";
    }
 
    function initializePersonFactsTriggers(root)

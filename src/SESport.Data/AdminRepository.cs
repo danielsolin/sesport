@@ -787,7 +787,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                or coalesce(e.alias_name, '') ilike @term escape '\'
                or (
                   @include_related_entity_names
-                  and coalesce(linked.related_entity_names, '') ilike @term
+                  and coalesce(linked.searchable_entity_names, '') ilike @term
                      escape '\'
                )
             )
@@ -876,17 +876,39 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             p.id,
             p.label,
             coalesce(c.name, e.country_id, ''),
-            coalesce(linked.related_entity_names, '')
+            coalesce(linked.related_organization_names, ''),
+            coalesce(linked.related_person_count, 0)::integer,
+            e.person_gender_id,
+            e.birthdate,
+            e.height,
+            e.weight,
+            e.formative_club
          from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          join entity_watch_priorities p on p.id = e.watch_priority_id
          left join countries c on c.id = e.country_id
          left join lateral (
-            select string_agg(linked_name, ', ' order by linked_name)
-               as related_entity_names
+            select
+               string_agg(linked_name, ', ' order by linked_name)
+                  as searchable_entity_names,
+               string_agg(
+                  linked_name,
+                  ', ' order by linked_name
+               ) filter (
+                  where linked_type not in (
+                     '{TrackedEntityTypeIds.Person}',
+                     '{TrackedEntityTypeIds.Pair}'
+                  )
+               ) as related_organization_names,
+               count(*) filter (
+                  where linked_type = '{TrackedEntityTypeIds.Person}'
+               ) as related_person_count
             from (
-               select distinct e2.canonical_name as linked_name
+               select distinct
+                  e2.id as linked_id,
+                  e2.canonical_name as linked_name,
+                  e2.entity_type_id as linked_type
                from entity_to_entity_links l
                join entities e2
                   on e2.id =
@@ -966,7 +988,13 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(4),
                reader.GetString(5),
                reader.GetString(6),
-               reader.GetString(7)
+               reader.GetString(7),
+               reader.GetInt32(8),
+               reader.IsDBNull(9) ? null : reader.GetString(9),
+               reader.IsDBNull(10) ? null : reader.GetFieldValue<DateOnly>(10),
+               reader.IsDBNull(11) ? null : reader.GetInt32(11),
+               reader.IsDBNull(12) ? null : reader.GetInt32(12),
+               reader.IsDBNull(13) ? null : reader.GetString(13)
             )
          );
       }
@@ -1629,8 +1657,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return
       [
          new LookupOption(PersonGenderIds.Female, "Female"),
-         new LookupOption(PersonGenderIds.Male, "Male"),
-         new LookupOption(PersonGenderIds.NonBinary, "Non-binary")
+         new LookupOption(PersonGenderIds.Male, "Male")
       ];
    }
 

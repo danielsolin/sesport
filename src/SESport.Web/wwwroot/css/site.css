@@ -525,27 +525,42 @@ h2 {
 }
 
 .entities-col-related {
-   width: 16%;
-}
-
-.entities-col-type {
-   width: 10%;
+   width: 15%;
 }
 
 .entities-col-sport {
-   width: 8%;
+   width: 7%;
 }
 
-.entities-col-watch-priority {
+.entities-col-gender {
+   width: 5%;
+}
+
+.entities-col-age {
+   width: 13%;
+}
+
+.entities-col-height,
+.entities-col-weight {
+   width: 7%;
+}
+
+.entities-col-first-club {
    width: 14%;
 }
 
-.entities-col-country {
-   width: 8%;
+.entities-col-watch-priority {
+   width: 6%;
 }
 
 .entities-col-actions {
-   width: 6%;
+   width: 10%;
+}
+
+.entity-list-type {
+   display: block;
+   color: var(--muted);
+   font-size: 12px;
 }
 
 .entity-inline-editable {

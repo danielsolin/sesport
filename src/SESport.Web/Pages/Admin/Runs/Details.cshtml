@@ -232,8 +232,14 @@
                            </div>
                         }
 
-                        @if(!string.IsNullOrWhiteSpace(
-                           turn.AssistantContent))
+                        @if(
+                           !string.IsNullOrWhiteSpace(
+                              turn.AssistantContent) ||
+                           !string.IsNullOrWhiteSpace(
+                              turn.AssistantValidationStatus) ||
+                           !string.IsNullOrWhiteSpace(
+                              turn.AssistantValidationError)
+                        )
                         {
                            <div class="tool-trace-block">
                               <div class="tool-trace-block-label">
@@ -255,9 +261,17 @@
                                     @turn.AssistantValidationError
                                  </div>
                               }
-                              <pre class="prompt-details-pre">
+                              @if(!string.IsNullOrWhiteSpace(
+                                 turn.AssistantContent))
+                              {
+                                 <pre class="prompt-details-pre">
 @turn.AssistantContent
-                              </pre>
+                                 </pre>
+                              }
+                              else
+                              {
+                                 <div>Final output: Empty</div>
+                              }
                            </div>
                         }
 

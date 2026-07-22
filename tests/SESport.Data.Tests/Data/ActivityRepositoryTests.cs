@@ -339,14 +339,14 @@ public sealed class ActivityRepositoryTests
          reviewAlphaId,
          "Alpha Review",
          TrackedEntityTypeIds.Person,
-         "review"
+         "tier_3"
       );
       await InsertEntityAsync(
          dataSource,
          reviewBravoId,
          "Bravo Review",
          TrackedEntityTypeIds.Person,
-         "review"
+         "tier_3"
       );
       await InsertActivityEntityLinkAsync(
          dataSource,
@@ -528,7 +528,7 @@ public sealed class ActivityRepositoryTests
       Guid entityId,
       string entityName,
       string entityTypeId,
-      string watchPriorityId = "review",
+      string watchPriorityId = "tier_3",
       string? aliasName = null
    )
    {

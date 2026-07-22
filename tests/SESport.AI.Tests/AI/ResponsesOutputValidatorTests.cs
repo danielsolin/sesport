@@ -122,4 +122,18 @@ public class ResponsesOutputValidatorTests
       Assert.IsType<JsonException>(exception.InnerException);
       Assert.Contains("at least 1 item", exception.InnerException!.Message);
    }
+
+   [Fact]
+   public void ValidateStructuredOutputDescribesEmptyOutput()
+   {
+      var exception = Assert.Throws<InvalidOperationException>(() =>
+         ResponsesOutputValidator.ValidateStructuredOutput(
+            "",
+            "json_schema",
+            """{"type":"object"}"""
+         )
+      );
+
+      Assert.Contains("Output was empty.", exception.Message);
+   }
 }

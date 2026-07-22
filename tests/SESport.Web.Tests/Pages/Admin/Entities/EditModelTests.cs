@@ -33,7 +33,7 @@ public sealed class EditModelTests
             CountryRelevanceKindId =
                "NationalityOrSportingIdentity",
             CountryRelevanceReason = "Test coverage",
-            WatchPriorityId = "review",
+            WatchPriorityId = "tier_3",
             ExpectedStabilityId = "short_term"
          }
       };

@@ -612,7 +612,7 @@ public sealed class BroadcastParticipationServiceTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            'tier_3',
             'short_term'
          )
          """;

@@ -871,7 +871,7 @@ public sealed class BroadcastFieldModelTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            'tier_3',
             'short_term'
          )
          """;

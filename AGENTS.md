@@ -39,6 +39,10 @@ Several console applications live in `tools/legacy/` for occasional use:
 - There is no separate test database. Any database-backed test or script
   talks to the live PostgreSQL database referenced by `.env` unless it is
   explicitly isolated in some other way.
+- Hard rule: Database-backed tests must not make test data visible in the
+  live UI. Test activities must use a safely distant date and should remain
+  unpublished whenever publication is not part of the behavior under test.
+  Test cleanup must also cover failures that occur during test setup.
 - SearXNG is a local dependency for AI-run machines and defaults to
   `http://127.0.0.1:8088/`.
 - Docker is required only for the local SearXNG container or when operating

@@ -516,7 +516,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             case e.person_gender_id
                when '{{PersonGenderIds.Female}}' then 'Female'
                when '{{PersonGenderIds.Male}}' then 'Male'
-               when '{{PersonGenderIds.NonBinary}}' then 'Non-binary'
                else ''
             end,
             coalesce(e.alias_name, ''),
@@ -670,7 +669,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             case e.person_gender_id
                when '{{PersonGenderIds.Female}}' then 'Female'
                when '{{PersonGenderIds.Male}}' then 'Male'
-               when '{{PersonGenderIds.NonBinary}}' then 'Non-binary'
                else ''
             end,
             coalesce(e.alias_name, '')

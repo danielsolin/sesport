@@ -1304,7 +1304,7 @@ public sealed class ActivityEditPageServiceTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            'tier_3',
             'short_term'
          )
          """;

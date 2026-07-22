@@ -115,10 +115,13 @@ else
             <colgroup>
                <col class="entities-col-name" />
                <col class="entities-col-related" />
-               <col class="entities-col-type" />
                <col class="entities-col-sport" />
+               <col class="entities-col-gender" />
+               <col class="entities-col-age" />
+               <col class="entities-col-height" />
+               <col class="entities-col-weight" />
+               <col class="entities-col-first-club" />
                <col class="entities-col-watch-priority" />
-               <col class="entities-col-country" />
                <col class="entities-col-actions" />
             </colgroup>
             <thead>
@@ -136,27 +139,20 @@ else
                      </a>
                   </th>
                   <th>
-                     <a asp-page="./Index" asp-route-sortColumn="Type"
-                        asp-route-sortAsc='@Model.GetNextSortAsc("Type")'>
-                        Type @Model.GetSortIndicator("Type")
-                     </a>
-                  </th>
-                  <th>
                      <a asp-page="./Index" asp-route-sortColumn="Sport"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Sport")'>
                         Sport @Model.GetSortIndicator("Sport")
                      </a>
                   </th>
+                  <th>Gender</th>
+                  <th>Age</th>
+                  <th>Height</th>
+                  <th>Weight</th>
+                  <th>First Club</th>
                   <th>
                      <a asp-page="./Index" asp-route-sortColumn="Watch"
                         asp-route-sortAsc='@Model.GetNextSortAsc("Watch")'>
-                        Watch priority @Model.GetSortIndicator("Watch")
-                     </a>
-                  </th>
-                  <th>
-                     <a asp-page="./Index" asp-route-sortColumn="Country"
-                        asp-route-sortAsc='@Model.GetNextSortAsc("Country")'>
-                        Country @Model.GetSortIndicator("Country")
+                        WP @Model.GetSortIndicator("Watch")
                      </a>
                   </th>
                   <th></th>

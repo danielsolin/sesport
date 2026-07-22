@@ -206,7 +206,8 @@ internal static class LlamaToolTrace
 
    public static JsonObject CreateValidationFeedbackTraceEntry(
       int turn,
-      string validationError
+      string validationError,
+      bool toolsRemain
    )
    {
       var preview = validationError.ReplaceLineEndings(" ").Trim();
@@ -222,9 +223,11 @@ internal static class LlamaToolTrace
          ["kind"] = "validation_feedback",
          ["turn"] = turn,
          ["validation_error"] = preview,
-         ["content"] =
-            "Final answer rejected while tools remained. Continuing tool " +
-            "loop with validation feedback."
+         ["content"] = toolsRemain
+            ? "Final answer rejected while tools remained. Continuing " +
+               "tool loop with validation feedback."
+            : "Final answer rejected after the tool budget was exhausted. " +
+               "Retrying the final answer with validation feedback."
       };
    }
 

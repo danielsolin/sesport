@@ -448,6 +448,11 @@ public static class ResponsesOutputValidator
    {
       var preview = outputText.ReplaceLineEndings(" ").Trim();
 
+      if(string.IsNullOrWhiteSpace(preview))
+      {
+         preview = "Output was empty.";
+      }
+
       if(preview.Length > LlamaServerDefaults.PreviewSnippetCharacters)
       {
          preview = preview[..LlamaServerDefaults.PreviewSnippetCharacters] +

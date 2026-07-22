@@ -630,7 +630,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   toolTrace.Add(
                      LlamaToolTrace.CreateValidationFeedbackTraceEntry(
                         turn,
-                        exception.Message
+                        exception.Message,
+                        toolsRemain: false
                      )
                   );
                   await LlamaToolTrace.ReportProgressAsync(
@@ -723,7 +724,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                   toolTrace.Add(
                      LlamaToolTrace.CreateValidationFeedbackTraceEntry(
                         turn,
-                        exception.Message
+                        exception.Message,
+                        toolsRemain: true
                      )
                   );
                   await LlamaToolTrace.ReportProgressAsync(

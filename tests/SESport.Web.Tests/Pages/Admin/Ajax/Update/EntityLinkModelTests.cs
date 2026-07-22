@@ -136,7 +136,7 @@ public sealed class EntityLinkModelTests
             'se',
             'NationalityOrSportingIdentity',
             'Test coverage',
-            'review',
+            'tier_3',
             'short_term'
          )
          """;

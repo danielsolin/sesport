@@ -106,7 +106,13 @@ public sealed record EntityListItem(
    string WatchPriorityId,
    string WatchPriority,
    string Country,
-   string RelatedEntityNames
+   string RelatedEntityNames,
+   int RelatedPersonCount,
+   string? PersonGenderId,
+   DateOnly? Birthdate,
+   int? Height,
+   int? Weight,
+   string? FormativeClub
 );
 
 public sealed record EntityLinkOption(
