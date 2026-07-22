@@ -292,18 +292,26 @@
    content: "";
 }
 
-.activity-time-point-day::before {
+.activity-time-point-day::before,
+.activity-time-point-evening::before,
+.activity-time-point-night::before {
    inset: 3px;
-   background: #f2c91f;
-   box-shadow: 0 0 7px rgba(242, 201, 31, 0.58);
    transform: translateX(1px);
 }
 
+.activity-time-point-day::before {
+   background: #f2c91f;
+   box-shadow: 0 0 7px rgba(242, 201, 31, 0.58);
+}
+
+.activity-time-point-evening::before {
+   background: #d9a62e;
+   box-shadow: 0 0 7px rgba(217, 166, 46, 0.52);
+}
+
 .activity-time-point-night::before {
-   inset: 3px;
    background: #52618f;
    box-shadow: 0 0 7px rgba(82, 97, 143, 0.55);
-   transform: translateX(1px);
 }
 
 .activity-time-badge-muted {

@@ -178,6 +178,7 @@ public sealed record ActivityAgendaSection(
 public enum ActivityDayPhase
 {
    Day,
+   Evening,
    Night
 }
 

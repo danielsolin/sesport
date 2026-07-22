@@ -103,9 +103,12 @@ public sealed class PublicActivityTimelineBuilder
 
    private static ActivityDayPhase GetDayPhase(int hour)
    {
-      return hour >= 5 && hour < 22
-         ? ActivityDayPhase.Day
-         : ActivityDayPhase.Night;
+      return hour switch
+      {
+         >= 6 and < 18 => ActivityDayPhase.Day,
+         >= 18 and < 22 => ActivityDayPhase.Evening,
+         _ => ActivityDayPhase.Night
+      };
    }
 }
 
