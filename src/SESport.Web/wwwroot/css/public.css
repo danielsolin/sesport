@@ -289,7 +289,7 @@
    height: 18px;
    border-radius: 50%;
    background: #f7f9f7;
-   transform: translateX(7px);
+   transform: translate(7px, 4px);
 }
 
 .activity-time-point::before {
