@@ -121,31 +121,26 @@ else
    <div class="activity-agenda">
       @foreach(var timelineEntry in Model.TimelineEntries)
       {
-         @if(timelineEntry.IsCurrentMarker)
+         var agendaSection = timelineEntry.Section;
+         var activity = agendaSection.Activities[0];
+         var dayPhaseClass = agendaSection.DayPhase switch
          {
-            <div class="activity-now-marker" id="activity-now-marker">
-               <span class="activity-now-marker-line"></span>
-               <span class="activity-now-marker-badge">
-                  @timelineEntry.CurrentMarkerLabel
-               </span>
-               <span class="activity-now-marker-line"></span>
-            </div>
-         }
-         else if(timelineEntry.Section is not null)
-         {
-            var agendaSection = timelineEntry.Section;
-            var activity = agendaSection.Activities[0];
-            var dayPhaseClass = agendaSection.DayPhase switch
-            {
-               ActivityDayPhase.Morning =>
-                  "activity-day-phase-morning",
-               ActivityDayPhase.Day => "activity-day-phase-day",
-               ActivityDayPhase.Evening =>
-                  "activity-day-phase-evening",
-               _ => "activity-day-phase-night"
-            };
+            ActivityDayPhase.Morning =>
+               "activity-day-phase-morning",
+            ActivityDayPhase.Day => "activity-day-phase-day",
+            ActivityDayPhase.Evening =>
+               "activity-day-phase-evening",
+            _ => "activity-day-phase-night"
+         };
+         var timingClass = agendaSection.IsOngoing
+            ? "activity-is-ongoing"
+            : agendaSection.HasEnded
+               ? "activity-has-ended"
+               : "activity-is-upcoming";
 
-            <section class="activity-agenda-section @dayPhaseClass">
+         <section class="activity-agenda-section
+                            @dayPhaseClass
+                            @timingClass">
                <div class="activity-agenda-time">
                   @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
                   {
@@ -175,8 +170,26 @@ else
                      <span class="activity-clock-center"></span>
                   </div>
                </div>
+               @if(agendaSection.EndTimeLabel is not null)
+               {
+                  <div class="activity-duration-rail"
+                       aria-label=
+                          "Slutar @agendaSection.EndTimeLabel">
+                     <span class="activity-duration-line"></span>
+                     <span class="activity-duration-end-point"></span>
+                     <time class="activity-duration-end-time">
+                        @agendaSection.EndTimeLabel
+                     </time>
+                  </div>
+               }
                <div class="activity-agenda-items">
                   <article class="activity-entry">
+                     @if(agendaSection.IsOngoing)
+                     {
+                        <span class="activity-ongoing-badge">
+                           Pågår
+                        </span>
+                     }
                      @if(activity.SportIconPath is not null)
                      {
                         <span class="activity-entry-sport-icon"
@@ -313,7 +326,6 @@ else
                   </article>
                </div>
             </section>
-         }
       }
    </div>
 }

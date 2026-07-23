@@ -46,7 +46,6 @@
    const runInlineEditDisplaySelector = "[data-run-inline-edit-display]";
    const runInlineEditInputSelector = "[data-run-inline-edit-input]";
    const runInlineEditField = "execution-environment";
-   const currentMarkerSelector = "#activity-now-marker";
    const broadcastInlineEditCellSelector =
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditUrlSelector =
@@ -110,7 +109,6 @@
    initializeParticipationPolling();
    initializeRunPolling();
    initializeRunInlineEditing();
-   initializeCurrentMarkerScroll();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -1890,38 +1888,6 @@
       );
 
       return mediaQuery?.matches ?? false;
-   }
-
-   function initializeCurrentMarkerScroll()
-   {
-      const marker = document.querySelector(currentMarkerSelector);
-      const storageKey = `sesport.currentMarkerScrolled:${
-         window.location.pathname
-      }`;
-
-      if(!(marker instanceof HTMLElement)
-         || window.sessionStorage.getItem(storageKey) === "true")
-      {
-         return;
-      }
-
-      const scroll = () => {
-         marker.scrollIntoView({
-            behavior: window.matchMedia(
-               "(prefers-reduced-motion: reduce)"
-            ).matches
-               ? "auto"
-               : "smooth",
-            block: "center",
-            inline: "nearest"
-         });
-
-         window.sessionStorage.setItem(storageKey, "true");
-      };
-
-      window.requestAnimationFrame(() => {
-         window.requestAnimationFrame(scroll);
-      });
    }
 
    async function checkParticipationRowAsync(button)

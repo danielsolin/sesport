@@ -87,7 +87,6 @@ public class IndexModel(
          );
          var timeline = timelineBuilder.Build(
             filteredActivities,
-            SelectedDate,
             now
          );
          TimelineEntries = timeline.TimelineEntries;
@@ -258,7 +257,10 @@ public sealed record ActivityAgendaSection(
    string RelatedOrganizationEntities,
    ActivityDayPhase DayPhase,
    string ClockHourAngle,
-   string ClockMinuteAngle
+   string ClockMinuteAngle,
+   string? EndTimeLabel,
+   bool IsOngoing,
+   bool HasEnded
 );
 
 public enum ActivityDayPhase

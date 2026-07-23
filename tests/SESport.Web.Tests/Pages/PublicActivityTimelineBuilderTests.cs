@@ -7,7 +7,7 @@ namespace SESport.Core.Tests.Pages;
 public class PublicActivityTimelineBuilderTests
 {
    [Fact]
-   public void Build_ShowsEarlierTodayAndPlacesCurrentMarker()
+   public void Build_ShowsEarlierAndFutureActivities()
    {
       var now = new DateTimeOffset(2026, 6, 12, 12, 0, 0, TimeSpan.Zero);
       var selectedDate = SportDay.GetSportDate(now);
@@ -31,25 +31,17 @@ public class PublicActivityTimelineBuilderTests
          )
       };
 
-      var timeline = builder.Build(activities, selectedDate, now);
-      var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
+      var timeline = builder.Build(activities, now);
 
       Assert.True(timeline.HasVisibleActivities);
-      Assert.Equal(3, timeline.TimelineEntries.Count);
-      Assert.False(timeline.TimelineEntries[0].IsCurrentMarker);
+      Assert.Equal(2, timeline.TimelineEntries.Count);
       Assert.Equal(
          "Past",
-         timeline.TimelineEntries[0].Section!.Activities[0].Title
+         timeline.TimelineEntries[0].Section.Activities[0].Title
       );
-      Assert.True(timeline.TimelineEntries[1].IsCurrentMarker);
-      Assert.Equal(
-         $"Nu {localNow:HH:mm}",
-         timeline.TimelineEntries[1].CurrentMarkerLabel
-      );
-      Assert.False(timeline.TimelineEntries[2].IsCurrentMarker);
       Assert.Equal(
          "Future",
-         timeline.TimelineEntries[2].Section!.Activities[0].Title
+         timeline.TimelineEntries[1].Section.Activities[0].Title
       );
       Assert.Equal(
          ["Untimed"],
@@ -58,7 +50,7 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Fact]
-   public void Build_ShowsAllActivitiesForOtherDatesWithoutMarker()
+   public void Build_ShowsAllActivitiesInTimeOrder()
    {
       var now = new DateTimeOffset(2026, 6, 12, 12, 0, 0, TimeSpan.Zero);
       var selectedDate = SportDay.GetSportDate(now).AddDays(1);
@@ -77,18 +69,57 @@ public class PublicActivityTimelineBuilderTests
          )
       };
 
-      var timeline = builder.Build(activities, selectedDate, now);
+      var timeline = builder.Build(activities, now);
 
       Assert.True(timeline.HasVisibleActivities);
-      Assert.All(
-         timeline.TimelineEntries,
-         entry => Assert.False(entry.IsCurrentMarker)
-      );
       Assert.Equal(
          ["Earlier", "Later"],
          timeline.TimelineEntries.Select(entry =>
-            entry.Section!.Activities[0].Title)
+            entry.Section.Activities[0].Title)
       );
+   }
+
+   [Fact]
+   public void Build_MarksActivitiesThatAreOngoing()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         6,
+         12,
+         12,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var selectedDate = SportDay.GetSportDate(now);
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Ended",
+            selectedDate,
+            now.AddHours(-2),
+            now.AddHours(-1)
+         ),
+         CreateActivity(
+            "Ongoing",
+            selectedDate,
+            now.AddMinutes(-30),
+            now.AddMinutes(30)
+         ),
+         CreateActivity(
+            "Upcoming",
+            selectedDate,
+            now.AddHours(1),
+            now.AddHours(2)
+         )
+      };
+
+      var timeline = builder.Build(activities, now);
+
+      Assert.True(timeline.TimelineEntries[0].Section.HasEnded);
+      Assert.True(timeline.TimelineEntries[1].Section.IsOngoing);
+      Assert.False(timeline.TimelineEntries[2].Section.IsOngoing);
    }
 
    [Fact]
@@ -104,28 +135,29 @@ public class PublicActivityTimelineBuilderTests
          CreateActivity("Second", selectedDate, sharedStart)
       };
 
-      var timeline = builder.Build(activities, selectedDate, now);
+      var timeline = builder.Build(activities, now);
 
       Assert.Equal(2, timeline.TimelineEntries.Count);
       Assert.Equal(
          ["First", "Second"],
          timeline.TimelineEntries.Select(entry =>
-            entry.Section!.Activities[0].Title)
+            entry.Section.Activities[0].Title)
       );
       Assert.All(
          timeline.TimelineEntries,
-         entry => Assert.Single(entry.Section!.Activities)
+         entry => Assert.Single(entry.Section.Activities)
       );
       Assert.Equal(
          ["18:00", "18:00"],
-         timeline.TimelineEntries.Select(entry => entry.Section!.TimeLabel)
+         timeline.TimelineEntries.Select(entry => entry.Section.TimeLabel)
       );
    }
 
    private static ActivityListItem CreateActivity(
       string title,
       DateOnly activityDate,
-      DateTimeOffset? startsAt
+      DateTimeOffset? startsAt,
+      DateTimeOffset? endsAt = null
    )
    {
       return new ActivityListItem(
@@ -146,6 +178,17 @@ public class PublicActivityTimelineBuilderTests
          string.Empty,
          [],
          string.Empty
-      );
+      )
+      {
+         EndsAt = endsAt,
+         LocalEndTime = endsAt is null
+            ? null
+            : TimeOnly.FromDateTime(
+               TimeZoneHelper.ToLocal(
+                  endsAt.Value,
+                  SportDay.TimeZoneId
+               ).DateTime
+            )
+      };
    }
 }

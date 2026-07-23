@@ -9,11 +9,9 @@ public sealed class PublicActivityTimelineBuilder
 {
    public PublicActivityTimelineViewModel Build(
       IEnumerable<ActivityListItem> activities,
-      DateOnly selectedDate,
       DateTimeOffset now
    )
    {
-      var sportToday = SportDay.GetSportDate(now);
       var visibleActivities = activities.ToList();
 
       var timedActivities = visibleActivities
@@ -28,49 +26,16 @@ public sealed class PublicActivityTimelineBuilder
          {
             Start = activity.StartsAt ?? DateTimeOffset.MaxValue,
             Activity = activity,
-            Section = CreateSection(activity)
+            Section = CreateSection(activity, now)
          })
          .OrderBy(item => item.Start)
          .ThenBy(item => item.Activity.TimeText, StringComparer.Ordinal)
          .ThenBy(item => item.Activity.Title, StringComparer.OrdinalIgnoreCase)
          .ToList();
 
-      var timelineEntries = new List<PublicActivityTimelineEntry>();
-
-      if(selectedDate == sportToday && timedSections.Count > 0)
-      {
-         var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
-         var marker =
-            PublicActivityTimelineEntry.Current($"Nu {localNow:HH:mm}");
-         var markerInserted = false;
-
-         foreach(var timedSection in timedSections)
-         {
-            if(!markerInserted && timedSection.Start >= now)
-            {
-               timelineEntries.Add(marker);
-               markerInserted = true;
-            }
-
-            timelineEntries.Add(
-               PublicActivityTimelineEntry.Activity(timedSection.Section)
-            );
-         }
-
-         if(!markerInserted)
-         {
-            timelineEntries.Add(marker);
-         }
-      }
-      else
-      {
-         foreach(var timedSection in timedSections)
-         {
-            timelineEntries.Add(
-               PublicActivityTimelineEntry.Activity(timedSection.Section)
-            );
-         }
-      }
+      var timelineEntries = timedSections
+         .Select(item => new PublicActivityTimelineEntry(item.Section))
+         .ToList();
 
       return new PublicActivityTimelineViewModel(
          timelineEntries,
@@ -85,7 +50,8 @@ public sealed class PublicActivityTimelineBuilder
    }
 
    private static ActivityAgendaSection CreateSection(
-      ActivityListItem activity
+      ActivityListItem activity,
+      DateTimeOffset now
    )
    {
       var localStart = TimeZoneHelper.ToLocal(
@@ -99,7 +65,12 @@ public sealed class PublicActivityTimelineBuilder
          activity.RelatedOrganizationEntities,
          GetDayPhase(localStart.Hour),
          GetHourHandAngle(localStart),
-         $"{localStart.Minute * 6}deg"
+         $"{localStart.Minute * 6}deg",
+         activity.LocalEndTime?.ToString("HH:mm"),
+         activity.EndsAt is not null &&
+            activity.StartsAt <= now &&
+            activity.EndsAt > now,
+         activity.EndsAt is not null && activity.EndsAt <= now
       );
    }
 
@@ -130,20 +101,5 @@ public sealed record PublicActivityTimelineViewModel(
 );
 
 public sealed record PublicActivityTimelineEntry(
-   bool IsCurrentMarker,
-   string? CurrentMarkerLabel,
-   ActivityAgendaSection? Section
-)
-{
-   public static PublicActivityTimelineEntry Current(string label)
-   {
-      return new PublicActivityTimelineEntry(true, label, null);
-   }
-
-   public static PublicActivityTimelineEntry Activity(
-      ActivityAgendaSection section
-   )
-   {
-      return new PublicActivityTimelineEntry(false, null, section);
-   }
-}
+   ActivityAgendaSection Section
+);

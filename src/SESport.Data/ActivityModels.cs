@@ -26,6 +26,8 @@ public sealed record ActivityListItem(
 
    public TimeOnly? LocalEndTime { get; init; }
 
+   public DateTimeOffset? EndsAt { get; init; }
+
    public IReadOnlyList<PublicActivityParticipant> Participants
    {
       get;
