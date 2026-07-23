@@ -203,6 +203,7 @@ public sealed class ActivityEditPageService(
             participationRunId,
             cancellationToken
          );
+      IReadOnlyList<ActivityGroupParticipant> groupParticipants = [];
       var selectableEntities = participationCheck is null
          ? []
          : await GetSelectableEntitiesAsync(
@@ -220,6 +221,22 @@ public sealed class ActivityEditPageService(
             firstBroadcast.ActivityGroupSourceActivityId.Value,
             cancellationToken
          );
+
+         if(activity.ActivityGroupId is not null)
+         {
+            var participantsByGroup = await repository
+               .GetActivityGroupParticipantsAsync(
+                  [activity.ActivityGroupId.Value],
+                  cancellationToken
+               );
+            if(participantsByGroup.TryGetValue(
+                  activity.ActivityGroupId.Value,
+                  out var knownParticipants
+               ))
+            {
+               groupParticipants = knownParticipants;
+            }
+         }
       }
 
       activity.ActivityGroupCreationRequired =
@@ -285,6 +302,12 @@ public sealed class ActivityEditPageService(
                cancellationToken
             )
          ).ToList();
+      }
+      else if(groupParticipants.Count > 0)
+      {
+         activity.LinkedEntityIds = groupParticipants
+            .Select(participant => participant.Id)
+            .ToList();
       }
 
       return firstBroadcast.EntityId;

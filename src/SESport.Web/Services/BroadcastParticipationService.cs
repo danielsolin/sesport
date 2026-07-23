@@ -57,6 +57,16 @@ public sealed class BroadcastParticipationService(
          broadcastIds,
          cancellationToken
       );
+      var activityGroupIds = broadcasts
+         .Where(broadcast => broadcast.ActivityGroupId is not null)
+         .Select(broadcast => broadcast.ActivityGroupId!.Value)
+         .Distinct()
+         .ToArray();
+      var groupParticipants = await activityRepository
+         .GetActivityGroupParticipantsAsync(
+            activityGroupIds,
+            cancellationToken
+         );
 
       return broadcasts
          .Select(broadcast =>
@@ -69,11 +79,20 @@ public sealed class BroadcastParticipationService(
                participationChecks.Count == 0
                ? null
                : participationChecks[0];
+            var knownParticipants =
+               broadcast.ActivityGroupId is not null &&
+               groupParticipants.TryGetValue(
+                  broadcast.ActivityGroupId.Value,
+                  out var participants
+               )
+                  ? participants
+                  : [];
 
             return broadcast with
             {
                ParticipationCheck = participationCheck,
-               ParticipationChecks = participationChecks ?? []
+               ParticipationChecks = participationChecks ?? [],
+               ActivityGroupParticipants = knownParticipants
             };
          })
          .ToList();

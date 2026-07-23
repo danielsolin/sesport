@@ -54,6 +54,11 @@ public sealed record EntityOption(
 
 public sealed record LookupOption(string Id, string Label);
 
+public sealed record ActivityGroupParticipant(
+   Guid Id,
+   string Name
+);
+
 public sealed record ActivityParticipantListItem(
    Guid Id,
    string Name,

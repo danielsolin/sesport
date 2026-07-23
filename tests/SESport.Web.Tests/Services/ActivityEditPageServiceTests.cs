@@ -435,6 +435,26 @@ public sealed class ActivityEditPageServiceTests
 
          Assert.Equal(activityGroupId, activity.ActivityGroupId);
          Assert.False(activity.ActivityGroupCreationRequired);
+         Assert.Equal([personId], activity.LinkedEntityIds);
+
+         var broadcast = Assert.IsType<BroadcastListItem>(
+            await broadcastRepository.GetByIdAsync(
+               broadcastId,
+               CancellationToken.None
+            )
+         );
+         var displayedBroadcast = Assert.Single(
+            await fixture.ParticipationService
+               .ApplyParticipationChecksAsync(
+                  [broadcast],
+                  CancellationToken.None
+               )
+         );
+         Assert.Equal(
+            [personId],
+            displayedBroadcast.ActivityGroupParticipants
+               .Select(participant => participant.Id)
+         );
       }
       finally
       {
@@ -1024,6 +1044,7 @@ public sealed class ActivityEditPageServiceTests
             participationService,
             jobRunner
          ),
+         participationService,
          jobRunner
       );
    }
@@ -1085,6 +1106,7 @@ public sealed class ActivityEditPageServiceTests
 
    private sealed record ActivityEditPageServiceFixture(
       ActivityEditPageService Service,
+      BroadcastParticipationService ParticipationService,
       CapturingAiJobRunner JobRunner
    );
 

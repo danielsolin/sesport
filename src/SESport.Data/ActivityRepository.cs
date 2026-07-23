@@ -491,6 +491,75 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          : (Guid)result;
    }
 
+   public async Task<
+      IReadOnlyDictionary<Guid, IReadOnlyList<ActivityGroupParticipant>>>
+      GetActivityGroupParticipantsAsync(
+         IReadOnlyCollection<Guid> activityGroupIds,
+         CancellationToken cancellationToken
+      )
+   {
+      if(activityGroupIds.Count == 0)
+      {
+         return new Dictionary<
+            Guid,
+            IReadOnlyList<ActivityGroupParticipant>
+         >();
+      }
+
+      var sql = $$"""
+         select distinct
+            a.activity_group_id,
+            e.id,
+            e.canonical_name
+         from activities a
+         join activity_entity_links al on al.activity_id = a.id
+         join entities e on e.id = al.entity_id
+         where a.activity_group_id = any(@activity_group_ids)
+            and e.entity_type_id in (
+               '{{TrackedEntityTypeIds.Person}}',
+               '{{TrackedEntityTypeIds.NationalTeam}}',
+               '{{TrackedEntityTypeIds.Pair}}'
+            )
+         order by a.activity_group_id, e.canonical_name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "activity_group_ids",
+         activityGroupIds.Distinct().ToArray()
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var participants = new Dictionary<
+         Guid,
+         List<ActivityGroupParticipant>
+      >();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         var activityGroupId = reader.GetGuid(0);
+
+         if(!participants.TryGetValue(activityGroupId, out var group))
+         {
+            group = [];
+            participants[activityGroupId] = group;
+         }
+
+         group.Add(
+            new ActivityGroupParticipant(
+               reader.GetGuid(1),
+               reader.GetString(2)
+            )
+         );
+      }
+
+      return participants.ToDictionary(
+         pair => pair.Key,
+         pair => (IReadOnlyList<ActivityGroupParticipant>)pair.Value
+      );
+   }
+
    public async Task<IReadOnlyList<ActivityParticipantListItem>>
       GetParticipantsForEditAsync(
          Guid? activityId,

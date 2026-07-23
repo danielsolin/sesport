@@ -611,6 +611,16 @@ h2 {
    width: 200px;
 }
 
+.broadcast-group-participants {
+   display: block;
+   margin-top: 4px;
+   color: var(--muted);
+}
+
+.broadcast-group-participants span {
+   display: block;
+}
+
 .broadcast-org-autocomplete {
    position: relative;
    min-width: 0;

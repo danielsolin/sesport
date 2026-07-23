@@ -287,6 +287,18 @@
                            <div data-broadcast-inline-edit-display>
                               @groupText
                            </div>
+                           @if(
+                              broadcast.ActivityGroupParticipants.Count > 0
+                           )
+                           {
+                              <small class="broadcast-group-participants">
+                                 @foreach(var participant in
+                                    broadcast.ActivityGroupParticipants)
+                                 {
+                                    <span>@participant.Name</span>
+                                 }
+                              </small>
+                           }
                            <input class="broadcast-inline-edit-input"
                                   data-broadcast-inline-edit-input
                                   type="text"
@@ -302,7 +314,19 @@
                         <td class="broadcasts-col-group"
                             data-broadcast-group-text="@groupText"
                             title="@groupText">
-                           @groupText
+                           <div>@groupText</div>
+                           @if(
+                              broadcast.ActivityGroupParticipants.Count > 0
+                           )
+                           {
+                              <small class="broadcast-group-participants">
+                                 @foreach(var participant in
+                                    broadcast.ActivityGroupParticipants)
+                                 {
+                                    <span>@participant.Name</span>
+                                 }
+                              </small>
+                           }
                         </td>
                      }
                      <td class="broadcasts-col-categories

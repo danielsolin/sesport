@@ -26,6 +26,10 @@ public sealed record BroadcastListItem(
    public IReadOnlyList<BroadcastParticipationCheck>
       ParticipationChecks
    { get; init; } = [];
+
+   public IReadOnlyList<ActivityGroupParticipant>
+      ActivityGroupParticipants
+   { get; init; } = [];
 };
 
 public sealed record BroadcastCategoryOption(
