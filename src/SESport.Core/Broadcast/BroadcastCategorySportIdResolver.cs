@@ -86,6 +86,7 @@ public static class BroadcastCategorySportIdResolver
          case "motocross":
          case "motorcykel":
          case "motorsport":
+         case "rally":
             sportId = "motorsport";
             return true;
          case "djursport":

@@ -15,6 +15,16 @@ public sealed class BroadcastCategorySportIdResolverTests
    }
 
    [Fact]
+   public void ResolveSportIdReturnsMotorsportForRallyCategory()
+   {
+      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
+         ["Rally"]
+      );
+
+      Assert.Equal("motorsport", sportId);
+   }
+
+   [Fact]
    public void ResolveSportIdReturnsFootballForEnglishCategory()
    {
       var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
