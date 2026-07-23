@@ -197,19 +197,7 @@ public sealed class ActivityEditPageService(
          firstBroadcast.StartsAt,
          SportDay.TimeZoneId
       );
-      var participationCheck =
-         await participationService.GetParticipationCheckAsync(
-            firstBroadcast.Id,
-            participationRunId,
-            cancellationToken
-         );
       IReadOnlyList<ActivityGroupParticipant> groupParticipants = [];
-      var selectableEntities = participationCheck is null
-         ? []
-         : await GetSelectableEntitiesAsync(
-            firstBroadcast.EntityId,
-            cancellationToken
-         );
 
       activity.BroadcastIds = [firstBroadcast.Id];
       activity.OrganizationEntityId = firstBroadcast.EntityId;
@@ -238,6 +226,21 @@ public sealed class ActivityEditPageService(
             }
          }
       }
+
+      var participationCheck =
+         participationRunId is null && groupParticipants.Count > 0
+            ? null
+            : await participationService.GetParticipationCheckAsync(
+               firstBroadcast.Id,
+               participationRunId,
+               cancellationToken
+            );
+      var selectableEntities = participationCheck is null
+         ? []
+         : await GetSelectableEntitiesAsync(
+            firstBroadcast.EntityId,
+            cancellationToken
+         );
 
       activity.ActivityGroupCreationRequired =
          string.Equals(

@@ -24,6 +24,7 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("data-ajax-success=\"toggle-visibility\"", html);
       Assert.Contains("data-participation-cell", html);
       Assert.Contains("broadcast.ActivityGroupParticipants", html);
+      Assert.Contains("Create Activity", html);
       Assert.Contains("data-broadcast-categories-list", html);
       Assert.DoesNotContain("_BroadcastParticipationRuns", html);
       Assert.DoesNotContain("broadcast-ai-check-retry", html);

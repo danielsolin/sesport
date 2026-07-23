@@ -349,6 +349,11 @@ public sealed class ActivityEditPageServiceTests
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
       var broadcastRepository = new AdminBroadcastRepository(dataSource);
+      var jobContext = await LoadParticipationJobContextAsync(
+         dataSource,
+         "decide-swedish-participation"
+      );
+      var runId = Guid.NewGuid();
 
       await InsertRelatedEntityAsync(
          dataSource,
@@ -421,6 +426,15 @@ public sealed class ActivityEditPageServiceTests
          broadcastSource.ActivityGroupSourceKindId
       );
       Assert.Equal(activityId, broadcastSource.ActivityGroupSourceActivityId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         "decide-swedish-participation",
+         jobContext.PromptId,
+         jobContext.ProviderId,
+         broadcastId.ToString(),
+         "Unknown participant"
+      );
 
       try
       {
@@ -458,6 +472,7 @@ public sealed class ActivityEditPageServiceTests
       }
       finally
       {
+         await DeleteParticipationRunAsync(dataSource, runId);
          await DeleteBroadcastAsync(dataSource, broadcastId);
          await DeleteActivityAsync(dataSource, activityId);
          await DeleteActivityGroupAsync(dataSource, activityGroupId);
