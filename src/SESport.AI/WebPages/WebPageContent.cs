@@ -11,5 +11,6 @@ public sealed record WebPageContent(
    string? FetchErrorMessage = null,
    WebPageFetchErrorKind? FetchErrorKind = null,
    string? Fetcher = null,
-   IReadOnlyList<WebPageRelevantLink>? RelevantLinks = null
+   IReadOnlyList<WebPageRelevantLink>? RelevantLinks = null,
+   IReadOnlyList<WebPageImageCandidate>? RelevantImages = null
 );

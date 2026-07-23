@@ -33,6 +33,37 @@ public class WebPageContentClientLiveTests
    private static readonly Uri HugoTownsendLiveTestUri = new(
       "https://en.wikipedia.org/wiki/Hugo_Townsend"
    );
+   private static readonly Uri FiaFormula2EntryListLiveTestUri = new(
+      "https://www.fia.com/events/formula-2-championship/" +
+      "season-2026/entry-list"
+   );
+
+   [Fact]
+   public async Task FetchFiaEntryListExtractsEmbeddedDriverListImage()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         FiaFormula2EntryListLiveTestUri.ToString(),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.True(
+         page!.RelevantImages is { Count: > 0 },
+         $"Fetcher: {page.Fetcher}; error: {page.FetchErrorMessage}"
+      );
+      Assert.Contains(
+         "1 | Rafael Camara | BRA | Invicta Racing",
+         page!.MainTextFull
+      );
+   }
 
    [Fact]
    public async Task FetchPlayerListPageKeepsCountryCodes()

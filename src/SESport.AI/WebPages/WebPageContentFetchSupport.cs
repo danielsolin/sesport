@@ -554,6 +554,69 @@ internal static class WebPageContentFetchSupport
          .ToArray();
    }
 
+   internal static IReadOnlyList<WebPageImageCandidate>
+      ExtractRelevantImagesFromHtml(
+         string html,
+         Uri absoluteUrl
+      )
+   {
+      var sourceHtml = ExtractRelevantLinkSourceHtml(html);
+      var candidates = new List<(WebPageImageCandidate Image, int Score)>();
+      var seenUrls = new HashSet<string>(
+         StringComparer.OrdinalIgnoreCase
+      );
+
+      foreach(Match match in HtmlImageRegex.Matches(sourceHtml))
+      {
+         var attributes = match.Groups["attrs"].Value;
+
+         if(!TryGetAttributeValue(attributes, "src", out var source) ||
+            !Uri.TryCreate(absoluteUrl, source, out var imageUri) ||
+            imageUri.Scheme is not ("http" or "https") ||
+            !seenUrls.Add(imageUri.AbsoluteUri))
+         {
+            continue;
+         }
+
+         TryGetAttributeValue(attributes, "alt", out var alt);
+         TryGetAttributeValue(attributes, "class", out var cssClass);
+         var width = GetPositiveAttributeInt(attributes, "width");
+         var height = GetPositiveAttributeInt(attributes, "height");
+         var semanticText =
+            $"{source} {alt} {cssClass}";
+         var semanticMatch = IsDocumentImageText(semanticText);
+         var isLargeImage =
+            width >= WebPageFetchDefaults.ImageOcrMinimumWidth &&
+            height >= WebPageFetchDefaults.ImageOcrMinimumHeight &&
+            width * height >= WebPageFetchDefaults.ImageOcrMinimumArea;
+
+         if(!semanticMatch && !isLargeImage)
+         {
+            continue;
+         }
+
+         candidates.Add((
+            new WebPageImageCandidate(
+               imageUri.AbsoluteUri,
+               width,
+               height,
+               string.IsNullOrWhiteSpace(alt) ? null : alt
+            ),
+            semanticMatch ? 1 : 0
+         ));
+      }
+
+      return candidates
+         .OrderByDescending(candidate => candidate.Score)
+         .ThenByDescending(
+            candidate => candidate.Image.Width *
+               candidate.Image.Height
+         )
+         .Take(WebPageFetchDefaults.ImageOcrMaximumCandidateCount)
+         .Select(candidate => candidate.Image)
+         .ToArray();
+   }
+
    internal static string ExtractHtmlText(string html)
    {
       var cleanedHtml = RemoveBoilerplateHtml(html);
@@ -852,6 +915,44 @@ internal static class WebPageContentFetchSupport
 
       value = string.Empty;
       return false;
+   }
+
+   private static int GetPositiveAttributeInt(
+      string attributes,
+      string attributeName
+   )
+   {
+      return TryGetAttributeValue(
+         attributes,
+         attributeName,
+         out var value
+      ) &&
+         int.TryParse(
+            value,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var result
+         ) &&
+         result > 0
+         ? result
+         : 0;
+   }
+
+   private static bool IsDocumentImageText(string value)
+   {
+      return new[]
+      {
+         "entry",
+         "start",
+         "result",
+         "driver",
+         "participant",
+         "document",
+         "list"
+      }.Any(term => value.Contains(
+         term,
+         StringComparison.OrdinalIgnoreCase
+      ));
    }
 
    private static bool TryBuildRelevantLinkUrl(

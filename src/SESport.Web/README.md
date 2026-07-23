@@ -6,6 +6,13 @@ site and the manual administration interface.
 ## Prerequisites
 
 - .NET 10 SDK
+- Tesseract OCR with English language data on machines that run AI jobs
+
+On Ubuntu, install the OCR dependency with:
+
+```bash
+sudo apt-get install tesseract-ocr tesseract-ocr-eng
+```
 
 ## Start the local server
 

@@ -90,6 +90,7 @@ internal static class WebPageBrowserPageFetcher
                renderedHtml,
                absoluteUrl
             );
+         var relevantImages = await ExtractRelevantImagesAsync(page);
          await page.EvaluateAsync(
             WebPageNormalizationScript.Build(),
             JsonSerializer.Serialize(
@@ -121,7 +122,8 @@ internal static class WebPageBrowserPageFetcher
                      bodyHtml,
                      absoluteUrl
                   )
-               )
+               ),
+            RelevantImages: relevantImages
          );
       }
       catch(OperationCanceledException)
@@ -142,6 +144,84 @@ internal static class WebPageBrowserPageFetcher
             "Playwright failed."
          );
       }
+   }
+
+   private static Task<WebPageImageCandidate[]> ExtractRelevantImagesAsync(
+      IPage page
+   )
+   {
+      var script = $$"""
+         () => Array.from(document.images)
+            .map(image => {
+               const width = image.naturalWidth;
+               const height = image.naturalHeight;
+               const url = image.currentSrc || image.src;
+               const details = [
+                  url,
+                  image.alt,
+                  image.className
+               ].join(" ").toLowerCase();
+               const semanticTerms = [
+                  "entry",
+                  "start",
+                  "result",
+                  "driver",
+                  "participant",
+                  "document",
+                  "list"
+               ];
+               const semanticMatch = semanticTerms.some(
+                  term => details.includes(term)
+               );
+               const inContent = Boolean(image.closest(
+                  "main, article, [role='main'], .content, .field"
+               ));
+
+               return {
+                  url,
+                  width,
+                  height,
+                  alt: image.alt || null,
+                  semanticMatch,
+                  score:
+                     (semanticMatch ? 2 : 0) +
+                     (inContent ? 1 : 0) +
+                     Math.min(width * height / 1000000, 1)
+               };
+            })
+            .filter(image =>
+               (
+                  image.semanticMatch ||
+                  (
+                     image.width >=
+                        {{WebPageFetchDefaults.ImageOcrMinimumWidth}} &&
+                     image.height >=
+                        {{WebPageFetchDefaults.ImageOcrMinimumHeight}} &&
+                     image.width * image.height >=
+                        {{WebPageFetchDefaults.ImageOcrMinimumArea}}
+                  )
+               ) &&
+               /^https?:/i.test(image.url)
+            )
+            .filter((image, index, images) =>
+               images.findIndex(item => item.url === image.url) === index
+            )
+            .sort((left, right) => right.score - left.score)
+            .slice(
+               0,
+               {{WebPageFetchDefaults.ImageOcrMaximumCandidateCount}}
+            )
+            .map(({ url, width, height, alt }) => ({
+               url,
+               width,
+               height,
+               alt
+            }))
+         """;
+
+      return page.EvaluateAsync<WebPageImageCandidate[]>(
+         script
+      );
    }
 
    private static async Task ScrollThroughPageAsync(

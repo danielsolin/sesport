@@ -19,6 +19,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       browserPageFetcher;
    private readonly Func<Uri, CancellationToken, Task<WebPageContent?>>
       curlPageFetcher;
+   private readonly Func<
+      IReadOnlyList<WebPageImageCandidate>,
+      CancellationToken,
+      Task<string>> imageTextFetcher;
 
    [ActivatorUtilitiesConstructor]
    public WebPageContentClient(HttpClient httpClient)
@@ -32,7 +36,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       ILogger<WebPageContentClient>? logger = null,
       Func<Task<string>>? browserUserAgentFetcher = null,
       Func<Uri, CancellationToken, Task<WebPageContent?>>? curlPageFetcher =
-         null
+         null,
+      Func<
+         IReadOnlyList<WebPageImageCandidate>,
+         CancellationToken,
+         Task<string>>? imageTextFetcher = null
    )
    {
       this.httpClient = httpClient;
@@ -53,6 +61,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
             WebPageCurlPageFetcher.FetchAsync(
                this.logger,
                uri,
+               cancellationToken
+            ));
+      this.imageTextFetcher = imageTextFetcher ??
+         ((images, cancellationToken) =>
+            WebPageImageOcr.ExtractAsync(
+               this.httpClient,
+               this.logger,
+               images,
                cancellationToken
             ));
    }
@@ -98,10 +114,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          try
          {
-            return await FetchOnceAsync(
+            var page = await FetchOnceAsync(
                absoluteUrl,
                cancellationToken
             );
+
+            return await AppendImageTextAsync(page, cancellationToken);
          }
          catch(OperationCanceledException)
             when(cancellationToken.IsCancellationRequested)
@@ -129,6 +147,38 @@ public sealed class WebPageContentClient : IWebPageContentClient
          $"Could not retrieve page content from {absoluteUrl}.",
          "http"
       );
+   }
+
+   private async Task<WebPageContent?> AppendImageTextAsync(
+      WebPageContent? page,
+      CancellationToken cancellationToken
+   )
+   {
+      if(page?.RelevantImages is not { Count: > 0 } images)
+      {
+         return page;
+      }
+
+      var imageText = await imageTextFetcher(images, cancellationToken);
+
+      if(string.IsNullOrWhiteSpace(imageText))
+      {
+         return page;
+      }
+
+      var fullText = string.IsNullOrWhiteSpace(page.MainTextFull)
+         ? imageText
+         : page.MainTextFull.TrimEnd() +
+            Environment.NewLine +
+            Environment.NewLine +
+            imageText;
+
+      return page with
+      {
+         MainTextFull = fullText,
+         MainText = WebPageContentFetchSupport.ApplyResponseCutoff(fullText),
+         HasBodyText = true
+      };
    }
 
    private async Task<WebPageContent?> FetchOnceAsync(
@@ -250,6 +300,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
             primaryHtml,
             absoluteUrl
          );
+      var primaryRelevantImages =
+         WebPageContentFetchSupport.ExtractRelevantImagesFromHtml(
+            primaryHtml,
+            absoluteUrl
+         );
 
       try
       {
@@ -258,9 +313,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken
          );
 
-         return MergePrimaryRelevantLinks(
+         return MergePrimaryRelevantContent(
             renderedContent,
-            primaryRelevantLinks
+            primaryRelevantLinks,
+            primaryRelevantImages
          );
       }
       catch(WebPageFetchException exception)
@@ -271,13 +327,18 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchHtmlAsync(
+         var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
             this.logger,
             this.curlPageFetcher,
             primaryHtml,
             absoluteUrl,
             cancellationToken,
             exception.ErrorKind
+         );
+         return MergePrimaryRelevantContent(
+            htmlContent,
+            primaryRelevantLinks,
+            primaryRelevantImages
          );
       }
       catch(OperationCanceledException)
@@ -293,13 +354,18 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchHtmlAsync(
+         var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
             this.logger,
             this.curlPageFetcher,
             primaryHtml,
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.Timeout
+         );
+         return MergePrimaryRelevantContent(
+            htmlContent,
+            primaryRelevantLinks,
+            primaryRelevantImages
          );
       }
       catch(PlaywrightException exception)
@@ -310,13 +376,18 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         return await WebPageHtmlPageFetcher.FetchHtmlAsync(
+         var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
             this.logger,
             this.curlPageFetcher,
             primaryHtml,
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.BrowserBlocked
+         );
+         return MergePrimaryRelevantContent(
+            htmlContent,
+            primaryRelevantLinks,
+            primaryRelevantImages
          );
       }
    }
@@ -400,12 +471,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
    }
 
-   private static WebPageContent? MergePrimaryRelevantLinks(
+   private static WebPageContent? MergePrimaryRelevantContent(
       WebPageContent? renderedContent,
-      IReadOnlyList<WebPageRelevantLink> primaryRelevantLinks
+      IReadOnlyList<WebPageRelevantLink> primaryRelevantLinks,
+      IReadOnlyList<WebPageImageCandidate> primaryRelevantImages
    )
    {
-      if(renderedContent is null || primaryRelevantLinks.Count == 0)
+      if(renderedContent is null)
       {
          return renderedContent;
       }
@@ -415,8 +487,27 @@ public sealed class WebPageContentClient : IWebPageContentClient
          RelevantLinks = WebPageContentFetchSupport.MergeRelevantLinks(
             primaryRelevantLinks,
             renderedContent.RelevantLinks
+         ),
+         RelevantImages = MergeRelevantImages(
+            primaryRelevantImages,
+            renderedContent.RelevantImages
          )
       };
+   }
+
+   private static IReadOnlyList<WebPageImageCandidate> MergeRelevantImages(
+      params IReadOnlyList<WebPageImageCandidate>?[] imageSets
+   )
+   {
+      return imageSets
+         .Where(images => images is not null)
+         .SelectMany(images => images!)
+         .DistinctBy(
+            image => image.Url,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .Take(WebPageFetchDefaults.ImageOcrMaximumCandidateCount)
+         .ToArray();
    }
 
    private static bool IsTransientFailure(Exception exception)

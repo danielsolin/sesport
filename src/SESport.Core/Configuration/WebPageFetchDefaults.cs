@@ -63,4 +63,13 @@ public static class WebPageFetchDefaults
    public const int BrowserStableScrollSampleCount = 2;
    public const int BrowserViewportWidth = 1440;
    public const int BrowserViewportHeight = 2400;
+   public const int ImageOcrMinimumWidth = 600;
+   public const int ImageOcrMinimumHeight = 400;
+   public const int ImageOcrMinimumArea = 300000;
+   public const int ImageOcrMaximumCandidateCount = 3;
+   public const int ImageOcrMaximumBytes = 10 * 1024 * 1024;
+   public const int ImageOcrMinimumWordCount = 6;
+   public const double ImageOcrMinimumMeanConfidence = 60d;
+   public static readonly TimeSpan ImageOcrTimeout =
+      TimeSpan.FromSeconds(30);
 }

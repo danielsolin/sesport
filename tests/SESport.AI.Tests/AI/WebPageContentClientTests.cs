@@ -58,6 +58,126 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchAppendsTextExtractedFromRelevantImages()
+   {
+      IReadOnlyList<WebPageImageCandidate>? receivedImages = null;
+      var image = new WebPageImageCandidate(
+         "https://example.test/entry-list.png",
+         950,
+         1344,
+         null
+      );
+      var client = new WebPageContentClient(
+         new HttpClient(new HtmlRecordingHandler()),
+         (_, _) => Task.FromResult<WebPageContent?>(
+            new WebPageContent(
+               "Entry list",
+               "https://example.test/entry-list",
+               null,
+               [],
+               "Entry list",
+               true,
+               "Entry list",
+               RelevantImages: [image]
+            )
+         ),
+         NullLogger<WebPageContentClient>.Instance,
+         BrowserUserAgentProvider,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         (images, _) =>
+         {
+            receivedImages = images;
+            return Task.FromResult(
+               "Image text:" + Environment.NewLine +
+               "1 | Rafael Camara | BRA | Invicta Racing"
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/entry-list",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Same(image, Assert.Single(receivedImages!));
+      Assert.Contains("Entry list", page!.MainTextFull);
+      Assert.Contains("Rafael Camara", page.MainTextFull);
+      Assert.Contains("Invicta Racing", page.MainText);
+   }
+
+   [Fact]
+   public void ParseImageOcrTsvPreservesVisuallySeparatedColumns()
+   {
+      var header = string.Join('\t',
+      [
+         "level",
+         "page_num",
+         "block_num",
+         "par_num",
+         "line_num",
+         "word_num",
+         "left",
+         "top",
+         "width",
+         "height",
+         "conf",
+         "text"
+      ]);
+      var rows = """
+         5	1	1	1	1	1	140	400	8	12	96.0	1
+         5	1	1	1	1	2	199	400	42	12	96.0	Rafael
+         5	1	1	1	1	3	246	400	53	12	96.0	Camara
+         5	1	1	1	1	4	521	400	27	12	96.0	BRA
+         5	1	1	1	1	5	590	400	44	12	96.0	Invicta
+         5	1	1	1	1	6	639	400	46	12	96.0	Racing
+         5	1	1	1	2	1	140	436	8	12	96.0	2
+         5	1	1	1	2	2	199	436	50	12	96.0	Joshua
+         5	1	1	1	2	3	254	436	57	12	96.0	Durksen
+         5	1	1	1	2	4	521	436	27	12	96.0	PAR
+         5	1	1	1	2	5	590	436	44	12	96.0	Invicta
+         5	1	1	1	2	6	639	436	46	12	96.0	Racing
+         """;
+      var tsv = header + Environment.NewLine + rows;
+
+      var text = WebPageImageOcr.ParseTsv(tsv);
+
+      Assert.Equal(
+         "1 | Rafael Camara | BRA | Invicta Racing" +
+         Environment.NewLine +
+         "2 | Joshua Durksen | PAR | Invicta Racing",
+         text
+      );
+   }
+
+   [Fact]
+   public void ExtractRelevantImagesFromHtmlFindsDocumentStyleImage()
+   {
+      var html = """
+         <html>
+         <body>
+         <img
+            class="media-element file-fia-image-full content-details"
+            src="/images/2026_f2_drivers_list.png"
+            alt="">
+         </body>
+         </html>
+         """;
+
+      var images =
+         WebPageContentFetchSupport.ExtractRelevantImagesFromHtml(
+            html,
+            new Uri("https://www.example.test/entry-list")
+         );
+
+      var image = Assert.Single(images);
+      Assert.Equal(
+         "https://www.example.test/images/2026_f2_drivers_list.png",
+         image.Url
+      );
+   }
+
+   [Fact]
    public async Task FetchMergesPrimaryHtmlRelevantLinksIntoBrowserContent()
    {
       var href =
@@ -1565,7 +1685,11 @@ public class WebPageContentClientTests
       Func<Uri, CancellationToken, Task<WebPageContent?>>? browserFetcher =
          null,
       Func<Uri, CancellationToken, Task<WebPageContent?>>? curlFetcher =
-         null
+         null,
+      Func<
+         IReadOnlyList<WebPageImageCandidate>,
+         CancellationToken,
+         Task<string>>? imageTextFetcher = null
    )
    {
       return new WebPageContentClient(
@@ -1573,7 +1697,8 @@ public class WebPageContentClientTests
          browserFetcher,
          null,
          BrowserUserAgentProvider,
-         curlFetcher ?? ((_, _) => Task.FromResult<WebPageContent?>(null))
+         curlFetcher ?? ((_, _) => Task.FromResult<WebPageContent?>(null)),
+         imageTextFetcher
       );
    }
 
