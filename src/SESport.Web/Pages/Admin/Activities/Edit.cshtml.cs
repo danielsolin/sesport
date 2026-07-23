@@ -256,5 +256,23 @@ public class EditModel(ActivityEditPageService editService) : PageModel
             "Activity date is required."
          );
       }
+
+      if(Activity.LocalEndTime is not null &&
+         Activity.LocalStartTime is null)
+      {
+         ModelState.AddModelError(
+            "Activity.LocalEndTime",
+            "Start is required when end is set."
+         );
+      }
+
+      if(Activity.LocalEndTime is not null &&
+         Activity.LocalEndTime == Activity.LocalStartTime)
+      {
+         ModelState.AddModelError(
+            "Activity.LocalEndTime",
+            "End must differ from start."
+         );
+      }
    }
 }

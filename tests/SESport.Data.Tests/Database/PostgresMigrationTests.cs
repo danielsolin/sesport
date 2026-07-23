@@ -53,6 +53,24 @@ public class PostgresMigrationTests
       Assert.DoesNotContain("rename to", baseline);
    }
 
+   [Fact]
+   public void ActivityEndTimeMigrationAddsLocalAndAbsoluteEndTimes()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "015_add_end_time_to_activities.sql"
+         )
+      );
+
+      Assert.Contains("local_end_time time null", migration);
+      Assert.Contains("ends_at timestamptz null", migration);
+      Assert.Contains("activities_end_time_shape_check", migration);
+      Assert.Contains("ends_at > starts_at", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

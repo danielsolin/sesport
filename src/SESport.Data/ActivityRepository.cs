@@ -364,6 +364,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.sport_id,
             a.activity_date,
             a.local_start_time,
+            a.local_end_time,
             a.time_zone_id,
             a.publication_status_id,
             a.tv_channel_name,
@@ -394,11 +395,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          SportId = reader.GetString(6),
          ActivityDate = reader.GetFieldValue<DateOnly>(7),
          LocalStartTime = ReadTimeOnly(reader, 8),
-         TimeZoneId = reader.GetString(9),
+         LocalEndTime = ReadTimeOnly(reader, 9),
+         TimeZoneId = reader.GetString(10),
          IsPublished =
-            reader.GetString(10) == ActivityPublicationStatusIds.Published,
-         TvChannelName = ReadString(reader, 11),
-         ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12)
+            reader.GetString(11) == ActivityPublicationStatusIds.Published,
+         TvChannelName = ReadString(reader, 12),
+         ActivityGroupId = reader.IsDBNull(13) ? null : reader.GetGuid(13)
       };
 
       await reader.DisposeAsync();
@@ -737,6 +739,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          ? ActivityPublicationStatusIds.Published
          : ActivityPublicationStatusIds.Draft;
       var startsAt = GetStartsAt(model);
+      var endsAt = GetEndsAt(model);
 
       await using var connection = await dataSource.OpenConnectionAsync(
          cancellationToken
@@ -768,6 +771,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             model,
             startsAt,
+            endsAt,
             status,
             slug,
             cancellationToken
@@ -781,6 +785,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             model,
             startsAt,
+            endsAt,
             status,
             slug,
             cancellationToken
@@ -1109,8 +1114,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "   coalesce(ro.related_organization_entities, '') " +
-            "as related_organization_entities"
+            "as related_organization_entities,"
          )
+         .AppendLine("   a.local_end_time")
          .AppendLine("from activities a")
          .AppendLine("join sports s on s.id = a.sport_id")
          .AppendLine("join activity_types at on at.id = a.activity_type_id")
@@ -1189,7 +1195,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(
             "         rp.related_person_entity_ids,"
          )
-         .AppendLine("         ro.related_organization_entities")
+         .AppendLine(
+            "         ro.related_organization_entities, a.local_end_time"
+         )
          .AppendLine(orderClause);
 
       return builder.ToString();
@@ -1201,6 +1209,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       Guid id,
       ActivityEditModel model,
       DateTimeOffset? startsAt,
+      DateTimeOffset? endsAt,
       string status,
       string slug,
       CancellationToken cancellationToken
@@ -1218,6 +1227,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             activity_date,
             local_start_time,
             starts_at,
+            local_end_time,
+            ends_at,
             time_zone_id,
             publication_status_id,
             tv_channel_name,
@@ -1236,6 +1247,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @activity_date,
             @local_start_time,
             @starts_at,
+            @local_end_time,
+            @ends_at,
             @time_zone_id,
             @publication_status_id,
             @tv_channel_name,
@@ -1250,7 +1263,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
-      AddActivityParameters(command, id, model, startsAt, status, slug);
+      AddActivityParameters(
+         command,
+         id,
+         model,
+         startsAt,
+         endsAt,
+         status,
+         slug
+      );
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -1260,6 +1281,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       Guid id,
       ActivityEditModel model,
       DateTimeOffset? startsAt,
+      DateTimeOffset? endsAt,
       string status,
       string slug,
       CancellationToken cancellationToken
@@ -1277,6 +1299,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             activity_date = @activity_date,
             local_start_time = @local_start_time,
             starts_at = @starts_at,
+            local_end_time = @local_end_time,
+            ends_at = @ends_at,
             time_zone_id = @time_zone_id,
             publication_status_id = @publication_status_id,
             tv_channel_name = @tv_channel_name,
@@ -1295,7 +1319,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
-      AddActivityParameters(command, id, model, startsAt, status, slug);
+      AddActivityParameters(
+         command,
+         id,
+         model,
+         startsAt,
+         endsAt,
+         status,
+         slug
+      );
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -1507,6 +1539,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       Guid id,
       ActivityEditModel model,
       DateTimeOffset? startsAt,
+      DateTimeOffset? endsAt,
       string status,
       string slug
    )
@@ -1539,6 +1572,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          "starts_at",
          startsAt?.ToUniversalTime() ?? (object)DBNull.Value
       );
+      command.Parameters.AddWithValue(
+         "local_end_time",
+         model.LocalEndTime ?? (object)DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "ends_at",
+         endsAt?.ToUniversalTime() ?? (object)DBNull.Value
+      );
       command.Parameters.AddWithValue("time_zone_id", model.TimeZoneId.Trim());
       command.Parameters.AddWithValue("publication_status_id", status);
       command.Parameters.AddWithValue(
@@ -1562,6 +1603,29 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return TimeZoneHelper.ToUtc(
          model.ActivityDate.Value,
          model.LocalStartTime.Value,
+         model.TimeZoneId
+      );
+   }
+
+   private static DateTimeOffset? GetEndsAt(ActivityEditModel model)
+   {
+      if(model.ActivityDate is null ||
+         model.LocalStartTime is null ||
+         model.LocalEndTime is null)
+      {
+         return null;
+      }
+
+      var endDate = model.ActivityDate.Value;
+
+      if(model.LocalEndTime < model.LocalStartTime)
+      {
+         endDate = endDate.AddDays(1);
+      }
+
+      return TimeZoneHelper.ToUtc(
+         endDate,
+         model.LocalEndTime.Value,
          model.TimeZoneId
       );
    }
@@ -1714,6 +1778,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ReadGuidArray(reader, 15),
                reader.GetString(16)
             )
+            {
+               ActivityDate = reader.GetFieldValue<DateOnly>(8),
+               LocalStartTime = ReadTimeOnly(reader, 9),
+               LocalEndTime = ReadTimeOnly(reader, 17)
+            }
          );
       }
 

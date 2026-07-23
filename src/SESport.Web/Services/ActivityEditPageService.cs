@@ -268,6 +268,11 @@ public sealed class ActivityEditPageService(
 
       activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
+      var localEnd = TimeZoneHelper.ToLocal(
+         firstBroadcast.EndsAt,
+         SportDay.TimeZoneId
+      );
+      activity.LocalEndTime = TimeOnly.FromDateTime(localEnd.DateTime);
       activity.TimeZoneId = SportDay.TimeZoneId;
 
       if(participationCheck is not null)
@@ -528,6 +533,7 @@ public sealed class ActivityEditPageService(
             sport = sportName,
             activity_date = DateDisplay.Format(activity.ActivityDate),
             local_start_time = activity.LocalStartTime?.ToString("HH:mm"),
+            local_end_time = activity.LocalEndTime?.ToString("HH:mm"),
             time_zone_id = activity.TimeZoneId,
             participants = CreatePromptListText(selectedParticipantNames),
             related_entities = Array.Empty<string>()

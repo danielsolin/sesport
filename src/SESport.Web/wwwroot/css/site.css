@@ -1789,6 +1789,12 @@ h2 {
    gap: 10px;
 }
 
+.activity-time-fields {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 10px;
+}
+
 .ai-runs-filter-grid {
    grid-template-columns:
       160px minmax(220px, 280px) 160px minmax(0, 1fr);

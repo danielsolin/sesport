@@ -167,6 +167,16 @@ public sealed class ActivityEditPageServiceTests
       var broadcastId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var personName = $"Person {Guid.NewGuid():N}";
+      var startsAt = TimeZoneHelper.ToUtc(
+         new DateOnly(2026, 7, 15),
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         new DateOnly(2026, 7, 15),
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
@@ -202,8 +212,8 @@ public sealed class ActivityEditPageServiceTests
          "Viaplay",
          "Broadcast title",
          ["football"],
-         DateTimeOffset.UtcNow,
-         DateTimeOffset.UtcNow.AddHours(2)
+         startsAt,
+         endsAt
       );
       await InsertRunAsync(
          dataSource,
@@ -229,6 +239,9 @@ public sealed class ActivityEditPageServiceTests
          Assert.Equal([broadcastId], activity.BroadcastIds);
          Assert.Equal(organizationId, activity.OrganizationEntityId);
          Assert.Equal([personId], activity.LinkedEntityIds);
+         Assert.Equal(new DateOnly(2026, 7, 15), activity.ActivityDate);
+         Assert.Equal(new TimeOnly(12, 0), activity.LocalStartTime);
+         Assert.Equal(new TimeOnly(14, 0), activity.LocalEndTime);
       }
       finally
       {
@@ -763,6 +776,7 @@ public sealed class ActivityEditPageServiceTests
             SportId = "football",
             ActivityDate = new DateOnly(2026, 7, 15),
             LocalStartTime = new TimeOnly(12, 0),
+            LocalEndTime = new TimeOnly(14, 0),
             TimeZoneId = SportDay.TimeZoneId,
             LinkedEntityIds = [personId],
             OrganizationEntityId = organizationId,
@@ -780,6 +794,7 @@ public sealed class ActivityEditPageServiceTests
 
          Assert.NotNull(savedActivity);
          Assert.NotNull(savedActivity!.ActivityGroupId);
+         Assert.Equal(new TimeOnly(14, 0), savedActivity.LocalEndTime);
          Assert.Equal(savedActivity.ActivityGroupId, model.ActivityGroupId);
          Assert.False(model.ActivityGroupCreationRequired);
          savedActivityGroupId = savedActivity.ActivityGroupId;

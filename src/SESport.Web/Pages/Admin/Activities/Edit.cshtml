@@ -87,11 +87,18 @@
             <input asp-for="Activity.ActivityDate" type="date" />
             <span asp-validation-for="Activity.ActivityDate"></span>
          </label>
-         <label>
-            <span>Time</span>
-            <input asp-for="Activity.LocalStartTime" type="time" />
-            <span asp-validation-for="Activity.LocalStartTime"></span>
-         </label>
+         <div class="activity-time-fields">
+            <label>
+               <span>Start</span>
+               <input asp-for="Activity.LocalStartTime" type="time" />
+               <span asp-validation-for="Activity.LocalStartTime"></span>
+            </label>
+            <label>
+               <span>End</span>
+               <input asp-for="Activity.LocalEndTime" type="time" />
+               <span asp-validation-for="Activity.LocalEndTime"></span>
+            </label>
+         </div>
          <label>
             <span>Sport</span>
             <select asp-for="Activity.SportId">

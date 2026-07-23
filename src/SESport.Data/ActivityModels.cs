@@ -20,6 +20,12 @@ public sealed record ActivityListItem(
    string RelatedOrganizationEntities
 )
 {
+   public DateOnly ActivityDate { get; init; }
+
+   public TimeOnly? LocalStartTime { get; init; }
+
+   public TimeOnly? LocalEndTime { get; init; }
+
    public IReadOnlyList<PublicActivityParticipant> Participants
    {
       get;
@@ -91,6 +97,8 @@ public sealed class ActivityEditModel
    public DateOnly? ActivityDate { get; set; }
 
    public TimeOnly? LocalStartTime { get; set; }
+
+   public TimeOnly? LocalEndTime { get; set; }
 
    public string TimeZoneId { get; set; } = SportDay.TimeZoneId;
 

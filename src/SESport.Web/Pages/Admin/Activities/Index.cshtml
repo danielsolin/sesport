@@ -101,9 +101,10 @@
                         <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Time")'>
-                        Time @Model.GetSortIndicator("Time")
+                        Date @Model.GetSortIndicator("Time")
                      </a>
                   </th>
+                  <th>Time</th>
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
@@ -144,10 +145,15 @@
                      $"{searchUrlBase}{System.Uri.EscapeDataString(
                         activity.Title
                      )}";
+                  var startTime = activity.LocalStartTime?.ToString("HH:mm")
+                     ?? "?";
+                  var endTime = activity.LocalEndTime?.ToString("HH:mm")
+                     ?? "?";
                   <tr class="@(highlightRow
                      ? "activity-description-missing"
                      : string.Empty)">
-                     <td>@activity.TimeText</td>
+                     <td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
+                     <td>@startTime–@endTime</td>
                      <td>
                         <a asp-page="./Edit"
                            asp-route-id="@activity.Id"
