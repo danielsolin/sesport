@@ -48,42 +48,72 @@
    flex-direction: row;
    align-items: center;
    gap: 12px;
-   flex-wrap: nowrap;
+   flex-wrap: wrap;
 }
 
 .index-participants {
-   flex: 0 0 170px;
-   width: 170px;
-   min-width: 170px;
+   flex: 0 0 auto;
+   width: max-content;
+   min-width: 0;
 }
 
-.index-participants-pill {
+.index-participants-info {
    display: inline-flex;
    align-items: center;
-   justify-content: center;
+   justify-content: flex-start;
    gap: 8px;
-   width: 100%;
+   width: max-content;
    min-height: 48px;
-   padding: 7px 14px;
-   border: 1px solid rgba(255, 204, 0, 0.55);
-   border-radius: 999px;
-   background: #006aa8;
-   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
-   color: #ffcc00;
-   font-size: 16px;
-   font-weight: 800;
+   padding: 7px 14px 7px 12px;
+   border: 1px solid var(--line);
+   border-left: 4px solid #ffcc00;
+   border-radius: 8px;
+   background: rgba(0, 106, 168, 0.06);
+   color: var(--muted);
+   font-size: 13px;
+   font-weight: 700;
    line-height: 1.2;
 }
 
 .index-participants-count {
-   color: inherit;
-   text-decoration: underline;
-   text-decoration-thickness: 2px;
-   text-underline-offset: 3px;
+   color: var(--accent-strong);
+   font-size: 21px;
+   font-variant-numeric: tabular-nums;
+   font-weight: 800;
 }
 
 .index-participants-value {
-   margin-left: 6px;
+   margin-left: 0;
+}
+
+.index-participants-filter {
+   text-decoration: none;
+   transition:
+      background 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+}
+
+.index-participants-filter:hover {
+   border-color: rgba(0, 106, 168, 0.55);
+   background: rgba(0, 106, 168, 0.12);
+   color: var(--accent-strong);
+}
+
+.index-participants-filter:focus-visible {
+   outline: 2px solid rgba(0, 106, 168, 0.45);
+   outline-offset: 2px;
+}
+
+.index-participants-filter.is-selected {
+   border-color: var(--accent);
+   border-left-color: #ffcc00;
+   background: var(--accent);
+   color: #ffcc00;
+}
+
+.index-participants-filter.is-selected .index-participants-count {
+   color: #ffffff;
 }
 
 .date-select {

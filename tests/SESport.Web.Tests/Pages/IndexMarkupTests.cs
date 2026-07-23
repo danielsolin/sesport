@@ -14,11 +14,17 @@ public sealed class IndexMarkupTests
       );
       var html = await File.ReadAllTextAsync(htmlPath);
 
-      Assert.Contains("index-participants-pill", html);
+      Assert.Contains("index-participants-info", html);
+      Assert.Contains("aria-label=\"Visa alla sporter\"", html);
       Assert.Contains("TotalParticipantsCount", html);
       Assert.Contains("Svenskar:", html);
-      Assert.Contains("activity-participants-toggle", html);
-      Assert.Contains("activity-participants-more", html);
-      Assert.Contains("SplitParticipantNames", html);
+      Assert.Contains("SportParticipantCounts", html);
+      Assert.Contains(
+         "aria-label=\"Visa endast @sport.SportName\"",
+         html
+      );
+      Assert.Contains("index-participants-filter", html);
+      Assert.Contains("is-selected", html);
+      Assert.Contains("asp-route-sport=\"@sport.SportId\"", html);
    }
 }

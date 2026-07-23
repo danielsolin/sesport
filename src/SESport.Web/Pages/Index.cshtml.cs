@@ -31,6 +31,9 @@ public class IndexModel(
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public string? Date { get; set; }
 
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Sport)]
+   public string? Sport { get; set; }
+
    public DateOnly SelectedDate { get; private set; }
 
    public bool IsSportToday { get; private set; }
@@ -38,6 +41,12 @@ public class IndexModel(
    public DateOnly CurrentDate { get; private set; }
 
    public int? TotalParticipantsCount { get; private set; }
+
+   public IReadOnlyList<SportParticipantCount> SportParticipantCounts
+   {
+      get;
+      private set;
+   } = [];
 
    public string? LoadError { get; private set; }
 
@@ -65,14 +74,24 @@ public class IndexModel(
             SelectedDate,
             cancellationToken
          );
-         var timeline = timelineBuilder.Build(
+         TotalParticipantsCount = CountParticipants(activities);
+         SportParticipantCounts =
+            CountParticipantsBySport(activities);
+         Sport = NormalizeSportFilter(
+            Sport,
+            SportParticipantCounts
+         );
+         var filteredActivities = FilterActivitiesBySport(
             activities,
+            Sport
+         );
+         var timeline = timelineBuilder.Build(
+            filteredActivities,
             SelectedDate,
             now
          );
          TimelineEntries = timeline.TimelineEntries;
          UntimedActivities = timeline.UntimedActivities;
-         TotalParticipantsCount = CountParticipants(activities);
       }
       catch(Exception exception)
       {
@@ -89,6 +108,71 @@ public class IndexModel(
          .Where(entityId => entityId != Guid.Empty)
          .Distinct()
          .Count();
+   }
+
+   internal static IReadOnlyList<SportParticipantCount>
+      CountParticipantsBySport(
+         IEnumerable<ActivityListItem> activities
+      )
+   {
+      return activities
+         .GroupBy(
+            activity => activity.SportId,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .Select(group => new SportParticipantCount(
+            group.Key,
+            group
+               .Select(activity => activity.SportName)
+               .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name))
+               ?? group.Key,
+            group
+               .SelectMany(activity => activity.RelatedPersonEntityIds)
+               .Where(entityId => entityId != Guid.Empty)
+               .Distinct()
+               .Count()
+         ))
+         .OrderBy(
+            item => item.SportName,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .ToArray();
+   }
+
+   internal static IReadOnlyList<ActivityListItem>
+      FilterActivitiesBySport(
+         IEnumerable<ActivityListItem> activities,
+         string? sportId
+      )
+   {
+      return string.IsNullOrWhiteSpace(sportId)
+         ? activities.ToArray()
+         : activities
+            .Where(activity => string.Equals(
+               activity.SportId,
+               sportId,
+               StringComparison.OrdinalIgnoreCase
+            ))
+            .ToArray();
+   }
+
+   private static string? NormalizeSportFilter(
+      string? sportId,
+      IReadOnlyList<SportParticipantCount> sportCounts
+   )
+   {
+      if(string.IsNullOrWhiteSpace(sportId))
+      {
+         return null;
+      }
+
+      return sportCounts
+         .Select(sport => sport.SportId)
+         .FirstOrDefault(id => string.Equals(
+            id,
+            sportId.Trim(),
+            StringComparison.OrdinalIgnoreCase
+         ));
    }
 
    internal static IReadOnlyList<string> SplitParticipantNames(
@@ -189,4 +273,10 @@ public sealed record DateOption(
    string Value,
    string Label,
    bool IsSelected
+);
+
+public sealed record SportParticipantCount(
+   string SportId,
+   string SportName,
+   int ParticipantCount
 );
