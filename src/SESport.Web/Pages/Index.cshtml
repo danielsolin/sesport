@@ -4,6 +4,8 @@
    const string PageDescription =
       "TV-sändningar med svenskar som tävlar internationellt, " +
       "både individuellt och i lag.";
+   var selectedDateOption = Model.DateOptions
+      .First(option => option.IsSelected);
 }
 @section Head {
    <title>sesport</title>
@@ -20,32 +22,39 @@
 <section class="page-heading index-heading">
    <div class="index-heading-left">
       <div class="date-select">
-         <div class="date-select-control">
-            <form method="get">
-               @if(!string.IsNullOrWhiteSpace(Model.Sport))
+         <div class="date-dropdown" data-date-dropdown>
+            <button class="date-dropdown-toggle"
+                    type="button"
+                    aria-label="Välj datum"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-controls="date-dropdown-menu"
+                    data-date-dropdown-toggle>
+               <span>@selectedDateOption.Label</span>
+               <span class="date-dropdown-chevron"
+                     aria-hidden="true"></span>
+            </button>
+            <div id="date-dropdown-menu"
+                 class="date-dropdown-menu"
+                 role="listbox"
+                 aria-label="Datum"
+                 hidden
+                 data-date-dropdown-menu>
+               @foreach(var dateOption in Model.DateOptions)
                {
-                  <input type="hidden"
-                         name="@RouteKeys.Sport"
-                         value="@Model.Sport" />
+                  <a class="date-dropdown-option
+                     @(dateOption.IsSelected ? "is-selected" : "")"
+                     asp-page="/Index"
+                     asp-route-date="@dateOption.Value"
+                     asp-route-sport="@Model.Sport"
+                     role="option"
+                     aria-selected="@(
+                        dateOption.IsSelected ? "true" : "false"
+                     )">
+                     @dateOption.Label
+                  </a>
                }
-               <select id="date-select-input"
-                       class="date-select-input"
-                       name="@RouteKeys.Date"
-                       aria-label="Date"
-                       onchange="this.form.submit();">
-                  @foreach(var dateOption in Model.DateOptions)
-                  {
-                     <option value="@dateOption.Value"
-                             selected="@(
-                                dateOption.IsSelected
-                                   ? "selected"
-                                   : null
-                             )">
-                        @dateOption.Label
-                     </option>
-                  }
-               </select>
-            </form>
+            </div>
          </div>
       </div>
       @if(Model.TotalParticipantsCount is not null)
@@ -397,6 +406,8 @@ else
 }
 
 @section Scripts {
+   <script src="~/js/public-date-select.js"
+           asp-append-version="true"></script>
    <script src="~/js/public-participant-table.js"
            asp-append-version="true"></script>
 }

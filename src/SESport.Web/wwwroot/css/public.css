@@ -151,28 +151,19 @@
    min-width: 170px;
 }
 
-.date-select-control {
+.date-dropdown {
    position: relative;
    width: 100%;
 }
 
-.date-select-control::after {
-   content: "";
-   position: absolute;
-   top: 50%;
-   right: 16px;
-   width: 8px;
-   height: 8px;
-   border-right: 2px solid #ffcc00;
-   border-bottom: 2px solid #ffcc00;
-   transform: translateY(-65%) rotate(45deg);
-   pointer-events: none;
-}
-
-.date-select-input {
+.date-dropdown-toggle {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
    width: 100%;
    min-height: 48px;
-   padding: 7px 32px 7px 18px;
+   padding: 7px 17px 7px 20px;
    border: 1px solid rgba(255, 204, 0, 0.55);
    border-radius: 999px;
    background: #006aa8;
@@ -181,26 +172,77 @@
    font-size: 16px;
    font-weight: 800;
    line-height: 1.2;
-   text-align: center;
-   appearance: none;
-   -webkit-appearance: none;
-   -moz-appearance: none;
+   cursor: pointer;
 }
 
-.date-select-input:focus {
+.date-dropdown-toggle:hover {
+   background: #005f98;
+}
+
+.date-dropdown-toggle:focus-visible {
    outline: 2px solid rgba(255, 204, 0, 0.35);
    outline-offset: 2px;
 }
 
-.date-select-input option {
-   background: #006aa8;
-   color: #ffcc00;
-   font-weight: 600;
+.date-dropdown-chevron {
+   display: block;
+   flex: 0 0 auto;
+   position: absolute;
+   top: 50%;
+   right: 16px;
+   width: 8px;
+   height: 8px;
+   border-right: 2px solid #ffcc00;
+   border-bottom: 2px solid #ffcc00;
+   transform: translateY(-65%) rotate(45deg);
+   transition: transform 140ms ease;
 }
 
-.date-select-input option:checked,
-.date-select-input option:hover,
-.date-select-input option:focus {
+.date-dropdown.is-open .date-dropdown-chevron {
+   transform: translateY(-20%) rotate(225deg);
+}
+
+.date-dropdown-menu {
+   display: grid;
+   gap: 4px;
+   position: absolute;
+   z-index: 20;
+   top: calc(100% + 7px);
+   left: 0;
+   width: 100%;
+   padding: 7px;
+   border: 1px solid rgba(0, 106, 168, 0.25);
+   border-radius: 12px;
+   background: #f7f9f7;
+   box-shadow: 0 14px 30px rgba(0, 79, 128, 0.18);
+}
+
+.date-dropdown-menu[hidden] {
+   display: none;
+}
+
+.date-dropdown-option {
+   display: block;
+   padding: 9px 11px;
+   border-left: 3px solid transparent;
+   border-radius: 7px;
+   color: #397293;
+   font-size: 13px;
+   font-weight: 750;
+   text-align: center;
+   text-decoration: none;
+}
+
+.date-dropdown-option:hover,
+.date-dropdown-option:focus-visible {
+   border-left-color: rgba(255, 204, 0, 0.72);
+   background: rgba(0, 106, 168, 0.08);
+   color: #004f80;
+   outline: none;
+}
+
+.date-dropdown-option.is-selected {
+   border-left-color: #ffcc00;
    background: #006aa8;
    color: #ffcc00;
 }

@@ -79,7 +79,6 @@
    let runPollingInFlight = false;
    const getFormSelector = "form[method='get']";
    const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
-   const dateSelectSelector = "#date-select-input";
    const exclusiveEmptySelectStates = new WeakMap();
    const multiSelectScrollPositions = new WeakMap();
    window.submitFilterForm = submitFilterForm;
@@ -92,7 +91,6 @@
    window.initializeEntitySearch?.(document);
    initializePersonGenderVisibility();
    initializeGetFormRestoration();
-   initializeDateSelect();
    initializeEntityInlineEditing();
    window.initializeEntityInlineEditing = initializeEntityInlineEditing;
    window.initializeBroadcastInlineEditing =
@@ -1145,32 +1143,6 @@
          select.addEventListener("change", update);
          update();
       });
-   }
-
-   function initializeDateSelect(root = document)
-   {
-      const select = root.querySelector(dateSelectSelector);
-
-      if(!(select instanceof HTMLSelectElement)
-         || select.dataset.dateSelectInitialized === "true")
-      {
-         return;
-      }
-
-      select.dataset.dateSelectInitialized = "true";
-
-      const sync = () => {
-         const url = new URL(window.location.href);
-         const selectedDate = url.searchParams.get("date");
-
-         if(selectedDate && select.value !== selectedDate)
-         {
-            select.value = selectedDate;
-         }
-      };
-
-      window.addEventListener("pageshow", sync);
-      sync();
    }
 
    function initializeGetFormRestoration()
