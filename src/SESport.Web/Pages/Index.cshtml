@@ -236,11 +236,12 @@ else
                                        </button>
                                     </th>
                                     <th class=
-                                           "activity-participant-col-height"
+                                           "activity-participant-col-birthday"
                                         aria-sort="none">
                                        <button type="button"
-                                               data-participant-sort="height">
-                                          Längd
+                                               data-participant-sort=
+                                                  "birthdate">
+                                          Födelsedag
                                        </button>
                                     </th>
                                     <th class=
@@ -249,15 +250,6 @@ else
                                        <button type="button"
                                                data-participant-sort="club">
                                           Moderklubb/Klubb
-                                       </button>
-                                    </th>
-                                    <th class=
-                                           "activity-participant-col-birthday"
-                                        aria-sort="none">
-                                       <button type="button"
-                                               data-participant-sort=
-                                                  "birthdate">
-                                          Födelsedag
                                        </button>
                                     </th>
                                     <th class=
@@ -280,8 +272,6 @@ else
                                            "@participant.Birthdate?.ToString(
                                               DateDisplay.DateOnlyFormat
                                            )"
-                                        data-participant-height=
-                                           "@participant.Height"
                                         data-participant-club=
                                            "@participant.Club">
                                        <td class="activity-participant-name
@@ -295,20 +285,14 @@ else
                                           : $"{age} år")
                                        </td>
                                        <td class=
-                                              "activity-participant-col-height">
-                                          @(participant.Height is null
-                                          ? string.Empty
-                                          : $"{participant.Height} cm")
-                                       </td>
-                                       <td class=
-                                              "activity-participant-col-club">
-                                          @participant.Club
-                                       </td>
-                                       <td class=
                                           "activity-participant-col-birthday">
                                           @IndexModel.FormatBirthday(
                                           participant.Birthdate
                                           )
+                                       </td>
+                                       <td class=
+                                              "activity-participant-col-club">
+                                          @participant.Club
                                        </td>
                                        <td class=
                                           "activity-participant-col-country">

@@ -86,7 +86,7 @@
          return null;
       }
 
-      if(key === "age" || key === "height")
+      if(key === "age")
       {
          const number = Number(value);
          return Number.isFinite(number) ? number : null;
@@ -105,8 +105,6 @@
             return row.dataset.participantAge ?? "";
          case "birthdate":
             return row.dataset.participantBirthdate ?? "";
-         case "height":
-            return row.dataset.participantHeight ?? "";
          case "club":
             return row.dataset.participantClub ?? "";
          default:

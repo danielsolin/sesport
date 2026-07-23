@@ -33,7 +33,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("asp-route-sport=\"@sport.SportId\"", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-age", html);
-      Assert.Contains("activity-participant-col-height", html);
+      Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
       Assert.Contains(
          "@media (max-width: 600px) and (orientation: portrait)",
