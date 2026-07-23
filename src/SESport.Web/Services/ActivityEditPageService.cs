@@ -17,7 +17,8 @@ public sealed class ActivityEditPageService(
    AdminRepository adminRepository,
    AdminBroadcastRepository broadcastRepository,
    BroadcastParticipationService participationService,
-   IAiJobRunner aiJobRunner
+   IAiJobRunner aiJobRunner,
+   ILogger<ActivityEditPageService> logger
 )
 {
    public async Task<ActivityEditOptions> LoadOptionsAsync(
@@ -71,13 +72,19 @@ public sealed class ActivityEditPageService(
          );
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
+         logger.LogError(
+            exception,
+            "Unable to load activity edit options."
+         );
+
          return new ActivityEditOptions(
             [],
             [],
             [],
             [],
-            exception.Message
+            PageModelErrorExtensions.UnexpectedErrorMessage
          );
       }
    }

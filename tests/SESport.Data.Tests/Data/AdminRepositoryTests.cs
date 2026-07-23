@@ -384,7 +384,7 @@ public sealed class AdminRepositoryTests
          dataSource,
          olderActivityId,
          "Older Linked Activity",
-         new DateOnly(2026, 7, 1),
+         DistantActivityDate,
          new TimeOnly(12, 0),
          "Draft"
       );
@@ -392,7 +392,7 @@ public sealed class AdminRepositoryTests
          dataSource,
          newerActivityId,
          "Newer Linked Activity",
-         new DateOnly(2026, 7, 2),
+         DistantActivityDate.AddDays(1),
          new TimeOnly(13, 30),
          "Published"
       );
@@ -400,7 +400,7 @@ public sealed class AdminRepositoryTests
          dataSource,
          otherActivityId,
          "Other Linked Activity",
-         new DateOnly(2026, 7, 3),
+         DistantActivityDate.AddDays(2),
          new TimeOnly(14, 0),
          "Published"
       );
@@ -432,7 +432,10 @@ public sealed class AdminRepositoryTests
             .Select(activity => activity.Id)
             .ToArray());
          Assert.Equal(
-            "2026-07-02 13:30",
+            DateDisplay.Format(
+               DistantActivityDate.AddDays(1),
+               new TimeOnly(13, 30)
+            ),
             DateDisplay.Format(
                activities[0].ActivityDate,
                activities[0].LocalStartTime
@@ -695,7 +698,7 @@ public sealed class AdminRepositoryTests
          FormativeClub = formativeClub,
          EntityTypeId = TrackedEntityTypeIds.Person,
          SportId = "football",
-         CountryId = "se",
+         CountryId = PrimaryCountry.Id,
          CountryRelevanceKindId =
             "NationalityOrSportingIdentity",
          CountryRelevanceReason = "Test coverage",
@@ -879,7 +882,7 @@ public sealed class AdminRepositoryTests
          dataSource,
          sourceActivityId,
          "Merge Preview Activity",
-         new DateOnly(2026, 7, 8),
+         DistantActivityDate,
          new TimeOnly(12, 0),
          "Draft"
       );
@@ -953,7 +956,7 @@ public sealed class AdminRepositoryTests
          dataSource,
          sourceActivityId,
          "Merge Source Activity",
-         new DateOnly(2026, 7, 8),
+         DistantActivityDate,
          new TimeOnly(12, 0),
          "Draft"
       );
@@ -961,7 +964,7 @@ public sealed class AdminRepositoryTests
          dataSource,
          targetActivityId,
          "Merge Target Activity",
-         new DateOnly(2026, 7, 9),
+         DistantActivityDate.AddDays(1),
          new TimeOnly(12, 0),
          "Draft"
       );
@@ -1050,13 +1053,6 @@ public sealed class AdminRepositoryTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static async Task InsertEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId,
@@ -1084,7 +1080,7 @@ public sealed class AdminRepositoryTests
             @canonical_name,
             'Person',
             'football',
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             'tier_3',
@@ -1094,6 +1090,7 @@ public sealed class AdminRepositoryTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue(
          "alias_name",
          (object?)aliasName ?? DBNull.Value
@@ -1129,7 +1126,7 @@ public sealed class AdminRepositoryTests
             @canonical_name,
             @entity_type_id,
             @sport_id,
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             'tier_3',
@@ -1138,6 +1135,7 @@ public sealed class AdminRepositoryTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
 

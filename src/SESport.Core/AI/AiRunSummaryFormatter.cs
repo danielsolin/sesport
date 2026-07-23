@@ -269,7 +269,7 @@ public static class AiRunSummaryFormatter
       }
 
       if(value.Length > 1 &&
-         value.EndsWith("s", StringComparison.Ordinal) &&
+         value.EndsWith('s') &&
          !value.EndsWith("ss", StringComparison.Ordinal))
       {
          return value[..^1];

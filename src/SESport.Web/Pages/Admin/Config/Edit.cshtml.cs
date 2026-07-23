@@ -99,8 +99,9 @@ public class EditModel(AdminRepository repository) : PageModel
             await repository.SaveCountryAsync(Country, cancellationToken);
          }
          catch(Exception exception)
+            when(!cancellationToken.IsCancellationRequested)
          {
-            LoadError = exception.Message;
+            LoadError = this.LogUnexpectedError(exception);
             return Page();
          }
 
@@ -121,8 +122,9 @@ public class EditModel(AdminRepository repository) : PageModel
             await repository.SaveSportAsync(Sport, cancellationToken);
          }
          catch(Exception exception)
+            when(!cancellationToken.IsCancellationRequested)
          {
-            LoadError = exception.Message;
+            LoadError = this.LogUnexpectedError(exception);
             return Page();
          }
 
@@ -145,8 +147,9 @@ public class EditModel(AdminRepository repository) : PageModel
          );
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
          return Page();
       }
 

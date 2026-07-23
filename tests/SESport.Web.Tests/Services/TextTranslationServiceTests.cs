@@ -17,7 +17,7 @@ public sealed class TextTranslationServiceTests
 
       await service.QueueAsync(
          "English",
-         "Swedish",
+         PrimaryCountry.LanguageName,
          "A short biography.",
          correlationId,
          CancellationToken.None
@@ -32,7 +32,10 @@ public sealed class TextTranslationServiceTests
       var root = payload.RootElement;
 
       Assert.Equal("English", root.GetProperty("from_language").GetString());
-      Assert.Equal("Swedish", root.GetProperty("to_language").GetString());
+      Assert.Equal(
+         PrimaryCountry.LanguageName,
+         root.GetProperty("to_language").GetString()
+      );
       Assert.Equal(
          "A short biography.",
          root.GetProperty("text").GetString()

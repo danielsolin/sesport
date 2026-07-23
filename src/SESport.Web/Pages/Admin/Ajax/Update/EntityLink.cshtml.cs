@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using Npgsql;
-
 using SESport.Data;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
@@ -65,17 +63,14 @@ public sealed class EntityLinkModel(AdminRepository repository)
             changed
          });
       }
-      catch(PostgresException exception)
-         when(exception.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+      catch(EntityLinkEntityNotFoundException)
       {
          return NotFound(new { error = "Entity not found." });
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         return new JsonResult(new { error = exception.Message })
-         {
-            StatusCode = StatusCodes.Status500InternalServerError
-         };
+         return this.UnexpectedJsonError(exception);
       }
    }
 

@@ -42,10 +42,7 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = TimeSpan.FromMinutes(20);
       });
-      services.AddHttpClient<GoogleTranslateClient>(client =>
-      {
-         client.Timeout = TimeSpan.FromSeconds(60);
-      });
+      services.AddTransient<GoogleTranslateClient>();
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<OpenRouterClient>()
       );

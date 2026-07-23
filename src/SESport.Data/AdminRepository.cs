@@ -1998,7 +1998,19 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("source_entity_id", sourceEntityId);
       command.Parameters.AddWithValue("target_entity_id", targetEntityId);
 
-      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+      try
+      {
+         return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+      }
+      catch(PostgresException exception)
+         when(exception.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+      {
+         throw new EntityLinkEntityNotFoundException(
+            sourceEntityId,
+            targetEntityId,
+            exception
+         );
+      }
    }
 
    public async Task<bool> RemoveEntityLinkAsync(

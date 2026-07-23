@@ -17,18 +17,20 @@ internal static class WebPageBrowserPageFetcher
       try
       {
          var absoluteUrlString = absoluteUrl.ToString();
-         var browserUserAgent = await browserUserAgentFetcher();
+         var browserUserAgent = await browserUserAgentFetcher()
+            .WaitAsync(cancellationToken);
          var browserLikeHeaders =
             WebPageContentFetchSupport.BuildBrowserLikeHeaders(
                browserUserAgent
             );
-         using var playwright = await Playwright.CreateAsync();
+         using var playwright = await Playwright.CreateAsync()
+            .WaitAsync(cancellationToken);
          await using var browser = await playwright.Chromium.LaunchAsync(
             new BrowserTypeLaunchOptions
             {
                Headless = true
             }
-         );
+         ).WaitAsync(cancellationToken);
 
          await using var context = await browser.NewContextAsync(
             new BrowserNewContextOptions
@@ -42,13 +44,14 @@ internal static class WebPageBrowserPageFetcher
                   Height = WebPageFetchDefaults.BrowserViewportHeight
                }
             }
-         );
+         ).WaitAsync(cancellationToken);
 
          await context.AddInitScriptAsync(
             WebPageFetchDefaults.BrowserFingerprintScript
-         );
+         ).WaitAsync(cancellationToken);
 
-         await using var page = await context.NewPageAsync();
+         await using var page = await context.NewPageAsync()
+            .WaitAsync(cancellationToken);
          await page.GotoAsync(
             absoluteUrl.ToString(),
             new PageGotoOptions
@@ -58,7 +61,7 @@ internal static class WebPageBrowserPageFetcher
                   WebPageFetchDefaults.BrowserNavigationTimeout
                      .TotalMilliseconds
             }
-         );
+         ).WaitAsync(cancellationToken);
 
          try
          {
@@ -70,7 +73,7 @@ internal static class WebPageBrowserPageFetcher
                      WebPageFetchDefaults.BrowserLoadStateTimeout
                         .TotalMilliseconds
                }
-            );
+            ).WaitAsync(cancellationToken);
          }
          catch(PlaywrightException)
          {
@@ -83,24 +86,28 @@ internal static class WebPageBrowserPageFetcher
          await ScrollThroughPageAsync(page, cancellationToken);
          await WaitForContentStabilityAsync(page, cancellationToken);
 
-         var title = await page.TitleAsync();
-         var renderedHtml = await page.ContentAsync();
+         var title = await page.TitleAsync()
+            .WaitAsync(cancellationToken);
+         var renderedHtml = await page.ContentAsync()
+            .WaitAsync(cancellationToken);
          var renderedRelevantLinks =
             WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
                renderedHtml,
                absoluteUrl
             );
-         var relevantImages = await ExtractRelevantImagesAsync(page);
+         var relevantImages = await ExtractRelevantImagesAsync(page)
+            .WaitAsync(cancellationToken);
          await page.EvaluateAsync(
             WebPageNormalizationScript.Build(),
             JsonSerializer.Serialize(
                WebPageContentFetchSupport.CountryNamesByCode
             )
-         );
+         ).WaitAsync(cancellationToken);
          var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
             "element => element.innerHTML"
-         );
-         var visibleText = await page.Locator("body").InnerTextAsync();
+         ).WaitAsync(cancellationToken);
+         var visibleText = await page.Locator("body").InnerTextAsync()
+            .WaitAsync(cancellationToken);
          var normalizedText =
             WebPageContentFetchSupport.NormalizeText(visibleText);
 

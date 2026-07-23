@@ -48,14 +48,9 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
          await adminRepository.SaveEntityAsync(template, cancellationToken);
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         return new JsonResult(new
-         {
-            error = exception.Message
-         })
-         {
-            StatusCode = StatusCodes.Status500InternalServerError
-         };
+         return this.UnexpectedJsonError(exception);
       }
 
       return new JsonResult(new

@@ -69,7 +69,9 @@
       const searchUrl = getBroadcastOrganizationSearchUrl();
       const broadcastId = (cell?.dataset.broadcastId ?? "").trim();
       const originalId = (cell?.dataset.broadcastInlineEditValue ?? "").trim();
-      const originalLabel = (cell?.dataset.broadcastInlineEditLabel ?? "").trim();
+      const originalLabel = (
+         cell?.dataset.broadcastInlineEditLabel ?? ""
+      ).trim();
 
       if(!(cell instanceof HTMLElement)
          || !(input instanceof HTMLInputElement)
@@ -83,7 +85,8 @@
 
       container.dataset.broadcastOrgAutocompleteInitialized = "true";
       cell.dataset.broadcastInlineEditValue = originalId;
-      cell.dataset.broadcastInlineEditLabel = originalLabel || input.value.trim();
+      cell.dataset.broadcastInlineEditLabel =
+         originalLabel || input.value.trim();
       input.dataset.broadcastOrgOriginalLabel =
          cell.dataset.broadcastInlineEditLabel ?? "";
       hiddenId.dataset.broadcastOrgOriginalValue = originalId;
@@ -199,7 +202,9 @@
       };
 
       const selectSuggestion = async item => {
-         if(!item || typeof item.id !== "string" || typeof item.text !== "string")
+         if(!item
+            || typeof item.id !== "string"
+            || typeof item.text !== "string")
          {
             return;
          }

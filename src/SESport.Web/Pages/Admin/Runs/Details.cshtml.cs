@@ -23,6 +23,11 @@ public class DetailsModel(
    private const string ConversationHistorySummaryPrefix =
       "Conversation history summary:";
 
+   private static readonly JsonSerializerOptions IndentedJsonOptions = new()
+   {
+      WriteIndented = true
+   };
+
    public AiRunDetail? Run { get; private set; }
 
    public string SystemPromptText { get; private set; } = string.Empty;
@@ -155,8 +160,9 @@ public class DetailsModel(
          );
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
          return Page();
       }
 
@@ -856,9 +862,8 @@ public class DetailsModel(
          ));
       }
 
-      var finalTurn = turns.LastOrDefault();
-      if(finalTurn is not null &&
-         !string.IsNullOrWhiteSpace(finalTurn.FinishReason))
+      var finalTurn = turns[^1];
+      if(!string.IsNullOrWhiteSpace(finalTurn.FinishReason))
       {
          badges.Add(new(
             $"Finish: {finalTurn.FinishReason}",
@@ -1151,10 +1156,7 @@ public class DetailsModel(
          using var document = JsonDocument.Parse(value);
          prettyPrinted = JsonSerializer.Serialize(
             document.RootElement,
-            new JsonSerializerOptions
-            {
-               WriteIndented = true
-            }
+            IndentedJsonOptions
          );
          return true;
       }

@@ -20,8 +20,9 @@ public class IndexModel(AiAdminRepository repository) : PageModel
          Providers = await repository.GetProvidersAsync(cancellationToken);
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
       }
    }
 

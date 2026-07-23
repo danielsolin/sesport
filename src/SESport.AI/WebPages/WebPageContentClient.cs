@@ -78,8 +78,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       CancellationToken cancellationToken
    )
    {
-      if(string.IsNullOrWhiteSpace(url) ||
-         !Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
+      if(!WebPageUrlPolicy.TryValidate(
+         url,
+         out var absoluteUrl,
+         out _
+      ))
       {
          return null;
       }

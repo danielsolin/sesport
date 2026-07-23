@@ -27,6 +27,10 @@
          Include="..\TestSupport\TestEnvironmentBootstrap.cs"
          Link="TestEnvironmentBootstrap.cs"
       />
+      <Compile
+         Include="..\TestSupport\PostgresTestDatabase.cs"
+         Link="PostgresTestDatabase.cs"
+      />
    </ItemGroup>
 
 </Project>

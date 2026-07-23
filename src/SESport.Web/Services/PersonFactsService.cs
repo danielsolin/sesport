@@ -33,7 +33,7 @@ public sealed class PersonFactsService(
          StringComparison.OrdinalIgnoreCase
       ))
       {
-         throw new InvalidOperationException(
+         throw new PersonFactsValidationException(
             "Person facts jobs can only be queued for person entities."
          );
       }

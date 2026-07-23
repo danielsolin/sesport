@@ -46,7 +46,8 @@ PGPASSWORD="$SESPORT_POSTGRES_PASSWORD" \
 
 `001_baseline.sql` defines the current schema from scratch, including the
 lookup tables, entity model, activity model, broadcast imports, AI jobs, and
-the reference rows needed by the application.
+their indexes and constraints. It contains no application data; reference
+rows must be managed outside migrations.
 
 Future schema changes should be added as new numbered SQL files after the
 baseline.

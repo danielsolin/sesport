@@ -7,7 +7,8 @@ namespace SESport.Web.Services;
 
 public sealed class ActivityIndexPageService(
    ActivityRepository repository,
-   AdminDatePreferenceStore datePreferenceStore
+   AdminDatePreferenceStore datePreferenceStore,
+   ILogger<ActivityIndexPageService> logger
 )
 {
    private const string TimeSortColumn = "Time";
@@ -69,7 +70,13 @@ public sealed class ActivityIndexPageService(
          );
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
+         logger.LogError(
+            exception,
+            "Unable to build the activity index page."
+         );
+
          return new ActivityIndexViewModel(
             selectedDate,
             normalizedStatus,
@@ -80,7 +87,7 @@ public sealed class ActivityIndexPageService(
                : normalizedSports,
             [],
             [],
-            exception.Message
+            PageModelErrorExtensions.UnexpectedErrorMessage
          );
       }
    }
@@ -144,15 +151,16 @@ public sealed class ActivityIndexPageService(
 
    public string? NormalizeStatus(string? status)
    {
-      return status switch
+      if(status is
+         ActivityPublicationStatusIds.Draft or
+         ActivityPublicationStatusIds.Published)
       {
-         ActivityPublicationStatusIds.Draft => ActivityPublicationStatusIds.Draft,
-         ActivityPublicationStatusIds.Published =>
-            ActivityPublicationStatusIds.Published,
-         ActivityListStatusIds.All or "" or null =>
-            ActivityListStatusIds.All,
-         _ => null
-      };
+         return status;
+      }
+
+      return status is ActivityListStatusIds.All or "" or null
+         ? ActivityListStatusIds.All
+         : null;
    }
 
    public string NormalizeSortColumn(string? sortColumn)

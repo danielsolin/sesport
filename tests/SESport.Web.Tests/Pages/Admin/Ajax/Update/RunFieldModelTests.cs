@@ -137,13 +137,6 @@ public sealed class RunFieldModelTests
       );
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static async Task InsertProviderAsync(
       NpgsqlDataSource dataSource,
       string providerId

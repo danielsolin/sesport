@@ -214,13 +214,6 @@ public sealed class BroadcastRepositoryTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static async Task InsertBroadcastAsync(
       NpgsqlDataSource dataSource,
       Guid broadcastId,

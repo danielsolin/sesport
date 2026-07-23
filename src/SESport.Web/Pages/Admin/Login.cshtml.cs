@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -28,7 +30,7 @@ public class LoginModel(AdminLoginOptions adminOptions) : PageModel
          return Page();
       }
 
-      if(Password != configuredPassword)
+      if(!PasswordsMatch(Password, configuredPassword))
       {
          ErrorMessage = "Invalid password.";
          return Page();
@@ -50,5 +52,20 @@ public class LoginModel(AdminLoginOptions adminOptions) : PageModel
       );
 
       return RedirectToPage("/Admin/Broadcasts/Index");
+   }
+
+   private static bool PasswordsMatch(string provided, string configured)
+   {
+      var providedHash = SHA256.HashData(
+         Encoding.UTF8.GetBytes(provided)
+      );
+      var configuredHash = SHA256.HashData(
+         Encoding.UTF8.GetBytes(configured)
+      );
+
+      return CryptographicOperations.FixedTimeEquals(
+         providedHash,
+         configuredHash
+      );
    }
 }

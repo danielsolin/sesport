@@ -152,7 +152,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             e.entity_type_id,
             s.name,
             coalesce(org.organization_names, ''),
-            p.sort_order,
             e.person_gender_id,
             e.alias_name
          from entities e
@@ -182,9 +181,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetInt32(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6),
-               reader.IsDBNull(7) ? null : reader.GetString(7)
+               reader.IsDBNull(5) ? null : reader.GetString(5),
+               reader.IsDBNull(6) ? null : reader.GetString(6)
             )
          );
       }
@@ -205,7 +203,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             e.entity_type_id,
             s.name,
             coalesce(org.alias_name, org.canonical_name) as organization_names,
-            p.sort_order,
             e.person_gender_id,
             e.alias_name
          from entities e
@@ -246,9 +243,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetInt32(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6),
-               reader.IsDBNull(7) ? null : reader.GetString(7)
+               reader.IsDBNull(5) ? null : reader.GetString(5),
+               reader.IsDBNull(6) ? null : reader.GetString(6)
             )
          );
       }
@@ -293,7 +289,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                         and l.source_entity_id = e.id)
                )
          )
-         select *
+         select
+            id,
+            canonical_name,
+            entity_type_id,
+            name,
+            organization_names,
+            person_gender_id,
+            alias_name
          from candidate_rows
          order by sort_order, random()
          limit 5
@@ -318,9 +321,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetInt32(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6),
-               reader.IsDBNull(7) ? null : reader.GetString(7)
+               reader.IsDBNull(5) ? null : reader.GetString(5),
+               reader.IsDBNull(6) ? null : reader.GetString(6)
             )
          );
       }

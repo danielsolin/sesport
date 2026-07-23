@@ -36,9 +36,14 @@ public sealed class PersonFactsModel(PersonFactsService factsService)
             status = "queued"
          });
       }
-      catch(InvalidOperationException exception)
+      catch(PersonFactsValidationException exception)
       {
          return BadRequest(new { error = exception.Message });
+      }
+      catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
+      {
+         return this.UnexpectedJsonError(exception);
       }
    }
 }

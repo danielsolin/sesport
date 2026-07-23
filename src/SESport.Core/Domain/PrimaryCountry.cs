@@ -2,11 +2,13 @@ namespace SESport.Core.Domain;
 
 public static class PrimaryCountry
 {
+   public const string Id = "se";
    public const string TwoLetterCode = "SE";
    public const string ThreeLetterCode = "SWE";
    public const string CountryName = "Sweden";
    public const string LocalDisplayName = "Sverige";
    public const string LanguageName = "Swedish";
+   public const string CultureName = "sv-SE";
    public const string BroadcastChannelPrefix = TwoLetterCode + " - ";
    public const string BroadcastChannelPrefixRegex =
       "^" + BroadcastChannelPrefix;

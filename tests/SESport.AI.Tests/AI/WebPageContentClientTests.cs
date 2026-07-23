@@ -241,6 +241,49 @@ public class WebPageContentClientTests
       Assert.Null(page);
    }
 
+   [Theory]
+   [InlineData("http://localhost/admin")]
+   [InlineData("http://service.localhost/admin")]
+   [InlineData("http://10.0.0.1/admin")]
+   [InlineData("http://169.254.169.254/metadata")]
+   [InlineData("http://192.168.1.10/admin")]
+   [InlineData("http://[::1]/admin")]
+   [InlineData("http://[fe80::1]/admin")]
+   [InlineData("file:///etc/passwd")]
+   public async Task FetchRejectsNonPublicUrls(string url)
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(null);
+         }
+      );
+
+      var page = await client.FetchAsync(url, CancellationToken.None);
+
+      Assert.Equal(0, browserCalls);
+      Assert.Null(page);
+   }
+
+   [Theory]
+   [InlineData("https://example.test/article")]
+   [InlineData("http://8.8.8.8/article")]
+   [InlineData("https://[2606:4700:4700::1111]/article")]
+   public void UrlPolicyAllowsPublicWebUrls(string url)
+   {
+      var isValid = WebPageUrlPolicy.TryValidate(
+         url,
+         out var absoluteUrl,
+         out var error
+      );
+
+      Assert.True(isValid, error);
+      Assert.Equal(url, absoluteUrl.AbsoluteUri);
+   }
+
    [Fact]
    public async Task FetchReturnsNullWhenBrowserReturnsNull()
    {
@@ -858,11 +901,11 @@ public class WebPageContentClientTests
 
       Assert.NotNull(page);
       Assert.Contains(
-         "Sweden",
+         PrimaryCountry.CountryName,
          page!.MainText,
          StringComparison.OrdinalIgnoreCase
       );
-      Assert.Contains("SWE", page.MainText);
+      Assert.Contains(PrimaryCountry.ThreeLetterCode, page.MainText);
       Assert.DoesNotContain(
          "SWE_sm",
          page.MainText,
@@ -874,12 +917,16 @@ public class WebPageContentClientTests
    public void NormalizeTextCollapsesAdjacentCountryNameDuplicates()
    {
       Assert.Equal(
-         "Sweden",
-         WebPageContentFetchSupport.NormalizeText("Sweden Sweden")
+         PrimaryCountry.CountryName,
+         WebPageContentFetchSupport.NormalizeText(
+            $"{PrimaryCountry.CountryName} {PrimaryCountry.CountryName}"
+         )
       );
       Assert.Equal(
-         "Sweden",
-         WebPageContentFetchSupport.NormalizeText("Sweden | Sweden")
+         PrimaryCountry.CountryName,
+         WebPageContentFetchSupport.NormalizeText(
+            $"{PrimaryCountry.CountryName} | {PrimaryCountry.CountryName}"
+         )
       );
       Assert.Equal(
          "South Africa",

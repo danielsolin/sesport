@@ -188,11 +188,9 @@ public sealed class BroadcastFieldModel(
          return BadRequest(new { error = "Unsupported field." });
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         return new JsonResult(new { error = exception.Message })
-         {
-            StatusCode = StatusCodes.Status500InternalServerError
-         };
+         return this.UnexpectedJsonError(exception);
       }
    }
 

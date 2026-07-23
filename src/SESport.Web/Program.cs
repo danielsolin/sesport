@@ -44,18 +44,15 @@ builder.Services
          options.AccessDeniedPath = "/Admin/Login";
       }
    );
-builder.Services.AddAuthorization(
-   options =>
-   {
-      options.AddPolicy(
-         "Admin",
-         policy =>
-         {
-            policy.RequireAuthenticatedUser();
-         }
-      );
-   }
-);
+builder.Services
+   .AddAuthorizationBuilder()
+   .AddPolicy(
+      "Admin",
+      policy =>
+      {
+         policy.RequireAuthenticatedUser();
+      }
+   );
 builder.Services.AddRazorPages(
    options =>
    {

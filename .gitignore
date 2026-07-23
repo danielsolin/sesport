@@ -6,6 +6,7 @@
 !/android/**/bin/**
 **/obj/
 *.swp
+*.user
 docs/TODO.md
 artifacts/publish-dev/
 .worktale/

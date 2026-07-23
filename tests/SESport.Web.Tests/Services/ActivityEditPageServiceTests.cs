@@ -1,6 +1,8 @@
 using Npgsql;
 using System.Text.Json;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SESport.AI.Interfaces;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
@@ -132,7 +134,7 @@ public sealed class ActivityEditPageServiceTests
             Description = "Description",
             ActivityType = ActivityType.Match.ToString(),
             SportId = "football",
-            ActivityDate = new DateOnly(2026, 7, 15),
+            ActivityDate = DistantActivityDate,
             OrganizationEntityId = organizationId
          };
 
@@ -168,12 +170,12 @@ public sealed class ActivityEditPageServiceTests
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var personName = $"Person {Guid.NewGuid():N}";
       var startsAt = TimeZoneHelper.ToUtc(
-         new DateOnly(2026, 7, 15),
+         DistantActivityDate,
          new TimeOnly(12, 0),
          SportDay.TimeZoneId
       );
       var endsAt = TimeZoneHelper.ToUtc(
-         new DateOnly(2026, 7, 15),
+         DistantActivityDate,
          new TimeOnly(14, 0),
          SportDay.TimeZoneId
       );
@@ -239,7 +241,7 @@ public sealed class ActivityEditPageServiceTests
          Assert.Equal([broadcastId], activity.BroadcastIds);
          Assert.Equal(organizationId, activity.OrganizationEntityId);
          Assert.Equal([personId], activity.LinkedEntityIds);
-         Assert.Equal(new DateOnly(2026, 7, 15), activity.ActivityDate);
+         Assert.Equal(DistantActivityDate, activity.ActivityDate);
          Assert.Equal(new TimeOnly(12, 0), activity.LocalStartTime);
          Assert.Equal(new TimeOnly(14, 0), activity.LocalEndTime);
       }
@@ -344,7 +346,7 @@ public sealed class ActivityEditPageServiceTests
       var activityGroupId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var title = "Broadcast title";
-      var startDate = new DateOnly(2026, 7, 15);
+      var startDate = DistantActivityDate;
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
@@ -512,12 +514,12 @@ public sealed class ActivityEditPageServiceTests
          "Broadcast title",
          ["football"],
          TimeZoneHelper.ToUtc(
-            new DateOnly(2026, 7, 15),
+            DistantActivityDate,
             new TimeOnly(12, 0),
             SportDay.TimeZoneId
          ),
          TimeZoneHelper.ToUtc(
-            new DateOnly(2026, 7, 15),
+            DistantActivityDate,
             new TimeOnly(14, 0),
             SportDay.TimeZoneId
          )
@@ -602,12 +604,12 @@ public sealed class ActivityEditPageServiceTests
          broadcastTitle,
          ["football"],
          TimeZoneHelper.ToUtc(
-            new DateOnly(2026, 7, 15),
+            DistantActivityDate,
             new TimeOnly(12, 0),
             SportDay.TimeZoneId
          ),
          TimeZoneHelper.ToUtc(
-            new DateOnly(2026, 7, 15),
+            DistantActivityDate,
             new TimeOnly(14, 0),
             SportDay.TimeZoneId
          ),
@@ -709,12 +711,12 @@ public sealed class ActivityEditPageServiceTests
          broadcastTitle,
          ["football"],
          TimeZoneHelper.ToUtc(
-            new DateOnly(2026, 7, 15),
+            DistantActivityDate,
             new TimeOnly(12, 0),
             SportDay.TimeZoneId
          ),
          TimeZoneHelper.ToUtc(
-            new DateOnly(2026, 7, 15),
+            DistantActivityDate,
             new TimeOnly(14, 0),
             SportDay.TimeZoneId
          )
@@ -809,7 +811,7 @@ public sealed class ActivityEditPageServiceTests
             Title = "Broadcast title",
             ActivityType = ActivityType.Match.ToString(),
             SportId = "football",
-            ActivityDate = new DateOnly(2026, 7, 15),
+            ActivityDate = DistantActivityDate,
             LocalStartTime = new TimeOnly(12, 0),
             LocalEndTime = new TimeOnly(14, 0),
             TimeZoneId = SportDay.TimeZoneId,
@@ -998,7 +1000,7 @@ public sealed class ActivityEditPageServiceTests
             Title = "Activity title",
             ActivityType = "Match",
             SportId = "football",
-            ActivityDate = new DateOnly(2026, 7, 10),
+            ActivityDate = DistantActivityDate.AddDays(-5),
             LinkedEntityIds = [firstPersonId, secondPersonId]
          };
 
@@ -1029,13 +1031,6 @@ public sealed class ActivityEditPageServiceTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      return new NpgsqlDataSourceBuilder(
-         PostgresConnectionStrings.ResolveDefault()
-      ).Build();
-   }
-
    private static ActivityEditPageServiceFixture CreateFixture(
       NpgsqlDataSource dataSource
    )
@@ -1057,7 +1052,8 @@ public sealed class ActivityEditPageServiceTests
             new AdminRepository(dataSource),
             broadcastRepository,
             participationService,
-            jobRunner
+            jobRunner,
+            NullLogger<ActivityEditPageService>.Instance
          ),
          participationService,
          jobRunner
@@ -1353,7 +1349,7 @@ public sealed class ActivityEditPageServiceTests
             @canonical_name,
             @entity_type_id,
             @sport_id,
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             'tier_3',
@@ -1362,6 +1358,7 @@ public sealed class ActivityEditPageServiceTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
 

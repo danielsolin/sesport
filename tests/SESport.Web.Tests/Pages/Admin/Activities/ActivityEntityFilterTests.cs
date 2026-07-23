@@ -18,7 +18,7 @@ public sealed class ActivityEntityFilterTests
          ),
          new BroadcastEntityOption(
             Guid.NewGuid(),
-            "Sweden",
+            PrimaryCountry.CountryName,
             TrackedEntityTypeIds.NationalTeam,
             "Tennis",
             ""

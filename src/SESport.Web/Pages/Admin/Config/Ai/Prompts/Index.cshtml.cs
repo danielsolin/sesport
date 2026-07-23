@@ -19,8 +19,9 @@ public class IndexModel(AiAdminRepository repository) : PageModel
          Prompts = await repository.GetPromptsAsync(cancellationToken);
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
       }
    }
 

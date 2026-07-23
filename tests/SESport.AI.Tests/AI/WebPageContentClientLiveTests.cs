@@ -83,11 +83,11 @@ public class WebPageContentClientLiveTests
 
       Assert.NotNull(page);
       Assert.Contains(
-         "Sweden",
+         PrimaryCountry.CountryName,
          page!.MainText,
          StringComparison.OrdinalIgnoreCase
       );
-      Assert.Contains("SWE", page.MainText);
+      Assert.Contains(PrimaryCountry.ThreeLetterCode, page.MainText);
       Assert.DoesNotContain("SWE_sm", page.MainText);
    }
 
@@ -110,7 +110,7 @@ public class WebPageContentClientLiveTests
       Assert.NotNull(page);
       Assert.Contains("Meja Örtengren", page!.MainText);
       Assert.Contains(
-         "Sweden",
+         PrimaryCountry.CountryName,
          page.MainText,
          StringComparison.OrdinalIgnoreCase
       );

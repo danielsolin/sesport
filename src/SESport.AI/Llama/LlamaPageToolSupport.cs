@@ -13,52 +13,16 @@ internal static class LlamaPageToolSupport
       normalizedUrl = "";
       error = "";
 
-      if(string.IsNullOrWhiteSpace(url))
+      if(!WebPageUrlPolicy.TryValidate(
+         url,
+         out var absoluteUrl,
+         out error
+      ))
       {
-         error = "Missing page URL.";
          return false;
       }
 
-      if(url.Length > 2048)
-      {
-         error = "Page URL is too long.";
-         return false;
-      }
-
-      if(!Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
-      {
-         error = "Invalid page URL.";
-         return false;
-      }
-
-      if(!string.Equals(
-         absoluteUrl.Scheme,
-         Uri.UriSchemeHttp,
-         StringComparison.OrdinalIgnoreCase
-      ) &&
-         !string.Equals(
-            absoluteUrl.Scheme,
-            Uri.UriSchemeHttps,
-            StringComparison.OrdinalIgnoreCase
-         ))
-      {
-         error = "Page URL must use http or https.";
-         return false;
-      }
-
-      if(string.IsNullOrWhiteSpace(absoluteUrl.Host))
-      {
-         error = "Page URL is missing a host.";
-         return false;
-      }
-
-      if(IsBlockedHost(absoluteUrl.Host))
-      {
-         error = "Page URL host is not allowed.";
-         return false;
-      }
-
-      normalizedUrl = absoluteUrl.ToString();
+      normalizedUrl = absoluteUrl.AbsoluteUri;
       return true;
    }
 
@@ -96,23 +60,6 @@ internal static class LlamaPageToolSupport
          null,
          message,
          fetchErrorKind
-      );
-   }
-
-   private static bool IsBlockedHost(string host)
-   {
-      return string.Equals(
-         host,
-         "localhost",
-         StringComparison.OrdinalIgnoreCase
-      ) || string.Equals(
-         host,
-         "127.0.0.1",
-         StringComparison.OrdinalIgnoreCase
-      ) || string.Equals(
-         host,
-         "::1",
-         StringComparison.OrdinalIgnoreCase
       );
    }
 }

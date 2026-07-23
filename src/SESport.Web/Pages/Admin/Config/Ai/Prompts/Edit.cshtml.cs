@@ -10,6 +10,11 @@ namespace SESport.Web.Pages.Admin.Config.Ai.Prompts;
 
 public class EditModel(AiAdminRepository repository) : PageModel
 {
+   private static readonly JsonSerializerOptions IndentedJsonOptions = new()
+   {
+      WriteIndented = true
+   };
+
    [BindProperty]
    public AiPromptEditModel Prompt { get; set; } = new();
 
@@ -62,8 +67,9 @@ public class EditModel(AiAdminRepository repository) : PageModel
          await repository.SavePromptAsync(Prompt, cancellationToken);
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
          return Page();
       }
 
@@ -167,10 +173,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
          using var document = JsonDocument.Parse(json);
          return JsonSerializer.Serialize(
             document.RootElement,
-            new JsonSerializerOptions
-            {
-               WriteIndented = true
-            }
+            IndentedJsonOptions
          );
       }
       catch(JsonException)

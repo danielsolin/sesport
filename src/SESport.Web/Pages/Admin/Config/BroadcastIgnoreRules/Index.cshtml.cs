@@ -24,8 +24,9 @@ public class IndexModel(AdminRepository repository) : PageModel
          );
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
       }
    }
 

@@ -14,17 +14,15 @@ public sealed class GoogleTranslateClient : IAiProviderClient
    private readonly Func<string, CancellationToken, Task<string>>
       translationFetcher;
 
-   public GoogleTranslateClient(HttpClient httpClient)
-      : this(httpClient, FetchTranslationWithPlaywrightAsync)
+   public GoogleTranslateClient()
+      : this(FetchTranslationWithPlaywrightAsync)
    {
    }
 
    internal GoogleTranslateClient(
-      HttpClient httpClient,
       Func<string, CancellationToken, Task<string>> translationFetcher
    )
    {
-      _ = httpClient;
       this.translationFetcher = translationFetcher;
    }
 
@@ -187,15 +185,18 @@ public sealed class GoogleTranslateClient : IAiProviderClient
       CancellationToken cancellationToken
    )
    {
-      using var playwright = await Playwright.CreateAsync();
+      using var playwright = await Playwright.CreateAsync()
+         .WaitAsync(cancellationToken);
       await using var browser = await playwright.Chromium.LaunchAsync(
          new BrowserTypeLaunchOptions
          {
             Headless = true
          }
-      );
-      await using var context = await browser.NewContextAsync();
-      await using var page = await context.NewPageAsync();
+      ).WaitAsync(cancellationToken);
+      await using var context = await browser.NewContextAsync()
+         .WaitAsync(cancellationToken);
+      await using var page = await context.NewPageAsync()
+         .WaitAsync(cancellationToken);
 
       await page.GotoAsync(
          url,
@@ -204,7 +205,7 @@ public sealed class GoogleTranslateClient : IAiProviderClient
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 60000
          }
-      );
+      ).WaitAsync(cancellationToken);
 
       var rejectCookiesButton = page.GetByRole(
          AriaRole.Button,
@@ -214,10 +215,13 @@ public sealed class GoogleTranslateClient : IAiProviderClient
             Exact = true
          }
       );
-      if(await rejectCookiesButton.CountAsync() > 0)
+      if(await rejectCookiesButton.CountAsync()
+         .WaitAsync(cancellationToken) > 0)
       {
-         await rejectCookiesButton.ClickAsync();
-         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+         await rejectCookiesButton.ClickAsync()
+            .WaitAsync(cancellationToken);
+         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded)
+            .WaitAsync(cancellationToken);
       }
 
       var result = page.Locator("span[jsname='W297wb']").First;
@@ -227,13 +231,16 @@ public sealed class GoogleTranslateClient : IAiProviderClient
             State = WaitForSelectorState.Visible,
             Timeout = 60000
          }
-      );
-      await page.WaitForTimeoutAsync(500);
+      ).WaitAsync(cancellationToken);
+      await page.WaitForTimeoutAsync(500)
+         .WaitAsync(cancellationToken);
 
-      cancellationToken.ThrowIfCancellationRequested();
       var translatedText = string.Join(
          " ",
-         (await page.Locator("span[jsname='W297wb']").AllInnerTextsAsync())
+         (await page
+            .Locator("span[jsname='W297wb']")
+            .AllInnerTextsAsync()
+            .WaitAsync(cancellationToken))
             .Select(text => text.Trim())
             .Where(text => !string.IsNullOrWhiteSpace(text))
       );

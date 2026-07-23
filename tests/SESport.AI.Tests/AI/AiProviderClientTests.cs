@@ -2131,7 +2131,6 @@ public class AiProviderClientTests
          BaseAddress = "https://translate.google.com/"
       };
       var client = new GoogleTranslateClient(
-         new HttpClient(),
          (url, cancellationToken) =>
          {
             requestUrl = url;
@@ -2144,10 +2143,10 @@ public class AiProviderClientTests
          CreateJob("text", requiresWebSearch: false, null),
          CreatePrompt(null),
          CreateRenderedPrompt(),
-         """
+         $$"""
          {
             "from_language": "English",
-            "to_language": "Swedish",
+            "to_language": "{{PrimaryCountry.LanguageName}}",
             "text": "triple jump"
          }
          """,

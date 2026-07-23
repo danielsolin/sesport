@@ -99,13 +99,6 @@ public sealed class EntityLinkModelTests
       return Assert.IsType<T>(property!.GetValue(value));
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static async Task InsertRelatedEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId,
@@ -133,7 +126,7 @@ public sealed class EntityLinkModelTests
             @canonical_name,
             @entity_type_id,
             @sport_id,
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             'tier_3',
@@ -142,6 +135,7 @@ public sealed class EntityLinkModelTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
 

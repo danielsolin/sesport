@@ -29,8 +29,7 @@ public sealed class ActivityRepositoryTests
    [Fact]
    public async Task GetActivitiesAsyncIncludesSeriesOrganizations()
    {
-      var now = DateTimeOffset.UtcNow;
-      var selectedDate = SportDay.Today(now).StartDate;
+      var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
          selectedDate,
          new TimeOnly(12, 0),
@@ -97,8 +96,7 @@ public sealed class ActivityRepositoryTests
    [Fact]
    public async Task GetActivitiesAsyncPrefersOrganizationAliasName()
    {
-      var now = DateTimeOffset.UtcNow;
-      var selectedDate = SportDay.Today(now).StartDate;
+      var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
          selectedDate,
          new TimeOnly(12, 0),
@@ -166,8 +164,7 @@ public sealed class ActivityRepositoryTests
    [Fact]
    public async Task GetActivitiesAsyncPrefersActivityOrganizationContext()
    {
-      var now = DateTimeOffset.UtcNow;
-      var selectedDate = SportDay.Today(now).StartDate;
+      var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
          selectedDate,
          new TimeOnly(12, 0),
@@ -243,8 +240,7 @@ public sealed class ActivityRepositoryTests
    [Fact]
    public async Task GetActivitiesAsyncDoesNotInferOrganizationContext()
    {
-      var now = DateTimeOffset.UtcNow;
-      var selectedDate = SportDay.Today(now).StartDate;
+      var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
          selectedDate,
          new TimeOnly(12, 0),
@@ -306,8 +302,7 @@ public sealed class ActivityRepositoryTests
    [Fact]
    public async Task GetPublishedForDateAsyncOrdersParticipantsByWatchPriority()
    {
-      var now = DateTimeOffset.UtcNow;
-      var selectedDate = SportDay.Today(now).StartDate;
+      var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
          selectedDate,
          new TimeOnly(12, 0),
@@ -325,7 +320,8 @@ public sealed class ActivityRepositoryTests
          dataSource,
          activityId,
          selectedDate,
-         startsAt
+         startsAt,
+         ActivityPublicationStatusIds.Published
       );
       await InsertEntityAsync(
          dataSource,
@@ -418,8 +414,12 @@ public sealed class ActivityRepositoryTests
       await InsertActivityAsync(
          dataSource,
          activityId,
-         SportDay.Today(DateTimeOffset.UtcNow).StartDate,
-         DateTimeOffset.UtcNow
+         DistantActivityDate,
+         TimeZoneHelper.ToUtc(
+            DistantActivityDate,
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         )
       );
       await InsertActivityEntityLinkAsync(
          dataSource,
@@ -460,18 +460,12 @@ public sealed class ActivityRepositoryTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static async Task InsertActivityAsync(
       NpgsqlDataSource dataSource,
       Guid activityId,
       DateOnly activityDate,
-      DateTimeOffset startsAt
+      DateTimeOffset startsAt,
+      string publicationStatus = ActivityPublicationStatusIds.Draft
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -503,7 +497,7 @@ public sealed class ActivityRepositoryTests
             @local_start_time,
             @starts_at,
             'Europe/Stockholm',
-            'Published',
+            @publication_status,
             null,
             @slug
          )
@@ -515,6 +509,10 @@ public sealed class ActivityRepositoryTests
          startsAt.ToLocalTime().TimeOfDay
       );
       command.Parameters.AddWithValue("starts_at", startsAt);
+      command.Parameters.AddWithValue(
+         "publication_status",
+         publicationStatus
+      );
       command.Parameters.AddWithValue(
          "slug",
          $"test-activity-{activityId:N}"
@@ -552,7 +550,7 @@ public sealed class ActivityRepositoryTests
             @canonical_name,
             @entity_type_id,
             'football',
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             @watch_priority_id,
@@ -562,6 +560,7 @@ public sealed class ActivityRepositoryTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("watch_priority_id", watchPriorityId);
       command.Parameters.AddWithValue(

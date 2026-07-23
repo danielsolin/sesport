@@ -62,6 +62,10 @@ internal static class WebPageCurlPageFetcher
       processStartInfo.ArgumentList.Add("--silent");
       processStartInfo.ArgumentList.Add("--show-error");
       processStartInfo.ArgumentList.Add("--location");
+      processStartInfo.ArgumentList.Add("--proto");
+      processStartInfo.ArgumentList.Add("=http,https");
+      processStartInfo.ArgumentList.Add("--proto-redir");
+      processStartInfo.ArgumentList.Add("=http,https");
       processStartInfo.ArgumentList.Add("--compressed");
       processStartInfo.ArgumentList.Add("--max-time");
       processStartInfo.ArgumentList.Add(

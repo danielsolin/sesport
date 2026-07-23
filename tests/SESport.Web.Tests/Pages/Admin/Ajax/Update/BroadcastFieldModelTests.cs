@@ -117,7 +117,7 @@ public sealed class BroadcastFieldModelTests
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var uniqueSuffix = Guid.NewGuid().ToString("N");
       var title = $"Austrian Open {uniqueSuffix}";
-      var activityDate = new DateOnly(2026, 7, 17);
+      var activityDate = DistantActivityDate;
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminBroadcastRepository(dataSource);
@@ -221,7 +221,7 @@ public sealed class BroadcastFieldModelTests
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var uniqueSuffix = Guid.NewGuid().ToString("N");
       var title = $"Austrian Open {uniqueSuffix}";
-      var activityDate = new DateOnly(2026, 7, 17);
+      var activityDate = DistantActivityDate;
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminBroadcastRepository(dataSource);
@@ -318,7 +318,7 @@ public sealed class BroadcastFieldModelTests
       var activitySuffix = Guid.NewGuid().ToString("N");
       var broadcastTitle = $"Austrian Open {broadcastSuffix}";
       var activityTitle = $"Nordea Open Båstad {activitySuffix}";
-      var activityDate = new DateOnly(2026, 7, 17);
+      var activityDate = DistantActivityDate;
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminBroadcastRepository(dataSource);
@@ -423,7 +423,7 @@ public sealed class BroadcastFieldModelTests
       var broadcastTitle = $"Broadcast {uniqueSuffix}";
       var updatedGroupTitle = $"Updated group {uniqueSuffix}";
       var activityTitle = $"Activity {uniqueSuffix}";
-      var activityDate = new DateOnly(2026, 7, 17);
+      var activityDate = DistantActivityDate;
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminBroadcastRepository(dataSource);
@@ -680,13 +680,6 @@ public sealed class BroadcastFieldModelTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static async Task InsertBroadcastAsync(
       NpgsqlDataSource dataSource,
       Guid broadcastId,
@@ -868,7 +861,7 @@ public sealed class BroadcastFieldModelTests
             @canonical_name,
             @entity_type_id,
             @sport_id,
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             'tier_3',
@@ -877,6 +870,7 @@ public sealed class BroadcastFieldModelTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
 

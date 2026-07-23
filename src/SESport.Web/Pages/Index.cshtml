@@ -110,9 +110,7 @@
 @if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">
-      @(Model.ShowLoadErrorDetails
-         ? Model.LoadError
-         : "Ett problem uppstod. Vänligen försök igen.")
+      Ett problem uppstod. Vänligen försök igen.
    </div>
 }
 else if(Model.TimelineEntries.Count == 0 &&
@@ -398,7 +396,10 @@ else
                                           <img class=
                                                   "participant-country-flag"
                                                src="~/images/flags/se.svg"
-                                               alt="Sverige" />
+                                               alt="@(
+                                                  PrimaryCountry
+                                                     .LocalDisplayName
+                                               )" />
                                        </td>
                                     </tr>
                                  }

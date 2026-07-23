@@ -86,11 +86,9 @@ public sealed class EntityFieldModel(AdminRepository repository)
          });
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         return new JsonResult(new { error = exception.Message })
-         {
-            StatusCode = StatusCodes.Status500InternalServerError
-         };
+         return this.UnexpectedJsonError(exception);
       }
    }
 

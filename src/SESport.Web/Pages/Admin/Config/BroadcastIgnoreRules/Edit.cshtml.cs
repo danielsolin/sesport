@@ -50,8 +50,9 @@ public class EditModel(AdminRepository repository) : PageModel
          await repository.SaveBroadcastIgnoreRuleAsync(Rule, cancellationToken);
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
          return Page();
       }
 

@@ -25,7 +25,10 @@ public static class BroadcastActivityTypeResolver
          return ActivityType.Qualification;
       }
 
-      if(ContainsTitleToken(normalizedTitle, ["practice", "träning", "traning"]))
+      if(ContainsTitleToken(
+         normalizedTitle,
+         ["practice", "träning", "traning"]
+      ))
       {
          return ActivityType.Practice;
       }
@@ -99,7 +102,10 @@ public static class BroadcastActivityTypeResolver
    )
    {
       return tokens.Any(token =>
-         normalizedCategories.Contains(token, StringComparer.OrdinalIgnoreCase) ||
+         normalizedCategories.Contains(
+            token,
+            StringComparer.OrdinalIgnoreCase
+         ) ||
          ContainsTextToken(normalizedText, token)
       );
    }
@@ -108,7 +114,10 @@ public static class BroadcastActivityTypeResolver
    {
       if(token.Contains(' '))
       {
-         return normalizedText.Contains(token, StringComparison.OrdinalIgnoreCase);
+         return normalizedText.Contains(
+            token,
+            StringComparison.OrdinalIgnoreCase
+         );
       }
 
       return normalizedText

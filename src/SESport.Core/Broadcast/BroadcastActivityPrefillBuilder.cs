@@ -242,7 +242,10 @@ public static class BroadcastActivityPrefillBuilder
 
          if(span.Start <= lastSpan.End)
          {
-            mergedSpans[^1] = (lastSpan.Start, Math.Max(lastSpan.End, span.End));
+            mergedSpans[^1] = (
+               lastSpan.Start,
+               Math.Max(lastSpan.End, span.End)
+            );
             continue;
          }
 
@@ -412,7 +415,9 @@ public static class BroadcastActivityPrefillBuilder
       IReadOnlyList<int> IndexMap
    );
 
-   private static string CreateBroadcastSummary(BroadcastActivitySource broadcast)
+   private static string CreateBroadcastSummary(
+      BroadcastActivitySource broadcast
+   )
    {
       var localStart = TimeZoneHelper.ToLocal(
          broadcast.StartsAt,

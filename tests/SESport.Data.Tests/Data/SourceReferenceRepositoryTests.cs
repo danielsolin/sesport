@@ -126,10 +126,4 @@ public sealed class SourceReferenceRepositoryTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
 }

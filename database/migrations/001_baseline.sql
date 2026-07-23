@@ -1,720 +1,1125 @@
-create table sports
-(
-   id text primary key,
-   name text not null,
-   icon_id text null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
+--
+-- PostgreSQL database dump
+--
+
+\restrict JCzg5EYhMw6o4etPKoAsw7mv3TvMpuo7EpIIpzIm05gbn7k63NWHOWAyWjEoTlF
+
+-- Dumped from database version 17.10 (Debian 17.10-1.pgdg13+1)
+-- Dumped by pg_dump version 18.4 (Ubuntu 18.4-0ubuntu0.26.04.1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: activities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activities (
+    id uuid NOT NULL,
+    title text NOT NULL,
+    description text,
+    activity_type_id text NOT NULL,
+    sport_id text NOT NULL,
+    activity_date date NOT NULL,
+    local_start_time time without time zone,
+    starts_at timestamp with time zone,
+    time_zone_id text DEFAULT 'Europe/Stockholm'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    publication_status_id text DEFAULT 'Draft'::text NOT NULL,
+    slug text,
+    published_at timestamp with time zone,
+    teaser text,
+    tv_channel_name text,
+    facts text,
+    activity_group_id uuid,
+    local_end_time time without time zone,
+    ends_at timestamp with time zone,
+    CONSTRAINT activities_end_time_shape_check CHECK ((((local_end_time IS NULL) AND (ends_at IS NULL)) OR ((local_end_time IS NOT NULL) AND (ends_at IS NOT NULL) AND (starts_at IS NOT NULL) AND (ends_at > starts_at)))),
+    CONSTRAINT activities_time_shape_check CHECK ((((local_start_time IS NOT NULL) AND (starts_at IS NOT NULL)) OR ((local_start_time IS NULL) AND (starts_at IS NULL))))
 );
 
-insert into sports (id, name, icon_id)
-values
-   ('football', 'Football', 'mdi:soccer'),
-   ('ice-hockey', 'Ice hockey', 'mdi:hockey-puck')
-on conflict (id) do nothing;
 
-create table activity_types
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null,
-   is_active boolean not null default true
+--
+-- Name: activity_entity_link_roles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_entity_link_roles (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL
 );
 
-insert into activity_types (id, label, sort_order)
-values
-   ('Match', 'Match', 10),
-   ('Race', 'Race', 20),
-   ('Tournament', 'Tournament', 30),
-   ('Stage', 'Stage', 40),
-   ('Championship', 'Championship', 50),
-   ('Qualification', 'Qualification', 60),
-   ('RosterAnnouncement', 'Roster announcement', 70),
-   ('Transfer', 'Transfer', 80),
-   ('Ranking', 'Ranking', 90),
-   ('CoachingRole', 'Coaching role', 100),
-   ('OtherSportingActivity', 'Other sporting activity', 1000)
-on conflict (id) do nothing;
 
-create table entity_types
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: activity_entity_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_entity_links (
+    id uuid NOT NULL,
+    activity_id uuid NOT NULL,
+    entity_id uuid NOT NULL,
+    organization_entity_id uuid
 );
 
-insert into entity_types (id, label, sort_order)
-values
-   ('Person', 'Person', 10),
-   ('NationalTeam', 'National team', 20),
-   ('Club', 'Club', 30),
-   ('RecurringEvent', 'Recurring event', 40),
-   ('Pair', 'Pair/group', 50),
-   ('Organization', 'Organization', 60),
-   ('Other', 'Other', 1000)
-on conflict (id) do nothing;
 
-create table country_relevance_kinds
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: activity_groups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_groups (
+    id uuid NOT NULL,
+    title text NOT NULL,
+    sport_id text NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT activity_groups_date_check CHECK ((end_date >= start_date))
 );
 
-insert into country_relevance_kinds (id, label, sort_order)
-values
-   ('NationalityOrSportingIdentity',
-      'Nationality or sporting identity',
-      10),
-   ('NationalTeamRepresentation', 'National team representation', 20),
-   ('BasedInCountry', 'Based in country', 30),
-   (
-      'RecurringEventOriginOrInterest',
-      'Recurring event origin or interest',
-      40
-   ),
-   ('Manual', 'Manual', 1000)
-on conflict (id) do nothing;
 
-create table entity_watch_priorities
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: activity_publication_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_publication_statuses (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL
 );
 
-insert into entity_watch_priorities (id, label, sort_order)
-values
-   ('tier_1', 'Tier 1', 10),
-   ('tier_2', 'Tier 2', 20),
-   ('tier_3', 'Tier 3', 30),
-   ('review', 'Review', 100)
-on conflict (id) do nothing;
 
-create table entity_stability_kinds
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: activity_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_types (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
 );
 
-insert into entity_stability_kinds (id, label, sort_order)
-values
-   ('long_term', 'Long term', 10),
-   ('medium_term', 'Medium term', 20),
-   ('short_term', 'Short term', 30)
-on conflict (id) do nothing;
 
-create table activity_entity_link_roles
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: ai_job_prompts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_job_prompts (
+    id uuid NOT NULL,
+    job_id text NOT NULL,
+    version integer NOT NULL,
+    system_prompt text NOT NULL,
+    user_prompt_template text NOT NULL,
+    output_schema jsonb,
+    temperature numeric(4,2),
+    max_output_tokens integer,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    request_options jsonb DEFAULT '{}'::jsonb NOT NULL,
+    max_tool_rounds integer,
+    min_tool_rounds integer
 );
 
-insert into activity_entity_link_roles (id, label, sort_order)
-values
-   ('CompetesIn', 'Competes in', 10),
-   ('PlaysForContext', 'Plays for context', 20),
-   ('SelectedForRoster', 'Selected for roster', 30),
-   ('TransferSubject', 'Transfer subject', 40),
-   ('CoachingRole', 'Coaching role', 50),
-   ('RecurringEventEdition', 'Recurring event edition', 60),
-   ('RelatedOrganization', 'Related organization', 70),
-   ('Other', 'Other', 1000)
-on conflict (id) do nothing;
 
-create table producer_types
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: ai_job_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_job_runs (
+    id uuid NOT NULL,
+    job_id text NOT NULL,
+    prompt_id uuid NOT NULL,
+    provider_id text NOT NULL,
+    status_id text NOT NULL,
+    correlation_id text,
+    input_payload jsonb NOT NULL,
+    rendered_prompt text NOT NULL,
+    raw_response jsonb,
+    output_text text,
+    error_message text,
+    started_at timestamp with time zone NOT NULL,
+    completed_at timestamp with time zone,
+    duration_seconds numeric(12,3),
+    input_tokens integer,
+    output_tokens integer,
+    reasoning_tokens integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    raw_request jsonb,
+    provider_model text,
+    tool_trace jsonb,
+    tool_round_count integer DEFAULT 0 NOT NULL,
+    conversation_character_count integer DEFAULT 0 NOT NULL,
+    prompt_version integer,
+    prompt_system_prompt text,
+    prompt_user_prompt_template text,
+    execution_environment text,
+    job_label text,
+    provider_label text,
+    rendered_system_prompt text,
+    job_output_mode text,
+    job_requires_web_search boolean,
+    job_tools_json jsonb,
+    job_conditional_tools_json jsonb,
+    job_tool_call_max_tokens integer,
+    provider_kind text,
+    provider_base_address text,
+    provider_api_key_source text,
+    provider_request_options_json jsonb,
+    prompt_output_schema_json jsonb,
+    prompt_request_options_json jsonb,
+    prompt_temperature numeric(4,2),
+    prompt_max_output_tokens integer,
+    prompt_max_tool_rounds integer,
+    max_output_tokens integer,
+    prompt_min_tool_rounds integer,
+    job_include_social_media boolean
 );
 
-insert into producer_types (id, label, sort_order)
-values
-   ('WebImport', 'Web import', 10),
-   ('AiSearch', 'AI search', 20),
-   ('Manual', 'Manual', 30)
-on conflict (id) do nothing;
 
-create table proposal_statuses
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: ai_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_jobs (
+    id text NOT NULL,
+    label text NOT NULL,
+    description text,
+    provider_id text NOT NULL,
+    output_mode text NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    requires_web_search boolean DEFAULT true NOT NULL,
+    active_prompt_id uuid,
+    tools_json jsonb,
+    conditional_tools_json jsonb,
+    tool_call_max_tokens integer,
+    model text,
+    queue_priority integer DEFAULT 0 NOT NULL,
+    include_social_media boolean DEFAULT false NOT NULL
 );
 
-insert into proposal_statuses (id, label, sort_order)
-values
-   ('Pending', 'Pending', 10),
-   ('Approved', 'Approved', 20),
-   ('Rejected', 'Rejected', 30),
-   ('NeedsChanges', 'Needs changes', 40),
-   ('Duplicate', 'Duplicate', 50)
-on conflict (id) do nothing;
 
-create table activity_publication_statuses
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: ai_providers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_providers (
+    id text NOT NULL,
+    label text NOT NULL,
+    kind text NOT NULL,
+    base_address text,
+    model text,
+    api_key_source text,
+    request_options jsonb DEFAULT '{}'::jsonb NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-insert into activity_publication_statuses (id, label, sort_order)
-values
-   ('Draft', 'Draft', 10),
-   ('Published', 'Published', 20)
-on conflict (id) do nothing;
 
-create table proposal_reject_reasons
-(
-   id text primary key,
-   label text not null,
-   sort_order integer not null
+--
+-- Name: broadcast_ignore; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.broadcast_ignore (
+    id uuid NOT NULL,
+    kind text NOT NULL,
+    value text NOT NULL,
+    source_key text,
+    reason text,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-insert into proposal_reject_reasons (id, label, sort_order)
-values
-   ('Hallucination', 'Hallucination', 10),
-   ('Duplicate', 'Duplicate', 20),
-   ('OutOfScope', 'Out of scope', 30)
-on conflict (id) do nothing;
 
-create table sources
-(
-   id text primary key,
-   name text not null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
+--
+-- Name: broadcast_import_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.broadcast_import_runs (
+    id uuid NOT NULL,
+    source_key text NOT NULL,
+    source_uri text,
+    started_at timestamp with time zone NOT NULL,
+    finished_at timestamp with time zone,
+    status text NOT NULL,
+    broadcast_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-create table countries
-(
-   id text primary key,
-   code text not null,
-   name text not null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   constraint countries_code_unique unique (code)
+
+--
+-- Name: broadcasts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.broadcasts (
+    id uuid NOT NULL,
+    import_run_id uuid,
+    source_key text NOT NULL,
+    external_id text NOT NULL,
+    fingerprint text NOT NULL,
+    channel_id text NOT NULL,
+    channel_name text,
+    title text NOT NULL,
+    description text,
+    categories text[] NOT NULL,
+    starts_at timestamp with time zone NOT NULL,
+    ends_at timestamp with time zone NOT NULL,
+    time_zone_id text DEFAULT 'Europe/Stockholm'::text NOT NULL,
+    raw_programme_xml text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_replay boolean DEFAULT false NOT NULL,
+    original_air_date date,
+    hidden_at timestamp with time zone,
+    entity_id uuid,
+    activity_group_source_kind_id text,
+    activity_group_source_activity_id uuid,
+    activity_group_draft_title text,
+    CONSTRAINT broadcasts_activity_group_source_kind_check CHECK (((activity_group_source_kind_id IS NULL) OR (activity_group_source_kind_id = 'ActivityGroupForActivity'::text))),
+    CONSTRAINT broadcasts_time_check CHECK ((ends_at > starts_at))
 );
 
-insert into countries (id, code, name)
-values ('se', 'SE', 'Sweden')
-on conflict (id) do nothing;
 
-create table activity_groups
-(
-   id uuid primary key,
-   title text not null,
-   sport_id text not null references sports(id),
-   start_date date not null,
-   end_date date not null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   constraint activity_groups_date_check
-      check (end_date >= start_date)
+--
+-- Name: countries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.countries (
+    id text NOT NULL,
+    code text NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-create index activity_groups_sport_title_date_idx
-   on activity_groups(sport_id, title, start_date, end_date);
 
-create table entities
-(
-   id uuid primary key,
-   canonical_name text not null,
-   entity_type_id text not null references entity_types(id),
-   sport_id text not null references sports(id),
-   country_id text not null references countries(id),
-   country_relevance_kind_id text not null
-      references country_relevance_kinds(id),
-   country_relevance_reason text not null,
-   watch_priority_id text not null references entity_watch_priorities(id),
-   expected_stability_id text not null references entity_stability_kinds(id),
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   person_gender_id text null,
-   alias_name text null,
-   constraint entities_person_gender_id_valid
-      check (
-         person_gender_id is null or
-         person_gender_id in ('female', 'male', 'non_binary')
-      ),
-   constraint entities_person_gender_only_for_persons
-      check (
-         entity_type_id = 'Person' or person_gender_id is null
-      )
+--
+-- Name: country_relevance_kinds; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.country_relevance_kinds (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL
 );
 
-create table activities
-(
-   id uuid primary key,
-   title text not null,
-   description text null,
-   teaser text null,
-   activity_type_id text not null references activity_types(id),
-   sport_id text not null references sports(id),
-   activity_date date not null,
-   local_start_time time null,
-   starts_at timestamptz null,
-   time_zone_id text not null default 'Europe/Stockholm',
-   publication_status_id text not null default 'Draft'
-      references activity_publication_statuses(id),
-   tv_channel_name text null,
-   slug text null,
-   published_at timestamptz null,
-   facts text null,
-   activity_group_id uuid null references activity_groups(id)
-      on delete set null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   constraint activities_time_shape_check
-      check (
-         (local_start_time is not null and starts_at is not null) or
-         (local_start_time is null and starts_at is null)
-      )
+
+--
+-- Name: entities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entities (
+    id uuid NOT NULL,
+    canonical_name text NOT NULL,
+    entity_type_id text NOT NULL,
+    sport_id text NOT NULL,
+    country_id text NOT NULL,
+    country_relevance_kind_id text NOT NULL,
+    country_relevance_reason text NOT NULL,
+    watch_priority_id text NOT NULL,
+    expected_stability_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    person_gender_id text,
+    alias_name text,
+    bio text,
+    bio_eng text,
+    birthdate date,
+    height integer,
+    weight integer,
+    formative_club text,
+    CONSTRAINT entities_person_gender_id_valid CHECK (((person_gender_id IS NULL) OR (person_gender_id = ANY (ARRAY['female'::text, 'male'::text])))),
+    CONSTRAINT entities_person_gender_only_for_persons CHECK (((entity_type_id = 'Person'::text) OR (person_gender_id IS NULL)))
 );
 
-create unique index activities_slug_unique
-   on activities(slug)
-   where slug is not null;
 
-create index activities_publication_listing_idx
-   on activities(publication_status_id, activity_date, local_start_time);
+--
+-- Name: entity_stability_kinds; Type: TABLE; Schema: public; Owner: -
+--
 
-create index activities_activity_group_id_idx
-   on activities(activity_group_id);
-
-create table activity_proposals
-(
-   id text primary key,
-   producer_type_id text not null references producer_types(id),
-   producer text null,
-   source_id text not null references sources(id),
-   external_id text null,
-   fingerprint text not null,
-   title text not null,
-   description text null,
-   raw_content text null,
-   activity_type_id text not null references activity_types(id),
-   sport_id text not null references sports(id),
-   context text null,
-   activity_date date not null,
-   local_start_time time null,
-   starts_at timestamptz null,
-   time_zone_id text not null default 'Europe/Stockholm',
-   confidence numeric(4,3) null,
-   status_id text not null references proposal_statuses(id),
-   reject_reason_id text null references proposal_reject_reasons(id),
-   reject_comment text null,
-   activity_id uuid null references activities(id),
-   prompt text null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   constraint activity_proposals_confidence_check
-      check (confidence is null or (confidence >= 0 and confidence <= 1)),
-   constraint activity_proposals_time_shape_check
-      check (
-         (local_start_time is not null and starts_at is not null) or
-         (local_start_time is null and starts_at is null)
-      ),
-   constraint activity_proposals_activity_reference_check
-      check (
-         (status_id = 'Approved' and activity_id is not null) or
-         (status_id <> 'Approved')
-      ),
-   constraint activity_proposals_reject_reason_status_check
-      check (
-         (status_id = 'Rejected') or
-         (reject_reason_id is null and reject_comment is null)
-      )
+CREATE TABLE public.entity_stability_kinds (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL
 );
 
-create table activity_proposal_entity_links
-(
-   id uuid primary key,
-   proposal_id text not null references activity_proposals(id),
-   entity_id uuid not null references entities(id),
-   proposed_role_id text not null references activity_entity_link_roles(id),
-   explanation text not null,
-   context_name text null,
-   confidence numeric(4,3) null,
-   constraint activity_proposal_entity_links_confidence_check
-      check (confidence is null or (confidence >= 0 and confidence <= 1))
+
+--
+-- Name: entity_to_entity_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_to_entity_links (
+    id uuid NOT NULL,
+    source_entity_id uuid NOT NULL,
+    target_entity_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT entity_to_entity_links_distinct_entities_check CHECK ((source_entity_id <> target_entity_id))
 );
 
-create table activity_proposal_evidence
-(
-   id uuid primary key,
-   proposal_id text not null references activity_proposals(id),
-   source_id text not null references sources(id),
-   uri text null,
-   title text null,
-   observed_at timestamptz not null,
-   summary text not null,
-   raw_excerpt text null,
-   created_at timestamptz not null default now()
+
+--
+-- Name: entity_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_types (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL
 );
 
-create table activity_entity_links
-(
-   id uuid primary key,
-   activity_id uuid not null references activities(id),
-   entity_id uuid not null references entities(id),
-   organization_entity_id uuid null references entities(id)
-      on delete set null
+
+--
+-- Name: entity_watch_priorities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_watch_priorities (
+    id text NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL
 );
 
-create index activity_entity_links_activity_id_idx
-   on activity_entity_links(activity_id);
 
-create index activity_entity_links_entity_id_idx
-   on activity_entity_links(entity_id);
+--
+-- Name: sources; Type: TABLE; Schema: public; Owner: -
+--
 
-create index activity_entity_links_organization_entity_id_idx
-   on activity_entity_links(organization_entity_id);
-
-create table activity_evidence
-(
-   id uuid primary key,
-   activity_id uuid not null references activities(id),
-   proposal_id text null references activity_proposals(id),
-   source_id text not null references sources(id),
-   uri text null,
-   title text null,
-   observed_at timestamptz not null,
-   comment text null,
-   created_at timestamptz not null default now()
+CREATE TABLE public.sources (
+    id uuid NOT NULL,
+    correlation_type text NOT NULL,
+    correlation_id text NOT NULL,
+    kind text NOT NULL,
+    url text NOT NULL,
+    title text,
+    excerpt text,
+    observed_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-create table entity_to_entity_links
-(
-   id uuid primary key,
-   source_entity_id uuid not null references entities(id)
-      on delete cascade,
-   target_entity_id uuid not null references entities(id)
-      on delete cascade,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   constraint entity_to_entity_links_distinct_entities_check
-      check (source_entity_id <> target_entity_id),
-   constraint entity_to_entity_links_unique
-      unique (source_entity_id, target_entity_id)
+
+--
+-- Name: sports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sports (
+    id text NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    icon_id text,
+    display_name text
 );
 
-create index entity_to_entity_links_source_entity_id_idx
-   on entity_to_entity_links(source_entity_id);
 
-create index entity_to_entity_links_target_entity_id_idx
-   on entity_to_entity_links(target_entity_id);
+--
+-- Name: activities activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create unique index entity_to_entity_links_entity_pair_unique
-   on entity_to_entity_links (
-      least(source_entity_id, target_entity_id),
-      greatest(source_entity_id, target_entity_id)
-   );
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT activities_pkey PRIMARY KEY (id);
 
-create table broadcast_import_runs
-(
-   id uuid primary key,
-   source_key text not null,
-   source_uri text null,
-   started_at timestamptz not null,
-   finished_at timestamptz null,
-   status text not null,
-   broadcast_count integer not null default 0,
-   created_at timestamptz not null default now()
-);
 
-create table broadcasts
-(
-   id uuid primary key,
-   import_run_id uuid null references broadcast_import_runs(id),
-   source_key text not null,
-   external_id text not null,
-   fingerprint text not null,
-   channel_id text not null,
-   channel_name text null,
-   title text not null,
-   description text null,
-   categories text[] not null,
-   is_replay boolean not null default false,
-   original_air_date date null,
-   starts_at timestamptz not null,
-   ends_at timestamptz not null,
-   time_zone_id text not null default 'Europe/Stockholm',
-   raw_programme_xml text null,
-   hidden_at timestamptz null,
-   entity_id uuid null references entities(id) on delete set null,
-   activity_group_source_kind_id text null,
-   activity_group_source_activity_id uuid null references activities(id)
-      on delete set null,
-   activity_group_draft_title text null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   constraint broadcasts_activity_group_source_kind_check
-      check (
-         activity_group_source_kind_id is null or
-         activity_group_source_kind_id = 'ActivityGroupForActivity'
-      ),
-   constraint broadcasts_time_check
-      check (ends_at > starts_at),
-   constraint broadcasts_fingerprint_unique
-      unique (fingerprint)
-);
+--
+-- Name: activity_entity_link_roles activity_entity_link_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create index broadcasts_starts_at_idx
-   on broadcasts (starts_at);
+ALTER TABLE ONLY public.activity_entity_link_roles
+    ADD CONSTRAINT activity_entity_link_roles_pkey PRIMARY KEY (id);
 
-create index broadcasts_channel_id_idx
-   on broadcasts (channel_id);
 
-create index broadcasts_visible_starts_at_idx
-   on broadcasts (starts_at)
-   where hidden_at is null;
+--
+-- Name: activity_entity_links activity_entity_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create index broadcasts_entity_id_idx
-   on broadcasts(entity_id);
+ALTER TABLE ONLY public.activity_entity_links
+    ADD CONSTRAINT activity_entity_links_pkey PRIMARY KEY (id);
 
-create index broadcasts_activity_group_source_activity_id_idx
-   on broadcasts(activity_group_source_activity_id);
 
-create index broadcasts_categories_gin_idx
-   on broadcasts using gin (categories);
+--
+-- Name: activity_groups activity_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create table broadcast_ignore
-(
-   id uuid primary key,
-   kind text not null,
-   value text not null,
-   source_key text null,
-   reason text null,
-   is_active boolean not null default true,
-   created_at timestamptz not null default now(),
-   constraint broadcast_ignore_kind_value_source_unique
-      unique nulls not distinct (kind, value, source_key)
-);
+ALTER TABLE ONLY public.activity_groups
+    ADD CONSTRAINT activity_groups_pkey PRIMARY KEY (id);
 
-create index broadcast_ignore_active_kind_idx
-   on broadcast_ignore (kind, source_key)
-   where is_active = true;
 
-insert into broadcast_ignore (
-   id,
-   kind,
-   value,
-   source_key,
-   reason
-)
-values
-   (
-      '5ed80f1d-0d57-4f6b-a261-3c9b4b64df64',
-      'channel_name',
-      'Horse & Country TV',
-      'iptv-epg-se',
-      'Horse racing channel is outside the target sports scope.'
-   ),
-   (
-      'f05f8c33-ef23-4e47-b9bf-22b6da761f6d',
-      'channel_name',
-      'ATG Live',
-      'iptv-epg-se',
-      'Horse racing channel is outside the target sports scope.'
-   ),
-   (
-      '541ab42f-2799-40f2-a904-8c8de49bd45f',
-      'channel_name',
-      'Fight Sports',
-      'iptv-epg-se',
-      'Channel is outside the target sports scope.'
-   ),
-   (
-      '8952ba8d-7b65-43c8-9d12-93a1c1de906c',
-      'channel_name',
-      'GINX eSports TV',
-      'iptv-epg-se',
-      'Channel is outside the target sports scope.'
-   ),
-   (
-      '4914e8ef-89e0-4aa8-8914-f277c675b15c',
-      'channel_name',
-      'Extreme Sports Channel',
-      'iptv-epg-se',
-      'Channel is outside the target sports scope.'
-   )
-on conflict (id) do nothing;
+--
+-- Name: activity_publication_statuses activity_publication_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create table ai_providers
-(
-   id text primary key,
-   label text not null,
-   kind text not null,
-   base_address text null,
-   model text null,
-   api_key_source text null,
-   request_options jsonb not null default '{}'::jsonb,
-   enabled boolean not null default true,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
-);
+ALTER TABLE ONLY public.activity_publication_statuses
+    ADD CONSTRAINT activity_publication_statuses_pkey PRIMARY KEY (id);
 
-create table ai_jobs
-(
-   id text primary key,
-   label text not null,
-   description text null,
-   provider_id text not null references ai_providers(id),
-   output_mode text not null,
-   enabled boolean not null default true,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   requires_web_search boolean not null default true,
-   active_prompt_id uuid null,
-   tools_json jsonb null,
-   conditional_tools_json jsonb null
-);
 
-create table ai_job_prompts
-(
-   id uuid primary key,
-   job_id text not null references ai_jobs(id) on delete cascade,
-   version integer not null,
-   system_prompt text not null,
-   user_prompt_template text not null,
-   output_schema jsonb null,
-   request_options jsonb not null default '{}'::jsonb,
-   temperature numeric(4,2) null,
-   max_output_tokens integer null,
-   enabled boolean not null default true,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now(),
-   max_tool_rounds integer null,
-   unique(job_id, version)
-);
+--
+-- Name: activity_types activity_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-alter table ai_jobs
-   add constraint ai_jobs_active_prompt_id_fkey
-      foreign key (active_prompt_id)
-      references ai_job_prompts(id)
-      on delete set null;
+ALTER TABLE ONLY public.activity_types
+    ADD CONSTRAINT activity_types_pkey PRIMARY KEY (id);
 
-create table ai_job_runs
-(
-   id uuid primary key,
-   job_id text not null references ai_jobs(id),
-   prompt_id uuid not null references ai_job_prompts(id),
-   provider_id text not null references ai_providers(id),
-   provider_model text null,
-   status_id text not null,
-   correlation_id text null,
-   input_payload jsonb not null,
-   rendered_prompt text not null,
-   raw_request jsonb null,
-   raw_response jsonb null,
-   output_text text null,
-   error_message text null,
-   started_at timestamptz not null,
-   completed_at timestamptz null,
-   duration_seconds numeric(12,3) null,
-   input_tokens integer null,
-   output_tokens integer null,
-   reasoning_tokens integer null,
-   created_at timestamptz not null default now(),
-   tool_trace jsonb null,
-   tool_round_count integer not null default 0,
-   conversation_character_count integer not null default 0,
-   prompt_version integer null,
-   prompt_system_prompt text null,
-   prompt_user_prompt_template text null,
-   execution_environment text null
-);
 
-create index ai_job_prompts_job_id_enabled_version_idx
-   on ai_job_prompts(job_id, enabled, version desc);
+--
+-- Name: ai_job_prompts ai_job_prompts_job_id_version_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create index ai_job_runs_job_id_started_at_idx
-   on ai_job_runs(job_id, started_at desc);
+ALTER TABLE ONLY public.ai_job_prompts
+    ADD CONSTRAINT ai_job_prompts_job_id_version_key UNIQUE (job_id, version);
 
-create index ai_job_runs_provider_id_started_at_idx
-   on ai_job_runs(provider_id, started_at desc);
 
-create index ai_job_runs_status_id_started_at_idx
-   on ai_job_runs(status_id, started_at desc);
+--
+-- Name: ai_job_prompts ai_job_prompts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create index ai_job_runs_started_at_desc_idx
-   on ai_job_runs(started_at desc);
+ALTER TABLE ONLY public.ai_job_prompts
+    ADD CONSTRAINT ai_job_prompts_pkey PRIMARY KEY (id);
 
-create index ai_job_runs_job_corr_started_idx
-   on ai_job_runs(job_id, correlation_id, started_at desc);
 
-create index ai_job_runs_exec_claim_idx
-   on ai_job_runs(
-      execution_environment,
-      status_id desc,
-      started_at asc,
-      created_at asc,
-      id asc
-   )
-   where status_id in ('pending', 'running');
+--
+-- Name: ai_job_runs ai_job_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create index ai_job_runs_exec_env_idx
-   on ai_job_runs(execution_environment)
-   where execution_environment is not null
-      and btrim(execution_environment) <> '';
+ALTER TABLE ONLY public.ai_job_runs
+    ADD CONSTRAINT ai_job_runs_pkey PRIMARY KEY (id);
 
-create table ai_activity_search_runs
-(
-   id text primary key,
-   started_at timestamptz not null,
-   completed_at timestamptz null,
-   status_id text not null,
-   client_mode text not null,
-   base_address text not null,
-   requested_model text not null,
-   api_key_source text not null,
-   allow_web_search boolean not null,
-   web_search_tool_type text not null,
-   plugin_id text null,
-   search_date date not null,
-   window_start date not null,
-   window_end date not null,
-   max_proposals integer not null,
-   write_to_database boolean not null,
-   run_directory text null,
-   output_path text null,
-   total_entity_count integer not null,
-   completed_item_count integer not null default 0,
-   failed_item_count integer not null default 0,
-   proposal_count integer not null default 0,
-   persisted_proposal_count integer not null default 0,
-   error_message text null,
-   created_at timestamptz not null default now(),
-   updated_at timestamptz not null default now()
-);
 
-create table ai_activity_search_run_items
-(
-   id uuid primary key,
-   run_id text not null references ai_activity_search_runs(id)
-      on delete cascade,
-   entity_id uuid null references entities(id),
-   entity_key text not null,
-   entity_name text not null,
-   status_id text not null,
-   proposal_count integer null,
-   persisted_proposal_count integer null,
-   result_path text null,
-   failure_path text null,
-   error_type text null,
-   error_message text null,
-   started_at timestamptz not null,
-   completed_at timestamptz not null,
-   duration_seconds numeric(12,3) not null,
-   created_at timestamptz not null default now()
-);
+--
+-- Name: ai_jobs ai_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-create index ai_activity_search_run_items_run_id_idx
-   on ai_activity_search_run_items(run_id);
+ALTER TABLE ONLY public.ai_jobs
+    ADD CONSTRAINT ai_jobs_pkey PRIMARY KEY (id);
 
-create index ai_activity_search_run_items_entity_id_idx
-   on ai_activity_search_run_items(entity_id);
+
+--
+-- Name: ai_providers ai_providers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_providers
+    ADD CONSTRAINT ai_providers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: broadcast_ignore broadcast_ignore_kind_value_source_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcast_ignore
+    ADD CONSTRAINT broadcast_ignore_kind_value_source_unique UNIQUE NULLS NOT DISTINCT (kind, value, source_key);
+
+
+--
+-- Name: broadcast_ignore broadcast_ignore_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcast_ignore
+    ADD CONSTRAINT broadcast_ignore_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: broadcast_import_runs broadcast_import_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcast_import_runs
+    ADD CONSTRAINT broadcast_import_runs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: broadcasts broadcasts_fingerprint_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcasts
+    ADD CONSTRAINT broadcasts_fingerprint_unique UNIQUE (fingerprint);
+
+
+--
+-- Name: broadcasts broadcasts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcasts
+    ADD CONSTRAINT broadcasts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: countries countries_code_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_code_unique UNIQUE (code);
+
+
+--
+-- Name: countries countries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: country_relevance_kinds country_relevance_kinds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.country_relevance_kinds
+    ADD CONSTRAINT country_relevance_kinds_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entities entities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT entities_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_stability_kinds entity_stability_kinds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_stability_kinds
+    ADD CONSTRAINT entity_stability_kinds_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_to_entity_links entity_to_entity_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_to_entity_links
+    ADD CONSTRAINT entity_to_entity_links_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_to_entity_links entity_to_entity_links_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_to_entity_links
+    ADD CONSTRAINT entity_to_entity_links_unique UNIQUE (source_entity_id, target_entity_id);
+
+
+--
+-- Name: entity_types entity_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_types
+    ADD CONSTRAINT entity_types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_watch_priorities entity_watch_priorities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_watch_priorities
+    ADD CONSTRAINT entity_watch_priorities_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sources sources_pkey1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sources
+    ADD CONSTRAINT sources_pkey1 PRIMARY KEY (id);
+
+
+--
+-- Name: sports sports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sports
+    ADD CONSTRAINT sports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: activities_activity_group_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activities_activity_group_id_idx ON public.activities USING btree (activity_group_id);
+
+
+--
+-- Name: activities_publication_listing_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activities_publication_listing_idx ON public.activities USING btree (publication_status_id, activity_date, local_start_time);
+
+
+--
+-- Name: activities_slug_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX activities_slug_unique ON public.activities USING btree (slug) WHERE (slug IS NOT NULL);
+
+
+--
+-- Name: activities_starts_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activities_starts_at_idx ON public.activities USING btree (starts_at);
+
+
+--
+-- Name: activity_entity_link_roles_sort_label_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_entity_link_roles_sort_label_idx ON public.activity_entity_link_roles USING btree (sort_order, label);
+
+
+--
+-- Name: activity_entity_links_activity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_entity_links_activity_id_idx ON public.activity_entity_links USING btree (activity_id);
+
+
+--
+-- Name: activity_entity_links_entity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_entity_links_entity_id_idx ON public.activity_entity_links USING btree (entity_id);
+
+
+--
+-- Name: activity_entity_links_organization_entity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_entity_links_organization_entity_id_idx ON public.activity_entity_links USING btree (organization_entity_id);
+
+
+--
+-- Name: activity_groups_sport_title_date_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_groups_sport_title_date_idx ON public.activity_groups USING btree (sport_id, title, start_date, end_date);
+
+
+--
+-- Name: activity_publication_statuses_sort_label_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_publication_statuses_sort_label_idx ON public.activity_publication_statuses USING btree (sort_order, label);
+
+
+--
+-- Name: activity_types_sort_label_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_types_sort_label_idx ON public.activity_types USING btree (sort_order, label);
+
+
+--
+-- Name: ai_job_prompts_job_id_enabled_version_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_prompts_job_id_enabled_version_idx ON public.ai_job_prompts USING btree (job_id, enabled, version DESC);
+
+
+--
+-- Name: ai_job_runs_exec_claim_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_exec_claim_idx ON public.ai_job_runs USING btree (execution_environment, status_id DESC, started_at, created_at, id) WHERE (status_id = ANY (ARRAY['pending'::text, 'running'::text]));
+
+
+--
+-- Name: ai_job_runs_exec_env_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_exec_env_idx ON public.ai_job_runs USING btree (execution_environment) WHERE ((execution_environment IS NOT NULL) AND (btrim(execution_environment) <> ''::text));
+
+
+--
+-- Name: ai_job_runs_job_corr_started_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_job_corr_started_idx ON public.ai_job_runs USING btree (job_id, correlation_id, started_at DESC);
+
+
+--
+-- Name: ai_job_runs_job_id_started_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_job_id_started_at_idx ON public.ai_job_runs USING btree (job_id, started_at DESC);
+
+
+--
+-- Name: ai_job_runs_provider_id_started_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_provider_id_started_at_idx ON public.ai_job_runs USING btree (provider_id, started_at DESC);
+
+
+--
+-- Name: ai_job_runs_started_at_desc_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_started_at_desc_idx ON public.ai_job_runs USING btree (started_at DESC);
+
+
+--
+-- Name: ai_job_runs_status_id_started_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_job_runs_status_id_started_at_idx ON public.ai_job_runs USING btree (status_id, started_at DESC);
+
+
+--
+-- Name: broadcast_ignore_active_kind_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcast_ignore_active_kind_idx ON public.broadcast_ignore USING btree (kind, source_key) WHERE (is_active = true);
+
+
+--
+-- Name: broadcasts_activity_group_source_activity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcasts_activity_group_source_activity_id_idx ON public.broadcasts USING btree (activity_group_source_activity_id);
+
+
+--
+-- Name: broadcasts_categories_gin_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcasts_categories_gin_idx ON public.broadcasts USING gin (categories);
+
+
+--
+-- Name: broadcasts_channel_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcasts_channel_id_idx ON public.broadcasts USING btree (channel_id);
+
+
+--
+-- Name: broadcasts_entity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcasts_entity_id_idx ON public.broadcasts USING btree (entity_id);
+
+
+--
+-- Name: broadcasts_starts_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcasts_starts_at_idx ON public.broadcasts USING btree (starts_at);
+
+
+--
+-- Name: broadcasts_visible_starts_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX broadcasts_visible_starts_at_idx ON public.broadcasts USING btree (starts_at) WHERE (hidden_at IS NULL);
+
+
+--
+-- Name: countries_name_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX countries_name_idx ON public.countries USING btree (name);
+
+
+--
+-- Name: entities_canonical_name_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entities_canonical_name_idx ON public.entities USING btree (canonical_name);
+
+
+--
+-- Name: entities_type_name_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entities_type_name_idx ON public.entities USING btree (entity_type_id, canonical_name);
+
+
+--
+-- Name: entity_stability_kinds_sort_label_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_stability_kinds_sort_label_idx ON public.entity_stability_kinds USING btree (sort_order, label);
+
+
+--
+-- Name: entity_to_entity_links_entity_pair_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX entity_to_entity_links_entity_pair_unique ON public.entity_to_entity_links USING btree (LEAST(source_entity_id, target_entity_id), GREATEST(source_entity_id, target_entity_id));
+
+
+--
+-- Name: entity_to_entity_links_source_entity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_to_entity_links_source_entity_id_idx ON public.entity_to_entity_links USING btree (source_entity_id);
+
+
+--
+-- Name: entity_to_entity_links_target_entity_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_to_entity_links_target_entity_id_idx ON public.entity_to_entity_links USING btree (target_entity_id);
+
+
+--
+-- Name: entity_types_label_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_types_label_idx ON public.entity_types USING btree (label);
+
+
+--
+-- Name: entity_watch_priorities_sort_label_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_watch_priorities_sort_label_idx ON public.entity_watch_priorities USING btree (sort_order, label);
+
+
+--
+-- Name: sources_correlation_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sources_correlation_idx ON public.sources USING btree (correlation_type, correlation_id, kind);
+
+
+--
+-- Name: sources_observed_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sources_observed_at_idx ON public.sources USING btree (observed_at DESC);
+
+
+--
+-- Name: sources_url_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sources_url_idx ON public.sources USING btree (url);
+
+
+--
+-- Name: sports_name_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sports_name_idx ON public.sports USING btree (name);
+
+
+--
+-- Name: activities activities_activity_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT activities_activity_group_id_fkey FOREIGN KEY (activity_group_id) REFERENCES public.activity_groups(id) ON DELETE SET NULL;
+
+
+--
+-- Name: activities activities_activity_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT activities_activity_type_id_fkey FOREIGN KEY (activity_type_id) REFERENCES public.activity_types(id);
+
+
+--
+-- Name: activities activities_publication_status_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT activities_publication_status_id_fkey FOREIGN KEY (publication_status_id) REFERENCES public.activity_publication_statuses(id);
+
+
+--
+-- Name: activities activities_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT activities_sport_id_fkey FOREIGN KEY (sport_id) REFERENCES public.sports(id);
+
+
+--
+-- Name: activity_entity_links activity_entity_links_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_entity_links
+    ADD CONSTRAINT activity_entity_links_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activities(id);
+
+
+--
+-- Name: activity_entity_links activity_entity_links_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_entity_links
+    ADD CONSTRAINT activity_entity_links_entity_id_fkey FOREIGN KEY (entity_id) REFERENCES public.entities(id);
+
+
+--
+-- Name: activity_entity_links activity_entity_links_organization_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_entity_links
+    ADD CONSTRAINT activity_entity_links_organization_entity_id_fkey FOREIGN KEY (organization_entity_id) REFERENCES public.entities(id) ON DELETE SET NULL;
+
+
+--
+-- Name: activity_groups activity_groups_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_groups
+    ADD CONSTRAINT activity_groups_sport_id_fkey FOREIGN KEY (sport_id) REFERENCES public.sports(id);
+
+
+--
+-- Name: ai_job_prompts ai_job_prompts_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_job_prompts
+    ADD CONSTRAINT ai_job_prompts_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.ai_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ai_job_runs ai_job_runs_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_job_runs
+    ADD CONSTRAINT ai_job_runs_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.ai_jobs(id);
+
+
+--
+-- Name: ai_job_runs ai_job_runs_prompt_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_job_runs
+    ADD CONSTRAINT ai_job_runs_prompt_id_fkey FOREIGN KEY (prompt_id) REFERENCES public.ai_job_prompts(id);
+
+
+--
+-- Name: ai_job_runs ai_job_runs_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_job_runs
+    ADD CONSTRAINT ai_job_runs_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ai_providers(id);
+
+
+--
+-- Name: ai_jobs ai_jobs_active_prompt_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_jobs
+    ADD CONSTRAINT ai_jobs_active_prompt_id_fkey FOREIGN KEY (active_prompt_id) REFERENCES public.ai_job_prompts(id) ON DELETE SET NULL;
+
+
+--
+-- Name: ai_jobs ai_jobs_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_jobs
+    ADD CONSTRAINT ai_jobs_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ai_providers(id);
+
+
+--
+-- Name: broadcasts broadcasts_activity_group_source_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcasts
+    ADD CONSTRAINT broadcasts_activity_group_source_activity_id_fkey FOREIGN KEY (activity_group_source_activity_id) REFERENCES public.activities(id) ON DELETE SET NULL;
+
+
+--
+-- Name: broadcasts broadcasts_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcasts
+    ADD CONSTRAINT broadcasts_entity_id_fkey FOREIGN KEY (entity_id) REFERENCES public.entities(id) ON DELETE SET NULL;
+
+
+--
+-- Name: broadcasts broadcasts_import_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.broadcasts
+    ADD CONSTRAINT broadcasts_import_run_id_fkey FOREIGN KEY (import_run_id) REFERENCES public.broadcast_import_runs(id);
+
+
+--
+-- Name: entities entities_country_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT entities_country_id_fk FOREIGN KEY (country_id) REFERENCES public.countries(id);
+
+
+--
+-- Name: entity_to_entity_links entity_to_entity_links_source_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_to_entity_links
+    ADD CONSTRAINT entity_to_entity_links_source_entity_id_fkey FOREIGN KEY (source_entity_id) REFERENCES public.entities(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_to_entity_links entity_to_entity_links_target_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_to_entity_links
+    ADD CONSTRAINT entity_to_entity_links_target_entity_id_fkey FOREIGN KEY (target_entity_id) REFERENCES public.entities(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entities tracked_entities_country_relevance_kind_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT tracked_entities_country_relevance_kind_id_fkey FOREIGN KEY (country_relevance_kind_id) REFERENCES public.country_relevance_kinds(id);
+
+
+--
+-- Name: entities tracked_entities_entity_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT tracked_entities_entity_type_id_fkey FOREIGN KEY (entity_type_id) REFERENCES public.entity_types(id);
+
+
+--
+-- Name: entities tracked_entities_expected_stability_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT tracked_entities_expected_stability_id_fkey FOREIGN KEY (expected_stability_id) REFERENCES public.entity_stability_kinds(id);
+
+
+--
+-- Name: entities tracked_entities_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT tracked_entities_sport_id_fkey FOREIGN KEY (sport_id) REFERENCES public.sports(id);
+
+
+--
+-- Name: entities tracked_entities_watch_priority_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT tracked_entities_watch_priority_id_fkey FOREIGN KEY (watch_priority_id) REFERENCES public.entity_watch_priorities(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict JCzg5EYhMw6o4etPKoAsw7mv3TvMpuo7EpIIpzIm05gbn7k63NWHOWAyWjEoTlF

@@ -29,7 +29,7 @@ public sealed class EditModelTests
             AliasName = aliasName,
             EntityTypeId = TrackedEntityTypeIds.Organization,
             SportId = "football",
-            CountryId = "se",
+            CountryId = PrimaryCountry.Id,
             CountryRelevanceKindId =
                "NationalityOrSportingIdentity",
             CountryRelevanceReason = "Test coverage",
@@ -66,10 +66,4 @@ public sealed class EditModelTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
 }

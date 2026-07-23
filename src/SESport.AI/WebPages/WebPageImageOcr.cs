@@ -102,8 +102,11 @@ internal static class WebPageImageOcr
       CancellationToken cancellationToken
    )
    {
-      if(!Uri.TryCreate(image.Url, UriKind.Absolute, out var imageUri) ||
-         imageUri.Scheme is not ("http" or "https"))
+      if(!WebPageUrlPolicy.TryValidate(
+         image.Url,
+         out var imageUri,
+         out _
+      ))
       {
          return null;
       }

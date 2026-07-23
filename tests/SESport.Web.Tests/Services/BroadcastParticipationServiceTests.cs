@@ -459,13 +459,6 @@ public sealed class BroadcastParticipationServiceTests
       }
    }
 
-   private static NpgsqlDataSource CreateDataSource()
-   {
-      var connectionString = PostgresConnectionStrings.ResolveDefault();
-
-      return new NpgsqlDataSourceBuilder(connectionString).Build();
-   }
-
    private static ServiceFixture CreateService(NpgsqlDataSource dataSource)
    {
       var jobRunner = new CapturingAiJobRunner();
@@ -609,7 +602,7 @@ public sealed class BroadcastParticipationServiceTests
             @canonical_name,
             @entity_type_id,
             @sport_id,
-            'se',
+            @country_id,
             'NationalityOrSportingIdentity',
             'Test coverage',
             'tier_3',
@@ -618,6 +611,7 @@ public sealed class BroadcastParticipationServiceTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
+      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
 

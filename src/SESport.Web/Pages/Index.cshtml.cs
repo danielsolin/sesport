@@ -50,13 +50,6 @@ public class IndexModel(
 
    public string? LoadError { get; private set; }
 
-   public bool ShowLoadErrorDetails =>
-      string.Equals(
-         HttpContext.Request.Host.Host,
-         "dev.sesport.se",
-         StringComparison.OrdinalIgnoreCase
-      );
-
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
       var now = DateTimeOffset.UtcNow;
@@ -93,8 +86,9 @@ public class IndexModel(
          UntimedActivities = timeline.UntimedActivities;
       }
       catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
       {
-         LoadError = exception.Message;
+         LoadError = this.LogUnexpectedError(exception);
       }
    }
 
@@ -208,7 +202,7 @@ public class IndexModel(
    {
       return birthdate?.ToString(
          "d MMMM, yyyy",
-         CultureInfo.GetCultureInfo("sv-SE")
+         CultureInfo.GetCultureInfo(PrimaryCountry.CultureName)
       ) ?? string.Empty;
    }
 
