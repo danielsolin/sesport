@@ -13,18 +13,29 @@ public sealed class DetailsMarkupTests
          "src/SESport.Web/Pages/Admin/Runs/Details.cshtml"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
+      var toolTracePath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Ajax/Poll/RunToolTrace.cshtml"
+      );
+      var toolTraceHtml = await File.ReadAllTextAsync(toolTracePath);
+      var toolTraceScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/run-tool-trace.js"
+      );
+      var toolTraceScript = await File.ReadAllTextAsync(
+         toolTraceScriptPath
+      );
 
       AssertOrder(
          html,
          "Execution Environment",
          "run-execution-environment-form",
          "Save",
-         "tool-trace-summary-content",
+         "data-run-tool-trace",
          "summary>Conversation history summary</summary>",
          "summary>Output</summary>",
          "summary>Raw final request</summary>",
          "summary>Raw final response</summary>",
-         "summary>Raw tool trace JSON</summary>",
          "summary>System prompt</summary>",
          "summary>Rendered prompt</summary>",
          "summary>Input payload</summary>",
@@ -35,9 +46,19 @@ public sealed class DetailsMarkupTests
       Assert.Contains("Max payload chars", html);
       Assert.Contains("DetailsModel.FormatJson(Model.Run.OutputText)", html);
       Assert.Contains("asp-for=\"ExecutionEnvironment\"", html);
-      Assert.Contains("tool-trace-turn-header-main", html);
-      Assert.DoesNotContain("Full trace", html);
-      Assert.Contains("Round", html);
+      Assert.Contains("run-tool-trace.js", html);
+      Assert.DoesNotContain("tool-trace-turn-header-main", html);
+      Assert.Contains("tool-trace-turn-header-main", toolTraceHtml);
+      Assert.Contains("summary>Raw tool trace JSON</summary>", toolTraceHtml);
+      Assert.DoesNotContain("Full trace", toolTraceHtml);
+      Assert.Contains("Round", toolTraceHtml);
+      Assert.Contains("pollIntervalMilliseconds = 5000", toolTraceScript);
+      Assert.Contains("updateToolTrace()", toolTraceScript);
+      Assert.Contains(
+         "host.dataset.runStatus !== \"running\"",
+         toolTraceScript
+      );
+      Assert.Contains("data-run-status", toolTraceHtml);
       Assert.DoesNotContain("Tools description", html);
    }
 

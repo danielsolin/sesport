@@ -34,12 +34,6 @@ public class DetailsModel(
 
    public string RenderedPromptText { get; private set; } = string.Empty;
 
-   public IReadOnlyList<ToolTraceTurnViewModel> ToolTraceTurns
-   {
-      get; private
-      set;
-   } = [];
-
    public IReadOnlyList<SelectListItem> ExecutionEnvironmentOptions
    {
       get;
@@ -50,14 +44,6 @@ public class DetailsModel(
 
    private ISet<string> KnownExecutionEnvironmentValues { get; set; } =
       new HashSet<string>(StringComparer.Ordinal);
-
-   public IReadOnlyList<ToolTraceBadgeViewModel> ToolTraceSummaryBadges
-   {
-      get
-      {
-         return BuildToolTraceSummaryBadges(ToolTraceTurns);
-      }
-   }
 
    [BindProperty(SupportsGet = true, Name = RouteKeys.JobId)]
    public string? JobId { get; set; }
@@ -104,7 +90,6 @@ public class DetailsModel(
             Run.ExecutionEnvironment,
             cancellationToken
          );
-         ToolTraceTurns = ParseToolTrace(Run.ToolTraceJson);
          ConversationHistorySummaryText =
             GetConversationHistorySummaryText(Run.RawRequestJson);
          SystemPromptText = GetRenderedSystemPromptText(Run);
@@ -687,7 +672,7 @@ public class DetailsModel(
          : "tool-trace-badge tool-trace-badge-tool";
    }
 
-   private static IReadOnlyList<ToolTraceTurnViewModel> ParseToolTrace(
+   public static IReadOnlyList<ToolTraceTurnViewModel> ParseToolTrace(
       string? toolTraceJson
    )
    {
@@ -790,7 +775,7 @@ public class DetailsModel(
       }
    }
 
-   private static IReadOnlyList<ToolTraceBadgeViewModel>
+   public static IReadOnlyList<ToolTraceBadgeViewModel>
       BuildToolTraceSummaryBadges(
          IReadOnlyList<ToolTraceTurnViewModel> turns
       )

@@ -1092,6 +1092,44 @@ h2 {
    min-width: 0;
 }
 
+.run-tool-trace-loading,
+.run-tool-trace-poll-status {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 700;
+}
+
+.run-tool-trace-poll-status {
+   justify-content: flex-end;
+   margin-bottom: 8px;
+}
+
+.run-tool-trace-spinner {
+   width: 14px;
+   height: 14px;
+   border: 2px solid var(--line);
+   border-top-color: var(--accent-strong);
+   border-radius: 50%;
+   animation: run-tool-trace-spin 1s linear infinite;
+}
+
+.run-tool-trace-host.is-refreshing .run-tool-trace-spinner {
+   animation-duration: 0.45s;
+}
+
+.run-tool-trace-host.is-stopped .run-tool-trace-spinner {
+   display: none;
+}
+
+@keyframes run-tool-trace-spin {
+   to {
+      transform: rotate(360deg);
+   }
+}
+
 .tool-trace-summary-header {
    display: flex;
    align-items: baseline;

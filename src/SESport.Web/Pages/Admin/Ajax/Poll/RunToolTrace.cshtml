@@ -1,0 +1,336 @@
+@page
+@model SESport.Web.Pages.Admin.Ajax.Poll.RunToolTraceModel
+@using SESport.Core.AI
+@using SESport.Web.Pages.Admin.Runs
+@{
+   Layout = null;
+}
+
+<section class="form-section">
+   <div class="run-tool-trace-poll-status"
+        data-run-status="@Model.Run.StatusId"
+        role="status">
+      <span class="run-tool-trace-spinner" aria-hidden="true"></span>
+      <span data-run-tool-trace-status>
+         @if(string.Equals(
+            Model.Run.StatusId,
+            AiJobRunStatusIds.Running,
+            StringComparison.Ordinal
+         ))
+         {
+            <text>Updates automatically every 5 seconds</text>
+         }
+         else
+         {
+            <text>Tool trace loaded</text>
+         }
+      </span>
+   </div>
+   <details class="run-data-details"
+            data-tool-trace-panel="trace"
+            open>
+      <summary>
+         <div class="tool-trace-summary-content">
+            <div class="tool-trace-summary-header">
+               <span>Tool trace</span>
+               @if(Model.Turns.Count > 0)
+               {
+                  <span class="tool-trace-summary-count">
+                     @Model.Turns.Count
+                     round@(Model.Turns.Count == 1 ? "" : "s")
+                  </span>
+               }
+            </div>
+            @if(Model.SummaryBadges.Count > 0)
+            {
+               <div class="tool-trace-summary-badges">
+                  @foreach(var badge in Model.SummaryBadges)
+                  {
+                     <span class="tool-trace-badge @badge.CssClass">
+                        @badge.Text
+                     </span>
+                  }
+               </div>
+            }
+         </div>
+      </summary>
+      @if(string.Equals(
+         Model.Run.StatusId,
+         AiJobRunStatusIds.Running,
+         StringComparison.Ordinal
+      ))
+      {
+         <div class="notice">
+            This run is still in progress. Tool trace updates as rounds
+            complete.
+         </div>
+      }
+
+      @if(Model.Turns.Count == 0)
+      {
+         <div class="notice">No tool trace recorded yet.</div>
+      }
+      else
+      {
+         <div class="tool-trace-list">
+            @foreach(var turn in Model.Turns)
+            {
+               <article class="tool-trace-turn">
+                  <details class="tool-trace-turn-details"
+                           data-tool-trace-panel="turn-@turn.Turn">
+                     <summary>
+                        <div class="tool-trace-turn-header-main">
+                           <span class="tool-trace-turn-label">
+                              Round @turn.Turn
+                           </span>
+                           @if(turn.CompactBadges.Count > 1)
+                           {
+                              <div class="tool-trace-turn-badges">
+                                 @foreach(var badge in
+                                    turn.CompactBadges.Skip(1))
+                                 {
+                                    <span class="tool-trace-badge
+                                       @badge.CssClass">
+                                       @badge.Text
+                                    </span>
+                                 }
+                              </div>
+                           }
+                        </div>
+                     </summary>
+
+                     @if(!string.IsNullOrWhiteSpace(
+                        turn.AssistantReasoningContent))
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Reasoning
+                           </div>
+                           <pre class="prompt-details-pre">
+@turn.AssistantReasoningContent
+                           </pre>
+                        </div>
+                     }
+
+                     @if(
+                        !string.IsNullOrWhiteSpace(
+                           turn.AssistantContent) ||
+                        !string.IsNullOrWhiteSpace(
+                           turn.AssistantValidationStatus) ||
+                        !string.IsNullOrWhiteSpace(
+                           turn.AssistantValidationError)
+                     )
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Assistant
+                           </div>
+                           @if(!string.IsNullOrWhiteSpace(
+                              turn.AssistantValidationStatus))
+                           {
+                              <div>
+                                 Validation:
+                                 @turn.AssistantValidationStatus
+                              </div>
+                           }
+                           @if(!string.IsNullOrWhiteSpace(
+                              turn.AssistantValidationError))
+                           {
+                              <div>
+                                 Error:
+                                 @turn.AssistantValidationError
+                              </div>
+                           }
+                           @if(!string.IsNullOrWhiteSpace(
+                              turn.AssistantContent))
+                           {
+                              <pre class="prompt-details-pre">
+@turn.AssistantContent
+                              </pre>
+                           }
+                           else
+                           {
+                              <div>Final output: Empty</div>
+                           }
+                        </div>
+                     }
+
+                     @if(turn.RepairPrompts.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Repair prompts
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach(var repairPrompt in
+                                 turn.RepairPrompts)
+                              {
+                                 <div class="tool-trace-item">
+                                    <pre class="prompt-details-pre">
+@repairPrompt
+                                    </pre>
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+
+                     @if(turn.ToolCalls.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Tool calls
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach(var toolCall in turn.ToolCalls)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>
+                                          @DetailsModel.FormatToolCall(
+                                             toolCall
+                                          )
+                                       </code>
+                                    </div>
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+
+                     @if(turn.Submissions.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Report submission
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach(var submission in turn.Submissions)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>@submission.Name</code>
+                                       <span>@submission.ToolCallId</span>
+                                    </div>
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       submission.Arguments))
+                                    {
+                                       <pre class="prompt-details-pre">
+@DetailsModel.FormatJson(submission.Arguments)
+                                       </pre>
+                                    }
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+
+                     @if(turn.ConditionalTools.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Conditional tools
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach(var conditionalTool in
+                                 turn.ConditionalTools)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>@conditionalTool.Name</code>
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          conditionalTool.Behavior))
+                                       {
+                                          <span>
+                                             Behavior:
+                                             @conditionalTool.Behavior
+                                          </span>
+                                       }
+                                    </div>
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+
+                     @if(turn.ToolResults.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Tool results
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach(var toolResult in turn.ToolResults)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>@toolResult.Name</code>
+                                       <span>@toolResult.ToolCallId</span>
+                                    </div>
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.Query))
+                                    {
+                                       <div>Query: @toolResult.Query</div>
+                                    }
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.Id))
+                                    {
+                                       <div>Id: @toolResult.Id</div>
+                                    }
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.SearchProvider))
+                                    {
+                                       <div>
+                                          Source:
+                                          @toolResult.SearchProvider
+                                       </div>
+                                    }
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.SearchProviderDetails))
+                                    {
+                                       <div>
+                                          Note:
+                                          @toolResult.SearchProviderDetails
+                                       </div>
+                                    }
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.SearchEngine))
+                                    {
+                                       <div>
+                                          Engine:
+                                          @toolResult.SearchEngine
+                                       </div>
+                                    }
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.Fetcher))
+                                    {
+                                       <div>Fetcher: @toolResult.Fetcher</div>
+                                    }
+                                    <pre class="prompt-details-pre">
+@toolResult.Result
+                                    </pre>
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+                  </details>
+               </article>
+            }
+         </div>
+      }
+   </details>
+</section>
+
+@if(!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
+{
+   <section class="form-section">
+      <details class="run-data-details"
+               data-tool-trace-panel="raw">
+         <summary>Raw tool trace JSON</summary>
+         <pre class="prompt-details-pre">
+@DetailsModel.FormatJson(Model.Run.ToolTraceJson)
+         </pre>
+      </details>
+   </section>
+}
