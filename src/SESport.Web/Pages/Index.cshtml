@@ -234,8 +234,16 @@ else
                   <article class="activity-entry">
                      @if(agendaSection.IsOngoing)
                      {
-                        <span class="activity-ongoing-badge">
+                        <span class="activity-status-badge
+                           activity-ongoing-badge">
                            Pågår
+                        </span>
+                     }
+                     else if(agendaSection.HasEnded)
+                     {
+                        <span class="activity-status-badge
+                           activity-ended-badge">
+                           Avslutad
                         </span>
                      }
                      @if(activity.SportIconPath is not null)

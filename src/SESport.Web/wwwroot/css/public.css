@@ -453,6 +453,11 @@
    --activity-duration-color: #b79a3a;
 }
 
+.activity-is-upcoming .activity-duration-rail,
+.activity-has-ended .activity-duration-rail {
+   --activity-duration-color: #006aa8;
+}
+
 .activity-is-ongoing .activity-duration-line {
    width: 5px;
    opacity: 1;
@@ -460,11 +465,11 @@
    transform: translateX(-1px);
 }
 
-.activity-has-ended .activity-duration-rail {
-   --activity-duration-color: rgba(0, 106, 168, 0.38);
+.activity-has-ended {
+   opacity: 0.5;
 }
 
-.activity-ongoing-badge {
+.activity-status-badge {
    display: inline-flex;
    position: absolute;
    z-index: 1;
@@ -472,16 +477,25 @@
    right: 54px;
    padding: 3px 8px;
    border-radius: 999px;
-   background: rgba(255, 204, 0, 0.3);
-   color: #755f00;
    font-size: 10px;
    font-weight: 900;
    letter-spacing: 0.04em;
    text-transform: uppercase;
 }
 
-.activity-is-ongoing .activity-entry-organization {
-   padding-right: 105px;
+.activity-ongoing-badge {
+   background: rgba(255, 204, 0, 0.3);
+   color: #755f00;
+}
+
+.activity-ended-badge {
+   background: rgba(0, 106, 168, 0.14);
+   color: #004f80;
+}
+
+.activity-is-ongoing .activity-entry-organization,
+.activity-has-ended .activity-entry-organization {
+   padding-right: 125px;
 }
 
 .activity-time-badge-muted {
@@ -828,8 +842,17 @@
 }
 
 @media (max-width: 600px) and (orientation: portrait) {
-   .activity-ongoing-badge {
+   .activity-status-badge {
       top: 5px;
+   }
+
+   .activity-is-ongoing .activity-entry-organization,
+   .activity-has-ended .activity-entry-organization {
+      max-width: calc(100% - 125px);
+      padding-right: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
    }
 
    .activity-group-schedule-item {
