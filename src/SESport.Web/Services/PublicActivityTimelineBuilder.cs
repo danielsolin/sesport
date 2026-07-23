@@ -21,20 +21,42 @@ public sealed class PublicActivityTimelineBuilder
          .Where(activity => !HasLocalStartTime(activity))
          .ToList();
 
-      var timedSections = timedActivities
-         .Select(activity => new
+      var groupedActivityIds = timedActivities
+         .Where(activity => activity.ActivityGroupId is not null)
+         .GroupBy(activity => new
          {
-            Start = activity.StartsAt ?? DateTimeOffset.MaxValue,
-            Activity = activity,
-            Section = CreateSection(activity, now)
+            activity.ActivityDate,
+            GroupId = activity.ActivityGroupId!.Value
          })
-         .OrderBy(item => item.Start)
-         .ThenBy(item => item.Activity.TimeText, StringComparer.Ordinal)
-         .ThenBy(item => item.Activity.Title, StringComparer.OrdinalIgnoreCase)
+         .Where(group => group.Count() > 1)
+         .SelectMany(group => group.Select(activity => activity.Id))
+         .ToHashSet();
+
+      var groupedSections = timedActivities
+         .Where(activity => groupedActivityIds.Contains(activity.Id))
+         .GroupBy(activity => new
+         {
+            activity.ActivityDate,
+            GroupId = activity.ActivityGroupId!.Value
+         })
+         .Select(group => CreateSection(group.ToList(), now));
+      var individualSections = timedActivities
+         .Where(activity => !groupedActivityIds.Contains(activity.Id))
+         .Select(activity => CreateSection([activity], now));
+
+      var timedSections = groupedSections
+         .Concat(individualSections)
+         .OrderBy(section => section.TimelineSlot.Activity.StartsAt)
+         .ThenBy(section => section.TimeLabel, StringComparer.Ordinal)
+         .ThenBy(
+            section => section.ActivityGroupTitle ??
+               section.Activities[0].Title,
+            StringComparer.OrdinalIgnoreCase
+         )
          .ToList();
 
       var timelineEntries = timedSections
-         .Select(item => new PublicActivityTimelineEntry(item.Section))
+         .Select(section => new PublicActivityTimelineEntry(section))
          .ToList();
 
       return new PublicActivityTimelineViewModel(
@@ -50,22 +72,59 @@ public sealed class PublicActivityTimelineBuilder
    }
 
    private static ActivityAgendaSection CreateSection(
-      ActivityListItem activity,
+      IReadOnlyList<ActivityListItem> activities,
       DateTimeOffset now
    )
    {
-      var localStart = TimeZoneHelper.ToLocal(
-         activity.StartsAt!.Value,
+      var orderedActivities = activities
+         .OrderBy(activity => activity.StartsAt)
+         .ThenBy(activity => activity.Title, StringComparer.OrdinalIgnoreCase)
+         .ToList();
+      var activity = orderedActivities[0] with
+      {
+         Participants = orderedActivities
+            .SelectMany(item => item.Participants)
+            .DistinctBy(participant => participant.Id)
+            .ToList()
+      };
+      orderedActivities[0] = activity;
+      var slots = orderedActivities
+         .Select(item => CreateSlot(item, now))
+         .ToList();
+      var timelineSlot = slots
+         .FirstOrDefault(slot => slot.Activity.StartsAt >= now)
+         ?? slots[^1];
+      var timelineStart = TimeZoneHelper.ToLocal(
+         timelineSlot.Activity.StartsAt!.Value,
          SportDay.TimeZoneId
       );
 
       return new ActivityAgendaSection(
-         TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
-         [activity],
+         timelineSlot.TimeLabel,
+         orderedActivities,
          activity.RelatedOrganizationEntities,
-         GetDayPhase(localStart.Hour),
-         GetHourHandAngle(localStart),
-         $"{localStart.Minute * 6}deg",
+         GetDayPhase(timelineStart.Hour),
+         GetHourHandAngle(timelineStart),
+         $"{timelineStart.Minute * 6}deg",
+         activity.LocalEndTime?.ToString("HH:mm"),
+         slots.Any(slot => slot.IsOngoing),
+         slots.All(slot => slot.HasEnded),
+         orderedActivities.Count > 1
+            ? activity.ActivityGroupTitle
+            : null,
+         slots,
+         timelineSlot
+      );
+   }
+
+   private static ActivityAgendaSlot CreateSlot(
+      ActivityListItem activity,
+      DateTimeOffset now
+   )
+   {
+      return new ActivityAgendaSlot(
+         activity,
+         TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
          activity.LocalEndTime?.ToString("HH:mm"),
          activity.EndsAt is not null &&
             activity.StartsAt <= now &&

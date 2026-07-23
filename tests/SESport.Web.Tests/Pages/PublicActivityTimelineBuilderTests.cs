@@ -153,11 +153,87 @@ public class PublicActivityTimelineBuilderTests
       );
    }
 
+   [Fact]
+   public void Build_GroupsActivitiesFromSameGroupAndDate()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Rally Polen: Sträcka 9",
+            selectedDate,
+            now.AddMinutes(15),
+            now.AddMinutes(55),
+            groupId,
+            "Rally Polen"
+         ),
+         CreateActivity(
+            "Rally Polen: Sträcka 10 - 11",
+            selectedDate,
+            now.AddHours(1).AddMinutes(45),
+            now.AddHours(3).AddMinutes(25),
+            groupId,
+            "Rally Polen"
+         ),
+         CreateActivity(
+            "Rally Polen: Live Stage 1",
+            selectedDate,
+            now.AddHours(5),
+            now.AddHours(6),
+            groupId,
+            "Rally Polen"
+         )
+      };
+
+      var timeline = builder.Build(activities, now);
+
+      var section = Assert.Single(timeline.TimelineEntries).Section;
+      Assert.Equal("Rally Polen", section.ActivityGroupTitle);
+      Assert.Equal(3, section.Activities.Count);
+      Assert.Equal(
+         ["08:15", "09:45", "13:00"],
+         section.Slots.Select(slot => slot.TimeLabel)
+      );
+      Assert.Equal(
+         ["08:55", "11:25", "14:00"],
+         section.Slots.Select(slot => slot.EndTimeLabel)
+      );
+      Assert.Equal("08:15", section.TimelineSlot.TimeLabel);
+
+      var midday = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         12,
+         45,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var middayTimeline = builder.Build(activities, midday);
+      var middaySection =
+         Assert.Single(middayTimeline.TimelineEntries).Section;
+
+      Assert.Equal("13:00", middaySection.TimelineSlot.TimeLabel);
+   }
+
    private static ActivityListItem CreateActivity(
       string title,
       DateOnly activityDate,
       DateTimeOffset? startsAt,
-      DateTimeOffset? endsAt = null
+      DateTimeOffset? endsAt = null,
+      Guid? activityGroupId = null,
+      string? activityGroupTitle = null
    )
    {
       return new ActivityListItem(
@@ -188,7 +264,9 @@ public class PublicActivityTimelineBuilderTests
                   endsAt.Value,
                   SportDay.TimeZoneId
                ).DateTime
-            )
+            ),
+         ActivityGroupId = activityGroupId,
+         ActivityGroupTitle = activityGroupTitle
       };
    }
 }

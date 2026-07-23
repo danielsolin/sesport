@@ -268,6 +268,33 @@
    transform: translateY(4px);
 }
 
+.activity-group-time-item {
+   display: flex;
+   align-items: center;
+   width: calc(100% + var(--activity-time-gap));
+   min-height: 43px;
+}
+
+.activity-group-time-item.has-ended .activity-time-badge {
+   background: #e8ece7;
+   color: var(--muted);
+}
+
+.activity-group-time-item.has-ended .activity-time-point::before {
+   background: rgba(0, 106, 168, 0.38);
+   box-shadow: none;
+}
+
+.activity-group-time-item.is-ongoing .activity-time-badge {
+   background: #d8ad00;
+   color: #4f4000;
+}
+
+.activity-group-time-item.is-ongoing .activity-time-point::before {
+   background: #ffcc00;
+   box-shadow: 0 0 9px rgba(255, 204, 0, 0.72);
+}
+
 .activity-time-badge {
    display: inline-flex;
    align-items: center;
@@ -535,6 +562,66 @@
    margin-top: 4px;
 }
 
+.activity-group-schedule {
+   display: grid;
+   gap: 8px;
+   margin: 12px 0 0;
+   padding: 0;
+   list-style: none;
+}
+
+.activity-group-schedule-item {
+   display: grid;
+   grid-template-columns: auto minmax(0, 1fr) auto;
+   gap: 3px 10px;
+   align-items: center;
+   min-height: 43px;
+   padding: 7px 9px;
+   border: 1px solid rgba(0, 106, 168, 0.22);
+   border-radius: 8px;
+   background: rgba(255, 255, 255, 0.5);
+}
+
+.activity-group-schedule-item.has-ended {
+   opacity: 0.62;
+}
+
+.activity-group-schedule-item.is-ongoing {
+   border-color: #d8ad00;
+   background: rgba(255, 204, 0, 0.18);
+   opacity: 1;
+}
+
+.activity-group-slot-time {
+   font-weight: 850;
+   font-variant-numeric: tabular-nums;
+   white-space: nowrap;
+}
+
+.activity-group-slot-title {
+   min-width: 0;
+   font-weight: 750;
+}
+
+.activity-group-slot-channel {
+   color: var(--muted);
+   font-size: 11px;
+   font-weight: 700;
+   white-space: nowrap;
+}
+
+.activity-group-slot-status {
+   grid-column: 2;
+   justify-self: start;
+   padding: 2px 6px;
+   border-radius: 999px;
+   background: rgba(255, 204, 0, 0.3);
+   color: #755f00;
+   font-size: 9px;
+   font-weight: 900;
+   text-transform: uppercase;
+}
+
 .activity-entry .activity-meta {
    color: #004f80;
 }
@@ -671,6 +758,20 @@
 }
 
 @media (max-width: 600px) and (orientation: portrait) {
+   .activity-group-schedule-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+   }
+
+   .activity-group-slot-time {
+      display: none;
+   }
+
+   .activity-group-slot-channel {
+      white-space: normal;
+   }
+
    .activity-participant-table {
       min-width: 0;
    }

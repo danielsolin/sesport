@@ -1186,8 +1186,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "as related_organization_entities,"
          )
          .AppendLine("   a.local_end_time,")
-         .AppendLine("   a.ends_at")
+         .AppendLine("   a.ends_at,")
+         .AppendLine("   a.activity_group_id,")
+         .AppendLine("   ag.title as activity_group_title")
          .AppendLine("from activities a")
+         .AppendLine(
+            "left join activity_groups ag on ag.id = a.activity_group_id"
+         )
          .AppendLine("join sports s on s.id = a.sport_id")
          .AppendLine("join activity_types at on at.id = a.activity_type_id")
          .AppendLine(
@@ -1268,7 +1273,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(
             "         ro.related_organization_entities, a.local_end_time,"
          )
-         .AppendLine("         a.ends_at")
+         .AppendLine("         a.ends_at, ag.title")
          .AppendLine(orderClause);
 
       return builder.ToString();
@@ -1853,7 +1858,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ActivityDate = reader.GetFieldValue<DateOnly>(8),
                LocalStartTime = ReadTimeOnly(reader, 9),
                LocalEndTime = ReadTimeOnly(reader, 17),
-               EndsAt = ReadDateTimeOffset(reader, 18)
+               EndsAt = ReadDateTimeOffset(reader, 18),
+               ActivityGroupId = reader.IsDBNull(19)
+                  ? null
+                  : reader.GetGuid(19),
+               ActivityGroupTitle = ReadString(reader, 20)
             }
          );
       }

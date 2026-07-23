@@ -260,6 +260,17 @@ public sealed record ActivityAgendaSection(
    string ClockMinuteAngle,
    string? EndTimeLabel,
    bool IsOngoing,
+   bool HasEnded,
+   string? ActivityGroupTitle,
+   IReadOnlyList<ActivityAgendaSlot> Slots,
+   ActivityAgendaSlot TimelineSlot
+);
+
+public sealed record ActivityAgendaSlot(
+   ActivityListItem Activity,
+   string TimeLabel,
+   string? EndTimeLabel,
+   bool IsOngoing,
    bool HasEnded
 );
 

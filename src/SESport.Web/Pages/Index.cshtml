@@ -123,6 +123,7 @@ else
       {
          var agendaSection = timelineEntry.Section;
          var activity = agendaSection.Activities[0];
+         var isGrouped = agendaSection.ActivityGroupTitle is not null;
          var dayPhaseClass = agendaSection.DayPhase switch
          {
             ActivityDayPhase.Morning =>
@@ -140,37 +141,60 @@ else
 
          <section class="activity-agenda-section
                             @dayPhaseClass
-                            @timingClass">
+                            @timingClass
+                            @(isGrouped
+                               ? "activity-agenda-section-grouped"
+                               : "")">
                <div class="activity-agenda-time">
-                  @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
+                  @if(isGrouped)
                   {
-                     <span class="activity-time-channel">
-                        @activity.TvChannelName
-                     </span>
-                  }
-                  <div class="activity-time-row">
-                     <div class="activity-time-badge">
-                        <time class="activity-time-value">
-                           @agendaSection.TimeLabel
-                        </time>
+                     var timelineSlot = agendaSection.TimelineSlot;
+                     <div class="activity-group-time-item
+                        @(timelineSlot.IsOngoing ? "is-ongoing" : "")
+                        @(timelineSlot.HasEnded ? "has-ended" : "")">
+                        <div class="activity-time-badge">
+                           <time class="activity-time-value">
+                              @timelineSlot.TimeLabel
+                           </time>
+                        </div>
+                        <span class="activity-time-connector"
+                              aria-hidden="true">
+                           <span class="activity-time-point"></span>
+                        </span>
                      </div>
-                     <span class="activity-time-connector"
-                           aria-hidden="true">
-                        <span class="activity-time-point"></span>
-                     </span>
-                  </div>
-                  <div class="activity-analog-clock"
-                       style="--clock-hour-angle:
-                                 @agendaSection.ClockHourAngle;
-                              --clock-minute-angle:
-                                 @agendaSection.ClockMinuteAngle;"
-                       aria-hidden="true">
-                     <span class="activity-clock-hour-hand"></span>
-                     <span class="activity-clock-minute-hand"></span>
-                     <span class="activity-clock-center"></span>
-                  </div>
+                  }
+                  else
+                  {
+                     @if(!string.IsNullOrWhiteSpace(activity.TvChannelName))
+                     {
+                        <span class="activity-time-channel">
+                           @activity.TvChannelName
+                        </span>
+                     }
+                     <div class="activity-time-row">
+                        <div class="activity-time-badge">
+                           <time class="activity-time-value">
+                              @agendaSection.TimeLabel
+                           </time>
+                        </div>
+                        <span class="activity-time-connector"
+                              aria-hidden="true">
+                           <span class="activity-time-point"></span>
+                        </span>
+                     </div>
+                     <div class="activity-analog-clock"
+                          style="--clock-hour-angle:
+                                    @agendaSection.ClockHourAngle;
+                                 --clock-minute-angle:
+                                    @agendaSection.ClockMinuteAngle;"
+                          aria-hidden="true">
+                        <span class="activity-clock-hour-hand"></span>
+                        <span class="activity-clock-minute-hand"></span>
+                        <span class="activity-clock-center"></span>
+                     </div>
+                  }
                </div>
-               @if(agendaSection.EndTimeLabel is not null)
+               @if(!isGrouped && agendaSection.EndTimeLabel is not null)
                {
                   <div class="activity-duration-rail"
                        aria-label=
@@ -206,9 +230,48 @@ else
                            : $"{activity.RelatedOrganizationEntities} ")
                      </h3>
                      <h2 class="activity-entry-title">
-                        @activity.Title
+                        @(agendaSection.ActivityGroupTitle ?? activity.Title)
                      </h2>
-                     @if(!string.IsNullOrWhiteSpace(activity.Description))
+                     @if(isGrouped)
+                     {
+                        <ol class="activity-group-schedule">
+                           @foreach(var slot in agendaSection.Slots)
+                           {
+                              <li class="activity-group-schedule-item
+                                 @(slot.IsOngoing ? "is-ongoing" : "")
+                                 @(slot.HasEnded ? "has-ended" : "")">
+                                 <span class="activity-group-slot-time">
+                                    @slot.TimeLabel@(
+                                       slot.EndTimeLabel is null
+                                          ? ""
+                                          : $"–{slot.EndTimeLabel}"
+                                    )
+                                 </span>
+                                 <span class="activity-group-slot-title">
+                                    @slot.Activity.Title
+                                 </span>
+                                 @if(!string.IsNullOrWhiteSpace(
+                                    slot.Activity.TvChannelName
+                                 ))
+                                 {
+                                    <span class="activity-group-slot-channel">
+                                       @slot.Activity.TvChannelName
+                                    </span>
+                                 }
+                                 @if(slot.IsOngoing)
+                                 {
+                                    <span class=
+                                       "activity-group-slot-status">
+                                       Pågår
+                                    </span>
+                                 }
+                              </li>
+                           }
+                        </ol>
+                     }
+                     else if(!string.IsNullOrWhiteSpace(
+                        activity.Description
+                     ))
                      {
                         <p style="margin-bottom: 0px;">@activity.Description</p>
                      }

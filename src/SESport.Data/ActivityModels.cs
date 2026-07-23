@@ -28,6 +28,10 @@ public sealed record ActivityListItem(
 
    public DateTimeOffset? EndsAt { get; init; }
 
+   public Guid? ActivityGroupId { get; init; }
+
+   public string? ActivityGroupTitle { get; init; }
+
    public IReadOnlyList<PublicActivityParticipant> Participants
    {
       get;
