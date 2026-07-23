@@ -590,3 +590,21 @@
       padding-left: 10px;
    }
 }
+
+@media (max-width: 600px) and (orientation: portrait) {
+   .activity-participant-table {
+      min-width: 0;
+   }
+
+   .activity-participant-col-height,
+   .activity-participant-col-club,
+   .activity-participant-col-birthday,
+   .activity-participant-col-country {
+      display: none;
+   }
+
+   .activity-participant-col-age {
+      width: 1%;
+      white-space: nowrap;
+   }
+}

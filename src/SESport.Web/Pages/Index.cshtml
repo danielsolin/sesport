@@ -206,38 +206,50 @@ else
                                   data-participant-table>
                               <thead>
                                  <tr>
-                                    <th aria-sort="none">
+                                    <th class=
+                                           "activity-participant-col-name"
+                                        aria-sort="none">
                                        <button type="button"
                                                data-participant-sort="name">
                                           Namn
                                        </button>
                                     </th>
-                                    <th aria-sort="none">
+                                    <th class=
+                                           "activity-participant-col-age"
+                                        aria-sort="none">
                                        <button type="button"
                                                data-participant-sort="age">
                                           Ålder
                                        </button>
                                     </th>
-                                    <th aria-sort="none">
+                                    <th class=
+                                           "activity-participant-col-height"
+                                        aria-sort="none">
                                        <button type="button"
                                                data-participant-sort="height">
                                           Längd
                                        </button>
                                     </th>
-                                    <th aria-sort="none">
+                                    <th class=
+                                           "activity-participant-col-club"
+                                        aria-sort="none">
                                        <button type="button"
                                                data-participant-sort="club">
                                           Moderklubb/Klubb
                                        </button>
                                     </th>
-                                    <th aria-sort="none">
+                                    <th class=
+                                           "activity-participant-col-birthday"
+                                        aria-sort="none">
                                        <button type="button"
                                                data-participant-sort=
                                                   "birthdate">
                                           Födelsedag
                                        </button>
                                     </th>
-                                    <th></th>
+                                    <th class=
+                                           "activity-participant-col-country">
+                                    </th>
                                  </tr>
                               </thead>
                               <tbody>
@@ -259,20 +271,34 @@ else
                                            "@participant.Height"
                                         data-participant-club=
                                            "@participant.Club">
-                                       <td class="activity-participant-name">
+                                       <td class="activity-participant-name
+                                          activity-participant-col-name">
                                           @participant.Name
                                        </td>
-                                       <td>@(age is null
+                                       <td class=
+                                              "activity-participant-col-age">
+                                          @(age is null
                                           ? string.Empty
-                                          : $"{age} år")</td>
-                                       <td>@(participant.Height is null
+                                          : $"{age} år")
+                                       </td>
+                                       <td class=
+                                              "activity-participant-col-height">
+                                          @(participant.Height is null
                                           ? string.Empty
-                                          : $"{participant.Height} cm")</td>
-                                       <td>@participant.Club</td>
-                                       <td>@IndexModel.FormatBirthday(
+                                          : $"{participant.Height} cm")
+                                       </td>
+                                       <td class=
+                                              "activity-participant-col-club">
+                                          @participant.Club
+                                       </td>
+                                       <td class=
+                                          "activity-participant-col-birthday">
+                                          @IndexModel.FormatBirthday(
                                           participant.Birthdate
-                                       )</td>
-                                       <td>
+                                          )
+                                       </td>
+                                       <td class=
+                                          "activity-participant-col-country">
                                           <img class=
                                                   "participant-country-flag"
                                                src="~/images/flags/se.svg"
