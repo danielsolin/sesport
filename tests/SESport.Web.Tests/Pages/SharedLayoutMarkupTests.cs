@@ -12,7 +12,12 @@ public sealed class SharedLayoutMarkupTests
          repoRoot,
          "src/SESport.Web/Pages/Shared/_Layout.cshtml"
       );
+      var publicCssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/public.css"
+      );
       var html = await File.ReadAllTextAsync(layoutPath);
+      var publicCss = await File.ReadAllTextAsync(publicCssPath);
 
       Assert.Contains("public.css", html);
       Assert.Contains("site.css", html);
@@ -20,5 +25,9 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("var broadcastsHref = Url.Page(", html);
       Assert.Contains("var activitiesHref = Url.Page(", html);
       Assert.Contains("RouteKeys.Date", html);
+      Assert.Contains("class=\"public-contact-link\"", html);
+      Assert.Contains(".public-contact-link {", publicCss);
+      Assert.Contains("justify-content: space-between", publicCss);
+      Assert.Contains("width: 100%", publicCss);
    }
 }

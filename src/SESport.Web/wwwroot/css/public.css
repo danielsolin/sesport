@@ -24,12 +24,27 @@
    color: #ffcc00;
 }
 
+.site-header-main {
+   flex: 1 1 auto;
+   flex-direction: row;
+   align-items: center;
+   justify-content: space-between;
+   width: 100%;
+}
+
 .site-header a {
    color: #ffcc00;
 }
 
 .site-header a:hover {
    color: #ffcc00;
+}
+
+.public-contact-link {
+   flex: 0 0 auto;
+   margin-left: auto;
+   font-size: 10px;
+   white-space: nowrap;
 }
 
 .index-heading {
