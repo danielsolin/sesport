@@ -2040,6 +2040,33 @@ textarea {
    line-height: 1;
 }
 
+.ses-entity-search-link-missing {
+   justify-content: center;
+   width: 1.5rem;
+   height: 1.5rem;
+   margin-left: 0;
+   border: 1px solid #e5bd75;
+   border-radius: 999px;
+   background: #fff7e5;
+   color: #a86419;
+   transition:
+      background 120ms ease,
+      border-color 120ms ease,
+      transform 120ms ease;
+}
+
+.ses-entity-search-link-missing:hover {
+   border-color: #ce8a35;
+   background: #ffedc7;
+   color: #8b4a0b;
+   transform: translateY(-1px);
+}
+
+.ses-entity-search-link-missing:focus-visible {
+   outline: 2px solid #bd6500;
+   outline-offset: 2px;
+}
+
 .ses-nowrap {
    text-wrap: nowrap;
 }

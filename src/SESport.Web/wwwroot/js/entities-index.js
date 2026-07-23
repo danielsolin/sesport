@@ -373,10 +373,13 @@
       const age = ageValue !== ""
          ? ageValue
          : `
-               <a class="ses-entity-search-link"
+               <a class="ses-entity-search-link
+                  ses-entity-search-link-missing"
                   href="${ageSearchUrl}"
                   target="_blank"
-                  rel="noreferrer">
+                  rel="noreferrer"
+                  aria-label="Search for missing age"
+                  title="Search for missing age">
                   <span class="ses-icon-search"></span>
                </a>
             `;
@@ -388,10 +391,13 @@
       const height = heightValue !== ""
          ? heightValue
          : `
-               <a class="ses-entity-search-link"
+               <a class="ses-entity-search-link
+                  ses-entity-search-link-missing"
                   href="${heightSearchUrl}"
                   target="_blank"
-                  rel="noreferrer">
+                  rel="noreferrer"
+                  aria-label="Search for missing height"
+                  title="Search for missing height">
                   <span class="ses-icon-search"></span>
                </a>
             `;
@@ -403,10 +409,13 @@
       const weight = weightValue !== ""
          ? weightValue
          : `
-               <a class="ses-entity-search-link"
+               <a class="ses-entity-search-link
+                  ses-entity-search-link-missing"
                   href="${weightSearchUrl}"
                   target="_blank"
-                  rel="noreferrer">
+                  rel="noreferrer"
+                  aria-label="Search for missing weight"
+                  title="Search for missing weight">
                   <span class="ses-icon-search"></span>
                </a>
             `;
@@ -419,10 +428,13 @@
       const firstClub = formativeClub !== ""
          ? formativeClub
          : `
-               <a class="ses-entity-search-link"
+               <a class="ses-entity-search-link
+                  ses-entity-search-link-missing"
                   href="${firstClubSearchUrl}"
                   target="_blank"
-                  rel="noreferrer">
+                  rel="noreferrer"
+                  aria-label="Search for missing formative club"
+                  title="Search for missing formative club">
                   <span class="ses-icon-search"></span>
                </a>
             `;
