@@ -142,7 +142,7 @@
 }
 
 .index-participants-filter.is-selected .index-participants-count {
-   color: #ffffff;
+   color: #d8e7ef;
 }
 
 .date-select {
@@ -265,7 +265,7 @@
    display: flex;
    align-items: center;
    width: calc(100% + var(--activity-time-gap));
-   transform: translateY(4px);
+   transform: translateY(24px);
 }
 
 .activity-group-time-item {
@@ -273,6 +273,7 @@
    align-items: center;
    width: calc(100% + var(--activity-time-gap));
    min-height: 43px;
+   transform: translateY(20px);
 }
 
 .activity-group-time-item.has-ended .activity-time-badge {
@@ -358,7 +359,7 @@
    --activity-duration-color: var(--activity-phase-color);
    position: absolute;
    z-index: 2;
-   top: 33px;
+   top: 53px;
    bottom: 4px;
    left: calc(
       var(--activity-time-column) + var(--activity-time-gap) - 2px
@@ -457,7 +458,7 @@
    position: relative;
    width: 62px;
    height: 62px;
-   margin: 8px 0 0 8px;
+   margin: 28px 0 0 8px;
    border: 2px solid rgba(0, 106, 168, 0.72);
    border-radius: 50%;
    background:
