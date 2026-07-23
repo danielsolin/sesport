@@ -423,7 +423,10 @@
 
 .activity-ongoing-badge {
    display: inline-flex;
-   margin-bottom: 6px;
+   position: absolute;
+   z-index: 1;
+   top: 13px;
+   right: 54px;
    padding: 3px 8px;
    border-radius: 999px;
    background: rgba(255, 204, 0, 0.3);
@@ -432,6 +435,10 @@
    font-weight: 900;
    letter-spacing: 0.04em;
    text-transform: uppercase;
+}
+
+.activity-is-ongoing .activity-entry-organization {
+   padding-right: 105px;
 }
 
 .activity-time-badge-muted {
@@ -778,6 +785,10 @@
 }
 
 @media (max-width: 600px) and (orientation: portrait) {
+   .activity-ongoing-badge {
+      top: 5px;
+   }
+
    .activity-group-schedule-item {
       display: flex;
       flex-direction: column;
