@@ -121,10 +121,24 @@
 }
 
 .index-participants-filter.is-selected {
+   position: relative;
    border-color: var(--accent);
    border-left-color: #ffcc00;
    background: var(--accent);
    color: #ffcc00;
+}
+
+.index-participants-filter.is-selected::before {
+   position: absolute;
+   top: -10px;
+   left: 50%;
+   width: 0;
+   height: 0;
+   border-top: 8px solid #ffcc00;
+   border-right: 7px solid transparent;
+   border-left: 7px solid transparent;
+   content: "";
+   transform: translateX(-50%);
 }
 
 .index-participants-filter.is-selected .index-participants-count {
