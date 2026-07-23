@@ -286,13 +286,13 @@
 }
 
 .activity-group-time-item.is-ongoing .activity-time-badge {
-   background: #d8ad00;
+   background: #b79a3a;
    color: #4f4000;
 }
 
 .activity-group-time-item.is-ongoing .activity-time-point::before {
-   background: #ffcc00;
-   box-shadow: 0 0 9px rgba(255, 204, 0, 0.72);
+   background: #c3a64a;
+   box-shadow: 0 0 6px rgba(183, 154, 58, 0.3);
 }
 
 .activity-time-badge {
@@ -358,7 +358,7 @@
    --activity-duration-color: var(--activity-phase-color);
    position: absolute;
    z-index: 2;
-   top: 58px;
+   top: 33px;
    bottom: 4px;
    left: calc(
       var(--activity-time-column) + var(--activity-time-gap) - 2px
@@ -407,19 +407,14 @@
 }
 
 .activity-is-ongoing {
-   --activity-duration-color: #d8ad00;
+   --activity-duration-color: #b79a3a;
 }
 
 .activity-is-ongoing .activity-duration-line {
    width: 5px;
    opacity: 1;
-   box-shadow: 0 0 9px rgba(255, 204, 0, 0.72);
+   box-shadow: 0 0 6px rgba(183, 154, 58, 0.3);
    transform: translateX(-1px);
-}
-
-.activity-is-ongoing .activity-entry {
-   border-color: #d8ad00;
-   box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.18);
 }
 
 .activity-has-ended .activity-duration-rail {
@@ -562,6 +557,36 @@
    margin-top: 4px;
 }
 
+.activity-channel-list {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 5px;
+   margin-top: 7px;
+}
+
+.activity-time-channel-list {
+   flex-direction: column;
+   align-items: flex-start;
+   justify-content: flex-start;
+   max-width: calc(100% - 8px);
+   margin: 3px 0 0 4px;
+}
+
+.activity-channel-chip {
+   display: inline-flex;
+   align-items: center;
+   min-height: 21px;
+   padding: 2px 8px;
+   border: 1px solid rgba(0, 106, 168, 0.24);
+   border-radius: 999px;
+   background: rgba(255, 255, 255, 0.72);
+   color: #397293;
+   font-size: 10px;
+   font-weight: 800;
+   line-height: 1.2;
+   white-space: nowrap;
+}
+
 .activity-group-schedule {
    display: grid;
    gap: 8px;
@@ -572,7 +597,7 @@
 
 .activity-group-schedule-item {
    display: grid;
-   grid-template-columns: auto minmax(0, 1fr) auto;
+   grid-template-columns: auto minmax(0, 1fr);
    gap: 3px 10px;
    align-items: center;
    min-height: 43px;
@@ -587,8 +612,8 @@
 }
 
 .activity-group-schedule-item.is-ongoing {
-   border-color: #d8ad00;
-   background: rgba(255, 204, 0, 0.18);
+   border-color: #b79a3a;
+   background: rgba(183, 154, 58, 0.12);
    opacity: 1;
 }
 
@@ -598,16 +623,20 @@
    white-space: nowrap;
 }
 
+.activity-group-slot-content {
+   min-width: 0;
+}
+
 .activity-group-slot-title {
    min-width: 0;
    font-weight: 750;
 }
 
-.activity-group-slot-channel {
+.activity-group-slot-description {
+   margin-left: 5px;
    color: var(--muted);
    font-size: 11px;
-   font-weight: 700;
-   white-space: nowrap;
+   line-height: 1.35;
 }
 
 .activity-group-slot-status {
@@ -718,15 +747,6 @@
    -webkit-mask-size: contain;
 }
 
-.activity-time-channel {
-   padding-left: 4px;
-   color: var(--muted);
-   font-size: 12px;
-   font-weight: 700;
-   line-height: 1.2;
-   white-space: nowrap;
-}
-
 .activity-teaser {
    color: var(--muted);
    font-size: 12px;
@@ -766,10 +786,6 @@
 
    .activity-group-slot-time {
       display: none;
-   }
-
-   .activity-group-slot-channel {
-      white-space: normal;
    }
 
    .activity-participant-table {
