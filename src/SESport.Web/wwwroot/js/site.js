@@ -1,12 +1,18 @@
 (() => {
-   document.addEventListener("visibilitychange", () => {
-      if(!document.hidden)
-      {
-         const baseUrl =
-            `${window.location.origin}${window.location.pathname}`;
-         window.location.assign(baseUrl);
-      }
-   });
+   const isAdminPath = window.location.pathname.toLowerCase() === "/admin" ||
+      window.location.pathname.toLowerCase().startsWith("/admin/");
+
+   if(!isAdminPath)
+   {
+      document.addEventListener("visibilitychange", () => {
+         if(!document.hidden)
+         {
+            const baseUrl =
+               `${window.location.origin}${window.location.pathname}`;
+            window.location.assign(baseUrl);
+         }
+      });
+   }
 
    const enhancedFormSelector =
       "form[data-ajax-success]:not([data-ajax-success=''])";
