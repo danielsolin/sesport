@@ -2,7 +2,7 @@
    "use strict";
 
    const host = document.querySelector("[data-run-tool-trace]");
-   const pollIntervalMilliseconds = 5000;
+   const pollIntervalMilliseconds = 10000;
 
    if(!(host instanceof HTMLElement))
    {

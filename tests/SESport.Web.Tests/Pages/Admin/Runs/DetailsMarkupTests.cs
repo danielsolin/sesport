@@ -52,7 +52,7 @@ public sealed class DetailsMarkupTests
       Assert.Contains("summary>Raw tool trace JSON</summary>", toolTraceHtml);
       Assert.DoesNotContain("Full trace", toolTraceHtml);
       Assert.Contains("Round", toolTraceHtml);
-      Assert.Contains("pollIntervalMilliseconds = 5000", toolTraceScript);
+      Assert.Contains("pollIntervalMilliseconds = 10000", toolTraceScript);
       Assert.Contains("updateToolTrace()", toolTraceScript);
       Assert.Contains(
          "host.dataset.runStatus !== \"running\"",
