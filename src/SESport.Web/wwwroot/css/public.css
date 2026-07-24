@@ -930,27 +930,11 @@
 @media (orientation: portrait) {
    .activity-now-marker {
       display: flex;
-      gap: 5px;
-      width: calc(
-         var(--activity-time-column) + var(--activity-time-gap)
-      );
-      margin-left: 0;
-   }
-
-   .activity-now-marker-line:first-child {
-      display: none;
    }
 
    .activity-now-marker-badge {
-      flex: 0 0 auto;
-      min-height: 22px;
-      padding: 3px 7px;
-      font-size: 9px;
-      letter-spacing: 0.02em;
-   }
-
-   .activity-now-marker-line:last-child {
-      background: rgba(0, 106, 168, 0.42);
+      padding: 5px 10px;
+      font-size: 10px;
    }
 }
 

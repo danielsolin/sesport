@@ -55,12 +55,16 @@ public sealed class IndexMarkupTests
          ".activity-now-marker {\n      display: none;",
          css
       );
-      Assert.Contains(
+      Assert.DoesNotContain(
          ".activity-now-marker-line:first-child",
          css
       );
-      Assert.Contains(
+      Assert.DoesNotContain(
          ".activity-now-marker-line:last-child",
+         css
+      );
+      Assert.Contains(
+         ".activity-now-marker-badge {\n      padding: 5px 10px;",
          css
       );
       Assert.Contains(
