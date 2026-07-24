@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
@@ -1399,6 +1398,82 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractHtmlTextKeepsProCyclingStatsFlagCountryLabel()
+   {
+      var html = $$"""
+         <html>
+            <body>
+               <li>
+                  <span class="bib">42</span>
+                  <span class="flag
+                     {{PrimaryCountry.TwoLetterCode.ToLowerInvariant()}}">
+                  </span>
+                  <a href="/rider/hanna-karlsson">KARLSSON Hanna</a>
+               </li>
+            </body>
+         </html>
+         """;
+
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+
+      Assert.Contains(PrimaryCountry.CountryName, text);
+      Assert.Contains("KARLSSON Hanna", text);
+   }
+
+   [Fact]
+   public void ExtractHtmlTextKeepsSvgFlagCountryLabel()
+   {
+      var html = $$"""
+         <html>
+            <body>
+               <svg class="country-symbol">
+                  <use href="#flag-{{PrimaryCountry.TwoLetterCode}}">
+                  </use>
+               </svg>
+               Hanna Karlsson
+            </body>
+         </html>
+         """;
+
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+
+      Assert.Contains(PrimaryCountry.CountryName, text);
+      Assert.Contains("Hanna Karlsson", text);
+   }
+
+   [Fact]
+   public async Task BrowserAndHtmlPathsShareSemanticNormalization()
+   {
+      var html = $$"""
+         <html>
+            <body>
+               <nav>Navigation noise</nav>
+               <table>
+                  <tr>
+                     <td>
+                        <span class="flag
+                           {{PrimaryCountry.TwoLetterCode
+                              .ToLowerInvariant()}}">
+                        </span>
+                     </td>
+                     <td>KARLSSON Hanna</td>
+                  </tr>
+               </table>
+            </body>
+         </html>
+         """;
+      var htmlText = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+      var browserText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Equal(htmlText, browserText);
+      Assert.Contains(PrimaryCountry.CountryName, browserText);
+      Assert.DoesNotContain("Navigation noise", browserText);
+   }
+
+   [Fact]
    public async Task NormalizeWikipediaFlagImageUsesAltText()
    {
       var html =
@@ -1604,14 +1679,13 @@ public class WebPageContentClientTests
       await using var page = await context.NewPageAsync();
 
       await page.SetContentAsync(html);
-      await page.EvaluateAsync(
-         WebPageNormalizationScript.Build(),
-         JsonSerializer.Serialize(
-            WebPageContentFetchSupport.CountryNamesByCode
-         )
+      await page.EvaluateAsync(WebPageNormalizationScript.Build());
+      var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
+         "element => element.innerHTML"
       );
 
-      return await page.Locator("body").InnerTextAsync();
+      return WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(bodyHtml);
    }
 
    private sealed class PdfRecordingHandler : HttpMessageHandler

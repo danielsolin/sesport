@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.Json;
 
 using Microsoft.Playwright;
 
@@ -37,6 +36,31 @@ public class WebPageContentClientLiveTests
       "https://www.fia.com/events/formula-2-championship/" +
       "season-2026/entry-list"
    );
+   private static readonly Uri ProCyclingStatsLiveTestUri = new(
+      "https://www.procyclingstats.com/race/" +
+      "tour-de-l-ain/2026/startlist"
+   );
+
+   [Fact]
+   public async Task FetchProCyclingStatsStartListKeepsFlagCountries()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         ProCyclingStatsLiveTestUri.ToString(),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Contains("GOSZCZURNY Patryk", page!.MainTextFull);
+      Assert.Contains("Poland", page.MainTextFull);
+   }
 
    [Fact]
    public async Task FetchFiaEntryListExtractsEmbeddedDriverListImage()
@@ -474,14 +498,13 @@ public class WebPageContentClientLiveTests
       cancellationToken.ThrowIfCancellationRequested();
 
       await page.SetContentAsync(html);
-      await page.EvaluateAsync(
-         WebPageNormalizationScript.Build(),
-         JsonSerializer.Serialize(
-            WebPageContentFetchSupport.CountryNamesByCode
-         )
+      await page.EvaluateAsync(WebPageNormalizationScript.Build());
+      var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
+         "element => element.innerHTML"
       );
 
-      return await page.Locator("body").InnerTextAsync();
+      return WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(bodyHtml);
    }
 
    private static string ExtractHtmlSnippet(

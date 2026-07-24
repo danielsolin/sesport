@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using Microsoft.Playwright;
 
 using SESport.Core.Configuration;
@@ -98,18 +96,14 @@ internal static class WebPageBrowserPageFetcher
          var relevantImages = await ExtractRelevantImagesAsync(page)
             .WaitAsync(cancellationToken);
          await page.EvaluateAsync(
-            WebPageNormalizationScript.Build(),
-            JsonSerializer.Serialize(
-               WebPageContentFetchSupport.CountryNamesByCode
-            )
+            WebPageNormalizationScript.Build()
          ).WaitAsync(cancellationToken);
          var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
             "element => element.innerHTML"
          ).WaitAsync(cancellationToken);
-         var visibleText = await page.Locator("body").InnerTextAsync()
-            .WaitAsync(cancellationToken);
          var normalizedText =
-            WebPageContentFetchSupport.NormalizeText(visibleText);
+            WebPageContentFetchSupport
+               .ExtractHtmlTextWithEmbeddedState(bodyHtml);
 
          return new WebPageContent(
             string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
@@ -119,7 +113,7 @@ internal static class WebPageBrowserPageFetcher
             WebPageContentFetchSupport.ApplyResponseCutoff(
                normalizedText
             ),
-            !string.IsNullOrWhiteSpace(visibleText),
+            !string.IsNullOrWhiteSpace(normalizedText),
             normalizedText,
             Fetcher: "playwright",
             RelevantLinks:

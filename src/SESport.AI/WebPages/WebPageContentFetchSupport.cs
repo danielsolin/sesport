@@ -32,6 +32,23 @@ internal static class WebPageContentFetchSupport
       @"<img\b(?<attrs>[^>]*)>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
+   private static readonly Regex HtmlEmptyFlagElementRegex = new(
+      @"<(?<tag>span|i|div)\b(?<attrs>[^>]*)>\s*</\k<tag>>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlSvgRegex = new(
+      @"<svg\b(?<attrs>[^>]*)>(?<content>.*?)</svg>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlUseRegex = new(
+      @"<use\b(?<attrs>[^>]*)>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlLineBreakTagRegex = new(
+      @"<br\b[^>]*>|</(?:address|article|blockquote|div|h[1-6]|" +
+      @"li|main|p|section|tr)>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
    private static readonly Regex HtmlAttributeRegex = new(
       @"\b(?<name>[a-zA-Z0-9:-]+)\s*=\s*(?:" +
       @"""(?<value>[^""]*)""|'(?<value>[^']*)')",
@@ -82,6 +99,12 @@ internal static class WebPageContentFetchSupport
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
          RegexOptions.Compiled
    );
+   private static readonly Regex FlagNamedCountryRegex = new(
+      @"(?:^|[^a-z0-9])Flag_of_(?<country>[A-Za-z_]+)" +
+      @"(?:[^a-z0-9]|$)",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
    private static readonly Regex FlagNoisePrefixRegex = new(
       @"^(?:flag|flags)(?:\s+(?:of|for|from))?\s+",
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
@@ -105,6 +128,10 @@ internal static class WebPageContentFetchSupport
    private static readonly Regex AdjacentPipeCellDuplicateRegex = new(
       @"(?<prefix>^|\|\s*)(?<value>[^|\r\n]+?)\s+\|\s+\k<value>" +
       @"(?=\s*(?:\||$))",
+      RegexOptions.CultureInvariant | RegexOptions.Compiled
+   );
+   private static readonly Regex PipeSeparatorWhitespaceRegex = new(
+      @"[^\S\r\n]*\|[^\S\r\n]*",
       RegexOptions.CultureInvariant | RegexOptions.Compiled
    );
 
@@ -183,6 +210,7 @@ internal static class WebPageContentFetchSupport
 
    internal static string NormalizeGluedTableCellText(string text)
    {
+      text = PipeSeparatorWhitespaceRegex.Replace(text, " | ");
       text = GluedGolfClubRegex.Replace(text, " | ");
       text = GluedDuplicateCellSuffixRegex.Replace(
          text,
@@ -620,7 +648,11 @@ internal static class WebPageContentFetchSupport
    internal static string ExtractHtmlText(string html)
    {
       var cleanedHtml = RemoveBoilerplateHtml(html);
-      cleanedHtml = ReplaceFlagImagesWithCountryLabels(cleanedHtml);
+      cleanedHtml = ReplaceFlagsWithCountryLabels(cleanedHtml);
+      cleanedHtml = HtmlLineBreakTagRegex.Replace(
+         cleanedHtml,
+         Environment.NewLine
+      );
       cleanedHtml = Regex.Replace(
          cleanedHtml,
          @"<[^>]+>",
@@ -630,10 +662,34 @@ internal static class WebPageContentFetchSupport
       return NormalizeText(WebUtility.HtmlDecode(cleanedHtml));
    }
 
-   private static string ReplaceFlagImagesWithCountryLabels(string html)
+   private static string ReplaceFlagsWithCountryLabels(string html)
    {
-      return HtmlImageRegex.Replace(
+      var normalizedHtml = HtmlSvgRegex.Replace(
          html,
+         match =>
+         {
+            var label = GetFlagSvgCountryLabel(
+               match.Groups["attrs"].Value,
+               match.Groups["content"].Value
+            );
+
+            return label is null ? match.Value : $" {label} ";
+         }
+      );
+      normalizedHtml = HtmlEmptyFlagElementRegex.Replace(
+         normalizedHtml,
+         match =>
+         {
+            var label = GetFlagImageCountryLabel(
+               match.Groups["attrs"].Value
+            );
+
+            return label is null ? match.Value : $" {label} ";
+         }
+      );
+
+      return HtmlImageRegex.Replace(
+         normalizedHtml,
          match =>
          {
             var label = GetFlagImageCountryLabel(
@@ -643,6 +699,50 @@ internal static class WebPageContentFetchSupport
             return label is null ? " " : $" {label} ";
          }
       );
+   }
+
+   private static string? GetFlagSvgCountryLabel(
+      string attributes,
+      string content
+   )
+   {
+      var label = GetFlagImageCountryLabel(attributes);
+
+      if(label is not null)
+      {
+         return label;
+      }
+
+      foreach(Match match in HtmlUseRegex.Matches(content))
+      {
+         foreach(var attributeName in new[]
+         {
+            "href",
+            "xlink:href"
+         })
+         {
+            if(!TryGetAttributeValue(
+               match.Groups["attrs"].Value,
+               attributeName,
+               out var attributeValue
+            ))
+            {
+               continue;
+            }
+
+            var sourceLabel = GetFlagLabelFromAttribute(
+               "src",
+               attributeValue
+            );
+
+            if(sourceLabel is not null)
+            {
+               return ResolveCountryFlagLabel(sourceLabel);
+            }
+         }
+      }
+
+      return null;
    }
 
    private static string? GetFlagImageCountryLabel(string attributes)
@@ -740,7 +840,8 @@ internal static class WebPageContentFetchSupport
             attributeName,
             out var attributeValue
          ) &&
-            FlagSourceCodeRegex.IsMatch(attributeValue))
+            (FlagSourceCodeRegex.IsMatch(attributeValue) ||
+               FlagNamedCountryRegex.IsMatch(attributeValue)))
          {
             return true;
          }
@@ -784,9 +885,36 @@ internal static class WebPageContentFetchSupport
       {
          var classMatch = FlagClassCodeRegex.Match(attributeValue);
 
-         return classMatch.Success
-            ? classMatch.Groups["code"].Value
-            : null;
+         if(classMatch.Success)
+         {
+            return classMatch.Groups["code"].Value;
+         }
+
+         var classTokens = attributeValue.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         );
+         var flagTokenIndex = Array.FindIndex(
+            classTokens,
+            token => string.Equals(
+               token,
+               "flag",
+               StringComparison.OrdinalIgnoreCase
+            )
+         );
+
+         if(flagTokenIndex < 0)
+         {
+            return null;
+         }
+
+         return classTokens
+            .Skip(flagTokenIndex + 1)
+            .FirstOrDefault(token =>
+               token.Length is 2 or 3 &&
+               token.All(char.IsLetter)
+            );
       }
 
       foreach(var sourceCandidate in attributeValue.Split(
@@ -802,6 +930,16 @@ internal static class WebPageContentFetchSupport
          if(string.IsNullOrWhiteSpace(urlCandidate))
          {
             continue;
+         }
+
+         var namedCountryMatch = FlagNamedCountryRegex.Match(urlCandidate);
+
+         if(namedCountryMatch.Success)
+         {
+            return namedCountryMatch.Groups["country"].Value.Replace(
+               '_',
+               ' '
+            );
          }
 
          var sourceMatch = FlagSourceCodeRegex.Match(urlCandidate);
@@ -1343,7 +1481,7 @@ internal static class WebPageContentFetchSupport
 
       foreach(Match cellMatch in cellMatches)
       {
-         var cellHtml = ReplaceFlagImagesWithCountryLabels(
+         var cellHtml = ReplaceFlagsWithCountryLabels(
             cellMatch.Groups["content"].Value
          );
          var cellText = NormalizeText(
