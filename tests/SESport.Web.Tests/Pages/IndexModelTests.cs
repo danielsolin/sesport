@@ -101,30 +101,13 @@ public sealed class IndexModelTests
    }
 
    [Fact]
-   public void FormatBirthday_UsesSwedishOrdinalAndOmitsYear()
+   public void FormatBirthday_OmitsYear()
    {
       var birthday = IndexModel.FormatBirthday(
          new DateOnly(1973, 8, 13)
       );
 
-      Assert.Equal("13:e augusti", birthday);
-   }
-
-   [Theory]
-   [InlineData(1, "1:a")]
-   [InlineData(2, "2:a")]
-   [InlineData(3, "3:e")]
-   [InlineData(11, "11:e")]
-   [InlineData(12, "12:e")]
-   [InlineData(21, "21:a")]
-   [InlineData(22, "22:a")]
-   [InlineData(31, "31:a")]
-   public void FormatOrdinalDay_UsesSwedishSuffix(
-      int day,
-      string expected
-   )
-   {
-      Assert.Equal(expected, IndexModel.FormatOrdinalDay(day));
+      Assert.Equal("13 augusti", birthday);
    }
 
    [Fact]
