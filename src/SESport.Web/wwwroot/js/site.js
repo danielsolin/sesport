@@ -1,4 +1,11 @@
 (() => {
+   document.addEventListener("visibilitychange", () => {
+      if(!document.hidden)
+      {
+         window.location.reload();
+      }
+   });
+
    const enhancedFormSelector =
       "form[data-ajax-success]:not([data-ajax-success=''])";
    const replacementFormSelector = "form[data-ajax-replace-target]";

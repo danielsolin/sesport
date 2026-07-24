@@ -86,6 +86,28 @@ if(!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.Use(
+   async (context, next) =>
+   {
+      context.Response.OnStarting(
+         () =>
+         {
+            if(
+               context.Response.ContentType?.StartsWith(
+                  "text/html",
+                  StringComparison.OrdinalIgnoreCase
+               ) == true
+            )
+            {
+               context.Response.Headers.CacheControl = "no-cache";
+            }
+
+            return Task.CompletedTask;
+         }
+      );
+      await next();
+   }
+);
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

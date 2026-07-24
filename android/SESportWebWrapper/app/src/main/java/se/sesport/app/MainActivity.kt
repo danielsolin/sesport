@@ -68,6 +68,11 @@ class MainActivity : ComponentActivity() {
         webView.saveState(outState)
     }
 
+    override fun onResume() {
+        super.onResume()
+        webView.reload()
+    }
+
     private fun isAllowedUrl(url: String): Boolean {
         val parsed = runCatching { android.net.Uri.parse(url) }.getOrNull()
             ?: return false
