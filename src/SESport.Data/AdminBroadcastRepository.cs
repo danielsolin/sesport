@@ -640,9 +640,17 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
+      var categorySportId = BroadcastCategorySportIdResolver.ResolveSportId(
          broadcast.Categories
       );
+      var sportId = string.IsNullOrWhiteSpace(categorySportId)
+         ? await GetOrganizationSportIdAsync(
+            connection,
+            transaction,
+            organizationEntityId,
+            cancellationToken
+         )
+         : categorySportId;
 
       if(string.IsNullOrWhiteSpace(sportId) ||
          string.IsNullOrWhiteSpace(broadcast.Title))
@@ -718,6 +726,25 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       }
 
       return bestCandidateScore > 0 ? bestCandidateId : null;
+   }
+
+   private static async Task<string?> GetOrganizationSportIdAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid organizationEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select sport_id
+         from entities
+         where id = @id
+         """;
+
+      await using var command = new NpgsqlCommand(sql, connection, transaction);
+      command.Parameters.AddWithValue("id", organizationEntityId);
+
+      return (string?)await command.ExecuteScalarAsync(cancellationToken);
    }
 
    private static int GetMatchScore(

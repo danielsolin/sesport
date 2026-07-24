@@ -108,7 +108,7 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncMatchesExistingGroupWhenOrganizationMatches()
+   public async Task OnPostAsyncMatchesGroupUsingOrganizationSport()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
@@ -166,7 +166,7 @@ public sealed class BroadcastFieldModelTests
          "channel-1",
          "Viaplay",
          title,
-         ["tennis"],
+         [],
          TimeZoneHelper.ToUtc(
             activityDate,
             new TimeOnly(12, 0),
