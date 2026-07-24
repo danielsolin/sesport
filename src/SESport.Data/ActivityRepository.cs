@@ -493,6 +493,108 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          : (Guid)result;
    }
 
+   public async Task<ActivityGroupEditModel?> GetActivityGroupForEditAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id, title, sport_id, start_date, end_date
+         from activity_groups
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new ActivityGroupEditModel
+      {
+         Id = reader.GetGuid(0),
+         Title = reader.GetString(1),
+         SportId = reader.GetString(2),
+         StartDate = reader.GetFieldValue<DateOnly>(3),
+         EndDate = reader.GetFieldValue<DateOnly>(4)
+      };
+   }
+
+   public async Task<bool> UpdateActivityGroupAsync(
+      ActivityGroupEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activity_groups
+         set title = @title,
+            sport_id = @sport_id,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", model.Id);
+      command.Parameters.AddWithValue("title", model.Title.Trim());
+      command.Parameters.AddWithValue("sport_id", model.SportId);
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
+   public async Task<IReadOnlyList<ActivityGroupActivityListItem>>
+      GetActivitiesForGroupEditAsync(
+         Guid activityGroupId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            id,
+            title,
+            description,
+            activity_date,
+            local_start_time,
+            local_end_time
+         from activities
+         where activity_group_id = @activity_group_id
+         order by
+            activity_date,
+            local_start_time nulls last,
+            title
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         activityGroupId
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var activities = new List<ActivityGroupActivityListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         activities.Add(
+            new ActivityGroupActivityListItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               ReadString(reader, 2),
+               reader.GetFieldValue<DateOnly>(3),
+               ReadTimeOnly(reader, 4),
+               ReadTimeOnly(reader, 5)
+            )
+         );
+      }
+
+      return activities;
+   }
+
    public async Task<
       IReadOnlyDictionary<Guid, IReadOnlyList<ActivityGroupParticipant>>>
       GetActivityGroupParticipantsAsync(
@@ -818,6 +920,14 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var transaction = await connection.BeginTransactionAsync(
          cancellationToken
       );
+      var previousActivityGroupId = model.Id is null
+         ? null
+         : await GetActivityGroupIdAsync(
+            connection,
+            transaction,
+            id,
+            cancellationToken
+         );
 
       var slug = await CreateSlugAsync(
          connection,
@@ -878,6 +988,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          model,
          cancellationToken
       );
+      await SynchronizeActivityGroupDatesAsync(
+         connection,
+         transaction,
+         [
+            previousActivityGroupId,
+            model.ActivityGroupId
+         ],
+         cancellationToken
+      );
       await transaction.CommitAsync(cancellationToken);
       return id;
    }
@@ -891,6 +1010,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
       await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+      var activityGroupId = await GetActivityGroupIdAsync(
+         connection,
+         transaction,
+         id,
          cancellationToken
       );
 
@@ -935,6 +1060,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          await activityCommand.ExecuteNonQueryAsync(cancellationToken);
       }
 
+      await SynchronizeActivityGroupDatesAsync(
+         connection,
+         transaction,
+         [activityGroupId],
+         cancellationToken
+      );
       await transaction.CommitAsync(cancellationToken);
    }
 
@@ -1610,6 +1741,73 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
       model.ActivityGroupId = activityGroupId;
       model.ActivityGroupCreationRequired = false;
+   }
+
+   private static async Task<Guid?> GetActivityGroupIdAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid activityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select activity_group_id
+         from activities
+         where id = @activity_id
+         """;
+
+      await using var command = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("activity_id", activityId);
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+
+      return result is null || result is DBNull
+         ? null
+         : (Guid)result;
+   }
+
+   private static async Task SynchronizeActivityGroupDatesAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      IEnumerable<Guid?> activityGroupIds,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activity_groups ag
+         set start_date = dates.start_date,
+            end_date = dates.end_date,
+            updated_at = now()
+         from (
+            select
+               min(activity_date) as start_date,
+               max(activity_date) as end_date
+            from activities
+            where activity_group_id = @activity_group_id
+         ) dates
+         where ag.id = @activity_group_id
+            and dates.start_date is not null
+         """;
+
+      foreach(var activityGroupId in activityGroupIds
+         .Where(id => id is not null)
+         .Select(id => id!.Value)
+         .Distinct())
+      {
+         await using var command = new NpgsqlCommand(
+            sql,
+            connection,
+            transaction
+         );
+         command.Parameters.AddWithValue(
+            "activity_group_id",
+            activityGroupId
+         );
+         await command.ExecuteNonQueryAsync(cancellationToken);
+      }
    }
 
    private static void AddActivityParameters(

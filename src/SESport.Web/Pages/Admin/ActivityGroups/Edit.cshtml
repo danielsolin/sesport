@@ -1,0 +1,108 @@
+@page "{id:guid}"
+@model SESport.Web.Pages.Admin.ActivityGroups.EditModel
+@{
+   ViewData["Title"] = "Edit Activity Group";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <h1>@ViewData["Title"]</h1>
+   </div>
+   <a class="button" href="@Model.GetBackUrl()">Back</a>
+</section>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <input asp-for="ActivityGroup.Id" type="hidden" />
+   <input asp-for="ReturnUrl" type="hidden" />
+   <div asp-validation-summary="ModelOnly"
+        class="notice notice-error"></div>
+
+   <section class="form-section">
+      <h2>Activity Group</h2>
+      <div class="form-grid">
+         <label>
+            <span>Title</span>
+            <input asp-for="ActivityGroup.Title" />
+            <span asp-validation-for="ActivityGroup.Title"></span>
+         </label>
+         <label>
+            <span>Sport</span>
+            <select asp-for="ActivityGroup.SportId">
+               <option value="">Select sport</option>
+               @foreach(var sport in Model.Sports)
+               {
+                  <option value="@sport.Id">@sport.Label</option>
+               }
+            </select>
+            <span asp-validation-for="ActivityGroup.SportId"></span>
+         </label>
+         <label>
+            <span>Start date</span>
+            <input asp-for="ActivityGroup.StartDate"
+                   type="date"
+                   readonly />
+            <span asp-validation-for="ActivityGroup.StartDate"></span>
+         </label>
+         <label>
+            <span>End date</span>
+            <input asp-for="ActivityGroup.EndDate"
+                   type="date"
+                   readonly />
+            <span asp-validation-for="ActivityGroup.EndDate"></span>
+         </label>
+      </div>
+   </section>
+
+   <section class="form-section">
+      <h2>Activities</h2>
+      @if(Model.Activities.Count == 0)
+      {
+         <div class="notice">
+            No related activities.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact">
+               <thead>
+                  <tr>
+                     <th>Date</th>
+                     <th>Time</th>
+                     <th>Activity</th>
+                     <th>Description</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var activity in Model.Activities)
+                  {
+                     var startTime =
+                        activity.LocalStartTime?.ToString("HH:mm") ?? "?";
+                     var endTime =
+                        activity.LocalEndTime?.ToString("HH:mm") ?? "?";
+                     <tr>
+                        <td>
+                           @activity.ActivityDate.ToString("yyyy-MM-dd")
+                        </td>
+                        <td>@startTime–@endTime</td>
+                        <td>@activity.Title</td>
+                        <td>@activity.Description</td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+
+   <section class="form-actions">
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>

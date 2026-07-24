@@ -161,7 +161,16 @@
                      : string.Empty)">
                      <td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
                      <td>@startTime–@endTime</td>
-                     <td>@activity.ActivityGroupTitle</td>
+                     <td>
+                        @if(activity.ActivityGroupId is not null)
+                        {
+                           <a asp-page="/Admin/ActivityGroups/Edit"
+                              asp-route-id="@activity.ActivityGroupId"
+                              asp-route-returnUrl="@returnUrl">
+                              @activity.ActivityGroupTitle
+                           </a>
+                        }
+                     </td>
                      <td>
                         <a asp-page="./Edit"
                            asp-route-id="@activity.Id"

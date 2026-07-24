@@ -64,6 +64,28 @@ public sealed record ActivityGroupParticipant(
    string Name
 );
 
+public sealed class ActivityGroupEditModel
+{
+   public Guid Id { get; set; }
+
+   public string Title { get; set; } = string.Empty;
+
+   public string SportId { get; set; } = string.Empty;
+
+   public DateOnly? StartDate { get; set; }
+
+   public DateOnly? EndDate { get; set; }
+}
+
+public sealed record ActivityGroupActivityListItem(
+   Guid Id,
+   string Title,
+   string? Description,
+   DateOnly ActivityDate,
+   TimeOnly? LocalStartTime,
+   TimeOnly? LocalEndTime
+);
+
 public sealed record ActivityParticipantListItem(
    Guid Id,
    string Name,
