@@ -38,6 +38,13 @@ public sealed class WebSearchCache
             return false;
          }
 
+         if(entry.Response.Results.Count == 0)
+         {
+            entries.Remove(key);
+            response = new WebSearchResponse([]);
+            return false;
+         }
+
          response = entry.Response;
          return true;
       }
@@ -45,6 +52,11 @@ public sealed class WebSearchCache
 
    public void Store(WebSearchCacheKey key, WebSearchResponse response)
    {
+      if(response.Results.Count == 0)
+      {
+         return;
+      }
+
       lock(stateLock)
       {
          entries[key] = new CacheEntry(

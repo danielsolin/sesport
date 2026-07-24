@@ -289,7 +289,7 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchIgnoresCaptchaReportedForDifferentEngine()
+   public async Task SearchRotatesWhenDifferentEngineFailureHasNoResults()
    {
       var handler = new SequenceHandler(
          new SequenceHandler.ResponseSpec(
@@ -309,8 +309,10 @@ public class SearxngWebSearchClientTests
          CancellationToken.None
       );
 
-      Assert.Equal(1, handler.RequestCount);
-      Assert.Empty(response.Results);
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Contains("engines=google", handler.RequestBodies[0]);
+      Assert.Contains("engines=brave", handler.RequestBodies[1]);
+      Assert.Single(response.Results);
    }
 
    [Fact]
@@ -407,23 +409,73 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchReturnsEmptyWhenSearxngReturnsNoResults()
+   public async Task SearchRotatesWhenSearxngReturnsNoResults()
    {
-      var handler = new RecordingHandler(CreateEmptyResponseJson());
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateEmptyResponseJson()
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
+         )
+      );
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
-         new SearxngWebSearchClientOptions(),
+         new SearxngWebSearchClientOptions
+         {
+            Engines = ["mojeek", "privacywall"]
+         },
          CreateFastRateLimiter()
       );
 
       var response = await client.SearchAsync(
-         "Tre Kronor",
-         3,
+         "Maja Stark 2026",
+         10,
          CancellationToken.None
       );
 
-      Assert.Empty(response.Results);
-      Assert.NotNull(handler.RequestUri);
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Contains("engines=mojeek", handler.RequestBodies[0]);
+      Assert.Contains("engines=privacywall", handler.RequestBodies[1]);
+      Assert.Single(response.Results);
+      Assert.Equal("SearXNG/privacywall", response.Provider);
+   }
+
+   [Fact]
+   public async Task SearchThrowsWhenEveryEngineReturnsNoResults()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateEmptyResponseJson()
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateEmptyResponseJson()
+         )
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions
+         {
+            Engines = ["mojeek", "privacywall"]
+         },
+         CreateFastRateLimiter()
+      );
+
+      var exception = await Assert.ThrowsAnyAsync<Exception>(
+         () => client.SearchAsync(
+            "Maja Stark 2026",
+            10,
+            CancellationToken.None
+         )
+      );
+
+      Assert.Equal(2, handler.RequestCount);
+      Assert.Contains("privacywall", exception.Message);
+      Assert.Contains("no usable results", exception.Message);
    }
 
    [Fact]

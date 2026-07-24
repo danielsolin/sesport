@@ -271,6 +271,13 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          );
       }
 
+      if(results.Count == 0)
+      {
+         throw new SearxngEngineUnavailableException(
+            $"SearXNG engine '{engine}' returned no usable results."
+         );
+      }
+
       if(SearchResultRelevanceGuard.IsCatastrophicallyIrrelevant(
          query,
          results

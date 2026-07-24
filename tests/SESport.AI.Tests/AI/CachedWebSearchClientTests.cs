@@ -89,7 +89,7 @@ public sealed class CachedWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchReusesEmptyResults()
+   public async Task SearchDoesNotReuseEmptyResults()
    {
       var innerClient = new RecordingWebSearchClient();
       var client = CreateClient(innerClient);
@@ -97,7 +97,7 @@ public sealed class CachedWebSearchClientTests
       await client.SearchAsync("Tre Kronor", 3, CancellationToken.None, 0);
       await client.SearchAsync("Tre Kronor", 3, CancellationToken.None, 0);
 
-      Assert.Single(innerClient.Queries);
+      Assert.Equal(2, innerClient.Queries.Count);
    }
 
    private static CachedWebSearchClient CreateClient(
