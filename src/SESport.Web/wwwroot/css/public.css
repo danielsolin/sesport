@@ -936,22 +936,33 @@
       padding: 5px 10px;
       font-size: 10px;
    }
-}
 
-@media (max-width: 600px) and (orientation: portrait) {
+   .activity-is-ongoing .activity-entry,
+   .activity-has-ended .activity-entry {
+      padding-top: 52px;
+   }
+
    .activity-status-badge {
-      top: 5px;
+      right: auto;
+      left: 14px;
+   }
+
+   .activity-entry-sport-icon {
+      right: 14px;
+      left: auto;
    }
 
    .activity-is-ongoing .activity-entry-organization,
    .activity-has-ended .activity-entry-organization {
-      max-width: calc(100% - 125px);
+      max-width: none;
       padding-right: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
    }
+}
 
+@media (max-width: 600px) and (orientation: portrait) {
    .activity-group-schedule-item {
       display: flex;
       flex-direction: column;

@@ -68,6 +68,27 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
+         ".activity-is-ongoing .activity-entry,\n" +
+         "   .activity-has-ended .activity-entry {\n" +
+         "      padding-top: 52px;",
+         css
+      );
+      Assert.Contains(
+         ".activity-status-badge {\n      right: auto;\n" +
+         "      left: 14px;",
+         css
+      );
+      Assert.Contains(
+         ".activity-entry-sport-icon {\n      right: 14px;\n" +
+         "      left: auto;",
+         css
+      );
+      Assert.Contains(
+         "max-width: none;\n      padding-right: 0;\n" +
+         "      overflow: visible;",
+         css
+      );
+      Assert.Contains(
          "@media (max-width: 600px) and (orientation: portrait)",
          css
       );
