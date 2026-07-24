@@ -121,5 +121,13 @@ public sealed class IndexMarkupTests
          "border-color: rgba(0, 106, 168, 0.5);",
          css
       );
+      Assert.Contains(
+         "--activity-duration-color: #7d8589;",
+         css
+      );
+      Assert.Contains(
+         "box-shadow: 0 0 2px rgba(125, 133, 137, 0.1);",
+         css
+      );
    }
 }

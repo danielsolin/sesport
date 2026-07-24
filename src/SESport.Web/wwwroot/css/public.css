@@ -488,7 +488,7 @@
 }
 
 .activity-is-ongoing {
-   --activity-duration-color: #b79a3a;
+   --activity-duration-color: #7d8589;
 }
 
 .activity-is-upcoming .activity-duration-rail,
@@ -497,10 +497,9 @@
 }
 
 .activity-is-ongoing .activity-duration-line {
-   width: 5px;
-   opacity: 1;
-   box-shadow: 0 0 6px rgba(183, 154, 58, 0.3);
-   transform: translateX(-1px);
+   width: 3px;
+   opacity: 0.78;
+   box-shadow: 0 0 2px rgba(125, 133, 137, 0.1);
 }
 
 .activity-has-ended > .activity-agenda-time,
