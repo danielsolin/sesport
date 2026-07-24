@@ -344,6 +344,8 @@
 .activity-time-row {
    display: flex;
    align-items: center;
+   position: relative;
+   z-index: 3;
    width: calc(100% + var(--activity-time-gap));
    transform: translateY(24px);
 }
@@ -351,6 +353,8 @@
 .activity-group-time-item {
    display: flex;
    align-items: center;
+   position: relative;
+   z-index: 3;
    width: calc(100% + var(--activity-time-gap));
    min-height: 43px;
    transform: translateY(20px);
@@ -417,6 +421,7 @@
    display: block;
    flex: 0 0 18px;
    position: relative;
+   z-index: 3;
    width: 18px;
    height: 18px;
    border-radius: 50%;
@@ -502,9 +507,17 @@
    box-shadow: 0 0 2px rgba(125, 133, 137, 0.1);
 }
 
-.activity-has-ended > .activity-agenda-time,
 .activity-has-ended > .activity-duration-rail,
 .activity-has-ended .activity-entry > :not(.activity-ended-badge) {
+   opacity: 0.5;
+}
+
+.activity-has-ended .activity-time-badge,
+.activity-has-ended .activity-time-connector::before,
+.activity-has-ended > .activity-agenda-time
+   > .activity-analog-clock,
+.activity-has-ended > .activity-agenda-time
+   > .activity-time-channel-list {
    opacity: 0.5;
 }
 

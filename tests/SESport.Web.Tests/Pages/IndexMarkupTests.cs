@@ -129,5 +129,25 @@ public sealed class IndexMarkupTests
          "box-shadow: 0 0 2px rgba(125, 133, 137, 0.1);",
          css
       );
+      Assert.Contains(
+         ".activity-time-point {\n   display: block;\n" +
+         "   flex: 0 0 18px;\n   position: relative;\n" +
+         "   z-index: 3;",
+         css
+      );
+      Assert.Contains(
+         ".activity-time-row {\n   display: flex;\n" +
+         "   align-items: center;\n   position: relative;\n" +
+         "   z-index: 3;",
+         css
+      );
+      Assert.DoesNotContain(
+         ".activity-has-ended > .activity-agenda-time,",
+         css
+      );
+      Assert.Contains(
+         ".activity-has-ended .activity-time-connector::before",
+         css
+      );
    }
 }
