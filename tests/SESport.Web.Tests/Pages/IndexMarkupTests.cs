@@ -58,9 +58,14 @@ public sealed class IndexMarkupTests
          "@media (max-width: 600px) and (orientation: portrait)",
          css
       );
-      Assert.Contains(
+      Assert.DoesNotContain(
          ".index-participants-filter.is-selected::before",
          css
       );
+      Assert.Contains(
+         ".index-participants-filter.is-selected::after",
+         css
+      );
+      Assert.Contains("bottom: -9px;", css);
    }
 }

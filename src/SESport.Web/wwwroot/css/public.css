@@ -128,17 +128,15 @@
    color: #ffcc00;
 }
 
-.index-participants-filter.is-selected::before {
+.index-participants-filter.is-selected::after {
    position: absolute;
-   top: -10px;
-   left: 50%;
-   width: 0;
-   height: 0;
-   border-top: 8px solid #ffcc00;
-   border-right: 7px solid transparent;
-   border-left: 7px solid transparent;
+   right: 6px;
+   bottom: -9px;
+   left: 6px;
+   height: 3px;
+   border-radius: 2px;
+   background: var(--accent);
    content: "";
-   transform: translateX(-50%);
 }
 
 .index-participants-filter.is-selected .index-participants-count {
