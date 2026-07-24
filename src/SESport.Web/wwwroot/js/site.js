@@ -2,7 +2,9 @@
    document.addEventListener("visibilitychange", () => {
       if(!document.hidden)
       {
-         window.location.reload();
+         const baseUrl =
+            `${window.location.origin}${window.location.pathname}`;
+         window.location.assign(baseUrl);
       }
    });
 
