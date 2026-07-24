@@ -227,7 +227,7 @@ public class IndexModel(
    {
       var dates = new List<DateOnly>();
 
-      for(var offset = -1; offset <= 1; offset++)
+      for(var offset = 0; offset <= 2; offset++)
       {
          dates.Add(todayDate.AddDays(offset));
       }
@@ -242,11 +242,34 @@ public class IndexModel(
          .Select(date =>
             new DateOption(
                DateDisplay.Format(date),
-               DateDisplay.Format(date),
+               FormatDateOptionLabel(date, todayDate),
                date == selectedDate
             )
          )
          .ToList();
+   }
+
+   private static string FormatDateOptionLabel(
+      DateOnly date,
+      DateOnly todayDate
+   )
+   {
+      var culture = CultureInfo.GetCultureInfo(
+         PrimaryCountry.CultureName
+      );
+      var label = date == todayDate
+         ? "Idag"
+         : date == todayDate.AddDays(1)
+            ? "Imorgon"
+            : culture.TextInfo.ToTitleCase(
+               date.ToString("dddd", culture)
+            );
+      var dateLabel = date.ToString(
+         "d MMMM",
+         culture
+      );
+
+      return $"{label} ({dateLabel})";
    }
 
 }

@@ -103,7 +103,7 @@ public sealed class IndexModelTests
    [Fact]
    public void BuildDateOptions_UsesThreeDayWindow()
    {
-      var today = new DateOnly(2026, 7, 3);
+      var today = new DateOnly(2026, 7, 24);
       var selectedDate = today;
 
       var method = typeof(IndexModel).GetMethod(
@@ -118,8 +118,16 @@ public sealed class IndexModelTests
 
       Assert.Equal(3, options.Count);
       Assert.Equal(
-         [today.AddDays(-1), today, today.AddDays(1)],
+         [today, today.AddDays(1), today.AddDays(2)],
          options.Select(option => DateOnly.Parse(option.Value))
+      );
+      Assert.Equal(
+         [
+            "Idag (24 juli)",
+            "Imorgon (25 juli)",
+            "Söndag (26 juli)"
+         ],
+         options.Select(option => option.Label)
       );
    }
 
@@ -127,7 +135,7 @@ public sealed class IndexModelTests
    public void BuildDateOptions_IncludesSelectedDateOutsideWindow()
    {
       var today = new DateOnly(2026, 7, 24);
-      var selectedDate = new DateOnly(2026, 7, 26);
+      var selectedDate = new DateOnly(2026, 7, 27);
       var method = typeof(IndexModel).GetMethod(
          "BuildDateOptions",
          BindingFlags.NonPublic | BindingFlags.Static
@@ -142,7 +150,8 @@ public sealed class IndexModelTests
          option => option.IsSelected
       );
 
-      Assert.Equal("2026-07-26", selectedOption.Value);
+      Assert.Equal("2026-07-27", selectedOption.Value);
+      Assert.Equal("Måndag (27 juli)", selectedOption.Label);
       Assert.Equal(4, options.Count);
    }
 

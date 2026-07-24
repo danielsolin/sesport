@@ -146,9 +146,9 @@
 }
 
 .date-select {
-   flex: 0 0 170px;
-   width: 170px;
-   min-width: 170px;
+   flex: 0 0 200px;
+   width: 200px;
+   min-width: 200px;
 }
 
 .date-dropdown {
@@ -229,7 +229,7 @@
    color: #397293;
    font-size: 13px;
    font-weight: 750;
-   text-align: center;
+   text-align: left;
    text-decoration: none;
 }
 
