@@ -123,6 +123,29 @@ public sealed class IndexModelTests
       );
    }
 
+   [Fact]
+   public void BuildDateOptions_IncludesSelectedDateOutsideWindow()
+   {
+      var today = new DateOnly(2026, 7, 24);
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var method = typeof(IndexModel).GetMethod(
+         "BuildDateOptions",
+         BindingFlags.NonPublic | BindingFlags.Static
+      );
+
+      var options = (IReadOnlyList<DateOption>)method!.Invoke(
+         null,
+         [today, selectedDate]
+      )!;
+      var selectedOption = Assert.Single(
+         options,
+         option => option.IsSelected
+      );
+
+      Assert.Equal("2026-07-26", selectedOption.Value);
+      Assert.Equal(4, options.Count);
+   }
+
    private static ActivityListItem CreateActivity(
       string title,
       Guid[] participantIds,

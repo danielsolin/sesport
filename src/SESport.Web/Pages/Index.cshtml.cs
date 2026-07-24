@@ -232,6 +232,11 @@ public class IndexModel(
          dates.Add(todayDate.AddDays(offset));
       }
 
+      if(!dates.Contains(selectedDate))
+      {
+         dates.Add(selectedDate);
+      }
+
       return dates
          .OrderBy(date => date)
          .Select(date =>
