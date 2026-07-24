@@ -13,6 +13,9 @@ var adminOptions = builder.Configuration.GetSection("Admin")
 var searxngOptions = builder.Configuration.GetSection("SearXNG")
    .Get<SearxngWebSearchClientOptions>() ??
    new SearxngWebSearchClientOptions();
+var webStatsOptions = builder.Configuration.GetSection("WebStats")
+   .Get<WebStatsOptions>() ??
+   new WebStatsOptions();
 builder.Services.AddSingleton(
    _ => PostgresDataSourceFactory.CreateDefault(
       builder.Configuration.GetConnectionString("Default")
@@ -20,6 +23,7 @@ builder.Services.AddSingleton(
 );
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(searxngOptions);
+builder.Services.AddSingleton(webStatsOptions);
 builder.Services.AddAiPlatform();
 builder.Services.AddSingleton<AdminDatePreferenceStore>();
 builder.Services.AddSingleton<RunDatePreferenceStore>();

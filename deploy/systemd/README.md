@@ -19,6 +19,8 @@ The SESport web services load `/home/daniel/sesport/.env` through
 - `sesport-db-backup.timer`
 - `sesport-db-cleanup.service`
 - `sesport-db-cleanup.timer`
+- `sesport-web-stats.service`
+- `sesport-web-stats.timer`
 
 ## Install Example
 
@@ -28,6 +30,17 @@ sudo cp deploy/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now sesport.service
 ```
+
+Install GoAccess before enabling the web statistics timer:
+
+```bash
+sudo apt-get install goaccess
+sudo systemctl enable --now sesport-web-stats.timer
+```
+
+The timer generates an anonymized report every night, commits the HTML
+reports in `data/web-stats`, and pushes them to the current branch. Its
+GoAccess database is stored outside Git in `/var/lib/sesport-web-stats`.
 
 Do not enable `searxng.service` on a web or database host unless that
 machine also runs AI jobs locally.

@@ -52,6 +52,12 @@ public static class AdminNavigationBuilder
       return
       [
          new AdminNavGroup(
+            "Operations",
+            [
+               new AdminNavItem("Web statistics", "/Admin/Config/Stats")
+            ]
+         ),
+         new AdminNavGroup(
             "AI",
             [
                new AdminNavItem("AI providers", "/Admin/Config/Ai/Providers"),

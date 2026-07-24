@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate SESport web statistics daily
+
+[Timer]
+OnCalendar=03:10
+Persistent=true
+RandomizedDelaySec=10m
+Unit=sesport-web-stats.service
+
+[Install]
+WantedBy=timers.target

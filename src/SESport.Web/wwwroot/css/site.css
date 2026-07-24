@@ -417,6 +417,21 @@ h2 {
    color: var(--muted);
 }
 
+.stats-report-list {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px;
+   margin-bottom: 12px;
+}
+
+.stats-report-frame {
+   width: 100%;
+   min-height: 75vh;
+   border: 1px solid var(--line);
+   border-radius: 8px;
+   background: var(--surface);
+}
+
 .admin-table-wrap {
    width: 100%;
    overflow-x: auto;

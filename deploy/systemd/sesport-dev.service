@@ -11,6 +11,7 @@ Restart=always
 RestartSec=5
 User=daniel
 Environment=ASPNETCORE_ENVIRONMENT=Development
+Environment=WebStats__ReportDirectory=/home/daniel/sesport/data/web-stats
 EnvironmentFile=/home/daniel/sesport/.env
 
 [Install]

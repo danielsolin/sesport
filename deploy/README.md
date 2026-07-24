@@ -54,6 +54,7 @@ docker compose up -d postgres
 ## Notes
 
 - Copy the systemd units into `/etc/systemd/system/`
+- Install GoAccess on the web host for the `/Admin/Config/Stats` report
 - Copy the Caddyfile into the Caddy config location used on the VPS
 - Keep a host-local `.env` in the repository root on each machine that runs
   a systemd service. The file is intentionally ignored by git, but
