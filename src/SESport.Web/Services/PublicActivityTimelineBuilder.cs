@@ -9,6 +9,7 @@ public sealed class PublicActivityTimelineBuilder
 {
    public PublicActivityTimelineViewModel Build(
       IEnumerable<ActivityListItem> activities,
+      DateOnly selectedDate,
       DateTimeOffset now
    )
    {
@@ -55,14 +56,64 @@ public sealed class PublicActivityTimelineBuilder
          )
          .ToList();
 
-      var timelineEntries = timedSections
-         .Select(section => new PublicActivityTimelineEntry(section))
-         .ToList();
+      var timelineEntries = CreateTimelineEntries(
+         timedSections,
+         selectedDate,
+         now
+      );
 
       return new PublicActivityTimelineViewModel(
          timelineEntries,
          untimedActivities,
          visibleActivities.Count > 0
+      );
+   }
+
+   private static IReadOnlyList<PublicActivityTimelineEntry>
+      CreateTimelineEntries(
+         IReadOnlyList<ActivityAgendaSection> timedSections,
+         DateOnly selectedDate,
+         DateTimeOffset now
+      )
+   {
+      var entries = new List<PublicActivityTimelineEntry>();
+      var showCurrentMarker =
+         selectedDate == SportDay.GetSportDate(now) &&
+         timedSections.Count > 0;
+      var markerInserted = false;
+
+      foreach(var section in timedSections)
+      {
+         if(
+            showCurrentMarker &&
+            !markerInserted &&
+            section.TimelineSlot.Activity.StartsAt >= now
+         )
+         {
+            entries.Add(CreateCurrentMarker(now));
+            markerInserted = true;
+         }
+
+         entries.Add(new PublicActivityTimelineEntry(null, section));
+      }
+
+      if(showCurrentMarker && !markerInserted)
+      {
+         entries.Add(CreateCurrentMarker(now));
+      }
+
+      return entries;
+   }
+
+   private static PublicActivityTimelineEntry CreateCurrentMarker(
+      DateTimeOffset now
+   )
+   {
+      var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
+
+      return new PublicActivityTimelineEntry(
+         $"Nu {localNow:HH:mm}",
+         null
       );
    }
 
@@ -160,5 +211,9 @@ public sealed record PublicActivityTimelineViewModel(
 );
 
 public sealed record PublicActivityTimelineEntry(
-   ActivityAgendaSection Section
-);
+   string? CurrentMarkerLabel,
+   ActivityAgendaSection? Section
+)
+{
+   public bool IsCurrentMarker => CurrentMarkerLabel is not null;
+}

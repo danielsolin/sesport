@@ -80,6 +80,7 @@ public class IndexModel(
          );
          var timeline = timelineBuilder.Build(
             filteredActivities,
+            SelectedDate,
             now
          );
          TimelineEntries = timeline.TimelineEntries;

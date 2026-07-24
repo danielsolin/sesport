@@ -40,6 +40,12 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-participant-col-age", html);
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
+      Assert.Contains("activity-now-marker", html);
+      Assert.Contains("@media (orientation: portrait)", css);
+      Assert.Contains(
+         ".activity-now-marker {\n      display: none;",
+         css
+      );
       Assert.Contains(
          "@media (max-width: 600px) and (orientation: portrait)",
          css

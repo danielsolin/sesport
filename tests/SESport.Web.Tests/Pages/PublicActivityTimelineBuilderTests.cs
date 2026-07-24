@@ -31,17 +31,23 @@ public class PublicActivityTimelineBuilderTests
          )
       };
 
-      var timeline = builder.Build(activities, now);
+      var timeline = builder.Build(activities, selectedDate, now);
+      var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
 
       Assert.True(timeline.HasVisibleActivities);
-      Assert.Equal(2, timeline.TimelineEntries.Count);
+      Assert.Equal(3, timeline.TimelineEntries.Count);
       Assert.Equal(
          "Past",
-         timeline.TimelineEntries[0].Section.Activities[0].Title
+         timeline.TimelineEntries[0].Section!.Activities[0].Title
+      );
+      Assert.True(timeline.TimelineEntries[1].IsCurrentMarker);
+      Assert.Equal(
+         $"Nu {localNow:HH:mm}",
+         timeline.TimelineEntries[1].CurrentMarkerLabel
       );
       Assert.Equal(
          "Future",
-         timeline.TimelineEntries[1].Section.Activities[0].Title
+         timeline.TimelineEntries[2].Section!.Activities[0].Title
       );
       Assert.Equal(
          ["Untimed"],
@@ -69,13 +75,13 @@ public class PublicActivityTimelineBuilderTests
          )
       };
 
-      var timeline = builder.Build(activities, now);
+      var timeline = builder.Build(activities, selectedDate, now);
 
       Assert.True(timeline.HasVisibleActivities);
       Assert.Equal(
          ["Earlier", "Later"],
          timeline.TimelineEntries.Select(entry =>
-            entry.Section.Activities[0].Title)
+            entry.Section!.Activities[0].Title)
       );
    }
 
@@ -115,11 +121,12 @@ public class PublicActivityTimelineBuilderTests
          )
       };
 
-      var timeline = builder.Build(activities, now);
+      var timeline = builder.Build(activities, selectedDate, now);
 
-      Assert.True(timeline.TimelineEntries[0].Section.HasEnded);
-      Assert.True(timeline.TimelineEntries[1].Section.IsOngoing);
-      Assert.False(timeline.TimelineEntries[2].Section.IsOngoing);
+      Assert.True(timeline.TimelineEntries[0].Section!.HasEnded);
+      Assert.True(timeline.TimelineEntries[1].Section!.IsOngoing);
+      Assert.True(timeline.TimelineEntries[2].IsCurrentMarker);
+      Assert.False(timeline.TimelineEntries[3].Section!.IsOngoing);
    }
 
    [Fact]
@@ -135,21 +142,21 @@ public class PublicActivityTimelineBuilderTests
          CreateActivity("Second", selectedDate, sharedStart)
       };
 
-      var timeline = builder.Build(activities, now);
+      var timeline = builder.Build(activities, selectedDate, now);
 
       Assert.Equal(2, timeline.TimelineEntries.Count);
       Assert.Equal(
          ["First", "Second"],
          timeline.TimelineEntries.Select(entry =>
-            entry.Section.Activities[0].Title)
+            entry.Section!.Activities[0].Title)
       );
       Assert.All(
          timeline.TimelineEntries,
-         entry => Assert.Single(entry.Section.Activities)
+         entry => Assert.Single(entry.Section!.Activities)
       );
       Assert.Equal(
          ["18:00", "18:00"],
-         timeline.TimelineEntries.Select(entry => entry.Section.TimeLabel)
+         timeline.TimelineEntries.Select(entry => entry.Section!.TimeLabel)
       );
    }
 
@@ -196,9 +203,12 @@ public class PublicActivityTimelineBuilderTests
          )
       };
 
-      var timeline = builder.Build(activities, now);
+      var timeline = builder.Build(activities, selectedDate, now);
 
-      var section = Assert.Single(timeline.TimelineEntries).Section;
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
       Assert.Equal("Rally Polen", section.ActivityGroupTitle);
       Assert.Equal(3, section.Activities.Count);
       Assert.Equal(
@@ -220,9 +230,16 @@ public class PublicActivityTimelineBuilderTests
          0,
          TimeSpan.FromHours(2)
       );
-      var middayTimeline = builder.Build(activities, midday);
+      var middayTimeline = builder.Build(
+         activities,
+         selectedDate,
+         midday
+      );
       var middaySection =
-         Assert.Single(middayTimeline.TimelineEntries).Section;
+         Assert.Single(
+            middayTimeline.TimelineEntries,
+            entry => !entry.IsCurrentMarker
+         ).Section!;
 
       Assert.Equal("13:00", middaySection.TimelineSlot.TimeLabel);
    }
