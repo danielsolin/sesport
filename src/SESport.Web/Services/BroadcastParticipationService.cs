@@ -362,13 +362,28 @@ public sealed class BroadcastParticipationService(
       return JsonSerializer.Serialize(
          new
          {
-            sport = broadcast.Categories,
+            sport = NormalizeParticipationSports(broadcast.Categories),
             event_name = broadcast.Title,
             description = broadcast.Description,
             date = $"{localDate:yyyy-MM-dd}",
             candidates
          }
       );
+   }
+
+   private static IReadOnlyList<string> NormalizeParticipationSports(
+      IEnumerable<string> categories
+   )
+   {
+      return categories
+         .SelectMany(category => category.Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         ))
+         .Where(category => !string.IsNullOrWhiteSpace(category))
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 
    private async Task<IReadOnlyList<EntityOption>> GetCandidateOptionsAsync(

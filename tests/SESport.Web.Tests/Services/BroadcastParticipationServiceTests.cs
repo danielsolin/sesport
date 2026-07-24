@@ -48,6 +48,35 @@ public sealed class BroadcastParticipationServiceTests
    }
 
    [Fact]
+   public void CreateParticipationInputJsonDeduplicatesCompositeSports()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "Channel",
+         "Sweden-Canada",
+         null,
+         ["Handboll", "Handboll, U18-VM Damer", "U18-VM Damer"],
+         DateTimeOffset.Parse("2026-07-29T12:00:00Z"),
+         DateTimeOffset.Parse("2026-07-29T14:00:00Z")
+      );
+
+      var method = typeof(BroadcastParticipationService).GetMethod(
+         "CreateParticipationInputJson",
+         BindingFlags.NonPublic | BindingFlags.Static
+      )!;
+
+      var json = (string)method.Invoke(null, [broadcast, string.Empty])!;
+      using var document = JsonDocument.Parse(json);
+      var sports = document.RootElement
+         .GetProperty("sport")
+         .EnumerateArray()
+         .Select(item => item.GetString()!)
+         .ToArray();
+
+      Assert.Equal(["Handboll", "U18-VM Damer"], sports);
+   }
+
+   [Fact]
    public void GetParticipantDisplayItemsLinksExistingEntities()
    {
       var entityId = Guid.NewGuid();
