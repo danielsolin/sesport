@@ -97,14 +97,21 @@
          <table class="admin-table admin-table-hover">
             <thead>
                <tr>
+                  <th>Date</th>
                   <th>
-                        <a asp-page="./Index"
+                     <a asp-page="./Index"
                            asp-all-route-data=
                               '@Model.GetSortRouteValues("Time")'>
-                        Date @Model.GetSortIndicator("Time")
+                        Time @Model.GetSortIndicator("Time")
                      </a>
                   </th>
-                  <th>Time</th>
+                  <th>
+                     <a asp-page="./Index"
+                           asp-all-route-data=
+                              '@Model.GetSortRouteValues("Group")'>
+                        Group @Model.GetSortIndicator("Group")
+                     </a>
+                  </th>
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
@@ -154,6 +161,7 @@
                      : string.Empty)">
                      <td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
                      <td>@startTime–@endTime</td>
+                     <td>@activity.ActivityGroupTitle</td>
                      <td>
                         <a asp-page="./Edit"
                            asp-route-id="@activity.Id"

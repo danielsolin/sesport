@@ -12,6 +12,7 @@ public sealed class ActivityIndexPageService(
 )
 {
    private const string TimeSortColumn = "Time";
+   private const string GroupSortColumn = "Group";
    private const string ActivitySortColumn = "Activity";
    private const string EntitiesSortColumn = "Entities";
    private const string StatusSortColumn = "Status";
@@ -167,6 +168,7 @@ public sealed class ActivityIndexPageService(
    {
       return sortColumn switch
       {
+         GroupSortColumn => GroupSortColumn,
          ActivitySortColumn => ActivitySortColumn,
          EntitiesSortColumn => EntitiesSortColumn,
          StatusSortColumn => StatusSortColumn,
@@ -194,6 +196,11 @@ public sealed class ActivityIndexPageService(
    {
       return sortColumn switch
       {
+         GroupSortColumn => OrderByDirection(
+            activities,
+            activity => activity.ActivityGroupTitle ?? string.Empty,
+            sortAsc
+         ),
          ActivitySortColumn => OrderByDirection(
             activities,
             activity => activity.Title,
@@ -209,12 +216,29 @@ public sealed class ActivityIndexPageService(
             activity => activity.PublicationStatus,
             sortAsc
          ),
-         _ => OrderByDirection(
+         _ => OrderByStartTime(
             activities,
-            activity => activity.TimeText,
             sortAsc
          )
       };
+   }
+
+   private static IReadOnlyList<ActivityListItem> OrderByStartTime(
+      IEnumerable<ActivityListItem> activities,
+      bool sortAsc
+   )
+   {
+      var activitiesWithUntimedLast = activities
+         .OrderBy(activity => activity.StartsAt is null);
+      var sortedActivities = sortAsc
+         ? activitiesWithUntimedLast.ThenBy(activity => activity.StartsAt)
+         : activitiesWithUntimedLast.ThenByDescending(
+            activity => activity.StartsAt
+         );
+
+      return sortedActivities
+         .ThenBy(activity => activity.Title, StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 
    private static IReadOnlyList<ActivityListItem> OrderByDirection(
