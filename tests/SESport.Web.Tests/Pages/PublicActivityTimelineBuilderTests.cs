@@ -124,9 +124,52 @@ public class PublicActivityTimelineBuilderTests
       var timeline = builder.Build(activities, selectedDate, now);
 
       Assert.True(timeline.TimelineEntries[0].Section!.HasEnded);
-      Assert.True(timeline.TimelineEntries[1].Section!.IsOngoing);
-      Assert.True(timeline.TimelineEntries[2].IsCurrentMarker);
+      Assert.True(timeline.TimelineEntries[1].IsCurrentMarker);
+      Assert.True(timeline.TimelineEntries[2].Section!.IsOngoing);
       Assert.False(timeline.TimelineEntries[3].Section!.IsOngoing);
+   }
+
+   [Fact]
+   public void Build_ShowsRecentlyEndedBeforeEarlierOngoingActivity()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         6,
+         12,
+         12,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var selectedDate = SportDay.GetSportDate(now);
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Ongoing",
+            selectedDate,
+            now.AddHours(-2),
+            now.AddHours(1)
+         ),
+         CreateActivity(
+            "Recently ended",
+            selectedDate,
+            now.AddHours(-1),
+            now.AddMinutes(-5)
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+
+      Assert.Equal(
+         "Recently ended",
+         timeline.TimelineEntries[0].Section!.Activities[0].Title
+      );
+      Assert.True(timeline.TimelineEntries[1].IsCurrentMarker);
+      Assert.Equal(
+         "Ongoing",
+         timeline.TimelineEntries[2].Section!.Activities[0].Title
+      );
    }
 
    [Fact]

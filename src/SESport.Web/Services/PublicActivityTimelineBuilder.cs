@@ -47,7 +47,8 @@ public sealed class PublicActivityTimelineBuilder
 
       var timedSections = groupedSections
          .Concat(individualSections)
-         .OrderBy(section => section.TimelineSlot.Activity.StartsAt)
+         .OrderBy(section => GetTimelineOrder(section, now))
+         .ThenBy(section => section.TimelineSlot.Activity.StartsAt)
          .ThenBy(section => section.TimeLabel, StringComparer.Ordinal)
          .ThenBy(
             section => section.ActivityGroupTitle ??
@@ -87,7 +88,7 @@ public sealed class PublicActivityTimelineBuilder
          if(
             showCurrentMarker &&
             !markerInserted &&
-            section.TimelineSlot.Activity.StartsAt >= now
+            !IsBeforeCurrentMarker(section, now)
          )
          {
             entries.Add(CreateCurrentMarker(now));
@@ -103,6 +104,29 @@ public sealed class PublicActivityTimelineBuilder
       }
 
       return entries;
+   }
+
+   private static int GetTimelineOrder(
+      ActivityAgendaSection section,
+      DateTimeOffset now
+   )
+   {
+      if(IsBeforeCurrentMarker(section, now))
+      {
+         return 0;
+      }
+
+      return section.IsOngoing ? 1 : 2;
+   }
+
+   private static bool IsBeforeCurrentMarker(
+      ActivityAgendaSection section,
+      DateTimeOffset now
+   )
+   {
+      return section.HasEnded ||
+         !section.IsOngoing &&
+         section.TimelineSlot.Activity.StartsAt < now;
    }
 
    private static PublicActivityTimelineEntry CreateCurrentMarker(
