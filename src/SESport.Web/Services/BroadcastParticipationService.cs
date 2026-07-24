@@ -46,6 +46,34 @@ public sealed class BroadcastParticipationService(
          ?? participationChecks[0];
    }
 
+   public async Task RecordApplicationAsync(
+      Guid runId,
+      Guid activityId,
+      IReadOnlyCollection<Guid> broadcastIds,
+      CancellationToken cancellationToken
+   )
+   {
+      var history = await aiRepository.GetParticipationCheckHistoryAsync(
+         NormalizeBroadcastIds(broadcastIds),
+         cancellationToken
+      );
+      var isParticipationRun = history.Values
+         .SelectMany(checks => checks)
+         .Any(check => check.RunId == runId);
+
+      if(!isParticipationRun)
+      {
+         return;
+      }
+
+      await aiRepository.RecordApplicationAsync(
+         runId,
+         AiJobRunApplicationTargetTypes.Activity,
+         activityId.ToString(),
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<BroadcastListItem>>
       ApplyParticipationChecksAsync(
          IReadOnlyList<BroadcastListItem> broadcasts,

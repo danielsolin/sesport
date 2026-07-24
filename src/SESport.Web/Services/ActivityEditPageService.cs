@@ -168,7 +168,19 @@ public sealed class ActivityEditPageService(
          ) ?? activity.ActivityGroupTitle;
       }
 
-      _ = await repository.SaveAsync(activity, cancellationToken);
+      var activityId = await repository.SaveAsync(
+         activity,
+         cancellationToken
+      );
+      if(activity.ParticipationRunId is not null)
+      {
+         await participationService.RecordApplicationAsync(
+            activity.ParticipationRunId.Value,
+            activityId,
+            activity.BroadcastIds,
+            cancellationToken
+         );
+      }
       await broadcastRepository.HideAsync(
          NormalizeBroadcastIds(activity.BroadcastIds),
          cancellationToken
@@ -304,6 +316,7 @@ public sealed class ActivityEditPageService(
 
       if(participationCheck is not null)
       {
+         activity.ParticipationRunId = participationCheck.RunId;
          activity.LinkedEntityIds = (
             await ResolveLinkedEntityIdsAsync(
                firstBroadcast.EntityId,

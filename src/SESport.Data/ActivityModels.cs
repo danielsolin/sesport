@@ -120,6 +120,8 @@ public sealed class ActivitySourceEditModel
 
 public sealed class ActivityEditModel
 {
+   public Guid? ParticipationRunId { get; set; }
+
    public Guid? Id { get; set; }
 
    public string Title { get; set; } = string.Empty;

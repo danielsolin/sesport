@@ -72,9 +72,11 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
+      bool wasApplied;
+
       if(run.JobId == AiJobIds.GenerateActivityTeaser)
       {
-         await activityRepository.UpdateTeaserAsync(
+         wasApplied = await activityRepository.UpdateTeaserAsync(
             activityId,
             output,
             cancellationToken
@@ -82,17 +84,32 @@ public sealed class AiJobPostProcessor(
       }
       else
       {
-         await activityRepository.UpdateFactsAsync(
+         wasApplied = await activityRepository.UpdateFactsAsync(
             activityId,
             output,
             cancellationToken
          );
-         await ReplaceActivityFactSourcesAsync(
-            activityId,
-            activityFacts?.Sources ?? [],
-            cancellationToken
-         );
+         if(wasApplied)
+         {
+            await ReplaceActivityFactSourcesAsync(
+               activityId,
+               activityFacts?.Sources ?? [],
+               cancellationToken
+            );
+         }
       }
+
+      if(!wasApplied)
+      {
+         return;
+      }
+
+      await runRepository.RecordApplicationAsync(
+         runId,
+         AiJobRunApplicationTargetTypes.Activity,
+         activityId.ToString(),
+         cancellationToken
+      );
    }
 
    private async Task ReplaceActivityFactSourcesAsync(
@@ -163,12 +180,23 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
-      await adminRepository.UpdateEntityPersonFactsAsync(
+      var wasApplied = await adminRepository.UpdateEntityPersonFactsAsync(
          entityId,
          facts.Birthdate,
          facts.Height,
          facts.Weight,
          facts.FormativeClub,
+         cancellationToken
+      );
+      if(!wasApplied)
+      {
+         return;
+      }
+
+      await runRepository.RecordApplicationAsync(
+         runId,
+         AiJobRunApplicationTargetTypes.Entity,
+         entityId.ToString(),
          cancellationToken
       );
 
@@ -232,9 +260,20 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
-      await adminRepository.UpdateEntityBioAsync(
+      var wasApplied = await adminRepository.UpdateEntityBioAsync(
          entityId,
          translatedText,
+         cancellationToken
+      );
+      if(!wasApplied)
+      {
+         return;
+      }
+
+      await runRepository.RecordApplicationAsync(
+         runId,
+         AiJobRunApplicationTargetTypes.Entity,
+         entityId.ToString(),
          cancellationToken
       );
    }

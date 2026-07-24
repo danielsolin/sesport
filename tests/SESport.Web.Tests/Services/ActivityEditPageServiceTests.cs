@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SESport.AI.Interfaces;
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data;
@@ -227,6 +228,8 @@ public sealed class ActivityEditPageServiceTests
          personName
       );
 
+      Guid? savedActivityId = null;
+
       try
       {
          var activity = new ActivityEditModel();
@@ -239,14 +242,53 @@ public sealed class ActivityEditPageServiceTests
          );
 
          Assert.Equal([broadcastId], activity.BroadcastIds);
+         Assert.Equal(runId, activity.ParticipationRunId);
          Assert.Equal(organizationId, activity.OrganizationEntityId);
          Assert.Equal([personId], activity.LinkedEntityIds);
          Assert.Equal(DistantActivityDate, activity.ActivityDate);
          Assert.Equal(new TimeOnly(12, 0), activity.LocalStartTime);
          Assert.Equal(new TimeOnly(14, 0), activity.LocalEndTime);
+
+         await fixture.Service.SaveAsync(activity, CancellationToken.None);
+         var activityInfo = await GetActivityInfoAsync(
+            dataSource,
+            activity.Title,
+            activity.ActivityDate!.Value,
+            activity.SportId
+         );
+         savedActivityId = activityInfo.ActivityId;
+
+         await using var applicationCommand = dataSource.CreateCommand(
+            """
+            select count(*)
+            from ai_job_run_applications
+            where run_id = @run_id
+               and target_type = @target_type
+               and target_id = @target_id
+            """
+         );
+         applicationCommand.Parameters.AddWithValue("run_id", runId);
+         applicationCommand.Parameters.AddWithValue(
+            "target_type",
+            AiJobRunApplicationTargetTypes.Activity
+         );
+         applicationCommand.Parameters.AddWithValue(
+            "target_id",
+            savedActivityId.Value.ToString()
+         );
+
+         Assert.Equal(
+            1L,
+            (long)(await applicationCommand.ExecuteScalarAsync())!
+         );
       }
       finally
       {
+         if(savedActivityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, savedActivityId.Value);
+         }
+
          await DeleteParticipationRunAsync(dataSource, runId);
          await DeleteBroadcastAsync(dataSource, broadcastId);
          await DeleteLinksAsync(dataSource, personId);

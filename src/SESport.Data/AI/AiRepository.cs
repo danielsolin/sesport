@@ -1040,6 +1040,34 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task RecordApplicationAsync(
+      Guid runId,
+      string targetType,
+      string targetId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         insert into ai_job_run_applications (
+            run_id,
+            target_type,
+            target_id
+         )
+         values (
+            @run_id,
+            @target_type,
+            @target_id
+         )
+         on conflict (run_id, target_type, target_id) do nothing
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("run_id", runId);
+      command.Parameters.AddWithValue("target_type", targetType);
+      command.Parameters.AddWithValue("target_id", targetId);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task<bool> TryClaimRunAsync(
       Guid id,
       CancellationToken cancellationToken

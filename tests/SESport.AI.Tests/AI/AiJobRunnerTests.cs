@@ -576,6 +576,16 @@ public class AiJobRunnerTests
          return Task.CompletedTask;
       }
 
+      public Task RecordApplicationAsync(
+         Guid runId,
+         string targetType,
+         string targetId,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.CompletedTask;
+      }
+
       public Task<AiRunDetail?> GetRunAsync(
          Guid id,
          CancellationToken cancellationToken

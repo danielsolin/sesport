@@ -1,5 +1,6 @@
 using Npgsql;
 
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data.AI;
@@ -8,6 +9,74 @@ namespace SESport.Core.Tests.Data;
 
 public sealed class AiRepositoryTests
 {
+   [Fact]
+   public async Task RecordApplicationAsyncStoresApplicationOnce()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      var activityId = Guid.NewGuid().ToString();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId
+      );
+
+      try
+      {
+         await repository.RecordApplicationAsync(
+            runId,
+            AiJobRunApplicationTargetTypes.Activity,
+            activityId,
+            CancellationToken.None
+         );
+         await repository.RecordApplicationAsync(
+            runId,
+            AiJobRunApplicationTargetTypes.Activity,
+            activityId,
+            CancellationToken.None
+         );
+
+         await using var command = dataSource.CreateCommand(
+            """
+            select count(*)
+            from ai_job_run_applications
+            where run_id = @run_id
+               and target_type = @target_type
+               and target_id = @target_id
+            """
+         );
+         command.Parameters.AddWithValue("run_id", runId);
+         command.Parameters.AddWithValue(
+            "target_type",
+            AiJobRunApplicationTargetTypes.Activity
+         );
+         command.Parameters.AddWithValue("target_id", activityId);
+
+         Assert.Equal(
+            1L,
+            (long)(await command.ExecuteScalarAsync())!
+         );
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
    [Fact]
    public async Task GetRunsAsyncUsesLocalDateBoundaries()
    {

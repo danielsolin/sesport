@@ -49,6 +49,13 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
+   Task RecordApplicationAsync(
+      Guid runId,
+      string targetType,
+      string targetId,
+      CancellationToken cancellationToken
+   );
+
    Task<int> FailStaleRunningRunsAsync(
       TimeSpan maxAge,
       CancellationToken cancellationToken

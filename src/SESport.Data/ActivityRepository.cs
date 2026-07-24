@@ -1160,7 +1160,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await transaction.CommitAsync(cancellationToken);
    }
 
-   public async Task UpdateTeaserAsync(
+   public async Task<bool> UpdateTeaserAsync(
       Guid id,
       string teaser,
       CancellationToken cancellationToken
@@ -1177,10 +1177,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue("teaser", teaser.Trim());
-      await command.ExecuteNonQueryAsync(cancellationToken);
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
-   public async Task UpdateFactsAsync(
+   public async Task<bool> UpdateFactsAsync(
       Guid id,
       string facts,
       CancellationToken cancellationToken
@@ -1197,7 +1197,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue("facts", facts.Trim());
-      await command.ExecuteNonQueryAsync(cancellationToken);
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
    public async Task<bool> UpdateEmptyFactsAsync(
