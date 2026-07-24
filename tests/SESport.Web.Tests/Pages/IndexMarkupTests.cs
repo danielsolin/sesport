@@ -47,6 +47,14 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
+         ".activity-now-marker-line:first-child",
+         css
+      );
+      Assert.Contains(
+         ".activity-now-marker-line:last-child",
+         css
+      );
+      Assert.Contains(
          "@media (max-width: 600px) and (orientation: portrait)",
          css
       );
