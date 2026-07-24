@@ -328,7 +328,8 @@ public class WebPageContentClientTests
       Assert.NotNull(page);
       Assert.Equal(WebPageFetchErrorKind.Timeout, page!.FetchErrorKind);
       Assert.Equal(
-         "HTML fallback produced no text.",
+         "HTML fallback produced no text. " +
+         "Playwright error: Timeout 30000ms exceeded.",
          page!.FetchErrorMessage
       );
    }
@@ -443,7 +444,11 @@ public class WebPageContentClientTests
       Assert.Equal(1, browserCalls);
       Assert.NotNull(page);
       Assert.Equal(WebPageFetchErrorKind.Timeout, page!.FetchErrorKind);
-      Assert.Equal("HTML fallback had no body.", page!.FetchErrorMessage);
+      Assert.Equal(
+         "HTML fallback had no body. " +
+         "Playwright error: Timeout 30000ms exceeded.",
+         page!.FetchErrorMessage
+      );
    }
 
    [Fact]
@@ -602,7 +607,8 @@ public class WebPageContentClientTests
          page!.FetchErrorKind
       );
       Assert.Equal(
-         "HTML fallback had no body.",
+         "HTML fallback had no body. " +
+         "Playwright error: Browser blocked",
          page!.FetchErrorMessage
       );
       Assert.False(page.HasBodyText);

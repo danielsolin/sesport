@@ -4,9 +4,10 @@ internal sealed class WebPageFetchException : Exception
 {
    public WebPageFetchException(
       WebPageFetchErrorKind errorKind,
-      string message
+      string message,
+      Exception? innerException = null
    )
-      : base(message)
+      : base(message, innerException)
    {
       ErrorKind = errorKind;
    }

@@ -137,18 +137,20 @@ internal static class WebPageBrowserPageFetcher
       {
          throw;
       }
-      catch(TimeoutException)
+      catch(TimeoutException exception)
       {
          throw new WebPageFetchException(
             WebPageFetchErrorKind.Timeout,
-            "Playwright timed out."
+            exception.Message,
+            exception
          );
       }
-      catch(PlaywrightException)
+      catch(PlaywrightException exception)
       {
          throw new WebPageFetchException(
             WebPageFetchErrorKind.BrowserBlocked,
-            "Playwright failed."
+            exception.Message,
+            exception
          );
       }
    }

@@ -338,6 +338,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken,
             exception.ErrorKind
          );
+         htmlContent = AppendBrowserFailureMessage(
+            htmlContent,
+            exception.Message
+         );
          return MergePrimaryRelevantContent(
             htmlContent,
             primaryRelevantLinks,
@@ -365,6 +369,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken,
             WebPageFetchErrorKind.Timeout
          );
+         htmlContent = AppendBrowserFailureMessage(
+            htmlContent,
+            exception.Message
+         );
          return MergePrimaryRelevantContent(
             htmlContent,
             primaryRelevantLinks,
@@ -386,6 +394,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
             absoluteUrl,
             cancellationToken,
             WebPageFetchErrorKind.BrowserBlocked
+         );
+         htmlContent = AppendBrowserFailureMessage(
+            htmlContent,
+            exception.Message
          );
          return MergePrimaryRelevantContent(
             htmlContent,
@@ -495,6 +507,26 @@ public sealed class WebPageContentClient : IWebPageContentClient
             primaryRelevantImages,
             renderedContent.RelevantImages
          )
+      };
+   }
+
+   private static WebPageContent? AppendBrowserFailureMessage(
+      WebPageContent? content,
+      string browserFailureMessage
+   )
+   {
+      if(content is null ||
+         string.IsNullOrWhiteSpace(content.FetchErrorMessage) ||
+         string.IsNullOrWhiteSpace(browserFailureMessage))
+      {
+         return content;
+      }
+
+      return content with
+      {
+         FetchErrorMessage =
+            $"{content.FetchErrorMessage} " +
+            $"Playwright error: {browserFailureMessage}"
       };
    }
 
