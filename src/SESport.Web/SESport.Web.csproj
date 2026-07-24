@@ -13,4 +13,12 @@
       <ProjectReference Include="..\SESport.AI\SESport.AI.csproj" />
    </ItemGroup>
 
+   <ItemGroup>
+      <Content Include="..\..\data\web-stats\*.html">
+         <Link>data\web-stats\%(Filename)%(Extension)</Link>
+         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+   </ItemGroup>
+
 </Project>
