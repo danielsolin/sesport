@@ -29,5 +29,14 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains(".public-contact-link {", publicCss);
       Assert.Contains("justify-content: space-between", publicCss);
       Assert.Contains("width: 100%", publicCss);
+      Assert.True(
+         html.IndexOf(
+            "asp-page=\"/Admin/Entities/Index\"",
+            StringComparison.Ordinal
+         ) < html.IndexOf(
+            "asp-page=\"/Admin/Runs/Index\"",
+            StringComparison.Ordinal
+         )
+      );
    }
 }
