@@ -201,10 +201,27 @@ public class IndexModel(
 
    internal static string FormatBirthday(DateOnly? birthdate)
    {
-      return birthdate?.ToString(
-         "d MMMM, yyyy",
-         CultureInfo.GetCultureInfo(PrimaryCountry.CultureName)
-      ) ?? string.Empty;
+      if(birthdate is null)
+      {
+         return string.Empty;
+      }
+
+      var culture = CultureInfo.GetCultureInfo(
+         PrimaryCountry.CultureName
+      );
+      var month = birthdate.Value.ToString("MMMM", culture);
+
+      return $"{FormatOrdinalDay(birthdate.Value.Day)} {month}";
+   }
+
+   internal static string FormatOrdinalDay(int day)
+   {
+      var suffix = day % 10 is 1 or 2
+         && day % 100 is not 11 and not 12
+            ? "a"
+            : "e";
+
+      return $"{day}:{suffix}";
    }
 
    private static DateOnly? ParseDate(string? date)
