@@ -111,10 +111,17 @@ public sealed class IndexModelTests
    }
 
    [Fact]
-   public void BuildDateOptions_UsesThreeDayWindow()
+   public void BuildDateOptions_UsesTodayAndPublishedFutureDates()
    {
       var today = new DateOnly(2026, 7, 24);
       var selectedDate = today;
+      var publishedDates = new[]
+      {
+         today.AddDays(-1),
+         today,
+         today.AddDays(2),
+         today.AddDays(5)
+      };
 
       var method = typeof(IndexModel).GetMethod(
          "BuildDateOptions",
@@ -123,26 +130,26 @@ public sealed class IndexModelTests
 
       var options = (IReadOnlyList<DateOption>)method!.Invoke(
          null,
-         [today, selectedDate]
+         [today, selectedDate, publishedDates]
       )!;
 
       Assert.Equal(3, options.Count);
       Assert.Equal(
-         [today, today.AddDays(1), today.AddDays(2)],
+         [today, today.AddDays(2), today.AddDays(5)],
          options.Select(option => DateOnly.Parse(option.Value))
       );
       Assert.Equal(
          [
             "Idag (24 juli)",
-            "Imorgon (25 juli)",
-            "Söndag (26 juli)"
+            "Söndag (26 juli)",
+            "Onsdag (29 juli)"
          ],
          options.Select(option => option.Label)
       );
    }
 
    [Fact]
-   public void BuildDateOptions_IncludesSelectedDateOutsideWindow()
+   public void BuildDateOptions_DoesNotIncludeUnpublishedSelectedDate()
    {
       var today = new DateOnly(2026, 7, 24);
       var selectedDate = new DateOnly(2026, 7, 27);
@@ -153,16 +160,12 @@ public sealed class IndexModelTests
 
       var options = (IReadOnlyList<DateOption>)method!.Invoke(
          null,
-         [today, selectedDate]
+         [today, selectedDate, Array.Empty<DateOnly>()]
       )!;
-      var selectedOption = Assert.Single(
-         options,
-         option => option.IsSelected
-      );
 
-      Assert.Equal("2026-07-27", selectedOption.Value);
-      Assert.Equal("Måndag (27 juli)", selectedOption.Label);
-      Assert.Equal(4, options.Count);
+      var option = Assert.Single(options);
+      Assert.Equal("2026-07-24", option.Value);
+      Assert.False(option.IsSelected);
    }
 
    private static ActivityListItem CreateActivity(

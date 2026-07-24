@@ -59,10 +59,20 @@ public class IndexModel(
       var sportToday = SportDay.Today(now).StartDate;
       SelectedDate = ParseDate(Date) ?? sportToday;
       IsSportToday = SelectedDate == sportToday;
-      DateOptions = BuildDateOptions(sportToday, SelectedDate);
+      DateOptions = BuildDateOptions(sportToday, SelectedDate, []);
 
       try
       {
+         var publishedDates =
+            await repository.GetPublishedDatesFromAsync(
+               sportToday,
+               cancellationToken
+            );
+         DateOptions = BuildDateOptions(
+            sportToday,
+            SelectedDate,
+            publishedDates
+         );
          var activities = await repository.GetPublishedForDateAsync(
             SelectedDate,
             cancellationToken
@@ -228,22 +238,14 @@ public class IndexModel(
 
    private static IReadOnlyList<DateOption> BuildDateOptions(
       DateOnly todayDate,
-      DateOnly selectedDate
+      DateOnly selectedDate,
+      IEnumerable<DateOnly> publishedDates
    )
    {
-      var dates = new List<DateOnly>();
-
-      for(var offset = 0; offset <= 2; offset++)
-      {
-         dates.Add(todayDate.AddDays(offset));
-      }
-
-      if(!dates.Contains(selectedDate))
-      {
-         dates.Add(selectedDate);
-      }
-
-      return dates
+      return publishedDates
+         .Where(date => date >= todayDate)
+         .Append(todayDate)
+         .Distinct()
          .OrderBy(date => date)
          .Select(date =>
             new DateOption(

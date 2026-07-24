@@ -109,6 +109,50 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<IReadOnlyList<DateOnly>>
+      GetPublishedDatesFromAsync(
+         DateOnly firstDate,
+         CancellationToken cancellationToken
+      )
+   {
+      var sql = $$"""
+         select distinct
+            (
+               (a.starts_at at time zone @time_zone) - @cutoff
+            )::date as sport_date
+         from activities a
+         where a.publication_status_id =
+            '{{ActivityPublicationStatusIds.Published}}'
+            and a.starts_at >= @start
+         order by sport_date
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "time_zone",
+         SportDay.TimeZoneId
+      );
+      command.Parameters.AddWithValue(
+         "cutoff",
+         SportDay.Cutoff.ToTimeSpan()
+      );
+      command.Parameters.AddWithValue(
+         "start",
+         ToUtc(firstDate, SportDay.Cutoff)
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var dates = new List<DateOnly>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         dates.Add(reader.GetFieldValue<DateOnly>(0));
+      }
+
+      return dates;
+   }
+
    private async Task<IReadOnlyList<ActivityListItem>>
       GetPublishedActivitiesAsync(
          SportDayWindow window,
