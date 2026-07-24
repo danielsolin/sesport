@@ -12,7 +12,7 @@ namespace SESport.Web.Pages.Admin.Broadcasts;
 public class IndexModel(
    AdminBroadcastRepository repository,
    AdminRepository adminRepository,
-   AdminDatePreferenceStore datePreferenceStore,
+   BroadcastDatePreferenceStore datePreferenceStore,
    BroadcastParticipationService participationService
 ) : PageModel
 {

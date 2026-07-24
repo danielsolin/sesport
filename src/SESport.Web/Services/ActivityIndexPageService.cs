@@ -7,7 +7,7 @@ namespace SESport.Web.Services;
 
 public sealed class ActivityIndexPageService(
    ActivityRepository repository,
-   AdminDatePreferenceStore datePreferenceStore,
+   ActivityDatePreferenceStore datePreferenceStore,
    ILogger<ActivityIndexPageService> logger
 )
 {
@@ -134,17 +134,21 @@ public sealed class ActivityIndexPageService(
    {
       if(date is not null)
       {
-         return date.Value;
+         return datePreferenceStore.ResolveDate(httpContext, date);
       }
 
       if(status == ActivityListStatusIds.Today)
       {
-         return SportDay.Today(DateTimeOffset.UtcNow).StartDate;
+         var today = SportDay.Today(DateTimeOffset.UtcNow).StartDate;
+         return datePreferenceStore.ResolveDate(httpContext, today);
       }
 
       if(status == ActivityListStatusIds.Tomorrow)
       {
-         return SportDay.Tomorrow(DateTimeOffset.UtcNow).StartDate;
+         var tomorrow = SportDay.Tomorrow(
+            DateTimeOffset.UtcNow
+         ).StartDate;
+         return datePreferenceStore.ResolveDate(httpContext, tomorrow);
       }
 
       return datePreferenceStore.ResolveDate(httpContext, date);

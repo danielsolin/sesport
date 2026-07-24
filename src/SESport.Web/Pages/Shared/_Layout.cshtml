@@ -13,24 +13,11 @@
       "/Admin/Activities",
       StringComparison.OrdinalIgnoreCase
    );
-   var selectedDate = ViewContext.HttpContext.Request.Query[
-      RouteKeys.Date
-   ].ToString();
-   var shareSelectedDate = isBroadcasts || isActivities;
-   var dateRouteValues = string.IsNullOrWhiteSpace(selectedDate) ||
-      !shareSelectedDate
-      ? null
-      : new Dictionary<string, string?>
-      {
-         [RouteKeys.Date] = selectedDate
-      };
    var broadcastsHref = Url.Page(
-      "/Admin/Broadcasts/Index",
-      dateRouteValues
+      "/Admin/Broadcasts/Index"
    ) ?? "/Admin/Broadcasts";
    var activitiesHref = Url.Page(
-      "/Admin/Activities/Index",
-      dateRouteValues
+      "/Admin/Activities/Index"
    ) ?? "/Admin/Activities";
    var isAdmin = requestPath.StartsWith(
       "/Admin",

@@ -24,7 +24,8 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("!isAdmin", html);
       Assert.Contains("var broadcastsHref = Url.Page(", html);
       Assert.Contains("var activitiesHref = Url.Page(", html);
-      Assert.Contains("RouteKeys.Date", html);
+      Assert.DoesNotContain("shareSelectedDate", html);
+      Assert.DoesNotContain("dateRouteValues", html);
       Assert.Contains("class=\"public-contact-link\"", html);
       Assert.Contains(".public-contact-link {", publicCss);
       Assert.Contains("justify-content: space-between", publicCss);

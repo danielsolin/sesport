@@ -7,18 +7,54 @@ namespace SESport.Core.Tests.Services;
 public sealed class DatePreferenceStoreTests
 {
    [Fact]
-   public void AdminAndRunStoresUseDifferentCookies()
+   public void AdminPagesUseDifferentDateCookies()
    {
       var context = CreateContext(
-         "sesport.admin.date=2026-06-18; sesport.admin.runs.date=2026-06-17"
+         "sesport.admin.activities.date=2026-06-18; " +
+         "sesport.admin.broadcasts.date=2026-06-19; " +
+         "sesport.admin.runs.date=2026-06-17"
       );
 
-      var adminDate = new AdminDatePreferenceStore()
+      var activityDate = new ActivityDatePreferenceStore()
+         .ResolveDate(context, null);
+      var broadcastDate = new BroadcastDatePreferenceStore()
          .ResolveDate(context, null);
       var runDate = new RunDatePreferenceStore().ResolveDate(context, null);
 
-      Assert.Equal(new DateOnly(2026, 6, 18), adminDate);
+      Assert.Equal(new DateOnly(2026, 6, 18), activityDate);
+      Assert.Equal(new DateOnly(2026, 6, 19), broadcastDate);
       Assert.Equal(new DateOnly(2026, 6, 17), runDate);
+   }
+
+   [Theory]
+   [InlineData(
+      "sesport.admin.activities.date=2026-06-18",
+      "sesport.admin.activities.date=2026-06-18"
+   )]
+   [InlineData(
+      "sesport.admin.broadcasts.date=2026-06-19",
+      "sesport.admin.broadcasts.date=2026-06-19"
+   )]
+   public void ActivityAndBroadcastStoresWriteOwnCookie(
+      string cookieHeader,
+      string expectedCookie
+   )
+   {
+      var context = CreateContext(cookieHeader);
+
+      if(cookieHeader.Contains(".activities.", StringComparison.Ordinal))
+      {
+         _ = new ActivityDatePreferenceStore().ResolveDate(context, null);
+      }
+      else
+      {
+         _ = new BroadcastDatePreferenceStore().ResolveDate(context, null);
+      }
+
+      Assert.Contains(
+         expectedCookie,
+         context.Response.Headers.SetCookie.ToString()
+      );
    }
 
    [Fact]

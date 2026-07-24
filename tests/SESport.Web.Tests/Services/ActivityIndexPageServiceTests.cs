@@ -1,5 +1,8 @@
 using System.Reflection;
 
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SESport.Data;
 using SESport.Web.Services;
 
@@ -7,6 +10,29 @@ namespace SESport.Core.Tests.Services;
 
 public sealed class ActivityIndexPageServiceTests
 {
+   [Fact]
+   public void ResolveSelectedDateWritesExplicitActivityDateCookie()
+   {
+      var context = new DefaultHttpContext();
+      var service = new ActivityIndexPageService(
+         null!,
+         new ActivityDatePreferenceStore(),
+         NullLogger<ActivityIndexPageService>.Instance
+      );
+
+      var selectedDate = service.ResolveSelectedDate(
+         context,
+         new DateOnly(2026, 7, 28),
+         null
+      );
+
+      Assert.Equal(new DateOnly(2026, 7, 28), selectedDate);
+      Assert.Contains(
+         "sesport.admin.activities.date=2026-07-28",
+         context.Response.Headers.SetCookie.ToString()
+      );
+   }
+
    [Fact]
    public void SortActivitiesOrdersTimeByStartWithUntimedLast()
    {
