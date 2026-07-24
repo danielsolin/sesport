@@ -35,6 +35,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-date-dropdown-toggle", html);
       Assert.Contains("data-date-dropdown-menu", html);
       Assert.Contains("public-date-select.js", html);
+      Assert.Contains("public-current-marker-scroll.js", html);
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-age", html);
