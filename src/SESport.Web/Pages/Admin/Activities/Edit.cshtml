@@ -281,10 +281,28 @@
                   </tr>
                </thead>
                <tbody>
-                  @foreach(var source in Model.Activity.Sources)
+                  @for(var index = 0;
+                     index < Model.Activity.Sources.Count;
+                     index++)
                   {
+                     var source = Model.Activity.Sources[index];
                      <tr>
                         <td>
+                           @if(source.Id is null)
+                           {
+                              <input
+                                 asp-for="Activity.Sources[index].Kind"
+                                 type="hidden" />
+                              <input
+                                 asp-for="Activity.Sources[index].Url"
+                                 type="hidden" />
+                              <input
+                                 asp-for="Activity.Sources[index].Title"
+                                 type="hidden" />
+                              <input
+                                 asp-for="Activity.Sources[index].Excerpt"
+                                 type="hidden" />
+                           }
                            @TimeDisplay.FormatLocalTimestamp(
                               source.ObservedAt
                            )

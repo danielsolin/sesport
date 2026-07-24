@@ -56,9 +56,12 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
+      var activityFacts = run.JobId == AiJobIds.FindActivityFacts
+         ? ExtractGeneratedActivityFacts(run.OutputText ?? string.Empty)
+         : null;
       var output = run.JobId == AiJobIds.GenerateActivityTeaser
          ? ExtractGeneratedTeaser(run.OutputText ?? string.Empty)
-         : ExtractGeneratedFacts(run.OutputText ?? string.Empty);
+         : activityFacts?.Facts;
 
       if(string.IsNullOrWhiteSpace(output))
       {
@@ -82,6 +85,39 @@ public sealed class AiJobPostProcessor(
          await activityRepository.UpdateFactsAsync(
             activityId,
             output,
+            cancellationToken
+         );
+         await ReplaceActivityFactSourcesAsync(
+            activityId,
+            activityFacts?.Sources ?? [],
+            cancellationToken
+         );
+      }
+   }
+
+   private async Task ReplaceActivityFactSourcesAsync(
+      Guid activityId,
+      IReadOnlyList<ActivityFactSource> sources,
+      CancellationToken cancellationToken
+   )
+   {
+      await sourceRepository.DeleteByCorrelationAsync(
+         SourceCorrelationTypes.Activity,
+         activityId.ToString(),
+         cancellationToken,
+         SourceKinds.ActivityEvidence
+      );
+
+      foreach(var source in sources)
+      {
+         await sourceRepository.CreateAsync(
+            SourceCorrelationTypes.Activity,
+            activityId.ToString(),
+            SourceKinds.ActivityEvidence,
+            source.Url,
+            source.Title,
+            source.Excerpt,
+            null,
             cancellationToken
          );
       }
@@ -225,6 +261,13 @@ public sealed class AiJobPostProcessor(
 
    internal static string? ExtractGeneratedFacts(string outputText)
    {
+      return ExtractGeneratedActivityFacts(outputText)?.Facts;
+   }
+
+   internal static ActivityFactsOutput? ExtractGeneratedActivityFacts(
+      string outputText
+   )
+   {
       try
       {
          using var document = JsonDocument.Parse(outputText);
@@ -233,14 +276,64 @@ public sealed class AiJobPostProcessor(
          if(root.TryGetProperty("facts", out var facts) &&
             facts.ValueKind == JsonValueKind.String)
          {
-            return facts.GetString();
+            return new ActivityFactsOutput(
+               facts.GetString() ?? string.Empty,
+               ReadActivityFactSources(root)
+            );
          }
       }
       catch(JsonException)
       {
       }
 
-      return outputText;
+      return string.IsNullOrWhiteSpace(outputText)
+         ? null
+         : new ActivityFactsOutput(outputText, []);
+   }
+
+   private static IReadOnlyList<ActivityFactSource> ReadActivityFactSources(
+      JsonElement root
+   )
+   {
+      if(!root.TryGetProperty("sources", out var sources) ||
+         sources.ValueKind != JsonValueKind.Array)
+      {
+         return [];
+      }
+
+      var result = new List<ActivityFactSource>();
+      var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach(var source in sources.EnumerateArray())
+      {
+         if(source.ValueKind != JsonValueKind.Object ||
+            !source.TryGetProperty("url", out var urlValue) ||
+            urlValue.ValueKind != JsonValueKind.String)
+         {
+            continue;
+         }
+
+         var url = urlValue.GetString()?.Trim();
+
+         if(string.IsNullOrWhiteSpace(url) ||
+            !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp &&
+               uri.Scheme != Uri.UriSchemeHttps) ||
+            !urls.Add(url))
+         {
+            continue;
+         }
+
+         result.Add(
+            new ActivityFactSource(
+               url,
+               ReadNullableString(source, "title"),
+               ReadNullableString(source, "excerpt")
+            )
+         );
+      }
+
+      return result;
    }
 
    internal static PersonFactsOutput? ExtractGeneratedPersonFacts(
@@ -367,6 +460,17 @@ public sealed class AiJobPostProcessor(
    );
 
    internal sealed record PersonFactSource(
+      string Url,
+      string? Title,
+      string? Excerpt
+   );
+
+   internal sealed record ActivityFactsOutput(
+      string Facts,
+      IReadOnlyList<ActivityFactSource> Sources
+   );
+
+   internal sealed record ActivityFactSource(
       string Url,
       string? Title,
       string? Excerpt

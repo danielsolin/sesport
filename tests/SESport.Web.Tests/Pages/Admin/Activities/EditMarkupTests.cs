@@ -25,4 +25,35 @@ public sealed class EditMarkupTests
       Assert.Contains("renderEmptyParticipantsNotice", script);
       Assert.Contains("Delete", html);
    }
+
+   [Fact]
+   public async Task EditPagePostsUnsavedPrefilledSources()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+
+      Assert.Contains("if(source.Id is null)", html);
+      Assert.Contains(
+         "asp-for=\"Activity.Sources[index].Kind\"",
+         html
+      );
+      Assert.Contains(
+         "asp-for=\"Activity.Sources[index].Url\"",
+         html
+      );
+      Assert.Contains(
+         "asp-for=\"Activity.Sources[index].Title\"",
+         html
+      );
+      Assert.Contains(
+         "asp-for=\"Activity.Sources[index].Excerpt\"",
+         html
+      );
+   }
 }
