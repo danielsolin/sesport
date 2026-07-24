@@ -503,8 +503,18 @@
    transform: translateX(-1px);
 }
 
-.activity-has-ended {
+.activity-has-ended > .activity-agenda-time,
+.activity-has-ended > .activity-duration-rail,
+.activity-has-ended .activity-entry > :not(.activity-ended-badge) {
    opacity: 0.5;
+}
+
+.activity-has-ended .activity-entry {
+   border-color: rgba(0, 106, 168, 0.5);
+}
+
+.activity-has-ended .activity-ended-badge {
+   opacity: 1;
 }
 
 .activity-status-badge {
@@ -524,6 +534,40 @@
 .activity-ongoing-badge {
    background: rgba(255, 204, 0, 0.3);
    color: #755f00;
+}
+
+.activity-ongoing-dots {
+   display: inline-block;
+   width: 1.5em;
+}
+
+.activity-ongoing-dots::after {
+   content: ".";
+   animation: activity-ongoing-dots 2.4s steps(1, end) infinite;
+}
+
+@keyframes activity-ongoing-dots {
+   0%,
+   32% {
+      content: ".";
+   }
+
+   33%,
+   65% {
+      content: "..";
+   }
+
+   66%,
+   100% {
+      content: "...";
+   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+   .activity-ongoing-dots::after {
+      animation: none;
+      content: "...";
+   }
 }
 
 .activity-ended-badge {

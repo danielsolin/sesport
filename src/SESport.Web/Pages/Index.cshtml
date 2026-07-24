@@ -250,8 +250,11 @@ else
                      @if(agendaSection.IsOngoing)
                      {
                         <span class="activity-status-badge
-                           activity-ongoing-badge">
+                           activity-ongoing-badge"
+                           aria-label="Pågår">
                            Pågår
+                           <span class="activity-ongoing-dots"
+                                 aria-hidden="true"></span>
                         </span>
                      }
                      else if(agendaSection.HasEnded)

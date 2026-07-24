@@ -41,6 +41,15 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
       Assert.Contains("activity-now-marker", html);
+      Assert.Contains("activity-ongoing-dots", html);
+      Assert.Contains(
+         "@keyframes activity-ongoing-dots",
+         css
+      );
+      Assert.Contains(
+         "@media (prefers-reduced-motion: reduce)",
+         css
+      );
       Assert.Contains("@media (orientation: portrait)", css);
       Assert.Contains(
          ".activity-now-marker {\n      display: none;",
@@ -67,5 +76,25 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains("bottom: -9px;", css);
+      Assert.DoesNotContain(
+         ".activity-has-ended {\n   opacity: 0.5;",
+         css
+      );
+      Assert.Contains(
+         ".activity-has-ended .activity-ended-badge",
+         css
+      );
+      Assert.Contains(
+         ".activity-entry > :not(.activity-ended-badge)",
+         css
+      );
+      Assert.Contains(
+         ".activity-has-ended .activity-entry",
+         css
+      );
+      Assert.Contains(
+         "border-color: rgba(0, 106, 168, 0.5);",
+         css
+      );
    }
 }
