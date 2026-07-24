@@ -21,6 +21,12 @@ public class EditModel(ActivityRepository repository) : PageModel
       private set;
    } = [];
 
+   public IReadOnlyList<ActivityGroupSourceListItem> Sources
+   {
+      get;
+      private set;
+   } = [];
+
    public string? LoadError { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -99,6 +105,10 @@ public class EditModel(ActivityRepository repository) : PageModel
             ActivityGroup.Id,
             cancellationToken
          );
+         Sources = await repository.GetSourcesForGroupEditAsync(
+            ActivityGroup.Id,
+            cancellationToken
+         );
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)
@@ -106,6 +116,7 @@ public class EditModel(ActivityRepository repository) : PageModel
          LoadError = this.LogUnexpectedError(exception);
          Sports = [];
          Activities = [];
+         Sources = [];
       }
    }
 

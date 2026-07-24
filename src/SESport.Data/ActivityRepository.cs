@@ -595,6 +595,53 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return activities;
    }
 
+   public async Task<IReadOnlyList<ActivityGroupSourceListItem>>
+      GetSourcesForGroupEditAsync(
+         Guid activityGroupId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = $"""
+         select
+            s.kind,
+            s.url,
+            s.title,
+            s.excerpt,
+            s.observed_at
+         from activities a
+         join sources s
+            on s.correlation_type = '{SourceCorrelationTypes.Activity}'
+            and s.correlation_id = a.id::text
+         where a.activity_group_id = @activity_group_id
+         order by s.observed_at desc, s.created_at desc, s.id desc
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         activityGroupId
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var sources = new List<ActivityGroupSourceListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         sources.Add(
+            new ActivityGroupSourceListItem(
+               reader.GetString(0),
+               reader.GetString(1),
+               ReadString(reader, 2),
+               ReadString(reader, 3),
+               reader.GetFieldValue<DateTimeOffset>(4)
+            )
+         );
+      }
+
+      return sources;
+   }
+
    public async Task<
       IReadOnlyDictionary<Guid, IReadOnlyList<ActivityGroupParticipant>>>
       GetActivityGroupParticipantsAsync(

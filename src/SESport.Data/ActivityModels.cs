@@ -86,6 +86,14 @@ public sealed record ActivityGroupActivityListItem(
    TimeOnly? LocalEndTime
 );
 
+public sealed record ActivityGroupSourceListItem(
+   string Kind,
+   string Url,
+   string? Title,
+   string? Excerpt,
+   DateTimeOffset ObservedAt
+);
+
 public sealed record ActivityParticipantListItem(
    Guid Id,
    string Name,
