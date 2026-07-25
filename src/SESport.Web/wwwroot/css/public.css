@@ -227,6 +227,7 @@
    color: #397293;
    font-size: 13px;
    font-weight: 750;
+   line-height: 16px;
    text-align: left;
    text-decoration: none;
 }
@@ -250,7 +251,6 @@
    flex: 0 0 auto;
    width: 16px;
    height: auto;
-   transform: translateY(1px);
 }
 
 .date-option-content {
