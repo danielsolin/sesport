@@ -254,9 +254,26 @@ else
                </div>
                @if(isGrouped)
                {
+                  var groupedEndTimeLabel =
+                     agendaSection.TimelineSlot.EndTimeLabel;
                   <div class="activity-duration-rail"
-                       aria-hidden="true">
+                       aria-label="@(
+                          groupedEndTimeLabel is null
+                             ? null
+                             : $"Slutar {groupedEndTimeLabel}"
+                       )"
+                       aria-hidden="@(
+                          groupedEndTimeLabel is null ? "true" : null
+                       )">
                      <span class="activity-duration-line"></span>
+                     @if(groupedEndTimeLabel is not null)
+                     {
+                        <span class=
+                           "activity-duration-end-point"></span>
+                        <time class="activity-duration-end-time">
+                           @groupedEndTimeLabel
+                        </time>
+                     }
                   </div>
                }
                else if(agendaSection.EndTimeLabel is not null)
