@@ -5,7 +5,52 @@
    ],
    "properties": {
       "facts": {
-         "type": "string"
+         "type": "array",
+         "minItems": 3,
+         "maxItems": 3,
+         "items": {
+            "type": "object",
+            "required": [
+               "text",
+               "sources"
+            ],
+            "properties": {
+               "text": {
+                  "type": "string",
+                  "minLength": 1
+               },
+               "sources": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                     "type": "object",
+                     "required": [
+                        "url"
+                     ],
+                     "properties": {
+                        "url": {
+                           "type": "string",
+                           "format": "uri"
+                        },
+                        "title": {
+                           "type": [
+                              "string",
+                              "null"
+                           ]
+                        },
+                        "excerpt": {
+                           "type": [
+                              "string",
+                              "null"
+                           ]
+                        }
+                     },
+                     "additionalProperties": false
+                  }
+               }
+            },
+            "additionalProperties": false
+         }
       }
    },
    "additionalProperties": false

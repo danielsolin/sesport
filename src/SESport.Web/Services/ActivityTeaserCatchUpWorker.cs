@@ -1,5 +1,6 @@
 using SESport.Data;
 using SESport.Data.AI;
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 
 namespace SESport.Web.Services;
@@ -18,6 +19,8 @@ public sealed class ActivityTeaserCatchUpWorker(
             .GetRequiredService<AiRepository>();
          var activityRepository = scope.ServiceProvider
             .GetRequiredService<ActivityRepository>();
+         var factRepository = scope.ServiceProvider
+            .GetRequiredService<FactRepository>();
 
          var runs = await aiRepository
                .GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
@@ -26,7 +29,7 @@ public sealed class ActivityTeaserCatchUpWorker(
             );
 
          var factsRuns = await aiRepository
-               .GetCompletedActivityFactsRunsWithEmptyActivityFactsAsync(
+               .GetUnappliedCompletedActivityFactsRunsAsync(
                AiWorkerDefaults.ActivityTeaserCatchUpMaxRuns,
                stoppingToken
             );
@@ -59,23 +62,29 @@ public sealed class ActivityTeaserCatchUpWorker(
 
          foreach(var run in factsRuns)
          {
-            var facts = AiJobPostProcessor.ExtractGeneratedFacts(
+            var facts = AiJobPostProcessor.ExtractGeneratedActivityFacts(
                run.OutputText
             );
 
-            if(string.IsNullOrWhiteSpace(facts))
+            if(facts is null)
             {
                continue;
             }
 
-            var updated = await activityRepository.UpdateEmptyFactsAsync(
+            var createdFacts = await factRepository.ReplaceForActivityAsync(
                run.ActivityId,
-               facts,
+               facts.Facts,
                stoppingToken
             );
 
-            if(updated)
+            if(createdFacts.Count > 0)
             {
+               await aiRepository.RecordApplicationAsync(
+                  run.RunId,
+                  AiJobRunApplicationTargetTypes.Activity,
+                  run.ActivityId.ToString(),
+                  stoppingToken
+               );
                logger.LogInformation(
                   "Saved missed activity facts from AI run {RunId}.",
                   run.RunId

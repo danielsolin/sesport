@@ -111,6 +111,92 @@ public sealed class FactRepositoryTests
    }
 
    [Fact]
+   public async Task ReplacesActivityFactsWithLinkedSources()
+   {
+      var activityId = Guid.NewGuid();
+      var sharedSource = new FactSourceDraft(
+         "https://example.test/rally",
+         "Rally page",
+         "Supporting text"
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new FactRepository(dataSource);
+
+      try
+      {
+         await InsertActivityAsync(dataSource, activityId);
+         var original = await repository.ReplaceForActivityAsync(
+            activityId,
+            [
+               new FactDraft("First fact.", [sharedSource]),
+               new FactDraft("Second fact.", [sharedSource])
+            ],
+            CancellationToken.None
+         );
+
+         Assert.Equal(2, original.Count);
+         var firstSources =
+            await repository.GetSourcesAsync(
+               original[0].Id,
+               CancellationToken.None
+            );
+         var secondSources =
+            await repository.GetSourcesAsync(
+               original[1].Id,
+               CancellationToken.None
+            );
+         Assert.Equal(
+            Assert.Single(firstSources).Id,
+            Assert.Single(secondSources).Id
+         );
+         Assert.Equal(
+            1,
+            await CountActivityEvidenceSourcesAsync(
+               dataSource,
+               activityId
+            )
+         );
+
+         var replacement = await repository.ReplaceForActivityAsync(
+            activityId,
+            [
+               new FactDraft(
+                  "Replacement fact.",
+                  [
+                     new FactSourceDraft(
+                        "https://example.test/new",
+                        null,
+                        null
+                     )
+                  ]
+               )
+            ],
+            CancellationToken.None
+         );
+
+         Assert.Single(replacement);
+         Assert.Null(
+            await repository.GetAsync(
+               original[0].Id,
+               CancellationToken.None
+            )
+         );
+         var source = Assert.Single(
+            await repository.GetSourcesAsync(
+               replacement[0].Id,
+               CancellationToken.None
+            )
+         );
+         Assert.Equal("https://example.test/new", source.Url);
+      }
+      finally
+      {
+         await DeleteActivityAsync(dataSource, activityId);
+      }
+   }
+
+   [Fact]
    public async Task DeletingSubjectCascadesToFacts()
    {
       var entityId = Guid.NewGuid();
@@ -249,11 +335,47 @@ public sealed class FactRepositoryTests
       Guid activityId
    )
    {
+      await using(var sourceCommand = dataSource.CreateCommand(
+         """
+         delete from sources
+         where correlation_type = 'Activity'
+            and correlation_id = @correlation_id
+         """
+      ))
+      {
+         sourceCommand.Parameters.AddWithValue(
+            "correlation_id",
+            activityId.ToString()
+         );
+         await sourceCommand.ExecuteNonQueryAsync();
+      }
+
       await using var command = dataSource.CreateCommand(
          "delete from activities where id = @id"
       );
       command.Parameters.AddWithValue("id", activityId);
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<int> CountActivityEvidenceSourcesAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      const string sql = """
+         select count(*)
+         from sources
+         where correlation_type = 'Activity'
+            and correlation_id = @correlation_id
+            and kind = 'ActivityEvidence'
+         """;
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "correlation_id",
+         activityId.ToString()
+      );
+
+      return Convert.ToInt32(await command.ExecuteScalarAsync());
    }
 
    private static async Task DeleteEntityAsync(

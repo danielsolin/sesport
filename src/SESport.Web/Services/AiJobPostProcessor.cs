@@ -3,6 +3,7 @@ using System.Text.Json;
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
+using SESport.Core.Facts;
 using SESport.Data;
 using SESport.Core.Sources;
 
@@ -12,6 +13,7 @@ public sealed class AiJobPostProcessor(
    AiJobRunner inner,
    IAiJobRunRepository runRepository,
    ActivityRepository activityRepository,
+   FactRepository factRepository,
    AdminRepository adminRepository,
    SourceReferenceRepository sourceRepository,
    ILogger<AiJobPostProcessor> logger
@@ -61,12 +63,23 @@ public sealed class AiJobPostProcessor(
          : null;
       var output = run.JobId == AiJobIds.GenerateActivityTeaser
          ? ExtractGeneratedTeaser(run.OutputText ?? string.Empty)
-         : activityFacts?.Facts;
+         : null;
 
-      if(string.IsNullOrWhiteSpace(output))
+      if(run.JobId == AiJobIds.GenerateActivityTeaser &&
+         string.IsNullOrWhiteSpace(output))
       {
          logger.LogWarning(
             "Activity text run {RunId} completed without output.",
+            runId
+         );
+         return;
+      }
+
+      if(run.JobId == AiJobIds.FindActivityFacts &&
+         activityFacts is null)
+      {
+         logger.LogWarning(
+            "Activity facts run {RunId} completed without valid facts.",
             runId
          );
          return;
@@ -78,25 +91,18 @@ public sealed class AiJobPostProcessor(
       {
          wasApplied = await activityRepository.UpdateTeaserAsync(
             activityId,
-            output,
+            output!,
             cancellationToken
          );
       }
       else
       {
-         wasApplied = await activityRepository.UpdateFactsAsync(
+         var createdFacts = await factRepository.ReplaceForActivityAsync(
             activityId,
-            output,
+            activityFacts!.Facts,
             cancellationToken
          );
-         if(wasApplied)
-         {
-            await ReplaceActivityFactSourcesAsync(
-               activityId,
-               activityFacts?.Sources ?? [],
-               cancellationToken
-            );
-         }
+         wasApplied = createdFacts.Count > 0;
       }
 
       if(!wasApplied)
@@ -112,34 +118,6 @@ public sealed class AiJobPostProcessor(
       );
    }
 
-   private async Task ReplaceActivityFactSourcesAsync(
-      Guid activityId,
-      IReadOnlyList<ActivityFactSource> sources,
-      CancellationToken cancellationToken
-   )
-   {
-      await sourceRepository.DeleteByCorrelationAsync(
-         SourceCorrelationTypes.Activity,
-         activityId.ToString(),
-         cancellationToken,
-         SourceKinds.ActivityEvidence
-      );
-
-      foreach(var source in sources)
-      {
-         await sourceRepository.CreateAsync(
-            SourceCorrelationTypes.Activity,
-            activityId.ToString(),
-            SourceKinds.ActivityEvidence,
-            source.Url,
-            source.Title,
-            source.Excerpt,
-            null,
-            cancellationToken
-         );
-      }
-   }
-
    private async Task SaveCompletedPersonFactsAsync(
       Guid runId,
       CancellationToken cancellationToken
@@ -148,7 +126,7 @@ public sealed class AiJobPostProcessor(
       var run = await runRepository.GetRunAsync(runId, cancellationToken);
 
       if(run is null ||
-         run.JobId != AiJobIds.FindPersonFacts ||
+         run.JobId != AiJobIds.FindPersonData ||
          !string.Equals(
             run.StatusId,
             AiJobRunStatusIds.Completed,
@@ -298,11 +276,6 @@ public sealed class AiJobPostProcessor(
       return outputText;
    }
 
-   internal static string? ExtractGeneratedFacts(string outputText)
-   {
-      return ExtractGeneratedActivityFacts(outputText)?.Facts;
-   }
-
    internal static ActivityFactsOutput? ExtractGeneratedActivityFacts(
       string outputText
    )
@@ -312,25 +285,40 @@ public sealed class AiJobPostProcessor(
          using var document = JsonDocument.Parse(outputText);
          var root = document.RootElement;
 
-         if(root.TryGetProperty("facts", out var facts) &&
-            facts.ValueKind == JsonValueKind.String)
+         if(!root.TryGetProperty("facts", out var facts) ||
+            facts.ValueKind != JsonValueKind.Array)
          {
-            return new ActivityFactsOutput(
-               facts.GetString() ?? string.Empty,
-               ReadActivityFactSources(root)
-            );
+            return null;
          }
+
+         var result = new List<FactDraft>();
+         foreach(var fact in facts.EnumerateArray())
+         {
+            if(fact.ValueKind != JsonValueKind.Object ||
+               !fact.TryGetProperty("text", out var textValue) ||
+               textValue.ValueKind != JsonValueKind.String)
+            {
+               continue;
+            }
+
+            var text = textValue.GetString()?.Trim();
+            var sources = ReadActivityFactSources(fact);
+
+            if(!string.IsNullOrWhiteSpace(text) && sources.Count > 0)
+            {
+               result.Add(new FactDraft(text, sources));
+            }
+         }
+
+         return result.Count == 3 ? new ActivityFactsOutput(result) : null;
       }
       catch(JsonException)
       {
+         return null;
       }
-
-      return string.IsNullOrWhiteSpace(outputText)
-         ? null
-         : new ActivityFactsOutput(outputText, []);
    }
 
-   private static IReadOnlyList<ActivityFactSource> ReadActivityFactSources(
+   private static IReadOnlyList<FactSourceDraft> ReadActivityFactSources(
       JsonElement root
    )
    {
@@ -340,7 +328,7 @@ public sealed class AiJobPostProcessor(
          return [];
       }
 
-      var result = new List<ActivityFactSource>();
+      var result = new List<FactSourceDraft>();
       var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
       foreach(var source in sources.EnumerateArray())
@@ -364,7 +352,7 @@ public sealed class AiJobPostProcessor(
          }
 
          result.Add(
-            new ActivityFactSource(
+            new FactSourceDraft(
                url,
                ReadNullableString(source, "title"),
                ReadNullableString(source, "excerpt")
@@ -505,14 +493,7 @@ public sealed class AiJobPostProcessor(
    );
 
    internal sealed record ActivityFactsOutput(
-      string Facts,
-      IReadOnlyList<ActivityFactSource> Sources
-   );
-
-   internal sealed record ActivityFactSource(
-      string Url,
-      string? Title,
-      string? Excerpt
+      IReadOnlyList<FactDraft> Facts
    );
 
 }

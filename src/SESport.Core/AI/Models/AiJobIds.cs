@@ -19,8 +19,8 @@ public static class AiJobIds
    public const string FindActivityFacts =
       "find-activity-facts";
 
-   public const string FindPersonFacts =
-      "find-person-facts";
+   public const string FindPersonData =
+      "find-person-data";
 
    public const string TranslateText =
       "translate-text";
@@ -33,7 +33,7 @@ public static class AiJobIds
             AiJobTargetType.Activity,
          DecidePrimaryCountryParticipation =>
             AiJobTargetType.Broadcast,
-         FindPersonFacts or TranslateText =>
+         FindPersonData or TranslateText =>
             AiJobTargetType.Person,
          _ => AiJobTargetType.Unknown
       };

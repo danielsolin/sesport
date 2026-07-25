@@ -20,7 +20,7 @@ public static class AiRunSummaryFormatter
 
       if(string.Equals(
          jobId,
-         AiJobIds.FindPersonFacts,
+         AiJobIds.FindPersonData,
          StringComparison.Ordinal
       ) && TryFormatPersonFactsSummary(outputText, out var factsSummary))
       {

@@ -46,7 +46,7 @@ public sealed class AiRunSummaryFormatterTests
            "sources": []
          }
          """,
-         AiJobIds.FindPersonFacts
+         AiJobIds.FindPersonData
       );
 
       Assert.Equal(

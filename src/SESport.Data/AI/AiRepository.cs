@@ -26,7 +26,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
    private static readonly string[] PersonJobIds =
    [
-      AiJobIds.FindPersonFacts,
+      AiJobIds.FindPersonData,
       AiJobIds.TranslateText
    ];
 
@@ -555,7 +555,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    }
 
    public async Task<IReadOnlyList<CompletedActivityFactsRun>>
-      GetCompletedActivityFactsRunsWithEmptyActivityFactsAsync(
+      GetUnappliedCompletedActivityFactsRunsAsync(
          int maxRuns,
          CancellationToken cancellationToken
       )
@@ -567,9 +567,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             r.output_text
          from ai_job_runs r
          join activities a on a.id::text = r.correlation_id
+         left join ai_job_run_applications app
+            on app.run_id = r.id
+            and app.target_type = @target_type
+            and app.target_id = a.id::text
          where r.job_id = @job_id
             and r.status_id = @status_id
-            and coalesce(a.facts, '') = ''
+            and r.prompt_version >= 3
+            and app.run_id is null
             and coalesce(r.output_text, '') <> ''
          order by r.completed_at desc, r.id desc
          limit @limit
@@ -583,6 +588,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "status_id",
          AiJobRunStatusIds.Completed
+      );
+      command.Parameters.AddWithValue(
+         "target_type",
+         AiJobRunApplicationTargetTypes.Activity
       );
       command.Parameters.AddWithValue("limit", maxRuns);
 

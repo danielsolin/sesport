@@ -69,7 +69,7 @@ public sealed class PersonFactsService(
 
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
-            AiJobIds.FindPersonFacts,
+            AiJobIds.FindPersonData,
             inputPayloadJson,
             entityId.ToString()
          ),

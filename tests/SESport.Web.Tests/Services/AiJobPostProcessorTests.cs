@@ -9,12 +9,32 @@ public sealed class AiJobPostProcessorTests
    {
       const string output = """
          {
-           "facts": "Fact one.\nFact two.",
-           "sources": [
+           "facts": [
              {
-               "url": "https://example.test/event",
-               "title": "Event page",
-               "excerpt": "Supporting text"
+               "text": "Fact one.",
+               "sources": [
+                 {
+                   "url": "https://example.test/event",
+                   "title": "Event page",
+                   "excerpt": "Supporting text"
+                 }
+               ]
+             },
+             {
+               "text": "Fact two.",
+               "sources": [
+                 {
+                   "url": "https://example.test/second"
+                 }
+               ]
+             },
+             {
+               "text": "Fact three.",
+               "sources": [
+                 {
+                   "url": "https://example.test/third"
+                 }
+               ]
              }
            ]
          }
@@ -23,8 +43,9 @@ public sealed class AiJobPostProcessorTests
       var result = AiJobPostProcessor.ExtractGeneratedActivityFacts(output);
 
       Assert.NotNull(result);
-      Assert.Equal("Fact one.\nFact two.", result.Facts);
-      var source = Assert.Single(result.Sources);
+      Assert.Equal(3, result.Facts.Count);
+      Assert.Equal("Fact one.", result.Facts[0].Text);
+      var source = Assert.Single(result.Facts[0].Sources);
       Assert.Equal("https://example.test/event", source.Url);
       Assert.Equal("Event page", source.Title);
       Assert.Equal("Supporting text", source.Excerpt);
@@ -35,11 +56,33 @@ public sealed class AiJobPostProcessorTests
    {
       const string output = """
          {
-           "facts": "Fact.",
-           "sources": [
-             {"url": "not-a-url"},
-             {"url": "https://example.test/event"},
-             {"url": "https://example.test/event"}
+           "facts": [
+             {
+               "text": "Fact.",
+               "sources": [
+                 {"url": "not-a-url"},
+                 {"url": "https://example.test/event"},
+                 {"url": "https://example.test/event"}
+               ]
+             },
+             {
+               "text": "Second fact.",
+               "sources": [
+                 {"url": "https://example.test/second"}
+               ]
+             },
+             {
+               "text": "Third fact.",
+               "sources": [
+                 {"url": "https://example.test/third"}
+               ]
+             },
+             {
+               "text": "Unsupported fact.",
+               "sources": [
+                 {"url": "not-a-url"}
+               ]
+             }
            ]
          }
          """;
@@ -47,16 +90,17 @@ public sealed class AiJobPostProcessorTests
       var result = AiJobPostProcessor.ExtractGeneratedActivityFacts(output);
 
       Assert.NotNull(result);
-      Assert.Single(result.Sources);
+      Assert.Equal(3, result.Facts.Count);
+      Assert.Single(result.Facts[0].Sources);
    }
 
    [Fact]
-   public void ExtractGeneratedFacts_RemainsCompatibleWithLegacyOutput()
+   public void ExtractGeneratedActivityFactsRejectsLegacyOutput()
    {
       const string output = """{"facts":"Legacy fact."}""";
 
-      var result = AiJobPostProcessor.ExtractGeneratedFacts(output);
+      var result = AiJobPostProcessor.ExtractGeneratedActivityFacts(output);
 
-      Assert.Equal("Legacy fact.", result);
+      Assert.Null(result);
    }
 }

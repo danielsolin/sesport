@@ -106,6 +106,25 @@ public partial class PostgresMigrationTests
       Assert.Contains("on delete cascade", migration);
    }
 
+   [Fact]
+   public void FactSourceLinksMigrationConnectsFactsAndSources()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "005_fact_source_links.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("create table public.fact_source_links", migration);
+      Assert.Contains("references public.facts(id)", migration);
+      Assert.Contains("references public.sources(id)", migration);
+      Assert.Contains("primary key (fact_id, source_id)", migration);
+      Assert.Contains("on delete cascade", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

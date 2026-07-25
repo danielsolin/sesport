@@ -15,3 +15,14 @@ public sealed record FactRecord(
    DateTimeOffset CreatedAt,
    DateTimeOffset UpdatedAt
 );
+
+public sealed record FactSourceDraft(
+   string Url,
+   string? Title,
+   string? Excerpt
+);
+
+public sealed record FactDraft(
+   string Text,
+   IReadOnlyList<FactSourceDraft> Sources
+);
