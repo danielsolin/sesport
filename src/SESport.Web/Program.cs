@@ -40,6 +40,7 @@ builder.Services.AddSingleton<EntityDatePreferenceStore>();
 builder.Services.AddScoped<ActivityEditPageService>();
 builder.Services.AddScoped<ActivityIndexPageService>();
 builder.Services.AddScoped<ActivityRepository>();
+builder.Services.AddScoped<FactRepository>();
 builder.Services.AddScoped<SourceReferenceRepository>();
 builder.Services.AddScoped<PublicActivityTimelineBuilder>();
 builder.Services.AddScoped<AdminRepository>();

@@ -84,6 +84,28 @@ public partial class PostgresMigrationTests
       Assert.Contains("ends_at > starts_at", baseline);
    }
 
+   [Fact]
+   public void FactsMigrationDefinesPolymorphicFactStorage()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "004_facts.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("create table public.facts", migration);
+      Assert.Contains("activity_id uuid", migration);
+      Assert.Contains("entity_id uuid", migration);
+      Assert.Contains("fact_text text not null", migration);
+      Assert.Contains("facts_exactly_one_subject_check", migration);
+      Assert.Contains("references public.activities(id)", migration);
+      Assert.Contains("references public.entities(id)", migration);
+      Assert.Contains("on delete cascade", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

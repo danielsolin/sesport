@@ -1,0 +1,17 @@
+namespace SESport.Core.Facts;
+
+public static class FactSubjectTypes
+{
+   public const string Activity = "Activity";
+
+   public const string Entity = "Entity";
+}
+
+public sealed record FactRecord(
+   Guid Id,
+   string SubjectType,
+   Guid SubjectId,
+   string Text,
+   DateTimeOffset CreatedAt,
+   DateTimeOffset UpdatedAt
+);
