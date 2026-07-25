@@ -942,6 +942,17 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void NormalizeTextSanitizesPostgresUnsupportedUnicode()
+   {
+      var text = "Rally\0 Polen \uD800 😀";
+
+      Assert.Equal(
+         "Rally Polen � 😀",
+         WebPageContentFetchSupport.NormalizeText(text)
+      );
+   }
+
+   [Fact]
    public void NormalizeTextSeparatesGolfPlayerNameFromClub()
    {
       Assert.Equal(

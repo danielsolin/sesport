@@ -1555,19 +1555,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       string? value
    )
    {
-      var jsonValue = (object?)value ?? DBNull.Value;
-
-      if(!string.IsNullOrWhiteSpace(value))
-      {
-         try
-         {
-            using var document = JsonDocument.Parse(value);
-         }
-         catch(JsonException)
-         {
-            jsonValue = DBNull.Value;
-         }
-      }
+      var normalizedValue = PostgreSqlJson.Normalize(value);
+      var jsonValue = (object?)normalizedValue ?? DBNull.Value;
 
       command.Parameters.Add(
          new NpgsqlParameter(name, NpgsqlDbType.Jsonb)

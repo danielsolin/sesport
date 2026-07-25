@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using Npgsql;
 
 using SESport.Core.AI;
@@ -954,6 +956,70 @@ public sealed class AiRepositoryTests
 
          Assert.NotNull(run);
          Assert.Equal(executionEnvironment, run!.ExecutionEnvironment);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task UpdateToolTraceAsyncSanitizesUnsupportedUnicode()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      const string toolTraceJson =
+         """
+         [{
+            "result":"Rally\u0000 Polen \uD800",
+            "emoji":"😀",
+            "literal":"\\u0000",
+            "ok\u0000key":"värde"
+         }]
+         """;
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId
+      );
+
+      try
+      {
+         await repository.UpdateToolTraceAsync(
+            runId,
+            toolTraceJson,
+            1,
+            CancellationToken.None
+         );
+
+         var run = await repository.GetRunAsync(
+            runId,
+            CancellationToken.None
+         );
+         using var document = JsonDocument.Parse(run!.ToolTraceJson!);
+         var trace = document.RootElement[0];
+
+         Assert.Equal("Rally Polen �", trace.GetProperty("result").GetString());
+         Assert.Equal("😀", trace.GetProperty("emoji").GetString());
+         Assert.Equal(
+            @"\u0000",
+            trace.GetProperty("literal").GetString()
+         );
+         Assert.Equal("värde", trace.GetProperty("okkey").GetString());
       }
       finally
       {

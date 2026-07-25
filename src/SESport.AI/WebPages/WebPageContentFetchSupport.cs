@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 
 using SESport.Core.Configuration;
+using SESport.Core.Formatting;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
@@ -193,6 +194,7 @@ internal static class WebPageContentFetchSupport
          return string.Empty;
       }
 
+      text = UnicodeTextSanitizer.Sanitize(text);
       text = NormalizeGluedTableCellText(text);
 
       var normalizedLines = text.Replace("\r", "\n", StringComparison.Ordinal)

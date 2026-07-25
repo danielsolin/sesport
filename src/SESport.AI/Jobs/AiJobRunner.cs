@@ -1,5 +1,7 @@
 using System.Text.Json;
 
+using Microsoft.Extensions.Logging;
+
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
 using SESport.Core.Configuration;
@@ -11,7 +13,8 @@ public sealed class AiJobRunner(
    IAiPromptRenderer promptRenderer,
    IEnumerable<IAiProviderClient> providerClients,
    IAiJobRunRepository runRepository,
-   AiJobExecutionGate executionGate
+   AiJobExecutionGate executionGate,
+   ILogger<AiJobRunner>? logger = null
 ) : IAiJobRunner, IAiJobProcessor
 {
    public async Task<Guid> QueueAsync(
@@ -162,8 +165,13 @@ public sealed class AiJobRunner(
                progressCancellationToken
             );
          }
-         catch(Exception)
+         catch(Exception exception)
          {
+            logger?.LogWarning(
+               exception,
+               "Unable to persist tool trace progress for AI run {RunId}.",
+               run.Id
+            );
          }
       }
 

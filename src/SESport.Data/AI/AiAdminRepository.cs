@@ -675,10 +675,12 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       string? value
    )
    {
+      var normalizedValue = PostgreSqlJson.Normalize(value);
+
       command.Parameters.Add(
          new NpgsqlParameter(name, NpgsqlDbType.Jsonb)
          {
-            Value = (object?)value ?? DBNull.Value
+            Value = (object?)normalizedValue ?? DBNull.Value
          }
       );
    }
