@@ -1875,8 +1875,46 @@ internal static class WebPageContentFetchSupport
       switch(element.ValueKind)
       {
          case JsonValueKind.Object:
-            foreach(var property in element.EnumerateObject())
+            var properties = element.EnumerateObject().ToList();
+            var recordValues = properties
+               .Where(property => IsEmbeddedScalar(property.Value))
+               .Select(property => (
+                  property.Name,
+                  Value: property.Value.ToString()
+               ))
+               .Where(item =>
+                  ShouldCaptureEmbeddedValue(item.Name, item.Value)
+               )
+               .Select(item => (
+                  item.Name,
+                  Value: NormalizeText(item.Value)
+               ))
+               .Where(item => !string.IsNullOrWhiteSpace(item.Value))
+               .ToList();
+
+            if(recordValues.Count > 1)
             {
+               var recordText = string.Join(
+                  " | ",
+                  recordValues.Select(item =>
+                     $"{item.Name}: {item.Value}"
+                  )
+               );
+
+               if(seenTexts.Add(recordText))
+               {
+                  texts.Add(recordText);
+               }
+            }
+
+            foreach(var property in properties)
+            {
+               if(recordValues.Count > 1 &&
+                  IsEmbeddedScalar(property.Value))
+               {
+                  continue;
+               }
+
                CollectEmbeddedText(
                   property.Value,
                   property.Name,
@@ -1914,6 +1952,15 @@ internal static class WebPageContentFetchSupport
 
             break;
       }
+   }
+
+   private static bool IsEmbeddedScalar(JsonElement element)
+   {
+      return element.ValueKind is
+         JsonValueKind.String or
+         JsonValueKind.Number or
+         JsonValueKind.True or
+         JsonValueKind.False;
    }
 
    private static void AddEmbeddedValue(

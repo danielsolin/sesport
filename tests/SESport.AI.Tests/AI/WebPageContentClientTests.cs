@@ -582,6 +582,57 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractEmbeddedStateKeepsRepeatedValuesWithTheirRecords()
+   {
+      const string html = """
+         <html>
+            <body>
+               <script id="__NEXT_DATA__" type="application/json">
+                  {
+                     "players": [
+                        {
+                           "countryCode": "SWE",
+                           "countryName": "Sweden",
+                           "playerName": "Jesper Svensson"
+                        },
+                        {
+                           "countryCode": "SWE",
+                           "countryName": "Sweden",
+                           "playerName": "Pontus Nyholm"
+                        },
+                        {
+                           "countryCode": "NOR",
+                           "countryName": "Norway",
+                           "playerName": "Kristoffer Ventura"
+                        }
+                     ]
+                  }
+               </script>
+            </body>
+         </html>
+         """;
+
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+
+      Assert.Contains(
+         "countryCode: SWE | countryName: Sweden | " +
+         "playerName: Jesper Svensson",
+         text
+      );
+      Assert.Contains(
+         "countryCode: SWE | countryName: Sweden | " +
+         "playerName: Pontus Nyholm",
+         text
+      );
+      Assert.Contains(
+         "countryCode: NOR | countryName: Norway | " +
+         "playerName: Kristoffer Ventura",
+         text
+      );
+   }
+
+   [Fact]
    public async Task FetchReturnsErrorContentWhenFallbackHasNoBody()
    {
       var browserCalls = 0;
