@@ -414,7 +414,8 @@ public sealed class ActivityEditPageService(
             AiJobIds.FindActivityFacts,
             await CreateActivityAiInputJsonAsync(
                activity,
-               cancellationToken
+               cancellationToken,
+               activity.ActivityGroupTitle
             ),
             activity.Id?.ToString()
          ),
@@ -559,7 +560,8 @@ public sealed class ActivityEditPageService(
 
    private async Task<string> CreateActivityAiInputJsonAsync(
       ActivityEditModel activity,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      string? promptTitle = null
    )
    {
       var selectedIds = (activity.LinkedEntityIds ?? []).ToHashSet();
@@ -587,7 +589,7 @@ public sealed class ActivityEditPageService(
          new
          {
             event_name = activity.Title,
-            title = activity.Title,
+            title = promptTitle ?? activity.Title,
             type = organizationName,
             description = activity.Description,
             activity_type = activity.ActivityType,

@@ -132,6 +132,7 @@ public sealed class ActivityEditPageServiceTests
          var activity = new ActivityEditModel
          {
             Title = "Friidrott - London",
+            ActivityGroupTitle = "Diamond League London",
             Description = "Description",
             ActivityType = ActivityType.Match.ToString(),
             SportId = "football",
@@ -152,7 +153,7 @@ public sealed class ActivityEditPageServiceTests
             document.RootElement.GetProperty("type").GetString()
          );
          Assert.Equal(
-            "Friidrott - London",
+            "Diamond League London",
             document.RootElement.GetProperty("title").GetString()
          );
       }
@@ -873,6 +874,7 @@ public sealed class ActivityEditPageServiceTests
 
          Assert.NotNull(savedActivity);
          Assert.NotNull(savedActivity!.ActivityGroupId);
+         Assert.Equal("Broadcast title", savedActivity.ActivityGroupTitle);
          Assert.Equal(new TimeOnly(14, 0), savedActivity.LocalEndTime);
          Assert.Equal(savedActivity.ActivityGroupId, model.ActivityGroupId);
          Assert.False(model.ActivityGroupCreationRequired);

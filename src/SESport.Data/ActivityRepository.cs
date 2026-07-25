@@ -429,8 +429,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.time_zone_id,
             a.publication_status_id,
             a.tv_channel_name,
-            a.activity_group_id
+            a.activity_group_id,
+            ag.title as activity_group_title
          from activities a
+         left join activity_groups ag on ag.id = a.activity_group_id
          where a.id = @id
          """;
 
@@ -461,7 +463,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          IsPublished =
             reader.GetString(11) == ActivityPublicationStatusIds.Published,
          TvChannelName = ReadString(reader, 12),
-         ActivityGroupId = reader.IsDBNull(13) ? null : reader.GetGuid(13)
+         ActivityGroupId = reader.IsDBNull(13) ? null : reader.GetGuid(13),
+         ActivityGroupTitle = ReadString(reader, 14)
       };
 
       await reader.DisposeAsync();
