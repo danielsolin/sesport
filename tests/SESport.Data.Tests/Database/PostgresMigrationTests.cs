@@ -125,6 +125,22 @@ public partial class PostgresMigrationTests
       Assert.Contains("on delete cascade", migration);
    }
 
+   [Fact]
+   public void LegacyActivityFactsMigrationDropsColumn()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "006_drop_activities_facts.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.activities", migration);
+      Assert.Contains("drop column facts", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -4464,10 +4464,9 @@
    {
       const form = button.form;
       const url = button.dataset.factsUrl;
-      const output = form?.querySelector("[data-facts-output]");
       const status = form?.querySelector("[data-facts-status]");
 
-      if(!form || !url || !(output instanceof HTMLTextAreaElement))
+      if(!form || !url)
       {
          return;
       }

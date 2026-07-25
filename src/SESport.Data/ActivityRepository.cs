@@ -420,7 +420,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.title,
             a.description,
             a.teaser,
-            a.facts,
             a.activity_type_id,
             a.sport_id,
             a.activity_date,
@@ -453,18 +452,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          Title = reader.GetString(1),
          Description = ReadString(reader, 2),
          Teaser = ReadString(reader, 3),
-         Facts = ReadString(reader, 4),
-         ActivityType = reader.GetString(5),
-         SportId = reader.GetString(6),
-         ActivityDate = reader.GetFieldValue<DateOnly>(7),
-         LocalStartTime = ReadTimeOnly(reader, 8),
-         LocalEndTime = ReadTimeOnly(reader, 9),
-         TimeZoneId = reader.GetString(10),
+         ActivityType = reader.GetString(4),
+         SportId = reader.GetString(5),
+         ActivityDate = reader.GetFieldValue<DateOnly>(6),
+         LocalStartTime = ReadTimeOnly(reader, 7),
+         LocalEndTime = ReadTimeOnly(reader, 8),
+         TimeZoneId = reader.GetString(9),
          IsPublished =
-            reader.GetString(11) == ActivityPublicationStatusIds.Published,
-         TvChannelName = ReadString(reader, 12),
-         ActivityGroupId = reader.IsDBNull(13) ? null : reader.GetGuid(13),
-         ActivityGroupTitle = ReadString(reader, 14)
+            reader.GetString(10) == ActivityPublicationStatusIds.Published,
+         TvChannelName = ReadString(reader, 11),
+         ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
+         ActivityGroupTitle = ReadString(reader, 13)
       };
 
       await reader.DisposeAsync();
@@ -1223,47 +1221,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
-   public async Task<bool> UpdateFactsAsync(
-      Guid id,
-      string facts,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         update activities
-         set
-            facts = @facts,
-            updated_at = now()
-         where id = @id
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", id);
-      command.Parameters.AddWithValue("facts", facts.Trim());
-      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
-   }
-
-   public async Task<bool> UpdateEmptyFactsAsync(
-      Guid id,
-      string facts,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         update activities
-         set
-            facts = @facts,
-            updated_at = now()
-         where id = @id
-            and coalesce(facts, '') = ''
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", id);
-      command.Parameters.AddWithValue("facts", facts.Trim());
-      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
-   }
-
    public async Task<bool> UpdateEmptyTeaserAsync(
       Guid id,
       string teaser,
@@ -1567,7 +1524,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             title,
             description,
             teaser,
-            facts,
             activity_type_id,
             sport_id,
             activity_date,
@@ -1587,7 +1543,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @title,
             @description,
             @teaser,
-            @facts,
             @activity_type_id,
             @sport_id,
             @activity_date,
@@ -1639,7 +1594,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             title = @title,
             description = @description,
             teaser = @teaser,
-            facts = @facts,
             activity_type_id = @activity_type_id,
             sport_id = @sport_id,
             activity_date = @activity_date,
@@ -1995,10 +1949,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "teaser",
          BlankToDbNull(model.Teaser)
-      );
-      command.Parameters.AddWithValue(
-         "facts",
-         BlankToDbNull(model.Facts)
       );
       command.Parameters.AddWithValue("activity_type_id", model.ActivityType);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());

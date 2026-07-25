@@ -323,15 +323,29 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
    {
       var sql = $"""
          select
-            id,
-            activity_id,
-            entity_id,
-            fact_text,
-            created_at,
-            updated_at
-         from facts
-         where {subjectColumn} = @subject_id
-         order by created_at, id
+            f.id,
+            f.activity_id,
+            f.entity_id,
+            f.fact_text,
+            f.created_at,
+            f.updated_at,
+            coalesce(
+               array_agg(s.url order by fsl.created_at, s.id)
+                  filter (where s.id is not null),
+               array[]::text[]
+            ) as source_urls
+         from facts f
+         left join fact_source_links fsl on fsl.fact_id = f.id
+         left join sources s on s.id = fsl.source_id
+         where f.{subjectColumn} = @subject_id
+         group by
+            f.id,
+            f.activity_id,
+            f.entity_id,
+            f.fact_text,
+            f.created_at,
+            f.updated_at
+         order by f.created_at, f.id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -364,7 +378,10 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          ),
          reader.GetString(3),
          reader.GetFieldValue<DateTimeOffset>(4),
-         reader.GetFieldValue<DateTimeOffset>(5)
+         reader.GetFieldValue<DateTimeOffset>(5),
+         reader.FieldCount > 6
+            ? reader.GetFieldValue<string[]>(6)
+            : []
       );
    }
 

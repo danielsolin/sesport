@@ -13,7 +13,8 @@ public sealed record FactRecord(
    Guid SubjectId,
    string Text,
    DateTimeOffset CreatedAt,
-   DateTimeOffset UpdatedAt
+   DateTimeOffset UpdatedAt,
+   IReadOnlyList<string> SourceUrls
 );
 
 public sealed record FactSourceDraft(

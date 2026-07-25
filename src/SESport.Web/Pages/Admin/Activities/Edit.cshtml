@@ -7,9 +7,6 @@
    var generateTeaserUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityTeaser"
    );
-   var findFactsUrl = Url.Page(
-      "/Admin/Ajax/Create/ActivityFacts"
-   );
    var participantSearchUrl = Url.Page(
       "/Admin/Ajax/Search/ActivityParticipant"
    );
@@ -123,21 +120,52 @@
                    class="medium-textarea"
                    rows="3"></textarea>
       </label>
-      <label>
-         <span>Facts</span>
-         <textarea asp-for="Activity.Facts"
-                   class="medium-textarea"
-                   rows="3"
-                   data-facts-output></textarea>
-      </label>
-      <div class="button-row">
-         <button class="button"
-                 type="button"
-                 data-find-facts
-                 data-facts-url="@findFactsUrl">
-            Find Facts
-         </button>
-         <span class="form-status" data-facts-status></span>
+      <h3 class="subgrid-heading">Facts</h3>
+      <div data-activity-facts-grid>
+         @if(Model.Facts.Count == 0)
+         {
+            <div class="notice">No facts.</div>
+         }
+         else
+         {
+            <div class="admin-table-wrap">
+               <table class="admin-table admin-table-compact
+                             activity-facts-table">
+                  <colgroup>
+                     <col class="activity-facts-date-column" />
+                     <col />
+                     <col />
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>Date</th>
+                        <th>Fact</th>
+                        <th>Source</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     @foreach(var fact in Model.Facts)
+                     {
+                        <tr>
+                           <td>@fact.CreatedAt.ToString("yyyy-MM-dd")</td>
+                           <td>@fact.Text</td>
+                           <td>
+                              @foreach(var sourceUrl in fact.SourceUrls)
+                              {
+                                 <a class="source-url"
+                                    href="@sourceUrl"
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    @sourceUrl
+                                 </a>
+                              }
+                           </td>
+                        </tr>
+                     }
+                  </tbody>
+               </table>
+            </div>
+         }
       </div>
       <label style="display: none;">
          <span>Teaser</span>
@@ -283,7 +311,6 @@
                   <col class="source-kind-column" />
                   <col class="source-url-column" />
                   <col class="source-title-column" />
-                  <col class="source-excerpt-column" />
                </colgroup>
                <thead>
                   <tr>
@@ -291,7 +318,6 @@
                      <th>Kind</th>
                      <th>Source</th>
                      <th>Title</th>
-                     <th>Excerpt</th>
                   </tr>
                </thead>
                <tbody>
@@ -331,9 +357,6 @@
                            </a>
                         </td>
                         <td>@source.Title</td>
-                        <td title="@source.Excerpt">
-                           @SourceDisplay.FormatExcerpt(source.Excerpt)
-                        </td>
                      </tr>
                   }
                </tbody>

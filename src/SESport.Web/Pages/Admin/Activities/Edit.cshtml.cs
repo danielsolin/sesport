@@ -2,12 +2,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using SESport.Core.Facts;
 using SESport.Data;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Activities;
 
-public class EditModel(ActivityEditPageService editService) : PageModel
+public class EditModel(
+   ActivityEditPageService editService,
+   FactRepository factRepository
+) : PageModel
 {
    [BindProperty]
    public ActivityEditModel Activity { get; set; } = new();
@@ -32,6 +36,8 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       get;
       private set;
    } = [];
+
+   public IReadOnlyList<FactRecord> Facts { get; private set; } = [];
 
    public string? LoadError { get; private set; }
 
@@ -82,6 +88,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
          Activity.SportId
       );
       await LoadParticipantsAsync(cancellationToken);
+      await LoadFactsAsync(cancellationToken);
 
       return Page();
    }
@@ -208,6 +215,7 @@ public class EditModel(ActivityEditPageService editService) : PageModel
             Activity.SportId
          );
          await LoadParticipantsAsync(cancellationToken);
+         await LoadFactsAsync(cancellationToken);
          return Page();
       }
 
@@ -229,6 +237,16 @@ public class EditModel(ActivityEditPageService editService) : PageModel
          Activity,
          cancellationToken
       );
+   }
+
+   private async Task LoadFactsAsync(CancellationToken cancellationToken)
+   {
+      Facts = Activity.Id is null
+         ? []
+         : await factRepository.GetForActivityAsync(
+            Activity.Id.Value,
+            cancellationToken
+         );
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)

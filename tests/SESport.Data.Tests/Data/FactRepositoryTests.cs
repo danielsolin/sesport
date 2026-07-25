@@ -136,6 +136,14 @@ public sealed class FactRepositoryTests
          );
 
          Assert.Equal(2, original.Count);
+         var listedFacts = await repository.GetForActivityAsync(
+            activityId,
+            CancellationToken.None
+         );
+         Assert.Equal(
+            sharedSource.Url,
+            Assert.Single(listedFacts[0].SourceUrls)
+         );
          var firstSources =
             await repository.GetSourcesAsync(
                original[0].Id,

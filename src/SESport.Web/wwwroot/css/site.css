@@ -497,6 +497,18 @@ h2 {
    overflow-wrap: anywhere;
 }
 
+.activity-facts-table {
+   table-layout: fixed;
+}
+
+.activity-facts-table .activity-facts-date-column {
+   width: 7rem;
+}
+
+.activity-facts-table .source-url {
+   overflow-wrap: anywhere;
+}
+
 .broadcasts-table {
    table-layout: fixed;
    min-width: 0;
