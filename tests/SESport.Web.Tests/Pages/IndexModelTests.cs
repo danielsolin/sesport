@@ -115,12 +115,12 @@ public sealed class IndexModelTests
    {
       var today = new DateOnly(2026, 7, 24);
       var selectedDate = today;
-      var publishedDates = new[]
+      var publishedDateCounts = new[]
       {
-         today.AddDays(-1),
-         today,
-         today.AddDays(2),
-         today.AddDays(5)
+         new PublishedDateParticipantCount(today.AddDays(-1), 4),
+         new PublishedDateParticipantCount(today, 10),
+         new PublishedDateParticipantCount(today.AddDays(2), 7),
+         new PublishedDateParticipantCount(today.AddDays(5), 3)
       };
 
       var method = typeof(IndexModel).GetMethod(
@@ -130,7 +130,7 @@ public sealed class IndexModelTests
 
       var options = (IReadOnlyList<DateOption>)method!.Invoke(
          null,
-         [today, selectedDate, publishedDates]
+         [today, selectedDate, publishedDateCounts]
       )!;
 
       Assert.Equal(3, options.Count);
@@ -140,11 +140,15 @@ public sealed class IndexModelTests
       );
       Assert.Equal(
          [
-            "Idag (24 juli)",
-            "Söndag (26 juli)",
-            "Onsdag (29 juli)"
+            "Idag 24 juli",
+            "Söndag 26 juli",
+            "Onsdag 29 juli"
          ],
          options.Select(option => option.Label)
+      );
+      Assert.Equal(
+         [10, 7, 3],
+         options.Select(option => option.ParticipantCount)
       );
    }
 
@@ -160,7 +164,11 @@ public sealed class IndexModelTests
 
       var options = (IReadOnlyList<DateOption>)method!.Invoke(
          null,
-         [today, selectedDate, Array.Empty<DateOnly>()]
+         [
+            today,
+            selectedDate,
+            Array.Empty<PublishedDateParticipantCount>()
+         ]
       )!;
 
       var option = Assert.Single(options);

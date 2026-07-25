@@ -109,21 +109,31 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   public async Task<IReadOnlyList<DateOnly>>
-      GetPublishedDatesFromAsync(
+   public async Task<IReadOnlyList<PublishedDateParticipantCount>>
+      GetPublishedDateParticipantCountsFromAsync(
          DateOnly firstDate,
          CancellationToken cancellationToken
       )
    {
       var sql = $$"""
-         select distinct
+         select
             (
                (a.starts_at at time zone @time_zone) - @cutoff
-            )::date as sport_date
+            )::date as sport_date,
+            count(distinct e.id) filter (
+               where e.entity_type_id in (
+                  '{{TrackedEntityTypeIds.Person}}',
+                  '{{TrackedEntityTypeIds.NationalTeam}}',
+                  '{{TrackedEntityTypeIds.Pair}}'
+               )
+            )::integer as participant_count
          from activities a
+         left join activity_entity_links al on al.activity_id = a.id
+         left join entities e on e.id = al.entity_id
          where a.publication_status_id =
             '{{ActivityPublicationStatusIds.Published}}'
             and a.starts_at >= @start
+         group by sport_date
          order by sport_date
          """;
 
@@ -143,11 +153,16 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var dates = new List<DateOnly>();
+      var dates = new List<PublishedDateParticipantCount>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         dates.Add(reader.GetFieldValue<DateOnly>(0));
+         dates.Add(
+            new PublishedDateParticipantCount(
+               reader.GetFieldValue<DateOnly>(0),
+               reader.GetInt32(1)
+            )
+         );
       }
 
       return dates;

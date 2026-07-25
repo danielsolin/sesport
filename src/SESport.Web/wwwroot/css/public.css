@@ -245,6 +245,37 @@
    color: #ffcc00;
 }
 
+.date-option-country-flag {
+   display: block;
+   flex: 0 0 auto;
+   width: 16px;
+   height: auto;
+   transform: translateY(1px);
+}
+
+.date-option-content {
+   display: inline-flex;
+   align-items: center;
+}
+
+.date-option-participant-count {
+   display: inline-flex;
+   align-items: center;
+   gap: 3px;
+   margin-left: 4px;
+   white-space: nowrap;
+}
+
+.date-dropdown-option .date-option-content {
+   display: grid;
+   grid-template-columns: minmax(0, 1fr) 48px;
+   width: 100%;
+}
+
+.date-dropdown-option .date-option-participant-count {
+   margin-left: 0;
+}
+
 .activity-agenda {
    --activity-time-column: 160px;
    --activity-time-gap: 14px;

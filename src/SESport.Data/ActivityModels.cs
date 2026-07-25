@@ -48,6 +48,11 @@ public sealed record PublicActivityParticipant(
    bool IsActive
 );
 
+public sealed record PublishedDateParticipantCount(
+   DateOnly Date,
+   int ParticipantCount
+);
+
 public sealed record EntityOption(
    Guid Id,
    string Name,

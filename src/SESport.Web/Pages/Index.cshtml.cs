@@ -63,15 +63,15 @@ public class IndexModel(
 
       try
       {
-         var publishedDates =
-            await repository.GetPublishedDatesFromAsync(
+         var publishedDateCounts =
+            await repository.GetPublishedDateParticipantCountsFromAsync(
                sportToday,
                cancellationToken
             );
          DateOptions = BuildDateOptions(
             sportToday,
             SelectedDate,
-            publishedDates
+            publishedDateCounts
          );
          var activities = await repository.GetPublishedForDateAsync(
             SelectedDate,
@@ -239,19 +239,27 @@ public class IndexModel(
    private static IReadOnlyList<DateOption> BuildDateOptions(
       DateOnly todayDate,
       DateOnly selectedDate,
-      IEnumerable<DateOnly> publishedDates
+      IEnumerable<PublishedDateParticipantCount> publishedDateCounts
    )
    {
-      return publishedDates
-         .Where(date => date >= todayDate)
-         .Append(todayDate)
-         .Distinct()
-         .OrderBy(date => date)
-         .Select(date =>
+      return publishedDateCounts
+         .Where(item => item.Date >= todayDate)
+         .Append(new PublishedDateParticipantCount(todayDate, 0))
+         .GroupBy(item => item.Date)
+         .Select(group => new PublishedDateParticipantCount(
+            group.Key,
+            group.Max(item => item.ParticipantCount)
+         ))
+         .OrderBy(item => item.Date)
+         .Select(item =>
             new DateOption(
-               DateDisplay.Format(date),
-               FormatDateOptionLabel(date, todayDate),
-               date == selectedDate
+               DateDisplay.Format(item.Date),
+               FormatDateOptionLabel(
+                  item.Date,
+                  todayDate
+               ),
+               item.ParticipantCount,
+               item.Date == selectedDate
             )
          )
          .ToList();
@@ -277,7 +285,7 @@ public class IndexModel(
          culture
       );
 
-      return $"{label} ({dateLabel})";
+      return $"{label} {dateLabel}";
    }
 
 }
@@ -316,6 +324,7 @@ public enum ActivityDayPhase
 public sealed record DateOption(
    string Value,
    string Label,
+   int ParticipantCount,
    bool IsSelected
 );
 

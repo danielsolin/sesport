@@ -30,7 +30,9 @@
                     aria-expanded="false"
                     aria-controls="date-dropdown-menu"
                     data-date-dropdown-toggle>
-               <span>@selectedDateOption.Label</span>
+               <span class="date-option-content">
+                  @selectedDateOption.Label
+               </span>
                <span class="date-dropdown-chevron"
                      aria-hidden="true"></span>
             </button>
@@ -51,7 +53,24 @@
                      aria-selected="@(
                         dateOption.IsSelected ? "true" : "false"
                      )">
-                     @dateOption.Label
+                     <span class="date-option-content">
+                        @if(dateOption.IsSelected)
+                        {
+                           @dateOption.Label
+                        }
+                        else
+                        {
+                           @dateOption.Label
+                           <span class="date-option-participant-count">
+                              <img class="date-option-country-flag"
+                                   src="~/images/flags/se.svg"
+                                   alt="@(
+                                      PrimaryCountry.LocalDisplayName
+                                   )" /><span>x@(
+                                dateOption.ParticipantCount)</span>
+                           </span>
+                        }
+                     </span>
                   </a>
                }
             </div>
