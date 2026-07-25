@@ -252,7 +252,14 @@ else
                      </div>
                   }
                </div>
-               @if(!isGrouped && agendaSection.EndTimeLabel is not null)
+               @if(isGrouped)
+               {
+                  <div class="activity-duration-rail"
+                       aria-hidden="true">
+                     <span class="activity-duration-line"></span>
+                  </div>
+               }
+               else if(agendaSection.EndTimeLabel is not null)
                {
                   <div class="activity-duration-rail"
                        aria-label=
