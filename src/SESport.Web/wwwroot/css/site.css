@@ -6,6 +6,9 @@
    --line: #c9dcef;
    --accent: #006aa8;
    --accent-strong: #004f80;
+   --subgrid-header: #dcebf5;
+   --subgrid-row: #f4f8fb;
+   --subgrid-row-hover: #eaf3f8;
    --warning: #8a6500;
    --warning-bg: #fff0b8;
 }
@@ -457,6 +460,21 @@ h2 {
 .admin-table-compact th,
 .admin-table-compact td {
    padding: 4px 6px;
+}
+
+.admin-table-compact thead th {
+   background: var(--subgrid-header);
+   color: var(--accent-strong);
+}
+
+.admin-table-compact tbody th,
+.admin-table-compact tbody td {
+   background: var(--subgrid-row);
+}
+
+.admin-table-compact tbody tr:hover > th,
+.admin-table-compact tbody tr:hover > td {
+   background: var(--subgrid-row-hover);
 }
 
 .subgrid-heading {
