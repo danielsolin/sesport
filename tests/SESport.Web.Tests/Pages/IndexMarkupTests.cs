@@ -74,6 +74,10 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("activity-now-marker", html);
       Assert.Contains("activity-ongoing-dots", html);
+      Assert.DoesNotContain(
+         ".activity-group-time-item.is-ongoing .activity-time-badge",
+         css
+      );
       Assert.DoesNotContain("activity-group-slot-status", html);
       Assert.DoesNotContain("activity-group-slot-status", css);
       Assert.Contains(

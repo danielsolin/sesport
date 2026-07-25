@@ -167,7 +167,8 @@ public sealed class PublicActivityTimelineBuilder
          .Select(item => CreateSlot(item, now))
          .ToList();
       var timelineSlot = slots
-         .FirstOrDefault(slot => slot.Activity.StartsAt >= now)
+         .FirstOrDefault(slot => slot.IsOngoing)
+         ?? slots.FirstOrDefault(slot => slot.Activity.StartsAt >= now)
          ?? slots[^1];
       var timelineStart = TimeZoneHelper.ToLocal(
          timelineSlot.Activity.StartsAt!.Value,

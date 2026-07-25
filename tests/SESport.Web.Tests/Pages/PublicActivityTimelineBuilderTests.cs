@@ -264,6 +264,29 @@ public class PublicActivityTimelineBuilderTests
       );
       Assert.Equal("08:15", section.TimelineSlot.TimeLabel);
 
+      var duringFirstActivity = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         30,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var activeTimeline = builder.Build(
+         activities,
+         selectedDate,
+         duringFirstActivity
+      );
+      var activeSection =
+         Assert.Single(
+            activeTimeline.TimelineEntries,
+            entry => !entry.IsCurrentMarker
+         ).Section!;
+
+      Assert.True(activeSection.TimelineSlot.IsOngoing);
+      Assert.Equal("08:15", activeSection.TimelineSlot.TimeLabel);
+
       var midday = new DateTimeOffset(
          2026,
          7,
