@@ -791,8 +791,8 @@
 }
 
 .activity-group-schedule-item.is-ongoing {
-   border-color: #b79a3a;
-   background: rgba(183, 154, 58, 0.12);
+   border-color: #ffcc00;
+   background: rgba(255, 204, 0, 0.12);
    opacity: 1;
 }
 
