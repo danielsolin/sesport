@@ -24,6 +24,9 @@ public sealed class EditMarkupTests
       Assert.Contains("removeParticipantRow", script);
       Assert.Contains("renderEmptyParticipantsNotice", script);
       Assert.Contains("Delete", html);
+      Assert.Contains("SetParticipantActive", html);
+      Assert.Contains("Deactivate", html);
+      Assert.Contains("Reactivate", html);
    }
 
    [Fact]

@@ -27,7 +27,6 @@
          });
       });
 
-      sortTable(table, "name", "ascending");
    });
 
    function sortTable(table, key, direction)

@@ -822,6 +822,29 @@
    font-weight: 750;
 }
 
+.activity-participant-inactive {
+   opacity: 0.5;
+}
+
+.activity-has-ended .activity-participant-inactive {
+   opacity: 1;
+}
+
+.activity-participant-out-badge {
+   display: none;
+   margin-left: 6px;
+   padding: 1px 5px;
+   border: 1px solid currentColor;
+   border-radius: 999px;
+   font-size: 9px;
+   font-weight: 800;
+   line-height: 1.2;
+}
+
+.activity-has-ended .activity-participant-out-badge {
+   display: inline-flex;
+}
+
 .activity-participant-table {
    width: 100%;
    min-width: 540px;

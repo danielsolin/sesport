@@ -300,7 +300,7 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
-   public async Task GetPublishedForDateAsyncOrdersParticipantsByWatchPriority()
+   public async Task GetPublishedForDateAsyncOrdersInactiveParticipantsLast()
    {
       var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
@@ -355,6 +355,12 @@ public sealed class ActivityRepositoryTests
          activityId,
          reviewAlphaId
       );
+      await repository.SetParticipantActiveAsync(
+         activityId,
+         tierOneId,
+         false,
+         CancellationToken.None
+      );
 
       try
       {
@@ -370,6 +376,10 @@ public sealed class ActivityRepositoryTests
          Assert.Equal(
             "Zulu Tier, Alpha Review, Bravo Review",
             activity.RelatedPersonEntities
+         );
+         Assert.Equal(
+            ["Alpha Review", "Bravo Review", "Zulu Tier"],
+            activity.Participants.Select(participant => participant.Name)
          );
       }
       finally
@@ -457,6 +467,62 @@ public sealed class ActivityRepositoryTests
          await DeleteEntityAsync(dataSource, betaId);
          await DeleteEntityAsync(dataSource, alphaId);
          await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task SetParticipantActiveAsyncUpdatesEditStatus()
+   {
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertEntityAsync(
+         dataSource,
+         personId,
+         "Inactive Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         DistantActivityDate,
+         TimeZoneHelper.ToUtc(
+            DistantActivityDate,
+            new TimeOnly(12, 0),
+            SportDay.TimeZoneId
+         )
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         activityId,
+         personId
+      );
+
+      try
+      {
+         await repository.SetParticipantActiveAsync(
+            activityId,
+            personId,
+            false,
+            CancellationToken.None
+         );
+         var participants = await repository.GetParticipantsForEditAsync(
+            activityId,
+            [],
+            CancellationToken.None
+         );
+
+         var participant = Assert.Single(participants);
+         Assert.False(participant.IsActive);
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, personId);
       }
    }
 

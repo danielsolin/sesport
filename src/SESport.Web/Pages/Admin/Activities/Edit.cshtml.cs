@@ -119,6 +119,31 @@ public class EditModel(ActivityEditPageService editService) : PageModel
       );
    }
 
+   public async Task<IActionResult> OnPostSetParticipantActiveAsync(
+      Guid id,
+      Guid entityId,
+      bool isActive,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      await editService.SetParticipantActiveAsync(
+         id,
+         entityId,
+         isActive,
+         cancellationToken
+      );
+
+      return RedirectToPage(
+         "./Edit",
+         new
+         {
+            id,
+            returnUrl = GetLocalReturnUrl(returnUrl)
+         }
+      );
+   }
+
    public async Task<IActionResult> OnPostAddParticipantAsync(
       Guid id,
       Guid entityId,

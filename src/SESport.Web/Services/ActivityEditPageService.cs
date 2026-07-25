@@ -123,6 +123,21 @@ public sealed class ActivityEditPageService(
       );
    }
 
+   public async Task SetParticipantActiveAsync(
+      Guid activityId,
+      Guid entityId,
+      bool isActive,
+      CancellationToken cancellationToken
+   )
+   {
+      await repository.SetParticipantActiveAsync(
+         activityId,
+         entityId,
+         isActive,
+         cancellationToken
+      );
+   }
+
    public async Task AddParticipantAsync(
       Guid activityId,
       Guid entityId,

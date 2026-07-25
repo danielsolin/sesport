@@ -382,7 +382,12 @@ else
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
-                                    <tr data-participant-name=
+                                    <tr class="@(
+                                           participant.IsActive
+                                              ? null
+                                              : "activity-participant-inactive"
+                                        )"
+                                        data-participant-name=
                                            "@participant.Name"
                                         data-participant-age="@age"
                                         data-participant-birthdate=
@@ -394,6 +399,13 @@ else
                                        <td class="activity-participant-name
                                           activity-participant-col-name">
                                           @participant.Name
+                                          @if(!participant.IsActive)
+                                          {
+                                             <span class=
+                                                "activity-participant-out-badge">
+                                                UTE
+                                             </span>
+                                          }
                                        </td>
                                        <td class=
                                               "activity-participant-col-age">
@@ -439,6 +451,8 @@ else
            asp-append-version="true"></script>
    <script src="~/js/public-participant-table.js"
            asp-append-version="true"></script>
+   @*
    <script src="~/js/public-current-marker-scroll.js"
            asp-append-version="true"></script>
+   *@
 }

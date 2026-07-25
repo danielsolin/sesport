@@ -727,6 +727,10 @@ h2 {
    margin-bottom: 8px;
 }
 
+.activity-participant-inactive {
+   opacity: 0.5;
+}
+
 .activity-participant-picker .broadcast-org-entity-input {
    padding: 3px 6px;
    font-size: 12px;

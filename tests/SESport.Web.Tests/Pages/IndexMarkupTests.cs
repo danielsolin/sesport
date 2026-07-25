@@ -16,8 +16,15 @@ public sealed class IndexMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/css/public.css"
       );
+      var participantScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/public-participant-table.js"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
       var css = await File.ReadAllTextAsync(cssPath);
+      var participantScript = await File.ReadAllTextAsync(
+         participantScriptPath
+      );
 
       Assert.Contains("index-participants-info", html);
       Assert.Contains("aria-label=\"Visa alla sporter\"", html);
@@ -36,11 +43,35 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-date-dropdown-menu", html);
       Assert.Contains("public-date-select.js", html);
       Assert.Contains("public-current-marker-scroll.js", html);
+      Assert.Contains(
+         "@*\n   <script src=\"~/js/public-current-marker-scroll.js\"",
+         html
+      );
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-age", html);
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
+      Assert.Contains("activity-participant-inactive", html);
+      Assert.Contains(
+         ".activity-participant-inactive {\n" +
+         "   opacity: 0.5;",
+         css
+      );
+      Assert.Contains(
+         ".activity-has-ended .activity-participant-inactive {\n" +
+         "   opacity: 1;",
+         css
+      );
+      Assert.Contains("activity-participant-out-badge", html);
+      Assert.Contains(
+         ".activity-has-ended .activity-participant-out-badge",
+         css
+      );
+      Assert.DoesNotContain(
+         "sortTable(table, \"name\", \"ascending\");",
+         participantScript
+      );
       Assert.Contains("activity-now-marker", html);
       Assert.Contains("activity-ongoing-dots", html);
       Assert.Contains(

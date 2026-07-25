@@ -770,6 +770,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       var activityLinkJoin = activityId is null
          ? string.Empty
          : "join activity_entity_links al on al.entity_id = e.id";
+      var activeExpression = activityId is null ? "true" : "al.is_active";
       var whereClause = activityId is null
          ? "where e.id = any(@entity_ids)"
          : "where al.activity_id = @activity_id";
@@ -785,7 +786,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                else ''
             end,
             coalesce(e.alias_name, ''),
-            wp.sort_order as sort_order
+            wp.sort_order as sort_order,
+            {{activeExpression}}
          from entities e
          join entity_watch_priorities wp on wp.id = e.watch_priority_id
          {{activityLinkJoin}}
@@ -819,7 +821,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetString(5)
+               reader.GetString(5),
+               reader.GetBoolean(7)
             )
          );
       }
@@ -842,6 +845,27 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("entity_id", entityId);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task SetParticipantActiveAsync(
+      Guid activityId,
+      Guid entityId,
+      bool isActive,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activity_entity_links
+         set is_active = @is_active
+         where activity_id = @activity_id
+            and entity_id = @entity_id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue("is_active", isActive);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -985,7 +1009,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               reader.GetString(5)
+               reader.GetString(5),
+               true
             )
          );
       }
@@ -1316,7 +1341,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             person.birthdate,
             person.height,
             coalesce(person.formative_club, '') as club,
-            priority.sort_order
+            priority.sort_order,
+            al.is_active
          from activity_entity_links al
          join entities person on person.id = al.entity_id
          join entity_watch_priorities priority
@@ -1326,6 +1352,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                '{{TrackedEntityTypeIds.Person}}'
          order by
             al.activity_id,
+            al.is_active desc,
             priority.sort_order,
             person.canonical_name
          """;
@@ -1358,7 +1385,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   ? null
                   : reader.GetFieldValue<DateOnly>(3),
                reader.IsDBNull(4) ? null : reader.GetInt32(4),
-               reader.GetString(5)
+               reader.GetString(5),
+               reader.GetBoolean(7)
             )
          );
       }
@@ -1640,6 +1668,29 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
+      var inactiveEntityIds = new HashSet<Guid>();
+      await using(var statusCommand = new NpgsqlCommand(
+         """
+         select entity_id
+         from activity_entity_links
+         where activity_id = @activity_id
+            and not is_active
+         """,
+         connection,
+         transaction
+      ))
+      {
+         statusCommand.Parameters.AddWithValue("activity_id", activityId);
+         await using var reader = await statusCommand.ExecuteReaderAsync(
+            cancellationToken
+         );
+
+         while(await reader.ReadAsync(cancellationToken))
+         {
+            inactiveEntityIds.Add(reader.GetGuid(0));
+         }
+      }
+
       await using var deleteCommand = new NpgsqlCommand(
          "delete from activity_entity_links where activity_id = @activity_id",
          connection,
@@ -1663,7 +1714,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             id,
             activity_id,
             entity_id,
-            organization_entity_id
+            organization_entity_id,
+            is_active
          )
          values (
             @id,
@@ -1677,9 +1729,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                      and e.entity_type_id =
                         '{{TrackedEntityTypeIds.Person}}'
                )
-                  then @organization_entity_id
+               then @organization_entity_id
                else null
-            end
+            end,
+            @is_active
          )
          """;
 
@@ -1696,6 +1749,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          command.Parameters.AddWithValue(
             "organization_entity_id",
             organizationEntityId ?? (object)DBNull.Value
+         );
+         command.Parameters.AddWithValue(
+            "is_active",
+            !inactiveEntityIds.Contains(entityId)
          );
          await command.ExecuteNonQueryAsync(cancellationToken);
       }

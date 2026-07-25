@@ -216,7 +216,14 @@
                      {
                         var deleteFormId =
                            $"delete-participant-{participant.Id:N}";
-                        <tr data-activity-participant-row="@participant.Id">
+                        var statusFormId =
+                           $"status-participant-{participant.Id:N}";
+                        <tr class="@(
+                               participant.IsActive
+                                  ? null
+                                  : "activity-participant-inactive"
+                            )"
+                            data-activity-participant-row="@participant.Id">
                            <td>
                               <a asp-page="/Admin/Entities/Edit"
                                  asp-route-id="@participant.Id">
@@ -230,6 +237,12 @@
                            <td class="table-actions">
                               @if(Model.Activity.Id is not null)
                               {
+                                 <button type="submit"
+                                         form="@statusFormId">
+                                    @(participant.IsActive
+                                       ? "Deactivate"
+                                       : "Reactivate")
+                                 </button>
                                  <button type="submit"
                                          form="@deleteFormId">
                                     Delete
@@ -360,6 +373,15 @@
    @foreach(var participant in Model.Participants)
    {
       var deleteFormId = $"delete-participant-{participant.Id:N}";
+      var statusFormId = $"status-participant-{participant.Id:N}";
+      <form id="@statusFormId"
+            method="post"
+            asp-page-handler="SetParticipantActive"
+            asp-route-id="@Model.Activity.Id"
+            asp-route-entityId="@participant.Id"
+            asp-route-isActive="@(!participant.IsActive)">
+         <input asp-for="ReturnUrl" type="hidden" />
+      </form>
       <form id="@deleteFormId"
             method="post"
             asp-page-handler="DeleteParticipant"

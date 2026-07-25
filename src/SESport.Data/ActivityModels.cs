@@ -44,7 +44,8 @@ public sealed record PublicActivityParticipant(
    string Name,
    DateOnly? Birthdate,
    int? Height,
-   string Club
+   string Club,
+   bool IsActive
 );
 
 public sealed record EntityOption(
@@ -100,7 +101,8 @@ public sealed record ActivityParticipantListItem(
    string RelatedOrganizations,
    string WatchPriority,
    string Gender,
-   string Alias
+   string Alias,
+   bool IsActive
 );
 
 public sealed class ActivitySourceEditModel
