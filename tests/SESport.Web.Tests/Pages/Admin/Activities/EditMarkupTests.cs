@@ -88,6 +88,7 @@ public sealed class EditMarkupTests
       Assert.Contains("<th>Fact</th>", html);
       Assert.Contains("<th>Source</th>", html);
       Assert.Contains("activity-facts-date-column", html);
+      Assert.Contains("activity-facts-actions-column", html);
       Assert.Contains(
          "fact.CreatedAt.ToString(\"yyyy-MM-dd\")",
          html
@@ -96,6 +97,12 @@ public sealed class EditMarkupTests
       Assert.Contains("activity-facts-table", html);
       Assert.Contains("@sourceUrl", html);
       Assert.Contains("target=\"_blank\"", html);
+      Assert.Contains("asp-page-handler=\"DeleteFact\"", html);
+      Assert.Contains("asp-route-factId=\"@fact.Id\"", html);
+      Assert.Contains(
+         "onsubmit=\"return confirm('Are you sure?');\"",
+         html
+      );
       Assert.DoesNotContain("data-find-facts", html);
       Assert.DoesNotContain("Find Facts", html);
       Assert.DoesNotContain("data-facts-output", html);

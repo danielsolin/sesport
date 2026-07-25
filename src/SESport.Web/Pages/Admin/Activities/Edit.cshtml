@@ -135,17 +135,21 @@
                      <col class="activity-facts-date-column" />
                      <col />
                      <col />
+                     <col class="activity-facts-actions-column" />
                   </colgroup>
                   <thead>
                      <tr>
                         <th>Date</th>
                         <th>Fact</th>
                         <th>Source</th>
+                        <th></th>
                      </tr>
                   </thead>
                   <tbody>
                      @foreach(var fact in Model.Facts)
                      {
+                        var deleteFactFormId =
+                           $"delete-fact-{fact.Id:N}";
                         <tr>
                            <td>@fact.CreatedAt.ToString("yyyy-MM-dd")</td>
                            <td>@fact.Text</td>
@@ -159,6 +163,12 @@
                                     @sourceUrl
                                  </a>
                               }
+                           </td>
+                           <td class="table-actions">
+                              <button type="submit"
+                                      form="@deleteFactFormId">
+                                 Delete
+                              </button>
                            </td>
                         </tr>
                      }
@@ -377,6 +387,19 @@
       </button>
    </section>
 </form>
+
+@foreach(var fact in Model.Facts)
+{
+   var deleteFactFormId = $"delete-fact-{fact.Id:N}";
+   <form id="@deleteFactFormId"
+         method="post"
+         asp-page-handler="DeleteFact"
+         asp-route-id="@Model.Activity.Id"
+         asp-route-factId="@fact.Id"
+         onsubmit="return confirm('Are you sure?');">
+      <input asp-for="ReturnUrl" type="hidden" />
+   </form>
+}
 
 @if(Model.Activity.Id is not null)
 {

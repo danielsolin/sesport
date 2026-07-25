@@ -133,6 +133,24 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
+   public async Task<bool> DeleteForActivityAsync(
+      Guid id,
+      Guid activityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from facts
+         where id = @id
+            and activity_id = @activity_id
+         """;
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("activity_id", activityId);
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
    public async Task<IReadOnlyList<SourceReference>> GetSourcesAsync(
       Guid factId,
       CancellationToken cancellationToken

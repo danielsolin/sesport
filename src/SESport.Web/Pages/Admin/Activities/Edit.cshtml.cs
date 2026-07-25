@@ -126,6 +126,29 @@ public class EditModel(
       );
    }
 
+   public async Task<IActionResult> OnPostDeleteFactAsync(
+      Guid id,
+      Guid factId,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      await factRepository.DeleteForActivityAsync(
+         factId,
+         id,
+         cancellationToken
+      );
+
+      return RedirectToPage(
+         "./Edit",
+         new
+         {
+            id,
+            returnUrl = GetLocalReturnUrl(returnUrl)
+         }
+      );
+   }
+
    public async Task<IActionResult> OnPostSetParticipantActiveAsync(
       Guid id,
       Guid entityId,

@@ -91,9 +91,17 @@ public sealed class FactRepositoryTests
          Assert.NotNull(updated);
          Assert.Equal("Updated fact.", updated!.Text);
          Assert.True(updated.UpdatedAt >= fact.UpdatedAt);
-         Assert.True(
-            await repository.DeleteAsync(
+         Assert.False(
+            await repository.DeleteForActivityAsync(
                fact.Id,
+               Guid.NewGuid(),
+               CancellationToken.None
+            )
+         );
+         Assert.True(
+            await repository.DeleteForActivityAsync(
+               fact.Id,
+               activityId,
                CancellationToken.None
             )
          );

@@ -505,6 +505,10 @@ h2 {
    width: 7rem;
 }
 
+.activity-facts-table .activity-facts-actions-column {
+   width: 4rem;
+}
+
 .activity-facts-table .source-url {
    overflow-wrap: anywhere;
 }
