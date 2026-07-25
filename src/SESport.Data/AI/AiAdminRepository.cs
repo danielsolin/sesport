@@ -351,7 +351,12 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             p.system_prompt,
             p.user_prompt_template,
             p.temperature,
-            p.enabled
+            p.enabled,
+            exists (
+               select 1
+               from ai_jobs active_job
+               where active_job.active_prompt_id = p.id
+            ) as is_in_use
          from ai_job_prompts p
          join ai_jobs j on j.id = p.job_id
          order by p.job_id, p.version desc
@@ -374,7 +379,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(4),
                reader.GetString(5),
                ReadNullableDecimal(reader, 6),
-               reader.GetBoolean(7)
+               reader.GetBoolean(7),
+               reader.GetBoolean(8)
             )
          );
       }
@@ -411,7 +417,12 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             p.system_prompt,
             p.user_prompt_template,
             p.temperature,
-            p.enabled
+            p.enabled,
+            exists (
+               select 1
+               from ai_jobs active_job
+               where active_job.active_prompt_id = p.id
+            ) as is_in_use
          from ai_job_prompts p
          join ai_jobs j on j.id = p.job_id
          where p.job_id = @job_id
@@ -436,7 +447,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(4),
                reader.GetString(5),
                ReadNullableDecimal(reader, 6),
-               reader.GetBoolean(7)
+               reader.GetBoolean(7),
+               reader.GetBoolean(8)
             )
          );
       }

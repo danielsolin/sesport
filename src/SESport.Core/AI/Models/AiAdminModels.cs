@@ -82,7 +82,8 @@ public sealed record AiPromptListItem(
    string SystemPrompt,
    string UserPromptTemplate,
    decimal? Temperature,
-   bool Enabled
+   bool Enabled,
+   bool IsInUse
 );
 
 public sealed record AiRunListItem(

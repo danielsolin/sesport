@@ -2,6 +2,21 @@
 @model SESport.Web.Pages.Admin.Config.Ai.Prompts.IndexModel
 @{
    ViewData["Title"] = "AI prompts";
+   var promptSections = new[]
+   {
+      new
+      {
+         Title = "Active",
+         EmptyText = "No prompts are currently in use.",
+         Prompts = Model.CurrentPrompts
+      },
+      new
+      {
+         Title = "Inactive",
+         EmptyText = "No unused prompts.",
+         Prompts = Model.UnusedPrompts
+      }
+   };
 }
 
 <section class="page-heading page-heading-row">
@@ -19,42 +34,63 @@
    </div>
 }
 
-<div class="admin-table-wrap">
-   <table class="admin-table">
-      <thead>
-         <tr>
-            <th>VERSION</th>
-            <th>AI JOB</th>
-            <th>PROMPT</th>
-            <th>TEMPERATURE</th>
-            <th></th>
-         </tr>
-      </thead>
-      <tbody>
-         @foreach (var prompt in Model.Prompts)
-         {
-            <tr>
-               <td>@prompt.Version</td>
-               <td><code>@prompt.JobId</code></td>
-               <td>
-                  <div>Sys: @IndexModel.Truncate(prompt.SystemPrompt, 50)</div>
-                  <div>User: @IndexModel.Truncate(
-                     prompt.UserPromptTemplate,
-                     50
-                  )</div>
-               </td>
-               <td>@prompt.Temperature</td>
-               <td class="table-actions">
-                  <a asp-page="./Edit" asp-route-id="@prompt.Id">Edit</a>
-                  <form method="post"
-                        asp-page-handler="Delete"
-                        asp-route-id="@prompt.Id"
-                        onsubmit="return confirm('Are you sure?');">
-                     <button type="submit">Delete</button>
-                  </form>
-               </td>
-            </tr>
-         }
-      </tbody>
-   </table>
-</div>
+@foreach (var promptSection in promptSections)
+{
+   <section class="form-section">
+      <h2>@promptSection.Title</h2>
+      @if (promptSection.Prompts.Count == 0)
+      {
+         <p class="muted">@promptSection.EmptyText</p>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table">
+               <thead>
+                  <tr>
+                     <th>VERSION</th>
+                     <th>AI JOB</th>
+                     <th>PROMPT</th>
+                     <th>TEMPERATURE</th>
+                     <th></th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach (var prompt in promptSection.Prompts)
+                  {
+                     <tr>
+                        <td>@prompt.Version</td>
+                        <td><code>@prompt.JobId</code></td>
+                        <td>
+                           <div>
+                              Sys: @IndexModel.Truncate(
+                                 prompt.SystemPrompt,
+                                 50
+                              )
+                           </div>
+                           <div>
+                              User: @IndexModel.Truncate(
+                                 prompt.UserPromptTemplate,
+                                 50
+                              )
+                           </div>
+                        </td>
+                        <td>@prompt.Temperature</td>
+                        <td class="table-actions">
+                           <a asp-page="./Edit"
+                              asp-route-id="@prompt.Id">Edit</a>
+                           <form method="post"
+                                 asp-page-handler="Delete"
+                                 asp-route-id="@prompt.Id"
+                                 onsubmit="return confirm('Are you sure?');">
+                              <button type="submit">Delete</button>
+                           </form>
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+}

@@ -8,7 +8,17 @@ namespace SESport.Web.Pages.Admin.Config.Ai.Prompts;
 
 public class IndexModel(AiAdminRepository repository) : PageModel
 {
-   public IReadOnlyList<AiPromptListItem> Prompts { get; private set; } = [];
+   public IReadOnlyList<AiPromptListItem> CurrentPrompts
+   {
+      get;
+      private set;
+   } = [];
+
+   public IReadOnlyList<AiPromptListItem> UnusedPrompts
+   {
+      get;
+      private set;
+   } = [];
 
    public string? LoadError { get; private set; }
 
@@ -16,7 +26,9 @@ public class IndexModel(AiAdminRepository repository) : PageModel
    {
       try
       {
-         Prompts = await repository.GetPromptsAsync(cancellationToken);
+         var prompts = await repository.GetPromptsAsync(cancellationToken);
+         CurrentPrompts = prompts.Where(prompt => prompt.IsInUse).ToList();
+         UnusedPrompts = prompts.Where(prompt => !prompt.IsInUse).ToList();
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)
