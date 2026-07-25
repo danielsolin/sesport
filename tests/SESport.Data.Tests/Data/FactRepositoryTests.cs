@@ -119,7 +119,7 @@ public sealed class FactRepositoryTests
    }
 
    [Fact]
-   public async Task ReplacesActivityFactsWithLinkedSources()
+   public async Task AddsActivityFactsWithLinkedSources()
    {
       var activityId = Guid.NewGuid();
       var sharedSource = new FactSourceDraft(
@@ -134,7 +134,7 @@ public sealed class FactRepositoryTests
       try
       {
          await InsertActivityAsync(dataSource, activityId);
-         var original = await repository.ReplaceForActivityAsync(
+         var original = await repository.AddForActivityAsync(
             activityId,
             [
                new FactDraft("First fact.", [sharedSource]),
@@ -174,12 +174,13 @@ public sealed class FactRepositoryTests
             )
          );
 
-         var replacement = await repository.ReplaceForActivityAsync(
+         var added = await repository.AddForActivityAsync(
             activityId,
             [
                new FactDraft(
                   "Replacement fact.",
                   [
+                     sharedSource,
                      new FactSourceDraft(
                         "https://example.test/new",
                         null,
@@ -191,20 +192,29 @@ public sealed class FactRepositoryTests
             CancellationToken.None
          );
 
-         Assert.Single(replacement);
-         Assert.Null(
-            await repository.GetAsync(
-               original[0].Id,
+         Assert.Single(added);
+         Assert.NotNull(
+            await repository.GetAsync(original[0].Id, CancellationToken.None)
+         );
+         var addedSources = await repository.GetSourcesAsync(
+            added[0].Id,
+            CancellationToken.None
+         );
+         Assert.Equal(2, addedSources.Count);
+         Assert.Equal(
+            3,
+            (await repository.GetForActivityAsync(
+               activityId,
                CancellationToken.None
+            )).Count
+         );
+         Assert.Equal(
+            2,
+            await CountActivityEvidenceSourcesAsync(
+               dataSource,
+               activityId
             )
          );
-         var source = Assert.Single(
-            await repository.GetSourcesAsync(
-               replacement[0].Id,
-               CancellationToken.None
-            )
-         );
-         Assert.Equal("https://example.test/new", source.Url);
       }
       finally
       {

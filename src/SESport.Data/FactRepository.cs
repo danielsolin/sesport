@@ -200,7 +200,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return sources;
    }
 
-   public async Task<IReadOnlyList<FactRecord>> ReplaceForActivityAsync(
+   public async Task<IReadOnlyList<FactRecord>> AddForActivityAsync(
       Guid activityId,
       IReadOnlyList<FactDraft> drafts,
       CancellationToken cancellationToken
@@ -224,7 +224,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          return [];
       }
 
-      await DeleteActivityFactsAndSourcesAsync(
+      var sourceIds = await GetActivityFactSourceIdsAsync(
          connection,
          transaction,
          activityId,
@@ -232,9 +232,6 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       );
 
       var createdFacts = new List<FactRecord>();
-      var sourceIds = new Dictionary<string, Guid>(
-         StringComparer.OrdinalIgnoreCase
-      );
 
       foreach(var draft in normalizedDrafts)
       {
@@ -421,46 +418,51 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          false);
    }
 
-   private static async Task DeleteActivityFactsAndSourcesAsync(
+   private static async Task<Dictionary<string, Guid>>
+      GetActivityFactSourceIdsAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid activityId,
       CancellationToken cancellationToken
    )
    {
-      await using(var factCommand = new NpgsqlCommand(
-         "delete from facts where activity_id = @activity_id",
-         connection,
-         transaction
-      ))
-      {
-         factCommand.Parameters.AddWithValue("activity_id", activityId);
-         await factCommand.ExecuteNonQueryAsync(cancellationToken);
-      }
-
-      await using var sourceCommand = new NpgsqlCommand(
+      await using var command = new NpgsqlCommand(
          """
-         delete from sources
+         select id, url
+         from sources
          where correlation_type = @correlation_type
             and correlation_id = @correlation_id
             and kind = @kind
+         order by created_at, id
          """,
          connection,
          transaction
       );
-      sourceCommand.Parameters.AddWithValue(
+      command.Parameters.AddWithValue(
          "correlation_type",
          SourceCorrelationTypes.Activity
       );
-      sourceCommand.Parameters.AddWithValue(
+      command.Parameters.AddWithValue(
          "correlation_id",
          activityId.ToString()
       );
-      sourceCommand.Parameters.AddWithValue(
+      command.Parameters.AddWithValue(
          "kind",
          SourceKinds.ActivityEvidence
       );
-      await sourceCommand.ExecuteNonQueryAsync(cancellationToken);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var sourceIds = new Dictionary<string, Guid>(
+         StringComparer.OrdinalIgnoreCase
+      );
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         sourceIds.TryAdd(reader.GetString(1), reader.GetGuid(0));
+      }
+
+      return sourceIds;
    }
 
    private static async Task<FactRecord> InsertActivityFactAsync(

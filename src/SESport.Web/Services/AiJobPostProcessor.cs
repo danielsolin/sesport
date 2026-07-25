@@ -97,7 +97,7 @@ public sealed class AiJobPostProcessor(
       }
       else
       {
-         var createdFacts = await factRepository.ReplaceForActivityAsync(
+         var createdFacts = await factRepository.AddForActivityAsync(
             activityId,
             activityFacts!.Facts,
             cancellationToken

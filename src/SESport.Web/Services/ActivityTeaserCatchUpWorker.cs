@@ -71,7 +71,7 @@ public sealed class ActivityTeaserCatchUpWorker(
                continue;
             }
 
-            var createdFacts = await factRepository.ReplaceForActivityAsync(
+            var createdFacts = await factRepository.AddForActivityAsync(
                run.ActivityId,
                facts.Facts,
                stoppingToken
