@@ -6,6 +6,5 @@ After=network.target caddy.service
 Type=oneshot
 User=daniel
 WorkingDirectory=/home/daniel/sesport
-StateDirectory=sesport-web-stats
 ExecStart=/usr/bin/flock -n /tmp/sesport-web-stats.lock \
    /home/daniel/sesport/bin/web-stats-generate.sh --with-git
