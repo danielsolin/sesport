@@ -872,10 +872,35 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         update activity_entity_links
+         with selected_activity as (
+            select activity_group_id
+            from activities
+            where id = @activity_id
+         )
+         update activity_entity_links link
          set is_active = @is_active
-         where activity_id = @activity_id
-            and entity_id = @entity_id
+         from activities activity
+         where link.activity_id = activity.id
+            and link.entity_id = @entity_id
+            and (
+               link.activity_id = @activity_id
+               or (
+                  activity.activity_group_id = (
+                     select activity_group_id
+                     from selected_activity
+                  )
+                  and coalesce(
+                     activity.starts_at,
+                     (
+                        activity.activity_date
+                        + coalesce(
+                           activity.local_start_time,
+                           time '23:59:59'
+                        )
+                     ) at time zone activity.time_zone_id
+                  ) > now()
+               )
+            )
          """;
 
       await using var command = dataSource.CreateCommand(sql);

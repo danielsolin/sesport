@@ -526,12 +526,166 @@ public sealed class ActivityRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task SetParticipantActiveAsyncUpdatesFutureGroupEntries()
+   {
+      var groupId = Guid.NewGuid();
+      var selectedActivityId = Guid.NewGuid();
+      var futureActivityId = Guid.NewGuid();
+      var pastActivityId = Guid.NewGuid();
+      var unrelatedActivityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var pastDate = new DateOnly(1900, 1, 1);
+      var futureDate = DistantActivityDate.AddDays(1);
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertEntityAsync(
+         dataSource,
+         personId,
+         "Group Participant",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertActivityGroupAsync(dataSource, groupId);
+      await InsertActivityAsync(
+         dataSource,
+         selectedActivityId,
+         DistantActivityDate,
+         ToUtc(DistantActivityDate),
+         activityGroupId: groupId
+      );
+      await InsertActivityAsync(
+         dataSource,
+         futureActivityId,
+         futureDate,
+         ToUtc(futureDate),
+         activityGroupId: groupId
+      );
+      await InsertActivityAsync(
+         dataSource,
+         pastActivityId,
+         pastDate,
+         ToUtc(pastDate),
+         activityGroupId: groupId
+      );
+      await InsertActivityAsync(
+         dataSource,
+         unrelatedActivityId,
+         futureDate,
+         ToUtc(futureDate)
+      );
+
+      var activityIds = new[]
+      {
+         selectedActivityId,
+         futureActivityId,
+         pastActivityId,
+         unrelatedActivityId
+      };
+
+      foreach(var activityId in activityIds)
+      {
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            activityId,
+            personId
+         );
+      }
+
+      try
+      {
+         await repository.SetParticipantActiveAsync(
+            selectedActivityId,
+            personId,
+            false,
+            CancellationToken.None
+         );
+
+         Assert.False(
+            await GetParticipantActiveAsync(
+               dataSource,
+               selectedActivityId,
+               personId
+            )
+         );
+         Assert.False(
+            await GetParticipantActiveAsync(
+               dataSource,
+               futureActivityId,
+               personId
+            )
+         );
+         Assert.True(
+            await GetParticipantActiveAsync(
+               dataSource,
+               pastActivityId,
+               personId
+            )
+         );
+         Assert.True(
+            await GetParticipantActiveAsync(
+               dataSource,
+               unrelatedActivityId,
+               personId
+            )
+         );
+
+         await repository.SetParticipantActiveAsync(
+            pastActivityId,
+            personId,
+            false,
+            CancellationToken.None
+         );
+         await repository.SetParticipantActiveAsync(
+            selectedActivityId,
+            personId,
+            true,
+            CancellationToken.None
+         );
+
+         Assert.True(
+            await GetParticipantActiveAsync(
+               dataSource,
+               selectedActivityId,
+               personId
+            )
+         );
+         Assert.True(
+            await GetParticipantActiveAsync(
+               dataSource,
+               futureActivityId,
+               personId
+            )
+         );
+         Assert.False(
+            await GetParticipantActiveAsync(
+               dataSource,
+               pastActivityId,
+               personId
+            )
+         );
+      }
+      finally
+      {
+         foreach(var activityId in activityIds)
+         {
+            await DeleteActivityEntityLinksAsync(dataSource, activityId);
+            await DeleteActivityAsync(dataSource, activityId);
+         }
+
+         await DeleteActivityGroupAsync(dataSource, groupId);
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
    private static async Task InsertActivityAsync(
       NpgsqlDataSource dataSource,
       Guid activityId,
       DateOnly activityDate,
       DateTimeOffset startsAt,
-      string publicationStatus = ActivityPublicationStatusIds.Draft
+      string publicationStatus = ActivityPublicationStatusIds.Draft,
+      Guid? activityGroupId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -550,7 +704,8 @@ public sealed class ActivityRepositoryTests
             time_zone_id,
             publication_status_id,
             tv_channel_name,
-            slug
+            slug,
+            activity_group_id
          )
          values (
             @id,
@@ -565,7 +720,8 @@ public sealed class ActivityRepositoryTests
             'Europe/Stockholm',
             @publication_status,
             null,
-            @slug
+            @slug,
+            @activity_group_id
          )
          """;
       command.Parameters.AddWithValue("id", activityId);
@@ -583,8 +739,75 @@ public sealed class ActivityRepositoryTests
          "slug",
          $"test-activity-{activityId:N}"
       );
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         (object?)activityGroupId ?? DBNull.Value
+      );
 
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static DateTimeOffset ToUtc(DateOnly date)
+   {
+      return TimeZoneHelper.ToUtc(
+         date,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+   }
+
+   private static async Task InsertActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         insert into activity_groups (
+            id,
+            title,
+            sport_id,
+            start_date,
+            end_date
+         )
+         values (
+            @id,
+            'Test Activity Group',
+            'football',
+            @start_date,
+            @end_date
+         )
+         """
+      );
+      command.Parameters.AddWithValue("id", activityGroupId);
+      command.Parameters.AddWithValue(
+         "start_date",
+         new DateOnly(1900, 1, 1)
+      );
+      command.Parameters.AddWithValue(
+         "end_date",
+         DistantActivityDate.AddDays(1)
+      );
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<bool> GetParticipantActiveAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId,
+      Guid entityId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         select is_active
+         from activity_entity_links
+         where activity_id = @activity_id
+            and entity_id = @entity_id
+         """
+      );
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      return (bool)(await command.ExecuteScalarAsync())!;
    }
 
    private static async Task InsertEntityAsync(
@@ -711,6 +934,21 @@ public sealed class ActivityRepositoryTests
          """;
       command.Parameters.AddWithValue("id", activityId);
 
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         delete from activity_groups
+         where id = @id
+         """
+      );
+      command.Parameters.AddWithValue("id", activityGroupId);
       await command.ExecuteNonQueryAsync();
    }
 
