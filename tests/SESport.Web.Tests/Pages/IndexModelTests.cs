@@ -153,10 +153,10 @@ public sealed class IndexModelTests
    }
 
    [Fact]
-   public void BuildDateOptions_DoesNotIncludeUnpublishedSelectedDate()
+   public void BuildDateOptions_IncludesSelectedDateOutsideDefaultRange()
    {
       var today = new DateOnly(2026, 7, 24);
-      var selectedDate = new DateOnly(2026, 7, 27);
+      var selectedDate = new DateOnly(2026, 7, 23);
       var method = typeof(IndexModel).GetMethod(
          "BuildDateOptions",
          BindingFlags.NonPublic | BindingFlags.Static
@@ -171,9 +171,13 @@ public sealed class IndexModelTests
          ]
       )!;
 
-      var option = Assert.Single(options);
-      Assert.Equal("2026-07-24", option.Value);
-      Assert.False(option.IsSelected);
+      Assert.Equal(2, options.Count);
+      var selectedOption = Assert.Single(
+         options,
+         option => option.IsSelected
+      );
+      Assert.Equal("2026-07-23", selectedOption.Value);
+      Assert.Equal("Torsdag 23 juli", selectedOption.Label);
    }
 
    private static ActivityListItem CreateActivity(

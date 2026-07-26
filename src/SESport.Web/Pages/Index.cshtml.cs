@@ -245,6 +245,7 @@ public class IndexModel(
       return publishedDateCounts
          .Where(item => item.Date >= todayDate)
          .Append(new PublishedDateParticipantCount(todayDate, 0))
+         .Append(new PublishedDateParticipantCount(selectedDate, 0))
          .GroupBy(item => item.Date)
          .Select(group => new PublishedDateParticipantCount(
             group.Key,
