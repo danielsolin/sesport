@@ -1102,23 +1102,37 @@ public sealed class ActivityEditPageServiceTests
    )
    {
       var activityRepository = new ActivityRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
       var broadcastRepository = new AdminBroadcastRepository(dataSource);
       var jobRunner = new CapturingAiJobRunner();
       var participationService = new BroadcastParticipationService(
          activityRepository,
          new AiRepository(dataSource),
-         new AdminRepository(dataSource),
+         adminRepository,
          broadcastRepository,
          jobRunner
+      );
+      var inputBuilder = new ActivityAiInputBuilder(
+         activityRepository,
+         adminRepository
+      );
+      var automationService = new AiAutomationService(
+         new AiAutomationRepository(dataSource),
+         activityRepository,
+         inputBuilder,
+         jobRunner,
+         NullLogger<AiAutomationService>.Instance
       );
 
       return new ActivityEditPageServiceFixture(
          new ActivityEditPageService(
             activityRepository,
-            new AdminRepository(dataSource),
+            adminRepository,
             broadcastRepository,
             participationService,
             jobRunner,
+            inputBuilder,
+            automationService,
             NullLogger<ActivityEditPageService>.Instance
          ),
          participationService,

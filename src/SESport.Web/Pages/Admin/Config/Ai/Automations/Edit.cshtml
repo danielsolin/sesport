@@ -1,0 +1,49 @@
+@page
+@model SESport.Web.Pages.Admin.Config.Ai.Automations.EditModel
+@{
+   ViewData["Title"] = Model.Rule.Id is null
+      ? "New AI automation"
+      : "Edit AI automation";
+}
+
+<section class="page-heading">
+   <p class="eyebrow">Config</p>
+   <h1>@ViewData["Title"]</h1>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="admin-form">
+   <input asp-for="Rule.Id" type="hidden" />
+
+   <label asp-for="Rule.EventId">Event</label>
+   <select asp-for="Rule.EventId" asp-items="Model.Events"></select>
+   <span asp-validation-for="Rule.EventId"></span>
+
+   <label asp-for="Rule.JobId">AI job</label>
+   <select asp-for="Rule.JobId">
+      <option value="">Select job</option>
+      @foreach (var job in Model.Jobs)
+      {
+         <option value="@job.Id">
+            @job.Label (@job.Id)
+         </option>
+      }
+   </select>
+   <span asp-validation-for="Rule.JobId"></span>
+
+   <label class="check-row">
+      <input asp-for="Rule.Enabled" type="checkbox" />
+      <span>Enabled</span>
+   </label>
+
+   <div class="form-actions">
+      <button class="button button-primary" type="submit">Save</button>
+      <a class="button" asp-page="./Index">Cancel</a>
+   </div>
+</form>

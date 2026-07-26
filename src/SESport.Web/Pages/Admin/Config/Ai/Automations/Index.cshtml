@@ -1,0 +1,52 @@
+@page
+@model SESport.Web.Pages.Admin.Config.Ai.Automations.IndexModel
+@{
+   ViewData["Title"] = "AI automations";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <p class="eyebrow">Config</p>
+      <h1>AI automations</h1>
+   </div>
+   <a class="button button-primary" asp-page="./Edit">New automation</a>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Event</th>
+            <th>Job</th>
+            <th>Enabled</th>
+            <th></th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var rule in Model.Rules)
+         {
+            <tr>
+               <td><code>@rule.EventId</code></td>
+               <td>@rule.JobLabel (<code>@rule.JobId</code>)</td>
+               <td>@(rule.Enabled ? "Yes" : "No")</td>
+               <td class="table-actions">
+                  <a asp-page="./Edit" asp-route-id="@rule.Id">Edit</a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-id="@rule.Id"
+                        onsubmit="return confirm('Are you sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

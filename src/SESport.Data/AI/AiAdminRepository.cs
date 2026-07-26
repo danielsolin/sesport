@@ -8,6 +8,107 @@ namespace SESport.Data.AI;
 
 public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 {
+   public async Task<IReadOnlyList<AiAutomationRuleListItem>>
+      GetAutomationRulesAsync(CancellationToken cancellationToken)
+   {
+      const string sql = """
+         select r.id, r.event_id, r.job_id, j.label, r.enabled
+         from ai_automation_rules r
+         join ai_jobs j on j.id = r.job_id
+         order by r.event_id, j.label
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var rules = new List<AiAutomationRuleListItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         rules.Add(
+            new AiAutomationRuleListItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.GetString(3),
+               reader.GetBoolean(4)
+            )
+         );
+      }
+
+      return rules;
+   }
+
+   public async Task<AiAutomationRuleEditModel?> GetAutomationRuleAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id, event_id, job_id, enabled
+         from ai_automation_rules
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      return await reader.ReadAsync(cancellationToken)
+         ? new AiAutomationRuleEditModel
+         {
+            Id = reader.GetGuid(0),
+            EventId = reader.GetString(1),
+            JobId = reader.GetString(2),
+            Enabled = reader.GetBoolean(3)
+         }
+         : null;
+   }
+
+   public async Task SaveAutomationRuleAsync(
+      AiAutomationRuleEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         insert into ai_automation_rules (
+            id, event_id, job_id, enabled
+         )
+         values (@id, @event_id, @job_id, @enabled)
+         on conflict (id) do update
+         set
+            event_id = excluded.event_id,
+            job_id = excluded.job_id,
+            enabled = excluded.enabled,
+            updated_at = now()
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", model.Id ?? Guid.NewGuid());
+      command.Parameters.AddWithValue("event_id", model.EventId.Trim());
+      command.Parameters.AddWithValue("job_id", model.JobId.Trim());
+      command.Parameters.AddWithValue("enabled", model.Enabled);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public async Task DeleteAutomationRuleAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         delete from ai_automation_rules
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task<IReadOnlyList<AiProviderListItem>> GetProvidersAsync(
       CancellationToken cancellationToken
    )

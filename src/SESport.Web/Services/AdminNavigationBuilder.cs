@@ -62,7 +62,11 @@ public static class AdminNavigationBuilder
             [
                new AdminNavItem("AI providers", "/Admin/Config/Ai/Providers"),
                new AdminNavItem("AI jobs", "/Admin/Config/Ai/Jobs"),
-               new AdminNavItem("AI prompts", "/Admin/Config/Ai/Prompts")
+               new AdminNavItem("AI prompts", "/Admin/Config/Ai/Prompts"),
+               new AdminNavItem(
+                  "AI automations",
+                  "/Admin/Config/Ai/Automations"
+               )
             ]
          ),
          new AdminNavGroup(

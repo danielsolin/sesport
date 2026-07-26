@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.AI.Interfaces;
@@ -18,6 +16,8 @@ public sealed class ActivityEditPageService(
    AdminBroadcastRepository broadcastRepository,
    BroadcastParticipationService participationService,
    IAiJobRunner aiJobRunner,
+   ActivityAiInputBuilder aiInputBuilder,
+   AiAutomationService automationService,
    ILogger<ActivityEditPageService> logger
 )
 {
@@ -174,6 +174,8 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
+      var isNew = activity.Id is null;
+
       if(activity.ActivityGroupCreationRequired &&
          activity.ActivityGroupId is null)
       {
@@ -200,6 +202,14 @@ public sealed class ActivityEditPageService(
          NormalizeBroadcastIds(activity.BroadcastIds),
          cancellationToken
       );
+
+      if(isNew)
+      {
+         await automationService.HandleActivityCreatedAsync(
+            activityId,
+            cancellationToken
+         );
+      }
    }
 
    public async Task<Guid?> PrefillFromBroadcastsAsync(
@@ -394,7 +404,7 @@ public sealed class ActivityEditPageService(
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
             AiJobIds.GenerateActivityTeaser,
-            await CreateActivityAiInputJsonAsync(
+            await aiInputBuilder.BuildAsync(
                activity,
                cancellationToken
             ),
@@ -412,7 +422,7 @@ public sealed class ActivityEditPageService(
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
             AiJobIds.FindActivityFacts,
-            await CreateActivityAiInputJsonAsync(
+            await aiInputBuilder.BuildAsync(
                activity,
                cancellationToken,
                activity.ActivityGroupTitle
@@ -556,80 +566,6 @@ public sealed class ActivityEditPageService(
       }
 
       return linkedEntityIds;
-   }
-
-   private async Task<string> CreateActivityAiInputJsonAsync(
-      ActivityEditModel activity,
-      CancellationToken cancellationToken,
-      string? promptTitle = null
-   )
-   {
-      var selectedIds = (activity.LinkedEntityIds ?? []).ToHashSet();
-      var entityNames = await GetSelectableEntitiesAsync(
-         null,
-         cancellationToken
-      );
-
-      var selectedParticipantNames = entityNames
-         .Where(entity => selectedIds.Contains(entity.Id))
-         .Select(entity => entity.Name)
-         .ToList();
-
-      var sportName = (await repository.GetSportOptionsAsync(
-         cancellationToken
-      ))
-         .FirstOrDefault(sport => sport.Id == activity.SportId)
-         ?.Label ?? activity.SportId;
-      var organizationName = await GetOrganizationEntityNameAsync(
-         activity.OrganizationEntityId,
-         cancellationToken
-      );
-
-      return JsonSerializer.Serialize(
-         new
-         {
-            event_name = activity.Title,
-            title = promptTitle ?? activity.Title,
-            type = organizationName,
-            description = activity.Description,
-            activity_type = activity.ActivityType,
-            sport = sportName,
-            activity_date = DateDisplay.Format(activity.ActivityDate),
-            local_start_time = activity.LocalStartTime?.ToString("HH:mm"),
-            local_end_time = activity.LocalEndTime?.ToString("HH:mm"),
-            time_zone_id = activity.TimeZoneId,
-            participants = CreatePromptListText(selectedParticipantNames),
-            related_entities = Array.Empty<string>()
-         }
-      );
-   }
-
-   private async Task<string> GetOrganizationEntityNameAsync(
-      Guid? organizationEntityId,
-      CancellationToken cancellationToken
-   )
-   {
-      if(organizationEntityId is null)
-      {
-         return string.Empty;
-      }
-
-      var entity = await adminRepository.GetEntityForEditAsync(
-         organizationEntityId.Value,
-         cancellationToken
-      );
-
-      return entity?.CanonicalName ?? string.Empty;
-   }
-
-   private static string CreatePromptListText(IReadOnlyList<string> values)
-   {
-      return values.Count == 0
-         ? string.Empty
-         : string.Join(
-            Environment.NewLine,
-            values.Select(value => $"  - {value}")
-         );
    }
 
    private static List<Guid> NormalizeBroadcastIds(
