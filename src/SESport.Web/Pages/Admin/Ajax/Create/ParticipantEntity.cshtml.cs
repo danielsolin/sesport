@@ -42,6 +42,7 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
       }
 
       template.CanonicalName = participantName;
+      ClearPersonalData(template);
 
       try
       {
@@ -60,5 +61,13 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
          canonicalName = template.CanonicalName,
          editUrl = Url.Page("/Admin/Entities/Edit", new { id = template.Id })
       });
+   }
+
+   internal static void ClearPersonalData(EntityEditModel entity)
+   {
+      entity.Birthdate = null;
+      entity.Height = null;
+      entity.Weight = null;
+      entity.FormativeClub = null;
    }
 }
