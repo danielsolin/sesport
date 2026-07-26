@@ -40,6 +40,10 @@
    color: #ffcc00;
 }
 
+.page-shell {
+   padding-top: 24px;
+}
+
 .public-contact-link {
    flex: 0 0 auto;
    margin-left: auto;
@@ -127,6 +131,14 @@
    align-items: center;
    gap: 12px;
    flex-wrap: wrap;
+}
+
+.sport-select {
+   display: block;
+   flex: 0 0 200px;
+   position: relative;
+   width: 200px;
+   min-width: 200px;
 }
 
 .index-participants {
@@ -271,6 +283,7 @@
    top: calc(100% + 7px);
    left: 0;
    width: 100%;
+   min-width: 200px;
    padding: 7px;
    border: 1px solid rgba(0, 106, 168, 0.25);
    border-radius: 12px;
@@ -293,6 +306,7 @@
    line-height: 16px;
    text-align: left;
    text-decoration: none;
+   white-space: nowrap;
 }
 
 .date-dropdown-option:hover,
@@ -1041,6 +1055,149 @@
    .activity-now-marker {
       display: none;
    }
+}
+
+@media (orientation: portrait) {
+   .index-heading-left {
+      width: 100%;
+   }
+
+   .date-select,
+   .sport-select {
+      flex: 1 1 calc(50% - 6px);
+      width: auto;
+      min-width: 140px;
+   }
+
+}
+
+.sport-dropdown-toggle {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   position: relative;
+   width: 100%;
+   min-height: 48px;
+   padding: 7px 14px 7px 16px;
+   border: 1px solid rgba(255, 204, 0, 0.55);
+   border-radius: 999px;
+   background: #006aa8;
+   color: #ffcc00;
+   font-size: 16px;
+   font-weight: 800;
+   line-height: 1.2;
+   cursor: pointer;
+}
+
+.sport-dropdown-toggle:hover {
+   background: #005f98;
+}
+
+.sport-dropdown-toggle:focus-visible {
+   outline: 2px solid rgba(255, 204, 0, 0.35);
+   outline-offset: 2px;
+}
+
+.sport-option-content {
+   display: flex;
+   align-items: baseline;
+   gap: 5px;
+   min-width: 0;
+}
+
+.sport-option-name {
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.sport-option-count {
+   flex: 0 0 auto;
+   color: #d8e7ef;
+   font-variant-numeric: tabular-nums;
+}
+
+.sport-dropdown-chevron {
+   display: block;
+   flex: 0 0 auto;
+   width: 8px;
+   height: 8px;
+   margin-right: 1px;
+   border-right: 2px solid #ffcc00;
+   border-bottom: 2px solid #ffcc00;
+   transform: translateY(-25%) rotate(45deg);
+   transition: transform 140ms ease;
+}
+
+.sport-select.is-open .sport-dropdown-chevron {
+   transform: translateY(25%) rotate(225deg);
+}
+
+.sport-dropdown-menu {
+   display: none;
+   gap: 7px;
+   position: absolute;
+   z-index: 20;
+   top: calc(100% + 7px);
+   left: 0;
+   width: 100%;
+   padding: 7px;
+   border: 1px solid rgba(0, 106, 168, 0.25);
+   border-radius: 12px;
+   background: #f7f9f7;
+   box-shadow: 0 14px 30px rgba(0, 79, 128, 0.18);
+}
+
+.sport-select.is-open .sport-dropdown-menu {
+   display: grid;
+}
+
+.sport-dropdown-menu .index-participants {
+   width: 100%;
+}
+
+.sport-dropdown-menu .index-participants-info {
+   display: grid;
+   grid-template-columns: minmax(0, 1fr) auto;
+   gap: 8px;
+   width: 100%;
+   min-height: 48px;
+   padding: 7px 14px 7px 12px;
+   border: 1px solid var(--line);
+   border-left: 4px solid #ffcc00;
+   border-radius: 8px;
+   background: rgba(0, 106, 168, 0.06);
+   color: var(--muted);
+   font-size: 13px;
+   font-weight: 700;
+   line-height: 1.2;
+}
+
+.sport-dropdown-menu .index-participants-filter:hover,
+.sport-dropdown-menu .index-participants-filter:focus-visible {
+   border-color: rgba(0, 106, 168, 0.55);
+   border-left-color: #ffcc00;
+   background: rgba(0, 106, 168, 0.12);
+   color: var(--accent-strong);
+   outline: 2px solid rgba(0, 106, 168, 0.45);
+   outline-offset: 2px;
+}
+
+.sport-dropdown-menu .index-participants-filter.is-selected {
+   border-color: var(--accent);
+   border-left-color: #ffcc00;
+   background: #006aa8;
+   color: #ffcc00;
+}
+
+.sport-dropdown-menu .index-participants-filter.is-selected::after {
+   display: none;
+}
+
+.sport-dropdown-menu .index-participants-count {
+   color: inherit;
+   font-size: 21px;
 }
 
 @media (orientation: portrait) {

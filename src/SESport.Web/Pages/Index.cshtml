@@ -105,50 +105,86 @@
       </div>
       @if(Model.TotalParticipantsCount is not null)
       {
-         <div class="index-participants">
-            <a class="index-participants-info
-               index-participants-filter
-               @(Model.Sport is null ? "is-selected" : "")"
-               asp-page="/Index"
-               asp-route-date="@DateDisplay.Format(Model.SelectedDate)"
-               aria-current="@(Model.Sport is null ? "true" : null)"
-               aria-label="Visa alla sporter">
-               <span>Svenskar:</span>
-               <span class="index-participants-count
-                  index-participants-value">
-                  @Model.TotalParticipantsCount
+         var selectedSport = Model.SportParticipantCounts
+            .FirstOrDefault(sport => string.Equals(
+               Model.Sport,
+               sport.SportId,
+               StringComparison.OrdinalIgnoreCase
+            ));
+         var selectedSportName = selectedSport?.SportName ??
+            "Svenskar";
+         var selectedSportCount = selectedSport?.ParticipantCount ??
+            Model.TotalParticipantsCount;
+         <div class="sport-select" data-sport-dropdown>
+            <button class="sport-dropdown-toggle"
+                    type="button"
+                    aria-label="Välj sport"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="sport-dropdown-menu"
+                    data-sport-dropdown-toggle>
+               <span class="sport-option-content">
+                  <span class="sport-option-name">
+                     @selectedSportName:
+                  </span>
+                  <span class="sport-option-count">
+                     @selectedSportCount
+                  </span>
                </span>
-            </a>
-         </div>
-         @foreach(var sport in Model.SportParticipantCounts)
-         {
-            <div class="index-participants">
-               <a class="index-participants-info
-                  index-participants-filter
-                  @(string.Equals(
+               <span class="sport-dropdown-chevron"
+                     aria-hidden="true"></span>
+            </button>
+            <div id="sport-dropdown-menu"
+                 class="sport-dropdown-menu"
+                 aria-label="Sportfilter"
+                 data-sport-dropdown-menu>
+               <div class="index-participants">
+                  <a class="index-participants-info
+                     index-participants-filter
+                     @(Model.Sport is null ? "is-selected" : "")"
+                     asp-page="/Index"
+                     asp-route-date="@DateDisplay.Format(
+                        Model.SelectedDate
+                     )"
+                     aria-current="@(
+                        Model.Sport is null ? "true" : null
+                     )"
+                     aria-label="Visa alla sporter">
+                     <span>Svenskar:</span>
+                     <span class="index-participants-count
+                        index-participants-value">
+                        @Model.TotalParticipantsCount
+                     </span>
+                  </a>
+               </div>
+               @foreach(var sport in Model.SportParticipantCounts)
+               {
+                  var isSelected = string.Equals(
                      Model.Sport,
                      sport.SportId,
                      StringComparison.OrdinalIgnoreCase
-                  ) ? "is-selected" : "")"
-                  asp-page="/Index"
-                  asp-route-date="@DateDisplay.Format(Model.SelectedDate)"
-                  asp-route-sport="@sport.SportId"
-                  aria-current="@(
-                     string.Equals(
-                        Model.Sport,
-                        sport.SportId,
-                        StringComparison.OrdinalIgnoreCase
-                     ) ? "true" : null
-                  )"
-                  aria-label="Visa endast @sport.SportName">
-                  <span>@sport.SportName:</span>
-                  <span class="index-participants-count
-                     index-participants-value">
-                     @sport.ParticipantCount
-                  </span>
-               </a>
+                  );
+                  <div class="index-participants">
+                     <a class="index-participants-info
+                        index-participants-filter
+                        @(isSelected ? "is-selected" : "")"
+                        asp-page="/Index"
+                        asp-route-date="@DateDisplay.Format(
+                           Model.SelectedDate
+                        )"
+                        asp-route-sport="@sport.SportId"
+                        aria-current="@(isSelected ? "true" : null)"
+                        aria-label="Visa endast @sport.SportName">
+                        <span>@sport.SportName:</span>
+                        <span class="index-participants-count
+                           index-participants-value">
+                           @sport.ParticipantCount
+                        </span>
+                     </a>
+                  </div>
+               }
             </div>
-         }
+         </div>
       }
    </div>
 </section>
@@ -513,6 +549,8 @@ else
    <script src="~/js/public-app-install.js"
            asp-append-version="true"></script>
    <script src="~/js/public-date-select.js"
+           asp-append-version="true"></script>
+   <script src="~/js/public-sport-select.js"
            asp-append-version="true"></script>
    <script src="~/js/public-participant-table.js"
            asp-append-version="true"></script>
