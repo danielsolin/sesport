@@ -606,7 +606,10 @@
 }
 
 .activity-has-ended > .activity-duration-rail,
-.activity-has-ended .activity-entry > :not(.activity-ended-badge) {
+.activity-has-ended .activity-entry
+   > :not(.activity-ended-badge):not(
+      .activity-participant-table-wrap
+   ) {
    opacity: 0.5;
 }
 
@@ -916,8 +919,12 @@
    opacity: 1;
 }
 
+.activity-has-ended .activity-participant-table thead {
+   opacity: 0.5;
+}
+
 .activity-participant-out-badge {
-   display: none;
+   display: inline-flex;
    margin-left: 6px;
    padding: 1px 5px;
    border: 1px solid currentColor;
@@ -925,10 +932,6 @@
    font-size: 9px;
    font-weight: 800;
    line-height: 1.2;
-}
-
-.activity-has-ended .activity-participant-out-badge {
-   display: inline-flex;
 }
 
 .activity-participant-table {
