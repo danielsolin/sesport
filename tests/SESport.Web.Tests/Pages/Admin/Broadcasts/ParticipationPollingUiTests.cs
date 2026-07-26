@@ -34,6 +34,18 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);
+      Assert.Contains("const queuingParticipationIds = new Set()", script);
+      Assert.Contains("queuingParticipationIds.has(broadcastId)", script);
+      Assert.Contains("queuingParticipationIds.delete(broadcastId)", script);
+      Assert.DoesNotContain("syncParticipationCheckButton", script);
+      var checkButtonIndex = html.IndexOf(
+         "data-check-participation-row",
+         StringComparison.Ordinal
+      );
+      var checkButtonContext = html[
+         Math.Max(0, checkButtonIndex - 400)..checkButtonIndex
+      ];
+      Assert.DoesNotContain("@if", checkButtonContext);
       Assert.Contains("updateBroadcastVisibilityAsync", script);
       Assert.Contains("headCell.colSpan = 4", script);
       Assert.Contains("function getParticipationValue", script);

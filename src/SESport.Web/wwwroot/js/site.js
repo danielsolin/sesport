@@ -85,6 +85,7 @@
       window.getBroadcastSearchUrlBase;
    const getAntiForgeryToken = window.getAntiForgeryToken;
    const pendingParticipationIds = new Set();
+   const queuingParticipationIds = new Set();
    const pendingRunIds = new Set();
    let participationPollingTimer = null;
    let participationPollingInFlight = false;
@@ -1886,19 +1887,18 @@
       const broadcastId = button.dataset.broadcastId;
       const cell = getParticipationCellForButton(button);
       const previousRunId = getParticipationRunId(cell);
-      let keepPolling = false;
 
       if(!url || !broadcastId || !(cell instanceof HTMLElement))
       {
          return;
       }
 
-      if(pendingParticipationIds.has(broadcastId))
+      if(queuingParticipationIds.has(broadcastId))
       {
          return;
       }
 
-      pendingParticipationIds.add(broadcastId);
+      queuingParticipationIds.add(broadcastId);
       const originalLabel = button.textContent ?? "Check";
       button.disabled = true;
       button.textContent = "Checking...";
@@ -1913,7 +1913,7 @@
 
          if(payload && payload.queued === true)
          {
-            keepPolling = true;
+            pendingParticipationIds.add(broadcastId);
             if(previousRunId !== "")
             {
                cell.dataset.participationQueuedFromRunId = previousRunId;
@@ -1950,10 +1950,7 @@
       }
       finally
       {
-         if(!keepPolling)
-         {
-            pendingParticipationIds.delete(broadcastId);
-         }
+         queuingParticipationIds.delete(broadcastId);
          button.disabled = false;
          button.textContent = originalLabel;
       }
@@ -3635,7 +3632,6 @@
          if(mainRow instanceof HTMLElement && mainRow !== row)
          {
             mainRow.dataset.participationStatus = normalizedStatusId;
-            syncParticipationCheckButton(mainRow, normalizedStatusId);
          }
       }
       else
@@ -3644,32 +3640,8 @@
          if(mainRow instanceof HTMLElement && mainRow !== row)
          {
             delete mainRow.dataset.participationStatus;
-            syncParticipationCheckButton(mainRow, "");
          }
       }
-   }
-
-   function syncParticipationCheckButton(mainRow, statusId)
-   {
-      if(!(mainRow instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const checkButton = mainRow.querySelector(
-         "[data-check-participation-row]"
-      );
-
-      if(!(checkButton instanceof HTMLButtonElement))
-      {
-         return;
-      }
-
-      const normalizedStatusId = typeof statusId === "string"
-         ? statusId.trim().toLowerCase()
-         : "";
-
-      checkButton.hidden = normalizedStatusId === "running";
    }
 
    function formatParticipationStatus(statusId)

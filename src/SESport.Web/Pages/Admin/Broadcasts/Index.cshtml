@@ -356,22 +356,15 @@
                      <td class="broadcasts-col-actions table-actions">
                         <div class="table-actions-stack">
                            <div class="table-actions-primary">
-                              @if(!string.Equals(
-                                 broadcast.ParticipationCheck?.StatusId,
-                                 "running",
-                                 StringComparison.OrdinalIgnoreCase
-                              ))
-                              {
-                                 <button type="button"
-                                         class=
-                                            "broadcast-participation-check-link"
-                                         data-check-participation-row
-                                         data-check-participation-url=
-                                            "@checkParticipationUrl"
-                                         data-broadcast-id="@broadcast.Id">
-                                    Check
-                                 </button>
-                              }
+                              <button type="button"
+                                      class=
+                                         "broadcast-participation-check-link"
+                                      data-check-participation-row
+                                      data-check-participation-url=
+                                         "@checkParticipationUrl"
+                                      data-broadcast-id="@broadcast.Id">
+                                 Check
+                              </button>
                               <form method="post"
                                     action="@hideBroadcastUrl"
                                     data-ajax-success="toggle-visibility"
