@@ -38,9 +38,9 @@ sudo apt-get install goaccess
 sudo systemctl enable --now sesport-web-stats.timer
 ```
 
-The timer generates an anonymized report for the previous calendar day
-every night, commits the HTML reports in `data/web-stats`, and pushes them
-to the current branch.
+The timer generates a report for the previous calendar day every night,
+commits the HTML reports in `data/web-stats`, and pushes them to the current
+branch.
 
 Do not enable `searxng.service` on a web or database host unless that
 machine also runs AI jobs locally.
