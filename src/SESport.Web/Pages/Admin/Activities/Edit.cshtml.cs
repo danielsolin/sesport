@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.Core.Facts;
+using SESport.Core.Sources;
 using SESport.Data;
 using SESport.Web.Services;
 
@@ -10,7 +11,8 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class EditModel(
    ActivityEditPageService editService,
-   FactRepository factRepository
+   FactRepository factRepository,
+   SourceReferenceRepository sourceRepository
 ) : PageModel
 {
    [BindProperty]
@@ -40,6 +42,12 @@ public class EditModel(
    public IReadOnlyList<FactRecord> Facts { get; private set; } = [];
 
    public string? LoadError { get; private set; }
+
+   [TempData]
+   public string? SourceError { get; set; }
+
+   [TempData]
+   public string? SourceMessage { get; set; }
 
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
@@ -147,6 +155,44 @@ public class EditModel(
             returnUrl = GetLocalReturnUrl(returnUrl)
          }
       );
+   }
+
+   public async Task<IActionResult> OnPostAddSourceAsync(
+      Guid id,
+      string? sourceUrl,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      var activity = await editService.LoadActivityAsync(
+         id,
+         cancellationToken
+      );
+
+      if(activity is null)
+      {
+         return NotFound();
+      }
+
+      if(!TryNormalizeSourceUrl(sourceUrl, out var normalizedUrl))
+      {
+         SourceError = "Enter a valid HTTP or HTTPS URL.";
+         return RedirectToEdit(id, returnUrl);
+      }
+
+      await sourceRepository.CreateAsync(
+         SourceCorrelationTypes.Activity,
+         id.ToString(),
+         SourceKinds.ActivityEvidence,
+         normalizedUrl,
+         null,
+         null,
+         DateTimeOffset.UtcNow,
+         cancellationToken
+      );
+      SourceMessage = "Source added.";
+
+      return RedirectToEdit(id, returnUrl);
    }
 
    public async Task<IActionResult> OnPostSetParticipantActiveAsync(
@@ -281,6 +327,45 @@ public class EditModel(
       }
 
       return returnUrl;
+   }
+
+   public static bool TryNormalizeSourceUrl(
+      string? sourceUrl,
+      out string normalizedUrl
+   )
+   {
+      normalizedUrl = string.Empty;
+      var trimmedUrl = sourceUrl?.Trim();
+
+      if(!Uri.TryCreate(
+         trimmedUrl,
+         UriKind.Absolute,
+         out var parsedUrl
+      ))
+      {
+         return false;
+      }
+
+      if(parsedUrl.Scheme != Uri.UriSchemeHttp
+         && parsedUrl.Scheme != Uri.UriSchemeHttps)
+      {
+         return false;
+      }
+
+      normalizedUrl = parsedUrl.AbsoluteUri;
+      return true;
+   }
+
+   private IActionResult RedirectToEdit(Guid id, string? returnUrl)
+   {
+      return RedirectToPage(
+         "./Edit",
+         new
+         {
+            id,
+            returnUrl = GetLocalReturnUrl(returnUrl)
+         }
+      );
    }
 
    private void ValidateActivity()

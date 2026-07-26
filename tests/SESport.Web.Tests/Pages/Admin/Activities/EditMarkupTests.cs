@@ -66,6 +66,44 @@ public sealed class EditMarkupTests
    }
 
    [Fact]
+   public async Task EditPageCanAddSourceFromUrl()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+
+      Assert.Contains("asp-page-handler=\"AddSource\"", html);
+      Assert.Contains("id=\"add-activity-source-form\"", html);
+      Assert.Contains("form=\"add-activity-source-form\"", html);
+      Assert.Contains("name=\"sourceUrl\"", html);
+      Assert.Contains("type=\"url\"", html);
+      Assert.Contains("required", html);
+      Assert.Contains("Add source", html);
+   }
+
+   [Theory]
+   [InlineData("https://example.com/source", true)]
+   [InlineData(" http://example.com/source ", true)]
+   [InlineData("ftp://example.com/source", false)]
+   [InlineData("not a url", false)]
+   [InlineData("", false)]
+   public void SourceUrlRequiresAbsoluteHttpUrl(
+      string sourceUrl,
+      bool expected
+   )
+   {
+      var isValid = SESport.Web.Pages.Admin.Activities.EditModel
+         .TryNormalizeSourceUrl(sourceUrl, out _);
+
+      Assert.Equal(expected, isValid);
+   }
+
+   [Fact]
    public async Task EditPageShowsFactsAsSubgrid()
    {
       var repoRoot = Path.GetFullPath(

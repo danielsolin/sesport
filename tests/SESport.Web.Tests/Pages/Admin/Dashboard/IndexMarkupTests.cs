@@ -16,7 +16,25 @@ public sealed class IndexMarkupTests
 
       Assert.Contains("Upcoming coverage", html);
       Assert.Contains("Activities needing attention", html);
-      Assert.Contains("System health", html);
+      Assert.DoesNotContain("System health", html);
+      Assert.DoesNotContain(
+         "AI processing and broadcast import status.",
+         html
+      );
+      Assert.DoesNotContain("<th>Drafts</th>", html);
+      Assert.Contains(
+         "admin-table admin-table-compact",
+         html
+      );
+      Assert.True(
+         html.IndexOf(
+            "dashboard-health-grid",
+            StringComparison.Ordinal
+         ) < html.IndexOf(
+            "Upcoming coverage",
+            StringComparison.Ordinal
+         )
+      );
       Assert.Contains("/Admin/Broadcasts/Index", html);
       Assert.Contains("/Admin/Activities/Edit", html);
       Assert.DoesNotContain("bio", html, StringComparison.OrdinalIgnoreCase);

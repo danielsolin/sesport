@@ -25,6 +25,16 @@
    </div>
 }
 
+@if(Model.Activity.Id is not null)
+{
+   <form id="add-activity-source-form"
+         method="post"
+         asp-page-handler="AddSource">
+      <input type="hidden" name="id" value="@Model.Activity.Id" />
+      <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+   </form>
+}
+
 <form method="post" class="edit-form">
    <input asp-for="Activity.Id" type="hidden" />
    <input asp-for="Activity.ActivityGroupId" type="hidden" />
@@ -305,6 +315,14 @@
 
    <section class="form-section">
       <h2>Sources</h2>
+      @if(Model.SourceError is not null)
+      {
+         <div class="notice notice-error">@Model.SourceError</div>
+      }
+      @if(Model.SourceMessage is not null)
+      {
+         <div class="notice">@Model.SourceMessage</div>
+      }
       @if(Model.Activity.Sources.Count == 0)
       {
          <div class="notice">
@@ -371,6 +389,24 @@
                   }
                </tbody>
             </table>
+         </div>
+      }
+      @if(Model.Activity.Id is not null)
+      {
+         <div class="activity-source-add-row">
+            <label>
+               <span>URL</span>
+               <input type="url"
+                      name="sourceUrl"
+                      form="add-activity-source-form"
+                      placeholder="https://"
+                      required />
+            </label>
+            <button class="button"
+                    type="submit"
+                    form="add-activity-source-form">
+               Add source
+            </button>
          </div>
       }
    </section>
