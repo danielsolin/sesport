@@ -1,6 +1,11 @@
 {
+  "id": "/",
   "name": "sesport",
   "short_name": "sesport",
+  "description": "Svenskar i internationell sport på TV",
+  "lang": "sv",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/icon-192.png",

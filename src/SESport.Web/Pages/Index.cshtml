@@ -3,8 +3,7 @@
 @{
    const string CanonicalHomeUrl = "https://sesport.se/";
    const string PageDescription =
-      "TV-sändningar med svenska idrottare som tävlar internationellt, " +
-      "både individuellt och i lag.";
+      "Svenskar i internationell sport på TV";
    var isFilteredView =
       Request.Query.ContainsKey(RouteKeys.Date) ||
       Request.Query.ContainsKey(RouteKeys.Sport);
@@ -27,6 +26,25 @@
    <meta name="twitter:description"
          content="@PageDescription" />
 }
+
+<aside class="public-install-promotion"
+       data-public-install-promotion
+       hidden>
+   <p class="public-install-message"
+      data-public-install-message></p>
+   <div class="public-install-actions">
+      <button class="public-install-button"
+              type="button"
+              data-public-install-button>
+         Installera sesport
+      </button>
+      <button class="public-install-dismiss"
+              type="button"
+              data-public-install-dismiss>
+         Inte nu
+      </button>
+   </div>
+</aside>
 
 <section class="page-heading index-heading">
    <div class="index-heading-left">
@@ -492,6 +510,8 @@ else
 }
 
 @section Scripts {
+   <script src="~/js/public-app-install.js"
+           asp-append-version="true"></script>
    <script src="~/js/public-date-select.js"
            asp-append-version="true"></script>
    <script src="~/js/public-participant-table.js"
