@@ -37,6 +37,10 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("updateBroadcastVisibilityAsync", script);
       Assert.Contains("headCell.colSpan = 4", script);
       Assert.Contains("function getParticipationValue", script);
+      Assert.Contains("createParticipantSearchLink", script);
+      Assert.Contains("getParticipationSportName", script);
+      Assert.Contains("organizationSportName", script);
+      Assert.Contains("encodeURIComponent(searchQuery)", script);
       Assert.Contains("check.participation", script);
    }
 }

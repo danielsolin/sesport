@@ -14,6 +14,7 @@ public sealed record BroadcastListItem(
    bool IsHidden,
    Guid? OrganizationEntityId,
    string? OrganizationEntityName,
+   string? OrganizationSportName,
    Guid? ActivityGroupId,
    string? ActivityGroupTitle,
    string? ActivityGroupDraftTitle,

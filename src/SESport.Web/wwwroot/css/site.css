@@ -1695,6 +1695,10 @@ h2 {
    white-space: nowrap;
 }
 
+.broadcast-ai-check-participant-row .ses-entity-search-link {
+   margin-left: 0;
+}
+
 .broadcast-ai-check-participant-link {
    color: var(--accent);
    text-decoration: underline;

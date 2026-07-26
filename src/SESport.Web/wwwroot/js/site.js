@@ -575,6 +575,9 @@
       const organizationEntityName = normalizeNullableString(
          broadcast.organizationEntityName
       );
+      const organizationSportName = normalizeNullableString(
+         broadcast.organizationSportName
+      );
       const activityGroupId = normalizeNullableString(
          broadcast.activityGroupId
       );
@@ -867,6 +870,8 @@
       runsCell.dataset.participationRunId = "";
       runsCell.dataset.participationStatus = participationStatusId || "";
       runsCell.dataset.checkParticipationUrl = checkParticipationUrl;
+      runsCell.dataset.organizationSportName =
+         organizationSportName || "";
       runsCell.dataset.activityUrlBase = activityUrlBase;
       runsRow.append(spacerCell, runsCell);
 
@@ -3351,7 +3356,10 @@
          if(check.participants.length > 0)
          {
             participantsCell.append(
-               createParticipationParticipantsBlock(check.participants)
+               createParticipationParticipantsBlock(
+                  check.participants,
+                  cell
+               )
             );
          }
 
@@ -3417,7 +3425,10 @@
          if(check.participants.length > 0)
          {
             participantsCell.append(
-               createParticipationParticipantsBlock(check.participants)
+               createParticipationParticipantsBlock(
+                  check.participants,
+                  cell
+               )
             );
          }
 
@@ -3486,7 +3497,10 @@
       if(check.participants.length > 0)
       {
          participantsCell.append(
-            createParticipationParticipantsBlock(check.participants)
+            createParticipationParticipantsBlock(
+               check.participants,
+               cell
+            )
          );
       }
 
@@ -3878,7 +3892,7 @@
       return label;
    }
 
-   function createParticipationParticipantsBlock(participants)
+   function createParticipationParticipantsBlock(participants, cell)
    {
       if(!Array.isArray(participants) || participants.length === 0)
       {
@@ -3903,12 +3917,23 @@
 
       const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check-participants";
+      const sportName = getParticipationSportName(cell);
 
       names.forEach(participant => {
-         wrapper.append(createParticipantRow(participant));
+         wrapper.append(createParticipantRow(participant, sportName));
       });
 
       return wrapper;
+   }
+
+   function getParticipationSportName(cell)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      return normalizeString(cell.dataset.organizationSportName);
    }
 
    function createParticipationErrorBlock(
@@ -4206,7 +4231,7 @@
    }
 
 
-   function createParticipantRow(participant)
+   function createParticipantRow(participant, sportName)
    {
       const item = normalizeParticipantItem(participant);
 
@@ -4224,6 +4249,13 @@
       if(createForm)
       {
          row.append(createForm);
+      }
+
+      const searchLink = createParticipantSearchLink(item, sportName);
+
+      if(searchLink)
+      {
+         row.append(searchLink);
       }
 
       return row;
@@ -4305,6 +4337,35 @@
 
       form.append(nameInput, templateInput, button);
       return form;
+   }
+
+   function createParticipantSearchLink(participant, sportName)
+   {
+      const item = normalizeParticipantItem(participant);
+      const searchUrlBase = getBroadcastSearchUrlBase();
+      const searchQuery = [item?.name, normalizeString(sportName)]
+         .filter(value => value)
+         .join(" ");
+
+      if(item === null ||
+         item.editUrl !== null ||
+         searchUrlBase === "")
+      {
+         return null;
+      }
+
+      const link = document.createElement("a");
+      link.className = "ses-entity-search-link";
+      link.href = `${searchUrlBase}${encodeURIComponent(searchQuery)}`;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
+      link.title = `Search for ${item.name}`;
+      link.setAttribute("aria-label", `Search for ${item.name}`);
+
+      const icon = document.createElement("span");
+      icon.className = "ses-icon-search";
+      link.append(icon);
+      return link;
    }
 
    function normalizeParticipantItem(participant)

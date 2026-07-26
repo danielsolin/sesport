@@ -33,6 +33,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.ends_at,
             broadcasts.hidden_at,
             org.canonical_name as organization_name,
+            organization_sport.name as organization_sport_name,
             source_group.id as activity_group_id,
             source_group.title as activity_group_title,
             broadcasts.activity_group_draft_title,
@@ -40,6 +41,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.activity_group_source_activity_id
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
+         left join sports organization_sport
+            on organization_sport.id = org.sport_id
          left join activities source_activity
             on source_activity.id = broadcasts.activity_group_source_activity_id
          left join activity_groups source_group
@@ -93,6 +96,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.ends_at,
             broadcasts.hidden_at,
             org.canonical_name as organization_name,
+            organization_sport.name as organization_sport_name,
             source_group.id as activity_group_id,
             source_group.title as activity_group_title,
             broadcasts.activity_group_draft_title,
@@ -100,6 +104,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             broadcasts.activity_group_source_activity_id
          from broadcasts
          left join entities org on org.id = broadcasts.entity_id
+         left join sports organization_sport
+            on organization_sport.id = org.sport_id
          left join activities source_activity
             on source_activity.id = broadcasts.activity_group_source_activity_id
          left join activity_groups source_group
@@ -438,11 +444,12 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(11) == false,
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
          reader.IsDBNull(12) ? null : reader.GetString(12),
-         reader.IsDBNull(13) ? null : reader.GetGuid(13),
-         reader.IsDBNull(14) ? null : reader.GetString(14),
+         reader.IsDBNull(13) ? null : reader.GetString(13),
+         reader.IsDBNull(14) ? null : reader.GetGuid(14),
          reader.IsDBNull(15) ? null : reader.GetString(15),
          reader.IsDBNull(16) ? null : reader.GetString(16),
-         reader.IsDBNull(17) ? null : reader.GetGuid(17)
+         reader.IsDBNull(17) ? null : reader.GetString(17),
+         reader.IsDBNull(18) ? null : reader.GetGuid(18)
       );
    }
 
