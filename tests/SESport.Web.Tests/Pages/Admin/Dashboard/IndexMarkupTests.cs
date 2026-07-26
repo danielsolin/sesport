@@ -36,6 +36,14 @@ public sealed class IndexMarkupTests
          )
       );
       Assert.Contains("/Admin/Broadcasts/Index", html);
+      Assert.Contains(
+         "@date.Date.ToString(\"yyyy-MM-dd\")",
+         html
+      );
+      Assert.Contains(
+         "@Model.GetBroadcastDateRouteValues(",
+         html
+      );
       Assert.Contains("/Admin/Activities/Edit", html);
       Assert.DoesNotContain("bio", html, StringComparison.OrdinalIgnoreCase);
       Assert.DoesNotContain("No direct source", html);

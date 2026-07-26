@@ -136,7 +136,15 @@ else if(Model.Dashboard is not null)
                      ? "dashboard-attention-row"
                      : string.Empty)">
                      <td class="dashboard-date-label">
-                        <strong>@date.Date.ToString("yyyy-MM-dd")</strong>
+                        <strong>
+                           <a asp-page="/Admin/Broadcasts/Index"
+                              asp-all-route-data=
+                                 "@Model.GetBroadcastDateRouteValues(
+                                    date.Date
+                                 )">
+                              @date.Date.ToString("yyyy-MM-dd")
+                           </a>
+                        </strong>
                      </td>
                      <td>
                         <a asp-page="/Admin/Broadcasts/Index"
