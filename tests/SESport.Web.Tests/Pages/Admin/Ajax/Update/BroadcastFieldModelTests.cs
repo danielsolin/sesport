@@ -307,7 +307,7 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncDoesNotMatchSimilarTitle()
+   public async Task OnPostAsyncMatchesNearbyGroupWithDifferentTitle()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
@@ -398,10 +398,10 @@ public sealed class BroadcastFieldModelTests
             CancellationToken.None
          );
 
-         Assert.Equal($"NEW: {broadcastTitle}", groupText);
+         Assert.Equal(activityTitle, groupText);
          Assert.NotNull(broadcast);
-         Assert.Null(broadcast!.ActivityGroupId);
-         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+         Assert.Equal(activityGroupId, broadcast!.ActivityGroupId);
+         Assert.Equal(activityId, broadcast.ActivityGroupSourceActivityId);
       }
       finally
       {

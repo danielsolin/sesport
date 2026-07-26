@@ -11,6 +11,8 @@ namespace SESport.Data;
 
 public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 {
+   private const double ActivityGroupMatchWindowHours = 72;
+
    public async Task<BroadcastListItem?> GetByIdAsync(
       Guid id,
       CancellationToken cancellationToken
@@ -658,24 +660,21 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      var broadcastDate = TimeZoneHelper.ToLocal(
+      var broadcastLocalStart = TimeZoneHelper.ToLocal(
          broadcast.StartsAt,
          SportDay.TimeZoneId
-      ).Date;
-      var startDate = DateOnly.FromDateTime(broadcastDate).AddDays(-14);
-      var endDate = DateOnly.FromDateTime(
-         TimeZoneHelper.ToLocal(
-            broadcast.EndsAt,
-            SportDay.TimeZoneId
-         ).Date
-      ).AddDays(14);
+      ).DateTime;
+      var broadcastDate = DateOnly.FromDateTime(broadcastLocalStart);
+      var startDate = broadcastDate.AddDays(-2);
+      var endDate = broadcastDate.AddDays(2);
       var normalizedBroadcastTitle = NormalizeMatchText(broadcast.Title);
 
       var sql = $$"""
          select
             a.id,
             a.title,
-            a.activity_date
+            a.activity_date,
+            a.local_start_time
          from activities a
          where a.sport_id = @sport_id
             and a.activity_group_id is not null
@@ -709,11 +708,15 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          var candidateId = reader.GetGuid(0);
          var candidateTitle = reader.GetString(1);
          var candidateDate = reader.GetFieldValue<DateOnly>(2);
+         var candidateTime = reader.IsDBNull(3)
+            ? TimeOnly.FromDateTime(broadcastLocalStart)
+            : reader.GetFieldValue<TimeOnly>(3);
+         var candidateLocalStart = candidateDate.ToDateTime(candidateTime);
          var candidateScore = GetMatchScore(
             normalizedBroadcastTitle,
             NormalizeMatchText(candidateTitle),
-            broadcastDate,
-            candidateDate
+            broadcastLocalStart,
+            candidateLocalStart
          );
 
          if(candidateScore <= bestCandidateScore)
@@ -750,35 +753,36 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
    private static int GetMatchScore(
       string broadcastTitle,
       string activityTitle,
-      DateTime broadcastDate,
-      DateOnly activityDate
+      DateTime broadcastLocalStart,
+      DateTime activityLocalStart
    )
    {
-      if(string.IsNullOrWhiteSpace(broadcastTitle) ||
-         string.IsNullOrWhiteSpace(activityTitle))
+      var hourDistance = Math.Abs(
+         (broadcastLocalStart - activityLocalStart).TotalHours
+      );
+
+      if(hourDistance > ActivityGroupMatchWindowHours)
       {
          return 0;
       }
 
       var titleScore = 0;
 
-      if(string.Equals(
+      if(!string.IsNullOrWhiteSpace(broadcastTitle) &&
+         !string.IsNullOrWhiteSpace(activityTitle) &&
+         string.Equals(
          broadcastTitle,
          activityTitle,
          StringComparison.Ordinal
       ))
       {
-         titleScore = 100;
+         titleScore = 30;
       }
-      else
+      else if(!string.IsNullOrWhiteSpace(broadcastTitle) &&
+         !string.IsNullOrWhiteSpace(activityTitle))
       {
          var broadcastTokens = GetMatchTokens(broadcastTitle);
          var activityTokens = GetMatchTokens(activityTitle);
-
-         if(broadcastTokens.Count < 2 || activityTokens.Count < 2)
-         {
-            return 0;
-         }
 
          if(broadcastTitle.Contains(
             activityTitle,
@@ -788,27 +792,22 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             StringComparison.Ordinal
          ))
          {
-            titleScore = 80;
+            titleScore = 20;
          }
          else
          {
             var overlap = broadcastTokens.Intersect(activityTokens).Count();
 
-            if(overlap < 2)
-            {
-               return 0;
-            }
-
-            titleScore = 40 + overlap * 5;
+            titleScore = Math.Min(15, overlap * 5);
          }
       }
 
-      var dayDistance = Math.Abs(
-         DateOnly.FromDateTime(broadcastDate).DayNumber - activityDate.DayNumber
+      var timeScore = (int)Math.Round(
+         (ActivityGroupMatchWindowHours - hourDistance) * 60,
+         MidpointRounding.AwayFromZero
       );
-      var dateScore = Math.Max(0, 14 - dayDistance);
 
-      return titleScore * 100 + dateScore;
+      return timeScore + titleScore + 1;
    }
 
    private static IReadOnlyCollection<string> GetMatchTokens(string value)
