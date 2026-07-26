@@ -53,7 +53,11 @@ a:hover {
    align-items: center;
    justify-content: space-between;
    gap: 16px;
-   padding: 10px 32px;
+   padding:
+      calc(10px + env(safe-area-inset-top, 0px))
+      calc(32px + env(safe-area-inset-right, 0px))
+      10px
+      calc(32px + env(safe-area-inset-left, 0px));
    border-bottom: 1px solid rgba(255, 204, 0, 0.22);
    background: #006aa8;
    color: #ffcc00;
@@ -2159,7 +2163,11 @@ textarea {
    .site-header {
       align-items: stretch;
       flex-direction: column;
-      padding: 10px 16px;
+      padding:
+         calc(10px + env(safe-area-inset-top, 0px))
+         calc(16px + env(safe-area-inset-right, 0px))
+         10px
+         calc(16px + env(safe-area-inset-left, 0px));
    }
 
    .site-header-main {
