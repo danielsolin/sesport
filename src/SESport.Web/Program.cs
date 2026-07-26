@@ -45,6 +45,7 @@ builder.Services.AddScoped<SourceReferenceRepository>();
 builder.Services.AddScoped<PublicActivityTimelineBuilder>();
 builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<AdminBroadcastRepository>();
+builder.Services.AddScoped<DashboardRepository>();
 builder.Services.AddScoped<BroadcastParticipationService>();
 builder.Services.AddHostedService<ActivityTeaserCatchUpWorker>();
 builder.Services.AddHostedService<AiPendingRunWorker>();

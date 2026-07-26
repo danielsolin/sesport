@@ -5,6 +5,10 @@
       "/Admin/Runs",
       StringComparison.OrdinalIgnoreCase
    );
+   var isDashboard = requestPath.StartsWith(
+      "/Admin/Dashboard",
+      StringComparison.OrdinalIgnoreCase
+   );
    var isBroadcasts = requestPath.StartsWith(
       "/Admin/Broadcasts",
       StringComparison.OrdinalIgnoreCase
@@ -16,6 +20,9 @@
    var broadcastsHref = Url.Page(
       "/Admin/Broadcasts/Index"
    ) ?? "/Admin/Broadcasts";
+   var dashboardHref = Url.Page(
+      "/Admin/Dashboard/Index"
+   ) ?? "/Admin/Dashboard";
    var activitiesHref = Url.Page(
       "/Admin/Activities/Index"
    ) ?? "/Admin/Activities";
@@ -32,6 +39,9 @@
       StringComparison.OrdinalIgnoreCase
    );
    var adminMenuLink = "admin-top-menu-link";
+   var dashboardClass = isDashboard
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
    var runsClass = isRuns
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
@@ -92,6 +102,10 @@
          @if(isAdmin)
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
+               <a class="@dashboardClass"
+                  href="@dashboardHref">
+                  Dashboard
+               </a>
                <a class="@broadcastsClass"
                   href="@broadcastsHref">
                   Broadcasts
@@ -126,7 +140,7 @@
       {
          <nav class="site-nav">
             <a asp-page="/Index">Public</a>
-            <a href="@broadcastsHref">Admin</a>
+            <a href="@dashboardHref">Admin</a>
          </nav> 
       }
    </header>

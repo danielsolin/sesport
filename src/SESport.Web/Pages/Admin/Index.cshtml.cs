@@ -7,6 +7,6 @@ public class IndexModel : PageModel
 {
    public IActionResult OnGet()
    {
-      return RedirectToPage("/Admin/Broadcasts/Index");
+      return RedirectToPage("/Admin/Dashboard/Index");
    }
 }

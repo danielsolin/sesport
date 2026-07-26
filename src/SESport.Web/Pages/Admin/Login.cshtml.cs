@@ -51,7 +51,7 @@ public class LoginModel(AdminLoginOptions adminOptions) : PageModel
          principal
       );
 
-      return RedirectToPage("/Admin/Broadcasts/Index");
+      return RedirectToPage("/Admin/Dashboard/Index");
    }
 
    private static bool PasswordsMatch(string provided, string configured)

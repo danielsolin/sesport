@@ -1,0 +1,239 @@
+@page
+@model SESport.Web.Pages.Admin.Dashboard.IndexModel
+@{
+   ViewData["Title"] = "Dashboard";
+}
+
+<section class="page-heading">
+   <h1>Dashboard</h1>
+   <p>What needs attention next.</p>
+</section>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+else if(Model.Dashboard is not null)
+{
+   var dashboard = Model.Dashboard;
+
+   <section class="dashboard-section">
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>Upcoming coverage</h2>
+            <p>Broadcast and activity coverage for the next eight days.</p>
+         </div>
+      </div>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-hover dashboard-date-table">
+            <thead>
+               <tr>
+                  <th class="dashboard-date-label">Date</th>
+                  <th>Broadcasts</th>
+                  <th>Unreviewed</th>
+                  <th>Published</th>
+                  <th>Drafts</th>
+               </tr>
+            </thead>
+            <tbody>
+               @foreach(var date in dashboard.Dates)
+               {
+                  <tr class="@(IndexModel.DateNeedsAttention(date)
+                     ? "dashboard-attention-row"
+                     : string.Empty)">
+                     <td class="dashboard-date-label">
+                        <strong>@date.Date.ToString("yyyy-MM-dd")</strong>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Broadcasts/Index"
+                           asp-all-route-data=
+                              "@Model.GetBroadcastDateRouteValues(date.Date)">
+                           @date.VisibleBroadcastCount
+                        </a>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Broadcasts/Index"
+                           asp-all-route-data=
+                              "@Model.GetBroadcastDateRouteValues(date.Date)">
+                           @date.UnreviewedBroadcastCount
+                        </a>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Activities/Index"
+                           asp-all-route-data=
+                              "@Model.GetActivityDateRouteValues(date.Date)">
+                           @date.PublishedActivityCount
+                        </a>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Activities/Index"
+                           asp-all-route-data=
+                              "@Model.GetActivityDateRouteValues(date.Date)">
+                           @date.DraftActivityCount
+                        </a>
+                     </td>
+                  </tr>
+               }
+            </tbody>
+         </table>
+      </div>
+   </section>
+
+   <section class="dashboard-section">
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>Activities needing attention</h2>
+            <p>
+               Upcoming activities with missing data or publication work.
+            </p>
+         </div>
+         <a asp-page="/Admin/Activities/Index">View activities</a>
+      </div>
+      @if(dashboard.ActivityIssues.Count == 0)
+      {
+         <div class="notice">
+            No upcoming activity issues.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-hover">
+               <thead>
+                  <tr>
+                     <th>Date</th>
+                     <th>Activity</th>
+                     <th>Needs attention</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var issue in dashboard.ActivityIssues)
+                  {
+                     <tr>
+                        <td>@issue.Date.ToString("yyyy-MM-dd")</td>
+                        <td>
+                           <a asp-page="/Admin/Activities/Edit"
+                              asp-route-id="@issue.Id">
+                              @issue.Title
+                           </a>
+                        </td>
+                        <td>
+                           <div class="dashboard-issue-list">
+                              @foreach(
+                                 var label in IndexModel.GetIssueLabels(issue)
+                              )
+                              {
+                                 <span class="status-pill">@label</span>
+                              }
+                           </div>
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+
+   <section class="dashboard-section">
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>System health</h2>
+            <p>AI processing and broadcast import status.</p>
+         </div>
+      </div>
+      <div class="dashboard-health-grid">
+         <article class="dashboard-health-card">
+            <h3>AI runs</h3>
+            @if(!Model.AiNeedsAttention)
+            {
+               <p class="dashboard-health-ok">No current AI alerts.</p>
+            }
+            <dl class="dashboard-health-list">
+               <div>
+                  <dt>Pending</dt>
+                  <dd>@dashboard.AiHealth.PendingCount</dd>
+               </div>
+               <div>
+                  <dt>Running</dt>
+                  <dd>@dashboard.AiHealth.RunningCount</dd>
+               </div>
+               @if(dashboard.AiHealth.OldestPendingAt is not null)
+               {
+                  <div>
+                     <dt>Oldest pending</dt>
+                     <dd>
+                        @TimeDisplay.FormatLocalTimestamp(
+                           dashboard.AiHealth.OldestPendingAt.Value
+                        )
+                     </dd>
+                  </div>
+               }
+               <div>
+                  <dt>Stale running</dt>
+                  <dd>@dashboard.AiHealth.StaleRunningCount</dd>
+               </div>
+               <div>
+                  <dt>Failed, last 24 hours</dt>
+                  <dd>
+                     @if(dashboard.AiHealth.FailedLastDayCount > 0)
+                     {
+                        <a asp-page="/Admin/Runs/Index"
+                           asp-all-route-data=
+                              "@Model.GetFailedRunRouteValues()">
+                           @dashboard.AiHealth.FailedLastDayCount
+                        </a>
+                     }
+                     else
+                     {
+                        @dashboard.AiHealth.FailedLastDayCount
+                     }
+                  </dd>
+               </div>
+            </dl>
+         </article>
+         <article class="dashboard-health-card">
+            <h3>Latest broadcast import</h3>
+            @if(dashboard.ImportHealth is null)
+            {
+               <p class="notice notice-warning">
+                  No broadcast import found.
+               </p>
+            }
+            else
+            {
+               @if(!Model.ImportNeedsAttention)
+               {
+                  <p class="dashboard-health-ok">
+                     Latest import completed.
+                  </p>
+               }
+               <dl class="dashboard-health-list">
+                  <div>
+                     <dt>Source</dt>
+                     <dd>@dashboard.ImportHealth.SourceKey</dd>
+                  </div>
+                  <div>
+                     <dt>Status</dt>
+                     <dd>@dashboard.ImportHealth.Status</dd>
+                  </div>
+                  <div>
+                     <dt>Broadcasts</dt>
+                     <dd>@dashboard.ImportHealth.BroadcastCount</dd>
+                  </div>
+                  <div>
+                     <dt>Started</dt>
+                     <dd>
+                        @TimeDisplay.FormatLocalTimestamp(
+                           dashboard.ImportHealth.StartedAt
+                        )
+                     </dd>
+                  </div>
+               </dl>
+            }
+         </article>
+      </div>
+   </section>
+}

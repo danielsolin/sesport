@@ -2047,6 +2047,92 @@ textarea {
    margin: 40px auto;
 }
 
+.dashboard-section {
+   margin-top: 32px;
+}
+
+.dashboard-section-heading {
+   display: flex;
+   align-items: flex-end;
+   justify-content: space-between;
+   gap: 16px;
+   margin-bottom: 12px;
+}
+
+.dashboard-section-heading h2,
+.dashboard-section-heading p {
+   margin-bottom: 0;
+}
+
+.dashboard-section-heading p,
+.page-heading p {
+   color: var(--muted);
+}
+
+.dashboard-date-table th,
+.dashboard-date-table td {
+   text-align: right;
+}
+
+.dashboard-date-table .dashboard-date-label {
+   text-align: left;
+}
+
+.admin-table-hover tbody tr.dashboard-attention-row > td,
+.admin-table-hover tbody tr.dashboard-attention-row:hover > td {
+   background: var(--warning-bg);
+}
+
+.dashboard-issue-list {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px;
+}
+
+.dashboard-health-grid {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 16px;
+}
+
+.dashboard-health-card {
+   padding: 18px;
+   border: 1px solid var(--line);
+   border-radius: 8px;
+   background: var(--surface);
+}
+
+.dashboard-health-card h3 {
+   margin-top: 0;
+}
+
+.dashboard-health-ok {
+   color: #28733f;
+   font-weight: 700;
+}
+
+.dashboard-health-list {
+   margin: 0;
+}
+
+.dashboard-health-list div {
+   display: flex;
+   justify-content: space-between;
+   gap: 16px;
+   padding: 7px 0;
+   border-top: 1px solid var(--line);
+}
+
+.dashboard-health-list dt {
+   color: var(--muted);
+}
+
+.dashboard-health-list dd {
+   margin: 0;
+   font-weight: 700;
+   text-align: right;
+}
+
 @media (max-width: 720px) {
    .page-heading-row,
    .form-actions {
@@ -2069,8 +2155,14 @@ textarea {
    .admin-layout,
    .proposal-summary,
    .form-grid,
-   .detail-grid {
+   .detail-grid,
+   .dashboard-health-grid {
       grid-template-columns: 1fr;
+   }
+
+   .dashboard-section-heading {
+      align-items: flex-start;
+      flex-direction: column;
    }
 
    h1 {

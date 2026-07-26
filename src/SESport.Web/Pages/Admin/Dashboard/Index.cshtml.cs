@@ -1,0 +1,129 @@
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+using SESport.Core.AI;
+using SESport.Core.Broadcast;
+using SESport.Core.Domain;
+using SESport.Data;
+using SESport.Web.Services;
+
+namespace SESport.Web.Pages.Admin.Dashboard;
+
+public class IndexModel(DashboardRepository repository) : PageModel
+{
+   public AdminDashboardSnapshot? Dashboard { get; private set; }
+
+   public string? LoadError { get; private set; }
+
+   public bool AiNeedsAttention =>
+      Dashboard is not null
+      && (
+         Dashboard.AiHealth.StaleRunningCount > 0
+         || Dashboard.AiHealth.FailedLastDayCount > 0
+      );
+
+   public bool ImportNeedsAttention =>
+      Dashboard is not null
+      && (
+         Dashboard.ImportHealth is null
+         || !string.Equals(
+            Dashboard.ImportHealth.Status,
+            BroadcastImportRunStatus.Completed.ToString(),
+            StringComparison.Ordinal
+         )
+      );
+
+   public async Task OnGetAsync(CancellationToken cancellationToken)
+   {
+      try
+      {
+         Dashboard = await repository.GetAsync(
+            DateTimeOffset.UtcNow,
+            cancellationToken
+         );
+      }
+      catch(Exception exception)
+      {
+         LoadError = exception.Message;
+      }
+   }
+
+   public static IReadOnlyList<string> GetIssueLabels(
+      DashboardActivityIssue issue
+   )
+   {
+      var labels = new List<string>();
+
+      if(issue.IsDraft)
+      {
+         labels.Add("Draft");
+      }
+
+      if(issue.IsMissingDescription)
+      {
+         labels.Add("Missing description");
+      }
+
+      if(issue.HasNoParticipants)
+      {
+         labels.Add("No participants");
+      }
+
+      if(issue.HasNoGroup)
+      {
+         labels.Add("No group");
+      }
+
+      if(issue.HasNoRelatedSource)
+      {
+         labels.Add(
+            issue.HasNoGroup
+               ? "No source"
+               : "No source in group"
+         );
+      }
+
+      return labels;
+   }
+
+   public static bool DateNeedsAttention(DashboardDateSummary date)
+   {
+      return date.DraftActivityCount > 0
+         || date.UnreviewedBroadcastCount > 0
+         || (
+            date.VisibleBroadcastCount > 0
+            && date.PublishedActivityCount == 0
+         );
+   }
+
+   public Dictionary<string, string?> GetActivityDateRouteValues(
+      DateOnly date
+   )
+   {
+      return new Dictionary<string, string?>
+      {
+         [RouteKeys.Date] = date.ToString("yyyy-MM-dd"),
+         [RouteKeys.Status] = ActivityListStatusIds.All
+      };
+   }
+
+   public Dictionary<string, string?> GetBroadcastDateRouteValues(
+      DateOnly date
+   )
+   {
+      return new Dictionary<string, string?>
+      {
+         [RouteKeys.Date] = date.ToString("yyyy-MM-dd")
+      };
+   }
+
+   public Dictionary<string, string?> GetFailedRunRouteValues()
+   {
+      return new Dictionary<string, string?>
+      {
+         [RouteKeys.Date] = SportDay.GetLocalDate(
+            DateTimeOffset.UtcNow
+         ).ToString("yyyy-MM-dd"),
+         [RouteKeys.Status] = AiJobRunStatusIds.Failed
+      };
+   }
+}
