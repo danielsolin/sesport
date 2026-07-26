@@ -26,6 +26,11 @@
    const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true;
+   const isMobile =
+      window.navigator.userAgentData?.mobile === true ||
+      /android|iphone|ipad|ipod/i.test(
+         window.navigator.userAgent
+      );
    const isIos =
       /iphone|ipad|ipod/i.test(window.navigator.userAgent) ||
       (
@@ -88,6 +93,12 @@
 
    window.addEventListener("beforeinstallprompt", event => {
       event.preventDefault();
+
+      if(!isMobile)
+      {
+         return;
+      }
+
       installPrompt = event;
       showPromotion(
          "Installera sesport för snabb åtkomst från hemskärmen.",
