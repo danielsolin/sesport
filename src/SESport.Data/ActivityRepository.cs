@@ -1145,6 +1145,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          model,
          cancellationToken
       );
+      await AddBroadcastLinksAsync(
+         connection,
+         transaction,
+         id,
+         model.BroadcastIds,
+         cancellationToken
+      );
       await SynchronizeActivityGroupDatesAsync(
          connection,
          transaction,
@@ -1156,6 +1163,42 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       await transaction.CommitAsync(cancellationToken);
       return id;
+   }
+
+   private static async Task AddBroadcastLinksAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid activityId,
+      IReadOnlyCollection<Guid> broadcastIds,
+      CancellationToken cancellationToken
+   )
+   {
+      if(broadcastIds.Count == 0)
+      {
+         return;
+      }
+
+      const string sql = """
+         insert into activity_broadcast_links (
+            activity_id,
+            broadcast_id
+         )
+         select @activity_id, broadcast_id
+         from unnest(@broadcast_ids) as broadcast_id
+         on conflict (activity_id, broadcast_id) do nothing
+         """;
+
+      await using var command = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue(
+         "broadcast_ids",
+         broadcastIds.Distinct().ToArray()
+      );
+      await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
    public async Task DeleteAsync(

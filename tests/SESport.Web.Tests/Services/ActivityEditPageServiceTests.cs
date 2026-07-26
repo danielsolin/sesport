@@ -282,6 +282,28 @@ public sealed class ActivityEditPageServiceTests
             1L,
             (long)(await applicationCommand.ExecuteScalarAsync())!
          );
+
+         await using var broadcastLinkCommand = dataSource.CreateCommand(
+            """
+            select count(*)
+            from activity_broadcast_links
+            where activity_id = @activity_id
+               and broadcast_id = @broadcast_id
+            """
+         );
+         broadcastLinkCommand.Parameters.AddWithValue(
+            "activity_id",
+            savedActivityId.Value
+         );
+         broadcastLinkCommand.Parameters.AddWithValue(
+            "broadcast_id",
+            broadcastId
+         );
+
+         Assert.Equal(
+            1L,
+            (long)(await broadcastLinkCommand.ExecuteScalarAsync())!
+         );
       }
       finally
       {
