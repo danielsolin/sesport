@@ -1,14 +1,23 @@
 @page
 @model IndexModel
 @{
+   const string CanonicalHomeUrl = "https://sesport.se/";
    const string PageDescription =
       "TV-sändningar med svenska idrottare som tävlar internationellt, " +
       "både individuellt och i lag.";
+   var isFilteredView =
+      Request.Query.ContainsKey(RouteKeys.Date) ||
+      Request.Query.ContainsKey(RouteKeys.Sport);
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
 }
 @section Head {
    <title>Svenskar i internationell idrott på TV – sesport</title>
+   <link rel="canonical" href="@CanonicalHomeUrl" />
+   @if(isFilteredView)
+   {
+      <meta name="robots" content="noindex,follow" />
+   }
    <meta name="description"
          content="@PageDescription" />
    <meta property="og:title" content="sesport" />
