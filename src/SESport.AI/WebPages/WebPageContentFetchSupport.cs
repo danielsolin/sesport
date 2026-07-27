@@ -1664,27 +1664,29 @@ internal static class WebPageContentFetchSupport
       public void Add(Word word)
       {
          words.Add(word);
-
-         if(words.Count == 1)
-         {
-            Top = word.BoundingBox.Top;
-            Bottom = word.BoundingBox.Bottom;
-            return;
-         }
-
-         Top = Math.Max(Top, word.BoundingBox.Top);
-         Bottom = Math.Min(Bottom, word.BoundingBox.Bottom);
+         CenterSum += GetVerticalCenter(word);
       }
 
       public bool CanAccept(Word word, double tolerance)
       {
-         return word.BoundingBox.Bottom <= Top + tolerance &&
-            word.BoundingBox.Top >= Bottom - tolerance;
+         if(words.Count == 0)
+         {
+            return true;
+         }
+
+         var rowCenter = CenterSum / words.Count;
+         return Math.Abs(GetVerticalCenter(word) - rowCenter) <= tolerance;
       }
 
-      private double Top { get; set; }
+      private static double GetVerticalCenter(Word word)
+      {
+         return (
+            word.BoundingBox.Top +
+            word.BoundingBox.Bottom
+         ) / 2d;
+      }
 
-      private double Bottom { get; set; }
+      private double CenterSum { get; set; }
    }
 
    internal static string ExtractPdfTitle(

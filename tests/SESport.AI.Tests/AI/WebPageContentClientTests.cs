@@ -850,6 +850,31 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task FetchKeepsTightlySpacedPdfCellLinesSeparate()
+   {
+      var handler = new PdfRecordingHandler(
+         CreateTightlySpacedDriverPdfBytes()
+      );
+      var client = CreateClient(
+         new HttpClient(handler),
+         (_, _) => Task.FromResult<WebPageContent?>(null)
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/drivers.pdf",
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal(
+         "(B) Daniel Goldburg | USA\n" +
+         "(P) Paul Di Resta | GBR\n" +
+         "(S) Rasmus Lindh | SWE",
+         page!.MainTextFull.ReplaceLineEndings("\n").Trim()
+      );
+   }
+
+   [Fact]
    public async Task FetchPassesHtmlUrlToBrowserFetcher()
    {
       Uri? seenUrl = null;
@@ -1670,6 +1695,38 @@ public class WebPageContentClientTests
       page.AddText("Jonas ANDERSSON", 12, new PdfPoint(72, 700), font);
       page.AddText("GBR", 12, new PdfPoint(240, 720), font);
       page.AddText("SWE", 12, new PdfPoint(240, 700), font);
+      return builder.Build();
+   }
+
+   private static byte[] CreateTightlySpacedDriverPdfBytes()
+   {
+      var builder = new PdfDocumentBuilder();
+      var page = builder.AddPage(PageSize.A4);
+      var font = builder.AddStandard14Font(Standard14Font.Helvetica);
+      builder.DocumentInformation.Title = "Driver PDF";
+
+      page.AddText(
+         "(B) Daniel Goldburg",
+         12,
+         new PdfPoint(72, 720),
+         font
+      );
+      page.AddText("USA", 12, new PdfPoint(240, 720), font);
+      page.AddText(
+         "(P) Paul Di Resta",
+         12,
+         new PdfPoint(72, 708),
+         font
+      );
+      page.AddText("GBR", 12, new PdfPoint(240, 708), font);
+      page.AddText(
+         "(S) Rasmus Lindh",
+         12,
+         new PdfPoint(72, 696),
+         font
+      );
+      page.AddText("SWE", 12, new PdfPoint(240, 696), font);
+
       return builder.Build();
    }
 
