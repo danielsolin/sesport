@@ -981,6 +981,76 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task LoadOtherGroupDescriptionsAsyncReturnsUniqueDescriptions()
+   {
+      var activityGroupId = Guid.NewGuid();
+      var title = $"Description group {Guid.NewGuid():N}";
+      var activityIds = new List<Guid>();
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         title,
+         "football",
+         DistantActivityDate,
+         DistantActivityDate.AddDays(2)
+      );
+
+      try
+      {
+         foreach(var description in new[]
+         {
+            "First group description",
+            "Second group description",
+            "First group description"
+         })
+         {
+            activityIds.Add(
+               await repository.SaveAsync(
+                  new ActivityEditModel
+                  {
+                     Title = title,
+                     Description = description,
+                     ActivityType = ActivityType.Match.ToString(),
+                     SportId = "football",
+                     ActivityDate = DistantActivityDate,
+                     TimeZoneId = SportDay.TimeZoneId,
+                     ActivityGroupId = activityGroupId
+                  },
+                  CancellationToken.None
+               )
+            );
+         }
+
+         var descriptions = await fixture.Service
+            .LoadOtherGroupDescriptionsAsync(
+               new ActivityEditModel
+               {
+                  ActivityGroupId = activityGroupId
+               },
+               CancellationToken.None
+            );
+
+         Assert.Equal(2, descriptions.Count);
+         Assert.Contains("First group description", descriptions);
+         Assert.Contains("Second group description", descriptions);
+      }
+      finally
+      {
+         foreach(var activityId in activityIds)
+         {
+            await DeleteActivityAsync(dataSource, activityId);
+         }
+
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncExpandsPairParticipants()
    {
       var organizationId = Guid.NewGuid();

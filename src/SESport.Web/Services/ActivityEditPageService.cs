@@ -98,6 +98,24 @@ public sealed class ActivityEditPageService(
       return await repository.GetForEditAsync(id, cancellationToken);
    }
 
+   public async Task<IReadOnlyList<string>> LoadOtherGroupDescriptionsAsync(
+      ActivityEditModel activity,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(activity.Description) ||
+         activity.ActivityGroupId is null)
+      {
+         return [];
+      }
+
+      return await repository.GetOtherGroupDescriptionsAsync(
+         activity.ActivityGroupId.Value,
+         activity.Id,
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<ActivityParticipantListItem>>
       LoadParticipantsAsync(
          ActivityEditModel activity,

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using Npgsql;
+using NpgsqlTypes;
 
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
@@ -531,6 +532,46 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       }
 
       return model;
+   }
+
+   public async Task<IReadOnlyList<string>> GetOtherGroupDescriptionsAsync(
+      Guid activityGroupId,
+      Guid? excludedActivityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select btrim(description) as description
+         from activities
+         where activity_group_id = @activity_group_id
+            and description is not null
+            and btrim(description) <> ''
+            and (@excluded_activity_id is null
+               or id <> @excluded_activity_id)
+         group by btrim(description)
+         order by max(activity_date) desc, description
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         activityGroupId
+      );
+      command.Parameters.Add(
+         "excluded_activity_id",
+         NpgsqlDbType.Uuid
+      ).Value = (object?)excludedActivityId ?? DBNull.Value;
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var descriptions = new List<string>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         descriptions.Add(reader.GetString(0));
+      }
+
+      return descriptions;
    }
 
    public async Task<Guid?> GetActivityGroupIdAsync(

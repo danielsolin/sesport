@@ -41,6 +41,12 @@ public class EditModel(
 
    public IReadOnlyList<FactRecord> Facts { get; private set; } = [];
 
+   public IReadOnlyList<string> OtherGroupDescriptions
+   {
+      get;
+      private set;
+   } = [];
+
    public string? LoadError { get; private set; }
 
    [TempData]
@@ -76,6 +82,7 @@ public class EditModel(
             Activity.SportId
          );
          await LoadParticipantsAsync(cancellationToken);
+         await LoadOtherGroupDescriptionsAsync(cancellationToken);
          return Page();
       }
 
@@ -97,6 +104,7 @@ public class EditModel(
       );
       await LoadParticipantsAsync(cancellationToken);
       await LoadFactsAsync(cancellationToken);
+      await LoadOtherGroupDescriptionsAsync(cancellationToken);
 
       return Page();
    }
@@ -285,6 +293,7 @@ public class EditModel(
          );
          await LoadParticipantsAsync(cancellationToken);
          await LoadFactsAsync(cancellationToken);
+         await LoadOtherGroupDescriptionsAsync(cancellationToken);
          return Page();
       }
 
@@ -316,6 +325,14 @@ public class EditModel(
             Activity.Id.Value,
             cancellationToken
          );
+   }
+
+   private async Task LoadOtherGroupDescriptionsAsync(
+      CancellationToken cancellationToken
+   )
+   {
+      OtherGroupDescriptions = await editService
+         .LoadOtherGroupDescriptionsAsync(Activity, cancellationToken);
    }
 
    private string? GetLocalReturnUrl(string? returnUrl)

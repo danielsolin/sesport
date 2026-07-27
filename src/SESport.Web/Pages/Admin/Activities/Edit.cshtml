@@ -130,6 +130,12 @@
                    class="medium-textarea"
                    rows="3"></textarea>
       </label>
+      @if(Model.OtherGroupDescriptions.Count > 0)
+      {
+         <div class="activity-group-description-options">
+            @string.Join(", ", Model.OtherGroupDescriptions)
+         </div>
+      }
       <h3 class="subgrid-heading">Facts</h3>
       <div data-activity-facts-grid>
          @if(Model.Facts.Count == 0)

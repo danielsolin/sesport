@@ -147,4 +147,42 @@ public sealed class EditMarkupTests
       Assert.Contains("async function findFactsAsync(button)", script);
       Assert.Contains("if(!form || !url)", script);
    }
+
+   [Fact]
+   public async Task EditPageShowsOtherGroupDescriptions()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+      var css = await File.ReadAllTextAsync(cssPath);
+
+      Assert.Contains(
+         "if(Model.OtherGroupDescriptions.Count > 0)",
+         html
+      );
+      Assert.Contains(
+         "class=\"activity-group-description-options\"",
+         html
+      );
+      Assert.Contains(
+         "@string.Join(\", \", Model.OtherGroupDescriptions)",
+         html
+      );
+      Assert.DoesNotContain(
+         "Other descriptions in this ActivityGroup",
+         html
+      );
+      Assert.Contains(".activity-group-description-options", css);
+      Assert.Contains("color: var(--muted)", css);
+      Assert.Contains("font-size: 11px", css);
+   }
 }

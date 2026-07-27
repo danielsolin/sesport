@@ -1872,6 +1872,13 @@ h2 {
    gap: 10px;
 }
 
+.activity-group-description-options {
+   margin: -8px 0 10px;
+   color: var(--muted);
+   font-size: 11px;
+   line-height: 1.3;
+}
+
 .activity-source-add-row {
    display: flex;
    align-items: flex-end;
