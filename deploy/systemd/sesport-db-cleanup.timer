@@ -1,8 +1,8 @@
 [Unit]
-Description=Run SESport database maintenance daily
+Description=Run SESport database cleanup hourly
 
 [Timer]
-OnCalendar=*-*-* 03:20:00
+OnCalendar=hourly
 Persistent=true
 RandomizedDelaySec=30m
 Unit=sesport-db-cleanup.service

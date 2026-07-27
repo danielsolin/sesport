@@ -20,3 +20,13 @@ dev.sesport.se {
 
 	reverse_proxy 127.0.0.1:5001
 }
+
+llm.sesport.se {
+	encode zstd gzip
+
+	basicauth {
+		sesport $2a$14$vU5XoQAKHQfgcz0tSwGizuK1Rh7447FJa/CWGNppJujRrzTloNtfO
+	}
+
+	reverse_proxy 127.0.0.0:8080
+}

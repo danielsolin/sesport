@@ -42,6 +42,9 @@ The timer generates a report for the previous calendar day every night,
 commits the HTML reports in `data/web-stats`, and pushes them to the current
 branch.
 
+The database cleanup timer runs once per hour, with a randomized delay of up
+to 30 minutes to avoid starting maintenance exactly on the hour.
+
 Do not enable `searxng.service` on a web or database host unless that
 machine also runs AI jobs locally.
 
