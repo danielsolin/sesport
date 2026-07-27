@@ -98,7 +98,7 @@ public sealed class DetailsModelTests
    public void BuildExecutionEnvironmentOptionsIncludesCurrentEnvironment()
    {
       var currentExecutionEnvironment =
-         SESport.Core.AI.ExecutionEnvironment.Current;
+         SESport.Core.Configuration.ExecutionEnvironment.Current;
       var options = DetailsModel.BuildExecutionEnvironmentOptions(
          ["Worker-A"],
          null,
@@ -121,7 +121,7 @@ public sealed class DetailsModelTests
       var options = DetailsModel.BuildExecutionEnvironmentOptions(
          ["Worker-A", "Worker-B"],
          "Worker-B",
-         SESport.Core.AI.ExecutionEnvironment.Current,
+         SESport.Core.Configuration.ExecutionEnvironment.Current,
          includeUnsetOption: false
       );
 

@@ -69,6 +69,17 @@ Stores each execution.
 
 ## Project Structure
 
+### `src/SESport.Core/Configuration`
+
+- all code-defined application configuration
+- defaults, option types, environment-variable resolution, and keys
+- AI provider, web-search, page-fetch, and worker configuration
+
+Subsystem-specific configuration remains centralized here. `SESport.AI`
+consumes it but owns the configured clients and runtime behavior.
+Executable projects own configuration binding and dependency-injection
+composition.
+
 ### `src/SESport.Core/AI`
 
 - AI job, provider, prompt, rendered prompt, and run models

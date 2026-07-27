@@ -1,6 +1,6 @@
-namespace SESport.AI.Clients;
+namespace SESport.Core.Configuration;
 
-internal static class ApiKeySourceResolver
+public static class ApiKeySourceResolver
 {
    public static string? Resolve(string? apiKeySource)
    {

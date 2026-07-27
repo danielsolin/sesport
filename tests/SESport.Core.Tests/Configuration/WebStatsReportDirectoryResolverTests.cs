@@ -1,4 +1,4 @@
-using SESport.Web.Configuration;
+using SESport.Core.Configuration;
 
 namespace SESport.Core.Tests.Configuration;
 

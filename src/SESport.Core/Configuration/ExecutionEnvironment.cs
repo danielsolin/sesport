@@ -1,4 +1,4 @@
-namespace SESport.Core.AI;
+namespace SESport.Core.Configuration;
 
 public static class ExecutionEnvironment
 {

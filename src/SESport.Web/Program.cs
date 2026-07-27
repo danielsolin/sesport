@@ -7,13 +7,19 @@ using SESport.Web.Extensions;
 using SESport.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-var adminOptions = builder.Configuration.GetSection("Admin")
+var adminOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.AdminSection
+   )
    .Get<AdminLoginOptions>() ??
    new AdminLoginOptions();
-var searxngOptions = builder.Configuration.GetSection("SearXNG")
+var searxngOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.SearxngSection
+   )
    .Get<SearxngWebSearchClientOptions>() ??
    new SearxngWebSearchClientOptions();
-var configuredWebStatsOptions = builder.Configuration.GetSection("WebStats")
+var configuredWebStatsOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.WebStatsSection
+   )
    .Get<WebStatsOptions>() ??
    new WebStatsOptions();
 var webStatsOptions = configuredWebStatsOptions with
@@ -26,7 +32,9 @@ var webStatsOptions = configuredWebStatsOptions with
 };
 builder.Services.AddSingleton(
    _ => PostgresDataSourceFactory.CreateDefault(
-      builder.Configuration.GetConnectionString("Default")
+      builder.Configuration.GetConnectionString(
+         ApplicationConfigurationKeys.DefaultConnectionString
+      )
    )
 );
 builder.Services.AddSingleton(adminOptions);
@@ -84,9 +92,7 @@ app.Logger.LogInformation(
 );
 app.Logger.LogInformation(
    "SearXNG env vars present in process: baseUrl={HasBaseUrl}",
-   !string.IsNullOrWhiteSpace(
-      Environment.GetEnvironmentVariable("SearXNG__BaseUrl")
-   )
+   ConfigurationEnvironment.HasSearxngBaseUrl
 );
 app.Logger.LogInformation(
    "SearXNG config bound: baseUrl={BaseUrl}",

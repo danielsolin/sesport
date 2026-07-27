@@ -76,16 +76,24 @@ Several console applications live in `tools/legacy/` for occasional use:
 
 ## Project Structure
 - `src/SESport.Core`: shared domain types, identifiers, formatting helpers,
-  broadcast parsing rules, country constants, and AI contracts/models that
-  are used across project boundaries. It must not contain PostgreSQL access
-  or provider-specific AI clients.
+  broadcast parsing rules, country constants, AI contracts/models, and all
+  code-defined application configuration. Configuration defaults, option
+  types, environment-variable resolution, keys, and connection-string
+  construction belong in `SESport.Core.Configuration`, including
+  subsystem-specific PostgreSQL and AI configuration. Core must not contain
+  live PostgreSQL access or provider-specific AI client implementations.
+  Executable projects still own their configuration sources, binding, and
+  composition, such as Web's `appsettings.json` and dependency-injection
+  registration.
 - `src/SESport.Data`: PostgreSQL persistence. Repository classes, SQL,
   Npgsql usage, data-source creation, and database-specific mapping belong
-  here. It depends on `SESport.Core` and must not depend on `SESport.AI`.
+  here. It consumes configuration from `SESport.Core.Configuration`, depends
+  on `SESport.Core`, and must not depend on `SESport.AI`.
 - `src/SESport.AI`: AI provider clients, prompt rendering, web-search and
   page-fetching clients, activity-search orchestration, and AI job execution
-  runtime. It depends on `SESport.Core` and must not contain PostgreSQL
-  access.
+  runtime. It consumes configuration from
+  `SESport.Core.Configuration`, depends on `SESport.Core`, and must not
+  contain PostgreSQL access.
 - `src/SESport.Web`: Razor Pages UI, dependency injection, request handling,
   hosted workers, and application-level orchestration. It should call
   repositories from `SESport.Data` instead of issuing SQL directly.

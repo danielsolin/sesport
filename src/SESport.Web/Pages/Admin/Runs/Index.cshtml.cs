@@ -124,7 +124,7 @@ public class IndexModel(
       return DetailsModel.BuildExecutionEnvironmentOptions(
          ExecutionEnvironmentValues,
          selectedExecutionEnvironment,
-         SESport.Core.AI.ExecutionEnvironment.Current,
+         SESport.Core.Configuration.ExecutionEnvironment.Current,
          includeUnsetOption: false
       );
    }

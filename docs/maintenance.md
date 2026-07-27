@@ -12,7 +12,19 @@ Use this for recurring repo clean-up.
 
 - Put each file in the project that owns that code.
 - Keep `SESport.Data` for PostgreSQL persistence and SQL only.
-- Keep `SESport.Core` for shared domain types, IDs, and helpers.
+- Keep `SESport.Core` for shared domain types, IDs, helpers, and all
+  code-defined application configuration.
+- Put configuration defaults, option types, environment-variable resolution,
+  keys, and connection-string construction in
+  `SESport.Core.Configuration`, even when they are specific to PostgreSQL,
+  AI providers, web search, or another subsystem.
+- Keep configured runtime implementations in their owning projects. For
+  example, `SESport.Data` creates Npgsql data sources and `SESport.AI`
+  creates provider, search, browser, and page-fetch clients.
+- Keep host-specific configuration sources and composition in the executable
+  project. For example, Web owns `appsettings.json`, configuration binding,
+  and dependency-injection registration, while the bound option types and
+  defaults remain in `SESport.Core.Configuration`.
 - Keep `SESport.AI` for AI clients, prompts, and job execution.
 - Keep `SESport.Web` for Razor Pages, workers, and orchestration.
 - Avoid `<Compile Remove>` unless there is no better fix.
