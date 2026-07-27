@@ -1284,14 +1284,7 @@
 }
 
 @media (max-width: 600px) and (orientation: portrait) {
-   .activity-group-schedule-item {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-   }
-
-   .activity-group-slot-time {
+   .activity-group-slot-description {
       display: none;
    }
 
