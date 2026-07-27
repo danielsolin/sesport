@@ -310,4 +310,26 @@ public sealed class ActivityBroadcastPrefillBuilderTests
 
       Assert.Equal("GT World Challenge", title);
    }
+
+   [Fact]
+   public void CreateActivityTitlePreservesBroadcastHyphenSpacing()
+   {
+      var broadcast = new BroadcastActivitySource(
+         Guid.NewGuid(),
+         "SVT",
+         "Ungern-Sverige",
+         null,
+         ["handball"],
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow
+      );
+
+      var title = BroadcastActivityPrefillBuilder.CreateActivityTitle(
+         broadcast,
+         [],
+         null
+      );
+
+      Assert.Equal("Ungern-Sverige", title);
+   }
 }

@@ -277,7 +277,6 @@ public static class BroadcastActivityPrefillBuilder
       cleaned = Regex.Replace(cleaned, @"\s*[,;/:\-]+\s*$", string.Empty);
       cleaned = Regex.Replace(cleaned, @"\s*,\s*", ", ");
       cleaned = Regex.Replace(cleaned, @"\s*/\s*", " / ");
-      cleaned = Regex.Replace(cleaned, @"\s*-\s*", " - ");
 
       return cleaned.Trim();
    }
