@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 
 namespace SESport.AI.Clients;
@@ -62,11 +63,11 @@ public static class ResponsesOutputValidator
 
       if(string.Equals(
          outputMode,
-         "json_object",
+         AiOutputModeIds.JsonObject,
          StringComparison.OrdinalIgnoreCase
       ))
       {
-         EnsureJsonObject(outputText, "json_object");
+         EnsureJsonObject(outputText, AiOutputModeIds.JsonObject);
       }
 
       return outputText;

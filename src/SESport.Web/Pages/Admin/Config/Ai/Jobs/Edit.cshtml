@@ -83,8 +83,12 @@
          <label>
             <span>Output mode</span>
             <select asp-for="Job.OutputMode">
-               <option value="text">text</option>
-               <option value="json_object">json_object</option>
+               <option value="@AiOutputModeIds.Text">
+                  @AiOutputModeIds.Text
+               </option>
+               <option value="@AiOutputModeIds.JsonObject">
+                  @AiOutputModeIds.JsonObject
+               </option>
             </select>
             <span asp-validation-for="Job.OutputMode"></span>
          </label>

@@ -65,6 +65,11 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("activity-participant-out-badge", html);
       Assert.Contains(
+         ".activity-participant-out-badge {\n" +
+         "   display: inline-flex;",
+         css
+      );
+      Assert.DoesNotContain(
          ".activity-has-ended .activity-participant-out-badge",
          css
       );
@@ -148,7 +153,8 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
-         ".activity-entry > :not(.activity-ended-badge)",
+         "> :not(.activity-ended-badge):not(\n" +
+         "      .activity-participant-table-wrap",
          css
       );
       Assert.Contains(

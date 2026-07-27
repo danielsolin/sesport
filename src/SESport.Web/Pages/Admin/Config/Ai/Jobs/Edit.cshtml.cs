@@ -118,11 +118,15 @@ public class EditModel(AiAdminRepository repository) : PageModel
       }
 
       if(!string.IsNullOrWhiteSpace(Job.OutputMode)
-         && Job.OutputMode is not ("text" or "json_object"))
+         && Job.OutputMode is not (
+            AiOutputModeIds.Text or
+            AiOutputModeIds.JsonObject
+         ))
       {
          ModelState.AddModelError(
             "Job.OutputMode",
-            "Output mode must be text or json_object."
+            $"Output mode must be {AiOutputModeIds.Text} or " +
+            $"{AiOutputModeIds.JsonObject}."
          );
       }
 

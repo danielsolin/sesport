@@ -26,7 +26,7 @@ public sealed class GoogleTranslateClient : IAiProviderClient
       this.translationFetcher = translationFetcher;
    }
 
-   public string Kind => "google-translate";
+   public string Kind => AiProviderKinds.GoogleTranslate;
 
    public JsonObject CreateRequestPayload(
       AiProviderDefinition provider,

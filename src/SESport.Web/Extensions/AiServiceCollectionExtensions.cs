@@ -39,11 +39,11 @@ public static class AiServiceCollectionExtensions
       // archived configs, but do not assume LlamaServerClient feature parity.
       services.AddHttpClient<OpenRouterClient>(client =>
       {
-         client.Timeout = TimeSpan.FromSeconds(300);
+         client.Timeout = AiDefaults.OpenRouterHttpClientTimeout;
       });
       services.AddHttpClient<LlamaServerClient>(client =>
       {
-         client.Timeout = TimeSpan.FromMinutes(20);
+         client.Timeout = AiDefaults.LlamaServerHttpClientTimeout;
       });
       services.AddTransient<GoogleTranslateClient>();
       services.AddTransient<IAiProviderClient>(serviceProvider =>
@@ -58,7 +58,7 @@ public static class AiServiceCollectionExtensions
       services.AddHttpClient<SearxngWebSearchClient>(
          client =>
          {
-            client.Timeout = TimeSpan.FromSeconds(60);
+            client.Timeout = AiDefaults.SearxngHttpClientTimeout;
          }
       );
       services.AddScoped<IWebSearchClient>(serviceProvider =>
@@ -73,7 +73,7 @@ public static class AiServiceCollectionExtensions
          WebPageContentClient
       >(client =>
       {
-         client.Timeout = TimeSpan.FromSeconds(30);
+         client.Timeout = AiDefaults.WebPageContentHttpClientTimeout;
       });
 
       return services;

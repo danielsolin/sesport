@@ -57,7 +57,7 @@ public sealed class AiJobEditModel
 
    public int QueuePriority { get; set; }
 
-   public string OutputMode { get; set; } = "text";
+   public string OutputMode { get; set; } = AiOutputModeIds.Text;
 
    public string? ActivePromptId { get; set; }
 

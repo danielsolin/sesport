@@ -36,7 +36,7 @@ internal static class LlamaRequestFactory
    private const string JsonPropertyTemperature = "temperature";
    private const string JsonPropertyToolChoice = "tool_choice";
    private const string JsonPropertyTools = "tools";
-   private const string JsonValueJsonObject = "json_object";
+   private const string JsonValueJsonObject = AiOutputModeIds.JsonObject;
    private const string JsonValueAuto = "auto";
    private const string JsonValueRequired = "required";
    private const string JsonValueSystem = "system";

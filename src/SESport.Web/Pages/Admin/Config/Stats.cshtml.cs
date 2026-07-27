@@ -3,12 +3,14 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Formatting;
+
 namespace SESport.Web.Pages.Admin.Config;
 
 public sealed class StatsModel(WebStatsOptions options) : PageModel
 {
    private const string LatestReportFileName = "latest.html";
-   private const string ReportDateFormat = "yyyy-MM-dd";
+   private const string ReportDateFormat = DateDisplay.DateOnlyFormat;
 
    public IReadOnlyList<WebStatsReport> Reports { get; private set; } = [];
 

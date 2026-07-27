@@ -40,6 +40,11 @@
             "entitySearchUrlBase"
          );
          const activityDate = getDataValue(container, "entityDate");
+         const femaleGenderId = getDataValue(
+            container,
+            "personGenderFemale"
+         );
+         const maleGenderId = getDataValue(container, "personGenderMale");
          const cookieName = getDataValue(
             container,
             "entityFilterCookieName"
@@ -154,7 +159,9 @@
                   editUrlBase,
                   deleteUrlBase,
                   template,
-                  personFactsUrl
+                  personFactsUrl,
+                  femaleGenderId,
+                  maleGenderId
                ))
                .join("");
 
@@ -350,7 +357,9 @@
       editUrlBase,
       deleteUrlBase,
       watchPriorityTemplate,
-      personFactsUrl
+      personFactsUrl,
+      femaleGenderId,
+      maleGenderId
    )
    {
       const token = getAntiForgeryToken();
@@ -364,7 +373,11 @@
       ].filter(value => value !== "").join(", ");
       const entityType = escapeHtml(entity.entityType ?? "");
       const sport = escapeHtml(entity.sport ?? "");
-      const gender = formatGender(entity.personGenderId);
+      const gender = formatGender(
+         entity.personGenderId,
+         femaleGenderId,
+         maleGenderId
+      );
       const ageValue = formatAge(entity.birthdate);
       const ageSearchQuery = encodeURIComponent(
          `${entity.name ?? ""} ${entity.sport ?? ""} ålder`
@@ -529,14 +542,14 @@
       `;
    }
 
-   function formatGender(personGenderId)
+   function formatGender(personGenderId, femaleGenderId, maleGenderId)
    {
-      if(personGenderId === "female")
+      if(personGenderId === femaleGenderId)
       {
          return "F";
       }
 
-      if(personGenderId === "male")
+      if(personGenderId === maleGenderId)
       {
          return "M";
       }

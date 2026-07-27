@@ -23,7 +23,7 @@ public sealed class OpenRouterClient : IAiProviderClient
       DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
    };
 
-   public string Kind => "openrouter";
+   public string Kind => AiProviderKinds.OpenRouter;
 
    public OpenRouterClient(HttpClient httpClient)
    {
@@ -236,7 +236,11 @@ public sealed class OpenRouterClient : IAiProviderClient
             new AuthenticationHeaderValue("Bearer", apiKey);
       }
 
-      if(string.Equals(provider.Kind, "openrouter", StringComparison.Ordinal))
+      if(string.Equals(
+         provider.Kind,
+         AiProviderKinds.OpenRouter,
+         StringComparison.Ordinal
+      ))
       {
          requestMessage.Headers.TryAddWithoutValidation(
             AiDefaults.OpenRouterMetadataHeader,

@@ -37,7 +37,7 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("/Admin/Broadcasts/Index", html);
       Assert.Contains(
-         "@date.Date.ToString(\"yyyy-MM-dd\")",
+         "DateDisplay.DateOnlyFormat",
          html
       );
       Assert.Contains(

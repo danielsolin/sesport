@@ -128,7 +128,7 @@ public sealed class EditMarkupTests
       Assert.Contains("activity-facts-date-column", html);
       Assert.Contains("activity-facts-actions-column", html);
       Assert.Contains(
-         "fact.CreatedAt.ToString(\"yyyy-MM-dd\")",
+         "DateDisplay.DateOnlyFormat",
          html
       );
       Assert.Contains("<td>@fact.Text</td>", html);

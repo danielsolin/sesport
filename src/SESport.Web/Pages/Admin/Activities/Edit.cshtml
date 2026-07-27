@@ -167,7 +167,11 @@
                         var deleteFactFormId =
                            $"delete-fact-{fact.Id:N}";
                         <tr>
-                           <td>@fact.CreatedAt.ToString("yyyy-MM-dd")</td>
+                           <td>
+                              @fact.CreatedAt.ToString(
+                                 DateDisplay.DateOnlyFormat
+                              )
+                           </td>
                            <td>@fact.Text</td>
                            <td>
                               @foreach(var sourceUrl in fact.SourceUrls)

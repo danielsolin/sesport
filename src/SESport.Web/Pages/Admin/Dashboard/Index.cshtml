@@ -142,7 +142,9 @@ else if(Model.Dashboard is not null)
                                  "@Model.GetBroadcastDateRouteValues(
                                     date.Date
                                  )">
-                              @date.Date.ToString("yyyy-MM-dd")
+                              @date.Date.ToString(
+                                 DateDisplay.DateOnlyFormat
+                              )
                            </a>
                         </strong>
                      </td>
@@ -201,7 +203,9 @@ else if(Model.Dashboard is not null)
                   @foreach(var issue in dashboard.ActivityIssues)
                   {
                      <tr>
-                        <td>@issue.Date.ToString("yyyy-MM-dd")</td>
+                        <td>
+                           @issue.Date.ToString(DateDisplay.DateOnlyFormat)
+                        </td>
                         <td>
                            <a asp-page="/Admin/Activities/Edit"
                               asp-route-id="@issue.Id">

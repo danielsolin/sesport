@@ -4,8 +4,9 @@ using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Core.Facts;
-using SESport.Data;
+using SESport.Core.Formatting;
 using SESport.Core.Sources;
+using SESport.Data;
 
 namespace SESport.Web.Services;
 
@@ -382,7 +383,7 @@ public sealed class AiJobPostProcessor(
             birthdateValue.ValueKind == JsonValueKind.String &&
             DateOnly.TryParseExact(
                birthdateValue.GetString(),
-               "yyyy-MM-dd",
+               DateDisplay.DateOnlyFormat,
                out var parsedBirthdate
             ))
          {

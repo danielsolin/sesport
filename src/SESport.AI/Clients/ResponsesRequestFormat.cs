@@ -1,5 +1,7 @@
 using System.Text.Json.Nodes;
 
+using SESport.Core.AI;
+
 namespace SESport.AI.Clients;
 
 internal static class ResponsesRequestFormat
@@ -34,7 +36,7 @@ internal static class ResponsesRequestFormat
 
       if(!string.Equals(
          outputMode,
-         "json_object",
+         AiOutputModeIds.JsonObject,
          StringComparison.OrdinalIgnoreCase
       ))
       {
@@ -43,7 +45,7 @@ internal static class ResponsesRequestFormat
 
       payload["response_format"] = new JsonObject
       {
-         ["type"] = "json_object"
+         ["type"] = AiOutputModeIds.JsonObject
       };
    }
 }

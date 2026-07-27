@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
 
@@ -101,7 +102,7 @@ public class IndexModel(DashboardRepository repository) : PageModel
    {
       return new Dictionary<string, string?>
       {
-         [RouteKeys.Date] = date.ToString("yyyy-MM-dd"),
+         [RouteKeys.Date] = date.ToString(DateDisplay.DateOnlyFormat),
          [RouteKeys.Status] = ActivityListStatusIds.All
       };
    }
@@ -112,7 +113,7 @@ public class IndexModel(DashboardRepository repository) : PageModel
    {
       return new Dictionary<string, string?>
       {
-         [RouteKeys.Date] = date.ToString("yyyy-MM-dd")
+         [RouteKeys.Date] = date.ToString(DateDisplay.DateOnlyFormat)
       };
    }
 
@@ -122,7 +123,7 @@ public class IndexModel(DashboardRepository repository) : PageModel
       {
          [RouteKeys.Date] = SportDay.GetLocalDate(
             DateTimeOffset.UtcNow
-         ).ToString("yyyy-MM-dd"),
+         ).ToString(DateDisplay.DateOnlyFormat),
          [RouteKeys.Status] = AiJobRunStatusIds.Failed
       };
    }

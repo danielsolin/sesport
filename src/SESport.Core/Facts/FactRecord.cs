@@ -1,10 +1,12 @@
 namespace SESport.Core.Facts;
 
+using SESport.Core.Domain;
+
 public static class FactSubjectTypes
 {
-   public const string Activity = "Activity";
+   public const string Activity = ApplicationObjectTypes.Activity;
 
-   public const string Entity = "Entity";
+   public const string Entity = ApplicationObjectTypes.Entity;
 }
 
 public sealed record FactRecord(

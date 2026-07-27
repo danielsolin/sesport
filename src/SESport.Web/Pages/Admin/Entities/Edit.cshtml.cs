@@ -241,7 +241,7 @@ public class EditModel(
       if(!string.IsNullOrWhiteSpace(Entity.PersonGenderId) &&
          !string.Equals(
             Entity.EntityTypeId,
-            "Person",
+            TrackedEntityTypeIds.Person,
             StringComparison.OrdinalIgnoreCase
          ))
       {

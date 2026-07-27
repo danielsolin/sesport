@@ -159,7 +159,11 @@
                   <tr class="@(highlightRow
                      ? "activity-description-missing"
                      : string.Empty)">
-                     <td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
+                     <td>
+                        @activity.ActivityDate.ToString(
+                           DateDisplay.DateOnlyFormat
+                        )
+                     </td>
                      <td>@startTime–@endTime</td>
                      <td>@activity.RelatedPersonEntityIds.Length</td>
                      <td>

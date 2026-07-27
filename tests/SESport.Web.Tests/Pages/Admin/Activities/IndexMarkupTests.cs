@@ -23,8 +23,8 @@ public sealed class IndexMarkupTests
          "Activity @Model.GetSortIndicator"
       );
 
-      Assert.True(timeHeaderIndex < groupHeaderIndex);
-      Assert.True(groupHeaderIndex < activityHeaderIndex);
+      Assert.True(timeHeaderIndex < activityHeaderIndex);
+      Assert.True(activityHeaderIndex < groupHeaderIndex);
       Assert.Contains(
          "@Model.GetSortRouteValues(\"Time\")",
          html

@@ -6,7 +6,7 @@
    var entityLinkUpdateUrl = Url.Page("/Admin/Ajax/Update/EntityLink");
    var isPersonEntity = string.Equals(
       Model.Entity.EntityTypeId,
-      "Person",
+      TrackedEntityTypeIds.Person,
       StringComparison.OrdinalIgnoreCase
    );
 }

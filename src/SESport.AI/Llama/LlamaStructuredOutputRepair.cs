@@ -6,6 +6,9 @@ namespace SESport.AI.Llama;
 
 internal static class LlamaStructuredOutputRepair
 {
+   private const string InvalidJsonObjectOutputMessage =
+      "invalid " + AiOutputModeIds.JsonObject + " output";
+
    public static bool CanRepair(
       string outputMode,
       AiPromptDefinition prompt
@@ -14,7 +17,7 @@ internal static class LlamaStructuredOutputRepair
       return !string.IsNullOrWhiteSpace(prompt.OutputSchemaJson) ||
          string.Equals(
             outputMode,
-            "json_object",
+            AiOutputModeIds.JsonObject,
             StringComparison.OrdinalIgnoreCase
          );
    }
@@ -43,7 +46,7 @@ internal static class LlamaStructuredOutputRepair
          "invalid json_schema output",
          StringComparison.OrdinalIgnoreCase
       ) || exception.Message.Contains(
-         "invalid json_object output",
+         InvalidJsonObjectOutputMessage,
          StringComparison.OrdinalIgnoreCase
       );
    }
