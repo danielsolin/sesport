@@ -108,8 +108,10 @@
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
-                              '@Model.GetSortRouteValues("Group")'>
-                        Group @Model.GetSortIndicator("Group")
+                              '@Model.GetSortRouteValues("Entities")'>
+                        <span title="Participants">
+                           # @Model.GetSortIndicator("Entities")
+                        </span>
                      </a>
                   </th>
                   <th>
@@ -122,10 +124,8 @@
                   <th>
                      <a asp-page="./Index"
                            asp-all-route-data=
-                              '@Model.GetSortRouteValues("Entities")'>
-                        <span title="Participants">
-                           # @Model.GetSortIndicator("Entities")
-                        </span>
+                              '@Model.GetSortRouteValues("Group")'>
+                        Group @Model.GetSortIndicator("Group")
                      </a>
                   </th>
                   <th>Description</th>
@@ -161,16 +161,7 @@
                      : string.Empty)">
                      <td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
                      <td>@startTime–@endTime</td>
-                     <td>
-                        @if(activity.ActivityGroupId is not null)
-                        {
-                           <a asp-page="/Admin/ActivityGroups/Edit"
-                              asp-route-id="@activity.ActivityGroupId"
-                              asp-route-returnUrl="@returnUrl">
-                              @activity.ActivityGroupTitle
-                           </a>
-                        }
-                     </td>
+                     <td>@activity.RelatedPersonEntityIds.Length</td>
                      <td>
                         <a asp-page="./Edit"
                            asp-route-id="@activity.Id"
@@ -194,7 +185,16 @@
                            <span class="ses-icon-search"></span>
                         </a>
                      </td>
-                     <td>@activity.RelatedPersonEntityIds.Length</td>
+                     <td>
+                        @if(activity.ActivityGroupId is not null)
+                        {
+                           <a asp-page="/Admin/ActivityGroups/Edit"
+                              asp-route-id="@activity.ActivityGroupId"
+                              asp-route-returnUrl="@returnUrl">
+                              @activity.ActivityGroupTitle
+                           </a>
+                        }
+                     </td>
                      <td>
                         @if(!string.IsNullOrEmpty(activity.Description))
                         {
