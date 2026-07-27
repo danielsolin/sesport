@@ -27,18 +27,22 @@ internal static class LlamaRequestFactory
    private const string JsonPropertyFunction = "function";
    private const string JsonPropertyGrammar = "grammar";
    private const string JsonPropertyJsonSchema = "json_schema";
+   private const string JsonPropertyChatTemplateKwargs =
+      "chat_template_kwargs";
    private const string JsonPropertyMessages = "messages";
    private const string JsonPropertyMaxTokens = "max_tokens";
    private const string JsonPropertyModel = "model";
    private const string JsonPropertyName = "name";
    private const string JsonPropertyResponseFormat = "response_format";
    private const string JsonPropertyRole = "role";
+   private const string JsonPropertyReasoningEffort = "reasoning_effort";
    private const string JsonPropertyTemperature = "temperature";
    private const string JsonPropertyToolChoice = "tool_choice";
    private const string JsonPropertyTools = "tools";
    private const string JsonValueJsonObject = AiOutputModeIds.JsonObject;
    private const string JsonValueAuto = "auto";
    private const string JsonValueRequired = "required";
+   private const string JsonValueLow = "low";
    private const string JsonValueSystem = "system";
    private const string JsonValueUser = "user";
 
@@ -156,12 +160,18 @@ internal static class LlamaRequestFactory
       AiPromptDefinition prompt
    )
    {
+      var usedTools = RequestUsesTools(request);
       var finalRequest = (JsonObject)request.DeepClone();
       finalRequest.Remove(JsonPropertyTools);
       finalRequest.Remove(JsonPropertyToolChoice);
 
       ApplyStructuredOutputPrompt(finalRequest, job, prompt);
       ApplyStructuredResponseFormat(finalRequest, job, prompt);
+
+      if(usedTools)
+      {
+         ApplyLowReasoningEffort(finalRequest);
+      }
 
       return finalRequest;
    }
@@ -455,6 +465,27 @@ internal static class LlamaRequestFactory
          prompt.OutputSchemaJson,
          $"{PromptRequestNamePrefix}{prompt.Id:N}"
       );
+   }
+
+   private static void ApplyLowReasoningEffort(JsonObject payload)
+   {
+      if(payload[JsonPropertyChatTemplateKwargs] is JsonObject
+         chatTemplateKwargs)
+      {
+         chatTemplateKwargs[JsonPropertyReasoningEffort] = JsonValueLow;
+         return;
+      }
+
+      payload[JsonPropertyChatTemplateKwargs] = new JsonObject
+      {
+         [JsonPropertyReasoningEffort] = JsonValueLow
+      };
+   }
+
+   private static bool RequestUsesTools(JsonObject request)
+   {
+      return request[JsonPropertyTools] is JsonArray tools &&
+         tools.Count > 0;
    }
 
    private static void RemoveStructuredResponseFormat(JsonObject payload)
