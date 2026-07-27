@@ -15,5 +15,6 @@ public sealed record Broadcast(
    DateTimeOffset StartsAt,
    DateTimeOffset EndsAt,
    string TimeZoneId,
-   string? RawProgrammeXml
+   string? RawProgrammeXml,
+   string? ImageUrl
 );

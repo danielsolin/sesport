@@ -107,6 +107,22 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void BroadcastImageMigrationAddsImageUrl()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "009_broadcast_image_url.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.broadcasts", migration);
+      Assert.Contains("add column image_url text", migration);
+   }
+
+   [Fact]
    public void FactSourceLinksMigrationConnectsFactsAndSources()
    {
       var migration = File.ReadAllText(

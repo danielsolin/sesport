@@ -172,7 +172,8 @@ public sealed partial class BroadcastXmlParser
          startsAt,
          endsAt,
          SportDay.TimeZoneId,
-         programme.ToString(SaveOptions.DisableFormatting)
+         programme.ToString(SaveOptions.DisableFormatting),
+         null
       );
    }
 

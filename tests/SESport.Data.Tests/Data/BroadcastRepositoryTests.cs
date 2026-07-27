@@ -157,6 +157,7 @@ public sealed class BroadcastRepositoryTests
          DateTimeOffset.UtcNow,
          DateTimeOffset.UtcNow.AddHours(2),
          "Europe/Stockholm",
+         null,
          null
       );
 

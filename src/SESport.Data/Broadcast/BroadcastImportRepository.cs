@@ -265,13 +265,14 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
                @starts_at::timestamptz,
                @ends_at::timestamptz,
                @time_zone_id::text,
-               @raw_programme_xml::text
+               @raw_programme_xml::text,
+               @image_url::text
             )
          ) as source (
             id, import_run_id, source_key, external_id, fingerprint,
             channel_id, channel_name, title, description, categories,
             is_replay, original_air_date, starts_at, ends_at, time_zone_id,
-            raw_programme_xml
+            raw_programme_xml, image_url
          )
          on target.fingerprint = source.fingerprint
          when matched then
@@ -294,13 +295,14 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
                ends_at = source.ends_at,
                time_zone_id = source.time_zone_id,
                raw_programme_xml = source.raw_programme_xml,
+               image_url = coalesce(source.image_url, target.image_url),
                updated_at = now()
          when not matched then
             insert (
                id, import_run_id, source_key, external_id, fingerprint,
                channel_id, channel_name, title, description, categories,
                is_replay, original_air_date, starts_at, ends_at, time_zone_id,
-               raw_programme_xml
+               raw_programme_xml, image_url
             )
             values (
                source.id, source.import_run_id, source.source_key,
@@ -308,7 +310,7 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
                source.channel_name, source.title, source.description,
                source.categories, source.is_replay, source.original_air_date,
                source.starts_at, source.ends_at, source.time_zone_id,
-               source.raw_programme_xml
+               source.raw_programme_xml, source.image_url
             )
          returning merge_action()
          """;
@@ -350,6 +352,10 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
       command.Parameters.AddWithValue(
          "raw_programme_xml",
          (object?)broadcast.RawProgrammeXml ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "image_url",
+         (object?)broadcast.ImageUrl ?? DBNull.Value
       );
 
       var action = (string)(await command.ExecuteScalarAsync(
