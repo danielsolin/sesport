@@ -1,7 +1,5 @@
 using Npgsql;
 
-using SESport.Core.Domain;
-using SESport.Core.Facts;
 using SESport.Core.Formatting;
 using SESport.Data;
 

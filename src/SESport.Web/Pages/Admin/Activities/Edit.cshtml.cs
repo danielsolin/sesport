@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-using SESport.Core.Facts;
+using SESport.Core.Domain;
 using SESport.Core.Sources;
 using SESport.Data;
 using SESport.Web.Services;

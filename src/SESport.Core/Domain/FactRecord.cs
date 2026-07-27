@@ -1,6 +1,4 @@
-namespace SESport.Core.Facts;
-
-using SESport.Core.Domain;
+namespace SESport.Core.Domain;
 
 public static class FactSubjectTypes
 {
