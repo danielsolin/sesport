@@ -324,7 +324,7 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchStopsAfterOneConfiguredEngineCycle()
+   public async Task SearchWaitsAfterAllEnginesAreRateLimited()
    {
       var handler = new SequenceHandler(
          new SequenceHandler.ResponseSpec(
@@ -334,6 +334,10 @@ public class SearxngWebSearchClientTests
          new SequenceHandler.ResponseSpec(
             HttpStatusCode.OK,
             CreateCaptchaResponseJson("brave")
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
          )
       );
       var client = new SearxngWebSearchClient(
@@ -345,16 +349,17 @@ public class SearxngWebSearchClientTests
          CreateFastRateLimiter()
       );
 
-      var exception = await Record.ExceptionAsync(
-         () => client.SearchAsync(
-            "Tre Kronor",
-            3,
-            CancellationToken.None
-         )
+      var response = await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None
       );
 
-      Assert.NotNull(exception);
-      Assert.Equal(2, handler.RequestCount);
+      Assert.Equal(3, handler.RequestCount);
+      Assert.Contains("engines=google", handler.RequestBodies[0]);
+      Assert.Contains("engines=brave", handler.RequestBodies[1]);
+      Assert.Contains("engines=google", handler.RequestBodies[2]);
+      Assert.Single(response.Results);
    }
 
    [Fact]

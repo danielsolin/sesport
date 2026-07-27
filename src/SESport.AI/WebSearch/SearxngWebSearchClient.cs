@@ -130,86 +130,95 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       );
       WebSearchResponse? emptyResponse = null;
 
-      for(var attemptOffset = 0;
-         attemptOffset < engines.Count;
-         attemptOffset++)
+      while(true)
       {
-         var retryAttempt = searchAttempt + attemptOffset;
-         var engine = SearxngSearchEngineRotation.GetEngineForAttempt(
-            engines,
-            retryAttempt
-         );
+         var rateLimitedFailureCount = 0;
 
-         await RateLimiter.WaitAsync(engine, cancellationToken);
-
-         try
+         for(var attemptOffset = 0;
+            attemptOffset < engines.Count;
+            attemptOffset++)
          {
-            var response = await SearchOnceAsync(
-               query,
-               maxResults,
-               cancellationToken,
-               engine,
-               includeSocialMedia,
-               timeRange
+            var retryAttempt = searchAttempt + attemptOffset;
+            var engine = SearxngSearchEngineRotation.GetEngineForAttempt(
+               engines,
+               retryAttempt
             );
 
-            if(response.Results.Count > 0)
+            await RateLimiter.WaitAsync(engine, cancellationToken);
+
+            try
             {
-               return response;
+               var response = await SearchOnceAsync(
+                  query,
+                  maxResults,
+                  cancellationToken,
+                  engine,
+                  includeSocialMedia,
+                  timeRange
+               );
+
+               if(response.Results.Count > 0)
+               {
+                  return response;
+               }
+
+               emptyResponse ??= response;
             }
-
-            emptyResponse ??= response;
-         }
-         catch(OperationCanceledException)
-            when(cancellationToken.IsCancellationRequested)
-         {
-            throw;
-         }
-         catch(Exception exception) when(IsRateLimitedFailure(exception))
-         {
-            RateLimiter.RegisterRateLimitedFailure(engine);
-
-            if(attemptOffset == engines.Count - 1 &&
-               emptyResponse is null)
+            catch(OperationCanceledException)
+               when(cancellationToken.IsCancellationRequested)
             {
                throw;
             }
-
-            LogRetryWait(
-               engine,
-               query,
-               exception.Message,
-               "rate-limited"
-            );
-         }
-         catch(Exception exception) when(IsTransientFailure(exception))
-         {
-            RateLimiter.RegisterTransientFailure(engine);
-
-            if(attemptOffset == engines.Count - 1 &&
-               emptyResponse is null)
+            catch(Exception exception) when(IsRateLimitedFailure(exception))
             {
-               throw;
-            }
+               RateLimiter.RegisterRateLimitedFailure(engine);
+               rateLimitedFailureCount++;
 
-            LogRetryWait(
-               engine,
-               query,
-               exception.Message,
-               "transient"
-            );
+               if(attemptOffset == engines.Count - 1 &&
+                  emptyResponse is null &&
+                  rateLimitedFailureCount < engines.Count)
+               {
+                  throw;
+               }
+
+               LogRetryWait(
+                  engine,
+                  query,
+                  exception.Message,
+                  "rate-limited"
+               );
+            }
+            catch(Exception exception) when(IsTransientFailure(exception))
+            {
+               RateLimiter.RegisterTransientFailure(engine);
+
+               if(attemptOffset == engines.Count - 1 &&
+                  emptyResponse is null)
+               {
+                  throw;
+               }
+
+               LogRetryWait(
+                  engine,
+                  query,
+                  exception.Message,
+                  "transient"
+               );
+            }
          }
 
-      }
+         if(emptyResponse is not null)
+         {
+            return emptyResponse;
+         }
 
-      if(emptyResponse is not null)
-      {
-         return emptyResponse;
+         if(rateLimitedFailureCount < engines.Count)
+         {
+            throw new InvalidOperationException(
+               "SearXNG search exhausted all configured engines."
+            );
+         }
       }
-
-      throw new InvalidOperationException(
-         "SearXNG search exhausted all configured engines."
-      );
    }
 
    private async Task<WebSearchResponse> SearchOnceAsync(
