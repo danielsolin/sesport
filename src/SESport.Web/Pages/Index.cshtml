@@ -380,10 +380,33 @@ else
                         </span>
                      }
                      <h3 class="activity-entry-organization">
-                        #@(string.IsNullOrEmpty(
-                           activity.RelatedOrganizationEntities)
-                           ? string.Empty
-                           : $"{activity.RelatedOrganizationEntities} ")
+                        <span class="activity-organization-portrait">
+                           @activity.RelatedOrganizationEntities
+                        </span>
+                        <span class="activity-organization-landscape">
+                           @activity.RelatedOrganizationEntities
+                           @if(
+                              !string.IsNullOrWhiteSpace(
+                                 activity
+                                    .RelatedOrganizationCanonicalEntities
+                              ) &&
+                              !string.Equals(
+                                 activity.RelatedOrganizationEntities,
+                                 activity
+                                    .RelatedOrganizationCanonicalEntities,
+                                 StringComparison.Ordinal
+                              )
+                           )
+                           {
+                              <span class=
+                                 "activity-organization-canonical">
+                                 – @(
+                                    activity
+                                       .RelatedOrganizationCanonicalEntities
+                                 )
+                              </span>
+                           }
+                        </span>
                      </h3>
                      <h2 class="activity-entry-title">
                         @(agendaSection.ActivityGroupTitle ?? activity.Title)

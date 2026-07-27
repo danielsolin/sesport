@@ -1524,7 +1524,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   a.local_end_time,")
          .AppendLine("   a.ends_at,")
          .AppendLine("   a.activity_group_id,")
-         .AppendLine("   ag.title as activity_group_title")
+         .AppendLine("   ag.title as activity_group_title,")
+         .AppendLine(
+            "   coalesce(ro.related_organization_canonical_entities, '') " +
+            "as related_organization_canonical_entities"
+         )
          .AppendLine("from activities a")
          .AppendLine(
             "left join activity_groups ag on ag.id = a.activity_group_id"
@@ -1572,11 +1576,22 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   select string_agg(")
          .AppendLine("      distinct organization_name,")
          .AppendLine("      ', ' order by organization_name")
-         .AppendLine("   ) as related_organization_entities")
+         .AppendLine("   ) as related_organization_entities,")
+         .AppendLine("   string_agg(")
+         .AppendLine("      distinct organization_canonical_name,")
+         .AppendLine("      ', ' order by organization_canonical_name")
+         .AppendLine(
+            "   ) as related_organization_canonical_entities"
+         )
          .AppendLine("   from (")
          .AppendLine("      select distinct")
          .AppendLine("         coalesce(context.alias_name,")
-         .AppendLine("            context.canonical_name) as organization_name")
+         .AppendLine(
+            "            context.canonical_name) as organization_name,"
+         )
+         .AppendLine(
+            "         context.canonical_name as organization_canonical_name"
+         )
          .AppendLine("      from activity_entity_links al")
          .AppendLine("      join entities p on p.id = al.entity_id")
          .AppendLine("      join entities context")
@@ -1608,6 +1623,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "         ro.related_organization_entities, a.local_end_time,"
+         )
+         .AppendLine(
+            "         ro.related_organization_canonical_entities,"
          )
          .AppendLine("         a.ends_at, ag.title")
          .AppendLine(orderClause);
@@ -2287,7 +2305,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                ActivityGroupId = reader.IsDBNull(19)
                   ? null
                   : reader.GetGuid(19),
-               ActivityGroupTitle = ReadString(reader, 20)
+               ActivityGroupTitle = ReadString(reader, 20),
+               RelatedOrganizationCanonicalEntities =
+                  reader.GetString(21)
             }
          );
       }

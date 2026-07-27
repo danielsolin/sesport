@@ -209,6 +209,10 @@ public sealed class ActivityRepositoryTests
             item => item.Id == activityId
          );
          Assert.Equal("Series Alias", activity.RelatedOrganizationEntities);
+         Assert.Equal(
+            "Test Series",
+            activity.RelatedOrganizationCanonicalEntities
+         );
       }
       finally
       {

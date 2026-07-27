@@ -802,6 +802,14 @@
    line-height: 1.2;
 }
 
+.activity-organization-portrait {
+   display: none;
+}
+
+.activity-organization-canonical {
+   margin-left: 0.2em;
+}
+
 .activity-entry-title {
    position: relative;
    margin-top: 4px;
@@ -1204,6 +1212,14 @@
 }
 
 @media (orientation: portrait) {
+   .activity-organization-landscape {
+      display: none;
+   }
+
+   .activity-organization-portrait {
+      display: inline;
+   }
+
    .activity-now-marker {
       display: flex;
    }
