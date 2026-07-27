@@ -1978,13 +1978,21 @@ textarea {
    width: 100%;
    min-height: 32px;
    padding: 5px 8px;
-   border: 1px solid #cfd8d0;
+   border: 1px solid var(--line);
    border-radius: 3px;
-   background: #ffffff;
+   background: var(--subgrid-row);
    color: var(--text);
    font: inherit;
    font-size: 13px;
    line-height: 1.25;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+   border-color: var(--accent);
+   outline: 2px solid var(--subgrid-header);
+   background: var(--subgrid-row-hover);
 }
 
 input[readonly],
