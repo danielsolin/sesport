@@ -63,8 +63,14 @@ internal static class LlamaStructuredOutputRepair
 
    public static void ApplyRepairPrompt(JsonArray messages)
    {
-      var repairPrompt = GetRepairPrompt();
+      ApplyRepairPrompt(messages, GetRepairPrompt());
+   }
 
+   public static void ApplyRepairPrompt(
+      JsonArray messages,
+      string repairPrompt
+   )
+   {
       var repairMessage = new JsonObject
       {
          ["role"] = "system",
@@ -85,11 +91,19 @@ internal static class LlamaStructuredOutputRepair
 
    public static JsonObject CreateRepairPromptTraceEntry(int turn)
    {
+      return CreateRepairPromptTraceEntry(turn, GetRepairPrompt());
+   }
+
+   public static JsonObject CreateRepairPromptTraceEntry(
+      int turn,
+      string repairPrompt
+   )
+   {
       return new JsonObject
       {
          ["kind"] = "repair_prompt",
          ["turn"] = turn,
-         ["content"] = GetRepairPrompt()
+         ["content"] = repairPrompt
       };
    }
 

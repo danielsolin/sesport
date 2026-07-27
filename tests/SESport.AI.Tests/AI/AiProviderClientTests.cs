@@ -102,6 +102,86 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task
+      LlamaServerGenerateAsyncRetriesSuspiciousParticipantNameOnce()
+   {
+      var sourceUrl = "https://example.test/news/line-up";
+      var suspiciousOutput =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"R. (???) ...??...???\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}";
+      var cleanOutput =
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[{\"Name\":\"Armand Duplantis\","
+         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
+         + "\"EvidenceType\":\"ParticipantList\"}]}";
+      var handler = new RecordingHandler(
+         CreateLlamaSubmitReportResponseJson(suspiciousOutput),
+         CreateLlamaSubmitReportResponseJson(cleanOutput)
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson(),
+            conditionalToolsJson: CreateConditionalToolsJson(),
+            jobId: AiJobIds.DecidePrimaryCountryParticipation
+         ),
+         CreatePrompt(
+            CreateParticipationSchemaJsonWithEvidenceType(),
+            maxToolRounds: 4
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(cleanOutput, result.OutputText);
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains(
+         "corrupted participant name",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         "Retry the same report once",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         $"\"name\":\"{LlamaReportSubmission.ToolName}\"",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         "\"kind\":\"repair_prompt\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains(
+         "corrupted participant name",
+         result.ToolTraceJson
+      );
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains(
+         "\"validation_status\":\"accepted\"",
+         result.ToolTraceJson
+      );
+   }
+
+   [Fact]
    public async Task LlamaServerGenerateAsyncUsesModelDrivenToolLoop()
    {
       var handler = new RecordingHandler(

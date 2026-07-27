@@ -35,4 +35,18 @@ public sealed class LlamaRequestFactoryTests
       Assert.DoesNotContain("EvidenceType", prompt);
       Assert.DoesNotContain("participant source", prompt);
    }
+
+   [Fact]
+   public void AddCorruptedParticipantNameRetryPromptIsMinimal()
+   {
+      var messages = new JsonArray();
+
+      LlamaRequestFactory.AddCorruptedParticipantNameRetryPrompt(messages);
+
+      var prompt = messages[0]!["content"]!.GetValue<string>();
+
+      Assert.Contains("corrupted participant name", prompt);
+      Assert.Contains("Retry the same report once", prompt);
+      Assert.DoesNotContain("schema validation", prompt);
+   }
 }

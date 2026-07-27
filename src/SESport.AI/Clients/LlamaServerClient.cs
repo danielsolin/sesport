@@ -144,6 +144,7 @@ public sealed class LlamaServerClient : IAiProviderClient
       var validationContinuationAttempts = 0;
       var finalReportCorrectionAttempts = 0;
       var reportSubmissionPending = false;
+      var corruptedParticipantRetryUsed = false;
       var maxToolRounds = job.RequiresWebSearch
          ? prompt.MaxToolRounds ?? DefaultMaxToolRounds
          : prompt.MaxToolRounds;
@@ -313,13 +314,63 @@ public sealed class LlamaServerClient : IAiProviderClient
                   out var reportSubmission
                ))
                {
-                  reportSubmissionPending = true;
                   toolTrace.Add(
                      LlamaToolTrace.CreateToolSubmissionTraceEntry(
                         turn,
                         reportSubmission
                      )
                   );
+
+                  if(!corruptedParticipantRetryUsed &&
+                     LlamaReportSubmission
+                        .TryGetCorruptedParticipantNameReason(
+                           reportSubmission.Arguments,
+                           out var retryReason
+                        ))
+                  {
+                     corruptedParticipantRetryUsed = true;
+                     toolTrace.Add(
+                        LlamaToolTrace.CreateAssistantTraceEntry(
+                           turn,
+                           responseJson,
+                           toolCalls,
+                           JsonOptions,
+                           validationStatus: "rejected",
+                           validationError: retryReason
+                        )
+                     );
+                     toolTrace.Add(
+                        LlamaStructuredOutputRepair
+                           .CreateRepairPromptTraceEntry(
+                              turn,
+                              LlamaReportSubmission
+                                 .GetCorruptedParticipantNamePrompt()
+                           )
+                     );
+                     await LlamaToolTrace.ReportProgressAsync(
+                        toolTrace,
+                        toolRoundCount,
+                        JsonOptions,
+                        toolTraceUpdated,
+                        cancellationToken
+                     );
+                     LlamaResponseReader.AppendAssistantMessage(
+                        messages,
+                        responseJson,
+                        JsonOptions
+                     );
+                     LlamaRequestFactory
+                        .AddCorruptedParticipantNameRetryPrompt(messages);
+                     LlamaRequestFactory.ApplyToolChoice(
+                        request,
+                        minToolRounds,
+                        toolRoundCount
+                     );
+                     continueWithTools = true;
+                     break;
+                  }
+
+                  reportSubmissionPending = true;
                   await LlamaToolTrace.ReportProgressAsync(
                      toolTrace,
                      toolRoundCount,

@@ -236,6 +236,15 @@ internal static class LlamaRequestFactory
       messages.Add(CreateSystemMessage(prompt));
    }
 
+   public static void AddCorruptedParticipantNameRetryPrompt(
+      JsonArray messages
+   )
+   {
+      messages.Add(CreateSystemMessage(
+         LlamaReportSubmission.GetCorruptedParticipantNamePrompt()
+      ));
+   }
+
    public static void AddToolFormatFeedbackPrompt(
       JsonArray messages,
       string formatError
