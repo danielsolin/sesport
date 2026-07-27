@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.Core.Broadcast;
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Web.Services;
@@ -177,7 +178,7 @@ public class IndexModel(
 
       try
       {
-         var normalizedSports = NormalizeSelectedSports(SelectedSports);
+         var normalizedSports = SportFilter.Normalize(SelectedSports);
          SelectedSports = normalizedSports.Count == 0
             ? [string.Empty]
             : normalizedSports;
@@ -297,18 +298,6 @@ public class IndexModel(
          .ThenBy(broadcast => broadcast.TimeText, StringComparer.Ordinal)
          .ThenBy(broadcast => broadcast.ChannelName)
          .ThenBy(broadcast => broadcast.Title)
-         .ToList();
-   }
-
-   private static List<string> NormalizeSelectedSports(
-      IEnumerable<string> values
-   )
-   {
-      return values
-         .Where(value => !string.IsNullOrWhiteSpace(value))
-         .Select(value => value.Trim())
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
          .ToList();
    }
 

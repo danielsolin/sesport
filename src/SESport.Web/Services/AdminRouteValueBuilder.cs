@@ -1,3 +1,4 @@
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
 namespace SESport.Web.Services;
@@ -73,7 +74,7 @@ internal static class AdminRouteValueBuilder
       IEnumerable<string> selectedSports
    )
    {
-      var normalizedSports = NormalizeSelectedSports(selectedSports);
+      var normalizedSports = SportFilter.Normalize(selectedSports);
 
       for(var index = 0; index < normalizedSports.Count; index++)
       {
@@ -87,7 +88,7 @@ internal static class AdminRouteValueBuilder
       IEnumerable<string> selectedSports
    )
    {
-      var normalizedSports = NormalizeSelectedSports(selectedSports);
+      var normalizedSports = SportFilter.Normalize(selectedSports);
 
       for(var index = 0; index < normalizedSports.Count; index++)
       {
@@ -96,15 +97,4 @@ internal static class AdminRouteValueBuilder
       }
    }
 
-   private static List<string> NormalizeSelectedSports(
-      IEnumerable<string> values
-   )
-   {
-      return values
-         .Where(value => !string.IsNullOrWhiteSpace(value))
-         .Select(value => value.Trim())
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-         .ToList();
-   }
 }

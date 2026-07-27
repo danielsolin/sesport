@@ -430,7 +430,17 @@ public static class BroadcastActivityPrefillBuilder
       return string.Join(
          " ",
          [
-            $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}",
+            string.Concat(
+               localStart.ToString(
+                  DateDisplay.DateTimeMinutesFormat,
+                  CultureInfo.InvariantCulture
+               ),
+               "-",
+               localEnd.ToString(
+                  DateDisplay.TimeOnlyMinutesFormat,
+                  CultureInfo.InvariantCulture
+               )
+            ),
             broadcast.ChannelName,
             broadcast.Title,
             broadcast.Description ?? string.Empty

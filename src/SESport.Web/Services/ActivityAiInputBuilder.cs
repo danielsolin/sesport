@@ -44,8 +44,12 @@ public sealed class ActivityAiInputBuilder(
             activity_type = activity.ActivityType,
             sport = sportName,
             activity_date = DateDisplay.Format(activity.ActivityDate),
-            local_start_time = activity.LocalStartTime?.ToString("HH:mm"),
-            local_end_time = activity.LocalEndTime?.ToString("HH:mm"),
+            local_start_time = activity.LocalStartTime?.ToString(
+               DateDisplay.TimeOnlyMinutesFormat
+            ),
+            local_end_time = activity.LocalEndTime?.ToString(
+               DateDisplay.TimeOnlyMinutesFormat
+            ),
             time_zone_id = activity.TimeZoneId,
             participants = CreatePromptListText(participantNames),
             related_entities = Array.Empty<string>()

@@ -83,10 +83,12 @@
                <tbody>
                   @foreach(var activity in Model.Activities)
                   {
-                     var startTime =
-                        activity.LocalStartTime?.ToString("HH:mm") ?? "?";
-                     var endTime =
-                        activity.LocalEndTime?.ToString("HH:mm") ?? "?";
+                     var startTime = activity.LocalStartTime?.ToString(
+                        DateDisplay.TimeOnlyMinutesFormat
+                     ) ?? "?";
+                     var endTime = activity.LocalEndTime?.ToString(
+                        DateDisplay.TimeOnlyMinutesFormat
+                     ) ?? "?";
                      <tr>
                         <td>
                            @activity.ActivityDate.ToString(

@@ -152,9 +152,13 @@
                      $"{searchUrlBase}{System.Uri.EscapeDataString(
                         activity.Title
                      )}";
-                  var startTime = activity.LocalStartTime?.ToString("HH:mm")
+                  var startTime = activity.LocalStartTime?.ToString(
+                     DateDisplay.TimeOnlyMinutesFormat
+                  )
                      ?? "?";
-                  var endTime = activity.LocalEndTime?.ToString("HH:mm")
+                  var endTime = activity.LocalEndTime?.ToString(
+                     DateDisplay.TimeOnlyMinutesFormat
+                  )
                      ?? "?";
                   <tr class="@(highlightRow
                      ? "activity-description-missing"

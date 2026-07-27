@@ -36,7 +36,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var normalizedSports = NormalizeSelectedSports(sportIds);
+      var normalizedSports = SportFilter.Normalize(sportIds);
       // Timed rows follow sport day; untimed rows keep their stored date.
       var window = SportDay.ForDate(date);
       var start = ToUtc(window.StartDate, window.Cutoff);
@@ -2337,18 +2337,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal)
          ? []
          : reader.GetFieldValue<Guid[]>(ordinal);
-   }
-
-   private static List<string> NormalizeSelectedSports(
-      IEnumerable<string> values
-   )
-   {
-      return values
-         .Where(value => !string.IsNullOrWhiteSpace(value))
-         .Select(value => value.Trim())
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-         .ToList();
    }
 
    private static object BlankToDbNull(string? value)

@@ -365,7 +365,7 @@ public sealed class BroadcastParticipationService(
             sport = NormalizeParticipationSports(broadcast.Categories),
             event_name = broadcast.Title,
             description = broadcast.Description,
-            date = $"{localDate:yyyy-MM-dd}",
+            date = DateDisplay.Format(localDate),
             candidates
          }
       );

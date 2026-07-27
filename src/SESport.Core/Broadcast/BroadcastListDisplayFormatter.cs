@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using SESport.Core.Formatting;
 
 namespace SESport.Core.Broadcast;
@@ -18,7 +20,17 @@ public static class BroadcastListDisplayFormatter
          SportDay.TimeZoneId
       );
 
-      return $"{localStart:yyyy-MM-dd HH:mm}-{localEnd:HH:mm}";
+      return string.Concat(
+         localStart.ToString(
+            DateDisplay.DateTimeMinutesFormat,
+            CultureInfo.InvariantCulture
+         ),
+         "-",
+         localEnd.ToString(
+            DateDisplay.TimeOnlyMinutesFormat,
+            CultureInfo.InvariantCulture
+         )
+      );
    }
 
    public static string FormatCategoriesText(

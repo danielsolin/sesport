@@ -182,7 +182,9 @@ public sealed class PublicActivityTimelineBuilder
          GetDayPhase(timelineStart.Hour),
          GetHourHandAngle(timelineStart),
          $"{timelineStart.Minute * 6}deg",
-         activity.LocalEndTime?.ToString("HH:mm"),
+         activity.LocalEndTime?.ToString(
+            DateDisplay.TimeOnlyMinutesFormat
+         ),
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
          orderedActivities.Count > 1
@@ -201,7 +203,9 @@ public sealed class PublicActivityTimelineBuilder
       return new ActivityAgendaSlot(
          activity,
          TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
-         activity.LocalEndTime?.ToString("HH:mm"),
+         activity.LocalEndTime?.ToString(
+            DateDisplay.TimeOnlyMinutesFormat
+         ),
          activity.EndsAt is not null &&
             activity.StartsAt <= now &&
             activity.EndsAt > now,

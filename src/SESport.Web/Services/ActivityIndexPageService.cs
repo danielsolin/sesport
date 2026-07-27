@@ -31,7 +31,7 @@ public sealed class ActivityIndexPageService(
       var normalizedStatus = NormalizeStatus(status)
          ?? ActivityListStatusIds.All;
       var selectedDate = ResolveSelectedDate(httpContext, date, status);
-      var normalizedSports = NormalizeSelectedSports(selectedSports);
+      var normalizedSports = SportFilter.Normalize(selectedSports);
 
       try
       {
@@ -122,8 +122,15 @@ public sealed class ActivityIndexPageService(
       IEnumerable<string> values
    )
    {
-      var normalizedSports = NormalizeSelectedSports(values);
+      var normalizedSports = SportFilter.Normalize(values);
       return normalizedSports.Count == 0 ? [string.Empty] : normalizedSports;
+   }
+
+   public List<string> NormalizeSelectedSports(
+      IEnumerable<string> values
+   )
+   {
+      return SportFilter.Normalize(values);
    }
 
    public DateOnly ResolveSelectedDate(
@@ -178,18 +185,6 @@ public sealed class ActivityIndexPageService(
          StatusSortColumn => StatusSortColumn,
          _ => TimeSortColumn
       };
-   }
-
-   public List<string> NormalizeSelectedSports(
-      IEnumerable<string> values
-   )
-   {
-      return values
-         .Where(value => !string.IsNullOrWhiteSpace(value))
-         .Select(value => value.Trim())
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-         .ToList();
    }
 
    private static IReadOnlyList<ActivityListItem> SortActivities(
