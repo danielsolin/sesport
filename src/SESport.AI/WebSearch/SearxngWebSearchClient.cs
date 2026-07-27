@@ -128,6 +128,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       var engines = SearxngSearchEngineRotation.NormalizeEngines(
          configuredEngines
       );
+      WebSearchResponse? emptyResponse = null;
 
       for(var attemptOffset = 0;
          attemptOffset < engines.Count;
@@ -143,7 +144,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
          try
          {
-            return await SearchOnceAsync(
+            var response = await SearchOnceAsync(
                query,
                maxResults,
                cancellationToken,
@@ -151,6 +152,13 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                includeSocialMedia,
                timeRange
             );
+
+            if(response.Results.Count > 0)
+            {
+               return response;
+            }
+
+            emptyResponse ??= response;
          }
          catch(OperationCanceledException)
             when(cancellationToken.IsCancellationRequested)
@@ -161,7 +169,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          {
             RateLimiter.RegisterRateLimitedFailure(engine);
 
-            if(attemptOffset == engines.Count - 1)
+            if(attemptOffset == engines.Count - 1 &&
+               emptyResponse is null)
             {
                throw;
             }
@@ -177,7 +186,8 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          {
             RateLimiter.RegisterTransientFailure(engine);
 
-            if(attemptOffset == engines.Count - 1)
+            if(attemptOffset == engines.Count - 1 &&
+               emptyResponse is null)
             {
                throw;
             }
@@ -190,6 +200,11 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
             );
          }
 
+      }
+
+      if(emptyResponse is not null)
+      {
+         return emptyResponse;
       }
 
       throw new InvalidOperationException(
@@ -273,8 +288,10 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
 
       if(results.Count == 0)
       {
-         throw new SearxngEngineUnavailableException(
-            $"SearXNG engine '{engine}' returned no usable results."
+         return new WebSearchResponse(
+            [],
+            $"SearXNG/{engine}",
+            $"engines={engine}"
          );
       }
 

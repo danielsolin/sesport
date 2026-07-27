@@ -289,17 +289,24 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchRotatesWhenDifferentEngineFailureHasNoResults()
+   public async Task SearchContinuesWhenDifferentEngineFailed()
    {
       var handler = new SequenceHandler(
          new SequenceHandler.ResponseSpec(
             HttpStatusCode.OK,
             CreateCaptchaResponseJson("duckduckgo")
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
          )
       );
       var client = new SearxngWebSearchClient(
          new HttpClient(handler),
-         new SearxngWebSearchClientOptions(),
+         new SearxngWebSearchClientOptions
+         {
+            Engines = ["google", "brave"]
+         },
          CreateFastRateLimiter()
       );
 
@@ -313,6 +320,7 @@ public class SearxngWebSearchClientTests
       Assert.Contains("engines=google", handler.RequestBodies[0]);
       Assert.Contains("engines=brave", handler.RequestBodies[1]);
       Assert.Single(response.Results);
+      Assert.Equal("SearXNG/brave", response.Provider);
    }
 
    [Fact]
@@ -444,7 +452,7 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
-   public async Task SearchThrowsWhenEveryEngineReturnsNoResults()
+   public async Task SearchReturnsEmptyWhenEveryEngineHasNoResults()
    {
       var handler = new SequenceHandler(
          new SequenceHandler.ResponseSpec(
@@ -465,17 +473,15 @@ public class SearxngWebSearchClientTests
          CreateFastRateLimiter()
       );
 
-      var exception = await Assert.ThrowsAnyAsync<Exception>(
-         () => client.SearchAsync(
-            "Maja Stark 2026",
-            10,
-            CancellationToken.None
-         )
+      var response = await client.SearchAsync(
+         "Maja Stark 2026",
+         10,
+         CancellationToken.None
       );
 
       Assert.Equal(2, handler.RequestCount);
-      Assert.Contains("privacywall", exception.Message);
-      Assert.Contains("no usable results", exception.Message);
+      Assert.Empty(response.Results);
+      Assert.Equal("SearXNG/mojeek", response.Provider);
    }
 
    [Fact]
