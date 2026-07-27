@@ -135,10 +135,10 @@
 
 .sport-select {
    display: block;
-   flex: 0 0 200px;
+   flex: 0 0 180px;
    position: relative;
-   width: 200px;
-   min-width: 200px;
+   width: 180px;
+   min-width: 180px;
 }
 
 .index-participants {
@@ -219,9 +219,9 @@
 }
 
 .date-select {
-   flex: 0 0 200px;
-   width: 200px;
-   min-width: 200px;
+   flex: 0 0 220px;
+   width: 220px;
+   min-width: 220px;
 }
 
 .date-dropdown {
@@ -242,7 +242,7 @@
    background: #006aa8;
    box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
    color: #ffcc00;
-   font-size: 16px;
+   font-size: 15px;
    font-weight: 800;
    line-height: 1.2;
    cursor: pointer;
@@ -333,6 +333,25 @@
 .date-option-content {
    display: inline-flex;
    align-items: center;
+   flex-wrap: wrap;
+   column-gap: 0.3em;
+}
+
+.date-dropdown-toggle .date-option-content {
+   justify-content: center;
+   width: 100%;
+   text-align: center;
+   transform: translateX(-5px);
+}
+
+.date-option-day,
+.date-option-date {
+   white-space: nowrap;
+}
+
+.date-option-label {
+   display: inline-flex;
+   column-gap: 0.3em;
 }
 
 .date-option-participant-count {
@@ -1073,9 +1092,14 @@
       width: 100%;
    }
 
-   .date-select,
+   .date-select {
+      flex: 1.1 1 0;
+      width: auto;
+      min-width: 140px;
+   }
+
    .sport-select {
-      flex: 1 1 calc(50% - 6px);
+      flex: 0.9 1 0;
       width: auto;
       min-width: 140px;
    }
@@ -1095,7 +1119,7 @@
    border-radius: 999px;
    background: #006aa8;
    color: #ffcc00;
-   font-size: 16px;
+   font-size: 15px;
    font-weight: 800;
    line-height: 1.2;
    cursor: pointer;
@@ -1113,8 +1137,12 @@
 .sport-option-content {
    display: flex;
    align-items: baseline;
+   justify-content: center;
    gap: 5px;
+   width: 100%;
    min-width: 0;
+   text-align: center;
+   transform: translateX(-5px);
 }
 
 .sport-option-name {
@@ -1131,18 +1159,19 @@
 
 .sport-dropdown-chevron {
    display: block;
-   flex: 0 0 auto;
+   position: absolute;
+   top: 50%;
+   right: 16px;
    width: 8px;
    height: 8px;
-   margin-right: 1px;
    border-right: 2px solid #ffcc00;
    border-bottom: 2px solid #ffcc00;
-   transform: translateY(-25%) rotate(45deg);
+   transform: translateY(-65%) rotate(45deg);
    transition: transform 140ms ease;
 }
 
 .sport-select.is-open .sport-dropdown-chevron {
-   transform: translateY(25%) rotate(225deg);
+   transform: translateY(-20%) rotate(225deg);
 }
 
 .sport-dropdown-menu {
@@ -1173,8 +1202,8 @@
    grid-template-columns: minmax(0, 1fr) auto;
    gap: 8px;
    width: 100%;
-   min-height: 48px;
-   padding: 7px 14px 7px 12px;
+   min-height: 40px;
+   padding: 5px 12px 5px 10px;
    border: 1px solid var(--line);
    border-left: 4px solid #ffcc00;
    border-radius: 8px;
@@ -1208,7 +1237,7 @@
 
 .sport-dropdown-menu .index-participants-count {
    color: inherit;
-   font-size: 21px;
+   font-size: 15px;
 }
 
 @media (orientation: portrait) {
@@ -1259,6 +1288,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      justify-content: center;
    }
 
    .activity-group-slot-time {

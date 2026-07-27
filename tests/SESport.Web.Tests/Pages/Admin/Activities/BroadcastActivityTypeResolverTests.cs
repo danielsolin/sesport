@@ -64,6 +64,23 @@ public sealed class BroadcastActivityTypeResolverTests
       Assert.Equal(ActivityType.Race, activityType);
    }
 
+   [Theory]
+   [InlineData("Motocross")]
+   [InlineData("Rally")]
+   [InlineData("Speedway")]
+   public void ResolveActivityTypeReturnsRaceForSpecificMotorSports(
+      string category
+   )
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Swedish round",
+         null,
+         [category]
+      );
+
+      Assert.Equal(ActivityType.Race, activityType);
+   }
+
    [Fact]
    public void ResolveActivityTypeReturnsRaceForCycling()
    {

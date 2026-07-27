@@ -255,10 +255,11 @@ public class IndexModel(
          .Select(item =>
             new DateOption(
                DateDisplay.Format(item.Date),
-               FormatDateOptionLabel(
+               FormatDateOptionDayLabel(
                   item.Date,
                   todayDate
                ),
+               FormatDateOptionDateLabel(item.Date),
                item.ParticipantCount,
                item.Date == selectedDate
             )
@@ -266,7 +267,7 @@ public class IndexModel(
          .ToList();
    }
 
-   private static string FormatDateOptionLabel(
+   private static string FormatDateOptionDayLabel(
       DateOnly date,
       DateOnly todayDate
    )
@@ -281,12 +282,19 @@ public class IndexModel(
             : culture.TextInfo.ToTitleCase(
                date.ToString("dddd", culture)
             );
-      var dateLabel = date.ToString(
+      return label;
+   }
+
+   private static string FormatDateOptionDateLabel(DateOnly date)
+   {
+      var culture = CultureInfo.GetCultureInfo(
+         PrimaryCountry.CultureName
+      );
+
+      return date.ToString(
          "d MMMM",
          culture
       );
-
-      return $"{label} {dateLabel}";
    }
 
 }
@@ -324,10 +332,14 @@ public enum ActivityDayPhase
 
 public sealed record DateOption(
    string Value,
-   string Label,
+   string DayLabel,
+   string DateLabel,
    int ParticipantCount,
    bool IsSelected
-);
+)
+{
+   public string Label => $"{DayLabel} {DateLabel}";
+}
 
 public sealed record SportParticipantCount(
    string SportId,

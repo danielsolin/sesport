@@ -58,7 +58,12 @@
                     aria-controls="date-dropdown-menu"
                     data-date-dropdown-toggle>
                <span class="date-option-content">
-                  @selectedDateOption.Label
+                  <span class="date-option-day">
+                     @selectedDateOption.DayLabel
+                  </span>
+                  <span class="date-option-date">
+                     @selectedDateOption.DateLabel
+                  </span>
                </span>
                <span class="date-dropdown-chevron"
                      aria-hidden="true"></span>
@@ -83,11 +88,25 @@
                      <span class="date-option-content">
                         @if(dateOption.IsSelected)
                         {
-                           @dateOption.Label
+                           <span class="date-option-label">
+                              <span class="date-option-day">
+                                 @dateOption.DayLabel
+                              </span>
+                              <span class="date-option-date">
+                                 @dateOption.DateLabel
+                              </span>
+                           </span>
                         }
                         else
                         {
-                           @dateOption.Label
+                           <span class="date-option-label">
+                              <span class="date-option-day">
+                                 @dateOption.DayLabel
+                              </span>
+                              <span class="date-option-date">
+                                 @dateOption.DateLabel
+                              </span>
+                           </span>
                            <span class="date-option-participant-count">
                               <img class="date-option-country-flag"
                                    src="~/images/flags/se.svg"

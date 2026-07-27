@@ -37,7 +37,13 @@ public static class BroadcastActivityTypeResolver
          ContainsAny(
             normalizedCategories,
             normalizedText,
-            ["motorsport", "cycling"]
+            [
+               SportIds.Motorsport,
+               SportIds.Motocross,
+               SportIds.Rally,
+               SportIds.Speedway,
+               SportIds.Cycling
+            ]
          )
       )
       {
