@@ -47,15 +47,33 @@ public sealed class ActivityEditPageService(
             })
             .ToList();
 
-         var organizationOptions = (
+         var organizations = (
             await adminRepository.GetOrganizationEntityOptionsAsync(
                cancellationToken,
                sportId
             )
-         )
+         ).ToList();
+
+         if(organizationEntityId is not null &&
+            organizations.All(
+               entity => entity.Id != organizationEntityId.Value
+            ))
+         {
+            organizations.AddRange(
+               await adminRepository.GetEntityLinkOptionsByIdsAsync(
+                  [organizationEntityId.Value],
+                  null,
+                  cancellationToken
+               )
+            );
+         }
+
+         var organizationOptions = organizations
+            .OrderBy(entity => entity.Name)
             .Select(entity => new SelectListItem(
                $"{entity.Name} ({entity.Sport})",
-               entity.Id.ToString()
+               entity.Id.ToString(),
+               entity.Id == organizationEntityId
             ))
             .ToList();
 
@@ -340,13 +358,9 @@ public sealed class ActivityEditPageService(
          )
          .ToList() ?? [];
 
-      var sportId = BroadcastCategorySportIdResolver.ResolveSportId(
-         broadcasts.SelectMany(broadcast => broadcast.Categories)
-      );
-
-      if(!string.IsNullOrWhiteSpace(sportId))
+      if(!string.IsNullOrWhiteSpace(firstBroadcast.EntitySportId))
       {
-         activity.SportId = sportId;
+         activity.SportId = firstBroadcast.EntitySportId;
       }
 
       activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);

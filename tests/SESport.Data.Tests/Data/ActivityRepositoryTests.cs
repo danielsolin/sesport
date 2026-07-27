@@ -27,6 +27,65 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task SaveAsyncAcceptsPersonWithoutOrganization()
+   {
+      var personId = Guid.NewGuid();
+      Guid? activityId = null;
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "Person Without Organization",
+            TrackedEntityTypeIds.Person
+         );
+
+         activityId = await repository.SaveAsync(
+            new ActivityEditModel
+            {
+               Title = "Activity Without Organization",
+               ActivityType = "Match",
+               SportId = "football",
+               ActivityDate = DistantActivityDate,
+               TimeZoneId = SportDay.TimeZoneId,
+               LinkedEntityIds = [personId]
+            },
+            CancellationToken.None
+         );
+
+         await using var command = dataSource.CreateCommand(
+            """
+            select organization_entity_id
+            from activity_entity_links
+            where activity_id = @activity_id
+               and entity_id = @entity_id
+            """
+         );
+         command.Parameters.AddWithValue("activity_id", activityId.Value);
+         command.Parameters.AddWithValue("entity_id", personId);
+
+         Assert.Equal(DBNull.Value, await command.ExecuteScalarAsync());
+      }
+      finally
+      {
+         if(activityId is not null)
+         {
+            await DeleteActivityEntityLinksAsync(
+               dataSource,
+               activityId.Value
+            );
+            await DeleteActivityAsync(dataSource, activityId.Value);
+         }
+
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task GetActivitiesAsyncIncludesSeriesOrganizations()
    {
       var selectedDate = DistantActivityDate;

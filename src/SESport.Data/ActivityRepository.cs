@@ -1827,10 +1827,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          command.Parameters.AddWithValue("id", Guid.NewGuid());
          command.Parameters.AddWithValue("activity_id", activityId);
          command.Parameters.AddWithValue("entity_id", entityId);
-         command.Parameters.AddWithValue(
+         command.Parameters.Add(
             "organization_entity_id",
-            organizationEntityId ?? (object)DBNull.Value
-         );
+            NpgsqlDbType.Uuid
+         ).Value = organizationEntityId ?? (object)DBNull.Value;
          command.Parameters.AddWithValue(
             "is_active",
             !inactiveEntityIds.Contains(entityId)

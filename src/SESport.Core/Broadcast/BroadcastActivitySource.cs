@@ -11,5 +11,6 @@ public sealed record BroadcastActivitySource(
    Guid? EntityId = null,
    string? ActivityGroupSourceKindId = null,
    Guid? ActivityGroupSourceActivityId = null,
-   string? ActivityGroupDraftTitle = null
+   string? ActivityGroupDraftTitle = null,
+   string? EntitySportId = null
 );

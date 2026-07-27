@@ -113,6 +113,43 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task LoadOptionsAsyncKeepsSelectedCrossSportOrganization()
+   {
+      var organizationId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            $"Tour {organizationId:N}",
+            TrackedEntityTypeIds.Tour,
+            "cycling"
+         );
+
+         var options = await fixture.Service.LoadOptionsAsync(
+            [],
+            organizationId,
+            CancellationToken.None,
+            "mountain-biking"
+         );
+
+         var organization = Assert.Single(
+            options.OrganizationEntities,
+            option => option.Value == organizationId.ToString()
+         );
+         Assert.True(organization.Selected);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task QueueFactsAsyncIncludesOrganizationType()
    {
       var organizationId = Guid.NewGuid();
@@ -247,6 +284,7 @@ public sealed class ActivityEditPageServiceTests
          Assert.Equal(runId, activity.ParticipationRunId);
          Assert.Equal(organizationId, activity.OrganizationEntityId);
          Assert.Equal([personId], activity.LinkedEntityIds);
+         Assert.Equal("football", activity.SportId);
          Assert.Equal(DistantActivityDate, activity.ActivityDate);
          Assert.Equal(new TimeOnly(12, 0), activity.LocalStartTime);
          Assert.Equal(new TimeOnly(14, 0), activity.LocalEndTime);

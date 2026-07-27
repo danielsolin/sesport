@@ -197,21 +197,23 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       const string sql = """
          select
-            id,
-            entity_id,
-            channel_id,
-            channel_name,
-            title,
-            description,
-            categories,
-            starts_at,
-            ends_at,
-            activity_group_source_kind_id,
-            activity_group_source_activity_id,
-            activity_group_draft_title
-         from broadcasts
-         where id = any(@ids)
-         order by starts_at, channel_name nulls last, channel_id, title
+            b.id,
+            b.entity_id,
+            b.channel_id,
+            b.channel_name,
+            b.title,
+            b.description,
+            b.categories,
+            b.starts_at,
+            b.ends_at,
+            b.activity_group_source_kind_id,
+            b.activity_group_source_activity_id,
+            b.activity_group_draft_title,
+            e.sport_id
+         from broadcasts b
+         left join entities e on e.id = b.entity_id
+         where b.id = any(@ids)
+         order by b.starts_at, b.channel_name nulls last, b.channel_id, b.title
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -239,7 +241,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
                reader.IsDBNull(1) ? null : reader.GetGuid(1),
                ReadString(reader, 9),
                reader.IsDBNull(10) ? null : reader.GetGuid(10),
-               ReadString(reader, 11)
+               ReadString(reader, 11),
+               ReadString(reader, 12)
             )
          );
       }
@@ -598,19 +601,21 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          select
-            id,
-            entity_id,
-            channel_id,
-            channel_name,
-            title,
-            description,
-            categories,
-            starts_at,
-            ends_at,
-            activity_group_source_kind_id,
-            activity_group_source_activity_id
-         from broadcasts
-         where id = @id
+            b.id,
+            b.entity_id,
+            b.channel_id,
+            b.channel_name,
+            b.title,
+            b.description,
+            b.categories,
+            b.starts_at,
+            b.ends_at,
+            b.activity_group_source_kind_id,
+            b.activity_group_source_activity_id,
+            e.sport_id
+         from broadcasts b
+         left join entities e on e.id = b.entity_id
+         where b.id = @id
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
@@ -637,7 +642,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.GetFieldValue<DateTimeOffset>(8),
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
          ReadString(reader, 9),
-         reader.IsDBNull(10) ? null : reader.GetGuid(10)
+         reader.IsDBNull(10) ? null : reader.GetGuid(10),
+         EntitySportId: ReadString(reader, 11)
       );
    }
 
@@ -649,17 +655,12 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var categorySportId = BroadcastCategorySportIdResolver.ResolveSportId(
-         broadcast.Categories
+      var sportId = await GetOrganizationSportIdAsync(
+         connection,
+         transaction,
+         organizationEntityId,
+         cancellationToken
       );
-      var sportId = string.IsNullOrWhiteSpace(categorySportId)
-         ? await GetOrganizationSportIdAsync(
-            connection,
-            transaction,
-            organizationEntityId,
-            cancellationToken
-         )
-         : categorySportId;
 
       if(string.IsNullOrWhiteSpace(sportId) ||
          string.IsNullOrWhiteSpace(broadcast.Title))
