@@ -9,5 +9,5 @@ public static class AiWorkerDefaults
    public static readonly TimeSpan RunTimeoutSweepInterval =
       TimeSpan.FromMinutes(10);
 
-   public const int ActivityTeaserCatchUpMaxRuns = 50;
+   public const int ActivityAiResultCatchUpMaxRuns = 50;
 }

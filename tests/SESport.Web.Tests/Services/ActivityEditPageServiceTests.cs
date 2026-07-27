@@ -2,6 +2,7 @@ using Npgsql;
 using System.Text.Json;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Hosting;
 
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
@@ -927,6 +928,59 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task SaveAsyncUsesApplicationLifetimeForAutomation()
+   {
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var requestCancellation = new CancellationTokenSource();
+      var title = $"Automation token {Guid.NewGuid():N}";
+      Guid? savedActivityId = null;
+
+      try
+      {
+         var activity = new ActivityEditModel
+         {
+            Title = title,
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = DistantActivityDate,
+            TimeZoneId = SportDay.TimeZoneId
+         };
+
+         await fixture.Service.SaveAsync(
+            activity,
+            requestCancellation.Token
+         );
+
+         var activityInfo = await GetActivityInfoAsync(
+            dataSource,
+            title,
+            DistantActivityDate,
+            "football"
+         );
+         savedActivityId = activityInfo.ActivityId;
+
+         Assert.Equal(
+            fixture.ApplicationLifetime.ApplicationStopping,
+            fixture.AutomationService.CancellationToken
+         );
+         Assert.NotEqual(
+            requestCancellation.Token,
+            fixture.AutomationService.CancellationToken
+         );
+      }
+      finally
+      {
+         requestCancellation.Dispose();
+
+         if(savedActivityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, savedActivityId.Value);
+         }
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncExpandsPairParticipants()
    {
       var organizationId = Guid.NewGuid();
@@ -1116,13 +1170,8 @@ public sealed class ActivityEditPageServiceTests
          activityRepository,
          adminRepository
       );
-      var automationService = new AiAutomationService(
-         new AiAutomationRepository(dataSource),
-         activityRepository,
-         inputBuilder,
-         jobRunner,
-         NullLogger<AiAutomationService>.Instance
-      );
+      var automationService = new CapturingAiAutomationService();
+      var applicationLifetime = new TestHostApplicationLifetime();
 
       return new ActivityEditPageServiceFixture(
          new ActivityEditPageService(
@@ -1133,10 +1182,13 @@ public sealed class ActivityEditPageServiceTests
             jobRunner,
             inputBuilder,
             automationService,
+            applicationLifetime,
             NullLogger<ActivityEditPageService>.Instance
          ),
          participationService,
-         jobRunner
+         jobRunner,
+         automationService,
+         applicationLifetime
       );
    }
 
@@ -1198,8 +1250,24 @@ public sealed class ActivityEditPageServiceTests
    private sealed record ActivityEditPageServiceFixture(
       ActivityEditPageService Service,
       BroadcastParticipationService ParticipationService,
-      CapturingAiJobRunner JobRunner
+      CapturingAiJobRunner JobRunner,
+      CapturingAiAutomationService AutomationService,
+      TestHostApplicationLifetime ApplicationLifetime
    );
+
+   private sealed class CapturingAiAutomationService : IAiAutomationService
+   {
+      public CancellationToken CancellationToken { get; private set; }
+
+      public Task HandleActivityCreatedAsync(
+         Guid activityId,
+         CancellationToken cancellationToken
+      )
+      {
+         CancellationToken = cancellationToken;
+         return Task.CompletedTask;
+      }
+   }
 
    private sealed class CapturingAiJobRunner : IAiJobRunner
    {
@@ -1240,6 +1308,20 @@ public sealed class ActivityEditPageServiceTests
                null
             )
          );
+      }
+   }
+
+   private sealed class TestHostApplicationLifetime
+      : IHostApplicationLifetime
+   {
+      public CancellationToken ApplicationStarted => CancellationToken.None;
+
+      public CancellationToken ApplicationStopping => CancellationToken.None;
+
+      public CancellationToken ApplicationStopped => CancellationToken.None;
+
+      public void StopApplication()
+      {
       }
    }
 

@@ -17,7 +17,8 @@ public sealed class ActivityEditPageService(
    BroadcastParticipationService participationService,
    IAiJobRunner aiJobRunner,
    ActivityAiInputBuilder aiInputBuilder,
-   AiAutomationService automationService,
+   IAiAutomationService automationService,
+   IHostApplicationLifetime applicationLifetime,
    ILogger<ActivityEditPageService> logger
 )
 {
@@ -207,7 +208,7 @@ public sealed class ActivityEditPageService(
       {
          await automationService.HandleActivityCreatedAsync(
             activityId,
-            cancellationToken
+            applicationLifetime.ApplicationStopping
          );
       }
    }

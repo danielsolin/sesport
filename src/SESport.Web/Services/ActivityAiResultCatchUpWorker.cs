@@ -5,9 +5,9 @@ using SESport.Core.Configuration;
 
 namespace SESport.Web.Services;
 
-public sealed class ActivityTeaserCatchUpWorker(
+public sealed class ActivityAiResultCatchUpWorker(
    IServiceScopeFactory scopeFactory,
-   ILogger<ActivityTeaserCatchUpWorker> logger
+   ILogger<ActivityAiResultCatchUpWorker> logger
 ) : BackgroundService
 {
    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -24,13 +24,13 @@ public sealed class ActivityTeaserCatchUpWorker(
 
          var runs = await aiRepository
                .GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
-               AiWorkerDefaults.ActivityTeaserCatchUpMaxRuns,
+               AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
             );
 
          var factsRuns = await aiRepository
                .GetUnappliedCompletedActivityFactsRunsAsync(
-               AiWorkerDefaults.ActivityTeaserCatchUpMaxRuns,
+               AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
             );
 
@@ -100,7 +100,7 @@ public sealed class ActivityTeaserCatchUpWorker(
       {
          logger.LogError(
             exception,
-            "Activity teaser catch-up failed."
+            "Activity AI result catch-up failed."
          );
       }
    }
