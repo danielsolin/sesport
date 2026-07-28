@@ -74,6 +74,45 @@ public sealed class IndexMarkupTests
    }
 
    [Fact]
+   public void GetDateRowClassUsesLighterYellowWhenVisibleBroadcastsExist()
+   {
+      var date = CreateDateSummary(1, 0, 1, 0);
+      var rowClass =
+         SESport.Web.Pages.Admin.Dashboard.IndexModel.GetDateRowClass(
+            date
+         );
+
+      Assert.Equal(
+         "dashboard-attention-row dashboard-attention-row-light",
+         rowClass
+      );
+   }
+
+   [Fact]
+   public void GetDateRowClassUsesRegularYellowForOtherAttention()
+   {
+      var date = CreateDateSummary(1, 1, 0, 0);
+      var rowClass =
+         SESport.Web.Pages.Admin.Dashboard.IndexModel.GetDateRowClass(
+            date
+         );
+
+      Assert.Equal("dashboard-attention-row", rowClass);
+   }
+
+   [Fact]
+   public void GetDateRowClassLeavesNormalRowsUnstyled()
+   {
+      var date = CreateDateSummary(0, 0, 0, 0);
+      var rowClass =
+         SESport.Web.Pages.Admin.Dashboard.IndexModel.GetDateRowClass(
+            date
+         );
+
+      Assert.Equal(string.Empty, rowClass);
+   }
+
+   [Fact]
    public void SourceIssueLabelReflectsGroupScope()
    {
       var groupedIssue = CreateSourceIssue(hasNoGroup: false);
@@ -87,6 +126,22 @@ public sealed class IndexMarkupTests
       Assert.Contains("No source in group", groupedLabels);
       Assert.Contains("No source", ungroupedLabels);
       Assert.DoesNotContain("No direct source", groupedLabels);
+   }
+
+   private static SESport.Data.DashboardDateSummary CreateDateSummary(
+      int visibleBroadcastCount,
+      int unreviewedBroadcastCount,
+      int publishedActivityCount,
+      int draftActivityCount
+   )
+   {
+      return new SESport.Data.DashboardDateSummary(
+         new DateOnly(2199, 12, 1),
+         visibleBroadcastCount,
+         unreviewedBroadcastCount,
+         publishedActivityCount,
+         draftActivityCount
+      );
    }
 
    private static SESport.Data.DashboardActivityIssue CreateSourceIssue(

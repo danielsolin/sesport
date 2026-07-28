@@ -83,14 +83,23 @@ public class IndexModel(DashboardRepository repository) : PageModel
       return labels;
    }
 
-   public static bool DateNeedsAttention(DashboardDateSummary date)
+   public static string GetDateRowClass(DashboardDateSummary date)
    {
-      return date.DraftActivityCount > 0
+      if(
+         date.DraftActivityCount > 0
          || date.UnreviewedBroadcastCount > 0
-         || (
-            date.VisibleBroadcastCount > 0
-            && date.PublishedActivityCount == 0
-         );
+      )
+      {
+         return "dashboard-attention-row";
+      }
+
+      if(date.VisibleBroadcastCount > 0)
+      {
+         return
+            "dashboard-attention-row dashboard-attention-row-light";
+      }
+
+      return string.Empty;
    }
 
    public Dictionary<string, string?> GetActivityDateRouteValues(

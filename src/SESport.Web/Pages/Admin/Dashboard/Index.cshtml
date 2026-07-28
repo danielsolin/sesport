@@ -125,9 +125,7 @@ else if(Model.Dashboard is not null)
             <tbody>
                @foreach(var date in dashboard.Dates)
                {
-                  <tr class="@(IndexModel.DateNeedsAttention(date)
-                     ? "dashboard-attention-row"
-                     : string.Empty)">
+                  <tr class="@(IndexModel.GetDateRowClass(date))">
                      <td class="dashboard-date-label">
                         <strong>
                            <a asp-page="/Admin/Broadcasts/Index"

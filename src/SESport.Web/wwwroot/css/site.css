@@ -2175,6 +2175,11 @@ textarea {
    background: var(--warning-bg);
 }
 
+.admin-table-hover tbody tr.dashboard-attention-row-light > td,
+.admin-table-hover tbody tr.dashboard-attention-row-light:hover > td {
+   background: #fff8d6;
+}
+
 .dashboard-issue-list {
    display: flex;
    flex-wrap: wrap;
