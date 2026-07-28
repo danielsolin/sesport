@@ -2170,14 +2170,17 @@ textarea {
    text-align: left;
 }
 
-.admin-table-hover tbody tr.dashboard-attention-row > td,
-.admin-table-hover tbody tr.dashboard-attention-row:hover > td {
+.admin-table-hover tbody tr.dashboard-attention-row > td {
    background: var(--warning-bg);
 }
 
-.admin-table-hover tbody tr.dashboard-attention-row-light > td,
-.admin-table-hover tbody tr.dashboard-attention-row-light:hover > td {
+.admin-table-hover tbody tr.dashboard-attention-row-light > td {
    background: #fff8d6;
+}
+
+.admin-table-hover tbody tr.dashboard-attention-row:hover > td,
+.admin-table-hover tbody tr.dashboard-attention-row-light:hover > td {
+   background: #edf3ee;
 }
 
 .dashboard-issue-list {
