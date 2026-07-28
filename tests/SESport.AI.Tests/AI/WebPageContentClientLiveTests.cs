@@ -40,6 +40,10 @@ public class WebPageContentClientLiveTests
       "https://www.procyclingstats.com/race/" +
       "tour-de-l-ain/2026/startlist"
    );
+   private static readonly Uri WorldTableTennisLiveTestUri = new(
+      "https://www.worldtabletennis.com/eventInfo?selectedTab=" +
+      "Player%20List&eventId=3245"
+   );
 
    [Fact]
    public async Task FetchProCyclingStatsStartListKeepsFlagCountries()
@@ -113,6 +117,43 @@ public class WebPageContentClientLiveTests
       );
       Assert.Contains(PrimaryCountry.ThreeLetterCode, page.MainText);
       Assert.DoesNotContain("SWE_sm", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchWorldTableTennisPlayerListPageHydrates()
+   {
+      if(!ShouldRunLiveTest())
+      {
+         return;
+      }
+
+      using var httpClient = CreateHttpClient();
+      var client = new WebPageContentClient(httpClient);
+
+      var page = await client.FetchAsync(
+         WorldTableTennisLiveTestUri.ToString(),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal("playwright", page!.Fetcher);
+      Assert.True(page.HasBodyText);
+      Assert.Contains(
+         "Player List",
+         page.MainTextFull,
+         StringComparison.OrdinalIgnoreCase
+      );
+      Assert.True(
+         page.MainTextFull.Contains(
+            "Tomokazu HARIMOTO",
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         page.MainTextFull.Contains(
+            "Felix LEBRUN",
+            StringComparison.OrdinalIgnoreCase
+         ),
+         page.MainTextFull
+      );
    }
 
    [Fact]

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using Microsoft.Playwright;
 
 namespace SESport.AI.WebPages;
@@ -48,16 +50,25 @@ internal static class WebPageBrowserPageFetcher
 
          await using var page = await context.NewPageAsync()
             .WaitAsync(cancellationToken);
-         await page.GotoAsync(
-            absoluteUrl.ToString(),
-            new PageGotoOptions
-            {
-               WaitUntil = WaitUntilState.DOMContentLoaded,
-               Timeout = (float)
-                  WebPageFetchDefaults.BrowserNavigationTimeout
-                     .TotalMilliseconds
-            }
-         ).WaitAsync(cancellationToken);
+         try
+         {
+            await page.GotoAsync(
+               absoluteUrl.ToString(),
+               new PageGotoOptions
+               {
+                  WaitUntil = WaitUntilState.DOMContentLoaded,
+                  Timeout = (float)
+                     WebPageFetchDefaults.BrowserNavigationTimeout
+                        .TotalMilliseconds
+               }
+            ).WaitAsync(cancellationToken);
+         }
+         catch(TimeoutException)
+         {
+            // Some SPA pages keep loading long enough to miss the initial
+            // DOMContentLoaded wait, but still render useful content after
+            // the browser is allowed to continue.
+         }
 
          try
          {
@@ -147,82 +158,90 @@ internal static class WebPageBrowserPageFetcher
       }
    }
 
-   private static Task<WebPageImageCandidate[]> ExtractRelevantImagesAsync(
+   private static async Task<WebPageImageCandidate[]> ExtractRelevantImagesAsync(
       IPage page
    )
    {
       var script = $$"""
-         () => Array.from(document.images)
-            .map(image => {
-               const width = image.naturalWidth;
-               const height = image.naturalHeight;
-               const url = image.currentSrc || image.src;
-               const details = [
-                  url,
-                  image.alt,
-                  image.className
-               ].join(" ").toLowerCase();
-               const semanticTerms = [
-                  "entry",
-                  "start",
-                  "result",
-                  "driver",
-                  "participant",
-                  "document",
-                  "list"
-               ];
-               const semanticMatch = semanticTerms.some(
-                  term => details.includes(term)
-               );
-               const inContent = Boolean(image.closest(
-                  "main, article, [role='main'], .content, .field"
-               ));
+         () => JSON.stringify(
+            Array.from(document.images)
+               .map(image => {
+                  const width = image.naturalWidth;
+                  const height = image.naturalHeight;
+                  const url = image.currentSrc || image.src;
+                  const details = [
+                     url,
+                     image.alt,
+                     image.className
+                  ].join(" ").toLowerCase();
+                  const semanticTerms = [
+                     "entry",
+                     "start",
+                     "result",
+                     "driver",
+                     "participant",
+                     "document",
+                     "list"
+                  ];
+                  const semanticMatch = semanticTerms.some(
+                     term => details.includes(term)
+                  );
+                  const inContent = Boolean(image.closest(
+                     "main, article, [role='main'], .content, .field"
+                  ));
 
-               return {
+                  return {
+                     url,
+                     width,
+                     height,
+                     alt: image.alt || null,
+                     semanticMatch,
+                     score:
+                        (semanticMatch ? 2 : 0) +
+                        (inContent ? 1 : 0) +
+                        Math.min(width * height / 1000000, 1)
+                  };
+               })
+               .filter(image =>
+                  (
+                     image.semanticMatch ||
+                     (
+                        image.width >=
+                           {{WebPageFetchDefaults.ImageOcrMinimumWidth}} &&
+                        image.height >=
+                           {{WebPageFetchDefaults.ImageOcrMinimumHeight}} &&
+                        image.width * image.height >=
+                           {{WebPageFetchDefaults.ImageOcrMinimumArea}}
+                     )
+                  ) &&
+                  /^https?:/i.test(image.url)
+               )
+               .filter((image, index, images) =>
+                  images.findIndex(item => item.url === image.url) === index
+               )
+               .sort((left, right) => right.score - left.score)
+               .slice(
+                  0,
+                  {{WebPageFetchDefaults.ImageOcrMaximumCandidateCount}}
+               )
+               .map(({ url, width, height, alt }) => ({
                   url,
                   width,
                   height,
-                  alt: image.alt || null,
-                  semanticMatch,
-                  score:
-                     (semanticMatch ? 2 : 0) +
-                     (inContent ? 1 : 0) +
-                     Math.min(width * height / 1000000, 1)
-               };
-            })
-            .filter(image =>
-               (
-                  image.semanticMatch ||
-                  (
-                     image.width >=
-                        {{WebPageFetchDefaults.ImageOcrMinimumWidth}} &&
-                     image.height >=
-                        {{WebPageFetchDefaults.ImageOcrMinimumHeight}} &&
-                     image.width * image.height >=
-                        {{WebPageFetchDefaults.ImageOcrMinimumArea}}
-                  )
-               ) &&
-               /^https?:/i.test(image.url)
-            )
-            .filter((image, index, images) =>
-               images.findIndex(item => item.url === image.url) === index
-            )
-            .sort((left, right) => right.score - left.score)
-            .slice(
-               0,
-               {{WebPageFetchDefaults.ImageOcrMaximumCandidateCount}}
-            )
-            .map(({ url, width, height, alt }) => ({
-               url,
-               width,
-               height,
-               alt
-            }))
+                  alt
+               }))
+         )
          """;
 
-      return page.EvaluateAsync<WebPageImageCandidate[]>(
+      var imagesJson = await page.EvaluateAsync<string>(
          script
       );
+      var images = JsonSerializer.Deserialize<WebPageImageCandidate[]>(
+         imagesJson ?? "[]",
+         new JsonSerializerOptions(JsonSerializerDefaults.Web)
+      );
+
+      return images ?? [];
    }
 
    private static async Task ScrollThroughPageAsync(
