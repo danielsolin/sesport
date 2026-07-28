@@ -2,7 +2,7 @@ using Npgsql;
 
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
-using SESport.Data.Broadcast;
+using SESport.Data.Models;
 
 using CoreBroadcast = SESport.Core.Broadcast.Broadcast;
 

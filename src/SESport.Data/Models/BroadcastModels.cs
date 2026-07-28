@@ -37,3 +37,15 @@ public sealed record BroadcastCategoryOption(
    string Name,
    bool IsSelected
 );
+
+public sealed record BroadcastSaveResult(
+   int SavedCount,
+   int InsertedCount,
+   int UpdatedCount
+);
+
+public sealed record BroadcastIgnoreRule(
+   string Kind,
+   string Value,
+   string? SourceKey
+);
