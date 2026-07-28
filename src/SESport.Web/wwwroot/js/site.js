@@ -44,6 +44,7 @@
    const participantCreateUrlSelector = "[data-create-participant-url]";
    const participationStatusUrlSelector =
       "[data-check-participation-status-url]";
+   const adminDateInputSelector = "input[type='date']";
    const runStatusesUrlSelector = "[data-run-statuses-url]";
    const runInlineEditUrlSelector = "[data-run-inline-edit-url]";
    const runRowSelector = "[data-ai-run-id]";
@@ -105,6 +106,7 @@
    window.initializeEntitySearch?.(document);
    initializePersonGenderVisibility();
    initializeGetFormRestoration();
+   initializeAdminDateSteppers();
    initializeEntityInlineEditing();
    window.initializeEntityInlineEditing = initializeEntityInlineEditing;
    window.initializeBroadcastInlineEditing =
@@ -1178,6 +1180,139 @@
 
       window.addEventListener("pageshow", restore);
       restore();
+   }
+
+   function initializeAdminDateSteppers(root = document)
+   {
+      if(!isAdminPath)
+      {
+         return;
+      }
+
+      root.querySelectorAll(adminDateInputSelector).forEach(input => {
+         if(!(input instanceof HTMLInputElement)
+            || input.dataset.adminDateStepperInitialized === "true"
+            || input.readOnly
+            || input.disabled)
+         {
+            return;
+         }
+
+         input.dataset.adminDateStepperInitialized = "true";
+
+         const label = input.closest("label");
+
+         if(label instanceof HTMLLabelElement)
+         {
+            label.classList.add("admin-date-field");
+         }
+
+         const stepper = document.createElement("div");
+         stepper.className = "admin-date-stepper";
+
+         const previousButton = createAdminDateStepperButton(
+            "<<",
+            "Previous day"
+         );
+         const nextButton = createAdminDateStepperButton(
+            ">>",
+            "Next day"
+         );
+
+         previousButton.addEventListener("click", () => {
+            shiftAdminDateInput(input, -1);
+         });
+         nextButton.addEventListener("click", () => {
+            shiftAdminDateInput(input, 1);
+         });
+
+         stepper.append(previousButton, nextButton);
+         input.after(stepper);
+      });
+   }
+
+   function createAdminDateStepperButton(text, label)
+   {
+      const button = document.createElement("button");
+
+      button.type = "button";
+      button.className = "admin-date-stepper-button";
+      button.setAttribute("aria-label", label);
+      button.textContent = text;
+
+      return button;
+   }
+
+   function shiftAdminDateInput(input, dayOffset)
+   {
+      const nextDate = getAdminDateOffset(input.value, dayOffset);
+
+      if(nextDate === null)
+      {
+         return;
+      }
+
+      input.value = nextDate;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+   }
+
+   function getAdminDateOffset(value, dayOffset)
+   {
+      const parsedDate = parseAdminDateValue(value);
+
+      if(parsedDate instanceof Date)
+      {
+         parsedDate.setDate(parsedDate.getDate() + dayOffset);
+         return formatAdminDateValue(parsedDate);
+      }
+
+      return formatAdminDateValue(getAdminDateRelativeToToday(dayOffset));
+   }
+
+   function parseAdminDateValue(value)
+   {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+         value.trim()
+      );
+
+      if(match === null)
+      {
+         return null;
+      }
+
+      const year = Number.parseInt(match[1], 10);
+      const month = Number.parseInt(match[2], 10);
+      const day = Number.parseInt(match[3], 10);
+      const parsedDate = new Date(year, month - 1, day, 12);
+
+      if(parsedDate.getFullYear() !== year
+         || parsedDate.getMonth() !== month - 1
+         || parsedDate.getDate() !== day)
+      {
+         return null;
+      }
+
+      return parsedDate;
+   }
+
+   function getAdminDateRelativeToToday(dayOffset)
+   {
+      const today = new Date();
+
+      today.setHours(12, 0, 0, 0);
+      today.setDate(today.getDate() + dayOffset);
+
+      return today;
+   }
+
+   function formatAdminDateValue(date)
+   {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
    }
 
    function initializeTeaserGeneration(root = document)
@@ -4666,6 +4801,7 @@
          }
 
          target.replaceWith(nextTarget);
+         initializeAdminDateSteppers(nextTarget);
          initializeCheckboxToggles(nextTarget);
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
@@ -4731,6 +4867,7 @@
          }
 
          target.replaceWith(nextTarget);
+         initializeAdminDateSteppers(nextTarget);
          initializeCheckboxToggles(nextTarget);
          initializeCheckboxVisibility(nextTarget);
          initializeTeaserGeneration(nextTarget);
