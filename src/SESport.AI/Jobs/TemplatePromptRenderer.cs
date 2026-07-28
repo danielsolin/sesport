@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
 
-namespace SESport.AI.Prompts;
+namespace SESport.AI.Jobs;
 
 public sealed class TemplatePromptRenderer : IAiPromptRenderer
 {

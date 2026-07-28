@@ -363,17 +363,4 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
       ))!;
       return action.Equals("INSERT", StringComparison.OrdinalIgnoreCase);
    }
-
 }
-
-public sealed record BroadcastIgnoreRule(
-   string Kind,
-   string Value,
-   string? SourceKey
-);
-
-public sealed record BroadcastSaveResult(
-   int SavedCount,
-   int InsertedCount,
-   int UpdatedCount
-);

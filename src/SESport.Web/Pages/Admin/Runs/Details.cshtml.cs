@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-using SESport.AI.Prompts;
+using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
