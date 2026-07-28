@@ -2042,6 +2042,19 @@ select:disabled {
    color: var(--accent);
 }
 
+.admin-date-stepper-clear {
+   color: var(--muted);
+   font-size: 9px;
+   font-weight: 700;
+   text-decoration: underline;
+   text-underline-offset: 2px;
+}
+
+.admin-date-stepper-clear:hover,
+.admin-date-stepper-clear:focus-visible {
+   color: var(--accent);
+}
+
 .admin-date-stepper-button:focus-visible {
    outline: 2px solid var(--subgrid-header);
    outline-offset: 1px;

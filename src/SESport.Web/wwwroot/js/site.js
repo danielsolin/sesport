@@ -1214,6 +1214,11 @@
             "<<",
             "Previous day"
          );
+         const clearButton = createAdminDateStepperButton(
+            "clear",
+            "Clear date",
+            "admin-date-stepper-clear"
+         );
          const nextButton = createAdminDateStepperButton(
             ">>",
             "Next day"
@@ -1222,25 +1227,41 @@
          previousButton.addEventListener("click", () => {
             shiftAdminDateInput(input, -1);
          });
+         clearButton.addEventListener("click", () => {
+            clearAdminDateInput(input);
+         });
          nextButton.addEventListener("click", () => {
             shiftAdminDateInput(input, 1);
          });
 
-         stepper.append(previousButton, nextButton);
+         stepper.append(previousButton, clearButton, nextButton);
          input.after(stepper);
       });
    }
 
-   function createAdminDateStepperButton(text, label)
+   function createAdminDateStepperButton(
+      text,
+      label,
+      className = ""
+   )
    {
       const button = document.createElement("button");
 
       button.type = "button";
-      button.className = "admin-date-stepper-button";
+      button.className = className
+         ? `admin-date-stepper-button ${className}`
+         : "admin-date-stepper-button";
       button.setAttribute("aria-label", label);
       button.textContent = text;
 
       return button;
+   }
+
+   function clearAdminDateInput(input)
+   {
+      input.value = "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
    }
 
    function shiftAdminDateInput(input, dayOffset)
