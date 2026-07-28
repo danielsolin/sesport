@@ -765,6 +765,46 @@ public class DetailsModel(
                {
                   builder.RepairPrompts.Add(repairPrompt);
                }
+
+               continue;
+            }
+
+            if(string.Equals(
+               kind,
+               "tool_format_fallback",
+               StringComparison.Ordinal
+            ))
+            {
+               var note = ParseToolTraceNote(
+                  entry,
+                  "Tool format fallback",
+                  "reason"
+               );
+
+               if(note is not null)
+               {
+                  builder.Notes.Add(note);
+               }
+
+               continue;
+            }
+
+            if(string.Equals(
+               kind,
+               "validation_feedback",
+               StringComparison.Ordinal
+            ))
+            {
+               var note = ParseToolTraceNote(
+                  entry,
+                  "Validation feedback",
+                  "validation_error"
+               );
+
+               if(note is not null)
+               {
+                  builder.Notes.Add(note);
+               }
             }
          }
 
@@ -1115,6 +1155,28 @@ public class DetailsModel(
       return JsonSerializer.Serialize(value);
    }
 
+   private static ToolTraceNoteViewModel? ParseToolTraceNote(
+      JsonElement entry,
+      string title,
+      string detailProperty
+   )
+   {
+      var content = GetString(entry, "content")?.Trim();
+      var detail = GetString(entry, detailProperty)?.Trim();
+
+      if(string.IsNullOrWhiteSpace(content) &&
+         string.IsNullOrWhiteSpace(detail))
+      {
+         return null;
+      }
+
+      return new ToolTraceNoteViewModel(
+         title,
+         content ?? string.Empty,
+         detail
+      );
+   }
+
    private static string FormatDisplayValue(JsonElement? value)
    {
       if(value is null)
@@ -1194,6 +1256,12 @@ public class DetailsModel(
       string? Arguments
    );
 
+   public sealed record ToolTraceNoteViewModel(
+      string Title,
+      string Content,
+      string? Detail
+   );
+
    public sealed record ToolTraceConditionalToolViewModel(
       string Name,
       string? Behavior
@@ -1212,6 +1280,7 @@ public class DetailsModel(
       IReadOnlyList<string> RepairPrompts,
       IReadOnlyList<ToolTraceCallViewModel> ToolCalls,
       IReadOnlyList<ToolTraceSubmissionViewModel> Submissions,
+      IReadOnlyList<ToolTraceNoteViewModel> Notes,
       IReadOnlyList<ToolTraceToolResultViewModel> ToolResults,
       IReadOnlyList<ToolTraceBadgeViewModel> CompactBadges,
       string? AssistantPreview
@@ -1244,6 +1313,8 @@ public class DetailsModel(
 
       public List<ToolTraceSubmissionViewModel> Submissions { get; } = [];
 
+      public List<ToolTraceNoteViewModel> Notes { get; } = [];
+
       public List<ToolTraceToolResultViewModel> ToolResults { get; } = [];
 
       public ToolTraceTurnViewModel ToViewModel()
@@ -1261,6 +1332,7 @@ public class DetailsModel(
             RepairPrompts,
             ToolCalls,
             Submissions,
+            Notes,
             ToolResults,
             BuildCompactBadges(),
             BuildAssistantPreview()

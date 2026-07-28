@@ -70,6 +70,61 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void ParseToolTraceIncludesFallbackNote()
+   {
+      var reason =
+         "The model produced output that does not match the expected format.";
+      var content =
+         "Tool request failed in llama-server structured output parsing. " +
+         "Retrying with tools.";
+
+      var turns = DetailsModel.ParseToolTrace(
+         $$"""
+         [
+           {
+             "kind": "budget",
+             "turn": 7,
+             "content": "Tool calls remaining: 9 of 15.",
+             "enabled": true,
+             "remaining": 9,
+             "max": 15,
+             "temperature": 1.0,
+             "payload_chars": 21122,
+             "conditional_tools": [
+               {
+                 "name": "submit_report",
+                 "behavior": "submit_report"
+               }
+             ]
+           },
+           {
+             "kind": "tool_format_fallback",
+             "turn": 7,
+             "reason": "{{reason}}",
+             "content": "{{content}}"
+           }
+         ]
+         """
+      );
+
+      var turn = Assert.Single(turns);
+
+      Assert.Equal(7, turn.Turn);
+      var note = Assert.Single(turn.Notes);
+      Assert.Equal("Tool format fallback", note.Title);
+      Assert.Equal(
+         "Tool request failed in llama-server structured output parsing. " +
+         "Retrying with tools.",
+         note.Content
+      );
+      Assert.Equal(
+         "The model produced output that does not match the expected " +
+         "format.",
+         note.Detail
+      );
+   }
+
+   [Fact]
    public void GetToolRoundCountUsesStoredValueOnly()
    {
       Assert.Equal(

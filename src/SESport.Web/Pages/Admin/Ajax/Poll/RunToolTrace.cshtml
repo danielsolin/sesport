@@ -155,6 +155,36 @@
                         </div>
                      }
 
+                     @if(turn.Notes.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Trace notes
+                           </div>
+                           <div class="tool-trace-items">
+                              @foreach(var note in turn.Notes)
+                              {
+                                 <div class="tool-trace-item">
+                                    <div class="tool-trace-item-title">
+                                       <code>@note.Title</code>
+                                    </div>
+                                    <pre class="prompt-details-pre">
+@note.Content
+                                    </pre>
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       note.Detail))
+                                    {
+                                       <div>
+                                          Detail:
+                                          @note.Detail
+                                       </div>
+                                    }
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                     }
+
                      @if(turn.RepairPrompts.Count > 0)
                      {
                         <div class="tool-trace-block">
