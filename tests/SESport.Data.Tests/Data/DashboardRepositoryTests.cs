@@ -35,6 +35,6 @@ public sealed class DashboardRepositoryTests
       Assert.True(dashboard.AiHealth.PendingCount >= 0);
       Assert.True(dashboard.AiHealth.RunningCount >= 0);
       Assert.True(dashboard.AiHealth.StaleRunningCount >= 0);
-      Assert.True(dashboard.AiHealth.FailedLastDayCount >= 0);
+      Assert.True(dashboard.AiHealth.FailedLast25HoursCount >= 0);
    }
 }

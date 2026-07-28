@@ -17,10 +17,7 @@ public class IndexModel(DashboardRepository repository) : PageModel
 
    public bool AiNeedsAttention =>
       Dashboard is not null
-      && (
-         Dashboard.AiHealth.StaleRunningCount > 0
-         || Dashboard.AiHealth.FailedLastDayCount > 0
-      );
+      && Dashboard.AiHealth.FailedLast25HoursCount > 0;
 
    public bool ImportNeedsAttention =>
       Dashboard is not null

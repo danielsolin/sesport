@@ -26,6 +26,30 @@ public sealed class IndexMarkupTests
          "admin-table admin-table-compact",
          html
       );
+      Assert.Contains(
+         "Broadcast imports",
+         html
+      );
+      Assert.Contains(
+         "Failed, last 25 hours",
+         html
+      );
+      Assert.DoesNotContain(
+         "Latest broadcast import",
+         html
+      );
+      Assert.Contains(
+         "<dt>Imported</dt>",
+         html
+      );
+      Assert.DoesNotContain(
+         "<dt>Stale running</dt>",
+         html
+      );
+      Assert.DoesNotContain(
+         "<dt>Source</dt>",
+         html
+      );
       Assert.True(
          html.IndexOf(
             "dashboard-health-grid",

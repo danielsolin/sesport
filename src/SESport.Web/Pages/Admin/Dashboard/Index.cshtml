@@ -29,48 +29,45 @@ else if(Model.Dashboard is not null)
             <dl class="dashboard-health-list">
                <div>
                   <dt>Pending</dt>
-                  <dd>@dashboard.AiHealth.PendingCount</dd>
+                  <dd>
+                     <span class="dashboard-health-count
+                                  dashboard-health-count-pending">
+                        @dashboard.AiHealth.PendingCount
+                     </span>
+                  </dd>
                </div>
                <div>
                   <dt>Running</dt>
-                  <dd>@dashboard.AiHealth.RunningCount</dd>
-               </div>
-               @if(dashboard.AiHealth.OldestPendingAt is not null)
-               {
-                  <div>
-                     <dt>Oldest pending</dt>
-                     <dd>
-                        @TimeDisplay.FormatLocalTimestamp(
-                           dashboard.AiHealth.OldestPendingAt.Value
-                        )
-                     </dd>
-                  </div>
-               }
-               <div>
-                  <dt>Stale running</dt>
-                  <dd>@dashboard.AiHealth.StaleRunningCount</dd>
-               </div>
-               <div>
-                  <dt>Failed, last 24 hours</dt>
                   <dd>
-                     @if(dashboard.AiHealth.FailedLastDayCount > 0)
+                     <span class="dashboard-health-count
+                                  dashboard-health-count-running">
+                        @dashboard.AiHealth.RunningCount
+                     </span>
+                  </dd>
+               </div>
+               <div>
+                  <dt>Failed, last 25 hours</dt>
+                  <dd>
+                     @if(dashboard.AiHealth.FailedLast25HoursCount > 0)
                      {
-                        <a asp-page="/Admin/Runs/Index"
+                        <a class="dashboard-health-count
+                                 dashboard-health-count-failed"
+                           asp-page="/Admin/Runs/Index"
                            asp-all-route-data=
                               "@Model.GetFailedRunRouteValues()">
-                           @dashboard.AiHealth.FailedLastDayCount
+                           @dashboard.AiHealth.FailedLast25HoursCount
                         </a>
                      }
                      else
                      {
-                        @dashboard.AiHealth.FailedLastDayCount
+                        @dashboard.AiHealth.FailedLast25HoursCount
                      }
                   </dd>
                </div>
             </dl>
          </article>
          <article class="dashboard-health-card">
-            <h3>Latest broadcast import</h3>
+            <h3>Broadcast imports</h3>
             @if(dashboard.ImportHealth is null)
             {
                <p class="notice notice-warning">
@@ -87,15 +84,11 @@ else if(Model.Dashboard is not null)
                }
                <dl class="dashboard-health-list">
                   <div>
-                     <dt>Source</dt>
-                     <dd>@dashboard.ImportHealth.SourceKey</dd>
-                  </div>
-                  <div>
                      <dt>Status</dt>
                      <dd>@dashboard.ImportHealth.Status</dd>
                   </div>
                   <div>
-                     <dt>Broadcasts</dt>
+                     <dt>Imported</dt>
                      <dd>@dashboard.ImportHealth.BroadcastCount</dd>
                   </div>
                   <div>

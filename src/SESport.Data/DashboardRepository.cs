@@ -167,10 +167,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             count(*) filter (
                where status_id = @failed_status
                   and started_at >= @failed_since
-            )::int,
-            min(started_at) filter (
-               where status_id = @pending_status
-            )
+            )::int
          from ai_job_runs
          where status_id in (
             @pending_status,
@@ -246,7 +243,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("now", now);
       command.Parameters.AddWithValue(
          "failed_since",
-         now.AddDays(-1)
+         now.AddHours(-25)
       );
       command.Parameters.AddWithValue(
          "stale_running_before",
@@ -361,10 +358,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
          reader.GetInt32(0),
          reader.GetInt32(1),
          reader.GetInt32(2),
-         reader.GetInt32(3),
-         reader.IsDBNull(4)
-            ? null
-            : reader.GetFieldValue<DateTimeOffset>(4)
+         reader.GetInt32(3)
       );
    }
 

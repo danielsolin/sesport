@@ -2187,6 +2187,26 @@ textarea {
    font-size: 15px;
 }
 
+.dashboard-health-count {
+   display: inline-block;
+   font-size: 15px;
+   font-weight: 800;
+   text-decoration: underline;
+   text-underline-offset: 2px;
+}
+
+.dashboard-health-count-pending {
+   color: var(--accent);
+}
+
+.dashboard-health-count-running {
+   color: #b07a00;
+}
+
+.dashboard-health-count-failed {
+   color: #8c2d2d;
+}
+
 .dashboard-health-ok {
    margin-bottom: 6px;
    color: #28733f;

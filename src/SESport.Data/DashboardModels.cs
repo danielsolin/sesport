@@ -31,8 +31,7 @@ public sealed record DashboardAiHealth(
    int PendingCount,
    int RunningCount,
    int StaleRunningCount,
-   int FailedLastDayCount,
-   DateTimeOffset? OldestPendingAt
+   int FailedLast25HoursCount
 );
 
 public sealed record DashboardImportHealth(
