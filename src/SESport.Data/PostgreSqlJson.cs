@@ -4,7 +4,7 @@ using System.Text.Json;
 
 using SESport.Core.Formatting;
 
-namespace SESport.Data.AI;
+namespace SESport.Data;
 
 internal static class PostgreSqlJson
 {
