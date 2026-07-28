@@ -1,4 +1,4 @@
-using SESport.Data;
+using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
 
@@ -7,7 +7,7 @@ public sealed class EntityLinkSqlTests
    [Fact]
    public void GetOtherSideEntityIdSqlUsesSourceAndTargetColumns()
    {
-      var sql = EntityLinkSql.GetOtherSideEntityIdSql("e.id");
+      var sql = AdminRepository.GetOtherSideEntityIdSql("e.id");
 
       Assert.Contains("when source_entity_id = e.id", sql);
       Assert.Contains("then target_entity_id", sql);
@@ -17,7 +17,7 @@ public sealed class EntityLinkSqlTests
    [Fact]
    public void GetLinkedOrganizationNamesLateralSqlUsesNonOrganizationTypes()
    {
-      var sql = EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e");
+      var sql = ActivityRepository.GetLinkedOrganizationNamesLateralSql("e");
 
       Assert.Contains("left join lateral", sql);
       Assert.Contains("organization_names", sql);

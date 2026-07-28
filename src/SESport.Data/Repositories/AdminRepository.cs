@@ -913,7 +913,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                from entity_to_entity_links l
                join entities e2
                   on e2.id =
-                     {EntityLinkSql.GetOtherSideEntityIdSql("e.id")}
+                     {GetOtherSideEntityIdSql("e.id")}
                where l.source_entity_id = e.id
                   or l.target_entity_id = e.id
             ) linked_entities
@@ -1106,7 +1106,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       var linkSql = $$"""
          select
-            {{EntityLinkSql.GetOtherSideEntityIdSql("@id")}}
+            {{GetOtherSideEntityIdSql("@id")}}
                as linked_entity_id
          from entity_to_entity_links
          where source_entity_id = @id or target_entity_id = @id
@@ -1238,12 +1238,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       var linkSql = $"""
          select
-            {EntityLinkSql.GetOtherSideEntityIdSql("@id")}
+            {GetOtherSideEntityIdSql("@id")}
                as linked_entity_id
          from entity_to_entity_links l
          join entities linked
             on linked.id =
-               {EntityLinkSql.GetOtherSideEntityIdSql("@id")}
+               {GetOtherSideEntityIdSql("@id")}
             where (
                source_entity_id = @id
                or target_entity_id = @id
@@ -1338,6 +1338,17 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             limit @max_results
             """
          : string.Empty;
+
+   internal static string GetOtherSideEntityIdSql(string entityIdSql)
+   {
+      return $"""
+         case
+            when source_entity_id = {entityIdSql}
+               then target_entity_id
+            else source_entity_id
+         end
+         """;
+   }
 
    public async Task<IReadOnlyList<EntityLinkOption>>
       GetOrganizationEntityOptionsAsync(
@@ -2585,7 +2596,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          from entity_to_entity_links source_link
          join entities related
             on related.id =
-               {{EntityLinkSql.GetOtherSideEntityIdSql("@source_entity_id")}}
+               {{GetOtherSideEntityIdSql("@source_entity_id")}}
          where source_link.source_entity_id = @source_entity_id
             or source_link.target_entity_id = @source_entity_id
          order by related.canonical_name

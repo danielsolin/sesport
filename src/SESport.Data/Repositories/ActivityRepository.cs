@@ -222,7 +222,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
          join entity_watch_priorities p
             on p.id = e.watch_priority_id
-         {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
+         {{GetLinkedOrganizationNamesLateralSql("e")}}
          order by
             p.sort_order,
             e.canonical_name
@@ -850,7 +850,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          from entities e
          join entity_watch_priorities wp on wp.id = e.watch_priority_id
          {{activityLinkJoin}}
-         {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
+         {{GetLinkedOrganizationNamesLateralSql("e")}}
          {{whereClause}}
          order by sort_order, e.canonical_name
          """;
@@ -1048,7 +1048,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             coalesce(e.alias_name, '')
          from entities e
          join entity_watch_priorities wp on wp.id = e.watch_priority_id
-         {{EntityLinkSql.GetLinkedOrganizationNamesLateralSql("e")}}
+         {{GetLinkedOrganizationNamesLateralSql("e")}}
          where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
             {{termFilterSql}}
             and exists (
@@ -2366,5 +2366,40 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .Trim('-');
 
       return $"/icons/sports/{fileName}.svg";
+   }
+
+   internal static string GetLinkedOrganizationNamesLateralSql(
+      string entityAlias
+   )
+   {
+      var entityIdSql = $"{entityAlias}.id";
+
+      return $"""
+         left join lateral (
+            select string_agg(
+               distinct organization_name,
+               ', ' order by organization_name
+            ) as organization_names
+            from (
+               select distinct
+                  coalesce(entity.alias_name,
+                     entity.canonical_name) as organization_name
+               from entity_to_entity_links l
+               join entities entity
+                  on entity.id =
+                     case
+                        when source_entity_id = {entityIdSql}
+                           then target_entity_id
+                        else source_entity_id
+                     end
+               where (l.source_entity_id = {entityIdSql}
+                     or l.target_entity_id = {entityIdSql})
+                  and {BroadcastEntityFilter
+                     .GetNonOrganizationEntityTypePredicateSql(
+                        "entity.entity_type_id"
+                     )}
+            ) organizations
+         ) org on true
+         """;
    }
 }
