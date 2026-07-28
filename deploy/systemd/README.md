@@ -1,9 +1,7 @@
 # systemd Units
 
-These files are the source of truth for SESport systemd units.
-
 Copy only the units that belong on the target machine to
-`/etc/systemd/system/` with `sudo`, then reload systemd and enable the
+`/etc/systemd/system/` with `sudo. Then reload systemd and enable the
 services or timer you want active.
 
 The SESport web services load `/home/daniel/sesport/.env` through
