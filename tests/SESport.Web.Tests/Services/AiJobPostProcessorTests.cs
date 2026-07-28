@@ -1,5 +1,3 @@
-using SESport.Web.Services;
-
 namespace SESport.Web.Tests.Services;
 
 public sealed class AiJobPostProcessorTests

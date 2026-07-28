@@ -9,7 +9,6 @@ using SESport.AI.Interfaces;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
-using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Services;
 

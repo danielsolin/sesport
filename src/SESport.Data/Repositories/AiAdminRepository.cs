@@ -3,7 +3,6 @@ using Npgsql;
 using NpgsqlTypes;
 
 using SESport.Core.AI;
-using SESport.Data;
 
 namespace SESport.Data.Repositories;
 

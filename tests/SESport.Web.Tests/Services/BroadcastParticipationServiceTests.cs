@@ -5,9 +5,7 @@ using Npgsql;
 
 using SESport.AI.Interfaces;
 using SESport.Core.Broadcast;
-using SESport.Data;
 using SESport.Data.Repositories;
-using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Services;
 

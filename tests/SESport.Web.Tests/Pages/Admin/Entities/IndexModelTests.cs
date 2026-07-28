@@ -5,7 +5,6 @@ using Npgsql;
 
 using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Entities;
-using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Pages.Admin.Entities;
 

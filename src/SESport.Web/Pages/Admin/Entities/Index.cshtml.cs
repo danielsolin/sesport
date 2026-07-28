@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
-using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Entities;
 

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.AI;
 using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Runs;
-using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 

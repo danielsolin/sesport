@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace SESport.Web.Support;
+namespace SESport.Web.Extensions;
 
 internal static class PageModelErrorExtensions
 {

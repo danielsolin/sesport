@@ -1,10 +1,6 @@
 using SESport.Data.Repositories;
-using SESport.Web.Builders;
-using SESport.Web.Preferences;
-using SESport.Web.Services;
-using SESport.Web.Workers;
 
-namespace SESport.Web.Composition;
+namespace SESport.Web.Extensions;
 
 public static class WebServiceCollectionExtensions
 {
