@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-using SESport.Core.Configuration;
 using SESport.AI.WebPages;
 
 namespace SESport.AI.Llama;

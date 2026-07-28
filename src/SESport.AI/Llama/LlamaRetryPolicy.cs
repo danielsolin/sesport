@@ -1,7 +1,5 @@
 using System.Net;
 
-using SESport.Core.Configuration;
-
 namespace SESport.AI.Llama;
 
 internal static class LlamaRetryPolicy

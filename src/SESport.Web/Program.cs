@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-using SESport.Core.Configuration;
-using SESport.Core.AI;
 using SESport.Data;
 using SESport.Web.Extensions;
 using SESport.Web.Services;

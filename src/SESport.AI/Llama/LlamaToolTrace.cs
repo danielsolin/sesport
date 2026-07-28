@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using SESport.Core.Configuration;
-
 namespace SESport.AI.Llama;
 
 internal static class LlamaToolTrace

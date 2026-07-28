@@ -1,7 +1,5 @@
 using Microsoft.Playwright;
 
-using SESport.Core.Configuration;
-
 namespace SESport.AI.WebPages;
 
 internal static class WebPageBrowserPageFetcher

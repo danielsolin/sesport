@@ -1,7 +1,6 @@
 using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
-using SESport.Core.Configuration;
 
 namespace SESport.Web.Services;
 

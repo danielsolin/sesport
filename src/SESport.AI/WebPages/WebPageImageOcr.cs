@@ -3,8 +3,6 @@ using System.Globalization;
 
 using Microsoft.Extensions.Logging;
 
-using SESport.Core.Configuration;
-
 namespace SESport.AI.WebPages;
 
 internal static class WebPageImageOcr
@@ -176,7 +174,7 @@ internal static class WebPageImageOcr
 
       if(!response.IsSuccessStatusCode ||
          response.Content.Headers.ContentType?.MediaType is not
-            { } mediaType ||
+         { } mediaType ||
          !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
       {
          return null;

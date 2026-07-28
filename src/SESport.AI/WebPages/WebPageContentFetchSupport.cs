@@ -5,8 +5,8 @@ using System.Text.RegularExpressions;
 
 using Microsoft.Playwright;
 
-using SESport.Core.Configuration;
 using SESport.Core.Formatting;
+
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;

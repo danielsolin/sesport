@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
-using SESport.Core.Configuration;
 
 namespace SESport.AI.Jobs;
 

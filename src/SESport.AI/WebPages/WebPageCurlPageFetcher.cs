@@ -2,8 +2,6 @@ using System.Diagnostics;
 
 using Microsoft.Extensions.Logging;
 
-using SESport.Core.Configuration;
-
 namespace SESport.AI.WebPages;
 
 internal static class WebPageCurlPageFetcher

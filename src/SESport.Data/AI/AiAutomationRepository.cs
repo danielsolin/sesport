@@ -1,7 +1,5 @@
 using Npgsql;
 
-using SESport.Core.AI;
-
 namespace SESport.Data.AI;
 
 public sealed class AiAutomationRepository(NpgsqlDataSource dataSource)

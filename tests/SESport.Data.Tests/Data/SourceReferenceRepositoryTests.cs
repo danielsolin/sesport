@@ -1,6 +1,3 @@
-using Npgsql;
-
-using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data;
 

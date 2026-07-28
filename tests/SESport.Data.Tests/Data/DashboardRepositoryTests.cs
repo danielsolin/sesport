@@ -1,4 +1,3 @@
-using SESport.Core.Domain;
 using SESport.Data;
 
 namespace SESport.Core.Tests.Data;

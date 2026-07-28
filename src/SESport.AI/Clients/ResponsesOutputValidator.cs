@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 
 using SESport.Core.AI;
-using SESport.Core.Configuration;
 
 namespace SESport.AI.Clients;
 

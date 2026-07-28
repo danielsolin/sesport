@@ -1,5 +1,4 @@
 using SESport.AI.WebSearch;
-using SESport.Core.Configuration;
 
 namespace SESport.Core.Tests.AI;
 

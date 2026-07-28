@@ -1,7 +1,6 @@
 using System.Text.Json;
 
 using SESport.AI.Interfaces;
-using SESport.Core.AI;
 using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Services;

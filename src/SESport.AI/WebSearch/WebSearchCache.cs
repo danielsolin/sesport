@@ -1,5 +1,3 @@
-using SESport.Core.Configuration;
-
 namespace SESport.AI.WebSearch;
 
 public sealed class WebSearchCache

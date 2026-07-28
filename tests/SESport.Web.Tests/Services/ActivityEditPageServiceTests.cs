@@ -1,12 +1,11 @@
-using Npgsql;
 using System.Text.Json;
 
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
+
+using Npgsql;
 
 using SESport.AI.Interfaces;
-using SESport.Core.AI;
-using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data;
 using SESport.Data.AI;

@@ -9,7 +9,7 @@ namespace SESport.Web.Pages.Admin.Config.Ai.Automations;
 public class IndexModel(AiAdminRepository repository) : PageModel
 {
    public IReadOnlyList<AiAutomationRuleListItem> Rules
-      { get; private set; } = [];
+   { get; private set; } = [];
 
    public string? LoadError { get; private set; }
 
