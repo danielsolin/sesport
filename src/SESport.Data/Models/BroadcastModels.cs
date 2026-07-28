@@ -19,7 +19,8 @@ public sealed record BroadcastListItem(
    string? ActivityGroupTitle,
    string? ActivityGroupDraftTitle,
    string? ActivityGroupSourceKindId,
-   Guid? ActivityGroupSourceActivityId
+   Guid? ActivityGroupSourceActivityId,
+   string SourceKey
 )
 {
    public BroadcastParticipationCheck? ParticipationCheck { get; init; }

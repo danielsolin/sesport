@@ -15,6 +15,19 @@ public class BroadcastListDisplayFormatterTests
    }
 
    [Fact]
+   public void FormatSourceLabel_ReturnsCompactLabel()
+   {
+      Assert.Equal(
+         "U",
+         BroadcastListDisplayFormatter.FormatSourceLabel("tvnu")
+      );
+      Assert.Equal(
+         "M",
+         BroadcastListDisplayFormatter.FormatSourceLabel("tvmatchen")
+      );
+   }
+
+   [Fact]
    public void FormatTimeText_ReturnsLocalRange()
    {
       var startsAt = new DateTimeOffset(

@@ -572,6 +572,8 @@
       const originalAirDate = normalizeNullableString(
          broadcast.originalAirDate
       );
+      const sourceLabel = normalizeString(broadcast.sourceLabel)
+         || normalizeString(broadcast.sourceKey);
       const organizationEntityId = normalizeNullableString(
          broadcast.organizationEntityId
       );
@@ -620,6 +622,10 @@
       mainRow.dataset.broadcastRow = "true";
       mainRow.dataset.broadcastId = broadcastId;
       mainRow.dataset.participationStatus = participationStatusId || "";
+
+      const sourceCell = document.createElement("td");
+      sourceCell.className = "broadcasts-col-source";
+      sourceCell.textContent = sourceLabel;
 
       const channelCell = document.createElement("td");
       channelCell.className = "broadcasts-col-channel";
@@ -848,6 +854,7 @@
       setBroadcastRowTabOrder(mainRow);
 
       mainRow.append(
+         sourceCell,
          channelCell,
          timeCell,
          titleCell,
@@ -867,7 +874,7 @@
 
       const runsCell = document.createElement("td");
       runsCell.className = "broadcast-participation-runs-cell";
-      runsCell.colSpan = 6;
+      runsCell.colSpan = 7;
       runsCell.dataset.participationCell = "true";
       runsCell.dataset.broadcastId = broadcastId;
       runsCell.dataset.participationRunId = "";

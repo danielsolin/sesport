@@ -40,6 +40,10 @@ public sealed class BroadcastModel(
          broadcast = new
          {
             id = refreshedBroadcast.Id.ToString(),
+            sourceKey = refreshedBroadcast.SourceKey,
+            sourceLabel = BroadcastListDisplayFormatter.FormatSourceLabel(
+               refreshedBroadcast.SourceKey
+            ),
             timeText = refreshedBroadcast.TimeText,
             timeOnlyText = TimeTextFormatter.FormatTimeOnlyText(
                refreshedBroadcast.TimeText

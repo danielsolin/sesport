@@ -107,9 +107,11 @@
    else
    {
       <div class="admin-table-wrap">
-         <table class="admin-table admin-table-hover broadcasts-table">
+            <table class="admin-table admin-table-hover broadcasts-table">
             <thead>
                   <tr>
+                     <th class="broadcasts-col-source"
+                         aria-hidden="true"></th>
                      <th class="broadcasts-col-channel">
                         <a asp-page="./Index"
                            asp-all-route-data=
@@ -156,6 +158,10 @@
                      {
                         airDate = broadcast.OriginalAirDate.Value;
                      }
+                     var sourceLabel =
+                        BroadcastListDisplayFormatter.FormatSourceLabel(
+                           broadcast.SourceKey
+                        );
                      var activityUrlBase = Url.Page(
                         "/Admin/Activities/Edit",
                         Model.GetActivityRouteValues(broadcast.Id)
@@ -194,6 +200,9 @@
                       data-broadcast-id="@broadcast.Id"
                       data-participation-status=
                          "@broadcast.ParticipationCheck?.StatusId">
+                     <td class="broadcasts-col-source">
+                        @sourceLabel
+                     </td>
                      <td class="broadcasts-col-channel">
                         <div class="ses-nowrap">
                            @broadcast.ChannelName
@@ -426,7 +435,7 @@
                          "@broadcast.ParticipationCheck?.StatusId">
                      <td class="broadcast-participation-spacer"></td>
                      <td class="broadcast-participation-runs-cell"
-                         colspan="6"
+                         colspan="7"
                          data-participation-cell
                          data-broadcast-id="@broadcast.Id"
                          data-participation-run-id=

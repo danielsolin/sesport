@@ -40,6 +40,16 @@ public static class BroadcastListDisplayFormatter
       return string.Join(", ", categories);
    }
 
+   public static string FormatSourceLabel(string sourceKey)
+   {
+      return sourceKey switch
+      {
+         "tvnu" => "U",
+         "tvmatchen" => "M",
+         _ => sourceKey
+      };
+   }
+
    public static string FormatGroupValue(
       string title,
       string? activityGroupTitle,
