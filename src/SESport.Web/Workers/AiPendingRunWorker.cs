@@ -2,7 +2,7 @@ using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Workers;
 
 public sealed class AiPendingRunWorker(
    IServiceScopeFactory scopeFactory,

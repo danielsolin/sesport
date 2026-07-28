@@ -1,6 +1,6 @@
 using SESport.Data.Models;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Navigation;
 
 public static class AdminNavigationBuilder
 {

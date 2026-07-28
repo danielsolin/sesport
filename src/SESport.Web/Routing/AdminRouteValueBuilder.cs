@@ -1,7 +1,7 @@
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Routing;
 
 internal static class AdminRouteValueBuilder
 {

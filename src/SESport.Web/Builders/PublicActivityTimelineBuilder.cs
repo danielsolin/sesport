@@ -3,7 +3,7 @@ using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Web.Pages;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Builders;
 
 public sealed class PublicActivityTimelineBuilder
 {

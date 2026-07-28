@@ -1,4 +1,4 @@
-namespace SESport.Web.Services;
+namespace SESport.Web.Routing;
 
 public static class RouteKeys
 {

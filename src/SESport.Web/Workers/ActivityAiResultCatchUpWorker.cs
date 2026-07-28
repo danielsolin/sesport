@@ -1,7 +1,7 @@
 using SESport.Core.AI;
 using SESport.Data.Repositories;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Workers;
 
 public sealed class ActivityAiResultCatchUpWorker(
    IServiceScopeFactory scopeFactory,

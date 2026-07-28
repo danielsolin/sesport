@@ -7,7 +7,7 @@ using SESport.Core.AI;
 using SESport.Data.Repositories;
 using SESport.Web.Services;
 
-namespace SESport.Web.Extensions;
+namespace SESport.Web.Composition;
 
 public static class AiServiceCollectionExtensions
 {
@@ -29,7 +29,6 @@ public static class AiServiceCollectionExtensions
          serviceProvider => serviceProvider.GetRequiredService<AiJobRunner>()
       );
       services.AddScoped<PersonFactsService>();
-      services.AddScoped<ActivityAiInputBuilder>();
       services.AddScoped<IAiAutomationService, AiAutomationService>();
       services.AddScoped<TextTranslationService>();
       services.AddScoped<IAiJobProcessor, AiJobPostProcessor>();

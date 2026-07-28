@@ -1,4 +1,4 @@
-namespace SESport.Web.Services;
+namespace SESport.Web.Navigation;
 
 public sealed record AdminNavItem(string Title, string Href);
 

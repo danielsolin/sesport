@@ -1,2 +1,10 @@
 global using SESport.Core.Configuration;
-global using SESport.Web.Infrastructure;
+global using SESport.Web.Builders;
+global using SESport.Web.Composition;
+global using SESport.Web.Navigation;
+global using SESport.Web.Preferences;
+global using SESport.Web.Routing;
+global using SESport.Web.Services;
+global using SESport.Web.Support;
+global using SESport.Web.Validation;
+global using SESport.Web.Workers;

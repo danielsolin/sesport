@@ -1,6 +1,6 @@
 using SESport.Core.AI;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Workers;
 
 public sealed class AiRunTimeoutWorker(
    IServiceScopeFactory scopeFactory,

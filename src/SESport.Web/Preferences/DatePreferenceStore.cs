@@ -3,7 +3,7 @@ using System.Globalization;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Preferences;
 
 public abstract class DatePreferenceStore(string cookieName)
 {

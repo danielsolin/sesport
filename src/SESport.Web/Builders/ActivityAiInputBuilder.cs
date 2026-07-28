@@ -4,7 +4,7 @@ using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
 
-namespace SESport.Web.Services;
+namespace SESport.Web.Builders;
 
 public sealed class ActivityAiInputBuilder(
    ActivityRepository activityRepository,

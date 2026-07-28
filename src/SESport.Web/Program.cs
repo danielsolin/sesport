@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 using SESport.Data;
-using SESport.Data.Repositories;
-using SESport.Web.Extensions;
-using SESport.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var adminOptions = builder.Configuration.GetSection(
@@ -39,24 +36,8 @@ builder.Services.AddSingleton(
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddSingleton(webStatsOptions);
+builder.Services.AddWebApplicationServices();
 builder.Services.AddAiPlatform();
-builder.Services.AddSingleton<ActivityDatePreferenceStore>();
-builder.Services.AddSingleton<BroadcastDatePreferenceStore>();
-builder.Services.AddSingleton<RunDatePreferenceStore>();
-builder.Services.AddSingleton<EntityDatePreferenceStore>();
-builder.Services.AddScoped<ActivityEditPageService>();
-builder.Services.AddScoped<ActivityIndexPageService>();
-builder.Services.AddScoped<ActivityRepository>();
-builder.Services.AddScoped<FactRepository>();
-builder.Services.AddScoped<SourceReferenceRepository>();
-builder.Services.AddScoped<PublicActivityTimelineBuilder>();
-builder.Services.AddScoped<AdminRepository>();
-builder.Services.AddScoped<AdminBroadcastRepository>();
-builder.Services.AddScoped<DashboardRepository>();
-builder.Services.AddScoped<BroadcastParticipationService>();
-builder.Services.AddHostedService<ActivityAiResultCatchUpWorker>();
-builder.Services.AddHostedService<AiPendingRunWorker>();
-builder.Services.AddHostedService<AiRunTimeoutWorker>();
 builder.Services
    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
    .AddCookie(

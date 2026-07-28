@@ -1,4 +1,4 @@
-namespace SESport.Web.Services;
+namespace SESport.Web.Preferences;
 
 public sealed class BroadcastDatePreferenceStore() :
    DatePreferenceStore("sesport.admin.broadcasts.date")
