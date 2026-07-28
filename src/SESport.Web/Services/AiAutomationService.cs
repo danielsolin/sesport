@@ -1,7 +1,6 @@
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
-using SESport.Data;
-using SESport.Data.AI;
+using SESport.Data.Repositories;
 
 namespace SESport.Web.Services;
 

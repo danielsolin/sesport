@@ -4,7 +4,7 @@ using SESport.AI.Jobs;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.AI;
-using SESport.Data.AI;
+using SESport.Data.Repositories;
 using SESport.Web.Services;
 
 namespace SESport.Web.Extensions;

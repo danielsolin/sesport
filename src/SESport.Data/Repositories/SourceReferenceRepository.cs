@@ -2,7 +2,7 @@ using Npgsql;
 
 using SESport.Core.Sources;
 
-namespace SESport.Data;
+namespace SESport.Data.Repositories;
 
 public sealed class SourceReferenceRepository(NpgsqlDataSource dataSource)
 {

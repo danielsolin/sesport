@@ -23,14 +23,8 @@
       <ProjectReference Include="..\..\src\SESport.Data\SESport.Data.csproj" />
       <ProjectReference Include="..\..\src\SESport.AI\SESport.AI.csproj" />
       <ProjectReference Include="..\..\src\SESport.Web\SESport.Web.csproj" />
-      <Compile
-         Include="..\TestSupport\TestEnvironmentBootstrap.cs"
-         Link="TestEnvironmentBootstrap.cs"
-      />
-      <Compile
-         Include="..\TestSupport\PostgresTestDatabase.cs"
-         Link="PostgresTestDatabase.cs"
-      />
+      <Compile Include="..\TestSupport\TestEnvironmentBootstrap.cs" Link="TestEnvironmentBootstrap.cs" />
+      <Compile Include="..\TestSupport\PostgresTestDatabase.cs" Link="PostgresTestDatabase.cs" />
    </ItemGroup>
 
 </Project>

@@ -5,8 +5,9 @@ using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Sources;
+using SESport.Data.Models;
 
-namespace SESport.Data;
+namespace SESport.Data.Repositories;
 
 public sealed class DashboardRepository(NpgsqlDataSource dataSource)
 {

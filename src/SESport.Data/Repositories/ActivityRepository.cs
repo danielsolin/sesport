@@ -10,8 +10,9 @@ using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
+using SESport.Data.Models;
 
-namespace SESport.Data;
+namespace SESport.Data.Repositories;
 
 public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 {

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using Npgsql;
 
-using SESport.Data;
+using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Entities;
 using SESport.Web.Services;
 

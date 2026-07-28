@@ -1,4 +1,5 @@
 @page "{table}/{id?}"
+@using SESport.Data.Models
 @model SESport.Web.Pages.Admin.ReferenceData.EditModel
 @{
    var isCountries = Model.CurrentTable?.Kind == ReferenceTableKind.Countries;

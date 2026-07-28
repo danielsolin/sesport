@@ -3,7 +3,7 @@ using Npgsql;
 using SESport.Core.Domain;
 using SESport.Core.Sources;
 
-namespace SESport.Data;
+namespace SESport.Data.Repositories;
 
 public sealed class FactRepository(NpgsqlDataSource dataSource)
 {

@@ -1,4 +1,4 @@
-using SESport.Data;
+using SESport.Data.Models;
 
 namespace SESport.Web.Services;
 

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
-using SESport.Data.AI;
+using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Runs;
 using SESport.Web.Services;
 

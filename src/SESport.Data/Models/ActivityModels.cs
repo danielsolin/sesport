@@ -1,6 +1,6 @@
 using SESport.Core.Domain;
 
-namespace SESport.Data;
+namespace SESport.Data.Models;
 
 public sealed record ActivityListItem(
    Guid Id,

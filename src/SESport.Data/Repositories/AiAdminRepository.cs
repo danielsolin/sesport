@@ -3,8 +3,9 @@ using Npgsql;
 using NpgsqlTypes;
 
 using SESport.Core.AI;
+using SESport.Data.AI;
 
-namespace SESport.Data.AI;
+namespace SESport.Data.Repositories;
 
 public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 {

@@ -3,7 +3,7 @@ using System.Text.Json;
 using SESport.AI.Interfaces;
 using SESport.Core.AI;
 using SESport.Core.Domain;
-using SESport.Data;
+using SESport.Data.Repositories;
 
 namespace SESport.Web.Services;
 

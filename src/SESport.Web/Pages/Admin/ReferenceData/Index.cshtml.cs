@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using SESport.Data;
+using SESport.Data.Models;
+using SESport.Data.Repositories;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.ReferenceData;

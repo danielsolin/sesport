@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace SESport.Data.AI;
+namespace SESport.Data.Repositories;
 
 public sealed class AiAutomationRepository(NpgsqlDataSource dataSource)
 {

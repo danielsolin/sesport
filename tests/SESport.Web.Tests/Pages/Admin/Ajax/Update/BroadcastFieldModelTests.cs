@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 
 using SESport.Core.Formatting;
-using SESport.Data;
+using SESport.Data.Models;
+using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Ajax.Update;
 
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Update;

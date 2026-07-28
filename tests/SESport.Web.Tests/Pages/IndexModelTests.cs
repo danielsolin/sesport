@@ -1,6 +1,6 @@
 using System.Reflection;
 
-using SESport.Data;
+using SESport.Data.Models;
 using SESport.Web.Pages;
 
 namespace SESport.Core.Tests.Pages;

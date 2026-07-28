@@ -1,4 +1,4 @@
-namespace SESport.Data;
+namespace SESport.Data.Models;
 
 public sealed record AdminDashboardSnapshot(
    IReadOnlyList<DashboardDateSummary> Dates,

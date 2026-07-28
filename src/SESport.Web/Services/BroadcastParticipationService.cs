@@ -5,8 +5,8 @@ using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
-using SESport.Data;
-using SESport.Data.AI;
+using SESport.Data.Models;
+using SESport.Data.Repositories;
 
 namespace SESport.Web.Services;
 

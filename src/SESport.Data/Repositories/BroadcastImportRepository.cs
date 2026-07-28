@@ -2,10 +2,11 @@ using Npgsql;
 
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
+using SESport.Data.Broadcast;
 
 using CoreBroadcast = SESport.Core.Broadcast.Broadcast;
 
-namespace SESport.Data.Broadcast;
+namespace SESport.Data.Repositories;
 
 public sealed class BroadcastImportRepository : IAsyncDisposable
 {

@@ -1,4 +1,4 @@
-using SESport.Data;
+using SESport.Data.Models;
 using SESport.Web.Pages.Admin.Ajax.Create;
 
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Create;

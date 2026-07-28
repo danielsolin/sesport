@@ -1,5 +1,5 @@
 using SESport.Core.Formatting;
-using SESport.Data;
+using SESport.Data.Models;
 using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Pages;

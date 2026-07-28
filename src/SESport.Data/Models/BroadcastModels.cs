@@ -1,6 +1,6 @@
 using SESport.Core.Broadcast;
 
-namespace SESport.Data;
+namespace SESport.Data.Models;
 
 public sealed record BroadcastListItem(
    Guid Id,

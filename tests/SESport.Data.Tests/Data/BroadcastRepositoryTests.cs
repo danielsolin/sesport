@@ -1,9 +1,7 @@
 using Npgsql;
 
 using SESport.Core.Broadcast;
-
-using SESport.Data;
-using SESport.Data.Broadcast;
+using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
 

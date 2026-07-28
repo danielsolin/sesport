@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.Core.Domain;
-using SESport.Data;
+using SESport.Data.Models;
+using SESport.Data.Repositories;
 
 namespace SESport.Web.Services;
 

@@ -1,3 +1,5 @@
+using SESport.Data.Models;
+
 namespace SESport.Core.Tests.Pages.Admin.Dashboard;
 
 public sealed class IndexMarkupTests
@@ -128,27 +130,24 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("No direct source", groupedLabels);
    }
 
-   private static SESport.Data.DashboardDateSummary CreateDateSummary(
+   private static DashboardDateSummary CreateDateSummary(
       int visibleBroadcastCount,
       int unreviewedBroadcastCount,
       int publishedActivityCount,
       int draftActivityCount
-   )
-   {
-      return new SESport.Data.DashboardDateSummary(
+   ) => new(
          new DateOnly(2199, 12, 1),
          visibleBroadcastCount,
          unreviewedBroadcastCount,
          publishedActivityCount,
          draftActivityCount
       );
-   }
 
-   private static SESport.Data.DashboardActivityIssue CreateSourceIssue(
+   private static DashboardActivityIssue CreateSourceIssue(
       bool hasNoGroup
    )
    {
-      return new SESport.Data.DashboardActivityIssue(
+      return new DashboardActivityIssue(
          Guid.NewGuid(),
          new DateOnly(2199, 12, 1),
          "Test Activity",

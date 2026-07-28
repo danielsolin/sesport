@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 
-using SESport.Data;
+using SESport.Data.Models;
 using SESport.Web.Services;
 
 namespace SESport.Core.Tests.Services;

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
-using SESport.Data;
+using SESport.Data.Models;
+using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Entities;
 
 namespace SESport.Core.Tests.Pages.Admin.Entities;

@@ -3,7 +3,7 @@ using System.Text.Json;
 using Npgsql;
 
 using SESport.Core.Formatting;
-using SESport.Data.AI;
+using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
 

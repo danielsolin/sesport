@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.Formatting;
-using SESport.Data;
+using SESport.Data.Repositories;
 using SESport.Web.Services;
 
 namespace SESport.Web.Pages.Admin.Ajax.Toggle;
