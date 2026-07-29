@@ -60,7 +60,7 @@
                      "null"
                   ],
                   "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
-                  "description": "The local start time in HH:mm format."
+                  "description": "The start time in HH:mm format."
                }
             },
             "additionalProperties": false
