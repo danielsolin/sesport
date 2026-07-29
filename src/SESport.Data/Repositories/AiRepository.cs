@@ -615,6 +615,57 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       return runs;
    }
 
+   public async Task<IReadOnlyList<Guid>>
+      GetUnappliedCompletedActivityParticipantResultRunIdsAsync(
+         int maxRuns,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            r.id
+         from ai_job_runs r
+         join activities a on a.id::text = r.correlation_id
+         left join ai_job_run_applications app
+            on app.run_id = r.id
+            and app.target_type = @target_type
+            and app.target_id = a.id::text
+         where r.job_id = @job_id
+            and r.status_id = @status_id
+            and app.run_id is null
+            and coalesce(r.output_text, '') <> ''
+         order by r.completed_at desc, r.id desc
+         limit @limit
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "job_id",
+         AiJobIds.FindParticipantsStart
+      );
+      command.Parameters.AddWithValue(
+         "status_id",
+         AiJobRunStatusIds.Completed
+      );
+      command.Parameters.AddWithValue(
+         "target_type",
+         AiJobRunApplicationTargetTypes.Activity
+      );
+      command.Parameters.AddWithValue("limit", maxRuns);
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var runs = new List<Guid>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         runs.Add(reader.GetGuid(0));
+      }
+
+      return runs;
+   }
+
    public async Task<IReadOnlyDictionary<Guid, BroadcastParticipationCheck>>
       GetParticipationChecksAsync(
          IReadOnlyCollection<Guid> broadcastIds,

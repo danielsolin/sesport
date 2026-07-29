@@ -1250,6 +1250,18 @@ public sealed class ActivityEditPageServiceTests
                $"  - {secondPersonName}",
             document.RootElement.GetProperty("participants").GetString()
          );
+         var participantEntities = document.RootElement
+            .GetProperty("participant_entities");
+
+         Assert.Equal(2, participantEntities.GetArrayLength());
+         Assert.Equal(
+            firstPersonId.ToString(),
+            participantEntities[0].GetProperty("id").GetString()
+         );
+         Assert.Equal(
+            firstPersonName,
+            participantEntities[0].GetProperty("name").GetString()
+         );
       }
       finally
       {

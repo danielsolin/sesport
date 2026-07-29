@@ -19,6 +19,8 @@ public sealed class ActivityAiResultCatchUpWorker(
             .GetRequiredService<ActivityRepository>();
          var factRepository = scope.ServiceProvider
             .GetRequiredService<FactRepository>();
+         var participantResultService = scope.ServiceProvider
+            .GetRequiredService<ActivityParticipantAiResultService>();
 
          var runs = await aiRepository
                .GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
@@ -28,6 +30,11 @@ public sealed class ActivityAiResultCatchUpWorker(
 
          var factsRuns = await aiRepository
                .GetUnappliedCompletedActivityFactsRunsAsync(
+               AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
+               stoppingToken
+            );
+         var participantRuns = await aiRepository
+               .GetUnappliedCompletedActivityParticipantResultRunIdsAsync(
                AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
             );
@@ -86,6 +93,20 @@ public sealed class ActivityAiResultCatchUpWorker(
                logger.LogInformation(
                   "Saved missed activity facts from AI run {RunId}.",
                   run.RunId
+               );
+            }
+         }
+
+         foreach(var runId in participantRuns)
+         {
+            if(await participantResultService.TryApplyRunAsync(
+               runId,
+               stoppingToken
+            ))
+            {
+               logger.LogInformation(
+                  "Saved missed participant AI result from run {RunId}.",
+                  runId
                );
             }
          }

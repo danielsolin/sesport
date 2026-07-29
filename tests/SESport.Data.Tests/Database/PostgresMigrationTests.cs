@@ -123,6 +123,43 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void ParticipantAiResultsMigrationDefinesGenericResultStorage()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "010_activity_participant_ai_results.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "create table public.activity_participant_ai_result_sets",
+         migration
+      );
+      Assert.Contains(
+         "create table public.activity_participant_ai_result_values",
+         migration
+      );
+      Assert.Contains("activity_id uuid not null", migration);
+      Assert.Contains("job_id text not null", migration);
+      Assert.Contains("run_id uuid not null", migration);
+      Assert.Contains("checked_sources jsonb not null default '[]'::jsonb",
+         migration);
+      Assert.Contains("value_json jsonb not null", migration);
+      Assert.Contains("primary key (activity_id, job_id)", migration);
+      Assert.Contains(
+         "primary key (activity_id, job_id, entity_id, field_key)",
+         migration
+      );
+      Assert.Contains("references public.activities(id)", migration);
+      Assert.Contains("references public.ai_jobs(id)", migration);
+      Assert.Contains("references public.ai_job_runs(id)", migration);
+      Assert.Contains("references public.entities(id)", migration);
+   }
+
+   [Fact]
    public void FactSourceLinksMigrationConnectsFactsAndSources()
    {
       var migration = File.ReadAllText(

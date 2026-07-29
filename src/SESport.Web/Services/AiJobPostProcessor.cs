@@ -17,6 +17,7 @@ public sealed class AiJobPostProcessor(
    FactRepository factRepository,
    AdminRepository adminRepository,
    SourceReferenceRepository sourceRepository,
+   ActivityParticipantAiResultService activityParticipantAiResultService,
    ILogger<AiJobPostProcessor> logger
 ) : IAiJobProcessor
 {
@@ -26,6 +27,10 @@ public sealed class AiJobPostProcessor(
    )
    {
       await inner.ProcessRunAsync(runId, cancellationToken);
+      await activityParticipantAiResultService.TryApplyRunAsync(
+         runId,
+         cancellationToken
+      );
       await SaveCompletedActivityTextAsync(runId, cancellationToken);
       await SaveCompletedPersonFactsAsync(runId, cancellationToken);
       await SaveCompletedTranslationAsync(runId, cancellationToken);

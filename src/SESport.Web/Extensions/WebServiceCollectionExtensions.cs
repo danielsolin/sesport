@@ -11,6 +11,7 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<ActivityRepository>();
       services.AddScoped<FactRepository>();
       services.AddScoped<SourceReferenceRepository>();
+      services.AddScoped<ActivityParticipantAiResultRepository>();
       services.AddScoped<AdminRepository>();
       services.AddScoped<AdminBroadcastRepository>();
       services.AddScoped<DashboardRepository>();
@@ -19,6 +20,7 @@ public static class WebServiceCollectionExtensions
       services.AddSingleton<RunDatePreferenceStore>();
       services.AddSingleton<EntityDatePreferenceStore>();
       services.AddScoped<ActivityAiInputBuilder>();
+      services.AddScoped<ActivityParticipantAiResultService>();
       services.AddScoped<ActivityEditPageService>();
       services.AddScoped<ActivityIndexPageService>();
       services.AddScoped<PublicActivityTimelineBuilder>();

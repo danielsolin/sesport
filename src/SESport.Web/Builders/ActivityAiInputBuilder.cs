@@ -21,8 +21,10 @@ public sealed class ActivityAiInputBuilder(
       var entities = await activityRepository.GetEntityOptionsAsync(
          cancellationToken
       );
-      var participantNames = entities
+      var participantEntities = entities
          .Where(entity => selectedIds.Contains(entity.Id))
+         .ToList();
+      var participantNames = participantEntities
          .Select(entity => entity.Name)
          .ToList();
       var sportName = (await activityRepository.GetSportOptionsAsync(
@@ -53,6 +55,12 @@ public sealed class ActivityAiInputBuilder(
             ),
             time_zone_id = activity.TimeZoneId,
             participants = CreatePromptListText(participantNames),
+            participant_entities = participantEntities.Select(entity => new
+            {
+               id = entity.Id,
+               name = entity.Name,
+               alias_name = entity.AliasName
+            }),
             related_entities = Array.Empty<string>()
          }
       );
