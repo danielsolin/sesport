@@ -29,6 +29,17 @@ public sealed class IndexMarkupTests
          "@Model.GetSortRouteValues(\"Time\")",
          html
       );
+      Assert.Contains(
+         "data-ajax-count-target=\"[data-activity-count]\"",
+         html
+      );
+      Assert.Contains(
+         "data-ajax-count-value=\"@Model.Activities.Count\"",
+         html
+      );
+      Assert.Contains("filter-form-count", html);
+      Assert.Contains("Activities:", html);
+      Assert.Contains("data-activity-count", html);
       Assert.Contains("@activity.ActivityGroupTitle", html);
       Assert.Contains(
          "@Model.GetSortRouteValues(\"Group\")",

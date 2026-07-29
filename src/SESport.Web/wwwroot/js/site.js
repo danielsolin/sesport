@@ -4895,6 +4895,7 @@
          }
 
          target.replaceWith(nextTarget);
+         syncReplacementCount(form, nextTarget);
          initializeAdminDateSteppers(nextTarget);
          initializeCheckboxToggles(nextTarget);
          initializeCheckboxVisibility(nextTarget);
@@ -4910,6 +4911,32 @@
       {
          HTMLFormElement.prototype.submit.call(form);
       }
+   }
+
+   function syncReplacementCount(form, nextTarget)
+   {
+      if(!(form instanceof HTMLFormElement) ||
+         !(nextTarget instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const countSelector = (form.dataset.ajaxCountTarget ?? "").trim();
+      const countValue = (nextTarget.dataset.ajaxCountValue ?? "").trim();
+
+      if(countSelector === "" || countValue === "")
+      {
+         return;
+      }
+
+      const count = document.querySelector(countSelector);
+
+      if(!(count instanceof HTMLElement))
+      {
+         return;
+      }
+
+      count.textContent = countValue;
    }
 
    function captureOpenBroadcastIds(root)

@@ -54,5 +54,8 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("organizationSportName", script);
       Assert.Contains("encodeURIComponent(searchQuery)", script);
       Assert.Contains("check.participation", script);
+      Assert.Contains("syncReplacementCount", script);
+      Assert.Contains("ajaxCountTarget", script);
+      Assert.Contains("ajaxCountValue", script);
    }
 }

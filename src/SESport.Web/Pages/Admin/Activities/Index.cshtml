@@ -28,6 +28,7 @@
 <section class="form-section">
    <form method="get"
          class="filter-form"
+         data-ajax-count-target="[data-activity-count]"
          data-ajax-replace-target="[data-activity-results]">
       <input type="hidden"
              name="@RouteKeys.SortColumn"
@@ -50,14 +51,14 @@
                     multiple="multiple"
                     size="1"
                     data-empty-option="exclusive"
-                    onchange="submitFilterForm(this);">
+               onchange="submitFilterForm(this);">
             </select>
          </label>
       </div>
-         <label>
-            <span>Status</span>
-            <select name="@RouteKeys.Status"
-                    onchange="this.form.submit();">
+      <label>
+         <span>Status</span>
+         <select name="@RouteKeys.Status"
+                 onchange="this.form.submit();">
             <option value="@ActivityListStatusIds.All"
                     selected="@(Model.Status == ActivityListStatusIds.All)">
                All
@@ -74,10 +75,15 @@
             </option>
          </select>
       </label>
+      <span class="entity-filter-count filter-form-count">
+         Activities:
+         <strong data-activity-count>@Model.Activities.Count</strong>
+      </span>
    </form>
 </section>
 
 <div data-activity-results
+     data-ajax-count-value="@Model.Activities.Count"
      data-run-statuses-url="@runStatusesUrl">
    @if(Model.LoadError is not null)
    {

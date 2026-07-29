@@ -332,6 +332,10 @@ h2 {
    gap: 8px;
 }
 
+.filter-form-count {
+   margin-left: auto;
+}
+
 .filter-form label {
    min-width: 180px;
    margin-bottom: 0;

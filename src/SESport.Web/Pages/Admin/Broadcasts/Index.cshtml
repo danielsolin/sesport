@@ -35,6 +35,7 @@
 <section class="form-section">
       <form method="get"
          class="filter-form"
+         data-ajax-count-target="[data-broadcast-count]"
          data-ajax-replace-target="[data-broadcast-results]">
       <input type="hidden"
              name="@RouteKeys.SortColumn"
@@ -77,10 +78,15 @@
                 onchange="this.form.submit();" />
          <span>Show hidden</span>
       </label>
+      <span class="entity-filter-count filter-form-count">
+         Broadcasts:
+         <strong data-broadcast-count>@Model.Broadcasts.Count</strong>
+      </span>
    </form>
 </section>
 
 <div data-broadcast-results
+     data-ajax-count-value="@Model.Broadcasts.Count"
      data-create-participant-url="@createParticipantEntityUrl"
      data-broadcast-inline-edit-url="@editBroadcastFieldUrl"
      data-broadcast-row-url="@broadcastRowUrl"
