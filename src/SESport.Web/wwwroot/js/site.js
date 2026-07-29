@@ -34,6 +34,8 @@
       "[data-entity-inline-edit-input]";
    const generateTeaserSelector = "[data-generate-teaser]";
    const findFactsSelector = "[data-find-facts]";
+   const activityStartCheckSelector =
+      "[data-activity-start-check]";
    const activityFactsCheckSelector =
       "[data-activity-facts-check]";
    const checkParticipationRowSelector =
@@ -112,6 +114,7 @@
    window.initializeBroadcastInlineEditing =
       initializeBroadcastInlineEditing;
    initializeTeaserGeneration();
+   initializeActivityStartChecks();
    initializeActivityFactsChecks();
    initializeParticipationRowChecks();
    void initializeParticipationRunsAsync();
@@ -1369,6 +1372,85 @@
          button.addEventListener("click", async () => {
             await findFactsAsync(button);
          });
+      });
+   }
+
+   function initializeActivityStartChecks()
+   {
+      if(document.documentElement.dataset.activityStartChecksInitialized
+         === "true")
+      {
+         return;
+      }
+
+      document.documentElement.dataset.activityStartChecksInitialized =
+         "true";
+
+      document.addEventListener("submit", async event => {
+         const form = event.target;
+
+         if(!(form instanceof HTMLFormElement)
+            || !form.matches(activityStartCheckSelector))
+         {
+            return;
+         }
+
+         event.preventDefault();
+
+         const button = form.querySelector("button[type='submit']");
+         const status = form.querySelector("[data-start-check-status]");
+         const url = button instanceof HTMLButtonElement
+            ? button.dataset.startUrl
+            : "";
+
+         if(!(button instanceof HTMLButtonElement)
+            || !url
+            || !(status instanceof HTMLElement))
+         {
+            return;
+         }
+
+         button.disabled = true;
+         status.textContent = "Queueing...";
+         status.classList.remove("form-status-error");
+
+         try
+         {
+            const response = await fetch(url, {
+               method: "post",
+               body: new FormData(form),
+               headers: {
+                  Accept: "application/json"
+               }
+            });
+            const payload = await response.json();
+
+            if(!response.ok)
+            {
+               throw new Error(
+                  payload.error || "Start time check failed."
+               );
+            }
+
+            const runId = typeof payload.runId === "string"
+               ? payload.runId.trim()
+               : "";
+
+            status.textContent = runId === ""
+               ? "Queued"
+               : `Queued: ${runId}`;
+         }
+         catch(error)
+         {
+            status.textContent = error instanceof Error
+               ? error.message
+               : "Start time check failed.";
+            status.classList.add("form-status-error");
+         }
+         finally
+         {
+            button.disabled = false;
+         }
       });
    }
 

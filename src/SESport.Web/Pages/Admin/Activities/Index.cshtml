@@ -7,6 +7,9 @@
    var findFactsUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityFacts"
    );
+   var findStartUrl = Url.Page(
+      "/Admin/Ajax/Create/ActivityParticipantFindStart"
+   );
    var runStatusesUrl = Url.Page(
       "/Admin/Ajax/Poll/RunStatuses"
    );
@@ -237,6 +240,23 @@
                            </button>
                            <span class="form-status"
                                  data-facts-check-status></span>
+                        </form>
+                        <form method="post"
+                              data-activity-start-check>
+                           @Html.AntiForgeryToken()
+                           <input type="hidden"
+                                  name="Activity.Id"
+                                  value="@activity.Id" />
+                           <input type="hidden"
+                                  name="Activity.Title"
+                                  value="@activity.Title" />
+                           <button class="broadcast-participation-check-link"
+                                   type="submit"
+                                   data-start-url="@findStartUrl">
+                              Find start
+                           </button>
+                           <span class="form-status"
+                                 data-start-check-status></span>
                         </form>
                         <form method="post"
                               asp-page-handler="Delete"

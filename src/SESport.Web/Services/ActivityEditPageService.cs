@@ -467,6 +467,25 @@ public sealed class ActivityEditPageService(
       );
    }
 
+   public async Task<Guid> QueueFindParticipantsStartAsync(
+      ActivityEditModel activity,
+      CancellationToken cancellationToken
+   )
+   {
+      return await aiJobRunner.QueueAsync(
+         new AiJobRequest(
+            AiJobIds.FindParticipantsStart,
+            await aiInputBuilder.BuildAsync(
+               activity,
+               cancellationToken,
+               activity.ActivityGroupTitle
+            ),
+            activity.Id?.ToString()
+         ),
+         cancellationToken
+      );
+   }
+
    private async Task<
       IReadOnlyList<BroadcastEntityOption>
    > GetEntityPickerOptionsAsync(

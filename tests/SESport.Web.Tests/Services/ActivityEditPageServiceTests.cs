@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 using SESport.AI.Interfaces;
+using SESport.Core.AI;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
@@ -1243,6 +1244,81 @@ public sealed class ActivityEditPageServiceTests
          Assert.Equal(
             "Activity title",
             document.RootElement.GetProperty("event_name").GetString()
+         );
+         Assert.Equal(
+            $"  - {firstPersonName}{Environment.NewLine}" +
+               $"  - {secondPersonName}",
+            document.RootElement.GetProperty("participants").GetString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, firstPersonId);
+         await DeleteEntityAsync(dataSource, secondPersonId);
+      }
+   }
+
+   [Fact]
+   public async Task
+      QueueFindParticipantsStartAsyncFormatsParticipantsLikeCandidates()
+   {
+      var firstPersonId = Guid.NewGuid();
+      var secondPersonId = Guid.NewGuid();
+      var firstPersonName = $"First {Guid.NewGuid():N}";
+      var secondPersonName = $"Second {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         firstPersonId,
+         firstPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         secondPersonId,
+         secondPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel
+         {
+            Title = "Activity title",
+            ActivityGroupTitle = "Activity group title",
+            ActivityType = "Match",
+            SportId = "football",
+            ActivityDate = DistantActivityDate.AddDays(-5),
+            LinkedEntityIds = [firstPersonId, secondPersonId]
+         };
+
+         await fixture.Service.QueueFindParticipantsStartAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var request = Assert.Single(fixture.JobRunner.Requests);
+         Assert.Equal(
+            AiJobIds.FindParticipantsStart,
+            request.JobId
+         );
+
+         using var document = System.Text.Json.JsonDocument.Parse(
+            request.InputPayloadJson
+         );
+
+         Assert.Equal(
+            "Activity title",
+            document.RootElement.GetProperty("event_name").GetString()
+         );
+         Assert.Equal(
+            "Activity group title",
+            document.RootElement.GetProperty("title").GetString()
          );
          Assert.Equal(
             $"  - {firstPersonName}{Environment.NewLine}" +

@@ -18,7 +18,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private static readonly string[] ActivityJobIds =
    [
       AiJobIds.GenerateActivityTeaser,
-      AiJobIds.FindActivityFacts
+      AiJobIds.FindActivityFacts,
+      AiJobIds.FindParticipantsStart
    ];
 
    private const string BroadcastJobId =

@@ -19,6 +19,9 @@ public static class AiJobIds
    public const string FindActivityFacts =
       "find-activity-facts";
 
+   public const string FindParticipantsStart =
+      "find-participants-start";
+
    public const string FindPersonData =
       "find-person-data";
 
@@ -29,7 +32,8 @@ public static class AiJobIds
    {
       return jobId switch
       {
-         GenerateActivityTeaser or FindActivityFacts =>
+         GenerateActivityTeaser or FindActivityFacts or
+            FindParticipantsStart =>
             AiJobTargetType.Activity,
          DecidePrimaryCountryParticipation =>
             AiJobTargetType.Broadcast,
