@@ -50,7 +50,9 @@
                   <tr>
                      <th>VERSION</th>
                      <th>AI JOB</th>
-                     <th>PROMPT</th>
+                     <th>MaxOT</th>
+                     <th>MaxTR</th>
+                     <th>MinTR</th>
                      <th>TEMPERATURE</th>
                      <th></th>
                   </tr>
@@ -62,18 +64,19 @@
                         <td>@prompt.Version</td>
                         <td><code>@prompt.JobId</code></td>
                         <td>
-                           <div>
-                              Sys: @IndexModel.Truncate(
-                                 prompt.SystemPrompt,
-                                 50
-                              )
-                           </div>
-                           <div>
-                              User: @IndexModel.Truncate(
-                                 prompt.UserPromptTemplate,
-                                 50
-                              )
-                           </div>
+                           @IndexModel.FormatNullableInt(
+                              prompt.MaxOutputTokens
+                           )
+                        </td>
+                        <td>
+                           @IndexModel.FormatNullableInt(
+                              prompt.MaxToolRounds
+                           )
+                        </td>
+                        <td>
+                           @IndexModel.FormatNullableInt(
+                              prompt.MinToolRounds
+                           )
                         </td>
                         <td>@prompt.Temperature</td>
                         <td class="table-actions">

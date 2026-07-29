@@ -82,6 +82,9 @@ public sealed record AiPromptListItem(
    string SystemPrompt,
    string UserPromptTemplate,
    decimal? Temperature,
+   int? MaxOutputTokens,
+   int? MaxToolRounds,
+   int? MinToolRounds,
    bool Enabled,
    bool IsInUse
 );

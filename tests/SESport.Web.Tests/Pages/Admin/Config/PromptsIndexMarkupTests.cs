@@ -18,5 +18,9 @@ public sealed class PromptsIndexMarkupTests
       Assert.Contains("Title = \"Inactive\"", html);
       Assert.Contains("Model.CurrentPrompts", html);
       Assert.Contains("Model.UnusedPrompts", html);
+      Assert.Contains("<th>MaxOT</th>", html);
+      Assert.Contains("<th>MaxTR</th>", html);
+      Assert.Contains("<th>MinTR</th>", html);
+      Assert.DoesNotContain("<th>PROMPT</th>", html);
    }
 }

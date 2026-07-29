@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -46,10 +48,8 @@ public class IndexModel(AiAdminRepository repository) : PageModel
       return RedirectToPage("./Index");
    }
 
-   public static string Truncate(string value, int maxLength)
+   public static string FormatNullableInt(int? value)
    {
-      return value.Length <= maxLength
-         ? value
-         : value[..maxLength] + "...";
+      return value?.ToString(CultureInfo.InvariantCulture) ?? "-";
    }
 }
