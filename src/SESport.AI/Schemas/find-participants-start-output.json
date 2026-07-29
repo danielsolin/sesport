@@ -1,70 +1,10 @@
 {
    "type": "object",
-   "title": "FindParticipantsStart",
-   "required": [
-      "status",
-      "participants",
-      "checked_sources"
-   ],
-   "properties": {
-      "status": {
-         "enum": [
-            "Found",
-            "Partial",
-            "NotFound",
-            "Unknown"
-         ],
-         "type": "string",
-         "description": "Overall result for the participant start-time search."
-      },
-      "participants": {
-         "type": "array",
-         "items": {
-            "type": "object",
-            "required": [
-               "name",
-               "start_time",
-               "sources"
-            ],
-            "properties": {
-               "name": {
-                  "type": "string",
-                  "description": "The participant name only."
-               },
-               "start_time": {
-                  "type": [
-                     "string",
-                     "null"
-                  ],
-                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
-                  "description": "The local start time in HH:mm format."
-               },
-               "sources": {
-                  "type": "array",
-                  "items": {
-                     "$ref": "#/$defs/SourceEvidence"
-                  },
-                  "description": "Sources for this participant's start time."
-               }
-            },
-            "additionalProperties": false
-         },
-         "description": "Participants in the same order as the activity input."
-      },
-      "checked_sources": {
-         "type": "array",
-         "items": {
-            "$ref": "#/$defs/SourceEvidence"
-         },
-         "description": "Sources checked for the overall result."
-      }
-   },
    "$defs": {
       "SourceEvidence": {
          "type": "object",
          "required": [
-            "url",
-            "evidence_type"
+            "url"
          ],
          "properties": {
             "url": {
@@ -82,22 +22,59 @@
                   "string",
                   "null"
                ]
-            },
-            "evidence_type": {
-               "enum": [
-                  "StartList",
-                  "ParticipantList",
-                  "ParticipantMention",
-                  "EventInfoOnly",
-                  "SearchOnly"
-               ],
-               "type": "string",
-               "description": "The evidence type for this source."
             }
          },
          "additionalProperties": false
       }
    },
-   "description": "Assessment of participant start times for an activity.",
+   "title": "FindParticipantsStart",
+   "required": [
+      "participants",
+      "checked_sources"
+   ],
+   "properties": {
+      "participants": {
+         "type": "array",
+         "items": {
+            "type": "object",
+            "required": [
+               "name",
+               "start_time",
+               "sources"
+            ],
+            "properties": {
+               "name": {
+                  "type": "string",
+                  "description": "The participant name only."
+               },
+               "sources": {
+                  "type": "array",
+                  "items": {
+                     "$ref": "#/$defs/SourceEvidence"
+                  },
+                  "description": "Sources for this participant\u0027s start time."
+               },
+               "start_time": {
+                  "type": [
+                     "string",
+                     "null"
+                  ],
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+                  "description": "The local start time in HH:mm format."
+               }
+            },
+            "additionalProperties": false
+         },
+         "description": "Participants in the same order as input."
+      },
+      "checked_sources": {
+         "type": "array",
+         "items": {
+            "$ref": "#/$defs/SourceEvidence"
+         },
+         "description": "Sources checked for the overall result."
+      }
+   },
+   "description": "Assessment of participant start times for an event.",
    "additionalProperties": false
 }
