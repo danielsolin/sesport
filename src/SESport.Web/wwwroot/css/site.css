@@ -1793,6 +1793,33 @@ h2 {
    white-space: nowrap;
 }
 
+.activities-table-actions {
+   white-space: normal;
+}
+
+.activities-table-actions .table-actions-stack {
+   gap: 2px;
+}
+
+.activities-table-actions form {
+   display: flex;
+   align-items: center;
+   justify-content: flex-end;
+   gap: 4px;
+   margin: 0;
+   white-space: nowrap;
+}
+
+.activities-table-actions .form-status {
+   margin: 0;
+   min-height: 0;
+   line-height: 1.1;
+}
+
+.activities-table-actions button {
+   line-height: 1.1;
+}
+
 .table-actions-stack {
    display: flex;
    flex-direction: column;

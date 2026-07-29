@@ -45,5 +45,9 @@ public sealed class IndexMarkupTests
          "@Model.GetSortRouteValues(\"Group\")",
          html
       );
+      Assert.Contains("activities-table-actions", html);
+      Assert.Contains("table-actions-stack", html);
+      Assert.Contains("Find Data", html);
+      Assert.Contains("Find Start", html);
    }
 }

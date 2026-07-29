@@ -223,67 +223,69 @@
                            @activity.PublicationStatus
                         </span>
                      </td>
-                     <td class="table-actions">
-                        <form method="post"
-                              data-activity-facts-check>
-                           @Html.AntiForgeryToken()
-                           <input type="hidden"
-                                  name="Activity.Id"
-                                  value="@activity.Id" />
-                           <input type="hidden"
-                                  name="Activity.Title"
-                                  value="@activity.Title" />
-                           <button class="broadcast-participation-check-link"
-                                   type="submit"
-                                   data-facts-url="@findFactsUrl">
-                              Check
-                           </button>
-                           <span class="form-status"
-                                 data-facts-check-status></span>
-                        </form>
-                        <form method="post"
-                              data-activity-start-check>
-                           @Html.AntiForgeryToken()
-                           <input type="hidden"
-                                  name="Activity.Id"
-                                  value="@activity.Id" />
-                           <input type="hidden"
-                                  name="Activity.Title"
-                                  value="@activity.Title" />
-                           <button class="broadcast-participation-check-link"
-                                   type="submit"
-                                   data-start-url="@findStartUrl">
-                              Find start
-                           </button>
-                           <span class="form-status"
-                                 data-start-check-status></span>
-                        </form>
-                        <form method="post"
-                              asp-page-handler="Delete"
-                              asp-route-id="@activity.Id"
-                              onsubmit="return confirm('Sure?');">
-                           <input type="hidden"
-                                  name="@RouteKeys.Date"
-                                  value="@Model.DateText" />
-                           <input type="hidden"
-                                  name="@RouteKeys.Status"
-                                  value="@Model.Status" />
-                           <input type="hidden"
-                                  name="@RouteKeys.SortColumn"
-                                  value="@Model.SortColumn" />
-                           <input type="hidden"
-                                  name="@RouteKeys.SortAsc"
-                                  value="@Model.SortAsc.ToString()" />
-                           @foreach(var sport in Model.SelectedSports
-                              .Where(value =>
-                                 !string.IsNullOrWhiteSpace(value)))
-                           {
+                     <td class="table-actions activities-table-actions">
+                        <div class="table-actions-stack">
+                           <form method="post"
+                                 data-activity-facts-check>
+                              @Html.AntiForgeryToken()
                               <input type="hidden"
-                                     name="@RouteKeys.SelectedSports"
-                                     value="@sport" />
-                           }
-                           <button type="submit">Delete</button>
-                        </form>
+                                     name="Activity.Id"
+                                     value="@activity.Id" />
+                              <input type="hidden"
+                                     name="Activity.Title"
+                                     value="@activity.Title" />
+                              <button class="broadcast-participation-check-link"
+                                 type="submit"
+                                 data-facts-url="@findFactsUrl">
+                                 Find Data
+                              </button>
+                              <span class="form-status"
+                                    data-facts-check-status></span>
+                           </form>
+                           <form method="post"
+                                 data-activity-start-check>
+                              @Html.AntiForgeryToken()
+                              <input type="hidden"
+                                     name="Activity.Id"
+                                     value="@activity.Id" />
+                              <input type="hidden"
+                                     name="Activity.Title"
+                                     value="@activity.Title" />
+                              <button class="broadcast-participation-check-link"
+                                 type="submit"
+                                 data-start-url="@findStartUrl">
+                                 Find Start
+                              </button>
+                              <span class="form-status"
+                                    data-start-check-status></span>
+                           </form>
+                           <form method="post"
+                                 asp-page-handler="Delete"
+                                 asp-route-id="@activity.Id"
+                                 onsubmit="return confirm('Sure?');">
+                              <input type="hidden"
+                                     name="@RouteKeys.Date"
+                                     value="@Model.DateText" />
+                              <input type="hidden"
+                                     name="@RouteKeys.Status"
+                                     value="@Model.Status" />
+                              <input type="hidden"
+                                     name="@RouteKeys.SortColumn"
+                                     value="@Model.SortColumn" />
+                              <input type="hidden"
+                                     name="@RouteKeys.SortAsc"
+                                     value="@Model.SortAsc.ToString()" />
+                              @foreach(var sport in Model.SelectedSports
+                                 .Where(value =>
+                                    !string.IsNullOrWhiteSpace(value)))
+                              {
+                                 <input type="hidden"
+                                        name="@RouteKeys.SelectedSports"
+                                        value="@sport" />
+                              }
+                              <button type="submit">Delete</button>
+                           </form>
+                        </div>
                      </td>
                   </tr>
                }
