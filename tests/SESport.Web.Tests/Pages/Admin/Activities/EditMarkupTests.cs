@@ -185,4 +185,27 @@ public sealed class EditMarkupTests
       Assert.Contains("color: var(--muted)", css);
       Assert.Contains("font-size: 11px", css);
    }
+
+   [Fact]
+   public async Task EditPageShowsAiResultsSection()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+
+      Assert.Contains("data-activity-ai-results", html);
+      Assert.Contains("AI results", html);
+      Assert.Contains("data-activity-ai-result-set", html);
+      Assert.Contains("data-activity-ai-result-job-id", html);
+      Assert.Contains("data-activity-ai-result-run-id", html);
+      Assert.Contains("Run details", html);
+      Assert.Contains("Checked sources", html);
+      Assert.Contains("Raw JSON", html);
+      Assert.Contains("activity-ai-result-table", html);
+   }
 }

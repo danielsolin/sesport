@@ -64,7 +64,8 @@
              name="Activity.BroadcastIds"
              value="@broadcastId" />
    }
-   <section class="form-section">
+   <section class="form-section"
+            data-activity-ai-results>
       <h2>Activity</h2>
       <label>
          <span>Related organization</span>
@@ -321,6 +322,151 @@
             </div>
          }
       </div>
+   </section>
+
+   <section class="form-section">
+      <h2>AI results</h2>
+      @if(Model.AiResults.Count == 0)
+      {
+         <div class="notice">
+            No AI results yet.
+         </div>
+      }
+      else
+      {
+         @foreach(var result in Model.AiResults)
+         {
+            var runDetailsUrl = Url.Page(
+               "/Admin/Runs/Details",
+               new { id = result.RunId }
+            );
+            <details class="activity-ai-result-details"
+                     data-activity-ai-result-set
+                     data-activity-ai-result-job-id="@result.JobId"
+                     data-activity-ai-result-run-id="@result.RunId"
+                     open>
+               <summary class="activity-ai-result-summary">
+                  <strong>@result.JobLabel</strong>
+                  <span class="activity-ai-result-summary-meta">
+                     <code>@result.RunStatusId</code>
+                     @if(!string.IsNullOrWhiteSpace(result.ResultSummary))
+                     {
+                        <span>@result.ResultSummary</span>
+                     }
+                     <a href="@runDetailsUrl">Run details</a>
+                     <span>
+                        @TimeDisplay.FormatLocalTimestamp(
+                           result.UpdatedAt
+                        )
+                     </span>
+                  </span>
+               </summary>
+               @if(result.CheckedSources.Count > 0)
+               {
+                  <div class="activity-ai-result-sources">
+                     <h3 class="subgrid-heading">Checked sources</h3>
+                     <ul class="activity-ai-result-source-list">
+                        @foreach(var source in result.CheckedSources)
+                        {
+                           <li>
+                              <a class="source-url"
+                                 href="@source.Url"
+                                 target="_blank"
+                                 rel="noopener noreferrer">
+                                 @source.Url
+                              </a>
+                              @if(!string.IsNullOrWhiteSpace(source.Title))
+                              {
+                                 <span>@source.Title</span>
+                              }
+                           </li>
+                        }
+                     </ul>
+                  </div>
+               }
+               @if(result.Values.Count == 0)
+               {
+                  <div class="notice">
+                     No structured values were saved.
+                  </div>
+               }
+               else
+               {
+                  <div class="admin-table-wrap">
+                     <table class="admin-table admin-table-compact
+                                   activity-ai-result-table">
+                        <colgroup>
+                           <col class="activity-ai-result-entity-column" />
+                           <col class="activity-ai-result-field-column" />
+                           <col />
+                           <col class="activity-ai-result-sources-column" />
+                        </colgroup>
+                        <thead>
+                           <tr>
+                              <th>Participant</th>
+                              <th>Field</th>
+                              <th>Value</th>
+                              <th>Sources</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           @foreach(var value in result.Values)
+                           {
+                              <tr>
+                                 <td>
+                                    <a asp-page="/Admin/Entities/Edit"
+                                       asp-route-id="@value.EntityId">
+                                       @value.EntityName
+                                    </a>
+                                 </td>
+                                 <td><code>@value.FieldKey</code></td>
+                                 <td>
+                                    <div>
+                                       @(
+                                          string.IsNullOrWhiteSpace(
+                                             value.ValueText
+                                          )
+                                             ? "-"
+                                             : value.ValueText
+                                       )
+                                    </div>
+                                    <details class="activity-ai-result-json">
+                                       <summary>Raw JSON</summary>
+                                       @Model.RenderJsonBlock(value.ValueJson)
+                                    </details>
+                                 </td>
+                                 <td>
+                                    @if(value.Sources.Count == 0)
+                                    {
+                                       <span>-</span>
+                                    }
+                                    else
+                                    {
+                                       <ul class=
+                                             "activity-ai-result-source-list">
+                                          @foreach(var source in value.Sources)
+                                          {
+                                             <li>
+                                                <a class="source-url"
+                                                   href="@source.Url"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer">
+                                                   @source.Url
+                                                </a>
+                                             </li>
+                                          }
+                                       </ul>
+                                    }
+                                 </td>
+                              </tr>
+                           }
+                        </tbody>
+                     </table>
+                  </div>
+               }
+            </details>
+         }
+      }
    </section>
 
    <section class="form-section">

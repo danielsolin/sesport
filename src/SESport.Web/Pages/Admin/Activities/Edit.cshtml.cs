@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,7 +13,8 @@ namespace SESport.Web.Pages.Admin.Activities;
 public class EditModel(
    ActivityEditPageService editService,
    FactRepository factRepository,
-   SourceReferenceRepository sourceRepository
+   SourceReferenceRepository sourceRepository,
+   ActivityParticipantAiResultRepository resultRepository
 ) : PageModel
 {
    [BindProperty]
@@ -40,6 +42,12 @@ public class EditModel(
    } = [];
 
    public IReadOnlyList<FactRecord> Facts { get; private set; } = [];
+
+   public IReadOnlyList<ActivityParticipantAiResultSetRecord> AiResults
+   {
+      get;
+      private set;
+   } = [];
 
    public IReadOnlyList<string> OtherGroupDescriptions
    {
@@ -83,6 +91,7 @@ public class EditModel(
          );
          await LoadParticipantsAsync(cancellationToken);
          await LoadOtherGroupDescriptionsAsync(cancellationToken);
+         AiResults = [];
          return Page();
       }
 
@@ -105,6 +114,10 @@ public class EditModel(
       await LoadParticipantsAsync(cancellationToken);
       await LoadFactsAsync(cancellationToken);
       await LoadOtherGroupDescriptionsAsync(cancellationToken);
+      AiResults = await resultRepository.GetForActivityAsync(
+         Activity.Id.Value,
+         cancellationToken
+      );
 
       return Page();
    }
@@ -253,6 +266,17 @@ public class EditModel(
             id,
             returnUrl = GetLocalReturnUrl(returnUrl)
          }
+      );
+   }
+
+   public static IHtmlContent RenderJsonBlock(string? value)
+   {
+      var encodedJson = System.Net.WebUtility.HtmlEncode(
+         SESport.Web.Pages.Admin.Runs.DetailsModel.FormatJson(value)
+      );
+
+      return new HtmlString(
+         $"<pre class=\"prompt-details-pre\">{encodedJson}</pre>"
       );
    }
 

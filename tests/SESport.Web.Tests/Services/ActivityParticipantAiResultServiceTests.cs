@@ -100,6 +100,46 @@ public sealed class ActivityParticipantAiResultServiceTests
 
          await using var connection = await dataSource.OpenConnectionAsync();
 
+         var resultSets = await resultRepository.GetForActivityAsync(
+            activityId,
+            CancellationToken.None
+         );
+         var resultSet = Assert.Single(resultSets);
+
+         Assert.Equal(AiJobIds.FindParticipantsStart, resultSet.JobId);
+         Assert.NotEmpty(resultSet.JobLabel);
+         Assert.Equal(runId, resultSet.RunId);
+         Assert.Equal("completed", resultSet.RunStatusId);
+         Assert.Contains(
+            resultSet.CheckedSources,
+            source => source.Url == "https://example.test/event"
+         );
+         Assert.Equal(3, resultSet.Values.Count);
+         Assert.Contains(
+            resultSet.Values,
+            value =>
+               value.EntityName == firstPersonName &&
+               value.FieldKey == "lane" &&
+               value.ValueText == "2" &&
+               value.ValueJson == "2"
+         );
+         Assert.Contains(
+            resultSet.Values,
+            value =>
+               value.EntityName == firstPersonName &&
+               value.FieldKey == "start_time" &&
+               value.ValueText == "12:30" &&
+               value.ValueJson == "\"12:30\""
+         );
+         Assert.Contains(
+            resultSet.Values,
+            value =>
+               value.EntityName == secondPersonName &&
+               value.FieldKey == "start_time" &&
+               value.ValueText == "13:10" &&
+               value.ValueJson == "\"13:10\""
+         );
+
          await using(var setCommand = connection.CreateCommand())
          {
             setCommand.CommandText = """
