@@ -432,7 +432,9 @@
                                     </div>
                                     <details class="activity-ai-result-json">
                                        <summary>Raw JSON</summary>
-                                       @Model.RenderJsonBlock(value.ValueJson)
+                                       @EditModel.RenderJsonBlock(
+                                          value.ValueJson
+                                       )
                                     </details>
                                  </td>
                                  <td>
