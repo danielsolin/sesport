@@ -23,6 +23,9 @@ services:
    searxng:
       image: docker.io/searxng/searxng:latest
       container_name: sesport-searxng
+      dns:
+         - 10.255.255.254
+         - 1.1.1.1
       ports:
          - "0.0.0.0:${SEARXNG_PORT:-8088}:8080"
       volumes:
