@@ -1948,12 +1948,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    {
       const string sql = """
          update entities
-         set birthdate = coalesce(@birthdate, birthdate),
-             height = coalesce(@height, height),
-             weight = coalesce(@weight, weight),
+         set birthdate = coalesce(birthdate, @birthdate),
+             height = coalesce(height, @height),
+             weight = coalesce(weight, @weight),
              formative_club = coalesce(
-                @formative_club,
-                formative_club
+                formative_club,
+                @formative_club
              ),
              updated_at = now()
          where id = @id

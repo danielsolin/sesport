@@ -734,6 +734,61 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task UpdateEntityPersonFactsAsyncPreservesExistingValues()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Person Facts {entityId:N}";
+      var currentBirthdate = new DateOnly(1992, 3, 17);
+      var currentHeight = 182;
+      var incomingBirthdate = new DateOnly(1998, 8, 24);
+      var incomingHeight = 190;
+      var incomingWeight = 84;
+      var incomingFormativeClub = $"Incoming Club {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, entityId, entityName);
+      await SetEntityPersonFactsAsync(
+         dataSource,
+         entityId,
+         currentBirthdate,
+         currentHeight,
+         null,
+         null
+      );
+
+      try
+      {
+         var wasApplied = await repository.UpdateEntityPersonFactsAsync(
+            entityId,
+            incomingBirthdate,
+            incomingHeight,
+            incomingWeight,
+            incomingFormativeClub,
+            CancellationToken.None
+         );
+
+         Assert.True(wasApplied);
+
+         var loaded = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(loaded);
+         Assert.Equal(currentBirthdate, loaded!.Birthdate);
+         Assert.Equal(currentHeight, loaded.Height);
+         Assert.Equal(incomingWeight, loaded.Weight);
+         Assert.Equal(incomingFormativeClub, loaded.FormativeClub);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
    public async Task SaveEntityAsyncPreservesExistingLinks()
    {
       var entityId = Guid.NewGuid();
@@ -1261,6 +1316,46 @@ public sealed class AdminRepositoryTests
       command.Parameters.AddWithValue(
          "organization_entity_id",
          (object?)organizationEntityId ?? DBNull.Value
+      );
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task SetEntityPersonFactsAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId,
+      DateOnly? birthdate,
+      int? height,
+      int? weight,
+      string? formativeClub
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         update entities
+         set birthdate = @birthdate,
+             height = @height,
+             weight = @weight,
+             formative_club = @formative_club
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", entityId);
+      command.Parameters.AddWithValue(
+         "birthdate",
+         (object?)birthdate ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "height",
+         (object?)height ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "weight",
+         (object?)weight ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "formative_club",
+         (object?)formativeClub ?? DBNull.Value
       );
 
       await command.ExecuteNonQueryAsync();

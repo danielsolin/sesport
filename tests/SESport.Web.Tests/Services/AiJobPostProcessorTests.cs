@@ -101,4 +101,31 @@ public sealed class AiJobPostProcessorTests
 
       Assert.Null(result);
    }
+
+   [Fact]
+   public void ExtractGeneratedPersonFacts_ConvertsWhitespaceToNull()
+   {
+      const string output = """
+         {
+           "birthdate": "1991-04-08",
+           "height": 181,
+           "weight": 77,
+           "formative_club": "   ",
+           "sources": [
+             {
+               "url": "https://example.test/source"
+             }
+           ]
+         }
+         """;
+
+      var result = AiJobPostProcessor.ExtractGeneratedPersonFacts(output);
+
+      Assert.NotNull(result);
+      Assert.Equal(new DateOnly(1991, 4, 8), result!.Birthdate);
+      Assert.Equal(181, result.Height);
+      Assert.Equal(77, result.Weight);
+      Assert.Null(result.FormativeClub);
+      Assert.Single(result.Sources);
+   }
 }

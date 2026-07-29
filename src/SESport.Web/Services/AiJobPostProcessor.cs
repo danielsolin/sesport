@@ -473,10 +473,14 @@ public sealed class AiJobPostProcessor(
       string propertyName
    )
    {
-      return source.TryGetProperty(propertyName, out var value) &&
-         value.ValueKind == JsonValueKind.String
-            ? value.GetString()?.Trim()
-            : null;
+      if(!source.TryGetProperty(propertyName, out var value) ||
+         value.ValueKind != JsonValueKind.String)
+      {
+         return null;
+      }
+
+      var text = value.GetString()?.Trim();
+      return string.IsNullOrWhiteSpace(text) ? null : text;
    }
 
    internal sealed record PersonFactsOutput(
