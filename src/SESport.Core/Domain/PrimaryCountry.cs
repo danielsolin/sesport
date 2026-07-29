@@ -22,4 +22,33 @@ public static class PrimaryCountry
          ? value[BroadcastChannelPrefix.Length..]
          : value;
    }
+
+   public static string NormalizeBroadcastChannelName(string value)
+   {
+      var normalizedValue = RemoveBroadcastChannelPrefix(value);
+
+      normalizedValue = RemoveBroadcastChannelSuffix(
+         normalizedValue,
+         " (SE)"
+      );
+      normalizedValue = RemoveBroadcastChannelSuffix(
+         normalizedValue,
+         " SE"
+      );
+
+      return normalizedValue;
+   }
+
+   private static string RemoveBroadcastChannelSuffix(
+      string value,
+      string suffix
+   )
+   {
+      return value.EndsWith(
+            suffix,
+            StringComparison.OrdinalIgnoreCase
+         ) && value.Length > suffix.Length
+         ? value[..^suffix.Length]
+         : value;
+   }
 }

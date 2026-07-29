@@ -112,6 +112,35 @@ public class BroadcastXmlParserTests
    }
 
    [Fact]
+   public async Task ParseAsyncRemovesSwedishChannelSuffix()
+   {
+      const string xml = """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <tv>
+           <channel id="AppleTV.se">
+             <display-name>Apple TV (SE)</display-name>
+           </channel>
+           <programme
+             start="20260603180000 +0000"
+             stop="20260603190000 +0000"
+             channel="AppleTV.se">
+             <title lang="sv">Film</title>
+             <category lang="sv">Film</category>
+             <category lang="sv">Sport</category>
+           </programme>
+         </tv>
+         """;
+
+      var parser = new BroadcastXmlParser();
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+
+      var broadcasts = await parser.ParseAsync(stream, CancellationToken.None);
+      var broadcast = Assert.Single(broadcasts);
+
+      Assert.Equal("Apple TV", broadcast.ChannelName);
+   }
+
+   [Fact]
    public async Task ParseAsyncUnescapesUnicodeAmpersandsInChannelNames()
    {
       const string xml = """

@@ -300,7 +300,7 @@ public sealed partial class BroadcastXmlParser
    {
       var channelName = NormalizeText(value);
 
-      return PrimaryCountry.RemoveBroadcastChannelPrefix(channelName);
+      return PrimaryCountry.NormalizeBroadcastChannelName(channelName);
    }
 
    [GeneratedRegex(@"\s+")]
