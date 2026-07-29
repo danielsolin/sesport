@@ -475,17 +475,11 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       const string loadSql = """
          select
-            source_group.id,
             b.activity_group_source_kind_id
          from broadcasts b
-         left join activities source_activity
-            on source_activity.id = b.activity_group_source_activity_id
-         left join activity_groups source_group
-            on source_group.id = source_activity.activity_group_id
          where b.id = @id
          """;
 
-      Guid? activityGroupId = null;
       string? sourceKindId = null;
 
       await using(
@@ -503,8 +497,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             return false;
          }
 
-         activityGroupId = reader.IsDBNull(0) ? null : reader.GetGuid(0);
-         sourceKindId = ReadString(reader, 1);
+         sourceKindId = ReadString(reader, 0);
       }
 
       if(!string.Equals(
@@ -544,37 +537,10 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          return cleared > 0;
       }
 
-      if(activityGroupId is not null)
-      {
-         const string groupSql = """
-            update activity_groups
-            set title = @title,
-               updated_at = now()
-            where id = @activity_group_id
-            """;
-
-         await using var groupCommand = new NpgsqlCommand(
-            groupSql,
-            connection,
-            transaction
-         );
-         groupCommand.Parameters.AddWithValue(
-            "activity_group_id",
-            activityGroupId.Value
-         );
-         groupCommand.Parameters.AddWithValue("title", normalizedTitle);
-
-         var updated = await groupCommand.ExecuteNonQueryAsync(
-            cancellationToken
-         );
-
-         await transaction.CommitAsync(cancellationToken);
-         return updated > 0;
-      }
-
       const string broadcastSql = """
          update broadcasts
-         set activity_group_draft_title = @title,
+         set activity_group_source_activity_id = null,
+            activity_group_draft_title = @title,
             updated_at = now()
          where id = @id
          """;

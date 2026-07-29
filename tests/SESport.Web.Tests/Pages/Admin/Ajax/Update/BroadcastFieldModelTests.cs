@@ -414,13 +414,14 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncUpdatesActivityGroupTitle()
+   public async Task OnPostAsyncDoesNotRenameExistingActivityGroup()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
       var sourceKey = $"test-source-{Guid.NewGuid():N}";
       var uniqueSuffix = Guid.NewGuid().ToString("N");
       var broadcastTitle = $"Broadcast {uniqueSuffix}";
+      var originalGroupTitle = $"Original group {uniqueSuffix}";
       var updatedGroupTitle = $"Updated group {uniqueSuffix}";
       var activityTitle = $"Activity {uniqueSuffix}";
       var activityDate = DistantActivityDate;
@@ -433,7 +434,7 @@ public sealed class BroadcastFieldModelTests
       await InsertActivityGroupAsync(
          dataSource,
          activityGroupId,
-         $"Original group {uniqueSuffix}",
+         originalGroupTitle,
          "football",
          activityDate,
          activityDate
@@ -477,16 +478,55 @@ public sealed class BroadcastFieldModelTests
          var groupText = (string?)updatePayload.GetType()
             .GetProperty("groupText")
             ?.GetValue(updatePayload);
+         var groupValue = (string?)updatePayload.GetType()
+            .GetProperty("groupValue")
+            ?.GetValue(updatePayload);
          var returnedActivityGroupId = (string?)updatePayload.GetType()
             .GetProperty("activityGroupId")
             ?.GetValue(updatePayload);
+         var returnedActivityGroupTitle = (string?)updatePayload.GetType()
+            .GetProperty("activityGroupTitle")
+            ?.GetValue(updatePayload);
+         var returnedActivityGroupDraftTitle =
+            (string?)updatePayload.GetType()
+               .GetProperty("activityGroupDraftTitle")
+               ?.GetValue(updatePayload);
+         var returnedActivityGroupSourceKindId =
+            (string?)updatePayload.GetType()
+               .GetProperty("activityGroupSourceKindId")
+               ?.GetValue(updatePayload);
 
-         Assert.Equal(updatedGroupTitle, groupText);
-         Assert.Equal(activityGroupId.ToString(), returnedActivityGroupId);
+         Assert.Equal($"NEW: {updatedGroupTitle}", groupText);
+         Assert.Equal(updatedGroupTitle, groupValue);
+         Assert.Equal(string.Empty, returnedActivityGroupId);
+         Assert.Equal(string.Empty, returnedActivityGroupTitle);
+         Assert.Equal(updatedGroupTitle, returnedActivityGroupDraftTitle);
+         Assert.Equal(
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            returnedActivityGroupSourceKindId
+         );
+         AssertBroadcastActivityGroupDraftTitle(
+            dataSource,
+            broadcastId,
+            updatedGroupTitle
+         );
          AssertActivityGroupTitle(
             dataSource,
             activityGroupId,
-            updatedGroupTitle
+            originalGroupTitle
+         );
+
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(broadcast);
+         Assert.Null(broadcast!.ActivityGroupId);
+         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+         Assert.Equal(
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            broadcast.ActivityGroupSourceKindId
          );
       }
       finally
