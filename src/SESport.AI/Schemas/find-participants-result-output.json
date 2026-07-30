@@ -1,0 +1,45 @@
+{
+   "type": "object",
+   "title": "FindParticipantsResult",
+   "required": [
+      "participants"
+   ],
+   "properties": {
+      "participants": {
+         "type": "array",
+         "items": {
+            "type": "object",
+            "required": [
+               "name",
+               "result_position",
+               "result_info",
+               "source_url"
+            ],
+            "properties": {
+               "name": {
+                  "type": "string"
+               },
+               "result_position": {
+                  "type": [
+                     "string",
+                     "null"
+                  ]
+               },
+               "result_info": {
+                  "type": [
+                     "string",
+                     "null"
+                  ]
+               },
+               "source_url": {
+                  "type": "string",
+                  "format": "uri"
+               }
+            },
+            "additionalProperties": false
+         }
+      }
+   },
+   "description": "Participant result.",
+   "additionalProperties": false
+}
