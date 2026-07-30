@@ -1,0 +1,67 @@
+{
+   "type": "object",
+   "required": [
+      "birthdate",
+      "height",
+      "weight",
+      "formative_club",
+      "sources"
+   ],
+   "properties": {
+      "height": {
+         "type": [
+            "integer",
+            "null"
+         ],
+         "minimum": 0
+      },
+      "weight": {
+         "type": [
+            "integer",
+            "null"
+         ],
+         "minimum": 0
+      },
+      "sources": {
+         "type": "array",
+         "items": {
+            "type": "object",
+            "required": [
+               "url"
+            ],
+            "properties": {
+               "url": {
+                  "type": "string"
+               },
+               "title": {
+                  "type": [
+                     "string",
+                     "null"
+                  ]
+               },
+               "excerpt": {
+                  "type": [
+                     "string",
+                     "null"
+                  ]
+               }
+            },
+            "additionalProperties": false
+         }
+      },
+      "birthdate": {
+         "type": [
+            "string",
+            "null"
+         ],
+         "format": "date"
+      },
+      "formative_club": {
+         "type": [
+            "string",
+            "null"
+         ]
+      }
+   },
+   "additionalProperties": false
+}
