@@ -139,7 +139,7 @@ public sealed class ActivityParticipantAiResultServiceTests
             resultSet.CheckedSources,
             source => source.Url == "https://example.test/event"
          );
-         Assert.Equal(3, resultSet.Values.Count);
+         Assert.Equal(4, resultSet.Values.Count);
          Assert.Contains(
             resultSet.Values,
             value =>
@@ -164,16 +164,22 @@ public sealed class ActivityParticipantAiResultServiceTests
                value.ValueText == "13:10" &&
                value.ValueJson == "\"13:10\""
          );
+         Assert.Contains(
+            resultSet.Values,
+            value =>
+               value.EntityName == secondPersonName &&
+               value.FieldKey == "lane" &&
+               value.ValueText == "3" &&
+               value.ValueJson == "3"
+         );
 
          await using(var countCommand = connection.CreateCommand())
          {
             countCommand.CommandText = """
-               select row_kind, count(*)
+               select count(*), count(distinct source_id)
                from activity_participant_ai_results
                where activity_id = @activity_id
                   and job_id = @job_id
-               group by row_kind
-               order by row_kind
                """;
             countCommand.Parameters.AddWithValue("activity_id", activityId);
             countCommand.Parameters.AddWithValue(
@@ -182,113 +188,27 @@ public sealed class ActivityParticipantAiResultServiceTests
             );
 
             await using var reader = await countCommand.ExecuteReaderAsync();
-            var rows = new List<(string Kind, long Count)>();
-
-            while(await reader.ReadAsync())
-            {
-               rows.Add((reader.GetString(0), reader.GetInt64(1)));
-            }
-
-            Assert.Equal(3, rows.Count);
-            Assert.Contains(
-               rows,
-               row =>
-                  row.Kind == ActivityParticipantAiResultRowKinds.Set &&
-                  row.Count == 1
-            );
-            Assert.Contains(
-               rows,
-               row =>
-                  row.Kind == ActivityParticipantAiResultRowKinds.Value &&
-                  row.Count == 3
-            );
-            Assert.Contains(
-               rows,
-               row =>
-                  row.Kind == ActivityParticipantAiResultRowKinds.Source &&
-                  row.Count == 4
-            );
-         }
-
-         await using(var setCommand = connection.CreateCommand())
-         {
-            setCommand.CommandText = """
-               select s.run_id, src.url, src.kind, rs.sort_order
-               from activity_participant_ai_results rs
-               join sources src on src.id = rs.source_id
-               join activity_participant_ai_results s
-                  on s.id = rs.parent_id
-               where rs.activity_id = @activity_id
-                  and rs.job_id = @job_id
-                  and rs.row_kind = @source_kind
-                  and s.row_kind = @set_kind
-               order by rs.sort_order
-               """;
-            setCommand.Parameters.AddWithValue("activity_id", activityId);
-            setCommand.Parameters.AddWithValue(
-               "job_id",
-               AiJobIds.FindParticipantsStart
-            );
-            setCommand.Parameters.AddWithValue(
-               "source_kind",
-               ActivityParticipantAiResultRowKinds.Source
-            );
-            setCommand.Parameters.AddWithValue(
-               "set_kind",
-               ActivityParticipantAiResultRowKinds.Set
-            );
-
-            await using var reader = await setCommand.ExecuteReaderAsync();
-            var rows = new List<(Guid RunId, string Url, string Kind, int
-               SortOrder)>();
-
-            while(await reader.ReadAsync())
-            {
-               rows.Add(
-                  (
-                     reader.GetGuid(0),
-                     reader.GetString(1),
-                     reader.GetString(2),
-                     reader.GetInt32(3)
-                  )
-               );
-            }
-
-            Assert.Single(rows);
-            Assert.Equal(runId, rows[0].RunId);
-            Assert.Equal("https://example.test/event", rows[0].Url);
-            Assert.Equal(SourceKinds.ParticipantStartEvidence, rows[0].Kind);
-            Assert.Equal(0, rows[0].SortOrder);
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(4L, reader.GetInt64(0));
+            Assert.Equal(1L, reader.GetInt64(1));
          }
 
          await using(var valueCommand = connection.CreateCommand())
          {
             valueCommand.CommandText = """
-               select e.canonical_name, v.field_key, v.value_text,
-                  v.value_json::text, src.url, src.kind, rs.sort_order
-               from activity_participant_ai_results v
-               join entities e on e.id = v.entity_id
-               join activity_participant_ai_results rs
-                  on rs.parent_id = v.id
-                 and rs.row_kind = @source_kind
-               join sources src on src.id = rs.source_id
-               where v.activity_id = @activity_id
-                  and v.job_id = @job_id
-                  and v.row_kind = @value_kind
-               order by e.canonical_name, v.field_key, rs.sort_order, rs.id
+               select e.canonical_name, r.field_key, r.value_text,
+                  r.value_json::text, src.url, src.kind, r.sort_order
+               from activity_participant_ai_results r
+               join entities e on e.id = r.entity_id
+               join sources src on src.id = r.source_id
+               where r.activity_id = @activity_id
+                  and r.job_id = @job_id
+               order by e.canonical_name, r.field_key, r.sort_order, r.id
                """;
             valueCommand.Parameters.AddWithValue("activity_id", activityId);
             valueCommand.Parameters.AddWithValue(
                "job_id",
                AiJobIds.FindParticipantsStart
-            );
-            valueCommand.Parameters.AddWithValue(
-               "source_kind",
-               ActivityParticipantAiResultRowKinds.Source
-            );
-            valueCommand.Parameters.AddWithValue(
-               "value_kind",
-               ActivityParticipantAiResultRowKinds.Value
             );
 
             await using var reader = await valueCommand.ExecuteReaderAsync();
@@ -310,7 +230,32 @@ public sealed class ActivityParticipantAiResultServiceTests
                );
             }
 
-            Assert.Equal(3, rows.Count);
+            Assert.Equal(4, rows.Count);
+            Assert.All(
+               rows,
+               row =>
+               {
+                  Assert.Equal(
+                     "https://example.test/event",
+                     row.Url
+                  );
+                  Assert.Equal(
+                     SourceKinds.ParticipantStartEvidence,
+                     row.Kind
+                  );
+               }
+            );
+            Assert.Contains(
+               rows,
+               row =>
+               row.Name == firstPersonName &&
+               row.FieldKey == "start_time" &&
+               row.Text == "12:30" &&
+               row.Json == "\"12:30\"" &&
+               row.Url == "https://example.test/event" &&
+               row.Kind == SourceKinds.ParticipantStartEvidence &&
+               row.SortOrder == 0
+            );
             Assert.Contains(
                rows,
                row =>
@@ -318,20 +263,9 @@ public sealed class ActivityParticipantAiResultServiceTests
                row.FieldKey == "lane" &&
                row.Text == "2" &&
                row.Json == "2" &&
-               row.Url == "https://example.test/first" &&
+               row.Url == "https://example.test/event" &&
                row.Kind == SourceKinds.ParticipantStartEvidence &&
-               row.SortOrder == 0
-            );
-            Assert.Contains(
-               rows,
-               row =>
-                  row.Name == firstPersonName &&
-                  row.FieldKey == "start_time" &&
-                  row.Text == "12:30" &&
-                  row.Json == "\"12:30\"" &&
-                  row.Url == "https://example.test/first" &&
-                  row.Kind == SourceKinds.ParticipantStartEvidence &&
-                  row.SortOrder == 0
+               row.SortOrder == 1
             );
             Assert.Contains(
                rows,
@@ -340,9 +274,20 @@ public sealed class ActivityParticipantAiResultServiceTests
                   row.FieldKey == "start_time" &&
                   row.Text == "13:10" &&
                   row.Json == "\"13:10\"" &&
-                  row.Url == "https://example.test/second" &&
+                  row.Url == "https://example.test/event" &&
                   row.Kind == SourceKinds.ParticipantStartEvidence &&
-                  row.SortOrder == 0
+                  row.SortOrder == 2
+            );
+            Assert.Contains(
+               rows,
+               row =>
+                  row.Name == secondPersonName &&
+                  row.FieldKey == "lane" &&
+                  row.Text == "3" &&
+                  row.Json == "3" &&
+                  row.Url == "https://example.test/event" &&
+                  row.Kind == SourceKinds.ParticipantStartEvidence &&
+                  row.SortOrder == 3
             );
          }
 
@@ -500,6 +445,7 @@ public sealed class ActivityParticipantAiResultServiceTests
                {
                   "name": "{{secondPersonName}}",
                   "start_time": "13:10",
+                  "lane": 3,
                   "sources": [
                      {
                         "url": "https://example.test/second"
