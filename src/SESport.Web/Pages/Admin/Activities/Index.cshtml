@@ -10,6 +10,9 @@
    var findStartUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityParticipantFindStart"
    );
+   var findResultUrl = Url.Page(
+      "/Admin/Ajax/Create/ActivityParticipantFindResult"
+   );
    var runStatusesUrl = Url.Page(
       "/Admin/Ajax/Poll/RunStatuses"
    );
@@ -237,7 +240,7 @@
                               <button class="broadcast-participation-check-link"
                                  type="submit"
                                  data-facts-url="@findFactsUrl">
-                                 Find Data
+                                 Find Facts
                               </button>
                               <span class="form-status"
                                     data-facts-check-status></span>
@@ -258,6 +261,23 @@
                               </button>
                               <span class="form-status"
                                     data-start-check-status></span>
+                           </form>
+                           <form method="post"
+                                 data-activity-result-check>
+                              @Html.AntiForgeryToken()
+                              <input type="hidden"
+                                     name="Activity.Id"
+                                     value="@activity.Id" />
+                              <input type="hidden"
+                                     name="Activity.Title"
+                                     value="@activity.Title" />
+                              <button class="broadcast-participation-check-link"
+                                 type="submit"
+                                 data-result-url="@findResultUrl">
+                                 Find Result
+                              </button>
+                              <span class="form-status"
+                                    data-result-check-status></span>
                            </form>
                            <form method="post"
                                  asp-page-handler="Delete"

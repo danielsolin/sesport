@@ -36,6 +36,8 @@
    const findFactsSelector = "[data-find-facts]";
    const activityStartCheckSelector =
       "[data-activity-start-check]";
+   const activityResultCheckSelector =
+      "[data-activity-result-check]";
    const activityFactsCheckSelector =
       "[data-activity-facts-check]";
    const checkParticipationRowSelector =
@@ -116,6 +118,7 @@
       initializeBroadcastInlineEditing;
    initializeTeaserGeneration();
    initializeActivityStartChecks();
+   initializeActivityResultChecks();
    initializeActivityFactsChecks();
    initializeParticipationRowChecks();
    void initializeParticipationRunsAsync();
@@ -1451,6 +1454,85 @@
             status.textContent = error instanceof Error
                ? error.message
                : "Start time check failed.";
+            status.classList.add("form-status-error");
+         }
+         finally
+         {
+            button.disabled = false;
+         }
+      });
+   }
+
+   function initializeActivityResultChecks()
+   {
+      if(document.documentElement.dataset.activityResultChecksInitialized
+         === "true")
+      {
+         return;
+      }
+
+      document.documentElement.dataset.activityResultChecksInitialized =
+         "true";
+
+      document.addEventListener("submit", async event => {
+         const form = event.target;
+
+         if(!(form instanceof HTMLFormElement)
+            || !form.matches(activityResultCheckSelector))
+         {
+            return;
+         }
+
+         event.preventDefault();
+
+         const button = form.querySelector("button[type='submit']");
+         const status = form.querySelector("[data-result-check-status]");
+         const url = button instanceof HTMLButtonElement
+            ? button.dataset.resultUrl
+            : "";
+
+         if(!(button instanceof HTMLButtonElement)
+            || !url
+            || !(status instanceof HTMLElement))
+         {
+            return;
+         }
+
+         button.disabled = true;
+         status.textContent = "Queueing...";
+         status.classList.remove("form-status-error");
+
+         try
+         {
+            const response = await fetch(url, {
+               method: "post",
+               body: new FormData(form),
+               headers: {
+                  Accept: "application/json"
+               }
+            });
+            const payload = await response.json();
+
+            if(!response.ok)
+            {
+               throw new Error(
+                  payload.error || "Result check failed."
+               );
+            }
+
+            const runId = typeof payload.runId === "string"
+               ? payload.runId.trim()
+               : "";
+
+            status.textContent = runId === ""
+               ? "Queued"
+               : `Queued: ${runId}`;
+         }
+         catch(error)
+         {
+            status.textContent = error instanceof Error
+               ? error.message
+               : "Result check failed.";
             status.classList.add("form-status-error");
          }
          finally

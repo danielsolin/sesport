@@ -1345,6 +1345,81 @@ public sealed class ActivityEditPageServiceTests
       }
    }
 
+   [Fact]
+   public async Task
+      QueueFindParticipantsResultAsyncFormatsParticipantsLikeCandidates()
+   {
+      var firstPersonId = Guid.NewGuid();
+      var secondPersonId = Guid.NewGuid();
+      var firstPersonName = $"First {Guid.NewGuid():N}";
+      var secondPersonName = $"Second {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         firstPersonId,
+         firstPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         secondPersonId,
+         secondPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel
+         {
+            Title = "Activity title",
+            ActivityGroupTitle = "Activity group title",
+            ActivityType = "Match",
+            SportId = "football",
+            ActivityDate = DistantActivityDate.AddDays(-5),
+            LinkedEntityIds = [firstPersonId, secondPersonId]
+         };
+
+         await fixture.Service.QueueFindParticipantsResultAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var request = Assert.Single(fixture.JobRunner.Requests);
+         Assert.Equal(
+            AiJobIds.FindParticipantsResult,
+            request.JobId
+         );
+
+         using var document = System.Text.Json.JsonDocument.Parse(
+            request.InputPayloadJson
+         );
+
+         Assert.Equal(
+            "Activity title",
+            document.RootElement.GetProperty("event_name").GetString()
+         );
+         Assert.Equal(
+            "Activity group title",
+            document.RootElement.GetProperty("title").GetString()
+         );
+         Assert.Equal(
+            $"  - {firstPersonName}{Environment.NewLine}" +
+               $"  - {secondPersonName}",
+            document.RootElement.GetProperty("participants").GetString()
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, firstPersonId);
+         await DeleteEntityAsync(dataSource, secondPersonId);
+      }
+   }
+
    private static ActivityEditPageServiceFixture CreateFixture(
       NpgsqlDataSource dataSource
    )

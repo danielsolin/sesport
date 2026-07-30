@@ -472,9 +472,34 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
+      return await QueueFindParticipantsAsync(
+         activity,
+         AiJobIds.FindParticipantsStart,
+         cancellationToken
+      );
+   }
+
+   public async Task<Guid> QueueFindParticipantsResultAsync(
+      ActivityEditModel activity,
+      CancellationToken cancellationToken
+   )
+   {
+      return await QueueFindParticipantsAsync(
+         activity,
+         AiJobIds.FindParticipantsResult,
+         cancellationToken
+      );
+   }
+
+   private async Task<Guid> QueueFindParticipantsAsync(
+      ActivityEditModel activity,
+      string jobId,
+      CancellationToken cancellationToken
+   )
+   {
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
-            AiJobIds.FindParticipantsStart,
+            jobId,
             await aiInputBuilder.BuildAsync(
                activity,
                cancellationToken,

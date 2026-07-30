@@ -47,7 +47,8 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("activities-table-actions", html);
       Assert.Contains("table-actions-stack", html);
-      Assert.Contains("Find Data", html);
+      Assert.Contains("Find Facts", html);
       Assert.Contains("Find Start", html);
+      Assert.Contains("Find Result", html);
    }
 }
