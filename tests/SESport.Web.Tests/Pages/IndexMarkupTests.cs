@@ -59,6 +59,11 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
       Assert.Contains("showStartTimeColumn", html);
+      Assert.Contains("activity-participant-table-collapsed", html);
+      Assert.Contains("data-participant-toggle", html);
+      Assert.Contains("data-collapsed-label=\"Visa alla\"", html);
+      Assert.Contains("data-expanded-label=\"Visa färre\"", html);
+      Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
       Assert.Contains("data-participant-start-time", html);
       Assert.True(
@@ -69,7 +74,6 @@ public sealed class IndexMarkupTests
          html.IndexOf("activity-participant-col-start-time") <
          html.IndexOf("activity-participant-col-age")
       );
-      Assert.Contains("activity-participant-inactive", html);
       Assert.Contains(
          ".activity-participant-inactive {\n" +
          "   opacity: 0.5;",
@@ -90,6 +94,18 @@ public sealed class IndexMarkupTests
          ".activity-participant-col-start-time {\n" +
          "   width: 1%;\n" +
          "   white-space: nowrap;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-table-collapsed\n" +
+         "   .activity-participant-row-collapsed {\n" +
+         "   display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-toggle {\n" +
+         "   padding: 0;\n" +
+         "   border: 0;",
          css
       );
       Assert.DoesNotContain(

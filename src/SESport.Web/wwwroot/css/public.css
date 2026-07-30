@@ -930,6 +930,10 @@
 }
 
 .activity-participant-table-wrap {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 8px;
    margin-top: 12px;
    overflow-x: auto;
 }
@@ -1010,6 +1014,34 @@
 .activity-participant-table th[aria-sort="descending"] button::after {
    content: " ↓";
    opacity: 1;
+}
+
+.activity-participant-table-collapsed
+   .activity-participant-row-collapsed {
+   display: none;
+}
+
+.activity-participant-toggle {
+   display: inline-block;
+   padding: 0;
+   border: 0;
+   background: transparent;
+   color: var(--accent);
+   font: inherit;
+   font-size: 12px;
+   font-weight: 800;
+   text-align: center;
+   text-decoration: underline;
+   cursor: pointer;
+}
+
+.activity-participant-toggle:hover {
+   color: var(--accent-strong);
+}
+
+.activity-participant-toggle:focus-visible {
+   outline: 2px solid rgba(0, 106, 168, 0.45);
+   outline-offset: 2px;
 }
 
 .participant-country-flag {

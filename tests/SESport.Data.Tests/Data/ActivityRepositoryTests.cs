@@ -548,6 +548,115 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedForDateAsyncMarksNationalTeamActivities()
+   {
+      var selectedDate = DistantActivityDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var nationalTeamActivityId = Guid.NewGuid();
+      var regularActivityId = Guid.NewGuid();
+      var nationalTeamPersonId = Guid.NewGuid();
+      var regularPersonId = Guid.NewGuid();
+      var nationalTeamOrganizationId = Guid.NewGuid();
+      var seriesOrganizationId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         nationalTeamActivityId,
+         selectedDate,
+         startsAt,
+         ActivityPublicationStatusIds.Published
+      );
+      await InsertActivityAsync(
+         dataSource,
+         regularActivityId,
+         selectedDate,
+         startsAt,
+         ActivityPublicationStatusIds.Published
+      );
+      await InsertEntityAsync(
+         dataSource,
+         nationalTeamPersonId,
+         "National Team Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertEntityAsync(
+         dataSource,
+         regularPersonId,
+         "Regular Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertEntityAsync(
+         dataSource,
+         nationalTeamOrganizationId,
+         "National Team Organization",
+         TrackedEntityTypeIds.NationalTeam
+      );
+      await InsertEntityAsync(
+         dataSource,
+         seriesOrganizationId,
+         "Series Organization",
+         TrackedEntityTypeIds.Series
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         nationalTeamActivityId,
+         nationalTeamPersonId,
+         nationalTeamOrganizationId
+      );
+      await InsertActivityEntityLinkAsync(
+         dataSource,
+         regularActivityId,
+         regularPersonId,
+         seriesOrganizationId
+      );
+
+      try
+      {
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         var nationalTeamActivity = Assert.Single(
+            activities,
+            item => item.Id == nationalTeamActivityId
+         );
+         var regularActivity = Assert.Single(
+            activities,
+            item => item.Id == regularActivityId
+         );
+
+         Assert.True(
+            nationalTeamActivity.HasNationalTeamRelatedOrganization
+         );
+         Assert.False(
+            regularActivity.HasNationalTeamRelatedOrganization
+         );
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(
+            dataSource,
+            nationalTeamActivityId
+         );
+         await DeleteActivityEntityLinksAsync(dataSource, regularActivityId);
+         await DeleteActivityAsync(dataSource, nationalTeamActivityId);
+         await DeleteActivityAsync(dataSource, regularActivityId);
+         await DeleteEntityAsync(dataSource, nationalTeamOrganizationId);
+         await DeleteEntityAsync(dataSource, seriesOrganizationId);
+         await DeleteEntityAsync(dataSource, nationalTeamPersonId);
+         await DeleteEntityAsync(dataSource, regularPersonId);
+      }
+   }
+
+   [Fact]
    public async Task GetParticipantsForEditAsyncOrdersDistinctRows()
    {
       var activityId = Guid.NewGuid();

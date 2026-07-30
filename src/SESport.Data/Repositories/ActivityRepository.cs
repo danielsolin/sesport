@@ -180,7 +180,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      return await QueryActivityListAsync(
+      var activities = await QueryActivityListAsync(
          $$"""
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
@@ -204,6 +204,55 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          },
          cancellationToken
       );
+
+      return await ApplyNationalTeamFlagsAsync(
+         activities,
+         cancellationToken
+      );
+   }
+
+   private async Task<IReadOnlyList<ActivityListItem>>
+      ApplyNationalTeamFlagsAsync(
+         IReadOnlyList<ActivityListItem> activities,
+         CancellationToken cancellationToken
+      )
+   {
+      if(activities.Count == 0)
+      {
+         return activities;
+      }
+
+      const string sql = $$"""
+         select distinct al.activity_id
+         from activity_entity_links al
+         join entities org on org.id = al.organization_entity_id
+         where al.activity_id = any(@activity_ids)
+            and org.entity_type_id = '{{TrackedEntityTypeIds.NationalTeam}}'
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "activity_ids",
+         activities.Select(activity => activity.Id).ToArray()
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var nationalTeamActivityIds = new HashSet<Guid>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         nationalTeamActivityIds.Add(reader.GetGuid(0));
+      }
+
+      return activities
+         .Select(activity => nationalTeamActivityIds.Contains(activity.Id)
+            ? activity with
+            {
+               HasNationalTeamRelatedOrganization = true
+            }
+            : activity)
+         .ToArray();
    }
 
    public async Task<IReadOnlyList<EntityOption>> GetEntityOptionsAsync(

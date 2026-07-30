@@ -31,6 +31,17 @@
       {
          sortTable(table, "start-time", "ascending");
       }
+
+      const collapseButton = getCollapseButton(table);
+
+      if(collapseButton !== null)
+      {
+         updateCollapseButton(table, collapseButton);
+         collapseButton.addEventListener("click", () => {
+            table.classList.toggle("activity-participant-table-collapsed");
+            updateCollapseButton(table, collapseButton);
+         });
+      }
    });
 
    function sortTable(table, key, direction)
@@ -139,6 +150,33 @@
                : "none"
          );
       });
+   }
+
+   function getCollapseButton(table)
+   {
+      const wrap = table.closest(".activity-participant-table-wrap");
+
+      if(!(wrap instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const button = wrap.querySelector("[data-participant-toggle]");
+
+      return button instanceof HTMLButtonElement ? button : null;
+   }
+
+   function updateCollapseButton(table, button)
+   {
+      const collapsed = table.classList.contains(
+         "activity-participant-table-collapsed"
+      );
+      const label = collapsed
+         ? button.dataset.collapsedLabel ?? "Visa alla"
+         : button.dataset.expandedLabel ?? "Visa färre";
+
+      button.textContent = label;
+      button.setAttribute("aria-expanded", (!collapsed).toString());
    }
 
    function parseStartTime(value)

@@ -485,8 +485,19 @@ else
                                  "activity-participant-table-" +
                                  "has-start-time"
                               : "activity-participant-table";
+                        var shouldCollapseParticipants =
+                           activity.HasNationalTeamRelatedOrganization &&
+                           activity.Participants.Count > 5;
+                        if(shouldCollapseParticipants)
+                        {
+                           participantTableClass +=
+                              " activity-participant-table-collapsed";
+                        }
+                        var participantTableId =
+                           $"participant-table-{activity.Id:N}";
                         <div class="activity-participant-table-wrap">
-                           <table class="@participantTableClass"
+                           <table id="@participantTableId"
+                                  class="@participantTableClass"
                                   data-participant-table>
                               <thead>
                                  <tr>
@@ -540,18 +551,33 @@ else
                                  </tr>
                               </thead>
                               <tbody>
-                                 @foreach(var participant in
-                                    activity.Participants)
+                                 @for(var participantIndex = 0;
+                                       participantIndex <
+                                          activity.Participants.Count;
+                                       participantIndex++)
                                  {
+                                    var participant =
+                                       activity.Participants[participantIndex];
                                     var age = IndexModel.CalculateAge(
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
-                                    <tr class="@(
-                                           participant.IsActive
-                                              ? null
-                                              : "activity-participant-inactive"
-                                       )"
+                                    var rowClass =
+                                       participant.IsActive
+                                          ? shouldCollapseParticipants &&
+                                            participantIndex >= 5
+                                             ? "activity-participant-row-" +
+                                                "collapsed"
+                                             : null
+                                          : shouldCollapseParticipants &&
+                                            participantIndex >= 5
+                                             ? "activity-participant-" +
+                                                "inactive " +
+                                                "activity-participant-row-" +
+                                                "collapsed"
+                                             : "activity-participant-" +
+                                                "inactive";
+                                    <tr class="@rowClass"
                                         data-participant-name=
                                            "@participant.Name"
                                         data-participant-start-time=
@@ -612,6 +638,19 @@ else
                                  }
                               </tbody>
                            </table>
+                           @if(shouldCollapseParticipants)
+                           {
+                              <button type="button"
+                                      class=
+                                         "activity-participant-toggle"
+                                      data-participant-toggle
+                                      data-collapsed-label="Visa alla"
+                                      data-expanded-label="Visa färre"
+                                      aria-controls="@participantTableId"
+                                      aria-expanded="false">
+                                 Visa alla
+                              </button>
+                           }
                         </div>
                      }
                   </article>
