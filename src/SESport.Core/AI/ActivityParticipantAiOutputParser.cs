@@ -20,19 +20,15 @@ public static class ActivityParticipantAiOutputParser
          var root = document.RootElement;
 
          if(root.ValueKind != JsonValueKind.Object ||
-            !TryGetArrayProperty(root, "participants", out var participants) ||
-            !TryGetArrayProperty(
-               root,
-               "checked_sources",
-               out var checkedSources
-            ))
+            !TryGetArrayProperty(root, "participants", out var participants))
          {
             return null;
          }
 
+         var checkedSources = new List<SourceEvidenceDraft>();
          return new ActivityParticipantAiOutputDraft(
-            ReadParticipants(participants),
-            ReadSources(checkedSources)
+            ReadParticipants(participants, checkedSources),
+            checkedSources
          );
       }
       catch(JsonException)
@@ -42,88 +38,92 @@ public static class ActivityParticipantAiOutputParser
    }
 
    private static IReadOnlyList<ActivityParticipantAiParticipantDraft>
-      ReadParticipants(JsonElement participants)
+      ReadParticipants(
+         JsonElement participants,
+         List<SourceEvidenceDraft> checkedSources
+      )
    {
       var result = new List<ActivityParticipantAiParticipantDraft>();
+      var seenSourceUrls = new HashSet<string>(
+         StringComparer.OrdinalIgnoreCase
+      );
 
       foreach(var participant in participants.EnumerateArray())
       {
-         if(participant.ValueKind != JsonValueKind.Object ||
-            !TryGetStringProperty(participant, "name", out var name) ||
-            string.IsNullOrWhiteSpace(name) ||
-            !TryGetArrayProperty(participant, "sources", out var sources))
+         if(!TryReadParticipant(
+               participant,
+               out var draft,
+               out var source
+            ))
          {
             continue;
          }
 
-         var fields = new List<ActivityParticipantAiFieldDraft>();
-         foreach(var property in participant.EnumerateObject())
+         result.Add(draft);
+
+         if(seenSourceUrls.Add(source.Url))
          {
-            if(IsParticipantCoreProperty(property.Name))
-            {
-               continue;
-            }
-
-            fields.Add(ReadField(property));
+            checkedSources.Add(source);
          }
-
-         result.Add(
-            new ActivityParticipantAiParticipantDraft(
-               name,
-               fields,
-               ReadSources(sources)
-            )
-         );
       }
 
       return result;
    }
 
-   private static ActivityParticipantAiFieldDraft ReadField(
-      JsonProperty property
+   private static bool TryReadParticipant(
+      JsonElement participant,
+      out ActivityParticipantAiParticipantDraft draft,
+      out SourceEvidenceDraft source
    )
    {
-      return new ActivityParticipantAiFieldDraft(
-         property.Name,
-         ReadScalarText(property.Value),
-         property.Value.GetRawText()
-      );
-   }
+      draft = null!;
+      source = null!;
 
-   private static IReadOnlyList<SourceEvidenceDraft> ReadSources(
-      JsonElement sources
-   )
-   {
-      var result = new List<SourceEvidenceDraft>();
-      var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-      foreach(var source in sources.EnumerateArray())
+      if(participant.ValueKind != JsonValueKind.Object ||
+         !TryGetStringProperty(participant, "name", out var name) ||
+         string.IsNullOrWhiteSpace(name) ||
+         !TryGetProperty(participant, "start_time", out var startTime) ||
+         !TryGetStringProperty(
+            participant,
+            "source_url",
+            out var sourceUrl
+         ) ||
+         !TryReadSourceEvidence(sourceUrl, out source))
       {
-         if(source.ValueKind != JsonValueKind.Object ||
-            !TryGetStringProperty(source, "url", out var url))
-         {
-            continue;
-         }
-
-         if(string.IsNullOrWhiteSpace(url) ||
-            !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp &&
-               uri.Scheme != Uri.UriSchemeHttps) ||
-            !urls.Add(url))
-         {
-            continue;
-         }
-
-         result.Add(
-            new SourceEvidenceDraft(
-               url,
-               ReadNullableString(source, "title"),
-               ReadNullableString(source, "excerpt")
-            )
-         );
+         return false;
       }
 
-      return result;
+      draft = new ActivityParticipantAiParticipantDraft(
+         name,
+         [
+            new ActivityParticipantAiFieldDraft(
+               "start_time",
+               ReadScalarText(startTime),
+               startTime.GetRawText()
+            )
+         ],
+         [source]
+      );
+
+      return true;
+   }
+
+   private static bool TryReadSourceEvidence(
+      string? url,
+      out SourceEvidenceDraft source
+   )
+   {
+      if(string.IsNullOrWhiteSpace(url) ||
+         !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+         (uri.Scheme != Uri.UriSchemeHttp &&
+            uri.Scheme != Uri.UriSchemeHttps))
+      {
+         source = null!;
+         return false;
+      }
+
+      source = new SourceEvidenceDraft(url, null, null);
+      return true;
    }
 
    private static bool TryGetArrayProperty(
@@ -181,35 +181,6 @@ public static class ActivityParticipantAiOutputParser
 
       value = default;
       return false;
-   }
-
-   private static bool IsParticipantCoreProperty(string propertyName)
-   {
-      return string.Equals(
-         propertyName,
-         "name",
-         StringComparison.OrdinalIgnoreCase
-      ) ||
-      string.Equals(
-         propertyName,
-         "sources",
-         StringComparison.OrdinalIgnoreCase
-      );
-   }
-
-   private static string? ReadNullableString(
-      JsonElement element,
-      string propertyName
-   )
-   {
-      if(!TryGetProperty(element, propertyName, out var property) ||
-         property.ValueKind != JsonValueKind.String)
-      {
-         return null;
-      }
-
-      var value = property.GetString()?.Trim();
-      return string.IsNullOrWhiteSpace(value) ? null : value;
    }
 
    private static string? ReadScalarText(JsonElement element)

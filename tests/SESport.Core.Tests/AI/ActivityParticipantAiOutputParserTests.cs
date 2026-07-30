@@ -5,26 +5,20 @@ namespace SESport.Core.Tests.AI;
 public sealed class ActivityParticipantAiOutputParserTests
 {
    [Fact]
-   public void ParseReadsGenericParticipantFieldsAndSources()
+   public void ParseReadsParticipantStartTimesAndSourceUrls()
    {
       const string output = """
          {
            "Participants": [
              {
                "Name": "First Runner",
-               "Sources": [
-                 {
-                   "url": "https://example.test/first"
-                 }
-               ],
                "start_time": "12:30",
-               "lane": 2
-             }
-           ],
-           "CheckedSources": [
+               "source_url": "https://example.test/first"
+             },
              {
-               "url": "https://example.test/event",
-               "title": "Event page"
+               "name": "Second Runner",
+               "start_time": null,
+               "source_url": "https://example.test/second"
              }
            ]
          }
@@ -33,29 +27,45 @@ public sealed class ActivityParticipantAiOutputParserTests
       var result = ActivityParticipantAiOutputParser.Parse(output);
 
       Assert.NotNull(result);
-      Assert.Single(result!.CheckedSources);
-      Assert.Single(result.Participants);
+      Assert.Equal(2, result!.CheckedSources.Count);
+      Assert.Equal(2, result.Participants.Count);
 
-      var participant = result.Participants[0];
-      Assert.Equal("First Runner", participant.Name);
-      Assert.Single(participant.Sources);
+      var firstParticipant = result.Participants[0];
+      Assert.Equal("First Runner", firstParticipant.Name);
+      Assert.Single(firstParticipant.Sources);
 
-      var source = participant.Sources[0];
-      Assert.Equal("https://example.test/first", source.Url);
+      var firstSource = firstParticipant.Sources[0];
+      Assert.Equal("https://example.test/first", firstSource.Url);
 
-      var startTime = Assert.Single(
-         participant.Fields,
+      var firstStartTime = Assert.Single(
+         firstParticipant.Fields,
          field => field.FieldKey == "start_time"
       );
-      Assert.Equal("12:30", startTime.ValueText);
-      Assert.Equal("\"12:30\"", startTime.ValueJson);
+      Assert.Equal("12:30", firstStartTime.ValueText);
+      Assert.Equal("\"12:30\"", firstStartTime.ValueJson);
 
-      var lane = Assert.Single(
-         participant.Fields,
-         field => field.FieldKey == "lane"
+      var secondParticipant = result.Participants[1];
+      Assert.Equal("Second Runner", secondParticipant.Name);
+      Assert.Single(secondParticipant.Sources);
+
+      var secondSource = secondParticipant.Sources[0];
+      Assert.Equal("https://example.test/second", secondSource.Url);
+
+      var secondStartTime = Assert.Single(
+         secondParticipant.Fields,
+         field => field.FieldKey == "start_time"
       );
-      Assert.Equal("2", lane.ValueText);
-      Assert.Equal("2", lane.ValueJson);
+      Assert.Null(secondStartTime.ValueText);
+      Assert.Equal("null", secondStartTime.ValueJson);
+
+      Assert.Contains(
+         result.CheckedSources,
+         source => source.Url == "https://example.test/first"
+      );
+      Assert.Contains(
+         result.CheckedSources,
+         source => source.Url == "https://example.test/second"
+      );
    }
 
    [Fact]

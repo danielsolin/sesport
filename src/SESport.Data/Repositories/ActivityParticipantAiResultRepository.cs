@@ -57,17 +57,25 @@ public sealed class ActivityParticipantAiResultRepository(
             );
          }
 
-         var canonicalSourceId = sourceIds[uniqueSources[0].Url];
          for(var index = 0; index < result.Values.Count; index++)
          {
+            var value = result.Values[index];
+
+            if(!TryGetSourceId(value, sourceIds, out var sourceId))
+            {
+               throw new InvalidOperationException(
+                  "Participant AI result value requires a source."
+               );
+            }
+
             await InsertValueAsync(
                connection,
                transaction,
                result.ActivityId,
                result.JobId,
                result.RunId,
-               result.Values[index],
-               canonicalSourceId,
+               value,
+               sourceId,
                index,
                cancellationToken
             );
@@ -312,6 +320,24 @@ public sealed class ActivityParticipantAiResultRepository(
       }
 
       return uniqueSources;
+   }
+
+   private static bool TryGetSourceId(
+      ActivityParticipantAiResultValueDraft value,
+      IReadOnlyDictionary<string, Guid> sourceIds,
+      out Guid sourceId
+   )
+   {
+      foreach(var source in value.Sources)
+      {
+         if(sourceIds.TryGetValue(source.Url, out sourceId))
+         {
+            return true;
+         }
+      }
+
+      sourceId = default;
+      return false;
    }
 
    private static void AddSources(

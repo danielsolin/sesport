@@ -1,36 +1,8 @@
 {
    "type": "object",
-   "$defs": {
-      "SourceEvidence": {
-         "type": "object",
-         "required": [
-            "url"
-         ],
-         "properties": {
-            "url": {
-               "type": "string",
-               "format": "uri"
-            },
-            "title": {
-               "type": [
-                  "string",
-                  "null"
-               ]
-            },
-            "excerpt": {
-               "type": [
-                  "string",
-                  "null"
-               ]
-            }
-         },
-         "additionalProperties": false
-      }
-   },
    "title": "FindParticipantsStart",
    "required": [
-      "participants",
-      "checked_sources"
+      "participants"
    ],
    "properties": {
       "participants": {
@@ -40,41 +12,27 @@
             "required": [
                "name",
                "start_time",
-               "sources"
+               "source_url"
             ],
             "properties": {
                "name": {
-                  "type": "string",
-                  "description": "The participant name only."
-               },
-               "sources": {
-                  "type": "array",
-                  "items": {
-                     "$ref": "#/$defs/SourceEvidence"
-                  },
-                  "description": "Sources for this participant\u0027s start time."
+                  "type": "string"
                },
                "start_time": {
                   "type": [
                      "string",
                      "null"
-                  ],
-                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
-                  "description": "The start time in HH:mm format."
+                  ]
+               },
+               "source_url": {
+                  "type": "string",
+                  "format": "uri"
                }
             },
             "additionalProperties": false
-         },
-         "description": "Participants in the same order as input."
-      },
-      "checked_sources": {
-         "type": "array",
-         "items": {
-            "$ref": "#/$defs/SourceEvidence"
-         },
-         "description": "Sources checked for the overall result."
+         }
       }
    },
-   "description": "Assessment of participant start times for an event.",
+   "description": "Participant start times.",
    "additionalProperties": false
 }

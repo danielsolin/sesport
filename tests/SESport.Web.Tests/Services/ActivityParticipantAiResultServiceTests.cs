@@ -25,6 +25,7 @@ public sealed class ActivityParticipantAiResultServiceTests
       var runId = Guid.NewGuid();
       var firstPersonName = $"First {Guid.NewGuid():N}";
       var secondPersonName = $"Second {Guid.NewGuid():N}";
+      var sourceUrl = "https://example.test/event";
 
       await using var dataSource = CreateDataSource();
       var activityRepository = new ActivityRepository(dataSource);
@@ -87,6 +88,7 @@ public sealed class ActivityParticipantAiResultServiceTests
          activityId,
          firstPersonName,
          secondPersonName,
+         sourceUrl,
          firstPersonId,
          secondPersonId
       );
@@ -106,24 +108,43 @@ public sealed class ActivityParticipantAiResultServiceTests
             CancellationToken.None
          );
          Assert.NotNull(loadedActivity);
-         Assert.Contains(
-            loadedActivity!.Sources,
-            source =>
-               source.Kind == SourceKinds.ParticipantStartEvidence &&
-               source.Url == "https://example.test/event"
+         Assert.Single(loadedActivity!.Sources);
+         Assert.Equal(
+            sourceUrl,
+            loadedActivity.Sources[0].Url
          );
-         Assert.Contains(
-            loadedActivity.Sources,
-            source =>
-               source.Kind == SourceKinds.ParticipantStartEvidence &&
-               source.Url == "https://example.test/first"
+         Assert.Equal(
+            SourceKinds.ParticipantStartEvidence,
+            loadedActivity.Sources[0].Kind
          );
-         Assert.Contains(
-            loadedActivity.Sources,
-            source =>
-               source.Kind == SourceKinds.ParticipantStartEvidence &&
-               source.Url == "https://example.test/second"
-         );
+
+         await using(var sourceCountCommand = connection.CreateCommand())
+         {
+            sourceCountCommand.CommandText = """
+               select count(*)
+               from sources
+               where correlation_type = @correlation_type
+                  and correlation_id = @correlation_id
+                  and kind = @kind
+               """;
+            sourceCountCommand.Parameters.AddWithValue(
+               "correlation_type",
+               SourceCorrelationTypes.Activity
+            );
+            sourceCountCommand.Parameters.AddWithValue(
+               "correlation_id",
+               activityId.ToString()
+            );
+            sourceCountCommand.Parameters.AddWithValue(
+               "kind",
+               SourceKinds.ParticipantStartEvidence
+            );
+
+            Assert.Equal(
+               1L,
+               (long)(await sourceCountCommand.ExecuteScalarAsync())!
+            );
+         }
 
          var resultSets = await resultRepository.GetForActivityAsync(
             activityId,
@@ -135,26 +156,18 @@ public sealed class ActivityParticipantAiResultServiceTests
          Assert.NotEmpty(resultSet.JobLabel);
          Assert.Equal(runId, resultSet.RunId);
          Assert.Equal("completed", resultSet.RunStatusId);
-         Assert.Contains(
-            resultSet.CheckedSources,
-            source => source.Url == "https://example.test/event"
-         );
-         Assert.Equal(4, resultSet.Values.Count);
-         Assert.Contains(
-            resultSet.Values,
-            value =>
-               value.EntityName == firstPersonName &&
-               value.FieldKey == "lane" &&
-               value.ValueText == "2" &&
-               value.ValueJson == "2"
-         );
+         var checkedSource = Assert.Single(resultSet.CheckedSources);
+         Assert.Equal(sourceUrl, checkedSource.Url);
+         Assert.Equal(2, resultSet.Values.Count);
          Assert.Contains(
             resultSet.Values,
             value =>
                value.EntityName == firstPersonName &&
                value.FieldKey == "start_time" &&
                value.ValueText == "12:30" &&
-               value.ValueJson == "\"12:30\""
+               value.ValueJson == "\"12:30\"" &&
+               value.Sources.Count == 1 &&
+               value.Sources[0].Url == sourceUrl
          );
          Assert.Contains(
             resultSet.Values,
@@ -162,15 +175,9 @@ public sealed class ActivityParticipantAiResultServiceTests
                value.EntityName == secondPersonName &&
                value.FieldKey == "start_time" &&
                value.ValueText == "13:10" &&
-               value.ValueJson == "\"13:10\""
-         );
-         Assert.Contains(
-            resultSet.Values,
-            value =>
-               value.EntityName == secondPersonName &&
-               value.FieldKey == "lane" &&
-               value.ValueText == "3" &&
-               value.ValueJson == "3"
+               value.ValueJson == "\"13:10\"" &&
+               value.Sources.Count == 1 &&
+               value.Sources[0].Url == sourceUrl
          );
 
          await using(var countCommand = connection.CreateCommand())
@@ -189,7 +196,7 @@ public sealed class ActivityParticipantAiResultServiceTests
 
             await using var reader = await countCommand.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync());
-            Assert.Equal(4L, reader.GetInt64(0));
+            Assert.Equal(2L, reader.GetInt64(0));
             Assert.Equal(1L, reader.GetInt64(1));
          }
 
@@ -230,13 +237,13 @@ public sealed class ActivityParticipantAiResultServiceTests
                );
             }
 
-            Assert.Equal(4, rows.Count);
+            Assert.Equal(2, rows.Count);
             Assert.All(
                rows,
                row =>
                {
                   Assert.Equal(
-                     "https://example.test/event",
+                     sourceUrl,
                      row.Url
                   );
                   Assert.Equal(
@@ -248,24 +255,13 @@ public sealed class ActivityParticipantAiResultServiceTests
             Assert.Contains(
                rows,
                row =>
-               row.Name == firstPersonName &&
-               row.FieldKey == "start_time" &&
-               row.Text == "12:30" &&
-               row.Json == "\"12:30\"" &&
-               row.Url == "https://example.test/event" &&
-               row.Kind == SourceKinds.ParticipantStartEvidence &&
-               row.SortOrder == 0
-            );
-            Assert.Contains(
-               rows,
-               row =>
-               row.Name == firstPersonName &&
-               row.FieldKey == "lane" &&
-               row.Text == "2" &&
-               row.Json == "2" &&
-               row.Url == "https://example.test/event" &&
-               row.Kind == SourceKinds.ParticipantStartEvidence &&
-               row.SortOrder == 1
+                  row.Name == firstPersonName &&
+                  row.FieldKey == "start_time" &&
+                  row.Text == "12:30" &&
+                  row.Json == "\"12:30\"" &&
+                  row.Url == sourceUrl &&
+                  row.Kind == SourceKinds.ParticipantStartEvidence &&
+                  row.SortOrder == 0
             );
             Assert.Contains(
                rows,
@@ -274,20 +270,9 @@ public sealed class ActivityParticipantAiResultServiceTests
                   row.FieldKey == "start_time" &&
                   row.Text == "13:10" &&
                   row.Json == "\"13:10\"" &&
-                  row.Url == "https://example.test/event" &&
+                  row.Url == sourceUrl &&
                   row.Kind == SourceKinds.ParticipantStartEvidence &&
-                  row.SortOrder == 2
-            );
-            Assert.Contains(
-               rows,
-               row =>
-                  row.Name == secondPersonName &&
-                  row.FieldKey == "lane" &&
-                  row.Text == "3" &&
-                  row.Json == "3" &&
-                  row.Url == "https://example.test/event" &&
-                  row.Kind == SourceKinds.ParticipantStartEvidence &&
-                  row.SortOrder == 3
+                  row.SortOrder == 1
             );
          }
 
@@ -340,6 +325,7 @@ public sealed class ActivityParticipantAiResultServiceTests
       Guid activityId,
       string firstPersonName,
       string secondPersonName,
+      string sourceUrl,
       Guid firstPersonId,
       Guid secondPersonId
    )
@@ -435,27 +421,12 @@ public sealed class ActivityParticipantAiResultServiceTests
                {
                   "name": "{{firstPersonName}}",
                   "start_time": "12:30",
-                  "lane": 2,
-                  "sources": [
-                     {
-                        "url": "https://example.test/first"
-                     }
-                  ]
+                  "source_url": "{{sourceUrl}}"
                },
                {
                   "name": "{{secondPersonName}}",
                   "start_time": "13:10",
-                  "lane": 3,
-                  "sources": [
-                     {
-                        "url": "https://example.test/second"
-                     }
-                  ]
-               }
-            ],
-            "checked_sources": [
-               {
-                  "url": "https://example.test/event"
+                  "source_url": "{{sourceUrl}}"
                }
             ]
          }
