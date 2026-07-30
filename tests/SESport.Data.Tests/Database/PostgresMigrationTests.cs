@@ -160,44 +160,51 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
-   public void ParticipantAiResultsMigrationUsesSingleSourceLinkTable()
+   public void ParticipantAiResultsMigrationUsesSingleUnifiedTable()
    {
       var migration = File.ReadAllText(
          Path.Combine(
             FindRepositoryRoot(),
             "database",
             "migrations",
-            "012_activity_participant_ai_result_source_links.sql"
+            "013_activity_participant_ai_results.sql"
          )
       ).ToLowerInvariant();
 
       Assert.Contains(
-         "create table public.activity_participant_ai_result_sources",
-         migration
-      );
-      Assert.Contains("references public.sources(id)", migration);
-      Assert.Contains(
-         "references public.activity_participant_ai_result_sets",
+         "rename to activity_participant_ai_results",
          migration
       );
       Assert.Contains(
-         "references public.activity_participant_ai_result_values",
+         "add column id uuid",
          migration
       );
       Assert.Contains(
-         "activity_participant_ai_result_sources_scope_check",
+         "add column row_kind text",
          migration
       );
       Assert.Contains(
-         "activity_participant_ai_result_sources_unique",
+         "add column source_id uuid",
          migration
       );
       Assert.Contains(
-         "drop table public.activity_participant_ai_result_set_sources",
+         "activity_participant_ai_results_row_kind_check",
          migration
       );
       Assert.Contains(
-         "drop table public.activity_participant_ai_result_value_sources",
+         "activity_participant_ai_results_set_unique_idx",
+         migration
+      );
+      Assert.Contains(
+         "activity_participant_ai_results_source_unique_idx",
+         migration
+      );
+      Assert.Contains(
+         "drop table public.activity_participant_ai_result_sources",
+         migration
+      );
+      Assert.Contains(
+         "drop table public.activity_participant_ai_result_values",
          migration
       );
    }

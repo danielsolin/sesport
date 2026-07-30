@@ -2,8 +2,8 @@ using Npgsql;
 using NpgsqlTypes;
 
 using SESport.Core.AI;
-using SESport.Core.Sources;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 using SESport.Data.Models;
 
 namespace SESport.Data.Repositories;
@@ -26,10 +26,11 @@ public sealed class ActivityParticipantAiResultRepository(
 
       try
       {
-         await UpsertResultSetAsync(
+         await DeleteExistingRowsAsync(
             connection,
             transaction,
-            result,
+            result.ActivityId,
+            result.JobId,
             cancellationToken
          );
 
@@ -40,11 +41,10 @@ public sealed class ActivityParticipantAiResultRepository(
             cancellationToken
          );
 
-         await DeleteExistingValuesAsync(
+         var setRowId = await InsertResultSetAsync(
             connection,
             transaction,
-            result.ActivityId,
-            result.JobId,
+            result,
             cancellationToken
          );
 
@@ -57,17 +57,19 @@ public sealed class ActivityParticipantAiResultRepository(
             cancellationToken
          );
 
-         var valueCount = 0;
-         foreach(var value in result.Values)
+         var insertedValues = new List<(Guid ValueId, int Index)>();
+         for(var index = 0; index < result.Values.Count; index++)
          {
-            valueCount += await InsertValueAsync(
+            var valueId = await InsertValueAsync(
                connection,
                transaction,
                result.ActivityId,
                result.JobId,
-               value,
+               setRowId,
+               result.Values[index],
                cancellationToken
             );
+            insertedValues.Add((valueId, index));
          }
 
          await InsertSetSourceLinksAsync(
@@ -75,26 +77,28 @@ public sealed class ActivityParticipantAiResultRepository(
             transaction,
             result.ActivityId,
             result.JobId,
+            setRowId,
             result.CheckedSources,
             sourceIds,
             cancellationToken
          );
 
-         foreach(var value in result.Values)
+         foreach(var (valueId, index) in insertedValues)
          {
             await InsertValueSourceLinksAsync(
                connection,
                transaction,
                result.ActivityId,
                result.JobId,
-               value,
+               valueId,
+               result.Values[index],
                sourceIds,
                cancellationToken
             );
          }
 
          await transaction.CommitAsync(cancellationToken);
-         return valueCount;
+         return result.Values.Count;
       }
       catch
       {
@@ -119,19 +123,16 @@ public sealed class ActivityParticipantAiResultRepository(
          return [];
       }
 
-      await LoadResultSetSourcesAsync(
+      var valuesById = await LoadValuesAsync(
          activityId,
          buildersByJobId,
          cancellationToken
       );
-      await LoadValuesAsync(
+
+      await LoadSourceRowsAsync(
          activityId,
          buildersByJobId,
-         cancellationToken
-      );
-      await LoadValueSourcesAsync(
-         activityId,
-         buildersByJobId,
+         valuesById,
          cancellationToken
       );
 
@@ -150,6 +151,7 @@ public sealed class ActivityParticipantAiResultRepository(
    {
       const string sql = """
          select
+            s.id,
             s.job_id,
             coalesce(j.label, s.job_id) as job_label,
             s.run_id,
@@ -159,15 +161,20 @@ public sealed class ActivityParticipantAiResultRepository(
             r.completed_at,
             s.created_at,
             s.updated_at
-         from activity_participant_ai_result_sets s
+         from activity_participant_ai_results s
          join ai_job_runs r on r.id = s.run_id
          left join ai_jobs j on j.id = s.job_id
          where s.activity_id = @activity_id
+            and s.row_kind = @row_kind
          order by s.updated_at desc, s.job_id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue(
+         "row_kind",
+         ActivityParticipantAiResultRowKinds.Set
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -178,18 +185,19 @@ public sealed class ActivityParticipantAiResultRepository(
       while(await reader.ReadAsync(cancellationToken))
       {
          var builder = new Builder(
-            reader.GetString(0),
+            reader.GetGuid(0),
             reader.GetString(1),
-            reader.GetGuid(2),
-            reader.GetString(3),
+            reader.GetString(2),
+            reader.GetGuid(3),
+            reader.GetString(4),
             AiRunSummaryFormatter.Format(
-               ReadNullableString(reader, 4),
-               reader.GetString(1)
+               ReadNullableString(reader, 5),
+               reader.GetString(2)
             ),
-            reader.GetFieldValue<DateTimeOffset>(5),
-            ReadNullableDateTimeOffset(reader, 6),
-            reader.GetFieldValue<DateTimeOffset>(7),
-            reader.GetFieldValue<DateTimeOffset>(8)
+            reader.GetFieldValue<DateTimeOffset>(6),
+            ReadNullableDateTimeOffset(reader, 7),
+            reader.GetFieldValue<DateTimeOffset>(8),
+            reader.GetFieldValue<DateTimeOffset>(9)
          );
          buildersByJobId[builder.JobId] = builder;
       }
@@ -197,7 +205,7 @@ public sealed class ActivityParticipantAiResultRepository(
       return buildersByJobId;
    }
 
-   private async Task LoadResultSetSourcesAsync(
+   private async Task<Dictionary<Guid, ValueBuilder>> LoadValuesAsync(
       Guid activityId,
       IReadOnlyDictionary<string, Builder> buildersByJobId,
       CancellationToken cancellationToken
@@ -205,88 +213,52 @@ public sealed class ActivityParticipantAiResultRepository(
    {
       const string sql = """
          select
-            rs.job_id,
-            rs.sort_order,
-            src.url,
-            src.title,
-            src.excerpt
-         from activity_participant_ai_result_sources rs
-         join sources src on src.id = rs.source_id
-         where rs.activity_id = @activity_id
-            and rs.entity_id is null
-            and rs.field_key is null
-         order by rs.job_id, rs.sort_order, src.id
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("activity_id", activityId);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         if(reader.IsDBNull(0) || reader.IsDBNull(2))
-         {
-            continue;
-         }
-
-         if(!buildersByJobId.TryGetValue(reader.GetString(0), out var builder))
-         {
-            continue;
-         }
-
-         builder.CheckedSources.Add(
-            ReadSourceEvidence(reader, 2, 3, 4)
-         );
-      }
-   }
-
-   private async Task LoadValuesAsync(
-      Guid activityId,
-      IReadOnlyDictionary<string, Builder> buildersByJobId,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         select
+            v.id,
             v.job_id,
             v.entity_id,
             coalesce(e.canonical_name, '') as entity_name,
             v.field_key,
             v.value_text,
             v.value_json::text
-         from activity_participant_ai_result_values v
+         from activity_participant_ai_results v
          left join entities e on e.id = v.entity_id
          where v.activity_id = @activity_id
-         order by v.job_id, coalesce(e.canonical_name, ''), v.field_key
+            and v.row_kind = @row_kind
+         order by v.job_id, coalesce(e.canonical_name, ''), v.field_key, v.id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue(
+         "row_kind",
+         ActivityParticipantAiResultRowKinds.Value
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
+      var valuesById = new Dictionary<Guid, ValueBuilder>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         if(reader.IsDBNull(0) || reader.IsDBNull(1) || reader.IsDBNull(3) ||
-            reader.IsDBNull(5))
+         if(reader.IsDBNull(0) || reader.IsDBNull(1) || reader.IsDBNull(2) ||
+            reader.IsDBNull(4) || reader.IsDBNull(6))
          {
             continue;
          }
 
-         if(!buildersByJobId.TryGetValue(reader.GetString(0), out var builder))
+         if(!buildersByJobId.TryGetValue(reader.GetString(1), out var builder))
          {
             continue;
          }
 
-         var entityId = reader.GetGuid(1);
-         var entityName = ReadNullableString(reader, 2);
-         var fieldKey = reader.GetString(3);
-         var valueText = ReadNullableString(reader, 4);
-         var valueJson = reader.GetString(5);
-         builder.GetOrCreateValue(
+         var valueId = reader.GetGuid(0);
+         var entityId = reader.GetGuid(2);
+         var entityName = ReadNullableString(reader, 3);
+         var fieldKey = reader.GetString(4);
+         var valueText = ReadNullableString(reader, 5);
+         var valueJson = reader.GetString(6);
+         var value = builder.AddValue(
+            valueId,
             entityId,
             string.IsNullOrWhiteSpace(entityName)
                ? entityId.ToString("N")
@@ -295,95 +267,89 @@ public sealed class ActivityParticipantAiResultRepository(
             valueText,
             valueJson
          );
+         valuesById[valueId] = value;
       }
+
+      return valuesById;
    }
 
-   private async Task LoadValueSourcesAsync(
+   private async Task LoadSourceRowsAsync(
       Guid activityId,
       IReadOnlyDictionary<string, Builder> buildersByJobId,
+      IReadOnlyDictionary<Guid, ValueBuilder> valuesById,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
          select
+            rs.parent_id,
             rs.job_id,
-            rs.entity_id,
-            rs.field_key,
             rs.sort_order,
             src.url,
             src.title,
             src.excerpt
-         from activity_participant_ai_result_sources rs
+         from activity_participant_ai_results rs
          join sources src on src.id = rs.source_id
          where rs.activity_id = @activity_id
-            and rs.entity_id is not null
-            and rs.field_key is not null
-         order by rs.job_id, rs.entity_id, rs.field_key, rs.sort_order, src.id
+            and rs.row_kind = @row_kind
+         order by rs.job_id, rs.sort_order, src.id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue(
+         "row_kind",
+         ActivityParticipantAiResultRowKinds.Source
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         if(reader.IsDBNull(0) || reader.IsDBNull(1) ||
-            reader.IsDBNull(2) || reader.IsDBNull(4))
+         if(reader.IsDBNull(0) || reader.IsDBNull(1) || reader.IsDBNull(2) ||
+            reader.IsDBNull(3))
          {
             continue;
          }
 
-         if(!buildersByJobId.TryGetValue(reader.GetString(0), out var builder))
+         var parentId = reader.GetGuid(0);
+         var jobId = reader.GetString(1);
+         var source = ReadSourceEvidence(reader, 3, 4, 5);
+
+         if(valuesById.TryGetValue(parentId, out var value))
          {
+            value.Sources.Add(source);
             continue;
          }
 
-         var value = builder.GetValue(
-            reader.GetGuid(1),
-            reader.GetString(2)
-         );
-
-         if(value is null)
+         if(buildersByJobId.TryGetValue(jobId, out var builder) &&
+            builder.SetRowId == parentId)
          {
-            continue;
+            builder.CheckedSources.Add(source);
          }
-
-         value.Sources.Add(ReadSourceEvidence(reader, 4, 5, 6));
       }
    }
 
-   private static async Task UpsertResultSetAsync(
+   private static async Task DeleteExistingRowsAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
-      ActivityParticipantAiResultDraft result,
+      Guid activityId,
+      string jobId,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
-         insert into activity_participant_ai_result_sets (
-            activity_id,
-            job_id,
-            run_id
-         )
-         values (
-            @activity_id,
-            @job_id,
-            @run_id
-         )
-         on conflict (activity_id, job_id) do update set
-            run_id = excluded.run_id,
-            updated_at = now()
+         delete from activity_participant_ai_results
+         where activity_id = @activity_id
+            and job_id = @job_id
          """;
 
       await using var command = connection.CreateCommand();
       command.Transaction = transaction;
       command.CommandText = sql;
-      command.Parameters.AddWithValue("activity_id", result.ActivityId);
-      command.Parameters.AddWithValue("job_id", result.JobId);
-      command.Parameters.AddWithValue("run_id", result.RunId);
-
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("job_id", jobId);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -395,10 +361,15 @@ public sealed class ActivityParticipantAiResultRepository(
    )
    {
       const string sql = """
-         delete from sources
-         where correlation_type = @correlation_type
-            and correlation_id = @correlation_id
-            and kind = @kind
+         delete from sources src
+         where src.correlation_type = @correlation_type
+            and src.correlation_id = @correlation_id
+            and src.kind = @kind
+            and not exists (
+               select 1
+               from activity_participant_ai_results r
+               where r.source_id = src.id
+            )
          """;
 
       await using var command = connection.CreateCommand();
@@ -416,28 +387,6 @@ public sealed class ActivityParticipantAiResultRepository(
          "kind",
          SourceKinds.ParticipantStartEvidence
       );
-      await command.ExecuteNonQueryAsync(cancellationToken);
-   }
-
-   private static async Task DeleteExistingValuesAsync(
-      NpgsqlConnection connection,
-      NpgsqlTransaction transaction,
-      Guid activityId,
-      string jobId,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         delete from activity_participant_ai_result_values
-         where activity_id = @activity_id
-            and job_id = @job_id
-         """;
-
-      await using var command = connection.CreateCommand();
-      command.Transaction = transaction;
-      command.CommandText = sql;
-      command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue("job_id", jobId);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
@@ -500,27 +449,76 @@ public sealed class ActivityParticipantAiResultRepository(
       return sourceIds;
    }
 
-   private static async Task<int> InsertValueAsync(
+   private static async Task<Guid> InsertResultSetAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      ActivityParticipantAiResultDraft result,
+      CancellationToken cancellationToken
+   )
+   {
+      var id = Guid.NewGuid();
+      const string sql = """
+         insert into activity_participant_ai_results (
+            id,
+            activity_id,
+            job_id,
+            run_id,
+            row_kind
+         )
+         values (
+            @id,
+            @activity_id,
+            @job_id,
+            @run_id,
+            @row_kind
+         )
+         """;
+
+      await using var command = connection.CreateCommand();
+      command.Transaction = transaction;
+      command.CommandText = sql;
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("activity_id", result.ActivityId);
+      command.Parameters.AddWithValue("job_id", result.JobId);
+      command.Parameters.AddWithValue("run_id", result.RunId);
+      command.Parameters.AddWithValue(
+         "row_kind",
+         ActivityParticipantAiResultRowKinds.Set
+      );
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+      return id;
+   }
+
+   private static async Task<Guid> InsertValueAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid activityId,
       string jobId,
+      Guid setRowId,
       ActivityParticipantAiResultValueDraft value,
       CancellationToken cancellationToken
    )
    {
+      var id = Guid.NewGuid();
       const string sql = """
-         insert into activity_participant_ai_result_values (
+         insert into activity_participant_ai_results (
+            id,
             activity_id,
             job_id,
+            parent_id,
+            row_kind,
             entity_id,
             field_key,
             value_text,
             value_json
          )
          values (
+            @id,
             @activity_id,
             @job_id,
+            @parent_id,
+            @row_kind,
             @entity_id,
             @field_key,
             @value_text,
@@ -531,8 +529,14 @@ public sealed class ActivityParticipantAiResultRepository(
       await using var command = connection.CreateCommand();
       command.Transaction = transaction;
       command.CommandText = sql;
+      command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.AddWithValue("parent_id", setRowId);
+      command.Parameters.AddWithValue(
+         "row_kind",
+         ActivityParticipantAiResultRowKinds.Value
+      );
       command.Parameters.AddWithValue("entity_id", value.EntityId);
       command.Parameters.AddWithValue("field_key", value.FieldKey);
       command.Parameters.AddWithValue(
@@ -541,7 +545,7 @@ public sealed class ActivityParticipantAiResultRepository(
       );
       AddJsonbParameter(command, "value_json", value.ValueJson);
       await command.ExecuteNonQueryAsync(cancellationToken);
-      return 1;
+      return id;
    }
 
    private static async Task InsertSetSourceLinksAsync(
@@ -549,6 +553,7 @@ public sealed class ActivityParticipantAiResultRepository(
       NpgsqlTransaction transaction,
       Guid activityId,
       string jobId,
+      Guid setRowId,
       IReadOnlyList<SourceEvidenceDraft> sources,
       IReadOnlyDictionary<string, Guid> sourceIds,
       CancellationToken cancellationToken
@@ -561,11 +566,12 @@ public sealed class ActivityParticipantAiResultRepository(
             continue;
          }
 
-         await InsertSetSourceLinkAsync(
+         await InsertSourceRowAsync(
             connection,
             transaction,
             activityId,
             jobId,
+            setRowId,
             sourceId,
             index,
             cancellationToken
@@ -578,6 +584,7 @@ public sealed class ActivityParticipantAiResultRepository(
       NpgsqlTransaction transaction,
       Guid activityId,
       string jobId,
+      Guid valueId,
       ActivityParticipantAiResultValueDraft value,
       IReadOnlyDictionary<string, Guid> sourceIds,
       CancellationToken cancellationToken
@@ -590,13 +597,12 @@ public sealed class ActivityParticipantAiResultRepository(
             continue;
          }
 
-         await InsertValueSourceLinkAsync(
+         await InsertSourceRowAsync(
             connection,
             transaction,
             activityId,
             jobId,
-            value.EntityId,
-            value.FieldKey,
+            valueId,
             sourceId,
             index,
             cancellationToken
@@ -671,23 +677,24 @@ public sealed class ActivityParticipantAiResultRepository(
       return id;
    }
 
-   private static async Task InsertSetSourceLinkAsync(
+   private static async Task InsertSourceRowAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid activityId,
       string jobId,
+      Guid parentId,
       Guid sourceId,
       int sortOrder,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
-         insert into activity_participant_ai_result_sources (
+         insert into activity_participant_ai_results (
             id,
             activity_id,
             job_id,
-            entity_id,
-            field_key,
+            parent_id,
+            row_kind,
             source_id,
             sort_order
          )
@@ -695,8 +702,8 @@ public sealed class ActivityParticipantAiResultRepository(
             @id,
             @activity_id,
             @job_id,
-            @entity_id,
-            @field_key,
+            @parent_id,
+            @row_kind,
             @source_id,
             @sort_order
          )
@@ -710,66 +717,11 @@ public sealed class ActivityParticipantAiResultRepository(
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("job_id", jobId);
-      command.Parameters.Add(
-         new NpgsqlParameter("entity_id", NpgsqlDbType.Uuid)
-         {
-            Value = DBNull.Value
-         }
+      command.Parameters.AddWithValue("parent_id", parentId);
+      command.Parameters.AddWithValue(
+         "row_kind",
+         ActivityParticipantAiResultRowKinds.Source
       );
-      command.Parameters.Add(
-         new NpgsqlParameter("field_key", NpgsqlDbType.Text)
-         {
-            Value = DBNull.Value
-         }
-      );
-      command.Parameters.AddWithValue("source_id", sourceId);
-      command.Parameters.AddWithValue("sort_order", sortOrder);
-      await command.ExecuteNonQueryAsync(cancellationToken);
-   }
-
-   private static async Task InsertValueSourceLinkAsync(
-      NpgsqlConnection connection,
-      NpgsqlTransaction transaction,
-      Guid activityId,
-      string jobId,
-      Guid entityId,
-      string fieldKey,
-      Guid sourceId,
-      int sortOrder,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         insert into activity_participant_ai_result_sources (
-            id,
-            activity_id,
-            job_id,
-            entity_id,
-            field_key,
-            source_id,
-            sort_order
-         )
-         values (
-            @id,
-            @activity_id,
-            @job_id,
-            @entity_id,
-            @field_key,
-            @source_id,
-            @sort_order
-         )
-         """;
-
-      await using var command = new NpgsqlCommand(
-         sql,
-         connection,
-         transaction
-      );
-      command.Parameters.AddWithValue("id", Guid.NewGuid());
-      command.Parameters.AddWithValue("activity_id", activityId);
-      command.Parameters.AddWithValue("job_id", jobId);
-      command.Parameters.AddWithValue("entity_id", entityId);
-      command.Parameters.AddWithValue("field_key", fieldKey);
       command.Parameters.AddWithValue("source_id", sourceId);
       command.Parameters.AddWithValue("sort_order", sortOrder);
       await command.ExecuteNonQueryAsync(cancellationToken);
@@ -825,6 +777,7 @@ public sealed class ActivityParticipantAiResultRepository(
    }
 
    private sealed class Builder(
+      Guid SetRowId,
       string JobId,
       string JobLabel,
       Guid RunId,
@@ -836,9 +789,7 @@ public sealed class ActivityParticipantAiResultRepository(
       DateTimeOffset UpdatedAt
    )
    {
-      private readonly Dictionary<ValueKey, ValueBuilder> valueBuilders = [];
-
-      public List<SourceEvidenceDraft> CheckedSources { get; } = [];
+      public Guid SetRowId { get; } = SetRowId;
 
       public string JobId { get; } = JobId;
 
@@ -858,9 +809,12 @@ public sealed class ActivityParticipantAiResultRepository(
 
       public DateTimeOffset UpdatedAt { get; } = UpdatedAt;
 
+      public List<SourceEvidenceDraft> CheckedSources { get; } = [];
+
       public List<ValueBuilder> Values { get; } = [];
 
-      public ValueBuilder GetOrCreateValue(
+      public ValueBuilder AddValue(
+         Guid id,
          Guid entityId,
          string entityName,
          string fieldKey,
@@ -868,32 +822,17 @@ public sealed class ActivityParticipantAiResultRepository(
          string valueJson
       )
       {
-         var key = new ValueKey(entityId, fieldKey);
+         var value = new ValueBuilder(
+            id,
+            entityId,
+            entityName,
+            fieldKey,
+            valueText,
+            valueJson
+         );
 
-         if(!valueBuilders.TryGetValue(key, out var value))
-         {
-            value = new ValueBuilder(
-               entityId,
-               entityName,
-               fieldKey,
-               valueText,
-               valueJson
-            );
-            valueBuilders[key] = value;
-            Values.Add(value);
-         }
-
+         Values.Add(value);
          return value;
-      }
-
-      public ValueBuilder? GetValue(Guid entityId, string fieldKey)
-      {
-         return valueBuilders.TryGetValue(
-               new ValueKey(entityId, fieldKey),
-               out var value
-            )
-            ? value
-            : null;
       }
 
       public ActivityParticipantAiResultSetRecord ToRecord()
@@ -915,6 +854,7 @@ public sealed class ActivityParticipantAiResultRepository(
    }
 
    private sealed class ValueBuilder(
+      Guid Id,
       Guid EntityId,
       string EntityName,
       string FieldKey,
@@ -922,6 +862,8 @@ public sealed class ActivityParticipantAiResultRepository(
       string ValueJson
    )
    {
+      public Guid Id { get; } = Id;
+
       public Guid EntityId { get; } = EntityId;
 
       public string EntityName { get; } = EntityName;
@@ -946,9 +888,4 @@ public sealed class ActivityParticipantAiResultRepository(
          );
       }
    }
-
-   private readonly record struct ValueKey(
-      Guid EntityId,
-      string FieldKey
-   );
 }

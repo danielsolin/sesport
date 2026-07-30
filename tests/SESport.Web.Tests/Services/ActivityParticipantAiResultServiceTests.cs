@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Npgsql;
 
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -164,25 +165,77 @@ public sealed class ActivityParticipantAiResultServiceTests
                value.ValueJson == "\"13:10\""
          );
 
+         await using(var countCommand = connection.CreateCommand())
+         {
+            countCommand.CommandText = """
+               select row_kind, count(*)
+               from activity_participant_ai_results
+               where activity_id = @activity_id
+                  and job_id = @job_id
+               group by row_kind
+               order by row_kind
+               """;
+            countCommand.Parameters.AddWithValue("activity_id", activityId);
+            countCommand.Parameters.AddWithValue(
+               "job_id",
+               AiJobIds.FindParticipantsStart
+            );
+
+            await using var reader = await countCommand.ExecuteReaderAsync();
+            var rows = new List<(string Kind, long Count)>();
+
+            while(await reader.ReadAsync())
+            {
+               rows.Add((reader.GetString(0), reader.GetInt64(1)));
+            }
+
+            Assert.Equal(3, rows.Count);
+            Assert.Contains(
+               rows,
+               row =>
+                  row.Kind == ActivityParticipantAiResultRowKinds.Set &&
+                  row.Count == 1
+            );
+            Assert.Contains(
+               rows,
+               row =>
+                  row.Kind == ActivityParticipantAiResultRowKinds.Value &&
+                  row.Count == 3
+            );
+            Assert.Contains(
+               rows,
+               row =>
+                  row.Kind == ActivityParticipantAiResultRowKinds.Source &&
+                  row.Count == 4
+            );
+         }
+
          await using(var setCommand = connection.CreateCommand())
          {
             setCommand.CommandText = """
                select s.run_id, src.url, src.kind, rs.sort_order
-               from activity_participant_ai_result_sources rs
+               from activity_participant_ai_results rs
                join sources src on src.id = rs.source_id
-               join activity_participant_ai_result_sets s
-                  on s.activity_id = rs.activity_id
-                 and s.job_id = rs.job_id
+               join activity_participant_ai_results s
+                  on s.id = rs.parent_id
                where rs.activity_id = @activity_id
                   and rs.job_id = @job_id
-                  and rs.entity_id is null
-                  and rs.field_key is null
+                  and rs.row_kind = @source_kind
+                  and s.row_kind = @set_kind
                order by rs.sort_order
                """;
             setCommand.Parameters.AddWithValue("activity_id", activityId);
             setCommand.Parameters.AddWithValue(
                "job_id",
                AiJobIds.FindParticipantsStart
+            );
+            setCommand.Parameters.AddWithValue(
+               "source_kind",
+               ActivityParticipantAiResultRowKinds.Source
+            );
+            setCommand.Parameters.AddWithValue(
+               "set_kind",
+               ActivityParticipantAiResultRowKinds.Set
             );
 
             await using var reader = await setCommand.ExecuteReaderAsync();
@@ -213,24 +266,29 @@ public sealed class ActivityParticipantAiResultServiceTests
             valueCommand.CommandText = """
                select e.canonical_name, v.field_key, v.value_text,
                   v.value_json::text, src.url, src.kind, rs.sort_order
-               from activity_participant_ai_result_values v
+               from activity_participant_ai_results v
                join entities e on e.id = v.entity_id
-               join activity_participant_ai_result_sources rs
-                  on rs.activity_id = v.activity_id
-                 and rs.job_id = v.job_id
-                 and rs.entity_id = v.entity_id
-                 and rs.field_key = v.field_key
+               join activity_participant_ai_results rs
+                  on rs.parent_id = v.id
+                 and rs.row_kind = @source_kind
                join sources src on src.id = rs.source_id
                where v.activity_id = @activity_id
                   and v.job_id = @job_id
-                  and rs.entity_id is not null
-                  and rs.field_key is not null
-               order by e.canonical_name, v.field_key, rs.sort_order
+                  and v.row_kind = @value_kind
+               order by e.canonical_name, v.field_key, rs.sort_order, rs.id
                """;
             valueCommand.Parameters.AddWithValue("activity_id", activityId);
             valueCommand.Parameters.AddWithValue(
                "job_id",
                AiJobIds.FindParticipantsStart
+            );
+            valueCommand.Parameters.AddWithValue(
+               "source_kind",
+               ActivityParticipantAiResultRowKinds.Source
+            );
+            valueCommand.Parameters.AddWithValue(
+               "value_kind",
+               ActivityParticipantAiResultRowKinds.Value
             );
 
             await using var reader = await valueCommand.ExecuteReaderAsync();
