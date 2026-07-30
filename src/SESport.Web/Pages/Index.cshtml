@@ -496,9 +496,10 @@ else
                         var participantTableId =
                            $"participant-table-{activity.Id:N}";
                         <div class="activity-participant-table-wrap">
-                           <table id="@participantTableId"
-                                  class="@participantTableClass"
-                                  data-participant-table>
+                           <div class="activity-participant-table-frame">
+                              <table id="@participantTableId"
+                                     class="@participantTableClass"
+                                     data-participant-table>
                               <thead>
                                  <tr>
                                     <th class=
@@ -637,7 +638,14 @@ else
                                     </tr>
                                  }
                               </tbody>
-                           </table>
+                              </table>
+                              @if(shouldCollapseParticipants)
+                              {
+                                 <div
+                                    class="activity-participant-table-fade"
+                                    aria-hidden="true"></div>
+                              }
+                           </div>
                            @if(shouldCollapseParticipants)
                            {
                               <button type="button"

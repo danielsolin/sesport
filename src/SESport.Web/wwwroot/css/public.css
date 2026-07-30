@@ -918,6 +918,11 @@
    align-items: center;
    gap: 8px;
    margin-top: 12px;
+}
+
+.activity-participant-table-frame {
+   position: relative;
+   width: 100%;
    overflow-x: auto;
 }
 
@@ -992,7 +997,29 @@
    display: none;
 }
 
+.activity-participant-table-fade {
+   display: none;
+   position: absolute;
+   right: 0;
+   top: 0;
+   bottom: 0;
+   left: 0;
+   pointer-events: none;
+   z-index: 1;
+   background: linear-gradient(
+      to bottom,
+      rgba(249, 252, 254, 0.02),
+      rgba(249, 252, 254, 0.96)
+   );
+}
+
+.activity-participant-table-collapsed
+   + .activity-participant-table-fade {
+   display: block;
+}
+
 .activity-participant-toggle {
+   position: relative;
    display: inline-block;
    padding: 0;
    border: 0;
@@ -1004,6 +1031,12 @@
    text-align: center;
    text-decoration: underline;
    cursor: pointer;
+   z-index: 2;
+}
+
+.activity-participant-toggle[aria-expanded="false"] {
+   transform: translateY(-32px);
+   margin-bottom: -24px;
 }
 
 .activity-participant-toggle:hover {
