@@ -204,8 +204,10 @@ public sealed class EditMarkupTests
       Assert.Contains("data-activity-ai-result-job-id", html);
       Assert.Contains("data-activity-ai-result-run-id", html);
       Assert.Contains("Run details", html);
-      Assert.Contains("Checked sources", html);
       Assert.Contains("Raw JSON", html);
       Assert.Contains("activity-ai-result-table", html);
+      Assert.DoesNotContain("Checked sources", html);
+      Assert.DoesNotContain("<th>Sources</th>", html);
+      Assert.DoesNotContain("activity-ai-result-source-list", html);
    }
 }

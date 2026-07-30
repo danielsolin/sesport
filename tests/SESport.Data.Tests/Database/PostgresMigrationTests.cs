@@ -160,6 +160,39 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void ParticipantAiResultsMigrationNormalizesSourceStorage()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "011_activity_participant_ai_result_sources.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "create table public.activity_participant_ai_result_set_sources",
+         migration
+      );
+      Assert.Contains(
+         "create table public.activity_participant_ai_result_value_sources",
+         migration
+      );
+      Assert.Contains("references public.sources(id)", migration);
+      Assert.Contains(
+         "references public.activity_participant_ai_result_sets",
+         migration
+      );
+      Assert.Contains(
+         "references public.activity_participant_ai_result_values",
+         migration
+      );
+      Assert.Contains("drop column checked_sources", migration);
+      Assert.Contains("drop column sources", migration);
+   }
+
+   [Fact]
    public void FactSourceLinksMigrationConnectsFactsAndSources()
    {
       var migration = File.ReadAllText(

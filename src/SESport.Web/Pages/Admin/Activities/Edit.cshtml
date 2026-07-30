@@ -361,29 +361,6 @@
                      </span>
                   </span>
                </summary>
-               @if(result.CheckedSources.Count > 0)
-               {
-                  <div class="activity-ai-result-sources">
-                     <h3 class="subgrid-heading">Checked sources</h3>
-                     <ul class="activity-ai-result-source-list">
-                        @foreach(var source in result.CheckedSources)
-                        {
-                           <li>
-                              <a class="source-url"
-                                 href="@source.Url"
-                                 target="_blank"
-                                 rel="noopener noreferrer">
-                                 @source.Url
-                              </a>
-                              @if(!string.IsNullOrWhiteSpace(source.Title))
-                              {
-                                 <span>@source.Title</span>
-                              }
-                           </li>
-                        }
-                     </ul>
-                  </div>
-               }
                @if(result.Values.Count == 0)
                {
                   <div class="notice">
@@ -399,14 +376,12 @@
                            <col class="activity-ai-result-entity-column" />
                            <col class="activity-ai-result-field-column" />
                            <col />
-                           <col class="activity-ai-result-sources-column" />
                         </colgroup>
                         <thead>
                            <tr>
                               <th>Participant</th>
                               <th>Field</th>
                               <th>Value</th>
-                              <th>Sources</th>
                            </tr>
                         </thead>
                         <tbody>
@@ -437,33 +412,10 @@
                                        )
                                     </details>
                                  </td>
-                                 <td>
-                                    @if(value.Sources.Count == 0)
-                                    {
-                                       <span>-</span>
-                                    }
-                                    else
-                                    {
-                                       <ul class=
-                                             "activity-ai-result-source-list">
-                                          @foreach(var source in value.Sources)
-                                          {
-                                             <li>
-                                                <a class="source-url"
-                                                   href="@source.Url"
-                                                   target="_blank"
-                                                   rel="noopener noreferrer">
-                                                   @source.Url
-                                                </a>
-                                             </li>
-                                          }
-                                       </ul>
-                                    }
-                                 </td>
                               </tr>
                            }
                         </tbody>
-                     </table>
+                    </table>
                   </div>
                }
             </details>
