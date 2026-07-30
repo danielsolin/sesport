@@ -954,7 +954,7 @@ public sealed class ActivityRepositoryTests
    {
       await using var connection = await dataSource.OpenConnectionAsync();
       await using var command = connection.CreateCommand();
-      command.CommandText = """
+      command.CommandText = $$"""
          insert into activities (
             id,
             title,
@@ -969,7 +969,8 @@ public sealed class ActivityRepositoryTests
             publication_status_id,
             tv_channel_name,
             slug,
-            activity_group_id
+            activity_group_id,
+            published_at
          )
          values (
             @id,
@@ -985,7 +986,13 @@ public sealed class ActivityRepositoryTests
             @publication_status,
             null,
             @slug,
-            @activity_group_id
+            @activity_group_id,
+            case
+               when @publication_status =
+                  '{{ActivityPublicationStatusIds.Published}}'
+               then now()
+               else null
+            end
          )
          """;
       command.Parameters.AddWithValue("id", activityId);
