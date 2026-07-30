@@ -22,6 +22,10 @@
    var hideBroadcastUrl = Url.Page(
       "/Admin/Ajax/Toggle/BroadcastVisibility"
    );
+   var broadcastCountDecrementTarget =
+      Model.ShowHidden
+         ? string.Empty
+         : " data-ajax-decrement-target=\"[data-broadcast-count]\"";
 }
 
 @Html.AntiForgeryToken()
@@ -384,7 +388,9 @@
                                     action="@hideBroadcastUrl"
                                     data-ajax-success="toggle-visibility"
                                     data-ajax-remove-target="tr"
-                                    data-ajax-preserve-scroll="true">
+                                    data-ajax-preserve-scroll="true"
+                                    data-ajax-decrement-target=
+                                       "@broadcastCountDecrementTarget">
                                  @Html.AntiForgeryToken()
                                  <input type="hidden"
                                         name="id"

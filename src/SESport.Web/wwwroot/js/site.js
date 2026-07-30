@@ -76,6 +76,7 @@
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
    const broadcastInlineEditGroupField = "group";
+   const broadcastCountSelector = "[data-broadcast-count]";
    const getBroadcastInlineEditUrl =
       window.getBroadcastInlineEditUrl;
    const postBroadcastInlineEditAsync =
@@ -836,6 +837,11 @@
       visibilityForm.dataset.ajaxSuccess = "toggle-visibility";
       visibilityForm.dataset.ajaxRemoveTarget = "tr";
       visibilityForm.dataset.ajaxPreserveScroll = "true";
+      if(!showHidden)
+      {
+         visibilityForm.dataset.ajaxDecrementTarget =
+            broadcastCountSelector;
+      }
       appendHiddenBroadcastVisibilityFields(
          visibilityForm,
          sourceForm,

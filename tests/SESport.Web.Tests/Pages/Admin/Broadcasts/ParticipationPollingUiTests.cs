@@ -57,5 +57,13 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("syncReplacementCount", script);
       Assert.Contains("ajaxCountTarget", script);
       Assert.Contains("ajaxCountValue", script);
+      Assert.Contains(
+         "const broadcastCountSelector = \"[data-broadcast-count]\";",
+         script
+      );
+      Assert.Contains(
+         "visibilityForm.dataset.ajaxDecrementTarget =",
+         script
+      );
    }
 }

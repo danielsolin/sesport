@@ -22,6 +22,8 @@ public sealed class IndexMarkupTests
          "data-ajax-count-value=\"@Model.Broadcasts.Count\"",
          html
       );
+      Assert.Contains("broadcastCountDecrementTarget", html);
+      Assert.Contains("data-ajax-decrement-target=", html);
       Assert.Contains("filter-form-count", html);
       Assert.Contains("Broadcasts:", html);
       Assert.Contains("data-broadcast-count", html);
