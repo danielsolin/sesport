@@ -112,6 +112,12 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("@media (orientation: portrait)", css);
       Assert.Contains(
+         ".activity-participant-table-has-start-time\n" +
+         "      .activity-participant-col-age {\n" +
+         "      display: none;",
+         css
+      );
+      Assert.Contains(
          ".activity-now-marker {\n      display: none;",
          css
       );

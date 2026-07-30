@@ -479,8 +479,14 @@ else
                                     participant.StartTime
                                  )
                            );
+                        var participantTableClass =
+                           showStartTimeColumn
+                              ? "activity-participant-table " +
+                                 "activity-participant-table-" +
+                                 "has-start-time"
+                              : "activity-participant-table";
                         <div class="activity-participant-table-wrap">
-                           <table class="activity-participant-table"
+                           <table class="@participantTableClass"
                                   data-participant-table>
                               <thead>
                                  <tr>
@@ -494,10 +500,10 @@ else
                                     </th>
                                     @if(showStartTimeColumn)
                                     {
-                                    <th class=
-                                       "activity-participant-col-start-time">
-                                       Starttid
-                                    </th>
+                                       <th class=
+                                          "activity-participant-col-start-time">
+                                          Starttid
+                                       </th>
                                     }
                                     <th class=
                                            "activity-participant-col-age"

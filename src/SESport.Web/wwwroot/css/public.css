@@ -1307,4 +1307,9 @@
       width: 1%;
       white-space: nowrap;
    }
+
+   .activity-participant-table-has-start-time
+      .activity-participant-col-age {
+      display: none;
+   }
 }
