@@ -168,13 +168,15 @@ public sealed class ActivityParticipantAiResultServiceTests
          {
             setCommand.CommandText = """
                select s.run_id, src.url, src.kind, rs.sort_order
-               from activity_participant_ai_result_set_sources rs
+               from activity_participant_ai_result_sources rs
                join sources src on src.id = rs.source_id
                join activity_participant_ai_result_sets s
                   on s.activity_id = rs.activity_id
                  and s.job_id = rs.job_id
                where rs.activity_id = @activity_id
                   and rs.job_id = @job_id
+                  and rs.entity_id is null
+                  and rs.field_key is null
                order by rs.sort_order
                """;
             setCommand.Parameters.AddWithValue("activity_id", activityId);
@@ -213,7 +215,7 @@ public sealed class ActivityParticipantAiResultServiceTests
                   v.value_json::text, src.url, src.kind, rs.sort_order
                from activity_participant_ai_result_values v
                join entities e on e.id = v.entity_id
-               join activity_participant_ai_result_value_sources rs
+               join activity_participant_ai_result_sources rs
                   on rs.activity_id = v.activity_id
                  and rs.job_id = v.job_id
                  and rs.entity_id = v.entity_id
@@ -221,6 +223,8 @@ public sealed class ActivityParticipantAiResultServiceTests
                join sources src on src.id = rs.source_id
                where v.activity_id = @activity_id
                   and v.job_id = @job_id
+                  and rs.entity_id is not null
+                  and rs.field_key is not null
                order by e.canonical_name, v.field_key, rs.sort_order
                """;
             valueCommand.Parameters.AddWithValue("activity_id", activityId);

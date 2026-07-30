@@ -210,9 +210,11 @@ public sealed class ActivityParticipantAiResultRepository(
             src.url,
             src.title,
             src.excerpt
-         from activity_participant_ai_result_set_sources rs
+         from activity_participant_ai_result_sources rs
          join sources src on src.id = rs.source_id
          where rs.activity_id = @activity_id
+            and rs.entity_id is null
+            and rs.field_key is null
          order by rs.job_id, rs.sort_order, src.id
          """;
 
@@ -311,9 +313,11 @@ public sealed class ActivityParticipantAiResultRepository(
             src.url,
             src.title,
             src.excerpt
-         from activity_participant_ai_result_value_sources rs
+         from activity_participant_ai_result_sources rs
          join sources src on src.id = rs.source_id
          where rs.activity_id = @activity_id
+            and rs.entity_id is not null
+            and rs.field_key is not null
          order by rs.job_id, rs.entity_id, rs.field_key, rs.sort_order, src.id
          """;
 
@@ -678,15 +682,21 @@ public sealed class ActivityParticipantAiResultRepository(
    )
    {
       const string sql = """
-         insert into activity_participant_ai_result_set_sources (
+         insert into activity_participant_ai_result_sources (
+            id,
             activity_id,
             job_id,
+            entity_id,
+            field_key,
             source_id,
             sort_order
          )
          values (
+            @id,
             @activity_id,
             @job_id,
+            @entity_id,
+            @field_key,
             @source_id,
             @sort_order
          )
@@ -697,8 +707,21 @@ public sealed class ActivityParticipantAiResultRepository(
          connection,
          transaction
       );
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.Add(
+         new NpgsqlParameter("entity_id", NpgsqlDbType.Uuid)
+         {
+            Value = DBNull.Value
+         }
+      );
+      command.Parameters.Add(
+         new NpgsqlParameter("field_key", NpgsqlDbType.Text)
+         {
+            Value = DBNull.Value
+         }
+      );
       command.Parameters.AddWithValue("source_id", sourceId);
       command.Parameters.AddWithValue("sort_order", sortOrder);
       await command.ExecuteNonQueryAsync(cancellationToken);
@@ -717,7 +740,8 @@ public sealed class ActivityParticipantAiResultRepository(
    )
    {
       const string sql = """
-         insert into activity_participant_ai_result_value_sources (
+         insert into activity_participant_ai_result_sources (
+            id,
             activity_id,
             job_id,
             entity_id,
@@ -726,6 +750,7 @@ public sealed class ActivityParticipantAiResultRepository(
             sort_order
          )
          values (
+            @id,
             @activity_id,
             @job_id,
             @entity_id,
@@ -740,6 +765,7 @@ public sealed class ActivityParticipantAiResultRepository(
          connection,
          transaction
       );
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("job_id", jobId);
       command.Parameters.AddWithValue("entity_id", entityId);

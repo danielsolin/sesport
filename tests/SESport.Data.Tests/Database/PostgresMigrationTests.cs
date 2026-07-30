@@ -160,23 +160,19 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
-   public void ParticipantAiResultsMigrationNormalizesSourceStorage()
+   public void ParticipantAiResultsMigrationUsesSingleSourceLinkTable()
    {
       var migration = File.ReadAllText(
          Path.Combine(
             FindRepositoryRoot(),
             "database",
             "migrations",
-            "011_activity_participant_ai_result_sources.sql"
+            "012_activity_participant_ai_result_source_links.sql"
          )
       ).ToLowerInvariant();
 
       Assert.Contains(
-         "create table public.activity_participant_ai_result_set_sources",
-         migration
-      );
-      Assert.Contains(
-         "create table public.activity_participant_ai_result_value_sources",
+         "create table public.activity_participant_ai_result_sources",
          migration
       );
       Assert.Contains("references public.sources(id)", migration);
@@ -188,8 +184,22 @@ public partial class PostgresMigrationTests
          "references public.activity_participant_ai_result_values",
          migration
       );
-      Assert.Contains("drop column checked_sources", migration);
-      Assert.Contains("drop column sources", migration);
+      Assert.Contains(
+         "activity_participant_ai_result_sources_scope_check",
+         migration
+      );
+      Assert.Contains(
+         "activity_participant_ai_result_sources_unique",
+         migration
+      );
+      Assert.Contains(
+         "drop table public.activity_participant_ai_result_set_sources",
+         migration
+      );
+      Assert.Contains(
+         "drop table public.activity_participant_ai_result_value_sources",
+         migration
+      );
    }
 
    [Fact]
