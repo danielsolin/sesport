@@ -33,6 +33,18 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       """;
 
    private const string ParticipantStartFieldKey = "start_time";
+   private const string TestActivityTitle = "Test Activity";
+   private const string TestActivitySlugPattern = "test-activity-%";
+
+   private const string PublicActivityExclusionClause = """
+      and not (
+         (
+            a.title = @test_activity_title
+            or coalesce(a.slug, '') like @test_activity_slug_pattern
+         )
+         and a.published_at is null
+      )
+      """;
 
    public async Task<IReadOnlyList<ActivityListItem>> GetActivitiesAsync(
       DateOnly date,
@@ -139,6 +151,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          where a.publication_status_id =
             '{{ActivityPublicationStatusIds.Published}}'
             and a.starts_at >= @start
+            {{PublicActivityExclusionClause}}
          group by sport_date
          order by sport_date
          """;
@@ -156,6 +169,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          "start",
          ToUtc(firstDate, SportDay.Cutoff)
       );
+      AddPublicActivityExclusionParameters(command);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -186,6 +200,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                '{{ActivityPublicationStatusIds.Published}}'
                and a.starts_at >= @start
                and a.starts_at < @end
+               {{PublicActivityExclusionClause}}
          """,
          DefaultOrderClause,
          """
@@ -201,6 +216,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                "end",
                ToUtc(window.EndDateExclusive, window.Cutoff)
             );
+            AddPublicActivityExclusionParameters(command);
          },
          cancellationToken
       );
@@ -208,6 +224,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return await ApplyNationalTeamFlagsAsync(
          activities,
          cancellationToken
+      );
+   }
+
+   private static void AddPublicActivityExclusionParameters(
+      NpgsqlCommand command
+   )
+   {
+      command.Parameters.AddWithValue(
+         "test_activity_title",
+         TestActivityTitle
+      );
+      command.Parameters.AddWithValue(
+         "test_activity_slug_pattern",
+         TestActivitySlugPattern
       );
    }
 
