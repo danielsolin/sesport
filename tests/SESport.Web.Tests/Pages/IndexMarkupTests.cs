@@ -74,16 +74,6 @@ public sealed class IndexMarkupTests
          html.IndexOf("activity-participant-col-start-time") <
          html.IndexOf("activity-participant-col-age")
       );
-      Assert.Contains(
-         ".activity-participant-inactive {\n" +
-         "   opacity: 0.5;",
-         css
-      );
-      Assert.Contains(
-         ".activity-has-ended .activity-participant-inactive {\n" +
-         "   opacity: 1;",
-         css
-      );
       Assert.Contains("activity-participant-out-badge", html);
       Assert.Contains(
          ".activity-participant-out-badge {\n" +
@@ -104,6 +94,7 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-toggle {\n" +
+         "   display: inline-block;\n" +
          "   padding: 0;\n" +
          "   border: 0;",
          css
@@ -199,12 +190,7 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
-         ".activity-has-ended .activity-ended-badge",
-         css
-      );
-      Assert.Contains(
-         "> :not(.activity-ended-badge):not(\n" +
-         "      .activity-participant-table-wrap",
+         ".activity-has-ended {\n   opacity: 0.7;",
          css
       );
       Assert.Contains(
@@ -233,14 +219,6 @@ public sealed class IndexMarkupTests
          ".activity-time-row {\n   display: flex;\n" +
          "   align-items: center;\n   position: relative;\n" +
          "   z-index: 3;",
-         css
-      );
-      Assert.DoesNotContain(
-         ".activity-has-ended > .activity-agenda-time,",
-         css
-      );
-      Assert.Contains(
-         ".activity-has-ended .activity-time-connector::before",
          css
       );
    }
