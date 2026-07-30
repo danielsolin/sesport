@@ -27,6 +27,10 @@
          });
       });
 
+      if(table.classList.contains("activity-participant-table-has-start-time"))
+      {
+         sortTable(table, "start-time", "ascending");
+      }
    });
 
    function sortTable(table, key, direction)
@@ -91,6 +95,11 @@
          return Number.isFinite(number) ? number : null;
       }
 
+      if(key === "start-time")
+      {
+         return parseStartTime(value);
+      }
+
       return value;
    }
 
@@ -102,6 +111,8 @@
             return row.dataset.participantName ?? "";
          case "age":
             return row.dataset.participantAge ?? "";
+         case "start-time":
+            return row.dataset.participantStartTime ?? "";
          case "birthdate":
             return row.dataset.participantBirthdate ?? "";
          case "club":
@@ -128,5 +139,25 @@
                : "none"
          );
       });
+   }
+
+   function parseStartTime(value)
+   {
+      const match = /^(\d{1,2})[:.](\d{2})$/.exec(value);
+
+      if(match === null)
+      {
+         return null;
+      }
+
+      const hours = Number(match[1]);
+      const minutes = Number(match[2]);
+
+      if(!Number.isFinite(hours) || !Number.isFinite(minutes))
+      {
+         return null;
+      }
+
+      return hours * 60 + minutes;
    }
 })();

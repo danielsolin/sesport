@@ -50,11 +50,17 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-start-time", html);
+      Assert.Contains(
+         "data-participant-sort=\n" +
+         "                                                     \"start-time\"",
+         html
+      );
       Assert.Contains("activity-participant-col-age", html);
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
       Assert.Contains("showStartTimeColumn", html);
       Assert.Contains("participant.StartTime", html);
+      Assert.Contains("data-participant-start-time", html);
       Assert.True(
          html.IndexOf("activity-participant-col-name") <
          html.IndexOf("activity-participant-col-start-time")
@@ -94,6 +100,11 @@ public sealed class IndexMarkupTests
          "sortTable(table, \"name\", \"ascending\");",
          participantScript
       );
+      Assert.Contains(
+         "sortTable(table, \"start-time\", \"ascending\");",
+         participantScript
+      );
+      Assert.Contains("case \"start-time\":", participantScript);
       Assert.Contains("activity-now-marker", html);
       Assert.Contains("activity-ongoing-dots", html);
       Assert.DoesNotContain(

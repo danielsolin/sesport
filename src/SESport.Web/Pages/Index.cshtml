@@ -502,7 +502,11 @@ else
                                     {
                                        <th class=
                                           "activity-participant-col-start-time">
-                                          Starttid
+                                          <button type="button"
+                                                  data-participant-sort=
+                                                     "start-time">
+                                             Starttid
+                                          </button>
                                        </th>
                                     }
                                     <th class=
@@ -550,6 +554,8 @@ else
                                        )"
                                         data-participant-name=
                                            "@participant.Name"
+                                        data-participant-start-time=
+                                           "@participant.StartTime"
                                         data-participant-age="@age"
                                         data-participant-birthdate=
                                            "@participant.Birthdate?.ToString(
