@@ -1910,6 +1910,17 @@ h2 {
    gap: 10px;
 }
 
+.activity-ai-result-summary-meta {
+   display: inline-flex;
+   flex-wrap: wrap;
+   align-items: baseline;
+   gap: 2px 8px;
+   margin-left: 8px;
+   color: var(--muted);
+   font-size: 11px;
+   line-height: 1.2;
+}
+
 .activity-group-description-options {
    margin: -8px 0 10px;
    color: var(--muted);
