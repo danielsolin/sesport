@@ -45,6 +45,7 @@ public sealed record ActivityListItem(
 public sealed record PublicActivityParticipant(
    Guid Id,
    string Name,
+   string? StartTime,
    DateOnly? Birthdate,
    int? Height,
    string Club,

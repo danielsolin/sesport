@@ -938,6 +938,11 @@
    font-weight: 750;
 }
 
+.activity-participant-col-start-time {
+   width: 1%;
+   white-space: nowrap;
+}
+
 .activity-participant-inactive {
    opacity: 0.5;
 }

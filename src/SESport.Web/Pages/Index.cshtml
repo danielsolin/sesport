@@ -472,6 +472,13 @@ else
                      }
                      @if(activity.Participants.Count > 0)
                      {
+                        var showStartTimeColumn =
+                           activity.Participants.Any(
+                              participant =>
+                                 !string.IsNullOrWhiteSpace(
+                                    participant.StartTime
+                                 )
+                           );
                         <div class="activity-participant-table-wrap">
                            <table class="activity-participant-table"
                                   data-participant-table>
@@ -485,6 +492,13 @@ else
                                           Namn
                                        </button>
                                     </th>
+                                    @if(showStartTimeColumn)
+                                    {
+                                    <th class=
+                                       "activity-participant-col-start-time">
+                                       Starttid
+                                    </th>
+                                    }
                                     <th class=
                                            "activity-participant-col-age"
                                         aria-sort="none">
@@ -527,7 +541,7 @@ else
                                            participant.IsActive
                                               ? null
                                               : "activity-participant-inactive"
-                                        )"
+                                       )"
                                         data-participant-name=
                                            "@participant.Name"
                                         data-participant-age="@age"
@@ -548,6 +562,14 @@ else
                                              </span>
                                           }
                                        </td>
+                                       @if(showStartTimeColumn)
+                                       {
+                                          <td class=
+                                         "activity-participant-col-start-time">
+                                             @(participant.StartTime ??
+                                                string.Empty)
+                                          </td>
+                                       }
                                        <td class=
                                               "activity-participant-col-age">
                                           @(age is null

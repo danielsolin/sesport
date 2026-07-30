@@ -6,6 +6,7 @@ using Npgsql;
 
 using NpgsqlTypes;
 
+using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -30,6 +31,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          a.local_start_time nulls last,
          a.title
       """;
+
+   private const string ParticipantStartFieldKey = "start_time";
 
    public async Task<IReadOnlyList<ActivityListItem>> GetActivitiesAsync(
       DateOnly date,
@@ -1424,6 +1427,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             al.activity_id,
             person.id,
             person.canonical_name,
+            participant_start.start_time,
             person.birthdate,
             person.height,
             coalesce(person.formative_club, '') as club,
@@ -1433,6 +1437,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          join entities person on person.id = al.entity_id
          join entity_watch_priorities priority
             on priority.id = person.watch_priority_id
+         left join lateral (
+            select nullif(btrim(r.value_text), '') as start_time
+            from activity_participant_ai_results r
+            where r.activity_id = al.activity_id
+               and r.entity_id = person.id
+               and r.job_id = '{{AiJobIds.FindParticipantsStart}}'
+               and r.field_key = '{{ParticipantStartFieldKey}}'
+            order by
+               r.updated_at desc,
+               r.sort_order asc,
+               r.id desc
+            limit 1
+         ) participant_start on true
          where al.activity_id = any(@activity_ids)
             and person.entity_type_id =
                '{{TrackedEntityTypeIds.Person}}'
@@ -1469,10 +1486,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.IsDBNull(3)
                   ? null
-                  : reader.GetFieldValue<DateOnly>(3),
-               reader.IsDBNull(4) ? null : reader.GetInt32(4),
-               reader.GetString(5),
-               reader.GetBoolean(7)
+                  : reader.GetString(3),
+               reader.IsDBNull(4)
+                  ? null
+                  : reader.GetFieldValue<DateOnly>(4),
+               reader.IsDBNull(5) ? null : reader.GetInt32(5),
+               reader.GetString(6),
+               reader.GetBoolean(8)
             )
          );
       }

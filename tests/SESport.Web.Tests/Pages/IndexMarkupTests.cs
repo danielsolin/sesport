@@ -49,9 +49,20 @@ public sealed class IndexMarkupTests
       );
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
+      Assert.Contains("activity-participant-col-start-time", html);
       Assert.Contains("activity-participant-col-age", html);
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
+      Assert.Contains("showStartTimeColumn", html);
+      Assert.Contains("participant.StartTime", html);
+      Assert.True(
+         html.IndexOf("activity-participant-col-name") <
+         html.IndexOf("activity-participant-col-start-time")
+      );
+      Assert.True(
+         html.IndexOf("activity-participant-col-start-time") <
+         html.IndexOf("activity-participant-col-age")
+      );
       Assert.Contains("activity-participant-inactive", html);
       Assert.Contains(
          ".activity-participant-inactive {\n" +
@@ -67,6 +78,12 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-participant-out-badge {\n" +
          "   display: inline-flex;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-col-start-time {\n" +
+         "   width: 1%;\n" +
+         "   white-space: nowrap;",
          css
       );
       Assert.DoesNotContain(

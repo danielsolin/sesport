@@ -2,7 +2,9 @@ using System.Reflection;
 
 using Npgsql;
 
+using SESport.Core.AI;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
 
@@ -452,6 +454,96 @@ public sealed class ActivityRepositoryTests
          await DeleteEntityAsync(dataSource, reviewBravoId);
          await DeleteEntityAsync(dataSource, reviewAlphaId);
          await DeleteEntityAsync(dataSource, tierOneId);
+      }
+   }
+
+   [Fact]
+   public async Task GetPublishedForDateAsyncIncludesParticipantStartTime()
+   {
+      var selectedDate = DistantActivityDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+      var sourceUrl = "https://example.test/start-time";
+      var source = new SourceEvidenceDraft(sourceUrl, null, null);
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+      var resultRepository = new ActivityParticipantAiResultRepository(
+         dataSource
+      );
+      var jobContext = await LoadJobContextAsync(
+         dataSource,
+         AiJobIds.FindParticipantsStart
+      );
+
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt,
+         ActivityPublicationStatusIds.Published
+      );
+      await InsertEntityAsync(
+         dataSource,
+         personId,
+         "Start Time Person",
+         TrackedEntityTypeIds.Person
+      );
+      await InsertActivityEntityLinkAsync(dataSource, activityId, personId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         AiJobIds.FindParticipantsStart,
+         jobContext.PromptId,
+         jobContext.ProviderId,
+         activityId
+      );
+      await resultRepository.UpsertAsync(
+         new ActivityParticipantAiResultDraft(
+            activityId,
+            AiJobIds.FindParticipantsStart,
+            runId,
+            [source],
+            [
+               new ActivityParticipantAiResultValueDraft(
+                  personId,
+                  "start_time",
+                  "12:30",
+                  "\"12:30\"",
+                  [source]
+               )
+            ]
+         ),
+         CancellationToken.None
+      );
+
+      try
+      {
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         var participant = Assert.Single(activity.Participants);
+         Assert.Equal("12:30", participant.StartTime);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteParticipantAiSourcesAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, personId);
       }
    }
 
@@ -984,6 +1076,52 @@ public sealed class ActivityRepositoryTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task InsertRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid runId,
+      string jobId,
+      Guid promptId,
+      string providerId,
+      Guid activityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into ai_job_runs (
+            id,
+            job_id,
+            prompt_id,
+            provider_id,
+            status_id,
+            correlation_id,
+            input_payload,
+            rendered_prompt,
+            started_at,
+            completed_at
+         )
+         values (
+            @id,
+            @job_id,
+            @prompt_id,
+            @provider_id,
+            'completed',
+            @correlation_id,
+            '{}'::jsonb,
+            'Rendered',
+            now(),
+            now()
+         )
+         """;
+      command.Parameters.AddWithValue("id", runId);
+      command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.AddWithValue("prompt_id", promptId);
+      command.Parameters.AddWithValue("provider_id", providerId);
+      command.Parameters.AddWithValue("correlation_id", activityId.ToString());
+
+      await command.ExecuteNonQueryAsync();
+   }
+
    private static async Task DeleteActivityAsync(
       NpgsqlDataSource dataSource,
       Guid activityId
@@ -996,6 +1134,51 @@ public sealed class ActivityRepositoryTests
          where id = @id
          """;
       command.Parameters.AddWithValue("id", activityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid runId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from ai_job_runs
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", runId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteParticipantAiSourcesAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from sources
+         where correlation_type = @correlation_type
+            and correlation_id = @correlation_id
+            and kind = @kind
+         """;
+      command.Parameters.AddWithValue(
+         "correlation_type",
+         SourceCorrelationTypes.Activity
+      );
+      command.Parameters.AddWithValue(
+         "correlation_id",
+         activityId.ToString()
+      );
+      command.Parameters.AddWithValue(
+         "kind",
+         SourceKinds.ParticipantStartEvidence
+      );
 
       await command.ExecuteNonQueryAsync();
    }
@@ -1064,6 +1247,42 @@ public sealed class ActivityRepositoryTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task<JobContext> LoadJobContextAsync(
+      NpgsqlDataSource dataSource,
+      string jobId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         select
+            j.provider_id,
+            coalesce(j.active_prompt_id, p.id)
+         from ai_jobs j
+         left join ai_job_prompts p
+            on p.job_id = j.id
+               and p.enabled = true
+         where j.id = @job_id
+         order by p.version desc nulls last
+         limit 1
+         """;
+      command.Parameters.AddWithValue("job_id", jobId);
+
+      await using var reader = await command.ExecuteReaderAsync();
+
+      if(!await reader.ReadAsync())
+      {
+         throw new InvalidOperationException(
+            $"Missing AI job definition: {jobId}"
+         );
+      }
+
+      return new JobContext(
+         reader.GetString(0),
+         reader.GetGuid(1)
+      );
+   }
+
    private static string? InvokeGetSportIconPath(string? iconId)
    {
       var method = typeof(ActivityRepository).GetMethod(
@@ -1080,4 +1299,9 @@ public sealed class ActivityRepositoryTests
 
       return (string?)method.Invoke(null, [iconId]);
    }
+
+   private sealed record JobContext(
+      string ProviderId,
+      Guid PromptId
+   );
 }
