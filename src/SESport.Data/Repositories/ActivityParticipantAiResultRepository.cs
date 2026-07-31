@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using Npgsql;
 using NpgsqlTypes;
 
@@ -120,6 +122,35 @@ public sealed class ActivityParticipantAiResultRepository(
          .ToList();
    }
 
+   public async Task<bool> UpdateValueAsync(
+      Guid id,
+      string? valueText,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activity_participant_ai_results
+         set value_text = @value_text,
+            value_json = @value_json,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "value_text",
+         (object?)valueText ?? DBNull.Value
+      );
+      AddJsonbParameter(
+         command,
+         "value_json",
+         JsonSerializer.Serialize(valueText)
+      );
+      command.Parameters.AddWithValue("id", id);
+
+      return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+   }
+
    private async Task<Dictionary<string, Builder>>
       LoadResultSetBuildersAsync(
          Guid activityId,
@@ -191,6 +222,7 @@ public sealed class ActivityParticipantAiResultRepository(
    {
       const string sql = """
          select
+            r.id,
             r.job_id,
             r.entity_id,
             coalesce(e.canonical_name, '') as entity_name,
@@ -216,25 +248,28 @@ public sealed class ActivityParticipantAiResultRepository(
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         if(reader.IsDBNull(0) || reader.IsDBNull(1) || reader.IsDBNull(3) ||
-            reader.IsDBNull(5) || reader.IsDBNull(6))
+         if(reader.IsDBNull(0) || reader.IsDBNull(1) ||
+            reader.IsDBNull(2) || reader.IsDBNull(4) ||
+            reader.IsDBNull(6) || reader.IsDBNull(7))
          {
             continue;
          }
 
-         if(!buildersByJobId.TryGetValue(reader.GetString(0), out var builder))
+         if(!buildersByJobId.TryGetValue(reader.GetString(1), out var builder))
          {
             continue;
          }
 
-         var entityId = reader.GetGuid(1);
-         var entityName = ReadNullableString(reader, 2);
-         var fieldKey = reader.GetString(3);
-         var valueText = ReadNullableString(reader, 4);
-         var valueJson = reader.GetString(5);
-         var source = ReadSourceEvidence(reader, 7, 8, 9);
+         var id = reader.GetGuid(0);
+         var entityId = reader.GetGuid(2);
+         var entityName = ReadNullableString(reader, 3);
+         var fieldKey = reader.GetString(4);
+         var valueText = ReadNullableString(reader, 5);
+         var valueJson = reader.GetString(6);
+         var source = ReadSourceEvidence(reader, 8, 9, 10);
 
          builder.AddValue(
+            id,
             entityId,
             string.IsNullOrWhiteSpace(entityName)
                ? entityId.ToString("N")
@@ -603,6 +638,7 @@ public sealed class ActivityParticipantAiResultRepository(
       }
 
       public ValueBuilder AddValue(
+         Guid id,
          Guid entityId,
          string entityName,
          string fieldKey,
@@ -612,6 +648,7 @@ public sealed class ActivityParticipantAiResultRepository(
       )
       {
          var value = new ValueBuilder(
+            id,
             entityId,
             entityName,
             fieldKey,
@@ -643,6 +680,7 @@ public sealed class ActivityParticipantAiResultRepository(
    }
 
    private sealed class ValueBuilder(
+      Guid Id,
       Guid EntityId,
       string EntityName,
       string FieldKey,
@@ -650,6 +688,8 @@ public sealed class ActivityParticipantAiResultRepository(
       string ValueJson
    )
    {
+      public Guid Id { get; } = Id;
+
       public Guid EntityId { get; } = EntityId;
 
       public string EntityName { get; } = EntityName;
@@ -665,6 +705,7 @@ public sealed class ActivityParticipantAiResultRepository(
       public ActivityParticipantAiResultValueRecord ToRecord()
       {
          return new ActivityParticipantAiResultValueRecord(
+            Id,
             EntityId,
             EntityName,
             FieldKey,

@@ -1911,6 +1911,44 @@ h2 {
    line-height: 1.2;
 }
 
+.activity-ai-result-table {
+   table-layout: fixed;
+}
+
+.activity-ai-result-entity-column {
+   width: 34%;
+}
+
+.activity-ai-result-field-column {
+   width: 30%;
+}
+
+.activity-ai-result-value-column {
+   width: 36%;
+}
+
+.activity-ai-result-inline-editable {
+   cursor: text;
+}
+
+.activity-ai-result-inline-editable[
+   data-activity-ai-result-inline-editing="true"
+] {
+   cursor: text;
+}
+
+.activity-ai-result-inline-edit-input {
+   width: 80px;
+   max-width: 100%;
+   box-sizing: border-box;
+   font: inherit;
+   color: inherit;
+   padding: 4px 6px;
+   border: 1px solid var(--line);
+   border-radius: 4px;
+   background: var(--surface);
+}
+
 .activity-group-description-options {
    margin: -8px 0 10px;
    color: var(--muted);

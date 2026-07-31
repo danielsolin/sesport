@@ -64,6 +64,15 @@
    const runInlineEditDisplaySelector = "[data-run-inline-edit-display]";
    const runInlineEditInputSelector = "[data-run-inline-edit-input]";
    const runInlineEditField = "execution-environment";
+   const activityAiResultInlineEditUrlSelector =
+      "[data-ai-result-edit-url]";
+   const activityAiResultInlineEditCellSelector =
+      "[data-ai-result-edit-field]";
+   const activityAiResultInlineEditDisplaySelector =
+      "[data-ai-result-edit-display]";
+   const activityAiResultInlineEditInputSelector =
+      "[data-ai-result-edit-input]";
+   const activityAiResultInlineEditField = "value";
    const broadcastInlineEditCellSelector =
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditUrlSelector =
@@ -130,6 +139,7 @@
    initializeParticipationPolling();
    initializeRunPolling();
    initializeRunInlineEditing();
+   initializeActivityAiResultInlineEditing();
 
    document.addEventListener("submit", async event => {
       const form = event.target;
@@ -1717,6 +1727,18 @@
 
             if(!(runCell instanceof HTMLElement))
             {
+               const activityAiResultCell = target.closest(
+                  activityAiResultInlineEditCellSelector
+               );
+
+               if(activityAiResultCell instanceof HTMLElement)
+               {
+                  event.preventDefault();
+                  openActivityAiResultInlineEditCell(
+                     activityAiResultCell
+                  );
+               }
+
                return;
             }
 
@@ -1794,6 +1816,44 @@
          {
             event.preventDefault();
             cancelRunInlineEdit(input);
+         }
+      });
+   }
+
+   function initializeActivityAiResultInlineEditing(root = document)
+   {
+      root.querySelectorAll(
+         activityAiResultInlineEditInputSelector
+      ).forEach(input => {
+         initializeActivityAiResultInlineEditInput(input);
+      });
+   }
+
+   function initializeActivityAiResultInlineEditInput(input)
+   {
+      if(!(input instanceof HTMLInputElement)
+         || input.dataset.activityAiResultInlineEditInitialized
+            === "true")
+      {
+         return;
+      }
+
+      input.dataset.activityAiResultInlineEditInitialized = "true";
+
+      input.addEventListener("blur", () => {
+         void saveActivityAiResultInlineEditAsync(input);
+      });
+
+      input.addEventListener("keydown", event => {
+         if(event.key === "Enter")
+         {
+            event.preventDefault();
+            input.blur();
+         }
+         else if(event.key === "Escape")
+         {
+            event.preventDefault();
+            cancelActivityAiResultInlineEdit(input);
          }
       });
    }
@@ -2028,6 +2088,146 @@
       if(cell instanceof HTMLElement)
       {
          delete cell.dataset.runInlineEditing;
+      }
+   }
+
+   function openActivityAiResultInlineEditCell(cell)
+   {
+      const input = cell.querySelector(
+         activityAiResultInlineEditInputSelector
+      );
+      const display = cell.querySelector(
+         activityAiResultInlineEditDisplaySelector
+      );
+
+      if(!(input instanceof HTMLInputElement)
+         || !(display instanceof HTMLElement)
+         || input.hidden === false
+         || input.dataset.activityAiResultInlineEditSaving === "true")
+      {
+         return;
+      }
+
+      input.dataset.activityAiResultInlineEditOriginalValue = input.value;
+      cell.dataset.activityAiResultInlineEditing = "true";
+      display.hidden = true;
+      input.hidden = false;
+
+      window.requestAnimationFrame(() => {
+         input.focus();
+         input.select();
+      });
+   }
+
+   async function saveActivityAiResultInlineEditAsync(input)
+   {
+      if(!(input instanceof HTMLInputElement)
+         || input.hidden
+         || input.dataset.activityAiResultInlineEditSaving === "true")
+      {
+         return;
+      }
+
+      const cell = input.closest(
+         activityAiResultInlineEditCellSelector
+      );
+      const url = getActivityAiResultInlineEditUrl();
+      const resultId = (
+         cell?.dataset.aiResultValueId ?? ""
+      ).trim();
+      const field = (cell?.dataset.aiResultEditField ?? "").trim();
+      const currentValue = input.value.trim();
+      const originalValue = (
+         input.dataset.activityAiResultInlineEditOriginalValue ?? ""
+      ).trim();
+
+      if(!(cell instanceof HTMLElement)
+         || url === ""
+         || resultId === ""
+         || field === "")
+      {
+         return;
+      }
+
+      if(currentValue === originalValue)
+      {
+         restoreActivityAiResultInlineEditInput(input);
+         return;
+      }
+
+      input.dataset.activityAiResultInlineEditSaving = "true";
+      input.disabled = true;
+
+      try
+      {
+         const payload = await postActivityAiResultInlineEditAsync(
+            url,
+            resultId,
+            field,
+            currentValue
+         );
+
+         updateActivityAiResultInlineEditCell(cell, payload);
+         restoreActivityAiResultInlineEditInput(input);
+      }
+      catch(error)
+      {
+         window.alert(
+            error instanceof Error
+               ? error.message
+               : "AI result update failed."
+         );
+         input.hidden = false;
+         window.requestAnimationFrame(() => {
+            input.focus();
+            input.select();
+         });
+      }
+      finally
+      {
+         input.disabled = false;
+         delete input.dataset.activityAiResultInlineEditSaving;
+      }
+   }
+
+   function cancelActivityAiResultInlineEdit(input)
+   {
+      if(!(input instanceof HTMLInputElement))
+      {
+         return;
+      }
+
+      input.value = (
+         input.dataset.activityAiResultInlineEditOriginalValue ??
+            input.value
+      ).trim();
+      restoreActivityAiResultInlineEditInput(input);
+   }
+
+   function restoreActivityAiResultInlineEditInput(input)
+   {
+      if(!(input instanceof HTMLInputElement))
+      {
+         return;
+      }
+
+      const cell = input.closest(
+         activityAiResultInlineEditCellSelector
+      );
+      const display = cell?.querySelector(
+         activityAiResultInlineEditDisplaySelector
+      );
+
+      if(display instanceof HTMLElement)
+      {
+         display.hidden = false;
+      }
+
+      input.hidden = true;
+
+      if(cell instanceof HTMLElement)
+      {
+         delete cell.dataset.activityAiResultInlineEditing;
       }
    }
 
@@ -2774,6 +2974,24 @@
          : "";
    }
 
+   function getActivityAiResultInlineEditUrl()
+   {
+      const container = document.querySelector(
+         activityAiResultInlineEditUrlSelector
+      );
+
+      if(!(container instanceof HTMLElement))
+      {
+         return "";
+      }
+
+      const url = container.dataset.aiResultEditUrl;
+
+      return typeof url === "string" && url.trim() !== ""
+         ? url.trim()
+         : "";
+   }
+
    function getEntityInlineEditUrl()
    {
       const container = document.querySelector(entityInlineEditUrlSelector);
@@ -2850,6 +3068,60 @@
       }
 
       formData.append("id", runId);
+      formData.append("field", field);
+      formData.append("value", value);
+
+      const response = await fetch(url, {
+         method: "post",
+         body: formData,
+         headers: {
+            Accept: "application/json"
+         }
+      });
+      const responseText = await response.text();
+      const trimmedResponseText = responseText.trim();
+      let payload = null;
+
+      if(trimmedResponseText !== "")
+      {
+         try
+         {
+            payload = JSON.parse(trimmedResponseText);
+         }
+         catch
+         {
+            payload = null;
+         }
+      }
+
+      if(!response.ok)
+      {
+         throw new Error(
+            payload?.error ||
+               trimmedResponseText ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return payload ?? {};
+   }
+
+   async function postActivityAiResultInlineEditAsync(
+      url,
+      resultId,
+      field,
+      value
+   )
+   {
+      const formData = new URLSearchParams();
+      const token = getAntiForgeryToken();
+
+      if(token)
+      {
+         formData.append("__RequestVerificationToken", token);
+      }
+
+      formData.append("id", resultId);
       formData.append("field", field);
       formData.append("value", value);
 
@@ -3117,6 +3389,48 @@
       {
          input.value = nextValue;
          input.dataset.runInlineEditOriginalValue = nextValue;
+      }
+   }
+
+   function updateActivityAiResultInlineEditCell(cell, payload)
+   {
+      if(!(cell instanceof HTMLElement) || !payload)
+      {
+         return;
+      }
+
+      const field = typeof payload.field === "string"
+         ? payload.field.trim()
+         : "";
+
+      if(field !== activityAiResultInlineEditField)
+      {
+         return;
+      }
+
+      const nextValue = typeof payload.value === "string"
+         ? payload.value.trim()
+         : "";
+      const displayValue = typeof payload.displayValue === "string"
+         ? payload.displayValue.trim()
+         : nextValue;
+      const display = cell.querySelector(
+         activityAiResultInlineEditDisplaySelector
+      );
+      const input = cell.querySelector(
+         activityAiResultInlineEditInputSelector
+      );
+
+      if(display instanceof HTMLElement)
+      {
+         display.textContent = displayValue || "-";
+      }
+
+      if(input instanceof HTMLInputElement)
+      {
+         input.value = nextValue;
+         input.dataset.activityAiResultInlineEditOriginalValue =
+            nextValue;
       }
    }
 

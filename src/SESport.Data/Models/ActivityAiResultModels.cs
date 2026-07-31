@@ -3,6 +3,7 @@ using SESport.Core.Sources;
 namespace SESport.Data.Models;
 
 public sealed record ActivityParticipantAiResultValueRecord(
+   Guid Id,
    Guid EntityId,
    string EntityName,
    string FieldKey,

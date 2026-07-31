@@ -10,6 +10,9 @@
    var participantSearchUrl = Url.Page(
       "/Admin/Ajax/Search/ActivityParticipant"
    );
+   var aiResultValueUrl = Url.Page(
+      "/Admin/Ajax/Update/ActivityParticipantAiResultValue"
+   );
 }
 
 <section class="page-heading page-heading-row">
@@ -324,7 +327,8 @@
       </div>
    </section>
 
-   <section class="form-section">
+   <section class="form-section"
+            data-ai-result-edit-url="@aiResultValueUrl">
       <h2>AI results</h2>
       @if(Model.AiResults.Count == 0)
       {
@@ -375,7 +379,7 @@
                         <colgroup>
                            <col class="activity-ai-result-entity-column" />
                            <col class="activity-ai-result-field-column" />
-                           <col />
+                           <col class="activity-ai-result-value-column" />
                         </colgroup>
                         <thead>
                            <tr>
@@ -395,8 +399,13 @@
                                     </a>
                                  </td>
                                  <td><code>@value.FieldKey</code></td>
-                                 <td>
-                                    <div>
+                                 <td class="activity-ai-result-inline-editable"
+                                     data-ai-result-edit-field="value"
+                                     data-ai-result-value-id=
+                                        "@value.Id"
+                                     title="Double-click to edit">
+                                    <div
+                                       data-ai-result-edit-display>
                                        @(
                                           string.IsNullOrWhiteSpace(
                                              value.ValueText
@@ -405,6 +414,16 @@
                                              : value.ValueText
                                        )
                                     </div>
+                                    <input
+                                       class=
+                                          "activity-ai-result-inline-edit-input"
+                                       data-ai-result-edit-input
+                                       type="text"
+                                       value="@value.ValueText"
+                                       autocomplete="off"
+                                       spellcheck="false"
+                                       aria-label="Edit AI result value"
+                                       hidden />
                                  </td>
                               </tr>
                            }

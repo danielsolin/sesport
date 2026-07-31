@@ -300,6 +300,31 @@ public sealed class ActivityParticipantAiResultServiceTests
                (long)(await applicationCommand.ExecuteScalarAsync())!
             );
          }
+
+         var firstValue = Assert.Single(
+            resultSet.Values,
+            value => value.EntityId == firstPersonId
+         );
+         Assert.NotEqual(Guid.Empty, firstValue.Id);
+         Assert.True(
+            await resultRepository.UpdateValueAsync(
+               firstValue.Id,
+               "14:20",
+               CancellationToken.None
+            )
+         );
+         var updatedResultSet = Assert.Single(
+            await resultRepository.GetForActivityAsync(
+               activityId,
+               CancellationToken.None
+            )
+         );
+         var updatedValue = Assert.Single(
+            updatedResultSet.Values,
+            value => value.EntityId == firstPersonId
+         );
+         Assert.Equal("14:20", updatedValue.ValueText);
+         Assert.Equal("\"14:20\"", updatedValue.ValueJson);
       }
       finally
       {

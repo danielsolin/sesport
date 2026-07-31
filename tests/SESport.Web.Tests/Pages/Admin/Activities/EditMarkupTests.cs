@@ -196,7 +196,23 @@ public sealed class EditMarkupTests
          repoRoot,
          "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
       );
+      var scriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/site.js"
+      );
+      var endpointPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Ajax/Update/" +
+         "ActivityParticipantAiResultValue.cshtml.cs"
+      );
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
+      var script = await File.ReadAllTextAsync(scriptPath);
+      var endpoint = await File.ReadAllTextAsync(endpointPath);
+      var css = await File.ReadAllTextAsync(cssPath);
 
       Assert.Contains("data-activity-ai-results", html);
       Assert.Contains("AI results", html);
@@ -205,7 +221,62 @@ public sealed class EditMarkupTests
       Assert.Contains("data-activity-ai-result-run-id", html);
       Assert.Contains("Run details", html);
       Assert.Contains("activity-ai-result-table", html);
+      Assert.Contains(
+         "activity-ai-result-value-column",
+         html
+      );
       Assert.Contains("activity-ai-result-summary-meta", html);
+      Assert.Contains(
+         "data-ai-result-edit-url",
+         html
+      );
+      Assert.Contains(
+         "data-ai-result-edit-field=",
+         html
+      );
+      Assert.Contains("data-ai-result-value-id=", html);
+      Assert.Contains(
+         "data-ai-result-edit-display",
+         html
+      );
+      Assert.Contains(
+         "data-ai-result-edit-input",
+         html
+      );
+      Assert.Contains(
+         "initializeActivityAiResultInlineEditing",
+         script
+      );
+      Assert.Contains(
+         "postActivityAiResultInlineEditAsync",
+         script
+      );
+      Assert.Contains(
+         "openActivityAiResultInlineEditCell",
+         script
+      );
+      Assert.Contains("UpdateValueAsync", endpoint);
+      Assert.Contains(
+         ".activity-ai-result-inline-edit-input {\n" +
+         "   width: 80px;\n" +
+         "   max-width: 100%;",
+         css
+      );
+      Assert.Contains(
+         ".activity-ai-result-table {\n" +
+         "   table-layout: fixed;",
+         css
+      );
+      Assert.Contains(
+         ".activity-ai-result-field-column {\n" +
+         "   width: 30%;",
+         css
+      );
+      Assert.Contains(
+         ".activity-ai-result-value-column {\n" +
+         "   width: 36%;",
+         css
+      );
       Assert.DoesNotContain("Checked sources", html);
       Assert.DoesNotContain("<th>Sources</th>", html);
       Assert.DoesNotContain("Raw JSON", html);
