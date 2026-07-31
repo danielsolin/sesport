@@ -797,6 +797,8 @@
 }
 
 .activity-entry-organization {
+   margin-top: 0px;
+   margin-bottom: 0px;
    color: #397293;
    font-size: 12px;
    font-weight: 700;
@@ -815,6 +817,7 @@
 .activity-entry-title {
    position: relative;
    margin-top: 4px;
+   margin-bottom: 0px;
    color: #004f80;
    font-size: 19px;
    font-weight: 850;

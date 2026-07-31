@@ -136,6 +136,19 @@ public sealed class IndexMarkupTests
       Assert.Contains("case \"start-time\":", participantScript);
       Assert.Contains("activity-now-marker", html);
       Assert.Contains("activity-ongoing-dots", html);
+      Assert.Contains(
+         ".activity-entry-organization {\n" +
+         "   margin-top: 0px;\n" +
+         "   margin-bottom: 0px;",
+         css
+      );
+      Assert.Contains(
+         ".activity-entry-title {\n" +
+         "   position: relative;\n" +
+         "   margin-top: 4px;\n" +
+         "   margin-bottom: 0px;",
+         css
+      );
       Assert.DoesNotContain(
          ".activity-group-time-item.is-ongoing .activity-time-badge",
          css
