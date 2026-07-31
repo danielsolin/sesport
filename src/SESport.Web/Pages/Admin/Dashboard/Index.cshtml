@@ -17,6 +17,126 @@
 else if(Model.Dashboard is not null)
 {
    var dashboard = Model.Dashboard;
+   var dashboardReturnUrl = Url.Page(
+      "/Admin/Dashboard/Index"
+   ) ?? "/Admin/Dashboard";
+
+   <section class="dashboard-section">
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>Activities needing attention</h2>
+         </div>
+      </div>
+      @if(dashboard.ActivityIssues.Count == 0)
+      {
+         <div class="notice">
+            No upcoming activity issues.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-hover">
+               <thead>
+                  <tr>
+                     <th>Date</th>
+                     <th>Activity</th>
+                     <th>Needs attention</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var issue in dashboard.ActivityIssues)
+                  {
+                     <tr>
+                        <td>
+                           @issue.Date.ToString(DateDisplay.DateOnlyFormat)
+                        </td>
+                        <td>
+                           <a asp-page="/Admin/Activities/Edit"
+                              asp-route-id="@issue.Id"
+                              asp-route-returnUrl="@dashboardReturnUrl">
+                              @issue.Title
+                           </a>
+                        </td>
+                        <td>
+                           <div class="dashboard-issue-list">
+                              @foreach(
+                                 var label in IndexModel.GetIssueLabels(issue)
+                              )
+                              {
+                                 <span class="status-pill">@label</span>
+                              }
+                           </div>
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+
+   <section class="dashboard-section">
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>Upcoming coverage</h2>
+         </div>
+      </div>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-compact
+                       admin-table-hover dashboard-date-table">
+            <thead>
+               <tr>
+                  <th class="dashboard-date-label">Date</th>
+                  <th>Broadcasts</th>
+                  <th>Unreviewed</th>
+                  <th>Published</th>
+               </tr>
+            </thead>
+            <tbody>
+               @foreach(var date in dashboard.Dates)
+               {
+                  <tr class="@(IndexModel.GetDateRowClass(date))">
+                     <td class="dashboard-date-label">
+                        <strong>
+                           <a asp-page="/Admin/Broadcasts/Index"
+                              asp-all-route-data=
+                                 "@Model.GetBroadcastDateRouteValues(
+                                    date.Date
+                                 )">
+                              @date.Date.ToString(
+                                 DateDisplay.DateOnlyFormat
+                              )
+                           </a>
+                        </strong>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Broadcasts/Index"
+                           asp-all-route-data=
+                              "@Model.GetBroadcastDateRouteValues(date.Date)">
+                           @date.VisibleBroadcastCount
+                        </a>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Broadcasts/Index"
+                           asp-all-route-data=
+                              "@Model.GetBroadcastDateRouteValues(date.Date)">
+                           @date.UnreviewedBroadcastCount
+                        </a>
+                     </td>
+                     <td>
+                        <a asp-page="/Admin/Activities/Index"
+                           asp-all-route-data=
+                              "@Model.GetActivityDateRouteValues(date.Date)">
+                           @date.PublishedActivityCount
+                        </a>
+                     </td>
+                  </tr>
+               }
+            </tbody>
+         </table>
+      </div>
+   </section>
 
    <section class="dashboard-section">
       <div class="dashboard-health-grid">
@@ -103,122 +223,6 @@ else if(Model.Dashboard is not null)
             }
          </article>
       </div>
-   </section>
-
-   <section class="dashboard-section">
-      <div class="dashboard-section-heading">
-         <div>
-            <h2>Upcoming coverage</h2>
-         </div>
-      </div>
-      <div class="admin-table-wrap">
-         <table class="admin-table admin-table-compact
-                       admin-table-hover dashboard-date-table">
-            <thead>
-               <tr>
-                  <th class="dashboard-date-label">Date</th>
-                  <th>Broadcasts</th>
-                  <th>Unreviewed</th>
-                  <th>Published</th>
-               </tr>
-            </thead>
-            <tbody>
-               @foreach(var date in dashboard.Dates)
-               {
-                  <tr class="@(IndexModel.GetDateRowClass(date))">
-                     <td class="dashboard-date-label">
-                        <strong>
-                           <a asp-page="/Admin/Broadcasts/Index"
-                              asp-all-route-data=
-                                 "@Model.GetBroadcastDateRouteValues(
-                                    date.Date
-                                 )">
-                              @date.Date.ToString(
-                                 DateDisplay.DateOnlyFormat
-                              )
-                           </a>
-                        </strong>
-                     </td>
-                     <td>
-                        <a asp-page="/Admin/Broadcasts/Index"
-                           asp-all-route-data=
-                              "@Model.GetBroadcastDateRouteValues(date.Date)">
-                           @date.VisibleBroadcastCount
-                        </a>
-                     </td>
-                     <td>
-                        <a asp-page="/Admin/Broadcasts/Index"
-                           asp-all-route-data=
-                              "@Model.GetBroadcastDateRouteValues(date.Date)">
-                           @date.UnreviewedBroadcastCount
-                        </a>
-                     </td>
-                     <td>
-                        <a asp-page="/Admin/Activities/Index"
-                           asp-all-route-data=
-                              "@Model.GetActivityDateRouteValues(date.Date)">
-                           @date.PublishedActivityCount
-                        </a>
-                     </td>
-                  </tr>
-               }
-            </tbody>
-         </table>
-      </div>
-   </section>
-
-   <section class="dashboard-section">
-      <div class="dashboard-section-heading">
-         <div>
-            <h2>Activities needing attention</h2>
-         </div>
-      </div>
-      @if(dashboard.ActivityIssues.Count == 0)
-      {
-         <div class="notice">
-            No upcoming activity issues.
-         </div>
-      }
-      else
-      {
-         <div class="admin-table-wrap">
-            <table class="admin-table admin-table-hover">
-               <thead>
-                  <tr>
-                     <th>Date</th>
-                     <th>Activity</th>
-                     <th>Needs attention</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  @foreach(var issue in dashboard.ActivityIssues)
-                  {
-                     <tr>
-                        <td>
-                           @issue.Date.ToString(DateDisplay.DateOnlyFormat)
-                        </td>
-                        <td>
-                           <a asp-page="/Admin/Activities/Edit"
-                              asp-route-id="@issue.Id">
-                              @issue.Title
-                           </a>
-                        </td>
-                        <td>
-                           <div class="dashboard-issue-list">
-                              @foreach(
-                                 var label in IndexModel.GetIssueLabels(issue)
-                              )
-                              {
-                                 <span class="status-pill">@label</span>
-                              }
-                           </div>
-                        </td>
-                     </tr>
-                  }
-               </tbody>
-            </table>
-         </div>
-      }
    </section>
 
 }

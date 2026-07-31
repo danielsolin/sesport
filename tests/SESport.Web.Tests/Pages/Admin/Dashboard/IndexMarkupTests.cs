@@ -54,10 +54,19 @@ public sealed class IndexMarkupTests
       );
       Assert.True(
          html.IndexOf(
-            "dashboard-health-grid",
+            "Activities needing attention",
             StringComparison.Ordinal
          ) < html.IndexOf(
             "Upcoming coverage",
+            StringComparison.Ordinal
+         )
+      );
+      Assert.True(
+         html.IndexOf(
+            "Upcoming coverage",
+            StringComparison.Ordinal
+         ) < html.IndexOf(
+            "dashboard-health-grid",
             StringComparison.Ordinal
          )
       );
@@ -71,6 +80,10 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("/Admin/Activities/Edit", html);
+      Assert.Contains(
+         "asp-route-returnUrl=\"@dashboardReturnUrl\"",
+         html
+      );
       Assert.DoesNotContain("bio", html, StringComparison.OrdinalIgnoreCase);
       Assert.DoesNotContain("No direct source", html);
    }
