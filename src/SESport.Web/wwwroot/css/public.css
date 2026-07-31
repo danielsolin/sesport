@@ -624,6 +624,11 @@
    box-shadow: 0 0 2px rgba(125, 133, 137, 0.1);
 }
 
+.activity-is-ongoing .activity-entry {
+   border-color: #d8ad00;
+   box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.18);
+}
+
 .activity-has-ended {
    opacity: 0.7;
 }

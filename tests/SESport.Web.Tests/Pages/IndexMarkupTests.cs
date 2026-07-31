@@ -137,6 +137,12 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-now-marker", html);
       Assert.Contains("activity-ongoing-dots", html);
       Assert.Contains(
+         ".activity-is-ongoing .activity-entry {\n" +
+         "   border-color: #d8ad00;\n" +
+         "   box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.18);",
+         css
+      );
+      Assert.Contains(
          ".activity-entry-organization {\n" +
          "   margin-top: 0px;\n" +
          "   margin-bottom: 0px;",
