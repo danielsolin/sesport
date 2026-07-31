@@ -66,6 +66,7 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
 
    internal static void ClearPersonalData(EntityEditModel entity)
    {
+      entity.AliasName = null;
       entity.Birthdate = null;
       entity.Height = null;
       entity.Weight = null;
