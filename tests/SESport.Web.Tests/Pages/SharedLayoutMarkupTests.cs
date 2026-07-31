@@ -18,6 +18,11 @@ public sealed class SharedLayoutMarkupTests
       );
       var html = await File.ReadAllTextAsync(layoutPath);
       var publicCss = await File.ReadAllTextAsync(publicCssPath);
+      var siteCssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
+      var siteCss = await File.ReadAllTextAsync(siteCssPath);
 
       Assert.Contains("public.css", html);
       Assert.Contains("site.css", html);
@@ -30,6 +35,11 @@ public sealed class SharedLayoutMarkupTests
       Assert.DoesNotContain("dateRouteValues", html);
       Assert.Contains("class=\"public-contact-link\"", html);
       Assert.Contains(".public-contact-link {", publicCss);
+      Assert.DoesNotContain(".activity-entry-title {", siteCss);
+      Assert.DoesNotContain(
+         ".activity-entry-organization {",
+         siteCss
+      );
       Assert.Contains("justify-content: space-between", publicCss);
       Assert.Contains("width: 100%", publicCss);
       Assert.True(
