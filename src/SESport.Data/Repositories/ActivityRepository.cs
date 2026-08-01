@@ -144,6 +144,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   '{{TrackedEntityTypeIds.NationalTeam}}',
                   '{{TrackedEntityTypeIds.Pair}}'
                )
+                  and al.is_active
             )::integer as participant_count
          from activities a
          left join activity_entity_links al on al.activity_id = a.id
@@ -1619,6 +1620,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "as related_person_entity_ids,"
          )
          .AppendLine(
+            "   coalesce(" +
+            "rp.active_related_person_entity_ids, '{}'::uuid[]) " +
+            "as active_related_person_entity_ids,"
+         )
+         .AppendLine(
             "   coalesce(ro.related_organization_entities, '') " +
             "as related_organization_entities,"
          )
@@ -1651,12 +1657,21 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("            person_id order by sort_order, person_name")
          .AppendLine("         ),")
          .AppendLine("         '{}'::uuid[]")
-         .AppendLine("      ) as related_person_entity_ids")
+         .AppendLine("      ) as related_person_entity_ids,")
+         .AppendLine("      coalesce(")
+         .AppendLine("         array_agg(")
+         .AppendLine("            person_id order by sort_order, person_name")
+         .AppendLine("            ) filter (where is_active),")
+         .AppendLine("         '{}'::uuid[]")
+         .AppendLine(
+            "      ) as active_related_person_entity_ids"
+         )
          .AppendLine("   from (")
          .AppendLine("      select distinct")
          .AppendLine("         p.id as person_id,")
          .AppendLine("         p.canonical_name as person_name,")
-         .AppendLine("         wp.sort_order")
+         .AppendLine("         wp.sort_order,")
+         .AppendLine("         al.is_active")
          .AppendLine("      from activity_entity_links al")
          .AppendLine("      join entities p on p.id = al.entity_id")
          .AppendLine("      join entity_watch_priorities wp")
@@ -1721,6 +1736,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "         rp.related_person_entity_ids,"
+         )
+         .AppendLine(
+            "         rp.active_related_person_entity_ids,"
          )
          .AppendLine(
             "         ro.related_organization_entities, a.local_end_time,"
@@ -2396,19 +2414,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetString(11),
                reader.GetString(14),
                ReadGuidArray(reader, 15),
-               reader.GetString(16)
+               reader.GetString(17)
             )
             {
+               ActiveRelatedPersonEntityIds = ReadGuidArray(reader, 16),
                ActivityDate = reader.GetFieldValue<DateOnly>(8),
                LocalStartTime = ReadTimeOnly(reader, 9),
-               LocalEndTime = ReadTimeOnly(reader, 17),
-               EndsAt = ReadDateTimeOffset(reader, 18),
-               ActivityGroupId = reader.IsDBNull(19)
+               LocalEndTime = ReadTimeOnly(reader, 18),
+               EndsAt = ReadDateTimeOffset(reader, 19),
+               ActivityGroupId = reader.IsDBNull(20)
                   ? null
-                  : reader.GetGuid(19),
-               ActivityGroupTitle = ReadString(reader, 20),
+                  : reader.GetGuid(20),
+               ActivityGroupTitle = ReadString(reader, 21),
                RelatedOrganizationCanonicalEntities =
-                  reader.GetString(21)
+                  reader.GetString(22)
             }
          );
       }

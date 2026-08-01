@@ -446,6 +446,10 @@ public sealed class ActivityRepositoryTests
             ["Alpha Review", "Bravo Review", "Zulu Tier"],
             activity.Participants.Select(participant => participant.Name)
          );
+         Assert.Equal(
+            [reviewAlphaId, reviewBravoId],
+            activity.ActiveRelatedPersonEntityIds
+         );
       }
       finally
       {

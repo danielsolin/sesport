@@ -35,6 +35,8 @@ public sealed record ActivityListItem(
    public string RelatedOrganizationCanonicalEntities { get; init; } =
       string.Empty;
 
+   public Guid[] ActiveRelatedPersonEntityIds { get; init; } = [];
+
    public bool HasNationalTeamRelatedOrganization { get; init; }
 
    public IReadOnlyList<PublicActivityParticipant> Participants

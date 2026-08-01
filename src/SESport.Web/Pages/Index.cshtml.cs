@@ -108,7 +108,7 @@ public class IndexModel(
    )
    {
       return activities
-         .SelectMany(activity => activity.RelatedPersonEntityIds)
+         .SelectMany(activity => activity.ActiveRelatedPersonEntityIds)
          .Where(entityId => entityId != Guid.Empty)
          .Distinct()
          .Count();
@@ -131,7 +131,7 @@ public class IndexModel(
                .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name))
                ?? group.Key,
             group
-               .SelectMany(activity => activity.RelatedPersonEntityIds)
+               .SelectMany(activity => activity.ActiveRelatedPersonEntityIds)
                .Where(entityId => entityId != Guid.Empty)
                .Distinct()
                .Count()

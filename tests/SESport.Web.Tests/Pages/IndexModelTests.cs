@@ -32,6 +32,27 @@ public sealed class IndexModelTests
    }
 
    [Fact]
+   public void CountParticipants_UsesActiveEntityIds()
+   {
+      var inactiveId =
+         Guid.Parse("11111111-1111-1111-1111-111111111111");
+      var activeId = Guid.Parse(
+         "22222222-2222-2222-2222-222222222222"
+      );
+      var activity = CreateActivity(
+         "A",
+         [inactiveId, activeId]
+      ) with
+      {
+         ActiveRelatedPersonEntityIds = [activeId]
+      };
+
+      var total = IndexModel.CountParticipants([activity]);
+
+      Assert.Equal(1, total);
+   }
+
+   [Fact]
    public void CountParticipantsBySportCountsUniqueIdsWithinEachSport()
    {
       var firstPerson =
@@ -203,6 +224,9 @@ public sealed class IndexModelTests
          string.Empty,
          participantIds,
          string.Empty
-      );
+      )
+      {
+         ActiveRelatedPersonEntityIds = participantIds
+      };
    }
 }
