@@ -113,8 +113,33 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                         and source_activity.activity_group_id =
                            a.activity_group_id
                      )
-               ) as no_related_source
+               ) as no_related_source,
+               coalesce(s.requires_start_time, false)
+                  and exists (
+                     select 1
+                     from activity_entity_links participant_link
+                     join entities participant
+                        on participant.id = participant_link.entity_id
+                     where participant_link.activity_id = a.id
+                        and participant_link.is_active
+                        and participant.entity_type_id = @person_type
+                        and not exists (
+                           select 1
+                           from activity_participant_ai_results result
+                           where result.activity_id = a.id
+                              and result.entity_id =
+                                 participant_link.entity_id
+                              and result.job_id =
+                                 @participant_start_job_id
+                              and result.field_key =
+                                 @participant_start_field_key
+                              and nullif(
+                                 btrim(result.value_text), ''
+                              ) is not null
+                        )
+                  ) as missing_participant_start_time
             from activities a
+            left join sports s on s.id = a.sport_id
             where a.activity_date >= @today
                and a.activity_date <= @activity_end
                and coalesce(
@@ -137,13 +162,15 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             missing_description,
             no_participants,
             no_group,
-            no_related_source
+            no_related_source,
+            missing_participant_start_time
          from upcoming
          where publication_status_id = @draft_status
             or missing_description
             or no_participants
             or no_group
             or no_related_source
+            or missing_participant_start_time
          order by
             (publication_status_id = @draft_status) desc,
             activity_date,
@@ -151,6 +178,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             missing_description desc,
             no_group desc,
             no_related_source desc,
+            missing_participant_start_time desc,
             title
          limit {{ActivityIssueLimit}};
 
@@ -263,6 +291,14 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
          AiJobIds.DecidePrimaryCountryParticipation
       );
       command.Parameters.AddWithValue(
+         "participant_start_job_id",
+         AiJobIds.FindParticipantsStart
+      );
+      command.Parameters.AddWithValue(
+         "participant_start_field_key",
+         ActivityParticipantAiFieldKeys.StartTime
+      );
+      command.Parameters.AddWithValue(
          "published_status",
          ActivityPublicationStatusIds.Published
       );
@@ -340,7 +376,8 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                reader.GetBoolean(5),
                reader.GetBoolean(6),
                reader.GetBoolean(7),
-               reader.GetBoolean(8)
+               reader.GetBoolean(8),
+               reader.GetBoolean(9)
             )
          );
       }

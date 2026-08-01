@@ -32,7 +32,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          a.title
       """;
 
-   private const string ParticipantStartFieldKey = "start_time";
    private const string TestActivityTitle = "Test Activity";
    private const string TestActivitySlugPattern = "test-activity-%";
 
@@ -1581,7 +1580,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             where r.activity_id = al.activity_id
                and r.entity_id = person.id
                and r.job_id = '{{AiJobIds.FindParticipantsStart}}'
-               and r.field_key = '{{ParticipantStartFieldKey}}'
+               and r.field_key =
+                  '{{ActivityParticipantAiFieldKeys.StartTime}}'
             order by
                r.updated_at desc,
                r.sort_order asc,

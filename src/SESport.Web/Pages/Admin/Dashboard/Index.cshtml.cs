@@ -80,6 +80,11 @@ public class IndexModel(DashboardRepository repository) : PageModel
          );
       }
 
+      if(issue.HasMissingParticipantStartTime)
+      {
+         labels.Add("Missing participant start times");
+      }
+
       return labels;
    }
 

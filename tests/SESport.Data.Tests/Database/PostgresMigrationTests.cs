@@ -123,6 +123,25 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void SportStartTimeMigrationAddsRequiresStartTime()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "015_sport_requires_start_time.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.sports", migration);
+      Assert.Contains(
+         "add column requires_start_time boolean default false not null",
+         migration
+      );
+   }
+
+   [Fact]
    public void ParticipantAiResultsMigrationDefinesGenericResultStorage()
    {
       var migration = File.ReadAllText(

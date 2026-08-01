@@ -143,6 +143,20 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("No direct source", groupedLabels);
    }
 
+   [Fact]
+   public void MissingStartTimeLabelIsIncluded()
+   {
+      var issue = CreateSourceIssue(
+         hasNoGroup: false,
+         hasMissingParticipantStartTime: true
+      );
+
+      var labels = SESport.Web.Pages.Admin.Dashboard.IndexModel
+         .GetIssueLabels(issue);
+
+      Assert.Contains("Missing participant start times", labels);
+   }
+
    private static DashboardDateSummary CreateDateSummary(
       int visibleBroadcastCount,
       int unreviewedBroadcastCount,
@@ -157,7 +171,8 @@ public sealed class IndexMarkupTests
       );
 
    private static DashboardActivityIssue CreateSourceIssue(
-      bool hasNoGroup
+      bool hasNoGroup,
+      bool hasMissingParticipantStartTime = false
    )
    {
       return new DashboardActivityIssue(
@@ -169,7 +184,8 @@ public sealed class IndexMarkupTests
          false,
          false,
          hasNoGroup,
-         true
+         true,
+         hasMissingParticipantStartTime
       );
    }
 }

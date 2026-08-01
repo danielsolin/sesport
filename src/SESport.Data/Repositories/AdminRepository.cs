@@ -239,7 +239,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       GetSportReferenceRowsAsync(CancellationToken cancellationToken)
    {
       const string sql = """
-         select id, name, display_name, icon_id
+         select id, name, display_name, icon_id, requires_start_time
          from sports
          order by name
          """;
@@ -257,7 +257,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(0),
                reader.GetString(1),
                reader.IsDBNull(2) ? null : reader.GetString(2),
-               reader.IsDBNull(3) ? null : reader.GetString(3)
+               reader.IsDBNull(3) ? null : reader.GetString(3),
+               reader.GetBoolean(4)
             )
          );
       }
@@ -340,7 +341,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, name, display_name, icon_id
+         select id, name, display_name, icon_id, requires_start_time
          from sports
          where id = @id
          """;
@@ -362,7 +363,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          Id = reader.GetString(0),
          Name = reader.GetString(1),
          DisplayName = reader.IsDBNull(2) ? null : reader.GetString(2),
-         IconId = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+         IconId = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+         RequiresStartTime = reader.GetBoolean(4)
       };
    }
 
@@ -530,8 +532,12 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
       var sql = isNew
          ? """
-            insert into sports (id, name, display_name, icon_id)
-            values (@id, @name, @display_name, @icon_id)
+            insert into sports (
+               id, name, display_name, icon_id, requires_start_time
+            )
+            values (
+               @id, @name, @display_name, @icon_id, @requires_start_time
+            )
             """
          : """
             update sports
@@ -540,6 +546,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                name = @name,
                display_name = @display_name,
                icon_id = @icon_id,
+               requires_start_time = @requires_start_time,
                updated_at = now()
             where id = @original_id
             """;
@@ -554,6 +561,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "icon_id",
          (object?)iconId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "requires_start_time",
+         model.RequiresStartTime
       );
       command.Parameters.AddWithValue(
          "original_id",

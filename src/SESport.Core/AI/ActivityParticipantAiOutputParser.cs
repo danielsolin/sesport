@@ -82,7 +82,11 @@ public static class ActivityParticipantAiOutputParser
       if(participant.ValueKind != JsonValueKind.Object ||
          !TryGetStringProperty(participant, "name", out var name) ||
          string.IsNullOrWhiteSpace(name) ||
-         !TryGetProperty(participant, "start_time", out var startTime) ||
+         !TryGetProperty(
+            participant,
+            ActivityParticipantAiFieldKeys.StartTime,
+            out var startTime
+         ) ||
          !TryGetStringProperty(
             participant,
             "source_url",
@@ -97,7 +101,7 @@ public static class ActivityParticipantAiOutputParser
          name,
          [
             new ActivityParticipantAiFieldDraft(
-               "start_time",
+               ActivityParticipantAiFieldKeys.StartTime,
                ReadScalarText(startTime),
                startTime.GetRawText()
             )
