@@ -41,7 +41,7 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains(
-         "<dt>Imported</dt>",
+         "<th scope=\"row\">Imported</th>",
          html
       );
       Assert.DoesNotContain(
@@ -65,11 +65,11 @@ public sealed class IndexMarkupTests
          html.IndexOf(
             "Upcoming coverage",
             StringComparison.Ordinal
-         ) < html.IndexOf(
-            "dashboard-health-grid",
-            StringComparison.Ordinal
-         )
+         ) < html.IndexOf("dashboard-health-table", StringComparison.Ordinal)
       );
+      Assert.Contains("dashboard-health-table", html);
+      Assert.Contains("dashboard-health-grid", html);
+      Assert.Contains("dashboard-issue-pill", html);
       Assert.Contains("/Admin/Broadcasts/Index", html);
       Assert.Contains(
          "DateDisplay.DateOnlyFormat",
@@ -157,6 +157,20 @@ public sealed class IndexMarkupTests
       Assert.Contains("Missing participant start times", labels);
    }
 
+   [Fact]
+   public void ParticipantStartBeforeActivityLabelIsIncluded()
+   {
+      var issue = CreateSourceIssue(
+         hasNoGroup: false,
+         hasParticipantStartBeforeActivity: true
+      );
+
+      var labels = SESport.Web.Pages.Admin.Dashboard.IndexModel
+         .GetIssueLabels(issue);
+
+      Assert.Contains("Participant starts before activity", labels);
+   }
+
    private static DashboardDateSummary CreateDateSummary(
       int visibleBroadcastCount,
       int unreviewedBroadcastCount,
@@ -172,7 +186,8 @@ public sealed class IndexMarkupTests
 
    private static DashboardActivityIssue CreateSourceIssue(
       bool hasNoGroup,
-      bool hasMissingParticipantStartTime = false
+      bool hasMissingParticipantStartTime = false,
+      bool hasParticipantStartBeforeActivity = false
    )
    {
       return new DashboardActivityIssue(
@@ -185,7 +200,8 @@ public sealed class IndexMarkupTests
          false,
          hasNoGroup,
          true,
-         hasMissingParticipantStartTime
+         hasMissingParticipantStartTime,
+         hasParticipantStartBeforeActivity
       );
    }
 }

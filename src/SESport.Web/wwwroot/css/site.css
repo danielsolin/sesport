@@ -2288,23 +2288,21 @@ textarea {
    gap: 6px;
 }
 
+.dashboard-issue-pill {
+   background: #fff7d6;
+   color: var(--warning) !important;
+}
+
 .dashboard-health-grid {
    display: grid;
    grid-template-columns: repeat(2, minmax(0, 1fr));
    gap: 16px;
+   margin-top: 32px;
 }
 
-.dashboard-health-card {
-   padding: 12px;
-   border: 1px solid var(--line);
-   border-radius: 8px;
-   background: var(--surface);
-}
-
-.dashboard-health-card h3 {
+.dashboard-health-grid .dashboard-section {
+   min-width: 0;
    margin-top: 0;
-   margin-bottom: 6px;
-   font-size: 15px;
 }
 
 .dashboard-health-count {
@@ -2333,27 +2331,18 @@ textarea {
    font-weight: 700;
 }
 
-.dashboard-health-list {
-   margin: 0;
-}
-
-.dashboard-health-list div {
-   display: flex;
-   justify-content: space-between;
-   gap: 16px;
-   padding: 4px 0;
-   border-top: 1px solid var(--line);
-   line-height: 1.25;
-}
-
-.dashboard-health-list dt {
+.dashboard-health-table th {
    color: var(--muted);
+   text-align: left;
 }
 
-.dashboard-health-list dd {
-   margin: 0;
-   font-weight: 700;
+.dashboard-health-table td {
    text-align: right;
+}
+
+.dashboard-health-table th,
+.dashboard-health-table td {
+   vertical-align: middle;
 }
 
 @media (max-width: 720px) {

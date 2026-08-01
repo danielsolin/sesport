@@ -36,7 +36,8 @@ else if(Model.Dashboard is not null)
       else
       {
          <div class="admin-table-wrap">
-            <table class="admin-table admin-table-hover">
+            <table class="admin-table admin-table-compact
+                          admin-table-hover">
                <thead>
                   <tr>
                      <th>Date</th>
@@ -64,7 +65,10 @@ else if(Model.Dashboard is not null)
                                  var label in IndexModel.GetIssueLabels(issue)
                               )
                               {
-                                 <span class="status-pill">@label</span>
+                                 <span class="status-pill
+                                              dashboard-issue-pill">
+                                    @label
+                                 </span>
                               }
                            </div>
                         </td>
@@ -138,36 +142,42 @@ else if(Model.Dashboard is not null)
       </div>
    </section>
 
+   <div class="dashboard-health-grid">
    <section class="dashboard-section">
-      <div class="dashboard-health-grid">
-         <article class="dashboard-health-card">
-            <h3>AI runs</h3>
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>AI runs</h2>
             @if(!Model.AiNeedsAttention)
             {
                <p class="dashboard-health-ok">No current AI alerts.</p>
             }
-            <dl class="dashboard-health-list">
-               <div>
-                  <dt>Pending</dt>
-                  <dd>
+         </div>
+      </div>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-compact
+                       dashboard-health-table">
+            <tbody>
+               <tr>
+                  <th scope="row">Pending</th>
+                  <td>
                      <span class="dashboard-health-count
                                   dashboard-health-count-pending">
                         @dashboard.AiHealth.PendingCount
                      </span>
-                  </dd>
-               </div>
-               <div>
-                  <dt>Running</dt>
-                  <dd>
+                  </td>
+               </tr>
+               <tr>
+                  <th scope="row">Running</th>
+                  <td>
                      <span class="dashboard-health-count
                                   dashboard-health-count-running">
                         @dashboard.AiHealth.RunningCount
                      </span>
-                  </dd>
-               </div>
-               <div>
-                  <dt>Failed, last 25 hours</dt>
-                  <dd>
+                  </td>
+               </tr>
+               <tr>
+                  <th scope="row">Failed, last 25 hours</th>
+                  <td>
                      @if(dashboard.AiHealth.FailedLast25HoursCount > 0)
                      {
                         <a class="dashboard-health-count
@@ -182,47 +192,60 @@ else if(Model.Dashboard is not null)
                      {
                         @dashboard.AiHealth.FailedLast25HoursCount
                      }
-                  </dd>
-               </div>
-            </dl>
-         </article>
-         <article class="dashboard-health-card">
-            <h3>Broadcast imports</h3>
-            @if(dashboard.ImportHealth is null)
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+   </section>
+
+   <section class="dashboard-section">
+      <div class="dashboard-section-heading">
+         <div>
+            <h2>Broadcast imports</h2>
+            @if(dashboard.ImportHealth is not null &&
+               !Model.ImportNeedsAttention)
             {
-               <p class="notice notice-warning">
-                  No broadcast import found.
+               <p class="dashboard-health-ok">
+                  Latest import completed.
                </p>
             }
-            else
-            {
-               @if(!Model.ImportNeedsAttention)
+         </div>
+      </div>
+      <div class="admin-table-wrap">
+         <table class="admin-table admin-table-compact
+                       dashboard-health-table">
+            <tbody>
+               @if(dashboard.ImportHealth is null)
                {
-                  <p class="dashboard-health-ok">
-                     Latest import completed.
-                  </p>
+                  <tr>
+                     <th scope="row">Status</th>
+                     <td>No broadcast import found.</td>
+                  </tr>
                }
-               <dl class="dashboard-health-list">
-                  <div>
-                     <dt>Status</dt>
-                     <dd>@dashboard.ImportHealth.Status</dd>
-                  </div>
-                  <div>
-                     <dt>Imported</dt>
-                     <dd>@dashboard.ImportHealth.BroadcastCount</dd>
-                  </div>
-                  <div>
-                     <dt>Started</dt>
-                     <dd>
+               else
+               {
+                  <tr>
+                     <th scope="row">Status</th>
+                     <td>@dashboard.ImportHealth.Status</td>
+                  </tr>
+                  <tr>
+                     <th scope="row">Imported</th>
+                     <td>@dashboard.ImportHealth.BroadcastCount</td>
+                  </tr>
+                  <tr>
+                     <th scope="row">Started</th>
+                     <td>
                         @TimeDisplay.FormatLocalTimestamp(
                            dashboard.ImportHealth.StartedAt
                         )
-                     </dd>
-                  </div>
-               </dl>
-            }
-         </article>
+                     </td>
+                  </tr>
+               }
+            </tbody>
+         </table>
       </div>
    </section>
+   </div>
 
 }

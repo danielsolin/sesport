@@ -25,7 +25,8 @@ public sealed record DashboardActivityIssue(
    bool HasNoParticipants,
    bool HasNoGroup,
    bool HasNoRelatedSource,
-   bool HasMissingParticipantStartTime
+   bool HasMissingParticipantStartTime,
+   bool HasParticipantStartBeforeActivity
 );
 
 public sealed record DashboardAiHealth(

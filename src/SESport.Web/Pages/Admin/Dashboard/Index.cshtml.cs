@@ -85,6 +85,11 @@ public class IndexModel(DashboardRepository repository) : PageModel
          labels.Add("Missing participant start times");
       }
 
+      if(issue.HasParticipantStartBeforeActivity)
+      {
+         labels.Add("Participant starts before activity");
+      }
+
       return labels;
    }
 
