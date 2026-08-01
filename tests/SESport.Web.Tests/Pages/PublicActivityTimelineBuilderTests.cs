@@ -309,13 +309,65 @@ public class PublicActivityTimelineBuilderTests
       Assert.Equal("13:00", middaySection.TimelineSlot.TimeLabel);
    }
 
+   [Fact]
+   public void Build_DoesNotGroupTeamSportActivities()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Football: Match 1",
+            selectedDate,
+            now.AddMinutes(15),
+            now.AddHours(1),
+            groupId,
+            "Football League",
+            true
+         ),
+         CreateActivity(
+            "Football: Match 2",
+            selectedDate,
+            now.AddHours(2),
+            now.AddHours(3),
+            groupId,
+            "Football League",
+            true
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+      var sections = timeline.TimelineEntries
+         .Where(entry => !entry.IsCurrentMarker)
+         .Select(entry => entry.Section!)
+         .ToList();
+
+      Assert.Equal(2, sections.Count);
+      Assert.All(sections, section =>
+      {
+         Assert.Null(section.ActivityGroupTitle);
+         Assert.Single(section.Activities);
+      });
+   }
+
    private static ActivityListItem CreateActivity(
       string title,
       DateOnly activityDate,
       DateTimeOffset? startsAt,
       DateTimeOffset? endsAt = null,
       Guid? activityGroupId = null,
-      string? activityGroupTitle = null
+      string? activityGroupTitle = null,
+      bool isTeamSport = false
    )
    {
       return new ActivityListItem(
@@ -348,7 +400,8 @@ public class PublicActivityTimelineBuilderTests
                ).DateTime
             ),
          ActivityGroupId = activityGroupId,
-         ActivityGroupTitle = activityGroupTitle
+         ActivityGroupTitle = activityGroupTitle,
+         IsTeamSport = isTeamSport
       };
    }
 }

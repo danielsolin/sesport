@@ -94,6 +94,7 @@
                         <th>Name</th>
                         <th>Icon</th>
                         <th>Requires Start Time</th>
+                        <th>Is Team Sport</th>
                         <th></th>
                      </tr>
                   </thead>
@@ -105,6 +106,7 @@
                            <td>@row.Name</td>
                            <td><code>@row.IconId</code></td>
                            <td>@(row.RequiresStartTime ? "Yes" : "No")</td>
+                           <td>@(row.IsTeamSport ? "Yes" : "No")</td>
                            <td class="table-actions">
                               <a asp-page="./Edit"
                                  asp-route-table="@Model.CurrentTable.Id"

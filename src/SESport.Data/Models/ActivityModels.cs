@@ -32,6 +32,8 @@ public sealed record ActivityListItem(
 
    public string? ActivityGroupTitle { get; init; }
 
+   public bool IsTeamSport { get; init; }
+
    public string RelatedOrganizationCanonicalEntities { get; init; } =
       string.Empty;
 

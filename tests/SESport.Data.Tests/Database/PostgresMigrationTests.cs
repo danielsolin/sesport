@@ -142,6 +142,25 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void SportTeamMigrationAddsIsTeamSport()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "016_sport_team_sport.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.sports", migration);
+      Assert.Contains(
+         "add column is_team_sport boolean default false not null",
+         migration
+      );
+   }
+
+   [Fact]
    public void ParticipantAiResultsMigrationDefinesGenericResultStorage()
    {
       var migration = File.ReadAllText(

@@ -1692,8 +1692,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   ag.title as activity_group_title,")
          .AppendLine(
             "   coalesce(ro.related_organization_canonical_entities, '') " +
-            "as related_organization_canonical_entities"
+            "as related_organization_canonical_entities,"
          )
+         .AppendLine("   s.is_team_sport")
          .AppendLine("from activities a")
          .AppendLine(
             "left join activity_groups ag on ag.id = a.activity_group_id"
@@ -1804,7 +1805,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(
             "         ro.related_organization_canonical_entities,"
          )
-         .AppendLine("         a.ends_at, ag.title")
+         .AppendLine("         a.ends_at, ag.title, s.is_team_sport")
          .AppendLine(orderClause);
 
       return builder.ToString();
@@ -2494,7 +2495,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   : reader.GetGuid(20),
                ActivityGroupTitle = ReadString(reader, 21),
                RelatedOrganizationCanonicalEntities =
-                  reader.GetString(22)
+                  reader.GetString(22),
+               IsTeamSport = reader.GetBoolean(23)
             }
          );
       }

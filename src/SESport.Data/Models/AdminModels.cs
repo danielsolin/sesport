@@ -72,7 +72,8 @@ public sealed record SportReferenceRow(
    string Name,
    string? DisplayName,
    string? IconId,
-   bool RequiresStartTime
+   bool RequiresStartTime,
+   bool IsTeamSport
 );
 
 public sealed class CountryReferenceEditModel
@@ -99,6 +100,8 @@ public sealed class SportReferenceEditModel
    public string IconId { get; set; } = string.Empty;
 
    public bool RequiresStartTime { get; set; }
+
+   public bool IsTeamSport { get; set; }
 }
 
 public sealed record EntityListItem(
