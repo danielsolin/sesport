@@ -10,6 +10,9 @@
    var participantSearchUrl = Url.Page(
       "/Admin/Ajax/Search/ActivityParticipant"
    );
+   var activityGroupSearchUrl = Url.Page(
+      "/Admin/Ajax/Search/ActivityGroup"
+   );
    var aiResultValueUrl = Url.Page(
       "/Admin/Ajax/Update/ActivityParticipantAiResultValue"
    );
@@ -40,9 +43,6 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Activity.Id" type="hidden" />
-   <input asp-for="Activity.ActivityGroupId" type="hidden" />
-   <input asp-for="Activity.ActivityGroupCreationRequired"
-          type="hidden" />
    <input asp-for="Activity.ParticipationRunId" type="hidden" />
    <input asp-for="Activity.TimeZoneId" type="hidden" />
    <input asp-for="ReturnUrl" type="hidden" />
@@ -70,13 +70,44 @@
    <section class="form-section"
             data-activity-ai-results>
       <h2>Activity</h2>
-      <label>
-         <span>Related organization</span>
-         <select asp-for="Activity.OrganizationEntityId"
-                 asp-items="Model.OrganizationEntities">
-            <option value="">Select organization</option>
-         </select>
-      </label>
+      <div class="form-grid">
+         <label>
+            <span>Organization</span>
+            <select asp-for="Activity.OrganizationEntityId"
+                    asp-items="Model.OrganizationEntities">
+               <option value="">Select organization</option>
+            </select>
+         </label>
+         <label>
+            <span>Group</span>
+            <div class="activity-group-picker"
+                 data-activity-group-picker
+                 data-activity-group-search-url=
+                    "@activityGroupSearchUrl"
+                 data-activity-group-sport-id="@Model.Activity.SportId">
+               <input asp-for="Activity.ActivityGroupCreationRequired"
+                      type="hidden"
+                      data-activity-group-creation-required />
+               <input class="broadcast-org-entity-input"
+                      type="text"
+                      aria-label="Group"
+                      placeholder="Select or create group"
+                      autocomplete="off"
+                      spellcheck="false"
+                      value="@Model.Activity.ActivityGroupTitle"
+                      data-activity-group-input />
+               <input asp-for="Activity.ActivityGroupId"
+                      type="hidden"
+                      data-activity-group-id />
+               <input asp-for="Activity.ActivityGroupTitle"
+                      type="hidden"
+                      data-activity-group-title />
+               <div class="broadcast-org-entity-suggestions"
+                    data-activity-group-suggestions
+                    hidden></div>
+            </div>
+         </label>
+      </div>
       <div class="form-grid">
          <label>
             <span>Title</span>
@@ -599,6 +630,8 @@
 }
 
 @section Scripts {
+   <script src="~/js/activity-group-autocomplete.js"
+           asp-append-version="true"></script>
    <script src="~/js/activity-participants.js"
            asp-append-version="true"></script>
 }

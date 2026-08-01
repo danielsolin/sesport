@@ -117,6 +117,20 @@ public sealed class ActivityEditPageService(
       return await repository.GetForEditAsync(id, cancellationToken);
    }
 
+   public async Task<IReadOnlyList<LookupOption>>
+      SearchActivityGroupsAsync(
+         string? term,
+         string? sportId,
+         CancellationToken cancellationToken
+      )
+   {
+      return await repository.SearchActivityGroupOptionsAsync(
+         term,
+         sportId,
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<string>> LoadOtherGroupDescriptionsAsync(
       ActivityEditModel activity,
       CancellationToken cancellationToken
@@ -294,6 +308,11 @@ public sealed class ActivityEditPageService(
 
          if(activity.ActivityGroupId is not null)
          {
+            activity.ActivityGroupTitle = await repository
+               .GetActivityGroupTitleAsync(
+                  activity.ActivityGroupId.Value,
+                  cancellationToken
+               );
             var participantsByGroup = await repository
                .GetActivityGroupParticipantsAsync(
                   [activity.ActivityGroupId.Value],

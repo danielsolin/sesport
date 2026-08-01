@@ -21,6 +21,7 @@ public sealed class ActivityEditPageServiceTests
       var organizationId = Guid.NewGuid();
       var personId = Guid.NewGuid();
       var pairId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
@@ -48,13 +49,21 @@ public sealed class ActivityEditPageServiceTests
       );
       await InsertEntityLinkAsync(dataSource, personId, organizationId);
       await InsertEntityLinkAsync(dataSource, pairId, organizationId);
-
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         $"Activity Group {activityGroupId:N}",
+         "football",
+         DistantActivityDate,
+         DistantActivityDate
+      );
       try
       {
          var options = await fixture.Service.LoadOptionsAsync(
             [],
             organizationId,
-            CancellationToken.None
+            CancellationToken.None,
+            "football"
          );
 
          Assert.Contains(
@@ -65,6 +74,15 @@ public sealed class ActivityEditPageServiceTests
             options.Entities,
             option => option.Value == pairId.ToString()
          );
+         var groups = await fixture.Service.SearchActivityGroupsAsync(
+            "Activity Group",
+            "football",
+            CancellationToken.None
+         );
+         Assert.Contains(
+            groups,
+            option => option.Id == activityGroupId.ToString()
+         );
       }
       finally
       {
@@ -73,6 +91,7 @@ public sealed class ActivityEditPageServiceTests
          await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, pairId);
          await DeleteEntityAsync(dataSource, organizationId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
       }
    }
 

@@ -30,6 +30,38 @@ public sealed class EditMarkupTests
    }
 
    [Fact]
+   public async Task EditPageShowsOrganizationAndGroupSelectors()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+
+      Assert.Contains("<span>Organization</span>", html);
+      Assert.DoesNotContain("Related organization", html);
+      Assert.Contains(
+         "asp-for=\"Activity.OrganizationEntityId\"",
+         html
+      );
+      Assert.Contains("<span>Group</span>", html);
+      Assert.Contains("asp-for=\"Activity.ActivityGroupId\"", html);
+      Assert.Contains("data-activity-group-picker", html);
+      Assert.Contains("data-activity-group-search-url", html);
+      Assert.Contains("data-activity-group-suggestions", html);
+      Assert.Contains("activity-group-autocomplete.js", html);
+      Assert.Contains("Create new group", await File.ReadAllTextAsync(
+         Path.Combine(
+            repoRoot,
+            "src/SESport.Web/wwwroot/js/activity-group-autocomplete.js"
+         )
+      ));
+   }
+
+   [Fact]
    public async Task EditPagePostsUnsavedPrefilledSources()
    {
       var repoRoot = Path.GetFullPath(

@@ -766,6 +766,11 @@ h2 {
    margin-bottom: 8px;
 }
 
+.activity-group-picker {
+   position: relative;
+   width: 100%;
+}
+
 .activity-participant-inactive {
    opacity: 0.5;
 }

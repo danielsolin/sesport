@@ -495,6 +495,48 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<IReadOnlyList<LookupOption>>
+      SearchActivityGroupOptionsAsync(
+         string? term,
+         string? sportId,
+         CancellationToken cancellationToken
+      )
+   {
+      term = term?.Trim() ?? string.Empty;
+      var applyTermFilter = term != string.Empty;
+      var escapedTerm = applyTermFilter
+         ? term
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal)
+         : string.Empty;
+      var termFilterSql = applyTermFilter
+         ? "and title ilike @term escape '\\'"
+         : string.Empty;
+      var sql = $$"""
+         select id::text, title
+         from activity_groups
+         where (@sport_id is null or sport_id = @sport_id)
+            {{termFilterSql}}
+         order by start_date desc, end_date desc, title, id
+         limit 20
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.Add(
+         "sport_id",
+         NpgsqlDbType.Text
+      ).Value = string.IsNullOrWhiteSpace(sportId)
+         ? DBNull.Value
+         : sportId;
+      if(applyTermFilter)
+      {
+         command.Parameters.AddWithValue("term", $"%{escapedTerm}%");
+      }
+
+      return await ReadLookupOptionsAsync(command, cancellationToken);
+   }
+
    public async Task<ActivityEditModel?> GetForEditAsync(
       Guid id,
       CancellationToken cancellationToken
@@ -677,6 +719,22 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return result is null || result is DBNull
          ? null
          : (Guid)result;
+   }
+
+   public async Task<string?> GetActivityGroupTitleAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select title
+         from activity_groups
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      return (string?)await command.ExecuteScalarAsync(cancellationToken);
    }
 
    public async Task<ActivityGroupEditModel?> GetActivityGroupForEditAsync(
@@ -2274,6 +2332,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       await using var command = dataSource.CreateCommand(sql);
+      return await ReadLookupOptionsAsync(command, cancellationToken);
+   }
+
+   private static async Task<IReadOnlyList<LookupOption>>
+      ReadLookupOptionsAsync(
+         NpgsqlCommand command,
+         CancellationToken cancellationToken
+      )
+   {
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
