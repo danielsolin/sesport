@@ -48,6 +48,10 @@ public sealed class IndexMarkupTests
       Assert.Contains("public-date-select.js", html);
       Assert.Contains("public-current-marker-scroll.js", html);
       Assert.Contains(
+         "<script src=\"~/js/public-current-marker-scroll.js\"",
+         html
+      );
+      Assert.DoesNotContain(
          "@*\n   <script src=\"~/js/public-current-marker-scroll.js\"",
          html
       );

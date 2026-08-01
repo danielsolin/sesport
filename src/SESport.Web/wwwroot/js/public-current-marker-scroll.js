@@ -1,9 +1,11 @@
 (() => {
    "use strict";
 
-   const marker = document.querySelector(".activity-now-marker");
+   const ongoingActivity = document.querySelector(
+      ".activity-agenda-section.activity-is-ongoing"
+   );
 
-   if(!(marker instanceof HTMLElement))
+   if(!(ongoingActivity instanceof HTMLElement))
    {
       return;
    }
@@ -16,7 +18,7 @@
    window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
          const top = window.scrollY
-            + marker.getBoundingClientRect().top
+            + ongoingActivity.getBoundingClientRect().top
             - topMargin;
 
          window.scrollTo({
