@@ -4,6 +4,7 @@
    const string CanonicalHomeUrl = "https://sesport.se/";
    const string PageDescription =
       "Svenskar i internationell sport på TV";
+   const int MaxVisibleParticipants = 10;
    var isFilteredView =
       Request.Query.ContainsKey(RouteKeys.Date) ||
       Request.Query.ContainsKey(RouteKeys.Sport);
@@ -486,7 +487,8 @@ else
                                  "has-start-time"
                               : "activity-participant-table";
                         var shouldCollapseParticipants =
-                           activity.Participants.Count > 5;
+                           activity.Participants.Count >
+                              MaxVisibleParticipants;
                         if(shouldCollapseParticipants)
                         {
                            participantTableClass +=
@@ -565,12 +567,14 @@ else
                                     var rowClass =
                                        participant.IsActive
                                           ? shouldCollapseParticipants &&
-                                            participantIndex >= 5
+                                            participantIndex >=
+                                               MaxVisibleParticipants
                                              ? "activity-participant-row-" +
                                                 "collapsed"
                                              : null
                                           : shouldCollapseParticipants &&
-                                            participantIndex >= 5
+                                            participantIndex >=
+                                               MaxVisibleParticipants
                                              ? "activity-participant-" +
                                                 "inactive " +
                                                 "activity-participant-row-" +

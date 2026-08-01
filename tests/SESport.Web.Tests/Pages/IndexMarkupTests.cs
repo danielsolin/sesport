@@ -29,6 +29,10 @@ public sealed class IndexMarkupTests
       Assert.Contains("index-participants-info", html);
       Assert.Contains("aria-label=\"Visa alla sporter\"", html);
       Assert.Contains("TotalParticipantsCount", html);
+      Assert.Contains(
+         "const int MaxVisibleParticipants = 10;",
+         html
+      );
       Assert.Contains("Svenskar:", html);
       Assert.Contains("SportParticipantCounts", html);
       Assert.Contains(
