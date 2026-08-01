@@ -213,6 +213,19 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
+         ".activity-entry-sport-icon {\n   display: inline-block;\n" +
+         "   position: absolute;\n   top: 13px;\n" +
+         "   right: 14px;\n   width: 42px;\n" +
+         "   height: 42px;",
+         css
+      );
+      Assert.Contains("@media (orientation: landscape)", css);
+      Assert.Contains(
+         ".activity-status-badge {\n      top: 18px;\n" +
+         "      right: 68px;",
+         css
+      );
+      Assert.Contains(
          "max-width: none;\n      padding-right: 0;\n" +
          "      overflow: visible;",
          css

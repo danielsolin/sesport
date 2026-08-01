@@ -1080,8 +1080,8 @@
    position: absolute;
    top: 13px;
    right: 14px;
-   width: 32px;
-   height: 32px;
+   width: 42px;
+   height: 42px;
    background-color: #006aa8;
    mask-image: var(--sport-icon-url);
    mask-position: center;
@@ -1329,6 +1329,13 @@
       overflow: visible;
       text-overflow: clip;
       white-space: normal;
+   }
+}
+
+@media (orientation: landscape) {
+   .activity-status-badge {
+      top: 18px;
+      right: 68px;
    }
 }
 
