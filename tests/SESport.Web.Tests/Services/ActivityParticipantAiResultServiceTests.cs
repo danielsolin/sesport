@@ -21,10 +21,12 @@ public sealed class ActivityParticipantAiResultServiceTests
       var organizationId = Guid.NewGuid();
       var firstPersonId = Guid.NewGuid();
       var secondPersonId = Guid.NewGuid();
+      var thirdPersonId = Guid.NewGuid();
       var activityId = Guid.NewGuid();
       var runId = Guid.NewGuid();
       var firstPersonName = $"First {Guid.NewGuid():N}";
       var secondPersonName = $"Second {Guid.NewGuid():N}";
+      var thirdPersonName = $"Third {Guid.NewGuid():N}";
       var sourceUrl = "https://example.test/event";
 
       await using var dataSource = CreateDataSource();
@@ -65,8 +67,16 @@ public sealed class ActivityParticipantAiResultServiceTests
          TrackedEntityTypeIds.Person,
          "football"
       );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         thirdPersonId,
+         thirdPersonName,
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
       await InsertEntityLinkAsync(dataSource, firstPersonId, organizationId);
       await InsertEntityLinkAsync(dataSource, secondPersonId, organizationId);
+      await InsertEntityLinkAsync(dataSource, thirdPersonId, organizationId);
       activityId = await activityRepository.SaveAsync(
          new ActivityEditModel
          {
@@ -74,7 +84,7 @@ public sealed class ActivityParticipantAiResultServiceTests
             ActivityType = ActivityType.Match.ToString(),
             SportId = "football",
             ActivityDate = DistantActivityDate,
-            LinkedEntityIds = [firstPersonId, secondPersonId],
+            LinkedEntityIds = [firstPersonId, secondPersonId, thirdPersonId],
             OrganizationEntityId = organizationId
          },
          CancellationToken.None
@@ -88,9 +98,11 @@ public sealed class ActivityParticipantAiResultServiceTests
          activityId,
          firstPersonName,
          secondPersonName,
+         thirdPersonName,
          sourceUrl,
          firstPersonId,
-         secondPersonId
+         secondPersonId,
+         thirdPersonId
       );
 
       try
@@ -172,10 +184,10 @@ public sealed class ActivityParticipantAiResultServiceTests
          Assert.Contains(
             resultSet.Values,
             value =>
-               value.EntityName == secondPersonName &&
+               value.EntityName == thirdPersonName &&
                value.FieldKey == "start_time" &&
-               value.ValueText == "13:10" &&
-               value.ValueJson == "\"13:10\"" &&
+               value.ValueText == "14:20" &&
+               value.ValueJson == "\"14:20\"" &&
                value.Sources.Count == 1 &&
                value.Sources[0].Url == sourceUrl
          );
@@ -266,10 +278,10 @@ public sealed class ActivityParticipantAiResultServiceTests
             Assert.Contains(
                rows,
                row =>
-                  row.Name == secondPersonName &&
+                  row.Name == thirdPersonName &&
                   row.FieldKey == "start_time" &&
-                  row.Text == "13:10" &&
-                  row.Json == "\"13:10\"" &&
+                  row.Text == "14:20" &&
+                  row.Json == "\"14:20\"" &&
                   row.Url == sourceUrl &&
                   row.Kind == SourceKinds.ParticipantStartEvidence &&
                   row.SortOrder == 1
@@ -335,8 +347,10 @@ public sealed class ActivityParticipantAiResultServiceTests
          await DeleteRunAsync(dataSource, runId);
          await DeleteLinksAsync(dataSource, firstPersonId);
          await DeleteLinksAsync(dataSource, secondPersonId);
+         await DeleteLinksAsync(dataSource, thirdPersonId);
          await DeleteEntityAsync(dataSource, firstPersonId);
          await DeleteEntityAsync(dataSource, secondPersonId);
+         await DeleteEntityAsync(dataSource, thirdPersonId);
          await DeleteEntityAsync(dataSource, organizationId);
       }
    }
@@ -350,9 +364,11 @@ public sealed class ActivityParticipantAiResultServiceTests
       Guid activityId,
       string firstPersonName,
       string secondPersonName,
+      string thirdPersonName,
       string sourceUrl,
       Guid firstPersonId,
-      Guid secondPersonId
+      Guid secondPersonId,
+      Guid thirdPersonId
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -424,7 +440,11 @@ public sealed class ActivityParticipantAiResultServiceTests
          "input_payload",
          $$"""
          {
-            "participants": "  - {{firstPersonName}}\n  - {{secondPersonName}}",
+            "participants": [
+               "{{firstPersonName}}",
+               "{{secondPersonName}}",
+               "{{thirdPersonName}}"
+            ],
             "participant_entities": [
                {
                   "id": "{{firstPersonId}}",
@@ -433,6 +453,10 @@ public sealed class ActivityParticipantAiResultServiceTests
                {
                   "id": "{{secondPersonId}}",
                   "name": "{{secondPersonName}}"
+               },
+               {
+                  "id": "{{thirdPersonId}}",
+                  "name": "{{thirdPersonName}}"
                }
             ]
          }
@@ -449,9 +473,14 @@ public sealed class ActivityParticipantAiResultServiceTests
                   "source_url": "{{sourceUrl}}"
                },
                {
-                  "name": "{{secondPersonName}}",
-                  "start_time": "13:10",
+                  "name": "{{thirdPersonName}}",
+                  "start_time": "14:20",
                   "source_url": "{{sourceUrl}}"
+               },
+               {
+                  "name": "{{secondPersonName}}",
+                  "start_time": null,
+                  "source_url": null
                }
             ]
          }
