@@ -375,26 +375,10 @@ public class EditModel(
       out string normalizedUrl
    )
    {
-      normalizedUrl = string.Empty;
-      var trimmedUrl = sourceUrl?.Trim();
-
-      if(!Uri.TryCreate(
-         trimmedUrl,
-         UriKind.Absolute,
-         out var parsedUrl
-      ))
-      {
-         return false;
-      }
-
-      if(parsedUrl.Scheme != Uri.UriSchemeHttp
-         && parsedUrl.Scheme != Uri.UriSchemeHttps)
-      {
-         return false;
-      }
-
-      normalizedUrl = parsedUrl.AbsoluteUri;
-      return true;
+      return SourceUrlNormalizer.TryNormalize(
+         sourceUrl,
+         out normalizedUrl
+      );
    }
 
    private IActionResult RedirectToEdit(Guid id, string? returnUrl)

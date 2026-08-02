@@ -58,6 +58,12 @@ public class EditModel(
 
    public string? LoadError { get; private set; }
 
+   [TempData]
+   public string? SourceError { get; set; }
+
+   [TempData]
+   public string? SourceMessage { get; set; }
+
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
       CancellationToken cancellationToken
@@ -104,6 +110,43 @@ public class EditModel(
       }
 
       return RedirectToPage("./Index");
+   }
+
+   public async Task<IActionResult> OnPostAddSourceAsync(
+      Guid id,
+      string? sourceUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      var entity = await repository.GetEntityForEditAsync(
+         id,
+         cancellationToken
+      );
+
+      if(entity is null)
+      {
+         return NotFound();
+      }
+
+      if(!SourceUrlNormalizer.TryNormalize(sourceUrl, out var normalizedUrl))
+      {
+         SourceError = "Enter a valid HTTP or HTTPS URL.";
+         return RedirectToEdit(id);
+      }
+
+      await sourceRepository.CreateAsync(
+         SourceCorrelationTypes.Entity,
+         id.ToString(),
+         SourceKinds.Bio,
+         normalizedUrl,
+         null,
+         null,
+         DateTimeOffset.UtcNow,
+         cancellationToken
+      );
+      SourceMessage = "Source added.";
+
+      return RedirectToEdit(id);
    }
 
    private async Task LoadOptionsAsync(CancellationToken cancellationToken)
@@ -252,5 +295,13 @@ public class EditModel(
             "Person gender is only valid for person entities."
          );
       }
+   }
+
+   private IActionResult RedirectToEdit(Guid id)
+   {
+      return RedirectToPage(
+         "./Edit",
+         new { id }
+      );
    }
 }

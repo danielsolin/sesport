@@ -31,6 +31,11 @@ public sealed class EditMarkupTests
       Assert.Contains("Entity.Birthdate", html);
       Assert.Contains("data-person-formative-club-field", html);
       Assert.Contains("Entity.FormativeClub", html);
+      Assert.Contains("asp-page-handler=\"AddSource\"", html);
+      Assert.Contains("id=\"add-entity-source-form\"", html);
+      Assert.Contains("name=\"sourceUrl\"", html);
+      Assert.Contains("type=\"url\"", html);
+      Assert.Contains("Add source", html);
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);
       Assert.DoesNotContain("data-multi-select", html);
       Assert.Contains("entity-linked-entities.js", html);
