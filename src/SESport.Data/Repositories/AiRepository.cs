@@ -102,6 +102,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("   r.conversation_character_count,")
          .AppendLine("   r.tool_trace,")
          .AppendLine("   r.output_text,")
+         .AppendLine(
+            "   coalesce(r.prompt_output_schema_json, " +
+            "pr.output_schema)::text as output_schema,"
+         )
          .AppendLine("   case r.status_id")
          .AppendLine(
             $"      when '{AiJobRunStatusIds.Running}' then 0"
@@ -114,6 +118,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("from ai_job_runs r")
          .AppendLine("left join ai_jobs j on j.id = r.job_id")
          .AppendLine("left join ai_providers p on p.id = r.provider_id")
+         .AppendLine("left join ai_job_prompts pr on pr.id = r.prompt_id")
          .AppendLine("left join activities a")
          .AppendLine("   on a.id::text = r.correlation_id")
          .AppendLine("      and r.job_id = any(@activity_job_ids)")
@@ -147,7 +152,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("      sr.conversation_character_count,")
          .AppendLine("      coalesce(trace.max_payload_chars, 0)")
          .AppendLine("   ) as max_payload_chars,")
-         .AppendLine("   sr.output_text")
+         .AppendLine("   sr.output_text,")
+         .AppendLine("   sr.output_schema")
          .AppendLine("from selected_runs sr")
          .AppendLine("left join lateral (")
          .AppendLine("   select max((entry.value->>'payload_chars')::int)")
@@ -219,7 +225,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetInt32(12),
                AiRunSummaryFormatter.Format(
                   ReadNullableString(reader, 13),
-                  reader.GetString(1)
+                  reader.GetString(1),
+                  ReadNullableString(reader, 14)
                ),
                reader.GetFieldValue<DateTimeOffset>(10),
                ReadNullableDecimal(reader, 11)
@@ -301,10 +308,15 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                r.conversation_character_count,
                coalesce(trace.max_payload_chars, 0)
             ) as max_payload_chars,
-            r.output_text
+            r.output_text,
+            coalesce(
+               r.prompt_output_schema_json,
+               pr.output_schema
+            )::text
          from ai_job_runs r
          left join ai_jobs j on j.id = r.job_id
          left join ai_providers p on p.id = r.provider_id
+         left join ai_job_prompts pr on pr.id = r.prompt_id
          left join activities a
             on a.id::text = r.correlation_id
                and r.job_id = any(@activity_job_ids)
@@ -356,7 +368,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                reader.GetInt32(12),
                AiRunSummaryFormatter.Format(
                   ReadNullableString(reader, 13),
-                  reader.GetString(1)
+                  reader.GetString(1),
+                  ReadNullableString(reader, 14)
                ),
                reader.GetFieldValue<DateTimeOffset>(10),
                ReadNullableDecimal(reader, 11)

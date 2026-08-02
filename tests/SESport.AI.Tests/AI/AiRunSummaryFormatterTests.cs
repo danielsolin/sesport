@@ -24,6 +24,75 @@ public sealed class AiRunSummaryFormatterTests
    }
 
    [Fact]
+   public void FormatCountsNonNullObjectFieldValues()
+   {
+      var summary = AiRunSummaryFormatter.Format("""
+         {
+           "participants": [
+             {
+               "name": "Alice",
+               "start_time": "10:00",
+               "source_url": "https://example.test/a"
+             },
+             {
+               "name": "Bob",
+               "start_time": null,
+               "source_url": "https://example.test/b"
+             },
+             {
+               "name": "Carol",
+               "start_time": "11:00",
+               "source_url": "https://example.test/c"
+             },
+             {
+               "name": "Dave",
+               "start_time": "12:00",
+               "source_url": "https://example.test/d"
+             }
+           ]
+         }
+         """);
+
+      Assert.Equal("4 participants, 3 start times", summary);
+   }
+
+   [Fact]
+   public void FormatUsesNullableSchemaFieldWhenAllValuesArePresent()
+   {
+      var summary = AiRunSummaryFormatter.Format(
+         """
+         {
+           "participants": [
+             {"name":"Alice","start_time":"10:00"},
+             {"name":"Bob","start_time":"11:00"}
+           ]
+         }
+         """,
+         outputSchemaJson: """
+         {
+           "type": "object",
+           "properties": {
+             "participants": {
+               "type": "array",
+               "items": {
+                 "type": "object",
+                 "properties": {
+                   "name": {"type": "string"},
+                   "start_time": {
+                     "type": ["string", "null"]
+                   }
+                 }
+               }
+             }
+           }
+         }
+         """
+      );
+
+      Assert.Equal("2 participants, 2 start times", summary);
+   }
+
+   [Fact]
    public void FormatReturnsTrimmedPlainTextForNonJsonOutput()
    {
       var summary = AiRunSummaryFormatter.Format(
