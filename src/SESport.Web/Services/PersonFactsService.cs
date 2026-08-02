@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-using SESport.AI.Interfaces;
+using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Data.Repositories;

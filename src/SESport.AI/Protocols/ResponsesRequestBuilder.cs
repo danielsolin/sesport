@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 using SESport.Core.AI;
 
-namespace SESport.AI.Clients;
+namespace SESport.AI.Protocols;
 
 internal static class ResponsesRequestBuilder
 {

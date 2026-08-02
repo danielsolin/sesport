@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-namespace SESport.AI.Clients;
+namespace SESport.AI.Protocols;
 
 internal static class AiRequestJsonSerializer
 {

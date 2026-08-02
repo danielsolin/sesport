@@ -6,8 +6,8 @@ using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.Logging;
 
-using SESport.AI.Interfaces;
 using SESport.AI.Llama;
+using SESport.AI.Protocols;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.AI;

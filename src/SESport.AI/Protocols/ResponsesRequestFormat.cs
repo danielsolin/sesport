@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 using SESport.Core.AI;
 
-namespace SESport.AI.Clients;
+namespace SESport.AI.Protocols;
 
 internal static class ResponsesRequestFormat
 {

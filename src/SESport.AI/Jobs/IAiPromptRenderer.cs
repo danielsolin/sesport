@@ -1,6 +1,6 @@
 using SESport.Core.AI;
 
-namespace SESport.AI.Interfaces;
+namespace SESport.AI.Jobs;
 
 public interface IAiPromptRenderer
 {

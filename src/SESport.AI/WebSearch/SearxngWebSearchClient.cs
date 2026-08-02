@@ -2,8 +2,6 @@ using System.Text.Json;
 
 using Microsoft.Extensions.Logging;
 
-using SESport.AI.Interfaces;
-
 namespace SESport.AI.WebSearch;
 
 public sealed class SearxngWebSearchClient : IWebSearchClient

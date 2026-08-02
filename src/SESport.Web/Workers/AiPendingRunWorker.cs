@@ -1,4 +1,3 @@
-using SESport.AI.Interfaces;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
 

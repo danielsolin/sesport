@@ -4,7 +4,6 @@ using System.Text.Json.Nodes;
 
 using Microsoft.Playwright;
 
-using SESport.AI.Interfaces;
 using SESport.Core.AI;
 
 namespace SESport.AI.Clients;

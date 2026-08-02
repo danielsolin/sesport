@@ -1,4 +1,3 @@
-using SESport.AI.Interfaces;
 using SESport.AI.WebSearch;
 
 namespace SESport.Core.Tests.AI;

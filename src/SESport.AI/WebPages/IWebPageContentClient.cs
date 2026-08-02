@@ -1,6 +1,4 @@
-using SESport.AI.WebPages;
-
-namespace SESport.AI.Interfaces;
+namespace SESport.AI.WebPages;
 
 public interface IWebPageContentClient
 {

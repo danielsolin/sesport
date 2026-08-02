@@ -1,4 +1,4 @@
-using SESport.AI.Interfaces;
+using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Data.Repositories;
 

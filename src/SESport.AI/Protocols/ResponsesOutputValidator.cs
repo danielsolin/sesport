@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 using SESport.Core.AI;
 
-namespace SESport.AI.Clients;
+namespace SESport.AI.Protocols;
 
 public static class ResponsesOutputValidator
 {

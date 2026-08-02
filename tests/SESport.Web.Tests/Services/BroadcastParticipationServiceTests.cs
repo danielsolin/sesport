@@ -3,7 +3,7 @@ using System.Text.Json;
 
 using Npgsql;
 
-using SESport.AI.Interfaces;
+using SESport.AI.Jobs;
 using SESport.Core.Broadcast;
 using SESport.Data.Repositories;
 

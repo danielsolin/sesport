@@ -6,7 +6,6 @@ using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 
 using SESport.AI.Clients;
-using SESport.AI.Interfaces;
 using SESport.AI.Llama;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;

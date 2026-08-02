@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-using SESport.AI.Interfaces;
+using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;

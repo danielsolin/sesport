@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 using SESport.Core.AI;
 
-namespace SESport.AI.Interfaces;
+namespace SESport.AI.Clients;
 
 public interface IAiProviderClient
 {

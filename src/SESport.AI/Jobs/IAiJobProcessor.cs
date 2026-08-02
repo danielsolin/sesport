@@ -1,4 +1,4 @@
-namespace SESport.AI.Interfaces;
+namespace SESport.AI.Jobs;
 
 public interface IAiJobProcessor
 {

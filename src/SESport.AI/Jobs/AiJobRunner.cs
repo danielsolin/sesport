@@ -2,7 +2,7 @@ using System.Text.Json;
 
 using Microsoft.Extensions.Logging;
 
-using SESport.AI.Interfaces;
+using SESport.AI.Clients;
 using SESport.Core.AI;
 
 namespace SESport.AI.Jobs;

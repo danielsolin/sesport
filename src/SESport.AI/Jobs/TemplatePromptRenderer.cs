@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-using SESport.AI.Interfaces;
 using SESport.Core.AI;
 
 namespace SESport.AI.Jobs;

@@ -1,5 +1,3 @@
-using SESport.AI.Interfaces;
-
 namespace SESport.AI.WebSearch;
 
 public sealed class CachedWebSearchClient : IWebSearchClient

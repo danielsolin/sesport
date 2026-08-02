@@ -90,18 +90,24 @@ composition.
 
 ### `src/SESport.AI`
 
-- `ActivitySearch/`
 - `Clients/`
-- `Interfaces/`
 - `Jobs/`
 - `Llama/`
-- `Prompts/`
+- `Protocols/`
 - `WebPages/`
 - `WebSearch/`
 
 `SESport.AI` owns provider clients, prompt rendering, web-search/page-fetch
 clients, activity-search orchestration, and job execution. It depends on
 `SESport.Core` and does not contain PostgreSQL access.
+
+The namespace layout is also the dependency layout. Provider contracts live
+with their owning area, and shared provider wire-format helpers live in
+`Protocols`. This avoids cycles between generic clients, Llama helpers,
+search, and page fetching. See [the namespace guide][ai-readme] for the
+project-level description.
+
+[ai-readme]: ../src/SESport.AI/README.md
 
 ### `src/SESport.Data/AI`
 

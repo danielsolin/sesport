@@ -1,6 +1,4 @@
-using SESport.AI.WebSearch;
-
-namespace SESport.AI.Interfaces;
+namespace SESport.AI.WebSearch;
 
 public interface IWebSearchClient
 {

@@ -2,8 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
-using SESport.AI.Interfaces;
-
 namespace SESport.AI.WebPages;
 
 public sealed class WebPageContentClient : IWebPageContentClient
