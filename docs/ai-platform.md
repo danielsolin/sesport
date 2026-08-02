@@ -109,15 +109,19 @@ project-level description.
 
 [ai-readme]: ../src/SESport.AI/README.md
 
-### `src/SESport.Data/AI`
+### `src/SESport.Data`
 
+- `Models/`: query, command, and result models used by repositories
+- `Repositories/`: PostgreSQL repositories and SQL
 - `AiRepository`: run/job/prompt/provider reads and writes
 - `AiAdminRepository`: admin CRUD for AI configuration
-- activity-search proposal and run repositories
-- SQL for AI-related database access
+- `ActivityParticipantAiResultRepository`: AI participant results
 
 `SESport.Data` owns the Npgsql implementation. It depends on `SESport.Core`
 and does not depend on `SESport.AI`.
+
+See [`src/SESport.Data/README.md`](../src/SESport.Data/README.md) for the
+namespace and persistence-layer guide.
 
 ### `src/SESport.Web/Pages/Admin/Config/Ai`
 
