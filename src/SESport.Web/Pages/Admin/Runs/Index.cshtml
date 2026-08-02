@@ -62,7 +62,7 @@
       <colgroup>
          <col class="ai-runs-col-started" />
          <col class="ai-runs-col-job" />
-         <col class="ai-runs-col-event" />
+         <col class="ai-runs-col-name" />
          <col class="ai-runs-col-summary" />
          <col class="ai-runs-col-payload" />
          <col class="ai-runs-col-rounds" />
@@ -74,9 +74,9 @@
          <tr>
             <th>Started</th>
             <th>JOB</th>
-            <th>For</th>
+            <th>NAME</th>
             <th>Summary</th>
-            <th>MAX-CHARS</th>
+            <th>MAXCH</th>
             <th>Rounds</th>
             <th>Duration</th>
             <th>Status</th>
@@ -96,12 +96,20 @@
                 data-ai-run-status="@run.StatusId">
                <td class="ai-runs-started-cell">
                   @TimeDisplay.FormatLocalDate(run.StartedAt)
-                  @TimeDisplay.FormatLocalTime(run.StartedAt)
+                  @TimeDisplay.FormatLocalTimeWithoutSeconds(
+                     run.StartedAt
+                  )
                </td>
                <td class="ai-runs-job-cell"
                    title="@run.JobLabel">@jobCode</td>
-               <td>
-                  <strong>@runTarget:</strong> @run.EventName
+               <td class="ai-runs-name-cell">
+                  <a class="ai-runs-name-link"
+                     href="@Url.Page(
+                              "/Admin/Runs/Details",
+                              Model.GetDetailsRouteValues(run.Id)
+                           )">
+                     <strong>@runTarget:</strong> @run.EventName
+                  </a>
                </td>
                <td class="ai-runs-result-cell"
                    data-ai-run-summary-cell>
@@ -123,12 +131,6 @@
                </td>
                <td class="table-actions">
                   <div class="ai-runs-table-actions">
-                     <a href="@Url.Page(
-                              "/Admin/Runs/Details",
-                              Model.GetDetailsRouteValues(run.Id)
-                           )">
-                        View
-                     </a>
                      <form method="post"
                            action="@Url.Page(
                                  "/Admin/Runs/Index",

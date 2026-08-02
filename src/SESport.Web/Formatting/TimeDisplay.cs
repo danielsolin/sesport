@@ -27,6 +27,18 @@ public static class TimeDisplay
       );
    }
 
+   public static string FormatLocalTimeWithoutSeconds(
+      DateTimeOffset value
+   )
+   {
+      var localValue = TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
+
+      return localValue.ToString(
+         DateDisplay.TimeOnlyMinutesFormat,
+         CultureInfo.InvariantCulture
+      );
+   }
+
    public static string FormatLocalTimestamp(DateTimeOffset value)
    {
       var localValue = TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);

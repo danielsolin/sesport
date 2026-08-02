@@ -999,7 +999,7 @@ h2 {
 }
 
 .ai-runs-col-started {
-   width: 140px;
+   width: 10%;
 }
 
 .ai-runs-started-cell {
@@ -1013,38 +1013,47 @@ h2 {
 }
 
 .ai-runs-col-job {
-   width: 40px;
+   width: 3%;
 }
 
-.ai-runs-col-event {
-   width: 180px;
+.ai-runs-col-name {
+   width: 37%;
 }
 
 .ai-runs-col-summary {
-   width: auto;
+   width: 20%;
 }
 
 .ai-runs-col-status {
-   width: 82px;
+   width: 7%;
 }
 
 .ai-runs-col-payload {
-   width: 70px;
+   width: 5%;
 }
 
 .ai-runs-col-rounds {
-   width: 54px;
+   width: 5%;
 }
 
 .ai-runs-col-duration {
-   width: 82px;
+   width: 7%;
 }
 
 .ai-runs-col-actions {
-   width: 72px;
+   width: 6%;
 }
 
 .ai-runs-result-cell {
+   overflow-wrap: anywhere;
+}
+
+.ai-runs-table td[data-ai-run-rounds-cell] {
+   text-align: right;
+}
+
+.ai-runs-name-link {
+   display: block;
    overflow-wrap: anywhere;
 }
 
@@ -1072,14 +1081,6 @@ h2 {
    gap: 4px;
    align-items: center;
    white-space: nowrap;
-}
-
-.ai-runs-table .table-actions a {
-   display: block;
-   width: auto;
-   white-space: normal;
-   text-align: left;
-   font-size: 12px;
 }
 
 .ai-runs-table .table-actions form {
