@@ -4,7 +4,6 @@ using Npgsql;
 using NpgsqlTypes;
 
 using SESport.Core.AI;
-using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;
 

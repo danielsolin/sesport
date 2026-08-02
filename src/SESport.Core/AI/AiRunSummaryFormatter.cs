@@ -1,9 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-using SESport.Core.AI;
-
-namespace SESport.Core.Formatting;
+namespace SESport.Core.AI;
 
 public static class AiRunSummaryFormatter
 {

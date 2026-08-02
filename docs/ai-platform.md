@@ -88,6 +88,9 @@ composition.
 - execution-environment helper
 - `ActivitySearchEntity`, shared by AI clients and Data repositories
 
+See [`src/SESport.Core/README.md`](../src/SESport.Core/README.md) for the
+complete Core namespace and dependency guide.
+
 ### `src/SESport.AI`
 
 - `Clients/`
