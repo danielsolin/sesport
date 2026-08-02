@@ -21,7 +21,8 @@ public sealed class BroadcastParticipationServiceTests
          "Broadcast description",
          ["Tennis"],
          DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
-         DateTimeOffset.Parse("2026-06-15T14:00:00Z")
+         DateTimeOffset.Parse("2026-06-15T14:00:00Z"),
+         OrganizationName: "Organization Name"
       );
 
       var method = typeof(BroadcastParticipationService).GetMethod(
@@ -41,6 +42,7 @@ public sealed class BroadcastParticipationServiceTests
          "Broadcast description",
          root.GetProperty("description").GetString()
       );
+      Assert.Equal("Organization Name", root.GetProperty("type").GetString());
       Assert.Equal("  - Candidate", root.GetProperty("candidates").GetString());
    }
 
@@ -309,6 +311,10 @@ public sealed class BroadcastParticipationServiceTests
 
          var request = Assert.Single(fixture.JobRunner.Requests);
          using var document = JsonDocument.Parse(request.InputPayloadJson);
+         Assert.Equal(
+            $"Organization {organizationId:N}",
+            document.RootElement.GetProperty("type").GetString()
+         );
          var candidates = document.RootElement.GetProperty("candidates")
             .GetString();
 

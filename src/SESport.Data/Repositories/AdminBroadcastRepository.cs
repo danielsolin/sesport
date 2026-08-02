@@ -212,7 +212,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             b.activity_group_source_kind_id,
             b.activity_group_source_activity_id,
             b.activity_group_draft_title,
-            e.sport_id
+            e.sport_id,
+            e.canonical_name
          from broadcasts b
          left join entities e on e.id = b.entity_id
          where b.id = any(@ids)
@@ -245,7 +246,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
                ReadString(reader, 9),
                reader.IsDBNull(10) ? null : reader.GetGuid(10),
                ReadString(reader, 11),
-               ReadString(reader, 12)
+               ReadString(reader, 12),
+               OrganizationName: ReadString(reader, 13)
             )
          );
       }
@@ -582,7 +584,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             b.ends_at,
             b.activity_group_source_kind_id,
             b.activity_group_source_activity_id,
-            e.sport_id
+            e.sport_id,
+            e.canonical_name
          from broadcasts b
          left join entities e on e.id = b.entity_id
          where b.id = @id
@@ -613,7 +616,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(1) ? null : reader.GetGuid(1),
          ReadString(reader, 9),
          reader.IsDBNull(10) ? null : reader.GetGuid(10),
-         EntitySportId: ReadString(reader, 11)
+         EntitySportId: ReadString(reader, 11),
+         OrganizationName: ReadString(reader, 12)
       );
    }
 

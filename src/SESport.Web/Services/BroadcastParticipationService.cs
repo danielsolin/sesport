@@ -363,6 +363,7 @@ public sealed class BroadcastParticipationService(
          new
          {
             sport = NormalizeParticipationSports(broadcast.Categories),
+            type = broadcast.OrganizationName ?? string.Empty,
             event_name = broadcast.Title,
             description = broadcast.Description,
             date = DateDisplay.Format(localDate),
