@@ -1,0 +1,200 @@
+# Database structure
+
+This document describes the live PostgreSQL schema used by SESport. It was
+verified against the database configured in the repository `.env` on 2026-08-03.
+The schema is split into reference data, sports content, broadcast ingestion,
+and AI execution data.
+
+## Design principles
+
+- UUIDs identify mutable domain records; short text IDs identify configured
+  reference values and AI jobs.
+- Timestamps are stored as `timestamp with time zone`. Activities and
+  broadcasts also retain local date/time fields for editorial scheduling.
+- Many-to-many relationships use explicit link tables so that links can carry
+  metadata, provenance, or independent lifecycle rules.
+- Imported and AI-generated data keeps source and execution provenance instead
+  of replacing the original record.
+- Foreign keys use `cascade` for owned child data, `set null` for optional
+  associations, and `restrict` where deleting the referenced record would
+  remove important history.
+
+## Reference and configuration tables
+
+### `sports`
+
+Defines the sports used by activities, groups, and entities. It also stores
+display metadata and sport-specific editorial rules such as whether a start
+time is required and whether the sport is a team sport.
+
+### `countries`
+
+Provides the normalized country catalogue used by entities. The country code
+is unique so that country identity is not duplicated in entity rows.
+
+### `country_relevance_kinds`
+
+Defines why a country is relevant to an entity. The entity stores both the
+selected kind and a required explanatory reason.
+
+### `entity_types`
+
+Defines the kinds of entities that can be represented, such as people,
+organizations, teams, or competitions.
+
+### `entity_stability_kinds`
+
+Defines the expected stability of an entity identity. This supports decisions
+about whether an entity is likely to persist or change over time.
+
+### `entity_watch_priorities`
+
+Defines the priority used when deciding which entities deserve monitoring or
+further enrichment.
+
+### `activity_types`
+
+Defines the available activity classifications and their display order. An
+activity references one type instead of storing a free-form label.
+
+### `activity_publication_statuses`
+
+Defines the publication lifecycle for activities, for example draft or
+published. Activities reference this table to keep public visibility explicit.
+
+### `activity_entity_link_roles`
+
+Stores ordered labels for roles that can be used when presenting an
+activity-to-entity relationship. It is reference data and is not itself the
+activity relationship table.
+
+## Entity and source model
+
+### `entities`
+
+Stores the canonical identities followed by SESport. An entity is associated
+with a type, sport, country, country relevance, stability, and watch priority.
+Person-specific fields such as gender, birthdate, height, weight, and
+formative club are nullable and constrained to person entities.
+
+### `entity_to_entity_links`
+
+Stores relationships between two entities, such as an athlete and a team.
+The pair is unique in both directions, preventing the same relationship from
+being inserted twice with source and target reversed.
+
+### `sources`
+
+Stores reusable external evidence: URL, title, excerpt, correlation identity,
+source kind, and observation time. Facts and AI participant results reference
+these rows instead of embedding source URLs repeatedly.
+
+## Activity model
+
+### `activity_groups`
+
+Represents a multi-day competition, series, or other activity container. It
+provides a title, sport, and date span for the activities belonging to it.
+
+### `activities`
+
+Stores the scheduled sport content shown and published by SESport. It carries
+the title, description, sport and type, publication state, optional local
+schedule, UTC-backed timestamps, public slug, teaser, and broadcast channel.
+An activity may belong to an activity group.
+
+### `activity_entity_links`
+
+Connects activities to their participating entities. The optional
+`organization_entity_id` records the organization context separately from the
+participant, while `is_active` allows an inactive participant to remain
+visible without being treated as currently participating.
+
+### `activity_broadcast_links`
+
+Associates activities with the broadcasts that cover them. This is an explicit
+many-to-many link because one activity can have several broadcasts and one
+broadcast can support several activities.
+
+### `facts`
+
+Stores short normalized facts about exactly one subject: either an activity or
+an entity. The check constraint prevents a fact from belonging to both kinds
+of subject, or to neither.
+
+### `fact_source_links`
+
+Associates facts with the external sources that support them. The composite
+primary key prevents the same source from being attached to one fact twice.
+
+## Broadcast ingestion
+
+### `broadcast_import_runs`
+
+Records each broadcast-source collection run, including source, URI, timing,
+status, and the number of imported broadcasts. It provides operational
+history for the rows created or updated by ingestion.
+
+### `broadcasts`
+
+Stores normalized TV and streaming programme records from external sources.
+The source key, external ID, fingerprint, channel, categories, schedule,
+replay state, visibility, and optional entity/activity references support both
+deduplication and editorial matching. The fingerprint is globally unique so
+that equivalent records from different sources can converge on one row.
+
+### `broadcast_ignore`
+
+Stores active rules for excluding broadcasts during ingestion. Rules can be
+scoped by kind, value, and source, and retain a reason for manual auditing.
+
+## AI configuration and execution
+
+### `ai_providers`
+
+Defines the configured AI backends, including provider kind, address, model,
+request options, and enablement. Jobs reference a provider rather than
+duplicating connection configuration.
+
+### `ai_jobs`
+
+Defines an AI operation and its runtime policy: output mode, provider, tools,
+token limits, queue priority, web-search behavior, and active prompt.
+
+### `ai_job_prompts`
+
+Stores versioned system prompts, user templates, output schemas, and request
+options for jobs. A run references the exact prompt version used.
+
+### `ai_job_runs`
+
+Stores the audit record for one AI execution. It contains the input and
+rendered prompts, request and response payloads, status, timing, token counts,
+tool trace, errors, and snapshots of the relevant job/provider/prompt settings.
+The snapshots preserve historical explainability when configuration changes.
+
+### `ai_job_run_applications`
+
+Records where an AI run was applied. Its composite key makes application
+tracking idempotent for a run, target type, and target ID.
+
+### `ai_automation_rules`
+
+Maps application events to AI jobs. The unique event/job pair prevents
+duplicate rules, while the enabled flag allows automation to be paused without
+deleting its configuration.
+
+### `activity_participant_ai_results`
+
+Stores normalized AI-enriched participant fields for an activity and job.
+Each row identifies the entity and field, keeps both a display value and JSON
+value, preserves the supporting source, and records ordering and the run that
+produced it.
+
+## Migration bookkeeping
+
+### `schema_migrations`
+
+Records which numbered migration files have been applied, together with their
+checksums and application times. It protects the database from silently
+running a changed migration file.
