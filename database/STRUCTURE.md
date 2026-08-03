@@ -1,9 +1,8 @@
 # Database structure
 
-This document describes the live PostgreSQL schema used by SESport. It was
-verified against the database configured in the repository `.env` on 2026-08-03.
-The schema is split into reference data, sports content, broadcast ingestion,
-and AI execution data.
+This document describes the PostgreSQL schema used by SESport. The schema is
+split into reference data, sports content, broadcast ingestion, and AI
+execution data.
 
 ## Design principles
 
