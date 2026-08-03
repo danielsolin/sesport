@@ -20,6 +20,8 @@ else if(Model.Dashboard is not null)
    var dashboardReturnUrl = Url.Page(
       "/Admin/Dashboard/Index"
    ) ?? "/Admin/Dashboard";
+   var participantMissingPersonDataLabel =
+      IndexModel.ParticipantMissingPersonDataLabel;
 
    <section class="dashboard-section">
       <div class="dashboard-section-heading">
@@ -65,10 +67,30 @@ else if(Model.Dashboard is not null)
                                  var label in IndexModel.GetIssueLabels(issue)
                               )
                               {
-                                 <span class="status-pill
-                                              dashboard-issue-pill">
-                                    @label
-                                 </span>
+                                 @if(
+                                    issue.HasParticipantMissingPersonData &&
+                                    label == participantMissingPersonDataLabel
+                                 )
+                                 {
+                                    var participantActivityDate =
+                                       issue.ParticipantActivityDate.ToString(
+                                          DateDisplay.DateOnlyFormat
+                                       );
+                                    <a class="status-pill
+                                       dashboard-issue-pill"
+                                       asp-page="/Admin/Entities/Index"
+                                       asp-route-date=
+                                          "@participantActivityDate">
+                                       @label
+                                    </a>
+                                 }
+                                 else
+                                 {
+                                    <span class="status-pill
+                                                 dashboard-issue-pill">
+                                       @label
+                                    </span>
+                                 }
                               }
                            </div>
                         </td>

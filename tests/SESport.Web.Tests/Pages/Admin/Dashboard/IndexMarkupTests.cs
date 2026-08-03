@@ -171,6 +171,50 @@ public sealed class IndexMarkupTests
       Assert.Contains("Participant starts before activity", labels);
    }
 
+   [Fact]
+   public void ParticipantMissingPersonDataLabelIsIncluded()
+   {
+      var issue = CreateSourceIssue(
+         hasNoGroup: false,
+         hasParticipantMissingPersonData: true
+      );
+
+      var labels = SESport.Web.Pages.Admin.Dashboard.IndexModel
+         .GetIssueLabels(issue);
+
+      Assert.Contains(
+         SESport.Web.Pages.Admin.Dashboard.IndexModel
+            .ParticipantMissingPersonDataLabel,
+         labels
+      );
+   }
+
+   [Fact]
+   public async Task ParticipantMissingPersonDataLinksToEntitiesByDate()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var pagePath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Dashboard/Index.cshtml"
+      );
+      var html = await File.ReadAllTextAsync(pagePath);
+
+      Assert.Contains(
+         "asp-page=\"/Admin/Entities/Index\"",
+         html
+      );
+      Assert.Contains(
+         "asp-route-date=",
+         html
+      );
+      Assert.Contains(
+         "\"@participantActivityDate\"",
+         html
+      );
+   }
+
    private static DashboardDateSummary CreateDateSummary(
       int visibleBroadcastCount,
       int unreviewedBroadcastCount,
@@ -187,7 +231,8 @@ public sealed class IndexMarkupTests
    private static DashboardActivityIssue CreateSourceIssue(
       bool hasNoGroup,
       bool hasMissingParticipantStartTime = false,
-      bool hasParticipantStartBeforeActivity = false
+      bool hasParticipantStartBeforeActivity = false,
+      bool hasParticipantMissingPersonData = false
    )
    {
       return new DashboardActivityIssue(
@@ -201,7 +246,9 @@ public sealed class IndexMarkupTests
          hasNoGroup,
          true,
          hasMissingParticipantStartTime,
-         hasParticipantStartBeforeActivity
+         hasParticipantStartBeforeActivity,
+         hasParticipantMissingPersonData,
+         new DateOnly(2199, 12, 1)
       );
    }
 }

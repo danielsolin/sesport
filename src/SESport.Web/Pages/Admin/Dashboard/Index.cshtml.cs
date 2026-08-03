@@ -11,6 +11,9 @@ namespace SESport.Web.Pages.Admin.Dashboard;
 
 public class IndexModel(DashboardRepository repository) : PageModel
 {
+   public const string ParticipantMissingPersonDataLabel =
+      "Participant missing birth date or formative club";
+
    public AdminDashboardSnapshot? Dashboard { get; private set; }
 
    public string? LoadError { get; private set; }
@@ -88,6 +91,11 @@ public class IndexModel(DashboardRepository repository) : PageModel
       if(issue.HasParticipantStartBeforeActivity)
       {
          labels.Add("Participant starts before activity");
+      }
+
+      if(issue.HasParticipantMissingPersonData)
+      {
+         labels.Add(ParticipantMissingPersonDataLabel);
       }
 
       return labels;

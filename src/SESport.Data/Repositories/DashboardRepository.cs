@@ -163,7 +163,30 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                               a.local_start_time
                            else false
                         end
-                  ) as participant_start_before_activity
+                  ) as participant_start_before_activity,
+               a.publication_status_id = @published_status
+                  and exists (
+                     select 1
+                     from activity_entity_links participant_link
+                     join entities participant
+                        on participant.id = participant_link.entity_id
+                     where participant_link.activity_id = a.id
+                        and participant_link.is_active
+                        and participant.entity_type_id = @person_type
+                        and (
+                           participant.birthdate is null
+                           or nullif(
+                              btrim(participant.formative_club), ''
+                           ) is null
+                        )
+                  ) as participant_missing_person_data,
+               coalesce(
+                  (
+                     (a.starts_at at time zone @time_zone)
+                     - @sport_day_cutoff
+                  )::date,
+                  a.activity_date
+               ) as participant_activity_date
             from activities a
             left join sports s on s.id = a.sport_id
             where a.activity_date >= @today
@@ -190,7 +213,9 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             no_group,
             no_related_source,
             missing_participant_start_time,
-            participant_start_before_activity
+            participant_start_before_activity,
+            participant_missing_person_data,
+            participant_activity_date
          from upcoming
          where publication_status_id = @draft_status
             or missing_description
@@ -199,6 +224,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             or no_related_source
             or missing_participant_start_time
             or participant_start_before_activity
+            or participant_missing_person_data
          order by
             (publication_status_id = @draft_status) desc,
             activity_date,
@@ -208,6 +234,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             no_related_source desc,
             missing_participant_start_time desc,
             participant_start_before_activity desc,
+            participant_missing_person_data desc,
             title
          limit {{ActivityIssueLimit}};
 
@@ -407,7 +434,9 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                reader.GetBoolean(7),
                reader.GetBoolean(8),
                reader.GetBoolean(9),
-               reader.GetBoolean(10)
+               reader.GetBoolean(10),
+               reader.GetBoolean(11),
+               reader.GetFieldValue<DateOnly>(12)
             )
          );
       }
