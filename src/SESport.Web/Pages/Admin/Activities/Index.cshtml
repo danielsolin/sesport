@@ -177,7 +177,7 @@
                      : string.Empty)">
                      <td>
                         @activity.ActivityDate.ToString(
-                           DateDisplay.DateOnlyFormat
+                           DateDisplay.MonthDayFormat
                         )
                      </td>
                      <td>@startTime–@endTime</td>
@@ -240,7 +240,7 @@
                               <button class="broadcast-participation-check-link"
                                  type="submit"
                                  data-facts-url="@findFactsUrl">
-                                 Find Facts
+                                 Facts
                               </button>
                               <span class="form-status"
                                     data-facts-check-status></span>
@@ -257,7 +257,7 @@
                               <button class="broadcast-participation-check-link"
                                  type="submit"
                                  data-start-url="@findStartUrl">
-                                 Find Start
+                                 Start
                               </button>
                               <span class="form-status"
                                     data-start-check-status></span>
@@ -274,7 +274,7 @@
                               <button class="broadcast-participation-check-link"
                                  type="submit"
                                  data-result-url="@findResultUrl">
-                                 Find Result
+                                 Result
                               </button>
                               <span class="form-status"
                                     data-result-check-status></span>

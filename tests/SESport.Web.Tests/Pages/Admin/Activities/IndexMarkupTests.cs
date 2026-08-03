@@ -47,8 +47,13 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("activities-table-actions", html);
       Assert.Contains("table-actions-stack", html);
-      Assert.Contains("Find Facts", html);
-      Assert.Contains("Find Start", html);
-      Assert.Contains("Find Result", html);
+      Assert.Contains("Facts", html);
+      Assert.Contains("Start", html);
+      Assert.Contains("Result", html);
+      Assert.DoesNotContain("Find Facts", html);
+      Assert.DoesNotContain("Find Start", html);
+      Assert.DoesNotContain("Find Result", html);
+      Assert.Contains("DateDisplay.MonthDayFormat", html);
+      Assert.DoesNotContain("DateDisplay.DateOnlyFormat", html);
    }
 }
