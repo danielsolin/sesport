@@ -225,6 +225,13 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("@media (orientation: landscape)", css);
       Assert.Contains(
+         ".sport-select {\n" +
+         "      flex: 0 0 220px;\n" +
+         "      width: 220px;\n" +
+         "      min-width: 220px;",
+         css
+      );
+      Assert.Contains(
          ".activity-status-badge {\n      top: 18px;\n" +
          "      right: 68px;",
          css

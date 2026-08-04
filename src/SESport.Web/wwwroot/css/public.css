@@ -1333,6 +1333,12 @@
 }
 
 @media (orientation: landscape) {
+   .sport-select {
+      flex: 0 0 220px;
+      width: 220px;
+      min-width: 220px;
+   }
+
    .activity-status-badge {
       top: 18px;
       right: 68px;
