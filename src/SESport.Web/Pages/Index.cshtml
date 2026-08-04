@@ -608,8 +608,9 @@ else
                                        {
                                           <td class=
                                          "activity-participant-col-start-time">
-                                             @(participant.StartTime ??
-                                                string.Empty)
+                                             @PublicTimeDisplay.FormatTimeText(
+                                                participant.StartTime
+                                             )
                                           </td>
                                        }
                                        <td class=

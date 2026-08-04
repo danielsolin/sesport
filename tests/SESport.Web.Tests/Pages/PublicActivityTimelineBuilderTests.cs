@@ -31,8 +31,6 @@ public class PublicActivityTimelineBuilderTests
       };
 
       var timeline = builder.Build(activities, selectedDate, now);
-      var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
-
       Assert.True(timeline.HasVisibleActivities);
       Assert.Equal(3, timeline.TimelineEntries.Count);
       Assert.Equal(
@@ -41,7 +39,7 @@ public class PublicActivityTimelineBuilderTests
       );
       Assert.True(timeline.TimelineEntries[1].IsCurrentMarker);
       Assert.Equal(
-         $"Nu {localNow:HH:mm}",
+         "Nu 14:00",
          timeline.TimelineEntries[1].CurrentMarkerLabel
       );
       Assert.Equal(
@@ -197,7 +195,7 @@ public class PublicActivityTimelineBuilderTests
          entry => Assert.Single(entry.Section!.Activities)
       );
       Assert.Equal(
-         ["18:00", "18:00"],
+         ["≈18:00", "≈18:00"],
          timeline.TimelineEntries.Select(entry => entry.Section!.TimeLabel)
       );
    }
@@ -254,14 +252,14 @@ public class PublicActivityTimelineBuilderTests
       Assert.Equal("Rally Polen", section.ActivityGroupTitle);
       Assert.Equal(3, section.Activities.Count);
       Assert.Equal(
-         ["08:15", "09:45", "13:00"],
+         ["≈08:30", "≈10:00", "≈13:00"],
          section.Slots.Select(slot => slot.TimeLabel)
       );
       Assert.Equal(
-         ["08:55", "11:25", "14:00"],
+         ["≈09:00", "≈11:30", "≈14:00"],
          section.Slots.Select(slot => slot.EndTimeLabel)
       );
-      Assert.Equal("08:15", section.TimelineSlot.TimeLabel);
+      Assert.Equal("≈08:30", section.TimelineSlot.TimeLabel);
 
       var duringFirstActivity = new DateTimeOffset(
          2026,
@@ -284,7 +282,7 @@ public class PublicActivityTimelineBuilderTests
          ).Section!;
 
       Assert.True(activeSection.TimelineSlot.IsOngoing);
-      Assert.Equal("08:15", activeSection.TimelineSlot.TimeLabel);
+      Assert.Equal("≈08:30", activeSection.TimelineSlot.TimeLabel);
 
       var midday = new DateTimeOffset(
          2026,
@@ -306,7 +304,51 @@ public class PublicActivityTimelineBuilderTests
             entry => !entry.IsCurrentMarker
          ).Section!;
 
-      Assert.Equal("13:00", middaySection.TimelineSlot.TimeLabel);
+      Assert.Equal("≈13:00", middaySection.TimelineSlot.TimeLabel);
+   }
+
+   [Theory]
+   [InlineData(8, 14, "≈08:00")]
+   [InlineData(8, 15, "≈08:30")]
+   [InlineData(23, 50, "≈00:00")]
+   public void Build_RoundsTimesToNearestHalfHour(
+      int hour,
+      int minute,
+      string expectedLabel
+   )
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var activityStart = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         hour,
+         minute,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(
+         [CreateActivity("Rounded", selectedDate, activityStart)],
+         selectedDate,
+         now
+      );
+
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.Equal(expectedLabel, section.TimeLabel);
    }
 
    [Fact]

@@ -75,6 +75,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-expanded-label=\"Visa färre\"", html);
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
+      Assert.Contains("PublicTimeDisplay.FormatTimeText(", html);
       Assert.Contains("data-participant-start-time", html);
       Assert.True(
          html.IndexOf("activity-participant-col-name") <

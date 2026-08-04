@@ -1,6 +1,7 @@
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
+using SESport.Web.Formatting;
 using SESport.Web.Pages;
 
 namespace SESport.Web.Builders;
@@ -136,10 +137,8 @@ public sealed class PublicActivityTimelineBuilder
       DateTimeOffset now
    )
    {
-      var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
-
       return new PublicActivityTimelineEntry(
-         $"Nu {localNow:HH:mm}",
+         PublicTimeDisplay.FormatCurrentMarker(now),
          null
       );
    }
@@ -177,17 +176,19 @@ public sealed class PublicActivityTimelineBuilder
          timelineSlot.Activity.StartsAt!.Value,
          SportDay.TimeZoneId
       );
+      var roundedTimelineTime =
+         PublicTimeDisplay.RoundToNearestHalfHour(
+            TimeOnly.FromDateTime(timelineStart.DateTime)
+         );
 
       return new ActivityAgendaSection(
          timelineSlot.TimeLabel,
          orderedActivities,
          activity.RelatedOrganizationEntities,
          GetDayPhase(timelineStart.Hour),
-         GetHourHandAngle(timelineStart),
-         $"{timelineStart.Minute * 6}deg",
-         activity.LocalEndTime?.ToString(
-            DateDisplay.TimeOnlyMinutesFormat
-         ),
+         GetHourHandAngle(roundedTimelineTime),
+         $"{roundedTimelineTime.Minute * 6}deg",
+         PublicTimeDisplay.Format(activity.LocalEndTime),
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
          orderedActivities.Count > 1
@@ -205,10 +206,11 @@ public sealed class PublicActivityTimelineBuilder
    {
       return new ActivityAgendaSlot(
          activity,
-         TimeTextFormatter.FormatTimeOnlyText(activity.TimeText),
-         activity.LocalEndTime?.ToString(
-            DateDisplay.TimeOnlyMinutesFormat
+         PublicTimeDisplay.FormatTimeText(
+            activity.TimeText,
+            activity.LocalStartTime
          ),
+         PublicTimeDisplay.Format(activity.LocalEndTime),
          activity.EndsAt is not null &&
             activity.StartsAt <= now &&
             activity.EndsAt > now,
@@ -216,7 +218,7 @@ public sealed class PublicActivityTimelineBuilder
       );
    }
 
-   private static string GetHourHandAngle(DateTimeOffset localStart)
+   private static string GetHourHandAngle(TimeOnly localStart)
    {
       var angle = (localStart.Hour % 12 * 30) +
          (localStart.Minute * 0.5);
