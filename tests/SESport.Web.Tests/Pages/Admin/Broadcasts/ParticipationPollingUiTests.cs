@@ -50,6 +50,12 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("headCell.colSpan = 4", script);
       Assert.Contains("function getParticipationValue", script);
       Assert.Contains("createParticipantSearchLink", script);
+      Assert.Contains("templateOptions", script);
+      Assert.Contains("createParticipantTemplatePicker", script);
+      Assert.Contains(
+         "broadcast-ai-check-participant-template-input",
+         script
+      );
       Assert.Contains("getParticipationSportName", script);
       Assert.Contains("organizationSportName", script);
       Assert.Contains("encodeURIComponent(searchQuery)", script);

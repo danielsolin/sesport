@@ -194,8 +194,8 @@ public sealed class BroadcastParticipationService(
          return [];
       }
 
-      var participantEntityIdsByOrgId =
-         new Dictionary<Guid, IReadOnlyDictionary<string, Guid>>();
+      var participantEntityOptionsByOrgId =
+         new Dictionary<Guid, IReadOnlyList<EntityNameOption>>();
       var results = new List<BroadcastParticipationCheckResult>();
 
       foreach(var broadcast in broadcasts)
@@ -210,16 +210,23 @@ public sealed class BroadcastParticipationService(
          }
 
          var participationCheck = participationChecks[0];
-         var participantEntityIdsByName =
-            await LoadParticipantEntityIdsAsync(
+         var participantEntityOptions =
+            await LoadParticipantEntityOptionsAsync(
                broadcast.EntityId,
-               participantEntityIdsByOrgId,
+               participantEntityOptionsByOrgId,
                cancellationToken
+            );
+         var participantEntityIdsByName = BroadcastEntityFilter
+            .CreateNameLookup(
+               participantEntityOptions,
+               entity => entity.Name,
+               entity => entity.Id
             );
          var displayChecks = participationChecks
             .Select(check => CreateParticipationCheckDisplay(
                check,
-               participantEntityIdsByName
+               participantEntityIdsByName,
+               participantEntityOptions
             ))
             .ToList();
 
@@ -242,16 +249,16 @@ public sealed class BroadcastParticipationService(
       return results;
    }
 
-   private async Task<IReadOnlyDictionary<string, Guid>>
-      LoadParticipantEntityIdsAsync(
+   private async Task<IReadOnlyList<EntityNameOption>>
+      LoadParticipantEntityOptionsAsync(
          Guid? organizationEntityId,
-         IDictionary<Guid, IReadOnlyDictionary<string, Guid>> cache,
+         IDictionary<Guid, IReadOnlyList<EntityNameOption>> cache,
          CancellationToken cancellationToken
       )
    {
       if(organizationEntityId is null)
       {
-         return new Dictionary<string, Guid>();
+         return [];
       }
 
       if(cache.TryGetValue(organizationEntityId.Value, out var cached))
@@ -259,27 +266,31 @@ public sealed class BroadcastParticipationService(
          return cached;
       }
 
-      var entityOptions =
-         await adminRepository.GetParticipantEntityNameOptionsAsync(
+      var entityOptions = await adminRepository
+         .GetParticipantEntityNameOptionsAsync(
             organizationEntityId.Value,
             cancellationToken
          );
-      var entityIdsByName = BroadcastEntityFilter.CreateNameLookup(
-         entityOptions,
-         entity => entity.Name,
-         entity => entity.Id
-      );
 
-      cache[organizationEntityId.Value] = entityIdsByName;
-      return entityIdsByName;
+      cache[organizationEntityId.Value] = entityOptions;
+      return entityOptions;
    }
 
    private static BroadcastParticipationCheckDisplay
       CreateParticipationCheckDisplay(
          BroadcastParticipationCheck check,
-         IReadOnlyDictionary<string, Guid> participantEntityIdsByName
+         IReadOnlyDictionary<string, Guid> participantEntityIdsByName,
+         IReadOnlyList<EntityNameOption> participantEntityOptions
       )
    {
+      var templateOptions = participantEntityOptions
+         .Select(option => new BroadcastParticipantTemplateOption(
+            option.Id,
+            option.Name
+         ))
+         .DistinctBy(option => option.Id)
+         .ToList();
+
       return new BroadcastParticipationCheckDisplay(
          check.RunId,
          check.StatusId,
@@ -287,8 +298,10 @@ public sealed class BroadcastParticipationService(
          check.Participation,
          GetParticipantDisplayItems(
             check.Participants,
-            participantEntityIdsByName
+            participantEntityIdsByName,
+            participantEntityOptions
          ),
+         templateOptions,
          check.SourceUrls,
          check.ErrorMessage
       );
@@ -297,7 +310,8 @@ public sealed class BroadcastParticipationService(
    internal static IReadOnlyList<BroadcastParticipantDisplayItem>
       GetParticipantDisplayItems(
          IReadOnlyList<string> participantNames,
-         IReadOnlyDictionary<string, Guid> participantEntityIdsByName
+         IReadOnlyDictionary<string, Guid> participantEntityIdsByName,
+         IReadOnlyList<EntityNameOption>? participantEntityOptions = null
       )
    {
       Guid? templateEntityId = null;
@@ -313,6 +327,12 @@ public sealed class BroadcastParticipationService(
             templateEntityId = entityId;
             break;
          }
+      }
+
+      if(templateEntityId is null)
+      {
+         templateEntityId = participantEntityOptions?
+            .FirstOrDefault()?.Id;
       }
 
       return participantNames
@@ -455,6 +475,7 @@ public sealed record BroadcastParticipationCheckDisplay(
    int ToolRoundCount,
    string? Participation,
    IReadOnlyList<BroadcastParticipantDisplayItem> Participants,
+   IReadOnlyList<BroadcastParticipantTemplateOption> TemplateOptions,
    IReadOnlyList<string> SourceUrls,
    string? ErrorMessage
 )
@@ -482,4 +503,9 @@ public sealed record BroadcastParticipantDisplayItem(
    string Name,
    string? EditUrl,
    Guid? TemplateEntityId
+);
+
+public sealed record BroadcastParticipantTemplateOption(
+   Guid Id,
+   string Name
 );

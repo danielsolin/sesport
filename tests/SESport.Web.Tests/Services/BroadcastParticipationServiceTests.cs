@@ -5,6 +5,7 @@ using Npgsql;
 
 using SESport.AI.Jobs;
 using SESport.Core.Broadcast;
+using SESport.Data.Models;
 using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Services;
@@ -115,6 +116,25 @@ public sealed class BroadcastParticipationServiceTests
       Assert.Equal("Johan Görnvall", result[0].Name);
       Assert.Equal($"/Admin/Entities/Edit/{entityId}", result[0].EditUrl);
       Assert.Null(result[0].TemplateEntityId);
+   }
+
+   [Fact]
+   public void GetParticipantDisplayItemsUsesFirstTemplateOptionWhenNeeded()
+   {
+      var templateId = Guid.NewGuid();
+      var options = new[]
+      {
+         new EntityNameOption(templateId, "Felix Jakobsson"),
+         new EntityNameOption(Guid.NewGuid(), "Isak Brusberg")
+      };
+
+      var result = BroadcastParticipationService.GetParticipantDisplayItems(
+         ["New Person"],
+         new Dictionary<string, Guid>(),
+         options
+      );
+
+      Assert.Equal(templateId, result[0].TemplateEntityId);
    }
 
    [Fact]

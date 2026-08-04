@@ -1713,6 +1713,26 @@ h2 {
    justify-items: start;
 }
 
+.broadcast-ai-check-template-picker {
+   display: inline-flex;
+   align-items: center;
+   flex-wrap: wrap;
+   gap: 4px;
+   color: var(--muted);
+   font-size: 12px;
+}
+
+.broadcast-ai-check-template-select {
+   max-width: 100%;
+   min-width: 0;
+   padding: 2px 4px;
+   border: 1px solid var(--line);
+   border-radius: 4px;
+   background: var(--surface);
+   color: inherit;
+   font: inherit;
+}
+
 .broadcast-ai-check-participant-row {
    display: flex;
    align-items: center;

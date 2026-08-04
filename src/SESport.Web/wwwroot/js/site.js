@@ -3669,6 +3669,11 @@
          : Array.isArray(check.Participants)
             ? check.Participants
             : [];
+      const templateOptions = Array.isArray(check.templateOptions)
+         ? check.templateOptions
+         : Array.isArray(check.TemplateOptions)
+            ? check.TemplateOptions
+            : [];
 
       return {
          runId,
@@ -3678,6 +3683,9 @@
             : 0,
          swedishParticipation: getParticipationValue(check),
          participants,
+         templateOptions: templateOptions
+            .map(normalizeParticipantTemplateOption)
+            .filter(option => option !== null),
          sourceUrls: Array.isArray(check.sourceUrls)
             ? check.sourceUrls
                .filter(url => typeof url === "string" && url.trim() !== "")
@@ -3690,6 +3698,29 @@
                   ? formatParticipationStatus(statusId)
                   : statusId
       };
+   }
+
+   function normalizeParticipantTemplateOption(option)
+   {
+      if(!option || typeof option !== "object")
+      {
+         return null;
+      }
+
+      const id = typeof option.id === "string"
+         ? option.id.trim()
+         : typeof option.Id === "string"
+            ? option.Id.trim()
+            : "";
+      const name = typeof option.name === "string"
+         ? option.name.trim()
+         : typeof option.Name === "string"
+            ? option.Name.trim()
+            : "";
+
+      return id !== "" && name !== ""
+         ? { id, name }
+         : null;
    }
 
    function getParticipationValue(check)
@@ -4002,7 +4033,8 @@
             participantsCell.append(
                createParticipationParticipantsBlock(
                   check.participants,
-                  cell
+                  cell,
+                  check.templateOptions
                )
             );
          }
@@ -4071,7 +4103,8 @@
             participantsCell.append(
                createParticipationParticipantsBlock(
                   check.participants,
-                  cell
+                  cell,
+                  check.templateOptions
                )
             );
          }
@@ -4143,7 +4176,8 @@
          participantsCell.append(
             createParticipationParticipantsBlock(
                check.participants,
-               cell
+               cell,
+               check.templateOptions
             )
          );
       }
@@ -4511,7 +4545,11 @@
       return label;
    }
 
-   function createParticipationParticipantsBlock(participants, cell)
+   function createParticipationParticipantsBlock(
+      participants,
+      cell,
+      templateOptions = []
+   )
    {
       if(!Array.isArray(participants) || participants.length === 0)
       {
@@ -4537,12 +4575,73 @@
       const wrapper = document.createElement("div");
       wrapper.className = "broadcast-ai-check-participants";
       const sportName = getParticipationSportName(cell);
+      const normalizedTemplateOptions = templateOptions
+         .map(normalizeParticipantTemplateOption)
+         .filter(option => option !== null);
+      const hasCreatableParticipants = names.some(participant =>
+         participant.editUrl === null &&
+         participant.templateEntityId !== null
+      );
+
+      if(normalizedTemplateOptions.length > 1 &&
+         hasCreatableParticipants)
+      {
+         const templatePicker = createParticipantTemplatePicker(
+            normalizedTemplateOptions,
+            names
+         );
+         wrapper.append(templatePicker.container);
+         templatePicker.select.addEventListener("change", () => {
+            const templateInputs = wrapper.querySelectorAll(
+               ".broadcast-ai-check-participant-template-input"
+            );
+            templateInputs.forEach(input => {
+               input.value = templatePicker.select.value;
+            });
+         });
+      }
 
       names.forEach(participant => {
          wrapper.append(createParticipantRow(participant, sportName));
       });
 
       return wrapper;
+   }
+
+   function createParticipantTemplatePicker(options, participants)
+   {
+      const container = document.createElement("label");
+      container.className = "broadcast-ai-check-template-picker";
+
+      const label = document.createElement("span");
+      label.textContent = "Template for new people:";
+
+      const select = document.createElement("select");
+      select.className = "broadcast-ai-check-template-select";
+      select.setAttribute(
+         "aria-label",
+         "Template for new people"
+      );
+
+      options.forEach(option => {
+         const optionElement = document.createElement("option");
+         optionElement.value = option.id;
+         optionElement.textContent = option.name;
+         select.append(optionElement);
+      });
+
+      const defaultTemplateId = participants.find(participant =>
+         participant.editUrl === null &&
+         participant.templateEntityId !== null
+      )?.templateEntityId;
+
+      if(defaultTemplateId)
+      {
+         select.value = defaultTemplateId;
+      }
+
+      container.append(label, select);
+      return { container, select };
    }
 
    function getParticipationSportName(cell)
@@ -4945,6 +5044,8 @@
       templateInput.type = "hidden";
       templateInput.name = "templateEntityId";
       templateInput.value = item.templateEntityId;
+      templateInput.className =
+         "broadcast-ai-check-participant-template-input";
 
       const button = document.createElement("button");
       button.type = "submit";
