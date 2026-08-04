@@ -19,6 +19,9 @@
    var searchEntityUrl = Url.Page(
       "/Admin/Ajax/Search/Entity"
    );
+   var activityGroupSearchUrl = Url.Page(
+      "/Admin/Ajax/Search/ActivityGroup"
+   );
    var hideBroadcastUrl = Url.Page(
       "/Admin/Ajax/Toggle/BroadcastVisibility"
    );
@@ -180,7 +183,7 @@
                         broadcast.ActivityGroupSourceKindId,
                         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
                         StringComparison.Ordinal
-                     );
+                     ) || broadcast.OrganizationEntityId is not null;
                      var timeOnlyText =
                         TimeTextFormatter.FormatTimeOnlyText(
                            broadcast.TimeText
@@ -296,13 +299,15 @@
                                    broadcast-inline-editable"
                             data-broadcast-id="@broadcast.Id"
                             data-broadcast-group-text="@groupText"
-                        data-broadcast-inline-edit-field="group"
-                        data-broadcast-inline-edit-value="@groupValue"
-                        data-broadcast-activity-group-source-kind-id=
-                           "@broadcast.ActivityGroupSourceKindId"
-                        data-broadcast-activity-group-id=
-                           "@broadcast.ActivityGroupId"
-                        title="Double-click to edit">
+                            data-broadcast-inline-edit-field="group"
+                            data-broadcast-inline-edit-value="@groupValue"
+                            data-broadcast-organization-entity-id=
+                               "@broadcast.OrganizationEntityId"
+                            data-broadcast-activity-group-source-kind-id=
+                               "@broadcast.ActivityGroupSourceKindId"
+                            data-broadcast-activity-group-id=
+                               "@broadcast.ActivityGroupId"
+                            title="Double-click to edit">
                            <div data-broadcast-inline-edit-display>
                               @groupText
                            </div>
@@ -318,22 +323,39 @@
                                  }
                               </small>
                            }
-                           <input class="broadcast-inline-edit-input"
-                                  data-broadcast-inline-edit-input
-                                  type="text"
-                                  value="@groupValue"
-                                  autocomplete="off"
-                                  spellcheck="false"
-                                  aria-label="Edit group title"
-                                  hidden />
+                           <div class="broadcast-activity-group-picker"
+                                data-broadcast-activity-group-picker
+                                data-broadcast-activity-group-search-url=
+                                   "@activityGroupSearchUrl">
+                              <input class="broadcast-inline-edit-input"
+                                     data-broadcast-inline-edit-input
+                                     data-broadcast-activity-group-input
+                                     type="text"
+                                     value="@groupValue"
+                                     autocomplete="off"
+                                     spellcheck="false"
+                                     aria-label="Edit group title"
+                                     hidden />
+                              <input type="hidden"
+                                     data-broadcast-activity-group-id-input
+                                     value="@broadcast.ActivityGroupId" />
+                              <div class=
+                                 "broadcast-org-entity-suggestions"
+                                 data-broadcast-activity-group-suggestions
+                                 hidden></div>
+                           </div>
                         </td>
                      }
                      else
                      {
                         <td class="broadcasts-col-group"
                             data-broadcast-group-text="@groupText"
+                            data-broadcast-organization-entity-id=
+                               "@broadcast.OrganizationEntityId"
                             title="@groupText">
-                           <div>@groupText</div>
+                           <div data-broadcast-inline-edit-display>
+                              @groupText
+                           </div>
                            @if(
                               broadcast.ActivityGroupParticipants.Count > 0
                            )
@@ -346,6 +368,27 @@
                                  }
                               </small>
                            }
+                           <div class="broadcast-activity-group-picker"
+                                data-broadcast-activity-group-picker
+                                data-broadcast-activity-group-search-url=
+                                   "@activityGroupSearchUrl">
+                              <input class="broadcast-inline-edit-input"
+                                     data-broadcast-inline-edit-input
+                                     data-broadcast-activity-group-input
+                                     type="text"
+                                     value="@groupValue"
+                                     autocomplete="off"
+                                     spellcheck="false"
+                                     aria-label="Edit group title"
+                                     hidden />
+                              <input type="hidden"
+                                     data-broadcast-activity-group-id-input
+                                     value="@broadcast.ActivityGroupId" />
+                              <div class=
+                                 "broadcast-org-entity-suggestions"
+                                 data-broadcast-activity-group-suggestions
+                                 hidden></div>
+                           </div>
                         </td>
                      }
                      <td class="broadcasts-col-categories

@@ -46,7 +46,8 @@
       url,
       broadcastId,
       field,
-      value
+      value,
+      activityGroupId = ""
    )
    {
       const formData = new URLSearchParams();
@@ -60,6 +61,11 @@
       formData.append("id", broadcastId);
       formData.append("field", field);
       formData.append("value", value);
+
+      if(activityGroupId !== "")
+      {
+         formData.append("activityGroupId", activityGroupId);
+      }
 
       const response = await fetch(url, {
          method: "post",
@@ -224,6 +230,21 @@
          return;
       }
 
+      if(typeof payload.organizationEntityId === "string")
+      {
+         const organizationEntityId = payload.organizationEntityId.trim();
+
+         if(organizationEntityId === "")
+         {
+            delete groupCell.dataset.broadcastOrganizationEntityId;
+         }
+         else
+         {
+            groupCell.dataset.broadcastOrganizationEntityId =
+               organizationEntityId;
+         }
+      }
+
       const activityGroupId = typeof payload.activityGroupId === "string"
          ? payload.activityGroupId.trim()
          : "";
@@ -334,7 +355,36 @@
          delete cell.dataset.broadcastActivityGroupId;
          delete cell.dataset.broadcastActivityGroupSourceKindId;
          cell.title = nextDisplayValue;
-         cell.textContent = nextDisplayValue;
+
+         const display = cell.querySelector(
+            broadcastInlineEditDisplaySelector
+         );
+         const input = cell.querySelector(
+            broadcastInlineEditInputSelector
+         );
+
+         if(display instanceof HTMLElement)
+         {
+            display.textContent = nextDisplayValue;
+            display.hidden = false;
+         }
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = nextEditableValue;
+            input.hidden = true;
+         }
+
+         const hiddenGroupId = cell.querySelector(
+            "[data-broadcast-activity-group-id-input]"
+         );
+
+         if(hiddenGroupId instanceof HTMLInputElement)
+         {
+            hiddenGroupId.value = "";
+         }
+
+         window.initializeBroadcastActivityGroupAutocomplete?.(cell);
          return;
       }
 
@@ -397,7 +447,17 @@
       input.hidden = true;
       input.disabled = false;
 
+      const hiddenGroupId = cell.querySelector(
+         "[data-broadcast-activity-group-id-input]"
+      );
+
+      if(hiddenGroupId instanceof HTMLInputElement)
+      {
+         hiddenGroupId.value = nextActivityGroupId;
+      }
+
       window.initializeBroadcastInlineEditing?.(cell);
+      window.initializeBroadcastActivityGroupAutocomplete?.(cell);
    }
 
    function getBroadcastSearchUrlBase()

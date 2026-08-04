@@ -213,6 +213,143 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
+   public async Task OnPostAsyncSelectsExistingRelevantActivityGroup()
+   {
+      var broadcastId = Guid.NewGuid();
+      var currentGroupId = Guid.NewGuid();
+      var selectedGroupId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var broadcastTitle = $"Current group {uniqueSuffix}";
+      var selectedTitle = $"Selected group {uniqueSuffix}";
+      var activityDate = DistantActivityDate;
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+      Guid currentActivityId = Guid.Empty;
+      Guid selectedActivityId = Guid.Empty;
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            $"Organization {organizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            "tennis"
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            personId,
+            $"Person {personId:N}",
+            TrackedEntityTypeIds.Person,
+            "tennis"
+         );
+         await InsertActivityGroupAsync(
+            dataSource,
+            currentGroupId,
+            broadcastTitle,
+            "tennis",
+            activityDate,
+            activityDate
+         );
+         await InsertActivityGroupAsync(
+            dataSource,
+            selectedGroupId,
+            selectedTitle,
+            "tennis",
+            activityDate,
+            activityDate
+         );
+
+         currentActivityId = await InsertActivityAsync(
+            dataSource,
+            currentGroupId,
+            broadcastTitle,
+            "tennis",
+            activityDate,
+            organizationEntityId: organizationId,
+            linkedEntityIds: [personId]
+         );
+         selectedActivityId = await InsertActivityAsync(
+            dataSource,
+            selectedGroupId,
+            selectedTitle,
+            "tennis",
+            activityDate,
+            organizationEntityId: organizationId,
+            linkedEntityIds: [personId]
+         );
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            $"external-{uniqueSuffix}",
+            $"fingerprint-{uniqueSuffix}",
+            "channel-1",
+            "Viaplay",
+            broadcastTitle,
+            [],
+            TimeZoneHelper.ToUtc(
+               activityDate,
+               new TimeOnly(12, 0),
+               SportDay.TimeZoneId
+            ),
+            TimeZoneHelper.ToUtc(
+               activityDate,
+               new TimeOnly(14, 0),
+               SportDay.TimeZoneId
+            )
+         );
+
+         var organizationResult = await model.OnPostAsync(
+            broadcastId,
+            "organization",
+            organizationId.ToString(),
+            CancellationToken.None
+         );
+
+         Assert.IsType<JsonResult>(organizationResult);
+
+         var updateResult = await model.OnPostAsync(
+            broadcastId,
+            "group",
+            selectedTitle,
+            CancellationToken.None,
+            selectedGroupId
+         );
+
+         Assert.IsType<JsonResult>(updateResult);
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(broadcast);
+         Assert.Equal(selectedGroupId, broadcast!.ActivityGroupId);
+         Assert.Equal(
+            selectedActivityId,
+            broadcast.ActivityGroupSourceActivityId
+         );
+         Assert.Null(broadcast.ActivityGroupDraftTitle);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteActivityAsync(dataSource, currentActivityId);
+         await DeleteActivityAsync(dataSource, selectedActivityId);
+         await DeleteActivityGroupAsync(dataSource, currentGroupId);
+         await DeleteActivityGroupAsync(dataSource, selectedGroupId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task OnPostAsyncDoesNotMatchGroupWithoutOrgLink()
    {
       var broadcastId = Guid.NewGuid();

@@ -121,13 +121,15 @@ public sealed class ActivityEditPageService(
       SearchActivityGroupsAsync(
          string? term,
          string? sportId,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         Guid? organizationEntityId = null
       )
    {
       return await repository.SearchActivityGroupOptionsAsync(
          term,
          sportId,
-         cancellationToken
+         cancellationToken,
+         organizationEntityId
       );
    }
 

@@ -498,7 +498,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       SearchActivityGroupOptionsAsync(
          string? term,
          string? sportId,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         Guid? organizationEntityId = null
       )
    {
       term = term?.Trim() ?? string.Empty;
@@ -516,6 +517,15 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          select id::text, title
          from activity_groups
          where (@sport_id is null or sport_id = @sport_id)
+            and (@organization_entity_id is null or exists (
+               select 1
+               from activities a
+               join activity_entity_links al
+                  on al.activity_id = a.id
+               where a.activity_group_id = activity_groups.id
+                  and al.organization_entity_id =
+                     @organization_entity_id
+            ))
             {{termFilterSql}}
          order by start_date desc, end_date desc, title, id
          limit 20
@@ -528,6 +538,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       ).Value = string.IsNullOrWhiteSpace(sportId)
          ? DBNull.Value
          : sportId;
+      command.Parameters.Add(
+         "organization_entity_id",
+         NpgsqlDbType.Uuid
+      ).Value = (object?)organizationEntityId ?? DBNull.Value;
       if(applyTermFilter)
       {
          command.Parameters.AddWithValue("term", $"%{escapedTerm}%");

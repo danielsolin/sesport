@@ -16,9 +16,21 @@ public sealed class BroadcastInlineEditingUiTests
          repoRoot,
          "src/SESport.Web/wwwroot/js/broadcast-inline-edit.js"
       );
+      var groupAutocompleteJsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/"
+            + "broadcast-activity-group-autocomplete.js"
+      );
+      var layoutPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Shared/_Layout.cshtml"
+      );
       var siteJs = await File.ReadAllTextAsync(siteJsPath);
       var broadcastInlineEditJs =
          await File.ReadAllTextAsync(broadcastInlineEditJsPath);
+      var groupAutocompleteJs =
+         await File.ReadAllTextAsync(groupAutocompleteJsPath);
+      var layout = await File.ReadAllTextAsync(layoutPath);
 
       Assert.Contains(
          "window.initializeBroadcastInlineEditing =",
@@ -27,6 +39,24 @@ public sealed class BroadcastInlineEditingUiTests
       Assert.Contains(
          "window.initializeBroadcastInlineEditing?.(cell);",
          broadcastInlineEditJs
+      );
+      Assert.Contains("organizationEntityId", groupAutocompleteJs);
+      Assert.Contains(
+         "broadcast-activity-group-suggestions-fixed",
+         groupAutocompleteJs
+      );
+      Assert.Contains(
+         "document.addEventListener(\"focusin\"",
+         groupAutocompleteJs
+      );
+      Assert.Contains(
+         "document.addEventListener(\"input\"",
+         groupAutocompleteJs
+      );
+      Assert.Contains("activityGroupId", broadcastInlineEditJs);
+      Assert.Contains(
+         "broadcast-activity-group-autocomplete.js",
+         layout
       );
    }
 }

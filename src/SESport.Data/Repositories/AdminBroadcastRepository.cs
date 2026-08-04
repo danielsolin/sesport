@@ -477,12 +477,14 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       const string loadSql = """
          select
-            b.activity_group_source_kind_id
+            b.activity_group_source_kind_id,
+            b.entity_id
          from broadcasts b
          where b.id = @id
          """;
 
       string? sourceKindId = null;
+      Guid? organizationEntityId = null;
 
       await using(
          var command = new NpgsqlCommand(loadSql, connection, transaction)
@@ -500,13 +502,16 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          }
 
          sourceKindId = ReadString(reader, 0);
+         organizationEntityId = reader.IsDBNull(1)
+            ? null
+            : reader.GetGuid(1);
       }
 
       if(!string.Equals(
          sourceKindId,
          BroadcastActivitySourceKindIds.ActivityGroupForActivity,
          StringComparison.Ordinal
-      ))
+      ) && organizationEntityId is null)
       {
          return false;
       }
@@ -541,7 +546,8 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       const string broadcastSql = """
          update broadcasts
-         set activity_group_source_activity_id = null,
+         set activity_group_source_kind_id = @source_kind_id,
+            activity_group_source_activity_id = null,
             activity_group_draft_title = @title,
             updated_at = now()
          where id = @id
@@ -553,6 +559,10 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          transaction
       );
       broadcastCommand.Parameters.AddWithValue("id", broadcastId);
+      broadcastCommand.Parameters.AddWithValue(
+         "source_kind_id",
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity
+      );
       broadcastCommand.Parameters.AddWithValue("title", normalizedTitle);
 
       var broadcastUpdated = await broadcastCommand.ExecuteNonQueryAsync(
@@ -561,6 +571,148 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       await transaction.CommitAsync(cancellationToken);
       return broadcastUpdated > 0;
+   }
+
+   public async Task<bool> UpdateActivityGroupAsync(
+      Guid broadcastId,
+      Guid activityGroupId,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      const string sourceSql = """
+         select
+            b.activity_group_source_kind_id,
+            b.entity_id
+         from broadcasts b
+         where b.id = @id
+         """;
+
+      string? sourceKindId;
+      Guid? organizationEntityId;
+
+      await using(
+         var sourceCommand = new NpgsqlCommand(
+            sourceSql,
+            connection,
+            transaction
+         )
+      )
+      {
+         sourceCommand.Parameters.AddWithValue("id", broadcastId);
+
+         await using var reader = await sourceCommand.ExecuteReaderAsync(
+            cancellationToken
+         );
+
+         if(!await reader.ReadAsync(cancellationToken))
+         {
+            return false;
+         }
+
+         sourceKindId = ReadString(reader, 0);
+         organizationEntityId = reader.IsDBNull(1)
+            ? null
+            : reader.GetGuid(1);
+      }
+
+      if(organizationEntityId is null ||
+         (!string.IsNullOrWhiteSpace(sourceKindId) &&
+            !string.Equals(
+               sourceKindId,
+               BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+               StringComparison.Ordinal
+            )))
+      {
+         return false;
+      }
+
+      const string activitySql = """
+         select a.id
+         from activities a
+         join broadcasts b on b.id = @broadcast_id
+         where a.activity_group_id = @activity_group_id
+            and exists (
+               select 1
+               from activity_entity_links al
+               where al.activity_id = a.id
+                  and al.organization_entity_id = @organization_entity_id
+            )
+         order by
+            abs(extract(epoch from (a.starts_at - b.starts_at))),
+            a.activity_date,
+            a.id
+         limit 1
+         """;
+
+      Guid? sourceActivityId;
+      await using(
+         var activityCommand = new NpgsqlCommand(
+            activitySql,
+            connection,
+            transaction
+         )
+      )
+      {
+         activityCommand.Parameters.AddWithValue(
+            "broadcast_id",
+            broadcastId
+         );
+         activityCommand.Parameters.AddWithValue(
+            "activity_group_id",
+            activityGroupId
+         );
+         activityCommand.Parameters.AddWithValue(
+            "organization_entity_id",
+            organizationEntityId.Value
+         );
+
+         sourceActivityId = (Guid?)await activityCommand.ExecuteScalarAsync(
+            cancellationToken
+         );
+      }
+
+      if(sourceActivityId is null)
+      {
+         return false;
+      }
+
+      const string updateSql = """
+         update broadcasts
+         set activity_group_source_kind_id = @source_kind_id,
+            activity_group_source_activity_id = @source_activity_id,
+            activity_group_draft_title = null,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var updateCommand = new NpgsqlCommand(
+         updateSql,
+         connection,
+         transaction
+      );
+      updateCommand.Parameters.AddWithValue(
+         "source_kind_id",
+         BroadcastActivitySourceKindIds.ActivityGroupForActivity
+      );
+      updateCommand.Parameters.AddWithValue(
+         "source_activity_id",
+         sourceActivityId.Value
+      );
+      updateCommand.Parameters.AddWithValue("id", broadcastId);
+
+      var updated = await updateCommand.ExecuteNonQueryAsync(
+         cancellationToken
+      );
+
+      await transaction.CommitAsync(cancellationToken);
+      return updated > 0;
    }
 
    private async Task<BroadcastActivitySource?>

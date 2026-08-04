@@ -844,6 +844,12 @@ h2 {
    display: none;
 }
 
+.broadcast-activity-group-suggestions-fixed {
+   position: fixed;
+   z-index: 1000;
+   right: auto;
+}
+
 .broadcast-org-entity-option,
 .broadcast-org-entity-empty {
    display: block;

@@ -12,13 +12,15 @@ public sealed class ActivityGroupModel(
    public async Task<IActionResult> OnGetAsync(
       string? term,
       string? sportId,
+      Guid? organizationEntityId,
       CancellationToken cancellationToken
    )
    {
       var results = await editService.SearchActivityGroupsAsync(
          term,
          sportId,
-         cancellationToken
+         cancellationToken,
+         organizationEntityId
       );
 
       return new JsonResult(new

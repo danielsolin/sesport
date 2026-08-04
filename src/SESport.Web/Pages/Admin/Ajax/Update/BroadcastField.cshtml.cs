@@ -15,7 +15,8 @@ public sealed class BroadcastFieldModel(
       Guid id,
       string field,
       string? value,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      Guid? activityGroupId = null
    )
    {
       field = field?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -105,6 +106,8 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "organization",
                value = organizationEntityId?.ToString() ?? string.Empty,
+               organizationEntityId = broadcast?.OrganizationEntityId
+                  ?.ToString() ?? string.Empty,
                groupValue = broadcast is null
                   ? string.Empty
                   : BroadcastListDisplayFormatter.FormatGroupValue(
@@ -134,17 +137,26 @@ public sealed class BroadcastFieldModel(
 
          if(string.Equals(field, "group", StringComparison.Ordinal))
          {
-            var updated = await repository.UpdateActivityGroupTitleAsync(
-               id,
-               value ?? string.Empty,
-               cancellationToken
-            );
+            var updated = activityGroupId is not null
+               ? await repository.UpdateActivityGroupAsync(
+                  id,
+                  activityGroupId.Value,
+                  cancellationToken
+               )
+               : await repository.UpdateActivityGroupTitleAsync(
+                  id,
+                  value ?? string.Empty,
+                  cancellationToken
+               );
 
             if(!updated)
             {
                return BadRequest(new
                {
-                  error = "ActivityGroup is not editable yet."
+                  error = activityGroupId is not null
+                     ? "Selected ActivityGroup is not relevant for the " +
+                        "selected organization."
+                     : "ActivityGroup is not editable yet."
                });
             }
 
