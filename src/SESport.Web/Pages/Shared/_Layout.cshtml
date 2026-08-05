@@ -30,6 +30,13 @@
       "/Admin",
       StringComparison.OrdinalIgnoreCase
    );
+   var isMember = Context.User.Claims.Any(claim =>
+      claim.Type == MemberClaimTypes.MemberId &&
+      !string.IsNullOrWhiteSpace(claim.Value)
+   );
+   var currentUrl = $"{ViewContext.HttpContext.Request.PathBase}" +
+      $"{ViewContext.HttpContext.Request.Path}" +
+      $"{ViewContext.HttpContext.Request.QueryString}";
    var isEntities = requestPath.StartsWith(
       "/Admin/Entities",
       StringComparison.OrdinalIgnoreCase
@@ -132,10 +139,25 @@
          }
          else
          {
-            <a class="public-contact-link"
-               href="mailto:info@sesport.se">
-               info@sesport.se
-            </a>
+            <div class="public-header-actions">
+               @if(isMember)
+               {
+                  <span class="public-member-label">Medlem</span>
+                  <form class="public-member-form"
+                        method="post"
+                        asp-page="/Account/Logout"
+                        asp-route-returnUrl="@currentUrl">
+                     <button class="public-member-button"
+                             type="submit">
+                        Logga ut
+                     </button>
+                  </form>
+               }
+               <a class="public-contact-link"
+                  href="mailto:info@sesport.se">
+                  info@sesport.se
+               </a>
+            </div>
          }
       </div>
       @if(isAdmin)

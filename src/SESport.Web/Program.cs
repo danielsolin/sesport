@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+using SESport.Core.Members;
 using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,16 @@ var searxngOptions = builder.Configuration.GetSection(
    )
    .Get<SearxngWebSearchClientOptions>() ??
    new SearxngWebSearchClientOptions();
+var memberAuthOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.MemberAuthSection
+   )
+   .Get<MemberAuthOptions>() ??
+   new MemberAuthOptions();
+var smtpEmailOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.SmtpSection
+   )
+   .Get<SmtpEmailOptions>() ??
+   new SmtpEmailOptions();
 var configuredWebStatsOptions = builder.Configuration.GetSection(
       ApplicationConfigurationKeys.WebStatsSection
    )
@@ -35,16 +46,41 @@ builder.Services.AddSingleton(
 );
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(searxngOptions);
+builder.Services.AddSingleton(memberAuthOptions);
+builder.Services.AddSingleton(smtpEmailOptions);
 builder.Services.AddSingleton(webStatsOptions);
 builder.Services.AddWebApplicationServices();
 builder.Services.AddAiPlatform();
+builder.Services.AddSingleton<IMemberEmailSender, SmtpEmailSender>();
 builder.Services
-   .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+   .AddAuthentication(
+      options =>
+      {
+         options.DefaultAuthenticateScheme =
+            MemberAuthenticationDefaults.Scheme;
+         options.DefaultChallengeScheme = MemberAuthenticationDefaults.Scheme;
+      }
+   )
    .AddCookie(
+      CookieAuthenticationDefaults.AuthenticationScheme,
       options =>
       {
          options.LoginPath = "/Admin/Login";
          options.AccessDeniedPath = "/Admin/Login";
+      }
+   )
+   .AddCookie(
+      MemberAuthenticationDefaults.Scheme,
+      options =>
+      {
+         options.Cookie.Name = MemberAuthenticationDefaults.CookieName;
+         options.LoginPath = "/Account/Login";
+         options.AccessDeniedPath = "/Account/Login";
+         options.ExpireTimeSpan = memberAuthOptions.MemberCookieLifetime;
+         options.SlidingExpiration = true;
+         options.Cookie.HttpOnly = true;
+         options.Cookie.SameSite = SameSiteMode.Lax;
+         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
       }
    );
 builder.Services
@@ -53,7 +89,11 @@ builder.Services
       "Admin",
       policy =>
       {
+         policy.AddAuthenticationSchemes(
+            CookieAuthenticationDefaults.AuthenticationScheme
+         );
          policy.RequireAuthenticatedUser();
+         policy.RequireRole(AdminAuthenticationDefaults.Role);
       }
    );
 builder.Services.AddRazorPages(

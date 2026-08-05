@@ -1,0 +1,18 @@
+@page
+@model SESport.Web.Pages.Account.VerifyModel
+@{
+   ViewData["Title"] = "Logga in";
+}
+
+<section class="login-panel member-login-panel">
+   <p class="eyebrow">Medlem</p>
+   <h1>Logga in</h1>
+
+   @if(Model.ErrorMessage is not null)
+   {
+      <div class="notice notice-warning">@Model.ErrorMessage</div>
+      <a class="button" asp-page="/Account/Login">
+         Be om en ny länk
+      </a>
+   }
+</section>

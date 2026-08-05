@@ -1,0 +1,42 @@
+@page
+@model SESport.Web.Pages.Account.LoginModel
+@{
+   ViewData["Title"] = "Bli medlem";
+}
+
+<section class="login-panel member-login-panel">
+   <p class="eyebrow">Medlem</p>
+   <h1>Bli medlem</h1>
+
+   @if(Model.LinkRequested)
+   {
+      <div class="notice">
+         Om adressen kan ta emot e-post har vi skickat en inloggningslänk.
+         Öppna mejlet och klicka på länken för att slutföra.
+      </div>
+   }
+   else
+   {
+      <p>
+         Ange din e-postadress så skickar vi en länk. Du behöver inget lösenord.
+      </p>
+
+      <div asp-validation-summary="ModelOnly"
+           class="notice notice-error"></div>
+
+      <form method="post">
+         <input asp-for="ReturnUrl" type="hidden" />
+         <label>
+            <span>E-postadress</span>
+            <input asp-for="Email"
+                   type="email"
+                   autocomplete="email"
+                   autofocus />
+         </label>
+         <span asp-validation-for="Email"></span>
+         <button class="button button-primary" type="submit">
+            Skicka inloggningslänk
+         </button>
+      </form>
+   }
+</section>

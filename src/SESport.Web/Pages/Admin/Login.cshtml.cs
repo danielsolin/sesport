@@ -38,7 +38,11 @@ public class LoginModel(AdminLoginOptions adminOptions) : PageModel
 
       var claims = new[]
       {
-         new Claim(ClaimTypes.Name, "admin")
+         new Claim(ClaimTypes.Name, "admin"),
+         new Claim(
+            ClaimTypes.Role,
+            AdminAuthenticationDefaults.Role
+         )
       };
       var identity = new ClaimsIdentity(
          claims,

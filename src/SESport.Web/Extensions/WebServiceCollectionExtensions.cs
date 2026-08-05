@@ -1,4 +1,5 @@
 using SESport.Data.Repositories;
+using SESport.Core.Members.Interfaces;
 
 namespace SESport.Web.Extensions;
 
@@ -15,6 +16,12 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<AdminRepository>();
       services.AddScoped<AdminBroadcastRepository>();
       services.AddScoped<DashboardRepository>();
+      services.AddScoped<MemberRepository>();
+      services.AddScoped<IMemberRepository>(
+         serviceProvider => serviceProvider
+            .GetRequiredService<MemberRepository>()
+      );
+      services.AddScoped<MemberAuthService>();
       services.AddSingleton<ActivityDatePreferenceStore>();
       services.AddSingleton<BroadcastDatePreferenceStore>();
       services.AddSingleton<RunDatePreferenceStore>();

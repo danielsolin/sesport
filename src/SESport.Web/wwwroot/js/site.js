@@ -1,8 +1,10 @@
 (() => {
-   const isAdminPath = window.location.pathname.toLowerCase() === "/admin" ||
-      window.location.pathname.toLowerCase().startsWith("/admin/");
+   const currentPath = window.location.pathname.toLowerCase();
+   const isAdminPath = currentPath === "/admin" ||
+      currentPath.startsWith("/admin/");
+   const isRootPath = currentPath === "/";
 
-   if(!isAdminPath)
+   if(isRootPath)
    {
       document.addEventListener("visibilitychange", () => {
          if(!document.hidden)

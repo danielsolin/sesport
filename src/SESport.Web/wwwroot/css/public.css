@@ -46,9 +46,46 @@
 
 .public-contact-link {
    flex: 0 0 auto;
-   margin-left: auto;
    font-size: 10px;
    white-space: nowrap;
+}
+
+.public-header-actions {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   margin-left: auto;
+}
+
+.public-member-button {
+   color: #ffcc00;
+   font-size: 12px;
+   font-weight: 800;
+   white-space: nowrap;
+}
+
+.public-member-button:hover {
+   color: #ffffff;
+}
+
+.public-member-label {
+   color: #ffffff;
+   font-size: 12px;
+   font-weight: 800;
+   white-space: nowrap;
+}
+
+.public-member-form {
+   display: inline;
+   margin: 0;
+}
+
+.public-member-button {
+   padding: 0;
+   border: 0;
+   background: transparent;
+   font: inherit;
+   cursor: pointer;
 }
 
 .public-install-promotion {

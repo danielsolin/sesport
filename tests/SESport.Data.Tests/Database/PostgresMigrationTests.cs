@@ -161,6 +161,35 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void MemberMigrationDefinesAccountsTokensAndWatches()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "017_members.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("create table public.members", migration);
+      Assert.Contains("email_normalized text not null", migration);
+      Assert.Contains("create table public.member_login_tokens", migration);
+      Assert.Contains("token_hash text not null", migration);
+      Assert.Contains("member_login_tokens_expiry_check", migration);
+      Assert.Contains("create table public.member_entity_watches", migration);
+      Assert.Contains(
+         "primary key (member_id, entity_id)",
+         migration
+      );
+      Assert.Contains(
+         "references public.entities(id)",
+         migration
+      );
+      Assert.Contains("on delete cascade", migration);
+   }
+
+   [Fact]
    public void ParticipantAiResultsMigrationDefinesGenericResultStorage()
    {
       var migration = File.ReadAllText(

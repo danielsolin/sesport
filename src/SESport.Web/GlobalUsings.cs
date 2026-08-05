@@ -1,4 +1,7 @@
 global using SESport.Core.Configuration;
+global using SESport.Core.Members;
+global using SESport.Core.Members.Interfaces;
+global using SESport.Data.Repositories;
 global using SESport.Web.Builders;
 global using SESport.Web.Extensions;
 global using SESport.Web.Navigation;

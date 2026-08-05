@@ -80,6 +80,27 @@ $env:Admin__Password="<local-password>"
 dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 ```
 
+## Membership
+
+Public membership uses passwordless email links. Development logs the login
+link when SMTP is not configured. Production requires the following values in
+the host-local `.env` file:
+
+```text
+MemberAuth__PublicBaseUrl=https://sesport.se
+Smtp__Host=<smtp_host>
+Smtp__Port=587
+Smtp__UseSsl=true
+Smtp__Username=<smtp_username>
+Smtp__Password=<smtp_password>
+Smtp__FromAddress=<sender_email>
+Smtp__FromName=sesport
+```
+
+The login token is single-use and expires after fifteen minutes by default.
+The database also contains the member-to-entity watch table for the later
+notification feature; the public watch UI is not enabled yet.
+
 SearXNG is used only by AI runs. Run it locally on the machine that runs
 AI jobs and point the application at that local instance:
 

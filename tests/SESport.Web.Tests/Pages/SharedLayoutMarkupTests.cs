@@ -23,6 +23,11 @@ public sealed class SharedLayoutMarkupTests
          "src/SESport.Web/wwwroot/css/site.css"
       );
       var siteCss = await File.ReadAllTextAsync(siteCssPath);
+      var siteJsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/site.js"
+      );
+      var siteJs = await File.ReadAllTextAsync(siteJsPath);
 
       Assert.Contains("public.css", html);
       Assert.Contains("site.css", html);
@@ -33,8 +38,15 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("Dashboard", html);
       Assert.DoesNotContain("shareSelectedDate", html);
       Assert.DoesNotContain("dateRouteValues", html);
+      Assert.DoesNotContain("public-member-link", html);
+      Assert.DoesNotContain("Bli medlem", html);
       Assert.Contains("class=\"public-contact-link\"", html);
       Assert.Contains(".public-contact-link {", publicCss);
+      Assert.Contains(
+         "const isRootPath = currentPath === \"/\";\n\n" +
+         "   if(isRootPath)",
+         siteJs
+      );
       Assert.DoesNotContain(".activity-entry-title {", siteCss);
       Assert.DoesNotContain(
          ".activity-entry-organization {",
