@@ -431,6 +431,12 @@ else
                      <h2 class="activity-entry-title">
                         @(agendaSection.ActivityGroupTitle ?? activity.Title)
                      </h2>
+                     @if(!string.IsNullOrWhiteSpace(
+                        activity.Description
+                     ))
+                     {
+                        <p style="margin-bottom: 0px;">@activity.Description</p>
+                     }
                      @if(isGrouped)
                      {
                         <ol class="activity-group-schedule">
@@ -440,10 +446,17 @@ else
                                  @(slot.IsOngoing ? "is-ongoing" : "")
                                  @(slot.HasEnded ? "has-ended" : "")">
                                  <span class="activity-group-slot-time">
-                                    @slot.TimeLabel@(
+                                    @PublicTimeDisplay.WithoutApproximation(
+                                       slot.TimeLabel
+                                    )@(
                                        slot.EndTimeLabel is null
                                           ? ""
-                                          : $"–{slot.EndTimeLabel}"
+                                          : $"–{
+                                             PublicTimeDisplay
+                                                .WithoutApproximation(
+                                                   slot.EndTimeLabel
+                                                )
+                                          }"
                                     )
                                  </span>
                                  <span class="activity-group-slot-content">
@@ -451,25 +464,10 @@ else
                                        "activity-group-slot-title">
                                        @slot.Activity.Title
                                     </span>
-                                    @if(!string.IsNullOrWhiteSpace(
-                                       slot.Activity.Description
-                                    ))
-                                    {
-                                       <span class=
-                                          "activity-group-slot-description">
-                                          @slot.Activity.Description
-                                       </span>
-                                    }
                                  </span>
                               </li>
                            }
                         </ol>
-                     }
-                     else if(!string.IsNullOrWhiteSpace(
-                        activity.Description
-                     ))
-                     {
-                        <p style="margin-bottom: 0px;">@activity.Description</p>
                      }
                      @if(activity.Participants.Count > 0)
                      {

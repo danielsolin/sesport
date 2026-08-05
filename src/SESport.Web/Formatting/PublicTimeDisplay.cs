@@ -44,6 +44,16 @@ public static class PublicTimeDisplay
       );
    }
 
+   public static string? WithoutApproximation(string? timeText)
+   {
+      return timeText?.StartsWith(
+         ApproximationPrefix,
+         StringComparison.Ordinal
+      ) == true
+         ? timeText[ApproximationPrefix.Length..]
+         : timeText;
+   }
+
    public static string FormatCurrentMarker(DateTimeOffset now)
    {
       var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
