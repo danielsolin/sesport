@@ -14,7 +14,18 @@ public static class PublicTimeDisplay
    private const int RoundingOffsetSeconds = SecondsPerHalfHour / 2;
    private const string ApproximationPrefix = "≈";
 
-   public static string FormatTimeText(
+   public static string FormatExactTimeText(
+      string? timeText,
+      TimeOnly? localTime = null
+   )
+   {
+      return localTime?.ToString(
+         DateDisplay.TimeOnlyMinutesFormat,
+         CultureInfo.InvariantCulture
+      ) ?? TimeTextFormatter.FormatTimeOnlyText(timeText);
+   }
+
+   public static string FormatApproximateTimeText(
       string? timeText,
       TimeOnly? localTime = null
    )
@@ -22,36 +33,31 @@ public static class PublicTimeDisplay
       var time = localTime ?? ParseTime(timeText);
 
       return time is null
-         ? TimeTextFormatter.FormatTimeOnlyText(timeText)
-         : Format(time.Value);
+         ? FormatExactTimeText(timeText)
+         : FormatApproximateTime(time.Value);
    }
 
-   public static string? Format(TimeOnly? time)
+   public static string? FormatExactTime(TimeOnly? time)
    {
-      return time is null ? null : Format(time.Value);
+      return time?.ToString(
+         DateDisplay.TimeOnlyMinutesFormat,
+         CultureInfo.InvariantCulture
+      );
    }
 
-   public static string Format(TimeOnly time)
+   public static string? FormatApproximateTime(TimeOnly? time)
+   {
+      return time is null ? null : FormatApproximateTime(time.Value);
+   }
+
+   public static string FormatApproximateTime(TimeOnly time)
    {
       var roundedTime = RoundToNearestHalfHour(time);
 
       return string.Concat(
          ApproximationPrefix,
-         roundedTime.ToString(
-            DateDisplay.TimeOnlyMinutesFormat,
-            CultureInfo.InvariantCulture
-         )
+         FormatExactTime(roundedTime)
       );
-   }
-
-   public static string? WithoutApproximation(string? timeText)
-   {
-      return timeText?.StartsWith(
-         ApproximationPrefix,
-         StringComparison.Ordinal
-      ) == true
-         ? timeText[ApproximationPrefix.Length..]
-         : timeText;
    }
 
    public static string FormatCurrentMarker(DateTimeOffset now)

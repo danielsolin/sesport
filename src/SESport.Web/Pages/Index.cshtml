@@ -288,7 +288,7 @@ else
                         @(timelineSlot.HasEnded ? "has-ended" : "")">
                         <div class="activity-time-badge">
                            <time class="activity-time-value">
-                              @timelineSlot.TimeLabel
+                              @agendaSection.TimeLabel
                            </time>
                         </div>
                         <span class="activity-time-connector"
@@ -338,7 +338,7 @@ else
                @if(isGrouped)
                {
                   var groupedEndTimeLabel =
-                     agendaSection.TimelineSlot.EndTimeLabel;
+                     agendaSection.EndTimeLabel;
                   <div class="activity-duration-rail"
                        aria-label="@(
                           groupedEndTimeLabel is null
@@ -446,16 +446,11 @@ else
                                  @(slot.IsOngoing ? "is-ongoing" : "")
                                  @(slot.HasEnded ? "has-ended" : "")">
                                  <span class="activity-group-slot-time">
-                                    @PublicTimeDisplay.WithoutApproximation(
-                                       slot.TimeLabel
-                                    )@(
+                                    @slot.StartTimeLabel@(
                                        slot.EndTimeLabel is null
                                           ? ""
                                           : $"–{
-                                             PublicTimeDisplay
-                                                .WithoutApproximation(
-                                                   slot.EndTimeLabel
-                                                )
+                                             slot.EndTimeLabel
                                           }"
                                     )
                                  </span>
@@ -604,11 +599,14 @@ else
                                        </td>
                                        @if(showStartTimeColumn)
                                        {
+                                          var participantStartTime =
+                                             PublicTimeDisplay
+                                                .FormatExactTimeText(
+                                                   participant.StartTime
+                                                );
                                           <td class=
                                          "activity-participant-col-start-time">
-                                             @PublicTimeDisplay.FormatTimeText(
-                                                participant.StartTime
-                                             )
+                                             @participantStartTime
                                           </td>
                                        }
                                        <td class=

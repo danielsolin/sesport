@@ -252,14 +252,14 @@ public class PublicActivityTimelineBuilderTests
       Assert.Equal("Rally Polen", section.ActivityGroupTitle);
       Assert.Equal(3, section.Activities.Count);
       Assert.Equal(
-         ["≈08:30", "≈10:00", "≈13:00"],
-         section.Slots.Select(slot => slot.TimeLabel)
+         ["08:15", "09:45", "13:00"],
+         section.Slots.Select(slot => slot.StartTimeLabel)
       );
       Assert.Equal(
-         ["≈09:00", "≈11:30", "≈14:00"],
+         ["08:55", "11:25", "14:00"],
          section.Slots.Select(slot => slot.EndTimeLabel)
       );
-      Assert.Equal("≈08:30", section.TimelineSlot.TimeLabel);
+      Assert.Equal("≈08:30", section.TimeLabel);
 
       var duringFirstActivity = new DateTimeOffset(
          2026,
@@ -282,7 +282,7 @@ public class PublicActivityTimelineBuilderTests
          ).Section!;
 
       Assert.True(activeSection.TimelineSlot.IsOngoing);
-      Assert.Equal("≈08:30", activeSection.TimelineSlot.TimeLabel);
+      Assert.Equal("≈08:30", activeSection.TimeLabel);
 
       var midday = new DateTimeOffset(
          2026,
@@ -304,7 +304,7 @@ public class PublicActivityTimelineBuilderTests
             entry => !entry.IsCurrentMarker
          ).Section!;
 
-      Assert.Equal("≈13:00", middaySection.TimelineSlot.TimeLabel);
+      Assert.Equal("≈13:00", middaySection.TimeLabel);
    }
 
    [Theory]

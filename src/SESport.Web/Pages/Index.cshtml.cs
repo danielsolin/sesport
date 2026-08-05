@@ -316,7 +316,7 @@ public sealed record ActivityAgendaSection(
 
 public sealed record ActivityAgendaSlot(
    ActivityListItem Activity,
-   string TimeLabel,
+   string StartTimeLabel,
    string? EndTimeLabel,
    bool IsOngoing,
    bool HasEnded

@@ -180,15 +180,24 @@ public sealed class PublicActivityTimelineBuilder
          PublicTimeDisplay.RoundToNearestHalfHour(
             TimeOnly.FromDateTime(timelineStart.DateTime)
          );
+      var timelineTimeLabel =
+         PublicTimeDisplay.FormatApproximateTimeText(
+            timelineSlot.Activity.TimeText,
+            timelineSlot.Activity.LocalStartTime
+         );
+      var timelineEndTimeLabel =
+         PublicTimeDisplay.FormatApproximateTime(
+            timelineSlot.Activity.LocalEndTime
+         );
 
       return new ActivityAgendaSection(
-         timelineSlot.TimeLabel,
+         timelineTimeLabel,
          orderedActivities,
          activity.RelatedOrganizationEntities,
          GetDayPhase(timelineStart.Hour),
          GetHourHandAngle(roundedTimelineTime),
          $"{roundedTimelineTime.Minute * 6}deg",
-         PublicTimeDisplay.Format(activity.LocalEndTime),
+         timelineEndTimeLabel,
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
          orderedActivities.Count > 1
@@ -206,11 +215,11 @@ public sealed class PublicActivityTimelineBuilder
    {
       return new ActivityAgendaSlot(
          activity,
-         PublicTimeDisplay.FormatTimeText(
+         PublicTimeDisplay.FormatExactTimeText(
             activity.TimeText,
             activity.LocalStartTime
          ),
-         PublicTimeDisplay.Format(activity.LocalEndTime),
+         PublicTimeDisplay.FormatExactTime(activity.LocalEndTime),
          activity.EndsAt is not null &&
             activity.StartsAt <= now &&
             activity.EndsAt > now,
