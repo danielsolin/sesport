@@ -1,6 +1,3 @@
-using SESport.Data.Repositories;
-using SESport.Core.Members.Interfaces;
-
 namespace SESport.Web.Extensions;
 
 public static class WebServiceCollectionExtensions

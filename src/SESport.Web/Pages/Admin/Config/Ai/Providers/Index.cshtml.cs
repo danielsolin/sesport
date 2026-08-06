@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Providers;
 

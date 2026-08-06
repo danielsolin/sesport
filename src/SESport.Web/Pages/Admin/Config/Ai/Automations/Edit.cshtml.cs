@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.Core.AI;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Automations;
 

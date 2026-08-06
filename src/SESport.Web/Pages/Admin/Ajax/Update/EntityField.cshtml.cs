@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using SESport.Data.Repositories;
-
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
 public sealed class EntityFieldModel(AdminRepository repository)

@@ -1,7 +1,3 @@
-using SESport.Core.Configuration;
-using SESport.Core.Members;
-using SESport.Core.Members.Interfaces;
-
 namespace SESport.Web.Services;
 
 public sealed class MemberAuthService(

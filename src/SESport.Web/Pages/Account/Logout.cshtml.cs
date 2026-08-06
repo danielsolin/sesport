@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using SESport.Core.Members;
-
 namespace SESport.Web.Pages.Account;
 
 public sealed class LogoutModel : PageModel

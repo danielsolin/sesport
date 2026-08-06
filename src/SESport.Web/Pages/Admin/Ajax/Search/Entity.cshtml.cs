@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Data.Models;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Pages.Admin.Ajax.Search;
 

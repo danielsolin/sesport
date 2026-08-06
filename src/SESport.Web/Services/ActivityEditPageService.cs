@@ -7,7 +7,6 @@ using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Services;
 

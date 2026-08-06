@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Pages.Admin.Ajax.List;
 

@@ -4,9 +4,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using SESport.Core.Members;
-using SESport.Web.Services;
-
 namespace SESport.Web.Pages.Account;
 
 public sealed class VerifyModel(

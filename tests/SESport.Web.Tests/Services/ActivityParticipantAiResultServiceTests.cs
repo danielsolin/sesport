@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Npgsql;
 
-using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;

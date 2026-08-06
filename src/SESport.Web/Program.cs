@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-using SESport.Core.Members;
 using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);

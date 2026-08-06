@@ -1,6 +1,7 @@
 using System.Text.Json;
 
 using Npgsql;
+
 using NpgsqlTypes;
 
 using SESport.Core.AI;

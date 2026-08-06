@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
-using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Runs;
 
 namespace SESport.Web.Pages.Admin.Ajax.Poll;

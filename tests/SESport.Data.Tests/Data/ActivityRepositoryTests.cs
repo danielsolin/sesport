@@ -2,7 +2,6 @@ using System.Reflection;
 
 using Npgsql;
 
-using SESport.Core.AI;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;

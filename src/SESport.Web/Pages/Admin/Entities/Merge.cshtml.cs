@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SESport.Data.Models;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Pages.Admin.Entities;
 

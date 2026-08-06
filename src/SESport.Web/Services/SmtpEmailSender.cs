@@ -2,9 +2,6 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 
-using SESport.Core.Configuration;
-using SESport.Core.Members.Interfaces;
-
 namespace SESport.Web.Services;
 
 public sealed class SmtpEmailSender(

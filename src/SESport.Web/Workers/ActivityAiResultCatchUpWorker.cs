@@ -1,5 +1,4 @@
 using SESport.Core.AI;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Workers;
 
