@@ -19,20 +19,6 @@ public static class WebPageFetchDefaults
    public const string BrowserAcceptLanguageHeader = "en-US,en;q=0.9";
    public const string BrowserLocale = "en-US";
    public const string BrowserPlatform = "Linux";
-   public const string BrowserFingerprintScript = """
-      Object.defineProperty(navigator, 'webdriver', {
-         get: () => undefined
-      });
-      Object.defineProperty(navigator, 'languages', {
-         get: () => ['en-US', 'en']
-      });
-      Object.defineProperty(navigator, 'platform', {
-         get: () => 'Linux x86_64'
-      });
-      Object.defineProperty(navigator, 'vendor', {
-         get: () => 'Google Inc.'
-      });
-      """;
 
    public const string CutoffMarker = "[CUTOFF]";
    public const int MaxResponseCharacters = 50000;

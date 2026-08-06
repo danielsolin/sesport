@@ -763,6 +763,47 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void BrowserContextLeavesHeadersToPlaywright()
+   {
+      var options = WebPageBrowserPageFetcher.BuildContextOptions(
+         "Mozilla/5.0 Chrome/143.0.0.0 Safari/537.36"
+      );
+
+      Assert.Null(options.ExtraHTTPHeaders);
+      Assert.Equal(WebPageFetchDefaults.BrowserLocale, options.Locale);
+      Assert.Equal(
+         WebPageFetchDefaults.BrowserViewportWidth,
+         options.ViewportSize!.Width
+      );
+   }
+
+   [Fact]
+   public void BrowserBlockDetectionMatchesCloudflareVerificationPage()
+   {
+      var blocked = WebPageBlockDetection.IsBlocked(
+         "Just a moment...",
+         "Performing security verification. " +
+         "This website uses a security service to protect against malicious " +
+         "bots.",
+         WebPageBlockSource.Browser
+      );
+
+      Assert.True(blocked);
+   }
+
+   [Fact]
+   public void BrowserBlockDetectionAllowsOrdinarySecurityText()
+   {
+      var blocked = WebPageBlockDetection.IsBlocked(
+         "Security guide",
+         "This article explains browser security verification.",
+         WebPageBlockSource.Browser
+      );
+
+      Assert.False(blocked);
+   }
+
+   [Fact]
    public async Task FetchExtractsTextFromPdfResponses()
    {
       var browserCalls = 0;

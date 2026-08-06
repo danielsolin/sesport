@@ -17,10 +17,6 @@ internal static class WebPageBrowserPageFetcher
          var absoluteUrlString = absoluteUrl.ToString();
          var browserUserAgent = await browserUserAgentFetcher()
             .WaitAsync(cancellationToken);
-         var browserLikeHeaders =
-            WebPageContentFetchSupport.BuildBrowserLikeHeaders(
-               browserUserAgent
-            );
          using var playwright = await Playwright.CreateAsync()
             .WaitAsync(cancellationToken);
          await using var browser = await playwright.Chromium.LaunchAsync(
@@ -31,21 +27,7 @@ internal static class WebPageBrowserPageFetcher
          ).WaitAsync(cancellationToken);
 
          await using var context = await browser.NewContextAsync(
-            new BrowserNewContextOptions
-            {
-               UserAgent = browserUserAgent,
-               Locale = WebPageFetchDefaults.BrowserLocale,
-               ExtraHTTPHeaders = browserLikeHeaders,
-               ViewportSize = new ViewportSize
-               {
-                  Width = WebPageFetchDefaults.BrowserViewportWidth,
-                  Height = WebPageFetchDefaults.BrowserViewportHeight
-               }
-            }
-         ).WaitAsync(cancellationToken);
-
-         await context.AddInitScriptAsync(
-            WebPageFetchDefaults.BrowserFingerprintScript
+            BuildContextOptions(browserUserAgent)
          ).WaitAsync(cancellationToken);
 
          await using var page = await context.NewPageAsync()
@@ -114,6 +96,24 @@ internal static class WebPageBrowserPageFetcher
             WebPageContentFetchSupport
                .ExtractHtmlTextWithEmbeddedState(bodyHtml);
 
+         var blockedSignature = WebPageBlockDetection
+            .FindBlockedSignature(
+               title,
+               normalizedText,
+               WebPageBlockSource.Browser
+            );
+         if(blockedSignature is not null)
+         {
+            return WebPageContentFetchSupport.BuildFailureContent(
+               absoluteUrl,
+               title,
+               WebPageFetchErrorKind.BrowserBlocked,
+               "Browser renderer returned a blocked page: " +
+               blockedSignature + ".",
+               "playwright"
+            );
+         }
+
          return new WebPageContent(
             string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
             absoluteUrlString,
@@ -158,7 +158,24 @@ internal static class WebPageBrowserPageFetcher
       }
    }
 
-   private static async Task<WebPageImageCandidate[]> ExtractRelevantImagesAsync(
+   internal static BrowserNewContextOptions BuildContextOptions(
+      string browserUserAgent
+   )
+   {
+      return new BrowserNewContextOptions
+      {
+         UserAgent = browserUserAgent,
+         Locale = WebPageFetchDefaults.BrowserLocale,
+         ViewportSize = new ViewportSize
+         {
+            Width = WebPageFetchDefaults.BrowserViewportWidth,
+            Height = WebPageFetchDefaults.BrowserViewportHeight
+         }
+      };
+   }
+
+   private static async Task<WebPageImageCandidate[]>
+      ExtractRelevantImagesAsync(
       IPage page
    )
    {

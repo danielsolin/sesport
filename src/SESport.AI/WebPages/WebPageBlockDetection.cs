@@ -3,7 +3,8 @@ namespace SESport.AI.WebPages;
 internal enum WebPageBlockSource
 {
    HtmlFallback,
-   CurlFallback
+   CurlFallback,
+   Browser
 }
 
 internal static class WebPageBlockDetection
@@ -26,6 +27,15 @@ internal static class WebPageBlockDetection
       "reference #"
    ];
 
+   private static readonly string[] BrowserSignatures =
+   [
+      "performing security verification",
+      "incompatible browser extension or network configuration",
+      "this website uses a security service to protect against " +
+      "malicious bots",
+      "checking your browser"
+   ];
+
    internal static bool IsBlocked(
       string? title,
       string text,
@@ -44,9 +54,12 @@ internal static class WebPageBlockDetection
       var combinedText =
          WebPageContentFetchSupport.NormalizeText($"{title} {text}");
 
-      var signatures = source == WebPageBlockSource.CurlFallback
-         ? CurlFallbackSignatures
-         : HtmlFallbackSignatures;
+      var signatures = source switch
+      {
+         WebPageBlockSource.CurlFallback => CurlFallbackSignatures,
+         WebPageBlockSource.Browser => BrowserSignatures,
+         _ => HtmlFallbackSignatures
+      };
 
       return signatures.FirstOrDefault(signature =>
          combinedText.Contains(signature, StringComparison.OrdinalIgnoreCase));
