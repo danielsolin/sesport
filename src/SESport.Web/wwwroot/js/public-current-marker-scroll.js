@@ -1,6 +1,28 @@
 (() => {
    "use strict";
 
+   const autoReloadMarkerKey = "sesport-public-auto-reload";
+   let loadedByAutoReload = false;
+
+   try
+   {
+      loadedByAutoReload =
+         window.sessionStorage.getItem(autoReloadMarkerKey) === "true";
+      if(loadedByAutoReload)
+      {
+         window.sessionStorage.removeItem(autoReloadMarkerKey);
+      }
+   }
+   catch
+   {
+      // Scroll on the initial load when session storage is unavailable.
+   }
+
+   if(loadedByAutoReload)
+   {
+      return;
+   }
+
    const ongoingActivity = document.querySelector(
       ".activity-agenda-section.activity-is-ongoing"
    );

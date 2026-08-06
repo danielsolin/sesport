@@ -6,9 +6,23 @@
 
    if(isRootPath)
    {
+      const autoReloadMarkerKey = "sesport-public-auto-reload";
+
       document.addEventListener("visibilitychange", () => {
          if(!document.hidden)
          {
+            try
+            {
+               window.sessionStorage.setItem(
+                  autoReloadMarkerKey,
+                  "true"
+               );
+            }
+            catch
+            {
+               // Reloading still works when session storage is unavailable.
+            }
+
             window.location.reload();
          }
       });
