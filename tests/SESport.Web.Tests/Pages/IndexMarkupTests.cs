@@ -55,6 +55,22 @@ public sealed class IndexMarkupTests
          "@*\n   <script src=\"~/js/public-current-marker-scroll.js\"",
          html
       );
+      Assert.Contains(
+         "sesport-public-participant-expansions",
+         participantScript
+      );
+      Assert.Contains(
+         "sesport-public-auto-reload",
+         participantScript
+      );
+      Assert.Contains(
+         "window.sessionStorage.getItem(",
+         participantScript
+      );
+      Assert.Contains(
+         "window.sessionStorage.setItem(",
+         participantScript
+      );
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-start-time", html);

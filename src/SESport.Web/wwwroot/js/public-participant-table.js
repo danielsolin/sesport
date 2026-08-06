@@ -1,6 +1,13 @@
 (() => {
    const tableSelector = "[data-participant-table]";
    const sortSelector = "[data-participant-sort]";
+   const participantExpansionStorageKey =
+      "sesport-public-participant-expansions";
+   const autoReloadMarkerKey = "sesport-public-auto-reload";
+   const restoreParticipantExpansion = hasAutoReloadMarker();
+   const expandedTableIds = restoreParticipantExpansion
+      ? readExpandedTableIds()
+      : new Set();
    const collator = new Intl.Collator("sv", {
       numeric: true,
       sensitivity: "base"
@@ -38,13 +45,91 @@
 
       if(collapseButton !== null)
       {
+         if(expandedTableIds.has(table.id))
+         {
+            table.classList.remove(
+               "activity-participant-table-collapsed"
+            );
+         }
+
          updateCollapseButton(table, collapseButton);
          collapseButton.addEventListener("click", () => {
             table.classList.toggle("activity-participant-table-collapsed");
             updateCollapseButton(table, collapseButton);
+            saveExpandedTableState(table);
          });
       }
    });
+
+   function hasAutoReloadMarker()
+   {
+      try
+      {
+         return window.sessionStorage.getItem(
+            autoReloadMarkerKey
+         ) === "true";
+      }
+      catch
+      {
+         return false;
+      }
+   }
+
+   function readExpandedTableIds()
+   {
+      try
+      {
+         const serialized = window.sessionStorage.getItem(
+            participantExpansionStorageKey
+         );
+         if(serialized === null)
+         {
+            return new Set();
+         }
+
+         const parsed = JSON.parse(serialized);
+         return Array.isArray(parsed)
+            ? new Set(
+               parsed.filter(item => typeof item === "string")
+            )
+            : new Set();
+      }
+      catch
+      {
+         return new Set();
+      }
+   }
+
+   function saveExpandedTableState(table)
+   {
+      if(table.id === "")
+      {
+         return;
+      }
+
+      if(table.classList.contains(
+         "activity-participant-table-collapsed"
+      ))
+      {
+         expandedTableIds.delete(table.id);
+      }
+      else
+      {
+         expandedTableIds.add(table.id);
+      }
+
+      try
+      {
+         window.sessionStorage.setItem(
+            participantExpansionStorageKey,
+            JSON.stringify([...expandedTableIds])
+         );
+      }
+      catch
+      {
+         // The table can still be expanded for the current page view.
+      }
+   }
 
    function sortTable(table, key, direction)
    {
