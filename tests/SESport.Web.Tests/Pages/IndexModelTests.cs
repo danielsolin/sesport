@@ -122,16 +122,6 @@ public sealed class IndexModelTests
    }
 
    [Fact]
-   public void FormatBirthday_OmitsYear()
-   {
-      var birthday = IndexModel.FormatBirthday(
-         new DateOnly(1973, 8, 13)
-      );
-
-      Assert.Equal("13 augusti", birthday);
-   }
-
-   [Fact]
    public void BuildDateOptions_UsesTodayAndPublishedFutureDates()
    {
       var today = new DateOnly(2026, 7, 24);

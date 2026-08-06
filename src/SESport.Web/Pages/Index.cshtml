@@ -524,15 +524,6 @@ else
                                        </button>
                                     </th>
                                     <th class=
-                                           "activity-participant-col-birthday"
-                                        aria-sort="none">
-                                       <button type="button"
-                                               data-participant-sort=
-                                                  "birthdate">
-                                          Födelsedag
-                                       </button>
-                                    </th>
-                                    <th class=
                                            "activity-participant-col-club"
                                         aria-sort="none">
                                        <button type="button"
@@ -580,10 +571,6 @@ else
                                         data-participant-start-time=
                                            "@participant.StartTime"
                                         data-participant-age="@age"
-                                        data-participant-birthdate=
-                                           "@participant.Birthdate?.ToString(
-                                              DateDisplay.DateOnlyFormat
-                                           )"
                                         data-participant-club=
                                            "@participant.Club">
                                        <td class="activity-participant-name
@@ -614,12 +601,6 @@ else
                                           @(age is null
                                           ? string.Empty
                                           : $"{age} år")
-                                       </td>
-                                       <td class=
-                                          "activity-participant-col-birthday">
-                                          @IndexModel.FormatBirthday(
-                                          participant.Birthdate
-                                          )
                                        </td>
                                        <td class=
                                               "activity-participant-col-club">

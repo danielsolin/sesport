@@ -126,8 +126,6 @@
             return row.dataset.participantAge ?? "";
          case "start-time":
             return row.dataset.participantStartTime ?? "";
-         case "birthdate":
-            return row.dataset.participantBirthdate ?? "";
          case "club":
             return row.dataset.participantClub ?? "";
          default:

@@ -209,20 +209,6 @@ public class IndexModel(
       return age;
    }
 
-   internal static string FormatBirthday(DateOnly? birthdate)
-   {
-      if(birthdate is null)
-      {
-         return string.Empty;
-      }
-
-      var culture = CultureInfo.GetCultureInfo(
-         PrimaryCountry.CultureName
-      );
-
-      return birthdate.Value.ToString("d MMMM", culture);
-   }
-
    private static DateOnly? ParseDate(string? date)
    {
       return DateOnly.TryParseExact(

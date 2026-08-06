@@ -64,6 +64,8 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("activity-participant-col-age", html);
+      Assert.DoesNotContain("activity-participant-col-birthday", html);
+      Assert.DoesNotContain("Födelsedag", html);
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
       Assert.Contains("showStartTimeColumn", html);
@@ -195,6 +197,8 @@ public sealed class IndexMarkupTests
          "      display: none;",
          css
       );
+      Assert.DoesNotContain("activity-participant-col-birthday", css);
+      Assert.DoesNotContain("case \"birthdate\":", participantScript);
       Assert.Contains(
          ".activity-now-marker {\n      display: none;",
          css
