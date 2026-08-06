@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
@@ -159,10 +161,11 @@ public sealed class PublicActivityTimelineBuilder
          .ToList();
       var activity = orderedActivities[0] with
       {
-         Participants = orderedActivities
-            .SelectMany(item => item.Participants)
-            .DistinctBy(participant => participant.Id)
-            .ToList()
+         Participants = OrderParticipants(
+            orderedActivities
+               .SelectMany(item => item.Participants)
+               .DistinctBy(participant => participant.Id)
+         )
       };
       orderedActivities[0] = activity;
       var slots = orderedActivities
@@ -225,6 +228,40 @@ public sealed class PublicActivityTimelineBuilder
             activity.EndsAt > now,
          activity.EndsAt is not null && activity.EndsAt <= now
       );
+   }
+
+   private static IReadOnlyList<PublicActivityParticipant>
+      OrderParticipants(
+         IEnumerable<PublicActivityParticipant> participants
+      )
+   {
+      return participants
+         .Select((participant, index) => new
+         {
+            Participant = participant,
+            Index = index,
+            StartTime = ParseParticipantStartTime(
+               participant.StartTime
+            )
+         })
+         .OrderBy(item => item.StartTime is null)
+         .ThenBy(item => item.StartTime)
+         .ThenBy(item => item.Index)
+         .Select(item => item.Participant)
+         .ToList();
+   }
+
+   private static int? ParseParticipantStartTime(string? value)
+   {
+      return TimeOnly.TryParseExact(
+         value?.Trim(),
+         ["H:mm", "HH:mm", "H.mm", "HH.mm"],
+         CultureInfo.InvariantCulture,
+         DateTimeStyles.None,
+         out var time
+      )
+         ? time.Hour * 60 + time.Minute
+         : null;
    }
 
    private static string GetHourHandAngle(TimeOnly localStart)

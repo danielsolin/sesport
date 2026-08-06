@@ -201,6 +201,45 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Fact]
+   public void BuildOrdersParticipantsByStartTime()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         6,
+         12,
+         12,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var selectedDate = SportDay.GetSportDate(now).AddDays(1);
+      var activity = CreateActivity(
+         "Golf tournament",
+         selectedDate,
+         now.AddHours(1)
+      ) with
+      {
+         Participants =
+         [
+            CreateParticipant("Late", "12:30"),
+            CreateParticipant("Early", "08:15"),
+            CreateParticipant("No start time", null)
+         ]
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build([activity], selectedDate, now);
+      var section = Assert.Single(timeline.TimelineEntries).Section!;
+
+      Assert.Equal(
+         ["Early", "Late", "No start time"],
+         section.Activities[0].Participants.Select(
+            participant => participant.Name
+         )
+      );
+   }
+
+   [Fact]
    public void Build_GroupsActivitiesFromSameGroupAndDate()
    {
       var now = new DateTimeOffset(
@@ -445,5 +484,21 @@ public class PublicActivityTimelineBuilderTests
          ActivityGroupTitle = activityGroupTitle,
          IsTeamSport = isTeamSport
       };
+   }
+
+   private static PublicActivityParticipant CreateParticipant(
+      string name,
+      string? startTime
+   )
+   {
+      return new PublicActivityParticipant(
+         Guid.NewGuid(),
+         name,
+         startTime,
+         null,
+         null,
+         string.Empty,
+         true
+      );
    }
 }

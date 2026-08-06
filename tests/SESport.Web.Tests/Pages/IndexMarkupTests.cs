@@ -140,8 +140,16 @@ public sealed class IndexMarkupTests
          "sortTable(table, \"name\", \"ascending\");",
          participantScript
       );
-      Assert.Contains(
+      Assert.DoesNotContain(
          "sortTable(table, \"start-time\", \"ascending\");",
+         participantScript
+      );
+      Assert.Contains(
+         "table.dataset.participantSortKey = \"start-time\";",
+         participantScript
+      );
+      Assert.Contains(
+         "updateSortHeaders(table, \"start-time\", \"ascending\");",
          participantScript
       );
       Assert.Contains("case \"start-time\":", participantScript);
