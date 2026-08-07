@@ -6,7 +6,7 @@ public sealed record WebSearchRateLimitOptions
       TimeSpan.FromSeconds(10);
 
    public TimeSpan RateLimitedCooldown { get; init; } =
-      TimeSpan.FromMinutes(2);
+      TimeSpan.FromMinutes(15);
 
    public TimeSpan TransientFailureCooldown { get; init; } =
       TimeSpan.FromMinutes(1);

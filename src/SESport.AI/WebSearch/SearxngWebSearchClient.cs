@@ -130,6 +130,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       while(true)
       {
          var rateLimitedFailureCount = 0;
+         var skippedCooldownCount = 0;
 
          for(var attemptOffset = 0;
             attemptOffset < engines.Count;
@@ -141,7 +142,19 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                retryAttempt
             );
 
-            await RateLimiter.WaitAsync(engine, cancellationToken);
+            if(!await RateLimiter.TryWaitAsync(
+               engine,
+               cancellationToken
+            ))
+            {
+               skippedCooldownCount++;
+               Logger?.LogDebug(
+                  "Skipping SearXNG engine {Engine} because it is " +
+                  "on cooldown.",
+                  engine
+               );
+               continue;
+            }
 
             try
             {
@@ -207,6 +220,15 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          if(emptyResponse is not null)
          {
             return emptyResponse;
+         }
+
+         if(skippedCooldownCount > 0)
+         {
+            await RateLimiter.WaitForAnyEngineAsync(
+               engines,
+               cancellationToken
+            );
+            continue;
          }
 
          if(rateLimitedFailureCount < engines.Count)

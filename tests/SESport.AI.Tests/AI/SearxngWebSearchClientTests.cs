@@ -227,6 +227,59 @@ public class SearxngWebSearchClientTests
    }
 
    [Fact]
+   public async Task SearchSkipsRateLimitedEngineOnLaterSearch()
+   {
+      var handler = new SequenceHandler(
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.TooManyRequests,
+            "too many requests"
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
+         ),
+         new SequenceHandler.ResponseSpec(
+            HttpStatusCode.OK,
+            CreateResponseJson()
+         )
+      );
+      var rateLimiter = new SearchRateLimiter(
+         new WebSearchRateLimitOptions
+         {
+            MinimumRequestInterval = TimeSpan.Zero,
+            RateLimitedCooldown = TimeSpan.FromHours(1),
+            TransientFailureCooldown = TimeSpan.FromHours(1)
+         }
+      );
+      var client = new SearxngWebSearchClient(
+         new HttpClient(handler),
+         new SearxngWebSearchClientOptions
+         {
+            Engines = ["google", "brave"]
+         },
+         rateLimiter
+      );
+
+      await client.SearchAsync(
+         "Tre Kronor",
+         3,
+         CancellationToken.None,
+         searchAttempt: 1
+      );
+      await client.SearchAsync(
+         "World Cup",
+         3,
+         CancellationToken.None,
+         searchAttempt: 1
+      );
+
+      Assert.Equal(3, handler.RequestCount);
+      Assert.Contains("engines=brave", handler.RequestBodies[0]);
+      Assert.Contains("engines=google", handler.RequestBodies[1]);
+      Assert.Contains("engines=google", handler.RequestBodies[2]);
+   }
+
+   [Fact]
    public async Task SearchWaitsAndRetriesWhenRateLimited()
    {
       var handler = new SequenceHandler(

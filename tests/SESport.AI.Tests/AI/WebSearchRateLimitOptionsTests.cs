@@ -12,4 +12,15 @@ public sealed class WebSearchRateLimitOptionsTests
          options.MinimumRequestInterval
       );
    }
+
+   [Fact]
+   public void DefaultRateLimitedCooldownIsFifteenMinutes()
+   {
+      var options = new WebSearchRateLimitOptions();
+
+      Assert.Equal(
+         TimeSpan.FromMinutes(15),
+         options.RateLimitedCooldown
+      );
+   }
 }

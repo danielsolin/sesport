@@ -27,57 +27,65 @@ public sealed class SearchRateLimiter
 
    private TimeProvider TimeProvider { get; }
 
-   public async Task WaitAsync(
+   public async Task<bool> TryWaitAsync(
       string engine,
+      CancellationToken cancellationToken
+   )
+   {
+      if(GetEngineCooldownDelay(engine) > TimeSpan.Zero)
+      {
+         return false;
+      }
+
+      await requestGate.WaitAsync(cancellationToken);
+
+      try
+      {
+         if(GetEngineCooldownDelay(engine) > TimeSpan.Zero)
+         {
+            return false;
+         }
+
+         var requestDelay = GetGlobalRequestDelay();
+
+         if(requestDelay > TimeSpan.Zero)
+         {
+            await Task.Delay(
+               requestDelay,
+               TimeProvider,
+               cancellationToken
+            );
+         }
+
+         if(GetEngineCooldownDelay(engine) > TimeSpan.Zero)
+         {
+            return false;
+         }
+
+         ReserveNextRequestSlot();
+         return true;
+      }
+      finally
+      {
+         requestGate.Release();
+      }
+   }
+
+   public async Task WaitForAnyEngineAsync(
+      IReadOnlyList<string> engines,
       CancellationToken cancellationToken
    )
    {
       while(true)
       {
-         var cooldownDelay = GetEngineCooldownDelay(engine);
+         var cooldownDelay = GetEarliestEngineCooldownDelay(engines);
 
-         if(cooldownDelay > TimeSpan.Zero)
+         if(cooldownDelay <= TimeSpan.Zero)
          {
-            await Task.Delay(cooldownDelay, TimeProvider, cancellationToken);
-            continue;
-         }
-
-         await requestGate.WaitAsync(cancellationToken);
-
-         try
-         {
-            cooldownDelay = GetEngineCooldownDelay(engine);
-
-            if(cooldownDelay > TimeSpan.Zero)
-            {
-               continue;
-            }
-
-            var requestDelay = GetGlobalRequestDelay();
-
-            if(requestDelay > TimeSpan.Zero)
-            {
-               await Task.Delay(
-                  requestDelay,
-                  TimeProvider,
-                  cancellationToken
-               );
-            }
-
-            cooldownDelay = GetEngineCooldownDelay(engine);
-
-            if(cooldownDelay > TimeSpan.Zero)
-            {
-               continue;
-            }
-
-            ReserveNextRequestSlot();
             return;
          }
-         finally
-         {
-            requestGate.Release();
-         }
+
+         await Task.Delay(cooldownDelay, TimeProvider, cancellationToken);
       }
    }
 
@@ -110,6 +118,47 @@ public sealed class SearchRateLimiter
 
          return delay;
       }
+   }
+
+   private TimeSpan GetEarliestEngineCooldownDelay(
+      IReadOnlyList<string> engines
+   )
+   {
+      var now = TimeProvider.GetUtcNow();
+      var earliestCooldown = TimeSpan.MaxValue;
+
+      lock(stateLock)
+      {
+         foreach(var engine in engines)
+         {
+            if(!engineCooldowns.TryGetValue(
+               engine,
+               out var cooldownUntil
+            ))
+            {
+               continue;
+            }
+
+            var cooldownDelay = cooldownUntil - now;
+
+            if(cooldownDelay <= TimeSpan.Zero)
+            {
+               engineCooldowns.Remove(engine);
+               continue;
+            }
+
+            earliestCooldown = TimeSpan.FromTicks(
+               Math.Min(
+                  earliestCooldown.Ticks,
+                  cooldownDelay.Ticks
+               )
+            );
+         }
+      }
+
+      return earliestCooldown == TimeSpan.MaxValue
+         ? TimeSpan.Zero
+         : earliestCooldown;
    }
 
    private TimeSpan GetGlobalRequestDelay()
