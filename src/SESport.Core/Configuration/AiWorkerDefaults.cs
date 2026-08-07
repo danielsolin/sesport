@@ -6,6 +6,12 @@ public static class AiWorkerDefaults
       TimeSpan.FromSeconds(5);
    public static readonly TimeSpan CompletionPollInterval =
       TimeSpan.FromSeconds(1);
+   public const int RunPersistenceMaxAttempts = 3;
+   public static readonly IReadOnlyList<TimeSpan> RunPersistenceRetryDelays =
+   [
+      TimeSpan.FromMilliseconds(250),
+      TimeSpan.FromSeconds(1)
+   ];
    public static readonly TimeSpan RunTimeoutStaleAge =
       TimeSpan.FromHours(1);
    public static readonly TimeSpan RunTimeoutSweepInterval =

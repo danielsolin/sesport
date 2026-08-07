@@ -83,6 +83,16 @@ public sealed class AiJobRunner(
       {
          throw;
       }
+      catch(AiJobCompletionPersistenceException exception)
+      {
+         logger?.LogError(
+            exception,
+            "AI run {RunId} completed at the provider, but its final " +
+            "database state could not be verified. The run was left " +
+            "unchanged to avoid overwriting a possible completion.",
+            runId
+         );
+      }
       catch(Exception exception)
       {
          await MarkRunFailedAsync(
@@ -177,9 +187,11 @@ public sealed class AiJobRunner(
          }
       }
 
+      AiJobResult providerResult;
+
       try
       {
-         var providerResult = await context.ProviderClient.GenerateAsync(
+         providerResult = await context.ProviderClient.GenerateAsync(
             context.Provider,
             context.Job,
             context.Prompt,
@@ -188,55 +200,12 @@ public sealed class AiJobRunner(
             cancellationToken,
             ReportToolTraceProgressAsync
          );
-         var tokenUsage = ExtractTokenUsage(
-            providerResult.RawResponseJson
-         );
-
-         run = run with
-         {
-            Status = AiJobRunStatus.Completed,
-            RawRequestJson = providerResult.RawRequestJson,
-            RawResponseJson = providerResult.RawResponseJson,
-            ToolTraceJson = providerResult.ToolTraceJson,
-            ToolRoundCount = providerResult.ToolRoundCount,
-            ConversationCharacterCount =
-               providerResult.ConversationCharacterCount,
-            OutputText = providerResult.OutputText,
-            InputTokens = tokenUsage.inputTokens,
-            OutputTokens = tokenUsage.outputTokens,
-            ReasoningTokens = tokenUsage.reasoningTokens,
-            CompletedAt = DateTimeOffset.UtcNow,
-            DurationSeconds = (decimal)(
-               DateTimeOffset.UtcNow - run.StartedAt
-            ).TotalSeconds
-         };
-
-         await runRepository.UpdateAsync(run, cancellationToken);
-
-         return new AiJobResult(
-            run.Id,
-            run.JobId,
-            run.ProviderId,
-            run.ProviderModel,
-            GetRenderedPromptText(
-               run.RenderedSystemPrompt,
-               run.RenderedPrompt
-            ),
-            providerResult.RawRequestJson,
-            run.OutputText ?? string.Empty,
-            run.RawResponseJson,
-            run.ToolTraceJson,
-            run.ToolRoundCount,
-            run.ConversationCharacterCount,
-            tokenUsage.inputTokens,
-            tokenUsage.outputTokens,
-            tokenUsage.reasoningTokens,
-            null
-         );
       }
       catch(AiProviderExecutionException exception)
       {
-         var tokenUsage = ExtractTokenUsage(exception.RawResponseJson);
+         var failureTokenUsage = ExtractTokenUsage(
+            exception.RawResponseJson
+         );
 
          run = run with
          {
@@ -249,16 +218,16 @@ public sealed class AiJobRunner(
             ConversationCharacterCount =
                exception.ConversationCharacterCount,
             ErrorMessage = exception.Message,
-            InputTokens = tokenUsage.inputTokens,
-            OutputTokens = tokenUsage.outputTokens,
-            ReasoningTokens = tokenUsage.reasoningTokens,
+            InputTokens = failureTokenUsage.inputTokens,
+            OutputTokens = failureTokenUsage.outputTokens,
+            ReasoningTokens = failureTokenUsage.reasoningTokens,
             CompletedAt = DateTimeOffset.UtcNow,
             DurationSeconds = (decimal)(
                DateTimeOffset.UtcNow - run.StartedAt
             ).TotalSeconds
          };
 
-         await runRepository.UpdateAsync(run, cancellationToken);
+         await PersistRunWithRetryAsync(run, cancellationToken);
 
          return new AiJobResult(
             run.Id,
@@ -275,9 +244,9 @@ public sealed class AiJobRunner(
             run.ToolTraceJson,
             run.ToolRoundCount,
             run.ConversationCharacterCount,
-            tokenUsage.inputTokens,
-            tokenUsage.outputTokens,
-            tokenUsage.reasoningTokens,
+            failureTokenUsage.inputTokens,
+            failureTokenUsage.outputTokens,
+            failureTokenUsage.reasoningTokens,
             exception.Message
          );
       }
@@ -293,7 +262,7 @@ public sealed class AiJobRunner(
             ).TotalSeconds
          };
 
-         await runRepository.UpdateAsync(run, cancellationToken);
+         await PersistRunWithRetryAsync(run, cancellationToken);
 
          return new AiJobResult(
             run.Id,
@@ -316,7 +285,196 @@ public sealed class AiJobRunner(
             exception.Message
          );
       }
+
+      var tokenUsage = ExtractTokenUsage(
+         providerResult.RawResponseJson
+      );
+
+      run = run with
+      {
+         Status = AiJobRunStatus.Completed,
+         RawRequestJson = providerResult.RawRequestJson,
+         RawResponseJson = providerResult.RawResponseJson,
+         ToolTraceJson = providerResult.ToolTraceJson,
+         ToolRoundCount = providerResult.ToolRoundCount,
+         ConversationCharacterCount =
+            providerResult.ConversationCharacterCount,
+         OutputText = providerResult.OutputText,
+         ErrorMessage = null,
+         InputTokens = tokenUsage.inputTokens,
+         OutputTokens = tokenUsage.outputTokens,
+         ReasoningTokens = tokenUsage.reasoningTokens,
+         CompletedAt = DateTimeOffset.UtcNow,
+         DurationSeconds = (decimal)(
+            DateTimeOffset.UtcNow - run.StartedAt
+         ).TotalSeconds
+      };
+
+      await PersistCompletedRunAsync(run, cancellationToken);
+
+      return new AiJobResult(
+         run.Id,
+         run.JobId,
+         run.ProviderId,
+         run.ProviderModel,
+         GetRenderedPromptText(
+            run.RenderedSystemPrompt,
+            run.RenderedPrompt
+         ),
+         providerResult.RawRequestJson,
+         run.OutputText ?? string.Empty,
+         run.RawResponseJson,
+         run.ToolTraceJson,
+         run.ToolRoundCount,
+         run.ConversationCharacterCount,
+         tokenUsage.inputTokens,
+         tokenUsage.outputTokens,
+         tokenUsage.reasoningTokens,
+         null
+      );
    }
+
+   private async Task PersistCompletedRunAsync(
+      AiJobRun run,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         await PersistRunWithRetryAsync(run, cancellationToken);
+      }
+      catch(AiRunPersistenceException exception)
+      {
+         if(await IsCompletedRunPersistedAsync(
+            run.Id,
+            cancellationToken
+         ))
+         {
+            return;
+         }
+
+         throw new AiJobCompletionPersistenceException(
+            run.Id,
+            exception
+         );
+      }
+   }
+
+   private async Task PersistRunWithRetryAsync(
+      AiJobRun run,
+      CancellationToken cancellationToken
+   )
+   {
+      Exception? lastException = null;
+
+      for(
+         var attempt = 1;
+         attempt <= AiWorkerDefaults.RunPersistenceMaxAttempts;
+         attempt++
+      )
+      {
+         try
+         {
+            await runRepository.UpdateAsync(run, cancellationToken);
+            return;
+         }
+         catch(OperationCanceledException)
+            when(cancellationToken.IsCancellationRequested)
+         {
+            throw;
+         }
+         catch(Exception exception)
+         {
+            lastException = exception;
+
+            if(attempt >= AiWorkerDefaults.RunPersistenceMaxAttempts)
+            {
+               break;
+            }
+
+            var delay = GetRunPersistenceRetryDelay(attempt);
+
+            logger?.LogWarning(
+               exception,
+               "Unable to persist AI run {RunId} on attempt {Attempt}. " +
+               "Retrying in {Delay}.",
+               run.Id,
+               attempt,
+               delay
+            );
+
+            await Task.Delay(delay, cancellationToken);
+         }
+      }
+
+      throw new AiRunPersistenceException(
+         run.Id,
+         lastException!
+      );
+   }
+
+   private async Task<bool> IsCompletedRunPersistedAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         var persistedRun = await runRepository.GetRunAsync(
+            runId,
+            cancellationToken
+         );
+
+         return string.Equals(
+            persistedRun?.StatusId,
+            AiJobRunStatusIds.Completed,
+            StringComparison.Ordinal
+         );
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(Exception exception)
+      {
+         logger?.LogWarning(
+            exception,
+            "Unable to verify completion state for AI run {RunId}.",
+            runId
+         );
+         return false;
+      }
+   }
+
+   private static TimeSpan GetRunPersistenceRetryDelay(int attempt)
+   {
+      var retryDelays = AiWorkerDefaults.RunPersistenceRetryDelays;
+
+      if(attempt < 1 || attempt > retryDelays.Count)
+      {
+         return retryDelays[^1];
+      }
+
+      return retryDelays[attempt - 1];
+   }
+
+   private sealed class AiRunPersistenceException(
+      Guid runId,
+      Exception innerException
+   ) : Exception(
+      $"Unable to persist AI run '{runId}' after " +
+      $"{AiWorkerDefaults.RunPersistenceMaxAttempts} attempts.",
+      innerException
+   );
+
+   private sealed class AiJobCompletionPersistenceException(
+      Guid runId,
+      Exception innerException
+   ) : Exception(
+      $"Unable to persist completed AI run '{runId}'.",
+      innerException
+   );
 
    private async Task<ExecutionContext> BuildExecutionContextAsync(
       AiJobRequest request,

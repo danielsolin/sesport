@@ -93,6 +93,72 @@ public class AiJobRunnerTests
    }
 
    [Fact]
+   public async Task RunAsyncRetriesCompletionPersistenceWithoutFailingRun()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new SuccessfulProviderClient();
+      var runRepository = new RecordingRunRepository
+      {
+         UpdateFailuresRemaining = 1
+      };
+      var executionGate = new AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var result = await runner.RunAsync(
+         new AiJobRequest("job", "{\"event\":\"test\"}"),
+         CancellationToken.None
+      );
+
+      Assert.Null(result.ErrorMessage);
+      Assert.Equal(2, runRepository.UpdateCallCount);
+      Assert.NotNull(runRepository.UpdatedRun);
+      Assert.Equal(
+         AiJobRunStatus.Completed,
+         runRepository.UpdatedRun!.Status
+      );
+      Assert.Null(runRepository.UpdatedRun.ErrorMessage);
+   }
+
+   [Fact]
+   public async Task ProcessRunAsyncDoesNotFailWhenCompletionStateIsUnknown()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new SuccessfulProviderClient();
+      var runRepository = new RecordingRunRepository
+      {
+         AlwaysFailUpdates = true
+      };
+      var executionGate = new AiJobExecutionGate();
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var runId = await runner.QueueAsync(
+         new AiJobRequest("job", "{\"event\":\"test\"}"),
+         CancellationToken.None
+      );
+
+      await runner.ProcessRunAsync(runId, CancellationToken.None);
+
+      Assert.Equal(3, runRepository.UpdateCallCount);
+      Assert.False(runRepository.FailRunCalled);
+      Assert.Null(runRepository.UpdatedRun);
+   }
+
+   [Fact]
    public async Task RunAsyncPersistsLatestToolRoundCountFromProgress()
    {
       var jobRepository = new RecordingJobDefinitionRepository();
@@ -567,6 +633,14 @@ public class AiJobRunnerTests
 
       public AiJobRun? UpdatedRun { get; private set; }
 
+      public int UpdateFailuresRemaining { get; set; }
+
+      public bool AlwaysFailUpdates { get; set; }
+
+      public int UpdateCallCount { get; private set; }
+
+      public bool FailRunCalled { get; private set; }
+
       public Task StoreAsync(
          AiJobRun run,
          CancellationToken cancellationToken
@@ -693,6 +767,7 @@ public class AiJobRunnerTests
          CancellationToken cancellationToken
       )
       {
+         FailRunCalled = true;
          var run = UpdatedRun ?? StoredRun;
 
          if(run is not null)
@@ -713,6 +788,20 @@ public class AiJobRunnerTests
          CancellationToken cancellationToken
       )
       {
+         UpdateCallCount++;
+
+         if(AlwaysFailUpdates || UpdateFailuresRemaining > 0)
+         {
+            if(UpdateFailuresRemaining > 0)
+            {
+               UpdateFailuresRemaining--;
+            }
+
+            throw new InvalidOperationException(
+               "Run persistence is temporarily unavailable."
+            );
+         }
+
          UpdatedRun = run;
          return Task.CompletedTask;
       }
