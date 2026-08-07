@@ -1,4 +1,4 @@
-namespace SESport.Core.Domain;
+namespace SESport.Core.Configuration;
 
 public static class PrimaryCountry
 {

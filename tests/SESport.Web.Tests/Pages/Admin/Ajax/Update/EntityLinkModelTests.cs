@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Npgsql;
 
+using SESport.Core.Configuration;
 using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Ajax.Update;
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
+using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
 using SESport.Data.Repositories;

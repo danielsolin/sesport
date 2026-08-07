@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
+using SESport.Core.Configuration;
+
 namespace SESport.Core.Broadcast;
 
 public sealed partial class BroadcastXmlParser

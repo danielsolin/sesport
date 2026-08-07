@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Npgsql;
 
+using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
