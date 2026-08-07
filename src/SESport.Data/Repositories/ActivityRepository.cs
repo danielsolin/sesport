@@ -494,6 +494,31 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<bool> RequiresParticipantStartTimesAsync(
+      string sportId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select requires_start_time
+         from sports
+         where id = @sport_id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("sport_id", sportId.Trim());
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return false;
+      }
+
+      return reader.GetBoolean(0);
+   }
+
    public async Task<IReadOnlyList<LookupOption>>
       SearchActivityGroupOptionsAsync(
          string? term,

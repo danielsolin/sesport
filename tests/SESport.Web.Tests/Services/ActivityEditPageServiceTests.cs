@@ -1296,33 +1296,35 @@ public sealed class ActivityEditPageServiceTests
       var secondPersonId = Guid.NewGuid();
       var firstPersonName = $"First {Guid.NewGuid():N}";
       var secondPersonName = $"Second {Guid.NewGuid():N}";
+      var sportId = $"test-sport-{Guid.NewGuid():N}";
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
 
-      await InsertRelatedEntityAsync(
-         dataSource,
-         firstPersonId,
-         firstPersonName,
-         TrackedEntityTypeIds.Person,
-         "football"
-      );
-      await InsertRelatedEntityAsync(
-         dataSource,
-         secondPersonId,
-         secondPersonName,
-         TrackedEntityTypeIds.Person,
-         "football"
-      );
-
       try
       {
+         await InsertSportAsync(dataSource, sportId, true);
+         await InsertRelatedEntityAsync(
+            dataSource,
+            firstPersonId,
+            firstPersonName,
+            TrackedEntityTypeIds.Person,
+            sportId
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            secondPersonId,
+            secondPersonName,
+            TrackedEntityTypeIds.Person,
+            sportId
+         );
+
          var activity = new ActivityEditModel
          {
             Title = "Activity title",
             ActivityGroupTitle = "Activity group title",
             ActivityType = "Match",
-            SportId = "football",
+            SportId = sportId,
             ActivityDate = DistantActivityDate.AddDays(-5),
             LinkedEntityIds = [firstPersonId, secondPersonId]
          };
@@ -1360,6 +1362,42 @@ public sealed class ActivityEditPageServiceTests
       {
          await DeleteEntityAsync(dataSource, firstPersonId);
          await DeleteEntityAsync(dataSource, secondPersonId);
+         await DeleteSportAsync(dataSource, sportId);
+      }
+   }
+
+   [Fact]
+   public async Task
+      QueueFindParticipantsStartAsyncIgnoresSportStartTimeRequirement()
+   {
+      var sportId = $"test-sport-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      try
+      {
+         await InsertSportAsync(dataSource, sportId, false);
+
+         var activity = new ActivityEditModel
+         {
+            Title = "Activity title",
+            ActivityType = "Match",
+            SportId = sportId,
+            ActivityDate = DistantActivityDate.AddDays(-5)
+         };
+
+         await fixture.Service.QueueFindParticipantsStartAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var request = Assert.Single(fixture.JobRunner.Requests);
+         Assert.Equal(AiJobIds.FindParticipantsStart, request.JobId);
+      }
+      finally
+      {
+         await DeleteSportAsync(dataSource, sportId);
       }
    }
 
@@ -1477,6 +1515,50 @@ public sealed class ActivityEditPageServiceTests
          automationService,
          applicationLifetime
       );
+   }
+
+   private static async Task InsertSportAsync(
+      NpgsqlDataSource dataSource,
+      string sportId,
+      bool requiresParticipantStartTimes
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into sports (
+            id,
+            name,
+            requires_start_time
+         )
+         values (
+            @id,
+            @name,
+            @requires_start_time
+         )
+         """;
+      command.Parameters.AddWithValue("id", sportId);
+      command.Parameters.AddWithValue("name", sportId);
+      command.Parameters.AddWithValue(
+         "requires_start_time",
+         requiresParticipantStartTimes
+      );
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteSportAsync(
+      NpgsqlDataSource dataSource,
+      string sportId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from sports
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", sportId);
+      await command.ExecuteNonQueryAsync();
    }
 
    private static async Task<(Guid ActivityId, Guid? ActivityGroupId)>

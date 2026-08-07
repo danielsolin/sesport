@@ -21,6 +21,7 @@ public static class AiServiceCollectionExtensions
       services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
       services.AddSingleton<SearchRateLimiter>();
       services.AddSingleton<WebSearchCache>();
+      services.AddScoped<AiJobEligibilityService>();
       services.AddScoped<AiJobRunner>();
       services.AddScoped<IAiJobRunner>(
          serviceProvider => serviceProvider.GetRequiredService<AiJobRunner>()

@@ -15,6 +15,7 @@ public sealed class AiAutomationService(
    AiAutomationRepository repository,
    ActivityRepository activityRepository,
    ActivityAiInputBuilder inputBuilder,
+   AiJobEligibilityService eligibilityService,
    IAiJobRunner jobRunner,
    ILogger<AiAutomationService> logger
 ) : IAiAutomationService
@@ -48,13 +49,39 @@ public sealed class AiAutomationService(
          return;
       }
 
+      var eligibleJobIds = new List<string>();
+      foreach(var jobId in jobIds)
+      {
+         if(await eligibilityService.CanQueueAsync(
+               jobId,
+               activity,
+               cancellationToken
+            ))
+         {
+            eligibleJobIds.Add(jobId);
+            continue;
+         }
+
+         logger.LogInformation(
+            "Skipping AI automation job {JobId} for activity {ActivityId}; "
+               + "the sport does not require participant start times.",
+            jobId,
+            activityId
+         );
+      }
+
+      if(eligibleJobIds.Count == 0)
+      {
+         return;
+      }
+
       var input = await inputBuilder.BuildAsync(
          activity,
          cancellationToken,
          activity.ActivityGroupTitle
       );
 
-      foreach(var jobId in jobIds)
+      foreach(var jobId in eligibleJobIds)
       {
          await jobRunner.QueueAsync(
             new AiJobRequest(jobId, input, activityId.ToString()),

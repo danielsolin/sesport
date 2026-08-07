@@ -37,6 +37,12 @@
    </select>
    <span asp-validation-for="Rule.JobId"></span>
 
+   <div class="notice">
+      <code>find-participants-start</code> is only queued for activities whose
+      sport has <em>Requires Participant Start Times</em> enabled. Manual runs
+      are always allowed.
+   </div>
+
    <label class="check-row">
       <input asp-for="Rule.Enabled" type="checkbox" />
       <span>Enabled</span>
