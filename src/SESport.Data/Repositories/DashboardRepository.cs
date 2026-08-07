@@ -111,6 +111,16 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                      )
                ) as no_related_source,
                coalesce(s.requires_start_time, false)
+                  and coalesce(
+                     a.starts_at,
+                     (
+                        a.activity_date
+                        + coalesce(
+                           a.local_start_time,
+                           time '23:59:59'
+                        )
+                     ) at time zone a.time_zone_id
+                  ) <= @participant_start_time_cutoff
                   and exists (
                      select 1
                      from activity_entity_links participant_link
@@ -293,6 +303,12 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
          today.AddDays(DashboardDefaults.ActivityHorizonDayCount)
       );
       command.Parameters.AddWithValue("now", now);
+      command.Parameters.AddWithValue(
+         "participant_start_time_cutoff",
+         now.AddHours(
+            DashboardDefaults.ParticipantStartTimeWarningHorizonHours
+         )
+      );
       command.Parameters.AddWithValue(
          "failed_since",
          now.AddHours(-DashboardDefaults.FailedAiRunLookbackHours)
