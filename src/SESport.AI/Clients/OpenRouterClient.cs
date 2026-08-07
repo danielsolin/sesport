@@ -14,8 +14,6 @@ namespace SESport.AI.Clients;
 // client is not kept in feature parity with LlamaServerClient.
 public sealed class OpenRouterClient : IAiProviderClient
 {
-   private const int MaxRateLimitRetries = 5;
-
    private static readonly JsonSerializerOptions JsonOptions = new(
       JsonSerializerDefaults.Web
    )
@@ -134,7 +132,7 @@ public sealed class OpenRouterClient : IAiProviderClient
          }
 
          if(response.StatusCode == HttpStatusCode.TooManyRequests &&
-            retry < MaxRateLimitRetries)
+            retry < AiDefaults.OpenRouterMaxRateLimitRetries)
          {
             var retryAfter = GetRetryAfter(response, rawResponse);
             await Task.Delay(retryAfter, cancellationToken);
@@ -269,7 +267,7 @@ public sealed class OpenRouterClient : IAiProviderClient
             : retryAfter.Delta.Value;
       }
 
-      return TimeSpan.FromSeconds(10);
+      return AiDefaults.OpenRouterDefaultRetryDelay;
    }
 
    private static bool TryGetRetryAfterFromJson(

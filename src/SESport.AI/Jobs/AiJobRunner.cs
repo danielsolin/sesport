@@ -126,7 +126,10 @@ public sealed class AiJobRunner(
             return MapResult(run);
          }
 
-         await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+         await Task.Delay(
+            AiWorkerDefaults.CompletionPollInterval,
+            cancellationToken
+         );
       }
    }
 

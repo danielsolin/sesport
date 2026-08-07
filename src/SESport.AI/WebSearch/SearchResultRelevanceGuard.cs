@@ -4,22 +4,20 @@ namespace SESport.AI.WebSearch;
 
 internal static partial class SearchResultRelevanceGuard
 {
-   private const int MinimumQueryTermCount = 4;
-   private const int MinimumResultCount = 5;
-   private const int MinimumMatchingTermCount = 2;
-
    internal static bool IsCatastrophicallyIrrelevant(
       string query,
       IReadOnlyList<WebSearchResult> results
    )
    {
-      if(results.Count < MinimumResultCount)
+      if(results.Count < WebSearchDefaults.RelevanceMinimumResultCount)
       {
          return false;
       }
 
       var queryTerms = ReadDistinctTerms(query);
-      if(queryTerms.Count < MinimumQueryTermCount)
+      if(
+         queryTerms.Count < WebSearchDefaults.RelevanceMinimumQueryTermCount
+      )
       {
          return false;
       }
@@ -27,7 +25,7 @@ internal static partial class SearchResultRelevanceGuard
       return !results.Any(result => CountMatchingTerms(
          queryTerms,
          result.Title + " " + result.Snippet
-      ) >= MinimumMatchingTermCount);
+      ) >= WebSearchDefaults.RelevanceMinimumMatchingTermCount);
    }
 
    private static HashSet<string> ReadDistinctTerms(string text)

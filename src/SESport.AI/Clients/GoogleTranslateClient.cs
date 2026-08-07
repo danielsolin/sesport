@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using Microsoft.Playwright;
 
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 
 namespace SESport.AI.Clients;
 
@@ -202,7 +203,8 @@ public sealed class GoogleTranslateClient : IAiProviderClient
          new PageGotoOptions
          {
             WaitUntil = WaitUntilState.DOMContentLoaded,
-            Timeout = 60000
+            Timeout = (float)
+               AiDefaults.GoogleTranslatePageTimeout.TotalMilliseconds
          }
       ).WaitAsync(cancellationToken);
 
@@ -228,10 +230,14 @@ public sealed class GoogleTranslateClient : IAiProviderClient
          new LocatorWaitForOptions
          {
             State = WaitForSelectorState.Visible,
-            Timeout = 60000
+            Timeout = (float)
+               AiDefaults.GoogleTranslatePageTimeout.TotalMilliseconds
          }
       ).WaitAsync(cancellationToken);
-      await page.WaitForTimeoutAsync(500)
+      await page.WaitForTimeoutAsync(
+         (float)AiDefaults.GoogleTranslateStabilityDelay
+            .TotalMilliseconds
+      )
          .WaitAsync(cancellationToken);
 
       var translatedText = string.Join(

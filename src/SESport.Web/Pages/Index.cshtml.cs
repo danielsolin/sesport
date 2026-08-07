@@ -3,6 +3,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
@@ -11,9 +12,12 @@ namespace SESport.Web.Pages;
 
 public class IndexModel(
    ActivityRepository repository,
-   PublicActivityTimelineBuilder timelineBuilder
+   PublicActivityTimelineBuilder timelineBuilder,
+   PublicSiteOptions publicSiteOptions
 ) : PageModel
 {
+   public PublicSiteOptions PublicSiteOptions { get; } = publicSiteOptions;
+
    public IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries
    {
       get; private set;

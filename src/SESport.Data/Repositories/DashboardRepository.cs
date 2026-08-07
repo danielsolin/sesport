@@ -11,10 +11,6 @@ namespace SESport.Data.Repositories;
 
 public sealed class DashboardRepository(NpgsqlDataSource dataSource)
 {
-   private const int CoverageDayCount = 8;
-   private const int ActivityHorizonDayCount = 14;
-   private const int ActivityIssueLimit = 20;
-
    public async Task<AdminDashboardSnapshot> GetAsync(
       DateTimeOffset now,
       CancellationToken cancellationToken
@@ -207,7 +203,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             missing_participant_start_time desc,
             participant_missing_person_data desc,
             title
-         limit {{ActivityIssueLimit}};
+         limit {{DashboardDefaults.ActivityIssueLimit}};
 
          select
             count(*) filter (
@@ -290,16 +286,16 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("today", today);
       command.Parameters.AddWithValue(
          "coverage_end",
-         today.AddDays(CoverageDayCount - 1)
+         today.AddDays(DashboardDefaults.CoverageDayCount - 1)
       );
       command.Parameters.AddWithValue(
          "activity_end",
-         today.AddDays(ActivityHorizonDayCount)
+         today.AddDays(DashboardDefaults.ActivityHorizonDayCount)
       );
       command.Parameters.AddWithValue("now", now);
       command.Parameters.AddWithValue(
          "failed_since",
-         now.AddHours(-25)
+         now.AddHours(-DashboardDefaults.FailedAiRunLookbackHours)
       );
       command.Parameters.AddWithValue(
          "stale_running_before",

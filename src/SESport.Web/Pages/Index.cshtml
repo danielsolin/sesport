@@ -1,10 +1,8 @@
 @page
 @model IndexModel
 @{
-   const string CanonicalHomeUrl = "https://sesport.se/";
-   const string PageDescription =
-      "Svenskar i internationell sport på TV";
-   const int MaxVisibleParticipants = 10;
+   var maxVisibleParticipants =
+      Model.PublicSiteOptions.MaxVisibleParticipants;
    var isFilteredView =
       Request.Query.ContainsKey(RouteKeys.Date) ||
       Request.Query.ContainsKey(RouteKeys.Sport);
@@ -12,20 +10,21 @@
       .First(option => option.IsSelected);
 }
 @section Head {
-   <title>Svenskar i internationell sport på TV – sesport</title>
-   <link rel="canonical" href="@CanonicalHomeUrl" />
+   <title>@Model.PublicSiteOptions.PageDescription – sesport</title>
+   <link rel="canonical"
+         href="@Model.PublicSiteOptions.CanonicalHomeUrl" />
    @if(isFilteredView)
    {
       <meta name="robots" content="noindex,follow" />
    }
    <meta name="description"
-         content="@PageDescription" />
+         content="@Model.PublicSiteOptions.PageDescription" />
    <meta property="og:title" content="sesport" />
    <meta property="og:description"
-         content="@PageDescription" />
+         content="@Model.PublicSiteOptions.PageDescription" />
    <meta name="twitter:title" content="sesport" />
    <meta name="twitter:description"
-         content="@PageDescription" />
+         content="@Model.PublicSiteOptions.PageDescription" />
 }
 
 <aside class="public-install-promotion"
@@ -481,7 +480,7 @@ else
                               : "activity-participant-table";
                         var shouldCollapseParticipants =
                            activity.Participants.Count >
-                              MaxVisibleParticipants;
+                              maxVisibleParticipants;
                         if(shouldCollapseParticipants)
                         {
                            participantTableClass +=
@@ -552,13 +551,13 @@ else
                                        participant.IsActive
                                           ? shouldCollapseParticipants &&
                                             participantIndex >=
-                                               MaxVisibleParticipants
+                                               maxVisibleParticipants
                                              ? "activity-participant-row-" +
                                                 "collapsed"
                                              : null
                                           : shouldCollapseParticipants &&
                                             participantIndex >=
-                                               MaxVisibleParticipants
+                                               maxVisibleParticipants
                                              ? "activity-participant-" +
                                                 "inactive " +
                                                 "activity-participant-row-" +

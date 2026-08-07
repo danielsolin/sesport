@@ -16,7 +16,10 @@ public sealed class DashboardRepositoryTests
          CancellationToken.None
       );
 
-      Assert.Equal(8, dashboard.Dates.Count);
+      Assert.Equal(
+         DashboardDefaults.CoverageDayCount,
+         dashboard.Dates.Count
+      );
       Assert.Equal(
          SportDay.GetSportDate(now),
          dashboard.Dates[0].Date

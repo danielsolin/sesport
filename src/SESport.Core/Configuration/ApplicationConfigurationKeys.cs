@@ -13,4 +13,6 @@ public static class ApplicationConfigurationKeys
    public const string SearxngSection = "SearXNG";
 
    public const string WebStatsSection = "WebStats";
+
+   public const string PublicSiteSection = "PublicSite";
 }

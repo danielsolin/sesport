@@ -1,9 +1,7 @@
-using System.Globalization;
-using System.Text;
-
 using Npgsql;
 
 using SESport.Core.Broadcast;
+using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
@@ -12,8 +10,6 @@ namespace SESport.Data.Repositories;
 
 public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 {
-   private const double ActivityGroupMatchWindowHours = 72;
-
    public async Task<BroadcastListItem?> GetByIdAsync(
       Guid id,
       CancellationToken cancellationToken
@@ -799,10 +795,12 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          SportDay.TimeZoneId
       ).DateTime;
       var broadcastDate = DateOnly.FromDateTime(broadcastLocalStart);
-      var startDate = broadcastDate.AddDays(-2);
-      var endDate = broadcastDate.AddDays(2);
-      var normalizedBroadcastTitle = NormalizeMatchText(broadcast.Title);
-
+      var startDate = broadcastDate.AddDays(
+         -ActivityGroupDefaults.CandidateDateRangeDays
+      );
+      var endDate = broadcastDate.AddDays(
+         ActivityGroupDefaults.CandidateDateRangeDays
+      );
       var sql = $$"""
          select
             a.id,
@@ -846,9 +844,9 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             ? TimeOnly.FromDateTime(broadcastLocalStart)
             : reader.GetFieldValue<TimeOnly>(3);
          var candidateLocalStart = candidateDate.ToDateTime(candidateTime);
-         var candidateScore = GetMatchScore(
-            normalizedBroadcastTitle,
-            NormalizeMatchText(candidateTitle),
+         var candidateScore = BroadcastActivityMatchScorer.GetScore(
+            broadcast.Title,
+            candidateTitle,
             broadcastLocalStart,
             candidateLocalStart
          );
@@ -884,130 +882,4 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       return (string?)await command.ExecuteScalarAsync(cancellationToken);
    }
 
-   private static int GetMatchScore(
-      string broadcastTitle,
-      string activityTitle,
-      DateTime broadcastLocalStart,
-      DateTime activityLocalStart
-   )
-   {
-      var hourDistance = Math.Abs(
-         (broadcastLocalStart - activityLocalStart).TotalHours
-      );
-
-      if(hourDistance > ActivityGroupMatchWindowHours)
-      {
-         return 0;
-      }
-
-      var titleScore = 0;
-
-      if(!string.IsNullOrWhiteSpace(broadcastTitle) &&
-         !string.IsNullOrWhiteSpace(activityTitle) &&
-         string.Equals(
-         broadcastTitle,
-         activityTitle,
-         StringComparison.Ordinal
-      ))
-      {
-         titleScore = 30;
-      }
-      else if(!string.IsNullOrWhiteSpace(broadcastTitle) &&
-         !string.IsNullOrWhiteSpace(activityTitle))
-      {
-         var broadcastTokens = GetMatchTokens(broadcastTitle);
-         var activityTokens = GetMatchTokens(activityTitle);
-
-         if(broadcastTitle.Contains(
-            activityTitle,
-            StringComparison.Ordinal
-         ) || activityTitle.Contains(
-            broadcastTitle,
-            StringComparison.Ordinal
-         ))
-         {
-            titleScore = 20;
-         }
-         else
-         {
-            var overlap = broadcastTokens.Intersect(activityTokens).Count();
-
-            titleScore = Math.Min(15, overlap * 5);
-         }
-      }
-
-      var timeScore = (int)Math.Round(
-         (ActivityGroupMatchWindowHours - hourDistance) * 60,
-         MidpointRounding.AwayFromZero
-      );
-
-      return timeScore + titleScore + 1;
-   }
-
-   private static IReadOnlyCollection<string> GetMatchTokens(string value)
-   {
-      var normalized = NormalizeMatchText(value);
-
-      if(string.IsNullOrWhiteSpace(normalized))
-      {
-         return [];
-      }
-
-      return normalized
-         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-         .Where(token => !IsYearToken(token))
-         .Distinct(StringComparer.Ordinal)
-         .ToArray();
-   }
-
-   private static bool IsYearToken(string token)
-   {
-      if(token.Length != 4 ||
-         !int.TryParse(
-            token,
-            NumberStyles.None,
-            CultureInfo.InvariantCulture,
-            out var year
-         ))
-      {
-         return false;
-      }
-
-      return year is >= 1900 and <= 2100;
-   }
-
-   private static string NormalizeMatchText(string value)
-   {
-      var normalized = value.Normalize(NormalizationForm.FormD);
-      var builder = new StringBuilder();
-      var lastWasSeparator = false;
-
-      foreach(var character in normalized)
-      {
-         var category = CharUnicodeInfo.GetUnicodeCategory(character);
-
-         if(category == UnicodeCategory.NonSpacingMark)
-         {
-            continue;
-         }
-
-         if(char.IsLetterOrDigit(character))
-         {
-            builder.Append(char.ToLowerInvariant(character));
-            lastWasSeparator = false;
-            continue;
-         }
-
-         if(!lastWasSeparator)
-         {
-            builder.Append(' ');
-            lastWasSeparator = true;
-         }
-      }
-
-      return builder
-         .ToString()
-         .Normalize(NormalizationForm.FormC)
-         .Trim();
-   }
 }

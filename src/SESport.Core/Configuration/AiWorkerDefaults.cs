@@ -4,6 +4,8 @@ public static class AiWorkerDefaults
 {
    public static readonly TimeSpan PendingRunPollInterval =
       TimeSpan.FromSeconds(5);
+   public static readonly TimeSpan CompletionPollInterval =
+      TimeSpan.FromSeconds(1);
    public static readonly TimeSpan RunTimeoutStaleAge =
       TimeSpan.FromHours(1);
    public static readonly TimeSpan RunTimeoutSweepInterval =

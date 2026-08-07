@@ -25,6 +25,13 @@ Use this for recurring repo clean-up.
   project. For example, Web owns `appsettings.json`, configuration binding,
   and dependency-injection registration, while the bound option types and
   defaults remain in `SESport.Core.Configuration`.
+- Treat deployment/site settings and tunable application behavior, such as
+  limits, windows, timeouts, and public-page display thresholds, as
+  configuration. Razor views and PageModels must consume bound options rather
+  than define those values locally.
+- Keep UI copy, route/query names, SQL, protocol field names, and
+  implementation-only invariants in their owning project unless they are
+  intentionally configurable.
 - Keep `SESport.AI` for AI clients, prompts, and job execution.
 - Keep `SESport.Web` for Razor Pages, workers, and orchestration.
 - Avoid `<Compile Remove>` unless there is no better fix.

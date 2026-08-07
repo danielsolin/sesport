@@ -5,8 +5,6 @@ namespace SESport.AI.WebPages;
 
 internal static class WebPageUrlPolicy
 {
-   private const int MaximumUrlLength = 2048;
-
    internal static bool TryValidate(
       string url,
       out Uri absoluteUrl,
@@ -22,7 +20,7 @@ internal static class WebPageUrlPolicy
          return false;
       }
 
-      if(url.Length > MaximumUrlLength)
+      if(url.Length > WebPageFetchDefaults.MaximumUrlLength)
       {
          error = "Page URL is too long.";
          return false;

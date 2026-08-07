@@ -85,6 +85,14 @@ Several console applications live in `tools/legacy/` for occasional use:
   Executable projects still own their configuration sources, binding, and
   composition, such as Web's `appsettings.json` and dependency-injection
   registration.
+- Treat deployment/site settings and tunable application behavior, such as
+  limits, windows, timeouts, and public-page display thresholds, as
+  configuration. Define their option types and defaults in
+  `src/SESport.Core/Configuration`; Razor views and PageModels must consume
+  bound options rather than define those values locally.
+- Keep UI copy, route/query names, SQL, protocol field names, and
+  implementation-only invariants in their owning project unless they are
+  intentionally configurable.
 - `src/SESport.Data`: PostgreSQL persistence. Repository classes, SQL,
   Npgsql usage, data-source creation, and database-specific mapping belong
   here. It consumes configuration from `SESport.Core.Configuration`, depends

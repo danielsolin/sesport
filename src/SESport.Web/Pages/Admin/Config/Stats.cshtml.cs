@@ -9,7 +9,6 @@ namespace SESport.Web.Pages.Admin.Config;
 
 public sealed class StatsModel(WebStatsOptions options) : PageModel
 {
-   private const string LatestReportFileName = "latest.html";
    private const string ReportDateFormat = DateDisplay.DateOnlyFormat;
 
    public IReadOnlyList<WebStatsReport> Reports { get; private set; } = [];
@@ -67,7 +66,10 @@ public sealed class StatsModel(WebStatsOptions options) : PageModel
          .Select(CreateReport)
          .Where(report => report is not null)
          .Cast<WebStatsReport>()
-         .OrderBy(report => report.FileName == LatestReportFileName ? 0 : 1)
+         .OrderBy(
+            report => report.FileName ==
+               WebStatsDefaults.LatestReportFileName ? 0 : 1
+         )
          .ThenByDescending(report => report.FileName)
          .ToList();
    }
@@ -79,7 +81,7 @@ public sealed class StatsModel(WebStatsOptions options) : PageModel
       if(
          string.Equals(
             fileName,
-            LatestReportFileName,
+            WebStatsDefaults.LatestReportFileName,
             StringComparison.Ordinal
          )
       )

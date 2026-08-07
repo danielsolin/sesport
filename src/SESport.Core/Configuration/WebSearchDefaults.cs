@@ -6,6 +6,9 @@ public static class WebSearchDefaults
       "https://www.google.com/search";
 
    public const int MaxSearchResults = 20;
+   public const int RelevanceMinimumQueryTermCount = 4;
+   public const int RelevanceMinimumResultCount = 5;
+   public const int RelevanceMinimumMatchingTermCount = 2;
 
    public static readonly IReadOnlyList<string> DeniedHostSuffixes =
    [

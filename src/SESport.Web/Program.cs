@@ -28,6 +28,11 @@ var configuredWebStatsOptions = builder.Configuration.GetSection(
    )
    .Get<WebStatsOptions>() ??
    new WebStatsOptions();
+var publicSiteOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.PublicSiteSection
+   )
+   .Get<PublicSiteOptions>() ??
+   new PublicSiteOptions();
 var webStatsOptions = configuredWebStatsOptions with
 {
    ReportDirectory = WebStatsReportDirectoryResolver.Resolve(
@@ -48,6 +53,7 @@ builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddSingleton(memberAuthOptions);
 builder.Services.AddSingleton(smtpEmailOptions);
 builder.Services.AddSingleton(webStatsOptions);
+builder.Services.AddSingleton(publicSiteOptions);
 builder.Services.AddWebApplicationServices();
 builder.Services.AddAiPlatform();
 builder.Services.AddSingleton<IMemberEmailSender, SmtpEmailSender>();

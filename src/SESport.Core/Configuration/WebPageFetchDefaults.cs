@@ -20,6 +20,11 @@ public static class WebPageFetchDefaults
    public const string BrowserLocale = "en-US";
    public const string BrowserPlatform = "Linux";
 
+   public const int MaximumUrlLength = 2048;
+   public const string ImageOcrExecutable = "tesseract";
+   public const string ImageOcrLanguage = "eng";
+   public const int ImageOcrPageSegmentationMode = 3;
+
    public const string CutoffMarker = "[CUTOFF]";
    public const int MaxResponseCharacters = 50000;
    public const int MaxRelevantLinkCount = 20;

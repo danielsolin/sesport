@@ -7,10 +7,6 @@ namespace SESport.AI.WebPages;
 
 internal static class WebPageImageOcr
 {
-   private const string TesseractExecutable = "tesseract";
-   private const string OcrLanguage = "eng";
-   private const int PageSegmentationMode = 3;
-
    internal static async Task<string> ExtractAsync(
       HttpClient httpClient,
       ILogger logger,
@@ -234,7 +230,7 @@ internal static class WebPageImageOcr
       {
          StartInfo = new ProcessStartInfo
          {
-            FileName = TesseractExecutable,
+            FileName = WebPageFetchDefaults.ImageOcrExecutable,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -244,10 +240,14 @@ internal static class WebPageImageOcr
       process.StartInfo.ArgumentList.Add(imagePath);
       process.StartInfo.ArgumentList.Add("stdout");
       process.StartInfo.ArgumentList.Add("-l");
-      process.StartInfo.ArgumentList.Add(OcrLanguage);
+      process.StartInfo.ArgumentList.Add(
+         WebPageFetchDefaults.ImageOcrLanguage
+      );
       process.StartInfo.ArgumentList.Add("--psm");
       process.StartInfo.ArgumentList.Add(
-         PageSegmentationMode.ToString(CultureInfo.InvariantCulture)
+         WebPageFetchDefaults.ImageOcrPageSegmentationMode.ToString(
+            CultureInfo.InvariantCulture
+         )
       );
       process.StartInfo.ArgumentList.Add("tsv");
 
