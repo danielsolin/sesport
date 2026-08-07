@@ -242,6 +242,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   )
                )
                {
+                  RemoveMalformedToolCallMessages(messages);
                   var continueAfterToolFormatFailure =
                      ShouldContinueWithToolsAfterToolFormatFailure(
                         request,
@@ -287,7 +288,6 @@ public sealed class LlamaServerClient : IAiProviderClient
 
                responseJson = responseEnvelope.ResponseJson;
                rawResponse = responseEnvelope.RawResponseJson;
-               toolFormatFallbackStreak = 0;
 
                LogResponse("turn", turn, responseJson);
 
@@ -296,6 +296,7 @@ public sealed class LlamaServerClient : IAiProviderClient
                   out var toolCalls
                ))
                {
+                  toolFormatFallbackStreak = 0;
                   repeatedToolCallStreak = 0;
                   toolTrace.Add(
                      LlamaToolTrace.CreateAssistantTraceEntry(
@@ -307,6 +308,66 @@ public sealed class LlamaServerClient : IAiProviderClient
                   );
                   break;
                }
+
+               if(TryGetMalformedToolCallReason(
+                  toolCalls,
+                  out var malformedToolCallReason
+               ))
+               {
+                  var continueAfterToolFormatFailure =
+                     ShouldContinueWithToolsAfterToolFormatFailure(
+                        request,
+                        maxToolRounds,
+                        toolRoundCount,
+                        toolFormatFallbackStreak
+                     );
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateAssistantTraceEntry(
+                        turn,
+                        responseJson,
+                        toolCalls,
+                        JsonOptions,
+                        validationStatus: "rejected",
+                        validationError: malformedToolCallReason
+                     )
+                  );
+                  toolTrace.Add(
+                     LlamaToolTrace.CreateToolFormatFallbackTraceEntry(
+                        turn,
+                        malformedToolCallReason,
+                        continueAfterToolFormatFailure
+                     )
+                  );
+                  await LlamaToolTrace.ReportProgressAsync(
+                     toolTrace,
+                     toolRoundCount,
+                     JsonOptions,
+                     toolTraceUpdated,
+                     cancellationToken
+                  );
+
+                  if(continueAfterToolFormatFailure)
+                  {
+                     toolFormatFallbackStreak++;
+                     LlamaRequestFactory.AddToolFormatFeedbackPrompt(
+                        messages,
+                        malformedToolCallReason
+                     );
+                     request["tool_choice"] = "required";
+                     LlamaConversationTrimmer.TrimMessages(
+                        request,
+                        messages,
+                        MaxConversationContextCharacters,
+                        JsonOptions
+                     );
+                     continue;
+                  }
+
+                  finalizeWithoutTools = true;
+                  break;
+               }
+
+               toolFormatFallbackStreak = 0;
 
                if(LlamaReportSubmission.TryGetSubmission(
                   toolCalls,
@@ -988,6 +1049,110 @@ public sealed class LlamaServerClient : IAiProviderClient
    private static bool RequestUsesTools(JsonObject request)
    {
       return request["tools"] is JsonArray tools && tools.Count > 0;
+   }
+
+   private static bool TryGetMalformedToolCallReason(
+      IReadOnlyList<LlamaToolCall> toolCalls,
+      out string reason
+   )
+   {
+      foreach(var toolCall in toolCalls)
+      {
+         if(IsValidToolArguments(toolCall.Arguments))
+         {
+            continue;
+         }
+
+         reason =
+            $"Failed to parse tool call arguments as JSON for tool "
+            + $"'{toolCall.Name}'.";
+         return true;
+      }
+
+      reason = "";
+      return false;
+   }
+
+   private static bool IsValidToolArguments(string arguments)
+   {
+      if(string.IsNullOrWhiteSpace(arguments))
+      {
+         return true;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(arguments);
+         return document.RootElement.ValueKind == JsonValueKind.Object;
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
+   }
+
+   private static void RemoveMalformedToolCallMessages(
+      JsonArray messages
+   )
+   {
+      for(var index = messages.Count - 1; index >= 0; index--)
+      {
+         if(messages[index] is not JsonObject message ||
+            !IsMessageRole(message, "assistant") ||
+            !ContainsMalformedToolCall(message))
+         {
+            continue;
+         }
+
+         messages.RemoveAt(index);
+         while(index < messages.Count &&
+               IsMessageRole(messages[index], "tool"))
+         {
+            messages.RemoveAt(index);
+         }
+      }
+   }
+
+   private static bool ContainsMalformedToolCall(JsonObject message)
+   {
+      if(message["tool_calls"] is not JsonArray toolCalls)
+      {
+         return false;
+      }
+
+      foreach(var toolCallNode in toolCalls)
+      {
+         if(toolCallNode is not JsonObject toolCall ||
+            toolCall["function"] is not JsonObject function ||
+            function["arguments"] is not JsonValue argumentsValue ||
+            !argumentsValue.TryGetValue<string>(out var arguments))
+         {
+            continue;
+         }
+
+         if(!IsValidToolArguments(arguments))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool IsMessageRole(JsonNode? message, string role)
+   {
+      if(message is not JsonObject objectMessage ||
+         objectMessage["role"] is not JsonValue roleValue ||
+         !roleValue.TryGetValue<string>(out var messageRole))
+      {
+         return false;
+      }
+
+      return string.Equals(
+         messageRole,
+         role,
+         StringComparison.Ordinal
+      );
    }
 
    private static void ExpandTruncatedFinalCorrectionBudget(

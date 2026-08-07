@@ -602,6 +602,55 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
+      LlamaServerGenerateAsyncRejectsMalformedToolArgumentsBeforeHistory()
+   {
+      var handler = new RecordingHandler(
+         CreateMalformedLlamaToolCallResponseJson(),
+         CreateLlamaToolCallResponseJson("Tre Kronor roster"),
+         CreateLlamaPageCallResponseJson(),
+         CreateLlamaFinalResponseJson()
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", requiresWebSearch: true, CreateToolsJson()),
+         CreatePrompt(CreateParticipationSchemaJson()),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Equal(4, handler.RequestBodies.Count);
+      Assert.Contains(
+         "previous tool-call attempt could not be parsed",
+         handler.RequestBodies[1]
+      );
+      Assert.DoesNotContain(
+         "unterminated",
+         handler.RequestBodies[1]
+      );
+      Assert.Contains(
+         "\"validation_status\":\"rejected\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains("tool_format_fallback", result.ToolTraceJson);
+      Assert.DoesNotContain("Missing search term.", result.ToolTraceJson);
+      Assert.Equal(
+         "{\"Participation\":\"Yes\","
+         + "\"Participants\":[\"Dino Beganovic\"],"
+         + "\"Sources\":[\"https://example.test/roster\"]}",
+         result.OutputText
+      );
+   }
+
+   [Fact]
+   public async Task
       LlamaServerGenerateAsyncOmitsAssistantContentForToolCalls()
    {
       var handler = new RecordingHandler(
@@ -2537,6 +2586,41 @@ public class AiProviderClientTests
             },
          },
          model = "openai/gpt-4o-2024-08-06"
+      });
+   }
+
+   private static string CreateMalformedLlamaToolCallResponseJson()
+   {
+      return JsonSerializer.Serialize(new
+      {
+         choices = new[]
+         {
+            new
+            {
+               message = new
+               {
+                  role = "assistant",
+                  content = "",
+                  tool_calls = new[]
+                  {
+                     new
+                     {
+                        id = "call_malformed",
+                        type = "function",
+                        function = new
+                        {
+                           name = WebToolNames.FindInPage,
+                           arguments =
+                              "{\"url\":\"https://example.test/roster\","
+                              + "\"find\":\"unterminated"
+                        }
+                     }
+                  }
+               },
+               finish_reason = "length"
+            }
+         },
+         model = "openai/gpt-oss-20b"
       });
    }
 
