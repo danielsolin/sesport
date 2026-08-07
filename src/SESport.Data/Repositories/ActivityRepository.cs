@@ -1507,20 +1507,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
 
-   private async Task<IReadOnlyList<ActivityListItem>> GetActivityListAsync(
-      string whereClause,
-      CancellationToken cancellationToken
-   )
-   {
-      return await QueryActivityListAsync(
-         whereClause,
-         DefaultOrderClause,
-         "s.name",
-         null,
-         cancellationToken
-      );
-   }
-
    private async Task<IReadOnlyList<ActivityListItem>> QueryActivityListAsync(
       string whereClause,
       string orderClause,

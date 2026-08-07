@@ -29,11 +29,6 @@ internal static class SearxngSearchEngineRotation
    {
       var normalizedEngines = NormalizeEngines(engines);
 
-      if(normalizedEngines.Count == 0)
-      {
-         return SearxngWebSearchClientOptions.DefaultEngines[0];
-      }
-
       var index = searchAttempt % normalizedEngines.Count;
 
       if(index < 0)
