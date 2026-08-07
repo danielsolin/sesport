@@ -307,7 +307,8 @@ public sealed record ActivityAgendaSlot(
    string StartTimeLabel,
    string? EndTimeLabel,
    bool IsOngoing,
-   bool HasEnded
+   bool HasEnded,
+   IReadOnlyList<string> TvChannels
 );
 
 public enum ActivityDayPhase

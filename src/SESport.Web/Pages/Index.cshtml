@@ -443,7 +443,25 @@ else
                            {
                               <li class="activity-group-schedule-item
                                  @(slot.IsOngoing ? "is-ongoing" : "")
-                                 @(slot.HasEnded ? "has-ended" : "")">
+                                 @(slot.HasEnded ? "has-ended" : "")
+                                 @(slot.TvChannels.Count > 0
+                                    ? "has-tv-channels"
+                                    : "")">
+                                 @if(slot.TvChannels.Count > 0)
+                                 {
+                                    <div class="activity-channel-list
+                                       activity-group-slot-channel-list"
+                                       aria-label="TV-kanaler">
+                                       @foreach(var channel in
+                                          slot.TvChannels)
+                                       {
+                                          <span class=
+                                             "activity-channel-chip">
+                                             @channel
+                                          </span>
+                                       }
+                                    </div>
+                                 }
                                  <span class="activity-group-slot-time">
                                     @slot.StartTimeLabel@(
                                        slot.EndTimeLabel is null

@@ -202,6 +202,25 @@ public sealed class IndexMarkupTests
       );
       Assert.DoesNotContain("activity-group-slot-status", html);
       Assert.DoesNotContain("activity-group-slot-status", css);
+      Assert.Contains("activity-time-channel-list", html);
+      Assert.Contains("activity-group-slot-channel-list", html);
+      Assert.Contains("slot.TvChannels", html);
+      Assert.Contains("activity-group-slot-channel-list", css);
+      Assert.Contains(
+         ".activity-group-schedule-item.has-tv-channels {\n" +
+         "   grid-template-rows: auto auto;",
+         css
+      );
+      Assert.Contains(
+         "grid-template-columns: auto minmax(0, 1fr) auto;",
+         css
+      );
+      Assert.Contains(
+         "grid-column: 3;\n" +
+         "      grid-row: 1;\n" +
+         "      justify-content: flex-end;",
+         css
+      );
       Assert.Contains(
          "@keyframes activity-ongoing-dots",
          css

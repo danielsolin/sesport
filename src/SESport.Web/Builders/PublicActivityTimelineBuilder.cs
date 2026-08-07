@@ -226,8 +226,23 @@ public sealed class PublicActivityTimelineBuilder
          activity.EndsAt is not null &&
             activity.StartsAt <= now &&
             activity.EndsAt > now,
-         activity.EndsAt is not null && activity.EndsAt <= now
+         activity.EndsAt is not null && activity.EndsAt <= now,
+         SplitTvChannelNames(activity.TvChannelName)
       );
+   }
+
+   private static IReadOnlyList<string> SplitTvChannelNames(
+      string? tvChannelName
+   )
+   {
+      return (tvChannelName ?? string.Empty)
+         .Split(
+            ',',
+            StringSplitOptions.TrimEntries |
+               StringSplitOptions.RemoveEmptyEntries
+         )
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToList();
    }
 
    private static IReadOnlyList<PublicActivityParticipant>

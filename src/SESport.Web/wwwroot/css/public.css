@@ -946,6 +946,33 @@
    font-weight: 750;
 }
 
+.activity-group-slot-channel-list {
+   margin-top: 4px;
+}
+
+.activity-group-schedule-item.has-tv-channels {
+   grid-template-rows: auto auto;
+}
+
+.activity-group-schedule-item.has-tv-channels
+   .activity-group-slot-channel-list {
+   grid-column: 1 / -1;
+   grid-row: 1;
+   margin: 0 0 1px;
+}
+
+.activity-group-schedule-item.has-tv-channels
+   .activity-group-slot-time {
+   grid-column: 1;
+   grid-row: 2;
+}
+
+.activity-group-schedule-item.has-tv-channels
+   .activity-group-slot-content {
+   grid-column: 2;
+   grid-row: 2;
+}
+
 .activity-group-slot-description {
    margin-left: 5px;
    color: var(--muted);
@@ -1379,6 +1406,31 @@
    .activity-status-badge {
       top: 18px;
       right: 68px;
+   }
+
+   .activity-group-schedule-item.has-tv-channels {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto;
+   }
+
+   .activity-group-schedule-item.has-tv-channels
+      .activity-group-slot-channel-list {
+      grid-column: 3;
+      grid-row: 1;
+      justify-content: flex-end;
+      margin: 0;
+   }
+
+   .activity-group-schedule-item.has-tv-channels
+      .activity-group-slot-time {
+      grid-column: 1;
+      grid-row: 1;
+   }
+
+   .activity-group-schedule-item.has-tv-channels
+      .activity-group-slot-content {
+      grid-column: 2;
+      grid-row: 1;
    }
 }
 

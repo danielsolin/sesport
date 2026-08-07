@@ -262,7 +262,9 @@ public class PublicActivityTimelineBuilderTests
             now.AddMinutes(15),
             now.AddMinutes(55),
             groupId,
-            "Rally Polen"
+            "Rally Polen",
+            false,
+            "SVT1, TV4"
          ),
          CreateActivity(
             "Rally Polen: Sträcka 10 - 11",
@@ -270,7 +272,9 @@ public class PublicActivityTimelineBuilderTests
             now.AddHours(1).AddMinutes(45),
             now.AddHours(3).AddMinutes(25),
             groupId,
-            "Rally Polen"
+            "Rally Polen",
+            false,
+            "Eurosport"
          ),
          CreateActivity(
             "Rally Polen: Live Stage 1",
@@ -298,6 +302,9 @@ public class PublicActivityTimelineBuilderTests
          ["08:55", "11:25", "14:00"],
          section.Slots.Select(slot => slot.EndTimeLabel)
       );
+      Assert.Equal(["SVT1", "TV4"], section.Slots[0].TvChannels);
+      Assert.Equal(["Eurosport"], section.Slots[1].TvChannels);
+      Assert.Empty(section.Slots[2].TvChannels);
       Assert.Equal("≈08:30", section.TimeLabel);
 
       var duringFirstActivity = new DateTimeOffset(
@@ -448,7 +455,8 @@ public class PublicActivityTimelineBuilderTests
       DateTimeOffset? endsAt = null,
       Guid? activityGroupId = null,
       string? activityGroupTitle = null,
-      bool isTeamSport = false
+      bool isTeamSport = false,
+      string? tvChannelName = null
    )
    {
       return new ActivityListItem(
@@ -464,7 +472,7 @@ public class PublicActivityTimelineBuilderTests
             ? activityDate.ToString("yyyy-MM-dd")
             : $"{activityDate:yyyy-MM-dd} {startsAt.Value:HH:mm}",
          startsAt,
-         null,
+         tvChannelName,
          "Published",
          string.Empty,
          [],
