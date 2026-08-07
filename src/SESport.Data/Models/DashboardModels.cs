@@ -26,7 +26,6 @@ public sealed record DashboardActivityIssue(
    bool HasNoGroup,
    bool HasNoRelatedSource,
    bool HasMissingParticipantStartTime,
-   bool HasParticipantStartBeforeActivity,
    bool HasParticipantMissingPersonData,
    DateOnly ParticipantActivityDate
 );

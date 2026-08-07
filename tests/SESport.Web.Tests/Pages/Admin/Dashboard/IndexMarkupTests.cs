@@ -158,20 +158,6 @@ public sealed class IndexMarkupTests
    }
 
    [Fact]
-   public void ParticipantStartBeforeActivityLabelIsIncluded()
-   {
-      var issue = CreateSourceIssue(
-         hasNoGroup: false,
-         hasParticipantStartBeforeActivity: true
-      );
-
-      var labels = SESport.Web.Pages.Admin.Dashboard.IndexModel
-         .GetIssueLabels(issue);
-
-      Assert.Contains("Participant starts before activity", labels);
-   }
-
-   [Fact]
    public void ParticipantMissingPersonDataLabelIsIncluded()
    {
       var issue = CreateSourceIssue(
@@ -231,7 +217,6 @@ public sealed class IndexMarkupTests
    private static DashboardActivityIssue CreateSourceIssue(
       bool hasNoGroup,
       bool hasMissingParticipantStartTime = false,
-      bool hasParticipantStartBeforeActivity = false,
       bool hasParticipantMissingPersonData = false
    )
    {
@@ -246,7 +231,6 @@ public sealed class IndexMarkupTests
          hasNoGroup,
          true,
          hasMissingParticipantStartTime,
-         hasParticipantStartBeforeActivity,
          hasParticipantMissingPersonData,
          new DateOnly(2199, 12, 1)
       );
