@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 
+using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -20,7 +22,13 @@ public sealed class EditModelTests
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
       var sourceRepository = new SourceReferenceRepository(dataSource);
-      var model = new EditModel(repository, sourceRepository)
+      var automationService = new CapturingAiAutomationService();
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         automationService,
+         new TestHostApplicationLifetime()
+      )
       {
          Entity = new EntityEditModel
          {
@@ -73,7 +81,13 @@ public sealed class EditModelTests
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
       var sourceRepository = new SourceReferenceRepository(dataSource);
-      var model = new EditModel(repository, sourceRepository)
+      var automationService = new CapturingAiAutomationService();
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         automationService,
+         new TestHostApplicationLifetime()
+      )
       {
          Entity = new EntityEditModel
          {
@@ -127,6 +141,97 @@ public sealed class EditModelTests
                CancellationToken.None
             );
          }
+      }
+   }
+
+   [Fact]
+   public async Task OnPostAsyncTriggersAutomationForNewPerson()
+   {
+      var entityName = $"Person {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var automationService = new CapturingAiAutomationService();
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         automationService,
+         new TestHostApplicationLifetime()
+      )
+      {
+         Entity = new EntityEditModel
+         {
+            CanonicalName = entityName,
+            EntityTypeId = TrackedEntityTypeIds.Person,
+            SportId = "football",
+            CountryId = PrimaryCountry.Id,
+            CountryRelevanceKindId =
+               "NationalityOrSportingIdentity",
+            CountryRelevanceReason = "Test coverage",
+            WatchPriorityId = "tier_3",
+            ExpectedStabilityId = "short_term"
+         }
+      };
+
+      try
+      {
+         var result = await model.OnPostAsync(CancellationToken.None);
+
+         Assert.IsType<RedirectToPageResult>(result);
+         Assert.NotNull(model.Entity.Id);
+         var entityId = model.Entity.Id.Value;
+         var triggeredId = Assert.Single(
+            automationService.PersonCreatedEntityIds
+         );
+
+         Assert.Equal(entityId, triggeredId);
+      }
+      finally
+      {
+         if(model.Entity.Id is not null)
+         {
+            await repository.DeleteEntityAsync(
+               model.Entity.Id.Value,
+               CancellationToken.None
+            );
+         }
+      }
+   }
+
+   private sealed class CapturingAiAutomationService : IAiAutomationService
+   {
+      public List<Guid> PersonCreatedEntityIds { get; } = [];
+
+      public Task HandleActivityCreatedAsync(
+         Guid activityId,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.CompletedTask;
+      }
+
+      public Task HandlePersonCreatedAsync(
+         Guid personEntityId,
+         CancellationToken cancellationToken
+      )
+      {
+         PersonCreatedEntityIds.Add(personEntityId);
+         return Task.CompletedTask;
+      }
+   }
+
+   private sealed class TestHostApplicationLifetime
+      : IHostApplicationLifetime
+   {
+      public CancellationToken ApplicationStarted => CancellationToken.None;
+
+      public CancellationToken ApplicationStopping => CancellationToken.None;
+
+      public CancellationToken ApplicationStopped => CancellationToken.None;
+
+      public void StopApplication()
+      {
       }
    }
 

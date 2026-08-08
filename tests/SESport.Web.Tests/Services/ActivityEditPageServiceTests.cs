@@ -1637,6 +1637,14 @@ public sealed class ActivityEditPageServiceTests
          CancellationToken = cancellationToken;
          return Task.CompletedTask;
       }
+
+      public Task HandlePersonCreatedAsync(
+         Guid personEntityId,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.CompletedTask;
+      }
    }
 
    private sealed class CapturingAiJobRunner : IAiJobRunner

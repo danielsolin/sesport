@@ -1,12 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Hosting;
 
 using SESport.Core.Broadcast;
+using SESport.Core.AI;
+using SESport.Core.Domain;
 using SESport.Data.Models;
 
 namespace SESport.Web.Pages.Admin.Ajax.Create;
 
-public sealed class ParticipantEntityModel(AdminRepository adminRepository)
+public sealed class ParticipantEntityModel(
+   AdminRepository adminRepository,
+   IAiAutomationService automationService,
+   IHostApplicationLifetime applicationLifetime
+)
    : PageModel
 {
    public async Task<IActionResult> OnPostAsync(
@@ -47,6 +54,18 @@ public sealed class ParticipantEntityModel(AdminRepository adminRepository)
       try
       {
          await adminRepository.SaveEntityAsync(template, cancellationToken);
+
+         if(string.Equals(
+               template.EntityTypeId,
+               TrackedEntityTypeIds.Person,
+               StringComparison.OrdinalIgnoreCase
+            ) && template.Id is not null)
+         {
+            await automationService.HandlePersonCreatedAsync(
+               template.Id.Value,
+               applicationLifetime.ApplicationStopping
+            );
+         }
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)

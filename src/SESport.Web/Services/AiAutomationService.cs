@@ -9,6 +9,11 @@ public interface IAiAutomationService
       Guid activityId,
       CancellationToken cancellationToken
    );
+
+   Task HandlePersonCreatedAsync(
+      Guid personEntityId,
+      CancellationToken cancellationToken
+   );
 }
 
 public sealed class AiAutomationService(
@@ -16,6 +21,7 @@ public sealed class AiAutomationService(
    ActivityRepository activityRepository,
    ActivityAiInputBuilder inputBuilder,
    AiJobEligibilityService eligibilityService,
+   PersonFactsService personFactsService,
    IAiJobRunner jobRunner,
    ILogger<AiAutomationService> logger
 ) : IAiAutomationService
@@ -88,5 +94,30 @@ public sealed class AiAutomationService(
             cancellationToken
          );
       }
+   }
+
+   public async Task HandlePersonCreatedAsync(
+      Guid personEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      var jobIds = await repository.GetEnabledJobIdsAsync(
+         AiAutomationEventIds.PersonCreated,
+         cancellationToken
+      );
+
+      if(!jobIds.Any(jobId => string.Equals(
+            jobId,
+            AiJobIds.FindPersonData,
+            StringComparison.Ordinal
+         )))
+      {
+         return;
+      }
+
+      await personFactsService.QueueAsync(
+         personEntityId,
+         cancellationToken
+      );
    }
 }

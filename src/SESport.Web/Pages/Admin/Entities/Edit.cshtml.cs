@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Hosting;
 
+using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -9,7 +11,9 @@ namespace SESport.Web.Pages.Admin.Entities;
 
 public class EditModel(
    AdminRepository repository,
-   SourceReferenceRepository sourceRepository
+   SourceReferenceRepository sourceRepository,
+   IAiAutomationService automationService,
+   IHostApplicationLifetime applicationLifetime
 ) : PageModel
 {
    [BindProperty]
@@ -88,6 +92,12 @@ public class EditModel(
       CancellationToken cancellationToken
    )
    {
+      var isNewPerson = Entity.Id is null && string.Equals(
+         Entity.EntityTypeId,
+         TrackedEntityTypeIds.Person,
+         StringComparison.OrdinalIgnoreCase
+      );
+
       ValidateEntity();
 
       if(!ModelState.IsValid)
@@ -99,6 +109,14 @@ public class EditModel(
       try
       {
          await repository.SaveEntityAsync(Entity, cancellationToken);
+
+         if(isNewPerson && Entity.Id is not null)
+         {
+            await automationService.HandlePersonCreatedAsync(
+               Entity.Id.Value,
+               applicationLifetime.ApplicationStopping
+            );
+         }
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)

@@ -3,6 +3,8 @@ namespace SESport.Core.AI;
 public static class AiAutomationEventIds
 {
    public const string ActivityCreated = "activity-created";
+
+   public const string PersonCreated = "person-created";
 }
 
 public sealed record AiAutomationRuleListItem(
