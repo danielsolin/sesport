@@ -3,7 +3,7 @@ namespace SESport.Core.Tests.Pages.Admin.Entities;
 public sealed class EditMarkupTests
 {
    [Fact]
-   public async Task EditPageUsesRemoteLinkedEntityPicker()
+   public async Task EditPageUsesLinkedEntitySubgridPicker()
    {
       var repoRoot = Path.GetFullPath(
          Path.Combine(AppContext.BaseDirectory, "../../../../..")
@@ -22,9 +22,11 @@ public sealed class EditMarkupTests
       Assert.Contains("data-entity-linked-entities-picker", html);
       Assert.Contains("data-entity-linked-entities-search-url", html);
       Assert.Contains("data-entity-linked-entities-update-url", html);
-      Assert.Contains("data-entity-linked-entities-selected", html);
+      Assert.Contains("data-entity-linked-entities-grid", html);
+      Assert.Contains("data-entity-linked-entities-rows", html);
       Assert.Contains("data-entity-linked-entities-suggestions", html);
-      Assert.Contains("data-entity-linked-entities-chip-remove", html);
+      Assert.Contains("data-entity-linked-entities-remove", html);
+      Assert.Contains("entity-linked-entities-table", html);
       Assert.Contains("Entity.LinkedEntityIds", html);
       Assert.Contains("data-organization-only=\"false\"", html);
       Assert.Contains("data-person-birthdate-field", html);
@@ -38,10 +40,14 @@ public sealed class EditMarkupTests
       Assert.Contains("Add source", html);
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);
       Assert.DoesNotContain("data-multi-select", html);
+      Assert.DoesNotContain("data-entity-linked-entities-chip", html);
       Assert.Contains("entity-linked-entities.js", html);
       Assert.Contains("initializeEntityLinkedEntitiesPicker", script);
-      Assert.Contains("data-entity-linked-entities-chip", script);
-      Assert.Contains("data-entity-linked-entities-chip-remove", script);
+      Assert.Contains("data-entity-linked-entities-grid", script);
+      Assert.Contains("data-entity-linked-entities-rows", script);
+      Assert.Contains("data-entity-linked-entities-row", script);
+      Assert.Contains("data-entity-linked-entities-remove", script);
+      Assert.DoesNotContain("chip", script);
       Assert.Contains("broadcast-org-entity-option", script);
    }
 }

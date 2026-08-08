@@ -164,27 +164,59 @@
                     hidden
                     data-entity-linked-entities-suggestions></div>
             </div>
-            <div class="entity-linked-entities-selected"
-                 data-entity-linked-entities-selected>
-               @foreach(var option in Model.LinkedEntityOptions)
+            <div data-entity-linked-entities-grid>
+               @if(Model.LinkedEntityOptions.Count == 0)
                {
-                  <span class="entity-linked-entities-chip"
-                        data-entity-linked-entities-chip
-                        data-entity-id="@option.Id">
-                     <input type="hidden"
-                            name="Entity.LinkedEntityIds"
-                            value="@option.Id"
-                            data-entity-linked-entities-hidden-id />
-                     <span>
-                        @option.Name (@option.EntityType, @option.Sport)
-                     </span>
-                     <button type="button"
-                             class="entity-linked-entities-chip-remove"
-                             data-entity-linked-entities-chip-remove
-                             aria-label="@($"Remove {option.Name}")">
-                        ×
-                     </button>
-                  </span>
+                  <div class="notice"
+                       data-entity-linked-entities-empty>
+                     No linked entities.
+                  </div>
+               }
+               else
+               {
+                  <div class="admin-table-wrap">
+                     <table class="admin-table admin-table-compact
+                                   entity-linked-entities-table">
+                        <thead>
+                           <tr>
+                              <th>Name</th>
+                              <th>Entity Type</th>
+                              <th>Sport</th>
+                              <th></th>
+                           </tr>
+                        </thead>
+                        <tbody data-entity-linked-entities-rows>
+                           @foreach(var option in Model.LinkedEntityOptions)
+                           {
+                              <tr data-entity-linked-entities-row
+                                  data-entity-id="@option.Id">
+                                 <td>
+                                    <a asp-page="/Admin/Entities/Edit"
+                                       asp-route-id="@option.Id">
+                                       @option.Name
+                                    </a>
+                                 </td>
+                                 <td>@option.EntityType</td>
+                                 <td>@option.Sport</td>
+                                 <td class="table-actions">
+                                    <input
+                                           type="hidden"
+                                           name="Entity.LinkedEntityIds"
+                                           value="@option.Id"
+                                           data-entity-linked-entities-hidden-id
+                                    />
+                                    <button type="button"
+                                            data-entity-linked-entities-remove
+                                            aria-label=
+                                               "@($"Remove {option.Name}")">
+                                       Delete
+                                    </button>
+                                 </td>
+                              </tr>
+                           }
+                        </tbody>
+                     </table>
+                  </div>
                }
             </div>
          </div>

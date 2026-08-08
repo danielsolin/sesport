@@ -3,11 +3,11 @@
    const inputSelector = "[data-entity-linked-entities-input]";
    const suggestionsSelector =
       "[data-entity-linked-entities-suggestions]";
-   const selectedSelector = "[data-entity-linked-entities-selected]";
-   const chipSelector = "[data-entity-linked-entities-chip]";
-   const chipRemoveSelector =
-      ".entity-linked-entities-chip-remove," +
-      " [data-entity-linked-entities-chip-remove]";
+   const gridSelector = "[data-entity-linked-entities-grid]";
+   const rowsSelector = "[data-entity-linked-entities-rows]";
+   const rowSelector = "[data-entity-linked-entities-row]";
+   const removeButtonSelector =
+      "[data-entity-linked-entities-remove]";
    const hiddenInputSelector =
       "[data-entity-linked-entities-hidden-id]";
    const debounceMs = 180;
@@ -36,7 +36,7 @@
 
       const input = picker.querySelector(inputSelector);
       const suggestions = picker.querySelector(suggestionsSelector);
-      const selected = picker.querySelector(selectedSelector);
+      const grid = picker.querySelector(gridSelector);
       const searchUrl = (picker.dataset.entityLinkedEntitiesSearchUrl ?? "")
          .trim();
       const updateUrl = (picker.dataset.entityLinkedEntitiesUpdateUrl ?? "")
@@ -53,7 +53,7 @@
 
       if(!(input instanceof HTMLInputElement)
          || !(suggestions instanceof HTMLElement)
-         || !(selected instanceof HTMLElement)
+         || !(grid instanceof HTMLElement)
          || searchUrl === "")
       {
          return;
@@ -79,7 +79,7 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected,
+            grid,
             updateUrl,
             isExistingEntity
          );
@@ -97,7 +97,7 @@
                excludeEntityId,
                organizationOnly,
                maxResults,
-               selected,
+               grid,
                updateUrl,
                isExistingEntity
             );
@@ -111,7 +111,7 @@
             picker,
             input,
             suggestions,
-            selected,
+            grid,
             searchUrl,
             excludeEntityId,
             organizationOnly,
@@ -132,7 +132,7 @@
 
       picker.addEventListener("click", event => {
          const removeButton = event.target instanceof Element
-            ? event.target.closest(chipRemoveSelector)
+            ? event.target.closest(removeButtonSelector)
             : null;
 
          if(!(removeButton instanceof HTMLElement))
@@ -143,16 +143,16 @@
          event.preventDefault();
          event.stopPropagation();
 
-         const chip = removeButton.closest(chipSelector);
+         const row = removeButton.closest(rowSelector);
 
-         if(!(chip instanceof HTMLElement))
+         if(!(row instanceof HTMLElement))
          {
             return;
          }
 
-         void removeChipAsync(
+         void removeRowAsync(
             state,
-            chip,
+            row,
             picker,
             input,
             suggestions,
@@ -160,7 +160,7 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected,
+            grid,
             updateUrl,
             isExistingEntity
          );
@@ -176,7 +176,7 @@
       excludeEntityId,
       organizationOnly,
       maxResults,
-      selected,
+      grid,
       updateUrl,
       isExistingEntity
    )
@@ -197,7 +197,7 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected,
+            grid,
             updateUrl,
             isExistingEntity
          );
@@ -213,7 +213,7 @@
       excludeEntityId,
       organizationOnly,
       maxResults,
-      selected,
+      grid,
       updateUrl,
       isExistingEntity
    )
@@ -265,7 +265,7 @@
             throw new Error("Entity search failed.");
          }
 
-         const selectedIds = new Set(getSelectedEntityIds(selected));
+         const selectedIds = new Set(getSelectedEntityIds(grid));
          state.pendingEntityIds.forEach(id => {
             selectedIds.add(id);
          });
@@ -364,7 +364,7 @@
       picker,
       input,
       suggestions,
-      selected,
+      grid,
       searchUrl,
       excludeEntityId,
       organizationOnly,
@@ -375,16 +375,16 @@
    {
       if(event.key === "Backspace"
          && input.value === ""
-         && getSelectedEntityCount(selected) > 0)
+         && getSelectedEntityCount(grid) > 0)
       {
          event.preventDefault();
-         const chip = getLastChip(selected);
+         const row = getLastRow(grid);
 
-         if(chip instanceof HTMLElement)
+         if(row instanceof HTMLElement)
          {
-            void removeChipAsync(
+            void removeRowAsync(
                state,
-               chip,
+               row,
                picker,
                input,
                suggestions,
@@ -392,7 +392,7 @@
                excludeEntityId,
                organizationOnly,
                maxResults,
-               selected,
+               grid,
                updateUrl,
                isExistingEntity
             );
@@ -477,16 +477,16 @@
       isExistingEntity
    )
    {
-      const selected = picker.querySelector(selectedSelector);
+      const grid = picker.querySelector(gridSelector);
       const input = picker.querySelector(inputSelector);
 
-      if(!(selected instanceof HTMLElement)
+      if(!(grid instanceof HTMLElement)
          || !(input instanceof HTMLInputElement))
       {
          return;
       }
 
-      if(getSelectedEntityIds(selected).includes(item.id)
+      if(getSelectedEntityIds(grid).includes(item.id)
          || state.pendingEntityIds.has(item.id))
       {
          closeSuggestions(state, suggestions);
@@ -518,24 +518,80 @@
          }
       }
 
-      appendSelectedChip(selected, item);
+      appendSelectedRow(grid, item);
 
       input.value = "";
       closeSuggestions(state, suggestions);
       input.focus();
    }
 
-   function appendSelectedChip(selected, item)
+   function appendSelectedRow(grid, item)
    {
-      if(!(selected instanceof HTMLElement))
+      if(!(grid instanceof HTMLElement))
       {
          return;
       }
 
-      const chip = document.createElement("span");
-      chip.className = "entity-linked-entities-chip";
-      chip.dataset.entityLinkedEntitiesChip = "true";
-      chip.dataset.entityId = item.id;
+      const rows = ensureEntityLinkedEntitiesTable(grid);
+
+      if(!(rows instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const row = document.createElement("tr");
+      row.dataset.entityLinkedEntitiesRow = item.id;
+      row.dataset.entityId = item.id;
+      row.append(
+         createCell(createEntityLink(item)),
+         createCell(document.createTextNode(item.entityType)),
+         createCell(document.createTextNode(item.sport)),
+         createActionCell(item)
+      );
+      rows.append(row);
+   }
+
+   function ensureEntityLinkedEntitiesTable(grid)
+   {
+      const existingRows = grid.querySelector(rowsSelector);
+
+      if(existingRows instanceof HTMLElement)
+      {
+         return existingRows;
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "admin-table-wrap";
+      wrap.innerHTML = `
+         <table class="admin-table admin-table-compact
+                       entity-linked-entities-table">
+            <thead>
+               <tr>
+                  <th>Name</th>
+                  <th>Entity Type</th>
+                  <th>Sport</th>
+                  <th></th>
+               </tr>
+            </thead>
+            <tbody data-entity-linked-entities-rows></tbody>
+         </table>
+      `;
+      grid.replaceChildren(wrap);
+
+      return grid.querySelector(rowsSelector);
+   }
+
+   function createCell(content)
+   {
+      const cell = document.createElement("td");
+      cell.append(content);
+      return cell;
+   }
+
+   function createActionCell(item)
+   {
+      const cell = document.createElement("td");
+      cell.className = "table-actions";
 
       const hidden = document.createElement("input");
       hidden.type = "hidden";
@@ -543,43 +599,47 @@
       hidden.value = item.id;
       hidden.dataset.entityLinkedEntitiesHiddenId = "true";
 
-      const label = document.createElement("span");
-      label.textContent = formatItemText(item);
-
       const removeButton = document.createElement("button");
       removeButton.type = "button";
-      removeButton.className = "entity-linked-entities-chip-remove";
-      removeButton.dataset.entityLinkedEntitiesChipRemove = "true";
+      removeButton.dataset.entityLinkedEntitiesRemove = "true";
       removeButton.setAttribute("aria-label", `Remove ${item.text}`);
-      removeButton.textContent = "×";
+      removeButton.textContent = "Delete";
 
-      chip.append(hidden, label, removeButton);
-      selected.append(chip);
+      cell.append(hidden, removeButton);
+      return cell;
    }
 
-   function getLastChip(selected)
+   function createEntityLink(item)
    {
-      const chips = Array.from(selected.querySelectorAll(chipSelector));
-
-      return chips[chips.length - 1] ?? null;
+      const link = document.createElement("a");
+      link.href = `/Admin/Entities/Edit/${encodeURIComponent(item.id)}`;
+      link.textContent = item.text;
+      return link;
    }
 
-   function getSelectedEntityCount(selected)
+   function getLastRow(grid)
    {
-      return getSelectedEntityIds(selected).length;
+      const rows = Array.from(grid.querySelectorAll(rowSelector));
+
+      return rows[rows.length - 1] ?? null;
    }
 
-   function getSelectedEntityIds(selected)
+   function getSelectedEntityCount(grid)
    {
-      return Array.from(selected.querySelectorAll(hiddenInputSelector))
+      return getSelectedEntityIds(grid).length;
+   }
+
+   function getSelectedEntityIds(grid)
+   {
+      return Array.from(grid.querySelectorAll(hiddenInputSelector))
          .map(input => input instanceof HTMLInputElement ? input.value : "")
          .map(value => value.trim())
          .filter(value => value !== "");
    }
 
-   async function removeChipAsync(
+   async function removeRowAsync(
       state,
-      chip,
+      row,
       picker,
       input,
       suggestions,
@@ -587,16 +647,17 @@
       excludeEntityId,
       organizationOnly,
       maxResults,
-      selected,
+      grid,
       updateUrl,
       isExistingEntity
    )
    {
-      const entityId = (chip.dataset.entityId ?? "").trim();
+      const entityId = (row.dataset.entityId ?? "").trim();
 
       if(entityId === "")
       {
-         chip.remove();
+         row.remove();
+         renderEmptyGridIfNeeded(grid);
          return;
       }
 
@@ -633,7 +694,8 @@
          }
       }
 
-      chip.remove();
+      row.remove();
+      renderEmptyGridIfNeeded(grid);
 
       if(input.value.trim() !== "")
       {
@@ -646,11 +708,30 @@
             excludeEntityId,
             organizationOnly,
             maxResults,
-            selected,
+            grid,
             updateUrl,
             isExistingEntity
          );
       }
+   }
+
+   function renderEmptyGridIfNeeded(grid)
+   {
+      const rows = grid.querySelector(rowsSelector);
+
+      if(!(rows instanceof HTMLElement) || rows.children.length === 0)
+      {
+         renderEmptyGrid(grid);
+      }
+   }
+
+   function renderEmptyGrid(grid)
+   {
+      const notice = document.createElement("div");
+      notice.className = "notice";
+      notice.dataset.entityLinkedEntitiesEmpty = "true";
+      notice.textContent = "No linked entities.";
+      grid.replaceChildren(notice);
    }
 
    async function postEntityLinkAsync(
