@@ -36,6 +36,7 @@ public sealed record AiJobListItem(
    string Id,
    string Label,
    string ProviderId,
+   int QueuePriority,
    string OutputMode,
    int? ActivePromptVersion,
    bool Enabled

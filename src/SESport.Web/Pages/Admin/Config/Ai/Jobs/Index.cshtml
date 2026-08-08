@@ -24,9 +24,8 @@
       <thead>
          <tr>
             <th>ID</th>
-            <th>Label</th>
             <th>Provider</th>
-            <th>Output</th>
+            <th>QP</th>
             <th>PROMPT</th>
             <th></th>
          </tr>
@@ -36,9 +35,8 @@
          {
             <tr>
                <td><code>@job.Id</code></td>
-               <td>@job.Label</td>
                <td><code>@job.ProviderId</code></td>
-               <td>@job.OutputMode</td>
+               <td>@job.QueuePriority</td>
                <td>
                   @(job.ActivePromptVersion is null
                      ? "-"

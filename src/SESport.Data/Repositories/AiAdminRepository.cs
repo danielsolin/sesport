@@ -258,6 +258,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             j.id,
             j.label,
             j.provider_id,
+            j.queue_priority,
             j.output_mode,
             p.version,
             j.enabled
@@ -279,9 +280,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(0),
                reader.GetString(1),
                reader.GetString(2),
-               reader.GetString(3),
-               ReadNullableInt32(reader, 4),
-               reader.GetBoolean(5)
+               reader.GetInt32(3),
+               reader.GetString(4),
+               ReadNullableInt32(reader, 5),
+               reader.GetBoolean(6)
             )
          );
       }
