@@ -519,6 +519,9 @@ else
                         }
                         var participantTableId =
                            $"participant-table-{activity.Id:N}";
+                        var watchPriorityBadgeClass =
+                           "activity-participant-watch-" +
+                           "priority-badge";
                         <div class="activity-participant-table-wrap">
                            <div class="activity-participant-table-frame">
                               <table id="@participantTableId"
@@ -625,6 +628,16 @@ else
                                              <span class=
                                        "activity-participant-out-badge">
                                                 UTE
+                                             </span>
+                                          }
+                                          @if(participant.WatchPriority == 0)
+                                          {
+                                             <span class=
+                                                "@watchPriorityBadgeClass"
+                                                   role="img"
+                                                   aria-label=
+                                                      "Highest watch priority">
+                                                ★
                                              </span>
                                           }
                                        </td>

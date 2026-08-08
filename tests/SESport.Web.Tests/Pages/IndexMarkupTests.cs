@@ -105,6 +105,14 @@ public sealed class IndexMarkupTests
       Assert.Contains("participant.StartTime", html);
       Assert.Contains("participant.HasDiscipline", html);
       Assert.Contains("participant.DisciplineAliasName", html);
+      Assert.Contains("participant.WatchPriority", html);
+      Assert.Contains("participant.WatchPriority == 0", html);
+      Assert.Contains("watchPriorityBadgeClass", html);
+      Assert.Contains("★", html);
+      Assert.DoesNotContain(
+         "activity-participant-watch-priority-highest",
+         html
+      );
       Assert.Contains(".FormatExactTimeText(", html);
       Assert.DoesNotContain("PublicTimeDisplay.FormatTimeText(", html);
       Assert.DoesNotContain("PublicTimeDisplay.WithoutApproximation(", html);
@@ -135,6 +143,16 @@ public sealed class IndexMarkupTests
          ".activity-participant-col-discipline {\n" +
          "   width: 1%;\n" +
          "   white-space: nowrap;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-watch-priority-badge {\n" +
+         "   display: inline-flex;\n" +
+         "   align-items: center;",
+         css
+      );
+      Assert.DoesNotContain(
+         ".activity-participant-watch-priority-highest",
          css
       );
       Assert.Contains(

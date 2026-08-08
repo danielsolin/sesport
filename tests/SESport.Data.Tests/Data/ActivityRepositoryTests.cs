@@ -580,7 +580,8 @@ public sealed class ActivityRepositoryTests
             dataSource,
             personId,
             "Discipline Person",
-            TrackedEntityTypeIds.Person
+            TrackedEntityTypeIds.Person,
+            "tier_0"
          );
          await InsertEntityAsync(
             dataSource,
@@ -631,6 +632,13 @@ public sealed class ActivityRepositoryTests
 
          Assert.True(participant.HasDiscipline);
          Assert.Equal("100 m", participant.DisciplineAliasName);
+         Assert.NotNull(participant.WatchPriority);
+         Assert.Equal(0, participant.WatchPriority.GetValueOrDefault());
+         Assert.NotNull(otherParticipant.WatchPriority);
+         Assert.Equal(
+            30,
+            otherParticipant.WatchPriority.GetValueOrDefault()
+         );
          Assert.False(otherParticipant.HasDiscipline);
          Assert.Null(otherParticipant.DisciplineAliasName);
       }

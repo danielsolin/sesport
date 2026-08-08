@@ -1683,6 +1683,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.GetBoolean(7),
                reader.IsDBNull(8) ? null : reader.GetString(8)
             )
+            {
+               WatchPriority = reader.GetInt32(9)
+            }
          );
       }
 

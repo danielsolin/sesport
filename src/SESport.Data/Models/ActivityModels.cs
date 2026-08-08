@@ -58,7 +58,10 @@ public sealed record PublicActivityParticipant(
    bool IsActive,
    bool HasDiscipline,
    string? DisciplineAliasName
-);
+)
+{
+   public int? WatchPriority { get; init; }
+}
 
 public sealed record PublishedDateParticipantCount(
    DateOnly Date,

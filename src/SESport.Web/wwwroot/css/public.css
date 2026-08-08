@@ -1027,6 +1027,23 @@
    line-height: 1.2;
 }
 
+.activity-participant-watch-priority-badge {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   width: 15px;
+   height: 15px;
+   margin-left: 5px;
+   border: 1px solid rgba(138, 101, 0, 0.55);
+   border-radius: 999px;
+   background: rgba(255, 204, 0, 0.2);
+   color: var(--warning);
+   font-size: 9px;
+   font-weight: 800;
+   line-height: 1;
+   vertical-align: 1px;
+}
+
 .activity-participant-table {
    width: 100%;
    min-width: 540px;
