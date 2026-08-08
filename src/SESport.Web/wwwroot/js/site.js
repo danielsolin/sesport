@@ -675,12 +675,15 @@
       timeCell.append(timeStrong);
 
       const titleCell = document.createElement("td");
-      titleCell.className =
-         "broadcasts-col-broadcast broadcast-inline-editable";
-      titleCell.dataset.broadcastId = broadcastId;
-      titleCell.dataset.broadcastInlineEditField = "title";
-      titleCell.dataset.broadcastInlineEditValue = title;
-      titleCell.title = "Double-click to edit";
+      titleCell.className = "broadcasts-col-broadcast";
+
+      const titleEditor = document.createElement("div");
+      titleEditor.className = "broadcast-inline-editable";
+      titleEditor.dataset.broadcastId = broadcastId;
+      titleEditor.dataset.broadcastInlineEditField = "title";
+      titleEditor.dataset.broadcastInlineEditValue = title;
+      titleEditor.title = "Double-click to edit";
+
       const titleDisplay = document.createElement("div");
       titleDisplay.dataset.broadcastInlineEditDisplay = "true";
       const titleStrong = document.createElement("strong");
@@ -701,20 +704,6 @@
       searchLink.append(searchIcon);
       titleDisplay.append(searchLink);
 
-      if(description !== "")
-      {
-         const descriptionSpan = document.createElement("span");
-         descriptionSpan.textContent = description;
-         titleDisplay.append(descriptionSpan);
-      }
-
-      if(isReplay && originalAirDate !== "")
-      {
-         const replaySpan = document.createElement("span");
-         replaySpan.textContent = `Repris från ${originalAirDate}`;
-         titleDisplay.append(replaySpan);
-      }
-
       const titleInput = document.createElement("input");
       titleInput.className = "broadcast-inline-edit-input";
       titleInput.dataset.broadcastInlineEditInput = "true";
@@ -726,7 +715,46 @@
       titleInput.hidden = true;
       titleInput.tabIndex = -1;
 
-      titleCell.append(titleDisplay, titleInput);
+      titleEditor.append(titleDisplay, titleInput);
+
+      const descriptionEditor = document.createElement("div");
+      descriptionEditor.className = "broadcast-inline-editable";
+      descriptionEditor.dataset.broadcastId = broadcastId;
+      descriptionEditor.dataset.broadcastInlineEditField =
+         "description";
+      descriptionEditor.dataset.broadcastInlineEditValue = description;
+      descriptionEditor.title = "Double-click to edit";
+
+      const descriptionDisplay = document.createElement("div");
+      descriptionDisplay.dataset.broadcastInlineEditDisplay = "true";
+      const descriptionText = document.createElement("span");
+      descriptionText.dataset.broadcastDescriptionText = "true";
+      descriptionText.textContent = description;
+      descriptionDisplay.append(descriptionText);
+
+      const descriptionInput = document.createElement("input");
+      descriptionInput.className = "broadcast-inline-edit-input";
+      descriptionInput.dataset.broadcastInlineEditInput = "true";
+      descriptionInput.type = "text";
+      descriptionInput.value = description;
+      descriptionInput.autocomplete = "off";
+      descriptionInput.spellcheck = false;
+      descriptionInput.setAttribute(
+         "aria-label",
+         "Edit broadcast description"
+      );
+      descriptionInput.hidden = true;
+      descriptionInput.tabIndex = -1;
+
+      descriptionEditor.append(descriptionDisplay, descriptionInput);
+      titleCell.append(titleEditor, descriptionEditor);
+
+      if(isReplay && originalAirDate !== "")
+      {
+         const replayDisplay = document.createElement("div");
+         replayDisplay.textContent = `Repris från ${originalAirDate}`;
+         titleCell.append(replayDisplay);
+      }
 
       const organizationCell = document.createElement("td");
       organizationCell.className =

@@ -301,6 +301,29 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task UpdateDescriptionAsync(
+      Guid id,
+      string? description,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update broadcasts
+         set description = @description,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue(
+         "description",
+         (object?)description ?? DBNull.Value
+      );
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task UpdateCategoriesAsync(
       Guid id,
       IReadOnlyCollection<string> categories,

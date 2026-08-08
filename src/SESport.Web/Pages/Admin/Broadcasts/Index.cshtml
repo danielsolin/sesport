@@ -226,43 +226,59 @@
                            @timeOnlyText
                         </strong>
                      </td>
-                     <td class="broadcasts-col-broadcast
-                                broadcast-inline-editable"
-                         data-broadcast-id="@broadcast.Id"
-                         data-broadcast-inline-edit-field="title"
-                         data-broadcast-inline-edit-value=
-                            "@broadcast.Title"
-                         title="Double-click to edit">
-                        <div data-broadcast-inline-edit-display>
-                           <strong data-broadcast-title-text>
-                              @broadcast.Title
-                           </strong>
-                           <a class="ses-entity-search-link"
-                              data-broadcast-title-search-link
-                              href="@ViewData["SearchUrl"]@broadcast.Title"
-                              target="_blank">
-                              <span class="ses-icon-search"></span>
-                           </a>
-                           @if(!string.IsNullOrWhiteSpace(
-                              broadcast.Description))
-                           {
-                              <span>@broadcast.Description</span>
-                           }
-                           @if(airDate != null)
-                           {
-                              <span>
-                                 Repris från @airDate
-                              </span>
-                           }
+                     <td class="broadcasts-col-broadcast">
+                        <div class="broadcast-inline-editable"
+                             data-broadcast-id="@broadcast.Id"
+                             data-broadcast-inline-edit-field="title"
+                             data-broadcast-inline-edit-value=
+                                "@broadcast.Title"
+                             title="Double-click to edit">
+                           <div data-broadcast-inline-edit-display>
+                              <strong data-broadcast-title-text>
+                                 @broadcast.Title
+                              </strong>
+                              <a class="ses-entity-search-link"
+                                 data-broadcast-title-search-link
+                                 href="@ViewData["SearchUrl"]@broadcast.Title"
+                                 target="_blank">
+                                 <span class="ses-icon-search"></span>
+                              </a>
+                           </div>
+                           <input class="broadcast-inline-edit-input"
+                                  data-broadcast-inline-edit-input
+                                  type="text"
+                                  value="@broadcast.Title"
+                                  autocomplete="off"
+                                  spellcheck="false"
+                                  aria-label="Edit broadcast title"
+                                  hidden />
                         </div>
-                        <input class="broadcast-inline-edit-input"
-                               data-broadcast-inline-edit-input
-                               type="text"
-                               value="@broadcast.Title"
-                               autocomplete="off"
-                               spellcheck="false"
-                               aria-label="Edit broadcast title"
-                               hidden />
+                        <div class="broadcast-inline-editable"
+                             data-broadcast-id="@broadcast.Id"
+                             data-broadcast-inline-edit-field="description"
+                             data-broadcast-inline-edit-value=
+                                "@broadcast.Description"
+                             title="Double-click to edit">
+                           <div data-broadcast-inline-edit-display>
+                              <span data-broadcast-description-text>
+                                 @broadcast.Description
+                              </span>
+                           </div>
+                           <input class="broadcast-inline-edit-input"
+                                  data-broadcast-inline-edit-input
+                                  type="text"
+                                  value="@broadcast.Description"
+                                  autocomplete="off"
+                                  spellcheck="false"
+                                  aria-label="Edit broadcast description"
+                                  hidden />
+                        </div>
+                        @if(airDate != null)
+                        {
+                           <span>
+                              Repris från @airDate
+                           </span>
+                        }
                      </td>
                      <td class="broadcasts-col-organization
                                 broadcast-inline-editable"

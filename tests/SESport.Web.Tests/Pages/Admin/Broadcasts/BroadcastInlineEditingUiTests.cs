@@ -37,6 +37,10 @@ public sealed class BroadcastInlineEditingUiTests
          siteJs
       );
       Assert.Contains(
+         "descriptionEditor.dataset.broadcastInlineEditField",
+         siteJs
+      );
+      Assert.Contains(
          "window.initializeBroadcastInlineEditing?.(cell);",
          broadcastInlineEditJs
       );
@@ -54,6 +58,18 @@ public sealed class BroadcastInlineEditingUiTests
          groupAutocompleteJs
       );
       Assert.Contains("activityGroupId", broadcastInlineEditJs);
+      Assert.Contains(
+         "broadcastInlineEditDescriptionField = \"description\"",
+         broadcastInlineEditJs
+      );
+      Assert.Contains(
+         "broadcastDescriptionTextSelector",
+         broadcastInlineEditJs
+      );
+      Assert.Contains(
+         "data-broadcast-description-text",
+         broadcastInlineEditJs
+      );
       Assert.Contains(
          "broadcast-activity-group-autocomplete.js",
          layout

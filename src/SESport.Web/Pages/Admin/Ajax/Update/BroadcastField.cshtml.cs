@@ -54,6 +54,22 @@ public sealed class BroadcastFieldModel(
             });
          }
 
+         if(string.Equals(field, "description", StringComparison.Ordinal))
+         {
+            await repository.UpdateDescriptionAsync(
+               id,
+               string.IsNullOrWhiteSpace(value) ? null : value,
+               cancellationToken
+            );
+
+            return new JsonResult(new
+            {
+               updated = true,
+               field = "description",
+               value = value ?? string.Empty
+            });
+         }
+
          if(string.Equals(field, "categories", StringComparison.Ordinal))
          {
             var categories = NormalizeCategories(value);

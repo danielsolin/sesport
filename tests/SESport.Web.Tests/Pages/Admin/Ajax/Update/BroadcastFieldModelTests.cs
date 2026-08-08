@@ -13,6 +13,94 @@ namespace SESport.Core.Tests.Pages.Admin.Ajax.Update;
 public sealed class BroadcastFieldModelTests
 {
    [Fact]
+   public async Task OnPostAsyncUpdatesAndClearsDescription()
+   {
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var initialDescription = $"Initial description {uniqueSuffix}";
+      var updatedDescription = $"Updated description {uniqueSuffix}";
+      var startsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "channel-1",
+         "Viaplay",
+         $"Broadcast {uniqueSuffix}",
+         [],
+         startsAt,
+         endsAt,
+         description: initialDescription
+      );
+
+      try
+      {
+         var updateResult = await model.OnPostAsync(
+            broadcastId,
+            "description",
+            $" {updatedDescription} ",
+            CancellationToken.None
+         );
+
+         var updatePayload = Assert.IsType<JsonResult>(updateResult).Value!;
+         Assert.Equal(
+            "description",
+            updatePayload.GetType().GetProperty("field")?.GetValue(
+               updatePayload
+            )
+         );
+         Assert.Equal(
+            updatedDescription,
+            updatePayload.GetType().GetProperty("value")?.GetValue(
+               updatePayload
+            )
+         );
+
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+         Assert.Equal(updatedDescription, broadcast?.Description);
+
+         var clearResult = await model.OnPostAsync(
+            broadcastId,
+            "description",
+            "  ",
+            CancellationToken.None
+         );
+
+         Assert.IsType<JsonResult>(clearResult);
+         broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+         Assert.Null(broadcast?.Description);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+      }
+   }
+
+   [Fact]
    public async Task OnPostAsyncUpdatesOrganizationAndRejectsInvalidType()
    {
       var broadcastId = Guid.NewGuid();
@@ -872,7 +960,8 @@ public sealed class BroadcastFieldModelTests
       DateTimeOffset endsAt,
       string? activityGroupDraftTitle = null,
       string? activityGroupSourceKindId = null,
-      Guid? activityGroupSourceActivityId = null
+      Guid? activityGroupSourceActivityId = null,
+      string? description = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -906,7 +995,7 @@ public sealed class BroadcastFieldModelTests
             @channel_id,
             @channel_name,
             @title,
-            null,
+            @description,
             @categories,
             false,
             null,
@@ -926,6 +1015,10 @@ public sealed class BroadcastFieldModelTests
       command.Parameters.AddWithValue("channel_id", channelId);
       command.Parameters.AddWithValue("channel_name", channelName);
       command.Parameters.AddWithValue("title", title);
+      command.Parameters.AddWithValue(
+         "description",
+         (object?)description ?? DBNull.Value
+      );
       command.Parameters.AddWithValue("categories", categories);
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue("ends_at", endsAt);

@@ -5,6 +5,7 @@
    const broadcastInlineEditFieldSelector =
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditTitleField = "title";
+   const broadcastInlineEditDescriptionField = "description";
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
    const broadcastInlineEditGroupField = "group";
@@ -13,6 +14,8 @@
    const broadcastInlineEditDisplaySelector =
       "[data-broadcast-inline-edit-display]";
    const broadcastTitleTextSelector = "[data-broadcast-title-text]";
+   const broadcastDescriptionTextSelector =
+      "[data-broadcast-description-text]";
    const broadcastTitleSearchLinkSelector =
       "[data-broadcast-title-search-link]";
    const broadcastCategoriesListSelector =
@@ -153,6 +156,35 @@
             searchLink.href = `${searchUrlBase}${
                encodeURIComponent(nextValue)
             }`;
+         }
+
+         return;
+      }
+
+      if(field === broadcastInlineEditDescriptionField)
+      {
+         const nextValue = typeof payload.value === "string"
+            ? payload.value.trim()
+            : "";
+         const input = cell.querySelector(
+            broadcastInlineEditInputSelector
+         );
+
+         cell.dataset.broadcastInlineEditValue = nextValue;
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = nextValue;
+            input.dataset.broadcastInlineEditOriginalValue = nextValue;
+         }
+
+         const descriptionText = cell.querySelector(
+            broadcastDescriptionTextSelector
+         );
+
+         if(descriptionText instanceof HTMLElement)
+         {
+            descriptionText.textContent = nextValue;
          }
 
          return;

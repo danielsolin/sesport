@@ -27,5 +27,15 @@ public sealed class IndexMarkupTests
       Assert.Contains("filter-form-count", html);
       Assert.Contains("Broadcasts:", html);
       Assert.Contains("data-broadcast-count", html);
+      Assert.Contains(
+         "data-broadcast-inline-edit-field=\"title\"",
+         html
+      );
+      Assert.Contains(
+         "data-broadcast-inline-edit-field=\"description\"",
+         html
+      );
+      Assert.Contains("data-broadcast-description-text", html);
+      Assert.Contains("Edit broadcast description", html);
    }
 }
