@@ -3,6 +3,7 @@ namespace SESport.Core.Domain;
 public enum TrackedEntityType
 {
    Person,
+   Discipline,
    NationalTeam,
    Club,
    Team,

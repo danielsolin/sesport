@@ -1593,6 +1593,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             person.birthdate,
             person.height,
             coalesce(person.formative_club, '') as club,
+            discipline.id is not null as has_discipline,
+            nullif(btrim(discipline.alias_name), '') as discipline_alias_name,
             priority.sort_order,
             al.is_active
          from activity_entity_links al
@@ -1613,6 +1615,28 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                r.id desc
             limit 1
          ) participant_start on true
+         left join lateral (
+            select
+               linked.id,
+               linked.alias_name
+            from entity_to_entity_links entity_link
+            join entities linked on linked.id = case
+               when entity_link.source_entity_id = person.id
+                  then entity_link.target_entity_id
+               else entity_link.source_entity_id
+            end
+            where (
+               entity_link.source_entity_id = person.id
+               or entity_link.target_entity_id = person.id
+            )
+               and linked.entity_type_id =
+                  '{{TrackedEntityTypeIds.Discipline}}'
+            order by
+               linked.alias_name nulls last,
+               linked.canonical_name,
+               linked.id
+            limit 1
+         ) discipline on true
          where al.activity_id = any(@activity_ids)
             and person.entity_type_id =
                '{{TrackedEntityTypeIds.Person}}'
@@ -1655,7 +1679,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   : reader.GetFieldValue<DateOnly>(4),
                reader.IsDBNull(5) ? null : reader.GetInt32(5),
                reader.GetString(6),
-               reader.GetBoolean(8)
+               reader.GetBoolean(10),
+               reader.GetBoolean(7),
+               reader.IsDBNull(8) ? null : reader.GetString(8)
             )
          );
       }

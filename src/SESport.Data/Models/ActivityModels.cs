@@ -55,7 +55,9 @@ public sealed record PublicActivityParticipant(
    DateOnly? Birthdate,
    int? Height,
    string Club,
-   bool IsActive
+   bool IsActive,
+   bool HasDiscipline,
+   string? DisciplineAliasName
 );
 
 public sealed record PublishedDateParticipantCount(

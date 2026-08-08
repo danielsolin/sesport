@@ -211,6 +211,8 @@
             return row.dataset.participantAge ?? "";
          case "start-time":
             return row.dataset.participantStartTime ?? "";
+         case "discipline":
+            return row.dataset.participantDiscipline ?? "";
          case "club":
             return row.dataset.participantClub ?? "";
          default:

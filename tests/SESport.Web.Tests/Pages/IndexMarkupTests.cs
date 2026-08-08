@@ -78,9 +78,15 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-start-time", html);
+      Assert.Contains("activity-participant-col-discipline", html);
       Assert.Contains(
          "data-participant-sort=\n" +
-         "                                                     \"start-time\"",
+            new string(' ', 53) + "\"start-time\"",
+         html
+      );
+      Assert.Contains(
+         "data-participant-sort=\n" +
+            new string(' ', 53) + "\"discipline\"",
          html
       );
       Assert.Contains("activity-participant-col-age", html);
@@ -97,10 +103,14 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-expanded-label=\"Visa färre\"", html);
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
+      Assert.Contains("participant.HasDiscipline", html);
+      Assert.Contains("participant.DisciplineAliasName", html);
       Assert.Contains(".FormatExactTimeText(", html);
       Assert.DoesNotContain("PublicTimeDisplay.FormatTimeText(", html);
       Assert.DoesNotContain("PublicTimeDisplay.WithoutApproximation(", html);
       Assert.Contains("data-participant-start-time", html);
+      Assert.Contains("data-participant-discipline", html);
+      Assert.Contains("showDisciplineColumn", html);
       Assert.True(
          html.IndexOf("activity-participant-col-name") <
          html.IndexOf("activity-participant-col-start-time")
@@ -117,6 +127,12 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-col-start-time {\n" +
+         "   width: 1%;\n" +
+         "   white-space: nowrap;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-col-discipline {\n" +
          "   width: 1%;\n" +
          "   white-space: nowrap;",
          css
@@ -175,6 +191,7 @@ public sealed class IndexMarkupTests
          participantScript
       );
       Assert.Contains("case \"start-time\":", participantScript);
+      Assert.Contains("case \"discipline\":", participantScript);
       Assert.Contains("activity-now-marker", html);
       Assert.Contains("activity-ongoing-dots", html);
       Assert.Contains(

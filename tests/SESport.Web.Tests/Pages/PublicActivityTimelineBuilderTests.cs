@@ -506,7 +506,9 @@ public class PublicActivityTimelineBuilderTests
          null,
          null,
          string.Empty,
-         true
+         true,
+         false,
+         null
       );
    }
 }

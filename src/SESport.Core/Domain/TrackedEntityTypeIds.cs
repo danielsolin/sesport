@@ -3,6 +3,7 @@ namespace SESport.Core.Domain;
 public static class TrackedEntityTypeIds
 {
    public const string Person = nameof(TrackedEntityType.Person);
+   public const string Discipline = nameof(TrackedEntityType.Discipline);
    public const string NationalTeam = nameof(TrackedEntityType.NationalTeam);
    public const string Club = nameof(TrackedEntityType.Club);
    public const string Team = nameof(TrackedEntityType.Team);

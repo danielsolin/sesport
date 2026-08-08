@@ -551,6 +551,101 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedForDateAsyncIncludesParticipantDiscipline()
+   {
+      var selectedDate = DistantActivityDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var otherPersonId = Guid.NewGuid();
+      var disciplineId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertActivityAsync(
+            dataSource,
+            activityId,
+            selectedDate,
+            startsAt,
+            ActivityPublicationStatusIds.Published
+         );
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "Discipline Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            otherPersonId,
+            "Other Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            disciplineId,
+            "100 Metres",
+            TrackedEntityTypeIds.Discipline,
+            aliasName: "100 m"
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            activityId,
+            personId
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            activityId,
+            otherPersonId
+         );
+         await InsertEntityLinkAsync(
+            dataSource,
+            disciplineId,
+            personId
+         );
+
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         var participant = Assert.Single(
+            activity.Participants,
+            item => item.Id == personId
+         );
+         var otherParticipant = Assert.Single(
+            activity.Participants,
+            item => item.Id == otherPersonId
+         );
+
+         Assert.True(participant.HasDiscipline);
+         Assert.Equal("100 m", participant.DisciplineAliasName);
+         Assert.False(otherParticipant.HasDiscipline);
+         Assert.Null(otherParticipant.DisciplineAliasName);
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, disciplineId);
+         await DeleteEntityAsync(dataSource, otherPersonId);
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedForDateAsyncMarksNationalTeamActivities()
    {
       var selectedDate = DistantActivityDate;

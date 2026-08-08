@@ -490,12 +490,21 @@ else
                                     participant.StartTime
                                  )
                            );
+                        var showDisciplineColumn =
+                           activity.Participants.Any(
+                              participant => participant.HasDiscipline
+                           );
                         var participantTableClass =
                            showStartTimeColumn
                               ? "activity-participant-table " +
                                  "activity-participant-table-" +
                                  "has-start-time"
                               : "activity-participant-table";
+                        if(showDisciplineColumn)
+                        {
+                           participantTableClass +=
+                              " activity-participant-table-has-discipline";
+                        }
                         var shouldCollapseParticipants =
                            activity.Participants.Count >
                               maxVisibleParticipants;
@@ -529,6 +538,18 @@ else
                                                   data-participant-sort=
                                                      "start-time">
                                              Starttid
+                                          </button>
+                                       </th>
+                                    }
+                                    @if(showDisciplineColumn)
+                                    {
+                                       <th class=
+                                          "activity-participant-col-discipline"
+                                          aria-sort="none">
+                                          <button type="button"
+                                                  data-participant-sort=
+                                                     "discipline">
+                                             Disciplin
                                           </button>
                                        </th>
                                     }
@@ -587,6 +608,8 @@ else
                                            "@participant.Name"
                                         data-participant-start-time=
                                            "@participant.StartTime"
+                                        data-participant-discipline=
+                                           "@participant.DisciplineAliasName"
                                         data-participant-age="@age"
                                         data-participant-club=
                                            "@participant.Club">
@@ -611,6 +634,13 @@ else
                                           <td class=
                                          "activity-participant-col-start-time">
                                              @participantStartTime
+                                          </td>
+                                       }
+                                       @if(showDisciplineColumn)
+                                       {
+                                          <td class=
+                                         "activity-participant-col-discipline">
+                                             @participant.DisciplineAliasName
                                           </td>
                                        }
                                        <td class=
