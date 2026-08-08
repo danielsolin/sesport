@@ -255,6 +255,16 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             )
          order by run.started_at desc
          limit 1;
+
+         select
+            id,
+            target_type_id,
+            text,
+            correlation_id,
+            created_at
+         from todos
+         where done_at is null
+         order by created_at, id;
          """;
 
       var today = SportDay.GetSportDate(now);
@@ -278,12 +288,15 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
          reader,
          cancellationToken
       );
+      await reader.NextResultAsync(cancellationToken);
+      var todos = await ReadTodosAsync(reader, cancellationToken);
 
       return new AdminDashboardSnapshot(
          dates,
          issues,
          aiHealth,
-         importHealth
+         importHealth,
+         todos
       );
    }
 
@@ -460,5 +473,28 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             ? null
             : reader.GetFieldValue<DateTimeOffset>(4)
       );
+   }
+
+   private static async Task<IReadOnlyList<TodoItem>> ReadTodosAsync(
+      NpgsqlDataReader reader,
+      CancellationToken cancellationToken
+   )
+   {
+      var todos = new List<TodoItem>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         todos.Add(
+            new TodoItem(
+               reader.GetGuid(0),
+               reader.GetString(1),
+               reader.GetString(2),
+               reader.IsDBNull(3) ? null : reader.GetString(3),
+               reader.GetFieldValue<DateTimeOffset>(4)
+            )
+         );
+      }
+
+      return todos;
    }
 }

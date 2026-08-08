@@ -26,6 +26,9 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-entity-count", html);
       Assert.Contains("data-entity-watch-priority-template", html);
       Assert.Contains("AntiForgeryToken", html);
+      Assert.Contains("<summary class=\"button\">Todo</summary>", html);
+      Assert.Contains("asp-page-handler=\"AddTodo\"", html);
+      Assert.Contains("<textarea name=\"text\"", html);
       Assert.Contains("entities-index.js", html);
       Assert.Contains("renderEntityRowHtml", script);
       Assert.Contains("count.textContent = value", script);

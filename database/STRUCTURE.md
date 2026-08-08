@@ -147,6 +147,15 @@ that equivalent records from different sources can converge on one row.
 Stores active rules for excluding broadcasts during ingestion. Rules can be
 scoped by kind, value, and source, and retain a reason for manual auditing.
 
+## Editorial todos
+
+### `todos`
+
+Stores manually entered editorial tasks. Each task is classified as applying
+to broadcasts, activities, or entities. `correlation_id` is nullable so that
+future versions can associate a task with one specific record without
+changing the table shape.
+
 ## AI configuration and execution
 
 ### `ai_providers`

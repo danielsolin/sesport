@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
@@ -8,7 +9,10 @@ using SESport.Data.Models;
 
 namespace SESport.Web.Pages.Admin.Dashboard;
 
-public class IndexModel(DashboardRepository repository) : PageModel
+public class IndexModel(
+   DashboardRepository repository,
+   TodoRepository todoRepository
+) : PageModel
 {
    public const string ParticipantMissingPersonDataLabel =
       "Participant missing birth date or formative club";
@@ -45,6 +49,15 @@ public class IndexModel(DashboardRepository repository) : PageModel
       {
          LoadError = exception.Message;
       }
+   }
+
+   public async Task<IActionResult> OnPostCompleteTodoAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      await todoRepository.MarkDoneAsync(id, cancellationToken);
+      return RedirectToPage();
    }
 
    public static IReadOnlyList<string> GetIssueLabels(

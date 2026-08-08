@@ -10,7 +10,8 @@ namespace SESport.Web.Pages.Admin.Activities;
 
 public class IndexModel(
    ActivityRepository repository,
-   ActivityIndexPageService indexService
+   ActivityIndexPageService indexService,
+   TodoRepository todoRepository
 ) : PageModel
 {
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
@@ -94,6 +95,30 @@ public class IndexModel(
       routeValues[RouteKeys.SortColumn] = SortColumn;
 
       return Url.Page("./Index", routeValues) ?? "/Admin/Activities";
+   }
+
+   public async Task<IActionResult> OnPostAddTodoAsync(
+      string? text,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(text))
+      {
+         await todoRepository.CreateAsync(
+            TodoTargetTypeIds.Activities,
+            text,
+            null,
+            cancellationToken
+         );
+      }
+
+      if(Url.IsLocalUrl(returnUrl))
+      {
+         return LocalRedirect(returnUrl!);
+      }
+
+      return RedirectToPage("./Index");
    }
 
    public async Task<IActionResult> OnPostDeleteAsync(

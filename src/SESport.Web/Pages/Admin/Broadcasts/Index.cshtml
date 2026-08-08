@@ -29,6 +29,7 @@
       Model.ShowHidden
          ? string.Empty
          : " data-ajax-decrement-target=\"[data-broadcast-count]\"";
+   var todoReturnUrl = $"{Request.Path}{Request.QueryString}";
 }
 
 @Html.AntiForgeryToken()
@@ -36,6 +37,29 @@
 <section class="page-heading page-heading-row">
    <div>
       <h1>Broadcasts</h1>
+   </div>
+   <div class="button-row">
+      <details class="todo-composer">
+         <summary class="button">Todo</summary>
+         <form method="post"
+               asp-page-handler="AddTodo"
+               class="todo-composer-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@todoReturnUrl" />
+            <label>
+               <span>Todo</span>
+               <textarea name="text"
+                         rows="3"
+                         maxlength="2000"
+                         required></textarea>
+            </label>
+            <button class="button button-primary" type="submit">
+               Save
+            </button>
+         </form>
+      </details>
    </div>
 </section>
 

@@ -190,6 +190,27 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void TodoMigrationDefinesOpenTodoStorage()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "018_todos.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("create table public.todos", migration);
+      Assert.Contains("target_type_id text not null", migration);
+      Assert.Contains("correlation_id text", migration);
+      Assert.Contains("done_at timestamp with time zone", migration);
+      Assert.Contains("todos_target_type_id_check", migration);
+      Assert.Contains("todos_text_not_blank_check", migration);
+      Assert.Contains("todos_open_created_at_idx", migration);
+   }
+
+   [Fact]
    public void ParticipantAiResultsMigrationDefinesGenericResultStorage()
    {
       var migration = File.ReadAllText(

@@ -8,6 +8,7 @@
    var entityEditUrl = Url.Page("./Edit");
    var entityDeleteUrl = Url.Page("./Index");
    var searchUrlBase = ViewData["SearchUrl"] as string ?? string.Empty;
+   var todoReturnUrl = $"{Request.Path}{Request.QueryString}";
 }
 
 @Html.AntiForgeryToken()
@@ -18,6 +19,27 @@
    </div>
    <div class="button-row">
       <a class="button button-primary" asp-page="./Edit">New entity</a>
+      <details class="todo-composer">
+         <summary class="button">Todo</summary>
+         <form method="post"
+               asp-page-handler="AddTodo"
+               class="todo-composer-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@todoReturnUrl" />
+            <label>
+               <span>Todo</span>
+               <textarea name="text"
+                         rows="3"
+                         maxlength="2000"
+                         required></textarea>
+            </label>
+            <button class="button button-primary" type="submit">
+               Save
+            </button>
+         </form>
+      </details>
    </div>
 </section>
 

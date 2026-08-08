@@ -302,6 +302,47 @@ h2 {
    gap: 8px;
 }
 
+.todo-composer {
+   position: relative;
+}
+
+.todo-composer > summary {
+   list-style: none;
+}
+
+.todo-composer > summary::-webkit-details-marker {
+   display: none;
+}
+
+.todo-composer-form {
+   position: absolute;
+   top: calc(100% + 8px);
+   right: 0;
+   z-index: 10;
+   display: grid;
+   gap: 10px;
+   width: min(360px, calc(100vw - 32px));
+   padding: 14px;
+   border: 1px solid var(--line);
+   border-radius: 4px;
+   background: var(--surface);
+   box-shadow: 0 8px 24px rgba(21, 32, 43, 0.16);
+}
+
+.todo-composer-form label {
+   margin: 0;
+}
+
+.todo-composer-form textarea {
+   width: 100%;
+   min-height: 80px;
+   resize: vertical;
+}
+
+.todo-composer-form .button {
+   justify-self: start;
+}
+
 .form-status {
    display: inline-flex;
    align-items: center;

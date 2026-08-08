@@ -4,7 +4,8 @@ public sealed record AdminDashboardSnapshot(
    IReadOnlyList<DashboardDateSummary> Dates,
    IReadOnlyList<DashboardActivityIssue> ActivityIssues,
    DashboardAiHealth AiHealth,
-   DashboardImportHealth? ImportHealth
+   DashboardImportHealth? ImportHealth,
+   IReadOnlyList<TodoItem> Todos
 );
 
 public sealed record DashboardDateSummary(

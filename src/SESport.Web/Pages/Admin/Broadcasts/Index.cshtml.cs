@@ -13,7 +13,8 @@ public class IndexModel(
    AdminBroadcastRepository repository,
    AdminRepository adminRepository,
    BroadcastDatePreferenceStore datePreferenceStore,
-   BroadcastParticipationService participationService
+   BroadcastParticipationService participationService,
+   TodoRepository todoRepository
 ) : PageModel
 {
    public const string ChannelSortColumn = "Channel";
@@ -140,6 +141,30 @@ public class IndexModel(
       }
 
       return routeValues;
+   }
+
+   public async Task<IActionResult> OnPostAddTodoAsync(
+      string? text,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(text))
+      {
+         await todoRepository.CreateAsync(
+            TodoTargetTypeIds.Broadcasts,
+            text,
+            null,
+            cancellationToken
+         );
+      }
+
+      if(Url.IsLocalUrl(returnUrl))
+      {
+         return LocalRedirect(returnUrl!);
+      }
+
+      return RedirectToPage("./Index");
    }
 
    public async Task<IActionResult> OnPostGenerateActivityAsync(

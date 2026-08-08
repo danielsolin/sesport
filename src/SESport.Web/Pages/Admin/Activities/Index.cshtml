@@ -16,6 +16,7 @@
    var runStatusesUrl = Url.Page(
       "/Admin/Ajax/Poll/RunStatuses"
    );
+   var todoReturnUrl = $"{Request.Path}{Request.QueryString}";
 }
 
 <section class="page-heading page-heading-row">
@@ -28,6 +29,27 @@
          asp-route-returnUrl="@returnUrl">
          New activity
       </a>
+      <details class="todo-composer">
+         <summary class="button">Todo</summary>
+         <form method="post"
+               asp-page-handler="AddTodo"
+               class="todo-composer-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@todoReturnUrl" />
+            <label>
+               <span>Todo</span>
+               <textarea name="text"
+                         rows="3"
+                         maxlength="2000"
+                         required></textarea>
+            </label>
+            <button class="button button-primary" type="submit">
+               Save
+            </button>
+         </form>
+      </details>
    </div>
 </section>
 

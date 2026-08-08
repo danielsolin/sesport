@@ -50,6 +50,9 @@ public sealed class IndexMarkupTests
       Assert.Contains("Facts", html);
       Assert.Contains("Start", html);
       Assert.Contains("Result", html);
+      Assert.Contains("<summary class=\"button\">Todo</summary>", html);
+      Assert.Contains("asp-page-handler=\"AddTodo\"", html);
+      Assert.Contains("<textarea name=\"text\"", html);
       Assert.DoesNotContain("Find Facts", html);
       Assert.DoesNotContain("Find Start", html);
       Assert.DoesNotContain("Find Result", html);

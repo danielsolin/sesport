@@ -100,6 +100,46 @@ else if(Model.Dashboard is not null)
             </table>
          </div>
       }
+
+      <h3>Todos</h3>
+      @if(dashboard.Todos.Count == 0)
+      {
+         <div class="notice">
+            No open todos.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact
+                          admin-table-hover dashboard-todo-table">
+               <thead>
+                  <tr>
+                     <th>Type</th>
+                     <th>Todo</th>
+                     <th></th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var todo in dashboard.Todos)
+                  {
+                     <tr>
+                        <td>@todo.TargetTypeId</td>
+                        <td>@todo.Text</td>
+                        <td class="table-actions">
+                           <form method="post"
+                                 asp-page-handler="CompleteTodo"
+                                 asp-route-id="@todo.Id">
+                              @Html.AntiForgeryToken()
+                              <button type="submit">Done</button>
+                           </form>
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
    </section>
 
    <section class="dashboard-section">

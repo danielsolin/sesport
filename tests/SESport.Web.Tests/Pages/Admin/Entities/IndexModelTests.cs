@@ -20,9 +20,11 @@ public sealed class IndexModelTests
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
+      var todoRepository = new TodoRepository(dataSource);
       var model = new IndexModel(
          repository,
-         new EntityDatePreferenceStore()
+         new EntityDatePreferenceStore(),
+         todoRepository
       )
       {
          PageContext = new PageContext
@@ -74,9 +76,11 @@ public sealed class IndexModelTests
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
+      var todoRepository = new TodoRepository(dataSource);
       var model = new IndexModel(
          repository,
-         new EntityDatePreferenceStore()
+         new EntityDatePreferenceStore(),
+         todoRepository
       )
       {
          PageContext = new PageContext
@@ -117,9 +121,11 @@ public sealed class IndexModelTests
       var expectedDate = new DateOnly(2026, 7, 22);
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
+      var todoRepository = new TodoRepository(dataSource);
       var model = new IndexModel(
          repository,
-         new EntityDatePreferenceStore()
+         new EntityDatePreferenceStore(),
+         todoRepository
       )
       {
          PageContext = new PageContext

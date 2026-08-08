@@ -18,6 +18,10 @@ public sealed class IndexMarkupTests
 
       Assert.Contains("Upcoming coverage", html);
       Assert.Contains("Activities needing attention", html);
+      Assert.Contains("<h3>Todos</h3>", html);
+      Assert.Contains("dashboard.Todos", html);
+      Assert.Contains("asp-page-handler=\"CompleteTodo\"", html);
+      Assert.Contains(">Done</button>", html);
       Assert.DoesNotContain("System health", html);
       Assert.DoesNotContain(
          "AI processing and broadcast import status.",

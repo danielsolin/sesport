@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 
@@ -9,7 +10,8 @@ namespace SESport.Web.Pages.Admin.Entities;
 
 public class IndexModel(
    AdminRepository repository,
-   EntityDatePreferenceStore datePreferenceStore
+   EntityDatePreferenceStore datePreferenceStore,
+   TodoRepository todoRepository
 ) : PageModel
 {
    public const string FilterCookieName = "sesport.admin.entities.filter";
@@ -115,6 +117,30 @@ public class IndexModel(
    )
    {
       await repository.DeleteEntityAsync(id, cancellationToken);
+      return RedirectToPage("./Index");
+   }
+
+   public async Task<IActionResult> OnPostAddTodoAsync(
+      string? text,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(text))
+      {
+         await todoRepository.CreateAsync(
+            TodoTargetTypeIds.Entities,
+            text,
+            null,
+            cancellationToken
+         );
+      }
+
+      if(Url.IsLocalUrl(returnUrl))
+      {
+         return LocalRedirect(returnUrl!);
+      }
+
       return RedirectToPage("./Index");
    }
 

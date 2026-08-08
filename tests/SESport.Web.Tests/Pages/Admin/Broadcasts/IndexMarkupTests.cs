@@ -37,5 +37,9 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("data-broadcast-description-text", html);
       Assert.Contains("Edit broadcast description", html);
+      Assert.Contains("<summary class=\"button\">Todo</summary>", html);
+      Assert.Contains("asp-page-handler=\"AddTodo\"", html);
+      Assert.Contains("<textarea name=\"text\"", html);
+      Assert.Contains("Save", html);
    }
 }
