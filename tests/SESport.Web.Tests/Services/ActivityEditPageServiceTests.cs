@@ -593,6 +593,19 @@ public sealed class ActivityEditPageServiceTests
             displayedBroadcast.ActivityGroupParticipants
                .Select(participant => participant.Id)
          );
+
+         var clearedActivity = new ActivityEditModel();
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            clearedActivity,
+            [broadcastId],
+            null,
+            CancellationToken.None,
+            true
+         );
+
+         Assert.Equal(activityGroupId, clearedActivity.ActivityGroupId);
+         Assert.Empty(clearedActivity.LinkedEntityIds);
+         Assert.Null(clearedActivity.ParticipationRunId);
       }
       finally
       {

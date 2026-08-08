@@ -269,7 +269,8 @@ public sealed class ActivityEditPageService(
       ActivityEditModel activity,
       IReadOnlyCollection<Guid> ids,
       Guid? participationRunId,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      bool clearParticipants = false
    )
    {
       var normalizedIds = NormalizeBroadcastIds(ids);
@@ -300,6 +301,12 @@ public sealed class ActivityEditPageService(
       activity.OrganizationEntityId = firstBroadcast.EntityId;
       activity.TvChannelName = firstBroadcast.ChannelName;
 
+      if(clearParticipants)
+      {
+         activity.LinkedEntityIds = [];
+         activity.ParticipationRunId = null;
+      }
+
       if(firstBroadcast.ActivityGroupSourceActivityId is not null)
       {
          activity.ActivityGroupId = await repository.GetActivityGroupIdAsync(
@@ -314,29 +321,33 @@ public sealed class ActivityEditPageService(
                   activity.ActivityGroupId.Value,
                   cancellationToken
                );
-            var participantsByGroup = await repository
-               .GetActivityGroupParticipantsAsync(
-                  [activity.ActivityGroupId.Value],
-                  cancellationToken
-               );
-            if(participantsByGroup.TryGetValue(
-                  activity.ActivityGroupId.Value,
-                  out var knownParticipants
-               ))
+            if(!clearParticipants)
             {
-               groupParticipants = knownParticipants;
+               var participantsByGroup = await repository
+                  .GetActivityGroupParticipantsAsync(
+                     [activity.ActivityGroupId.Value],
+                     cancellationToken
+                  );
+               if(participantsByGroup.TryGetValue(
+                     activity.ActivityGroupId.Value,
+                     out var knownParticipants
+                  ))
+               {
+                  groupParticipants = knownParticipants;
+               }
             }
          }
       }
 
-      var participationCheck =
-         participationRunId is null && groupParticipants.Count > 0
-            ? null
-            : await participationService.GetParticipationCheckAsync(
-               firstBroadcast.Id,
-               participationRunId,
-               cancellationToken
-            );
+      var skipParticipationCheck = clearParticipants ||
+         participationRunId is null && groupParticipants.Count > 0;
+      var participationCheck = skipParticipationCheck
+         ? null
+         : await participationService.GetParticipationCheckAsync(
+            firstBroadcast.Id,
+            participationRunId,
+            cancellationToken
+         );
       var selectableEntities = participationCheck is null
          ? []
          : await GetSelectableEntitiesAsync(

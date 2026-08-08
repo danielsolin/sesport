@@ -14,4 +14,5 @@ public static class RouteKeys
    public const string ReturnUrl = "returnUrl";
    public const string BroadcastIds = "broadcastIds";
    public const string ParticipationRunId = "participationRunId";
+   public const string ClearParticipants = "clearParticipants";
 }

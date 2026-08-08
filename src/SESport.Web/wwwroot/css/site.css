@@ -737,6 +737,32 @@ h2 {
    display: block;
 }
 
+.broadcast-group-participants-clear {
+   display: block;
+   margin-top: 4px;
+   padding: 0;
+   border: 0;
+   background: transparent;
+   color: var(--accent);
+   font: inherit;
+   font-size: 11px;
+   font-weight: 800;
+   line-height: 1.2;
+   cursor: pointer;
+}
+
+.broadcast-group-participants-clear:hover,
+.broadcast-group-participants-clear:focus-visible {
+   color: var(--accent-strong);
+   text-decoration: underline;
+}
+
+.broadcast-group-participants-clear:disabled {
+   color: var(--muted);
+   cursor: default;
+   text-decoration: none;
+}
+
 .broadcast-org-autocomplete {
    position: relative;
    min-width: 0;

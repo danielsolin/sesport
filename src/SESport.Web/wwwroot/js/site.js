@@ -99,6 +99,11 @@
    const broadcastRowSelector = "tr[data-broadcast-row='true']";
    const broadcastRunsRowSelector =
       ".broadcast-participation-runs-row";
+   const broadcastGroupParticipantsClearSelector =
+      "[data-broadcast-group-participants-clear]";
+   const broadcastActivityLinkSelector =
+      "[data-broadcast-activity-link]";
+   const clearParticipantsQueryKey = "clearParticipants";
    const broadcastInlineEditTitleField = "title";
    const broadcastInlineEditChannelField = "channel";
    const broadcastInlineEditStartTimeField = "start-time";
@@ -149,6 +154,7 @@
    initializeActivityResultChecks();
    initializeActivityFactsChecks();
    initializeParticipationRowChecks();
+   initializeBroadcastParticipantClearing();
    void initializeParticipationRunsAsync();
    initializeBroadcastInlineEditing();
    if(typeof window.initializeBroadcastOrganizationAutocomplete === "function")
@@ -1811,6 +1817,95 @@
 
          await checkParticipationRowAsync(button);
       });
+   }
+
+   function initializeBroadcastParticipantClearing(root = document)
+   {
+      if(root !== document
+         || document.documentElement.dataset
+            .broadcastParticipantClearingInitialized === "true")
+      {
+         return;
+      }
+
+      document.documentElement.dataset
+         .broadcastParticipantClearingInitialized = "true";
+
+      document.addEventListener("click", event => {
+         const target = event.target;
+
+         if(!(target instanceof Element))
+         {
+            return;
+         }
+
+         const button = target.closest(
+            broadcastGroupParticipantsClearSelector
+         );
+
+         if(!(button instanceof HTMLButtonElement))
+         {
+            return;
+         }
+
+         event.preventDefault();
+         clearBroadcastParticipants(button);
+      });
+   }
+
+   function clearBroadcastParticipants(button)
+   {
+      const broadcastId = (button.dataset.broadcastId ?? "").trim();
+
+      if(broadcastId === "")
+      {
+         return;
+      }
+
+      const mainRow = Array.from(
+         document.querySelectorAll(broadcastRowSelector)
+      ).find(row => row instanceof HTMLElement &&
+         row.dataset.broadcastId === broadcastId);
+      const activityLink = mainRow?.querySelector(
+         broadcastActivityLinkSelector
+      );
+
+      if(!(activityLink instanceof HTMLAnchorElement))
+      {
+         return;
+      }
+
+      const activityUrl = new URL(
+         activityLink.href,
+         window.location.origin
+      );
+      activityUrl.searchParams.set(clearParticipantsQueryKey, "true");
+      activityLink.href = `${activityUrl.pathname}${activityUrl.search}` +
+         `${activityUrl.hash}`;
+
+      const participantList = button.closest("td")?.querySelector(
+         "[data-broadcast-group-participants]"
+      );
+
+      if(participantList instanceof HTMLElement)
+      {
+         participantList.remove();
+      }
+
+      const runsRow = mainRow instanceof HTMLElement
+         ? getBroadcastRunsRow(mainRow)
+         : null;
+      const participationCell = runsRow?.querySelector(
+         participationCellSelector
+      );
+
+      if(participationCell instanceof HTMLElement)
+      {
+         participationCell.dataset.clearParticipants = "true";
+      }
+
+      button.disabled = true;
+      button.textContent = "Cleared";
    }
 
    function initializeBroadcastInlineEditing(root = document)
@@ -4585,6 +4680,11 @@
             "participationRunId",
             normalizedRunId
          );
+      }
+
+      if(cell.dataset.clearParticipants === "true")
+      {
+         url.searchParams.set(clearParticipantsQueryKey, "true");
       }
 
       const link = document.createElement("a");

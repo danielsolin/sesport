@@ -407,13 +407,21 @@
                               broadcast.ActivityGroupParticipants.Count > 0
                            )
                            {
-                              <small class="broadcast-group-participants">
+                              <small class="broadcast-group-participants"
+                                     data-broadcast-group-participants>
                                  @foreach(var participant in
                                     broadcast.ActivityGroupParticipants)
                                  {
                                     <span>@participant.Name</span>
                                  }
                               </small>
+                              <button type="button"
+                                      class=
+                                         "broadcast-group-participants-clear"
+                                      data-broadcast-group-participants-clear
+                                      data-broadcast-id="@broadcast.Id">
+                                 Clear
+                              </button>
                            }
                            <div class="broadcast-activity-group-picker"
                                 data-broadcast-activity-group-picker
@@ -452,13 +460,21 @@
                               broadcast.ActivityGroupParticipants.Count > 0
                            )
                            {
-                              <small class="broadcast-group-participants">
+                              <small class="broadcast-group-participants"
+                                     data-broadcast-group-participants>
                                  @foreach(var participant in
                                     broadcast.ActivityGroupParticipants)
                                  {
                                     <span>@participant.Name</span>
                                  }
                               </small>
+                              <button type="button"
+                                      class=
+                                         "broadcast-group-participants-clear"
+                                      data-broadcast-group-participants-clear
+                                      data-broadcast-id="@broadcast.Id">
+                                 Clear
+                              </button>
                            }
                            <div class="broadcast-activity-group-picker"
                                 data-broadcast-activity-group-picker
@@ -570,6 +586,8 @@
                               </form>
                            </div>
                            <a class="broadcast-activity-link"
+                              data-broadcast-activity-link
+                              data-broadcast-id="@broadcast.Id"
                               href="@activityUrlBase">
                               Create Activity
                            </a>

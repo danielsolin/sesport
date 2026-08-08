@@ -67,7 +67,9 @@ public class EditModel(
       List<Guid>? broadcastIds,
       Guid? participationRunId,
       string? returnUrl,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      [FromQuery(Name = RouteKeys.ClearParticipants)]
+      bool clearParticipants = false
    )
    {
       ReturnUrl = GetLocalReturnUrl(returnUrl);
@@ -80,7 +82,8 @@ public class EditModel(
                Activity,
                broadcastIds ?? [],
                participationRunId,
-               cancellationToken
+               cancellationToken,
+               clearParticipants
             );
          await LoadEntitiesAsync(
             organizationEntityId,

@@ -24,11 +24,20 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("data-ajax-success=\"toggle-visibility\"", html);
       Assert.Contains("data-participation-cell", html);
       Assert.Contains("broadcast.ActivityGroupParticipants", html);
+      Assert.Contains("data-broadcast-group-participants", html);
+      Assert.Contains(
+         "data-broadcast-group-participants-clear",
+         html
+      );
+      Assert.Contains("data-broadcast-activity-link", html);
       Assert.Contains("Create Activity", html);
       Assert.Contains("data-broadcast-categories-list", html);
       Assert.DoesNotContain("_BroadcastParticipationRuns", html);
       Assert.DoesNotContain("broadcast-ai-check-retry", html);
       Assert.Contains("initializeParticipationRunsAsync", script);
+      Assert.Contains("initializeBroadcastParticipantClearing", script);
+      Assert.Contains("clearParticipantsQueryKey", script);
+      Assert.Contains("participantList.remove()", script);
       Assert.Contains("setNoParticipationHistoryCell", script);
       Assert.Contains("renderBroadcastCategories", script);
       Assert.Contains("participationQueuedFromRunId", script);
