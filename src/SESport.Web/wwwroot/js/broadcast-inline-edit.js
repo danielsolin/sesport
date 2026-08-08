@@ -5,6 +5,9 @@
    const broadcastInlineEditFieldSelector =
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditTitleField = "title";
+   const broadcastInlineEditChannelField = "channel";
+   const broadcastInlineEditStartTimeField = "start-time";
+   const broadcastInlineEditEndTimeField = "end-time";
    const broadcastInlineEditDescriptionField = "description";
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
@@ -185,6 +188,42 @@
          if(descriptionText instanceof HTMLElement)
          {
             descriptionText.textContent = nextValue;
+         }
+
+         return;
+      }
+
+      if(field === broadcastInlineEditChannelField
+         || field === broadcastInlineEditStartTimeField
+         || field === broadcastInlineEditEndTimeField)
+      {
+         const nextValue = typeof payload.value === "string"
+            ? payload.value.trim()
+            : "";
+
+         if(nextValue === "")
+         {
+            return;
+         }
+
+         cell.dataset.broadcastInlineEditValue = nextValue;
+         const input = cell.querySelector(
+            broadcastInlineEditInputSelector
+         );
+
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = nextValue;
+            input.dataset.broadcastInlineEditOriginalValue = nextValue;
+         }
+
+         const display = cell.querySelector(
+            broadcastInlineEditDisplaySelector
+         );
+
+         if(display instanceof HTMLElement)
+         {
+            display.textContent = nextValue;
          }
 
          return;

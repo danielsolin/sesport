@@ -35,8 +35,23 @@ public sealed class IndexMarkupTests
          "data-broadcast-inline-edit-field=\"description\"",
          html
       );
+      Assert.Contains(
+         "data-broadcast-inline-edit-field=\"channel\"",
+         html
+      );
+      Assert.Contains(
+         "\"start-time\"",
+         html
+      );
+      Assert.Contains(
+         "\"end-time\"",
+         html
+      );
       Assert.Contains("data-broadcast-description-text", html);
       Assert.Contains("Edit broadcast description", html);
+      Assert.Contains("Edit broadcast channel", html);
+      Assert.Contains("Edit broadcast start time", html);
+      Assert.Contains("Edit broadcast end time", html);
       Assert.Contains("<summary class=\"button\">Todo</summary>", html);
       Assert.Contains("asp-page-handler=\"AddTodo\"", html);
       Assert.Contains("<textarea name=\"text\"", html);

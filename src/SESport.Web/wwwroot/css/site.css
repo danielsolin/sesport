@@ -609,6 +609,27 @@ h2 {
    cursor: text;
 }
 
+.broadcast-time-editors {
+   display: flex;
+   align-items: baseline;
+   gap: 2px;
+}
+
+.broadcast-time-editors .broadcast-inline-editable {
+   min-width: 0;
+   flex: 1 1 0;
+}
+
+.broadcast-time-editors .broadcast-inline-edit-input {
+   min-width: 0;
+   padding-left: 2px;
+   padding-right: 2px;
+}
+
+.broadcast-time-separator {
+   color: var(--muted);
+}
+
 .entities-table {
    table-layout: fixed;
    width: 100%;

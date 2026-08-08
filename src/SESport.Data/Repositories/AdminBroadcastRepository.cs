@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Npgsql;
 
 using SESport.Core.Broadcast;
@@ -301,6 +303,54 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
+   public async Task UpdateChannelAsync(
+      Guid id,
+      string channelName,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update broadcasts
+         set channel_name = @channel_name,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue("channel_name", channelName);
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   public Task<BroadcastTimeUpdate?> UpdateStartTimeAsync(
+      Guid id,
+      TimeOnly startTime,
+      CancellationToken cancellationToken
+   )
+   {
+      return UpdateTimeAsync(
+         id,
+         startTime,
+         updateStartTime: true,
+         cancellationToken: cancellationToken
+      );
+   }
+
+   public Task<BroadcastTimeUpdate?> UpdateEndTimeAsync(
+      Guid id,
+      TimeOnly endTime,
+      CancellationToken cancellationToken
+   )
+   {
+      return UpdateTimeAsync(
+         id,
+         endTime,
+         updateStartTime: false,
+         cancellationToken: cancellationToken
+      );
+   }
+
    public async Task UpdateDescriptionAsync(
       Guid id,
       string? description,
@@ -447,6 +497,115 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
    }
 
+   private async Task<BroadcastTimeUpdate?> UpdateTimeAsync(
+      Guid id,
+      TimeOnly time,
+      bool updateStartTime,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      const string selectSql = """
+         select starts_at, ends_at, time_zone_id
+         from broadcasts
+         where id = @id
+         for update
+         """;
+
+      DateTimeOffset startsAt;
+      DateTimeOffset endsAt;
+      string timeZoneId;
+
+      await using(var selectCommand = new NpgsqlCommand(
+         selectSql,
+         connection,
+         transaction
+      ))
+      {
+         selectCommand.Parameters.AddWithValue("id", id);
+
+         await using var reader = await selectCommand.ExecuteReaderAsync(
+            cancellationToken
+         );
+
+         if(!await reader.ReadAsync(cancellationToken))
+         {
+            return null;
+         }
+
+         startsAt = reader.GetFieldValue<DateTimeOffset>(0);
+         endsAt = reader.GetFieldValue<DateTimeOffset>(1);
+         timeZoneId = reader.GetString(2);
+      }
+
+      var localStart = TimeZoneHelper.ToLocal(startsAt, timeZoneId);
+      var localEnd = TimeZoneHelper.ToLocal(endsAt, timeZoneId);
+      var nextStartsAt = updateStartTime
+         ? TimeZoneHelper.ToUtc(
+            DateOnly.FromDateTime(localStart.DateTime),
+            time,
+            timeZoneId
+         )
+         : startsAt;
+      var nextEndsAt = updateStartTime
+         ? endsAt
+         : TimeZoneHelper.ToUtc(
+            DateOnly.FromDateTime(localEnd.DateTime),
+            time,
+            timeZoneId
+         );
+
+      if(nextEndsAt <= nextStartsAt)
+      {
+         return null;
+      }
+
+      const string updateSql = """
+         update broadcasts
+         set starts_at = @starts_at,
+            ends_at = @ends_at,
+            updated_at = now()
+         where id = @id
+         """;
+
+      await using(var updateCommand = new NpgsqlCommand(
+         updateSql,
+         connection,
+         transaction
+      ))
+      {
+         updateCommand.Parameters.AddWithValue("id", id);
+         updateCommand.Parameters.AddWithValue("starts_at", nextStartsAt);
+         updateCommand.Parameters.AddWithValue("ends_at", nextEndsAt);
+
+         await updateCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await transaction.CommitAsync(cancellationToken);
+
+      return new BroadcastTimeUpdate(
+         FormatLocalTime(nextStartsAt, timeZoneId),
+         FormatLocalTime(nextEndsAt, timeZoneId)
+      );
+   }
+
+   private static string FormatLocalTime(
+      DateTimeOffset value,
+      string timeZoneId
+   )
+   {
+      return TimeZoneHelper.ToLocal(value, timeZoneId).ToString(
+         DateDisplay.TimeOnlyMinutesFormat,
+         CultureInfo.InvariantCulture
+      );
+   }
+
    private static BroadcastListItem ReadBroadcastListItem(
       NpgsqlDataReader reader
    )
@@ -478,7 +637,11 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          reader.IsDBNull(17) ? null : reader.GetString(17),
          reader.IsDBNull(18) ? null : reader.GetGuid(18),
          reader.GetString(19)
-      );
+      )
+      {
+         StartTimeText = FormatLocalTime(startsAt, SportDay.TimeZoneId),
+         EndTimeText = FormatLocalTime(endsAt, SportDay.TimeZoneId)
+      };
    }
 
    public async Task<bool> UpdateActivityGroupTitleAsync(

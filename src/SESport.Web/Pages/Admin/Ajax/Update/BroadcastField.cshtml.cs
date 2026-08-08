@@ -1,7 +1,10 @@
+using System.Globalization;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.Broadcast;
+using SESport.Core.Formatting;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
@@ -51,6 +54,89 @@ public sealed class BroadcastFieldModel(
                updated = true,
                field = "title",
                value
+            });
+         }
+
+         if(string.Equals(field, "channel", StringComparison.Ordinal))
+         {
+            if(string.IsNullOrWhiteSpace(value))
+            {
+               return BadRequest(new { error = "Channel cannot be empty." });
+            }
+
+            await repository.UpdateChannelAsync(
+               id,
+               value,
+               cancellationToken
+            );
+
+            return new JsonResult(new
+            {
+               updated = true,
+               field = "channel",
+               value
+            });
+         }
+
+         if(string.Equals(field, "start-time", StringComparison.Ordinal)
+            || string.Equals(field, "end-time", StringComparison.Ordinal))
+         {
+            if(!TimeOnly.TryParseExact(
+               value ?? string.Empty,
+               DateDisplay.TimeOnlyMinutesFormat,
+               CultureInfo.InvariantCulture,
+               DateTimeStyles.None,
+               out var parsedTime
+            ))
+            {
+               return BadRequest(new { error = "Time must use HH:mm." });
+            }
+
+            var timeUpdate = string.Equals(
+               field,
+               "start-time",
+               StringComparison.Ordinal
+            )
+               ? await repository.UpdateStartTimeAsync(
+                  id,
+                  parsedTime,
+                  cancellationToken
+               )
+               : await repository.UpdateEndTimeAsync(
+                  id,
+                  parsedTime,
+                  cancellationToken
+               );
+
+            if(timeUpdate is null)
+            {
+               var broadcast = await repository.GetByIdAsync(
+                  id,
+                  cancellationToken
+               );
+
+               if(broadcast is null)
+               {
+                  return NotFound(new { error = "Broadcast not found." });
+               }
+
+               var error = field == "start-time"
+                  ? "Start time must be before end time."
+                  : "End time must be after start time.";
+               return BadRequest(new { error });
+            }
+
+            var updatedValue = field == "start-time"
+               ? timeUpdate.StartTimeText
+               : timeUpdate.EndTimeText;
+
+            return new JsonResult(new
+            {
+               updated = true,
+               field,
+               value = updatedValue,
+               startTimeText = timeUpdate.StartTimeText,
+               endTimeText = timeUpdate.EndTimeText
             });
          }
 

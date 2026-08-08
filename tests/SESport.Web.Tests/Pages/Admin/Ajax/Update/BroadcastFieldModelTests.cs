@@ -101,6 +101,120 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
+   public async Task OnPostAsyncUpdatesChannelAndBroadcastTimes()
+   {
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var startsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+      var adminRepository = new AdminRepository(dataSource);
+      var model = new BroadcastFieldModel(repository, adminRepository);
+
+      try
+      {
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            $"external-{uniqueSuffix}",
+            $"fingerprint-{uniqueSuffix}",
+            "channel-1",
+            "Viaplay",
+            $"Broadcast {uniqueSuffix}",
+            [],
+            startsAt,
+            endsAt
+         );
+
+         var channelResult = await model.OnPostAsync(
+            broadcastId,
+            "channel",
+            "  SVT 1  ",
+            CancellationToken.None
+         );
+         var channelPayload = Assert.IsType<JsonResult>(channelResult).Value!;
+
+         Assert.Equal(
+            "channel",
+            channelPayload.GetType().GetProperty("field")?.GetValue(
+               channelPayload
+            )
+         );
+         Assert.Equal(
+            "SVT 1",
+            channelPayload.GetType().GetProperty("value")?.GetValue(
+               channelPayload
+            )
+         );
+
+         var startResult = await model.OnPostAsync(
+            broadcastId,
+            "start-time",
+            " 13:15 ",
+            CancellationToken.None
+         );
+         var startPayload = Assert.IsType<JsonResult>(startResult).Value!;
+
+         Assert.Equal(
+            "13:15",
+            startPayload.GetType().GetProperty("value")?.GetValue(
+               startPayload
+            )
+         );
+
+         var invalidEndResult = await model.OnPostAsync(
+            broadcastId,
+            "end-time",
+            "13:00",
+            CancellationToken.None
+         );
+
+         Assert.IsType<BadRequestObjectResult>(invalidEndResult);
+
+         var endResult = await model.OnPostAsync(
+            broadcastId,
+            "end-time",
+            "15:30",
+            CancellationToken.None
+         );
+         var endPayload = Assert.IsType<JsonResult>(endResult).Value!;
+
+         Assert.Equal(
+            "15:30",
+            endPayload.GetType().GetProperty("value")?.GetValue(
+               endPayload
+            )
+         );
+
+         var broadcast = await repository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(broadcast);
+         Assert.Equal("SVT 1", broadcast!.ChannelName);
+         Assert.Equal("13:15", broadcast.StartTimeText);
+         Assert.Equal("15:30", broadcast.EndTimeText);
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+      }
+   }
+
+   [Fact]
    public async Task OnPostAsyncUpdatesOrganizationAndRejectsInvalidType()
    {
       var broadcastId = Guid.NewGuid();

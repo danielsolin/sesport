@@ -23,6 +23,10 @@ public sealed record BroadcastListItem(
    string SourceKey
 )
 {
+   public string StartTimeText { get; init; } = string.Empty;
+
+   public string EndTimeText { get; init; } = string.Empty;
+
    public BroadcastParticipationCheck? ParticipationCheck { get; init; }
 
    public IReadOnlyList<BroadcastParticipationCheck>
@@ -43,6 +47,11 @@ public sealed record BroadcastSaveResult(
    int SavedCount,
    int InsertedCount,
    int UpdatedCount
+);
+
+public sealed record BroadcastTimeUpdate(
+   string StartTimeText,
+   string EndTimeText
 );
 
 public sealed record BroadcastIgnoreRule(

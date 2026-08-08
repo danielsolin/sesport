@@ -100,6 +100,9 @@
    const broadcastRunsRowSelector =
       ".broadcast-participation-runs-row";
    const broadcastInlineEditTitleField = "title";
+   const broadcastInlineEditChannelField = "channel";
+   const broadcastInlineEditStartTimeField = "start-time";
+   const broadcastInlineEditEndTimeField = "end-time";
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
    const broadcastInlineEditGroupField = "group";
@@ -599,6 +602,10 @@
       const broadcastId = normalizeString(broadcast.id);
       const title = normalizeString(broadcast.title);
       const timeOnlyText = normalizeString(broadcast.timeOnlyText);
+      const startTimeText = normalizeString(broadcast.startTimeText)
+         || getBroadcastTimePart(timeOnlyText, 0);
+      const endTimeText = normalizeString(broadcast.endTimeText)
+         || getBroadcastTimePart(timeOnlyText, 1);
       const channelName = normalizeString(broadcast.channelName);
       const description = normalizeNullableString(broadcast.description);
       const categories = normalizeBroadcastCategories(broadcast.categories);
@@ -645,7 +652,10 @@
          ? (sourceRunsCell.dataset.checkParticipationUrl ?? "").trim()
          : "";
 
-      if(broadcastId === "" || title === "" || timeOnlyText === "")
+      if(broadcastId === ""
+         || title === ""
+         || startTimeText === ""
+         || endTimeText === "")
       {
          return null;
       }
@@ -662,17 +672,49 @@
 
       const channelCell = document.createElement("td");
       channelCell.className = "broadcasts-col-channel";
-      const channelDiv = document.createElement("div");
-      channelDiv.className = "ses-nowrap";
-      channelDiv.textContent = channelName;
-      channelCell.append(channelDiv);
+      channelCell.append(
+         createBroadcastInlineEditor(
+            broadcastId,
+            broadcastInlineEditChannelField,
+            channelName,
+            "Edit broadcast channel",
+            "text",
+            "div",
+            "ses-nowrap"
+         )
+      );
 
       const timeCell = document.createElement("td");
       timeCell.className = "broadcasts-col-time";
-      const timeStrong = document.createElement("strong");
-      timeStrong.className = "ses-nowrap";
-      timeStrong.textContent = timeOnlyText;
-      timeCell.append(timeStrong);
+      const timeEditors = document.createElement("div");
+      timeEditors.className = "broadcast-time-editors";
+      timeEditors.append(
+         createBroadcastInlineEditor(
+            broadcastId,
+            broadcastInlineEditStartTimeField,
+            startTimeText,
+            "Edit broadcast start time",
+            "time",
+            "strong",
+            "ses-nowrap"
+         )
+      );
+      const timeSeparator = document.createElement("span");
+      timeSeparator.className = "broadcast-time-separator";
+      timeSeparator.textContent = "–";
+      timeEditors.append(timeSeparator);
+      timeEditors.append(
+         createBroadcastInlineEditor(
+            broadcastId,
+            broadcastInlineEditEndTimeField,
+            endTimeText,
+            "Edit broadcast end time",
+            "time",
+            "strong",
+            "ses-nowrap"
+         )
+      );
+      timeCell.append(timeEditors);
 
       const titleCell = document.createElement("td");
       titleCell.className = "broadcasts-col-broadcast";
@@ -953,6 +995,53 @@
 
       fragment.append(mainRow, runsRow);
       return fragment;
+   }
+
+   function createBroadcastInlineEditor(
+      broadcastId,
+      field,
+      value,
+      ariaLabel,
+      inputType,
+      displayTagName,
+      displayClassName
+   )
+   {
+      const editor = document.createElement("div");
+      editor.className = "broadcast-inline-editable";
+      editor.dataset.broadcastId = broadcastId;
+      editor.dataset.broadcastInlineEditField = field;
+      editor.dataset.broadcastInlineEditValue = value;
+      editor.title = "Double-click to edit";
+
+      const display = document.createElement(displayTagName);
+      display.className = displayClassName;
+      display.dataset.broadcastInlineEditDisplay = "true";
+      display.textContent = value;
+
+      const input = document.createElement("input");
+      input.className = "broadcast-inline-edit-input";
+      input.dataset.broadcastInlineEditInput = "true";
+      input.type = inputType;
+      input.value = value;
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.setAttribute("aria-label", ariaLabel);
+      if(inputType === "time")
+      {
+         input.step = "60";
+      }
+      input.hidden = true;
+      input.tabIndex = -1;
+
+      editor.append(display, input);
+      return editor;
+   }
+
+   function getBroadcastTimePart(timeOnlyText, index)
+   {
+      const parts = timeOnlyText.split("-");
+      return normalizeString(parts[index]);
    }
 
    function setBroadcastRowTabOrder(row)

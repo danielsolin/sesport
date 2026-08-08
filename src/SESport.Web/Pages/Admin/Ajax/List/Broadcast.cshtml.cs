@@ -47,6 +47,8 @@ public sealed class BroadcastModel(
             timeOnlyText = TimeTextFormatter.FormatTimeOnlyText(
                refreshedBroadcast.TimeText
             ),
+            startTimeText = refreshedBroadcast.StartTimeText,
+            endTimeText = refreshedBroadcast.EndTimeText,
             channelName = refreshedBroadcast.ChannelName,
             title = refreshedBroadcast.Title,
             description = refreshedBroadcast.Description,

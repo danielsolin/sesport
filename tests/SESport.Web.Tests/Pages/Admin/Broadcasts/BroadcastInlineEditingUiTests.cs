@@ -63,6 +63,18 @@ public sealed class BroadcastInlineEditingUiTests
          broadcastInlineEditJs
       );
       Assert.Contains(
+         "broadcastInlineEditChannelField = \"channel\"",
+         broadcastInlineEditJs
+      );
+      Assert.Contains(
+         "broadcastInlineEditStartTimeField = \"start-time\"",
+         broadcastInlineEditJs
+      );
+      Assert.Contains(
+         "broadcastInlineEditEndTimeField = \"end-time\"",
+         broadcastInlineEditJs
+      );
+      Assert.Contains(
          "broadcastDescriptionTextSelector",
          broadcastInlineEditJs
       );

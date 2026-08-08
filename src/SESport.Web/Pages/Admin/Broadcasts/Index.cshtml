@@ -208,10 +208,8 @@
                         BroadcastActivitySourceKindIds.ActivityGroupForActivity,
                         StringComparison.Ordinal
                      ) || broadcast.OrganizationEntityId is not null;
-                     var timeOnlyText =
-                        TimeTextFormatter.FormatTimeOnlyText(
-                           broadcast.TimeText
-                        );
+                     var startTimeText = broadcast.StartTimeText;
+                     var endTimeText = broadcast.EndTimeText;
                      var groupValue =
                         BroadcastListDisplayFormatter.FormatGroupValue(
                            broadcast.Title,
@@ -241,14 +239,68 @@
                         @sourceLabel
                      </td>
                      <td class="broadcasts-col-channel">
-                        <div class="ses-nowrap">
-                           @broadcast.ChannelName
+                        <div class="broadcast-inline-editable"
+                             data-broadcast-id="@broadcast.Id"
+                             data-broadcast-inline-edit-field="channel"
+                             data-broadcast-inline-edit-value=
+                                "@broadcast.ChannelName"
+                             title="Double-click to edit">
+                           <div class="ses-nowrap"
+                                data-broadcast-inline-edit-display>
+                              @broadcast.ChannelName
+                           </div>
+                           <input class="broadcast-inline-edit-input"
+                                  data-broadcast-inline-edit-input
+                                  type="text"
+                                  value="@broadcast.ChannelName"
+                                  autocomplete="off"
+                                  spellcheck="false"
+                                  aria-label="Edit broadcast channel"
+                                  hidden />
                         </div>
                      </td>
                      <td class="broadcasts-col-time">
-                        <strong class="ses-nowrap">
-                           @timeOnlyText
-                        </strong>
+                        <div class="broadcast-time-editors">
+                           <div class="broadcast-inline-editable"
+                                data-broadcast-id="@broadcast.Id"
+                                data-broadcast-inline-edit-field=
+                                   "start-time"
+                                data-broadcast-inline-edit-value=
+                                   "@startTimeText"
+                                title="Double-click to edit">
+                              <strong class="ses-nowrap"
+                                      data-broadcast-inline-edit-display>
+                                 @startTimeText
+                              </strong>
+                              <input class="broadcast-inline-edit-input"
+                                     data-broadcast-inline-edit-input
+                                     type="time"
+                                     value="@startTimeText"
+                                     step="60"
+                                     aria-label="Edit broadcast start time"
+                                     hidden />
+                           </div>
+                           <span class="broadcast-time-separator">–</span>
+                           <div class="broadcast-inline-editable"
+                                data-broadcast-id="@broadcast.Id"
+                                data-broadcast-inline-edit-field=
+                                   "end-time"
+                                data-broadcast-inline-edit-value=
+                                   "@endTimeText"
+                                title="Double-click to edit">
+                              <strong class="ses-nowrap"
+                                      data-broadcast-inline-edit-display>
+                                 @endTimeText
+                              </strong>
+                              <input class="broadcast-inline-edit-input"
+                                     data-broadcast-inline-edit-input
+                                     type="time"
+                                     value="@endTimeText"
+                                     step="60"
+                                     aria-label="Edit broadcast end time"
+                                     hidden />
+                           </div>
+                        </div>
                      </td>
                      <td class="broadcasts-col-broadcast">
                         <div class="broadcast-inline-editable"
