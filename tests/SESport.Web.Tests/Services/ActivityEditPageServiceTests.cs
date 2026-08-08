@@ -2000,13 +2000,7 @@ public sealed class ActivityEditPageServiceTests
             "Participation": "Yes",
             "Participants": [
                {
-                  "Name": "{{participantName}}",
-                  "Sources": [
-                     {
-                        "Url": "https://example.test/participant",
-                        "EvidenceType": "ParticipantMention"
-                     }
-                  ]
+                  "Name": "{{participantName}}"
                }
             ],
             "CheckedSources": []

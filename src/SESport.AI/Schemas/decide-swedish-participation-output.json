@@ -12,61 +12,39 @@
          "items": {
             "type": "object",
             "required": [
-               "Name",
-               "Sources"
+               "Name"
             ],
             "properties": {
                "Name": {
                   "type": "string",
                   "description": "The participant name only."
-               },
-               "Sources": {
-                  "type": "array",
-                  "items": { "$ref": "#/$defs/SourceEvidence" },
-                  "minItems": 1,
-                  "description": "Sources that support this participant."
                }
             },
             "additionalProperties": false
          },
-         "description": "The participant name or names with evidence."
+         "description": "The participant name or names only."
       },
       "CheckedSources": {
          "type": "array",
-         "items": { "$ref": "#/$defs/SourceEvidence" },
-         "description": "Sources checked for the overall conclusion."
+         "items": {
+            "type": "object",
+            "required": [
+               "Url"
+            ],
+            "properties": {
+               "Url": {
+                  "type": "string",
+                  "format": "uri"
+               }
+            },
+            "additionalProperties": false
+         },
+         "description": "URL-only sources checked for the overall conclusion."
       },
       "Participation": {
          "enum": [ "Yes", "No", "Unknown" ],
          "type": "string",
          "description": "Whether target-country participants are in the event."
-      }
-   },
-   "$defs": {
-      "SourceEvidence": {
-         "type": "object",
-         "required": [
-            "Url",
-            "EvidenceType"
-         ],
-         "properties": {
-            "Url": {
-               "type": "string",
-               "format": "uri"
-            },
-            "EvidenceType": {
-               "enum": [
-                  "ParticipantList",
-                  "ParticipantMention",
-                  "TeamRoster",
-                  "EventInfoOnly",
-                  "SearchOnly"
-               ],
-               "type": "string",
-               "description": "The evidence type for this source."
-            }
-         },
-         "additionalProperties": false
       }
    },
    "description": "Assessment of target-country event participation.",

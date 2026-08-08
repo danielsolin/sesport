@@ -32,7 +32,6 @@ public sealed class LlamaRequestFactoryTests
          "AI job returned invalid json_schema output:",
          prompt
       );
-      Assert.DoesNotContain("EvidenceType", prompt);
       Assert.DoesNotContain("participant source", prompt);
    }
 

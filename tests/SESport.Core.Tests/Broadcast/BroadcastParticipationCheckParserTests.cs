@@ -16,7 +16,7 @@ public class BroadcastParticipationCheckParserTests
                   "Name": "Oliver Bearman"
                }
             ],
-            "Sources": [
+            "CheckedSources": [
                "https://example.test/a",
                "https://example.test/a"
             ]

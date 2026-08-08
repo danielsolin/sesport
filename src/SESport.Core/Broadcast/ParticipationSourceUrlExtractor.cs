@@ -82,37 +82,12 @@ public static class ParticipationSourceUrlExtractor
          var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
          AddSourceUrls(root, "CheckedSources", urls, seen);
-         AddSourceUrls(root, "Sources", urls, seen);
-         AddParticipantSourceUrls(root, urls, seen);
 
          return urls;
       }
       catch(JsonException)
       {
          return [];
-      }
-   }
-
-   private static void AddParticipantSourceUrls(
-      JsonElement root,
-      List<string> urls,
-      HashSet<string> seen
-   )
-   {
-      if(!root.TryGetProperty("Participants", out var participants) ||
-         participants.ValueKind != JsonValueKind.Array)
-      {
-         return;
-      }
-
-      foreach(var participant in participants.EnumerateArray())
-      {
-         if(participant.ValueKind != JsonValueKind.Object)
-         {
-            continue;
-         }
-
-         AddSourceUrls(participant, "Sources", urls, seen);
       }
    }
 

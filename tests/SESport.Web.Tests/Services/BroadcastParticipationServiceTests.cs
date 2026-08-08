@@ -774,13 +774,7 @@ public sealed class BroadcastParticipationServiceTests
             "Participation": "Yes",
             "Participants": [
                {
-                  "Name": "{{participantName}}",
-                  "Sources": [
-                     {
-                        "Url": "https://example.test/participant",
-                        "EvidenceType": "ParticipantMention"
-                     }
-                  ]
+                  "Name": "{{participantName}}"
                }
             ],
             "CheckedSources": []

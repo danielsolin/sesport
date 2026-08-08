@@ -33,13 +33,13 @@ public class ParticipationSourceUrlExtractorTests
    }
 
    [Fact]
-   public void ExtractFromOutput_ReturnsSourcesArray()
+   public void ExtractFromOutput_ReturnsCheckedSourcesArray()
    {
       var outputText = """
          {
             "Participation": "Yes",
             "Participants": ["Dino Beganovic"],
-            "Sources": [
+            "CheckedSources": [
                "https://example.test/a",
                "https://example.test/a",
                "https://example.test/b"
@@ -59,30 +59,22 @@ public class ParticipationSourceUrlExtractorTests
    }
 
    [Fact]
-   public void ExtractFromOutput_ReturnsNestedParticipantSources()
+   public void ExtractFromOutput_ReturnsGlobalCheckedSources()
    {
       var outputText = """
          {
             "Participation": "Yes",
             "Participants": [
                {
-                  "Name": "Dino Beganovic",
-                  "Sources": [
-                     {
-                        "Url": "https://example.test/participant",
-                        "EvidenceType": "ParticipantList"
-                     }
-                  ]
+                  "Name": "Dino Beganovic"
                }
             ],
             "CheckedSources": [
                {
-                  "Url": "https://example.test/checked",
-                  "EvidenceType": "ParticipantList"
+                  "Url": "https://example.test/checked"
                },
                {
-                  "Url": "https://example.test/participant",
-                  "EvidenceType": "ParticipantList"
+                  "Url": "https://example.test/participant"
                }
             ]
          }

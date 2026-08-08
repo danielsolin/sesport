@@ -23,8 +23,7 @@ public class AiProviderClientTests
       var emptyOutput =
          "{\"Participation\":\"Unknown\","
          + "\"Participants\":[],"
-         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"EventInfoOnly\"}]}";
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\"}]}";
       var handler = new RecordingHandler(
          CreateLlamaSubmitReportResponseJson(emptyOutput)
       );
@@ -56,7 +55,7 @@ public class AiProviderClientTests
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
          CreatePrompt(
-            CreateParticipationSchemaJsonWithEvidenceType(),
+            CreateParticipationSchemaJsonWithCheckedSources(),
             maxToolRounds: 4
          ),
          CreateRenderedPrompt(),
@@ -107,18 +106,12 @@ public class AiProviderClientTests
       var sourceUrl = "https://example.test/news/line-up";
       var suspiciousOutput =
          "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"R. (???) ...??...???\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
-         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}";
+         + "\"Participants\":[{\"Name\":\"R. (???) ...??...???\"}],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\"}]}";
       var cleanOutput =
          "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"Armand Duplantis\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantMention\"}]}],"
-         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}";
+         + "\"Participants\":[{\"Name\":\"Armand Duplantis\"}],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\"}]}";
       var handler = new RecordingHandler(
          CreateLlamaSubmitReportResponseJson(suspiciousOutput),
          CreateLlamaSubmitReportResponseJson(cleanOutput)
@@ -140,7 +133,7 @@ public class AiProviderClientTests
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
          CreatePrompt(
-            CreateParticipationSchemaJsonWithEvidenceType(),
+            CreateParticipationSchemaJsonWithCheckedSources(),
             maxToolRounds: 4
          ),
          CreateRenderedPrompt(),
@@ -1782,8 +1775,7 @@ public class AiProviderClientTests
       var unknownOutput =
          CreateParticipationCheckedOutput(
             "Unknown",
-            "https://example.test/participants",
-            AiParticipationEvidenceTypeIds.EventInfoOnly
+            "https://example.test/participants"
          );
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
@@ -1825,7 +1817,7 @@ public class AiProviderClientTests
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
          CreatePrompt(
-            CreateParticipationSchemaJsonWithEvidenceType(),
+            CreateParticipationSchemaJsonWithCheckedSources(),
             maxToolRounds: 4
          ),
          CreateRenderedPrompt(),
@@ -1853,8 +1845,7 @@ public class AiProviderClientTests
       var output =
          CreateParticipationCheckedOutput(
             "No",
-            sourceUrl,
-            AiParticipationEvidenceTypeIds.ParticipantList
+            sourceUrl
          );
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
@@ -1900,7 +1891,7 @@ public class AiProviderClientTests
             toolsJson: CreateToolsJson(),
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreatePrompt(CreateParticipationSchemaJsonWithCheckedSources()),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -1923,9 +1914,7 @@ public class AiProviderClientTests
       var participantName = "Thobias Montler";
       var acceptedOutput =
          "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"ParticipantList\"}]}],"
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\"}],"
          + "\"CheckedSources\":[]}";
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(),
@@ -1933,16 +1922,13 @@ public class AiProviderClientTests
          CreateLlamaFindPageCallResponseJson(sourceUrl),
          CreateLlamaFinalResponseWithContentJson(
             "{\"Participation\":\"Yes\","
-            + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-            + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-            + "\"EvidenceType\":\"ParticipantList\"}]}],"
+            + "\"Participants\":[{\"Name\":\"" + participantName + "\"}],"
             + "\"CheckedSources\":[]}"
          ),
          CreateLlamaFinalResponseWithContentJson(
             "{\"Participation\":\"Unknown\","
             + "\"Participants\":[],"
-            + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-            + "\"EvidenceType\":\"EventInfoOnly\"}]}"
+            + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\"}]}"
          )
       );
       var webSearchClient = new RecordingWebSearchClient(
@@ -1983,7 +1969,7 @@ public class AiProviderClientTests
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
          CreatePrompt(
-            CreateParticipationSchemaJsonWithEvidenceType(),
+            CreateParticipationSchemaJsonWithCheckedSources(),
             maxToolRounds: 3
          ),
          CreateRenderedPrompt(),
@@ -2049,7 +2035,7 @@ public class AiProviderClientTests
 
    [Fact]
    public async Task
-      LlamaServerGenerateAsyncAcceptsUnknownWithSearchOnlyEvidence()
+      LlamaServerGenerateAsyncAcceptsUnknownWithSearchResult()
    {
       var handler = new RecordingHandler(
          CreateLlamaToolCallResponseJson(
@@ -2058,8 +2044,7 @@ public class AiProviderClientTests
          CreateLlamaFinalResponseWithContentJson(
             CreateParticipationCheckedOutput(
                "Unknown",
-               "https://example.test/search-result",
-               AiParticipationEvidenceTypeIds.SearchOnly
+               "https://example.test/search-result"
             )
          )
       );
@@ -2085,7 +2070,7 @@ public class AiProviderClientTests
             toolsJson: CreateToolsJson(),
             jobId: AiJobIds.DecidePrimaryCountryParticipation
          ),
-         CreatePrompt(CreateParticipationSchemaJsonWithEvidenceType()),
+         CreatePrompt(CreateParticipationSchemaJsonWithCheckedSources()),
          CreateRenderedPrompt(),
          "{}",
          CancellationToken.None
@@ -2099,8 +2084,7 @@ public class AiProviderClientTests
       Assert.Equal(
          CreateParticipationCheckedOutput(
             "Unknown",
-            "https://example.test/search-result",
-            AiParticipationEvidenceTypeIds.SearchOnly
+            "https://example.test/search-result"
          ),
          result.OutputText
       );
@@ -3008,30 +2992,24 @@ public class AiProviderClientTests
 
    private static string CreateParticipationYesOutput(
       string sourceUrl,
-      string evidenceType = AiParticipationEvidenceTypeIds.ParticipantList,
       string participantName = "Dino Beganovic"
    )
    {
       return
          "{\"Participation\":\"Yes\","
-         + "\"Participants\":[{\"Name\":\"" + participantName + "\","
-         + "\"Sources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"" + evidenceType + "\"}]}],"
-         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"" + evidenceType + "\"}]}";
+         + "\"Participants\":[{\"Name\":\"" + participantName + "\"}],"
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\"}]}";
    }
 
    private static string CreateParticipationCheckedOutput(
       string participation,
-      string sourceUrl,
-      string evidenceType
+      string sourceUrl
    )
    {
       return
          "{\"Participation\":\"" + participation + "\","
          + "\"Participants\":[],"
-         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\","
-         + "\"EvidenceType\":\"" + evidenceType + "\"}]}";
+         + "\"CheckedSources\":[{\"Url\":\"" + sourceUrl + "\"}]}";
    }
 
    private static string CreateLlamaFinalResponseWithContentJson(
@@ -3229,7 +3207,7 @@ public class AiProviderClientTests
       """;
    }
 
-   private static string CreateParticipationSchemaJsonWithEvidenceType()
+   private static string CreateParticipationSchemaJsonWithCheckedSources()
    {
       return """
       {
@@ -3239,10 +3217,35 @@ public class AiProviderClientTests
             "type": "string"
           },
           "Participants": {
-            "type": "array"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Name"
+              ],
+              "additionalProperties": false
+            }
           },
           "CheckedSources": {
-            "type": "array"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "required": [
+                "Url"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
