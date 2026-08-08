@@ -222,10 +222,44 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-time-channel-list", html);
       Assert.Contains("activity-group-slot-channel-list", html);
       Assert.Contains("slot.TvChannels", html);
+      Assert.Contains("activity-group-description", html);
       Assert.Contains("activity-group-slot-channel-list", css);
+      Assert.Contains(
+         ".activity-group-description {\n" +
+         "   margin-bottom: 0;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-description {\n" +
+         "      display: none;",
+         css
+      );
       Assert.Contains(
          ".activity-group-schedule-item.has-tv-channels {\n" +
          "   grid-template-rows: auto auto;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-schedule-item {\n" +
+         "      grid-template-columns: auto;\n" +
+         "      grid-template-rows: auto;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-slot-content {\n" +
+         "      display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-schedule-item.has-tv-channels {\n" +
+         "      grid-template-columns: auto minmax(0, 1fr);\n" +
+         "      grid-template-rows: auto;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-schedule-item.has-tv-channels\n" +
+         "      .activity-group-slot-channel-list {\n" +
+         "      grid-column: 2;",
          css
       );
       Assert.Contains(

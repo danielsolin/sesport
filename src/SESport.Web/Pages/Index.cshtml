@@ -434,7 +434,11 @@ else
                         activity.Description
                      ))
                      {
-                        <p style="margin-bottom: 0px;">@activity.Description</p>
+                        <p class="@(
+                           isGrouped ? "activity-group-description" : ""
+                        )">
+                           @activity.Description
+                        </p>
                      }
                      @if(isGrouped)
                      {
