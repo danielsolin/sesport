@@ -353,6 +353,59 @@ public class PublicActivityTimelineBuilderTests
       Assert.Equal("≈13:00", middaySection.TimeLabel);
    }
 
+   [Fact]
+   public void Build_DoesNotGroupActivitiesWhenGroupRequestsIt()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Activity One",
+            selectedDate,
+            now.AddMinutes(15),
+            activityGroupId: groupId,
+            activityGroupTitle: "Separate Group"
+         ) with
+         {
+            NoGrouping = true
+         },
+         CreateActivity(
+            "Activity Two",
+            selectedDate,
+            now.AddHours(1),
+            activityGroupId: groupId,
+            activityGroupTitle: "Separate Group"
+         ) with
+         {
+            NoGrouping = true
+         }
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+      var sections = timeline.TimelineEntries
+         .Where(entry => !entry.IsCurrentMarker)
+         .Select(entry => entry.Section!)
+         .ToList();
+
+      Assert.Equal(2, sections.Count);
+      Assert.All(sections, section =>
+      {
+         Assert.Null(section.ActivityGroupTitle);
+         Assert.Single(section.Activities);
+      });
+   }
+
    [Theory]
    [InlineData(8, 14, "≈08:00")]
    [InlineData(8, 15, "≈08:30")]

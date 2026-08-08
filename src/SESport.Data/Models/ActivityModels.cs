@@ -32,6 +32,8 @@ public sealed record ActivityListItem(
 
    public string? ActivityGroupTitle { get; init; }
 
+   public bool NoGrouping { get; init; }
+
    public bool IsTeamSport { get; init; }
 
    public string RelatedOrganizationCanonicalEntities { get; init; } =
@@ -96,6 +98,8 @@ public sealed class ActivityGroupEditModel
    public DateOnly? StartDate { get; set; }
 
    public DateOnly? EndDate { get; set; }
+
+   public bool NoGrouping { get; set; }
 }
 
 public sealed record ActivityGroupActivityListItem(

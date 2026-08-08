@@ -28,7 +28,8 @@ public sealed class PublicActivityTimelineBuilder
       var groupedActivityIds = timedActivities
          .Where(activity =>
             activity.ActivityGroupId is not null &&
-            !activity.IsTeamSport
+            !activity.IsTeamSport &&
+            !activity.NoGrouping
          )
          .GroupBy(activity => new
          {

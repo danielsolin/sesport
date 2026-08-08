@@ -161,6 +161,44 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void ActivityGroupSeparateParticipantsMigrationAddsSetting()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "019_activity_group_separate_participants.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.activity_groups", migration);
+      Assert.Contains(
+         "add column separate_participants boolean default false not null",
+         migration
+      );
+   }
+
+   [Fact]
+   public void ActivityGroupNoGroupingMigrationRenamesSetting()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "020_activity_group_no_grouping.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.activity_groups", migration);
+      Assert.Contains(
+         "rename column separate_participants to no_grouping",
+         migration
+      );
+   }
+
+   [Fact]
    public void MemberMigrationDefinesAccountsTokensAndWatches()
    {
       var migration = File.ReadAllText(

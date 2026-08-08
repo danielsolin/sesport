@@ -154,6 +154,74 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task ActivityGroupNoGroupingDefaultsToFalse()
+   {
+      var activityGroupId = Guid.NewGuid();
+      var activityId = Guid.NewGuid();
+      var selectedDate = DistantActivityDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityGroupAsync(dataSource, activityGroupId);
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt,
+         ActivityPublicationStatusIds.Published,
+         activityGroupId
+      );
+
+      try
+      {
+         var model = await repository.GetActivityGroupForEditAsync(
+            activityGroupId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(model);
+         Assert.False(model.NoGrouping);
+         model.NoGrouping = true;
+
+         Assert.True(
+            await repository.UpdateActivityGroupAsync(
+               model,
+               CancellationToken.None
+            )
+         );
+
+         var updatedModel =
+            await repository.GetActivityGroupForEditAsync(
+               activityGroupId,
+               CancellationToken.None
+            );
+         Assert.NotNull(updatedModel);
+         Assert.True(updatedModel.NoGrouping);
+
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         Assert.True(activity.NoGrouping);
+      }
+      finally
+      {
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+      }
+   }
+
+   [Fact]
    public async Task GetActivitiesAsyncPrefersOrganizationAliasName()
    {
       var selectedDate = DistantActivityDate;

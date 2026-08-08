@@ -781,7 +781,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       const string sql = """
-         select id, title, sport_id, start_date, end_date
+         select
+            id,
+            title,
+            sport_id,
+            start_date,
+            end_date,
+            no_grouping
          from activity_groups
          where id = @id
          """;
@@ -803,7 +809,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          Title = reader.GetString(1),
          SportId = reader.GetString(2),
          StartDate = reader.GetFieldValue<DateOnly>(3),
-         EndDate = reader.GetFieldValue<DateOnly>(4)
+         EndDate = reader.GetFieldValue<DateOnly>(4),
+         NoGrouping = reader.GetBoolean(5)
       };
    }
 
@@ -816,6 +823,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          update activity_groups
          set title = @title,
             sport_id = @sport_id,
+            no_grouping = @no_grouping,
             updated_at = now()
          where id = @id
          """;
@@ -824,6 +832,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", model.Id);
       command.Parameters.AddWithValue("title", model.Title.Trim());
       command.Parameters.AddWithValue("sport_id", model.SportId);
+      command.Parameters.AddWithValue(
+         "no_grouping",
+         model.NoGrouping
+      );
 
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
    }
@@ -1745,6 +1757,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   a.activity_group_id,")
          .AppendLine("   ag.title as activity_group_title,")
          .AppendLine(
+            "   coalesce(ag.no_grouping, false),"
+         )
+         .AppendLine(
             "   coalesce(ro.related_organization_canonical_entities, '') " +
             "as related_organization_canonical_entities,"
          )
@@ -1859,7 +1874,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(
             "         ro.related_organization_canonical_entities,"
          )
-         .AppendLine("         a.ends_at, ag.title, s.is_team_sport")
+         .AppendLine(
+            "         a.ends_at, ag.title, ag.no_grouping, " +
+            "s.is_team_sport"
+         )
          .AppendLine(orderClause);
 
       return builder.ToString();
@@ -2548,9 +2566,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   ? null
                   : reader.GetGuid(20),
                ActivityGroupTitle = ReadString(reader, 21),
+               NoGrouping = reader.GetBoolean(22),
                RelatedOrganizationCanonicalEntities =
-                  reader.GetString(22),
-               IsTeamSport = reader.GetBoolean(23)
+                  reader.GetString(23),
+               IsTeamSport = reader.GetBoolean(24)
             }
          );
       }
