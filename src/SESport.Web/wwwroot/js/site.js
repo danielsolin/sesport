@@ -5485,7 +5485,7 @@
          return;
       }
 
-      setTeaserStatus(status, "Queueing facts job...");
+      setTeaserStatus(status, "Queueing group facts job...");
       button.disabled = true;
 
       try

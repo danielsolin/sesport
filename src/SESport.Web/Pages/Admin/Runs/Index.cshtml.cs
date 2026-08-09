@@ -147,12 +147,14 @@ public class IndexModel(
 
    public static string FormatRunTargetLabel(AiRunListItem run)
    {
-      var targetLabel = AiJobIds.GetTargetType(run.JobId) ==
-         AiJobTargetType.Broadcast
-         ? "B"
-         : AiJobIds.GetTargetType(run.JobId) == AiJobTargetType.Person
-            ? "P"
-            : "A";
+      var targetType = AiJobIds.GetTargetType(run.JobId);
+      var targetLabel = targetType switch
+      {
+         AiJobTargetType.ActivityGroup => "G",
+         AiJobTargetType.Broadcast => "B",
+         AiJobTargetType.Person => "P",
+         _ => "A"
+      };
       var dateText = DateDisplay.Format(run.EventDate);
 
       return string.IsNullOrWhiteSpace(dateText)

@@ -117,9 +117,10 @@ broadcast can support several activities.
 
 ### `facts`
 
-Stores short normalized facts about exactly one subject: either an activity or
-an entity. The check constraint prevents a fact from belonging to both kinds
-of subject, or to neither.
+Stores short normalized facts about exactly one subject: an activity, an
+activity group, or an entity. The check constraint prevents a fact from
+belonging to more than one kind of subject, or to none of them. Activity-group
+facts are shared by every activity in that group.
 
 ### `fact_source_links`
 

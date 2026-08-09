@@ -10,6 +10,11 @@ public interface IAiAutomationService
       CancellationToken cancellationToken
    );
 
+   Task HandleActivityGroupCreatedAsync(
+      Guid activityGroupId,
+      CancellationToken cancellationToken
+   );
+
    Task HandlePersonCreatedAsync(
       Guid personEntityId,
       CancellationToken cancellationToken
@@ -23,6 +28,7 @@ public sealed class AiAutomationService(
    AiJobEligibilityService eligibilityService,
    PersonFactsService personFactsService,
    IAiJobRunner jobRunner,
+   IAiJobRunRepository runRepository,
    ILogger<AiAutomationService> logger
 ) : IAiAutomationService
 {
@@ -55,42 +61,108 @@ public sealed class AiAutomationService(
          return;
       }
 
-      var eligibleJobIds = new List<string>();
       foreach(var jobId in jobIds)
       {
-         if(await eligibilityService.CanQueueAsync(
+         var targetType = AiJobIds.GetTargetType(jobId);
+         if(targetType != AiJobTargetType.Activity)
+         {
+            logger.LogInformation(
+               "Skipping AI automation job {JobId} for " +
+                  "activity {ActivityId}; " +
+                  "the job does not target an activity.",
+               jobId,
+               activityId
+            );
+            continue;
+         }
+
+         if(!await eligibilityService.CanQueueAsync(
                jobId,
                activity,
                cancellationToken
             ))
          {
-            eligibleJobIds.Add(jobId);
+            logger.LogInformation(
+               "Skipping AI automation job {JobId} for activity " +
+                  "{ActivityId}; the sport does not require participant " +
+                  "start times.",
+               jobId,
+               activityId
+            );
             continue;
          }
 
-         logger.LogInformation(
-            "Skipping AI automation job {JobId} for activity {ActivityId}; "
-               + "the sport does not require participant start times.",
-            jobId,
-            activityId
+         await jobRunner.QueueAsync(
+            new AiJobRequest(
+               jobId,
+               await inputBuilder.BuildAsync(
+                  activity,
+                  cancellationToken,
+                  activity.ActivityGroupTitle
+               ),
+               activityId.ToString()
+            ),
+            cancellationToken
          );
       }
+   }
 
-      if(eligibleJobIds.Count == 0)
+   public async Task HandleActivityGroupCreatedAsync(
+      Guid activityGroupId,
+      CancellationToken cancellationToken
+   )
+   {
+      var jobIds = await repository.GetEnabledJobIdsAsync(
+         AiAutomationEventIds.ActivityGroupCreated,
+         cancellationToken
+      );
+
+      if(jobIds.Count == 0)
       {
          return;
       }
 
-      var input = await inputBuilder.BuildAsync(
-         activity,
-         cancellationToken,
-         activity.ActivityGroupTitle
-      );
-
-      foreach(var jobId in eligibleJobIds)
+      foreach(var jobId in jobIds)
       {
+         if(AiJobIds.GetTargetType(jobId) != AiJobTargetType.ActivityGroup)
+         {
+            logger.LogInformation(
+               "Skipping AI automation job {JobId} for ActivityGroup " +
+                  "{ActivityGroupId}; the job does not target an " +
+                  "activity group.",
+               jobId,
+               activityGroupId
+            );
+            continue;
+         }
+
+         var correlationId = activityGroupId.ToString();
+         var existingRunId = await runRepository.GetExistingRunIdAsync(
+            jobId,
+            correlationId,
+            cancellationToken
+         );
+
+         if(existingRunId is not null)
+         {
+            logger.LogInformation(
+               "Skipping AI automation job {JobId} for ActivityGroup " +
+                  "{ActivityGroupId}; a run already exists.",
+               jobId,
+               activityGroupId
+            );
+            continue;
+         }
+
          await jobRunner.QueueAsync(
-            new AiJobRequest(jobId, input, activityId.ToString()),
+            new AiJobRequest(
+               jobId,
+               await inputBuilder.BuildActivityGroupAsync(
+                  activityGroupId,
+                  cancellationToken
+               ),
+               correlationId
+            ),
             cancellationToken
          );
       }

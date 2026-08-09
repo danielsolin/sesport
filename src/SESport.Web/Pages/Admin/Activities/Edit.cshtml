@@ -172,6 +172,13 @@
          </div>
       }
       <h3 class="subgrid-heading">Facts</h3>
+      @if(Model.Activity.ActivityGroupId is not null)
+      {
+         <div class="notice">
+            These facts belong to the ActivityGroup and are shared by its
+            activities.
+         </div>
+      }
       <div data-activity-facts-grid>
          @if(Model.Facts.Count == 0)
          {

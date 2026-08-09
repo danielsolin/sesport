@@ -16,6 +16,22 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return CreateAsync(
          activityId,
          null,
+         null,
+         text,
+         cancellationToken
+      );
+   }
+
+   public Task<FactRecord> CreateForActivityGroupAsync(
+      Guid activityGroupId,
+      string text,
+      CancellationToken cancellationToken
+   )
+   {
+      return CreateAsync(
+         null,
+         activityGroupId,
+         null,
          text,
          cancellationToken
       );
@@ -28,6 +44,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
    )
    {
       return CreateAsync(
+         null,
          null,
          entityId,
          text,
@@ -44,6 +61,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          select
             id,
             activity_id,
+            activity_group_id,
             entity_id,
             fact_text,
             created_at,
@@ -68,9 +86,20 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      return GetForSubjectAsync(
-         "activity_id",
+      return GetForActivityIncludingGroupAsync(
          activityId,
+         cancellationToken
+      );
+   }
+
+   public Task<IReadOnlyList<FactRecord>> GetForActivityGroupAsync(
+      Guid activityGroupId,
+      CancellationToken cancellationToken
+   )
+   {
+      return GetForSubjectAsync(
+         "activity_group_id",
+         activityGroupId,
          cancellationToken
       );
    }
@@ -103,6 +132,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          returning
             id,
             activity_id,
+            activity_group_id,
             entity_id,
             fact_text,
             created_at,
@@ -142,7 +172,14 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       const string sql = """
          delete from facts
          where id = @id
-            and activity_id = @activity_id
+            and (
+               activity_id = @activity_id
+               or activity_group_id = (
+                  select activity_group_id
+                  from activities
+                  where id = @activity_id
+               )
+            )
          """;
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", id);
@@ -200,8 +237,40 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return sources;
    }
 
-   public async Task<IReadOnlyList<FactRecord>> AddForActivityAsync(
+   public Task<IReadOnlyList<FactRecord>> AddForActivityAsync(
       Guid activityId,
+      IReadOnlyList<FactDraft> drafts,
+      CancellationToken cancellationToken
+   )
+   {
+      return AddForSubjectAsync(
+         activityId,
+         null,
+         SourceCorrelationTypes.Activity,
+         drafts,
+         cancellationToken
+      );
+   }
+
+   public Task<IReadOnlyList<FactRecord>> AddForActivityGroupAsync(
+      Guid activityGroupId,
+      IReadOnlyList<FactDraft> drafts,
+      CancellationToken cancellationToken
+   )
+   {
+      return AddForSubjectAsync(
+         null,
+         activityGroupId,
+         SourceCorrelationTypes.ActivityGroup,
+         drafts,
+         cancellationToken
+      );
+   }
+
+   private async Task<IReadOnlyList<FactRecord>> AddForSubjectAsync(
+      Guid? activityId,
+      Guid? activityGroupId,
+      string correlationType,
       IReadOnlyList<FactDraft> drafts,
       CancellationToken cancellationToken
    )
@@ -214,31 +283,49 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      if(!await ActivityExistsAsync(
-         connection,
-         transaction,
-         activityId,
-         cancellationToken
-      ))
+      var subjectId = activityId ?? activityGroupId;
+      if(subjectId is null)
+      {
+         throw new InvalidOperationException("The fact has no subject.");
+      }
+
+      var subjectKey = subjectId.Value;
+
+      var subjectExists = activityId is not null
+         ? await ActivityExistsAsync(
+            connection,
+            transaction,
+            activityId.Value,
+            cancellationToken
+         )
+         : await ActivityGroupExistsAsync(
+            connection,
+            transaction,
+            activityGroupId!.Value,
+            cancellationToken
+         );
+
+      if(!subjectExists)
       {
          return [];
       }
 
-      var sourceIds = await GetActivityFactSourceIdsAsync(
+      var sourceIds = await GetFactSourceIdsAsync(
          connection,
          transaction,
-         activityId,
+         correlationType,
+         subjectKey,
          cancellationToken
       );
-
       var createdFacts = new List<FactRecord>();
 
       foreach(var draft in normalizedDrafts)
       {
-         var fact = await InsertActivityFactAsync(
+         var fact = await InsertFactAsync(
             connection,
             transaction,
             activityId,
+            activityGroupId,
             draft.Text,
             cancellationToken
          );
@@ -249,10 +336,11 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          {
             if(!sourceIds.TryGetValue(source.Url, out var sourceId))
             {
-               sourceId = await InsertActivityFactSourceAsync(
+               sourceId = await InsertFactSourceAsync(
                   connection,
                   transaction,
-                  activityId,
+                  correlationType,
+                  subjectKey,
                   source,
                   cancellationToken
                );
@@ -278,6 +366,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
 
    private async Task<FactRecord> CreateAsync(
       Guid? activityId,
+      Guid? activityGroupId,
       Guid? entityId,
       string text,
       CancellationToken cancellationToken
@@ -289,18 +378,21 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          insert into facts (
             id,
             activity_id,
+            activity_group_id,
             entity_id,
             fact_text
          )
          values (
             @id,
             @activity_id,
+            @activity_group_id,
             @entity_id,
             @fact_text
          )
          returning
             id,
             activity_id,
+            activity_group_id,
             entity_id,
             fact_text,
             created_at,
@@ -312,6 +404,10 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "activity_id",
          (object?)activityId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         (object?)activityGroupId ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "entity_id",
@@ -330,6 +426,56 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return ReadFact(reader);
    }
 
+   private async Task<IReadOnlyList<FactRecord>>
+      GetForActivityIncludingGroupAsync(
+         Guid activityId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = """
+         select
+            f.id,
+            f.activity_id,
+            f.activity_group_id,
+            f.entity_id,
+            f.fact_text,
+            f.created_at,
+            f.updated_at,
+            coalesce(
+               array_agg(s.url order by fsl.created_at, s.id)
+                  filter (where s.id is not null),
+               array[]::text[]
+            ) as source_urls
+         from facts f
+         left join fact_source_links fsl on fsl.fact_id = f.id
+         left join sources s on s.id = fsl.source_id
+         where f.activity_id = @activity_id
+            or f.activity_group_id = (
+               select activity_group_id
+               from activities
+               where id = @activity_id
+            )
+         group by
+            f.id,
+            f.activity_id,
+            f.activity_group_id,
+            f.entity_id,
+            f.fact_text,
+            f.created_at,
+            f.updated_at
+         order by f.created_at, f.id
+         """;
+
+      return await ReadFactsAsync(
+         sql,
+         command => command.Parameters.AddWithValue(
+            "activity_id",
+            activityId
+         ),
+         cancellationToken
+      );
+   }
+
    private async Task<IReadOnlyList<FactRecord>> GetForSubjectAsync(
       string subjectColumn,
       Guid subjectId,
@@ -340,6 +486,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          select
             f.id,
             f.activity_id,
+            f.activity_group_id,
             f.entity_id,
             f.fact_text,
             f.created_at,
@@ -356,6 +503,7 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          group by
             f.id,
             f.activity_id,
+            f.activity_group_id,
             f.entity_id,
             f.fact_text,
             f.created_at,
@@ -363,8 +511,24 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          order by f.created_at, f.id
          """;
 
+      return await ReadFactsAsync(
+         sql,
+         command => command.Parameters.AddWithValue(
+            "subject_id",
+            subjectId
+         ),
+         cancellationToken
+      );
+   }
+
+   private async Task<IReadOnlyList<FactRecord>> ReadFactsAsync(
+      string sql,
+      Action<NpgsqlCommand> addParameters,
+      CancellationToken cancellationToken
+   )
+   {
       await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("subject_id", subjectId);
+      addParameters(command);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -381,21 +545,26 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
    private static FactRecord ReadFact(NpgsqlDataReader reader)
    {
       Guid? activityId = reader.IsDBNull(1) ? null : reader.GetGuid(1);
-      Guid? entityId = reader.IsDBNull(2) ? null : reader.GetGuid(2);
+      Guid? activityGroupId = reader.IsDBNull(2)
+         ? null
+         : reader.GetGuid(2);
+      Guid? entityId = reader.IsDBNull(3) ? null : reader.GetGuid(3);
+      var subjectType = activityId is not null
+         ? FactSubjectTypes.Activity
+         : activityGroupId is not null
+            ? FactSubjectTypes.ActivityGroup
+            : FactSubjectTypes.Entity;
 
       return new FactRecord(
          reader.GetGuid(0),
-         activityId is not null
-            ? FactSubjectTypes.Activity
-            : FactSubjectTypes.Entity,
-         activityId ?? entityId ?? throw new InvalidOperationException(
-            "The fact has no subject."
-         ),
-         reader.GetString(3),
-         reader.GetFieldValue<DateTimeOffset>(4),
+         subjectType,
+         activityId ?? activityGroupId ?? entityId ??
+            throw new InvalidOperationException("The fact has no subject."),
+         reader.GetString(4),
          reader.GetFieldValue<DateTimeOffset>(5),
-         reader.FieldCount > 6
-            ? reader.GetFieldValue<string[]>(6)
+         reader.GetFieldValue<DateTimeOffset>(6),
+         reader.FieldCount > 7
+            ? reader.GetFieldValue<string[]>(7)
             : []
       );
    }
@@ -418,11 +587,30 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          false);
    }
 
-   private static async Task<Dictionary<string, Guid>>
-      GetActivityFactSourceIdsAsync(
+   private static async Task<bool> ActivityGroupExistsAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
-      Guid activityId,
+      Guid activityGroupId,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var command = new NpgsqlCommand(
+         "select exists(select 1 from activity_groups where id = @id)",
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("id", activityGroupId);
+
+      return (bool)(await command.ExecuteScalarAsync(cancellationToken) ??
+         false);
+   }
+
+   private static async Task<Dictionary<string, Guid>>
+      GetFactSourceIdsAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      string correlationType,
+      Guid subjectId,
       CancellationToken cancellationToken
    )
    {
@@ -440,11 +628,11 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue(
          "correlation_type",
-         SourceCorrelationTypes.Activity
+         correlationType
       );
       command.Parameters.AddWithValue(
          "correlation_id",
-         activityId.ToString()
+         subjectId.ToString()
       );
       command.Parameters.AddWithValue(
          "kind",
@@ -465,21 +653,33 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return sourceIds;
    }
 
-   private static async Task<FactRecord> InsertActivityFactAsync(
+   private static async Task<FactRecord> InsertFactAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
-      Guid activityId,
+      Guid? activityId,
+      Guid? activityGroupId,
       string text,
       CancellationToken cancellationToken
    )
    {
       var id = Guid.NewGuid();
       const string sql = """
-         insert into facts (id, activity_id, fact_text)
-         values (@id, @activity_id, @fact_text)
+         insert into facts (
+            id,
+            activity_id,
+            activity_group_id,
+            fact_text
+         )
+         values (
+            @id,
+            @activity_id,
+            @activity_group_id,
+            @fact_text
+         )
          returning
             id,
             activity_id,
+            activity_group_id,
             entity_id,
             fact_text,
             created_at,
@@ -491,7 +691,14 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          transaction
       );
       command.Parameters.AddWithValue("id", id);
-      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue(
+         "activity_id",
+         (object?)activityId ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         (object?)activityGroupId ?? DBNull.Value
+      );
       command.Parameters.AddWithValue("fact_text", text);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -505,10 +712,11 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       return ReadFact(reader);
    }
 
-   private static async Task<Guid> InsertActivityFactSourceAsync(
+   private static async Task<Guid> InsertFactSourceAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
-      Guid activityId,
+      string correlationType,
+      Guid subjectId,
       FactSourceDraft source,
       CancellationToken cancellationToken
    )
@@ -542,11 +750,11 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("id", id);
       command.Parameters.AddWithValue(
          "correlation_type",
-         SourceCorrelationTypes.Activity
+         correlationType
       );
       command.Parameters.AddWithValue(
          "correlation_id",
-         activityId.ToString()
+         subjectId.ToString()
       );
       command.Parameters.AddWithValue(
          "kind",

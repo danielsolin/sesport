@@ -168,9 +168,10 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
-   public async Task QueueFactsAsyncIncludesOrganizationType()
+   public async Task QueueFactsAsyncTargetsActivityGroup()
    {
       var organizationId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
@@ -182,12 +183,21 @@ public sealed class ActivityEditPageServiceTests
          TrackedEntityTypeIds.Organization,
          "football"
       );
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         "Diamond League London",
+         "football",
+         DistantActivityDate,
+         DistantActivityDate
+      );
 
       try
       {
          var activity = new ActivityEditModel
          {
             Title = "Friidrott - London",
+            ActivityGroupId = activityGroupId,
             ActivityGroupTitle = "Diamond League London",
             Description = "Description",
             ActivityType = ActivityType.Match.ToString(),
@@ -205,8 +215,8 @@ public sealed class ActivityEditPageServiceTests
          using var document = JsonDocument.Parse(request.InputPayloadJson);
 
          Assert.Equal(
-            "Diamond League",
-            document.RootElement.GetProperty("type").GetString()
+            AiJobIds.FindActivityGroupFacts,
+            request.JobId
          );
          Assert.Equal(
             "Diamond League London",
@@ -215,6 +225,7 @@ public sealed class ActivityEditPageServiceTests
       }
       finally
       {
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
          await DeleteEntityAsync(dataSource, organizationId);
       }
    }
@@ -786,6 +797,10 @@ public sealed class ActivityEditPageServiceTests
          Assert.NotNull(activityInfo.ActivityGroupId);
          Assert.Equal(groupTitle, activity.ActivityGroupTitle);
          Assert.False(activity.ActivityGroupCreationRequired);
+         Assert.Equal(
+            [activityInfo.ActivityGroupId!.Value],
+            fixture.AutomationService.ActivityGroupCreatedIds
+         );
          AssertActivityGroupTitle(
             dataSource,
             activityInfo.ActivityGroupId!.Value,
@@ -1519,6 +1534,7 @@ public sealed class ActivityEditPageServiceTests
             broadcastRepository,
             participationService,
             jobRunner,
+            new AiRepository(dataSource),
             inputBuilder,
             automationService,
             applicationLifetime,
@@ -1642,12 +1658,27 @@ public sealed class ActivityEditPageServiceTests
    {
       public CancellationToken CancellationToken { get; private set; }
 
+      public List<Guid> ActivityCreatedIds { get; } = [];
+
+      public List<Guid> ActivityGroupCreatedIds { get; } = [];
+
       public Task HandleActivityCreatedAsync(
          Guid activityId,
          CancellationToken cancellationToken
       )
       {
          CancellationToken = cancellationToken;
+         ActivityCreatedIds.Add(activityId);
+         return Task.CompletedTask;
+      }
+
+      public Task HandleActivityGroupCreatedAsync(
+         Guid activityGroupId,
+         CancellationToken cancellationToken
+      )
+      {
+         CancellationToken = cancellationToken;
+         ActivityGroupCreatedIds.Add(activityGroupId);
          return Task.CompletedTask;
       }
 

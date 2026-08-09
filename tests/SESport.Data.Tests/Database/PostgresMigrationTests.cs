@@ -394,6 +394,27 @@ public partial class PostgresMigrationTests
       Assert.Contains("drop column facts", migration);
    }
 
+   [Fact]
+   public void ActivityGroupFactsMigrationAddsGroupSubject()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "022_activity_group_facts.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("add column activity_group_id uuid", migration);
+      Assert.Contains("references public.activity_groups(id)", migration);
+      Assert.Contains("num_nonnulls", migration);
+      Assert.Contains(
+         "facts_activity_group_id_created_at_idx",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

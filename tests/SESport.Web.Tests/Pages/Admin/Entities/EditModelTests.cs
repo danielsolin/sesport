@@ -211,6 +211,14 @@ public sealed class EditModelTests
          return Task.CompletedTask;
       }
 
+      public Task HandleActivityGroupCreatedAsync(
+         Guid activityGroupId,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.CompletedTask;
+      }
+
       public Task HandlePersonCreatedAsync(
          Guid personEntityId,
          CancellationToken cancellationToken

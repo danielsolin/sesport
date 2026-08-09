@@ -18,10 +18,12 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    private static readonly string[] ActivityJobIds =
    [
       AiJobIds.GenerateActivityTeaser,
-      AiJobIds.FindActivityFacts,
       AiJobIds.FindParticipantsStart,
       AiJobIds.FindParticipantsResult
    ];
+
+   private const string ActivityGroupJobId =
+      AiJobIds.FindActivityGroupFacts;
 
    private const string BroadcastJobId =
       AiJobIds.DecidePrimaryCountryParticipation;
@@ -82,11 +84,13 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("      r.input_payload->>'event_name',")
          .AppendLine("      r.input_payload->>'title',")
          .AppendLine("      a.title,")
+         .AppendLine("      ag.title,")
          .AppendLine("      b.title,")
          .AppendLine("      person.canonical_name")
          .AppendLine("   ) as event_name,")
          .AppendLine("   coalesce(")
          .AppendLine("      a.activity_date,")
+         .AppendLine("      ag.start_date,")
          .AppendLine("      (b.starts_at at time zone @time_zone)::date")
          .AppendLine("   ) as event_date,")
          .AppendLine(
@@ -122,6 +126,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          .AppendLine("left join activities a")
          .AppendLine("   on a.id::text = r.correlation_id")
          .AppendLine("      and r.job_id = any(@activity_job_ids)")
+         .AppendLine("left join activity_groups ag")
+         .AppendLine("   on ag.id::text = r.correlation_id")
+         .AppendLine("      and r.job_id = @activity_group_job_id")
          .AppendLine("left join broadcasts b")
          .AppendLine("   on b.id::text = r.correlation_id")
          .AppendLine("      and r.job_id = @broadcast_job_id")
@@ -180,6 +187,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql.ToString());
       command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);
+      command.Parameters.AddWithValue(
+         "activity_group_job_id",
+         ActivityGroupJobId
+      );
       command.Parameters.AddWithValue("broadcast_job_id", BroadcastJobId);
       command.Parameters.AddWithValue("person_job_ids", PersonJobIds);
       command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
@@ -291,11 +302,13 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                r.input_payload->>'event_name',
                r.input_payload->>'title',
                a.title,
+               ag.title,
                b.title,
                person.canonical_name
             ),
             coalesce(
                a.activity_date,
+               ag.start_date,
                (b.starts_at at time zone @time_zone)::date
             ),
             coalesce(r.provider_label, p.label, ''),
@@ -320,6 +333,9 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          left join activities a
             on a.id::text = r.correlation_id
                and r.job_id = any(@activity_job_ids)
+         left join activity_groups ag
+            on ag.id::text = r.correlation_id
+               and r.job_id = @activity_group_job_id
          left join broadcasts b
             on b.id::text = r.correlation_id
                and r.job_id = @broadcast_job_id
@@ -343,6 +359,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("ids", ids.ToArray());
       command.Parameters.AddWithValue("activity_job_ids", ActivityJobIds);
+      command.Parameters.AddWithValue(
+         "activity_group_job_id",
+         ActivityGroupJobId
+      );
       command.Parameters.AddWithValue("broadcast_job_id", BroadcastJobId);
       command.Parameters.AddWithValue("person_job_ids", PersonJobIds);
       command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
@@ -518,6 +538,39 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<Guid?> GetExistingRunIdAsync(
+      string jobId,
+      string correlationId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id
+         from ai_job_runs
+         where job_id = @job_id
+            and correlation_id = @correlation_id
+            and status_id = any(@status_ids)
+         order by created_at desc, id desc
+         limit 1
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("job_id", jobId);
+      command.Parameters.AddWithValue("correlation_id", correlationId);
+      command.Parameters.AddWithValue(
+         "status_ids",
+         new[]
+         {
+            AiJobRunStatusIds.Pending,
+            AiJobRunStatusIds.Running,
+            AiJobRunStatusIds.Completed
+         }
+      );
+
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+      return result is null || result is DBNull ? null : (Guid)result;
+   }
+
    public async Task<IReadOnlyList<CompletedActivityTeaserRun>>
       GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
          int maxRuns,
@@ -569,8 +622,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       return runs;
    }
 
-   public async Task<IReadOnlyList<CompletedActivityFactsRun>>
-      GetUnappliedCompletedActivityFactsRunsAsync(
+   public async Task<IReadOnlyList<CompletedActivityGroupFactsRun>>
+      GetUnappliedCompletedActivityGroupFactsRunsAsync(
          int maxRuns,
          CancellationToken cancellationToken
       )
@@ -578,14 +631,14 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       const string sql = """
          select
             r.id,
-            a.id,
+            ag.id,
             r.output_text
          from ai_job_runs r
-         join activities a on a.id::text = r.correlation_id
+         join activity_groups ag on ag.id::text = r.correlation_id
          left join ai_job_run_applications app
             on app.run_id = r.id
             and app.target_type = @target_type
-            and app.target_id = a.id::text
+            and app.target_id = ag.id::text
          where r.job_id = @job_id
             and r.status_id = @status_id
             and r.prompt_version >= 3
@@ -598,7 +651,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue(
          "job_id",
-         AiJobIds.FindActivityFacts
+         AiJobIds.FindActivityGroupFacts
       );
       command.Parameters.AddWithValue(
          "status_id",
@@ -606,19 +659,19 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue(
          "target_type",
-         AiJobRunApplicationTargetTypes.Activity
+         AiJobRunApplicationTargetTypes.ActivityGroup
       );
       command.Parameters.AddWithValue("limit", maxRuns);
 
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var runs = new List<CompletedActivityFactsRun>();
+      var runs = new List<CompletedActivityGroupFactsRun>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
          runs.Add(
-            new CompletedActivityFactsRun(
+            new CompletedActivityGroupFactsRun(
                reader.GetGuid(0),
                reader.GetGuid(1),
                reader.GetString(2)
@@ -1725,8 +1778,8 @@ public sealed record CompletedActivityTeaserRun(
    string OutputText
 );
 
-public sealed record CompletedActivityFactsRun(
+public sealed record CompletedActivityGroupFactsRun(
    Guid RunId,
-   Guid ActivityId,
+   Guid ActivityGroupId,
    string OutputText
 );

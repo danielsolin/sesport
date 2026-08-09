@@ -8,6 +8,8 @@ public static class SourceCorrelationTypes
 
    public const string Activity = ApplicationObjectTypes.Activity;
 
+   public const string ActivityGroup = ApplicationObjectTypes.ActivityGroup;
+
    public const string Broadcast = ApplicationObjectTypes.Broadcast;
 
    public const string AiJobRun = ApplicationObjectTypes.AiJobRun;

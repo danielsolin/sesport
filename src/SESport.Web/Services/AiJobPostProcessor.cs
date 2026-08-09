@@ -43,7 +43,7 @@ public sealed class AiJobPostProcessor(
 
       if(run is null ||
          (run.JobId != AiJobIds.GenerateActivityTeaser &&
-            run.JobId != AiJobIds.FindActivityFacts) ||
+            run.JobId != AiJobIds.FindActivityGroupFacts) ||
          !string.Equals(
             run.StatusId,
             AiJobRunStatusIds.Completed,
@@ -53,7 +53,7 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
-      if(!Guid.TryParse(run.CorrelationId, out var activityId))
+      if(!Guid.TryParse(run.CorrelationId, out var targetId))
       {
          logger.LogWarning(
             "Activity text run {RunId} has invalid correlation id.",
@@ -62,7 +62,7 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
-      var activityFacts = run.JobId == AiJobIds.FindActivityFacts
+      var activityFacts = run.JobId == AiJobIds.FindActivityGroupFacts
          ? ExtractGeneratedActivityFacts(run.OutputText ?? string.Empty)
          : null;
       var output = run.JobId == AiJobIds.GenerateActivityTeaser
@@ -79,7 +79,7 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
-      if(run.JobId == AiJobIds.FindActivityFacts &&
+      if(run.JobId == AiJobIds.FindActivityGroupFacts &&
          activityFacts is null)
       {
          logger.LogWarning(
@@ -94,15 +94,15 @@ public sealed class AiJobPostProcessor(
       if(run.JobId == AiJobIds.GenerateActivityTeaser)
       {
          wasApplied = await activityRepository.UpdateTeaserAsync(
-            activityId,
+            targetId,
             output!,
             cancellationToken
          );
       }
       else
       {
-         var createdFacts = await factRepository.AddForActivityAsync(
-            activityId,
+         var createdFacts = await factRepository.AddForActivityGroupAsync(
+            targetId,
             activityFacts!.Facts,
             cancellationToken
          );
@@ -116,8 +116,10 @@ public sealed class AiJobPostProcessor(
 
       await runRepository.RecordApplicationAsync(
          runId,
-         AiJobRunApplicationTargetTypes.Activity,
-         activityId.ToString(),
+         run.JobId == AiJobIds.FindActivityGroupFacts
+            ? AiJobRunApplicationTargetTypes.ActivityGroup
+            : AiJobRunApplicationTargetTypes.Activity,
+         targetId.ToString(),
          cancellationToken
       );
    }

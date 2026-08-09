@@ -18,6 +18,10 @@ public class EditModel(AiAdminRepository repository) : PageModel
          AiAutomationEventIds.ActivityCreated
       ),
       new(
+         "Activity group created",
+         AiAutomationEventIds.ActivityGroupCreated
+      ),
+      new(
          "Person created",
          AiAutomationEventIds.PersonCreated
       )

@@ -28,7 +28,7 @@ public sealed class ActivityAiResultCatchUpWorker(
             );
 
          var factsRuns = await aiRepository
-               .GetUnappliedCompletedActivityFactsRunsAsync(
+               .GetUnappliedCompletedActivityGroupFactsRunsAsync(
                AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
             );
@@ -75,8 +75,8 @@ public sealed class ActivityAiResultCatchUpWorker(
                continue;
             }
 
-            var createdFacts = await factRepository.AddForActivityAsync(
-               run.ActivityId,
+            var createdFacts = await factRepository.AddForActivityGroupAsync(
+               run.ActivityGroupId,
                facts.Facts,
                stoppingToken
             );
@@ -85,12 +85,12 @@ public sealed class ActivityAiResultCatchUpWorker(
             {
                await aiRepository.RecordApplicationAsync(
                   run.RunId,
-                  AiJobRunApplicationTargetTypes.Activity,
-                  run.ActivityId.ToString(),
+                  AiJobRunApplicationTargetTypes.ActivityGroup,
+                  run.ActivityGroupId.ToString(),
                   stoppingToken
                );
                logger.LogInformation(
-                  "Saved missed activity facts from AI run {RunId}.",
+                  "Saved missed activity-group facts from AI run {RunId}.",
                   run.RunId
                );
             }

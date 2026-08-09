@@ -21,4 +21,13 @@ public sealed class AiJobIdsTests
          AiJobIds.GetTargetType(AiJobIds.FindParticipantsResult)
       );
    }
+
+   [Fact]
+   public void FindActivityGroupFactsTargetsActivityGroups()
+   {
+      Assert.Equal(
+         AiJobTargetType.ActivityGroup,
+         AiJobIds.GetTargetType(AiJobIds.FindActivityGroupFacts)
+      );
+   }
 }

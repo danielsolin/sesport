@@ -4,6 +4,7 @@ public enum AiJobTargetType
 {
    Unknown,
    Activity,
+   ActivityGroup,
    Broadcast,
    Person
 }
@@ -16,8 +17,8 @@ public static class AiJobIds
    public const string DecidePrimaryCountryParticipation =
       "decide-swedish-participation";
 
-   public const string FindActivityFacts =
-      "find-activity-facts";
+   public const string FindActivityGroupFacts =
+      "find-activitygroup-facts";
 
    public const string FindParticipantsStart =
       "find-participants-start";
@@ -35,9 +36,10 @@ public static class AiJobIds
    {
       return jobId switch
       {
-         GenerateActivityTeaser or FindActivityFacts or
-            FindParticipantsStart or FindParticipantsResult =>
+         GenerateActivityTeaser or FindParticipantsStart or
+            FindParticipantsResult =>
             AiJobTargetType.Activity,
+         FindActivityGroupFacts => AiJobTargetType.ActivityGroup,
          DecidePrimaryCountryParticipation =>
             AiJobTargetType.Broadcast,
          FindPersonData or TranslateText =>

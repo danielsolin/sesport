@@ -6,5 +6,7 @@ public static class AiJobRunApplicationTargetTypes
 {
    public const string Activity = ApplicationObjectTypes.Activity;
 
+   public const string ActivityGroup = ApplicationObjectTypes.ActivityGroup;
+
    public const string Entity = ApplicationObjectTypes.Entity;
 }

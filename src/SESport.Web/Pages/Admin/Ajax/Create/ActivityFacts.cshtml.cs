@@ -44,6 +44,15 @@ public sealed class ActivityFactsModel(ActivityEditPageService editService)
          });
       }
 
+      if(savedActivity.ActivityGroupId is null)
+      {
+         return BadRequest(new
+         {
+            error = "Assign the activity to an ActivityGroup before " +
+               "finding group facts."
+         });
+      }
+
       var runId = await editService.QueueFactsAsync(
          savedActivity,
          cancellationToken

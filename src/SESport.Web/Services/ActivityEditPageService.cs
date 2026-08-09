@@ -16,6 +16,7 @@ public sealed class ActivityEditPageService(
    AdminBroadcastRepository broadcastRepository,
    BroadcastParticipationService participationService,
    IAiJobRunner aiJobRunner,
+   IAiJobRunRepository runRepository,
    ActivityAiInputBuilder aiInputBuilder,
    IAiAutomationService automationService,
    IHostApplicationLifetime applicationLifetime,
@@ -228,6 +229,8 @@ public sealed class ActivityEditPageService(
    )
    {
       var isNew = activity.Id is null;
+      var createsActivityGroup = activity.ActivityGroupId is null &&
+         activity.ActivityGroupCreationRequired;
 
       if(activity.ActivityGroupCreationRequired &&
          activity.ActivityGroupId is null)
@@ -255,6 +258,14 @@ public sealed class ActivityEditPageService(
          NormalizeBroadcastIds(activity.BroadcastIds),
          cancellationToken
       );
+
+      if(createsActivityGroup && activity.ActivityGroupId is not null)
+      {
+         await automationService.HandleActivityGroupCreatedAsync(
+            activity.ActivityGroupId.Value,
+            applicationLifetime.ApplicationStopping
+         );
+      }
 
       if(isNew)
       {
@@ -484,15 +495,34 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
+      if(activity.ActivityGroupId is null)
+      {
+         throw new InvalidOperationException(
+            "The activity must belong to an ActivityGroup before finding " +
+            "group facts."
+         );
+      }
+
+      var correlationId = activity.ActivityGroupId.Value.ToString();
+      var existingRunId = await runRepository.GetExistingRunIdAsync(
+         AiJobIds.FindActivityGroupFacts,
+         correlationId,
+         cancellationToken
+      );
+
+      if(existingRunId is not null)
+      {
+         return existingRunId.Value;
+      }
+
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
-            AiJobIds.FindActivityFacts,
-            await aiInputBuilder.BuildAsync(
-               activity,
-               cancellationToken,
-               activity.ActivityGroupTitle
+            AiJobIds.FindActivityGroupFacts,
+            await aiInputBuilder.BuildActivityGroupAsync(
+               activity.ActivityGroupId.Value,
+               cancellationToken
             ),
-            activity.Id?.ToString()
+            correlationId
          ),
          cancellationToken
       );

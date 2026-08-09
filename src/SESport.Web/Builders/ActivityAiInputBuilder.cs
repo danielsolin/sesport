@@ -65,6 +65,69 @@ public sealed class ActivityAiInputBuilder(
       );
    }
 
+   public async Task<string> BuildActivityGroupAsync(
+      Guid activityGroupId,
+      CancellationToken cancellationToken
+   )
+   {
+      var group = await activityRepository.GetActivityGroupForEditAsync(
+         activityGroupId,
+         cancellationToken
+      );
+
+      if(group is null || group.StartDate is null || group.EndDate is null)
+      {
+         throw new InvalidOperationException(
+            $"Activity group '{activityGroupId}' was not found."
+         );
+      }
+
+      var activities = await activityRepository.GetActivitiesForGroupEditAsync(
+         activityGroupId,
+         cancellationToken
+      );
+      var sportName = (await activityRepository.GetSportOptionsAsync(
+         cancellationToken
+      ))
+         .FirstOrDefault(sport => sport.Id == group.SportId)
+         ?.Label ?? group.SportId;
+      var descriptions = activities
+         .Select(activity => activity.Description?.Trim())
+         .Where(description => !string.IsNullOrWhiteSpace(description))
+         .Distinct(StringComparer.Ordinal)
+         .ToList();
+
+      return JsonSerializer.Serialize(
+         new
+         {
+            event_name = group.Title,
+            title = group.Title,
+            type = string.Empty,
+            description = string.Join(
+               Environment.NewLine,
+               descriptions
+            ),
+            activity_type = string.Empty,
+            sport = sportName,
+            activity_date = FormatDateRange(
+               group.StartDate.Value,
+               group.EndDate.Value
+            ),
+            activity_group_id = activityGroupId,
+            activity_count = activities.Count,
+            activities = activities.Select(activity => new
+            {
+               title = activity.Title,
+               date = DateDisplay.Format(activity.ActivityDate),
+               description = activity.Description
+            }),
+            participants = string.Empty,
+            participant_entities = Array.Empty<object>(),
+            related_entities = Array.Empty<string>()
+         }
+      );
+   }
+
    private async Task<string> GetOrganizationNameAsync(
       Guid? organizationEntityId,
       CancellationToken cancellationToken
@@ -91,6 +154,17 @@ public sealed class ActivityAiInputBuilder(
          : string.Join(
             Environment.NewLine,
             values.Select(value => $"  - {value}")
-         );
+      );
+   }
+
+   private static string FormatDateRange(
+      DateOnly startDate,
+      DateOnly endDate
+   )
+   {
+      return startDate == endDate
+         ? DateDisplay.Format(startDate)
+         : $"{DateDisplay.Format(startDate)} - " +
+            DateDisplay.Format(endDate);
    }
 }

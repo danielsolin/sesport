@@ -64,6 +64,86 @@ public sealed class FactRepositoryTests
    }
 
    [Fact]
+   public async Task SharesActivityGroupFactsWithAllActivitiesInGroup()
+   {
+      var activityGroupId = Guid.NewGuid();
+      var firstActivityId = Guid.NewGuid();
+      var secondActivityId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new FactRepository(dataSource);
+
+      try
+      {
+         await InsertActivityGroupAsync(dataSource, activityGroupId);
+         await InsertActivityAsync(dataSource, firstActivityId);
+         await InsertActivityAsync(dataSource, secondActivityId);
+         await AssignActivityGroupAsync(
+            dataSource,
+            firstActivityId,
+            activityGroupId
+         );
+         await AssignActivityGroupAsync(
+            dataSource,
+            secondActivityId,
+            activityGroupId
+         );
+
+         var facts = await repository.AddForActivityGroupAsync(
+            activityGroupId,
+            [
+               new FactDraft(
+                  "A shared group fact.",
+                  [
+                     new FactSourceDraft(
+                        "https://example.test/group",
+                        null,
+                        null
+                     )
+                  ]
+               )
+            ],
+            CancellationToken.None
+         );
+
+         var fact = Assert.Single(facts);
+         Assert.Equal(FactSubjectTypes.ActivityGroup, fact.SubjectType);
+         Assert.Equal(activityGroupId, fact.SubjectId);
+         Assert.Single(
+            await repository.GetForActivityAsync(
+               firstActivityId,
+               CancellationToken.None
+            )
+         );
+         Assert.Single(
+            await repository.GetForActivityAsync(
+               secondActivityId,
+               CancellationToken.None
+            )
+         );
+         Assert.True(
+            await repository.DeleteForActivityAsync(
+               fact.Id,
+               secondActivityId,
+               CancellationToken.None
+            )
+         );
+         Assert.Empty(
+            await repository.GetForActivityGroupAsync(
+               activityGroupId,
+               CancellationToken.None
+            )
+         );
+      }
+      finally
+      {
+         await DeleteActivityAsync(dataSource, firstActivityId);
+         await DeleteActivityAsync(dataSource, secondActivityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+      }
+   }
+
+   [Fact]
    public async Task UpdatesAndDeletesFact()
    {
       var activityId = Guid.NewGuid();
@@ -318,6 +398,51 @@ public sealed class FactRepositoryTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task InsertActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      const string sql = """
+         insert into activity_groups (
+            id,
+            title,
+            sport_id,
+            start_date,
+            end_date
+         )
+         values (
+            @id,
+            'Fact test group',
+            'football',
+            @date,
+            @date
+         )
+         """;
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", activityGroupId);
+      command.Parameters.AddWithValue("date", DistantActivityDate);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task AssignActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId,
+      Guid activityGroupId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         update activities
+         set activity_group_id = @activity_group_id
+         where id = @activity_id
+         """
+      );
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("activity_group_id", activityGroupId);
+      await command.ExecuteNonQueryAsync();
+   }
+
    private static async Task InsertEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId
@@ -411,6 +536,33 @@ public sealed class FactRepositoryTests
          "delete from entities where id = @id"
       );
       command.Parameters.AddWithValue("id", entityId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityGroupAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      await using(var sourceCommand = dataSource.CreateCommand(
+         """
+         delete from sources
+         where correlation_type = 'ActivityGroup'
+            and correlation_id = @correlation_id
+         """
+      ))
+      {
+         sourceCommand.Parameters.AddWithValue(
+            "correlation_id",
+            activityGroupId.ToString()
+         );
+         await sourceCommand.ExecuteNonQueryAsync();
+      }
+
+      await using var command = dataSource.CreateCommand(
+         "delete from activity_groups where id = @id"
+      );
+      command.Parameters.AddWithValue("id", activityGroupId);
       await command.ExecuteNonQueryAsync();
    }
 
