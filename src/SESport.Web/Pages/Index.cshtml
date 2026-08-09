@@ -522,6 +522,13 @@ else
                         var watchPriorityBadgeClass =
                            "activity-participant-watch-" +
                            "priority-badge";
+                        var hasPrimaryCountryTeam = activity.Participants.Any(
+                           participant => string.Equals(
+                              participant.TeamCountryId,
+                              PrimaryCountry.Id,
+                              StringComparison.OrdinalIgnoreCase
+                           )
+                        );
                         <div class="activity-participant-table-wrap">
                            <div class="activity-participant-table-frame">
                               <table id="@participantTableId"
@@ -597,7 +604,8 @@ else
                                        PublicParticipantTeamFlag.GetPath(
                                           activity.IsTeamSport,
                                           activity.ActivityType,
-                                          participant.TeamCountryId
+                                          participant.TeamCountryId,
+                                          hasPrimaryCountryTeam
                                        );
                                     var rowClass =
                                        participant.IsActive

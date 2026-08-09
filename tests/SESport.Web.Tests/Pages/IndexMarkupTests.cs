@@ -107,6 +107,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("participant.DisciplineAliasName", html);
       Assert.Contains("PublicParticipantTeamFlag.GetPath(", html);
       Assert.Contains("participant.TeamCountryId", html);
+      Assert.Contains("hasPrimaryCountryTeam", html);
       Assert.Contains("participant-country-flag", html);
       Assert.Contains("participant.WatchPriority", html);
       Assert.Contains("participant.WatchPriority == 0", html);

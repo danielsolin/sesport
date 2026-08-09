@@ -11,7 +11,8 @@ public sealed class PublicParticipantTeamFlagTests
       var path = PublicParticipantTeamFlag.GetPath(
          true,
          nameof(ActivityType.Match),
-         "pl"
+         "pl",
+         true
       );
 
       Assert.Equal("/images/flags/pl.svg", path);
@@ -30,7 +31,8 @@ public sealed class PublicParticipantTeamFlagTests
       var path = PublicParticipantTeamFlag.GetPath(
          true,
          nameof(ActivityType.Match),
-         countryId
+         countryId,
+         true
       );
 
       Assert.Equal($"/images/flags/{countryId}.svg", path);
@@ -42,7 +44,8 @@ public sealed class PublicParticipantTeamFlagTests
       var path = PublicParticipantTeamFlag.GetPath(
          true,
          nameof(ActivityType.Match),
-         "int"
+         "int",
+         true
       );
 
       Assert.Null(path);
@@ -54,7 +57,8 @@ public sealed class PublicParticipantTeamFlagTests
       var path = PublicParticipantTeamFlag.GetPath(
          true,
          nameof(ActivityType.Match),
-         PrimaryCountry.Id
+         PrimaryCountry.Id,
+         true
       );
 
       Assert.Null(path);
@@ -71,7 +75,21 @@ public sealed class PublicParticipantTeamFlagTests
       var path = PublicParticipantTeamFlag.GetPath(
          isTeamSport,
          activityType,
-         "pl"
+         "pl",
+         true
+      );
+
+      Assert.Null(path);
+   }
+
+   [Fact]
+   public void GetPathHidesForeignTeamWithoutPrimaryCountryOpponent()
+   {
+      var path = PublicParticipantTeamFlag.GetPath(
+         true,
+         nameof(ActivityType.Match),
+         "pl",
+         false
       );
 
       Assert.Null(path);

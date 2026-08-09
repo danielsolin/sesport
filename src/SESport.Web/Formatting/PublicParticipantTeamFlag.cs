@@ -22,7 +22,8 @@ public static class PublicParticipantTeamFlag
    public static string? GetPath(
       bool isTeamSport,
       string activityType,
-      string? teamCountryId
+      string? teamCountryId,
+      bool hasPrimaryCountryTeam
    )
    {
       if(!isTeamSport || !string.Equals(
@@ -34,7 +35,8 @@ public static class PublicParticipantTeamFlag
          return null;
       }
 
-      if(string.IsNullOrWhiteSpace(teamCountryId) ||
+      if(!hasPrimaryCountryTeam ||
+         string.IsNullOrWhiteSpace(teamCountryId) ||
          string.Equals(
             teamCountryId.Trim(),
             PrimaryCountry.Id,
