@@ -336,6 +336,33 @@ public sealed class ActivityParticipantAiResultServiceTests
          );
          Assert.Equal("14:20", updatedValue.ValueText);
          Assert.Equal("\"14:20\"", updatedValue.ValueJson);
+
+         await aiRepository.DeleteRunAsync(
+            runId,
+            CancellationToken.None
+         );
+         var retainedResultSet = Assert.Single(
+            await resultRepository.GetForActivityAsync(
+               activityId,
+               CancellationToken.None
+            )
+         );
+         Assert.Null(retainedResultSet.RunId);
+         Assert.Null(retainedResultSet.RunStatusId);
+         Assert.Null(retainedResultSet.StartedAt);
+         Assert.Equal(2, retainedResultSet.Values.Count);
+         Assert.Contains(
+            retainedResultSet.Values,
+            value =>
+               value.EntityId == firstPersonId &&
+               value.ValueText == "14:20"
+         );
+         Assert.Contains(
+            retainedResultSet.Values,
+            value =>
+               value.EntityId == thirdPersonId &&
+               value.ValueText == "14:20"
+         );
       }
       finally
       {

@@ -371,10 +371,6 @@
       {
          @foreach(var result in Model.AiResults)
          {
-            var runDetailsUrl = Url.Page(
-               "/Admin/Runs/Details",
-               new { id = result.RunId }
-            );
             <details class="activity-ai-result-details"
                      data-activity-ai-result-set
                      data-activity-ai-result-job-id="@result.JobId"
@@ -383,12 +379,22 @@
                <summary class="activity-ai-result-summary">
                   <strong>@result.JobLabel</strong>
                   <span class="activity-ai-result-summary-meta">
-                     <code>@result.RunStatusId</code>
+                     @if(result.RunStatusId is not null)
+                     {
+                        <code>@result.RunStatusId</code>
+                     }
                      @if(!string.IsNullOrWhiteSpace(result.ResultSummary))
                      {
                         <span>@result.ResultSummary</span>
                      }
-                     <a href="@runDetailsUrl">Run details</a>
+                     @if(result.RunId is Guid runId)
+                     {
+                        var runDetailsUrl = Url.Page(
+                           "/Admin/Runs/Details",
+                           new { id = runId }
+                        );
+                        <a href="@runDetailsUrl">Run details</a>
+                     }
                      <span>
                         @TimeDisplay.FormatLocalTimestamp(
                            result.UpdatedAt

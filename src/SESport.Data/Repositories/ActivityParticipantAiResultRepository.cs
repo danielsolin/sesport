@@ -169,7 +169,7 @@ public sealed class ActivityParticipantAiResultRepository(
             min(r.created_at) as created_at,
             max(r.updated_at) as updated_at
          from activity_participant_ai_results r
-         join ai_job_runs run on run.id = r.run_id
+         left join ai_job_runs run on run.id = r.run_id
          left join ai_jobs j on j.id = r.job_id
          where r.activity_id = @activity_id
          group by
@@ -197,13 +197,13 @@ public sealed class ActivityParticipantAiResultRepository(
          var builder = new Builder(
             reader.GetString(0),
             reader.GetString(1),
-            reader.GetGuid(2),
-            reader.GetString(3),
+            ReadNullableGuid(reader, 2),
+            ReadNullableString(reader, 3),
             AiRunSummaryFormatter.Format(
                ReadNullableString(reader, 4),
                reader.GetString(1)
             ),
-            reader.GetFieldValue<DateTimeOffset>(5),
+            ReadNullableDateTimeOffset(reader, 5),
             ReadNullableDateTimeOffset(reader, 6),
             reader.GetFieldValue<DateTimeOffset>(7),
             reader.GetFieldValue<DateTimeOffset>(8)
@@ -567,6 +567,16 @@ public sealed class ActivityParticipantAiResultRepository(
          : reader.GetString(ordinal);
    }
 
+   private static Guid? ReadNullableGuid(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? null
+         : reader.GetGuid(ordinal);
+   }
+
    private static DateTimeOffset? ReadNullableDateTimeOffset(
       NpgsqlDataReader reader,
       int ordinal
@@ -595,10 +605,10 @@ public sealed class ActivityParticipantAiResultRepository(
    private sealed class Builder(
       string JobId,
       string JobLabel,
-      Guid RunId,
-      string RunStatusId,
+      Guid? RunId,
+      string? RunStatusId,
       string? ResultSummary,
-      DateTimeOffset StartedAt,
+      DateTimeOffset? StartedAt,
       DateTimeOffset? CompletedAt,
       DateTimeOffset CreatedAt,
       DateTimeOffset UpdatedAt
@@ -615,13 +625,13 @@ public sealed class ActivityParticipantAiResultRepository(
 
       public string JobLabel { get; } = JobLabel;
 
-      public Guid RunId { get; } = RunId;
+      public Guid? RunId { get; } = RunId;
 
-      public string RunStatusId { get; } = RunStatusId;
+      public string? RunStatusId { get; } = RunStatusId;
 
       public string? ResultSummary { get; } = ResultSummary;
 
-      public DateTimeOffset StartedAt { get; } = StartedAt;
+      public DateTimeOffset? StartedAt { get; } = StartedAt;
 
       public DateTimeOffset? CompletedAt { get; } = CompletedAt;
 

@@ -196,8 +196,8 @@ deleting its configuration.
 
 Stores normalized AI-enriched participant fields for an activity and job.
 Each row identifies the entity and field, keeps both a display value and JSON
-value, preserves the supporting source, and records ordering and the run that
-produced it.
+value, preserves the supporting source, and records ordering and, when still
+available, the run that produced it.
 
 ## Migration bookkeeping
 

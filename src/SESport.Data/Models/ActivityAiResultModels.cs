@@ -15,10 +15,10 @@ public sealed record ActivityParticipantAiResultValueRecord(
 public sealed record ActivityParticipantAiResultSetRecord(
    string JobId,
    string JobLabel,
-   Guid RunId,
-   string RunStatusId,
+   Guid? RunId,
+   string? RunStatusId,
    string? ResultSummary,
-   DateTimeOffset StartedAt,
+   DateTimeOffset? StartedAt,
    DateTimeOffset? CompletedAt,
    DateTimeOffset CreatedAt,
    DateTimeOffset UpdatedAt,
