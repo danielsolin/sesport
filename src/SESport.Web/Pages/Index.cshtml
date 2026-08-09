@@ -593,6 +593,12 @@ else
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
+                                    var teamCountryFlagPath =
+                                       PublicParticipantTeamFlag.GetPath(
+                                          activity.IsTeamSport,
+                                          activity.ActivityType,
+                                          participant.TeamCountryId
+                                       );
                                     var rowClass =
                                        participant.IsActive
                                           ? shouldCollapseParticipants &&
@@ -623,6 +629,18 @@ else
                                        <td class="activity-participant-name
                                           activity-participant-col-name">
                                           @participant.Name
+                                          @if(teamCountryFlagPath is not null)
+                                          {
+                                             <img class=
+                                                "participant-country-flag"
+                                                src="@teamCountryFlagPath"
+                                                alt="@(
+                                                   participant.TeamCountryName
+                                                )"
+                                                title="@(
+                                                   participant.TeamCountryName
+                                                )" />
+                                          }
                                           @if(!participant.IsActive)
                                           {
                                              <span class=

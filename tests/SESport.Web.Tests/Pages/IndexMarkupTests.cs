@@ -105,6 +105,9 @@ public sealed class IndexMarkupTests
       Assert.Contains("participant.StartTime", html);
       Assert.Contains("participant.HasDiscipline", html);
       Assert.Contains("participant.DisciplineAliasName", html);
+      Assert.Contains("PublicParticipantTeamFlag.GetPath(", html);
+      Assert.Contains("participant.TeamCountryId", html);
+      Assert.Contains("participant-country-flag", html);
       Assert.Contains("participant.WatchPriority", html);
       Assert.Contains("participant.WatchPriority == 0", html);
       Assert.Contains("watchPriorityBadgeClass", html);
@@ -143,6 +146,10 @@ public sealed class IndexMarkupTests
          ".activity-participant-col-discipline {\n" +
          "   width: 1%;\n" +
          "   white-space: nowrap;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-col-name .participant-country-flag {",
          css
       );
       Assert.Contains(

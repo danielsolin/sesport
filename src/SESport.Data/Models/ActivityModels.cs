@@ -57,6 +57,8 @@ public sealed record PublicActivityParticipant(
    DateOnly? Birthdate,
    int? Height,
    string Club,
+   string? TeamCountryId,
+   string? TeamCountryName,
    bool IsActive,
    bool HasDiscipline,
    string? DisciplineAliasName

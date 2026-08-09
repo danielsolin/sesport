@@ -1152,6 +1152,12 @@
    height: auto;
 }
 
+.activity-participant-col-name .participant-country-flag {
+   display: inline-block;
+   margin-left: 6px;
+   vertical-align: -1px;
+}
+
 .activity-meta {
    display: flex;
    flex-wrap: wrap;

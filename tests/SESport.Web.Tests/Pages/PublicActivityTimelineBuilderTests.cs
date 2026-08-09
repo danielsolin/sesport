@@ -559,6 +559,8 @@ public class PublicActivityTimelineBuilderTests
          null,
          null,
          string.Empty,
+         null,
+         null,
          true,
          false,
          null

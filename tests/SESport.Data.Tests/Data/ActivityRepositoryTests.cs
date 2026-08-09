@@ -722,6 +722,75 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedForDateAsyncIncludesParticipantTeamCountry()
+   {
+      var selectedDate = DistantActivityDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var teamId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertActivityAsync(
+            dataSource,
+            activityId,
+            selectedDate,
+            startsAt,
+            ActivityPublicationStatusIds.Published
+         );
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "Team Country Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            teamId,
+            "Test Foreign Team",
+            TrackedEntityTypeIds.Team,
+            countryId: "pl"
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            activityId,
+            personId
+         );
+         await InsertEntityLinkAsync(dataSource, personId, teamId);
+
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         var participant = Assert.Single(activity.Participants);
+
+         Assert.Equal("pl", participant.TeamCountryId);
+         Assert.Equal("Poland", participant.TeamCountryName);
+      }
+      finally
+      {
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteEntityAsync(dataSource, teamId);
+         await DeleteEntityAsync(dataSource, personId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedForDateAsyncMarksNationalTeamActivities()
    {
       var selectedDate = DistantActivityDate;
@@ -1261,7 +1330,8 @@ public sealed class ActivityRepositoryTests
       string entityName,
       string entityTypeId,
       string watchPriorityId = "tier_3",
-      string? aliasName = null
+      string? aliasName = null,
+      string? countryId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1294,7 +1364,10 @@ public sealed class ActivityRepositoryTests
          """;
       command.Parameters.AddWithValue("id", entityId);
       command.Parameters.AddWithValue("canonical_name", entityName);
-      command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
+      command.Parameters.AddWithValue(
+         "country_id",
+         countryId ?? PrimaryCountry.Id
+      );
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("watch_priority_id", watchPriorityId);
       command.Parameters.AddWithValue(

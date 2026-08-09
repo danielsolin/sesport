@@ -1608,6 +1608,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             discipline.id is not null as has_discipline,
             nullif(btrim(discipline.alias_name), '') as discipline_alias_name,
             priority.sort_order,
+            participant_team.team_country_id,
+            participant_team.team_country_name,
             al.is_active
          from activity_entity_links al
          join entities person on person.id = al.entity_id
@@ -1649,6 +1651,31 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                linked.id
             limit 1
          ) discipline on true
+         left join lateral (
+            select
+               min(team.country_id) as team_country_id,
+               min(team.country_name) as team_country_name
+            from (
+               select distinct
+                  linked.country_id,
+                  country.name as country_name,
+                  linked.canonical_name as team_name
+               from entity_to_entity_links entity_link
+               join entities linked on linked.id = case
+                  when entity_link.source_entity_id = person.id
+                     then entity_link.target_entity_id
+                  else entity_link.source_entity_id
+               end
+               join countries country on country.id = linked.country_id
+               where (
+                  entity_link.source_entity_id = person.id
+                  or entity_link.target_entity_id = person.id
+               )
+                  and linked.entity_type_id =
+                     '{{TrackedEntityTypeIds.Team}}'
+            ) team
+            having count(*) = 1
+         ) participant_team on true
          where al.activity_id = any(@activity_ids)
             and person.entity_type_id =
                '{{TrackedEntityTypeIds.Person}}'
@@ -1691,7 +1718,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   : reader.GetFieldValue<DateOnly>(4),
                reader.IsDBNull(5) ? null : reader.GetInt32(5),
                reader.GetString(6),
-               reader.GetBoolean(10),
+               reader.IsDBNull(10) ? null : reader.GetString(10),
+               reader.IsDBNull(11) ? null : reader.GetString(11),
+               reader.GetBoolean(12),
                reader.GetBoolean(7),
                reader.IsDBNull(8) ? null : reader.GetString(8)
             )
