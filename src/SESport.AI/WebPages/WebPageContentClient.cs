@@ -313,6 +313,25 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken
          );
 
+         if(HasFetchFailure(renderedContent))
+         {
+            logger.LogWarning(
+               "Playwright renderer returned no usable content for {Url}; " +
+               "using primary HTML response. Reason: {Reason}",
+               absoluteUrl,
+               renderedContent?.FetchErrorMessage ?? "No content returned."
+            );
+            return await FetchPrimaryHtmlFallbackAsync(
+               primaryHtml,
+               absoluteUrl,
+               cancellationToken,
+               renderedContent?.FetchErrorKind,
+               renderedContent?.FetchErrorMessage,
+               primaryRelevantLinks,
+               primaryRelevantImages
+            );
+         }
+
          return MergePrimaryRelevantContent(
             renderedContent,
             primaryRelevantLinks,
@@ -327,20 +346,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
-            this.logger,
-            this.curlPageFetcher,
+         return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
             absoluteUrl,
             cancellationToken,
-            exception.ErrorKind
-         );
-         htmlContent = AppendBrowserFailureMessage(
-            htmlContent,
-            exception.Message
-         );
-         return MergePrimaryRelevantContent(
-            htmlContent,
+            exception.ErrorKind,
+            exception.Message,
             primaryRelevantLinks,
             primaryRelevantImages
          );
@@ -358,20 +369,12 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
-            this.logger,
-            this.curlPageFetcher,
+         return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
             absoluteUrl,
             cancellationToken,
-            WebPageFetchErrorKind.Timeout
-         );
-         htmlContent = AppendBrowserFailureMessage(
-            htmlContent,
-            exception.Message
-         );
-         return MergePrimaryRelevantContent(
-            htmlContent,
+            WebPageFetchErrorKind.Timeout,
+            exception.Message,
             primaryRelevantLinks,
             primaryRelevantImages
          );
@@ -384,24 +387,42 @@ public sealed class WebPageContentClient : IWebPageContentClient
             "using primary HTML response.",
             absoluteUrl
          );
-         var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
-            this.logger,
-            this.curlPageFetcher,
+         return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
             absoluteUrl,
             cancellationToken,
-            WebPageFetchErrorKind.BrowserBlocked
-         );
-         htmlContent = AppendBrowserFailureMessage(
-            htmlContent,
-            exception.Message
-         );
-         return MergePrimaryRelevantContent(
-            htmlContent,
+            WebPageFetchErrorKind.BrowserBlocked,
+            exception.Message,
             primaryRelevantLinks,
             primaryRelevantImages
          );
       }
+   }
+
+   private async Task<WebPageContent?> FetchPrimaryHtmlFallbackAsync(
+      string primaryHtml,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken,
+      WebPageFetchErrorKind? browserFailureKind,
+      string? browserFailureMessage,
+      IReadOnlyList<WebPageRelevantLink> primaryRelevantLinks,
+      IReadOnlyList<WebPageImageCandidate> primaryRelevantImages
+   )
+   {
+      var htmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
+         this.logger,
+         this.curlPageFetcher,
+         primaryHtml,
+         absoluteUrl,
+         cancellationToken,
+         browserFailureKind
+      );
+
+      return MergePrimaryRelevantContent(
+         AppendBrowserFailureMessage(htmlContent, browserFailureMessage),
+         primaryRelevantLinks,
+         primaryRelevantImages
+      );
    }
 
    private async Task<WebPageContent?>
@@ -411,9 +432,29 @@ public sealed class WebPageContentClient : IWebPageContentClient
       WebPageFetchErrorKind? browserFailureKind
    )
    {
+      string? browserFailureMessage = null;
+
       try
       {
-         return await this.browserPageFetcher(absoluteUrl, cancellationToken);
+         var renderedContent = await this.browserPageFetcher(
+            absoluteUrl,
+            cancellationToken
+         );
+
+         if(!HasFetchFailure(renderedContent))
+         {
+            return renderedContent;
+         }
+
+         browserFailureKind = renderedContent?.FetchErrorKind ??
+            browserFailureKind;
+         browserFailureMessage = renderedContent?.FetchErrorMessage;
+         logger.LogWarning(
+            "Playwright renderer returned no usable content for {Url}; " +
+            "falling back to curl. Reason: {Reason}",
+            absoluteUrl,
+            browserFailureMessage ?? "No content returned."
+         );
       }
       catch(WebPageFetchException exception)
       {
@@ -423,6 +464,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             absoluteUrl
          );
          browserFailureKind = exception.ErrorKind;
+         browserFailureMessage = exception.Message;
       }
       catch(OperationCanceledException)
          when(cancellationToken.IsCancellationRequested)
@@ -437,6 +479,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             absoluteUrl
          );
          browserFailureKind = WebPageFetchErrorKind.Timeout;
+         browserFailureMessage = exception.Message;
       }
       catch(PlaywrightException exception)
       {
@@ -446,6 +489,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             absoluteUrl
          );
          browserFailureKind = WebPageFetchErrorKind.BrowserBlocked;
+         browserFailureMessage = exception.Message;
       }
 
       try
@@ -457,7 +501,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
          if(curlContent is not null)
          {
-            return curlContent;
+            return AppendBrowserFailureMessage(
+               curlContent,
+               browserFailureMessage
+            );
          }
       }
       catch(OperationCanceledException)
@@ -474,13 +521,27 @@ public sealed class WebPageContentClient : IWebPageContentClient
          );
       }
 
-      return WebPageContentFetchSupport.BuildFailureContent(
+      var failureContent = WebPageContentFetchSupport.BuildFailureContent(
          absoluteUrl,
          null,
          browserFailureKind,
          $"Could not retrieve page content from {absoluteUrl}.",
          "curl"
       );
+
+      return AppendBrowserFailureMessage(
+         failureContent,
+         browserFailureMessage
+      );
+   }
+
+   private static bool HasFetchFailure(WebPageContent? content)
+   {
+      return content is null ||
+         content.FetchErrorKind is not null ||
+         !string.IsNullOrWhiteSpace(content.FetchErrorMessage) ||
+         (!content.HasBodyText &&
+            content.RelevantImages is not { Count: > 0 });
    }
 
    private static WebPageContent? MergePrimaryRelevantContent(
@@ -509,7 +570,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static WebPageContent? AppendBrowserFailureMessage(
       WebPageContent? content,
-      string browserFailureMessage
+      string? browserFailureMessage
    )
    {
       if(content is null ||

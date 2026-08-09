@@ -83,41 +83,29 @@ internal static class WebPageHtmlPageFetcher
                "HTML fallback produced no text for {Url}.",
                absoluteUrl
             );
-            if(WebPageBlockDetection.IsBlocked(
+            var blockedSignature = WebPageBlockDetection.FindBlockedSignature(
                title,
                text,
                WebPageBlockSource.HtmlFallback
-            ))
+            );
+            if(blockedSignature is not null)
             {
-               var blockedSignature =
-                  WebPageBlockDetection.FindBlockedSignature(
-                     title,
-                     text,
-                     WebPageBlockSource.HtmlFallback
-                  );
-
                logger.LogWarning(
                   "HTML fallback blocked for {Url} by signature {Signature}.",
                   absoluteUrl,
-                  blockedSignature ?? "<unknown>"
-               );
-
-               return await TryCurlFallbackAsync(
-                  logger,
-                  curlPageFetcher,
-                  absoluteUrl,
-                  browserFailureKind,
-                  "HTML fallback produced no text.",
-                  cancellationToken
+                  blockedSignature
                );
             }
 
-            return WebPageContentFetchSupport.BuildFailureContent(
+            return await TryCurlFallbackAsync(
+               logger,
+               curlPageFetcher,
                absoluteUrl,
-               title ?? absoluteUrlString,
                browserFailureKind,
-               "HTML fallback produced no text.",
-               "html"
+               blockedSignature is null
+                  ? "HTML fallback produced no text."
+                  : "HTML fallback was blocked.",
+               cancellationToken
             );
          }
 

@@ -9,22 +9,18 @@ internal enum WebPageBlockSource
 
 internal static class WebPageBlockDetection
 {
-   private static readonly string[] HtmlFallbackSignatures =
+   private static readonly string[] FallbackSignatures =
    [
       "access denied",
       "you do not have permission to access",
       "you don't have permission to access",
       "errors edgesuite net",
-      "reference #"
-   ];
-
-   private static readonly string[] CurlFallbackSignatures =
-   [
-      "access denied",
-      "you do not have permission to access",
-      "you don't have permission to access",
-      "errors edgesuite net",
-      "reference #"
+      "reference #",
+      "performing security verification",
+      "incompatible browser extension or network configuration",
+      "this website uses a security service to protect against " +
+      "malicious bots",
+      "checking your browser"
    ];
 
    private static readonly string[] BrowserSignatures =
@@ -56,9 +52,8 @@ internal static class WebPageBlockDetection
 
       var signatures = source switch
       {
-         WebPageBlockSource.CurlFallback => CurlFallbackSignatures,
          WebPageBlockSource.Browser => BrowserSignatures,
-         _ => HtmlFallbackSignatures
+         _ => FallbackSignatures
       };
 
       return signatures.FirstOrDefault(signature =>

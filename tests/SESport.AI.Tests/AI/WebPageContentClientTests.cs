@@ -284,11 +284,18 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public async Task FetchReturnsNullWhenBrowserReturnsNull()
+   public async Task FetchFallsBackWhenBrowserReturnsNull()
    {
       var browserCalls = 0;
       var client = CreateClient(
-         new HttpClient(new HtmlRecordingHandler()),
+         new HttpClient(new HtmlRecordingHandler(
+            """
+            <html>
+               <head><title>Null fallback title</title></head>
+               <body><main><p>Null fallback body.</p></main></body>
+            </html>
+            """
+         )),
          (_, _) =>
          {
             browserCalls++;
@@ -302,7 +309,9 @@ public class WebPageContentClientTests
       );
 
       Assert.Equal(1, browserCalls);
-      Assert.Null(page);
+      Assert.NotNull(page);
+      Assert.Equal("Null fallback title", page!.Title);
+      Assert.Contains("Null fallback body.", page.MainText);
    }
 
    [Fact]
@@ -363,7 +372,8 @@ public class WebPageContentClientTests
       );
       Assert.Equal(
          "Could not retrieve page content from " +
-         "https://example.test/ssl.",
+         "https://example.test/ssl. " +
+         "Playwright error: Browser blocked",
          page.FetchErrorMessage
       );
    }
@@ -529,6 +539,142 @@ public class WebPageContentClientTests
       Assert.Equal("Fallback Title", page!.Title);
       Assert.Contains("Fallback heading", page.MainText);
       Assert.Contains("Fallback body text.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchFallsBackWhenBrowserReturnsBlockedContent()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(
+            """
+            <html>
+               <head><title>Fallback after block</title></head>
+               <body>
+                  <main><p>Recovered body text.</p></main>
+               </body>
+            </html>
+            """
+         )),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               CreateBrowserBlockedContent(
+                  "https://example.test/fallback-after-block"
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/fallback-after-block",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Fallback after block", page!.Title);
+      Assert.Contains("Recovered body text.", page.MainText);
+      Assert.Equal("html", page.Fetcher);
+      Assert.Null(page.FetchErrorMessage);
+   }
+
+   [Fact]
+   public async Task FetchFallsBackWhenBrowserReturnsNoBodyText()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(
+            """
+            <html>
+               <head><title>Fallback after empty browser</title></head>
+               <body><main><p>Recovered from empty browser.</p></main></body>
+            </html>
+            """
+         )),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Empty browser title",
+                  "https://example.test/empty-browser",
+                  null,
+                  [],
+                  string.Empty,
+                  false,
+                  string.Empty,
+                  Fetcher: "playwright"
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/empty-browser",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Fallback after empty browser", page!.Title);
+      Assert.Contains("Recovered from empty browser.", page.MainText);
+      Assert.Equal("html", page.Fetcher);
+   }
+
+   [Fact]
+   public async Task FetchUsesCurlWhenBrowserAndHtmlAreBlocked()
+   {
+      var browserCalls = 0;
+      var curlCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(
+            """
+            <html>
+               <head><title>Just a moment...</title></head>
+               <body>Performing security verification.</body>
+            </html>
+            """
+         )),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               CreateBrowserBlockedContent(
+                  "https://example.test/curl-after-block"
+               )
+            );
+         },
+         (_, _) =>
+         {
+            curlCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Curl fallback title",
+                  "https://example.test/curl-after-block",
+                  null,
+                  [],
+                  "Curl fallback body.",
+                  true,
+                  "Curl fallback body.",
+                  Fetcher: "curl"
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/curl-after-block",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.Equal(1, curlCalls);
+      Assert.NotNull(page);
+      Assert.Equal("Curl fallback title", page!.Title);
+      Assert.Contains("Curl fallback body.", page.MainText);
+      Assert.Equal("curl", page.Fetcher);
    }
 
    [Fact]
@@ -801,6 +947,22 @@ public class WebPageContentClientTests
       );
 
       Assert.False(blocked);
+   }
+
+   [Theory]
+   [InlineData("html")]
+   [InlineData("curl")]
+   public void FallbackBlockDetectionMatchesCloudflareVerificationPage(
+      string sourceKind
+   )
+   {
+      var blocked = WebPageBlockDetection.IsBlocked(
+         "Just a moment...",
+         "Performing security verification.",
+         ParseBlockSource(sourceKind)
+      );
+
+      Assert.True(blocked);
    }
 
    [Fact]
@@ -1986,6 +2148,18 @@ public class WebPageContentClientTests
          BrowserUserAgentProvider,
          curlFetcher ?? ((_, _) => Task.FromResult<WebPageContent?>(null)),
          imageTextFetcher
+      );
+   }
+
+   private static WebPageContent CreateBrowserBlockedContent(string url)
+   {
+      return WebPageContentFetchSupport.BuildFailureContent(
+         new Uri(url),
+         "Just a moment...",
+         WebPageFetchErrorKind.BrowserBlocked,
+         "Browser renderer returned a blocked page: " +
+         "performing security verification.",
+         "playwright"
       );
    }
 
