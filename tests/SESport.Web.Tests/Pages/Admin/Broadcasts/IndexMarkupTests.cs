@@ -28,6 +28,11 @@ public sealed class IndexMarkupTests
       Assert.Contains("Broadcasts:", html);
       Assert.Contains("data-broadcast-count", html);
       Assert.Contains(
+         "name=\"@RouteKeys.ShowHidden\"",
+         html
+      );
+      Assert.Contains("value=\"false\"", html);
+      Assert.Contains(
          "data-broadcast-inline-edit-field=\"title\"",
          html
       );

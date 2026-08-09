@@ -11,9 +11,15 @@ namespace SESport.Web.Pages.Admin.Activities;
 public class IndexModel(
    ActivityRepository repository,
    ActivityIndexPageService indexService,
-   TodoRepository todoRepository
+   TodoRepository todoRepository,
+   FilterPreferenceStore filterPreferenceStore
 ) : PageModel
 {
+   public const string SportFilterCookieName =
+      "sesport.admin.activities.sports";
+   public const string StatusFilterCookieName =
+      "sesport.admin.activities.status";
+
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
 
@@ -43,6 +49,18 @@ public class IndexModel(
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
+      Status = filterPreferenceStore.ResolveValue(
+         HttpContext,
+         RouteKeys.Status,
+         Status,
+         StatusFilterCookieName
+      );
+      SelectedSports = filterPreferenceStore.ResolveList(
+         HttpContext,
+         RouteKeys.SelectedSports,
+         SelectedSports,
+         SportFilterCookieName
+      ).ToList();
       var viewModel = await indexService.BuildAsync(
          HttpContext,
          Date,
@@ -54,6 +72,7 @@ public class IndexModel(
       );
 
       ApplyViewModel(viewModel);
+      WriteFilterPreferences();
    }
 
    public bool GetNextSortAsc(string sortColumn) =>
@@ -155,5 +174,19 @@ public class IndexModel(
       Activities = viewModel.Activities;
       SportOptions = viewModel.SportOptions;
       LoadError = viewModel.LoadError;
+   }
+
+   private void WriteFilterPreferences()
+   {
+      filterPreferenceStore.WriteValue(
+         HttpContext,
+         StatusFilterCookieName,
+         Status
+      );
+      filterPreferenceStore.WriteList(
+         HttpContext,
+         SportFilterCookieName,
+         SelectedSports
+      );
    }
 }

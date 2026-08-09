@@ -24,6 +24,7 @@ public static class WebServiceCollectionExtensions
       services.AddSingleton<BroadcastDatePreferenceStore>();
       services.AddSingleton<RunDatePreferenceStore>();
       services.AddSingleton<EntityDatePreferenceStore>();
+      services.AddSingleton<FilterPreferenceStore>();
       services.AddScoped<ActivityAiInputBuilder>();
       services.AddScoped<ActivityParticipantAiResultService>();
       services.AddScoped<ActivityEditPageService>();

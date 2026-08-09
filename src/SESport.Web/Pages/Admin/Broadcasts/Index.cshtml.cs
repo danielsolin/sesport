@@ -13,10 +13,17 @@ public class IndexModel(
    AdminBroadcastRepository repository,
    AdminRepository adminRepository,
    BroadcastDatePreferenceStore datePreferenceStore,
+   FilterPreferenceStore filterPreferenceStore,
    BroadcastParticipationService participationService,
    TodoRepository todoRepository
 ) : PageModel
 {
+   public const string SportFilterCookieName =
+      "sesport.admin.broadcasts.sports";
+   public const string ShowHiddenFilterCookieName =
+      "sesport.admin.broadcasts.show-hidden";
+   public const string HideReplaysFilterCookieName =
+      "sesport.admin.broadcasts.hide-replays";
    public const string ChannelSortColumn = "Channel";
    public const string TimeSortColumn = "Time";
    public const string BroadcastSortColumn = "Broadcast";
@@ -69,8 +76,10 @@ public class IndexModel(
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
+      ResolveFilterPreferences();
       SortColumn = NormalizeSortColumn(SortColumn);
       await LoadAsync(cancellationToken);
+      WriteFilterPreferences();
    }
 
    public bool GetNextSortAsc(string sortColumn) =>
@@ -260,6 +269,47 @@ public class IndexModel(
       {
          LoadError = this.LogUnexpectedError(exception);
       }
+   }
+
+   private void ResolveFilterPreferences()
+   {
+      SelectedSports = filterPreferenceStore.ResolveList(
+         HttpContext,
+         RouteKeys.SelectedSports,
+         SelectedSports,
+         SportFilterCookieName
+      ).ToList();
+      ShowHidden = filterPreferenceStore.ResolveBoolean(
+         HttpContext,
+         RouteKeys.ShowHidden,
+         ShowHidden,
+         ShowHiddenFilterCookieName
+      );
+      HideReplays = filterPreferenceStore.ResolveBoolean(
+         HttpContext,
+         RouteKeys.HideReplays,
+         HideReplays,
+         HideReplaysFilterCookieName
+      );
+   }
+
+   private void WriteFilterPreferences()
+   {
+      filterPreferenceStore.WriteList(
+         HttpContext,
+         SportFilterCookieName,
+         SelectedSports
+      );
+      filterPreferenceStore.WriteBoolean(
+         HttpContext,
+         ShowHiddenFilterCookieName,
+         ShowHidden
+      );
+      filterPreferenceStore.WriteBoolean(
+         HttpContext,
+         HideReplaysFilterCookieName,
+         HideReplays
+      );
    }
 
    private static string NormalizeSortColumn(string? sortColumn) =>
