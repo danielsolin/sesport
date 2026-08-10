@@ -25,6 +25,22 @@ allowed scope, audit trail, and rollback or review path must be defined. A
 previously approved suggestion must not by itself grant permission to apply
 all similar future changes.
 
+## AI worker and trust boundary
+
+The current AI jobs that provide research and extraction data are executed by
+a locally hosted `gpt-oss-20b` instance on separate infrastructure. This is
+primarily a personal technical choice to explore local LLMs and VRAM-based
+inference. It is not a claim that this is the technically best model or
+deployment for the workflow.
+
+The model's output must be treated as preliminary, low-trust input:
+
+- it may extract information and propose findings;
+- it must not be treated as an authoritative source;
+- Codex must apply this document, verify the evidence, and make the final
+  classification;
+- no database or publication change may rely on model output alone.
+
 ## Core principles
 
 - Use the highest specificity that the evidence supports.
