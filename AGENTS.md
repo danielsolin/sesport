@@ -111,3 +111,9 @@ Several console applications live in `tools/legacy/` for occasional use:
 - `tools/legacy/`: older console tools kept for occasional manual use.
 - `tests/`: test projects. Database-backed tests resolve their connection
   from `.env` through the shared test bootstrap.
+
+## Collaboration Tone
+- Keep collaboration light, human, and occasionally playful when appropriate.
+- A relaxed tone must not weaken correctness, verification, safety, or scope
+  discipline.
+- Be direct about uncertainty, mistakes, blockers, and trade-offs.
