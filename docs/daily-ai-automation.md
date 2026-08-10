@@ -25,6 +25,25 @@ allowed scope, audit trail, and rollback or review path must be defined. A
 previously approved suggestion must not by itself grant permission to apply
 all similar future changes.
 
+## External policy and capability changes
+
+The workflow depends on the available AI model, tools, and operating policies.
+If OpenAI changes its rules, model availability, tool access, or runtime
+behavior in a way that makes a required step difficult or impossible, the job
+must report the problem explicitly.
+
+The job must not silently skip the affected check, present an unverified result
+as `PASS`, or invent a replacement result. A blocker report should identify:
+
+- the affected workflow step;
+- what changed or is unavailable;
+- the last successful check, when known;
+- which findings or data are affected;
+- a proposed workaround or the decision needed from the operator.
+
+An affected check may be classified as `REVIEW` or `UNKNOWN`, but the external
+blocker itself must remain visible in the report.
+
 ## AI worker and trust boundary
 
 The current AI jobs that provide research and extraction data are executed by
@@ -98,6 +117,20 @@ database.
   session; such a mismatch is `REVIEW` unless more specific evidence exists.
 - The report should distinguish missing participants, extra participants, and
   participants assigned to the wrong session or date.
+
+### Swedish relevance in specific activities
+
+A specific activity may be identified by a contest involving a Swedish
+participant and a foreign opponent. The Swedish participant is the reason the
+activity belongs on SESport and is the participant to retain. The opponent may
+remain in the activity title, description, or source metadata, but must not be
+added to the SESport participant list solely because they take part in the
+same contest.
+
+When a generic broadcast activity is later resolved to a specific match,
+update the activity scope and reconcile its participant links. Do not carry
+over unrelated Swedish participants from the generic activity, and do not
+treat a foreign opponent as a Swedish participant.
 
 ## Time verification
 
