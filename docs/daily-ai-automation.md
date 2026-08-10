@@ -196,6 +196,29 @@ stale, use Swedish editorial judgment; a credible borderline case may still
 be included, while a genuinely unresolved case should be reported as
 `REVIEW`.
 
+### Editorial judgment
+
+A `tier_0` decision may sometimes be based on deliberate Swedish editorial
+judgment rather than decisive quantitative evidence. This is valid when the
+purpose is to reflect Swedish audience relevance, recognition, or affinity.
+It must be recorded as a judgment, not presented as an objective performance
+fact.
+
+For a borderline inclusion, record the editorial rationale separately from
+the source evidence. Recommended report fields are:
+
+- `basis: editorial_judgment`;
+- `perspective: Swedish audience`;
+- `decision: include_as_tier_0`;
+- `reason: ...`;
+- `quantitative_evidence: none_decisive`;
+- `confidence: deliberate_borderline_inclusion`;
+- reviewer and decision timestamp.
+
+The judgment may override the absence of decisive numbers for a Swedish
+audience decision, but it must not be disguised as a ranking, result, or
+other source-derived fact.
+
 ## Moderklubb/Klubb
 
 The club check follows the person club policy in
