@@ -67,6 +67,22 @@ The job must not turn a general event-level confirmation into a pass-specific
 claim. Withdrawals, replacements, and late schedule changes should be kept as
 reviewable evidence rather than silently inferred.
 
+### Session participant-list verification
+
+For each published activity, compare the complete participant set against the
+most specific source available for that activity. The audit must verify
+activity-to-person membership, not only whether each person exists in the
+database.
+
+- A person named by a session-specific source but missing from the published
+  activity is an `OBVIOUS_ERROR`.
+- A person published in a session or date where a reliable source places them
+  elsewhere is an `OBVIOUS_ERROR`.
+- A general championship roster does not prove membership in a particular
+  session; such a mismatch is `REVIEW` unless more specific evidence exists.
+- The report should distinguish missing participants, extra participants, and
+  participants assigned to the wrong session or date.
+
 ## Time verification
 
 The job should compare the most specific available time:
