@@ -98,6 +98,39 @@ displayed age for the selected date.
 
 A matching age alone is not sufficient evidence for an exact birth date.
 
+## Watch priority and public stars
+
+`Watch Priority = 0` (`watch_priority_id = tier_0`) is reserved for `Person`
+entities. From the Swedish editorial perspective, it means that the athlete
+can reasonably be seen as being among the top competitors and as able to
+contend for a medal at the Olympics, World Championships, or European
+Championships. It is a performance-based curation claim, not a popularity or
+participation marker.
+
+The assessment should err towards inclusion for Swedish readers. Foreign
+commentary or a lack of broad international consensus is not by itself a
+reason to withhold the star. When a credible borderline case remains after
+checking the available evidence, choose `tier_0` rather than creating a
+false negative.
+
+When a person participates in a published activity, priority 0 produces a
+star beside the person's name on the public page. The audit must check both
+the presentation and the underlying curation:
+
+- a star should appear exactly when the participant is a person with
+  `tier_0` priority;
+- `tier_0` must not be assigned to non-person entities;
+- each person with `tier_0` should have supporting evidence for the medal-
+  contender assessment;
+- strong medal contenders who lack `tier_0` should be reported as proposed
+  candidates, never silently promoted.
+
+Fame, a historic result by itself, or participation in a major event is not
+enough to establish the priority. If the available evidence is incomplete or
+stale, use Swedish editorial judgment; a credible borderline case may still
+be included, while a genuinely unresolved case should be reported as
+`REVIEW`.
+
 ## Moderklubb/Klubb
 
 The club check follows the person club policy in
@@ -180,8 +213,9 @@ The first implementation must not update or publish data automatically.
 4. Determine the most specific scope supported by each activity and source.
 5. Verify participation, time, birth date, and club evidence separately.
 6. Compare exact source values with normalized display values.
-7. Produce a report with findings, sources, and proposed corrections.
-8. Leave all database and publication changes for explicit review.
+7. Check public star rendering and the evidence for priority-0 people.
+8. Produce a report with findings, sources, and proposed corrections.
+9. Leave all database and publication changes for explicit review.
 
 Existing research jobs for participation, start times, and person data may be
 reused. The verification job must compare their evidence with published
