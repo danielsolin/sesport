@@ -1,8 +1,9 @@
 # Daily AI Automation
 
 This document defines the recurring verification job for the SESport public
-front page. The job is a read-only audit that compares published activity and
-participant information with the most specific reliable sources available.
+front page. The job is normally a read-only audit that compares published
+activity and participant information with the most specific reliable sources
+available.
 
 The job may propose corrections. It must not write corrections to the
 database or publish changes until the proposal has been reviewed and approved.
@@ -13,17 +14,31 @@ The long-term goal is to automate this work as far as reliable evidence,
 clear rules, and operational trust allow. Automation should expand gradually,
 not by silently changing the meaning of an existing rule.
 
-The current operating mode is proposal-only:
+The current recurring operating mode is proposal-only:
 
 - the job may fetch, compare, classify, and explain findings;
 - the job may suggest database or display changes;
 - the job must not apply changes or publish content automatically.
+
+An operator may explicitly authorize a one-off manual application after
+review. That authorization does not enable automatic changes for later runs.
 
 Future automation levels may be enabled explicitly and separately for each
 change type. Before a change type becomes automatic, its evidence threshold,
 allowed scope, audit trail, and rollback or review path must be defined. A
 previously approved suggestion must not by itself grant permission to apply
 all similar future changes.
+
+## Broadcast import
+
+The broadcast data import is currently run manually at least once per day with
+`bin/broadcasts-import.sh`. Until this step is automated, the daily audit must
+check that a recent successful import exists before relying on imported
+broadcast data.
+
+A missing or stale import must be reported explicitly. The long-term
+automation should run the import before verification and retain the import
+status, timestamp, and failure details in the audit record.
 
 ## External policy and capability changes
 
@@ -85,6 +100,17 @@ The published activity should be checked at the same scope whenever possible.
 For example, an overall championship roster cannot prove that an athlete is
 in a particular evening session. If only an overall roster is available, the
 report must say so and should not present the result as session-specific.
+
+### Source freshness and revisions
+
+Official schedules, start lists, and broadcaster guides may be corrected or
+updated on the day of an activity. The audit must fetch the current version
+and record the source's publication or update time when it is available.
+
+A later direct revision from a reliable source takes precedence over cached
+research or an earlier version of the same page. If a source changes the
+participant list or time after a previous check, the activity must be
+re-evaluated before it is classified as `PASS`.
 
 ## Swedish participation
 
@@ -219,6 +245,34 @@ The judgment may override the absence of decisive numbers for a Swedish
 audience decision, but it must not be disguised as a ranking, result, or
 other source-derived fact.
 
+### Candidate discovery and retrospective surprises
+
+The audit must actively look for strong Swedish medal candidates who are
+missing `tier_0`. It must not only validate the people who already have a
+star.
+
+For athletes entered in a major championship, the candidate check should
+compare the information available before the relevant competition, including:
+
+- current seasonal and relevant championship rankings;
+- recent Olympic, World, European, or equivalent championship results;
+- official start lists, previews, and federation assessments;
+- Swedish context that supports a borderline editorial decision.
+
+An exact medal result is not required for `tier_0`. The question is whether
+the athlete could reasonably contend for a medal. A medal won later is
+confirmation, not the sole basis for a retrospective promotion.
+
+If an athlete wins an apparently unexpected medal but the pre-competition
+evidence already supported medal contention, classify the case as a missed
+candidate rather than an unforeseeable surprise. Record the pre-competition
+evidence and propose `tier_0` through the normal review process.
+
+The Wictor Petersson review is an example: his pre-competition European
+ranking and recent major-championship result supported `tier_0` before his
+European Championship medal. The result confirmed the assessment but did not
+create it.
+
 ## Moderklubb/Klubb
 
 The club check follows the person club policy in
@@ -295,15 +349,19 @@ The first implementation must not update or publish data automatically.
 
 ## Daily workflow
 
-1. Fetch the front page and the underlying read-only activity data.
-2. Capture the selected date, time zone, and check timestamp.
-3. Deduplicate participants while retaining activity membership.
-4. Determine the most specific scope supported by each activity and source.
-5. Verify participation, time, birth date, and club evidence separately.
-6. Compare exact source values with normalized display values.
-7. Check public star rendering and the evidence for priority-0 people.
-8. Produce a report with findings, sources, and proposed corrections.
-9. Leave all database and publication changes for explicit review.
+1. Check the latest successful broadcast import, or report if it is missing
+   or stale.
+2. Fetch the front page and the underlying read-only activity data.
+3. Capture the selected date, time zone, and check timestamp.
+4. Deduplicate participants while retaining activity membership.
+5. Determine the most specific scope supported by each activity and source.
+6. Verify participation, time, birth date, and club evidence separately.
+7. Compare exact source values with normalized display values.
+8. Check public star rendering and the evidence for priority-0 people.
+9. Run the reverse candidate check for strong people missing `tier_0`.
+10. Produce a report with findings, sources, and proposed corrections.
+11. Leave all database and publication changes for explicit review unless the
+    operator has explicitly authorized a one-off manual application.
 
 Existing research jobs for participation, start times, and person data may be
 reused. The verification job must compare their evidence with published
