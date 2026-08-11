@@ -14,11 +14,16 @@ The long-term goal is to automate this work as far as reliable evidence,
 clear rules, and operational trust allow. Automation should expand gradually,
 not by silently changing the meaning of an existing rule.
 
-The current recurring operating mode is proposal-only:
+The current recurring operating mode is proposal-only for activities,
+participants, entities, and publication changes. There is one narrow automatic
+curation exception for broadcasts that meet the explicit safe exclusion rule
+documented below:
 
 - the job may fetch, compare, classify, and explain findings;
 - the job may suggest database or display changes;
-- the job must not apply changes or publish content automatically.
+- the job may set `broadcasts.hidden_at` for an unambiguous out-of-scope
+  broadcast under that exclusion rule;
+- the job must not apply any other change or publish content automatically.
 
 An operator may explicitly authorize a one-off manual application after
 review. That authorization does not enable automatic changes for later runs.
@@ -76,10 +81,10 @@ The `broadcasts.hidden_at` field has this editorial meaning:
 
 - `hidden_at IS NULL`: the broadcast has not been dismissed. It is an open
   curation item that must be reviewed.
-- A non-null `hidden_at`: an operator has chosen to hide it. This is a human
-  curation decision, not ground truth. It may mean no Swedish participant,
-  an out-of-scope transmission, a training match, a duplicate, or another
-  editorial reason.
+- A non-null `hidden_at`: an operator or the authorized automatic curation
+  rule has chosen to hide it. This is a curation decision, not ground truth.
+  It may mean no Swedish participant, an out-of-scope transmission, a
+  training match, a duplicate, or another editorial reason.
 
 The verification job must therefore:
 
@@ -104,8 +109,9 @@ The verification job must therefore:
   alone;
 - re-open or report a hidden broadcast when newer or stronger evidence
   contradicts the earlier decision;
-- never hide, delete, or otherwise dismiss a broadcast automatically under
-  the current proposal-only mode.
+- do not auto-hide a broadcast unless the automatic broadcast exclusion rule
+  below matches;
+- never delete or otherwise dismiss a broadcast automatically.
 
 Date-based review must use the broadcast's local time zone, normally
 `Europe/Stockholm`, rather than its raw UTC date. Multiple source or channel
@@ -114,6 +120,48 @@ proposing an activity or a hide decision.
 
 If a date still has unhidden broadcasts, the report must identify curation as
 incomplete even when all currently published activities pass their checks.
+
+### SESport relevance boundary
+
+The product scope follows the project README: SESport covers sport in an
+international context when Swedish participation is relevant. Swedish
+participation may be through an athlete, national team, Swedish club, coach,
+or a person meaningfully involved in a foreign team.
+
+The following examples define the boundary:
+
+- `AIK - Hammarby` in Allsvenskan is domestic sport and is out of scope.
+- `SM i Friidrott` is a domestic Swedish championship and is out of scope,
+  even when prominent Swedish athletes take part. Their opponents are other
+  Swedish participants, so the competition is not international.
+- `Hammarby - Arsenal` in the Champions League is an international candidate.
+  The job must check which Swedish people are meaningfully involved before
+  creating or updating a public activity.
+- A friendly, training, or pre-season club match is out of scope even when
+  Swedish people take part, unless stronger evidence establishes a separate
+  relevant international competition.
+
+An international match is therefore a candidate, not an automatic publication
+decision. A public activity requires source-supported Swedish participation at
+the most specific reliable scope available.
+
+### Automatic broadcast exclusion
+
+AI may automatically set `broadcasts.hidden_at` when the source material gives
+an explicit and unambiguous reason that the broadcast is outside SESport's
+scope, such as:
+
+- a domestic league or cup match with no international context;
+- a friendly, training, or pre-season match;
+- an exact duplicate or short scheduling fragment of an already handled
+  broadcast, when the underlying transmission is clear.
+
+The job must not auto-hide an international competition merely because the
+broadcast has no activity link or because Swedish participation has not yet
+been found. A reliable source must establish the absence of relevant Swedish
+participation before a negative decision is treated as safe. Every automatic
+hide must be listed in the run report with its rule, evidence, timestamp, and
+reversible broadcast identifier.
 
 ## External policy and capability changes
 
@@ -136,11 +184,13 @@ blocker itself must remain visible in the report.
 
 ## AI worker and trust boundary
 
-The current AI jobs that provide research and extraction data are executed by
-a locally hosted `gpt-oss-20b` instance on separate infrastructure. This is
-primarily a personal technical choice to explore local LLMs and VRAM-based
-inference. It is not a claim that this is the technically best model or
-deployment for the workflow.
+Some AI jobs may use a locally hosted `gpt-oss-20b` instance on separate
+infrastructure. Its presence is primarily the result of the operator's
+personal technical interest in local LLMs and VRAM-based inference. It is an
+experiment, not a required component of the daily workflow, and its absence
+must not prevent the workflow from being completed with the available tools.
+It is not a claim that this is the technically best model or deployment for
+the workflow.
 
 The model's output must be treated as preliminary, low-trust input:
 
