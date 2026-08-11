@@ -91,6 +91,11 @@ The verification job must therefore:
   correct;
 - treat an unhidden broadcast with no activity as a candidate for matching
   to an existing activity or proposing a new activity;
+- when a new broadcast gives a more specific scope for an existing published
+  activity, reconcile that activity in the same run. Move or add only the
+  participants supported by the specific source, preserve separately verified
+  participants when the source covers only a subset, and link the handled
+  broadcast records to the resulting activity;
 - never infer "no Swedish relevance" from the absence of an activity link
   alone;
 - re-open or report a hidden broadcast when newer or stronger evidence
@@ -256,6 +261,12 @@ column. `/Index` shows that column when at least one participant has a
 discipline relation, but it renders an empty value for participants without a
 matching relation. A partially populated column is therefore a data-quality
 finding, not a successful completeness check.
+
+For multi-event sports such as swimming, a discipline relation is not required
+when the published activity is a grouped session covering several events. Do
+not assign one participant's event discipline to the whole participant table
+if that would create a misleading partial column. The activity title and
+source may still carry the more specific event information.
 
 Use `2026-08-15 Friidrotts-EM: Dag` as the canonical example. The audit must
 first add or propose any source-supported Swedish participants missing from
