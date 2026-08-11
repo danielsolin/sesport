@@ -264,6 +264,21 @@ overall public impression. Record that judgment in the verification report.
 A draft must remain unpublished when participation, scope, identity, timing,
 or the overall profile quality is materially unresolved.
 
+### Public-page sanity check
+
+After the evidence checks and any proposed changes, open the actual public
+index for each affected date, using `/Index?date=YYYY-MM-DD` (or the
+equivalent public date URL). Review the page as a visitor would see it,
+including empty age or club cells, partial participant lists, duplicate or
+overlapping activities, and whether the overall presentation gives a
+reasonable impression of knowledge.
+
+This is a qualitative product check, not a binary truth test. There is no
+exactly correct numeric threshold for when a participant list looks too thin.
+The job must use judgment, state the reason, and choose `PASS`, `REVIEW`, or
+`LEFT_OPEN` accordingly. A source-supported activity may still be held back
+when its current public presentation looks misleading or premature.
+
 ## External policy and capability changes
 
 The workflow depends on the available AI model, tools, and operating policies.
