@@ -232,27 +232,37 @@ The job may publish an activity directly only when all blocking checks pass:
 - the activity is within SESport's international relevance boundary;
 - Swedish participation is supported at the activity's actual scope;
 - the time and scope are specific enough for the public page;
-- every published participant has a resolved person identity, activity link,
-  and at least one reliable profile anchor beyond the name: an exact
-  birthdate or a reliable formative/current club;
+- every published participant has a resolved person identity and activity
+  link;
 - required discipline relations exist, except for grouped multi-event
   activities where a discipline would mislead;
 - the activity does not overlap another activity representing the same
   transmission;
 - no blocking `REVIEW` or `UNKNOWN` finding remains.
 
-For the public participant presentation, a name alone is not sufficient. After
-reasonable research, a person with neither an exact birthdate nor a reliable
-formative/current club must not be shown. If a reliable source provides a
-complete lineup and one or more Swedish participants fail this rule, keep the
-whole activity unpublished rather than show a knowingly partial roster. Keep
-the activity and person links in the database so the missing data can be
-revisited later.
+For the public participant presentation, a name alone is not sufficient when
+the profile is otherwise unsupported. After reasonable research, a person
+with neither an exact birthdate nor a reliable formative/current club should
+normally be omitted from the public participant list, while the database link
+is kept for later review.
 
-Missing only one of the two profile anchors does not automatically block
-publication, but it must remain visible in the verification report. A draft
-must remain unpublished when participation, scope, identity, timing, or the
-profile gate is materially unresolved.
+This is a collective quality check, not an all-or-nothing rule for every
+person. A small number of missing birthdates or clubs in an otherwise well-
+supported roster must not by itself remove the whole activity from the public
+page. For example, one or two unresolved profiles in a football match with
+15 well-established Swedish participants should not block the match. The
+unresolved people may be omitted individually, and the report must explain
+the omission.
+
+If missing profile data is widespread or systematic, and the visible roster
+would mainly look like names with blank context, keep the whole activity
+unpublished rather than create a misleading impression of knowledge. There is
+no fixed percentage threshold: use the activity size, the number and
+importance of the gaps, the reliability of the remaining identities, and the
+overall public impression. Record that judgment in the verification report.
+
+A draft must remain unpublished when participation, scope, identity, timing,
+or the overall profile quality is materially unresolved.
 
 ## External policy and capability changes
 
