@@ -96,6 +96,10 @@ The verification job must therefore:
   participants supported by the specific source, preserve separately verified
   participants when the source covers only a subset, and link the handled
   broadcast records to the resulting activity;
+- if a specific broadcast is only a segment within an already published
+  session on the same channel, do not create an overlapping activity. Attach
+  the specific source to the existing activity unless it is independently
+  televised;
 - never infer "no Swedish relevance" from the absence of an activity link
   alone;
 - re-open or report a hidden broadcast when newer or stronger evidence
