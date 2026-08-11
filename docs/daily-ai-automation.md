@@ -53,6 +53,19 @@ report must say so and must not claim that the broadcast review is complete.
 An automatic import-status check may replace this question only when it can
 reliably prove the import's scope and completion.
 
+### Review horizon
+
+The import window and the verification horizon are different things. The
+importer currently collects roughly eight days of broadcasts, but that is not
+a rule for how far ahead the AI should verify or propose activities.
+
+The AI should review as far ahead as the available information makes
+reasonable. Future plans, athlete statements, and general schedules are useful
+leads but do not prove participation in a specific activity. Far-future
+information is provisional and should be rechecked as the activity approaches.
+When the evidence is too uncertain, report `REVIEW` instead of forcing a fixed
+date-based decision.
+
 ## Broadcast curation state
 
 Imported broadcasts are source material and also an operator curation queue.
@@ -196,6 +209,59 @@ database.
   session; such a mismatch is `REVIEW` unless more specific evidence exists.
 - The report should distinguish missing participants, extra participants, and
   participants assigned to the wrong session or date.
+
+For a final or other limited session, an overall team roster must not be
+copied directly into the participant list. If the official source has not
+identified the actual qualifiers, classify the membership as `REVIEW`, state
+the uncertainty, and recheck it against the official start list when
+published. A one-off editorial correction may use the strongest explicit
+source clue, but it must remain subject to that recheck.
+
+### Conditional participation markers
+
+A source marker such as `Ev.` means that the person may participate if they
+qualify, advance, or are selected for the relevant part of the session. It
+supports candidate discovery and may justify creating a verified `Person`
+entity, but it does not prove membership in the published activity.
+
+Because the current activity-participant model has no conditional status, the
+job must not add a person as a confirmed participant based on `Ev.` alone.
+Keep the case as `REVIEW` until a start list, result, or more specific source
+confirms the activity membership.
+
+### Participant entities and disciplines
+
+Participant completeness has two separate parts: the person entity must exist,
+and the person must be linked to the activity. A reliable source-supported
+Swedish participant who is missing from the database is a data-quality finding.
+The job should propose creating a `Person` entity and adding the activity link.
+An explicitly approved one-off run may create the data manually, but the
+current recurring job remains proposal-only.
+
+Creating a person requires evidence for the identity and the relevant fields.
+The job must not create a person from an unverified name alone, copy data from
+an ambiguous namesake, or invent a birth date, club, watch priority, or other
+profile value. If the identity or required profile data cannot be resolved,
+report `REVIEW` and explain what is missing.
+
+For sports or activities where a discipline is relevant, every published
+participant must also have a relevant relation to a `Discipline` entity. The
+relation is stored in `entity_to_entity_links` between the person and an entity
+whose `entity_type_id` is `Discipline`. The linked discipline must match the
+sport and the activity evidence; adding a generic relation merely to fill the
+public column is not sufficient.
+
+This check is required even when the activity already has a visible discipline
+column. `/Index` shows that column when at least one participant has a
+discipline relation, but it renders an empty value for participants without a
+matching relation. A partially populated column is therefore a data-quality
+finding, not a successful completeness check.
+
+Use `2026-08-15 Friidrotts-EM: Dag` as the canonical example. The audit must
+first add or propose any source-supported Swedish participants missing from
+the person table, then verify a discipline relation for every linked person,
+such as `Sprint`, `Triple Jump`, or `Race Walking` when supported by the
+relevant event evidence.
 
 ### Swedish relevance in specific activities
 
@@ -407,13 +473,15 @@ The first implementation must not update or publish data automatically.
 2. Fetch the front page and the underlying read-only activity data.
 3. Capture the selected date, time zone, and check timestamp.
 4. Deduplicate participants while retaining activity membership.
-5. Determine the most specific scope supported by each activity and source.
-6. Verify participation, time, birth date, and club evidence separately.
-7. Compare exact source values with normalized display values.
-8. Check public star rendering and the evidence for priority-0 people.
-9. Run the reverse candidate check for strong people missing `tier_0`.
-10. Produce a report with findings, sources, and proposed corrections.
-11. Leave all database and publication changes for explicit review unless the
+5. Check for missing person entities and missing activity-to-person links.
+6. Check relevant person-to-`Discipline` relations and `/Index` completeness.
+7. Determine the most specific scope supported by each activity and source.
+8. Verify participation, time, birth date, and club evidence separately.
+9. Compare exact source values with normalized display values.
+10. Check public star rendering and the evidence for priority-0 people.
+11. Run the reverse candidate check for strong people missing `tier_0`.
+12. Produce a report with findings, sources, and proposed corrections.
+13. Leave all database and publication changes for explicit review unless the
     operator has explicitly authorized a one-off manual application.
 
 Existing research jobs for participation, start times, and person data may be
