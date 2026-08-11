@@ -31,14 +31,67 @@ all similar future changes.
 
 ## Broadcast import
 
-The broadcast data import is currently run manually at least once per day with
-`bin/broadcasts-import.sh`. Until this step is automated, the daily audit must
-check that a recent successful import exists before relying on imported
-broadcast data.
+The broadcast data import is currently run manually, at least once per day,
+with `bin/broadcasts-import.sh`. It may be run on another machine, so local
+files under `data/broadcasts` may be stale or absent. The shared PostgreSQL
+database is the source of truth for imported broadcasts.
 
-A missing or stale import must be reported explicitly. The long-term
-automation should run the import before verification and retain the import
-status, timestamp, and failure details in the audit record.
+Imported broadcasts are partly human-curated upstream material, not verified
+editorial truth. They may be generic, incorrect, duplicated, outdated, or
+otherwise unreviewed. SESport does not control that upstream curation; it
+should use the import as input, verify it where possible, and report remaining
+uncertainty clearly.
+
+The AI must not infer the current import status from local files, file
+timestamps, or the presence or absence of database rows. Before reviewing a
+date, it must ask the operator whether the relevant broadcast data has been
+imported into the shared database. The operator's answer is authoritative for
+the current run and must be recorded in the report.
+
+If the operator says that the data has not been imported, or is unsure, the
+report must say so and must not claim that the broadcast review is complete.
+An automatic import-status check may replace this question only when it can
+reliably prove the import's scope and completion.
+
+## Broadcast curation state
+
+Imported broadcasts are source material and also an operator curation queue.
+The absence of a public activity does not by itself mean that a broadcast is
+irrelevant or that no Swedish participation exists.
+
+The `broadcasts.hidden_at` field has this editorial meaning:
+
+- `hidden_at IS NULL`: the broadcast has not been dismissed. It is an open
+  curation item that must be reviewed.
+- A non-null `hidden_at`: an operator has chosen to hide it. This is a human
+  curation decision, not ground truth. It may mean no Swedish participant,
+  an out-of-scope transmission, a training match, a duplicate, or another
+  editorial reason.
+
+The verification job must therefore:
+
+- inspect unhidden broadcasts for the relevant local date before claiming
+  that an activity or source is missing;
+- distinguish an unreviewed broadcast from a broadcast that was explicitly
+  hidden by an operator;
+- treat a hide decision as a strong prior, not as proof that the decision is
+  correct;
+- treat an unhidden broadcast with no activity as a candidate for matching
+  to an existing activity or proposing a new activity;
+- never infer "no Swedish relevance" from the absence of an activity link
+  alone;
+- re-open or report a hidden broadcast when newer or stronger evidence
+  contradicts the earlier decision;
+- never hide, delete, or otherwise dismiss a broadcast automatically under
+  the current proposal-only mode.
+
+Date-based review must use the broadcast's local time zone, normally
+`Europe/Stockholm`, rather than its raw UTC date. Multiple source or channel
+records may describe the same transmission, so they should be grouped before
+proposing an activity or a hide decision.
+
+If a date still has unhidden broadcasts, the report must identify curation as
+incomplete even when all currently published activities pass their checks.
 
 ## External policy and capability changes
 
@@ -349,8 +402,8 @@ The first implementation must not update or publish data automatically.
 
 ## Daily workflow
 
-1. Check the latest successful broadcast import, or report if it is missing
-   or stale.
+1. Ask the operator whether the relevant broadcast data has been imported
+   into the shared database, and record the answer.
 2. Fetch the front page and the underlying read-only activity data.
 3. Capture the selected date, time zone, and check timestamp.
 4. Deduplicate participants while retaining activity membership.
