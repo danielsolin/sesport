@@ -139,6 +139,14 @@ international context when Swedish participation is relevant. Swedish
 participation may be through an athlete, national team, Swedish club, coach,
 or a person meaningfully involved in a foreign team.
 
+Public activity participants are limited to people who actually compete in
+the activity. Coaches, trainers, support crew, managers, and similar staff
+must be omitted from the participant list, even when they travel with or
+support a competing team. The exception is a rally co-driver, who is a
+participant because they compete from inside the car. When a source
+distinguishes racers from support staff, the roles must not be collapsed into
+one generic participant type.
+
 The following examples define the boundary:
 
 - `AIK - Hammarby` in Allsvenskan is domestic sport and is out of scope.
