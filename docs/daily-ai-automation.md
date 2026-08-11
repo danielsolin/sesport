@@ -1,5 +1,13 @@
 # Daily AI Automation
 
+## Purpose
+
+Verify SESport's public presentation against the strongest available sources,
+fix clear errors, and leave material uncertainty for human review.
+
+Prefer a useful, honest, and reasonably accurate presentation over false
+precision or a misleading appearance of knowledge.
+
 This document defines the recurring verification job for the SESport public
 front page. The job compares published activity and participant information
 with the most specific reliable sources available and may apply
