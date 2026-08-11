@@ -1,12 +1,13 @@
 # Daily AI Automation
 
 This document defines the recurring verification job for the SESport public
-front page. The job is normally a read-only audit that compares published
-activity and participant information with the most specific reliable sources
-available.
+front page. The job compares published activity and participant information
+with the most specific reliable sources available and may apply
+evidence-gated corrections directly.
 
-The job may propose corrections. It must not write corrections to the
-database or publish changes until the proposal has been reviewed and approved.
+The job must still leave uncertain findings for later review. Direct execution
+is permitted only within the dispositions, evidence thresholds, and product
+rules defined in this document.
 
 ## Automation maturity
 
@@ -14,25 +15,33 @@ The long-term goal is to automate this work as far as reliable evidence,
 clear rules, and operational trust allow. Automation should expand gradually,
 not by silently changing the meaning of an existing rule.
 
-The current recurring operating mode is proposal-only for activities,
-participants, entities, and publication changes. There is one narrow automatic
-curation exception for broadcasts that meet the explicit safe exclusion rule
-documented below:
+The project operator has authorized Codex to apply evidence-gated changes in
+the recurring job. This replaces the former proposal-only default. The
+authorization covers the following actions:
 
-- the job may fetch, compare, classify, and explain findings;
-- the job may suggest database or display changes;
-- the job may set `broadcasts.hidden_at` for an unambiguous out-of-scope
-  broadcast under that exclusion rule;
-- the job must not apply any other change or publish content automatically.
+- link, reconcile, and hide broadcasts when the underlying transmission and
+  activity relationship are clear;
+- hide an unambiguous out-of-scope broadcast under the exclusion rule below;
+- correct an existing activity, draft activity, participant link, person
+  entity, discipline relation, time, club value, or watch priority when the
+  relevant evidence and rules support the change;
+- create a missing person or activity when identity, scope, Swedish relevance,
+  and the required display data are sufficiently supported;
+- publish an activity only when it passes the publication gate defined below.
 
-An operator may explicitly authorize a one-off manual application after
-review. That authorization does not enable automatic changes for later runs.
+The job must not apply a change classified as `REVIEW` or `UNKNOWN`. It must
+not invent values, delete broadcasts, or silently broaden a source's scope.
+When a change is applied, the run report must contain the affected identifier,
+the action, the evidence, the timestamp, and the reversible rollback path.
 
-Future automation levels may be enabled explicitly and separately for each
-change type. Before a change type becomes automatic, its evidence threshold,
-allowed scope, audit trail, and rollback or review path must be defined. A
-previously approved suggestion must not by itself grant permission to apply
-all similar future changes.
+This authorization applies to later runs of this job. It does not authorize
+unrelated code changes, external messages, or changes outside the SESport
+database and public presentation.
+
+Automation must remain evidence-gated. Before applying a new class of change,
+this document must define its evidence threshold, allowed scope, audit trail,
+and rollback or review path. A previous approval must not justify a change
+that falls outside these rules.
 
 ## Broadcast import
 
@@ -95,7 +104,9 @@ The verification job must therefore:
 - treat a hide decision as a strong prior, not as proof that the decision is
   correct;
 - treat an unhidden broadcast with no activity as a candidate for matching
-  to an existing activity or proposing a new activity;
+  to an existing activity or creating a new activity;
+- apply a safe source reconciliation directly when the broadcast is an exact
+  source, duplicate, or clearly scoped segment of an existing activity;
 - when a new broadcast gives a more specific scope for an existing published
   activity, reconcile that activity in the same run. Move or add only the
   participants supported by the specific source, preserve separately verified
@@ -111,7 +122,7 @@ The verification job must therefore:
   contradicts the earlier decision;
 - do not auto-hide a broadcast unless the automatic broadcast exclusion rule
   below matches;
-- never delete or otherwise dismiss a broadcast automatically.
+- never delete a broadcast or alter its imported source values automatically.
 
 Date-based review must use the broadcast's local time zone, normally
 `Europe/Stockholm`, rather than its raw UTC date. Multiple source or channel
@@ -162,6 +173,69 @@ been found. A reliable source must establish the absence of relevant Swedish
 participation before a negative decision is treated as safe. Every automatic
 hide must be listed in the run report with its rule, evidence, timestamp, and
 reversible broadcast identifier.
+
+### Evidence-gated dispositions
+
+Every reviewed broadcast or activity receives a status and a disposition
+before the job changes anything. The status describes the evidence:
+
+- `PASS`: the current data is supported and requires no change;
+- `OBVIOUS_ERROR`: a reliable source directly contradicts the current value;
+- `REVIEW`: the item is relevant or potentially relevant, but the evidence is
+  incomplete, conflicting, or too broad for a safe change;
+- `UNKNOWN`: no reliable evidence is available for the required check.
+
+The disposition describes the action: `NONE`, `APPLIED`, `HIDDEN`, or
+`LEFT_OPEN`. `APPLIED` is permitted only when reliable evidence supports the
+correction at the published scope or a more specific scope.
+
+`REVIEW` and `UNKNOWN` broadcasts remain unhidden. They must be listed as
+open work, not treated as irrelevant. A generic competition broadcast may be
+used to discover a candidate, but it does not prove that a person belongs to
+a particular session, heat, match, or discipline.
+
+For a direct change, prefer evidence in this order:
+
+1. the official federation, organiser, competition, start list, draw, or
+   roster source;
+2. an official broadcaster page with explicit event, participant, or time
+   information;
+3. a reliable event or sports-news source that corroborates the claim;
+4. imported broadcast metadata, which is a lead and not authoritative person
+   evidence by itself.
+
+An exact source match may be linked to the existing activity and hidden when
+the activity relationship is clear. A source that is a segment of an existing
+session must be linked to that session and must not create an overlapping
+activity. A source that resolves a generic activity to a specific contest may
+update the draft or activity scope and participant links when the evidence
+supports the change.
+
+The job may create a new activity when the international context, Swedish
+relevance, activity scope, and time are sufficiently supported. It may create
+or update the required person and relationship data when the identity is
+unambiguous. Unsupported optional profile values remain unknown; they must
+not be invented merely to pass the publication check.
+
+### Publication gate
+
+The job may publish an activity directly only when all blocking checks pass:
+
+- the activity is within SESport's international relevance boundary;
+- Swedish participation is supported at the activity's actual scope;
+- the time and scope are specific enough for the public page;
+- every published participant has a resolved person identity and activity
+  link;
+- required discipline relations exist, except for grouped multi-event
+  activities where a discipline would mislead;
+- the activity does not overlap another activity representing the same
+  transmission;
+- no blocking `REVIEW` or `UNKNOWN` finding remains.
+
+Unresolved optional birth-date or club metadata should be reported, but does
+not by itself block publication when the activity and participant identity
+are otherwise reliable. A draft must remain unpublished when participation,
+scope, identity, or timing is materially unresolved.
 
 ## External policy and capability changes
 
@@ -273,8 +347,8 @@ For a final or other limited session, an overall team roster must not be
 copied directly into the participant list. If the official source has not
 identified the actual qualifiers, classify the membership as `REVIEW`, state
 the uncertainty, and recheck it against the official start list when
-published. A one-off editorial correction may use the strongest explicit
-source clue, but it must remain subject to that recheck.
+published. An editorial correction may use the strongest explicit source
+clue, but it must remain subject to that recheck.
 
 ### Conditional participation markers
 
@@ -293,9 +367,10 @@ confirms the activity membership.
 Participant completeness has two separate parts: the person entity must exist,
 and the person must be linked to the activity. A reliable source-supported
 Swedish participant who is missing from the database is a data-quality finding.
-The job should propose creating a `Person` entity and adding the activity link.
-An explicitly approved one-off run may create the data manually, but the
-current recurring job remains proposal-only.
+The job may create a `Person` entity and add the activity link directly when
+the identity is unambiguous and the required fields are supported by reliable
+evidence. It must leave the item as `REVIEW` when the identity, country
+relevance, or required profile data cannot be resolved without guessing.
 
 Creating a person requires evidence for the identity and the relevant fields.
 The job must not create a person from an unverified name alone, copy data from
@@ -310,6 +385,11 @@ whose `entity_type_id` is `Discipline`. The linked discipline must match the
 sport and the activity evidence; adding a generic relation merely to fill the
 public column is not sufficient.
 
+When the activity evidence supports the discipline, the job may create the
+missing discipline relation directly. If the evidence does not support a
+discipline, it must leave the relation absent rather than infer one from the
+person's general sport.
+
 This check is required even when the activity already has a visible discipline
 column. `/Index` shows that column when at least one participant has a
 discipline relation, but it renders an empty value for participants without a
@@ -323,10 +403,10 @@ if that would create a misleading partial column. The activity title and
 source may still carry the more specific event information.
 
 Use `2026-08-15 Friidrotts-EM: Dag` as the canonical example. The audit must
-first add or propose any source-supported Swedish participants missing from
-the person table, then verify a discipline relation for every linked person,
-such as `Sprint`, `Triple Jump`, or `Race Walking` when supported by the
-relevant event evidence.
+first add any source-supported Swedish participants missing from the person
+table, then verify a discipline relation for every linked person, such as
+`Sprint`, `Triple Jump`, or `Race Walking` when supported by the relevant
+event evidence.
 
 ### Swedish relevance in specific activities
 
@@ -397,8 +477,9 @@ the presentation and the underlying curation:
 - `tier_0` must not be assigned to non-person entities;
 - each person with `tier_0` should have supporting evidence for the medal-
   contender assessment;
-- strong medal contenders who lack `tier_0` should be reported as proposed
-  candidates, never silently promoted.
+- strong medal contenders who lack `tier_0` may be promoted directly when
+  the assessment is supported by the evidence and Swedish perspective below;
+  the rationale must be recorded in the run report.
 
 Fame, a historic result by itself, or participation in a major event is not
 enough to establish the priority. If the available evidence is incomplete or
@@ -450,7 +531,8 @@ confirmation, not the sole basis for a retrospective promotion.
 If an athlete wins an apparently unexpected medal but the pre-competition
 evidence already supported medal contention, classify the case as a missed
 candidate rather than an unforeseeable surprise. Record the pre-competition
-evidence and propose `tier_0` through the normal review process.
+evidence and apply `tier_0` when the normal evidence and Swedish editorial
+rules support it. A result alone is not enough for a retrospective promotion.
 
 The Wictor Petersson review is an example: his pre-competition European
 ranking and recent major-championship result supported `tier_0` before his
@@ -509,17 +591,19 @@ long-course European swimming event. It is intentionally neutral and should
 not be flagged as an error merely because it does not say `Långbana`. The
 underlying event type must still be checked against authoritative sources.
 
-## Proposed-change policy
+## Disposition and change policy
 
 Each finding should include:
 
 - `status`;
+- `disposition`;
 - `scope`;
 - current value;
-- suggested value, when applicable;
+- applied or suggested value, when applicable;
 - reason for the finding;
-- source URLs;
-- check timestamp and time zone.
+- source URLs and source update time, when available;
+- check timestamp and time zone;
+- affected database identifier and rollback action when a change was applied.
 
 Recommended statuses are:
 
@@ -528,8 +612,19 @@ Recommended statuses are:
 - `OBVIOUS_ERROR`: a reliable source directly contradicts the value;
 - `UNKNOWN`: no reliable evidence was found.
 
-An `OBVIOUS_ERROR` should be highlighted clearly, but still remain a proposal.
-The first implementation must not update or publish data automatically.
+Recommended dispositions are:
+
+- `NONE`: no change is required;
+- `APPLIED`: an evidence-gated correction was executed;
+- `HIDDEN`: a broadcast was hidden under a documented exclusion rule;
+- `LEFT_OPEN`: a broadcast remains unhidden for later review.
+
+An `OBVIOUS_ERROR` with reliable, non-conflicting evidence may be corrected
+directly. A `REVIEW` or `UNKNOWN` finding must remain unchanged, except that
+an explicitly safe broadcast exclusion may still be applied. The report must
+make every applied change and every intentionally unresolved broadcast
+visible; a successful database write is not evidence that the underlying
+editorial decision was correct.
 
 ## Daily workflow
 
@@ -545,9 +640,12 @@ The first implementation must not update or publish data automatically.
 9. Compare exact source values with normalized display values.
 10. Check public star rendering and the evidence for priority-0 people.
 11. Run the reverse candidate check for strong people missing `tier_0`.
-12. Produce a report with findings, sources, and proposed corrections.
-13. Leave all database and publication changes for explicit review unless the
-    operator has explicitly authorized a one-off manual application.
+12. Classify each finding using the evidence-gated dispositions.
+13. Apply permitted corrections in explicit database transactions. Never
+    delete imported broadcasts or overwrite exact source values.
+14. Re-read the affected database rows and public presentation after writes.
+15. Produce a report with findings, sources, applied changes, rollback IDs,
+    and broadcasts intentionally left open.
 
 Existing research jobs for participation, start times, and person data may be
 reused. The verification job must compare their evidence with published
@@ -555,7 +653,7 @@ values; it must not blindly overwrite the values produced by those jobs.
 
 ## Example findings
 
-These examples describe the intended behavior, not automatic changes:
+These examples illustrate the intended behavior and evidence thresholds:
 
 - `Sim-EM` is accepted as a neutral display label when the source identifies
   the event as a 50-metre or long-course championship.
@@ -566,3 +664,7 @@ These examples describe the intended behavior, not automatic changes:
 - A participant listed in the overall championship but absent from the
   relevant session is a `REVIEW` or `OBVIOUS_ERROR` depending on whether the
   activity is explicitly session-scoped.
+- A full source for `Hammarby - Raków Częstochowa` may correct the draft's
+  scope, time, source links, and supported participants directly. It may be
+  published only when the resulting activity passes the publication gate;
+  an unresolved match or broadcast scope remains `REVIEW`.
