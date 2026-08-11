@@ -232,18 +232,27 @@ The job may publish an activity directly only when all blocking checks pass:
 - the activity is within SESport's international relevance boundary;
 - Swedish participation is supported at the activity's actual scope;
 - the time and scope are specific enough for the public page;
-- every published participant has a resolved person identity and activity
-  link;
+- every published participant has a resolved person identity, activity link,
+  and at least one reliable profile anchor beyond the name: an exact
+  birthdate or a reliable formative/current club;
 - required discipline relations exist, except for grouped multi-event
   activities where a discipline would mislead;
 - the activity does not overlap another activity representing the same
   transmission;
 - no blocking `REVIEW` or `UNKNOWN` finding remains.
 
-Unresolved optional birth-date or club metadata should be reported, but does
-not by itself block publication when the activity and participant identity
-are otherwise reliable. A draft must remain unpublished when participation,
-scope, identity, or timing is materially unresolved.
+For the public participant presentation, a name alone is not sufficient. After
+reasonable research, a person with neither an exact birthdate nor a reliable
+formative/current club must not be shown. If a reliable source provides a
+complete lineup and one or more Swedish participants fail this rule, keep the
+whole activity unpublished rather than show a knowingly partial roster. Keep
+the activity and person links in the database so the missing data can be
+revisited later.
+
+Missing only one of the two profile anchors does not automatically block
+publication, but it must remain visible in the verification report. A draft
+must remain unpublished when participation, scope, identity, timing, or the
+profile gate is materially unresolved.
 
 ## External policy and capability changes
 
