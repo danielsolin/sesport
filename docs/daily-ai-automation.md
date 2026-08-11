@@ -15,6 +15,19 @@ The long-term goal is to automate this work as far as reliable evidence,
 clear rules, and operational trust allow. Automation should expand gradually,
 not by silently changing the meaning of an existing rule.
 
+The current operating mode is supervised human-in-the-loop automation. The
+operator is expected to participate in every daily run and remains the final
+editorial authority for qualitative judgments about what the public page looks
+like and whether a result is reasonable. Codex may perform the research,
+verification, and authorized reversible changes without requiring approval for
+each individual safe action, but the run is not unattended autonomy.
+
+Perfect results are not required at this stage. Known uncertainty, reasonable
+disagreements, and possible mistakes must remain visible in the report so the
+operator can review, correct, or override them. A daily run is successful when
+it produces a useful, evidence-backed public result and a clear list of what
+still needs human attention.
+
 The project operator has authorized Codex to apply evidence-gated changes in
 the recurring job. This replaces the former proposal-only default. The
 authorization covers the following actions:
