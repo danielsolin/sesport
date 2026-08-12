@@ -48,6 +48,9 @@ Several console applications live in `tools/legacy/` for occasional use:
 - Docker is required only for the local SearXNG container or when operating
   the PostgreSQL container for the database referenced by `.env`.
 - `SESport.Data` uses Npgsql for PostgreSQL data access.
+- Hard rule: Always ask the operator for explicit confirmation before running
+  `bin/broadcasts-import.sh`. This is a deliberate human-controlled
+  safeguard while SESport's use of TV.nu and TVmatchen data is being assessed.
 - Known build issue: `dotnet build SESport.sln` can fail in this
   environment during restore with missing workload SDK resolvers,
   including `Microsoft.NET.SDK.WorkloadAutoImportPropsLocator`.
