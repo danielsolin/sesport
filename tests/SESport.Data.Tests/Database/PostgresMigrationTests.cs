@@ -415,6 +415,27 @@ public partial class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void DatabaseSanityMigrationAddsIntegrityAndGrowthIndexes()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "023_database_sanity_fixes.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "activity_entity_links_activity_entity_uidx",
+         migration
+      );
+      Assert.Contains("broadcasts_import_run_id_idx", migration);
+      Assert.Contains("broadcasts_ends_at_idx", migration);
+      Assert.Contains("activities_activity_date_idx", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

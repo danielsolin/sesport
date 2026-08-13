@@ -108,6 +108,8 @@ Connects activities to their participating entities. The optional
 `organization_entity_id` records the organization context separately from the
 participant, while `is_active` allows an inactive participant to remain
 visible without being treated as currently participating.
+The database enforces at most one row per `(activity_id, entity_id)` pair;
+the organization entity is metadata on that relation.
 
 ### `activity_broadcast_links`
 
@@ -185,7 +187,9 @@ The snapshots preserve historical explainability when configuration changes.
 ### `ai_job_run_applications`
 
 Records where an AI run was applied. Its composite key makes application
-tracking idempotent for a run, target type, and target ID.
+tracking idempotent for a run, target type, and target ID. Cleanup removes
+application rows whose typed target no longer exists, while unknown target
+types are retained for forward compatibility.
 
 ### `ai_automation_rules`
 
