@@ -19,6 +19,8 @@ public class DetailsModel(
 {
    private const string ConversationHistorySummaryPrefix =
       "Conversation history summary:";
+   private const string DiagnosticPayloadPurgedMessage =
+      "Removed by retention policy.";
 
    private static readonly JsonSerializerOptions IndentedJsonOptions = new()
    {
@@ -93,7 +95,9 @@ public class DetailsModel(
             cancellationToken
          );
          ConversationHistorySummaryText =
-            GetConversationHistorySummaryText(Run.RawRequestJson);
+            Run.DiagnosticPayloadPurgedAt is not null
+               ? DiagnosticPayloadPurgedMessage
+               : GetConversationHistorySummaryText(Run.RawRequestJson);
          SystemPromptText = GetRenderedSystemPromptText(Run);
          UserPromptTemplateText = Run.UserPromptTemplate;
          RenderedPromptText = Run.RenderedPrompt;
@@ -260,6 +264,16 @@ public class DetailsModel(
       }
 
       return value.Trim();
+   }
+
+   public static string FormatJsonOrRetentionNotice(
+      string? value,
+      DateTimeOffset? diagnosticPayloadPurgedAt
+   )
+   {
+      return diagnosticPayloadPurgedAt is not null
+         ? DiagnosticPayloadPurgedMessage
+         : FormatJson(value);
    }
 
    internal static string GetRenderedSystemPromptText(AiRunDetail run)

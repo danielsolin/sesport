@@ -61,6 +61,25 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void FormatJsonOrRetentionNoticeExplainsPurgedPayload()
+   {
+      Assert.Equal(
+         "Removed by retention policy.",
+         DetailsModel.FormatJsonOrRetentionNotice(
+            null,
+            DateTimeOffset.UtcNow
+         )
+      );
+      Assert.Equal(
+         "{\n  \"value\": 1\n}",
+         DetailsModel.FormatJsonOrRetentionNotice(
+            "{\"value\": 1}",
+            null
+         )
+      );
+   }
+
+   [Fact]
    public void GetToolBadgeCssClassHighlightsSubmitReport()
    {
       Assert.Equal(

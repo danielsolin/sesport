@@ -436,6 +436,28 @@ public partial class PostgresMigrationTests
       Assert.Contains("activities_activity_date_idx", migration);
    }
 
+   [Fact]
+   public void DiagnosticRetentionMigrationAddsPurgeMarker()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "024_ai_run_diagnostic_retention.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "diagnostic_payload_purged_at timestamp with time zone",
+         migration
+      );
+      Assert.Contains(
+         "ai_job_runs_diagnostic_retention_idx",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

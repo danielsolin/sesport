@@ -469,7 +469,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                r.job_conditional_tools_json,
                j.conditional_tools_json
             )::text,
-            coalesce(r.job_tool_call_max_tokens, j.tool_call_max_tokens)
+            coalesce(r.job_tool_call_max_tokens, j.tool_call_max_tokens),
+            r.diagnostic_payload_purged_at
          from ai_job_runs r
          left join ai_jobs j on j.id = r.job_id
          left join ai_providers p on p.id = r.provider_id
@@ -534,7 +535,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          JobToolsJson: ReadNullableString(reader, 43),
          JobConditionalToolsJson: ReadNullableString(reader, 44),
          JobToolCallMaxTokens: ReadNullableInt32(reader, 45),
-         PromptMinToolRounds: ReadNullableInt32(reader, 10)
+         PromptMinToolRounds: ReadNullableInt32(reader, 10),
+         DiagnosticPayloadPurgedAt: ReadNullableDateTimeOffset(reader, 46)
       );
    }
 

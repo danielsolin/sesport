@@ -68,7 +68,17 @@
 
       @if(Model.Turns.Count == 0)
       {
-         <div class="notice">No tool trace recorded yet.</div>
+         <div class="notice">
+            @if(Model.Run.DiagnosticPayloadPurgedAt is not null)
+            {
+               <text>Detailed tool trace was removed by retention
+                  policy.</text>
+            }
+            else
+            {
+               <text>No tool trace recorded yet.</text>
+            }
+         </div>
       }
       else
       {
@@ -352,14 +362,18 @@
    </details>
 </section>
 
-@if(!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson))
+@if(!string.IsNullOrWhiteSpace(Model.Run.ToolTraceJson) ||
+   Model.Run.DiagnosticPayloadPurgedAt is not null)
 {
    <section class="form-section">
       <details class="run-data-details"
                data-tool-trace-panel="raw">
          <summary>Raw tool trace JSON</summary>
          <pre class="prompt-details-pre">
-@DetailsModel.FormatJson(Model.Run.ToolTraceJson)
+@DetailsModel.FormatJsonOrRetentionNotice(
+   Model.Run.ToolTraceJson,
+   Model.Run.DiagnosticPayloadPurgedAt
+)
          </pre>
       </details>
    </section>

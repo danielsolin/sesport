@@ -50,6 +50,12 @@ public sealed class DetailsMarkupTests
       Assert.DoesNotContain("tool-trace-turn-header-main", html);
       Assert.Contains("tool-trace-turn-header-main", toolTraceHtml);
       Assert.Contains("summary>Raw tool trace JSON</summary>", toolTraceHtml);
+      Assert.Contains("FormatJsonOrRetentionNotice", html);
+      Assert.Contains("FormatJsonOrRetentionNotice", toolTraceHtml);
+      Assert.Contains(
+         "Detailed tool trace was removed by retention",
+         toolTraceHtml
+      );
       Assert.DoesNotContain("Full trace", toolTraceHtml);
       Assert.Contains("Round", toolTraceHtml);
       Assert.Contains("pollIntervalMilliseconds = 10000", toolTraceScript);

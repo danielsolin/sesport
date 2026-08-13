@@ -190,7 +190,10 @@
       <details class="run-data-details">
          <summary>Raw final request</summary>
          <pre class="prompt-details-pre">
-@DetailsModel.FormatJson(Model.Run.RawRequestJson)
+@DetailsModel.FormatJsonOrRetentionNotice(
+   Model.Run.RawRequestJson,
+   Model.Run.DiagnosticPayloadPurgedAt
+)
          </pre>
       </details>
    </section>
@@ -199,7 +202,10 @@
       <details class="run-data-details">
          <summary>Raw final response</summary>
          <pre class="prompt-details-pre">
-@DetailsModel.FormatJson(Model.Run.RawResponseJson)
+@DetailsModel.FormatJsonOrRetentionNotice(
+   Model.Run.RawResponseJson,
+   Model.Run.DiagnosticPayloadPurgedAt
+)
          </pre>
       </details>
    </section>

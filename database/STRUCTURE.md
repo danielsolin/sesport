@@ -183,6 +183,9 @@ Stores the audit record for one AI execution. It contains the input and
 rendered prompts, request and response payloads, status, timing, token counts,
 tool trace, errors, and snapshots of the relevant job/provider/prompt settings.
 The snapshots preserve historical explainability when configuration changes.
+The raw request, raw response, and tool trace may be purged after the
+diagnostic retention period; `diagnostic_payload_purged_at` records that this
+has happened without removing the run's result or operational metadata.
 
 ### `ai_job_run_applications`
 

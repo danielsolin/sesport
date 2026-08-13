@@ -153,7 +153,8 @@ public sealed record AiRunDetail(
    string? JobConditionalToolsJson,
    int? JobToolCallMaxTokens,
    int? PromptMinToolRounds = null,
-   bool JobIncludeSocialMedia = false
+   bool JobIncludeSocialMedia = false,
+   DateTimeOffset? DiagnosticPayloadPurgedAt = null
 );
 
 public sealed class AiPromptEditModel
