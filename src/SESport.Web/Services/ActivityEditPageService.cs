@@ -558,13 +558,16 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
+      var promptTitle = jobId == AiJobIds.FindParticipantsStart
+         ? null
+         : activity.ActivityGroupTitle;
       return await aiJobRunner.QueueAsync(
          new AiJobRequest(
             jobId,
             await aiInputBuilder.BuildAsync(
                activity,
                cancellationToken,
-               activity.ActivityGroupTitle
+               promptTitle
             ),
             activity.Id?.ToString()
          ),

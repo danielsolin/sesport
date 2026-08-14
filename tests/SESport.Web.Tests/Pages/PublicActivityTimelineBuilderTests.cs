@@ -354,6 +354,68 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Fact]
+   public void BuildKeepsParticipantsBoundToGroupedActivities()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var first = CreateActivity(
+         "Round 1",
+         selectedDate,
+         now.AddMinutes(15),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [CreateParticipant("First", "08:15")]
+      };
+      var second = CreateActivity(
+         "Round 2",
+         selectedDate,
+         now.AddHours(1),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [CreateParticipant("Second", "09:00")]
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(
+         [first, second],
+         selectedDate,
+         now
+      );
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.Equal(
+         ["First"],
+         section.Activities[0].Participants.Select(
+            participant => participant.Name
+         )
+      );
+      Assert.Equal(
+         ["Second"],
+         section.Activities[1].Participants.Select(
+            participant => participant.Name
+         )
+      );
+      Assert.Equal("08:15", section.Activities[0].Participants[0].StartTime);
+      Assert.Equal("09:00", section.Activities[1].Participants[0].StartTime);
+   }
+
+   [Fact]
    public void Build_DoesNotGroupActivitiesWhenGroupRequestsIt()
    {
       var now = new DateTimeOffset(

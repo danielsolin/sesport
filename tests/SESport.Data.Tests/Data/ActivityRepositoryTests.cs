@@ -529,7 +529,7 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
-   public async Task GetPublishedForDateAsyncIncludesParticipantStartTime()
+   public async Task GetPublishedForDateAsyncRequiresCurrentStartTimeResult()
    {
       var selectedDate = DistantActivityDate;
       var startsAt = TimeZoneHelper.ToUtc(
@@ -607,6 +607,28 @@ public sealed class ActivityRepositoryTests
          );
          var participant = Assert.Single(activity.Participants);
          Assert.Equal("12:30", participant.StartTime);
+
+         await using(var updateCommand = dataSource.CreateCommand(
+            """
+            update activities
+            set updated_at = now() + interval '1 second'
+            where id = @id
+            """
+         ))
+         {
+            updateCommand.Parameters.AddWithValue("id", activityId);
+            await updateCommand.ExecuteNonQueryAsync();
+         }
+
+         var refreshedActivities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+         var refreshedActivity = Assert.Single(
+            refreshedActivities,
+            item => item.Id == activityId
+         );
+         Assert.Null(Assert.Single(refreshedActivity.Participants).StartTime);
       }
       finally
       {

@@ -92,13 +92,16 @@ public sealed class AiAutomationService(
             continue;
          }
 
+         var promptTitle = jobId == AiJobIds.FindParticipantsStart
+            ? null
+            : activity.ActivityGroupTitle;
          await jobRunner.QueueAsync(
             new AiJobRequest(
                jobId,
                await inputBuilder.BuildAsync(
                   activity,
                   cancellationToken,
-                  activity.ActivityGroupTitle
+                  promptTitle
                ),
                activityId.ToString()
             ),

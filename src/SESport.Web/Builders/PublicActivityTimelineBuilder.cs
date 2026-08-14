@@ -159,16 +159,12 @@ public sealed class PublicActivityTimelineBuilder
       var orderedActivities = activities
          .OrderBy(activity => activity.StartsAt)
          .ThenBy(activity => activity.Title, StringComparer.OrdinalIgnoreCase)
+         .Select(activity => activity with
+         {
+            Participants = OrderParticipants(activity.Participants)
+         })
          .ToList();
-      var activity = orderedActivities[0] with
-      {
-         Participants = OrderParticipants(
-            orderedActivities
-               .SelectMany(item => item.Participants)
-               .DistinctBy(participant => participant.Id)
-         )
-      };
-      orderedActivities[0] = activity;
+      var activity = orderedActivities[0];
       var slots = orderedActivities
          .Select(item => CreateSlot(item, now))
          .ToList();

@@ -485,17 +485,28 @@ else
                            }
                         </ol>
                      }
-                     @if(activity.Participants.Count > 0)
+                     @foreach(var participantActivity in
+                        agendaSection.Activities)
                      {
+                        if(participantActivity.Participants.Count == 0)
+                        {
+                           continue;
+                        }
+                        @if(isGrouped)
+                        {
+                           <h3 class="activity-group-participant-title">
+                              @participantActivity.Title
+                           </h3>
+                        }
                         var showStartTimeColumn =
-                           activity.Participants.Any(
+                           participantActivity.Participants.Any(
                               participant =>
                                  !string.IsNullOrWhiteSpace(
                                     participant.StartTime
                                  )
                            );
                         var showDisciplineColumn =
-                           activity.Participants.Any(
+                           participantActivity.Participants.Any(
                               participant => participant.HasDiscipline
                            );
                         var participantTableClass =
@@ -510,7 +521,7 @@ else
                               " activity-participant-table-has-discipline";
                         }
                         var shouldCollapseParticipants =
-                           activity.Participants.Count >
+                           participantActivity.Participants.Count >
                               maxVisibleParticipants;
                         if(shouldCollapseParticipants)
                         {
@@ -518,17 +529,18 @@ else
                               " activity-participant-table-collapsed";
                         }
                         var participantTableId =
-                           $"participant-table-{activity.Id:N}";
+                           $"participant-table-{participantActivity.Id:N}";
                         var watchPriorityBadgeClass =
                            "activity-participant-watch-" +
                            "priority-badge";
-                        var hasPrimaryCountryTeam = activity.Participants.Any(
-                           participant => string.Equals(
-                              participant.TeamCountryId,
-                              PrimaryCountry.Id,
-                              StringComparison.OrdinalIgnoreCase
-                           )
-                        );
+                        var hasPrimaryCountryTeam = participantActivity
+                           .Participants.Any(
+                              participant => string.Equals(
+                                 participant.TeamCountryId,
+                                 PrimaryCountry.Id,
+                                 StringComparison.OrdinalIgnoreCase
+                              )
+                           );
                         <div class="activity-participant-table-wrap">
                            <div class="activity-participant-table-frame">
                               <table id="@participantTableId"
@@ -591,19 +603,21 @@ else
                               <tbody>
                                  @for(var participantIndex = 0;
                                        participantIndex <
-                                          activity.Participants.Count;
+                                          participantActivity
+                                             .Participants.Count;
                                        participantIndex++)
                                  {
                                     var participant =
-                                       activity.Participants[participantIndex];
+                                       participantActivity
+                                          .Participants[participantIndex];
                                     var age = IndexModel.CalculateAge(
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
                                     var teamCountryFlagPath =
                                        PublicParticipantTeamFlag.GetPath(
-                                          activity.IsTeamSport,
-                                          activity.ActivityType,
+                                          participantActivity.IsTeamSport,
+                                          participantActivity.ActivityType,
                                           participant.TeamCountryId,
                                           hasPrimaryCountryTeam
                                        );

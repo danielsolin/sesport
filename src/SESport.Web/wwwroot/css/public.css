@@ -946,6 +946,13 @@
    font-weight: 750;
 }
 
+.activity-group-participant-title {
+   margin: 14px 0 0;
+   color: #397293;
+   font-size: 12px;
+   font-weight: 800;
+}
+
 .activity-group-slot-channel-list {
    margin-top: 4px;
 }

@@ -95,6 +95,16 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("activity-participant-col-height", html);
       Assert.Contains("activity-participant-col-country", html);
       Assert.Contains("showStartTimeColumn", html);
+      Assert.Contains(
+         "foreach(var participantActivity in",
+         html
+      );
+      Assert.Contains("participantActivity.Participants", html);
+      Assert.Contains("participantActivity.Id", html);
+      Assert.Contains(
+         "activity-group-participant-title",
+         html
+      );
       Assert.Contains("activity-participant-table-collapsed", html);
       Assert.Contains("activity-participant-table-frame", html);
       Assert.Contains("activity-participant-table-fade", html);
@@ -274,6 +284,10 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-group-slot-content {\n" +
          "      display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-participant-title {",
          css
       );
       Assert.Contains(

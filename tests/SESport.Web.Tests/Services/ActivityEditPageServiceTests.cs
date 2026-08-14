@@ -1378,7 +1378,7 @@ public sealed class ActivityEditPageServiceTests
             document.RootElement.GetProperty("event_name").GetString()
          );
          Assert.Equal(
-            "Activity group title",
+            "Activity title",
             document.RootElement.GetProperty("title").GetString()
          );
          Assert.Equal(

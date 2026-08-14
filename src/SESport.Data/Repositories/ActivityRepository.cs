@@ -1612,6 +1612,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             participant_team.team_country_name,
             al.is_active
          from activity_entity_links al
+         join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
          join entity_watch_priorities priority
             on priority.id = person.watch_priority_id
@@ -1623,6 +1624,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                and r.job_id = '{{AiJobIds.FindParticipantsStart}}'
                and r.field_key =
                   '{{ActivityParticipantAiFieldKeys.StartTime}}'
+               and r.updated_at >= activity.updated_at
             order by
                r.updated_at desc,
                r.sort_order asc,
