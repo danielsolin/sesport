@@ -413,6 +413,62 @@ public class PublicActivityTimelineBuilderTests
       );
       Assert.Equal("08:15", section.Activities[0].Participants[0].StartTime);
       Assert.Equal("09:00", section.Activities[1].Participants[0].StartTime);
+      Assert.Equal(
+         ["First", "Second"],
+         section.Participants.Select(participant => participant.Name)
+      );
+   }
+
+   [Fact]
+   public void BuildUsesActivitySpecificStartTimeInMergedList()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var alex = CreateParticipant("Alex", null);
+      var first = CreateActivity(
+         "Tournament day",
+         selectedDate,
+         now.AddMinutes(15),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [alex]
+      };
+      var second = CreateActivity(
+         "Follow Alex",
+         selectedDate,
+         now.AddHours(1),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [alex with { StartTime = "17:40" }]
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(
+         [first, second],
+         selectedDate,
+         now
+      );
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      var participant = Assert.Single(section.Participants);
+      Assert.Equal("Alex", participant.Name);
+      Assert.Equal("17:40", participant.StartTime);
    }
 
    [Fact]

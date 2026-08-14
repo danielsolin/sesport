@@ -165,6 +165,7 @@ public sealed class PublicActivityTimelineBuilder
          })
          .ToList();
       var activity = orderedActivities[0];
+      var participants = MergeParticipants(orderedActivities);
       var slots = orderedActivities
          .Select(item => CreateSlot(item, now))
          .ToList();
@@ -190,6 +191,7 @@ public sealed class PublicActivityTimelineBuilder
       return new ActivityAgendaSection(
          timelineTimeLabel,
          orderedActivities,
+         participants,
          activity.RelatedOrganizationEntities,
          GetDayPhase(timelineStart.Hour),
          GetHourHandAngle(timelineTime),
@@ -203,6 +205,36 @@ public sealed class PublicActivityTimelineBuilder
          slots,
          timelineSlot
       );
+   }
+
+   private static IReadOnlyList<PublicActivityParticipant>
+      MergeParticipants(
+         IEnumerable<ActivityListItem> activities
+      )
+   {
+      var mergedParticipants = activities
+         .SelectMany(activity =>
+            activity.Participants.Select(participant => new
+            {
+               Activity = activity,
+               Participant = participant
+            })
+         )
+         .GroupBy(item => item.Participant.Id)
+         .Select(group => group
+            .OrderByDescending(item =>
+               !string.IsNullOrWhiteSpace(item.Participant.StartTime)
+            )
+            .ThenBy(item => item.Activity.StartsAt)
+            .ThenBy(
+               item => item.Activity.Title,
+               StringComparer.OrdinalIgnoreCase
+            )
+            .First()
+            .Participant
+         );
+
+      return OrderParticipants(mergedParticipants);
    }
 
    private static ActivityAgendaSlot CreateSlot(

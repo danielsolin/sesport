@@ -290,6 +290,7 @@ public class IndexModel(
 public sealed record ActivityAgendaSection(
    string TimeLabel,
    IReadOnlyList<ActivityListItem> Activities,
+   IReadOnlyList<PublicActivityParticipant> Participants,
    string RelatedOrganizationEntities,
    ActivityDayPhase DayPhase,
    string ClockHourAngle,

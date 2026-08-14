@@ -485,28 +485,18 @@ else
                            }
                         </ol>
                      }
-                     @foreach(var participantActivity in
-                        agendaSection.Activities)
+                     @if(agendaSection.Participants.Count > 0)
                      {
-                        if(participantActivity.Participants.Count == 0)
-                        {
-                           continue;
-                        }
-                        @if(isGrouped)
-                        {
-                           <h3 class="activity-group-participant-title">
-                              @participantActivity.Title
-                           </h3>
-                        }
+                        var participants = agendaSection.Participants;
                         var showStartTimeColumn =
-                           participantActivity.Participants.Any(
+                           participants.Any(
                               participant =>
                                  !string.IsNullOrWhiteSpace(
                                     participant.StartTime
                                  )
                            );
                         var showDisciplineColumn =
-                           participantActivity.Participants.Any(
+                           participants.Any(
                               participant => participant.HasDiscipline
                            );
                         var participantTableClass =
@@ -521,7 +511,7 @@ else
                               " activity-participant-table-has-discipline";
                         }
                         var shouldCollapseParticipants =
-                           participantActivity.Participants.Count >
+                           participants.Count >
                               maxVisibleParticipants;
                         if(shouldCollapseParticipants)
                         {
@@ -529,12 +519,12 @@ else
                               " activity-participant-table-collapsed";
                         }
                         var participantTableId =
-                           $"participant-table-{participantActivity.Id:N}";
+                           $"participant-table-{activity.Id:N}";
                         var watchPriorityBadgeClass =
                            "activity-participant-watch-" +
                            "priority-badge";
-                        var hasPrimaryCountryTeam = participantActivity
-                           .Participants.Any(
+                        var hasPrimaryCountryTeam = participants
+                           .Any(
                               participant => string.Equals(
                                  participant.TeamCountryId,
                                  PrimaryCountry.Id,
@@ -603,21 +593,19 @@ else
                               <tbody>
                                  @for(var participantIndex = 0;
                                        participantIndex <
-                                          participantActivity
-                                             .Participants.Count;
+                                          participants.Count;
                                        participantIndex++)
                                  {
                                     var participant =
-                                       participantActivity
-                                          .Participants[participantIndex];
+                                       participants[participantIndex];
                                     var age = IndexModel.CalculateAge(
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
                                     var teamCountryFlagPath =
                                        PublicParticipantTeamFlag.GetPath(
-                                          participantActivity.IsTeamSport,
-                                          participantActivity.ActivityType,
+                                          activity.IsTeamSport,
+                                          activity.ActivityType,
                                           participant.TeamCountryId,
                                           hasPrimaryCountryTeam
                                        );
