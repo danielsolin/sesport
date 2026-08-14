@@ -199,6 +199,33 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void ActivityGroupPublicDateModeMigrationAddsSetting()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "025_activity_group_public_date_mode.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "alter table public.activity_groups",
+         migration
+      );
+      Assert.Contains(
+         "add column public_date_mode text",
+         migration
+      );
+      Assert.Contains("default 'sport_day' not null", migration);
+      Assert.Contains(
+         "activity_groups_public_date_mode_check",
+         migration
+      );
+   }
+
+   [Fact]
    public void MemberMigrationDefinesAccountsTokensAndWatches()
    {
       var migration = File.ReadAllText(

@@ -57,6 +57,16 @@
                    readonly />
             <span asp-validation-for="ActivityGroup.EndDate"></span>
          </label>
+         <label>
+            <span>Public date</span>
+            <select asp-for="ActivityGroup.PublicDateMode">
+               @foreach(var mode in Model.PublicDateModes)
+               {
+                  <option value="@mode.Id">@mode.Label</option>
+               }
+            </select>
+            <span asp-validation-for="ActivityGroup.PublicDateMode"></span>
+         </label>
          <label class="check-row">
             <input asp-for="ActivityGroup.NoGrouping"
                    type="checkbox" />

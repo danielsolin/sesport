@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Domain;
 using SESport.Data.Models;
 
 namespace SESport.Web.Pages.Admin.ActivityGroups;
@@ -14,6 +15,18 @@ public class EditModel(ActivityRepository repository) : PageModel
    public string? ReturnUrl { get; set; }
 
    public IReadOnlyList<LookupOption> Sports { get; private set; } = [];
+
+   public IReadOnlyList<LookupOption> PublicDateModes { get; } =
+   [
+      new(
+         ActivityGroupPublicDateModeIds.SportDay,
+         "Sport day (04:01 boundary)"
+      ),
+      new(
+         ActivityGroupPublicDateModeIds.LocalCalendarDate,
+         "Local calendar date"
+      )
+   ];
 
    public IReadOnlyList<ActivityGroupActivityListItem> Activities
    {
@@ -161,6 +174,22 @@ public class EditModel(ActivityRepository repository) : PageModel
          ModelState.AddModelError(
             "ActivityGroup.EndDate",
             "End date must not be before start date."
+         );
+      }
+
+      if(!string.Equals(
+         ActivityGroup.PublicDateMode,
+         ActivityGroupPublicDateModeIds.SportDay,
+         StringComparison.Ordinal
+      ) && !string.Equals(
+         ActivityGroup.PublicDateMode,
+         ActivityGroupPublicDateModeIds.LocalCalendarDate,
+         StringComparison.Ordinal
+      ))
+      {
+         ModelState.AddModelError(
+            "ActivityGroup.PublicDateMode",
+            "Public date mode is invalid."
          );
       }
    }

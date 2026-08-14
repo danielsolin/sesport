@@ -33,7 +33,10 @@ public sealed class PublicActivityTimelineBuilder
          )
          .GroupBy(activity => new
          {
-            activity.ActivityDate,
+            DisplayDate = ActivityDisplayDateResolver.Resolve(
+               activity.StartsAt!.Value,
+               activity.PublicDateMode
+            ),
             GroupId = activity.ActivityGroupId!.Value
          })
          .Where(group => group.Count() > 1)
@@ -44,7 +47,10 @@ public sealed class PublicActivityTimelineBuilder
          .Where(activity => groupedActivityIds.Contains(activity.Id))
          .GroupBy(activity => new
          {
-            activity.ActivityDate,
+            DisplayDate = ActivityDisplayDateResolver.Resolve(
+               activity.StartsAt!.Value,
+               activity.PublicDateMode
+            ),
             GroupId = activity.ActivityGroupId!.Value
          })
          .Select(group => CreateSection(group.ToList(), now));

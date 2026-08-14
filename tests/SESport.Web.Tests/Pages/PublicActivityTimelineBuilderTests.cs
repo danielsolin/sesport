@@ -354,6 +354,138 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Fact]
+   public void Build_GroupsActivitiesAcrossStoredDatesInVisibleWindow()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         22,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Race start",
+            selectedDate,
+            new DateTimeOffset(
+               2026,
+               7,
+               26,
+               23,
+               45,
+               0,
+               TimeSpan.FromHours(2)
+            ),
+            activityGroupId: groupId,
+            activityGroupTitle: "One Water Race"
+         ),
+         CreateActivity(
+            "Day 2",
+            selectedDate.AddDays(1),
+            new DateTimeOffset(
+               2026,
+               7,
+               27,
+               0,
+               0,
+               0,
+               TimeSpan.FromHours(2)
+            ),
+            activityGroupId: groupId,
+            activityGroupTitle: "One Water Race"
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+      Assert.Equal("One Water Race", section.ActivityGroupTitle);
+      Assert.Equal(
+         ["Race start", "Day 2"],
+         section.Activities.Select(activity => activity.Title)
+      );
+   }
+
+   [Fact]
+   public void BuildKeepsLocalCalendarActivitiesOnTheirStartDates()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         22,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Race start",
+            selectedDate,
+            new DateTimeOffset(
+               2026,
+               7,
+               26,
+               23,
+               45,
+               0,
+               TimeSpan.FromHours(2)
+            ),
+            activityGroupId: groupId,
+            activityGroupTitle: "One Water Race",
+            publicDateMode: ActivityGroupPublicDateModeIds.LocalCalendarDate
+         ),
+         CreateActivity(
+            "Day 2",
+            selectedDate.AddDays(1),
+            new DateTimeOffset(
+               2026,
+               7,
+               27,
+               0,
+               0,
+               0,
+               TimeSpan.FromHours(2)
+            ),
+            activityGroupId: groupId,
+            activityGroupTitle: "One Water Race",
+            publicDateMode: ActivityGroupPublicDateModeIds.LocalCalendarDate
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+      var sections = timeline.TimelineEntries
+         .Where(entry => !entry.IsCurrentMarker)
+         .Select(entry => entry.Section!)
+         .ToList();
+
+      Assert.Equal(2, sections.Count);
+      Assert.Equal(
+         ["Race start", "Day 2"],
+         sections.Select(section =>
+            Assert.Single(section.Activities).Title
+         )
+      );
+      Assert.All(
+         sections,
+         section => Assert.Null(section.ActivityGroupTitle)
+      );
+   }
+
+   [Fact]
    public void BuildKeepsParticipantsBoundToGroupedActivities()
    {
       var now = new DateTimeOffset(
@@ -627,7 +759,8 @@ public class PublicActivityTimelineBuilderTests
       Guid? activityGroupId = null,
       string? activityGroupTitle = null,
       bool isTeamSport = false,
-      string? tvChannelName = null
+      string? tvChannelName = null,
+      string publicDateMode = ActivityGroupPublicDateModeIds.SportDay
    )
    {
       return new ActivityListItem(
@@ -661,7 +794,9 @@ public class PublicActivityTimelineBuilderTests
             ),
          ActivityGroupId = activityGroupId,
          ActivityGroupTitle = activityGroupTitle,
-         IsTeamSport = isTeamSport
+         IsTeamSport = isTeamSport,
+         ActivityDate = activityDate,
+         PublicDateMode = publicDateMode
       };
    }
 

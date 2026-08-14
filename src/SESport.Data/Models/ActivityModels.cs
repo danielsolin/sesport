@@ -36,6 +36,9 @@ public sealed record ActivityListItem(
 
    public bool IsTeamSport { get; init; }
 
+   public string PublicDateMode { get; init; } =
+      ActivityGroupPublicDateModeIds.SportDay;
+
    public string RelatedOrganizationCanonicalEntities { get; init; } =
       string.Empty;
 
@@ -102,6 +105,9 @@ public sealed class ActivityGroupEditModel
    public DateOnly? EndDate { get; set; }
 
    public bool NoGrouping { get; set; }
+
+   public string PublicDateMode { get; set; } =
+      ActivityGroupPublicDateModeIds.SportDay;
 }
 
 public sealed record ActivityGroupActivityListItem(

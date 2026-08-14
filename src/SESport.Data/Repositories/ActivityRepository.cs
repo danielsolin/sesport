@@ -45,6 +45,29 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       )
       """;
 
+   private static string BuildTimedDateFilterSql()
+   {
+      return $$"""
+         (
+            (
+               coalesce(
+                  ag.public_date_mode,
+                  '{{ActivityGroupPublicDateModeIds.SportDay}}'
+               ) = '{{ActivityGroupPublicDateModeIds.SportDay}}'
+               and a.starts_at >= @start
+               and a.starts_at < @end
+            )
+            or (
+               coalesce(
+                  ag.public_date_mode,
+                  '{{ActivityGroupPublicDateModeIds.SportDay}}'
+               ) = '{{ActivityGroupPublicDateModeIds.LocalCalendarDate}}'
+               and (a.starts_at at time zone @time_zone)::date = @date
+            )
+         )
+         """;
+   }
+
    public async Task<IReadOnlyList<ActivityListItem>> GetActivitiesAsync(
       DateOnly date,
       string? status,
@@ -53,14 +76,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    )
    {
       var normalizedSports = SportFilter.Normalize(sportIds);
-      // Timed rows follow sport day; untimed rows keep their stored date.
+      // Timed rows follow their group's public date mode.
       var window = SportDay.ForDate(date);
       var start = ToUtc(window.StartDate, window.Cutoff);
       var end = ToUtc(window.EndDateExclusive, window.Cutoff);
       var whereClause = new StringBuilder()
          .AppendLine("where (")
-         .AppendLine("   (a.starts_at >= @start")
-         .AppendLine("      and a.starts_at < @end)")
+         .AppendLine(BuildTimedDateFilterSql())
          .AppendLine("   or (")
          .AppendLine("      a.starts_at is null")
          .AppendLine("      and a.activity_date = @date")
@@ -89,6 +111,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          {
             command.Parameters.AddWithValue("start", start);
             command.Parameters.AddWithValue("end", end);
+            command.Parameters.AddWithValue(
+               "time_zone",
+               SportDay.TimeZoneId
+            );
             command.Parameters.AddWithValue("date", date);
 
             if(!string.Equals(
@@ -133,10 +159,29 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       )
    {
       var sql = $$"""
+         with dated_activities as (
+            select
+               a.id,
+               case
+                  when coalesce(
+                     ag.public_date_mode,
+                     '{{ActivityGroupPublicDateModeIds.SportDay}}'
+                  ) =
+                     '{{ActivityGroupPublicDateModeIds.LocalCalendarDate}}'
+                  then (a.starts_at at time zone @time_zone)::date
+                  else (
+                     (a.starts_at at time zone @time_zone) - @cutoff
+                  )::date
+               end as display_date
+            from activities a
+            left join activity_groups ag
+               on ag.id = a.activity_group_id
+            where a.publication_status_id =
+               '{{ActivityPublicationStatusIds.Published}}'
+               {{PublicActivityExclusionClause}}
+         )
          select
-            (
-               (a.starts_at at time zone @time_zone) - @cutoff
-            )::date as sport_date,
+            dated.display_date,
             count(distinct e.id) filter (
                where e.entity_type_id in (
                   '{{TrackedEntityTypeIds.Person}}',
@@ -145,15 +190,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                )
                   and al.is_active
             )::integer as participant_count
-         from activities a
-         left join activity_entity_links al on al.activity_id = a.id
+         from dated_activities dated
+         left join activity_entity_links al on al.activity_id = dated.id
          left join entities e on e.id = al.entity_id
-         where a.publication_status_id =
-            '{{ActivityPublicationStatusIds.Published}}'
-            and a.starts_at >= @start
-            {{PublicActivityExclusionClause}}
-         group by sport_date
-         order by sport_date
+         where dated.display_date >= @first_date
+         group by dated.display_date
+         order by dated.display_date
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -166,8 +208,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          SportDay.Cutoff.ToTimeSpan()
       );
       command.Parameters.AddWithValue(
-         "start",
-         ToUtc(firstDate, SportDay.Cutoff)
+         "first_date",
+         firstDate
       );
       AddPublicActivityExclusionParameters(command);
       await using var reader = await command.ExecuteReaderAsync(
@@ -198,8 +240,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          $$"""
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
-               and a.starts_at >= @start
-               and a.starts_at < @end
+               and {{BuildTimedDateFilterSql()}}
                {{PublicActivityExclusionClause}}
          """,
          DefaultOrderClause,
@@ -216,6 +257,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                "end",
                ToUtc(window.EndDateExclusive, window.Cutoff)
             );
+            command.Parameters.AddWithValue(
+               "time_zone",
+               SportDay.TimeZoneId
+            );
+            command.Parameters.AddWithValue("date", window.StartDate);
             AddPublicActivityExclusionParameters(command);
          },
          cancellationToken
@@ -787,7 +833,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             sport_id,
             start_date,
             end_date,
-            no_grouping
+            no_grouping,
+            public_date_mode
          from activity_groups
          where id = @id
          """;
@@ -810,7 +857,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          SportId = reader.GetString(2),
          StartDate = reader.GetFieldValue<DateOnly>(3),
          EndDate = reader.GetFieldValue<DateOnly>(4),
-         NoGrouping = reader.GetBoolean(5)
+         NoGrouping = reader.GetBoolean(5),
+         PublicDateMode = reader.GetString(6)
       };
    }
 
@@ -824,6 +872,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          set title = @title,
             sport_id = @sport_id,
             no_grouping = @no_grouping,
+            public_date_mode = @public_date_mode,
             updated_at = now()
          where id = @id
          """;
@@ -835,6 +884,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "no_grouping",
          model.NoGrouping
+      );
+      command.Parameters.AddWithValue(
+         "public_date_mode",
+         model.PublicDateMode
       );
 
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
@@ -1794,7 +1847,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "   coalesce(ro.related_organization_canonical_entities, '') " +
             "as related_organization_canonical_entities,"
          )
-         .AppendLine("   s.is_team_sport")
+         .AppendLine("   s.is_team_sport,")
+         .AppendLine(
+            $"   coalesce(ag.public_date_mode, " +
+            $"'{ActivityGroupPublicDateModeIds.SportDay}')"
+         )
          .AppendLine("from activities a")
          .AppendLine(
             "left join activity_groups ag on ag.id = a.activity_group_id"
@@ -1907,7 +1964,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          )
          .AppendLine(
             "         a.ends_at, ag.title, ag.no_grouping, " +
-            "s.is_team_sport"
+            "s.is_team_sport, ag.public_date_mode"
          )
          .AppendLine(orderClause);
 
@@ -2600,7 +2657,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                NoGrouping = reader.GetBoolean(22),
                RelatedOrganizationCanonicalEntities =
                   reader.GetString(23),
-               IsTeamSport = reader.GetBoolean(24)
+               IsTeamSport = reader.GetBoolean(24),
+               PublicDateMode = reader.GetString(25)
             }
          );
       }

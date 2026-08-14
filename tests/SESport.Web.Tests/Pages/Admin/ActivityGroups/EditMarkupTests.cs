@@ -19,5 +19,10 @@ public sealed class EditMarkupTests
          html
       );
       Assert.Contains("No Grouping", html);
+      Assert.Contains(
+         "asp-for=\"ActivityGroup.PublicDateMode\"",
+         html
+      );
+      Assert.Contains("Public date", html);
    }
 }

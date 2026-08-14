@@ -187,6 +187,10 @@ public sealed class ActivityRepositoryTests
 
          Assert.NotNull(model);
          Assert.False(model.NoGrouping);
+         Assert.Equal(
+            ActivityGroupPublicDateModeIds.SportDay,
+            model.PublicDateMode
+         );
          model.NoGrouping = true;
 
          Assert.True(
@@ -213,6 +217,82 @@ public sealed class ActivityRepositoryTests
             item => item.Id == activityId
          );
          Assert.True(activity.NoGrouping);
+      }
+      finally
+      {
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+      }
+   }
+
+   [Fact]
+   public async Task GetPublishedForDateAsyncUsesLocalCalendarDateMode()
+   {
+      var activityGroupId = Guid.NewGuid();
+      var activityId = Guid.NewGuid();
+      var previousDate = DistantActivityDate;
+      var localDate = previousDate.AddDays(1);
+      var startsAt = TimeZoneHelper.ToUtc(
+         localDate,
+         TimeOnly.MinValue,
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityGroupAsync(dataSource, activityGroupId);
+
+      try
+      {
+         await using(var modeCommand = dataSource.CreateCommand(
+            """
+            update activity_groups
+            set public_date_mode = @public_date_mode
+            where id = @id
+            """
+         ))
+         {
+            modeCommand.Parameters.AddWithValue("id", activityGroupId);
+            modeCommand.Parameters.AddWithValue(
+               "public_date_mode",
+               ActivityGroupPublicDateModeIds.LocalCalendarDate
+            );
+            await modeCommand.ExecuteNonQueryAsync();
+         }
+
+         await InsertActivityAsync(
+            dataSource,
+            activityId,
+            localDate,
+            startsAt,
+            ActivityPublicationStatusIds.Published,
+            activityGroupId
+         );
+
+         var previousDateActivities =
+            await repository.GetPublishedForDateAsync(
+               previousDate,
+               CancellationToken.None
+            );
+         var localDateActivities =
+            await repository.GetPublishedForDateAsync(
+               localDate,
+               CancellationToken.None
+            );
+
+         Assert.DoesNotContain(
+            previousDateActivities,
+            activity => activity.Id == activityId
+         );
+         var activity = Assert.Single(
+            localDateActivities,
+            item => item.Id == activityId
+         );
+         Assert.Equal(
+            ActivityGroupPublicDateModeIds.LocalCalendarDate,
+            activity.PublicDateMode
+         );
       }
       finally
       {
