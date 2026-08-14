@@ -7,11 +7,6 @@ namespace SESport.Web.Formatting;
 
 public static class PublicTimeDisplay
 {
-   private const int MinutesPerHalfHour = 30;
-   private const int SecondsPerMinute = 60;
-   private const int SecondsPerHalfHour =
-      MinutesPerHalfHour * SecondsPerMinute;
-   private const int RoundingOffsetSeconds = SecondsPerHalfHour / 2;
    private const string ApproximationPrefix = "≈";
 
    public static string FormatExactTimeText(
@@ -52,11 +47,9 @@ public static class PublicTimeDisplay
 
    public static string FormatApproximateTime(TimeOnly time)
    {
-      var roundedTime = RoundToNearestHalfHour(time);
-
       return string.Concat(
          ApproximationPrefix,
-         FormatExactTime(roundedTime)
+         FormatExactTime(time)
       );
    }
 
@@ -65,20 +58,6 @@ public static class PublicTimeDisplay
       var localNow = TimeZoneHelper.ToLocal(now, SportDay.TimeZoneId);
 
       return $"Nu {localNow:HH:mm}";
-   }
-
-   public static TimeOnly RoundToNearestHalfHour(TimeOnly time)
-   {
-      var totalSeconds = (int)time.ToTimeSpan().TotalSeconds;
-      var roundedSeconds =
-         (totalSeconds + RoundingOffsetSeconds) /
-         SecondsPerHalfHour *
-         SecondsPerHalfHour;
-      var minutesInDay = 24 * 60;
-      var roundedMinutes =
-         roundedSeconds / SecondsPerMinute % minutesInDay;
-
-      return new TimeOnly(roundedMinutes / 60, roundedMinutes % 60);
    }
 
    private static TimeOnly? ParseTime(string? timeText)

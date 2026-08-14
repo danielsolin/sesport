@@ -180,10 +180,7 @@ public sealed class PublicActivityTimelineBuilder
          timelineSlot.Activity.StartsAt!.Value,
          SportDay.TimeZoneId
       );
-      var roundedTimelineTime =
-         PublicTimeDisplay.RoundToNearestHalfHour(
-            TimeOnly.FromDateTime(timelineStart.DateTime)
-         );
+      var timelineTime = TimeOnly.FromDateTime(timelineStart.DateTime);
       var timelineTimeLabel =
          PublicTimeDisplay.FormatApproximateTimeText(
             timelineSlot.Activity.TimeText,
@@ -199,8 +196,8 @@ public sealed class PublicActivityTimelineBuilder
          orderedActivities,
          activity.RelatedOrganizationEntities,
          GetDayPhase(timelineStart.Hour),
-         GetHourHandAngle(roundedTimelineTime),
-         $"{roundedTimelineTime.Minute * 6}deg",
+         GetHourHandAngle(timelineTime),
+         $"{timelineTime.Minute * 6}deg",
          timelineEndTimeLabel,
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),

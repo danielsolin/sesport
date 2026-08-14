@@ -305,7 +305,7 @@ public class PublicActivityTimelineBuilderTests
       Assert.Equal(["SVT1", "TV4"], section.Slots[0].TvChannels);
       Assert.Equal(["Eurosport"], section.Slots[1].TvChannels);
       Assert.Empty(section.Slots[2].TvChannels);
-      Assert.Equal("≈08:30", section.TimeLabel);
+      Assert.Equal("≈08:15", section.TimeLabel);
 
       var duringFirstActivity = new DateTimeOffset(
          2026,
@@ -328,7 +328,7 @@ public class PublicActivityTimelineBuilderTests
          ).Section!;
 
       Assert.True(activeSection.TimelineSlot.IsOngoing);
-      Assert.Equal("≈08:30", activeSection.TimeLabel);
+      Assert.Equal("≈08:15", activeSection.TimeLabel);
 
       var midday = new DateTimeOffset(
          2026,
@@ -407,10 +407,10 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Theory]
-   [InlineData(8, 14, "≈08:00")]
-   [InlineData(8, 15, "≈08:30")]
-   [InlineData(23, 50, "≈00:00")]
-   public void Build_RoundsTimesToNearestHalfHour(
+   [InlineData(8, 14, "≈08:14")]
+   [InlineData(8, 15, "≈08:15")]
+   [InlineData(23, 50, "≈23:50")]
+   public void Build_KeepsApproximateTimesWithoutRounding(
       int hour,
       int minute,
       string expectedLabel
