@@ -8,6 +8,16 @@
       Request.Query.ContainsKey(RouteKeys.Sport);
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
+   var latestPastActivityIndex = -1;
+   for(var index = 0; index < Model.TimelineEntries.Count; index++)
+   {
+      if(Model.TimelineEntries[index].Section?.HasEnded == true)
+      {
+         latestPastActivityIndex = index;
+      }
+   }
+   var shouldHidePastActivities = Model.IsSportToday &&
+      latestPastActivityIndex >= 0;
 }
 @section Head {
    <title>@Model.PublicSiteOptions.PageDescription – sesport</title>
@@ -226,9 +236,16 @@ else if(Model.TimelineEntries.Count == 0 &&
 }
 else
 {
-   <div class="activity-agenda">
-      @foreach(var timelineEntry in Model.TimelineEntries)
+   <div class="activity-agenda
+      @(shouldHidePastActivities
+         ? "activity-past-activities-hidden"
+         : "")"
+        data-activity-agenda>
+      @for(var timelineIndex = 0;
+            timelineIndex < Model.TimelineEntries.Count;
+            timelineIndex++)
       {
+         var timelineEntry = Model.TimelineEntries[timelineIndex];
          if(timelineEntry.IsCurrentMarker)
          {
             <div class="activity-now-marker">
@@ -244,6 +261,24 @@ else
          if(timelineEntry.Section is null)
          {
             continue;
+         }
+
+         var isLatestPastActivity = shouldHidePastActivities &&
+            timelineIndex == latestPastActivityIndex;
+         @if(isLatestPastActivity)
+         {
+            <div class="activity-past-toggle-row">
+               <span class="activity-past-toggle-line"></span>
+               <button class="activity-past-toggle-button"
+                       type="button"
+                       data-activity-past-toggle
+                       data-collapsed-label="Visa Tidigare"
+                       data-expanded-label="Dölj Tidigare"
+                       aria-expanded="false">
+                  Visa Tidigare
+               </button>
+               <span class="activity-past-toggle-line"></span>
+            </div>
          }
 
          var agendaSection = timelineEntry.Section;
@@ -271,10 +306,16 @@ else
             : agendaSection.HasEnded
                ? "activity-has-ended"
                : "activity-is-upcoming";
+         var pastActivityVisibilityClass = shouldHidePastActivities &&
+            agendaSection.HasEnded &&
+            !isLatestPastActivity
+               ? "activity-past-activity-hidden"
+               : "";
 
          <section class="activity-agenda-section
                             @dayPhaseClass
                             @timingClass
+                            @pastActivityVisibilityClass
                             @(isGrouped
                                ? "activity-agenda-section-grouped"
                                : "")">
@@ -751,5 +792,7 @@ else
    <script src="~/js/public-participant-table.js"
            asp-append-version="true"></script>
    <script src="~/js/public-current-marker-scroll.js"
+           asp-append-version="true"></script>
+   <script src="~/js/public-past-activities.js"
            asp-append-version="true"></script>
 }

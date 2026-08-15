@@ -446,6 +446,63 @@
    );
 }
 
+.activity-past-toggle-row {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   position: relative;
+   z-index: 2;
+   margin: 4px 0 -14px;
+   margin-left: calc(
+      var(--activity-time-column) + var(--activity-time-gap)
+   );
+}
+
+.activity-past-toggle-line {
+   flex: 1;
+   height: 1px;
+   background:
+      linear-gradient(
+         90deg,
+         transparent,
+         rgba(0, 106, 168, 0.22),
+         transparent
+      );
+}
+
+.activity-past-toggle-button {
+   display: inline-flex;
+   align-items: center;
+   padding: 7px 14px;
+   border: 1px solid rgba(0, 106, 168, 0.45);
+   border-radius: 999px;
+   background: rgba(0, 106, 168, 0.14);
+   color: var(--accent-strong);
+   font: inherit;
+   font-size: 12px;
+   font-weight: 800;
+   letter-spacing: 0.04em;
+   white-space: nowrap;
+   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
+   cursor: pointer;
+}
+
+.activity-past-toggle-button:hover {
+   border-color: rgba(0, 106, 168, 0.7);
+   background: rgba(0, 106, 168, 0.22);
+   color: var(--accent-strong);
+}
+
+.activity-past-toggle-button:focus-visible {
+   outline: 2px solid rgba(0, 106, 168, 0.45);
+   outline-offset: 2px;
+}
+
+.activity-past-activities-hidden
+   .activity-past-activity-hidden {
+   display: none;
+}
+
 .activity-now-marker-line {
    flex: 1;
    height: 1px;
@@ -469,7 +526,6 @@
    font-size: 12px;
    font-weight: 800;
    letter-spacing: 0.04em;
-   text-transform: uppercase;
    white-space: nowrap;
    box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
 }
