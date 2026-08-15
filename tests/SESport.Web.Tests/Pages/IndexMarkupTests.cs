@@ -94,11 +94,26 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("participantActivity", html);
       Assert.DoesNotContain("activity-group-participant-title", html);
       Assert.Contains("activity-participant-table-collapsed", html);
+      Assert.Contains(
+         "activity-participant-table-inactive-",
+         html
+      );
       Assert.Contains("activity-participant-table-frame", html);
       Assert.Contains("activity-participant-table-fade", html);
       Assert.Contains("data-participant-toggle", html);
       Assert.Contains("data-collapsed-label=\"Visa alla\"", html);
       Assert.Contains("data-expanded-label=\"Visa färre\"", html);
+      Assert.Contains("data-participant-inactive-toggle", html);
+      Assert.Contains(
+         "data-collapsed-label=\"Visa utslagna\"",
+         html
+      );
+      Assert.Contains(
+         "data-expanded-label=\"Dölj utslagna\"",
+         html
+      );
+      Assert.Contains("activeParticipantCount", html);
+      Assert.Contains("hasInactiveParticipants", html);
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
       Assert.Contains("participant.HasDiscipline", html);
@@ -168,6 +183,12 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
+         ".activity-participant-table-inactive-collapsed\n" +
+         "   .activity-participant-inactive {\n" +
+         "   display: none;",
+         css
+      );
+      Assert.Contains(
          ".activity-participant-table-fade {\n" +
          "   display: none;\n" +
          "   position: absolute;",
@@ -194,6 +215,20 @@ public sealed class IndexMarkupTests
          "   margin-bottom: -24px;",
          css
       );
+      Assert.Contains(
+         ".activity-participant-inactive-toggle[aria-expanded=\"false\"]",
+         css
+      );
+      Assert.Contains(
+         "data-participant-inactive-toggle",
+         participantScript
+      );
+      Assert.Contains(
+         "activity-participant-table-inactive-collapsed",
+         participantScript
+      );
+      Assert.Contains("Visa utslagna", participantScript);
+      Assert.Contains("Dölj utslagna", participantScript);
       Assert.DoesNotContain(
          ".activity-has-ended .activity-participant-out-badge",
          css

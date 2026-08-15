@@ -550,13 +550,25 @@ else
                            participantTableClass +=
                               " activity-participant-table-has-discipline";
                         }
+                        var activeParticipantCount = participants.Count(
+                           participant => participant.IsActive
+                        );
+                        var hasInactiveParticipants = participants.Any(
+                           participant => !participant.IsActive
+                        );
                         var shouldCollapseParticipants =
-                           participants.Count >
+                           activeParticipantCount >
                               maxVisibleParticipants;
                         if(shouldCollapseParticipants)
                         {
                            participantTableClass +=
                               " activity-participant-table-collapsed";
+                        }
+                        if(hasInactiveParticipants)
+                        {
+                           participantTableClass +=
+                              " activity-participant-table-inactive-" +
+                              "collapsed";
                         }
                         var participantTableId =
                            $"participant-table-{activity.Id:N}";
@@ -649,23 +661,19 @@ else
                                           participant.TeamCountryId,
                                           hasPrimaryCountryTeam
                                        );
-                                    var rowClass =
-                                       participant.IsActive
-                                          ? shouldCollapseParticipants &&
-                                            participantIndex >=
-                                               maxVisibleParticipants
-                                             ? "activity-participant-row-" +
-                                                "collapsed"
-                                             : null
-                                          : shouldCollapseParticipants &&
-                                            participantIndex >=
-                                               maxVisibleParticipants
-                                             ? "activity-participant-" +
-                                                "inactive " +
-                                                "activity-participant-row-" +
-                                                "collapsed"
-                                             : "activity-participant-" +
-                                                "inactive";
+                                    var activeParticipantIndex = participants
+                                       .Take(participantIndex)
+                                       .Count(
+                                          item => item.IsActive
+                                       );
+                                    var rowClass = !participant.IsActive
+                                       ? "activity-participant-inactive"
+                                       : shouldCollapseParticipants &&
+                                          activeParticipantIndex >=
+                                             maxVisibleParticipants
+                                          ? "activity-participant-row-" +
+                                             "collapsed"
+                                          : null;
                                     <tr class="@rowClass"
                                         data-participant-name=
                                            "@participant.Name"
@@ -770,6 +778,19 @@ else
                                       aria-controls="@participantTableId"
                                       aria-expanded="false">
                                  Visa alla
+                              </button>
+                           }
+                           @if(hasInactiveParticipants)
+                           {
+                              <button type="button"
+                                      class="activity-participant-toggle
+                                         activity-participant-inactive-toggle"
+                                      data-participant-inactive-toggle
+                                      data-collapsed-label="Visa utslagna"
+                                      data-expanded-label="Dölj utslagna"
+                                      aria-controls="@participantTableId"
+                                      aria-expanded="false">
+                                 Visa utslagna
                               </button>
                            }
                         </div>

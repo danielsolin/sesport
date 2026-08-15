@@ -1151,6 +1151,11 @@
    display: none;
 }
 
+.activity-participant-table-inactive-collapsed
+   .activity-participant-inactive {
+   display: none;
+}
+
 .activity-participant-table-fade {
    display: none;
    position: absolute;
@@ -1191,6 +1196,11 @@
 .activity-participant-toggle[aria-expanded="false"] {
    transform: translateY(-32px);
    margin-bottom: -24px;
+}
+
+.activity-participant-inactive-toggle[aria-expanded="false"] {
+   transform: none;
+   margin-bottom: 0;
 }
 
 .activity-participant-toggle:hover {

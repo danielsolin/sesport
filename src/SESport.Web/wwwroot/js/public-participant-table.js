@@ -3,6 +3,8 @@
    const sortSelector = "[data-participant-sort]";
    const participantExpansionStorageKey =
       "sesport-public-participant-expansions";
+   const inactiveCollapsedClass =
+      "activity-participant-table-inactive-collapsed";
    const autoReloadMarkerKey = "sesport-public-auto-reload";
    const restoreParticipantExpansion = hasAutoReloadMarker();
    const expandedTableIds = restoreParticipantExpansion
@@ -57,6 +59,17 @@
             table.classList.toggle("activity-participant-table-collapsed");
             updateCollapseButton(table, collapseButton);
             saveExpandedTableState(table);
+         });
+      }
+
+      const inactiveToggle = getInactiveToggle(table);
+
+      if(inactiveToggle !== null)
+      {
+         updateInactiveToggle(table, inactiveToggle);
+         inactiveToggle.addEventListener("click", () => {
+            table.classList.toggle(inactiveCollapsedClass);
+            updateInactiveToggle(table, inactiveToggle);
          });
       }
    });
@@ -253,6 +266,22 @@
       return button instanceof HTMLButtonElement ? button : null;
    }
 
+   function getInactiveToggle(table)
+   {
+      const wrap = table.closest(".activity-participant-table-wrap");
+
+      if(!(wrap instanceof HTMLElement))
+      {
+         return null;
+      }
+
+      const button = wrap.querySelector(
+         "[data-participant-inactive-toggle]"
+      );
+
+      return button instanceof HTMLButtonElement ? button : null;
+   }
+
    function updateCollapseButton(table, button)
    {
       const collapsed = table.classList.contains(
@@ -261,6 +290,19 @@
       const label = collapsed
          ? button.dataset.collapsedLabel ?? "Visa alla"
          : button.dataset.expandedLabel ?? "Visa färre";
+
+      button.textContent = label;
+      button.setAttribute("aria-expanded", (!collapsed).toString());
+   }
+
+   function updateInactiveToggle(table, button)
+   {
+      const collapsed = table.classList.contains(
+         inactiveCollapsedClass
+      );
+      const label = collapsed
+         ? button.dataset.collapsedLabel ?? "Visa utslagna"
+         : button.dataset.expandedLabel ?? "Dölj utslagna";
 
       button.textContent = label;
       button.setAttribute("aria-expanded", (!collapsed).toString());
