@@ -1457,28 +1457,28 @@
 
    .activity-agenda-section-grouped
       .activity-group-schedule-item {
-      grid-template-columns: auto minmax(0, 1fr);
-      grid-template-rows: auto;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 3px 10px;
    }
 
    .activity-agenda-section-grouped
       .activity-group-slot-time {
       display: block;
-      grid-column: 1;
-      grid-row: 1;
+      flex: 0 0 auto;
    }
 
    .activity-agenda-section-grouped
       .activity-group-slot-content {
       display: block;
-      grid-column: 2;
-      grid-row: 1;
+      flex: 1 1 auto;
+      min-width: 0;
    }
 
    .activity-agenda-section-grouped
       .activity-group-schedule-item.has-tv-channels {
-      grid-template-columns: auto minmax(0, 1fr);
-      grid-template-rows: auto;
+      display: flex;
    }
 
    .activity-agenda-section-grouped
@@ -1490,8 +1490,7 @@
    .activity-agenda-section-grouped
       .activity-group-schedule-item.has-tv-channels
       .activity-group-slot-content {
-      grid-column: 2;
-      grid-row: 1;
+      flex: 1 1 auto;
    }
 
    .activity-is-ongoing .activity-entry-organization,

@@ -290,20 +290,22 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
          "      .activity-group-schedule-item {\n" +
-         "      grid-template-columns: auto minmax(0, 1fr);\n" +
-         "      grid-template-rows: auto;",
+         "      display: flex;\n" +
+         "      flex-wrap: nowrap;",
          css
       );
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
          "      .activity-group-slot-time {\n" +
-         "      display: block;",
+         "      display: block;\n" +
+         "      flex: 0 0 auto;",
          css
       );
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
          "      .activity-group-slot-content {\n" +
-         "      display: block;",
+         "      display: block;\n" +
+         "      flex: 1 1 auto;",
          css
       );
       Assert.Contains(
