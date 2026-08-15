@@ -50,15 +50,6 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-date-dropdown-toggle", html);
       Assert.Contains("data-date-dropdown-menu", html);
       Assert.Contains("public-date-select.js", html);
-      Assert.Contains("public-current-marker-scroll.js", html);
-      Assert.Contains(
-         "<script src=\"~/js/public-current-marker-scroll.js\"",
-         html
-      );
-      Assert.DoesNotContain(
-         "@*\n   <script src=\"~/js/public-current-marker-scroll.js\"",
-         html
-      );
       Assert.Contains(
          "sesport-public-participant-expansions",
          participantScript

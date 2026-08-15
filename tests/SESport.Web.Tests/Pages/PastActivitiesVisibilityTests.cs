@@ -1,9 +1,9 @@
 namespace SESport.Core.Tests.Pages;
 
-public sealed class PastActivitiesToggleTests
+public sealed class PastActivitiesVisibilityTests
 {
    [Fact]
-   public async Task IndexPageIncludesPastActivityToggle()
+   public async Task IndexPageHidesAllPastActivitiesOnToday()
    {
       var repoRoot = Path.GetFullPath(
          Path.Combine(AppContext.BaseDirectory, "../../../../..")
@@ -28,12 +28,9 @@ public sealed class PastActivitiesToggleTests
          "var shouldHidePastActivities = Model.IsSportToday &&",
          page
       );
-      Assert.Contains("data-activity-agenda", page);
-      Assert.Contains("data-activity-past-toggle", page);
-      Assert.Contains("Visa Tidigare", page);
-      Assert.Contains("Dölj Tidigare", page);
       Assert.Contains(
-         "<script src=\"~/js/public-past-activities.js\"",
+         "var pastActivityVisibilityClass = shouldHidePastActivities &&\n" +
+         "            agendaSection.HasEnded",
          page
       );
       Assert.Contains(
@@ -42,20 +39,17 @@ public sealed class PastActivitiesToggleTests
          "   display: none;",
          css
       );
+      Assert.DoesNotContain("isLatestPastActivity", page);
+      Assert.Contains("data-activity-past-toggle", page);
+      Assert.Contains("public-past-activities.js", page);
+      Assert.Contains("event.preventDefault();", script);
+      Assert.Contains("const scrollX = window.scrollX;", script);
+      Assert.Contains("const scrollY = window.scrollY;", script);
+      Assert.Contains("window.scrollTo({", script);
+      Assert.Contains("behavior: \"auto\"", script);
       Assert.Contains(
-         ".activity-past-toggle-row {",
-         css
-      );
-      Assert.Contains(
-         "const hiddenClass = \"activity-past-activities-hidden\";",
-         script
-      );
-      Assert.Contains(
-         "agenda.classList.toggle(hiddenClass);",
-         script
-      );
-      Assert.Contains(
-         "toggle.setAttribute(\"aria-expanded\", String(!isHidden));",
+         "window.requestAnimationFrame(() => {\n" +
+         "         window.requestAnimationFrame(restoreScrollPosition);",
          script
       );
    }

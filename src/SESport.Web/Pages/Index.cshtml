@@ -8,16 +8,16 @@
       Request.Query.ContainsKey(RouteKeys.Sport);
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
-   var latestPastActivityIndex = -1;
+   var pastActivityToggleIndex = -1;
    for(var index = 0; index < Model.TimelineEntries.Count; index++)
    {
       if(Model.TimelineEntries[index].Section?.HasEnded == true)
       {
-         latestPastActivityIndex = index;
+         pastActivityToggleIndex = index;
       }
    }
    var shouldHidePastActivities = Model.IsSportToday &&
-      latestPastActivityIndex >= 0;
+      pastActivityToggleIndex >= 0;
 }
 @section Head {
    <title>@Model.PublicSiteOptions.PageDescription – sesport</title>
@@ -263,9 +263,9 @@ else
             continue;
          }
 
-         var isLatestPastActivity = shouldHidePastActivities &&
-            timelineIndex == latestPastActivityIndex;
-         @if(isLatestPastActivity)
+         var shouldRenderPastActivityToggle = shouldHidePastActivities &&
+            timelineIndex == pastActivityToggleIndex;
+         @if(shouldRenderPastActivityToggle)
          {
             <div class="activity-past-toggle-row">
                <span class="activity-past-toggle-line"></span>
@@ -307,8 +307,7 @@ else
                ? "activity-has-ended"
                : "activity-is-upcoming";
          var pastActivityVisibilityClass = shouldHidePastActivities &&
-            agendaSection.HasEnded &&
-            !isLatestPastActivity
+            agendaSection.HasEnded
                ? "activity-past-activity-hidden"
                : "";
 
@@ -790,8 +789,6 @@ else
    <script src="~/js/public-sport-select.js"
            asp-append-version="true"></script>
    <script src="~/js/public-participant-table.js"
-           asp-append-version="true"></script>
-   <script src="~/js/public-current-marker-scroll.js"
            asp-append-version="true"></script>
    <script src="~/js/public-past-activities.js"
            asp-append-version="true"></script>
