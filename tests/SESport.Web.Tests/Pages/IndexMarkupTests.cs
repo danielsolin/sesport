@@ -290,14 +290,14 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
          "      .activity-group-schedule-item {\n" +
-         "      grid-template-columns: minmax(0, 1fr);\n" +
+         "      grid-template-columns: auto minmax(0, 1fr);\n" +
          "      grid-template-rows: auto;",
          css
       );
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
          "      .activity-group-slot-time {\n" +
-         "      display: none;",
+         "      display: block;",
          css
       );
       Assert.Contains(
@@ -332,6 +332,12 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains("@media (orientation: portrait)", css);
+      Assert.Contains(
+         ".activity-agenda {\n" +
+         "      --activity-time-column: 112px;\n" +
+         "      --activity-time-gap: 6px;",
+         css
+      );
       Assert.Contains(
          ".activity-participant-table-has-start-time\n" +
          "      .activity-participant-col-age {\n" +
