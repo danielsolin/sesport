@@ -276,11 +276,21 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
             raw_programme_xml, image_url
          )
          on target.fingerprint = source.fingerprint
+            or (
+               target.id = source.id
+               and not exists (
+                  select 1
+                  from broadcasts as fingerprint_target
+                  where fingerprint_target.fingerprint = source.fingerprint
+                    and fingerprint_target.id <> target.id
+               )
+            )
          when matched then
             update set
                import_run_id = source.import_run_id,
                source_key = source.source_key,
                external_id = source.external_id,
+               fingerprint = source.fingerprint,
                channel_id = source.channel_id,
                channel_name = source.channel_name,
                title = source.title,

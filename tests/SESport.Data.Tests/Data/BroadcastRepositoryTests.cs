@@ -212,6 +212,104 @@ public sealed class BroadcastRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task SaveAsyncRepairsLegacyFingerprintForExistingId()
+   {
+      var broadcastId = Guid.NewGuid();
+      var importRunId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var legacyFingerprint = $"legacy-{uniqueSuffix}";
+      var currentFingerprint = $"current-{uniqueSuffix}";
+      var startsAt = new DateTimeOffset(
+         2199,
+         12,
+         1,
+         11,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var endsAt = startsAt.AddHours(2);
+
+      await using var dataSource = CreateDataSource();
+      var repository = new BroadcastImportRepository(dataSource);
+      var broadcast = new global::SESport.Core.Broadcast.Broadcast(
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         currentFingerprint,
+         "channel-1",
+         "Viaplay",
+         "Updated title",
+         null,
+         ["Test"],
+         false,
+         null,
+         startsAt,
+         endsAt,
+         "Europe/Stockholm",
+         null,
+         null
+      );
+
+      try
+      {
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            $"external-{uniqueSuffix}",
+            legacyFingerprint,
+            "channel-1",
+            "Viaplay",
+            "Legacy title",
+            ["Test"],
+            startsAt,
+            endsAt
+         );
+
+         var importRun = new BroadcastImportRun(
+            importRunId,
+            sourceKey,
+            new Uri("https://example.invalid/broadcasts"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            BroadcastImportRunStatus.Completed,
+            1
+         );
+
+         var result = await repository.SaveAsync(
+            importRun,
+            [broadcast],
+            CancellationToken.None
+         );
+
+         Assert.Equal(1, result.UpdatedCount);
+         Assert.Equal(0, result.InsertedCount);
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select id, fingerprint, title
+            from broadcasts
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", broadcastId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal(broadcastId, reader.GetGuid(0));
+         Assert.Equal(currentFingerprint, reader.GetString(1));
+         Assert.Equal("Updated title", reader.GetString(2));
+      }
+      finally
+      {
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteImportRunAsync(dataSource, importRunId);
+      }
+   }
+
    private static async Task InsertBroadcastAsync(
       NpgsqlDataSource dataSource,
       Guid broadcastId,
@@ -329,6 +427,22 @@ public sealed class BroadcastRepositoryTests
          where id = @id
          """;
       command.Parameters.AddWithValue("id", broadcastId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteImportRunAsync(
+      NpgsqlDataSource dataSource,
+      Guid importRunId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from broadcast_import_runs
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", importRunId);
 
       await command.ExecuteNonQueryAsync();
    }
