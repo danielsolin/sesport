@@ -99,7 +99,7 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("activity-participant-table-frame", html);
-      Assert.Contains("activity-participant-table-fade", html);
+      Assert.DoesNotContain("activity-participant-table-fade", html);
       Assert.Contains("data-participant-toggle", html);
       Assert.Contains("data-collapsed-label=\"Visa alla\"", html);
       Assert.Contains("data-expanded-label=\"Visa färre\"", html);
@@ -188,34 +188,22 @@ public sealed class IndexMarkupTests
          "   display: none;",
          css
       );
-      Assert.Contains(
-         ".activity-participant-table-fade {\n" +
-         "   display: none;\n" +
-         "   position: absolute;",
-         css
-      );
+      Assert.DoesNotContain(".activity-participant-table-fade", css);
       Assert.Contains(
          ".activity-participant-table-frame {\n" +
-         "   position: relative;\n" +
          "   width: 100%;\n" +
          "   overflow-x: auto;",
          css
       );
       Assert.Contains(
          ".activity-participant-toggle {\n" +
-         "   position: relative;\n" +
          "   display: inline-block;\n" +
          "   padding: 0;\n" +
          "   border: 0;",
          css
       );
-      Assert.Contains(
-         ".activity-participant-toggle[aria-expanded=\"false\"] {\n" +
-         "   transform: translateY(-32px);\n" +
-         "   margin-bottom: -24px;",
-         css
-      );
-      Assert.Contains(
+      Assert.DoesNotContain("translateY(-32px)", css);
+      Assert.DoesNotContain(
          ".activity-participant-inactive-toggle[aria-expanded=\"false\"]",
          css
       );
