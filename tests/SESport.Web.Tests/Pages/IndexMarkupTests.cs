@@ -307,6 +307,13 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
+         ".activity-agenda-section-grouped\n" +
+         "      .activity-group-schedule-item.has-tv-channels\n" +
+         "      .activity-group-slot-channel-list {\n" +
+         "      display: none;",
+         css
+      );
+      Assert.Contains(
          "grid-template-columns: auto minmax(0, 1fr) auto;",
          css
       );
