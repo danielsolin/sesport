@@ -175,6 +175,10 @@ AI jobs may require the following runtime dependencies:
 - Playwright Chromium for browser-backed fetching and translation;
 - Tesseract with English language data for image OCR.
 
+Browser-backed page fetching uses Chromium as its baseline and opportunistically
+tries Playwright's alternate Chromium mode, installed Chrome, Firefox, or
+WebKit when those browser runtimes are available on the host.
+
 These dependencies are host concerns. The AI project receives their clients
 or options through constructors and does not own deployment or process
 startup.

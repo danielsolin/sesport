@@ -25,6 +25,10 @@ internal static class WebPageBlockDetection
 
    private static readonly string[] BrowserSignatures =
    [
+      "access denied",
+      "you do not have permission to access",
+      "you don't have permission to access",
+      "errors edgesuite net",
       "performing security verification",
       "incompatible browser extension or network configuration",
       "this website uses a security service to protect against " +

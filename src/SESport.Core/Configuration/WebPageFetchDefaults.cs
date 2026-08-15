@@ -29,6 +29,9 @@ public static class WebPageFetchDefaults
    public const int MaxResponseCharacters = 50000;
    public const int MaxRelevantLinkCount = 20;
    public const int MaxTransientRetryAttempts = 3;
+   public const int BrowserNavigationRetryAttempts = 2;
+   public static readonly TimeSpan BrowserNavigationRetryDelay =
+      TimeSpan.FromSeconds(2);
    public const int CurlMaxTimeSeconds = 30;
    public static readonly IReadOnlyList<TimeSpan> TransientRetryDelays =
    [

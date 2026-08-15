@@ -6,6 +6,15 @@ namespace SESport.AI.WebPages;
 
 internal static class WebPageBrowserPageFetcher
 {
+   private static readonly BrowserStrategy[] BrowserStrategies =
+   [
+      new(BrowserEngine.Chromium, null, true),
+      new(BrowserEngine.Chromium, "chromium", false),
+      new(BrowserEngine.Chromium, "chrome", false),
+      new(BrowserEngine.Firefox, null, false),
+      new(BrowserEngine.Webkit, null, false)
+   ];
+
    internal static async Task<WebPageContent?> FetchAsync(
       Func<Task<string>> browserUserAgentFetcher,
       Uri absoluteUrl,
@@ -14,127 +23,69 @@ internal static class WebPageBrowserPageFetcher
    {
       try
       {
-         var absoluteUrlString = absoluteUrl.ToString();
          var browserUserAgent = await browserUserAgentFetcher()
             .WaitAsync(cancellationToken);
          using var playwright = await Playwright.CreateAsync()
             .WaitAsync(cancellationToken);
-         await using var browser = await playwright.Chromium.LaunchAsync(
-            new BrowserTypeLaunchOptions
+         WebPageContent? lastBlockedContent = null;
+         WebPageFetchException? lastException = null;
+
+         foreach(var strategy in BrowserStrategies)
+         {
+            try
             {
-               Headless = true
+               var content = await FetchWithStrategyAsync(
+                  playwright,
+                  strategy,
+                  browserUserAgent,
+                  absoluteUrl,
+                  cancellationToken
+               );
+
+               if(IsUsableContent(content))
+               {
+                  return content;
+               }
+
+               if(content?.FetchErrorKind is not null)
+               {
+                  lastBlockedContent = content;
+               }
             }
-         ).WaitAsync(cancellationToken);
-
-         await using var context = await browser.NewContextAsync(
-            BuildContextOptions(browserUserAgent)
-         ).WaitAsync(cancellationToken);
-
-         await using var page = await context.NewPageAsync()
-            .WaitAsync(cancellationToken);
-         try
-         {
-            await page.GotoAsync(
-               absoluteUrl.ToString(),
-               new PageGotoOptions
-               {
-                  WaitUntil = WaitUntilState.DOMContentLoaded,
-                  Timeout = (float)
-                     WebPageFetchDefaults.BrowserNavigationTimeout
-                        .TotalMilliseconds
-               }
-            ).WaitAsync(cancellationToken);
-         }
-         catch(TimeoutException)
-         {
-            // Some SPA pages keep loading long enough to miss the initial
-            // DOMContentLoaded wait, but still render useful content after
-            // the browser is allowed to continue.
+            catch(OperationCanceledException)
+               when(cancellationToken.IsCancellationRequested)
+            {
+               throw;
+            }
+            catch(TimeoutException exception)
+            {
+               lastException = new WebPageFetchException(
+                  WebPageFetchErrorKind.Timeout,
+                  exception.Message,
+                  exception
+               );
+            }
+            catch(PlaywrightException exception)
+            {
+               lastException = new WebPageFetchException(
+                  WebPageFetchErrorKind.BrowserBlocked,
+                  exception.Message,
+                  exception
+               );
+            }
          }
 
-         try
+         if(lastBlockedContent is not null)
          {
-            await page.WaitForLoadStateAsync(
-               LoadState.NetworkIdle,
-               new PageWaitForLoadStateOptions
-               {
-                  Timeout = (float)
-                     WebPageFetchDefaults.BrowserLoadStateTimeout
-                        .TotalMilliseconds
-               }
-            ).WaitAsync(cancellationToken);
-         }
-         catch(PlaywrightException)
-         {
-         }
-         catch(TimeoutException)
-         {
+            return lastBlockedContent;
          }
 
-         cancellationToken.ThrowIfCancellationRequested();
-         await ScrollThroughPageAsync(page, cancellationToken);
-         await WaitForContentStabilityAsync(page, cancellationToken);
-
-         var title = await page.TitleAsync()
-            .WaitAsync(cancellationToken);
-         var renderedHtml = await page.ContentAsync()
-            .WaitAsync(cancellationToken);
-         var renderedRelevantLinks =
-            WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
-               renderedHtml,
-               absoluteUrl
-            );
-         var relevantImages = await ExtractRelevantImagesAsync(page)
-            .WaitAsync(cancellationToken);
-         await page.EvaluateAsync(
-            WebPageNormalizationScript.Build()
-         ).WaitAsync(cancellationToken);
-         var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
-            "element => element.innerHTML"
-         ).WaitAsync(cancellationToken);
-         var normalizedText =
-            WebPageContentFetchSupport
-               .ExtractHtmlTextWithEmbeddedState(bodyHtml);
-
-         var blockedSignature = WebPageBlockDetection
-            .FindBlockedSignature(
-               title,
-               normalizedText,
-               WebPageBlockSource.Browser
-            );
-         if(blockedSignature is not null)
+         if(lastException is not null)
          {
-            return WebPageContentFetchSupport.BuildFailureContent(
-               absoluteUrl,
-               title,
-               WebPageFetchErrorKind.BrowserBlocked,
-               "Browser renderer returned a blocked page: " +
-               blockedSignature + ".",
-               "playwright"
-            );
+            throw lastException;
          }
 
-         return new WebPageContent(
-            string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
-            absoluteUrlString,
-            null,
-            [],
-            WebPageContentFetchSupport.ApplyResponseCutoff(
-               normalizedText
-            ),
-            !string.IsNullOrWhiteSpace(normalizedText),
-            normalizedText,
-            Fetcher: "playwright",
-            RelevantLinks:
-               WebPageContentFetchSupport.MergeRelevantLinks(
-                  renderedRelevantLinks,
-                  WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
-                     bodyHtml,
-                     absoluteUrl
-                  )
-               ),
-            RelevantImages: relevantImages
-         );
+         return null;
       }
       catch(OperationCanceledException)
       {
@@ -159,12 +110,11 @@ internal static class WebPageBrowserPageFetcher
    }
 
    internal static BrowserNewContextOptions BuildContextOptions(
-      string browserUserAgent
+      string? browserUserAgent = null
    )
    {
-      return new BrowserNewContextOptions
+      var options = new BrowserNewContextOptions
       {
-         UserAgent = browserUserAgent,
          Locale = WebPageFetchDefaults.BrowserLocale,
          ViewportSize = new ViewportSize
          {
@@ -172,7 +122,237 @@ internal static class WebPageBrowserPageFetcher
             Height = WebPageFetchDefaults.BrowserViewportHeight
          }
       };
+
+      if(!string.IsNullOrWhiteSpace(browserUserAgent))
+      {
+         options.UserAgent = browserUserAgent;
+      }
+
+      return options;
    }
+
+   private static async Task<WebPageContent?> FetchWithStrategyAsync(
+      IPlaywright playwright,
+      BrowserStrategy strategy,
+      string browserUserAgent,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      var browserType = strategy.Engine switch
+      {
+         BrowserEngine.Chromium => playwright.Chromium,
+         BrowserEngine.Firefox => playwright.Firefox,
+         BrowserEngine.Webkit => playwright.Webkit,
+         _ => throw new ArgumentOutOfRangeException()
+      };
+
+      await using var browser = await browserType.LaunchAsync(
+         new BrowserTypeLaunchOptions
+         {
+            Channel = strategy.Channel,
+            Headless = true
+         }
+      ).WaitAsync(cancellationToken);
+
+      var userAgent = strategy.UseBrowserUserAgent
+         ? browserUserAgent
+         : null;
+      await using var context = await browser.NewContextAsync(
+         BuildContextOptions(userAgent)
+      ).WaitAsync(cancellationToken);
+
+      await using var page = await context.NewPageAsync()
+         .WaitAsync(cancellationToken);
+      WebPageContent? lastContent = null;
+
+      for(var attempt = 1;
+         attempt <= WebPageFetchDefaults.BrowserNavigationRetryAttempts;
+         attempt++)
+      {
+         var navigationResponse = await NavigateAsync(
+            page,
+            absoluteUrl,
+            cancellationToken
+         );
+         var content = await ReadPageContentAsync(
+            page,
+            absoluteUrl,
+            navigationResponse?.Status,
+            cancellationToken
+         );
+
+         if(IsUsableContent(content))
+         {
+            return content;
+         }
+
+         lastContent = content;
+
+         if(attempt < WebPageFetchDefaults.BrowserNavigationRetryAttempts)
+         {
+            await Task.Delay(
+               WebPageFetchDefaults.BrowserNavigationRetryDelay,
+               cancellationToken
+            );
+         }
+      }
+
+      return lastContent;
+   }
+
+   private static async Task<IResponse?> NavigateAsync(
+      IPage page,
+      Uri absoluteUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         return await page.GotoAsync(
+            absoluteUrl.ToString(),
+            new PageGotoOptions
+            {
+               WaitUntil = WaitUntilState.DOMContentLoaded,
+               Timeout = (float)
+                  WebPageFetchDefaults.BrowserNavigationTimeout
+                     .TotalMilliseconds
+            }
+         ).WaitAsync(cancellationToken);
+      }
+      catch(TimeoutException)
+      {
+         // Some SPA pages keep loading long enough to miss the initial
+         // DOMContentLoaded wait, but still render useful content after
+         // the browser is allowed to continue.
+         return null;
+      }
+   }
+
+   private static async Task<WebPageContent?> ReadPageContentAsync(
+      IPage page,
+      Uri absoluteUrl,
+      int? navigationStatus,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         await page.WaitForLoadStateAsync(
+            LoadState.NetworkIdle,
+            new PageWaitForLoadStateOptions
+            {
+               Timeout = (float)
+                  WebPageFetchDefaults.BrowserLoadStateTimeout
+                     .TotalMilliseconds
+            }
+         ).WaitAsync(cancellationToken);
+      }
+      catch(PlaywrightException)
+      {
+      }
+      catch(TimeoutException)
+      {
+      }
+
+      cancellationToken.ThrowIfCancellationRequested();
+      await ScrollThroughPageAsync(page, cancellationToken);
+      await WaitForContentStabilityAsync(page, cancellationToken);
+
+      var absoluteUrlString = absoluteUrl.ToString();
+      var title = await page.TitleAsync()
+         .WaitAsync(cancellationToken);
+      var renderedHtml = await page.ContentAsync()
+         .WaitAsync(cancellationToken);
+      var renderedRelevantLinks =
+         WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+            renderedHtml,
+            absoluteUrl
+         );
+      var relevantImages = await ExtractRelevantImagesAsync(page)
+         .WaitAsync(cancellationToken);
+      await page.EvaluateAsync(
+         WebPageNormalizationScript.Build()
+      ).WaitAsync(cancellationToken);
+      var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
+         "element => element.innerHTML"
+      ).WaitAsync(cancellationToken);
+      var normalizedText =
+         WebPageContentFetchSupport
+            .ExtractHtmlTextWithEmbeddedState(bodyHtml);
+
+      var blockedSignature = WebPageBlockDetection
+         .FindBlockedSignature(
+            title,
+            normalizedText,
+            WebPageBlockSource.Browser
+         );
+      var blockedStatus = navigationStatus is 401 or 403 or 429 &&
+         string.IsNullOrWhiteSpace(normalizedText);
+
+      if(blockedSignature is not null || blockedStatus)
+      {
+         var statusText = navigationStatus is int status
+            ? $" HTTP {status}."
+            : string.Empty;
+         var reason = blockedSignature is not null
+            ? "Browser renderer returned a blocked page: " +
+               blockedSignature + "." + statusText
+            : "Browser renderer returned no content." + statusText;
+
+         return WebPageContentFetchSupport.BuildFailureContent(
+            absoluteUrl,
+            title,
+            WebPageFetchErrorKind.BrowserBlocked,
+            reason,
+            "playwright"
+         );
+      }
+
+      return new WebPageContent(
+         string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
+         absoluteUrlString,
+         null,
+         [],
+         WebPageContentFetchSupport.ApplyResponseCutoff(
+            normalizedText
+         ),
+         !string.IsNullOrWhiteSpace(normalizedText),
+         normalizedText,
+         Fetcher: "playwright",
+         RelevantLinks:
+            WebPageContentFetchSupport.MergeRelevantLinks(
+               renderedRelevantLinks,
+               WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
+                  bodyHtml,
+                  absoluteUrl
+               )
+            ),
+         RelevantImages: relevantImages
+      );
+   }
+
+   private static bool IsUsableContent(WebPageContent? content)
+   {
+      return content is not null &&
+         content.FetchErrorKind is null &&
+         string.IsNullOrWhiteSpace(content.FetchErrorMessage) &&
+         (content.HasBodyText ||
+            content.RelevantImages is { Count: > 0 });
+   }
+
+   private enum BrowserEngine
+   {
+      Chromium,
+      Firefox,
+      Webkit
+   }
+
+   private sealed record BrowserStrategy(
+      BrowserEngine Engine,
+      string? Channel,
+      bool UseBrowserUserAgent
+   );
 
    private static async Task<WebPageImageCandidate[]>
       ExtractRelevantImagesAsync(

@@ -924,6 +924,15 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void BrowserContextCanLeaveUserAgentToBrowserEngine()
+   {
+      var options = WebPageBrowserPageFetcher.BuildContextOptions();
+
+      Assert.Null(options.UserAgent);
+      Assert.Null(options.ExtraHTTPHeaders);
+   }
+
+   [Fact]
    public void BrowserBlockDetectionMatchesCloudflareVerificationPage()
    {
       var blocked = WebPageBlockDetection.IsBlocked(
@@ -947,6 +956,19 @@ public class WebPageContentClientTests
       );
 
       Assert.False(blocked);
+   }
+
+   [Fact]
+   public void BrowserBlockDetectionMatchesAkamaiAccessDeniedPage()
+   {
+      var blocked = WebPageBlockDetection.IsBlocked(
+         "Access Denied",
+         "You don't have permission to access this page. " +
+         "Reference #18.12345678.1234567890.abcdef01",
+         WebPageBlockSource.Browser
+      );
+
+      Assert.True(blocked);
    }
 
    [Theory]
