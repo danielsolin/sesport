@@ -240,6 +240,75 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Fact]
+   public void BuildPutsTierZeroFirstInGroupedParticipantList()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var regularParticipant = CreateParticipant(
+         "Regular participant",
+         null,
+         hasDiscipline: true,
+         disciplineAliasName: "100 m"
+      ) with
+      {
+         WatchPriority = 30
+      };
+      var tierZeroParticipant = CreateParticipant(
+         "Tier zero participant",
+         null,
+         hasDiscipline: true,
+         disciplineAliasName: "200 m"
+      ) with
+      {
+         WatchPriority = 0
+      };
+      var activities = new[]
+      {
+         CreateActivity(
+            "First round",
+            selectedDate,
+            now.AddMinutes(15),
+            activityGroupId: groupId,
+            activityGroupTitle: "Tournament"
+         ) with
+         {
+            Participants = [regularParticipant]
+         },
+         CreateActivity(
+            "Second round",
+            selectedDate,
+            now.AddHours(1),
+            activityGroupId: groupId,
+            activityGroupTitle: "Tournament"
+         ) with
+         {
+            Participants = [tierZeroParticipant]
+         }
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(activities, selectedDate, now);
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.Equal(
+         ["Tier zero participant", "Regular participant"],
+         section.Participants.Select(participant => participant.Name)
+      );
+   }
+
+   [Fact]
    public void Build_GroupsActivitiesFromSameGroupAndDate()
    {
       var now = new DateTimeOffset(
@@ -802,7 +871,9 @@ public class PublicActivityTimelineBuilderTests
 
    private static PublicActivityParticipant CreateParticipant(
       string name,
-      string? startTime
+      string? startTime,
+      bool hasDiscipline = false,
+      string? disciplineAliasName = null
    )
    {
       return new PublicActivityParticipant(
@@ -815,8 +886,8 @@ public class PublicActivityTimelineBuilderTests
          null,
          null,
          true,
-         false,
-         null
+         hasDiscipline,
+         disciplineAliasName
       );
    }
 }

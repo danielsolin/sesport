@@ -291,7 +291,9 @@ public sealed class PublicActivityTimelineBuilder
                participant.StartTime
             )
          })
-         .OrderBy(item => item.StartTime is null)
+         .OrderByDescending(item => item.Participant.IsActive)
+         .ThenBy(item => item.Participant.WatchPriority ?? int.MaxValue)
+         .ThenBy(item => item.StartTime is null)
          .ThenBy(item => item.StartTime)
          .ThenBy(item => item.Index)
          .Select(item => item.Participant)
