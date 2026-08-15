@@ -116,6 +116,14 @@ public class IndexModel(
          .Count();
    }
 
+   internal static bool ShouldCollapseInactiveParticipants(
+      int activeParticipantCount,
+      bool hasInactiveParticipants
+   )
+   {
+      return hasInactiveParticipants && activeParticipantCount > 0;
+   }
+
    internal static IReadOnlyList<SportParticipantCount>
       CountParticipantsBySport(
          IEnumerable<ActivityListItem> activities

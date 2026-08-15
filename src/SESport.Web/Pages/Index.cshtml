@@ -556,6 +556,11 @@ else
                         var hasInactiveParticipants = participants.Any(
                            participant => !participant.IsActive
                         );
+                        var shouldCollapseInactiveParticipants =
+                           IndexModel.ShouldCollapseInactiveParticipants(
+                              activeParticipantCount,
+                              hasInactiveParticipants
+                           );
                         var shouldCollapseParticipants =
                            activeParticipantCount >
                               maxVisibleParticipants;
@@ -564,7 +569,7 @@ else
                            participantTableClass +=
                               " activity-participant-table-collapsed";
                         }
-                        if(hasInactiveParticipants)
+                        if(shouldCollapseInactiveParticipants)
                         {
                            participantTableClass +=
                               " activity-participant-table-inactive-" +
@@ -776,6 +781,8 @@ else
                            }
                            @if(hasInactiveParticipants)
                            {
+                              var inactiveParticipantsAreCollapsed =
+                                 shouldCollapseInactiveParticipants;
                               <button type="button"
                                       class="activity-participant-toggle
                                          activity-participant-inactive-toggle"
@@ -783,8 +790,14 @@ else
                                       data-collapsed-label="Visa utslagna"
                                       data-expanded-label="Dölj utslagna"
                                       aria-controls="@participantTableId"
-                                      aria-expanded="false">
-                                 Visa utslagna
+                                      aria-expanded="@(
+                                         inactiveParticipantsAreCollapsed
+                                            ? "false"
+                                            : "true"
+                                      )">
+                                 @(inactiveParticipantsAreCollapsed
+                                    ? "Visa utslagna"
+                                    : "Dölj utslagna")
                               </button>
                            }
                         </div>

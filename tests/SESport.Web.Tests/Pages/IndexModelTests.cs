@@ -52,6 +52,24 @@ public sealed class IndexModelTests
       Assert.Equal(1, total);
    }
 
+   [Theory]
+   [InlineData(0, true, false)]
+   [InlineData(1, true, true)]
+   [InlineData(0, false, false)]
+   public void ShouldCollapseInactiveParticipantsRequiresActiveParticipants(
+      int activeParticipantCount,
+      bool hasInactiveParticipants,
+      bool expected
+   )
+   {
+      var result = IndexModel.ShouldCollapseInactiveParticipants(
+         activeParticipantCount,
+         hasInactiveParticipants
+      );
+
+      Assert.Equal(expected, result);
+   }
+
    [Fact]
    public void CountParticipantsBySportCountsUniqueIdsWithinEachSport()
    {
