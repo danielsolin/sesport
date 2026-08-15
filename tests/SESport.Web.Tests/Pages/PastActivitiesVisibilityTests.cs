@@ -64,6 +64,14 @@ public sealed class PastActivitiesVisibilityTests
       Assert.Contains("behavior: \"smooth\"", script);
       Assert.Contains("block: \"center\"", script);
       Assert.Contains(
+         "sesport-public-past-activities-expanded",
+         script
+      );
+      Assert.Contains("window.sessionStorage.getItem(", script);
+      Assert.Contains("window.sessionStorage.setItem(", script);
+      Assert.Contains("window.sessionStorage.removeItem(", script);
+      Assert.Contains("window.location.href", script);
+      Assert.Contains(
          "window.requestAnimationFrame(() => {\n" +
          "         window.requestAnimationFrame(scrollToToggle);",
          script
