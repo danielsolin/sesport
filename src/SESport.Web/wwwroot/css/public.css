@@ -1450,6 +1450,46 @@
       left: auto;
    }
 
+   .activity-agenda-section-grouped
+      .activity-group-schedule-item {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto;
+   }
+
+   .activity-agenda-section-grouped
+      .activity-group-slot-time {
+      display: none;
+   }
+
+   .activity-agenda-section-grouped
+      .activity-group-slot-content {
+      display: block;
+      grid-column: 1;
+      grid-row: 1;
+   }
+
+   .activity-agenda-section-grouped
+      .activity-group-schedule-item.has-tv-channels {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto;
+   }
+
+   .activity-agenda-section-grouped
+      .activity-group-schedule-item.has-tv-channels
+      .activity-group-slot-channel-list {
+      grid-column: 1;
+      grid-row: 1;
+      justify-content: flex-start;
+      margin: 0 0 1px;
+   }
+
+   .activity-agenda-section-grouped
+      .activity-group-schedule-item.has-tv-channels
+      .activity-group-slot-content {
+      grid-column: 1;
+      grid-row: 2;
+   }
+
    .activity-is-ongoing .activity-entry-organization,
    .activity-has-ended .activity-entry-organization {
       max-width: none;
@@ -1505,34 +1545,6 @@
 
    .activity-group-description {
       display: none;
-   }
-
-   .activity-group-schedule-item {
-      grid-template-columns: auto;
-      grid-template-rows: auto;
-   }
-
-   .activity-group-slot-content {
-      display: none;
-   }
-
-   .activity-group-schedule-item.has-tv-channels {
-      grid-template-columns: auto minmax(0, 1fr);
-      grid-template-rows: auto;
-   }
-
-   .activity-group-schedule-item.has-tv-channels
-      .activity-group-slot-channel-list {
-      grid-column: 2;
-      grid-row: 1;
-      justify-content: flex-end;
-      margin: 0;
-   }
-
-   .activity-group-schedule-item.has-tv-channels
-      .activity-group-slot-time {
-      grid-column: 1;
-      grid-row: 1;
    }
 
    .activity-participant-table {
