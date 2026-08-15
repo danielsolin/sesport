@@ -8,16 +8,11 @@
       Request.Query.ContainsKey(RouteKeys.Sport);
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
-   var pastActivityToggleIndex = -1;
-   for(var index = 0; index < Model.TimelineEntries.Count; index++)
-   {
-      if(Model.TimelineEntries[index].Section?.HasEnded == true)
-      {
-         pastActivityToggleIndex = index;
-      }
-   }
+   var hasPastActivities = Model.TimelineEntries.Any(
+      entry => entry.Section?.HasEnded == true
+   );
    var shouldHidePastActivities = Model.IsSportToday &&
-      pastActivityToggleIndex >= 0;
+      hasPastActivities;
 }
 @section Head {
    <title>@Model.PublicSiteOptions.PageDescription – sesport</title>
@@ -248,6 +243,21 @@ else
          var timelineEntry = Model.TimelineEntries[timelineIndex];
          if(timelineEntry.IsCurrentMarker)
          {
+            @if(shouldHidePastActivities)
+            {
+               <div class="activity-past-toggle-row">
+                  <span class="activity-past-toggle-line"></span>
+                  <button class="activity-past-toggle-button"
+                          type="button"
+                          data-activity-past-toggle
+                          data-collapsed-label="Visa Tidigare"
+                          data-expanded-label="Dölj Tidigare"
+                          aria-expanded="false">
+                     Visa Tidigare
+                  </button>
+                  <span class="activity-past-toggle-line"></span>
+               </div>
+            }
             <div class="activity-now-marker">
                <span class="activity-now-marker-line"></span>
                <span class="activity-now-marker-badge">
@@ -261,24 +271,6 @@ else
          if(timelineEntry.Section is null)
          {
             continue;
-         }
-
-         var shouldRenderPastActivityToggle = shouldHidePastActivities &&
-            timelineIndex == pastActivityToggleIndex;
-         @if(shouldRenderPastActivityToggle)
-         {
-            <div class="activity-past-toggle-row">
-               <span class="activity-past-toggle-line"></span>
-               <button class="activity-past-toggle-button"
-                       type="button"
-                       data-activity-past-toggle
-                       data-collapsed-label="Visa Tidigare"
-                       data-expanded-label="Dölj Tidigare"
-                       aria-expanded="false">
-                  Visa Tidigare
-               </button>
-               <span class="activity-past-toggle-line"></span>
-            </div>
          }
 
          var agendaSection = timelineEntry.Section;

@@ -40,16 +40,32 @@ public sealed class PastActivitiesVisibilityTests
          css
       );
       Assert.DoesNotContain("isLatestPastActivity", page);
+      Assert.DoesNotContain("pastActivityToggleIndex", page);
       Assert.Contains("data-activity-past-toggle", page);
+      var markerIndex = page.IndexOf(
+         "if(timelineEntry.IsCurrentMarker)",
+         StringComparison.Ordinal
+      );
+      var toggleIndex = page.IndexOf(
+         "data-activity-past-toggle",
+         StringComparison.Ordinal
+      );
+      var nowMarkerIndex = page.IndexOf(
+         "<div class=\"activity-now-marker\">",
+         StringComparison.Ordinal
+      );
+      Assert.True(markerIndex >= 0);
+      Assert.True(toggleIndex > markerIndex);
+      Assert.True(toggleIndex < nowMarkerIndex);
       Assert.Contains("public-past-activities.js", page);
       Assert.Contains("event.preventDefault();", script);
-      Assert.Contains("const scrollX = window.scrollX;", script);
-      Assert.Contains("const scrollY = window.scrollY;", script);
-      Assert.Contains("window.scrollTo({", script);
-      Assert.Contains("behavior: \"auto\"", script);
+      Assert.DoesNotContain("window.scrollTo({", script);
+      Assert.Contains("toggle.scrollIntoView({", script);
+      Assert.Contains("behavior: \"smooth\"", script);
+      Assert.Contains("block: \"center\"", script);
       Assert.Contains(
          "window.requestAnimationFrame(() => {\n" +
-         "         window.requestAnimationFrame(restoreScrollPosition);",
+         "         window.requestAnimationFrame(scrollToToggle);",
          script
       );
    }

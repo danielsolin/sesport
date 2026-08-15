@@ -31,23 +31,19 @@
 
    toggle.addEventListener("click", event => {
       event.preventDefault();
-      const scrollX = window.scrollX;
-      const scrollY = window.scrollY;
 
       agenda.classList.toggle(hiddenClass);
       updateToggle();
 
-      const restoreScrollPosition = () => {
-         window.scrollTo({
-            left: scrollX,
-            top: scrollY,
-            behavior: "auto"
+      const scrollToToggle = () => {
+         toggle.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
          });
       };
 
-      restoreScrollPosition();
       window.requestAnimationFrame(() => {
-         window.requestAnimationFrame(restoreScrollPosition);
+         window.requestAnimationFrame(scrollToToggle);
       });
    });
 
