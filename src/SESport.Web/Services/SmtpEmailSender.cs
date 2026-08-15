@@ -35,9 +35,13 @@ public sealed class SmtpEmailSender(
          return;
       }
 
+      var fromAddress = string.IsNullOrWhiteSpace(options.FromName)
+         ? new MailAddress(options.FromAddress)
+         : new MailAddress(options.FromAddress, options.FromName);
+
       using var message = new MailMessage
       {
-         From = new MailAddress(options.FromAddress, options.FromName),
+         From = fromAddress,
          Subject = "Logga in på sesport",
          Body = CreateHtmlBody(loginLink, tokenLifetime),
          BodyEncoding = Encoding.UTF8,

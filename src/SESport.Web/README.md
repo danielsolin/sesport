@@ -83,19 +83,23 @@ dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 ## Membership
 
 Public membership uses passwordless email links. Development logs the login
-link when SMTP is not configured. Production requires the following values in
-the host-local `.env` file:
+link when SMTP is not configured. The production VPS uses the HostUp
+smarthost relay. Configure the following values in the host-local `.env` file:
 
 ```text
 MemberAuth__PublicBaseUrl=https://sesport.se
-Smtp__Host=<smtp_host>
+Smtp__Host=relay.hostup.se
 Smtp__Port=587
 Smtp__UseSsl=true
-Smtp__Username=<smtp_username>
-Smtp__Password=<smtp_password>
-Smtp__FromAddress=<sender_email>
+Smtp__FromAddress=info@sesport.se
 Smtp__FromName=sesport
 ```
+
+HostUp authorizes the VPS through DNS. Add `include:spf.hostup.se` to the
+existing SPF record and add a TXT record for `_hostup.sesport.se` with
+`v=mc1 auth=207.2.120.181`. The relay does not require SMTP username or
+password for this VPS setup. Keep any future relay credentials in the
+host-local `.env` file, never in tracked files.
 
 The login token is single-use and expires after fifteen minutes by default.
 The database also contains the member-to-entity watch table for the later
