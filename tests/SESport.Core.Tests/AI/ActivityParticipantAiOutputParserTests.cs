@@ -69,6 +69,34 @@ public sealed class ActivityParticipantAiOutputParserTests
    }
 
    [Fact]
+   public void ParseTreatsStringNullParticipantStartTimeAsNull()
+   {
+      const string output = """
+         {
+           "participants": [
+             {
+               "name": "Runner",
+               "start_time": "null",
+               "source_url": "https://example.test/runner"
+             }
+           ]
+         }
+         """;
+
+      var result = ActivityParticipantAiOutputParser.Parse(output);
+
+      Assert.NotNull(result);
+      var participant = Assert.Single(result!.Participants);
+      var startTime = Assert.Single(
+         participant.Fields,
+         field => field.FieldKey == "start_time"
+      );
+
+      Assert.Null(startTime.ValueText);
+      Assert.Equal("null", startTime.ValueJson);
+   }
+
+   [Fact]
    public void ParseReturnsNullForInvalidJson()
    {
       Assert.Null(ActivityParticipantAiOutputParser.Parse("not json"));

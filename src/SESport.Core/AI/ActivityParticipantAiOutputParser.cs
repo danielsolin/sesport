@@ -7,6 +7,8 @@ namespace SESport.Core.AI;
 
 public static class ActivityParticipantAiOutputParser
 {
+   private const string NullLiteral = "null";
+
    public static ActivityParticipantAiOutputDraft? Parse(string outputText)
    {
       if(string.IsNullOrWhiteSpace(outputText))
@@ -97,13 +99,19 @@ public static class ActivityParticipantAiOutputParser
          return false;
       }
 
+      // Some local models return the null literal as a JSON string.
+      var startTimeText = ReadScalarText(startTime);
+      var startTimeJson = IsNullLiteral(startTime)
+         ? NullLiteral
+         : startTime.GetRawText();
+
       draft = new ActivityParticipantAiParticipantDraft(
          name,
          [
             new ActivityParticipantAiFieldDraft(
                ActivityParticipantAiFieldKeys.StartTime,
-               ReadScalarText(startTime),
-               startTime.GetRawText()
+               startTimeText,
+               startTimeJson
             )
          ],
          [source]
@@ -207,7 +215,27 @@ public static class ActivityParticipantAiOutputParser
          return null;
       }
 
-      return UnicodeTextSanitizer.Sanitize(value).Trim();
+      var normalized = UnicodeTextSanitizer.Sanitize(value).Trim();
+      return IsNullLiteral(normalized) ? null : normalized;
+   }
+
+   private static bool IsNullLiteral(JsonElement element)
+   {
+      return element.ValueKind == JsonValueKind.String &&
+         IsNullLiteral(
+            UnicodeTextSanitizer.Sanitize(
+               element.GetString() ?? string.Empty
+            ).Trim()
+         );
+   }
+
+   private static bool IsNullLiteral(string value)
+   {
+      return string.Equals(
+         value,
+         NullLiteral,
+         StringComparison.OrdinalIgnoreCase
+      );
    }
 
    private static bool ComparePropertyNames(string left, string right)
