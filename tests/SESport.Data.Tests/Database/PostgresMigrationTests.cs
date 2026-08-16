@@ -485,6 +485,32 @@ public partial class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void ActivityParticipantMigrationRequiresPersonEntities()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "026_activity_participants_person_only.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "add column participant_entity_type_id text",
+         migration
+      );
+      Assert.Contains("generated always as ('person'::text) stored", migration);
+      Assert.Contains(
+         "foreign key (entity_id, participant_entity_type_id)",
+         migration
+      );
+      Assert.Contains("references public.entities (id, entity_type_id)",
+         migration);
+      Assert.Contains("not valid", migration);
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);
