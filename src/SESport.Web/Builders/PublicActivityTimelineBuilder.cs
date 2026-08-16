@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -172,8 +173,18 @@ public sealed class PublicActivityTimelineBuilder
          .ToList();
       var activity = orderedActivities[0];
       var participants = MergeParticipants(orderedActivities);
+      var hasDifferentParticipantSets =
+         HasDifferentActiveParticipantSets(orderedActivities);
       var slots = orderedActivities
-         .Select(item => CreateSlot(item, now))
+         .Select(item => CreateSlot(
+            item,
+            now,
+            hasDifferentParticipantSets &&
+               !TitleContainsActiveParticipantNameParts(
+                  item.Title,
+                  item.Participants
+               )
+         ))
          .ToList();
       var timelineSlot = slots
          .FirstOrDefault(slot => slot.IsOngoing)
@@ -208,9 +219,85 @@ public sealed class PublicActivityTimelineBuilder
          orderedActivities.Count > 1
             ? activity.ActivityGroupTitle
             : null,
+         hasDifferentParticipantSets,
          slots,
          timelineSlot
       );
+   }
+
+   private static bool HasDifferentActiveParticipantSets(
+      IReadOnlyList<ActivityListItem> activities
+   )
+   {
+      if(activities.Count < 2)
+      {
+         return false;
+      }
+
+      var firstParticipantIds = GetActiveParticipantIds(activities[0]);
+      return activities
+         .Skip(1)
+         .Any(activity =>
+            !firstParticipantIds.SetEquals(
+               GetActiveParticipantIds(activity)
+            )
+         );
+   }
+
+   private static HashSet<Guid> GetActiveParticipantIds(
+      ActivityListItem activity
+   )
+   {
+      return activity.Participants
+         .Where(participant => participant.IsActive)
+         .Select(participant => participant.Id)
+         .ToHashSet();
+   }
+
+   private static bool TitleContainsActiveParticipantNameParts(
+      string title,
+      IReadOnlyList<PublicActivityParticipant> participants
+   )
+   {
+      var titleParts = GetNormalizedNameParts(title);
+      var activeParticipants = participants
+         .Where(participant => participant.IsActive)
+         .ToList();
+
+      return activeParticipants.Count > 0 && activeParticipants.All(
+         participant => GetNormalizedNameParts(participant.Name)
+            .Any(part => titleParts.Contains(part))
+      );
+   }
+
+   private static HashSet<string> GetNormalizedNameParts(string value)
+   {
+      var normalized = value.Normalize(NormalizationForm.FormD);
+      var builder = new StringBuilder(normalized.Length);
+
+      foreach(var character in normalized)
+      {
+         if(CharUnicodeInfo.GetUnicodeCategory(character) ==
+            UnicodeCategory.NonSpacingMark)
+         {
+            continue;
+         }
+
+         builder.Append(
+            char.IsLetterOrDigit(character)
+               ? char.ToUpperInvariant(character)
+               : ' '
+         );
+      }
+
+      return builder
+         .ToString()
+         .Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         )
+         .ToHashSet(StringComparer.Ordinal);
    }
 
    private static IReadOnlyList<PublicActivityParticipant>
@@ -245,7 +332,8 @@ public sealed class PublicActivityTimelineBuilder
 
    private static ActivityAgendaSlot CreateSlot(
       ActivityListItem activity,
-      DateTimeOffset now
+      DateTimeOffset now,
+      bool showParticipantNames
    )
    {
       return new ActivityAgendaSlot(
@@ -259,7 +347,8 @@ public sealed class PublicActivityTimelineBuilder
             activity.StartsAt <= now &&
             activity.EndsAt > now,
          activity.EndsAt is not null && activity.EndsAt <= now,
-         SplitTvChannelNames(activity.TvChannelName)
+         SplitTvChannelNames(activity.TvChannelName),
+         showParticipantNames
       );
    }
 

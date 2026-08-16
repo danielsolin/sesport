@@ -315,6 +315,7 @@ public sealed record ActivityAgendaSection(
    bool IsOngoing,
    bool HasEnded,
    string? ActivityGroupTitle,
+   bool HasDifferentParticipantSets,
    IReadOnlyList<ActivityAgendaSlot> Slots,
    ActivityAgendaSlot TimelineSlot
 );
@@ -325,7 +326,8 @@ public sealed record ActivityAgendaSlot(
    string? EndTimeLabel,
    bool IsOngoing,
    bool HasEnded,
-   IReadOnlyList<string> TvChannels
+   IReadOnlyList<string> TvChannels,
+   bool ShowParticipantNames
 );
 
 public enum ActivityDayPhase

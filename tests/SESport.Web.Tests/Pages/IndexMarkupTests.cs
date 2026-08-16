@@ -276,7 +276,11 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-time-channel-list", html);
       Assert.Contains("activity-group-slot-channel-list", html);
       Assert.Contains(
-         "var slotParticipantNames = slot.Activity",
+         "string[] slotParticipantNames =",
+         html
+      );
+      Assert.Contains(
+         "slot.ShowParticipantNames",
          html
       );
       Assert.Contains("participant.IsActive", html);

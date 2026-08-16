@@ -477,11 +477,19 @@ else
                         <ol class="activity-group-schedule">
                            @foreach(var slot in agendaSection.Slots)
                            {
-                              var slotParticipantNames = slot.Activity
-                                 .Participants
-                                 .Where(participant => participant.IsActive)
-                                 .Select(participant => participant.Name)
-                                 .ToArray();
+                              string[] slotParticipantNames =
+                                 slot.ShowParticipantNames
+                                    ? slot.Activity
+                                       .Participants
+                                       .Where(
+                                          participant =>
+                                             participant.IsActive
+                                       )
+                                       .Select(
+                                          participant => participant.Name
+                                       )
+                                       .ToArray()
+                                    : [];
                               <li class="activity-group-schedule-item
                                  @(slot.IsOngoing ? "is-ongoing" : "")
                                  @(slot.HasEnded ? "has-ended" : "")

@@ -618,6 +618,122 @@ public class PublicActivityTimelineBuilderTests
          ["First", "Second"],
          section.Participants.Select(participant => participant.Name)
       );
+      Assert.True(section.HasDifferentParticipantSets);
+      Assert.All(
+         section.Slots,
+         slot => Assert.True(slot.ShowParticipantNames)
+      );
+   }
+
+   [Fact]
+   public void BuildHidesGroupedParticipantNamesWhenSetsAreEqual()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var participant = CreateParticipant("Participant", "08:15");
+      var first = CreateActivity(
+         "Round 1",
+         selectedDate,
+         now.AddMinutes(15),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [participant]
+      };
+      var second = CreateActivity(
+         "Round 2",
+         selectedDate,
+         now.AddHours(1),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [participant with { StartTime = "09:00" }]
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(
+         [first, second],
+         selectedDate,
+         now
+      );
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.False(section.HasDifferentParticipantSets);
+      Assert.All(
+         section.Slots,
+         slot => Assert.False(slot.ShowParticipantNames)
+      );
+   }
+
+   [Fact]
+   public void BuildHidesParticipantNamesAlreadyPresentInActivityTitle()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var first = CreateActivity(
+         "Åhman/Hellvig – Hölting Nilsson/Andersson",
+         selectedDate,
+         now.AddMinutes(15),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants =
+         [
+            CreateParticipant("David Åhman", null),
+            CreateParticipant("Elmer Andersson", null),
+            CreateParticipant("Jacob Hölting Nilsson", null),
+            CreateParticipant("Jonatan Hellvig", null)
+         ]
+      };
+      var second = CreateActivity(
+         "Another round",
+         selectedDate,
+         now.AddHours(1),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [CreateParticipant("Other Person", null)]
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(
+         [first, second],
+         selectedDate,
+         now
+      );
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.True(section.HasDifferentParticipantSets);
+      Assert.False(section.Slots[0].ShowParticipantNames);
+      Assert.True(section.Slots[1].ShowParticipantNames);
    }
 
    [Fact]
