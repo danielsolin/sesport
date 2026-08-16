@@ -281,7 +281,8 @@ internal static class WebPageContentFetchSupport
       string? title,
       WebPageFetchErrorKind? fetchErrorKind,
       string fetchErrorMessage,
-      string? fetcher = null
+      string? fetcher = null,
+      string? browserStrategy = null
    )
    {
       var absoluteUrlString = absoluteUrl.ToString();
@@ -296,7 +297,8 @@ internal static class WebPageContentFetchSupport
          string.Empty,
          fetchErrorMessage,
          fetchErrorKind,
-         fetcher
+         fetcher,
+         browserStrategy
       );
    }
 

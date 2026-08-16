@@ -194,8 +194,11 @@ public class AiProviderClientTests
             "https://example.test/roster",
             DateTimeOffset.Parse("2026-06-15T12:34:56Z"),
             ["Article heading"],
-            "Full article content.",
-            true
+            "Full article content.\n" +
+            "Sweden DANTORP, Jens | Hills G&SC | 85",
+            true,
+            Fetcher: "playwright",
+            BrowserStrategy: "chromium-bundled"
          )
       );
       var client = new LlamaServerClient(
@@ -231,6 +234,12 @@ public class AiProviderClientTests
       Assert.Contains("\"kind\":\"assistant\"", result.ToolTraceJson);
       Assert.Contains("\"kind\":\"tool\"", result.ToolTraceJson);
       Assert.Contains("Article Title", result.ToolTraceJson);
+      Assert.Contains(
+         "\"browser_strategy\":\"chromium-bundled\"",
+         result.ToolTraceJson
+      );
+      Assert.Contains("Sweden DANTORP, Jens", result.ToolTraceJson);
+      Assert.DoesNotContain("\"section\":\"text\"", result.ToolTraceJson);
       Assert.DoesNotContain("\"sources\"", result.RawResponseJson);
       Assert.Equal(3, handler.RequestBodies.Count);
       Assert.Contains("\"role\":\"system\"", handler.RequestBodies[0]);
@@ -1098,6 +1107,182 @@ public class AiProviderClientTests
    }
 
    [Fact]
+   public async Task LlamaServerFindInPageKeepsContextForPartialRows()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateLlamaFindPageCallResponseJson(find: "SWE"),
+         CreateLlamaFinalResponseJson()
+      );
+      var webSearchClient = new RecordingWebSearchClient(
+         new WebSearchResult(
+            "Roster",
+            "https://example.test/roster",
+            "Roster search result."
+         )
+      );
+      var body = string.Join(
+         "\n",
+         [
+            "Maja Stark",
+            "SWE",
+            "| Entered",
+            "| 40",
+            "Ingrid Lindblad",
+            "SWE",
+            "| Entered",
+            "| 55",
+            "Anna Nordqvist",
+            "SWE",
+            "| Entered",
+            "| 3",
+            "Linnea Strom",
+            "SWE",
+            "| Entered",
+            "| 3",
+            "Frida Kinhult",
+            "SWE",
+            "| Entered",
+            "| 6"
+         ]
+      );
+      var webPageContentClient = new RecordingWebPageContentClient(
+         new WebPageContent(
+            "Roster",
+            "https://example.test/roster",
+            null,
+            [],
+            body,
+            true,
+            body
+         )
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         webSearchClient,
+         webPageContentClient,
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var result = await client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob("text", true, CreateToolsJson()),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            minToolRounds: 10
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Contains("Maja Stark | SWE", result.ToolTraceJson);
+      Assert.Contains("Ingrid Lindblad | SWE", result.ToolTraceJson);
+      Assert.Contains("Anna Nordqvist | SWE", result.ToolTraceJson);
+      Assert.Contains("Linnea Strom | SWE", result.ToolTraceJson);
+      Assert.Contains("Frida Kinhult | SWE", result.ToolTraceJson);
+      Assert.DoesNotContain("match_count", result.ToolTraceJson);
+      Assert.DoesNotContain("rows_are_partial", result.ToolTraceJson);
+      Assert.DoesNotContain("\"section\"", result.ToolTraceJson);
+   }
+
+   [Fact]
+   public void ExtractMatchingCountryEntriesReturnsMinimalNameLines()
+   {
+      var body = string.Join(
+         "\n",
+         [
+            "Maja Stark",
+            "SWE",
+            "| Entered",
+            "| 40",
+            "Ingrid Lindblad",
+            "SWE",
+            "| Entered",
+            "| 55",
+            "Anna Nordqvist",
+            "SWE",
+            "| Entered",
+            "| 3",
+            "Linnea Strom",
+            "SWE",
+            "| Entered",
+            "| 3",
+            "Frida Kinhult",
+            "SWE",
+            "| Entered",
+            "| 6"
+         ]
+      );
+
+      var entries = LlamaPageToolFormatter.ExtractMatchingCountryEntries(
+         body,
+         PrimaryCountry.ThreeLetterCode,
+         50
+      );
+
+      Assert.Equal(
+         [
+            "Maja Stark | SWE",
+            "Ingrid Lindblad | SWE",
+            "Anna Nordqvist | SWE",
+            "Linnea Strom | SWE",
+            "Frida Kinhult | SWE"
+         ],
+         entries
+      );
+
+      var entriesForPhrase =
+         LlamaPageToolFormatter.ExtractMatchingCountryEntries(
+            body,
+            "SWE | Entered",
+            50
+         );
+
+      Assert.Equal(entries, entriesForPhrase);
+
+      Assert.Empty(
+         LlamaPageToolFormatter.ExtractMatchingCountryEntries(
+            "Research notes about the event.",
+            "research",
+            50
+         )
+      );
+   }
+
+   [Fact]
+   public void ExtractMatchingCountryEntriesHandlesCountryBeforeName()
+   {
+      var body = string.Join(
+         "\n",
+         [
+            "| Sweden",
+            "DANTORP , Jens Hills G&SC",
+            "| Hills G&SC",
+            "| 85",
+            "Adjacent control",
+            "| Sweden",
+            "Hölting Nilsson",
+            "| 12"
+         ]
+      );
+
+      var entries = LlamaPageToolFormatter.ExtractMatchingCountryEntries(
+         body,
+         PrimaryCountry.CountryName,
+         50
+      );
+
+      Assert.Equal(
+         [
+            "DANTORP, Jens | Sweden",
+            "Hölting Nilsson | Sweden"
+         ],
+         entries
+      );
+   }
+
+   [Fact]
    public void FindPageMatchesIgnoresTitleAndHeadings()
    {
       var matches = LlamaPageToolFormatter.FindPageMatches(
@@ -1175,7 +1360,7 @@ public class AiProviderClientTests
    }
 
    [Fact]
-   public void FormatPageContentTextBreaksLongPipeSeparatedRows()
+   public void FormatPageContentTextKeepsPipeSeparatedRowsTogether()
    {
       var output = LlamaPageToolFormatter.FormatPageContentText(
          "Page URL",
@@ -1193,8 +1378,8 @@ public class AiProviderClientTests
       );
 
       Assert.Contains(
-         $"{PrimaryCountry.CountryName} |\nLAGERGREN, Joakim |\n" +
-         "Black Mountain GC |",
+         $"{PrimaryCountry.CountryName} | LAGERGREN, Joakim | " +
+         "Black Mountain GC | 24",
          output,
          StringComparison.Ordinal
       );
@@ -1275,6 +1460,100 @@ public class AiProviderClientTests
       Assert.Contains(
          "Target FORSSTRÖM, Simon | Gamebook | 11",
          rows
+      );
+   }
+
+   [Fact]
+   public void ExtractMatchingRowsStopsBeforeAdjacentActionText()
+   {
+      var body =
+         "APHIBARNRAT, Kiradech Singha | Singha | 83 " +
+         "Adjacent control | " +
+         "Sweden DANTORP, Jens Hills G&SC | Hills G&SC | 85 " +
+         "Adjacent control |";
+
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
+         body,
+         PrimaryCountry.CountryName,
+         50
+      );
+
+      var row = Assert.Single(rows);
+      Assert.Contains("Sweden DANTORP", row);
+      Assert.DoesNotContain("Adjacent control", row);
+   }
+
+   [Fact]
+   public void ExtractMatchingRowsReconstructsRowsAcrossTextLines()
+   {
+      var body = string.Join(
+         "\n",
+         [
+            "| Sweden",
+            "DANTORP , Jens Hills G&SC",
+            "| Hills G&SC",
+            "| 85",
+            "Adjacent control",
+            "| Sweden",
+            "KINHULT , Marcus Skaftö GC",
+            "| Skaftö GC",
+            "| 86",
+            "Adjacent control"
+         ]
+      );
+
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
+         body,
+         PrimaryCountry.CountryName,
+         50
+      );
+
+      Assert.Equal(2, rows.Count);
+      Assert.Contains(
+         rows,
+         row => row.Contains("DANTORP", StringComparison.Ordinal) &&
+            row.Contains("| 85", StringComparison.Ordinal) &&
+            !row.Contains("KINHULT", StringComparison.Ordinal)
+      );
+      Assert.Contains(
+         rows,
+         row => row.Contains("KINHULT", StringComparison.Ordinal) &&
+            row.Contains("| 86", StringComparison.Ordinal) &&
+            !row.Contains("DANTORP", StringComparison.Ordinal)
+      );
+      Assert.DoesNotContain(
+         rows,
+         row => row.Contains("Adjacent control", StringComparison.Ordinal)
+      );
+   }
+
+   [Fact]
+   public void ExtractMatchingRowsDetectsRowsWithOnlyNumericVariation()
+   {
+      var body = string.Join(
+         "\n",
+         [
+            "SWE | Entered | 40",
+            "SWE | Entered | 55",
+            "SWE | Entered | 3",
+            "SWE | Entered | 6"
+         ]
+      );
+      var rows = LlamaPageToolFormatter.ExtractMatchingRows(
+         body,
+         "SWE",
+         50
+      );
+
+      Assert.Equal(4, rows.Count);
+      Assert.True(LlamaPageToolFormatter.AreRowsLikelyPartial(rows));
+      Assert.False(
+         LlamaPageToolFormatter.AreRowsLikelyPartial(
+            [
+               "Sweden DANTORP, Jens Hills G&SC | 85",
+               "Sweden KINHULT, Marcus Skaftö GC | 86"
+            ]
+         )
       );
    }
 

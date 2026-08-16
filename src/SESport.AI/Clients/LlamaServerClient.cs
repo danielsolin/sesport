@@ -507,7 +507,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                         toolState.LastSearchProvider,
                         toolState.LastSearchProviderDetails,
                         toolState.LastSearchEngine,
-                        toolState.LastPageFetcher
+                        toolState.LastPageFetcher,
+                        toolState.LastBrowserStrategy
                      )
                   );
                   await LlamaToolTrace.ReportProgressAsync(
@@ -1696,6 +1697,11 @@ public sealed class LlamaServerClient : IAiProviderClient
                toolState.PageContentCache,
                pageTarget.Url
             );
+         toolState.LastBrowserStrategy =
+            LlamaPageToolSupport.TryGetCachedPageBrowserStrategy(
+               toolState.PageContentCache,
+               pageTarget.Url
+            );
          return repeatedResult;
       }
 
@@ -1705,6 +1711,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          cancellationToken
       );
       toolState.LastPageFetcher = pageContent?.Fetcher;
+      toolState.LastBrowserStrategy = pageContent?.BrowserStrategy;
 
       string result;
 
@@ -1813,6 +1820,11 @@ public sealed class LlamaServerClient : IAiProviderClient
                toolState.PageContentCache,
                pageTarget.Url
             );
+         toolState.LastBrowserStrategy =
+            LlamaPageToolSupport.TryGetCachedPageBrowserStrategy(
+               toolState.PageContentCache,
+               pageTarget.Url
+            );
          return repeatedResult;
       }
 
@@ -1822,6 +1834,7 @@ public sealed class LlamaServerClient : IAiProviderClient
          cancellationToken
       );
       toolState.LastPageFetcher = pageContent?.Fetcher;
+      toolState.LastBrowserStrategy = pageContent?.BrowserStrategy;
 
       string result;
 
@@ -1847,32 +1860,22 @@ public sealed class LlamaServerClient : IAiProviderClient
             pageContent,
             find
          );
-         var allRows = LlamaPageToolFormatter.ExtractMatchingRows(
-            pageContent.MainTextFull,
-            find,
-            int.MaxValue
-         );
-         var returnedRows = allRows
-            .Take(LlamaServerDefaults.MaxFindInPageSnippetCount)
-            .ToList();
-         var hasRows = returnedRows.Count > 0;
+         var matchingCountryEntries =
+            LlamaPageToolFormatter.ExtractMatchingCountryEntries(
+               string.IsNullOrWhiteSpace(pageContent.MainTextFull)
+                  ? pageContent.MainText
+                  : pageContent.MainTextFull,
+               find
+            );
 
-         result = JsonSerializer.Serialize(
-            new
-            {
-               reference_label = pageTarget.ReferenceLabel,
-               reference_value = pageTarget.ReferenceValue,
-               find,
-               title = pageContent.Title,
-               url = pageContent.Url,
-               published_at = pageContent.PublishedAt?.ToString("O"),
-               match_count = hasRows ? allRows.Count : matches.Count,
-               returned_count = hasRows ? returnedRows.Count : matches.Count,
-               rows = hasRows ? returnedRows : null,
+         result = matchingCountryEntries.Count > 0
+            ? string.Join(
+               Environment.NewLine,
+               matchingCountryEntries
+            )
+            : LlamaPageToolFormatter.FormatFindMatchesForTool(
                matches
-            },
-            JsonOptions
-         );
+            );
       }
 
       LlamaToolCallHistory.RecordResult(
@@ -1918,6 +1921,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       public string? LastSearchEngine { get; set; }
 
       public string? LastPageFetcher { get; set; }
+
+      public string? LastBrowserStrategy { get; set; }
 
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
          new(StringComparer.OrdinalIgnoreCase);

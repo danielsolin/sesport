@@ -101,6 +101,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-participant-table-frame", html);
       Assert.DoesNotContain("activity-participant-table-fade", html);
       Assert.Contains("data-participant-toggle", html);
+      Assert.Contains("data-participant-toggle-full", html);
       Assert.Contains("data-collapsed-label=\"Visa alla\"", html);
       Assert.Contains("data-expanded-label=\"Visa färre\"", html);
       Assert.Contains("data-participant-inactive-toggle", html);
@@ -114,6 +115,7 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("activeParticipantCount", html);
       Assert.Contains("hasInactiveParticipants", html);
+      Assert.Contains("shouldCombineParticipantToggles", html);
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
       Assert.Contains("participant.HasDiscipline", html);
@@ -213,6 +215,11 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          "activity-participant-table-inactive-collapsed",
+         participantScript
+      );
+      Assert.Contains("participantToggleFull", participantScript);
+      Assert.Contains(
+         "setParticipantTableCollapsed(",
          participantScript
       );
       Assert.Contains("Visa utslagna", participantScript);

@@ -70,6 +70,25 @@ public sealed class IndexModelTests
       Assert.Equal(expected, result);
    }
 
+   [Theory]
+   [InlineData(true, true, true)]
+   [InlineData(true, false, false)]
+   [InlineData(false, true, false)]
+   [InlineData(false, false, false)]
+   public void ShouldCombineParticipantTogglesOnlyWhenBothListsCollapse(
+      bool shouldCollapseParticipants,
+      bool hasInactiveParticipants,
+      bool expected
+   )
+   {
+      var result = IndexModel.ShouldCombineParticipantToggles(
+         shouldCollapseParticipants,
+         hasInactiveParticipants
+      );
+
+      Assert.Equal(expected, result);
+   }
+
    [Fact]
    public void CountParticipantsBySportCountsUniqueIdsWithinEachSport()
    {

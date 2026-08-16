@@ -8,11 +8,11 @@ internal static class WebPageBrowserPageFetcher
 {
    private static readonly BrowserStrategy[] BrowserStrategies =
    [
-      new(BrowserEngine.Chromium, null, true),
-      new(BrowserEngine.Chromium, "chromium", false),
-      new(BrowserEngine.Chromium, "chrome", false),
-      new(BrowserEngine.Firefox, null, false),
-      new(BrowserEngine.Webkit, null, false)
+      new("chromium-bundled", BrowserEngine.Chromium, null, true),
+      new("chromium-channel", BrowserEngine.Chromium, "chromium", false),
+      new("chrome-channel", BrowserEngine.Chromium, "chrome", false),
+      new("firefox-bundled", BrowserEngine.Firefox, null, false),
+      new("webkit-bundled", BrowserEngine.Webkit, null, false)
    ];
 
    internal static async Task<WebPageContent?> FetchAsync(
@@ -62,7 +62,8 @@ internal static class WebPageBrowserPageFetcher
                lastException = new WebPageFetchException(
                   WebPageFetchErrorKind.Timeout,
                   exception.Message,
-                  exception
+                  exception,
+                  strategy.Id
                );
             }
             catch(PlaywrightException exception)
@@ -70,7 +71,8 @@ internal static class WebPageBrowserPageFetcher
                lastException = new WebPageFetchException(
                   WebPageFetchErrorKind.BrowserBlocked,
                   exception.Message,
-                  exception
+                  exception,
+                  strategy.Id
                );
             }
          }
@@ -177,6 +179,7 @@ internal static class WebPageBrowserPageFetcher
          );
          var content = await ReadPageContentAsync(
             page,
+            strategy.Id,
             absoluteUrl,
             navigationResponse?.Status,
             cancellationToken
@@ -231,6 +234,7 @@ internal static class WebPageBrowserPageFetcher
 
    private static async Task<WebPageContent?> ReadPageContentAsync(
       IPage page,
+      string browserStrategy,
       Uri absoluteUrl,
       int? navigationStatus,
       CancellationToken cancellationToken
@@ -305,7 +309,8 @@ internal static class WebPageBrowserPageFetcher
             title,
             WebPageFetchErrorKind.BrowserBlocked,
             reason,
-            "playwright"
+            "playwright",
+            browserStrategy
          );
       }
 
@@ -320,6 +325,7 @@ internal static class WebPageBrowserPageFetcher
          !string.IsNullOrWhiteSpace(normalizedText),
          normalizedText,
          Fetcher: "playwright",
+         BrowserStrategy: browserStrategy,
          RelevantLinks:
             WebPageContentFetchSupport.MergeRelevantLinks(
                renderedRelevantLinks,
@@ -349,6 +355,7 @@ internal static class WebPageBrowserPageFetcher
    }
 
    private sealed record BrowserStrategy(
+      string Id,
       BrowserEngine Engine,
       string? Channel,
       bool UseBrowserUserAgent

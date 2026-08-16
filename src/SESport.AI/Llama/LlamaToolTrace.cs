@@ -121,7 +121,8 @@ internal static class LlamaToolTrace
       string? searchProvider = null,
       string? searchProviderDetails = null,
       string? searchEngine = null,
-      string? pageFetcher = null
+      string? pageFetcher = null,
+      string? browserStrategy = null
    )
    {
       var isSearchTool = string.Equals(
@@ -168,6 +169,9 @@ internal static class LlamaToolTrace
          ["search_engine"] = isSearchTool ? searchEngine : null,
          ["fetcher"] = isGetPageTool || isFindInPageTool
             ? pageFetcher
+            : null,
+         ["browser_strategy"] = isGetPageTool || isFindInPageTool
+            ? browserStrategy
             : null,
          ["result"] = toolResult
       };

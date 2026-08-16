@@ -1036,6 +1036,7 @@ public class DetailsModel(
          GetString(entry, "search_provider_details"),
          GetString(entry, "search_engine"),
          GetString(entry, "fetcher"),
+         GetString(entry, "browser_strategy"),
          FormatDisplayValue(GetProperty(entry, "result"))
       );
    }
@@ -1260,6 +1261,7 @@ public class DetailsModel(
       string? SearchProviderDetails,
       string? SearchEngine,
       string? Fetcher,
+      string? BrowserStrategy,
       string Result
    );
 

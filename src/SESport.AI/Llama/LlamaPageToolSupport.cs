@@ -36,6 +36,16 @@ internal static class LlamaPageToolSupport
          : null;
    }
 
+   public static string? TryGetCachedPageBrowserStrategy(
+      IReadOnlyDictionary<string, WebPageContent?> pageContentCache,
+      string url
+   )
+   {
+      return pageContentCache.TryGetValue(url, out var cachedPage)
+         ? cachedPage?.BrowserStrategy
+         : null;
+   }
+
    public static string FormatFetchErrorText(
       LlamaPageTarget pageTarget,
       string? fetchErrorMessage,

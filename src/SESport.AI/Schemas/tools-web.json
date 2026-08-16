@@ -58,7 +58,8 @@
             },
             "additionalProperties": false
          },
-         "description": "Do case-insensitive text search in a page."
+         "description":
+            "Find case-insensitive text; return compact matching lines."
       }
    }
 ]

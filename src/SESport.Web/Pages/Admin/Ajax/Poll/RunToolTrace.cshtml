@@ -346,6 +346,14 @@
                                     {
                                        <div>Fetcher: @toolResult.Fetcher</div>
                                     }
+                                    @if(!string.IsNullOrWhiteSpace(
+                                       toolResult.BrowserStrategy))
+                                    {
+                                       <div>
+                                          Browser strategy:
+                                          @toolResult.BrowserStrategy
+                                       </div>
+                                    }
                                     <pre class="prompt-details-pre">
 @toolResult.Result
                                     </pre>

@@ -327,6 +327,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
                cancellationToken,
                renderedContent?.FetchErrorKind,
                renderedContent?.FetchErrorMessage,
+               renderedContent?.BrowserStrategy,
                primaryRelevantLinks,
                primaryRelevantImages
             );
@@ -342,9 +343,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          logger.LogWarning(
             exception,
-            "Playwright renderer failed for {Url}; " +
-            "using primary HTML response.",
-            absoluteUrl
+            "Playwright renderer failed for {Url} using strategy " +
+            "{Strategy}; using primary HTML response.",
+            absoluteUrl,
+            exception.BrowserStrategy ?? "unknown"
          );
          return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
@@ -352,6 +354,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken,
             exception.ErrorKind,
             exception.Message,
+            exception.BrowserStrategy,
             primaryRelevantLinks,
             primaryRelevantImages
          );
@@ -375,6 +378,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken,
             WebPageFetchErrorKind.Timeout,
             exception.Message,
+            null,
             primaryRelevantLinks,
             primaryRelevantImages
          );
@@ -393,6 +397,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             cancellationToken,
             WebPageFetchErrorKind.BrowserBlocked,
             exception.Message,
+            null,
             primaryRelevantLinks,
             primaryRelevantImages
          );
@@ -405,6 +410,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       CancellationToken cancellationToken,
       WebPageFetchErrorKind? browserFailureKind,
       string? browserFailureMessage,
+      string? browserFailureStrategy,
       IReadOnlyList<WebPageRelevantLink> primaryRelevantLinks,
       IReadOnlyList<WebPageImageCandidate> primaryRelevantImages
    )
@@ -419,7 +425,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
 
       return MergePrimaryRelevantContent(
-         AppendBrowserFailureMessage(htmlContent, browserFailureMessage),
+         AppendBrowserFailureMessage(
+            htmlContent,
+            browserFailureMessage,
+            browserFailureStrategy
+         ),
          primaryRelevantLinks,
          primaryRelevantImages
       );
@@ -433,6 +443,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
    )
    {
       string? browserFailureMessage = null;
+      string? browserFailureStrategy = null;
 
       try
       {
@@ -449,6 +460,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          browserFailureKind = renderedContent?.FetchErrorKind ??
             browserFailureKind;
          browserFailureMessage = renderedContent?.FetchErrorMessage;
+         browserFailureStrategy = renderedContent?.BrowserStrategy;
          logger.LogWarning(
             "Playwright renderer returned no usable content for {Url}; " +
             "falling back to curl. Reason: {Reason}",
@@ -460,11 +472,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
       {
          logger.LogWarning(
             exception,
-            "Playwright failed for {Url}; falling back to curl.",
-            absoluteUrl
+            "Playwright failed for {Url} using strategy {Strategy}; " +
+            "falling back to curl.",
+            absoluteUrl,
+            exception.BrowserStrategy ?? "unknown"
          );
          browserFailureKind = exception.ErrorKind;
          browserFailureMessage = exception.Message;
+         browserFailureStrategy = exception.BrowserStrategy;
       }
       catch(OperationCanceledException)
          when(cancellationToken.IsCancellationRequested)
@@ -503,7 +518,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
          {
             return AppendBrowserFailureMessage(
                curlContent,
-               browserFailureMessage
+               browserFailureMessage,
+               browserFailureStrategy
             );
          }
       }
@@ -526,12 +542,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
          null,
          browserFailureKind,
          $"Could not retrieve page content from {absoluteUrl}.",
-         "curl"
+         "curl",
+         browserFailureStrategy
       );
 
       return AppendBrowserFailureMessage(
          failureContent,
-         browserFailureMessage
+         browserFailureMessage,
+         browserFailureStrategy
       );
    }
 
@@ -570,22 +588,37 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
    private static WebPageContent? AppendBrowserFailureMessage(
       WebPageContent? content,
-      string? browserFailureMessage
+      string? browserFailureMessage,
+      string? browserFailureStrategy
    )
    {
-      if(content is null ||
-         string.IsNullOrWhiteSpace(content.FetchErrorMessage) ||
-         string.IsNullOrWhiteSpace(browserFailureMessage))
+      if(content is null)
       {
          return content;
       }
 
-      return content with
+      var updatedContent = content;
+
+      if(!string.IsNullOrWhiteSpace(content.FetchErrorMessage) &&
+         !string.IsNullOrWhiteSpace(browserFailureMessage))
       {
-         FetchErrorMessage =
-            $"{content.FetchErrorMessage} " +
-            $"Playwright error: {browserFailureMessage}"
-      };
+         updatedContent = updatedContent with
+         {
+            FetchErrorMessage =
+               $"{content.FetchErrorMessage} " +
+               $"Playwright error: {browserFailureMessage}"
+         };
+      }
+
+      if(!string.IsNullOrWhiteSpace(browserFailureStrategy))
+      {
+         updatedContent = updatedContent with
+         {
+            BrowserStrategy = browserFailureStrategy
+         };
+      }
+
+      return updatedContent;
    }
 
    private static IReadOnlyList<WebPageImageCandidate> MergeRelevantImages(

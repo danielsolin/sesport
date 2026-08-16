@@ -44,19 +44,31 @@
       }
 
       const collapseButton = getCollapseButton(table);
+      const collapseIncludesInactive =
+         collapseButton !== null &&
+         collapseButton.dataset.participantToggleFull === "true";
 
       if(collapseButton !== null)
       {
          if(expandedTableIds.has(table.id))
          {
-            table.classList.remove(
-               "activity-participant-table-collapsed"
+            setParticipantTableCollapsed(
+               table,
+               false,
+               collapseIncludesInactive
             );
          }
 
          updateCollapseButton(table, collapseButton);
          collapseButton.addEventListener("click", () => {
-            table.classList.toggle("activity-participant-table-collapsed");
+            const collapsed = table.classList.contains(
+               "activity-participant-table-collapsed"
+            );
+            setParticipantTableCollapsed(
+               table,
+               !collapsed,
+               collapseIncludesInactive
+            );
             updateCollapseButton(table, collapseButton);
             saveExpandedTableState(table);
          });
@@ -73,6 +85,26 @@
          });
       }
    });
+
+   function setParticipantTableCollapsed(
+      table,
+      collapsed,
+      includesInactive
+   )
+   {
+      table.classList.toggle(
+         "activity-participant-table-collapsed",
+         collapsed
+      );
+
+      if(includesInactive)
+      {
+         table.classList.toggle(
+            inactiveCollapsedClass,
+            collapsed
+         );
+      }
+   }
 
    function hasAutoReloadMarker()
    {

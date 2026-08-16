@@ -550,6 +550,11 @@ else
                         var shouldCollapseParticipants =
                            activeParticipantCount >
                               maxVisibleParticipants;
+                        var shouldCombineParticipantToggles =
+                           IndexModel.ShouldCombineParticipantToggles(
+                              shouldCollapseParticipants,
+                              hasInactiveParticipants
+                           );
                         if(shouldCollapseParticipants)
                         {
                            participantTableClass +=
@@ -758,6 +763,11 @@ else
                                       class=
                                          "activity-participant-toggle"
                                       data-participant-toggle
+                                      data-participant-toggle-full="@(
+                                         shouldCombineParticipantToggles
+                                            ? "true"
+                                            : "false"
+                                      )"
                                       data-collapsed-label="Visa alla"
                                       data-expanded-label="Visa färre"
                                       aria-controls="@participantTableId"
@@ -765,7 +775,8 @@ else
                                  Visa alla
                               </button>
                            }
-                           @if(hasInactiveParticipants)
+                           @if(hasInactiveParticipants &&
+                              !shouldCombineParticipantToggles)
                            {
                               var inactiveParticipantsAreCollapsed =
                                  shouldCollapseInactiveParticipants;

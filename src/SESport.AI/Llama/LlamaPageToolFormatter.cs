@@ -148,6 +148,80 @@ internal static class LlamaPageToolFormatter
       return matches;
    }
 
+   internal static IReadOnlyList<string> ExtractMatchingCountryEntries(
+      string text,
+      string find,
+      int maxEntries = LlamaServerDefaults.MaxFindInPageSnippetCount
+   )
+   {
+      if(string.IsNullOrWhiteSpace(text) ||
+         string.IsNullOrWhiteSpace(find) ||
+         !IsPrimaryCountryFind(find))
+      {
+         return [];
+      }
+
+      var lines = text.ReplaceLineEndings("\n").Split(
+         '\n',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      );
+      var countryFindTerm = GetPrimaryCountryTerms()
+         .FirstOrDefault(term =>
+            BuildFindTermRegex([term]).IsMatch(find)
+         );
+      var pattern = BuildFindTermRegex(
+         [countryFindTerm ?? find]
+      );
+      var entries = new List<string>();
+      var seenEntries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      for(var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+      {
+         foreach(Match match in pattern.Matches(lines[lineIndex]))
+         {
+            if(!TryExtractEntryName(
+               lines,
+               lineIndex,
+               match,
+               out var name
+            ))
+            {
+               continue;
+            }
+
+            var countryLabel = GetCountryLabel(match.Value);
+            var entry = $"{name} | {countryLabel}";
+
+            if(seenEntries.Add(entry))
+            {
+               entries.Add(entry);
+            }
+
+            if(entries.Count >= maxEntries)
+            {
+               return entries;
+            }
+         }
+      }
+
+      return entries;
+   }
+
+   internal static string FormatFindMatchesForTool(
+      IReadOnlyList<PageMatch> matches
+   )
+   {
+      if(matches.Count == 0)
+      {
+         return "No matching text found.";
+      }
+
+      return string.Join(
+         Environment.NewLine,
+         matches.Select(match => match.Snippet)
+      );
+   }
+
    internal static IReadOnlyList<string> ExtractMatchingRows(
       string text,
       string find,
@@ -183,26 +257,38 @@ internal static class LlamaPageToolFormatter
       var rows = new List<string>();
       var seenRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
       var normalizedText = text.ReplaceLineEndings("\n");
-
-      foreach(var line in normalizedText.Split(
+      var lines = normalizedText.Split(
          '\n',
          StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      );
+      var flattenedText = string.Join(" ", lines);
+
+      foreach(var candidate in ExtractPipeDelimitedRows(
+         flattenedText,
+         terms
       ))
+      {
+         AddMatchingRow(rows, seenRows, candidate, terms, maxRows);
+
+         if(rows.Count >= maxRows)
+         {
+            return rows;
+         }
+      }
+
+      if(rows.Count > 0)
+      {
+         return rows;
+      }
+
+      foreach(var line in lines)
       {
          foreach(var candidate in ExtractMatchingRowCandidates(
             line,
             terms
          ))
          {
-            var row = NormalizeMatchingRow(candidate);
-
-            if(!ContainsAnyTerm(row, terms) ||
-               !seenRows.Add(row))
-            {
-               continue;
-            }
-
-            rows.Add(row);
+            AddMatchingRow(rows, seenRows, candidate, terms, maxRows);
 
             if(rows.Count >= maxRows)
             {
@@ -214,11 +300,77 @@ internal static class LlamaPageToolFormatter
       return rows;
    }
 
+   internal static bool AreRowsLikelyPartial(
+      IReadOnlyList<string> rows
+   )
+   {
+      if(rows.Count < 2)
+      {
+         return false;
+      }
+
+      var rowShapes = rows
+         .Select(GetRowShape)
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray();
+
+      return rowShapes.Length == 1;
+   }
+
+   private static string GetRowShape(string row)
+   {
+      return Regex.Replace(
+         row,
+         @"\|\s*\d+(?:[.,]\d+)?[a-z]?\b",
+         "| #",
+         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase
+      ).Trim();
+   }
+
+   private static IEnumerable<string> ExtractPipeDelimitedRows(
+      string text,
+      IReadOnlyCollection<string> terms
+   )
+   {
+      foreach(Match match in BuildFindTermRegex(terms).Matches(text))
+      {
+         if(TryExtractPipeDelimitedRow(
+            text,
+            match.Index,
+            out var row
+         ))
+         {
+            yield return row;
+         }
+      }
+   }
+
+   private static void AddMatchingRow(
+      ICollection<string> rows,
+      ISet<string> seenRows,
+      string candidate,
+      IReadOnlyCollection<string> terms,
+      int maxRows
+   )
+   {
+      if(rows.Count >= maxRows)
+      {
+         return;
+      }
+
+      var row = NormalizeMatchingRow(candidate);
+
+      if(!ContainsAnyTerm(row, terms) || !seenRows.Add(row))
+      {
+         return;
+      }
+
+      rows.Add(row);
+   }
+
    private static string FormatPageTextForToolResult(string text)
    {
-      return text
-         .Replace(" | ", " |" + Environment.NewLine, StringComparison.Ordinal)
-         .Trim();
+      return text.Trim();
    }
 
    private static string GetPageSearchText(WebPageContent pageContent)
@@ -229,6 +381,197 @@ internal static class LlamaPageToolFormatter
       }
 
       return pageContent.MainText;
+   }
+
+   private static bool IsPrimaryCountryFind(string find)
+   {
+      return GetPrimaryCountryTerms().Any(term =>
+         BuildFindTermRegex([term]).IsMatch(find)
+      );
+   }
+
+   private static IEnumerable<string> GetPrimaryCountryTerms()
+   {
+      return
+      [
+         PrimaryCountry.CountryName,
+         PrimaryCountry.LocalDisplayName,
+         PrimaryCountry.ThreeLetterCode,
+         PrimaryCountry.TwoLetterCode
+      ];
+   }
+
+   private static string GetCountryLabel(string value)
+   {
+      foreach(var term in GetPrimaryCountryTerms())
+      {
+         var match = BuildFindTermRegex([term]).Match(value);
+
+         if(match.Success)
+         {
+            return match.Value.Trim();
+         }
+      }
+
+      return value.Trim();
+   }
+
+   private static bool TryExtractEntryName(
+      IReadOnlyList<string> lines,
+      int lineIndex,
+      Match countryMatch,
+      out string name
+   )
+   {
+      var line = lines[lineIndex];
+      var before = line[..countryMatch.Index];
+      var after = line[(countryMatch.Index + countryMatch.Length)..];
+
+      if(TryNormalizeNameCandidate(
+         GetCellBeforeMatch(before),
+         allowSingleWord: true,
+         out name
+      ))
+      {
+         return true;
+      }
+
+      if(TryNormalizeNameCandidate(
+         GetCellAfterMatch(after),
+         allowSingleWord: false,
+         out name
+      ))
+      {
+         return true;
+      }
+
+      var adjacentOffsets = string.IsNullOrWhiteSpace(
+         GetCellAfterMatch(after)
+      )
+         ? new[] { 1, -1 }
+         : new[] { -1, 1 };
+
+      foreach(var offset in adjacentOffsets)
+      {
+         var adjacentIndex = lineIndex + offset;
+
+         if(adjacentIndex < 0 || adjacentIndex >= lines.Count)
+         {
+            continue;
+         }
+
+         if(TryNormalizeNameCandidate(
+            lines[adjacentIndex],
+            allowSingleWord: true,
+            out name
+         ))
+         {
+            return true;
+         }
+      }
+
+      name = string.Empty;
+      return false;
+   }
+
+   private static string GetCellBeforeMatch(string value)
+   {
+      var lastPipeIndex = value.LastIndexOf('|');
+
+      if(lastPipeIndex >= 0)
+      {
+         value = value[(lastPipeIndex + 1)..];
+      }
+
+      return Regex.Replace(
+         value,
+         @"^\s*\d+\s+",
+         string.Empty,
+         RegexOptions.CultureInvariant
+      );
+   }
+
+   private static string GetCellAfterMatch(string value)
+   {
+      var firstPipeIndex = value.IndexOf('|');
+
+      if(firstPipeIndex >= 0)
+      {
+         value = value[..firstPipeIndex];
+      }
+
+      return value;
+   }
+
+   private static bool TryNormalizeNameCandidate(
+      string value,
+      bool allowSingleWord,
+      out string name
+   )
+   {
+      name = string.Empty;
+      var normalized = NormalizeMatchingRow(value);
+
+      if(normalized.Contains('|'))
+      {
+         normalized = normalized[..normalized.IndexOf('|')];
+      }
+
+      normalized = Regex.Replace(
+         normalized,
+         @"^\s*\d+\s+",
+         string.Empty,
+         RegexOptions.CultureInvariant
+      ).Trim(' ', '|', '-', ':');
+      normalized = Regex.Replace(
+         normalized,
+         @"\s+,",
+         ",",
+         RegexOptions.CultureInvariant
+      );
+
+      if(string.IsNullOrWhiteSpace(normalized) ||
+         normalized.Any(char.IsDigit))
+      {
+         return false;
+      }
+
+      var tokens = normalized.Split(
+         ' ',
+         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+      );
+
+      if(tokens.Length == 0 ||
+         (!allowSingleWord && tokens.Length < 2) ||
+         tokens.Any(token => token.Length == 0 || token.All(
+            character => !char.IsLetter(character)
+         )))
+      {
+         return false;
+      }
+
+      if(tokens.Length == 1 && tokens[0].All(char.IsUpper))
+      {
+         return false;
+      }
+
+      var commaIndex = normalized.IndexOf(',');
+
+      if(commaIndex > 0)
+      {
+         var surname = normalized[..commaIndex].Trim();
+         var givenName = normalized[(commaIndex + 1)..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault();
+
+         if(!string.IsNullOrWhiteSpace(givenName))
+         {
+            normalized = $"{surname}, {givenName}";
+         }
+      }
+
+      name = normalized;
+      return true;
    }
 
    private static void AddSnippetMatch(
@@ -444,7 +787,7 @@ internal static class LlamaPageToolFormatter
 
    private static bool IsCountryCodeTerm(string term)
    {
-      return term.Length == 3 &&
+      return term.Length is 2 or 3 &&
          term.All(character =>
             character is >= 'A' and <= 'Z' or >= 'a' and <= 'z'
          );
