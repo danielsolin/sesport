@@ -12,4 +12,7 @@ public static class SourceKinds
 
    public const string ParticipantStartEvidence =
       "ParticipantStartEvidence";
+
+   public const string ParticipantStarEvidence =
+      "ParticipantStarEvidence";
 }
