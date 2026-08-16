@@ -275,6 +275,12 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("activity-group-slot-status", css);
       Assert.Contains("activity-time-channel-list", html);
       Assert.Contains("activity-group-slot-channel-list", html);
+      Assert.Contains(
+         "var slotParticipantNames = slot.Activity",
+         html
+      );
+      Assert.Contains("participant.IsActive", html);
+      Assert.Contains("activity-group-slot-participants", html);
       Assert.Contains("slot.TvChannels", html);
       Assert.DoesNotContain("slot.EndTimeLabel", html);
       Assert.Contains("activity-group-description", html);
@@ -330,6 +336,16 @@ public sealed class IndexMarkupTests
          "grid-column: 3;\n" +
          "      grid-row: 1;\n" +
          "      justify-content: flex-end;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-slot-participants {\n" +
+         "   display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-slot-participants {\n" +
+         "      display: inline;",
          css
       );
       Assert.Contains(

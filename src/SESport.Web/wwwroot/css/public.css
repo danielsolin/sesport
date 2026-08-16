@@ -1002,6 +1002,12 @@
    font-weight: 750;
 }
 
+.activity-group-slot-participants {
+   display: none;
+   margin-left: 0.25em;
+   font-weight: 500;
+}
+
 .activity-group-slot-channel-list {
    margin-top: 4px;
 }
@@ -1538,6 +1544,10 @@
       .activity-group-slot-content {
       grid-column: 2;
       grid-row: 1;
+   }
+
+   .activity-group-slot-participants {
+      display: inline;
    }
 }
 
