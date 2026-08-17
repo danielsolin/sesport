@@ -7,7 +7,7 @@ internal static class WebPageNormalizationScript
       return """
          () => {
             document.querySelectorAll(
-               'nav, footer, aside, [role="dialog"], ' +
+               'nav, footer, aside, select, [role="dialog"], ' +
                '[role="banner"], [aria-modal="true"], ' +
                '[class*="modal"], [class*="overlay"], ' +
                '[class*="consent"], [class*="privacy"], ' +

@@ -62,6 +62,10 @@ internal static class WebPageContentFetchSupport
       @"(?:header|nav|footer|aside|script|style|noscript)>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
+   private static readonly Regex HtmlSelectBlockRegex = new(
+      @"<select\b[^>]*>.*?</select>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
    private static readonly Regex HtmlMainBlockRegex = new(
       @"<main\b[^>]*>(?<content>.*?)</main>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
@@ -1028,7 +1032,8 @@ internal static class WebPageContentFetchSupport
 
    private static string RemoveBoilerplateHtml(string html)
    {
-      return HtmlBoilerplateBlockRegex.Replace(html, " ");
+      var withoutBoilerplate = HtmlBoilerplateBlockRegex.Replace(html, " ");
+      return HtmlSelectBlockRegex.Replace(withoutBoilerplate, " ");
    }
 
    private static bool TryGetAttributeValue(

@@ -1783,6 +1783,35 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task BrowserAndHtmlPathsOmitSelectOptions()
+   {
+      var html = """
+         <html>
+            <body>
+               <h1>Squad Sunderland AFC</h1>
+               <label>Filter by season</label>
+               <select name="season">
+                  <option value="2026">26/27</option>
+                  <option value="2002">02/03</option>
+                  <option value="1961">60/61</option>
+               </select>
+               <p>Melker Ellborg</p>
+            </body>
+         </html>
+         """;
+      var htmlText = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+      var browserText = await EvaluateNormalizationScriptAsync(html);
+
+      Assert.Equal(htmlText, browserText);
+      Assert.Contains("Filter by season", browserText);
+      Assert.Contains("Melker Ellborg", browserText);
+      Assert.DoesNotContain("26/27", browserText);
+      Assert.DoesNotContain("02/03", browserText);
+      Assert.DoesNotContain("60/61", browserText);
+   }
+
+   [Fact]
    public async Task NormalizeWikipediaFlagImageUsesAltText()
    {
       var html =
