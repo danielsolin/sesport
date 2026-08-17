@@ -52,25 +52,12 @@ internal static class LlamaPageToolFormatter
       var pdfLinks = relevantLinks?
          .Where(link => IsPdfUrl(link.Url))
          .ToArray() ?? [];
-      var otherRelevantLinks = relevantLinks?
-         .Where(link => !IsPdfUrl(link.Url))
-         .ToArray() ?? [];
 
       if(pdfLinks.Length > 0)
       {
          builder.AppendLine("PDF links:");
 
          foreach(var link in pdfLinks)
-         {
-            builder.AppendLine($"- {link.Label}: {link.Url}");
-         }
-      }
-
-      if(otherRelevantLinks.Length > 0)
-      {
-         builder.AppendLine("Relevant links:");
-
-         foreach(var link in otherRelevantLinks)
          {
             builder.AppendLine($"- {link.Label}: {link.Url}");
          }

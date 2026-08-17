@@ -1507,7 +1507,7 @@ public class WebPageContentClientTests
    }
 
    [Fact]
-   public void FormatPageContentTextPlacesRelevantLinksBeforePageText()
+   public void FormatPageContentTextOmitsNonPdfRelevantLinks()
    {
       var output = LlamaPageToolFormatter.FormatPageContentText(
          "Page URL",
@@ -1528,12 +1528,9 @@ public class WebPageContentClientTests
          "Page body text."
       );
 
-      Assert.Contains("Relevant links:", output);
-      Assert.Contains("- Entry list: https://example.test/entries", output);
-      Assert.True(
-         output.IndexOf("Relevant links:", StringComparison.Ordinal) <
-         output.IndexOf("Page text:", StringComparison.Ordinal)
-      );
+      Assert.DoesNotContain("Relevant links:", output);
+      Assert.DoesNotContain("https://example.test/entries", output);
+      Assert.Contains("Page text:", output);
    }
 
    [Fact]
