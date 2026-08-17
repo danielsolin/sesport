@@ -1,11 +1,9 @@
-using System.Globalization;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
+using System.Globalization;
 
 namespace SESport.Web.Pages;
 

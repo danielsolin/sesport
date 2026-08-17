@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Hosting;
-
-using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Core.Sources;
 using SESport.Data.Models;

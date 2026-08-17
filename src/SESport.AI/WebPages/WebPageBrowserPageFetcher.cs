@@ -1,6 +1,5 @@
-using System.Text.Json;
-
 using Microsoft.Playwright;
+using System.Text.Json;
 
 namespace SESport.AI.WebPages;
 

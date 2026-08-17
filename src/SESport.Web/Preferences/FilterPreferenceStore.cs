@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace SESport.Web.Preferences;
 
 public sealed class FilterPreferenceStore

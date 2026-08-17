@@ -1,15 +1,13 @@
-using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-
 using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SESport.Web.Pages.Admin.Runs;
 
@@ -849,7 +847,7 @@ public class DetailsModel(
             "thread.started",
             StringComparison.Ordinal
          ) || GetProperty(entry, "item") is
-            { ValueKind: JsonValueKind.Object }
+         { ValueKind: JsonValueKind.Object }
       );
    }
 

@@ -1,9 +1,7 @@
-using System.Reflection;
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
-
 using SESport.Data.Models;
+using System.Reflection;
 
 namespace SESport.Core.Tests.Services;
 

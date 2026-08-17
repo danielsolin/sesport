@@ -1,9 +1,7 @@
-using System.Text.Json;
-
 using Npgsql;
-
 using SESport.Core.Formatting;
 using SESport.Data.Repositories;
+using System.Text.Json;
 
 namespace SESport.Core.Tests.Data;
 

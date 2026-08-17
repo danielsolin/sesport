@@ -1,8 +1,6 @@
-using System.Diagnostics;
-
 using Microsoft.Playwright;
-
 using SESport.AI.WebPages;
+using System.Diagnostics;
 
 namespace SESport.Core.Tests.AI;
 

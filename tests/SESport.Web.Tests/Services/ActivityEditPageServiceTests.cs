@@ -1,15 +1,12 @@
-using System.Text.Json;
-
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-
 using Npgsql;
-
 using SESport.AI.Jobs;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Data.Repositories;
+using System.Text.Json;
 
 namespace SESport.Core.Tests.Services;
 

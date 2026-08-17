@@ -1,14 +1,12 @@
-using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-
 using Microsoft.Extensions.Logging;
-
 using SESport.AI.Clients;
 using SESport.AI.Llama;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SESport.Core.Tests.AI;
 

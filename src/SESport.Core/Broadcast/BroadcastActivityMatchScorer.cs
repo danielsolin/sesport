@@ -1,7 +1,6 @@
+using SESport.Core.Configuration;
 using System.Globalization;
 using System.Text;
-
-using SESport.Core.Configuration;
 
 namespace SESport.Core.Broadcast;
 

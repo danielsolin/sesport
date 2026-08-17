@@ -1,4 +1,3 @@
-using SESport.Core.Configuration;
 using SESport.Core.Domain;
 
 namespace SESport.Web.Formatting;

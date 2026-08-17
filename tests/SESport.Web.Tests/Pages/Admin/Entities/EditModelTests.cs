@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
-
-using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;

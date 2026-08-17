@@ -1,12 +1,10 @@
-using System.Globalization;
-
 using Npgsql;
-
 using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
+using System.Globalization;
 
 namespace SESport.Data.Repositories;
 

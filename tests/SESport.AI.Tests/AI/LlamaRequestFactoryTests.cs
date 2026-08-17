@@ -1,6 +1,5 @@
-using System.Text.Json.Nodes;
-
 using SESport.AI.Llama;
+using System.Text.Json.Nodes;
 
 namespace SESport.Core.Tests.AI;
 

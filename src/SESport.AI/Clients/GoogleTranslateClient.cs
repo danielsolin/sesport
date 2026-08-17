@@ -1,11 +1,8 @@
+using Microsoft.Playwright;
+using SESport.Core.AI;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-
-using Microsoft.Playwright;
-
-using SESport.Core.AI;
-using SESport.Core.Configuration;
 
 namespace SESport.AI.Clients;
 
