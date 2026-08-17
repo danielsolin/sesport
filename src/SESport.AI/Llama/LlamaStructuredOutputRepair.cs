@@ -1,3 +1,4 @@
+using SESport.AI.Protocols;
 using SESport.Core.AI;
 using System.Text.Json.Nodes;
 
@@ -41,13 +42,19 @@ internal static class LlamaStructuredOutputRepair
       Exception exception
    )
    {
-      return exception.Message.Contains(
+      return IsEmptyOutputFailure(exception) ||
+         exception.Message.Contains(
          "invalid json_schema output",
          StringComparison.OrdinalIgnoreCase
       ) || exception.Message.Contains(
          InvalidJsonObjectOutputMessage,
          StringComparison.OrdinalIgnoreCase
       );
+   }
+
+   public static bool IsEmptyOutputFailure(Exception exception)
+   {
+      return ResponsesOutputValidator.IsEmptyOutputFailure(exception);
    }
 
    public static bool ShouldRepair(
@@ -72,20 +79,11 @@ internal static class LlamaStructuredOutputRepair
    {
       var repairMessage = new JsonObject
       {
-         ["role"] = "system",
+         ["role"] = "user",
          ["content"] = repairPrompt
       };
 
-      var insertionIndex =
-         LlamaConversationTrimmer.FindPrimarySystemMessageIndex(messages);
-
-      if(insertionIndex < 0)
-      {
-         messages.Insert(0, repairMessage);
-         return;
-      }
-
-      messages.Insert(insertionIndex + 1, repairMessage);
+      messages.Add(repairMessage);
    }
 
    public static JsonObject CreateRepairPromptTraceEntry(int turn)

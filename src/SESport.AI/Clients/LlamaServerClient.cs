@@ -548,6 +548,11 @@ public sealed class LlamaServerClient : IAiProviderClient
                }
             }
 
+            if(continueWithTools)
+            {
+               continue;
+            }
+
             if(toolBudgetExhausted || finalizeWithoutTools)
             {
                if(toolBudgetExhausted)
@@ -709,7 +714,8 @@ public sealed class LlamaServerClient : IAiProviderClient
                      ResponsesOutputValidator.ValidateStructuredOutput(
                         finalOutputText,
                         job.OutputMode,
-                        prompt.OutputSchemaJson
+                        prompt.OutputSchemaJson,
+                        LlamaResponseReader.GetFinishReason(responseJson)
                      );
                   return BuildAcceptedResult(finalOutputText);
                }
@@ -1184,6 +1190,11 @@ public sealed class LlamaServerClient : IAiProviderClient
    )
    {
       if(!RequestUsesTools(request))
+      {
+         return false;
+      }
+
+      if(LlamaStructuredOutputRepair.IsEmptyOutputFailure(exception))
       {
          return false;
       }

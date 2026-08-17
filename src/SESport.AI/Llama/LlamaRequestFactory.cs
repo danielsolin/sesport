@@ -227,7 +227,7 @@ internal static class LlamaRequestFactory
          toolsStillAvailable: true
       );
 
-      messages.Add(CreateSystemMessage(prompt));
+      messages.Add(CreateUserMessage(prompt));
    }
 
    public static void AddFinalReportCorrectionPrompt(
@@ -242,14 +242,14 @@ internal static class LlamaRequestFactory
          toolsStillAvailable: false
       );
 
-      messages.Add(CreateSystemMessage(prompt));
+      messages.Add(CreateUserMessage(prompt));
    }
 
    public static void AddCorruptedParticipantNameRetryPrompt(
       JsonArray messages
    )
    {
-      messages.Add(CreateSystemMessage(
+      messages.Add(CreateUserMessage(
          LlamaReportSubmission.GetCorruptedParticipantNamePrompt()
       ));
    }
@@ -266,7 +266,7 @@ internal static class LlamaRequestFactory
          $"{Environment.NewLine}{Environment.NewLine}" +
          ToolFormatFeedbackContinuePrompt;
 
-      messages.Add(CreateSystemMessage(prompt));
+      messages.Add(CreateUserMessage(prompt));
    }
 
    private static void UpsertPrimarySystemMessage(
@@ -291,6 +291,11 @@ internal static class LlamaRequestFactory
    private static JsonObject CreateSystemMessage(string content)
    {
       return CreateMessage(JsonValueSystem, content);
+   }
+
+   private static JsonObject CreateUserMessage(string content)
+   {
+      return CreateMessage(JsonValueUser, content);
    }
 
    private static JsonObject CreateMessage(string role, string content)

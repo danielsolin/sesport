@@ -1998,6 +1998,74 @@ public class AiProviderClientTests
          handler.RequestBodies[2]
       );
       Assert.Contains("\"kind\":\"validation_feedback\"", result.ToolTraceJson);
+
+      var retryMessages = JsonNode.Parse(handler.RequestBodies[2])!
+         ["messages"]!
+         .AsArray();
+      Assert.Equal(
+         "user",
+         retryMessages[retryMessages.Count - 1]!["role"]!.GetValue<string>()
+      );
+      Assert.DoesNotContain(
+         retryMessages.Skip(1),
+         message => string.Equals(
+            message?["role"]?.GetValue<string>(),
+            "system",
+            StringComparison.Ordinal
+         )
+      );
+   }
+
+   [Fact]
+   public async Task
+      LlamaServerGenerateAsyncReportsTruncatedEmptyFinalOutput()
+   {
+      var handler = new RecordingHandler(
+         CreateLlamaToolCallResponseJson(),
+         CreateChatResponseJson("", finishReason: "length")
+      );
+      var client = new LlamaServerClient(
+         new HttpClient(handler),
+         new RecordingWebSearchClient(),
+         new RecordingWebPageContentClient(null),
+         new NoopLogger<LlamaServerClient>()
+      );
+
+      var exception = await Assert.ThrowsAsync<
+         AiProviderExecutionException
+      >(() => client.GenerateAsync(
+         CreateProvider("llama-server"),
+         CreateJob(
+            "json_schema",
+            requiresWebSearch: true,
+            toolsJson: CreateToolsJson()
+         ),
+         CreatePrompt(
+            CreateParticipationSchemaJson(),
+            maxToolRounds: 4
+         ),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      ));
+
+      Assert.Equal(2, handler.RequestBodies.Count);
+      Assert.Contains(
+         "AI provider returned no final output (finish_reason=length).",
+         exception.Message
+      );
+      Assert.DoesNotContain(
+         "invalid json_schema output",
+         exception.Message
+      );
+      Assert.DoesNotContain(
+         "validation_feedback",
+         exception.ToolTraceJson
+      );
+      Assert.Contains(
+         "\"finish_reason\":\"length\"",
+         exception.RawResponseJson
+      );
    }
 
    [Fact]

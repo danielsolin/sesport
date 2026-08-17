@@ -133,6 +133,9 @@ public class ResponsesOutputValidatorTests
          )
       );
 
-      Assert.Contains("Output was empty.", exception.Message);
+      Assert.Equal(
+         ResponsesOutputValidator.EmptyOutputMessage,
+         exception.Message
+      );
    }
 }

@@ -6,6 +6,12 @@ namespace SESport.AI.Protocols;
 
 public static class ResponsesOutputValidator
 {
+   private const string EmptyOutputMessagePrefix =
+      "AI provider returned no final output";
+
+   public const string EmptyOutputMessage =
+      EmptyOutputMessagePrefix + ".";
+
    public static string ExtractFinalText(string rawResponse)
    {
       using var document = JsonDocument.Parse(rawResponse);
@@ -48,10 +54,12 @@ public static class ResponsesOutputValidator
    public static string ValidateStructuredOutput(
       string outputText,
       string outputMode,
-      string? outputSchemaJson
+      string? outputSchemaJson,
+      string? finishReason = null
    )
    {
       outputText = NormalizeStructuredJsonOutput(outputText);
+      EnsureOutputIsPresent(outputText, finishReason);
 
       if(!string.IsNullOrWhiteSpace(outputSchemaJson))
       {
@@ -69,6 +77,40 @@ public static class ResponsesOutputValidator
       }
 
       return outputText;
+   }
+
+   public static void EnsureOutputIsPresent(
+      string outputText,
+      string? finishReason = null
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(outputText))
+      {
+         return;
+      }
+
+      throw new InvalidOperationException(
+         CreateEmptyOutputMessage(finishReason)
+      );
+   }
+
+   public static bool IsEmptyOutputFailure(Exception exception)
+   {
+      return exception.Message.StartsWith(
+         EmptyOutputMessagePrefix,
+         StringComparison.Ordinal
+      );
+   }
+
+   public static string CreateEmptyOutputMessage(string? finishReason)
+   {
+      if(string.IsNullOrWhiteSpace(finishReason))
+      {
+         return EmptyOutputMessage;
+      }
+
+      return $"{EmptyOutputMessagePrefix} " +
+         $"(finish_reason={finishReason}).";
    }
 
    public static string NormalizeStructuredJsonOutput(string outputText)
@@ -449,7 +491,10 @@ public static class ResponsesOutputValidator
 
       if(string.IsNullOrWhiteSpace(preview))
       {
-         preview = "Output was empty.";
+         return new InvalidOperationException(
+            EmptyOutputMessage,
+            exception
+         );
       }
 
       if(preview.Length > LlamaServerDefaults.PreviewSnippetCharacters)
