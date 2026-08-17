@@ -42,6 +42,10 @@ public sealed class DetailsMarkupTests
          "summary>User prompt template</summary>"
       );
       Assert.Contains("<dt>Temperature</dt>", html);
+      Assert.Contains("<h2>Token usage</h2>", html);
+      Assert.Contains("Input tokens (total)", html);
+      Assert.Contains("Cached input tokens", html);
+      Assert.Contains("Uncached input tokens", html);
       Assert.Contains("Final payload chars", html);
       Assert.Contains("Max payload chars", html);
       Assert.Contains("DetailsModel.FormatJson(Model.Run.OutputText)", html);

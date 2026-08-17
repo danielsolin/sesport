@@ -375,6 +375,50 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void BuildTokenUsageCalculatesUncachedInputTokens()
+   {
+      var run = CreateRun() with
+      {
+         InputTokens = 1033255,
+         OutputTokens = 6199,
+         RawResponseJson =
+            """
+            {
+              "usage": {
+                "input_tokens": 1033255,
+                "output_tokens": 6199,
+                "cached_input_tokens": 896768,
+                "reasoning_output_tokens": 4508,
+                "cache_write_input_tokens": 0
+              }
+            }
+            """
+      };
+
+      var usage = DetailsModel.BuildTokenUsage(run);
+
+      Assert.NotNull(usage);
+      Assert.Equal(1033255, usage!.InputTokens);
+      Assert.Equal(896768, usage.CachedInputTokens);
+      Assert.Equal(136487, usage.UncachedInputTokens);
+      Assert.Equal(0, usage.CacheWriteInputTokens);
+      Assert.Equal(6199, usage.OutputTokens);
+      Assert.Equal(4508, usage.ReasoningTokens);
+   }
+
+   [Fact]
+   public void FormatTokenCountUsesSwedishThousandsSeparators()
+   {
+      Assert.Equal(
+         1033255.ToString(
+            "N0",
+            CultureInfo.GetCultureInfo(PrimaryCountry.CultureName)
+         ),
+         DetailsModel.FormatTokenCount(1033255)
+      );
+   }
+
+   [Fact]
    public void FormatTemperatureReturnsNotSetWhenPromptTemperatureIsNull()
    {
       var run = CreateRun() with

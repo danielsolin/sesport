@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
+using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using System.Globalization;
@@ -26,6 +27,8 @@ public class DetailsModel(
    };
 
    public AiRunDetail? Run { get; private set; }
+
+   public TokenUsageViewModel? TokenUsage { get; private set; }
 
    public string SystemPromptText { get; private set; } = string.Empty;
 
@@ -87,6 +90,7 @@ public class DetailsModel(
 
       if(Run is not null)
       {
+         TokenUsage = BuildTokenUsage(Run);
          ExecutionEnvironment = Run.ExecutionEnvironment;
          await LoadExecutionEnvironmentOptionsAsync(
             Run.ExecutionEnvironment,
@@ -116,6 +120,8 @@ public class DetailsModel(
       {
          return NotFound();
       }
+
+      TokenUsage = BuildTokenUsage(Run);
 
       var requestedExecutionEnvironment = string.IsNullOrWhiteSpace(
          ExecutionEnvironment
@@ -497,6 +503,100 @@ public class DetailsModel(
       return run.MaxOutputTokens.ToString(CultureInfo.InvariantCulture);
    }
 
+   public static string FormatTokenCount(int? tokenCount)
+   {
+      return tokenCount?.ToString(
+         "N0",
+         CultureInfo.GetCultureInfo(PrimaryCountry.CultureName)
+      ) ?? "-";
+   }
+
+   public static TokenUsageViewModel? BuildTokenUsage(AiRunDetail run)
+   {
+      var usage = ParseTokenUsage(run.RawResponseJson);
+      var inputTokens = run.InputTokens ?? ReadTokenCount(
+         usage,
+         "input_tokens",
+         "prompt_tokens",
+         "tokens_prompt"
+      );
+      var cachedInputTokens = ReadTokenCount(
+         usage,
+         "cached_input_tokens",
+         "input_cached_tokens",
+         "cache_read_input_tokens"
+      ) ?? ReadNestedTokenCount(
+         usage,
+         "input_tokens_details",
+         "cached_tokens"
+      );
+      var cacheWriteInputTokens = ReadTokenCount(
+         usage,
+         "cache_write_input_tokens",
+         "input_cache_write_tokens",
+         "cache_creation_input_tokens"
+      ) ?? ReadNestedTokenCount(
+         usage,
+         "input_tokens_details",
+         "cache_write_tokens",
+         "cache_creation_tokens"
+      );
+      var uncachedInputTokens = ReadTokenCount(
+         usage,
+         "input_uncached_tokens",
+         "uncached_input_tokens"
+      );
+      var outputTokens = run.OutputTokens ?? ReadTokenCount(
+         usage,
+         "output_tokens",
+         "completion_tokens",
+         "tokens_completion"
+      );
+      var reasoningTokens = run.ReasoningTokens ?? ReadTokenCount(
+         usage,
+         "reasoning_output_tokens",
+         "reasoning_tokens",
+         "tokens_reasoning"
+      ) ?? ReadNestedTokenCount(
+         usage,
+         "output_tokens_details",
+         "reasoning_tokens"
+      );
+
+      if(uncachedInputTokens is null &&
+         inputTokens is not null &&
+         cachedInputTokens is not null)
+      {
+         var calculatedUncachedInputTokens =
+            inputTokens.Value - cachedInputTokens.Value -
+            (cacheWriteInputTokens ?? 0);
+
+         if(calculatedUncachedInputTokens >= 0)
+         {
+            uncachedInputTokens = calculatedUncachedInputTokens;
+         }
+      }
+
+      if(inputTokens is null &&
+         cachedInputTokens is null &&
+         uncachedInputTokens is null &&
+         cacheWriteInputTokens is null &&
+         outputTokens is null &&
+         reasoningTokens is null)
+      {
+         return null;
+      }
+
+      return new TokenUsageViewModel(
+         inputTokens,
+         cachedInputTokens,
+         uncachedInputTokens,
+         cacheWriteInputTokens,
+         outputTokens,
+         reasoningTokens
+      );
+   }
+
    public static string FormatMaxToolRounds(AiRunDetail run)
    {
       var maxToolRounds = run.PromptMaxToolRounds ?? (
@@ -525,6 +625,87 @@ public class DetailsModel(
    public static int GetToolRoundCount(int toolRoundCount)
    {
       return toolRoundCount;
+   }
+
+   private static JsonElement? ParseTokenUsage(string? rawResponseJson)
+   {
+      if(string.IsNullOrWhiteSpace(rawResponseJson))
+      {
+         return null;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponseJson);
+         var root = document.RootElement;
+
+         if(root.ValueKind == JsonValueKind.Object &&
+            root.TryGetProperty("usage", out var usage) &&
+            usage.ValueKind == JsonValueKind.Object)
+         {
+            return usage.Clone();
+         }
+
+         return root.ValueKind == JsonValueKind.Object
+            ? root.Clone()
+            : null;
+      }
+      catch(JsonException)
+      {
+         return null;
+      }
+   }
+
+   private static int? ReadNestedTokenCount(
+      JsonElement? usage,
+      string objectName,
+      params string[] propertyNames
+   )
+   {
+      if(usage is null ||
+         usage.Value.ValueKind != JsonValueKind.Object ||
+         !usage.Value.TryGetProperty(objectName, out var details) ||
+         details.ValueKind != JsonValueKind.Object)
+      {
+         return null;
+      }
+
+      return ReadTokenCount(details, propertyNames);
+   }
+
+   private static int? ReadTokenCount(
+      JsonElement? usage,
+      params string[] propertyNames
+   )
+   {
+      return usage is null
+         ? null
+         : ReadTokenCount(usage.Value, propertyNames);
+   }
+
+   private static int? ReadTokenCount(
+      JsonElement usage,
+      params string[] propertyNames
+   )
+   {
+      if(usage.ValueKind != JsonValueKind.Object)
+      {
+         return null;
+      }
+
+      foreach(var propertyName in propertyNames)
+      {
+         if(!usage.TryGetProperty(propertyName, out var property) ||
+            property.ValueKind != JsonValueKind.Number ||
+            !property.TryGetInt32(out var value))
+         {
+            continue;
+         }
+
+         return value;
+      }
+
+      return null;
    }
 
    public static int GetMaxPayloadCharacterCount(AiRunDetail run)
@@ -1386,6 +1567,15 @@ public class DetailsModel(
       string Id,
       string Name,
       string Arguments
+   );
+
+   public sealed record TokenUsageViewModel(
+      int? InputTokens,
+      int? CachedInputTokens,
+      int? UncachedInputTokens,
+      int? CacheWriteInputTokens,
+      int? OutputTokens,
+      int? ReasoningTokens
    );
 
    public sealed record ToolTraceBadgeViewModel(

@@ -127,29 +127,79 @@
             <dt>Include Social Media</dt>
             <dd>@Model.Run.JobIncludeSocialMedia</dd>
          </div>
-         @if(Model.Run.InputTokens is not null)
-         {
-            <div>
-               <dt>Input tokens</dt>
-               <dd>@Model.Run.InputTokens</dd>
-            </div>
-         }
-         @if(Model.Run.OutputTokens is not null)
-         {
-            <div>
-               <dt>Output tokens</dt>
-               <dd>@Model.Run.OutputTokens</dd>
-            </div>
-         }
-         @if(Model.Run.ReasoningTokens is not null)
-         {
-            <div>
-               <dt>Reasoning tokens</dt>
-               <dd>@Model.Run.ReasoningTokens</dd>
-            </div>
-         }
       </dl>
    </section>
+
+   @if(Model.TokenUsage is not null)
+   {
+      <section class="form-section">
+         <h2>Token usage</h2>
+         @if(Model.TokenUsage.CachedInputTokens is not null)
+         {
+            <p class="muted">
+               Total input tokens includes cached input tokens. Uncached input
+               tokens are calculated from total, cached, and cache-write tokens
+               when the provider does not report them directly.
+            </p>
+         }
+         <dl class="detail-grid">
+            @if(Model.TokenUsage.InputTokens is not null)
+            {
+               <div>
+                  <dt>Input tokens (total)</dt>
+                  <dd>@DetailsModel.FormatTokenCount(
+                     Model.TokenUsage.InputTokens
+                  )</dd>
+               </div>
+            }
+            @if(Model.TokenUsage.CachedInputTokens is not null)
+            {
+               <div>
+                  <dt>Cached input tokens</dt>
+                  <dd>@DetailsModel.FormatTokenCount(
+                     Model.TokenUsage.CachedInputTokens
+                  )</dd>
+               </div>
+            }
+            @if(Model.TokenUsage.UncachedInputTokens is not null)
+            {
+               <div>
+                  <dt>Uncached input tokens</dt>
+                  <dd>@DetailsModel.FormatTokenCount(
+                     Model.TokenUsage.UncachedInputTokens
+                  )</dd>
+               </div>
+            }
+            @if(Model.TokenUsage.CacheWriteInputTokens is > 0)
+            {
+               <div>
+                  <dt>Cache write input tokens</dt>
+                  <dd>@DetailsModel.FormatTokenCount(
+                     Model.TokenUsage.CacheWriteInputTokens
+                  )</dd>
+               </div>
+            }
+            @if(Model.TokenUsage.OutputTokens is not null)
+            {
+               <div>
+                  <dt>Output tokens</dt>
+                  <dd>@DetailsModel.FormatTokenCount(
+                     Model.TokenUsage.OutputTokens
+                  )</dd>
+               </div>
+            }
+            @if(Model.TokenUsage.ReasoningTokens is not null)
+            {
+               <div>
+                  <dt>Reasoning tokens</dt>
+                  <dd>@DetailsModel.FormatTokenCount(
+                     Model.TokenUsage.ReasoningTokens
+                  )</dd>
+               </div>
+            }
+         </dl>
+      </section>
+   }
 
    <div class="run-tool-trace-host"
         data-run-tool-trace
