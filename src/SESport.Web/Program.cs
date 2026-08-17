@@ -8,6 +8,11 @@ var adminOptions = builder.Configuration.GetSection(
    )
    .Get<AdminLoginOptions>() ??
    new AdminLoginOptions();
+var codexCliOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.CodexCliSection
+   )
+   .Get<CodexCliOptions>() ??
+   new CodexCliOptions();
 var searxngOptions = builder.Configuration.GetSection(
       ApplicationConfigurationKeys.SearxngSection
    )
@@ -49,6 +54,7 @@ builder.Services.AddSingleton(
    )
 );
 builder.Services.AddSingleton(adminOptions);
+builder.Services.AddSingleton(codexCliOptions);
 builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddSingleton(memberAuthOptions);
 builder.Services.AddSingleton(smtpEmailOptions);

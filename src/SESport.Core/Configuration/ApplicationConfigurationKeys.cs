@@ -4,6 +4,8 @@ public static class ApplicationConfigurationKeys
 {
    public const string AdminSection = "Admin";
 
+   public const string CodexCliSection = "CodexCli";
+
    public const string MemberAuthSection = "MemberAuth";
 
    public const string SmtpSection = "Smtp";

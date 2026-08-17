@@ -49,6 +49,8 @@ public sealed class DetailsMarkupTests
       Assert.Contains("run-tool-trace.js", html);
       Assert.DoesNotContain("tool-trace-turn-header-main", html);
       Assert.Contains("tool-trace-turn-header-main", toolTraceHtml);
+      Assert.Contains("Agent actions", toolTraceHtml);
+      Assert.Contains("Raw event JSON", toolTraceHtml);
       Assert.Contains("summary>Raw tool trace JSON</summary>", toolTraceHtml);
       Assert.Contains("FormatJsonOrRetentionNotice", html);
       Assert.Contains("FormatJsonOrRetentionNotice", toolTraceHtml);

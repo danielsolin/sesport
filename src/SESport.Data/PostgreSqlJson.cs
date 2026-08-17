@@ -12,7 +12,7 @@ internal static class PostgreSqlJson
    {
       if(string.IsNullOrWhiteSpace(value))
       {
-         return value;
+         return null;
       }
 
       try

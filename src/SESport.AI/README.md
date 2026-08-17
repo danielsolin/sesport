@@ -175,6 +175,19 @@ AI jobs may require the following runtime dependencies:
 - Playwright Chromium for browser-backed fetching and translation;
 - Tesseract with English language data for image OCR.
 
+### Codex CLI provider
+
+The `codex-cli` provider runs `codex exec` as a full Codex agent. It uses the
+configured working directory, the rendered job prompt, the prompt output
+schema, and Codex's JSONL event stream. Jobs that require web search enable
+Codex live search automatically.
+
+The host can configure the executable and working directory with the
+`CodexCli__ExecutablePath` and `CodexCli__WorkingDirectory` configuration
+keys. `CodexCli__TimeoutSeconds` controls the process timeout and defaults to
+20 minutes. The provider intentionally runs with full Codex access for its
+agent-backed use case.
+
 Browser-backed page fetching uses Chromium as its baseline and opportunistically
 tries Playwright's alternate Chromium mode, installed Chrome, Firefox, or
 WebKit when those browser runtimes are available on the host.

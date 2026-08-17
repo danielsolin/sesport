@@ -144,6 +144,74 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void ParseToolTraceParsesCodexJsonlEvents()
+   {
+      var turns = DetailsModel.ParseToolTrace(
+         """
+         [
+           {
+             "type": "thread.started",
+             "thread_id": "thread-1"
+           },
+           {
+             "type": "turn.started"
+           },
+           {
+             "type": "item.completed",
+             "item": {
+               "id": "item-1",
+               "type": "agent_message",
+               "text": "Initial response"
+             }
+           },
+           {
+             "type": "item.completed",
+             "item": {
+               "id": "exec-1",
+               "type": "web_search",
+               "query": "Sweden Montenegro",
+               "action": {
+                 "type": "search",
+                 "queries": ["Sweden Montenegro"]
+               }
+             }
+           },
+           {
+             "type": "item.completed",
+             "item": {
+               "id": "item-2",
+               "type": "agent_message",
+               "text": "Final response"
+             }
+           },
+           {
+             "type": "turn.completed",
+             "usage": {
+               "input_tokens": 12,
+               "output_tokens": 8
+             }
+           }
+         ]
+         """
+      );
+
+      var turn = Assert.Single(turns);
+      Assert.Equal(1, turn.Turn);
+      Assert.Equal("Final response", turn.AssistantContent);
+
+      var action = Assert.Single(turn.CodexActions);
+      Assert.Equal("web_search", action.Name);
+      Assert.Equal("Sweden Montenegro", action.Query);
+      Assert.Equal("search", action.ActionType);
+      Assert.Single(action.SearchQueries);
+      Assert.Contains("\"queries\"", action.RawJson);
+
+      var note = Assert.Single(turn.Notes);
+      Assert.Equal("Codex usage", note.Title);
+      Assert.Contains("\"input_tokens\": 12", note.Content);
+   }
+
+   [Fact]
    public void GetToolRoundCountUsesStoredValueOnly()
    {
       Assert.Equal(

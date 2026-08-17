@@ -109,6 +109,110 @@
                         </div>
                      </summary>
 
+                     @if(turn.CodexActions.Count > 0)
+                     {
+                        <div class="tool-trace-block">
+                           <div class="tool-trace-block-label">
+                              Agent actions
+                           </div>
+                           <div class="tool-trace-items">
+                              @{
+                                 var actionNumber = 0;
+                              }
+                              @foreach(var action in turn.CodexActions)
+                              {
+                                 actionNumber++;
+                                 <details class="tool-trace-action">
+                                    <summary
+                                       class="tool-trace-action-summary">
+                                       <span
+                                          class="tool-trace-action-main">
+                                          <span
+                                             class="tool-trace-action-index">
+                                             @actionNumber
+                                          </span>
+                                          <code>@action.Name</code>
+                                          @if(!string.IsNullOrWhiteSpace(
+                                             action.ActionType))
+                                          {
+                                             <span
+                                                class="tool-trace-action-type">
+                                                @action.ActionType
+                                             </span>
+                                          }
+                                       </span>
+                                       <span
+                                          class="tool-trace-action-query">
+                                          @if(string.IsNullOrWhiteSpace(
+                                             action.Query))
+                                          {
+                                             <text>Completed</text>
+                                          }
+                                          else
+                                          {
+                                             @action.Query
+                                          }
+                                       </span>
+                                    </summary>
+                                    <div
+                                       class="tool-trace-action-content">
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          action.Query))
+                                       {
+                                          <div
+                                             class="tool-trace-action-meta">
+                                             <span
+                                                class="tool-trace-meta-label">
+                                                Query
+                                             </span>
+                                             <span>@action.Query</span>
+                                          </div>
+                                       }
+                                       @if(action.SearchQueries.Count > 0)
+                                       {
+                                          <div
+                                             class="tool-trace-action-meta">
+                                             <span
+                                                class="tool-trace-meta-label">
+                                                Search variants
+                                             </span>
+                                             <ul
+                                                class="tool-trace-query-list">
+                                                @foreach(var query in
+                                                   action.SearchQueries)
+                                                {
+                                                   <li>@query</li>
+                                                }
+                                             </ul>
+                                          </div>
+                                       }
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          action.Id))
+                                       {
+                                          <div
+                                             class="tool-trace-action-meta">
+                                             <span
+                                                class="tool-trace-meta-label">
+                                                Event id
+                                             </span>
+                                             <code>@action.Id</code>
+                                          </div>
+                                       }
+                                       <details
+                                          class="tool-trace-action-details">
+                                          <summary>Raw event JSON</summary>
+                                          <pre
+                                             class="prompt-details-pre">
+@action.RawJson
+                                          </pre>
+                                       </details>
+                                    </div>
+                                 </details>
+                              }
+                           </div>
+                        </div>
+                     }
+
                      @if(!string.IsNullOrWhiteSpace(
                         turn.AssistantReasoningContent))
                      {

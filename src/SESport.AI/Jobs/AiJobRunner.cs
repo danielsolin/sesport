@@ -95,6 +95,11 @@ public sealed class AiJobRunner(
       }
       catch(Exception exception)
       {
+         logger?.LogError(
+            exception,
+            "AI run {RunId} failed before completion.",
+            runId
+         );
          await MarkRunFailedAsync(
             runId,
             exception.Message,
@@ -715,7 +720,8 @@ public sealed class AiJobRunner(
             return tokens;
          }
       }
-      catch(JsonException)
+      catch(Exception exception)
+         when(exception is JsonException or ArgumentException)
       {
       }
 

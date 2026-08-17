@@ -706,9 +706,16 @@ public class DetailsModel(
             return [];
          }
 
+         var entries = document.RootElement.EnumerateArray().ToArray();
+
+         if(IsCodexToolTrace(entries))
+         {
+            return ParseCodexToolTrace(entries);
+         }
+
          var turns = new Dictionary<int, ToolTraceTurnBuilder>();
 
-         foreach(var entry in document.RootElement.EnumerateArray())
+         foreach(var entry in entries)
          {
             if(entry.ValueKind != JsonValueKind.Object)
             {
@@ -832,6 +839,160 @@ public class DetailsModel(
       }
    }
 
+   private static bool IsCodexToolTrace(
+      IReadOnlyList<JsonElement> entries
+   )
+   {
+      return entries.Any(entry =>
+         string.Equals(
+            GetString(entry, "type"),
+            "thread.started",
+            StringComparison.Ordinal
+         ) || GetProperty(entry, "item") is
+            { ValueKind: JsonValueKind.Object }
+      );
+   }
+
+   private static IReadOnlyList<ToolTraceTurnViewModel>
+      ParseCodexToolTrace(IReadOnlyList<JsonElement> entries)
+   {
+      var turns = new Dictionary<int, ToolTraceTurnBuilder>();
+      var currentTurn = 0;
+
+      foreach(var entry in entries)
+      {
+         var eventType = GetString(entry, "type");
+
+         if(string.Equals(
+            eventType,
+            "thread.started",
+            StringComparison.Ordinal
+         ))
+         {
+            continue;
+         }
+
+         if(string.Equals(
+            eventType,
+            "turn.started",
+            StringComparison.Ordinal
+         ))
+         {
+            currentTurn++;
+            GetOrCreateTurn(turns, currentTurn);
+            continue;
+         }
+
+         if(currentTurn == 0)
+         {
+            currentTurn = 1;
+         }
+
+         var builder = GetOrCreateTurn(turns, currentTurn);
+
+         if(string.Equals(
+            eventType,
+            "item.completed",
+            StringComparison.Ordinal
+         ))
+         {
+            ParseCodexCompletedItem(builder, entry);
+            continue;
+         }
+
+         if(string.Equals(
+            eventType,
+            "turn.completed",
+            StringComparison.Ordinal
+         ))
+         {
+            var usage = GetProperty(entry, "usage");
+
+            if(usage is not null)
+            {
+               builder.Notes.Add(new ToolTraceNoteViewModel(
+                  "Codex usage",
+                  FormatDisplayValue(usage.Value),
+                  null
+               ));
+            }
+         }
+      }
+
+      return turns
+         .OrderBy(pair => pair.Key)
+         .Select(pair => pair.Value.ToViewModel())
+         .ToArray();
+   }
+
+   private static void ParseCodexCompletedItem(
+      ToolTraceTurnBuilder builder,
+      JsonElement entry
+   )
+   {
+      var item = GetProperty(entry, "item");
+
+      if(item is null || item.Value.ValueKind != JsonValueKind.Object)
+      {
+         return;
+      }
+
+      var itemType = GetString(item.Value, "type");
+
+      if(string.Equals(
+         itemType,
+         "agent_message",
+         StringComparison.Ordinal
+      ))
+      {
+         builder.AssistantContent = GetString(item.Value, "text");
+         return;
+      }
+
+      if(string.IsNullOrWhiteSpace(itemType))
+      {
+         return;
+      }
+
+      builder.CodexActions.Add(ParseCodexAction(item.Value));
+   }
+
+   private static ToolTraceCodexActionViewModel ParseCodexAction(
+      JsonElement item
+   )
+   {
+      var action = GetProperty(item, "action");
+      var actionType = action is null
+         ? null
+         : GetString(action.Value, "type");
+
+      return new ToolTraceCodexActionViewModel(
+         GetString(item, "type") ?? "codex_action",
+         GetString(item, "id"),
+         GetString(item, "query"),
+         actionType,
+         ParseCodexSearchQueries(action),
+         FormatDisplayValue(item)
+      );
+   }
+
+   private static IReadOnlyList<string> ParseCodexSearchQueries(
+      JsonElement? action
+   )
+   {
+      if(action is null ||
+         !TryGetArray(action.Value, "queries", out var queries))
+      {
+         return [];
+      }
+
+      return queries
+         .Where(query => query.ValueKind == JsonValueKind.String)
+         .Select(query => query.GetString() ?? string.Empty)
+         .Where(query => !string.IsNullOrWhiteSpace(query))
+         .ToArray();
+   }
+
    public static IReadOnlyList<ToolTraceBadgeViewModel>
       BuildToolTraceSummaryBadges(
          IReadOnlyList<ToolTraceTurnViewModel> turns
@@ -910,6 +1071,18 @@ public class DetailsModel(
          badges.Add(new(
             $"{totalToolResults} result{(totalToolResults == 1 ? "" : "s")}",
             "tool-trace-badge-result"
+         ));
+      }
+
+      var totalCodexActions = turns.Sum(
+         turn => turn.CodexActions.Count
+      );
+      if(totalCodexActions > 0)
+      {
+         badges.Add(new(
+            $"{totalCodexActions} action" +
+            $"{(totalCodexActions == 1 ? "" : "s")}",
+            "tool-trace-badge-tool"
          ));
       }
 
@@ -1265,6 +1438,15 @@ public class DetailsModel(
       string Result
    );
 
+   public sealed record ToolTraceCodexActionViewModel(
+      string Name,
+      string? Id,
+      string? Query,
+      string? ActionType,
+      IReadOnlyList<string> SearchQueries,
+      string RawJson
+   );
+
    public sealed record ToolTraceSubmissionViewModel(
       string ToolCallId,
       string Name,
@@ -1297,6 +1479,7 @@ public class DetailsModel(
       IReadOnlyList<ToolTraceSubmissionViewModel> Submissions,
       IReadOnlyList<ToolTraceNoteViewModel> Notes,
       IReadOnlyList<ToolTraceToolResultViewModel> ToolResults,
+      IReadOnlyList<ToolTraceCodexActionViewModel> CodexActions,
       IReadOnlyList<ToolTraceBadgeViewModel> CompactBadges,
       string? AssistantPreview
    );
@@ -1332,6 +1515,9 @@ public class DetailsModel(
 
       public List<ToolTraceToolResultViewModel> ToolResults { get; } = [];
 
+      public List<ToolTraceCodexActionViewModel> CodexActions
+      { get; } = [];
+
       public ToolTraceTurnViewModel ToViewModel()
       {
          return new ToolTraceTurnViewModel(
@@ -1349,6 +1535,7 @@ public class DetailsModel(
             Submissions,
             Notes,
             ToolResults,
+            CodexActions,
             BuildCompactBadges(),
             BuildAssistantPreview()
          );
@@ -1434,6 +1621,15 @@ public class DetailsModel(
                $"{ToolResults.Count} result{(ToolResults.Count == 1 ? "" :
                   "s")}",
                "tool-trace-badge-result"
+            ));
+         }
+
+         if(CodexActions.Count > 0)
+         {
+            badges.Add(new(
+               $"{CodexActions.Count} action" +
+               $"{(CodexActions.Count == 1 ? "" : "s")}",
+               "tool-trace-badge-tool"
             ));
          }
 

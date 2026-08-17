@@ -40,12 +40,16 @@ public static class AiServiceCollectionExtensions
       {
          client.Timeout = AiDefaults.LlamaServerHttpClientTimeout;
       });
+      services.AddTransient<CodexCliClient>();
       services.AddTransient<GoogleTranslateClient>();
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<OpenRouterClient>()
       );
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<LlamaServerClient>()
+      );
+      services.AddTransient<IAiProviderClient>(serviceProvider =>
+         serviceProvider.GetRequiredService<CodexCliClient>()
       );
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<GoogleTranslateClient>()
