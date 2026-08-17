@@ -60,6 +60,29 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void FormatCodexActionSummaryExplainsMissingSearchDetails()
+   {
+      var action = new DetailsModel.ToolTraceCodexActionViewModel(
+         "web_search",
+         "search-1",
+         null,
+         "other",
+         [],
+         null,
+         null,
+         null,
+         null,
+         null,
+         "{}"
+      );
+
+      Assert.Equal(
+         "No query or result reported",
+         DetailsModel.FormatCodexActionSummary(action)
+      );
+   }
+
+   [Fact]
    public void FormatJsonOrRetentionNoticeExplainsPurgedPayload()
    {
       Assert.Equal(
@@ -190,6 +213,17 @@ public sealed class DetailsModelTests
            {
              "type": "item.completed",
              "item": {
+               "id": "exec-3",
+               "type": "command_execution",
+               "command": "/bin/bash -lc \"printf 'done\\n'\"",
+               "status": "completed",
+               "exit_code": 0,
+               "aggregated_output": "done\n"
+             }
+           },
+           {
+             "type": "item.completed",
+             "item": {
                "id": "item-2",
                "type": "agent_message",
                "text": "Final response"
@@ -206,11 +240,12 @@ public sealed class DetailsModelTests
          """
       );
 
-      Assert.Equal(2, turns.Count);
+      Assert.Equal(3, turns.Count);
       var firstTurn = turns[0];
-      var finalTurn = turns[1];
+      var secondTurn = turns[1];
+      var finalTurn = turns[2];
       Assert.Equal(1, firstTurn.Turn);
-      Assert.Equal(2, finalTurn.Turn);
+      Assert.Equal(3, finalTurn.Turn);
       Assert.Null(firstTurn.AssistantContent);
       Assert.Equal("Final response", finalTurn.AssistantContent);
 
@@ -221,8 +256,31 @@ public sealed class DetailsModelTests
       Assert.Single(action.SearchQueries);
       Assert.Contains("\"queries\"", action.RawJson);
 
-      var secondAction = Assert.Single(finalTurn.CodexActions);
+      var secondAction = Assert.Single(secondTurn.CodexActions);
       Assert.Equal("Montenegro Sweden", secondAction.Query);
+
+      var commandAction = Assert.Single(finalTurn.CodexActions);
+      Assert.Equal("command_execution", commandAction.Name);
+      Assert.Equal("/bin/bash -lc \"printf 'done\\n'\"",
+         commandAction.Command);
+      Assert.Equal("completed", commandAction.Status);
+      Assert.Equal(0, commandAction.ExitCode);
+      Assert.Equal(5, commandAction.OutputCharacterCount);
+      Assert.Equal("done\n", commandAction.AggregatedOutput);
+      Assert.Equal(
+         commandAction.Command,
+         DetailsModel.FormatCodexActionSummary(commandAction)
+      );
+      Assert.Equal(
+         "completed, exit 0",
+         DetailsModel.FormatCodexActionResult(commandAction)
+      );
+      Assert.Equal(
+         "5",
+         DetailsModel.FormatCodexActionOutputCount(
+            commandAction.OutputCharacterCount
+         )
+      );
 
       var note = Assert.Single(finalTurn.Notes);
       Assert.Equal("Codex usage", note.Title);

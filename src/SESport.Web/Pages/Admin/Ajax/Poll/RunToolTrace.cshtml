@@ -96,6 +96,18 @@
                            @if(turn.CodexActions.Count == 1)
                            {
                               var action = turn.CodexActions[0];
+                              var actionSummary =
+                                 DetailsModel.FormatCodexActionSummary(
+                                    action
+                                 );
+                              var actionResult =
+                                 DetailsModel.FormatCodexActionResult(
+                                    action
+                                 );
+                              var outputCount =
+                                 DetailsModel.FormatCodexActionOutputCount(
+                                    action.OutputCharacterCount
+                                 );
                               <span
                                  class="tool-trace-turn-action-summary">
                                  <code>@action.Name</code>
@@ -106,17 +118,25 @@
                                        @action.ActionType
                                     </span>
                                  }
+                                 @if(!string.IsNullOrWhiteSpace(
+                                    actionResult))
+                                 {
+                                    <span
+                                       class="tool-trace-action-status">
+                                       @actionResult
+                                    </span>
+                                 }
+                                 @if(action.OutputCharacterCount is not null)
+                                 {
+                                    <span
+                                       class="tool-trace-output-count">
+                                       Output
+                                       @outputCount chars
+                                    </span>
+                                 }
                                  <span
                                     class="tool-trace-turn-action-query">
-                                    @if(string.IsNullOrWhiteSpace(
-                                       action.Query))
-                                    {
-                                       <text>Completed</text>
-                                    }
-                                    else
-                                    {
-                                       @action.Query
-                                    }
+                                    @actionSummary
                                  </span>
                               </span>
                            }
@@ -145,6 +165,18 @@
                            <div class="tool-trace-items">
                               @foreach(var action in turn.CodexActions)
                               {
+                                 var actionSummary =
+                                    DetailsModel.FormatCodexActionSummary(
+                                       action
+                                    );
+                                 var actionResult =
+                                    DetailsModel.FormatCodexActionResult(
+                                       action
+                                    );
+                                 var outputCount =
+                                    DetailsModel.FormatCodexActionOutputCount(
+                                       action.OutputCharacterCount
+                                    );
                                  <details class="tool-trace-action">
                                     <summary
                                        class="tool-trace-action-summary">
@@ -159,22 +191,47 @@
                                                 @action.ActionType
                                              </span>
                                           }
+                                          @if(!string.IsNullOrWhiteSpace(
+                                             actionResult))
+                                          {
+                                             <span
+                                                class="tool-trace-action-status"
+                                                >
+                                                @actionResult
+                                             </span>
+                                          }
+                                          @if(
+                                             action.OutputCharacterCount is not
+                                             null)
+                                          {
+                                             <span
+                                                class=
+                                                   "tool-trace-output-count"
+                                                >
+                                                Output
+                                                @outputCount chars
+                                             </span>
+                                          }
                                        </span>
                                        <span
                                           class="tool-trace-action-query">
-                                          @if(string.IsNullOrWhiteSpace(
-                                             action.Query))
-                                          {
-                                             <text>Completed</text>
-                                          }
-                                          else
-                                          {
-                                             @action.Query
-                                          }
+                                          @actionSummary
                                        </span>
                                     </summary>
                                     <div
                                        class="tool-trace-action-content">
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          action.Command))
+                                       {
+                                          <details
+                                             class="tool-trace-action-details">
+                                             <summary>Command</summary>
+                                             <pre
+                                                class="prompt-details-pre">
+@action.Command
+                                             </pre>
+                                          </details>
+                                       }
                                        @if(!string.IsNullOrWhiteSpace(
                                           action.Query))
                                        {
@@ -204,6 +261,54 @@
                                                 }
                                              </ul>
                                           </div>
+                                       }
+                                       @if(!string.IsNullOrWhiteSpace(
+                                          action.Status))
+                                       {
+                                          <div
+                                             class="tool-trace-action-meta">
+                                             <span
+                                                class="tool-trace-meta-label">
+                                                Status
+                                             </span>
+                                             <span>@action.Status</span>
+                                          </div>
+                                       }
+                                       @if(action.ExitCode is not null)
+                                       {
+                                          <div
+                                             class="tool-trace-action-meta">
+                                             <span
+                                                class="tool-trace-meta-label">
+                                                Exit code
+                                             </span>
+                                             <span>@action.ExitCode</span>
+                                          </div>
+                                       }
+                                       @if(action.OutputCharacterCount is not
+                                          null)
+                                       {
+                                          <div
+                                             class="tool-trace-action-meta">
+                                             <span
+                                                class="tool-trace-meta-label">
+                                                Output characters
+                                             </span>
+                                             <span>
+                                                @outputCount
+                                             </span>
+                                          </div>
+                                       }
+                                       @if(action.AggregatedOutput is not null)
+                                       {
+                                          <details
+                                             class="tool-trace-action-details">
+                                             <summary>Command output</summary>
+                                             <pre
+                                                class="prompt-details-pre">
+@action.AggregatedOutput
+                                             </pre>
+                                          </details>
                                        }
                                        @if(!string.IsNullOrWhiteSpace(
                                           action.Id))

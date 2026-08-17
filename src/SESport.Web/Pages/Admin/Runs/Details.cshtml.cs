@@ -20,6 +20,10 @@ public class DetailsModel(
       "Conversation history summary:";
    private const string DiagnosticPayloadPurgedMessage =
       "Removed by retention policy.";
+   private const string CodexWebSearchActionName = "web_search";
+   private const string CodexOtherActionType = "other";
+   private const string CodexMissingSearchDetailsSummary =
+      "No query or result reported";
 
    private static readonly JsonSerializerOptions IndentedJsonOptions = new()
    {
@@ -857,6 +861,61 @@ public class DetailsModel(
       return $"{toolName} x {toolCallCount} ({uniqueToolCallCount})";
    }
 
+   public static string FormatCodexActionSummary(
+      ToolTraceCodexActionViewModel action
+   )
+   {
+      if(!string.IsNullOrWhiteSpace(action.Command))
+      {
+         return action.Command.Trim();
+      }
+
+      if(string.Equals(
+            action.Name,
+            CodexWebSearchActionName,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            action.ActionType,
+            CodexOtherActionType,
+            StringComparison.Ordinal
+         ) &&
+         string.IsNullOrWhiteSpace(action.Query))
+      {
+         return CodexMissingSearchDetailsSummary;
+      }
+
+      return string.IsNullOrWhiteSpace(action.Query)
+         ? "Completed"
+         : action.Query;
+   }
+
+   public static string FormatCodexActionResult(
+      ToolTraceCodexActionViewModel action
+   )
+   {
+      var parts = new List<string>();
+
+      if(!string.IsNullOrWhiteSpace(action.Status))
+      {
+         parts.Add(action.Status);
+      }
+
+      if(action.ExitCode is not null)
+      {
+         parts.Add($"exit {action.ExitCode.Value}");
+      }
+
+      return string.Join(", ", parts);
+   }
+
+   public static string FormatCodexActionOutputCount(
+      int? outputCharacterCount
+   )
+   {
+      return outputCharacterCount?.ToString("N0") ?? "";
+   }
+
    public static string GetToolBadgeCssClass(string toolName)
    {
       return string.Equals(
@@ -1127,6 +1186,7 @@ public class DetailsModel(
       var actionType = action is null
          ? null
          : GetString(action.Value, "type");
+      var aggregatedOutput = GetString(item, "aggregated_output");
 
       return new ToolTraceCodexActionViewModel(
          GetString(item, "type") ?? "codex_action",
@@ -1134,6 +1194,11 @@ public class DetailsModel(
          GetString(item, "query"),
          actionType,
          ParseCodexSearchQueries(action),
+         GetString(item, "command"),
+         GetString(item, "status"),
+         GetInt32(item, "exit_code"),
+         aggregatedOutput?.Length,
+         aggregatedOutput,
          FormatDisplayValue(item)
       );
    }
@@ -1603,6 +1668,11 @@ public class DetailsModel(
       string? Query,
       string? ActionType,
       IReadOnlyList<string> SearchQueries,
+      string? Command,
+      string? Status,
+      int? ExitCode,
+      int? OutputCharacterCount,
+      string? AggregatedOutput,
       string RawJson
    );
 

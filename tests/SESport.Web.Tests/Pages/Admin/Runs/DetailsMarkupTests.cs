@@ -25,6 +25,11 @@ public sealed class DetailsMarkupTests
       var toolTraceScript = await File.ReadAllTextAsync(
          toolTraceScriptPath
       );
+      var siteCssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
+      var siteCss = await File.ReadAllTextAsync(siteCssPath);
 
       AssertOrder(
          html,
@@ -56,6 +61,32 @@ public sealed class DetailsMarkupTests
       Assert.Contains("Action details", toolTraceHtml);
       Assert.Contains("tool-trace-turn-action-summary", toolTraceHtml);
       Assert.Contains("Raw event JSON", toolTraceHtml);
+      Assert.Contains("tool-trace-action-status", toolTraceHtml);
+      Assert.Contains("tool-trace-output-count", toolTraceHtml);
+      Assert.Contains("summary>Command</summary>", toolTraceHtml);
+      Assert.Contains("summary>Command output</summary>", toolTraceHtml);
+      Assert.Contains("Output characters", toolTraceHtml);
+      Assert.Contains(
+         ".tool-trace-action {\n"
+         + "   display: grid;\n"
+         + "   gap: 0;\n"
+         + "   min-width: 0;",
+         siteCss
+      );
+      Assert.Contains(
+         ".tool-trace-action-content {\n"
+         + "   display: grid;\n"
+         + "   gap: 8px;\n"
+         + "   min-width: 0;",
+         siteCss
+      );
+      Assert.Contains(
+         ".tool-trace-action-details {\n"
+         + "   display: grid;\n"
+         + "   gap: 6px;\n"
+         + "   min-width: 0;",
+         siteCss
+      );
       Assert.Contains("summary>Raw tool trace JSON</summary>", toolTraceHtml);
       Assert.Contains("FormatJsonOrRetentionNotice", html);
       Assert.Contains("FormatJsonOrRetentionNotice", toolTraceHtml);
