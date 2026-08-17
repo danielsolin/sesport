@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/home/daniel/llama.cpp
-ExecStart=/usr/bin/bash /home/daniel/sesport/bin/llm-start-vps.sh
+ExecStart=/usr/bin/bash /home/daniel/sesport/bin/llm-start.sh
 Restart=always
 RestartSec=5
 User=daniel

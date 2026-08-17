@@ -7,6 +7,10 @@ services or timer you want active.
 The SESport web services load `/home/daniel/sesport/.env` through
 `EnvironmentFile`. Keep the single active PostgreSQL connection there.
 
+The `llama-server.service` unit invokes
+`/home/daniel/sesport/bin/llm-start.sh`. Keep that path stable and change the
+symlink target when switching the active model.
+
 ## Units
 
 - `llama-server.service`
