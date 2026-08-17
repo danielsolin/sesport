@@ -8,6 +8,7 @@ public static class PublicParticipantTeamFlag
       new HashSet<string>(StringComparer.OrdinalIgnoreCase)
       {
          PrimaryCountry.Id,
+         "at",
          "be",
          "de",
          "it",

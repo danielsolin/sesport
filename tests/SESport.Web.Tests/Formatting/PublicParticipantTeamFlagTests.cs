@@ -19,6 +19,7 @@ public sealed class PublicParticipantTeamFlagTests
    }
 
    [Theory]
+   [InlineData("at")]
    [InlineData("be")]
    [InlineData("de")]
    [InlineData("it")]
