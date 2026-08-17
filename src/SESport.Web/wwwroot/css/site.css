@@ -1400,6 +1400,30 @@ h2 {
    text-transform: uppercase;
 }
 
+.tool-trace-turn-action-summary {
+   display: flex;
+   align-items: center;
+   flex: 1 1 240px;
+   min-width: 0;
+   gap: 6px;
+   overflow: hidden;
+   color: var(--ink);
+   font-size: 12px;
+}
+
+.tool-trace-turn-action-summary code {
+   flex: 0 0 auto;
+   color: var(--accent-strong);
+   font-weight: 800;
+}
+
+.tool-trace-turn-action-query {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
 .tool-trace-turn-badges {
    display: flex;
    flex-wrap: wrap;
@@ -1512,19 +1536,6 @@ h2 {
 
 .tool-trace-action-main code {
    color: var(--accent-strong);
-   font-weight: 800;
-}
-
-.tool-trace-action-index {
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
-   width: 22px;
-   height: 22px;
-   border-radius: 50%;
-   background: #e8f1ef;
-   color: var(--accent-strong);
-   font-size: 11px;
    font-weight: 800;
 }
 

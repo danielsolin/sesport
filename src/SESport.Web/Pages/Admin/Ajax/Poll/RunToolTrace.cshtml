@@ -93,6 +93,33 @@
                            <span class="tool-trace-turn-label">
                               Round @turn.Turn
                            </span>
+                           @if(turn.CodexActions.Count == 1)
+                           {
+                              var action = turn.CodexActions[0];
+                              <span
+                                 class="tool-trace-turn-action-summary">
+                                 <code>@action.Name</code>
+                                 @if(!string.IsNullOrWhiteSpace(
+                                    action.ActionType))
+                                 {
+                                    <span class="tool-trace-action-type">
+                                       @action.ActionType
+                                    </span>
+                                 }
+                                 <span
+                                    class="tool-trace-turn-action-query">
+                                    @if(string.IsNullOrWhiteSpace(
+                                       action.Query))
+                                    {
+                                       <text>Completed</text>
+                                    }
+                                    else
+                                    {
+                                       @action.Query
+                                    }
+                                 </span>
+                              </span>
+                           }
                            @if(turn.CompactBadges.Count > 1)
                            {
                               <div class="tool-trace-turn-badges">
@@ -113,24 +140,16 @@
                      {
                         <div class="tool-trace-block">
                            <div class="tool-trace-block-label">
-                              Agent actions
+                              Action details
                            </div>
                            <div class="tool-trace-items">
-                              @{
-                                 var actionNumber = 0;
-                              }
                               @foreach(var action in turn.CodexActions)
                               {
-                                 actionNumber++;
                                  <details class="tool-trace-action">
                                     <summary
                                        class="tool-trace-action-summary">
                                        <span
                                           class="tool-trace-action-main">
-                                          <span
-                                             class="tool-trace-action-index">
-                                             @actionNumber
-                                          </span>
                                           <code>@action.Name</code>
                                           @if(!string.IsNullOrWhiteSpace(
                                              action.ActionType))

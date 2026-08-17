@@ -856,8 +856,9 @@ public class DetailsModel(
    private static IReadOnlyList<ToolTraceTurnViewModel>
       ParseCodexToolTrace(IReadOnlyList<JsonElement> entries)
    {
-      var turns = new Dictionary<int, ToolTraceTurnBuilder>();
-      var currentTurn = 0;
+      var actionTurns = new List<ToolTraceTurnBuilder>();
+      var usageNotes = new List<ToolTraceNoteViewModel>();
+      string? assistantContent = null;
 
       foreach(var entry in entries)
       {
@@ -865,38 +866,39 @@ public class DetailsModel(
 
          if(string.Equals(
             eventType,
-            "thread.started",
-            StringComparison.Ordinal
-         ))
-         {
-            continue;
-         }
-
-         if(string.Equals(
-            eventType,
-            "turn.started",
-            StringComparison.Ordinal
-         ))
-         {
-            currentTurn++;
-            GetOrCreateTurn(turns, currentTurn);
-            continue;
-         }
-
-         if(currentTurn == 0)
-         {
-            currentTurn = 1;
-         }
-
-         var builder = GetOrCreateTurn(turns, currentTurn);
-
-         if(string.Equals(
-            eventType,
             "item.completed",
             StringComparison.Ordinal
          ))
          {
-            ParseCodexCompletedItem(builder, entry);
+            var item = GetProperty(entry, "item");
+
+            if(item is null || item.Value.ValueKind != JsonValueKind.Object)
+            {
+               continue;
+            }
+
+            var itemType = GetString(item.Value, "type");
+
+            if(string.Equals(
+               itemType,
+               "agent_message",
+               StringComparison.Ordinal
+            ))
+            {
+               assistantContent = GetString(item.Value, "text");
+               continue;
+            }
+
+            if(string.IsNullOrWhiteSpace(itemType))
+            {
+               continue;
+            }
+
+            var actionTurn = new ToolTraceTurnBuilder(
+               actionTurns.Count + 1
+            );
+            actionTurn.CodexActions.Add(ParseCodexAction(item.Value));
+            actionTurns.Add(actionTurn);
             continue;
          }
 
@@ -910,7 +912,7 @@ public class DetailsModel(
 
             if(usage is not null)
             {
-               builder.Notes.Add(new ToolTraceNoteViewModel(
+               usageNotes.Add(new ToolTraceNoteViewModel(
                   "Codex usage",
                   FormatDisplayValue(usage.Value),
                   null
@@ -919,42 +921,23 @@ public class DetailsModel(
          }
       }
 
-      return turns
-         .OrderBy(pair => pair.Key)
-         .Select(pair => pair.Value.ToViewModel())
+      if(actionTurns.Count == 0)
+      {
+         var assistantTurn = new ToolTraceTurnBuilder(1)
+         {
+            AssistantContent = assistantContent
+         };
+         assistantTurn.Notes.AddRange(usageNotes);
+         return [assistantTurn.ToViewModel()];
+      }
+
+      var finalTurn = actionTurns[^1];
+      finalTurn.AssistantContent = assistantContent;
+      finalTurn.Notes.AddRange(usageNotes);
+
+      return actionTurns
+         .Select(turn => turn.ToViewModel())
          .ToArray();
-   }
-
-   private static void ParseCodexCompletedItem(
-      ToolTraceTurnBuilder builder,
-      JsonElement entry
-   )
-   {
-      var item = GetProperty(entry, "item");
-
-      if(item is null || item.Value.ValueKind != JsonValueKind.Object)
-      {
-         return;
-      }
-
-      var itemType = GetString(item.Value, "type");
-
-      if(string.Equals(
-         itemType,
-         "agent_message",
-         StringComparison.Ordinal
-      ))
-      {
-         builder.AssistantContent = GetString(item.Value, "text");
-         return;
-      }
-
-      if(string.IsNullOrWhiteSpace(itemType))
-      {
-         return;
-      }
-
-      builder.CodexActions.Add(ParseCodexAction(item.Value));
    }
 
    private static ToolTraceCodexActionViewModel ParseCodexAction(
@@ -1071,18 +1054,6 @@ public class DetailsModel(
          badges.Add(new(
             $"{totalToolResults} result{(totalToolResults == 1 ? "" : "s")}",
             "tool-trace-badge-result"
-         ));
-      }
-
-      var totalCodexActions = turns.Sum(
-         turn => turn.CodexActions.Count
-      );
-      if(totalCodexActions > 0)
-      {
-         badges.Add(new(
-            $"{totalCodexActions} action" +
-            $"{(totalCodexActions == 1 ? "" : "s")}",
-            "tool-trace-badge-tool"
          ));
       }
 
@@ -1621,15 +1592,6 @@ public class DetailsModel(
                $"{ToolResults.Count} result{(ToolResults.Count == 1 ? "" :
                   "s")}",
                "tool-trace-badge-result"
-            ));
-         }
-
-         if(CodexActions.Count > 0)
-         {
-            badges.Add(new(
-               $"{CodexActions.Count} action" +
-               $"{(CodexActions.Count == 1 ? "" : "s")}",
-               "tool-trace-badge-tool"
             ));
          }
 

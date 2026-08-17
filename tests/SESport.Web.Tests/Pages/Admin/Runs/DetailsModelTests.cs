@@ -179,6 +179,18 @@ public sealed class DetailsModelTests
            {
              "type": "item.completed",
              "item": {
+               "id": "exec-2",
+               "type": "web_search",
+               "query": "Montenegro Sweden",
+               "action": {
+                 "type": "search",
+                 "queries": ["Montenegro Sweden"]
+               }
+             }
+           },
+           {
+             "type": "item.completed",
+             "item": {
                "id": "item-2",
                "type": "agent_message",
                "text": "Final response"
@@ -195,18 +207,25 @@ public sealed class DetailsModelTests
          """
       );
 
-      var turn = Assert.Single(turns);
-      Assert.Equal(1, turn.Turn);
-      Assert.Equal("Final response", turn.AssistantContent);
+      Assert.Equal(2, turns.Count);
+      var firstTurn = turns[0];
+      var finalTurn = turns[1];
+      Assert.Equal(1, firstTurn.Turn);
+      Assert.Equal(2, finalTurn.Turn);
+      Assert.Null(firstTurn.AssistantContent);
+      Assert.Equal("Final response", finalTurn.AssistantContent);
 
-      var action = Assert.Single(turn.CodexActions);
+      var action = Assert.Single(firstTurn.CodexActions);
       Assert.Equal("web_search", action.Name);
       Assert.Equal("Sweden Montenegro", action.Query);
       Assert.Equal("search", action.ActionType);
       Assert.Single(action.SearchQueries);
       Assert.Contains("\"queries\"", action.RawJson);
 
-      var note = Assert.Single(turn.Notes);
+      var secondAction = Assert.Single(finalTurn.CodexActions);
+      Assert.Equal("Montenegro Sweden", secondAction.Query);
+
+      var note = Assert.Single(finalTurn.Notes);
       Assert.Equal("Codex usage", note.Title);
       Assert.Contains("\"input_tokens\": 12", note.Content);
    }
