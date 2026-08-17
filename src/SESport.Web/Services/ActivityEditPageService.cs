@@ -359,6 +359,19 @@ public sealed class ActivityEditPageService(
             participationRunId,
             cancellationToken
          );
+
+      if(participationCheck is not null &&
+         participationCheck.IsPositive &&
+         firstBroadcast.EntityId is not null)
+      {
+         await participationService
+            .EnsureMatchedParticipantOrganizationLinksAsync(
+               firstBroadcast.EntityId.Value,
+               participationCheck.Participants,
+               cancellationToken
+            );
+      }
+
       var selectableEntities = participationCheck is null
          ? []
          : await GetSelectableEntitiesAsync(

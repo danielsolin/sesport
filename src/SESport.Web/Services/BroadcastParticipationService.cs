@@ -72,6 +72,39 @@ public sealed class BroadcastParticipationService(
       );
    }
 
+   public async Task EnsureMatchedParticipantOrganizationLinksAsync(
+      Guid organizationEntityId,
+      IReadOnlyCollection<string> participantNames,
+      CancellationToken cancellationToken
+   )
+   {
+      if(organizationEntityId == Guid.Empty || participantNames.Count == 0)
+      {
+         return;
+      }
+
+      var entityOptions = await adminRepository
+         .GetBroadcastParticipantEntityNameOptionsAsync(
+            organizationEntityId,
+            cancellationToken
+         );
+      var participantEntityIdsByName = BroadcastEntityFilter.CreateNameLookup(
+         entityOptions,
+         entity => entity.Name,
+         entity => entity.Id
+      );
+      var matchedEntityIds = GetMatchedParticipantEntityIds(
+         participantNames,
+         participantEntityIdsByName
+      );
+
+      await adminRepository.EnsureEntityLinksAsync(
+         matchedEntityIds,
+         organizationEntityId,
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<BroadcastListItem>>
       ApplyParticipationChecksAsync(
          IReadOnlyList<BroadcastListItem> broadcasts,
@@ -265,7 +298,7 @@ public sealed class BroadcastParticipationService(
       }
 
       var entityOptions = await adminRepository
-         .GetParticipantEntityNameOptionsAsync(
+         .GetBroadcastParticipantEntityNameOptionsAsync(
             organizationEntityId.Value,
             cancellationToken
          );
@@ -338,15 +371,10 @@ public sealed class BroadcastParticipationService(
          {
             var displayName = BroadcastParticipantNameFormatter.Format(name);
 
-            if(BroadcastEntityFilter.TryGetNameMatch(
+            if(TryGetMatchedParticipantEntityId(
                   participantEntityIdsByName,
                   name,
                   out var entityId
-               ) ||
-               BroadcastEntityFilter.TryGetFuzzyNameMatch(
-                  participantEntityIdsByName,
-                  name,
-                  out entityId
                ))
             {
                return new BroadcastParticipantDisplayItem(
@@ -363,6 +391,49 @@ public sealed class BroadcastParticipationService(
             );
          })
          .ToList();
+   }
+
+   private static IReadOnlyList<Guid> GetMatchedParticipantEntityIds(
+      IReadOnlyCollection<string> participantNames,
+      IReadOnlyDictionary<string, Guid> participantEntityIdsByName
+   )
+   {
+      var matchedEntityIds = new List<Guid>();
+
+      foreach(var participantName in participantNames)
+      {
+         if(!TryGetMatchedParticipantEntityId(
+               participantEntityIdsByName,
+               participantName,
+               out var entityId
+            ) ||
+            matchedEntityIds.Contains(entityId))
+         {
+            continue;
+         }
+
+         matchedEntityIds.Add(entityId);
+      }
+
+      return matchedEntityIds;
+   }
+
+   private static bool TryGetMatchedParticipantEntityId(
+      IReadOnlyDictionary<string, Guid> participantEntityIdsByName,
+      string participantName,
+      out Guid entityId
+   )
+   {
+      return BroadcastEntityFilter.TryGetNameMatch(
+            participantEntityIdsByName,
+            participantName,
+            out entityId
+         ) ||
+         BroadcastEntityFilter.TryGetFuzzyNameMatch(
+            participantEntityIdsByName,
+            participantName,
+            out entityId
+         );
    }
 
    private static string CreateParticipationInputJson(

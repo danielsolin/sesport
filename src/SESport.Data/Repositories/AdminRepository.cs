@@ -1658,6 +1658,100 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return options;
    }
 
+   public async Task<IReadOnlyList<EntityNameOption>>
+      GetBroadcastParticipantEntityNameOptionsAsync(
+         Guid organizationEntityId,
+         CancellationToken cancellationToken
+      )
+   {
+      const string sql = $$"""
+         with linked_participants as (
+            select
+               e.id,
+               e.canonical_name,
+               e.alias_name
+            from entities e
+            where e.entity_type_id in (
+               '{{TrackedEntityTypeIds.Person}}',
+               '{{TrackedEntityTypeIds.Pair}}'
+            )
+               and exists (
+                  select 1
+                  from entity_to_entity_links l
+                  where (l.source_entity_id = @organization_entity_id
+                        and l.target_entity_id = e.id)
+                     or (l.target_entity_id = @organization_entity_id
+                        and l.source_entity_id = e.id)
+               )
+            union
+            select distinct
+               person.id,
+               person.canonical_name,
+               person.alias_name
+            from entities person
+            join entity_to_entity_links person_team_link
+               on person_team_link.source_entity_id = person.id
+                  or person_team_link.target_entity_id = person.id
+            join entities team
+               on team.entity_type_id = '{{TrackedEntityTypeIds.Team}}'
+                  and (
+                     team.id = person_team_link.source_entity_id
+                     or team.id = person_team_link.target_entity_id
+                  )
+            join entity_to_entity_links team_organization_link
+               on (
+                  team_organization_link.source_entity_id = team.id
+                  and team_organization_link.target_entity_id =
+                     @organization_entity_id
+               )
+                  or (
+                     team_organization_link.target_entity_id = team.id
+                     and team_organization_link.source_entity_id =
+                        @organization_entity_id
+                  )
+            where person.entity_type_id =
+               '{{TrackedEntityTypeIds.Person}}'
+         )
+         select id, name
+         from (
+            select
+               id,
+               canonical_name as name
+            from linked_participants
+            union all
+            select
+               id,
+               alias_name as name
+            from linked_participants
+            where alias_name is not null
+         ) names
+         order by name
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         organizationEntityId
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<EntityNameOption>();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         options.Add(
+            new EntityNameOption(
+               reader.GetGuid(0),
+               reader.GetString(1)
+            )
+         );
+      }
+
+      return options;
+   }
+
    public async Task<IReadOnlyList<LookupOption>> GetCountryOptionsAsync(
       CancellationToken cancellationToken
    )
@@ -2048,6 +2142,53 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             exception
          );
       }
+   }
+
+   public async Task EnsureEntityLinksAsync(
+      IReadOnlyCollection<Guid> sourceEntityIds,
+      Guid targetEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      var normalizedSourceEntityIds = sourceEntityIds
+         .Where(entityId =>
+            entityId != Guid.Empty && entityId != targetEntityId)
+         .Distinct()
+         .ToArray();
+
+      if(normalizedSourceEntityIds.Length == 0 ||
+         targetEntityId == Guid.Empty)
+      {
+         return;
+      }
+
+      const string sql = $$"""
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         select
+            md5(source_entity.id::text || @target_entity_id::text)::uuid,
+            source_entity.id,
+            @target_entity_id
+         from unnest(@source_entity_ids) as source_entity_id
+         join entities source_entity
+            on source_entity.id = source_entity_id
+         where source_entity.entity_type_id in (
+            '{{TrackedEntityTypeIds.Person}}',
+            '{{TrackedEntityTypeIds.Pair}}'
+         )
+         on conflict do nothing
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "source_entity_ids",
+         normalizedSourceEntityIds
+      );
+      command.Parameters.AddWithValue("target_entity_id", targetEntityId);
+      await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
    public async Task<bool> RemoveEntityLinkAsync(

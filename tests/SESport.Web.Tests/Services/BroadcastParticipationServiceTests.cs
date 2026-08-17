@@ -219,6 +219,100 @@ public sealed class BroadcastParticipationServiceTests
    }
 
    [Fact]
+   public async Task GetParticipationCheckResultsAsyncLinksTeamRelatedPeople()
+   {
+      var organizationId = Guid.NewGuid();
+      var teamId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var personName = $"Team Person {personId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateService(dataSource);
+      var jobId = "decide-swedish-participation";
+      var context = await LoadParticipationJobContextAsync(
+         dataSource,
+         jobId
+      );
+      var runId = Guid.NewGuid();
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            $"Organization {organizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            "football"
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            teamId,
+            $"Team {teamId:N}",
+            TrackedEntityTypeIds.Team,
+            "football"
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            personId,
+            personName,
+            TrackedEntityTypeIds.Person,
+            "football"
+         );
+         await InsertEntityLinkAsync(dataSource, personId, teamId);
+         await InsertEntityLinkAsync(dataSource, teamId, organizationId);
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            organizationId,
+            $"external-{Guid.NewGuid():N}",
+            $"fingerprint-{Guid.NewGuid():N}",
+            "channel-1",
+            "Viaplay",
+            "Broadcast title",
+            ["Old", "Categories"],
+            DateTimeOffset.Parse("2100-01-01T12:00:00Z"),
+            DateTimeOffset.Parse("2100-01-01T14:00:00Z")
+         );
+         await InsertRunAsync(
+            dataSource,
+            runId,
+            jobId,
+            context.PromptId,
+            context.ProviderId,
+            broadcastId.ToString(),
+            personName
+         );
+
+         var results = await fixture.Service.GetParticipationCheckResultsAsync(
+            [broadcastId],
+            CancellationToken.None
+         );
+
+         var result = Assert.Single(results);
+         var check = Assert.Single(result.Checks);
+
+         Assert.Equal(
+            $"/Admin/Entities/Edit/{personId}",
+            check.Participants[0].EditUrl
+         );
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, runId);
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteLinksAsync(dataSource, teamId);
+         await DeleteLinksAsync(dataSource, organizationId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, teamId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task QueueParticipationAsyncUsesEmptyCandidatesWithoutOrg()
    {
       var broadcastId = Guid.NewGuid();

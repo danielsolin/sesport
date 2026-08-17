@@ -386,6 +386,130 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task PrefillFromBroadcastsAsyncAddsMissingTeamOrgLink()
+   {
+      var organizationId = Guid.NewGuid();
+      var teamId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var personName = $"Team Person {personId:N}";
+      var startsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var jobContext = await LoadParticipationJobContextAsync(
+         dataSource,
+         "decide-swedish-participation"
+      );
+      var runId = Guid.NewGuid();
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            $"Organization {organizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            "football"
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            teamId,
+            $"Team {teamId:N}",
+            TrackedEntityTypeIds.Team,
+            "football"
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            personId,
+            personName,
+            TrackedEntityTypeIds.Person,
+            "football"
+         );
+         await InsertEntityLinkAsync(dataSource, personId, teamId);
+         await InsertEntityLinkAsync(dataSource, teamId, organizationId);
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            organizationId,
+            $"external-{Guid.NewGuid():N}",
+            $"fingerprint-{Guid.NewGuid():N}",
+            "channel-1",
+            "Viaplay",
+            "Broadcast title",
+            ["football"],
+            startsAt,
+            endsAt
+         );
+         await InsertRunAsync(
+            dataSource,
+            runId,
+            "decide-swedish-participation",
+            jobContext.PromptId,
+            jobContext.ProviderId,
+            broadcastId.ToString(),
+            personName
+         );
+
+         await fixture.ParticipationService
+            .GetParticipationCheckResultsAsync(
+               [broadcastId],
+               CancellationToken.None
+            );
+
+         Assert.Equal(
+            0L,
+            await GetEntityLinkCountAsync(
+               dataSource,
+               personId,
+               organizationId
+            )
+         );
+
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal([personId], activity.LinkedEntityIds);
+         Assert.Equal(
+            1L,
+            await GetEntityLinkCountAsync(
+               dataSource,
+               personId,
+               organizationId
+            )
+         );
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, runId);
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteLinksAsync(dataSource, teamId);
+         await DeleteLinksAsync(dataSource, organizationId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, teamId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncLinksFuzzyOrgPersons()
    {
       var organizationId = Guid.NewGuid();
@@ -1971,6 +2095,32 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("target_entity_id", targetEntityId);
 
       await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task<long> GetEntityLinkCountAsync(
+      NpgsqlDataSource dataSource,
+      Guid firstEntityId,
+      Guid secondEntityId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         select count(*)
+         from entity_to_entity_links
+         where (
+               source_entity_id = @first_entity_id
+               and target_entity_id = @second_entity_id
+            )
+            or (
+               source_entity_id = @second_entity_id
+               and target_entity_id = @first_entity_id
+            )
+         """
+      );
+      command.Parameters.AddWithValue("first_entity_id", firstEntityId);
+      command.Parameters.AddWithValue("second_entity_id", secondEntityId);
+
+      return (long)(await command.ExecuteScalarAsync())!;
    }
 
    private static async Task InsertRunAsync(

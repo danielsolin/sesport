@@ -396,7 +396,8 @@ public class IndexModel(
       foreach(var organizationEntityId in organizationEntityIds)
       {
          var entityOptions =
-            await adminRepository.GetParticipantEntityNameOptionsAsync(
+            await adminRepository
+               .GetBroadcastParticipantEntityNameOptionsAsync(
                organizationEntityId,
                cancellationToken
             );
