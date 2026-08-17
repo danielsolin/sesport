@@ -144,6 +144,70 @@ public sealed class FactRepositoryTests
    }
 
    [Fact]
+   public async Task AppendsActivityGroupFactsAcrossRuns()
+   {
+      var activityGroupId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new FactRepository(dataSource);
+
+      try
+      {
+         await InsertActivityGroupAsync(dataSource, activityGroupId);
+
+         var firstFacts = await repository.AddForActivityGroupAsync(
+            activityGroupId,
+            [
+               new FactDraft(
+                  "First group fact.",
+                  [
+                     new FactSourceDraft(
+                        "https://example.test/first",
+                        null,
+                        null
+                     )
+                  ]
+               )
+            ],
+            CancellationToken.None
+         );
+         var secondFacts = await repository.AddForActivityGroupAsync(
+            activityGroupId,
+            [
+               new FactDraft(
+                  "Second group fact.",
+                  [
+                     new FactSourceDraft(
+                        "https://example.test/second",
+                        null,
+                        null
+                     )
+                  ]
+               )
+            ],
+            CancellationToken.None
+         );
+
+         Assert.Single(firstFacts);
+         Assert.Single(secondFacts);
+
+         var facts = await repository.GetForActivityGroupAsync(
+            activityGroupId,
+            CancellationToken.None
+         );
+
+         Assert.Equal(
+            ["First group fact.", "Second group fact."],
+            facts.Select(fact => fact.Text).OrderBy(text => text).ToArray()
+         );
+      }
+      finally
+      {
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+      }
+   }
+
+   [Fact]
    public async Task UpdatesAndDeletesFact()
    {
       var activityId = Guid.NewGuid();

@@ -537,9 +537,45 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   public async Task<Guid?> GetExistingRunIdAsync(
+   public Task<Guid?> GetExistingRunIdAsync(
       string jobId,
       string correlationId,
+      CancellationToken cancellationToken
+   )
+   {
+      return GetRunIdAsync(
+         jobId,
+         correlationId,
+         [
+            AiJobRunStatusIds.Pending,
+            AiJobRunStatusIds.Running,
+            AiJobRunStatusIds.Completed
+         ],
+         cancellationToken
+      );
+   }
+
+   public Task<Guid?> GetActiveRunIdAsync(
+      string jobId,
+      string correlationId,
+      CancellationToken cancellationToken
+   )
+   {
+      return GetRunIdAsync(
+         jobId,
+         correlationId,
+         [
+            AiJobRunStatusIds.Pending,
+            AiJobRunStatusIds.Running
+         ],
+         cancellationToken
+      );
+   }
+
+   private async Task<Guid?> GetRunIdAsync(
+      string jobId,
+      string correlationId,
+      string[] statusIds,
       CancellationToken cancellationToken
    )
    {
@@ -558,12 +594,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("correlation_id", correlationId);
       command.Parameters.AddWithValue(
          "status_ids",
-         new[]
-         {
-            AiJobRunStatusIds.Pending,
-            AiJobRunStatusIds.Running,
-            AiJobRunStatusIds.Completed
-         }
+         statusIds
       );
 
       var result = await command.ExecuteScalarAsync(cancellationToken);

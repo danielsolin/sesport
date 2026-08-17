@@ -228,6 +228,78 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task QueueFactsAsyncQueuesAfterCompletedGroupFactsRun()
+   {
+      var organizationId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var completedRunId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var jobContext = await LoadParticipationJobContextAsync(
+         dataSource,
+         AiJobIds.FindActivityGroupFacts
+      );
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            "Diamond League",
+            TrackedEntityTypeIds.Organization,
+            "football"
+         );
+         await InsertActivityGroupAsync(
+            dataSource,
+            activityGroupId,
+            "Diamond League London",
+            "football",
+            DistantActivityDate,
+            DistantActivityDate
+         );
+         await InsertRunAsync(
+            dataSource,
+            completedRunId,
+            AiJobIds.FindActivityGroupFacts,
+            jobContext.PromptId,
+            jobContext.ProviderId,
+            activityGroupId.ToString(),
+            "Completed group fact run"
+         );
+
+         var activity = new ActivityEditModel
+         {
+            Title = "Friidrott - London",
+            ActivityGroupId = activityGroupId,
+            ActivityGroupTitle = "Diamond League London",
+            Description = "Description",
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = DistantActivityDate,
+            OrganizationEntityId = organizationId
+         };
+
+         await fixture.Service.QueueFactsAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var request = Assert.Single(fixture.JobRunner.Requests);
+         Assert.Equal(
+            AiJobIds.FindActivityGroupFacts,
+            request.JobId
+         );
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, completedRunId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncUsesDirectOrgPersons()
    {
       var organizationId = Guid.NewGuid();

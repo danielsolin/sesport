@@ -517,7 +517,7 @@ public sealed class ActivityEditPageService(
       }
 
       var correlationId = activity.ActivityGroupId.Value.ToString();
-      var existingRunId = await runRepository.GetExistingRunIdAsync(
+      var existingRunId = await runRepository.GetActiveRunIdAsync(
          AiJobIds.FindActivityGroupFacts,
          correlationId,
          cancellationToken

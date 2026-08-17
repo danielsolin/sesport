@@ -668,6 +668,15 @@ public class AiJobRunnerTests
          return Task.FromResult<Guid?>(null);
       }
 
+      public Task<Guid?> GetActiveRunIdAsync(
+         string jobId,
+         string correlationId,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult<Guid?>(null);
+      }
+
       public Task<AiRunDetail?> GetRunAsync(
          Guid id,
          CancellationToken cancellationToken

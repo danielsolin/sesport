@@ -18,6 +18,12 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
+   Task<Guid?> GetActiveRunIdAsync(
+      string jobId,
+      string correlationId,
+      CancellationToken cancellationToken
+   );
+
    Task<bool> TryClaimRunAsync(
       Guid id,
       CancellationToken cancellationToken

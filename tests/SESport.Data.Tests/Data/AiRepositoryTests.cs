@@ -1,4 +1,5 @@
 using Npgsql;
+using SESport.Core.AI;
 using SESport.Core.Formatting;
 using SESport.Data.Repositories;
 using System.Text.Json;
@@ -7,6 +8,78 @@ namespace SESport.Core.Tests.Data;
 
 public sealed class AiRepositoryTests
 {
+   [Fact]
+   public async Task GetActiveRunIdAsyncExcludesCompletedRuns()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var completedRunId = Guid.NewGuid();
+      var runningRunId = Guid.NewGuid();
+      var completedCorrelation = $"completed-{Guid.NewGuid():N}";
+      var runningCorrelation = $"running-{Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      try
+      {
+         await InsertProviderAsync(dataSource, providerId);
+         await InsertJobAsync(dataSource, jobId, providerId);
+         await InsertPromptAsync(dataSource, promptId, jobId);
+         await InsertRunAsync(
+            dataSource,
+            completedRunId,
+            jobId,
+            promptId,
+            providerId,
+            correlationId: completedCorrelation,
+            statusId: AiJobRunStatusIds.Completed
+         );
+         await InsertRunAsync(
+            dataSource,
+            runningRunId,
+            jobId,
+            promptId,
+            providerId,
+            correlationId: runningCorrelation,
+            statusId: AiJobRunStatusIds.Running
+         );
+
+         Assert.Null(
+            await repository.GetActiveRunIdAsync(
+               jobId,
+               completedCorrelation,
+               CancellationToken.None
+            )
+         );
+         Assert.Equal(
+            completedRunId,
+            await repository.GetExistingRunIdAsync(
+               jobId,
+               completedCorrelation,
+               CancellationToken.None
+            )
+         );
+         Assert.Equal(
+            runningRunId,
+            await repository.GetActiveRunIdAsync(
+               jobId,
+               runningCorrelation,
+               CancellationToken.None
+            )
+         );
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runningRunId);
+         await DeleteRunAsync(dataSource, completedRunId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
    [Fact]
    public async Task RecordApplicationAsyncStoresApplicationOnce()
    {
