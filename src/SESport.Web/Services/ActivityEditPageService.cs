@@ -138,8 +138,9 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
-      if(!string.IsNullOrWhiteSpace(activity.Description) ||
-         activity.ActivityGroupId is null)
+      if(activity.ActivityGroupId is null ||
+         (activity.Id is not null &&
+            !string.IsNullOrWhiteSpace(activity.Description)))
       {
          return [];
       }

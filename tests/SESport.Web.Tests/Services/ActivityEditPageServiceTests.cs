@@ -1258,7 +1258,7 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
-   public async Task LoadOtherGroupDescriptionsAsyncReturnsUniqueDescriptions()
+   public async Task LoadOtherGroupDescriptionsAsyncShowsDescriptionsForCreate()
    {
       var activityGroupId = Guid.NewGuid();
       var title = $"Description group {Guid.NewGuid():N}";
@@ -1307,7 +1307,8 @@ public sealed class ActivityEditPageServiceTests
             .LoadOtherGroupDescriptionsAsync(
                new ActivityEditModel
                {
-                  ActivityGroupId = activityGroupId
+                  ActivityGroupId = activityGroupId,
+                  Description = "Prefilled activity description"
                },
                CancellationToken.None
             );
@@ -1315,6 +1316,19 @@ public sealed class ActivityEditPageServiceTests
          Assert.Equal(2, descriptions.Count);
          Assert.Contains("First group description", descriptions);
          Assert.Contains("Second group description", descriptions);
+
+         var existingActivityDescriptions = await fixture.Service
+            .LoadOtherGroupDescriptionsAsync(
+               new ActivityEditModel
+               {
+                  Id = activityIds[0],
+                  ActivityGroupId = activityGroupId,
+                  Description = "Existing activity description"
+               },
+               CancellationToken.None
+            );
+
+         Assert.Empty(existingActivityDescriptions);
       }
       finally
       {
