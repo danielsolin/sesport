@@ -1171,18 +1171,34 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+      var representedEntityId =
+         await ResolveRepresentedEntityIdAsync(
+            connection,
+            transaction,
+            entityId,
+            organizationEntityId,
+            cancellationToken
+         );
       const string sql = $$"""
          insert into activity_entity_links (
             id,
             activity_id,
             entity_id,
-            organization_entity_id
+            organization_entity_id,
+            represented_entity_id
          )
          select
             @id,
             @activity_id,
             e.id,
-            @organization_entity_id
+            @organization_entity_id,
+            @represented_entity_id
          from entities e
          where e.id = @entity_id
             and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
@@ -1202,7 +1218,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             )
          """;
 
-      await using var command = dataSource.CreateCommand(sql);
+      await using var command = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
       command.Parameters.AddWithValue("id", Guid.NewGuid());
       command.Parameters.AddWithValue("activity_id", activityId);
       command.Parameters.AddWithValue("entity_id", entityId);
@@ -1210,7 +1230,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          "organization_entity_id",
          organizationEntityId
       );
+      command.Parameters.Add(
+         "represented_entity_id",
+         NpgsqlDbType.Uuid
+      ).Value = representedEntityId ?? (object)DBNull.Value;
       await command.ExecuteNonQueryAsync(cancellationToken);
+      await transaction.CommitAsync(cancellationToken);
    }
 
    public async Task<IReadOnlyList<ActivityParticipantListItem>>
@@ -1630,10 +1655,16 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             priority.sort_order,
             participant_team.team_country_id,
             participant_team.team_country_name,
-            al.is_active
+            al.is_active,
+            coalesce(
+               nullif(btrim(represented_entity.alias_name), ''),
+               represented_entity.canonical_name
+            ) as represented_entity_name
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
+         left join entities represented_entity
+            on represented_entity.id = al.represented_entity_id
          join entity_watch_priorities priority
             on priority.id = person.watch_priority_id
          left join lateral (
@@ -1747,7 +1778,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                reader.IsDBNull(8) ? null : reader.GetString(8)
             )
             {
-               WatchPriority = reader.GetInt32(9)
+               WatchPriority = reader.GetInt32(9),
+               RepresentedEntityName = reader.IsDBNull(13)
+                  ? null
+                  : reader.GetString(13)
             }
          );
       }
@@ -2072,53 +2106,99 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var inactiveEntityIds = new HashSet<Guid>();
-      await using(var statusCommand = new NpgsqlCommand(
+      var existingEntityIds = new HashSet<Guid>();
+      await using(var existingCommand = new NpgsqlCommand(
          """
          select entity_id
          from activity_entity_links
          where activity_id = @activity_id
-            and not is_active
          """,
          connection,
          transaction
       ))
       {
-         statusCommand.Parameters.AddWithValue("activity_id", activityId);
-         await using var reader = await statusCommand.ExecuteReaderAsync(
+         existingCommand.Parameters.AddWithValue("activity_id", activityId);
+         await using var reader = await existingCommand.ExecuteReaderAsync(
             cancellationToken
          );
 
          while(await reader.ReadAsync(cancellationToken))
          {
-            inactiveEntityIds.Add(reader.GetGuid(0));
+            existingEntityIds.Add(reader.GetGuid(0));
          }
       }
-
-      await using var deleteCommand = new NpgsqlCommand(
-         "delete from activity_entity_links where activity_id = @activity_id",
-         connection,
-         transaction
-      );
-      deleteCommand.Parameters.AddWithValue("activity_id", activityId);
-      await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
       var distinctEntityIds = entityIds
          .Where(entityId => entityId != Guid.Empty)
          .Distinct()
          .ToList();
 
-      if(distinctEntityIds.Count == 0)
+      var removedEntityIds = existingEntityIds
+         .Except(distinctEntityIds)
+         .ToArray();
+
+      if(removedEntityIds.Length > 0)
       {
-         return;
+         await using var deleteCommand = new NpgsqlCommand(
+            """
+            delete from activity_entity_links
+            where activity_id = @activity_id
+               and entity_id = any(@entity_ids)
+            """,
+            connection,
+            transaction
+         );
+         deleteCommand.Parameters.AddWithValue("activity_id", activityId);
+         deleteCommand.Parameters.AddWithValue(
+            "entity_ids",
+            removedEntityIds
+         );
+         await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
       }
 
-      const string sql = $$"""
+      var retainedEntityIds = distinctEntityIds
+         .Where(existingEntityIds.Contains)
+         .ToArray();
+
+      if(retainedEntityIds.Length > 0)
+      {
+         const string updateSql = $$"""
+            update activity_entity_links link
+            set organization_entity_id = case
+               when e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+               then @organization_entity_id
+               else null
+            end
+            from entities e
+            where link.activity_id = @activity_id
+               and link.entity_id = e.id
+               and link.entity_id = any(@entity_ids)
+            """;
+
+         await using var updateCommand = new NpgsqlCommand(
+            updateSql,
+            connection,
+            transaction
+         );
+         updateCommand.Parameters.AddWithValue("activity_id", activityId);
+         updateCommand.Parameters.AddWithValue(
+            "entity_ids",
+            retainedEntityIds
+         );
+         updateCommand.Parameters.Add(
+            "organization_entity_id",
+            NpgsqlDbType.Uuid
+         ).Value = organizationEntityId ?? (object)DBNull.Value;
+         await updateCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      const string insertSql = $$"""
          insert into activity_entity_links (
             id,
             activity_id,
             entity_id,
             organization_entity_id,
+            represented_entity_id,
             is_active
          )
          values (
@@ -2136,14 +2216,24 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                then @organization_entity_id
                else null
             end,
-            @is_active
+            @represented_entity_id,
+            true
          )
          """;
 
-      foreach(var entityId in distinctEntityIds)
+      foreach(var entityId in distinctEntityIds
+         .Where(entityId => !existingEntityIds.Contains(entityId)))
       {
+         var representedEntityId =
+            await ResolveRepresentedEntityIdAsync(
+               connection,
+               transaction,
+               entityId,
+               organizationEntityId,
+               cancellationToken
+            );
          await using var command = new NpgsqlCommand(
-            sql,
+            insertSql,
             connection,
             transaction
          );
@@ -2154,12 +2244,117 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "organization_entity_id",
             NpgsqlDbType.Uuid
          ).Value = organizationEntityId ?? (object)DBNull.Value;
-         command.Parameters.AddWithValue(
-            "is_active",
-            !inactiveEntityIds.Contains(entityId)
-         );
+         command.Parameters.Add(
+            "represented_entity_id",
+            NpgsqlDbType.Uuid
+         ).Value = representedEntityId ?? (object)DBNull.Value;
          await command.ExecuteNonQueryAsync(cancellationToken);
       }
+   }
+
+   private static async Task<Guid?> ResolveRepresentedEntityIdAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid personEntityId,
+      Guid? organizationEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = $$"""
+         with direct_context as (
+            select context.id
+            from entities context
+            where context.id = @organization_entity_id
+               and context.entity_type_id =
+                  '{{TrackedEntityTypeIds.NationalTeam}}'
+               and exists (
+                  select 1
+                  from entity_to_entity_links link
+                  where (link.source_entity_id = @person_entity_id
+                        and link.target_entity_id = context.id)
+                     or (link.target_entity_id = @person_entity_id
+                        and link.source_entity_id = context.id)
+               )
+         ),
+         context_teams as (
+            select distinct team.id
+            from entity_to_entity_links person_team_link
+            join entities team
+               on team.id = case
+                  when person_team_link.source_entity_id =
+                     @person_entity_id
+                  then person_team_link.target_entity_id
+                  else person_team_link.source_entity_id
+               end
+            where (
+               person_team_link.source_entity_id = @person_entity_id
+               or person_team_link.target_entity_id = @person_entity_id
+            )
+               and team.entity_type_id = '{{TrackedEntityTypeIds.Team}}'
+               and @organization_entity_id is not null
+               and exists (
+                  select 1
+                  from entity_to_entity_links context_link
+                  where (context_link.source_entity_id = team.id
+                        and context_link.target_entity_id =
+                           @organization_entity_id)
+                     or (context_link.target_entity_id = team.id
+                        and context_link.source_entity_id =
+                           @organization_entity_id)
+               )
+         ),
+         all_teams as (
+            select distinct team.id
+            from entity_to_entity_links person_team_link
+            join entities team
+               on team.id = case
+                  when person_team_link.source_entity_id =
+                     @person_entity_id
+                  then person_team_link.target_entity_id
+                  else person_team_link.source_entity_id
+               end
+            where (
+               person_team_link.source_entity_id = @person_entity_id
+               or person_team_link.target_entity_id = @person_entity_id
+            )
+               and team.entity_type_id = '{{TrackedEntityTypeIds.Team}}'
+         )
+         select case
+            when exists (select 1 from direct_context)
+            then (select id from direct_context)
+            when exists (
+               select 1
+               from entities context
+               where context.id = @organization_entity_id
+                  and context.entity_type_id =
+                     '{{TrackedEntityTypeIds.NationalTeam}}'
+            )
+            then null
+            when (select count(*) from context_teams) = 1
+            then (select id from context_teams)
+            when (select count(*) from context_teams) > 1
+            then null
+            when (select count(*) from all_teams) = 1
+            then (select id from all_teams)
+            else null
+         end as represented_entity_id
+         """;
+
+      await using var command = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("person_entity_id", personEntityId);
+      command.Parameters.Add(
+         "organization_entity_id",
+         NpgsqlDbType.Uuid
+      ).Value = organizationEntityId ?? (object)DBNull.Value;
+
+      var value = await command.ExecuteScalarAsync(cancellationToken);
+      return value is Guid representedEntityId
+         ? representedEntityId
+         : null;
    }
 
    private static async Task ReplaceSourcesAsync(

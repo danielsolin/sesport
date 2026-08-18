@@ -541,6 +541,34 @@ public partial class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void ActivityParticipantRepresentationMigrationAddsSnapshot()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "028_activity_participant_representation.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "add column represented_entity_id uuid",
+         migration
+      );
+      Assert.Contains(
+         "activity_entity_links_represented_entity_id_fkey",
+         migration
+      );
+      Assert.Contains("references public.entities(id)", migration);
+      Assert.Contains("on delete restrict", migration);
+      Assert.Contains(
+         "activity_entity_links_represented_entity_id_idx",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

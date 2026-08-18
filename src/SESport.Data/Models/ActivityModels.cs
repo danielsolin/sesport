@@ -68,6 +68,8 @@ public sealed record PublicActivityParticipant(
 )
 {
    public int? WatchPriority { get; init; }
+
+   public string? RepresentedEntityName { get; init; }
 }
 
 public sealed record PublishedDateParticipantCount(

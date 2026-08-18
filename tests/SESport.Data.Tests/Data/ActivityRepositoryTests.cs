@@ -85,6 +85,262 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task SaveAsyncSnapshotsTeamAndPreservesItOnLaterSave()
+   {
+      var personId = Guid.NewGuid();
+      var oldTeamId = Guid.NewGuid();
+      var newTeamId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      Guid? activityId = null;
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "Snapshot Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            oldTeamId,
+            "Old Team",
+            TrackedEntityTypeIds.Team
+         );
+         await InsertEntityAsync(
+            dataSource,
+            newTeamId,
+            "New Team",
+            TrackedEntityTypeIds.Team
+         );
+         await InsertEntityAsync(
+            dataSource,
+            organizationId,
+            "Competition Organization",
+            TrackedEntityTypeIds.Organization
+         );
+         await InsertEntityLinkAsync(dataSource, personId, oldTeamId);
+         await InsertEntityLinkAsync(dataSource, oldTeamId, organizationId);
+
+         activityId = await repository.SaveAsync(
+            new ActivityEditModel
+            {
+               Title = "Snapshot Activity",
+               ActivityType = "Match",
+               SportId = "football",
+               ActivityDate = DistantActivityDate,
+               TimeZoneId = SportDay.TimeZoneId,
+               LinkedEntityIds = [personId],
+               OrganizationEntityId = organizationId
+            },
+            CancellationToken.None
+         );
+         var initialLink = await GetActivityLinkSnapshotAsync(
+            dataSource,
+            activityId.Value,
+            personId
+         );
+
+         Assert.NotNull(initialLink);
+         Assert.Equal(oldTeamId, initialLink!.Value.RepresentedEntityId);
+
+         await DeleteLinksAsync(dataSource, personId);
+         await InsertEntityLinkAsync(dataSource, personId, newTeamId);
+         await InsertEntityLinkAsync(dataSource, newTeamId, organizationId);
+
+         await repository.SaveAsync(
+            new ActivityEditModel
+            {
+               Id = activityId,
+               Title = "Edited Snapshot Activity",
+               ActivityType = "Match",
+               SportId = "football",
+               ActivityDate = DistantActivityDate,
+               TimeZoneId = SportDay.TimeZoneId,
+               LinkedEntityIds = [personId],
+               OrganizationEntityId = organizationId
+            },
+            CancellationToken.None
+         );
+         var editedLink = await GetActivityLinkSnapshotAsync(
+            dataSource,
+            activityId.Value,
+            personId
+         );
+
+         Assert.NotNull(editedLink);
+         Assert.Equal(initialLink.Value.Id, editedLink!.Value.Id);
+         Assert.Equal(oldTeamId, editedLink.Value.RepresentedEntityId);
+      }
+      finally
+      {
+         if(activityId is not null)
+         {
+            await DeleteActivityEntityLinksAsync(
+               dataSource,
+               activityId.Value
+            );
+            await DeleteActivityAsync(dataSource, activityId.Value);
+         }
+
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteLinksAsync(dataSource, oldTeamId);
+         await DeleteLinksAsync(dataSource, newTeamId);
+         await DeleteLinksAsync(dataSource, organizationId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, oldTeamId);
+         await DeleteEntityAsync(dataSource, newTeamId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task AddParticipantAsyncSnapshotsContextualTeam()
+   {
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var teamId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertActivityAsync(
+            dataSource,
+            activityId,
+            DistantActivityDate,
+            ToUtc(DistantActivityDate)
+         );
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "Added Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            teamId,
+            "Added Team",
+            TrackedEntityTypeIds.Team
+         );
+         await InsertEntityAsync(
+            dataSource,
+            organizationId,
+            "Added Organization",
+            TrackedEntityTypeIds.Organization
+         );
+         await InsertEntityLinkAsync(dataSource, personId, teamId);
+         await InsertEntityLinkAsync(dataSource, teamId, organizationId);
+         await InsertEntityLinkAsync(dataSource, personId, organizationId);
+
+         await repository.AddParticipantAsync(
+            activityId,
+            personId,
+            organizationId,
+            CancellationToken.None
+         );
+
+         var link = await GetActivityLinkSnapshotAsync(
+            dataSource,
+            activityId,
+            personId
+         );
+
+         Assert.NotNull(link);
+         Assert.Equal(teamId, link!.Value.RepresentedEntityId);
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteLinksAsync(dataSource, teamId);
+         await DeleteLinksAsync(dataSource, organizationId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, teamId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task AddParticipantAsyncPrefersNationalTeamInNationalContext()
+   {
+      var activityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var clubTeamId = Guid.NewGuid();
+      var nationalTeamId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertActivityAsync(
+            dataSource,
+            activityId,
+            DistantActivityDate,
+            ToUtc(DistantActivityDate)
+         );
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "National Team Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            clubTeamId,
+            "Current Club Team",
+            TrackedEntityTypeIds.Team
+         );
+         await InsertEntityAsync(
+            dataSource,
+            nationalTeamId,
+            "Current National Team",
+            TrackedEntityTypeIds.NationalTeam
+         );
+         await InsertEntityLinkAsync(dataSource, personId, clubTeamId);
+         await InsertEntityLinkAsync(
+            dataSource,
+            personId,
+            nationalTeamId
+         );
+
+         await repository.AddParticipantAsync(
+            activityId,
+            personId,
+            nationalTeamId,
+            CancellationToken.None
+         );
+
+         var link = await GetActivityLinkSnapshotAsync(
+            dataSource,
+            activityId,
+            personId
+         );
+
+         Assert.NotNull(link);
+         Assert.Equal(nationalTeamId, link!.Value.RepresentedEntityId);
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(dataSource, activityId);
+         await DeleteActivityAsync(dataSource, activityId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteLinksAsync(dataSource, clubTeamId);
+         await DeleteLinksAsync(dataSource, nationalTeamId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, clubTeamId);
+         await DeleteEntityAsync(dataSource, nationalTeamId);
+      }
+   }
+
+   [Fact]
    public async Task GetActivitiesAsyncIncludesSeriesOrganizations()
    {
       var selectedDate = DistantActivityDate;
@@ -862,7 +1118,8 @@ public sealed class ActivityRepositoryTests
          await InsertActivityEntityLinkAsync(
             dataSource,
             activityId,
-            personId
+            personId,
+            representedEntityId: teamId
          );
          await InsertEntityLinkAsync(dataSource, personId, teamId);
 
@@ -879,6 +1136,7 @@ public sealed class ActivityRepositoryTests
 
          Assert.Equal("pl", participant.TeamCountryId);
          Assert.Equal("Poland", participant.TeamCountryName);
+         Assert.Equal("Test Foreign Team", participant.RepresentedEntityName);
       }
       finally
       {
@@ -1424,6 +1682,35 @@ public sealed class ActivityRepositoryTests
       return (bool)(await command.ExecuteScalarAsync())!;
    }
 
+   private static async Task<(Guid Id, Guid? RepresentedEntityId)?>
+      GetActivityLinkSnapshotAsync(
+         NpgsqlDataSource dataSource,
+         Guid activityId,
+         Guid entityId
+      )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         select id, represented_entity_id
+         from activity_entity_links
+         where activity_id = @activity_id
+            and entity_id = @entity_id
+         """
+      );
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await using var reader = await command.ExecuteReaderAsync();
+      if(!await reader.ReadAsync())
+      {
+         return null;
+      }
+
+      return (
+         reader.GetGuid(0),
+         reader.IsDBNull(1) ? null : reader.GetGuid(1)
+      );
+   }
+
    private static async Task InsertEntityAsync(
       NpgsqlDataSource dataSource,
       Guid entityId,
@@ -1482,7 +1769,8 @@ public sealed class ActivityRepositoryTests
       NpgsqlDataSource dataSource,
       Guid activityId,
       Guid entityId,
-      Guid? organizationEntityId = null
+      Guid? organizationEntityId = null,
+      Guid? representedEntityId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1492,13 +1780,15 @@ public sealed class ActivityRepositoryTests
             id,
             activity_id,
             entity_id,
-            organization_entity_id
+            organization_entity_id,
+            represented_entity_id
          )
          values (
             @id,
             @activity_id,
             @entity_id,
-            @organization_entity_id
+            @organization_entity_id,
+            @represented_entity_id
          )
          """;
       command.Parameters.AddWithValue("id", Guid.NewGuid());
@@ -1507,6 +1797,10 @@ public sealed class ActivityRepositoryTests
       command.Parameters.AddWithValue(
          "organization_entity_id",
          organizationEntityId ?? (object)DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "represented_entity_id",
+         representedEntityId ?? (object)DBNull.Value
       );
 
       await command.ExecuteNonQueryAsync();

@@ -106,10 +106,12 @@ An activity may belong to an activity group.
 
 Connects activities to their participating entities. The optional
 `organization_entity_id` records the organization context separately from the
-participant, while `is_active` allows an inactive participant to remain
-visible without being treated as currently participating.
+participant, while `represented_entity_id` snapshots the team or other entity
+the participant represented at the time of linking. `is_active` allows an
+inactive participant to remain visible without being treated as currently
+participating.
 The database enforces at most one row per `(activity_id, entity_id)` pair;
-the organization entity is metadata on that relation.
+the organization and represented entities are metadata on that relation.
 
 ### `activity_broadcast_links`
 
