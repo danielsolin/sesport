@@ -503,11 +503,11 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 
       if(jobId is null)
       {
-         sql += "order by p.job_id, p.version desc";
+         sql += "\norder by p.job_id, p.version desc";
       }
       else
       {
-         sql += "where p.job_id = @job_id order by p.version desc";
+         sql += "\nwhere p.job_id = @job_id order by p.version desc";
       }
 
       await using var command = dataSource.CreateCommand(sql);
