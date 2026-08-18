@@ -153,6 +153,10 @@ public sealed class EditMarkupTests
       var script = await File.ReadAllTextAsync(scriptPath);
 
       Assert.Contains("data-activity-facts-grid", html);
+      Assert.DoesNotContain(
+         "These facts belong to the ActivityGroup",
+         html
+      );
       Assert.Contains("@foreach(var fact in Model.Facts)", html);
       Assert.Contains("<th>Date</th>", html);
       Assert.Contains("<th>Fact</th>", html);
