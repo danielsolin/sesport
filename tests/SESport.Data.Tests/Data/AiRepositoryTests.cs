@@ -633,6 +633,7 @@ public sealed class AiRepositoryTests
       var jobId = $"test-job-{Guid.NewGuid():N}";
       var promptId = Guid.NewGuid();
       var runIds = new List<Guid>();
+      var executionEnvironment = $"data-test-{Guid.NewGuid():N}";
 
       await using var dataSource = CreateDataSource();
       var repository = new AiRepository(dataSource);
@@ -653,7 +654,8 @@ public sealed class AiRepositoryTests
             promptId,
             providerId,
             DateTimeOffset.UtcNow.AddMinutes(-index),
-            statusId: AiJobRunStatusIds.Running
+            executionEnvironment,
+            statusId: AiJobRunStatusIds.Pending
          );
       }
 

@@ -218,28 +218,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         runs.Add(
-            new AiRunListItem(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               ReadNullableString(reader, 2),
-               reader.GetString(3),
-               ReadNullableString(reader, 4),
-               ReadNullableDateOnly(reader, 5),
-               reader.GetString(6),
-               ReadNullableString(reader, 7),
-               reader.GetString(8),
-               reader.GetInt32(9),
-               reader.GetInt32(12),
-               AiRunSummaryFormatter.Format(
-                  ReadNullableString(reader, 13),
-                  reader.GetString(1),
-                  ReadNullableString(reader, 14)
-               ),
-               reader.GetFieldValue<DateTimeOffset>(10),
-               ReadNullableDecimal(reader, 11)
-            )
-         );
+         runs.Add(ReadRunListItem(reader));
       }
 
       return runs;
@@ -370,28 +349,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         runs.Add(
-            new AiRunListItem(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               ReadNullableString(reader, 2),
-               reader.GetString(3),
-               ReadNullableString(reader, 4),
-               ReadNullableDateOnly(reader, 5),
-               reader.GetString(6),
-               ReadNullableString(reader, 7),
-               reader.GetString(8),
-               reader.GetInt32(9),
-               reader.GetInt32(12),
-               AiRunSummaryFormatter.Format(
-                  ReadNullableString(reader, 13),
-                  reader.GetString(1),
-                  ReadNullableString(reader, 14)
-               ),
-               reader.GetFieldValue<DateTimeOffset>(10),
-               ReadNullableDecimal(reader, 11)
-            )
-         );
+         runs.Add(ReadRunListItem(reader));
       }
 
       return runs;
@@ -1759,6 +1717,30 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          name,
          (object?)value ?? DBNull.Value
+      );
+   }
+
+   private static AiRunListItem ReadRunListItem(NpgsqlDataReader reader)
+   {
+      return new AiRunListItem(
+         reader.GetGuid(0),
+         reader.GetString(1),
+         ReadNullableString(reader, 2),
+         reader.GetString(3),
+         ReadNullableString(reader, 4),
+         ReadNullableDateOnly(reader, 5),
+         reader.GetString(6),
+         ReadNullableString(reader, 7),
+         reader.GetString(8),
+         reader.GetInt32(9),
+         reader.GetInt32(12),
+         AiRunSummaryFormatter.Format(
+            ReadNullableString(reader, 13),
+            reader.GetString(1),
+            ReadNullableString(reader, 14)
+         ),
+         reader.GetFieldValue<DateTimeOffset>(10),
+         ReadNullableDecimal(reader, 11)
       );
    }
 

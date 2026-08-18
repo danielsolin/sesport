@@ -444,60 +444,11 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       await updateCommand.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   public async Task<IReadOnlyList<AiPromptListItem>> GetPromptsAsync(
+   public Task<IReadOnlyList<AiPromptListItem>> GetPromptsAsync(
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
-         select
-            p.id::text,
-            p.job_id,
-            j.label,
-            p.version,
-            p.system_prompt,
-            p.user_prompt_template,
-            p.temperature,
-            p.max_output_tokens,
-            p.max_tool_rounds,
-            p.min_tool_rounds,
-            p.enabled,
-            exists (
-               select 1
-               from ai_jobs active_job
-               where active_job.active_prompt_id = p.id
-            ) as is_in_use
-         from ai_job_prompts p
-         join ai_jobs j on j.id = p.job_id
-         order by p.job_id, p.version desc
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var items = new List<AiPromptListItem>();
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         items.Add(
-            new AiPromptListItem(
-               reader.GetString(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetInt32(3),
-               reader.GetString(4),
-               reader.GetString(5),
-               ReadNullableDecimal(reader, 6),
-               ReadNullableInt32(reader, 7),
-               ReadNullableInt32(reader, 8),
-               ReadNullableInt32(reader, 9),
-               reader.GetBoolean(10),
-               reader.GetBoolean(11)
-            )
-         );
-      }
-
-      return items;
+      return GetPromptListAsync(null, cancellationToken);
    }
 
    public async Task DeletePromptAsync(
@@ -515,12 +466,20 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   public async Task<IReadOnlyList<AiPromptListItem>> GetJobPromptsAsync(
+   public Task<IReadOnlyList<AiPromptListItem>> GetJobPromptsAsync(
       string jobId,
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      return GetPromptListAsync(jobId, cancellationToken);
+   }
+
+   private async Task<IReadOnlyList<AiPromptListItem>> GetPromptListAsync(
+      string? jobId,
+      CancellationToken cancellationToken
+   )
+   {
+      var sql = """
          select
             p.id::text,
             p.job_id,
@@ -540,12 +499,23 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             ) as is_in_use
          from ai_job_prompts p
          join ai_jobs j on j.id = p.job_id
-         where p.job_id = @job_id
-         order by p.version desc
          """;
 
+      if(jobId is null)
+      {
+         sql += "order by p.job_id, p.version desc";
+      }
+      else
+      {
+         sql += "where p.job_id = @job_id order by p.version desc";
+      }
+
       await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("job_id", jobId);
+      if(jobId is not null)
+      {
+         command.Parameters.AddWithValue("job_id", jobId);
+      }
+
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -553,22 +523,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         items.Add(
-            new AiPromptListItem(
-               reader.GetString(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetInt32(3),
-               reader.GetString(4),
-               reader.GetString(5),
-               ReadNullableDecimal(reader, 6),
-               ReadNullableInt32(reader, 7),
-               ReadNullableInt32(reader, 8),
-               ReadNullableInt32(reader, 9),
-               reader.GetBoolean(10),
-               reader.GetBoolean(11)
-            )
-         );
+         items.Add(ReadPromptListItem(reader));
       }
 
       return items;
@@ -849,6 +804,26 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       return string.IsNullOrWhiteSpace(value)
          ? DBNull.Value
          : Guid.Parse(value.Trim());
+   }
+
+   private static AiPromptListItem ReadPromptListItem(
+      NpgsqlDataReader reader
+   )
+   {
+      return new AiPromptListItem(
+         reader.GetString(0),
+         reader.GetString(1),
+         reader.GetString(2),
+         reader.GetInt32(3),
+         reader.GetString(4),
+         reader.GetString(5),
+         ReadNullableDecimal(reader, 6),
+         ReadNullableInt32(reader, 7),
+         ReadNullableInt32(reader, 8),
+         ReadNullableInt32(reader, 9),
+         reader.GetBoolean(10),
+         reader.GetBoolean(11)
+      );
    }
 
    private static decimal? ReadNullableDecimal(

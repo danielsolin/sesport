@@ -361,17 +361,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(
-            new EntityOption(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetString(3),
-               reader.GetString(4),
-               reader.IsDBNull(5) ? null : reader.GetString(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6)
-            )
-         );
+         entities.Add(ReadEntityOption(reader));
       }
 
       return entities;
@@ -423,17 +413,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(
-            new EntityOption(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetString(3),
-               reader.GetString(4),
-               reader.IsDBNull(5) ? null : reader.GetString(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6)
-            )
-         );
+         entities.Add(ReadEntityOption(reader));
       }
 
       return entities;
@@ -501,17 +481,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(
-            new EntityOption(
-               reader.GetGuid(0),
-               reader.GetString(1),
-               reader.GetString(2),
-               reader.GetString(3),
-               reader.GetString(4),
-               reader.IsDBNull(5) ? null : reader.GetString(5),
-               reader.IsDBNull(6) ? null : reader.GetString(6)
-            )
-         );
+         entities.Add(ReadEntityOption(reader));
       }
 
       return entities;
@@ -2605,6 +2575,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private static string? ReadString(NpgsqlDataReader reader, int ordinal)
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+   }
+
+   private static EntityOption ReadEntityOption(NpgsqlDataReader reader)
+   {
+      return new EntityOption(
+         reader.GetGuid(0),
+         reader.GetString(1),
+         reader.GetString(2),
+         reader.GetString(3),
+         reader.GetString(4),
+         ReadString(reader, 5),
+         ReadString(reader, 6)
+      );
    }
 
    private static async Task<IReadOnlyList<ActivityListItem>>
