@@ -36,6 +36,7 @@ public sealed record AiJobListItem(
    string Id,
    string Label,
    string ProviderId,
+   string ProviderKind,
    int QueuePriority,
    string OutputMode,
    int? ActivePromptVersion,
@@ -153,6 +154,7 @@ public sealed record AiRunDetail(
    string? JobConditionalToolsJson,
    int? JobToolCallMaxTokens,
    int? PromptMinToolRounds = null,
+   string? PromptCodexReasoningEffort = null,
    bool JobIncludeSocialMedia = false,
    DateTimeOffset? DiagnosticPayloadPurgedAt = null
 );
@@ -182,6 +184,9 @@ public sealed class AiPromptEditModel
    public int? MaxToolRounds { get; set; }
 
    public int? MinToolRounds { get; set; }
+
+   public string? CodexReasoningEffort { get; set; } =
+      CodexReasoningEfforts.Default;
 
    public bool Enabled { get; set; } = true;
 }

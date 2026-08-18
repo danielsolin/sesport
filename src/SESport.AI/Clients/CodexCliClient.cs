@@ -19,10 +19,13 @@ public sealed class CodexCliClient : IAiProviderClient
    private const string ColorArgument = "--color";
    private const string OutputArgument = "--output-last-message";
    private const string SchemaArgument = "--output-schema";
+   private const string ConfigArgument = "--config";
    private const string ModelArgument = "--model";
    private const string ChangeDirectoryArgument = "--cd";
    private const string SkipGitCheckArgument = "--skip-git-repo-check";
    private const string NeverColorValue = "never";
+   private const string ReasoningEffortConfigKey =
+      "model_reasoning_effort";
    private const string StdinArgument = "-";
    private const string AgentMessageType = "agent_message";
    private const string ItemCompletedType = "item.completed";
@@ -75,6 +78,12 @@ public sealed class CodexCliClient : IAiProviderClient
       if(!string.IsNullOrWhiteSpace(provider.Model))
       {
          payload["model"] = provider.Model.Trim();
+      }
+
+      var reasoningEffort = GetReasoningEffort(provider, prompt);
+      if(reasoningEffort is not null)
+      {
+         payload["reasoning_effort"] = reasoningEffort;
       }
 
       if(!string.IsNullOrWhiteSpace(prompt.OutputSchemaJson))
@@ -134,6 +143,7 @@ public sealed class CodexCliClient : IAiProviderClient
 
          var invocation = CreateInvocation(
             provider,
+            prompt,
             promptText,
             workingDirectory,
             outputPath,
@@ -309,6 +319,7 @@ public sealed class CodexCliClient : IAiProviderClient
 
    private CodexCliInvocation CreateInvocation(
       AiProviderDefinition provider,
+      AiPromptDefinition prompt,
       string promptText,
       string workingDirectory,
       string outputPath,
@@ -324,6 +335,16 @@ public sealed class CodexCliClient : IAiProviderClient
       }
 
       arguments.Add(ExecCommand);
+
+      var reasoningEffort = GetReasoningEffort(provider, prompt);
+      if(reasoningEffort is not null)
+      {
+         arguments.Add(ConfigArgument);
+         arguments.Add(
+            $"{ReasoningEffortConfigKey}=\"{reasoningEffort}\""
+         );
+      }
+
       arguments.Add(FullAccessArgument);
       arguments.Add(JsonArgument);
       arguments.Add(EphemeralArgument);
@@ -357,6 +378,36 @@ public sealed class CodexCliClient : IAiProviderClient
          outputPath,
          TimeSpan.FromSeconds(options.TimeoutSeconds)
       );
+   }
+
+   private static string? GetReasoningEffort(
+      AiProviderDefinition provider,
+      AiPromptDefinition prompt
+   )
+   {
+      if(!string.Equals(
+         provider.Kind,
+         AiProviderKinds.CodexCli,
+         StringComparison.Ordinal
+      ))
+      {
+         return null;
+      }
+
+      var reasoningEffort = string.IsNullOrWhiteSpace(
+         prompt.CodexReasoningEffort
+      )
+         ? CodexReasoningEfforts.Default
+         : prompt.CodexReasoningEffort.Trim();
+
+      if(!CodexReasoningEfforts.IsSupported(reasoningEffort))
+      {
+         throw new InvalidOperationException(
+            $"Unsupported Codex reasoning effort '{reasoningEffort}'."
+         );
+      }
+
+      return reasoningEffort;
    }
 
    private string GetWorkingDirectory()

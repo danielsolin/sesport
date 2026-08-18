@@ -46,5 +46,6 @@ public sealed record AiJobRun(
    int? PromptMaxToolRounds,
    int MaxOutputTokens,
    int? PromptMinToolRounds = null,
-   bool JobIncludeSocialMedia = false
+   bool JobIncludeSocialMedia = false,
+   string? PromptCodexReasoningEffort = null
 );

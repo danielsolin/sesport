@@ -594,7 +594,8 @@ public sealed class AiJobRunner(
          maxToolRounds,
          maxOutputTokens,
          prompt.MinToolRounds,
-         job.IncludeSocialMedia
+         job.IncludeSocialMedia,
+         prompt.CodexReasoningEffort
       );
 
       return new ExecutionContext(
@@ -859,7 +860,8 @@ public sealed class AiJobRunner(
          run.MaxOutputTokens,
          run.PromptMaxToolRounds,
          true,
-         run.PromptMinToolRounds
+         run.PromptMinToolRounds,
+         run.PromptCodexReasoningEffort
       );
    }
 
@@ -940,7 +942,9 @@ internal static class AiRunDetailExtensions
          run.PromptMaxOutputTokens,
          run.PromptMaxToolRounds,
          run.MaxOutputTokens,
-         run.PromptMinToolRounds
+         run.PromptMinToolRounds,
+         run.JobIncludeSocialMedia,
+         run.PromptCodexReasoningEffort
       );
    }
 

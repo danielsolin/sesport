@@ -17,6 +17,15 @@ public class EditModel(AiAdminRepository repository) : PageModel
 
    public IReadOnlyList<AiJobListItem> Jobs { get; private set; } = [];
 
+   public IReadOnlyList<string> CodexReasoningEffortOptions =>
+      CodexReasoningEfforts.Values;
+
+   public bool IsCodexPrompt => string.Equals(
+      GetSelectedProviderKind(),
+      AiProviderKinds.CodexCli,
+      StringComparison.Ordinal
+   );
+
    public string? LoadError { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -29,6 +38,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
       if(string.IsNullOrWhiteSpace(id))
       {
          Prompt.Id = Guid.NewGuid().ToString();
+         NormalizeCodexReasoningEffort();
          return Page();
       }
 
@@ -44,6 +54,8 @@ public class EditModel(AiAdminRepository repository) : PageModel
          Prompt.RequestOptionsJson = FormatJson(Prompt.RequestOptionsJson)!;
       }
 
+      NormalizeCodexReasoningEffort();
+
       return Prompt.OriginalId is null ? NotFound() : Page();
    }
 
@@ -52,6 +64,7 @@ public class EditModel(AiAdminRepository repository) : PageModel
    )
    {
       await LoadJobsAsync(cancellationToken);
+      NormalizeCodexReasoningEffort();
       ValidatePrompt();
 
       if(!ModelState.IsValid)
@@ -137,8 +150,42 @@ public class EditModel(AiAdminRepository repository) : PageModel
          );
       }
 
+      if(IsCodexPrompt && !CodexReasoningEfforts.IsSupported(
+         Prompt.CodexReasoningEffort
+      ))
+      {
+         ModelState.AddModelError(
+            "Prompt.CodexReasoningEffort",
+            "Select a supported Codex reasoning effort."
+         );
+      }
+
       ValidateJson("Prompt.OutputSchemaJson", Prompt.OutputSchemaJson);
       ValidateJson("Prompt.RequestOptionsJson", Prompt.RequestOptionsJson);
+   }
+
+   private string? GetSelectedProviderKind()
+   {
+      return Jobs.FirstOrDefault(job => string.Equals(
+         job.Id,
+         Prompt.JobId,
+         StringComparison.Ordinal
+      ))?.ProviderKind;
+   }
+
+   private void NormalizeCodexReasoningEffort()
+   {
+      if(!IsCodexPrompt)
+      {
+         Prompt.CodexReasoningEffort = null;
+         return;
+      }
+
+      Prompt.CodexReasoningEffort = string.IsNullOrWhiteSpace(
+         Prompt.CodexReasoningEffort
+      )
+         ? CodexReasoningEfforts.Default
+         : Prompt.CodexReasoningEffort.Trim();
    }
 
    private void ValidateJson(string fieldName, string? json)

@@ -511,6 +511,36 @@ public partial class PostgresMigrationTests
       Assert.Contains("not valid", migration);
    }
 
+   [Fact]
+   public void CodexReasoningMigrationAddsPromptAndRunSettings()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "027_codex_prompt_reasoning_effort.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "add column codex_reasoning_effort text",
+         migration
+      );
+      Assert.Contains(
+         "add column prompt_codex_reasoning_effort text",
+         migration
+      );
+      Assert.Contains(
+         "ai_job_prompts_codex_reasoning_effort_check",
+         migration
+      );
+      Assert.Contains(
+         "ai_job_runs_prompt_codex_reasoning_effort_check",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

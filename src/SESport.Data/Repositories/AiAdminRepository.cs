@@ -258,11 +258,13 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             j.id,
             j.label,
             j.provider_id,
+            provider.kind,
             j.queue_priority,
             j.output_mode,
             p.version,
             j.enabled
          from ai_jobs j
+         join ai_providers provider on provider.id = j.provider_id
          left join ai_job_prompts p on p.id = j.active_prompt_id
          order by j.label
          """;
@@ -280,10 +282,11 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(0),
                reader.GetString(1),
                reader.GetString(2),
-               reader.GetInt32(3),
-               reader.GetString(4),
-               ReadNullableInt32(reader, 5),
-               reader.GetBoolean(6)
+               reader.GetString(3),
+               reader.GetInt32(4),
+               reader.GetString(5),
+               ReadNullableInt32(reader, 6),
+               reader.GetBoolean(7)
             )
          );
       }
@@ -589,7 +592,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             max_output_tokens,
             max_tool_rounds,
             min_tool_rounds,
-            enabled
+            enabled,
+            codex_reasoning_effort
          from ai_job_prompts
          where id = @id
          """;
@@ -619,7 +623,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          MaxOutputTokens = ReadNullableInt32(reader, 8),
          MaxToolRounds = ReadNullableInt32(reader, 9),
          MinToolRounds = ReadNullableInt32(reader, 10),
-         Enabled = reader.GetBoolean(11)
+         Enabled = reader.GetBoolean(11),
+         CodexReasoningEffort = ReadNullableString(reader, 12)
       };
    }
 
@@ -639,13 +644,14 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             insert into ai_job_prompts (
                id, job_id, version, system_prompt, user_prompt_template,
                output_schema, request_options, temperature,
-               max_output_tokens, max_tool_rounds, min_tool_rounds, enabled
+               max_output_tokens, max_tool_rounds, min_tool_rounds,
+               codex_reasoning_effort, enabled
             )
             values (
                @id, @job_id, @version, @system_prompt,
                @user_prompt_template, @output_schema, @request_options,
                @temperature, @max_output_tokens, @max_tool_rounds,
-               @min_tool_rounds, @enabled
+               @min_tool_rounds, @codex_reasoning_effort, @enabled
             )
             """;
 
@@ -666,6 +672,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
             max_output_tokens = @max_output_tokens,
             max_tool_rounds = @max_tool_rounds,
             min_tool_rounds = @min_tool_rounds,
+            codex_reasoning_effort = @codex_reasoning_effort,
             enabled = @enabled,
             updated_at = now()
          where id = @original_id
@@ -792,6 +799,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "min_tool_rounds",
          (object?)model.MinToolRounds ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "codex_reasoning_effort",
+         BlankToDbNull(model.CodexReasoningEffort)
       );
       command.Parameters.AddWithValue("enabled", model.Enabled);
    }

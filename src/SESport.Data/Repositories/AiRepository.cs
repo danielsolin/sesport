@@ -467,7 +467,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
                j.conditional_tools_json
             )::text,
             coalesce(r.job_tool_call_max_tokens, j.tool_call_max_tokens),
-            r.diagnostic_payload_purged_at
+            r.diagnostic_payload_purged_at,
+            r.prompt_codex_reasoning_effort
          from ai_job_runs r
          left join ai_jobs j on j.id = r.job_id
          left join ai_providers p on p.id = r.provider_id
@@ -533,7 +534,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          JobConditionalToolsJson: ReadNullableString(reader, 44),
          JobToolCallMaxTokens: ReadNullableInt32(reader, 45),
          PromptMinToolRounds: ReadNullableInt32(reader, 10),
-         DiagnosticPayloadPurgedAt: ReadNullableDateTimeOffset(reader, 46)
+         DiagnosticPayloadPurgedAt: ReadNullableDateTimeOffset(reader, 46),
+         PromptCodexReasoningEffort: ReadNullableString(reader, 47)
       );
    }
 
@@ -964,7 +966,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             max_output_tokens,
             max_tool_rounds,
             min_tool_rounds,
-            enabled
+            enabled,
+            codex_reasoning_effort
          from ai_job_prompts
          where id = @id
          """;
@@ -995,7 +998,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableInt32(promptReader, 8),
          ReadNullableInt32(promptReader, 9),
          promptReader.GetBoolean(11),
-         ReadNullableInt32(promptReader, 10)
+         ReadNullableInt32(promptReader, 10),
+         ReadNullableString(promptReader, 12)
       );
    }
 
@@ -1017,7 +1021,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             max_output_tokens,
             max_tool_rounds,
             min_tool_rounds,
-            enabled
+            enabled,
+            codex_reasoning_effort
          from ai_job_prompts
          where id = @id
          """;
@@ -1045,7 +1050,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          ReadNullableInt32(reader, 8),
          ReadNullableInt32(reader, 9),
          reader.GetBoolean(11),
-         ReadNullableInt32(reader, 10)
+         ReadNullableInt32(reader, 10),
+         ReadNullableString(reader, 12)
       );
    }
 
@@ -1067,7 +1073,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             max_output_tokens,
             max_tool_rounds,
             min_tool_rounds,
-            enabled
+            enabled,
+            codex_reasoning_effort
          from ai_job_prompts
          where job_id = @job_id
             and enabled = true
@@ -1098,7 +1105,8 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       ReadNullableInt32(reader, 8),
       ReadNullableInt32(reader, 9),
       reader.GetBoolean(11),
-      ReadNullableInt32(reader, 10)
+      ReadNullableInt32(reader, 10),
+      ReadNullableString(reader, 12)
    );
    }
 
@@ -1159,7 +1167,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             prompt_user_prompt_template, prompt_output_schema_json,
             prompt_request_options_json, prompt_temperature,
             prompt_max_output_tokens, prompt_max_tool_rounds,
-            prompt_min_tool_rounds,
+            prompt_min_tool_rounds, prompt_codex_reasoning_effort,
             max_output_tokens,
             provider_id, provider_label, provider_kind,
             provider_base_address, provider_model, provider_api_key_source,
@@ -1179,7 +1187,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             @prompt_user_prompt_template, @prompt_output_schema_json,
             @prompt_request_options_json, @prompt_temperature,
             @prompt_max_output_tokens, @prompt_max_tool_rounds,
-            @prompt_min_tool_rounds,
+            @prompt_min_tool_rounds, @prompt_codex_reasoning_effort,
             @max_output_tokens,
             @provider_id, @provider_label, @provider_kind,
             @provider_base_address, @provider_model, @provider_api_key_source,
@@ -1583,6 +1591,11 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "prompt_min_tool_rounds",
          (object?)run.PromptMinToolRounds ?? DBNull.Value
+      );
+      AddNullableStringParameter(
+         command,
+         "prompt_codex_reasoning_effort",
+         run.PromptCodexReasoningEffort
       );
       command.Parameters.AddWithValue(
          "max_output_tokens",

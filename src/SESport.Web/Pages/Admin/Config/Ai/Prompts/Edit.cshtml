@@ -40,7 +40,10 @@
                <option value="">Select job</option>
                @foreach (var job in Model.Jobs)
                {
-                  <option value="@job.Id">@job.Label</option>
+                  <option value="@job.Id"
+                          data-provider-kind="@job.ProviderKind">
+                     @job.Label
+                  </option>
                }
             </select>
             @if (Model.Prompt.OriginalId is not null)
@@ -56,6 +59,20 @@
                    min="1"
                    readonly="@(Model.Prompt.OriginalId is not null)" />
             <span asp-validation-for="Prompt.Version"></span>
+         </label>
+         <label data-codex-reasoning-field
+                data-codex-provider-kind="@AiProviderKinds.CodexCli"
+                data-default-effort="@CodexReasoningEfforts.Default"
+                hidden="@(Model.IsCodexPrompt ? null : "hidden")">
+            <span>Reasoning effort</span>
+            <select asp-for="Prompt.CodexReasoningEffort"
+                    data-codex-reasoning-select>
+               @foreach (var effort in Model.CodexReasoningEffortOptions)
+               {
+                  <option value="@effort">@effort</option>
+               }
+            </select>
+            <span asp-validation-for="Prompt.CodexReasoningEffort"></span>
          </label>
          <label>
             <span>Temperature</span>
@@ -112,3 +129,8 @@
       <button class="button button-primary" type="submit">Save</button>
    </section>
 </form>
+
+@section Scripts {
+   <script src="~/js/ai-prompt-edit.js"
+           asp-append-version="true"></script>
+}

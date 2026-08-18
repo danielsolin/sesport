@@ -182,6 +182,10 @@ configured working directory, the rendered job prompt, the prompt output
 schema, and Codex's JSONL event stream. Jobs that require web search enable
 Codex live search automatically.
 
+The prompt editor exposes a `Reasoning effort` setting for `codex-cli`
+jobs. It is passed to `codex exec` as `model_reasoning_effort` through
+`--config`; the default is `medium`, and other providers ignore the setting.
+
 The host can configure the executable and working directory with the
 `CodexCli__ExecutablePath` and `CodexCli__WorkingDirectory` configuration
 keys. `CodexCli__TimeoutSeconds` controls the process timeout and defaults to

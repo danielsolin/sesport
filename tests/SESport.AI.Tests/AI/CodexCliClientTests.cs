@@ -50,6 +50,11 @@ public sealed class CodexCliClientTests
       Assert.Contains("--output-last-message", runner.Invocation.Arguments);
       Assert.Contains("--output-schema", runner.Invocation.Arguments);
       Assert.Contains("--model", runner.Invocation.Arguments);
+      Assert.Contains("--config", runner.Invocation.Arguments);
+      Assert.Contains(
+         "model_reasoning_effort=\"medium\"",
+         runner.Invocation.Arguments
+      );
       Assert.Contains("Test event", runner.Invocation.Prompt);
       Assert.DoesNotContain("web_search", runner.Invocation.Prompt);
    }
@@ -132,6 +137,67 @@ public sealed class CodexCliClientTests
       Assert.DoesNotContain("\"format\"", json);
    }
 
+   [Fact]
+   public async Task GenerateAsyncUsesPromptReasoningEffort()
+   {
+      var runner = new RecordingProcessRunner(
+         new CodexCliProcessResult(
+            0,
+            CreateJsonl(CreateOutput("Yes")),
+            "",
+            CreateOutput("Yes")
+         )
+      );
+      var client = CreateClient(runner);
+
+      await client.GenerateAsync(
+         CreateProvider(),
+         CreateJob(),
+         CreatePrompt(CodexReasoningEfforts.Low),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Contains(
+         "model_reasoning_effort=\"low\"",
+         runner.Invocation!.Arguments
+      );
+   }
+
+   [Fact]
+   public async Task GenerateAsyncIgnoresReasoningForOtherProviderKinds()
+   {
+      var runner = new RecordingProcessRunner(
+         new CodexCliProcessResult(
+            0,
+            CreateJsonl(CreateOutput("Yes")),
+            "",
+            CreateOutput("Yes")
+         )
+      );
+      var client = CreateClient(runner);
+      var provider = CreateProvider() with
+      {
+         Kind = AiProviderKinds.LlamaServer
+      };
+
+      await client.GenerateAsync(
+         provider,
+         CreateJob(),
+         CreatePrompt(CodexReasoningEfforts.Low),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.DoesNotContain("--config", runner.Invocation!.Arguments);
+      Assert.DoesNotContain(
+         "model_reasoning_effort=\"low\"",
+         runner.Invocation.Arguments
+      );
+   }
+
    private static CodexCliClient CreateClient(
       ICodexCliProcessRunner runner
    )
@@ -178,7 +244,9 @@ public sealed class CodexCliClientTests
       );
    }
 
-   private static AiPromptDefinition CreatePrompt()
+   private static AiPromptDefinition CreatePrompt(
+      string? reasoningEffort = null
+   )
    {
       return new AiPromptDefinition(
          Guid.NewGuid(),
@@ -191,7 +259,9 @@ public sealed class CodexCliClientTests
          null,
          null,
          null,
-         true
+         true,
+         null,
+         reasoningEffort
       );
    }
 

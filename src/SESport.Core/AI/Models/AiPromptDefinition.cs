@@ -12,5 +12,6 @@ public sealed record AiPromptDefinition(
    int? MaxOutputTokens,
    int? MaxToolRounds,
    bool Enabled,
-   int? MinToolRounds = null
+   int? MinToolRounds = null,
+   string? CodexReasoningEffort = null
 );
