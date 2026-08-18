@@ -934,7 +934,8 @@ public sealed class AiRepositoryTests
          promptId,
          providerId,
          DateTimeOffset.UtcNow.AddHours(-3),
-         otherExecutionEnvironment
+         otherExecutionEnvironment,
+         statusId: "pending"
       );
       await InsertRunAsync(
          dataSource,
@@ -943,16 +944,20 @@ public sealed class AiRepositoryTests
          promptId,
          providerId,
          DateTimeOffset.UtcNow.AddHours(-2),
-         ExecutionEnvironment.Current
+         ExecutionEnvironment.Current,
+         statusId: "pending"
       );
 
       try
       {
-         var claimedRunId = await repository.ClaimNextRunAsync(
+         var claim = await repository.ClaimNextRunAsync(
+            [],
             CancellationToken.None
          );
 
-         Assert.Equal(matchingRunId, claimedRunId);
+         Assert.NotNull(claim);
+         Assert.Equal(matchingRunId, claim!.RunId);
+         Assert.Equal(providerId, claim.ProviderId);
 
          await using var connection = await dataSource.OpenConnectionAsync();
          await using var command = connection.CreateCommand();
@@ -976,7 +981,7 @@ public sealed class AiRepositoryTests
             );
          }
 
-         Assert.Equal("running", runs[otherRunId].statusId);
+         Assert.Equal("pending", runs[otherRunId].statusId);
          Assert.Equal("running", runs[matchingRunId].statusId);
          Assert.True(
             runs[otherRunId].startedAt < runs[matchingRunId].startedAt
@@ -989,6 +994,68 @@ public sealed class AiRepositoryTests
          await DeletePromptAsync(dataSource, promptId);
          await DeleteJobAsync(dataSource, jobId);
          await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
+   public async Task ClaimNextRunAsyncSkipsBusyProviders()
+   {
+      var firstProviderId = $"test-provider-{Guid.NewGuid():N}";
+      var secondProviderId = $"test-provider-{Guid.NewGuid():N}";
+      var firstJobId = $"test-job-{Guid.NewGuid():N}";
+      var secondJobId = $"test-job-{Guid.NewGuid():N}";
+      var firstPromptId = Guid.NewGuid();
+      var secondPromptId = Guid.NewGuid();
+      var firstRunId = Guid.NewGuid();
+      var secondRunId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      try
+      {
+         await InsertProviderAsync(dataSource, firstProviderId);
+         await InsertProviderAsync(dataSource, secondProviderId);
+         await InsertJobAsync(dataSource, firstJobId, firstProviderId);
+         await InsertJobAsync(dataSource, secondJobId, secondProviderId);
+         await InsertPromptAsync(dataSource, firstPromptId, firstJobId);
+         await InsertPromptAsync(dataSource, secondPromptId, secondJobId);
+         await InsertRunAsync(
+            dataSource,
+            firstRunId,
+            firstJobId,
+            firstPromptId,
+            firstProviderId,
+            statusId: "pending"
+         );
+         await InsertRunAsync(
+            dataSource,
+            secondRunId,
+            secondJobId,
+            secondPromptId,
+            secondProviderId,
+            statusId: "pending"
+         );
+
+         var claim = await repository.ClaimNextRunAsync(
+            [firstProviderId],
+            CancellationToken.None
+         );
+
+         Assert.NotNull(claim);
+         Assert.Equal(secondRunId, claim!.RunId);
+         Assert.Equal(secondProviderId, claim.ProviderId);
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, firstRunId);
+         await DeleteRunAsync(dataSource, secondRunId);
+         await DeletePromptAsync(dataSource, firstPromptId);
+         await DeletePromptAsync(dataSource, secondPromptId);
+         await DeleteJobAsync(dataSource, firstJobId);
+         await DeleteJobAsync(dataSource, secondJobId);
+         await DeleteProviderAsync(dataSource, firstProviderId);
+         await DeleteProviderAsync(dataSource, secondProviderId);
       }
    }
 

@@ -1255,20 +1255,26 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       return await reader.ReadAsync(cancellationToken);
    }
 
-   public async Task<Guid?> ClaimNextRunAsync(
+   public async Task<AiJobRunClaim?> ClaimNextRunAsync(
+      IReadOnlyCollection<string> busyProviderIds,
       CancellationToken cancellationToken
    )
    {
       const string sql = """
          with next_run as (
-            select ai_job_runs.id
+            select ai_job_runs.id, ai_job_runs.provider_id
             from ai_job_runs
             join ai_jobs j on j.id = ai_job_runs.job_id
-            where ai_job_runs.status_id in ('pending', 'running')
+            -- Running rows may belong to a direct or active worker run.
+            -- Stale running rows are handled by AiRunTimeoutWorker.
+            where ai_job_runs.status_id = 'pending'
                and ai_job_runs.execution_environment =
                   @execution_environment
+               and (
+                  cardinality(@busy_provider_ids) = 0
+                  or ai_job_runs.provider_id <> all(@busy_provider_ids)
+               )
             order by
-               ai_job_runs.status_id desc,
                j.queue_priority desc,
                ai_job_runs.started_at asc,
                ai_job_runs.created_at asc,
@@ -1282,13 +1288,17 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
             started_at = now()
          from next_run
          where r.id = next_run.id
-         returning r.id
+         returning r.id, r.provider_id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue(
          "execution_environment",
          ExecutionEnvironment.Current
+      );
+      command.Parameters.AddWithValue(
+         "busy_provider_ids",
+         busyProviderIds.ToArray()
       );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -1299,7 +1309,10 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
          return null;
       }
 
-      return reader.GetGuid(0);
+      return new AiJobRunClaim(
+         reader.GetGuid(0),
+         reader.GetString(1)
+      );
    }
 
    public async Task DeleteRunAsync(

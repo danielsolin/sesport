@@ -755,11 +755,12 @@ public class AiJobRunnerTests
          return Task.FromResult(true);
       }
 
-      public Task<Guid?> ClaimNextRunAsync(
+      public Task<AiJobRunClaim?> ClaimNextRunAsync(
+         IReadOnlyCollection<string> busyProviderIds,
          CancellationToken cancellationToken
       )
       {
-         return Task.FromResult<Guid?>(null);
+         return Task.FromResult<AiJobRunClaim?>(null);
       }
 
       public Task DeleteRunAsync(

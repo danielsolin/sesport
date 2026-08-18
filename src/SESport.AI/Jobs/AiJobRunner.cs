@@ -40,7 +40,10 @@ public sealed class AiJobRunner(
 
       await runRepository.StoreAsync(context.Run, cancellationToken);
 
-      await executionGate.WaitAsync(cancellationToken);
+      await executionGate.WaitAsync(
+         context.Run.ProviderId,
+         cancellationToken
+      );
       try
       {
          if(await runRepository.TryClaimRunAsync(
@@ -53,7 +56,7 @@ public sealed class AiJobRunner(
       }
       finally
       {
-         executionGate.Release();
+         executionGate.Release(context.Run.ProviderId);
       }
 
       return await WaitForCompletionAsync(
@@ -74,7 +77,18 @@ public sealed class AiJobRunner(
             cancellationToken
          );
 
-         await ExecuteAsync(context, cancellationToken);
+         await executionGate.WaitAsync(
+            context.Run.ProviderId,
+            cancellationToken
+         );
+         try
+         {
+            await ExecuteAsync(context, cancellationToken);
+         }
+         finally
+         {
+            executionGate.Release(context.Run.ProviderId);
+         }
       }
       catch(OperationCanceledException)
          when(cancellationToken.IsCancellationRequested)

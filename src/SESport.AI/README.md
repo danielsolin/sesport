@@ -99,7 +99,7 @@ Examples:
 - `AiJobRunner` builds execution contexts, claims runs, and maps results.
 - `TemplatePromptRenderer` resolves JSON input tokens in system and user
   prompts, including the configured primary-country values.
-- `AiJobExecutionGate` limits concurrent in-process AI execution.
+- `AiJobExecutionGate` limits in-process execution to one run per provider.
 - `IAiJobRunner`, `IAiJobProcessor`, and `IAiPromptRenderer` are the public
   seams used by the host and by tests.
 

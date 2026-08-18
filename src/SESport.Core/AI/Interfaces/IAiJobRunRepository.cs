@@ -29,7 +29,8 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
-   Task<Guid?> ClaimNextRunAsync(
+   Task<AiJobRunClaim?> ClaimNextRunAsync(
+      IReadOnlyCollection<string> busyProviderIds,
       CancellationToken cancellationToken
    );
 
