@@ -166,6 +166,43 @@ public sealed class CodexCliClientTests
    }
 
    [Fact]
+   public async Task GenerateAsyncConfiguresSesportWebToolsForWebJobs()
+   {
+      var runner = new RecordingProcessRunner(
+         new CodexCliProcessResult(
+            0,
+            CreateJsonl(CreateOutput("Yes")),
+            "",
+            CreateOutput("Yes")
+         )
+      );
+      var client = CreateClient(runner, webToolsEnabled: true);
+
+      await client.GenerateAsync(
+         CreateProvider(),
+         CreateJob(),
+         CreatePrompt(),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.Contains(
+         "mcp_servers.sesport_web_tools.command=\"dotnet\"",
+         runner.Invocation!.Arguments
+      );
+      Assert.Contains(
+         "mcp_servers.sesport_web_tools.enabled_tools=" +
+         "[\"web_get_page\",\"web_find_in_page\"]",
+         runner.Invocation.Arguments
+      );
+      Assert.Contains(
+         "mcp_servers.sesport_web_tools.tool_timeout_sec=300",
+         runner.Invocation.Arguments
+      );
+   }
+
+   [Fact]
    public async Task GenerateAsyncIgnoresReasoningForOtherProviderKinds()
    {
       var runner = new RecordingProcessRunner(
@@ -199,7 +236,8 @@ public sealed class CodexCliClientTests
    }
 
    private static CodexCliClient CreateClient(
-      ICodexCliProcessRunner runner
+      ICodexCliProcessRunner runner,
+      bool webToolsEnabled = false
    )
    {
       return new CodexCliClient(
@@ -207,7 +245,8 @@ public sealed class CodexCliClientTests
          {
             ExecutablePath = "/usr/bin/codex",
             WorkingDirectory = "/tmp",
-            TimeoutSeconds = 60
+            TimeoutSeconds = 60,
+            WebToolsEnabled = webToolsEnabled
          },
          runner
       );

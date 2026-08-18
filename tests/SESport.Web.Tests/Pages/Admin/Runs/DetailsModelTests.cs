@@ -83,6 +83,50 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void ParseToolTraceFormatsMcpToolCalls()
+   {
+      var turns = DetailsModel.ParseToolTrace(
+         """
+         [
+           {"type":"thread.started"},
+           {
+             "type":"item.completed",
+             "item": {
+               "id":"item_1",
+               "type":"mcp_tool_call",
+               "server":"sesport_web_tools",
+               "tool":"web_get_page",
+               "arguments":{"url":"https://example.com/"},
+               "result":{
+                 "content":[
+                   {"type":"text","text":"{\"title\":\"Example\"}"}
+                 ],
+                 "structured_content":null
+               },
+               "error":null,
+               "status":"completed"
+             }
+           },
+           {
+             "type":"item.completed",
+             "item": {
+               "type":"agent_message",
+               "text":"Done"
+             }
+           }
+         ]
+         """
+      );
+
+      var action = Assert.Single(turns[0].CodexActions);
+      Assert.Equal("web_get_page", action.Name);
+      Assert.Equal("MCP / sesport_web_tools", action.ActionType);
+      Assert.Equal("https://example.com/", action.Query);
+      Assert.Equal("{\"title\":\"Example\"}", action.AggregatedOutput);
+      Assert.Contains("\"server\": \"sesport_web_tools\"", action.RawJson);
+   }
+
+   [Fact]
    public void FormatJsonOrRetentionNoticeExplainsPurgedPayload()
    {
       Assert.Equal(

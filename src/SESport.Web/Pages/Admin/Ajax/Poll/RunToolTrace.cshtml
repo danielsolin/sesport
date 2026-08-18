@@ -303,7 +303,14 @@
                                        {
                                           <details
                                              class="tool-trace-action-details">
-                                             <summary>Command output</summary>
+                                             <summary>
+                                                @(action.ActionType?.StartsWith(
+                                                   "MCP",
+                                                   StringComparison.Ordinal
+                                                ) == true
+                                                   ? "Tool output"
+                                                   : "Command output")
+                                             </summary>
                                              <pre
                                                 class="prompt-details-pre">
 @action.AggregatedOutput

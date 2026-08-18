@@ -192,6 +192,15 @@ keys. `CodexCli__TimeoutSeconds` controls the process timeout and defaults to
 20 minutes. The provider intentionally runs with full Codex access for its
 agent-backed use case.
 
+Codex jobs that require web search also receive the internal
+sesport-web-tools MCP server. It exposes web_get_page and web_find_in_page,
+reusing the page fetcher's PDF, Playwright, fallback, and URL policy behavior.
+The server is started over stdio for each Codex run.
+CodexCli__WebToolsEnabled defaults to true, while
+CodexCli__WebToolsProjectPath and CodexCli__WebToolsTimeoutSeconds can
+override its project path and per-tool timeout. Build the solution before
+running Codex jobs because the server is started with --no-build.
+
 Browser-backed page fetching uses Chromium as its baseline and opportunistically
 tries Playwright's alternate Chromium mode, installed Chrome, Firefox, or
 WebKit when those browser runtimes are available on the host.

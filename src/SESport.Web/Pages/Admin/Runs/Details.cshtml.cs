@@ -1182,17 +1182,39 @@ public class DetailsModel(
       JsonElement item
    )
    {
+      var itemType = GetString(item, "type") ?? "codex_action";
+      var isMcpToolCall = string.Equals(
+         itemType,
+         "mcp_tool_call",
+         StringComparison.Ordinal
+      );
       var action = GetProperty(item, "action");
       var actionType = action is null
          ? null
          : GetString(action.Value, "type");
-      var aggregatedOutput = GetString(item, "aggregated_output");
+      var server = GetString(item, "server");
+      var mcpActionType = isMcpToolCall
+         ? string.IsNullOrWhiteSpace(server)
+            ? "MCP"
+            : $"MCP / {server}"
+         : actionType;
+      var aggregatedOutput = isMcpToolCall
+         ? GetMcpResultText(item)
+         : GetString(item, "aggregated_output");
+      var name = isMcpToolCall
+         ? GetString(item, "tool") ??
+            GetString(item, "tool_name") ??
+            itemType
+         : itemType;
+      var query = isMcpToolCall
+         ? GetMcpArgumentSummary(item)
+         : GetString(item, "query");
 
       return new ToolTraceCodexActionViewModel(
-         GetString(item, "type") ?? "codex_action",
+         name,
          GetString(item, "id"),
-         GetString(item, "query"),
-         actionType,
+         query,
+         mcpActionType,
          ParseCodexSearchQueries(action),
          GetString(item, "command"),
          GetString(item, "status"),
@@ -1201,6 +1223,59 @@ public class DetailsModel(
          aggregatedOutput,
          FormatDisplayValue(item)
       );
+   }
+
+   private static string? GetMcpArgumentSummary(JsonElement item)
+   {
+      var arguments = GetProperty(item, "arguments");
+
+      if(arguments is null ||
+         arguments.Value.ValueKind != JsonValueKind.Object)
+      {
+         return null;
+      }
+
+      var url = GetString(arguments.Value, "url");
+      var find = GetString(arguments.Value, "find");
+      var parts = new[] { url, find }
+         .Where(value => !string.IsNullOrWhiteSpace(value))
+         .Select(value => value!)
+         .ToArray();
+
+      return parts.Length == 0
+         ? FormatDisplayValue(arguments)
+         : string.Join(" · ", parts);
+   }
+
+   private static string? GetMcpResultText(JsonElement item)
+   {
+      var result = GetProperty(item, "result");
+
+      if(result is null ||
+         result.Value.ValueKind != JsonValueKind.Object ||
+         !result.Value.TryGetProperty("content", out var content) ||
+         content.ValueKind != JsonValueKind.Array)
+      {
+         return null;
+      }
+
+      var textParts = content
+         .EnumerateArray()
+         .Where(value => value.ValueKind == JsonValueKind.Object)
+         .Where(value =>
+            string.Equals(
+               GetString(value, "type"),
+               "text",
+               StringComparison.Ordinal
+            ))
+         .Select(value => GetString(value, "text"))
+         .Where(value => !string.IsNullOrWhiteSpace(value))
+         .Select(value => value!)
+         .ToArray();
+
+      return textParts.Length == 0
+         ? null
+         : string.Join(Environment.NewLine, textParts);
    }
 
    private static IReadOnlyList<string> ParseCodexSearchQueries(
