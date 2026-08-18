@@ -53,6 +53,8 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("data-broadcast-description-text", html);
+      Assert.Contains("Add description..", html);
+      Assert.Contains("Add categories..", html);
       Assert.Contains("Edit broadcast description", html);
       Assert.Contains("Edit broadcast channel", html);
       Assert.Contains("Edit broadcast start time", html);

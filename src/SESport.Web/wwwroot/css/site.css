@@ -594,6 +594,12 @@ h2 {
    display: block;
 }
 
+.inline-edit-placeholder {
+   color: var(--muted);
+   font-style: italic;
+   cursor: pointer;
+}
+
 .broadcast-inline-edit-input {
    width: 100%;
    box-sizing: border-box;
@@ -1055,6 +1061,10 @@ h2 {
    min-width: 0;
    color: var(--text);
    overflow-wrap: anywhere;
+}
+
+.broadcast-categories-list .inline-edit-placeholder {
+   color: var(--muted);
 }
 
 .ai-runs-table {

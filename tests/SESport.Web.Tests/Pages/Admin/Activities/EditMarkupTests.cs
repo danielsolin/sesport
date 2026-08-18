@@ -275,6 +275,8 @@ public sealed class EditMarkupTests
          "data-ai-result-edit-display",
          html
       );
+      Assert.Contains("data-ai-result-placeholder", html);
+      Assert.Contains("valuePlaceholder", html);
       Assert.Contains(
          "data-ai-result-edit-input",
          html

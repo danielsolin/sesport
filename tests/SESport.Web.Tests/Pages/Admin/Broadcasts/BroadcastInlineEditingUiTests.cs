@@ -78,6 +78,9 @@ public sealed class BroadcastInlineEditingUiTests
          "broadcastDescriptionTextSelector",
          broadcastInlineEditJs
       );
+      Assert.Contains("Add description..", broadcastInlineEditJs);
+      Assert.Contains("Add categories..", broadcastInlineEditJs);
+      Assert.Contains("inline-edit-placeholder", broadcastInlineEditJs);
       Assert.Contains(
          "data-broadcast-description-text",
          broadcastInlineEditJs

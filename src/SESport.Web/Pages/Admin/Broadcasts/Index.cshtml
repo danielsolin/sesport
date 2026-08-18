@@ -231,6 +231,9 @@
                         BroadcastListDisplayFormatter.FormatCategoriesText(
                            broadcast.Categories
                         );
+                     var descriptionEmpty = string.IsNullOrWhiteSpace(
+                        broadcast.Description
+                     );
                      var organizationAutocompleteClass =
                         "broadcast-org-autocomplete is-locked";
                   <tr class="broadcast-participation-main-row"
@@ -339,8 +342,13 @@
                                 "@broadcast.Description"
                              title="Double-click to edit">
                            <div data-broadcast-inline-edit-display>
-                              <span data-broadcast-description-text>
-                                 @broadcast.Description
+                              <span class="@(descriptionEmpty
+                                 ? "inline-edit-placeholder"
+                                 : null)"
+                                    data-broadcast-description-text>
+                                 @(descriptionEmpty
+                                    ? "Add description.."
+                                    : broadcast.Description)
                               </span>
                            </div>
                            <input class="broadcast-inline-edit-input"
@@ -515,7 +523,14 @@
                          title="Double-click to edit">
                         <div data-broadcast-inline-edit-display>
                            <div class="broadcast-categories-list"
-                                data-broadcast-categories-list></div>
+                                data-broadcast-categories-list>
+                              @if(broadcast.Categories.Count == 0)
+                              {
+                                 <span class="inline-edit-placeholder">
+                                    Add categories..
+                                 </span>
+                              }
+                           </div>
                         </div>
                         <input class="broadcast-inline-edit-input"
                                data-broadcast-inline-edit-input

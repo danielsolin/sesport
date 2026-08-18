@@ -45,7 +45,7 @@ public sealed class ActivityParticipantAiResultValueModel(
             updated = true,
             field = "value",
             value = value ?? string.Empty,
-            displayValue = value ?? "-"
+            displayValue = value ?? string.Empty
          });
       }
       catch(Exception exception)

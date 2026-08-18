@@ -89,6 +89,7 @@
    const activityAiResultInlineEditInputSelector =
       "[data-ai-result-edit-input]";
    const activityAiResultInlineEditField = "value";
+   const activityAiResultInlineEditDefaultPlaceholder = "Add value..";
    const broadcastInlineEditCellSelector =
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditUrlSelector =
@@ -105,6 +106,7 @@
       "[data-broadcast-activity-link]";
    const clearParticipantsQueryKey = "clearParticipants";
    const broadcastInlineEditTitleField = "title";
+   const broadcastInlineEditDescriptionField = "description";
    const broadcastInlineEditChannelField = "channel";
    const broadcastInlineEditStartTimeField = "start-time";
    const broadcastInlineEditEndTimeField = "end-time";
@@ -118,6 +120,8 @@
       window.postBroadcastInlineEditAsync;
    const updateBroadcastInlineEditCell =
       window.updateBroadcastInlineEditCell;
+   const getBroadcastInlineEditPlaceholder =
+      window.getBroadcastInlineEditPlaceholder;
    const renderBroadcastCategories =
       window.renderBroadcastCategories;
    const getBroadcastSearchUrlBase =
@@ -736,7 +740,11 @@
       titleDisplay.dataset.broadcastInlineEditDisplay = "true";
       const titleStrong = document.createElement("strong");
       titleStrong.dataset.broadcastTitleText = "true";
-      titleStrong.textContent = title;
+      const titlePlaceholder = getBroadcastInlineEditPlaceholderText(
+         broadcastInlineEditTitleField
+      );
+      titleStrong.textContent = title || titlePlaceholder;
+      titleStrong.classList.toggle("inline-edit-placeholder", title === "");
       titleDisplay.append(titleStrong);
 
       const searchLink = document.createElement("a");
@@ -777,7 +785,15 @@
       descriptionDisplay.dataset.broadcastInlineEditDisplay = "true";
       const descriptionText = document.createElement("span");
       descriptionText.dataset.broadcastDescriptionText = "true";
-      descriptionText.textContent = description;
+      const descriptionPlaceholder =
+         getBroadcastInlineEditPlaceholderText(
+            broadcastInlineEditDescriptionField
+         );
+      descriptionText.textContent = description || descriptionPlaceholder;
+      descriptionText.classList.toggle(
+         "inline-edit-placeholder",
+         description === ""
+      );
       descriptionDisplay.append(descriptionText);
 
       const descriptionInput = document.createElement("input");
@@ -1023,7 +1039,9 @@
       const display = document.createElement(displayTagName);
       display.className = displayClassName;
       display.dataset.broadcastInlineEditDisplay = "true";
-      display.textContent = value;
+      const placeholder = getBroadcastInlineEditPlaceholderText(field);
+      display.textContent = value || placeholder;
+      display.classList.toggle("inline-edit-placeholder", value === "");
 
       const input = document.createElement("input");
       input.className = "broadcast-inline-edit-input";
@@ -1042,6 +1060,13 @@
 
       editor.append(display, input);
       return editor;
+   }
+
+   function getBroadcastInlineEditPlaceholderText(field)
+   {
+      return typeof getBroadcastInlineEditPlaceholder === "function"
+         ? getBroadcastInlineEditPlaceholder(field)
+         : "Add value..";
    }
 
    function getBroadcastTimePart(timeOnlyText, index)
@@ -3642,6 +3667,11 @@
       const displayValue = typeof payload.displayValue === "string"
          ? payload.displayValue.trim()
          : nextValue;
+      const placeholder = (
+         cell.dataset.aiResultPlaceholder
+            ?? activityAiResultInlineEditDefaultPlaceholder
+      ).trim() || activityAiResultInlineEditDefaultPlaceholder;
+      const hasValue = nextValue !== "";
       const display = cell.querySelector(
          activityAiResultInlineEditDisplaySelector
       );
@@ -3651,7 +3681,10 @@
 
       if(display instanceof HTMLElement)
       {
-         display.textContent = displayValue || "-";
+         display.textContent = hasValue
+            ? displayValue || nextValue
+            : placeholder;
+         display.classList.toggle("inline-edit-placeholder", !hasValue);
       }
 
       if(input instanceof HTMLInputElement)
@@ -3684,6 +3717,11 @@
       const displayValue = typeof payload.displayValue === "string"
          ? payload.displayValue.trim()
          : nextValue;
+      const placeholder = (
+         cell.dataset.entityInlineEditPlaceholder
+            ?? "Add watch priority.."
+      ).trim() || "Add watch priority..";
+      const hasDisplayValue = displayValue !== "";
       const display = cell.querySelector(entityInlineEditDisplaySelector);
       const input = cell.querySelector(entityInlineEditInputSelector);
 
@@ -3697,12 +3735,24 @@
 
          if(valueText instanceof HTMLElement)
          {
-            valueText.textContent = displayValue || "-";
+            valueText.textContent = hasDisplayValue
+               ? displayValue
+               : placeholder;
             valueText.title = nextValue;
+            valueText.classList.toggle(
+               "inline-edit-placeholder",
+               !hasDisplayValue
+            );
          }
          else
          {
-            display.textContent = displayValue || "-";
+            display.textContent = hasDisplayValue
+               ? displayValue
+               : placeholder;
+            display.classList.toggle(
+               "inline-edit-placeholder",
+               !hasDisplayValue
+            );
          }
       }
 

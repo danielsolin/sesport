@@ -428,6 +428,15 @@
                         <tbody>
                            @foreach(var value in result.Values)
                            {
+                              var valueFieldLabel =
+                                 string.IsNullOrWhiteSpace(value.FieldKey)
+                                    ? "value"
+                                    : value.FieldKey.Replace('_', ' ');
+                              var valuePlaceholder =
+                                 $"Add {valueFieldLabel}..";
+                              var valueEmpty = string.IsNullOrWhiteSpace(
+                                 value.ValueText
+                              );
                               <tr>
                                  <td>
                                     <a asp-page="/Admin/Entities/Edit"
@@ -440,16 +449,16 @@
                                      data-ai-result-edit-field="value"
                                      data-ai-result-value-id=
                                         "@value.Id"
+                                     data-ai-result-placeholder=
+                                        "@valuePlaceholder"
                                      title="Double-click to edit">
-                                    <div
+                                    <div class="@(valueEmpty
+                                       ? "inline-edit-placeholder"
+                                       : null)"
                                        data-ai-result-edit-display>
-                                       @(
-                                          string.IsNullOrWhiteSpace(
-                                             value.ValueText
-                                          )
-                                             ? "-"
-                                             : value.ValueText
-                                       )
+                                       @(valueEmpty
+                                          ? valuePlaceholder
+                                          : value.ValueText)
                                     </div>
                                     <input
                                        class=

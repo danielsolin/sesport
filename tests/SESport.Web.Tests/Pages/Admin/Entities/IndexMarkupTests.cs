@@ -38,6 +38,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-entity-inline-edit-field", script);
       Assert.Contains("data-entity-inline-edit-display", script);
       Assert.Contains("data-entity-inline-edit-input", script);
+      Assert.Contains("Add watch priority..", script);
       Assert.Contains("renderWatchPriorityOptions", script);
    }
 }

@@ -453,6 +453,13 @@
             `;
       const watchPriorityId = escapeHtml(entity.watchPriorityId ?? "");
       const watchPriority = escapeHtml(entity.watchPriority ?? "");
+      const watchPriorityPlaceholder = "Add watch priority..";
+      const watchPriorityDisplay = watchPriority !== ""
+         ? watchPriority
+         : watchPriorityPlaceholder;
+      const watchPriorityPlaceholderClass = watchPriority === ""
+         ? "inline-edit-placeholder"
+         : "";
       const searchQuery = encodeURIComponent(
          `${entity.name ?? ""} ${entity.sport ?? ""}`.trim()
       );
@@ -513,11 +520,14 @@
             <td class="entity-inline-editable"
                 data-entity-inline-edit-field="watch-priority"
                 data-entity-inline-edit-value="${watchPriorityId}"
+                data-entity-inline-edit-placeholder=
+                   "${watchPriorityPlaceholder}"
                 title="Double-click to edit">
                <div class="entity-inline-edit-display"
                     data-entity-inline-edit-display>
-                  <span title="${watchPriority}">
-                     ${watchPriority}
+                  <span class="${watchPriorityPlaceholderClass}"
+                        title="${watchPriority}">
+                     ${watchPriorityDisplay}
                   </span>
                </div>
                <select class="entity-inline-edit-input"

@@ -12,6 +12,16 @@
    const broadcastInlineEditCategoriesField = "categories";
    const broadcastInlineEditOrganizationField = "organization";
    const broadcastInlineEditGroupField = "group";
+   const broadcastInlineEditPlaceholders = Object.freeze({
+      title: "Add title..",
+      channel: "Add channel..",
+      "start-time": "Add start time..",
+      "end-time": "Add end time..",
+      description: "Add description..",
+      categories: "Add categories..",
+      organization: "Add organization..",
+      group: "Add group.."
+   });
    const broadcastInlineEditInputSelector =
       "[data-broadcast-inline-edit-input]";
    const broadcastInlineEditDisplaySelector =
@@ -31,8 +41,20 @@
    window.postBroadcastInlineEditAsync = postBroadcastInlineEditAsync;
    window.updateBroadcastInlineEditCell = updateBroadcastInlineEditCell;
    window.renderBroadcastCategories = renderBroadcastCategories;
+   window.getBroadcastInlineEditPlaceholder =
+      getBroadcastInlineEditPlaceholder;
    window.getBroadcastSearchUrlBase = getBroadcastSearchUrlBase;
    window.getAntiForgeryToken = getAntiForgeryToken;
+
+   function getBroadcastInlineEditPlaceholder(field)
+   {
+      const normalizedField = typeof field === "string"
+         ? field.trim()
+         : "";
+
+      return broadcastInlineEditPlaceholders[normalizedField]
+         ?? "Add value..";
+   }
 
    function getBroadcastInlineEditUrl()
    {
@@ -145,7 +167,11 @@
 
          if(titleText instanceof HTMLElement)
          {
-            titleText.textContent = nextValue;
+            setBroadcastInlineEditDisplayText(
+               titleText,
+               nextValue,
+               getBroadcastInlineEditPlaceholder(field)
+            );
          }
 
          const searchLink = cell.querySelector(
@@ -187,7 +213,11 @@
 
          if(descriptionText instanceof HTMLElement)
          {
-            descriptionText.textContent = nextValue;
+            setBroadcastInlineEditDisplayText(
+               descriptionText,
+               nextValue,
+               getBroadcastInlineEditPlaceholder(field)
+            );
          }
 
          return;
@@ -223,7 +253,11 @@
 
          if(display instanceof HTMLElement)
          {
-            display.textContent = nextValue;
+            setBroadcastInlineEditDisplayText(
+               display,
+               nextValue,
+               getBroadcastInlineEditPlaceholder(field)
+            );
          }
 
          return;
@@ -436,7 +470,13 @@
 
          if(display instanceof HTMLElement)
          {
-            display.textContent = nextDisplayValue;
+            setBroadcastInlineEditDisplayText(
+               display,
+               nextDisplayValue,
+               getBroadcastInlineEditPlaceholder(
+                  broadcastInlineEditGroupField
+               )
+            );
             display.hidden = false;
          }
 
@@ -511,7 +551,13 @@
          cell.append(display, input);
       }
 
-      display.textContent = nextDisplayValue;
+      setBroadcastInlineEditDisplayText(
+         display,
+         nextDisplayValue,
+         getBroadcastInlineEditPlaceholder(
+            broadcastInlineEditGroupField
+         )
+      );
       display.hidden = false;
       input.value = nextEditableValue;
       input.dataset.broadcastInlineEditOriginalValue = nextEditableValue;
@@ -556,11 +602,47 @@
 
       list.replaceChildren();
 
+      if(items.length === 0)
+      {
+         const placeholder = document.createElement("span");
+         placeholder.className = "inline-edit-placeholder";
+         placeholder.textContent = getBroadcastInlineEditPlaceholder(
+            broadcastInlineEditCategoriesField
+         );
+         list.append(placeholder);
+         return;
+      }
+
       items.forEach(category => {
          const span = document.createElement("span");
          span.textContent = category;
          list.append(span);
       });
+   }
+
+   function setBroadcastInlineEditDisplayText(
+      display,
+      value,
+      placeholder
+   )
+   {
+      if(!(display instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const normalizedValue = typeof value === "string"
+         ? value.trim()
+         : "";
+      const normalizedPlaceholder = typeof placeholder === "string"
+         ? placeholder.trim()
+         : "Add value..";
+
+      display.textContent = normalizedValue || normalizedPlaceholder;
+      display.classList.toggle(
+         "inline-edit-placeholder",
+         normalizedValue === ""
+      );
    }
 
    function normalizeBroadcastCategories(categories)
