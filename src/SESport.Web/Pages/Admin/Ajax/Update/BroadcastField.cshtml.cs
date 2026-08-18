@@ -326,7 +326,7 @@ public sealed class BroadcastFieldModel(
       );
 
       if(entity is null ||
-         !BroadcastEntityFilter.IsOrganizationEntityType(
+         !BroadcastEntityFilter.IsBroadcastOrganizationEntityType(
             entity.EntityTypeId
          ))
       {

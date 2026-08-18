@@ -720,7 +720,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(
       string? term,
       CancellationToken cancellationToken,
-      bool excludePersonAndPair = false,
+      bool broadcastOrganizationOnly = false,
       IReadOnlyCollection<string>? entityTypeIds = null,
       Guid? excludeEntityId = null,
       int? maxResults = null,
@@ -733,7 +733,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          term,
          true,
          cancellationToken,
-         excludePersonAndPair,
+         broadcastOrganizationOnly,
          entityTypeIds,
          excludeEntityId,
          maxResults,
@@ -745,7 +745,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
    public async Task<IReadOnlyList<EntityListItem>> GetEntitiesAsync(
       CancellationToken cancellationToken,
-      bool excludePersonAndPair = false,
+      bool broadcastOrganizationOnly = false,
       IReadOnlyCollection<string>? entityTypeIds = null,
       Guid? excludeEntityId = null,
       int? maxResults = null,
@@ -757,7 +757,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          null,
          false,
          cancellationToken,
-         excludePersonAndPair,
+         broadcastOrganizationOnly,
          entityTypeIds,
          excludeEntityId,
          maxResults,
@@ -771,7 +771,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       string? term,
       bool applyTermFilter,
       CancellationToken cancellationToken,
-      bool excludePersonAndPair,
+      bool broadcastOrganizationOnly,
       IReadOnlyCollection<string>? entityTypeIds,
       Guid? excludeEntityId,
       int? maxResults,
@@ -822,13 +822,14 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          term = $"%{escapedTerm}%";
       }
 
-      if(excludePersonAndPair)
+      if(broadcastOrganizationOnly)
       {
          whereClauses.Add(
             $"""
-            {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
-               "e.entity_type_id"
-            )}
+            {BroadcastEntityFilter
+               .GetBroadcastOrganizationEntityTypePredicateSql(
+                  "e.entity_type_id"
+               )}
             """
          );
       }

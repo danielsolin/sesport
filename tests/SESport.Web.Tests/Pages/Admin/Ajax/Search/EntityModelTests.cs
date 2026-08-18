@@ -77,11 +77,12 @@ public sealed class EntityModelTests
    }
 
    [Fact]
-   public async Task OnGetAsyncOrganizationOnlyExcludesPersonAndPair()
+   public async Task OnGetAsyncOrganizationOnlyExcludesParticipantTypesAndTeam()
    {
       var organizationId = Guid.NewGuid();
       var personId = Guid.NewGuid();
       var pairId = Guid.NewGuid();
+      var teamId = Guid.NewGuid();
       var queryToken = Guid.NewGuid().ToString("N")[..8];
 
       await using var dataSource = CreateDataSource();
@@ -107,6 +108,13 @@ public sealed class EntityModelTests
          pairId,
          $"Pair {queryToken}",
          TrackedEntityTypeIds.Pair,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         teamId,
+         $"Team {queryToken}",
+         TrackedEntityTypeIds.Team,
          "football"
       );
 
@@ -139,9 +147,14 @@ public sealed class EntityModelTests
             pairId.ToString(),
             results.ToString()
          );
+         Assert.DoesNotContain(
+            teamId.ToString(),
+            results.ToString()
+         );
       }
       finally
       {
+         await DeleteEntityAsync(dataSource, teamId);
          await DeleteEntityAsync(dataSource, pairId);
          await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, organizationId);

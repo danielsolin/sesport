@@ -11,9 +11,19 @@ public static class BroadcastEntityFilter
       TrackedEntityTypeIds.Pair
    ];
 
-   public static bool IsOrganizationEntityType(string entityTypeId)
+   private static readonly IReadOnlyList<string>
+      NonBroadcastOrganizationEntityTypeIds =
+   [
+      TrackedEntityTypeIds.Person,
+      TrackedEntityTypeIds.Pair,
+      TrackedEntityTypeIds.Team
+   ];
+
+   public static bool IsBroadcastOrganizationEntityType(
+      string entityTypeId
+   )
    {
-      return !NonOrganizationEntityTypeIds.Any(
+      return !NonBroadcastOrganizationEntityTypeIds.Any(
          nonOrganizationEntityTypeId =>
             string.Equals(
                entityTypeId,
@@ -21,6 +31,24 @@ public static class BroadcastEntityFilter
                StringComparison.OrdinalIgnoreCase
             )
       );
+   }
+
+   public static string GetBroadcastOrganizationEntityTypeSql()
+   {
+      return string.Join(
+         ", ",
+         NonBroadcastOrganizationEntityTypeIds.Select(
+            entityTypeId => $"'{entityTypeId}'"
+         )
+      );
+   }
+
+   public static string GetBroadcastOrganizationEntityTypePredicateSql(
+      string entityTypeSql
+   )
+   {
+      return $"{entityTypeSql} not in (" +
+         $"{GetBroadcastOrganizationEntityTypeSql()})";
    }
 
    public static string GetNonOrganizationEntityTypeSql()

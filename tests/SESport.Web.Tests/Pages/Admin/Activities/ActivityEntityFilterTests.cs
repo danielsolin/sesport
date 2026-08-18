@@ -55,16 +55,42 @@ public sealed class ActivityEntityFilterTests
    [InlineData(TrackedEntityTypeIds.Organization, true)]
    [InlineData(TrackedEntityTypeIds.NationalTeam, true)]
    [InlineData(TrackedEntityTypeIds.Series, true)]
+   [InlineData(TrackedEntityTypeIds.Team, false)]
    [InlineData(TrackedEntityTypeIds.Person, false)]
    [InlineData(TrackedEntityTypeIds.Pair, false)]
-   public void IsOrganizationEntityTypeAllowsBroadcastOrganizationTypes(
+   public void IsBroadcastOrganizationEntityTypeAllowsBroadcastTypes(
       string entityTypeId,
       bool expected
    )
    {
       Assert.Equal(
          expected,
-         BroadcastEntityFilter.IsOrganizationEntityType(entityTypeId)
+         BroadcastEntityFilter.IsBroadcastOrganizationEntityType(
+            entityTypeId
+         )
+      );
+   }
+
+   [Fact]
+   public void GetBroadcastOrganizationEntityTypeSqlListsTeam()
+   {
+      var sql = BroadcastEntityFilter
+         .GetBroadcastOrganizationEntityTypeSql();
+
+      Assert.Equal("'Person', 'Pair', 'Team'", sql);
+   }
+
+   [Fact]
+   public void BroadcastOrganizationPredicateUsesProvidedColumn()
+   {
+      var sql = BroadcastEntityFilter
+         .GetBroadcastOrganizationEntityTypePredicateSql(
+            "e.entity_type_id"
+         );
+
+      Assert.Equal(
+         "e.entity_type_id not in ('Person', 'Pair', 'Team')",
+         sql
       );
    }
 
