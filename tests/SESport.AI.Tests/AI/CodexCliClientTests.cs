@@ -133,7 +133,6 @@ public sealed class CodexCliClientTests
       Assert.Contains("full_access", json);
       Assert.Contains("event_name", json);
       Assert.DoesNotContain("tools_json", json);
-      Assert.DoesNotContain("web_find_in_page", json);
       Assert.DoesNotContain("\"format\"", json);
    }
 
@@ -162,43 +161,6 @@ public sealed class CodexCliClientTests
       Assert.Contains(
          "model_reasoning_effort=\"low\"",
          runner.Invocation!.Arguments
-      );
-   }
-
-   [Fact]
-   public async Task GenerateAsyncConfiguresSesportWebToolsForWebJobs()
-   {
-      var runner = new RecordingProcessRunner(
-         new CodexCliProcessResult(
-            0,
-            CreateJsonl(CreateOutput("Yes")),
-            "",
-            CreateOutput("Yes")
-         )
-      );
-      var client = CreateClient(runner, webToolsEnabled: true);
-
-      await client.GenerateAsync(
-         CreateProvider(),
-         CreateJob(),
-         CreatePrompt(),
-         CreateRenderedPrompt(),
-         "{}",
-         CancellationToken.None
-      );
-
-      Assert.Contains(
-         "mcp_servers.sesport_web_tools.command=\"dotnet\"",
-         runner.Invocation!.Arguments
-      );
-      Assert.Contains(
-         "mcp_servers.sesport_web_tools.enabled_tools=" +
-         "[\"web_get_page\",\"web_find_in_page\"]",
-         runner.Invocation.Arguments
-      );
-      Assert.Contains(
-         "mcp_servers.sesport_web_tools.tool_timeout_sec=300",
-         runner.Invocation.Arguments
       );
    }
 
@@ -236,8 +198,7 @@ public sealed class CodexCliClientTests
    }
 
    private static CodexCliClient CreateClient(
-      ICodexCliProcessRunner runner,
-      bool webToolsEnabled = false
+      ICodexCliProcessRunner runner
    )
    {
       return new CodexCliClient(
@@ -245,8 +206,7 @@ public sealed class CodexCliClientTests
          {
             ExecutablePath = "/usr/bin/codex",
             WorkingDirectory = "/tmp",
-            TimeoutSeconds = 60,
-            WebToolsEnabled = webToolsEnabled
+            TimeoutSeconds = 60
          },
          runner
       );

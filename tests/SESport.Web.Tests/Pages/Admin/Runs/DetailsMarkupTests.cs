@@ -64,8 +64,7 @@ public sealed class DetailsMarkupTests
       Assert.Contains("tool-trace-action-status", toolTraceHtml);
       Assert.Contains("tool-trace-output-count", toolTraceHtml);
       Assert.Contains("summary>Command</summary>", toolTraceHtml);
-      Assert.Contains("Command output", toolTraceHtml);
-      Assert.Contains("Tool output", toolTraceHtml);
+      Assert.Contains("summary>Command output</summary>", toolTraceHtml);
       Assert.Contains("Output characters", toolTraceHtml);
       Assert.Contains(
          ".tool-trace-action {\n"

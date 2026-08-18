@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using SESport.AI.Protocols;
 using SESport.Core.AI;
 using System.Diagnostics;
-using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -31,10 +30,6 @@ public sealed class CodexCliClient : IAiProviderClient
    private const string AgentMessageType = "agent_message";
    private const string ItemCompletedType = "item.completed";
    private const string TurnCompletedType = "turn.completed";
-   private const string WebToolsServerPrefix =
-      "mcp_servers.sesport_web_tools";
-   private const string WebToolsGetPageName = "web_get_page";
-   private const string WebToolsFindInPageName = "web_find_in_page";
 
    private readonly CodexCliOptions options;
    private readonly ICodexCliProcessRunner processRunner;
@@ -76,10 +71,6 @@ public sealed class CodexCliClient : IAiProviderClient
          ["jsonl"] = true,
          ["ephemeral"] = true,
          ["live_web_search"] = job.RequiresWebSearch,
-         ["mcp_web_tools"] = ShouldUseWebTools(
-            provider,
-            job.RequiresWebSearch
-         ),
          ["working_directory"] = GetWorkingDirectory(),
          ["prompt"] = BuildAgentPrompt(job, prompt, renderedPrompt)
       };
@@ -354,11 +345,6 @@ public sealed class CodexCliClient : IAiProviderClient
          );
       }
 
-      if(ShouldUseWebTools(provider, requiresWebSearch))
-      {
-         AddWebToolsConfiguration(arguments, workingDirectory);
-      }
-
       arguments.Add(FullAccessArgument);
       arguments.Add(JsonArgument);
       arguments.Add(EphemeralArgument);
@@ -392,114 +378,6 @@ public sealed class CodexCliClient : IAiProviderClient
          outputPath,
          TimeSpan.FromSeconds(options.TimeoutSeconds)
       );
-   }
-
-   private bool ShouldUseWebTools(
-      AiProviderDefinition provider,
-      bool requiresWebSearch
-   )
-   {
-      return options.WebToolsEnabled &&
-         requiresWebSearch &&
-         string.Equals(
-            provider.Kind,
-            AiProviderKinds.CodexCli,
-            StringComparison.Ordinal
-         );
-   }
-
-   private void AddWebToolsConfiguration(
-      List<string> arguments,
-      string workingDirectory
-   )
-   {
-      if(options.WebToolsTimeoutSeconds <= 0)
-      {
-         throw new InvalidOperationException(
-            "Codex web tools timeout must be greater than zero."
-         );
-      }
-
-      var projectPath = GetWebToolsProjectPath(workingDirectory);
-      AddConfigOverride(
-         arguments,
-         $"{WebToolsServerPrefix}.enabled",
-         "true"
-      );
-      AddConfigOverride(
-         arguments,
-         $"{WebToolsServerPrefix}.command",
-         FormatTomlString("dotnet")
-      );
-      AddConfigOverride(
-         arguments,
-         $"{WebToolsServerPrefix}.args",
-         FormatTomlStringArray(
-            [
-               "run",
-               "--project",
-               projectPath,
-               "--no-build",
-               "--no-restore"
-            ]
-         )
-      );
-      AddConfigOverride(
-         arguments,
-         $"{WebToolsServerPrefix}.cwd",
-         FormatTomlString(workingDirectory)
-      );
-      AddConfigOverride(
-         arguments,
-         $"{WebToolsServerPrefix}.enabled_tools",
-         FormatTomlStringArray(
-            [WebToolsGetPageName, WebToolsFindInPageName]
-         )
-      );
-      AddConfigOverride(
-         arguments,
-         $"{WebToolsServerPrefix}.tool_timeout_sec",
-         options.WebToolsTimeoutSeconds.ToString(
-            CultureInfo.InvariantCulture
-         )
-      );
-   }
-
-   private string GetWebToolsProjectPath(string workingDirectory)
-   {
-      if(string.IsNullOrWhiteSpace(options.WebToolsProjectPath))
-      {
-         throw new InvalidOperationException(
-            "Codex web tools project path is not configured."
-         );
-      }
-
-      return Path.GetFullPath(
-         options.WebToolsProjectPath.Trim(),
-         workingDirectory
-      );
-   }
-
-   private static void AddConfigOverride(
-      List<string> arguments,
-      string key,
-      string value
-   )
-   {
-      arguments.Add(ConfigArgument);
-      arguments.Add($"{key}={value}");
-   }
-
-   private static string FormatTomlString(string value)
-   {
-      return JsonSerializer.Serialize(value);
-   }
-
-   private static string FormatTomlStringArray(
-      IReadOnlyList<string> values
-   )
-   {
-      return JsonSerializer.Serialize(values);
    }
 
    private static string? GetReasoningEffort(
