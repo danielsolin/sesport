@@ -543,8 +543,8 @@ else
                                  )
                            );
                         var showDisciplineColumn =
-                           participants.Any(
-                              participant => participant.HasDiscipline
+                           IndexModel.ShouldShowDisciplineColumn(
+                              participants
                            );
                         var showRepresentedEntityColumn =
                            participants.Any(

@@ -114,6 +114,19 @@ public class IndexModel(
          .Count();
    }
 
+   internal static bool ShouldShowDisciplineColumn(
+      IEnumerable<PublicActivityParticipant> participants
+   )
+   {
+      var disciplineValues = participants
+         .Select(
+            participant => participant.DisciplineAliasName ?? string.Empty
+         )
+         .Distinct(StringComparer.Ordinal);
+
+      return disciplineValues.Skip(1).Any();
+   }
+
    internal static bool ShouldCollapseInactiveParticipants(
       int activeParticipantCount,
       bool hasInactiveParticipants

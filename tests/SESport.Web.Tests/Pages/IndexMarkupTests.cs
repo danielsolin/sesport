@@ -130,7 +130,10 @@ public sealed class IndexMarkupTests
       Assert.Contains("shouldCombineParticipantToggles", html);
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
-      Assert.Contains("participant.HasDiscipline", html);
+      Assert.Contains(
+         "IndexModel.ShouldShowDisciplineColumn(",
+         html
+      );
       Assert.Contains("participant.DisciplineAliasName", html);
       Assert.Contains("PublicParticipantTeamFlag.GetPath(", html);
       Assert.Contains("participant.TeamCountryId", html);

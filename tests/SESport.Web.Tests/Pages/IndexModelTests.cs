@@ -51,6 +51,48 @@ public sealed class IndexModelTests
       Assert.Equal(1, total);
    }
 
+   [Fact]
+   public void ShouldShowDisciplineColumnHidesWhenValuesMatch()
+   {
+      var participants = new[]
+      {
+         CreateParticipant("Anna", "100 m"),
+         CreateParticipant("Björn", "100 m")
+      };
+
+      var result = IndexModel.ShouldShowDisciplineColumn(participants);
+
+      Assert.False(result);
+   }
+
+   [Fact]
+   public void ShouldShowDisciplineColumnShowsWhenValuesDiffer()
+   {
+      var participants = new[]
+      {
+         CreateParticipant("Anna", "100 m"),
+         CreateParticipant("Björn", "200 m")
+      };
+
+      var result = IndexModel.ShouldShowDisciplineColumn(participants);
+
+      Assert.True(result);
+   }
+
+   [Fact]
+   public void ShouldShowDisciplineColumnShowsWhenAValueIsMissing()
+   {
+      var participants = new[]
+      {
+         CreateParticipant("Anna", "100 m"),
+         CreateParticipant("Björn", null)
+      };
+
+      var result = IndexModel.ShouldShowDisciplineColumn(participants);
+
+      Assert.True(result);
+   }
+
    [Theory]
    [InlineData(0, true, false)]
    [InlineData(1, true, true)]
@@ -254,5 +296,25 @@ public sealed class IndexModelTests
       {
          ActiveRelatedPersonEntityIds = participantIds
       };
+   }
+
+   private static PublicActivityParticipant CreateParticipant(
+      string name,
+      string? discipline
+   )
+   {
+      return new PublicActivityParticipant(
+         Guid.NewGuid(),
+         name,
+         null,
+         null,
+         null,
+         string.Empty,
+         null,
+         null,
+         true,
+         discipline is not null,
+         discipline
+      );
    }
 }
