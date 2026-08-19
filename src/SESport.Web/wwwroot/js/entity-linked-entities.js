@@ -111,11 +111,7 @@
             picker,
             input,
             suggestions,
-            grid,
-            searchUrl,
             excludeEntityId,
-            organizationOnly,
-            maxResults,
             updateUrl,
             isExistingEntity
          );
@@ -364,43 +360,11 @@
       picker,
       input,
       suggestions,
-      grid,
-      searchUrl,
       excludeEntityId,
-      organizationOnly,
-      maxResults,
       updateUrl,
       isExistingEntity
    )
    {
-      if(event.key === "Backspace"
-         && input.value === ""
-         && getSelectedEntityCount(grid) > 0)
-      {
-         event.preventDefault();
-         const row = getLastRow(grid);
-
-         if(row instanceof HTMLElement)
-         {
-            void removeRowAsync(
-               state,
-               row,
-               picker,
-               input,
-               suggestions,
-               searchUrl,
-               excludeEntityId,
-               organizationOnly,
-               maxResults,
-               grid,
-               updateUrl,
-               isExistingEntity
-            );
-         }
-
-         return;
-      }
-
       if(suggestions.hidden)
       {
          return;
@@ -615,18 +579,6 @@
       link.href = `/Admin/Entities/Edit/${encodeURIComponent(item.id)}`;
       link.textContent = item.text;
       return link;
-   }
-
-   function getLastRow(grid)
-   {
-      const rows = Array.from(grid.querySelectorAll(rowSelector));
-
-      return rows[rows.length - 1] ?? null;
-   }
-
-   function getSelectedEntityCount(grid)
-   {
-      return getSelectedEntityIds(grid).length;
    }
 
    function getSelectedEntityIds(grid)

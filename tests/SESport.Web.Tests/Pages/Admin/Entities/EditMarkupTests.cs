@@ -47,6 +47,7 @@ public sealed class EditMarkupTests
       Assert.Contains("data-entity-linked-entities-rows", script);
       Assert.Contains("data-entity-linked-entities-row", script);
       Assert.Contains("data-entity-linked-entities-remove", script);
+      Assert.DoesNotContain("event.key === \"Backspace\"", script);
       Assert.DoesNotContain("chip", script);
       Assert.Contains("broadcast-org-entity-option", script);
    }
