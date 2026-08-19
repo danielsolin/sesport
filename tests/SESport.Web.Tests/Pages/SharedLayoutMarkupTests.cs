@@ -17,6 +17,11 @@ public sealed class SharedLayoutMarkupTests
          "src/SESport.Web/wwwroot/css/public.css"
       );
       var html = await File.ReadAllTextAsync(layoutPath);
+      var indexPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Index.cshtml"
+      );
+      var index = await File.ReadAllTextAsync(indexPath);
       var publicCss = await File.ReadAllTextAsync(publicCssPath);
       var siteCssPath = Path.Combine(
          repoRoot,
@@ -38,10 +43,20 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("Dashboard", html);
       Assert.DoesNotContain("shareSelectedDate", html);
       Assert.DoesNotContain("dateRouteValues", html);
-      Assert.DoesNotContain("public-member-link", html);
       Assert.DoesNotContain("Bli medlem", html);
-      Assert.Contains("class=\"public-contact-link\"", html);
+      Assert.DoesNotContain("public-contact-link", html);
+      Assert.Contains("class=\"public-header-actions\"", html);
+      Assert.Contains("class=\"public-member-link\"", html);
+      Assert.Contains("asp-page=\"/Account/Login\"", html);
+      Assert.Contains("Logga in", html);
+      Assert.Contains("asp-page=\"/Account/Logout\"", html);
+      Assert.Contains("Logga ut", html);
+      Assert.Contains("class=\"public-contact-footer\"", index);
+      Assert.Contains("class=\"public-contact-link\"", index);
+      Assert.Contains("href=\"mailto:info@sesport.se\"", index);
+      Assert.Contains(".public-contact-footer {", publicCss);
       Assert.Contains(".public-contact-link {", publicCss);
+      Assert.Contains(".public-member-link {", publicCss);
       Assert.Contains(
          "const isRootPath = currentPath === \"/\";\n\n" +
          "   if(isRootPath)",

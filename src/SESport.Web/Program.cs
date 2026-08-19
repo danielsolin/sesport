@@ -85,8 +85,8 @@ builder.Services
       options =>
       {
          options.Cookie.Name = MemberAuthenticationDefaults.CookieName;
-         options.LoginPath = "/Account/Login";
-         options.AccessDeniedPath = "/Account/Login";
+         options.LoginPath = "/login";
+         options.AccessDeniedPath = "/login";
          options.ExpireTimeSpan = memberAuthOptions.MemberCookieLifetime;
          options.SlidingExpiration = true;
          options.Cookie.HttpOnly = true;

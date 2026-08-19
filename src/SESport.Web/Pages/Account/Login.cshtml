@@ -1,24 +1,24 @@
-@page
+@page "/login"
 @model SESport.Web.Pages.Account.LoginModel
 @{
-   ViewData["Title"] = "Bli medlem";
+   ViewData["Title"] = "Logga in";
 }
 
 <section class="login-panel member-login-panel">
-   <p class="eyebrow">Medlem</p>
-   <h1>Bli medlem</h1>
+   <p class="eyebrow">Logga in</p>
 
    @if(Model.LinkRequested)
    {
       <div class="notice">
-         Om adressen kan ta emot e-post har vi skickat en inloggningslänk.
-         Öppna mejlet och klicka på länken för att slutföra.
+         Vi har skickat en inloggningslänk.
+         Öppna mejlet och klicka på länken för att logga in.
       </div>
    }
    else
    {
       <p>
-         Ange din e-postadress så skickar vi en länk. Du behöver inget lösenord.
+         Ange din e-postadress så skickar vi en inloggningslänk. Det spelar
+         ingen roll om du redan har konto eller är ny här.
       </p>
 
       <div asp-validation-summary="ModelOnly"
@@ -26,16 +26,18 @@
 
       <form method="post">
          <input asp-for="ReturnUrl" type="hidden" />
-         <label>
-            <span>E-postadress</span>
+         <label class="member-login-email-field">
             <input asp-for="Email"
+                   aria-label="E-postadress"
+                   placeholder="e-post"
                    type="email"
                    autocomplete="email"
                    autofocus />
          </label>
          <span asp-validation-for="Email"></span>
-         <button class="button button-primary" type="submit">
-            Skicka inloggningslänk
+         <button class="button button-primary member-login-submit"
+                 type="submit">
+            SKICKA
          </button>
       </form>
    }

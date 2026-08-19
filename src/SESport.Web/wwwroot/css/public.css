@@ -44,8 +44,14 @@
    padding-top: 24px;
 }
 
+.public-contact-footer {
+   display: flex;
+   justify-content: center;
+   margin: 24px auto 0;
+   padding-bottom: 24px;
+}
+
 .public-contact-link {
-   flex: 0 0 auto;
    font-size: 10px;
    white-space: nowrap;
 }
@@ -66,6 +72,12 @@
 
 .public-member-button:hover {
    color: #ffffff;
+}
+
+.public-member-link {
+   font-size: 12px;
+   font-weight: 800;
+   white-space: nowrap;
 }
 
 .public-member-label {

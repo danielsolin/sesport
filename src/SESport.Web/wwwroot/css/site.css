@@ -2499,6 +2499,14 @@ textarea {
    margin: 40px auto;
 }
 
+.member-login-email-field {
+   margin: 14px 0 16px;
+}
+
+.member-login-submit {
+   width: 100%;
+}
+
 .dashboard-section {
    margin-top: 32px;
 }
