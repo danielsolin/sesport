@@ -132,6 +132,19 @@ public class IndexModel(
       return disciplineValues.Skip(1).Any();
    }
 
+   internal static bool ShouldAutoExpandPastActivities(
+      bool isSportToday,
+      bool hasPastActivities,
+      bool hasActiveOrUpcomingActivities,
+      bool hasUntimedActivities
+   )
+   {
+      return isSportToday &&
+         hasPastActivities &&
+         !hasActiveOrUpcomingActivities &&
+         !hasUntimedActivities;
+   }
+
    internal static bool ShouldCollapseInactiveParticipants(
       int activeParticipantCount,
       bool hasInactiveParticipants

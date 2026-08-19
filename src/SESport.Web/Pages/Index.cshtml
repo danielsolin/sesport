@@ -11,7 +11,20 @@
    var hasPastActivities = Model.TimelineEntries.Any(
       entry => entry.Section?.HasEnded == true
    );
+   var hasActiveOrUpcomingActivities = Model.TimelineEntries.Any(
+      entry => entry.Section?.HasEnded == false
+   );
+   var shouldAutoExpandPastActivities =
+      IndexModel.ShouldAutoExpandPastActivities(
+         Model.IsSportToday,
+         hasPastActivities,
+         hasActiveOrUpcomingActivities,
+         Model.UntimedActivities.Count > 0
+      );
    var shouldHidePastActivities = Model.IsSportToday &&
+      hasPastActivities &&
+      !shouldAutoExpandPastActivities;
+   var shouldRenderPastActivitiesToggle = Model.IsSportToday &&
       hasPastActivities;
 }
 @section Head {
@@ -243,7 +256,7 @@ else
          var timelineEntry = Model.TimelineEntries[timelineIndex];
          if(timelineEntry.IsCurrentMarker)
          {
-            @if(shouldHidePastActivities)
+            @if(shouldRenderPastActivitiesToggle)
             {
                <div class="activity-past-toggle-row">
                   <span class="activity-past-toggle-line"></span>
@@ -252,8 +265,12 @@ else
                           data-activity-past-toggle
                           data-collapsed-label="Visa Tidigare"
                           data-expanded-label="Dölj Tidigare"
-                          aria-expanded="false">
-                     Visa Tidigare
+                          aria-expanded="@(
+                             shouldHidePastActivities ? "false" : "true"
+                          )">
+                     @(shouldHidePastActivities
+                        ? "Visa Tidigare"
+                        : "Dölj Tidigare")
                   </button>
                   <span class="activity-past-toggle-line"></span>
                </div>
