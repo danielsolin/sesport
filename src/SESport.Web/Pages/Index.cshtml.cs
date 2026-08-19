@@ -84,6 +84,11 @@ public class IndexModel(
             Sport,
             SportParticipantCounts
          );
+         PublicFilterPreferenceStore.Save(
+            HttpContext.Response,
+            SelectedDate,
+            Sport
+         );
          var filteredActivities = FilterActivitiesBySport(
             activities,
             Sport

@@ -51,6 +51,12 @@ public sealed class SharedLayoutMarkupTests
       Assert.DoesNotContain("Account/Logout", html);
       Assert.Contains("class=\"public-header-actions\"", html);
       Assert.Contains("class=\"public-member-link\"", html);
+      Assert.Contains(
+         "PublicFilterPreferenceStore.ReadQueryString",
+         html
+      );
+      Assert.Contains("publicIndexHref", html);
+      Assert.Contains("href=\"@publicIndexHref\"", html);
       Assert.Contains("asp-page=\"/Account/Login\"", html);
       Assert.Contains("Logga in", html);
       Assert.Contains("BEVAKNINGAR", html);

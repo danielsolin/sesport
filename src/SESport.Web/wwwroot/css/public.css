@@ -99,8 +99,15 @@
    text-transform: uppercase;
 }
 
+.member-watches-push-status.is-active {
+   padding: 8px 10px;
+   border: 1px solid #c9e0cd;
+   border-radius: 4px;
+   background: #f4faf4;
+}
+
 .member-watches-push-status.is-active p {
-   color: var(--accent-strong);
+   color: #2f6b3b;
 }
 
 .member-watches-push-status.is-error p {

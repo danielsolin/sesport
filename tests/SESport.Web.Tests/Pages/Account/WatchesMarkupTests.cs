@@ -20,6 +20,10 @@ public sealed class WatchesMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/js/member-watches.js"
       );
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/public.css"
+      );
       var workerPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/wwwroot/service-worker.js"
@@ -28,6 +32,7 @@ public sealed class WatchesMarkupTests
       var page = await File.ReadAllTextAsync(pagePath);
       var model = await File.ReadAllTextAsync(modelPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      var css = await File.ReadAllTextAsync(cssPath);
       var worker = await File.ReadAllTextAsync(workerPath);
 
       Assert.Contains("data-member-watch-push-configured", page);
@@ -57,6 +62,11 @@ public sealed class WatchesMarkupTests
       Assert.Contains("push service error", script);
       Assert.Contains("service-worker.js", script);
       Assert.Contains("pushSubscription", script);
+      Assert.Contains(
+         ".member-watches-push-status.is-active {",
+         css
+      );
+      Assert.Contains("background: #f4faf4;", css);
       Assert.Contains("showNotification", worker);
       Assert.Contains("notificationclick", worker);
    }

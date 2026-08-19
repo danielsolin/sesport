@@ -37,6 +37,15 @@
    var currentUrl = $"{ViewContext.HttpContext.Request.PathBase}" +
       $"{ViewContext.HttpContext.Request.Path}" +
       $"{ViewContext.HttpContext.Request.QueryString}";
+   var isPublicIndex = requestPath == "/" ||
+      requestPath.Equals("/Index", StringComparison.OrdinalIgnoreCase);
+   var publicFilterQuery = isPublicIndex
+      ? Context.Request.QueryString.Value
+      : PublicFilterPreferenceStore.ReadQueryString(
+         Context.Request
+      );
+   var publicIndexHref = (Url.Page("/Index") ?? "/") +
+      (publicFilterQuery ?? string.Empty);
    var isEntities = requestPath.StartsWith(
       "/Admin/Entities",
       StringComparison.OrdinalIgnoreCase
@@ -107,7 +116,7 @@
 <body>
    <header class="site-header">
       <div class="site-header-main">
-         <a class="brand" asp-page="/Index">sesport</a>
+         <a class="brand" href="@publicIndexHref">sesport</a>
          @if(isAdmin)
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
