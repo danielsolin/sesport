@@ -311,7 +311,7 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncMatchesGroupUsingOrganizationSport()
+   public async Task OnPostAsyncDefaultsToNewGroupUsingBroadcastTitle()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
@@ -400,10 +400,11 @@ public sealed class BroadcastFieldModelTests
             CancellationToken.None
          );
 
-         Assert.Equal(title, groupText);
+         Assert.Equal($"NEW: {title}", groupText);
          Assert.NotNull(broadcast);
-         Assert.Equal(activityGroupId, broadcast!.ActivityGroupId);
-         Assert.Equal(activityId, broadcast.ActivityGroupSourceActivityId);
+         Assert.Null(broadcast!.ActivityGroupId);
+         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+         Assert.Equal(title, broadcast.ActivityGroupDraftTitle);
       }
       finally
       {
@@ -553,7 +554,7 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncDoesNotMatchGroupWithoutOrgLink()
+   public async Task OnPostAsyncDefaultsToNewGroupWithoutOrgLink()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
@@ -636,6 +637,7 @@ public sealed class BroadcastFieldModelTests
          Assert.NotNull(broadcast);
          Assert.Null(broadcast!.ActivityGroupId);
          Assert.Null(broadcast.ActivityGroupSourceActivityId);
+         Assert.Equal(title, broadcast.ActivityGroupDraftTitle);
       }
       finally
       {
@@ -647,7 +649,7 @@ public sealed class BroadcastFieldModelTests
    }
 
    [Fact]
-   public async Task OnPostAsyncMatchesNearbyGroupWithDifferentTitle()
+   public async Task OnPostAsyncDoesNotMatchNearbyGroupWithDifferentTitle()
    {
       var broadcastId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
@@ -738,10 +740,11 @@ public sealed class BroadcastFieldModelTests
             CancellationToken.None
          );
 
-         Assert.Equal(activityTitle, groupText);
+         Assert.Equal($"NEW: {broadcastTitle}", groupText);
          Assert.NotNull(broadcast);
-         Assert.Equal(activityGroupId, broadcast!.ActivityGroupId);
-         Assert.Equal(activityId, broadcast.ActivityGroupSourceActivityId);
+         Assert.Null(broadcast!.ActivityGroupId);
+         Assert.Null(broadcast.ActivityGroupSourceActivityId);
+         Assert.Equal(broadcastTitle, broadcast.ActivityGroupDraftTitle);
       }
       finally
       {

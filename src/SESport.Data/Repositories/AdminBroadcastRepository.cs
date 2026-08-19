@@ -1,6 +1,6 @@
 using Npgsql;
+using NpgsqlTypes;
 using SESport.Core.Broadcast;
-using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
@@ -405,58 +405,31 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          cancellationToken
       );
 
-      string? activitySourceKindId = null;
-      Guid? activitySourceActivityId = null;
-
-      if(organizationEntityId is not null)
-      {
-         activitySourceKindId =
-            BroadcastActivitySourceKindIds.ActivityGroupForActivity;
-
-         var broadcast = await LoadBroadcastActivitySourceAsync(
-            connection,
-            transaction,
-            id,
-            cancellationToken
-         );
-
-         if(broadcast is not null)
-         {
-            activitySourceActivityId =
-               await FindMatchingActivityIdAsync(
-                  connection,
-                  transaction,
-                  organizationEntityId.Value,
-                  broadcast,
-                  cancellationToken
-               );
-         }
-      }
-
       const string sql = """
          update broadcasts
          set entity_id = @entity_id,
             activity_group_source_kind_id = @activity_group_source_kind_id,
-            activity_group_source_activity_id =
-               @activity_group_source_activity_id,
+            activity_group_source_activity_id = null,
+            activity_group_draft_title = case
+               when @entity_id is null then null
+               else title
+            end,
             updated_at = now()
          where id = @id
-         """;
+      """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
       command.Parameters.AddWithValue("id", id);
-      command.Parameters.AddWithValue(
+      command.Parameters.Add(
          "entity_id",
-         (object?)organizationEntityId ?? DBNull.Value
-      );
-      command.Parameters.AddWithValue(
+         NpgsqlDbType.Uuid
+      ).Value = (object?)organizationEntityId ?? DBNull.Value;
+      command.Parameters.Add(
          "activity_group_source_kind_id",
-         (object?)activitySourceKindId ?? DBNull.Value
-      );
-      command.Parameters.AddWithValue(
-         "activity_group_source_activity_id",
-         (object?)activitySourceActivityId ?? DBNull.Value
-      );
+         NpgsqlDbType.Text
+      ).Value = organizationEntityId is null
+         ? DBNull.Value
+         : BroadcastActivitySourceKindIds.ActivityGroupForActivity;
 
       await command.ExecuteNonQueryAsync(cancellationToken);
       await transaction.CommitAsync(cancellationToken);
@@ -890,174 +863,6 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
 
       await transaction.CommitAsync(cancellationToken);
       return updated > 0;
-   }
-
-   private async Task<BroadcastActivitySource?>
-      LoadBroadcastActivitySourceAsync(
-         NpgsqlConnection connection,
-         NpgsqlTransaction transaction,
-         Guid id,
-         CancellationToken cancellationToken
-      )
-   {
-      const string sql = """
-         select
-            b.id,
-            b.entity_id,
-            b.channel_id,
-            b.channel_name,
-            b.title,
-            b.description,
-            b.categories,
-            b.starts_at,
-            b.ends_at,
-            b.activity_group_source_kind_id,
-            b.activity_group_source_activity_id,
-            e.sport_id,
-            e.canonical_name
-         from broadcasts b
-         left join entities e on e.id = b.entity_id
-         where b.id = @id
-         """;
-
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("id", id);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-
-      if(!await reader.ReadAsync(cancellationToken))
-      {
-         return null;
-      }
-
-      var channelId = reader.GetString(2);
-      var channelName = ReadString(reader, 3) ?? channelId;
-
-      return new BroadcastActivitySource(
-         reader.GetGuid(0),
-         channelName,
-         reader.GetString(4),
-         ReadString(reader, 5),
-         reader.GetFieldValue<string[]>(6),
-         reader.GetFieldValue<DateTimeOffset>(7),
-         reader.GetFieldValue<DateTimeOffset>(8),
-         reader.IsDBNull(1) ? null : reader.GetGuid(1),
-         ReadString(reader, 9),
-         reader.IsDBNull(10) ? null : reader.GetGuid(10),
-         EntitySportId: ReadString(reader, 11),
-         OrganizationName: ReadString(reader, 12)
-      );
-   }
-
-   private async Task<Guid?> FindMatchingActivityIdAsync(
-      NpgsqlConnection connection,
-      NpgsqlTransaction transaction,
-      Guid organizationEntityId,
-      BroadcastActivitySource broadcast,
-      CancellationToken cancellationToken
-   )
-   {
-      var sportId = await GetOrganizationSportIdAsync(
-         connection,
-         transaction,
-         organizationEntityId,
-         cancellationToken
-      );
-
-      if(string.IsNullOrWhiteSpace(sportId) ||
-         string.IsNullOrWhiteSpace(broadcast.Title))
-      {
-         return null;
-      }
-
-      var broadcastLocalStart = TimeZoneHelper.ToLocal(
-         broadcast.StartsAt,
-         SportDay.TimeZoneId
-      ).DateTime;
-      var broadcastDate = DateOnly.FromDateTime(broadcastLocalStart);
-      var startDate = broadcastDate.AddDays(
-         -ActivityGroupDefaults.CandidateDateRangeDays
-      );
-      var endDate = broadcastDate.AddDays(
-         ActivityGroupDefaults.CandidateDateRangeDays
-      );
-      var sql = $$"""
-         select
-            a.id,
-            a.title,
-            a.activity_date,
-            a.local_start_time
-         from activities a
-         where a.sport_id = @sport_id
-            and a.activity_group_id is not null
-            and a.activity_date between @start_date and @end_date
-            and {{ActivityRepository
-               .GetActivityOrganizationEntityIdSql("a")}} =
-               @organization_entity_id
-         order by a.activity_date, a.local_start_time nulls last, a.title
-         """;
-
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("sport_id", sportId);
-      command.Parameters.AddWithValue("start_date", startDate);
-      command.Parameters.AddWithValue("end_date", endDate);
-      command.Parameters.AddWithValue(
-         "organization_entity_id",
-         organizationEntityId
-      );
-
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-      var bestCandidateId = (Guid?)null;
-      var bestCandidateScore = 0;
-
-      while(await reader.ReadAsync(cancellationToken))
-      {
-         var candidateId = reader.GetGuid(0);
-         var candidateTitle = reader.GetString(1);
-         var candidateDate = reader.GetFieldValue<DateOnly>(2);
-         var candidateTime = reader.IsDBNull(3)
-            ? TimeOnly.FromDateTime(broadcastLocalStart)
-            : reader.GetFieldValue<TimeOnly>(3);
-         var candidateLocalStart = candidateDate.ToDateTime(candidateTime);
-         var candidateScore = BroadcastActivityMatchScorer.GetScore(
-            broadcast.Title,
-            candidateTitle,
-            broadcastLocalStart,
-            candidateLocalStart
-         );
-
-         if(candidateScore <= bestCandidateScore)
-         {
-            continue;
-         }
-
-         bestCandidateScore = candidateScore;
-         bestCandidateId = candidateId;
-      }
-
-      return bestCandidateScore > 0 ? bestCandidateId : null;
-   }
-
-   private static async Task<string?> GetOrganizationSportIdAsync(
-      NpgsqlConnection connection,
-      NpgsqlTransaction transaction,
-      Guid organizationEntityId,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         select sport_id
-         from entities
-         where id = @id
-         """;
-
-      await using var command = new NpgsqlCommand(sql, connection, transaction);
-      command.Parameters.AddWithValue("id", organizationEntityId);
-
-      return (string?)await command.ExecuteScalarAsync(cancellationToken);
    }
 
 }

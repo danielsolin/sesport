@@ -664,7 +664,7 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
-   public async Task PrefillFromBroadcastsAsyncReusesExistingActivityGroup()
+   public async Task PrefillFromBroadcastsAsyncDoesNotReuseExistingGroup()
    {
       var organizationId = Guid.NewGuid();
       var personId = Guid.NewGuid();
@@ -753,7 +753,8 @@ public sealed class ActivityEditPageServiceTests
          BroadcastActivitySourceKindIds.ActivityGroupForActivity,
          broadcastSource.ActivityGroupSourceKindId
       );
-      Assert.Equal(activityId, broadcastSource.ActivityGroupSourceActivityId);
+      Assert.Null(broadcastSource.ActivityGroupSourceActivityId);
+      Assert.Equal(title, broadcastSource.ActivityGroupDraftTitle);
       await InsertRunAsync(
          dataSource,
          runId,
@@ -775,9 +776,9 @@ public sealed class ActivityEditPageServiceTests
             CancellationToken.None
          );
 
-         Assert.Equal(activityGroupId, activity.ActivityGroupId);
-         Assert.False(activity.ActivityGroupCreationRequired);
-         Assert.Equal([personId], activity.LinkedEntityIds);
+         Assert.Null(activity.ActivityGroupId);
+         Assert.True(activity.ActivityGroupCreationRequired);
+         Assert.Empty(activity.LinkedEntityIds);
 
          var broadcast = Assert.IsType<BroadcastListItem>(
             await broadcastRepository.GetByIdAsync(
@@ -792,11 +793,7 @@ public sealed class ActivityEditPageServiceTests
                   CancellationToken.None
                )
          );
-         Assert.Equal(
-            [personId],
-            displayedBroadcast.ActivityGroupParticipants
-               .Select(participant => participant.Id)
-         );
+         Assert.Empty(displayedBroadcast.ActivityGroupParticipants);
 
          var clearedActivity = new ActivityEditModel();
          await fixture.Service.PrefillFromBroadcastsAsync(
@@ -807,7 +804,8 @@ public sealed class ActivityEditPageServiceTests
             true
          );
 
-         Assert.Equal(activityGroupId, clearedActivity.ActivityGroupId);
+         Assert.Null(clearedActivity.ActivityGroupId);
+         Assert.True(clearedActivity.ActivityGroupCreationRequired);
          Assert.Empty(clearedActivity.LinkedEntityIds);
          Assert.Null(clearedActivity.ParticipationRunId);
       }
@@ -2354,6 +2352,9 @@ public sealed class ActivityEditPageServiceTests
       await using var connection = await dataSource.OpenConnectionAsync();
       await using var command = connection.CreateCommand();
       command.CommandText = """
+         delete from activity_broadcast_links
+         where broadcast_id = @id;
+
          delete from broadcasts
          where id = @id
          """;
