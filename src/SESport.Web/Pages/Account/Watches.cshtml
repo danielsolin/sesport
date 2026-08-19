@@ -2,67 +2,37 @@
 @model SESport.Web.Pages.Account.WatchesModel
 @{
    ViewData["Title"] = "Bevakningar";
+   var searchUrl = Url.Page("/Account/Watches", "Search");
 }
 
 <section class="member-watches-page">
    <h1 class="member-watches-section-title">LÄGG TILL</h1>
 
-   <form class="member-watches-search" method="get">
-      <label class="member-watches-search-field">
-         <input name="q"
-                id="member-watches-search-input"
-                value="@Model.Query"
-                placeholder="Sök person"
-                aria-label="Sök person"
-                autocomplete="off"
-                autofocus />
-      </label>
-      <button class="button button-primary
-         member-watches-search-button"
-              type="submit">
-         Sök
-      </button>
-   </form>
-
-   @if(Model.HasSearch)
-   {
-      <h2 class="member-watches-section-title">Sökresultat</h2>
-      @if(Model.SearchResults.Count == 0)
-      {
-         <p class="member-watches-empty">Inga personer hittades.</p>
-      }
-      else
-      {
-         <ul class="member-watch-results">
-            @foreach(var person in Model.SearchResults)
-            {
-               <li class="member-watch-result">
-                  <span class="member-watch-name">
-                     @person.Name
-                     <span class="member-watch-information">
-                        (@person.DisplayInformation)
-                     </span>
-                  </span>
-                  <form method="post"
-                        asp-page-handler="Add"
-                        class="member-watch-action-form">
-                     @Html.AntiForgeryToken()
-                     <input type="hidden"
-                            name="entityId"
-                            value="@person.Id" />
-                     <input type="hidden"
-                            name="q"
-                            value="@Model.Query" />
-                     <button class="member-watch-action-button"
-                             type="submit">
-                        Bevaka
-                     </button>
-                  </form>
-               </li>
-            }
-         </ul>
-      }
-   }
+   <div class="member-watches-search-container"
+        data-member-watch-search
+        data-member-watch-search-url="@searchUrl">
+      <form class="member-watches-search"
+            method="get"
+            data-member-watch-search-form>
+         <label class="member-watches-search-field">
+            <input name="q"
+                   id="member-watches-search-input"
+                   placeholder="Sök person"
+                   aria-label="Sök person"
+                   aria-controls="member-watch-search-results"
+                   aria-expanded="false"
+                   aria-autocomplete="list"
+                   autocomplete="off"
+                   autofocus
+                   data-member-watch-search-input />
+         </label>
+      </form>
+      <div class="member-watches-search-results"
+           id="member-watch-search-results"
+           data-member-watch-search-results
+           aria-live="polite"
+           hidden></div>
+   </div>
 
    @if(Model.WatchedEntities.Count > 0)
    {
@@ -84,9 +54,6 @@
                   <input type="hidden"
                          name="entityId"
                          value="@watch.Id" />
-                  <input type="hidden"
-                         name="q"
-                         value="@Model.Query" />
                   <button class="member-watch-action-button
                      member-watch-remove-button"
                           type="submit">
@@ -100,16 +67,6 @@
 </section>
 
 @section Scripts {
-   <script>
-      const searchInput = document.getElementById(
-         "member-watches-search-input"
-      );
-      if(searchInput) {
-         searchInput.focus();
-         searchInput.setSelectionRange(
-            searchInput.value.length,
-            searchInput.value.length
-         );
-      }
-   </script>
+   <script src="~/js/member-watches.js"
+           asp-append-version="true"></script>
 }

@@ -79,11 +79,15 @@
    margin: 0 auto;
 }
 
+.member-watches-search-container {
+   position: relative;
+   margin-bottom: 20px;
+}
+
 .member-watches-search {
    display: flex;
    align-items: stretch;
-   gap: 8px;
-   margin-bottom: 20px;
+   margin: 0;
 }
 
 .member-watches-search-field {
@@ -96,8 +100,38 @@
    min-height: 40px;
 }
 
-.member-watches-search-button {
-   min-width: 64px;
+.member-watches-search-results {
+   position: absolute;
+   z-index: 10;
+   top: calc(100% + 4px);
+   right: 0;
+   left: 0;
+   max-height: 320px;
+   overflow-y: auto;
+   border: 1px solid var(--line);
+   border-radius: 4px;
+   background: var(--surface);
+   box-shadow: 0 10px 24px rgba(20, 22, 20, 0.12);
+}
+
+.member-watches-search-results[hidden] {
+   display: none;
+}
+
+.member-watches-search-results .member-watch-results {
+   border-top: 0;
+}
+
+.member-watches-search-results .member-watch-result {
+   padding: 10px 12px;
+}
+
+.member-watches-search-status {
+   margin: 0;
+   padding: 12px;
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 700;
 }
 
 .member-watches-section-title {
@@ -171,13 +205,11 @@
 }
 
 .member-watches-empty {
+   margin: 0;
    color: var(--muted);
    font-size: 12px;
    font-weight: 700;
-}
-
-.member-watches-empty {
-   margin: 0;
+   padding: 12px;
 }
 
 .public-install-promotion {

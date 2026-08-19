@@ -16,46 +16,40 @@ public sealed class WatchesModel(
 {
    private const int MaxSearchResults = 5;
 
-   [BindProperty(SupportsGet = true, Name = "q")]
-   public string? Query { get; set; }
-
-   public IReadOnlyList<MemberPersonListItem> SearchResults {
-      get;
-      private set;
-   } = [];
-
    public IReadOnlyList<MemberPersonListItem> WatchedEntities {
       get;
       private set;
    } = [];
 
-   public bool HasSearch => !string.IsNullOrWhiteSpace(Query);
-
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
-      Query = NormalizeQuery(Query);
       var memberId = GetMemberId();
       WatchedEntities = await watchRepository.GetWatchedEntitiesAsync(
          memberId,
          cancellationToken
       );
+   }
 
-      if(!HasSearch)
-      {
-         return;
-      }
+   public async Task<IActionResult> OnGetSearchAsync(
+      string? q,
+      CancellationToken cancellationToken
+   )
+   {
+      var query = NormalizeQuery(q);
+      var results = query is null
+         ? Array.Empty<MemberPersonListItem>()
+         : await watchRepository.SearchPeopleAsync(
+            query,
+            GetMemberId(),
+            MaxSearchResults,
+            cancellationToken
+         );
 
-      SearchResults = await watchRepository.SearchPeopleAsync(
-         Query!,
-         memberId,
-         MaxSearchResults,
-         cancellationToken
-      );
+      return Partial("_WatchSearchResults", results);
    }
 
    public async Task<IActionResult> OnPostAddAsync(
       Guid entityId,
-      string? q,
       CancellationToken cancellationToken
    )
    {
@@ -65,14 +59,11 @@ public sealed class WatchesModel(
          cancellationToken
       );
 
-      return RedirectToPage(
-         new { q = NormalizeQuery(q) }
-      );
+      return RedirectToPage();
    }
 
    public async Task<IActionResult> OnPostRemoveAsync(
       Guid entityId,
-      string? q,
       CancellationToken cancellationToken
    )
    {
@@ -82,9 +73,7 @@ public sealed class WatchesModel(
          cancellationToken
       );
 
-      return RedirectToPage(
-         new { q = NormalizeQuery(q) }
-      );
+      return RedirectToPage();
    }
 
    private Guid GetMemberId()
