@@ -67,6 +67,11 @@ public sealed class WatchesMarkupTests
          css
       );
       Assert.Contains("background: #f4faf4;", css);
+      Assert.Contains("background: var(--subgrid-row);", css);
+      Assert.Contains("border-left: 3px solid", css);
+      Assert.Contains("gap: 6px;", css);
+      Assert.Contains("padding: 8px 8px 8px 0;", css);
+      Assert.Contains("padding: 12px 16px 12px 12px;", css);
       Assert.Contains("showNotification", worker);
       Assert.Contains("notificationclick", worker);
    }
