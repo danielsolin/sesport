@@ -53,6 +53,8 @@ public sealed class WatchesMarkupTests
          model
       );
       Assert.Contains("PushManager", script);
+      Assert.Contains("requestPermission", script);
+      Assert.Contains("push service error", script);
       Assert.Contains("service-worker.js", script);
       Assert.Contains("pushSubscription", script);
       Assert.Contains("showNotification", worker);

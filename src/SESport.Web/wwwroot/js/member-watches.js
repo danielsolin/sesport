@@ -86,33 +86,43 @@
          status.classList.toggle("is-error", state === "error");
       };
 
+      const createPushError = message => {
+         const error = new Error(message);
+         error.name = "MemberWatchError";
+         return error;
+      };
+
       const getRegistration = async () => {
          if(!pushConfigured || vapidPublicKey === "")
          {
-            throw new Error(
+            throw createPushError(
                "Notiser är inte tillgängliga just nu."
             );
          }
 
          if(!("serviceWorker" in navigator)
-            || !("PushManager" in window))
+            || !("PushManager" in window)
+            || !("Notification" in window)
+            || typeof Notification.requestPermission !== "function")
          {
-            throw new Error(
+            throw createPushError(
                "Notiser stöds inte i den här webbläsaren."
             );
          }
 
          if(registrationPromise === null)
          {
-            throw new Error(
-               "Notiser stöds inte i den här webbläsaren."
+            throw createPushError(
+               "Kunde inte förbereda notiser i webbläsaren."
             );
          }
 
          const registration = await registrationPromise;
          if(registration === null)
          {
-            throw new Error("Service worker registration failed.");
+            throw createPushError(
+               "Kunde inte förbereda notiser i webbläsaren."
+            );
          }
 
          return registration;
@@ -135,25 +145,101 @@
          return registration.pushManager.getSubscription();
       };
 
-      const getPushSubscription = async () => {
-         const registration = await getRegistration();
-         if("Notification" in window
-            && Notification.permission === "denied")
+      const requestNotificationPermission = async () => {
+         if(!("Notification" in window)
+            || typeof Notification.requestPermission !== "function")
          {
-            throw new Error(
-               "Tillåt notiser för att aktivera dem här."
+            throw createPushError(
+               "Notiser stöds inte i den här webbläsaren."
             );
          }
 
-         let subscription =
-            await registration.pushManager.getSubscription();
-         if(subscription === null)
+         if(Notification.permission === "granted")
          {
-            subscription = await registration.pushManager.subscribe({
-               userVisibleOnly: true,
-               applicationServerKey:
-                  createApplicationServerKey(vapidPublicKey)
-            });
+            return;
+         }
+
+         if(Notification.permission === "denied")
+         {
+            throw createPushError(
+               "Tillåt notiser för sesport i webbläsarens inställningar."
+            );
+         }
+
+         let permission;
+         try
+         {
+            permission = await Notification.requestPermission();
+         }
+         catch
+         {
+            throw createPushError(
+               "Webbläsaren kunde inte fråga om notisbehörighet."
+            );
+         }
+
+         if(permission !== "granted")
+         {
+            throw createPushError(
+               "Tillåt notiser för sesport i webbläsarens inställningar."
+            );
+         }
+      };
+
+      const getPushSubscription = async () => {
+         // Request permission before awaiting anything else. Browsers require
+         // this call to happen as part of the activation button click.
+         await requestNotificationPermission();
+         const registration = await getRegistration();
+
+         let subscription;
+         try
+         {
+            subscription =
+               await registration.pushManager.getSubscription();
+            if(subscription === null)
+            {
+               subscription = await registration.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey:
+                     createApplicationServerKey(vapidPublicKey)
+               });
+            }
+         }
+         catch(error)
+         {
+            const errorName = error !== null
+               && typeof error === "object"
+               && "name" in error
+               ? String(error.name)
+               : "";
+            const errorMessage = error !== null
+               && typeof error === "object"
+               && "message" in error
+               ? String(error.message).toLowerCase()
+               : "";
+
+            if(errorName === "NotAllowedError"
+               || errorMessage.includes("permission denied"))
+            {
+               throw createPushError(
+                  "Tillåt notiser för sesport i webbläsarens "
+                  + "inställningar."
+               );
+            }
+
+            if(errorMessage.includes("push service error"))
+            {
+               throw createPushError(
+                  "Webbläsaren kunde inte ansluta till sin "
+                  + "push-tjänst. Kontrollera nätverk och "
+                  + "webbläsarinställningar."
+               );
+            }
+
+            throw createPushError(
+               "Webbläsaren kunde inte aktivera notiser."
+            );
          }
 
          return subscription;
@@ -170,7 +256,7 @@
          });
          if(!response.ok)
          {
-            throw new Error(
+            throw createPushError(
                "Kunde inte registrera notiser just nu."
             );
          }
@@ -178,6 +264,7 @@
 
       const showError = error => {
          const message = error instanceof Error
+            && error.name === "MemberWatchError"
             ? error.message
             : "Kunde inte aktivera notiser just nu.";
          setMessage(message, "error");
@@ -194,7 +281,9 @@
          }
 
          if(!("serviceWorker" in navigator)
-            || !("PushManager" in window))
+            || !("PushManager" in window)
+            || !("Notification" in window)
+            || typeof Notification.requestPermission !== "function")
          {
             setMessage(
                "Notiser stöds inte i den här webbläsaren.",
