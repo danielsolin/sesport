@@ -1564,8 +1564,12 @@
       min-width: 0;
    }
 
+   .activity-participant-table th,
+   .activity-participant-table td {
+      padding: 5px 2px;
+   }
+
    .activity-participant-col-club,
-   .activity-participant-col-represented,
    .activity-participant-col-country {
       display: none;
    }
@@ -1573,6 +1577,11 @@
    .activity-participant-col-age {
       width: 1%;
       white-space: nowrap;
+   }
+
+   .activity-participant-table-has-represented
+      .activity-participant-col-age {
+      display: none;
    }
 
    .activity-participant-table-has-start-time

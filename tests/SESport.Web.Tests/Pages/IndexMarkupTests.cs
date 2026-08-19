@@ -87,6 +87,11 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("showRepresentedEntityColumn", html);
       Assert.Contains("HasNonNationalTeamRepresentation", html);
+      Assert.Contains(
+         "activity-participant-table-has-" +
+            "represented",
+         html
+      );
       Assert.Contains("participant.RepresentedEntityName", html);
       Assert.DoesNotContain("activity-participant-col-birthday", html);
       Assert.DoesNotContain("Födelsedag", html);
@@ -376,8 +381,14 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-table-has-start-time\n" +
-         "      .activity-participant-col-age {\n" +
-         "      display: none;",
+            "      .activity-participant-col-age {\n" +
+            "      display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-table-has-represented\n" +
+            "      .activity-participant-col-age {\n" +
+            "      display: none;",
          css
       );
       Assert.DoesNotContain("activity-participant-col-birthday", css);
@@ -441,6 +452,12 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          "@media (max-width: 600px) and (orientation: portrait)",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-table th,\n" +
+            "   .activity-participant-table td {\n" +
+            "      padding: 5px 2px;",
          css
       );
       Assert.DoesNotContain(
