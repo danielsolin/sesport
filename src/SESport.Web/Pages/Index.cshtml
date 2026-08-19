@@ -546,6 +546,13 @@ else
                            participants.Any(
                               participant => participant.HasDiscipline
                            );
+                        var showRepresentedEntityColumn =
+                           participants.Any(
+                              participant =>
+                                 participant.HasRepresentedEntity
+                           );
+                        var representedEntityColumnClass =
+                           "activity-participant-col-represented";
                         var participantTableClass =
                            showStartTimeColumn
                               ? "activity-participant-table " +
@@ -654,10 +661,13 @@ else
                                           Moderklubb/Klubb
                                        </button>
                                     </th>
-                                    <th class=
-                                         "activity-participant-col-represented">
-                                       Lag
-                                    </th>
+                                    @if(showRepresentedEntityColumn)
+                                    {
+                                       <th class=
+                                          "@representedEntityColumnClass">
+                                          Lag
+                                       </th>
+                                    }
                                     <th class=
                                            "activity-participant-col-country">
                                     </th>
@@ -767,10 +777,13 @@ else
                                               "activity-participant-col-club">
                                           @participant.Club
                                        </td>
-                                       <td class=
-                                         "activity-participant-col-represented">
-                                          @participant.RepresentedEntityName
-                                       </td>
+                                       @if(showRepresentedEntityColumn)
+                                       {
+                                          <td class=
+                                             "@representedEntityColumnClass">
+                                             @participant.RepresentedEntityName
+                                          </td>
+                                       }
                                        <td class=
                                           "activity-participant-col-country">
                                           <img class=

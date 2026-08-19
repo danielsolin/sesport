@@ -69,6 +69,8 @@ public sealed record PublicActivityParticipant(
 {
    public int? WatchPriority { get; init; }
 
+   public bool HasRepresentedEntity { get; init; }
+
    public string? RepresentedEntityName { get; init; }
 }
 

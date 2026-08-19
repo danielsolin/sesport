@@ -1065,6 +1065,8 @@ public sealed class ActivityRepositoryTests
          );
          Assert.False(otherParticipant.HasDiscipline);
          Assert.Null(otherParticipant.DisciplineAliasName);
+         Assert.False(participant.HasRepresentedEntity);
+         Assert.False(otherParticipant.HasRepresentedEntity);
       }
       finally
       {
@@ -1136,6 +1138,7 @@ public sealed class ActivityRepositoryTests
 
          Assert.Equal("pl", participant.TeamCountryId);
          Assert.Equal("Poland", participant.TeamCountryName);
+         Assert.True(participant.HasRepresentedEntity);
          Assert.Equal("Test Foreign Team", participant.RepresentedEntityName);
       }
       finally

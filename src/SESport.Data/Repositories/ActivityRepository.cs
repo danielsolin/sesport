@@ -1656,6 +1656,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             participant_team.team_country_id,
             participant_team.team_country_name,
             al.is_active,
+            al.represented_entity_id is not null
+               as has_represented_entity,
             coalesce(
                nullif(btrim(represented_entity.alias_name), ''),
                represented_entity.canonical_name
@@ -1779,9 +1781,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             )
             {
                WatchPriority = reader.GetInt32(9),
-               RepresentedEntityName = reader.IsDBNull(13)
+               HasRepresentedEntity = reader.GetBoolean(13),
+               RepresentedEntityName = reader.IsDBNull(14)
                   ? null
-                  : reader.GetString(13)
+                  : reader.GetString(14)
             }
          );
       }

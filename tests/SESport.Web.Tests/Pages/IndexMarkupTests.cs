@@ -85,6 +85,8 @@ public sealed class IndexMarkupTests
          "activity-participant-col-represented",
          html
       );
+      Assert.Contains("showRepresentedEntityColumn", html);
+      Assert.Contains("participant.HasRepresentedEntity", html);
       Assert.Contains("participant.RepresentedEntityName", html);
       Assert.DoesNotContain("activity-participant-col-birthday", html);
       Assert.DoesNotContain("Födelsedag", html);
