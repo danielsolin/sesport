@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Data.Models;
 using System.Security.Claims;
 using System.Text.Json;
-
-using SESport.Core.Members;
-using SESport.Data.Models;
-using SESport.Data.Repositories;
 
 namespace SESport.Web.Pages.Account;
 
@@ -24,12 +21,14 @@ public sealed class WatchesModel(
       PropertyNameCaseInsensitive = true
    };
 
-   public IReadOnlyList<MemberPersonListItem> WatchedEntities {
+   public IReadOnlyList<MemberPersonListItem> WatchedEntities
+   {
       get;
       private set;
    } = [];
 
-   public int NotificationLeadTimeMinutes {
+   public int NotificationLeadTimeMinutes
+   {
       get;
       private set;
    } = MemberNotificationLeadTimes.Normalize(
@@ -42,7 +41,8 @@ public sealed class WatchesModel(
    public string PushPublicKey => pushOptions.PublicKey;
 
    public IReadOnlyList<MemberNotificationLeadTimeOption>
-      NotificationLeadTimeOptions { get; } =
+      NotificationLeadTimeOptions
+   { get; } =
       MemberNotificationLeadTimes.SupportedMinutes
          .Select(minutes => new MemberNotificationLeadTimeOption(
             minutes,

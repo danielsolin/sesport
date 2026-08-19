@@ -1,6 +1,5 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Lib.Net.Http.WebPush;
-
+using Microsoft.AspNetCore.Authentication.Cookies;
 using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);

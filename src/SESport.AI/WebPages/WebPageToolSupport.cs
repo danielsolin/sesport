@@ -1,5 +1,4 @@
 using SESport.AI.Llama;
-using SESport.Core.Configuration;
 
 namespace SESport.AI.WebPages;
 

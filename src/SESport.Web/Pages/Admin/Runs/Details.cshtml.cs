@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SESport.AI.Jobs;
 using SESport.Core.AI;
-using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using System.Globalization;

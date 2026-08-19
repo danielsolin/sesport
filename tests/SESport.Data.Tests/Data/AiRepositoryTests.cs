@@ -1,5 +1,4 @@
 using Npgsql;
-using SESport.Core.AI;
 using SESport.Core.Formatting;
 using SESport.Data.Repositories;
 using System.Text.Json;
