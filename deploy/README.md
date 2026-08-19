@@ -8,6 +8,8 @@ This folder contains the non-code deployment assets for SESport.
   - systemd units and timer for the web app, SearXNG, backups, and LLM
 - `deploy/caddy/Caddyfile`
   - reverse proxy config for `sesport.se` and `dev.sesport.se`
+- `deploy/mail.md`
+  - direct Postfix delivery and OpenDKIM setup for the web host
 - `deploy/searxng/settings.yml`
   - override config mounted into the local SearXNG container used by AI runs
 
