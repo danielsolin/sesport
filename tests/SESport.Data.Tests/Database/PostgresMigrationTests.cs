@@ -255,6 +255,67 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void MemberPushMigrationDefinesSubscriptionsAndQueue()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "030_member_push_notifications.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "push_notification_lead_time_minutes integer",
+         migration
+      );
+      Assert.Contains(
+         "create table public.member_push_subscriptions",
+         migration
+      );
+      Assert.Contains(
+         "create table public.member_activity_push_notifications",
+         migration
+      );
+      Assert.Contains(
+         "primary key (member_id, activity_id)",
+         migration
+      );
+      Assert.Contains(
+         "references public.activities(id)",
+         migration
+      );
+      Assert.Contains(
+         "member_activity_push_notifications_due_idx",
+         migration
+      );
+   }
+
+   [Fact]
+   public void MemberPushEndpointMigrationMakesSubscriptionsDeviceUnique()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "031_member_push_endpoint_unique.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "drop constraint member_push_subscriptions_member_endpoint_unique",
+         migration
+      );
+      Assert.Contains(
+         "add constraint member_push_subscriptions_endpoint_unique",
+         migration
+      );
+      Assert.Contains("unique (endpoint)", migration);
+   }
+
+   [Fact]
    public void TodoMigrationDefinesOpenTodoStorage()
    {
       var migration = File.ReadAllText(

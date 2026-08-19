@@ -10,6 +10,8 @@ This folder contains the non-code deployment assets for SESport.
   - reverse proxy config for `sesport.se` and `dev.sesport.se`
 - `deploy/mail.md`
   - direct Postfix delivery and OpenDKIM setup for the web host
+- `deploy/push.md`
+  - Web Push and VAPID configuration for member notifications
 - `deploy/searxng/settings.yml`
   - override config mounted into the local SearXNG container used by AI runs
 

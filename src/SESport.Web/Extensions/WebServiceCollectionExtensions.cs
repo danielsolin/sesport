@@ -16,6 +16,8 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<TodoRepository>();
       services.AddScoped<MemberRepository>();
       services.AddScoped<MemberWatchRepository>();
+      services.AddScoped<MemberPushRepository>();
+      services.AddScoped<MemberPushNotificationSender>();
       services.AddScoped<IMemberRepository>(
          serviceProvider => serviceProvider
             .GetRequiredService<MemberRepository>()
@@ -35,6 +37,7 @@ public static class WebServiceCollectionExtensions
       services.AddHostedService<ActivityAiResultCatchUpWorker>();
       services.AddHostedService<AiPendingRunWorker>();
       services.AddHostedService<AiRunTimeoutWorker>();
+      services.AddHostedService<MemberPushNotificationWorker>();
 
       return services;
    }

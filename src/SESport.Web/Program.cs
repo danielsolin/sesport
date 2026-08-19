@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Lib.Net.Http.WebPush;
 
 using SESport.Data;
 
@@ -23,6 +24,11 @@ var memberAuthOptions = builder.Configuration.GetSection(
    )
    .Get<MemberAuthOptions>() ??
    new MemberAuthOptions();
+var memberPushOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.MemberPushSection
+   )
+   .Get<MemberPushOptions>() ??
+   new MemberPushOptions();
 var smtpEmailOptions = builder.Configuration.GetSection(
       ApplicationConfigurationKeys.SmtpSection
    )
@@ -57,9 +63,11 @@ builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(codexCliOptions);
 builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddSingleton(memberAuthOptions);
+builder.Services.AddSingleton(memberPushOptions);
 builder.Services.AddSingleton(smtpEmailOptions);
 builder.Services.AddSingleton(webStatsOptions);
 builder.Services.AddSingleton(publicSiteOptions);
+builder.Services.AddHttpClient<PushServiceClient>();
 builder.Services.AddWebApplicationServices();
 builder.Services.AddAiPlatform();
 builder.Services.AddSingleton<IMemberEmailSender, SmtpEmailSender>();

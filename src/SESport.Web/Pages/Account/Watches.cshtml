@@ -6,11 +6,62 @@
 }
 
 <section class="member-watches-page">
+   <div class="member-watches-push-status"
+        data-member-watch-push-status
+        data-member-watch-push-configured="@(
+           Model.PushNotificationsConfigured ? "true" : "false"
+        )"
+        data-member-watch-vapid-public-key="@Model.PushPublicKey"
+        aria-live="polite">
+      <p data-member-watch-push-status-text>
+         Kontrollerar notiser...
+      </p>
+      <button class="member-watch-action-button
+         member-watches-push-action"
+              type="button"
+              data-member-watch-push-activate
+              hidden>
+         AKTIVERA NOTISER
+      </button>
+      <form method="post"
+            asp-page-handler="RegisterPush"
+            data-member-watch-push-registration-form
+            hidden>
+         @Html.AntiForgeryToken()
+         <input type="hidden"
+                name="pushSubscription"
+                data-member-watch-push-subscription />
+      </form>
+   </div>
+
+   <form class="member-watches-notification-settings"
+         method="post"
+         asp-page-handler="SetNotificationLeadTime"
+         data-member-watch-notification-form>
+      @Html.AntiForgeryToken()
+      <select id="member-watch-notification-lead-time"
+              name="notificationLeadTimeMinutes"
+              aria-label="När ska notisen skickas?">
+         @foreach(var option in Model.NotificationLeadTimeOptions)
+         {
+            <option value="@option.Minutes"
+                    selected="@(option.Minutes ==
+                       Model.NotificationLeadTimeMinutes)">
+               @option.Label
+            </option>
+         }
+      </select>
+   </form>
+
    <h1 class="member-watches-section-title">LÄGG TILL</h1>
 
    <div class="member-watches-search-container"
         data-member-watch-search
-        data-member-watch-search-url="@searchUrl">
+        data-member-watch-search-url="@searchUrl"
+        data-member-watch-push-configured="@(
+           Model.PushNotificationsConfigured ? "true" : "false"
+        )"
+        data-member-watch-vapid-public-key="@Model.PushPublicKey">
       <form class="member-watches-search"
             method="get"
             data-member-watch-search-form>
@@ -23,7 +74,6 @@
                    aria-expanded="false"
                    aria-autocomplete="list"
                    autocomplete="off"
-                   autofocus
                    data-member-watch-search-input />
          </label>
       </form>

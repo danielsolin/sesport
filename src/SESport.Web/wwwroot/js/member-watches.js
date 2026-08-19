@@ -3,10 +3,27 @@
    const formSelector = "[data-member-watch-search-form]";
    const inputSelector = "[data-member-watch-search-input]";
    const resultsSelector = "[data-member-watch-search-results]";
+   const addFormSelector = "[data-member-watch-add-form]";
+   const notificationFormSelector =
+      "[data-member-watch-notification-form]";
+   const pushStatusSelector = "[data-member-watch-push-status]";
    const debounceMs = 220;
 
    const initializeSearch = root => {
+      root.querySelectorAll(pushStatusSelector).forEach(
+         initializePushStatus
+      );
       root.querySelectorAll(containerSelector).forEach(initializeContainer);
+      root.querySelectorAll(notificationFormSelector).forEach(form => {
+         if(!(form instanceof HTMLFormElement)
+            || form.dataset.memberWatchInitialized === "true")
+         {
+            return;
+         }
+
+         form.dataset.memberWatchInitialized = "true";
+         form.addEventListener("change", () => form.submit());
+      });
    };
 
    if(document.readyState === "loading")
@@ -18,6 +35,239 @@
    else
    {
       initializeSearch(document);
+   }
+
+   function initializePushStatus(status)
+   {
+      if(!(status instanceof HTMLElement)
+         || status.dataset.memberWatchPushInitialized === "true")
+      {
+         return;
+      }
+
+      const statusText = status.querySelector(
+         "[data-member-watch-push-status-text]"
+      );
+      const activateButton = status.querySelector(
+         "[data-member-watch-push-activate]"
+      );
+      const registrationForm = status.querySelector(
+         "[data-member-watch-push-registration-form]"
+      );
+      const subscriptionInput = status.querySelector(
+         "[data-member-watch-push-subscription]"
+      );
+      const pushConfigured =
+         status.dataset.memberWatchPushConfigured === "true";
+      const vapidPublicKey = (
+         status.dataset.memberWatchVapidPublicKey ?? ""
+      ).trim();
+
+      if(!(statusText instanceof HTMLElement)
+         || !(activateButton instanceof HTMLButtonElement)
+         || !(registrationForm instanceof HTMLFormElement)
+         || !(subscriptionInput instanceof HTMLInputElement))
+      {
+         return;
+      }
+
+      status.dataset.memberWatchPushInitialized = "true";
+      const registrationPromise =
+         pushConfigured && "serviceWorker" in navigator
+            ? navigator.serviceWorker.register(
+               "/service-worker.js",
+               { scope: "/" }
+            ).catch(() => null)
+            : null;
+
+      const setMessage = (message, state = "") => {
+         statusText.textContent = message;
+         status.classList.toggle("is-active", state === "active");
+         status.classList.toggle("is-error", state === "error");
+      };
+
+      const getRegistration = async () => {
+         if(!pushConfigured || vapidPublicKey === "")
+         {
+            throw new Error(
+               "Notiser är inte tillgängliga just nu."
+            );
+         }
+
+         if(!("serviceWorker" in navigator)
+            || !("PushManager" in window))
+         {
+            throw new Error(
+               "Notiser stöds inte i den här webbläsaren."
+            );
+         }
+
+         if(registrationPromise === null)
+         {
+            throw new Error(
+               "Notiser stöds inte i den här webbläsaren."
+            );
+         }
+
+         const registration = await registrationPromise;
+         if(registration === null)
+         {
+            throw new Error("Service worker registration failed.");
+         }
+
+         return registration;
+      };
+
+      const createApplicationServerKey = value => {
+         const padding = "=".repeat((4 - value.length % 4) % 4);
+         const base64 = (value + padding)
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+         const binary = window.atob(base64);
+         return Uint8Array.from(
+            binary,
+            character => character.charCodeAt(0)
+         );
+      };
+
+      const getExistingSubscription = async () => {
+         const registration = await getRegistration();
+         return registration.pushManager.getSubscription();
+      };
+
+      const getPushSubscription = async () => {
+         const registration = await getRegistration();
+         if("Notification" in window
+            && Notification.permission === "denied")
+         {
+            throw new Error(
+               "Tillåt notiser för att aktivera dem här."
+            );
+         }
+
+         let subscription =
+            await registration.pushManager.getSubscription();
+         if(subscription === null)
+         {
+            subscription = await registration.pushManager.subscribe({
+               userVisibleOnly: true,
+               applicationServerKey:
+                  createApplicationServerKey(vapidPublicKey)
+            });
+         }
+
+         return subscription;
+      };
+
+      const registerSubscription = async subscription => {
+         subscriptionInput.value = JSON.stringify(
+            subscription.toJSON()
+         );
+         const response = await fetch(registrationForm.action, {
+            method: "POST",
+            body: new FormData(registrationForm),
+            headers: { Accept: "text/plain" }
+         });
+         if(!response.ok)
+         {
+            throw new Error(
+               "Kunde inte registrera notiser just nu."
+            );
+         }
+      };
+
+      const showError = error => {
+         const message = error instanceof Error
+            ? error.message
+            : "Kunde inte aktivera notiser just nu.";
+         setMessage(message, "error");
+         activateButton.hidden = "Notification" in window
+            && Notification.permission === "denied";
+      };
+
+      const inspect = async () => {
+         if(!pushConfigured || vapidPublicKey === "")
+         {
+            setMessage("Notiser är inte tillgängliga just nu.");
+            activateButton.hidden = true;
+            return;
+         }
+
+         if(!("serviceWorker" in navigator)
+            || !("PushManager" in window))
+         {
+            setMessage(
+               "Notiser stöds inte i den här webbläsaren.",
+               "error"
+            );
+            activateButton.hidden = true;
+            return;
+         }
+
+         if("Notification" in window
+            && Notification.permission === "denied")
+         {
+            setMessage(
+               "Notiser är blockerade i webbläsaren.",
+               "error"
+            );
+            activateButton.hidden = true;
+            return;
+         }
+
+         try
+         {
+            const subscription = await getExistingSubscription();
+            if(subscription === null)
+            {
+               setMessage("Notiser är inte aktiva på den här enheten.");
+               activateButton.hidden = false;
+               return;
+            }
+
+            await registerSubscription(subscription);
+            setMessage(
+               "Notiser är aktiva på den här enheten.",
+               "active"
+            );
+            activateButton.hidden = true;
+         }
+         catch(error)
+         {
+            showError(error);
+         }
+      };
+
+      activateButton.addEventListener("click", async () => {
+         activateButton.disabled = true;
+         activateButton.textContent = "AKTIVERAR...";
+         setMessage("Aktiverar notiser...");
+
+         try
+         {
+            const subscription = await getPushSubscription();
+            await registerSubscription(subscription);
+            setMessage(
+               "Notiser är aktiva på den här enheten.",
+               "active"
+            );
+            activateButton.hidden = true;
+         }
+         catch(error)
+         {
+            showError(error);
+         }
+         finally
+         {
+            activateButton.disabled = false;
+            if(!activateButton.hidden)
+            {
+               activateButton.textContent = "AKTIVERA NOTISER";
+            }
+         }
+      });
+
+      void inspect();
    }
 
    function initializeContainer(container)
@@ -34,6 +284,15 @@
       const searchUrl = (
          container.dataset.memberWatchSearchUrl ?? ""
       ).trim();
+      const pushConfigured =
+         container.dataset.memberWatchPushConfigured === "true";
+      const serviceWorkerRegistrationPromise =
+         pushConfigured && "serviceWorker" in navigator
+            ? navigator.serviceWorker.register(
+               "/service-worker.js",
+               { scope: "/" }
+            ).catch(() => null)
+            : null;
 
       if(!(form instanceof HTMLFormElement)
          || !(input instanceof HTMLInputElement)
@@ -83,6 +342,20 @@
          status.className = "member-watches-search-status";
          status.textContent = text;
          results.replaceChildren(status);
+         results.hidden = false;
+         setExpanded(true);
+      };
+
+      const showPushError = text => {
+         results.querySelector(
+            "[data-member-watch-push-status]"
+         )?.remove();
+         const status = document.createElement("p");
+         status.className =
+            "member-watches-search-status is-error";
+         status.dataset.memberWatchPushStatus = "true";
+         status.textContent = text;
+         results.prepend(status);
          results.hidden = false;
          setExpanded(true);
       };
@@ -232,6 +505,100 @@
       form.addEventListener("submit", event => {
          event.preventDefault();
          scheduleSearch();
+      });
+
+      const getExistingPushSubscription = async () => {
+         if(!pushConfigured
+            || !("serviceWorker" in navigator)
+            || !("PushManager" in window)
+            || serviceWorkerRegistrationPromise === null)
+         {
+            return null;
+         }
+
+         try
+         {
+            const registration = await serviceWorkerRegistrationPromise;
+            if(registration === null)
+            {
+               return null;
+            }
+
+            return await registration.pushManager.getSubscription();
+         }
+         catch
+         {
+            return null;
+         }
+      };
+
+      results.addEventListener("submit", async event => {
+         const target = event.target;
+         if(!(target instanceof HTMLFormElement)
+            || !target.matches(addFormSelector))
+         {
+            return;
+         }
+
+         event.preventDefault();
+         const button = target.querySelector(
+            ".member-watch-action-button"
+         );
+         if(!(button instanceof HTMLButtonElement))
+         {
+            return;
+         }
+
+         button.disabled = true;
+         try
+         {
+            const subscription = await getExistingPushSubscription();
+            const subscriptionInput = target.querySelector(
+               "input[name='pushSubscription']"
+            );
+            if(subscription !== null)
+            {
+               let input = subscriptionInput;
+               if(!(input instanceof HTMLInputElement))
+               {
+                  input = document.createElement("input");
+                  input.type = "hidden";
+                  input.name = "pushSubscription";
+                  target.append(input);
+               }
+
+               input.value = JSON.stringify(subscription.toJSON());
+            }
+
+            if(subscription === null
+               && subscriptionInput instanceof HTMLInputElement)
+            {
+               subscriptionInput.remove();
+            }
+
+            const response = await fetch(target.action, {
+               method: "POST",
+               body: new FormData(target)
+            });
+            if(!response.ok)
+            {
+               const message = (await response.text()).trim();
+               throw new Error(
+                  message ||
+                  "Aktivera notiser på minst en enhet först."
+               );
+            }
+
+            window.location.reload();
+         }
+         catch(error)
+         {
+            button.disabled = false;
+            const message = error instanceof Error
+               ? error.message
+               : "Det gick inte att aktivera notiser.";
+            showPushError(message);
+         }
       });
 
       results.addEventListener("keydown", event => {

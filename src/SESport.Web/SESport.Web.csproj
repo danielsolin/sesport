@@ -11,6 +11,8 @@
    <ItemGroup>
       <ProjectReference Include="..\SESport.Data\SESport.Data.csproj" />
       <ProjectReference Include="..\SESport.AI\SESport.AI.csproj" />
+      <PackageReference Include="Lib.Net.Http.WebPush"
+                        Version="3.3.1" />
    </ItemGroup>
 
    <ItemGroup>

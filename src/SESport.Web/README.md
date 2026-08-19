@@ -102,8 +102,21 @@ password for this VPS setup. Keep any future relay credentials in the
 host-local `.env` file, never in tracked files.
 
 The login token is single-use and expires after fifteen minutes by default.
-The database also contains the member-to-entity watch table for the later
-notification feature; the public watch UI is not enabled yet.
+Members can add person watches from /bevakningar. The page shows whether push
+is active in the current browser and can activate it for the device. Adding a
+watch also registers the browser push subscription as a fallback.
+
+The production web services also need one VAPID key pair for Web Push. Keep
+the private key in the host-local .env file:
+
+~~~text
+MemberPush__Subject=mailto:info@sesport.se
+MemberPush__PublicKey=<vapid_public_key>
+MemberPush__PrivateKey=<vapid_private_key>
+~~~
+
+The default notification lead time is ten minutes. Members can choose one
+hour, thirty minutes, or ten minutes before an activity on /bevakningar.
 
 SearXNG is used only by AI runs. Run it locally on the machine that runs
 AI jobs and point the application at that local instance:
