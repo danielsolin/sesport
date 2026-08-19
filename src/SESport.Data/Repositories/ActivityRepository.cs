@@ -1659,6 +1659,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             al.represented_entity_id is not null
                as has_represented_entity,
             coalesce(
+               represented_entity.id is not null
+               and represented_entity.entity_type_id <>
+                  '{{TrackedEntityTypeIds.NationalTeam}}',
+               false
+            ) as has_non_national_team_representation,
+            coalesce(
                nullif(btrim(represented_entity.alias_name), ''),
                represented_entity.canonical_name
             ) as represented_entity_name
@@ -1782,9 +1788,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             {
                WatchPriority = reader.GetInt32(9),
                HasRepresentedEntity = reader.GetBoolean(13),
-               RepresentedEntityName = reader.IsDBNull(14)
+               HasNonNationalTeamRepresentation = reader.GetBoolean(14),
+               RepresentedEntityName = reader.IsDBNull(15)
                   ? null
-                  : reader.GetString(14)
+                  : reader.GetString(15)
             }
          );
       }

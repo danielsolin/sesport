@@ -1067,6 +1067,8 @@ public sealed class ActivityRepositoryTests
          Assert.Null(otherParticipant.DisciplineAliasName);
          Assert.False(participant.HasRepresentedEntity);
          Assert.False(otherParticipant.HasRepresentedEntity);
+         Assert.False(participant.HasNonNationalTeamRepresentation);
+         Assert.False(otherParticipant.HasNonNationalTeamRepresentation);
       }
       finally
       {
@@ -1139,6 +1141,7 @@ public sealed class ActivityRepositoryTests
          Assert.Equal("pl", participant.TeamCountryId);
          Assert.Equal("Poland", participant.TeamCountryName);
          Assert.True(participant.HasRepresentedEntity);
+         Assert.True(participant.HasNonNationalTeamRepresentation);
          Assert.Equal("Test Foreign Team", participant.RepresentedEntityName);
       }
       finally
@@ -1212,12 +1215,14 @@ public sealed class ActivityRepositoryTests
          dataSource,
          nationalTeamActivityId,
          nationalTeamPersonId,
+         nationalTeamOrganizationId,
          nationalTeamOrganizationId
       );
       await InsertActivityEntityLinkAsync(
          dataSource,
          regularActivityId,
          regularPersonId,
+         seriesOrganizationId,
          seriesOrganizationId
       );
 
@@ -1242,6 +1247,14 @@ public sealed class ActivityRepositoryTests
          );
          Assert.False(
             regularActivity.HasNationalTeamRelatedOrganization
+         );
+         Assert.False(
+            Assert.Single(nationalTeamActivity.Participants)
+               .HasNonNationalTeamRepresentation
+         );
+         Assert.True(
+            Assert.Single(regularActivity.Participants)
+               .HasNonNationalTeamRepresentation
          );
       }
       finally

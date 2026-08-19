@@ -549,7 +549,8 @@ else
                         var showRepresentedEntityColumn =
                            participants.Any(
                               participant =>
-                                 participant.HasRepresentedEntity
+                                 participant
+                                    .HasNonNationalTeamRepresentation
                            );
                         var representedEntityColumnClass =
                            "activity-participant-col-represented";
