@@ -104,7 +104,15 @@
 }
 
 .member-watches-push-status.is-error p {
-   color: var(--accent-strong);
+   color: #8c2d2d;
+}
+
+.member-watches-push-status.is-error {
+   padding: 10px 12px;
+   border: 1px solid #e0aaaa;
+   border-left: 4px solid #c95757;
+   border-radius: 4px;
+   background: #fff5f5;
 }
 
 .member-watches-push-action {

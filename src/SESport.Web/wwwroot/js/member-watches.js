@@ -309,7 +309,10 @@
             const subscription = await getExistingSubscription();
             if(subscription === null)
             {
-               setMessage("Notiser är inte aktiva på den här enheten.");
+               setMessage(
+                  "Notiser är inte aktiva på den här enheten.",
+                  "error"
+               );
                activateButton.hidden = false;
                return;
             }
