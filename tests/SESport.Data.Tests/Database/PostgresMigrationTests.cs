@@ -569,6 +569,34 @@ public partial class PostgresMigrationTests
       );
    }
 
+   [Fact]
+   public void ActivityOrganizationMigrationAddsActivityRelation()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "029_activity_organization.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "add column organization_entity_id uuid",
+         migration
+      );
+      Assert.Contains(
+         "activities_organization_entity_id_fkey",
+         migration
+      );
+      Assert.Contains("references public.entities(id)", migration);
+      Assert.Contains("on delete set null", migration);
+      Assert.Contains(
+         "activities_organization_entity_id_idx",
+         migration
+      );
+   }
+
    private static string FindRepositoryRoot()
    {
       var directory = new DirectoryInfo(AppContext.BaseDirectory);

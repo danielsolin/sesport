@@ -1159,7 +1159,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = """
+      var sql = $$"""
          select
             a.id,
             a.activity_date,
@@ -1169,21 +1169,26 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             s.name,
             at.label,
             a.publication_status_id
-         from activity_entity_links l
-         join activities a on a.id = l.activity_id
+         from activities a
          join sports s on s.id = a.sport_id
          join activity_types at on at.id = a.activity_type_id
          left join lateral (
-            select string_agg(
-               distinct org_entity.canonical_name,
-               ', ' order by org_entity.canonical_name
-            ) as organization_name
-            from activity_entity_links org_link
-            join entities org_entity
-               on org_entity.id = org_link.organization_entity_id
-            where org_link.activity_id = a.id
+            select org_entity.canonical_name as organization_name
+            from entities org_entity
+            where org_entity.id =
+               {{ActivityRepository
+                  .GetActivityOrganizationEntityIdSql("a")}}
          ) org on true
-         where l.entity_id = @entity_id
+         where (
+            exists (
+               select 1
+               from activity_entity_links participant_link
+               where participant_link.activity_id = a.id
+                  and participant_link.entity_id = @entity_id
+            )
+            or {{ActivityRepository
+               .GetActivityOrganizationEntityIdSql("a")}} = @entity_id
+         )
          order by
             a.activity_date desc,
             a.local_start_time desc nulls last,
@@ -2521,18 +2526,32 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          targetEntityId,
          cancellationToken
       );
-      var activityOrganizationLinksMoved = await ExecuteMergeCommandAsync(
-         connection,
-         transaction,
-         """
-         update activity_entity_links
-         set organization_entity_id = @target_entity_id
-         where organization_entity_id = @source_entity_id
-         """,
-         sourceEntityId,
-         targetEntityId,
-         cancellationToken
-      );
+      var activityOrganizationLinksMoved =
+         await ExecuteMergeCommandAsync(
+            connection,
+            transaction,
+            """
+            update activities
+            set organization_entity_id = @target_entity_id
+            where organization_entity_id = @source_entity_id
+            """,
+            sourceEntityId,
+            targetEntityId,
+            cancellationToken
+         );
+      activityOrganizationLinksMoved +=
+         await ExecuteMergeCommandAsync(
+            connection,
+            transaction,
+            """
+            update activity_entity_links
+            set organization_entity_id = @target_entity_id
+            where organization_entity_id = @source_entity_id
+            """,
+            sourceEntityId,
+            targetEntityId,
+            cancellationToken
+         );
       var broadcastsMoved = await ExecuteMergeCommandAsync(
          connection,
          transaction,
@@ -2683,7 +2702,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = """
+      var sql = $$"""
          select label, count
          from (
             select
@@ -2695,8 +2714,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             select
                'Activity organizations',
                count(*)::int
-            from activity_entity_links
-            where organization_entity_id = @source_entity_id
+            from activities a
+            where {{ActivityRepository
+               .GetActivityOrganizationEntityIdSql("a")}} =
+               @source_entity_id
             union all
             select
                'Broadcasts',

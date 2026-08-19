@@ -100,18 +100,20 @@ provides a title, sport, and date span for the activities belonging to it.
 Stores the scheduled sport content shown and published by SESport. It carries
 the title, description, sport and type, publication state, optional local
 schedule, UTC-backed timestamps, public slug, teaser, and broadcast channel.
-An activity may belong to an activity group.
+An activity may belong to an activity group and may have one organization
+context.
 
 ### `activity_entity_links`
 
 Connects activities to their participating entities. The optional
-`organization_entity_id` records the organization context separately from the
-participant, while `represented_entity_id` snapshots the team or other entity
-the participant represented at the time of linking. `is_active` allows an
-inactive participant to remain visible without being treated as currently
-participating.
+`organization_entity_id` is retained as participant-link metadata for
+compatibility, while the activity's organization context is stored on
+`activities.organization_entity_id`. `represented_entity_id` snapshots the
+team or other entity the participant represented at the time of linking.
+`is_active` allows an inactive participant to remain visible without being
+treated as currently participating.
 The database enforces at most one row per `(activity_id, entity_id)` pair;
-the organization and represented entities are metadata on that relation.
+the represented entity is metadata on that relation.
 
 ### `activity_broadcast_links`
 

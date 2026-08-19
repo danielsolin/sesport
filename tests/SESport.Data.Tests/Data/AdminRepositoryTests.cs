@@ -359,6 +359,7 @@ public sealed class AdminRepositoryTests
       var organizationId = Guid.NewGuid();
       var olderActivityId = Guid.NewGuid();
       var newerActivityId = Guid.NewGuid();
+      var organizationOnlyActivityId = Guid.NewGuid();
       var otherActivityId = Guid.NewGuid();
 
       await using var dataSource = CreateDataSource();
@@ -404,6 +405,15 @@ public sealed class AdminRepositoryTests
          new TimeOnly(14, 0),
          "Published"
       );
+      await InsertActivityAsync(
+         dataSource,
+         organizationOnlyActivityId,
+         "Organization Only Activity",
+         DistantActivityDate.AddDays(3),
+         new TimeOnly(15, 0),
+         "Published",
+         organizationId
+      );
       await InsertActivityEntityLinkAsync(
          dataSource,
          olderActivityId,
@@ -445,6 +455,16 @@ public sealed class AdminRepositoryTests
          Assert.Equal("Match", activities[0].ActivityType);
          Assert.Equal("Published", activities[0].PublicationStatus);
          Assert.Equal("Canonical Activity Org", activities[0].Organization);
+
+         var organizationActivities =
+            await repository.GetEntityActivitiesAsync(
+               organizationId,
+               CancellationToken.None
+            );
+         Assert.Equal(
+            [organizationOnlyActivityId, newerActivityId],
+            organizationActivities.Select(activity => activity.Id).ToArray()
+         );
       }
       finally
       {
@@ -453,6 +473,10 @@ public sealed class AdminRepositoryTests
          await DeleteActivityEntityLinksAsync(dataSource, otherActivityId);
          await DeleteActivityAsync(dataSource, olderActivityId);
          await DeleteActivityAsync(dataSource, newerActivityId);
+         await DeleteActivityAsync(
+            dataSource,
+            organizationOnlyActivityId
+         );
          await DeleteActivityAsync(dataSource, otherActivityId);
          await DeleteEntityAsync(dataSource, entityId);
          await DeleteEntityAsync(dataSource, otherEntityId);
@@ -1230,7 +1254,8 @@ public sealed class AdminRepositoryTests
       string title,
       DateOnly activityDate,
       TimeOnly localStartTime,
-      string publicationStatusId
+      string publicationStatusId,
+      Guid? organizationEntityId = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1249,7 +1274,8 @@ public sealed class AdminRepositoryTests
             time_zone_id,
             publication_status_id,
             tv_channel_name,
-            slug
+            slug,
+            organization_entity_id
          )
          values (
             @id,
@@ -1264,7 +1290,8 @@ public sealed class AdminRepositoryTests
             'Europe/Stockholm',
             @publication_status_id,
             null,
-            @slug
+            @slug,
+            @organization_entity_id
          )
          """;
       command.Parameters.AddWithValue("id", activityId);
@@ -1282,6 +1309,10 @@ public sealed class AdminRepositoryTests
       command.Parameters.AddWithValue(
          "slug",
          $"test-entity-activity-{activityId:N}"
+      );
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         (object?)organizationEntityId ?? DBNull.Value
       );
 
       await command.ExecuteNonQueryAsync();

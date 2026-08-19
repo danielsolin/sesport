@@ -295,11 +295,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          return activities;
       }
 
-      const string sql = $$"""
-         select distinct al.activity_id
-         from activity_entity_links al
-         join entities org on org.id = al.organization_entity_id
-         where al.activity_id = any(@activity_ids)
+      var sql = $$"""
+         select a.id
+         from activities a
+         join entities org on org.id =
+            {{GetActivityOrganizationEntityIdSql("a")}}
+         where a.id = any(@activity_ids)
             and org.entity_type_id = '{{TrackedEntityTypeIds.NationalTeam}}'
          """;
 
@@ -558,10 +559,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             and (@organization_entity_id is null or exists (
                select 1
                from activities a
-               join activity_entity_links al
-                  on al.activity_id = a.id
                where a.activity_group_id = activity_groups.id
-                  and al.organization_entity_id =
+                  and {{GetActivityOrganizationEntityIdSql("a")}} =
                      @organization_entity_id
             ))
             {{termFilterSql}}
@@ -608,7 +607,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             a.publication_status_id,
             a.tv_channel_name,
             a.activity_group_id,
-            ag.title as activity_group_title
+            ag.title as activity_group_title,
+            a.organization_entity_id
          from activities a
          left join activity_groups ag on ag.id = a.activity_group_id
          where a.id = @id
@@ -641,7 +641,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             reader.GetString(10) == ActivityPublicationStatusIds.Published,
          TvChannelName = ReadString(reader, 11),
          ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
-         ActivityGroupTitle = ReadString(reader, 13)
+         ActivityGroupTitle = ReadString(reader, 13),
+         OrganizationEntityId = reader.IsDBNull(14)
+            ? null
+            : reader.GetGuid(14)
       };
 
       await reader.DisposeAsync();
@@ -658,6 +661,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       await using var linkReader = await linkCommand.ExecuteReaderAsync(
          cancellationToken
       );
+      Guid? legacyOrganizationEntityId = null;
+      var hasLegacyOrganizationConflict = false;
 
       while(await linkReader.ReadAsync(cancellationToken))
       {
@@ -669,15 +674,20 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          }
 
          var organizationEntityId = linkReader.GetGuid(1);
+         if(legacyOrganizationEntityId is null)
+         {
+            legacyOrganizationEntityId = organizationEntityId;
+         }
+         else if(legacyOrganizationEntityId != organizationEntityId)
+         {
+            hasLegacyOrganizationConflict = true;
+         }
+      }
 
-         if(model.OrganizationEntityId is null)
-         {
-            model.OrganizationEntityId = organizationEntityId;
-         }
-         else if(model.OrganizationEntityId != organizationEntityId)
-         {
-            model.OrganizationEntityId = null;
-         }
+      if(model.OrganizationEntityId is null &&
+         !hasLegacyOrganizationConflict)
+      {
+         model.OrganizationEntityId = legacyOrganizationEntityId;
       }
 
       var sourceSql = $"""
@@ -1940,15 +1950,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(
             "         context.canonical_name as organization_canonical_name"
          )
-         .AppendLine("      from activity_entity_links al")
-         .AppendLine("      join entities p on p.id = al.entity_id")
-         .AppendLine("      join entities context")
-         .AppendLine("         on context.id = al.organization_entity_id")
-         .AppendLine("      where al.activity_id = a.id")
+         .AppendLine("      from entities context")
          .AppendLine(
-            $$"""
-               and p.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
-            """
+            "      where context.id = " +
+            GetActivityOrganizationEntityIdSql("a")
          )
          .AppendLine(
             "         and " +
@@ -1987,6 +1992,25 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return builder.ToString();
    }
 
+   internal static string GetActivityOrganizationEntityIdSql(
+      string activityAlias
+   )
+   {
+      return $"""
+         coalesce(
+            {activityAlias}.organization_entity_id,
+            (
+               select
+                  (array_agg(legacy_link.organization_entity_id))[1]
+               from activity_entity_links legacy_link
+               where legacy_link.activity_id = {activityAlias}.id
+                  and legacy_link.organization_entity_id is not null
+               having count(distinct legacy_link.organization_entity_id) = 1
+            )
+         )
+         """;
+   }
+
    private static async Task InsertActivityAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
@@ -2016,6 +2040,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             publication_status_id,
             tv_channel_name,
             activity_group_id,
+            organization_entity_id,
             slug,
             published_at
          )
@@ -2035,6 +2060,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             @publication_status_id,
             @tv_channel_name,
             @activity_group_id,
+            @organization_entity_id,
             @slug,
             case
                when @publication_status_id =
@@ -2086,6 +2112,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             publication_status_id = @publication_status_id,
             tv_channel_name = @tv_channel_name,
             activity_group_id = @activity_group_id,
+            organization_entity_id = @organization_entity_id,
             slug = @slug,
             published_at = case
                when @publication_status_id =
@@ -2623,6 +2650,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "activity_group_id",
          model.ActivityGroupId ?? (object)DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         model.OrganizationEntityId ?? (object)DBNull.Value
       );
       command.Parameters.AddWithValue("slug", slug);
    }

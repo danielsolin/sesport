@@ -813,17 +813,14 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          return false;
       }
 
-      const string activitySql = """
+      var activitySql = $$"""
          select a.id
          from activities a
          join broadcasts b on b.id = @broadcast_id
          where a.activity_group_id = @activity_group_id
-            and exists (
-               select 1
-               from activity_entity_links al
-               where al.activity_id = a.id
-                  and al.organization_entity_id = @organization_entity_id
-            )
+            and {{ActivityRepository
+               .GetActivityOrganizationEntityIdSql("a")}} =
+               @organization_entity_id
          order by
             abs(extract(epoch from (a.starts_at - b.starts_at))),
             a.activity_date,
@@ -995,12 +992,9 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
          where a.sport_id = @sport_id
             and a.activity_group_id is not null
             and a.activity_date between @start_date and @end_date
-            and exists (
-               select 1
-               from activity_entity_links al
-               where al.activity_id = a.id
-                  and al.organization_entity_id = @organization_entity_id
-            )
+            and {{ActivityRepository
+               .GetActivityOrganizationEntityIdSql("a")}} =
+               @organization_entity_id
          order by a.activity_date, a.local_start_time nulls last, a.title
          """;
 

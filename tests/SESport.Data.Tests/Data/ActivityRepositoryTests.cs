@@ -85,6 +85,89 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task DeleteParticipantAsyncPreservesActivityOrganization()
+   {
+      var personId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      Guid? activityId = null;
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertEntityAsync(
+            dataSource,
+            personId,
+            "Last Participant",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            organizationId,
+            "Activity Organization",
+            TrackedEntityTypeIds.Organization
+         );
+
+         activityId = await repository.SaveAsync(
+            new ActivityEditModel
+            {
+               Title = "Activity With One Participant",
+               ActivityType = "Match",
+               SportId = "football",
+               ActivityDate = DistantActivityDate,
+               LocalStartTime = new TimeOnly(12, 0),
+               TimeZoneId = SportDay.TimeZoneId,
+               LinkedEntityIds = [personId],
+               OrganizationEntityId = organizationId,
+               IsPublished = true
+            },
+            CancellationToken.None
+         );
+
+         await repository.DeleteParticipantAsync(
+            activityId.Value,
+            personId,
+            CancellationToken.None
+         );
+
+         var activity = await repository.GetForEditAsync(
+            activityId.Value,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(activity);
+         Assert.Equal(organizationId, activity!.OrganizationEntityId);
+         Assert.Empty(activity.LinkedEntityIds);
+
+         var publicActivities = await repository.GetActivitiesAsync(
+            DistantActivityDate,
+            ActivityPublicationStatusIds.Published,
+            ["football"],
+            CancellationToken.None
+         );
+         var publicActivity = Assert.Single(
+            publicActivities,
+            item => item.Id == activityId.Value
+         );
+         Assert.Equal(
+            "Activity Organization",
+            publicActivity.RelatedOrganizationEntities
+         );
+      }
+      finally
+      {
+         if(activityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, activityId.Value);
+         }
+
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task SaveAsyncSnapshotsTeamAndPreservesItOnLaterSave()
    {
       var personId = Guid.NewGuid();
