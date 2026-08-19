@@ -674,7 +674,7 @@
                const message = (await response.text()).trim();
                throw new Error(
                   message ||
-                  "Aktivera notiser på minst en enhet först."
+                  "Det gick inte att lägga till bevakningen just nu."
                );
             }
 

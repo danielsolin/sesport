@@ -11,13 +11,6 @@ public sealed class MemberPushRepositoryTests
       var repository = new MemberPushRepository(dataSource);
       var now = DateTimeOffset.UtcNow;
 
-      Assert.False(
-         await repository.HasActiveSubscriptionAsync(
-            Guid.NewGuid(),
-            CancellationToken.None
-         )
-      );
-
       var notifications = await repository.ClaimDueNotificationsAsync(
          now,
          now.AddMinutes(-5),

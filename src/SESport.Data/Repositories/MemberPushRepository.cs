@@ -26,28 +26,6 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
          : (int)value;
    }
 
-   public async Task<bool> HasActiveSubscriptionAsync(
-      Guid memberId,
-      CancellationToken cancellationToken
-   )
-   {
-      const string sql = """
-         select exists (
-            select 1
-            from member_push_subscriptions
-            where member_id = @member_id
-               and (
-                  expiration_at is null
-                  or expiration_at > now()
-               )
-         )
-         """;
-
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("member_id", memberId);
-      return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
-   }
-
    public async Task<bool> SetNotificationLeadTimeMinutesAsync(
       Guid memberId,
       int minutes,

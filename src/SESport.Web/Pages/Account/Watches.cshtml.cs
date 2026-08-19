@@ -91,15 +91,9 @@ public sealed class WatchesModel(
       CancellationToken cancellationToken
    )
    {
-      if(!pushOptions.IsConfigured)
-      {
-         return BadRequest(
-            "Pushnotiser är inte tillgängliga just nu."
-         );
-      }
-
       var memberId = GetMemberId();
-      if(!string.IsNullOrWhiteSpace(pushSubscription))
+      if(pushOptions.IsConfigured
+         && !string.IsNullOrWhiteSpace(pushSubscription))
       {
          if(!TryParsePushSubscription(
                pushSubscription,
@@ -113,16 +107,6 @@ public sealed class WatchesModel(
             memberId,
             parsedSubscription,
             cancellationToken
-         );
-      }
-      else if(!await pushRepository.HasActiveSubscriptionAsync(
-            memberId,
-            cancellationToken
-         ))
-      {
-         return BadRequest(
-            "Aktivera notiser på minst en enhet innan du lägger till " +
-            "en bevakning."
          );
       }
 
