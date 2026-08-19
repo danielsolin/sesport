@@ -1115,8 +1115,9 @@ public sealed class ActivityRepositoryTests
          await InsertEntityAsync(
             dataSource,
             teamId,
-            "Test Foreign Team",
+            "Canonical Foreign Team",
             TrackedEntityTypeIds.Team,
+            aliasName: "Alias Foreign Team",
             countryId: "pl"
          );
          await InsertActivityEntityLinkAsync(
@@ -1142,7 +1143,11 @@ public sealed class ActivityRepositoryTests
          Assert.Equal("Poland", participant.TeamCountryName);
          Assert.True(participant.HasRepresentedEntity);
          Assert.True(participant.HasNonNationalTeamRepresentation);
-         Assert.Equal("Test Foreign Team", participant.RepresentedEntityName);
+         Assert.Equal("Alias Foreign Team", participant.RepresentedEntityName);
+         Assert.Equal(
+            "Canonical Foreign Team",
+            participant.RepresentedEntityCanonicalName
+         );
       }
       finally
       {

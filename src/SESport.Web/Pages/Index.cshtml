@@ -689,6 +689,11 @@ else
                                  {
                                     var participant =
                                        participants[participantIndex];
+                                    var representedEntityCanonicalName =
+                                       participant
+                                          .RepresentedEntityCanonicalName ??
+                                       participant
+                                          .RepresentedEntityName;
                                     var age = IndexModel.CalculateAge(
                                        participant.Birthdate,
                                        Model.CurrentDate
@@ -779,7 +784,17 @@ else
                                        {
                                           <td class=
                                              "@representedEntityColumnClass">
-                                             @participant.RepresentedEntityName
+                                             <span class=
+                                                "activity-team-name-portrait">
+                                                @(
+                                                   participant
+                                                      .RepresentedEntityName
+                                                )
+                                             </span>
+                                             <span class=
+                                                "activity-team-name-landscape">
+                                                @representedEntityCanonicalName
+                                             </span>
                                           </td>
                                        }
                                        <td class=

@@ -1077,6 +1077,14 @@
    white-space: nowrap;
 }
 
+.activity-team-name-portrait {
+   display: none;
+}
+
+.activity-team-name-landscape {
+   display: inline;
+}
+
 .activity-participant-out-badge {
    display: inline-flex;
    margin-left: 6px;
@@ -1434,6 +1442,14 @@
    }
 
    .activity-organization-portrait {
+      display: inline;
+   }
+
+   .activity-team-name-landscape {
+      display: none;
+   }
+
+   .activity-team-name-portrait {
       display: inline;
    }
 

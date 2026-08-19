@@ -92,7 +92,19 @@ public sealed class IndexMarkupTests
             "represented",
          html
       );
-      Assert.Contains("participant.RepresentedEntityName", html);
+      Assert.Contains(".RepresentedEntityName", html);
+      Assert.Contains(
+         ".RepresentedEntityCanonicalName",
+         html
+      );
+      Assert.Contains(
+         "activity-team-name-portrait",
+         html
+      );
+      Assert.Contains(
+         "activity-team-name-landscape",
+         html
+      );
       Assert.DoesNotContain("activity-participant-col-birthday", html);
       Assert.DoesNotContain("Födelsedag", html);
       Assert.DoesNotContain("activity-participant-col-height", html);
@@ -175,8 +187,18 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-col-discipline {\n" +
-         "   width: 1%;\n" +
-         "   white-space: nowrap;",
+            "   width: 1%;\n" +
+            "   white-space: nowrap;",
+         css
+      );
+      Assert.Contains(
+         ".activity-team-name-portrait {\n" +
+            "   display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-team-name-landscape {\n" +
+            "   display: inline;",
          css
       );
       Assert.Contains(
@@ -392,6 +414,16 @@ public sealed class IndexMarkupTests
          ".activity-participant-table-has-represented\n" +
             "      .activity-participant-col-age {\n" +
             "      display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-team-name-landscape {\n" +
+            "      display: none;",
+         css
+      );
+      Assert.Contains(
+         ".activity-team-name-portrait {\n" +
+            "      display: inline;",
          css
       );
       Assert.DoesNotContain("activity-participant-col-birthday", css);

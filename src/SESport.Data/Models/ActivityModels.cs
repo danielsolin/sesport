@@ -74,6 +74,8 @@ public sealed record PublicActivityParticipant(
    public bool HasNonNationalTeamRepresentation { get; init; }
 
    public string? RepresentedEntityName { get; init; }
+
+   public string? RepresentedEntityCanonicalName { get; init; }
 }
 
 public sealed record PublishedDateParticipantCount(

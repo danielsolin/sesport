@@ -1667,7 +1667,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             coalesce(
                nullif(btrim(represented_entity.alias_name), ''),
                represented_entity.canonical_name
-            ) as represented_entity_name
+            ) as represented_entity_name,
+            represented_entity.canonical_name
+               as represented_entity_canonical_name
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
@@ -1791,7 +1793,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                HasNonNationalTeamRepresentation = reader.GetBoolean(14),
                RepresentedEntityName = reader.IsDBNull(15)
                   ? null
-                  : reader.GetString(15)
+                  : reader.GetString(15),
+               RepresentedEntityCanonicalName = reader.IsDBNull(16)
+                  ? null
+                  : reader.GetString(16)
             }
          );
       }
