@@ -15,6 +15,7 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<DashboardRepository>();
       services.AddScoped<TodoRepository>();
       services.AddScoped<MemberRepository>();
+      services.AddScoped<MemberWatchRepository>();
       services.AddScoped<IMemberRepository>(
          serviceProvider => serviceProvider
             .GetRequiredService<MemberRepository>()

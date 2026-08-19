@@ -142,16 +142,10 @@
             <div class="public-header-actions">
                @if(isMember)
                {
-                  <span class="public-member-label">Medlem</span>
-                  <form class="public-member-form"
-                        method="post"
-                        asp-page="/Account/Logout"
-                        asp-route-returnUrl="@currentUrl">
-                     <button class="public-member-button"
-                             type="submit">
-                        Logga ut
-                     </button>
-                  </form>
+                  <a class="public-member-link"
+                     asp-page="/Account/Watches">
+                     Bevakningar
+                  </a>
                }
                else
                {

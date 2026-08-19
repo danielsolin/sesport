@@ -45,12 +45,16 @@ public sealed class SharedLayoutMarkupTests
       Assert.DoesNotContain("dateRouteValues", html);
       Assert.DoesNotContain("Bli medlem", html);
       Assert.DoesNotContain("public-contact-link", html);
+      Assert.DoesNotContain("public-member-label", html);
+      Assert.DoesNotContain("public-member-button", html);
+      Assert.DoesNotContain("public-member-form", html);
+      Assert.DoesNotContain("Account/Logout", html);
       Assert.Contains("class=\"public-header-actions\"", html);
       Assert.Contains("class=\"public-member-link\"", html);
       Assert.Contains("asp-page=\"/Account/Login\"", html);
       Assert.Contains("Logga in", html);
-      Assert.Contains("asp-page=\"/Account/Logout\"", html);
-      Assert.Contains("Logga ut", html);
+      Assert.Contains("Bevakningar", html);
+      Assert.DoesNotContain("Logga ut", html);
       Assert.Contains("class=\"public-contact-footer\"", index);
       Assert.Contains("class=\"public-contact-link\"", index);
       Assert.Contains("href=\"mailto:info@sesport.se\"", index);

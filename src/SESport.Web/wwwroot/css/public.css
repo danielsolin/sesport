@@ -63,41 +63,121 @@
    margin-left: auto;
 }
 
-.public-member-button {
+.public-member-link {
    color: #ffcc00;
    font-size: 12px;
    font-weight: 800;
    white-space: nowrap;
 }
 
-.public-member-button:hover {
+.public-member-link:hover {
    color: #ffffff;
 }
 
-.public-member-link {
-   font-size: 12px;
-   font-weight: 800;
-   white-space: nowrap;
+.member-watches-page {
+   width: min(520px, 100%);
+   margin: 0 auto;
 }
 
-.public-member-label {
-   color: #ffffff;
-   font-size: 12px;
-   font-weight: 800;
-   white-space: nowrap;
+.member-watches-search {
+   display: flex;
+   align-items: stretch;
+   gap: 8px;
+   margin-bottom: 20px;
 }
 
-.public-member-form {
-   display: inline;
+.member-watches-search-field {
+   flex: 1 1 auto;
+   min-width: 0;
    margin: 0;
 }
 
-.public-member-button {
+.member-watches-search-field input {
+   min-height: 40px;
+}
+
+.member-watches-search-button {
+   min-width: 64px;
+}
+
+.member-watches-section-title {
+   margin: 20px 0 8px;
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 800;
+   text-transform: uppercase;
+}
+
+.member-watch-results {
+   margin: 0;
    padding: 0;
-   border: 0;
+   border-top: 1px solid var(--line);
+   list-style: none;
+}
+
+.member-watch-result {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+   padding: 12px 0;
+   border-bottom: 1px solid var(--line);
+}
+
+.member-watch-name {
+   min-width: 0;
+   overflow-wrap: anywhere;
+   font-weight: 700;
+}
+
+.member-watch-information {
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 400;
+}
+
+.member-watch-action-form {
+   flex: 0 0 auto;
+   margin: 0;
+}
+
+.member-watch-action-button {
+   min-height: 32px;
+   padding: 0 12px;
+   border: 1px solid var(--accent);
+   border-radius: 3px;
    background: transparent;
+   color: var(--accent);
    font: inherit;
+   font-size: 12px;
+   font-weight: 800;
    cursor: pointer;
+}
+
+.member-watch-action-button:hover {
+   background: var(--accent);
+   color: #ffffff;
+}
+
+.member-watch-remove-button {
+   border-color: var(--line);
+   color: var(--muted);
+}
+
+.member-watch-remove-button:hover {
+   border-color: var(--muted);
+   background: var(--muted);
+   color: #ffffff;
+}
+
+.member-watches-empty {
+   color: var(--muted);
+   font-size: 12px;
+   font-weight: 700;
+}
+
+.member-watches-empty {
+   margin: 0;
 }
 
 .public-install-promotion {

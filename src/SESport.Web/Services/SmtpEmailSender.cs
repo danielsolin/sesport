@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using System.Net.Mime;
 using System.Text;
 
 namespace SESport.Web.Services;
@@ -47,6 +48,13 @@ public sealed class SmtpEmailSender(
          BodyEncoding = Encoding.UTF8,
          IsBodyHtml = true
       };
+      message.AlternateViews.Add(
+         AlternateView.CreateAlternateViewFromString(
+            CreatePlainTextBody(loginLink, tokenLifetime),
+            Encoding.UTF8,
+            MediaTypeNames.Text.Plain
+         )
+      );
       message.To.Add(new MailAddress(recipientEmail));
 
       using var client = new SmtpClient(options.Host, options.Port)
@@ -84,6 +92,29 @@ public sealed class SmtpEmailSender(
          <p>Länken gäller i {lifetimeMinutes} minuter och kan bara användas
          en gång.</p>
          <p>Om du inte begärde länken kan du ignorera detta meddelande.</p>
+         """;
+   }
+
+   private static string CreatePlainTextBody(
+      string loginLink,
+      TimeSpan tokenLifetime
+   )
+   {
+      var lifetimeMinutes = Math.Max(
+         1,
+         (int)Math.Ceiling(tokenLifetime.TotalMinutes)
+      );
+
+      return $"""
+         Du har begärt en inloggningslänk till sesport.
+
+         Logga in på sesport:
+         {loginLink}
+
+         Länken gäller i {lifetimeMinutes} minuter och kan bara användas
+         en gång.
+
+         Om du inte begärde länken kan du ignorera detta meddelande.
          """;
    }
 }
