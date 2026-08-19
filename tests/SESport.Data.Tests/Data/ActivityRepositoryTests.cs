@@ -1297,7 +1297,8 @@ public sealed class ActivityRepositoryTests
          dataSource,
          seriesOrganizationId,
          "Series Organization",
-         TrackedEntityTypeIds.Series
+         TrackedEntityTypeIds.Series,
+         countryId: "de"
       );
       await InsertActivityEntityLinkAsync(
          dataSource,
@@ -1336,6 +1337,7 @@ public sealed class ActivityRepositoryTests
          Assert.False(
             regularActivity.HasNationalTeamRelatedOrganization
          );
+         Assert.Equal("de", regularActivity.OrganizationCountryId);
          Assert.False(
             Assert.Single(nationalTeamActivity.Participants)
                .HasNonNationalTeamRepresentation

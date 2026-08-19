@@ -467,6 +467,13 @@ public sealed class IndexMarkupTests
          "   height: 42px;",
          css
       );
+      Assert.Contains("activity-entry-sport-country-tag", html);
+      Assert.Contains(
+         ".activity-entry-sport-country-tag {\n" +
+         "   display: block;\n" +
+         "   position: absolute;",
+         css
+      );
       Assert.Contains("@media (orientation: landscape)", css);
       Assert.Contains(
          ".sport-select {\n" +

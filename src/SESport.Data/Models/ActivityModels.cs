@@ -42,6 +42,8 @@ public sealed record ActivityListItem(
    public string RelatedOrganizationCanonicalEntities { get; init; } =
       string.Empty;
 
+   public string? OrganizationCountryId { get; init; }
+
    public Guid[] ActiveRelatedPersonEntityIds { get; init; } = [];
 
    public bool HasNationalTeamRelatedOrganization { get; init; }

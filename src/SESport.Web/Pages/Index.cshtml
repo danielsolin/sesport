@@ -440,12 +440,23 @@ else
                      }
                      @if(activity.SportIconPath is not null)
                      {
+                        var sportIconCountryPath = PublicCountryFlag.GetPath(
+                           activity.OrganizationCountryId
+                        );
                         <span class="activity-entry-sport-icon"
                               role="img"
                               aria-label="@activity.SportName"
                               style="--sport-icon-url:
                                         url('@activity.SportIconPath');">
                         </span>
+                        @if(sportIconCountryPath is not null)
+                        {
+                           <img class=
+                              "activity-entry-sport-country-tag"
+                              src="@sportIconCountryPath"
+                              alt=""
+                              aria-hidden="true" />
+                        }
                      }
                      <h3 class="activity-entry-organization">
                         <span class="activity-organization-portrait">

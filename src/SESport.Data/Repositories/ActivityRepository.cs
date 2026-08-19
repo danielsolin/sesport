@@ -1876,8 +1876,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("   s.is_team_sport,")
          .AppendLine(
             $"   coalesce(ag.public_date_mode, " +
-            $"'{ActivityGroupPublicDateModeIds.SportDay}')"
+            $"'{ActivityGroupPublicDateModeIds.SportDay}'),"
          )
+         .AppendLine("   ro.organization_country_id")
          .AppendLine("from activities a")
          .AppendLine(
             "left join activity_groups ag on ag.id = a.activity_group_id"
@@ -1939,7 +1940,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine("      distinct organization_canonical_name,")
          .AppendLine("      ', ' order by organization_canonical_name")
          .AppendLine(
-            "   ) as related_organization_canonical_entities"
+            "   ) as related_organization_canonical_entities,"
+         )
+         .AppendLine(
+            "   max(organization_country_id) as " +
+            "organization_country_id"
          )
          .AppendLine("   from (")
          .AppendLine("      select distinct")
@@ -1948,8 +1953,9 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             "            context.canonical_name) as organization_name,"
          )
          .AppendLine(
-            "         context.canonical_name as organization_canonical_name"
+            "         context.canonical_name as organization_canonical_name,"
          )
+         .AppendLine("         context.country_id as organization_country_id")
          .AppendLine("      from entities context")
          .AppendLine(
             "      where context.id = " +
@@ -1983,6 +1989,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          .AppendLine(
             "         ro.related_organization_canonical_entities,"
          )
+         .AppendLine("         ro.organization_country_id,")
          .AppendLine(
             "         a.ends_at, ag.title, ag.no_grouping, " +
             "s.is_team_sport, ag.public_date_mode"
@@ -2879,7 +2886,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                RelatedOrganizationCanonicalEntities =
                   reader.GetString(23),
                IsTeamSport = reader.GetBoolean(24),
-               PublicDateMode = reader.GetString(25)
+               PublicDateMode = reader.GetString(25),
+               OrganizationCountryId = ReadString(reader, 26)
             }
          );
       }
