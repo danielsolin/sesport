@@ -34,9 +34,6 @@
       claim.Type == MemberClaimTypes.MemberId &&
       !string.IsNullOrWhiteSpace(claim.Value)
    );
-   var currentUrl = $"{ViewContext.HttpContext.Request.PathBase}" +
-      $"{ViewContext.HttpContext.Request.Path}" +
-      $"{ViewContext.HttpContext.Request.QueryString}";
    var isPublicIndex = requestPath == "/" ||
       requestPath.Equals("/Index", StringComparison.OrdinalIgnoreCase);
    var publicFilterQuery = isPublicIndex
@@ -159,8 +156,7 @@
                else
                {
                   <a class="public-member-link"
-                     asp-page="/Account/Login"
-                     asp-route-returnUrl="@currentUrl">
+                     asp-page="/Account/Login">
                      Logga in
                   </a>
                }

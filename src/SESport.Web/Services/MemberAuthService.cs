@@ -8,7 +8,6 @@ public sealed class MemberAuthService(
 {
    public async Task RequestLoginLinkAsync(
       string email,
-      string? returnUrl,
       HttpRequest request,
       CancellationToken cancellationToken
    )
@@ -41,11 +40,7 @@ public sealed class MemberAuthService(
          return;
       }
 
-      var loginLink = BuildLoginLink(
-         rawToken,
-         request,
-         NormalizeReturnUrl(returnUrl)
-      );
+      var loginLink = BuildLoginLink(rawToken, request);
 
       try
       {
@@ -94,8 +89,7 @@ public sealed class MemberAuthService(
 
    private static string BuildLoginLink(
       string rawToken,
-      HttpRequest request,
-      string? returnUrl
+      HttpRequest request
    )
    {
       var baseUrl = request.Scheme + "://" +
@@ -104,9 +98,7 @@ public sealed class MemberAuthService(
          "/Account/Verify?token=" +
          Uri.EscapeDataString(rawToken);
 
-      return string.IsNullOrWhiteSpace(returnUrl)
-         ? link
-         : link + "&returnUrl=" + Uri.EscapeDataString(returnUrl);
+      return link;
    }
 
    private static void ValidateRequestOrigin(HttpRequest request)
@@ -131,18 +123,5 @@ public sealed class MemberAuthService(
             "Member authentication timing options are invalid."
          );
       }
-   }
-
-   private static string? NormalizeReturnUrl(string? returnUrl)
-   {
-      if(string.IsNullOrWhiteSpace(returnUrl) ||
-         !returnUrl.StartsWith("/", StringComparison.Ordinal) ||
-         returnUrl.StartsWith("//", StringComparison.Ordinal) ||
-         returnUrl.Contains('\\'))
-      {
-         return null;
-      }
-
-      return returnUrl;
    }
 }

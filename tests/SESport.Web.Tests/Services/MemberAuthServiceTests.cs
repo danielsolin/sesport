@@ -25,7 +25,6 @@ public sealed class MemberAuthServiceTests
 
       await service.RequestLoginLinkAsync(
          " Person@Example.COM ",
-         "/activities?date=2199-12-01",
          CreateRequest(requestOrigin),
          CancellationToken.None
       );
@@ -39,8 +38,8 @@ public sealed class MemberAuthServiceTests
          sender.LoginLink,
          StringComparison.Ordinal
       );
-      Assert.Contains(
-         "returnUrl=%2Factivities%3Fdate%3D2199-12-01",
+      Assert.DoesNotContain(
+         "returnUrl=",
          sender.LoginLink,
          StringComparison.Ordinal
       );
@@ -62,7 +61,6 @@ public sealed class MemberAuthServiceTests
 
       await service.RequestLoginLinkAsync(
          "person@example.com",
-         null,
          CreateRequest("https://sesport.test"),
          CancellationToken.None
       );

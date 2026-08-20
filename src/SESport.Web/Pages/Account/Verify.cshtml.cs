@@ -13,9 +13,6 @@ public sealed class VerifyModel(
    [BindProperty(SupportsGet = true)]
    public string? Token { get; set; }
 
-   [BindProperty(SupportsGet = true)]
-   public string? ReturnUrl { get; set; }
-
    public string? ErrorMessage { get; private set; }
 
    public async Task<IActionResult> OnGetAsync(
@@ -63,7 +60,7 @@ public sealed class VerifyModel(
             }
          );
 
-         return LocalRedirect(NormalizeReturnUrl(ReturnUrl) ?? "/");
+         return LocalRedirect("/bevakningar");
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)
@@ -76,15 +73,5 @@ public sealed class VerifyModel(
             "Länken kunde inte behandlas just nu. Försök igen senare.";
          return Page();
       }
-   }
-
-   private static string? NormalizeReturnUrl(string? returnUrl)
-   {
-      return string.IsNullOrWhiteSpace(returnUrl) ||
-         !returnUrl.StartsWith("/", StringComparison.Ordinal) ||
-         returnUrl.StartsWith("//", StringComparison.Ordinal) ||
-         returnUrl.Contains('\\')
-         ? null
-         : returnUrl;
    }
 }

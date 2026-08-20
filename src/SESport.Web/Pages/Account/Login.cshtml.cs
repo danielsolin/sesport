@@ -14,17 +14,12 @@ public sealed class LoginModel(
    [EmailAddress(ErrorMessage = "Ange en giltig e-postadress.")]
    public string Email { get; set; } = string.Empty;
 
-   [BindProperty(SupportsGet = true)]
-   public string? ReturnUrl { get; set; }
-
    public bool LinkRequested { get; private set; }
 
    public async Task<IActionResult> OnPostAsync(
       CancellationToken cancellationToken
    )
    {
-      ReturnUrl = NormalizeReturnUrl(ReturnUrl);
-
       if(!ModelState.IsValid ||
          MemberEmailNormalizer.Normalize(Email) is null)
       {
@@ -43,7 +38,6 @@ public sealed class LoginModel(
       {
          await memberAuthService.RequestLoginLinkAsync(
             Email,
-            ReturnUrl,
             Request,
             cancellationToken
          );
@@ -63,15 +57,5 @@ public sealed class LoginModel(
          );
          return Page();
       }
-   }
-
-   private static string? NormalizeReturnUrl(string? returnUrl)
-   {
-      return string.IsNullOrWhiteSpace(returnUrl) ||
-         !returnUrl.StartsWith("/", StringComparison.Ordinal) ||
-         returnUrl.StartsWith("//", StringComparison.Ordinal) ||
-         returnUrl.Contains('\\')
-         ? null
-         : returnUrl;
    }
 }
