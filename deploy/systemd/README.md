@@ -12,9 +12,9 @@ The `sesport-dev.service` unit runs
 files and static assets are therefore available at `dev.sesport.se` without a
 publish step. Caddy proxies that hostname to port 5001.
 
-The `llama-server.service` unit invokes
-`/home/daniel/sesport/bin/llm-start.sh`. Keep that path stable and change the
-symlink target when switching the active model.
+The `llama-server.service` unit invokes the locally configured LLM startup
+command. Keep the service's startup command stable and update its model
+configuration when switching the active model.
 
 ## Units
 

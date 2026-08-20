@@ -9,9 +9,8 @@
 4. Start PostgreSQL with Docker Compose only on the machine that is
    intentionally operating the database referenced by `.env`:
    `docker compose up -d postgres`
-5. Run database migrations:
-   - Bash: `./bin/db-run-migrations.sh` (run in WSL if Docker is only
-     available there)
+5. Run database migrations using the environment's configured migration
+   procedure.
 
 ## Building
 - Build solution: `dotnet build`
@@ -49,7 +48,7 @@ Several console applications live in `tools/legacy/` for occasional use:
   the PostgreSQL container for the database referenced by `.env`.
 - `SESport.Data` uses Npgsql for PostgreSQL data access.
 - Hard rule: Always ask the operator for explicit confirmation before running
-  `bin/broadcasts-import.sh`. This is a deliberate human-controlled
+  the broadcast import command. This is a deliberate human-controlled
   safeguard while SESport's use of TV.nu and TVmatchen data is being assessed.
 - Known build issue: `dotnet build SESport.sln` can fail in this
   environment during restore with missing workload SDK resolvers,

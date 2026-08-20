@@ -20,9 +20,8 @@ If no variables are set, the code still falls back to the legacy local
 defaults for `sesport` on `localhost:5432`. Treat that only as a defensive
 fallback. Normal application, script, and test runs should use `.env`.
 
-The helper scripts in `bin/` and the integration-test bootstrap read these
-values from the repository-root `.env` file, so they target the same
-database by design.
+The integration-test bootstrap reads these values from the repository-root
+`.env` file, so database-backed tests target the same database by design.
 
 The `postgres` and `searxng` containers in `compose.yaml` are deliberately
 started by service name. Start `postgres` only on the machine that is
@@ -85,19 +84,14 @@ Start local SearXNG with Docker Compose on machines that run AI jobs:
 docker compose up -d searxng
 ```
 
-Run migrations from a Linux or WSL shell:
+Apply the numbered migration files using the migration procedure configured
+for the environment. Use a Linux or WSL shell when Docker is only available
+there.
 
-```bash
-./bin/db-run-migrations.sh
-```
-
-If the active database already has the current schema and you want to
-start using the new migration history without changing the schema, mark the
-baseline as applied:
-
-```bash
-./bin/db-mark-baseline-applied.sh
-```
+If the active database already has the current schema and you want to start
+using the new migration history without changing the schema, record the
+baseline as applied using the environment's database administration
+procedure.
 
 If the Postgres volume for the active database drifted from the baseline,
 recreate the volume before rerunning migrations.

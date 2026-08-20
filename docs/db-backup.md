@@ -1,8 +1,8 @@
 # Database Backup Timer
 
-This repo ships a `systemd` service and timer for running
-`bin/db-backup.sh` once an hour on the server.
-The script keeps only the last 24 hours of `.dump` backups.
+This repo ships a `systemd` service and timer for running scheduled database
+backups once an hour on the server. The service keeps only the last 24 hours
+of `.dump` backups.
 
 ## Files
 
@@ -34,9 +34,8 @@ journalctl -u sesport-db-backup.service -n 100 --no-pager
 ## Notes
 
 - The service expects the repo to be at `/home/daniel/sesport`.
-- `bin/db-backup.sh --with-git` commits and pushes the backup folder,
-  so Git credentials and push access must already work non-interactively
-  if that flag is used.
+- Any optional repository synchronization must be configured separately,
+  with credentials supplied through the deployment environment.
 - `flock` prevents overlapping backup runs if one job is still active
   when the next hourly trigger fires.
 - Older `.dump` files are removed on each run, so the backup set stays

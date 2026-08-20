@@ -29,7 +29,8 @@ create a subscription.
 
 ## Database and service
 
-Apply the migrations before restarting either web service:
+Apply the environment's schema migration procedure before restarting either
+web service:
 
 ~~~bash
 ./bin/db-run-migrations.sh

@@ -208,11 +208,8 @@ The solution targets the .NET 10 SDK.
    docker compose up -d postgres
    ```
 
-3. Apply schema migrations:
-
-   ```bash
-   ./bin/db-run-migrations.sh
-   ```
+3. Apply schema migrations using the migration procedure configured for
+   the environment.
 
 4. Start SearXNG if the application will run AI jobs:
 
