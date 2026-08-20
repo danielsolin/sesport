@@ -3,8 +3,9 @@
    const isAdminPath = currentPath === "/admin" ||
       currentPath.startsWith("/admin/");
    const isRootPath = currentPath === "/";
+   const isDesktopDevice = !isMobileDevice();
 
-   if(isRootPath)
+   if(isRootPath && !isDesktopDevice)
    {
       const autoReloadMarkerKey = "sesport-public-auto-reload";
 
@@ -26,6 +27,22 @@
             window.location.reload();
          }
       });
+   }
+
+   function isMobileDevice()
+   {
+      const userAgentDataMobile =
+         window.navigator.userAgentData?.mobile;
+
+      if(typeof userAgentDataMobile === "boolean")
+      {
+         return userAgentDataMobile;
+      }
+
+      const userAgent = window.navigator.userAgent;
+      return /android|iphone|ipad|ipod|mobile/i.test(userAgent) ||
+         window.navigator.platform === "MacIntel" &&
+         window.navigator.maxTouchPoints > 1;
    }
 
    const enhancedFormSelector =

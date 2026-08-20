@@ -68,8 +68,14 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains(".public-contact-link {", publicCss);
       Assert.Contains(".public-member-link {", publicCss);
       Assert.Contains(
-         "const isRootPath = currentPath === \"/\";\n\n" +
-         "   if(isRootPath)",
+         "const isRootPath = currentPath === \"/\";\n" +
+         "   const isDesktopDevice = !isMobileDevice();\n\n" +
+         "   if(isRootPath && !isDesktopDevice)",
+         siteJs
+      );
+      Assert.Contains("function isMobileDevice()", siteJs);
+      Assert.Contains(
+         "window.navigator.userAgentData?.mobile",
          siteJs
       );
       Assert.DoesNotContain(".activity-entry-title {", siteCss);
