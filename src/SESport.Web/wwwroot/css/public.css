@@ -1535,11 +1535,11 @@
    display: block;
    position: absolute;
    z-index: 2;
-   top: 43px;
-   right: 9px;
+   top: 42px;
+   right: 8px;
    box-sizing: border-box;
-   width: 22px;
-   height: 14px;
+   width: 24px;
+   height: 15px;
    border: 2px solid #ffffff;
    border-radius: 3px;
    background: #ffffff;
@@ -1549,10 +1549,10 @@
 }
 
 .activity-entry-sport-country-tag-symbol {
-   top: 40px;
-   right: 11px;
-   width: 18px;
-   height: 22px;
+   top: 37px;
+   right: 9px;
+   width: 22px;
+   height: 29px;
    border: 0;
    background: transparent;
    box-shadow: none;
