@@ -1511,7 +1511,7 @@
    }
 }
 
-@media (orientation: portrait) {
+@media (orientation: portrait), (max-width: 720px) {
    .index-heading-left {
       width: 100%;
    }
@@ -1664,7 +1664,7 @@
    font-size: 15px;
 }
 
-@media (orientation: portrait) {
+@media (orientation: portrait), (max-width: 720px) {
    .activity-agenda {
       --activity-time-column: 112px;
       --activity-time-gap: 6px;
@@ -1758,7 +1758,7 @@
    }
 }
 
-@media (orientation: landscape) {
+@media (orientation: landscape) and (min-width: 721px) {
    .sport-select {
       flex: 0 0 220px;
       width: 220px;
@@ -1800,7 +1800,8 @@
    }
 }
 
-@media (max-width: 600px) and (orientation: portrait) {
+@media (max-width: 600px) and (orientation: portrait),
+   (max-width: 720px) {
    .activity-group-slot-description {
       display: none;
    }
