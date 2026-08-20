@@ -28,7 +28,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docs\ai-platform.md = docs\ai-platform.md
 		docs\db-backup.md = docs\db-backup.md
 		docs\maintenance.md = docs\maintenance.md
-		jobs\verify-data.md = jobs\verify-data.md
 	EndProjectSection
 EndProject
 Global

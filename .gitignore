@@ -2,6 +2,7 @@
 .env
 /data/
 /tools/
+/jobs/
 /tests/SESport.BroadcastImporter.Tests/
 /tests/SESport.AI.Tests/AI/SesportWebToolsServerTests.cs
 **/bin/
