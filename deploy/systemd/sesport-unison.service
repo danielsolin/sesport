@@ -1,0 +1,14 @@
+[Unit]
+Description=SESport Unison two-way sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/sesport
+ExecStart=/usr/bin/unison sesport
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

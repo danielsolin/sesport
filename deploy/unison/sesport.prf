@@ -1,0 +1,14 @@
+root = /home/daniel/sesport
+root = ssh://vps.solin.org//home/daniel/sesport
+
+path = bin
+path = data
+path = jobs
+
+ignore = Name .env
+ignore = BelowPath data/db-backups
+ignore = Name *.swp
+
+times = true
+copyonconflict = true
+repeat = 60

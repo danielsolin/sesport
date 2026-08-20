@@ -16,6 +16,10 @@ The `llama-server.service` unit invokes the locally configured LLM startup
 command. Keep the service's startup command stable and update its model
 configuration when switching the active model.
 
+The `sesport-unison.service` unit is a user service for the local two-way
+sync client. The remote host only needs a matching Unison binary and SSH
+access; do not run a second Unison service on the remote host.
+
 ## Units
 
 - `llama-server.service`
@@ -28,6 +32,7 @@ configuration when switching the active model.
 - `sesport-db-cleanup.timer`
 - `sesport-web-stats.service`
 - `sesport-web-stats.timer`
+- `sesport-unison.service` as a user service on the sync client
 
 ## Install Example
 
@@ -51,6 +56,38 @@ branch.
 
 The database cleanup timer runs once per hour, with a randomized delay of up
 to 30 minutes to avoid starting maintenance exactly on the hour.
+
+## Unison Two-Way Sync
+
+Install the same Unison version on the local sync client and the remote host.
+The profile in `deploy/unison/sesport.prf` is intended for the local client
+and synchronizes only `bin/`, `data/`, and `jobs/`.
+
+Install the profile and user service on the local client:
+
+```bash
+mkdir -p /home/daniel/.unison
+cp deploy/unison/sesport.prf /home/daniel/.unison/sesport.prf
+mkdir -p /home/daniel/.config/systemd/user
+cp deploy/systemd/sesport-unison.service \
+   /home/daniel/.config/systemd/user/sesport-unison.service
+unison sesport
+systemctl --user daemon-reload
+systemctl --user enable --now sesport-unison.service
+sudo loginctl enable-linger daniel
+```
+
+The first `unison sesport` run must be manual if the replicas have not been
+synchronized before. Review and resolve the initial changes interactively.
+The service uses `repeat = 60` and leaves conflicting changes for manual
+resolution.
+
+Inspect the service with:
+
+```bash
+systemctl --user status sesport-unison.service
+journalctl --user -u sesport-unison.service -f
+```
 
 Do not enable `searxng.service` on a web or database host unless that
 machine also runs AI jobs locally.

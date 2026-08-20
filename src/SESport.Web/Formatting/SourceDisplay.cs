@@ -1,7 +1,6 @@
-using System.Globalization;
-
 using SESport.Core.Sources;
 using SESport.Data.Models;
+using System.Globalization;
 
 namespace SESport.Web.Formatting;
 
