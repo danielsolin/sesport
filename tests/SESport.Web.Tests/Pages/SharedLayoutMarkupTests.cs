@@ -66,6 +66,39 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("href=\"mailto:info@sesport.se\"", index);
       Assert.Contains(".public-contact-footer {", publicCss);
       Assert.Contains(".public-contact-link {", publicCss);
+      Assert.Contains(
+         ".page-shell {\n" +
+            "   padding-top: 24px;\n" +
+            "   padding-bottom: 24px;",
+         publicCss
+      );
+      Assert.Contains(
+         "width: calc(\n" +
+            "      100% -\n" +
+            "      var(--activity-card-center-offset) -\n" +
+            "      var(--activity-card-center-offset)",
+         publicCss
+      );
+      Assert.Contains(
+         "margin: 64px 0 0\n" +
+            "      calc(\n" +
+            "         var(--activity-card-center-offset) +\n" +
+            "         var(--activity-card-center-offset)",
+         publicCss
+      );
+      Assert.Contains("padding-bottom: 0;", publicCss);
+      Assert.Contains(
+         "--activity-card-center-offset: 94px;",
+         publicCss
+      );
+      Assert.DoesNotContain(
+         "transform: translateX(var(--activity-card-center-offset));",
+         publicCss
+      );
+      Assert.Contains(
+         "--activity-card-center-offset: 64px;",
+         publicCss
+      );
       Assert.Contains(".public-member-link {", publicCss);
       Assert.Contains(
          "const isRootPath = currentPath === \"/\";\n" +

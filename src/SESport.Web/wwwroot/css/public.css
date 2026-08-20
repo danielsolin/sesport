@@ -42,13 +42,24 @@
 
 .page-shell {
    padding-top: 24px;
+   padding-bottom: 24px;
 }
 
 .public-contact-footer {
+   --activity-card-center-offset: 94px;
+   width: calc(
+      100% -
+      var(--activity-card-center-offset) -
+      var(--activity-card-center-offset)
+   );
    display: flex;
    justify-content: center;
-   margin: 24px auto 0;
-   padding-bottom: 24px;
+   margin: 64px 0 0
+      calc(
+         var(--activity-card-center-offset) +
+         var(--activity-card-center-offset)
+      );
+   padding-bottom: 0;
 }
 
 .public-contact-link {
@@ -1746,6 +1757,10 @@
 }
 
 @media (orientation: portrait), (max-width: 720px) {
+   .public-contact-footer {
+      --activity-card-center-offset: 64px;
+   }
+
    .activity-agenda {
       --activity-time-column: 112px;
       --activity-time-gap: 6px;
