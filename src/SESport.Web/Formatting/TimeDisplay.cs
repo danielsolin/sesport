@@ -47,4 +47,16 @@ public static class TimeDisplay
          CultureInfo.InvariantCulture
       );
    }
+
+   public static string FormatLocalTimestampWithoutSeconds(
+      DateTimeOffset value
+   )
+   {
+      var localValue = TimeZoneHelper.ToLocal(value, SportDay.TimeZoneId);
+
+      return localValue.ToString(
+         DateDisplay.DateTimeMinutesFormat,
+         CultureInfo.InvariantCulture
+      );
+   }
 }

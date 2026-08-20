@@ -55,6 +55,7 @@ public sealed class WatchesModel(
       var memberId = GetMemberId();
       WatchedEntities = await watchRepository.GetWatchedEntitiesAsync(
          memberId,
+         DateTimeOffset.UtcNow,
          cancellationToken
       );
       NotificationLeadTimeMinutes =

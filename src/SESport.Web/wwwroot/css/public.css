@@ -273,6 +273,16 @@
    font-weight: 400;
 }
 
+.member-watch-next-activity {
+   display: block;
+   margin-top: 3px;
+   color: var(--muted);
+   font-size: 10px;
+   font-weight: 400;
+   line-height: 1.25;
+   overflow-wrap: anywhere;
+}
+
 .member-watch-action-form {
    flex: 0 0 auto;
    margin: 0;

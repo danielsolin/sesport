@@ -90,13 +90,29 @@
       <ul class="member-watch-results">
          @foreach(var watch in Model.WatchedEntities)
          {
+            var nextActivity = watch.NextActivity;
             <li class="member-watch-result">
-               <span class="member-watch-name">
+               <div class="member-watch-name">
                   @watch.Name
                   <span class="member-watch-information">
                      (@watch.DisplayInformation)
                   </span>
-               </span>
+                  @if(nextActivity is not null)
+                  {
+                     <span class="member-watch-next-activity">
+                        NÄSTA:
+                        @TimeDisplay.FormatLocalTimestampWithoutSeconds(
+                           nextActivity.StartsAt
+                        ), @nextActivity.Title
+                        @if(!string.IsNullOrWhiteSpace(
+                           nextActivity.RelatedOrganizationName
+                        ))
+                        {
+                           <text>, @nextActivity.RelatedOrganizationName</text>
+                        }
+                     </span>
+                  }
+               </div>
                <form method="post"
                      asp-page-handler="Remove"
                      class="member-watch-action-form">

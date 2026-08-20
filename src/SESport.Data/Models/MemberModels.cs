@@ -4,7 +4,8 @@ public sealed record MemberPersonListItem(
    Guid Id,
    string Name,
    string SportName,
-   string RelatedNames
+   string RelatedNames,
+   MemberNextActivity? NextActivity = null
 )
 {
    public string DisplayInformation =>
@@ -12,3 +13,9 @@ public sealed record MemberPersonListItem(
          ? SportName
          : $"{SportName}, {RelatedNames}";
 }
+
+public sealed record MemberNextActivity(
+   DateTimeOffset StartsAt,
+   string Title,
+   string? RelatedOrganizationName
+);

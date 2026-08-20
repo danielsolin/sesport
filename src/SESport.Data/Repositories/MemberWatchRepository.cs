@@ -7,9 +7,13 @@ namespace SESport.Data.Repositories;
 
 public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 {
+   private const string TestActivityTitle = "Test Activity";
+   private const string TestActivitySlugPattern = "test-activity-%";
+
    public async Task<IReadOnlyList<MemberPersonListItem>>
       GetWatchedEntitiesAsync(
       Guid memberId,
+      DateTimeOffset now,
       CancellationToken cancellationToken
    )
    {
@@ -21,11 +25,13 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          """
          and watch.member_id = @member_id
          """,
-         includeLimit: false
+         includeLimit: false,
+         includeNextActivity: true
       );
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("member_id", memberId);
+      AddNextActivityParameters(command, now);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -33,7 +39,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(ReadPersonListItem(reader));
+         entities.Add(ReadPersonListItem(reader, includesNextActivity: true));
       }
 
       return entities;
@@ -65,7 +71,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
                and existing_watch.entity_id = e.id
          )
          """,
-         includeLimit: true
+         includeLimit: true,
+         includeNextActivity: false
       );
 
       await using var command = dataSource.CreateCommand(sql);
@@ -79,7 +86,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(ReadPersonListItem(reader));
+         entities.Add(ReadPersonListItem(reader, includesNextActivity: false));
       }
 
       return entities;
@@ -140,25 +147,81 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    }
 
    private static MemberPersonListItem ReadPersonListItem(
-      NpgsqlDataReader reader
+      NpgsqlDataReader reader,
+      bool includesNextActivity
    )
    {
+      MemberNextActivity? nextActivity = null;
+      if(includesNextActivity && !reader.IsDBNull(4))
+      {
+         nextActivity = new MemberNextActivity(
+            reader.GetFieldValue<DateTimeOffset>(4),
+            reader.GetString(5),
+            reader.IsDBNull(6) ? null : reader.GetString(6)
+         );
+      }
+
       return new MemberPersonListItem(
          reader.GetGuid(0),
          reader.GetString(1),
          reader.GetString(2),
-         reader.GetString(3)
+         reader.GetString(3),
+         nextActivity
       );
    }
 
    private static string BuildPersonListSql(
       string additionalFromSql,
       string additionalWhereSql,
-      bool includeLimit
+      bool includeLimit,
+      bool includeNextActivity
    )
    {
       var limitSql = includeLimit
          ? "limit @max_results"
+         : string.Empty;
+      var nextActivitySelect = includeNextActivity
+         ? """
+            , next_activity.starts_at
+            , next_activity.title
+            , next_activity.organization_name
+         """
+         : string.Empty;
+      var nextActivityJoin = includeNextActivity
+         ? $$"""
+         left join lateral (
+            select
+               activity.starts_at,
+               activity.title,
+               coalesce(
+                  nullif(btrim(organization.alias_name), ''),
+                  organization.canonical_name
+               ) as organization_name
+            from activities activity
+            join activity_entity_links activity_link
+               on activity_link.activity_id = activity.id
+               and activity_link.entity_id = e.id
+               and activity_link.is_active
+            left join entities organization
+               on organization.id =
+                  {{ActivityRepository.GetActivityOrganizationEntityIdSql(
+                     "activity"
+                  )}}
+            where activity.publication_status_id =
+               '{{ActivityPublicationStatusIds.Published}}'
+               and activity.starts_at > @now
+               and not (
+                  (
+                     activity.title = @test_activity_title
+                     or coalesce(activity.slug, '') like
+                        @test_activity_slug_pattern
+                  )
+                  and activity.published_at is null
+               )
+            order by activity.starts_at, activity.id
+            limit 1
+         ) next_activity on true
+         """
          : string.Empty;
 
       return $$"""
@@ -167,6 +230,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             e.canonical_name,
             coalesce(s.display_name, s.name) as sport_name,
             coalesce(context.related_names, '') as related_names
+            {{nextActivitySelect}}
          from entities e
          join sports s on s.id = e.sport_id
          left join lateral (
@@ -200,11 +264,28 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
                   '{{TrackedEntityTypeIds.Club}}'
                )
          ) context on true
+         {{nextActivityJoin}}
          {{additionalFromSql}}
          where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
             {{additionalWhereSql}}
          order by e.canonical_name
          {{limitSql}}
          """;
+   }
+
+   private static void AddNextActivityParameters(
+      NpgsqlCommand command,
+      DateTimeOffset now
+   )
+   {
+      command.Parameters.AddWithValue("now", now);
+      command.Parameters.AddWithValue(
+         "test_activity_title",
+         TestActivityTitle
+      );
+      command.Parameters.AddWithValue(
+         "test_activity_slug_pattern",
+         TestActivitySlugPattern
+      );
    }
 }

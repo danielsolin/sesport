@@ -41,6 +41,14 @@ public sealed class WatchesMarkupTests
       Assert.Contains("data-member-watch-push-activate", page);
       Assert.Contains("RegisterPush", page);
       Assert.Contains("SetNotificationLeadTime", page);
+      Assert.Contains("NextActivity", page);
+      Assert.Contains(
+         "FormatLocalTimestampWithoutSeconds",
+         page
+      );
+      Assert.Contains("NÄSTA:", page);
+      Assert.Contains("RelatedOrganizationName", page);
+      Assert.Contains("member-watch-next-activity", page);
       Assert.DoesNotContain("autofocus", page);
       Assert.Contains(
          "aria-label=\"När ska notisen skickas?\"",
@@ -70,6 +78,11 @@ public sealed class WatchesMarkupTests
       Assert.Contains("background: var(--subgrid-row);", css);
       Assert.Contains("border-left: 3px solid", css);
       Assert.Contains("gap: 6px;", css);
+      Assert.Contains(
+         ".member-watch-next-activity {",
+         css
+      );
+      Assert.Contains("font-size: 10px;", css);
       Assert.Contains("padding: 8px 8px 8px 0;", css);
       Assert.Contains("padding: 12px 16px 12px 12px;", css);
       Assert.Contains("showNotification", worker);
