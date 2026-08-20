@@ -48,12 +48,19 @@ public sealed record ActivityListItem(
 
    public bool HasNationalTeamRelatedOrganization { get; init; }
 
+   public IReadOnlyList<ActivitySourceListItem> Sources { get; init; } = [];
+
    public IReadOnlyList<PublicActivityParticipant> Participants
    {
       get;
       init;
    } = [];
 }
+
+public sealed record ActivitySourceListItem(
+   string Kind,
+   string Url
+);
 
 public sealed record PublicActivityParticipant(
    Guid Id,

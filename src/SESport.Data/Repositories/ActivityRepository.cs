@@ -1623,6 +1623,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          activities.Select(activity => activity.Id).ToArray(),
          cancellationToken
       );
+      var sourcesByActivity = await GetActivitySourcesAsync(
+         activities.Select(activity => activity.Id).ToArray(),
+         cancellationToken
+      );
 
       return activities
          .Select(activity => activity with
@@ -1630,9 +1634,88 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             Participants = participantsByActivity.GetValueOrDefault(
                activity.Id,
                []
+            ),
+            Sources = sourcesByActivity.GetValueOrDefault(
+               activity.Id,
+               []
             )
          })
          .ToArray();
+   }
+
+   private async Task<IReadOnlyDictionary<
+      Guid,
+      IReadOnlyList<ActivitySourceListItem>
+   >> GetActivitySourcesAsync(
+      Guid[] activityIds,
+      CancellationToken cancellationToken
+   )
+   {
+      if(activityIds.Length == 0)
+      {
+         return new Dictionary<
+            Guid,
+            IReadOnlyList<ActivitySourceListItem>
+         >();
+      }
+
+      const string sql = """
+         select
+            s.correlation_id,
+            s.kind,
+            s.url
+         from sources s
+         where s.correlation_type = @correlation_type
+            and s.correlation_id = any(@activity_ids)
+         order by
+            s.correlation_id,
+            s.observed_at desc,
+            s.created_at desc,
+            s.id desc
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "correlation_type",
+         SourceCorrelationTypes.Activity
+      );
+      command.Parameters.AddWithValue(
+         "activity_ids",
+         activityIds.Select(id => id.ToString()).ToArray()
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var sources = new Dictionary<
+         Guid,
+         List<ActivitySourceListItem>
+      >();
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         if(!Guid.TryParse(reader.GetString(0), out var activityId))
+         {
+            continue;
+         }
+
+         if(!sources.TryGetValue(activityId, out var activitySources))
+         {
+            activitySources = [];
+            sources[activityId] = activitySources;
+         }
+
+         activitySources.Add(
+            new ActivitySourceListItem(
+               reader.GetString(1),
+               reader.GetString(2)
+            )
+         );
+      }
+
+      return sources.ToDictionary(
+         pair => pair.Key,
+         pair => (IReadOnlyList<ActivitySourceListItem>)pair.Value
+      );
    }
 
    private async Task<IReadOnlyDictionary<

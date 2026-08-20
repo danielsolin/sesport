@@ -1058,6 +1058,88 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedForDateAsyncIncludesActivitySources()
+   {
+      var selectedDate = DistantActivityDate;
+      var activityId = Guid.NewGuid();
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+
+      try
+      {
+         await InsertActivityAsync(
+            dataSource,
+            activityId,
+            selectedDate,
+            startsAt,
+            ActivityPublicationStatusIds.Published
+         );
+         await sourceRepository.CreateAsync(
+            SourceCorrelationTypes.Activity,
+            activityId.ToString(),
+            SourceKinds.ActivityEvidence,
+            "https://example.test/activity",
+            "Activity title",
+            "Activity excerpt",
+            null,
+            CancellationToken.None
+         );
+         await sourceRepository.CreateAsync(
+            SourceCorrelationTypes.Activity,
+            activityId.ToString(),
+            SourceKinds.ParticipationEvidence,
+            "https://example.test/participation",
+            "Participation title",
+            "Participation excerpt",
+            null,
+            CancellationToken.None
+         );
+
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         var activity = Assert.Single(
+            activities,
+            item => item.Id == activityId
+         );
+         Assert.Equal(2, activity.Sources.Count);
+         Assert.Contains(
+            new ActivitySourceListItem(
+               SourceKinds.ActivityEvidence,
+               "https://example.test/activity"
+            ),
+            activity.Sources
+         );
+         Assert.Contains(
+            new ActivitySourceListItem(
+               SourceKinds.ParticipationEvidence,
+               "https://example.test/participation"
+            ),
+            activity.Sources
+         );
+      }
+      finally
+      {
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Activity,
+            activityId.ToString(),
+            CancellationToken.None
+         );
+
+         await DeleteActivityAsync(dataSource, activityId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedForDateAsyncIncludesParticipantDiscipline()
    {
       var selectedDate = DistantActivityDate;

@@ -548,4 +548,37 @@ public sealed class IndexMarkupTests
          css
       );
    }
+
+   [Fact]
+   public async Task IndexRendersLandscapeOnlySourceLinks()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var html = await File.ReadAllTextAsync(
+         Path.Combine(repoRoot, "src/SESport.Web/Pages/Index.cshtml")
+      );
+      var css = await File.ReadAllTextAsync(
+         Path.Combine(repoRoot, "src/SESport.Web/wwwroot/css/public.css")
+      );
+
+      Assert.Contains("Källor+", html);
+      Assert.Contains("SourceDisplay.FormatKind(", html);
+      Assert.Contains("source.Kind", html);
+      Assert.Contains("target=\"_blank\"", html);
+      Assert.Contains("rel=\"noopener noreferrer\"", html);
+      Assert.Contains("@source.Url", html);
+      Assert.DoesNotContain("@source.Title", html);
+      Assert.DoesNotContain("@source.Excerpt", html);
+      Assert.Contains("<table class=\"activity-sources-table\">", html);
+      Assert.Contains("<td class=\"activity-source-kind\">", html);
+      Assert.DoesNotContain(
+         "<th class=\"activity-source-kind\"",
+         html
+      );
+      Assert.Contains("@media (orientation: landscape)", css);
+      Assert.Contains(".activity-sources", css);
+      Assert.Contains("margin: 12px 0 0 10px;", css);
+      Assert.Contains(".activity-sources-table", css);
+   }
 }

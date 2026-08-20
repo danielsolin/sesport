@@ -301,6 +301,10 @@ else
             ))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+         var activitySources = agendaSection.Activities
+            .SelectMany(item => item.Sources)
+            .Distinct()
+            .ToList();
          var dayPhaseClass = agendaSection.DayPhase switch
          {
             ActivityDayPhase.Morning =>
@@ -899,6 +903,36 @@ else
                               </button>
                            }
                         </div>
+                     }
+                     @if(activitySources.Count > 0)
+                     {
+                        <details class="activity-sources">
+                           <summary class="activity-sources-toggle">
+                              Källor+
+                           </summary>
+                           <table class="activity-sources-table">
+                              <tbody>
+                                 @foreach(var source in activitySources)
+                                 {
+                                    <tr>
+                                       <td class="activity-source-kind">
+                                          @SourceDisplay.FormatKind(
+                                             source.Kind
+                                          )
+                                       </td>
+                                       <td>
+                                          <a class="activity-source-link"
+                                             href="@source.Url"
+                                             target="_blank"
+                                             rel="noopener noreferrer">
+                                             @source.Url
+                                          </a>
+                                       </td>
+                                    </tr>
+                                 }
+                              </tbody>
+                           </table>
+                        </details>
                      }
                   </article>
                </div>
