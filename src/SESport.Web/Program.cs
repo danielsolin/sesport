@@ -1,8 +1,21 @@
+using System.Net;
+using Microsoft.AspNetCore.HttpOverrides;
 using Lib.Net.Http.WebPush;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SESport.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<ForwardedHeadersOptions>(
+   options =>
+   {
+      options.ForwardedHeaders =
+         ForwardedHeaders.XForwardedFor |
+         ForwardedHeaders.XForwardedHost |
+         ForwardedHeaders.XForwardedProto;
+      options.KnownProxies.Add(IPAddress.Loopback);
+      options.KnownProxies.Add(IPAddress.IPv6Loopback);
+   }
+);
 var adminOptions = builder.Configuration.GetSection(
       ApplicationConfigurationKeys.AdminSection
    )
@@ -144,6 +157,7 @@ if(!app.Environment.IsDevelopment())
    app.UseHsts();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.Use(
    async (context, next) =>

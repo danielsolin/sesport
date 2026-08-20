@@ -9,6 +9,7 @@ public sealed class MemberAuthService(
    public async Task RequestLoginLinkAsync(
       string email,
       string? returnUrl,
+      HttpRequest request,
       CancellationToken cancellationToken
    )
    {
@@ -18,6 +19,7 @@ public sealed class MemberAuthService(
             nameof(email)
          );
       ValidateOptions();
+      ValidateRequestOrigin(request);
 
       var now = DateTimeOffset.UtcNow;
       var rawToken = MemberLoginToken.Generate();
@@ -39,7 +41,11 @@ public sealed class MemberAuthService(
          return;
       }
 
-      var loginLink = BuildLoginLink(rawToken, NormalizeReturnUrl(returnUrl));
+      var loginLink = BuildLoginLink(
+         rawToken,
+         request,
+         NormalizeReturnUrl(returnUrl)
+      );
 
       try
       {
@@ -86,9 +92,14 @@ public sealed class MemberAuthService(
       );
    }
 
-   private string BuildLoginLink(string rawToken, string? returnUrl)
+   private static string BuildLoginLink(
+      string rawToken,
+      HttpRequest request,
+      string? returnUrl
+   )
    {
-      var baseUrl = options.PublicBaseUrl.TrimEnd('/');
+      var baseUrl = request.Scheme + "://" +
+         request.Host.ToUriComponent();
       var link = baseUrl +
          "/Account/Verify?token=" +
          Uri.EscapeDataString(rawToken);
@@ -98,20 +109,19 @@ public sealed class MemberAuthService(
          : link + "&returnUrl=" + Uri.EscapeDataString(returnUrl);
    }
 
-   private void ValidateOptions()
+   private static void ValidateRequestOrigin(HttpRequest request)
    {
-      if(!Uri.TryCreate(
-            options.PublicBaseUrl,
-            UriKind.Absolute,
-            out var publicBaseUri
-         ) ||
-         publicBaseUri.Scheme is not ("http" or "https"))
+      if(request.Scheme is not ("http" or "https") ||
+         string.IsNullOrWhiteSpace(request.Host.Host))
       {
          throw new InvalidOperationException(
-            "MemberAuth:PublicBaseUrl must be an absolute HTTP URL."
+            "The request must have an absolute HTTP origin."
          );
       }
+   }
 
+   private void ValidateOptions()
+   {
       if(options.LoginTokenLifetime <= TimeSpan.Zero ||
          options.LoginRequestCooldown < TimeSpan.Zero ||
          options.LoginRequestWindow <= TimeSpan.Zero ||

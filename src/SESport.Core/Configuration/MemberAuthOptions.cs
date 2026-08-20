@@ -2,8 +2,6 @@ namespace SESport.Core.Configuration;
 
 public sealed record MemberAuthOptions
 {
-   public string PublicBaseUrl { get; init; } = string.Empty;
-
    public TimeSpan LoginTokenLifetime { get; init; } =
       TimeSpan.FromMinutes(15);
 

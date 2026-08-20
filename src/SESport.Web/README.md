@@ -91,10 +91,10 @@ dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 
 Public membership uses passwordless email links. Development logs the login
 link when SMTP is not configured. The production VPS uses the HostUp
-smarthost relay. Configure the following values in the host-local `.env` file:
+smarthost relay. Login links use the scheme and host of the request that
+requested them. Configure the following values in the host-local `.env` file:
 
 ```text
-MemberAuth__PublicBaseUrl=https://sesport.se
 Smtp__Host=relay.hostup.se
 Smtp__Port=587
 Smtp__UseSsl=true
