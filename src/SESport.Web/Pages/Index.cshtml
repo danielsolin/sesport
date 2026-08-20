@@ -301,10 +301,9 @@ else
             ))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-         var activitySources = agendaSection.Activities
-            .SelectMany(item => item.Sources)
-            .Distinct()
-            .ToList();
+         var activitySources = SourceDisplay.OrderDistinctByUrl(
+            agendaSection.Activities.SelectMany(item => item.Sources)
+         );
          var dayPhaseClass = agendaSection.DayPhase switch
          {
             ActivityDayPhase.Morning =>
