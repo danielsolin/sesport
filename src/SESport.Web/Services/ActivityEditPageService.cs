@@ -394,12 +394,19 @@ public sealed class ActivityEditPageService(
          participationCheck
       );
       activity.Description = firstBroadcast.Description;
+
+      if(!string.IsNullOrWhiteSpace(firstBroadcast.EntitySportId))
+      {
+         activity.SportId = firstBroadcast.EntitySportId;
+      }
+
       activity.ActivityType =
          BroadcastActivityTypeResolver.ResolveActivityType(
             firstBroadcast.Title,
             firstBroadcast.Description,
-            firstBroadcast.Categories
-         )?.ToString() ?? ActivityType.Match.ToString();
+            firstBroadcast.Categories,
+            activity.SportId
+         )?.ToString() ?? string.Empty;
       activity.IsPublished = true;
       var evidenceExcerpt = BroadcastActivityPrefillBuilder
          .CreateEvidenceComment(firstBroadcast, participationCheck);
@@ -414,11 +421,6 @@ public sealed class ActivityEditPageService(
             }
          )
          .ToList() ?? [];
-
-      if(!string.IsNullOrWhiteSpace(firstBroadcast.EntitySportId))
-      {
-         activity.SportId = firstBroadcast.EntitySportId;
-      }
 
       activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);

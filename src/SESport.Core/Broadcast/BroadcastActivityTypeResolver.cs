@@ -8,17 +8,20 @@ public static class BroadcastActivityTypeResolver
    public static ActivityType? ResolveActivityType(
       string title,
       string? description,
-      IReadOnlyCollection<string> categories
+      IReadOnlyCollection<string> categories,
+      string? sportId = null
    )
    {
       var normalizedTitle = NormalizeText(title);
       var normalizedCategories = categories
-         .Select(NormalizeToken)
+         .Select(NormalizeText)
          .Where(token => !string.IsNullOrWhiteSpace(token))
          .Distinct(StringComparer.OrdinalIgnoreCase)
          .ToList();
 
       var normalizedText = NormalizeText($"{title} {description}");
+      var normalizedSportId = sportId?.Trim().ToLowerInvariant() ??
+         string.Empty;
 
       if(ContainsTitleToken(normalizedTitle, ["qualification", "kval"]))
       {
@@ -37,33 +40,16 @@ public static class BroadcastActivityTypeResolver
          ContainsAny(
             normalizedCategories,
             normalizedText,
-            [
-               SportIds.Motorsport,
-               SportIds.Motocross,
-               SportIds.Rally,
-               SportIds.Speedway,
-               SportIds.Cycling
-            ]
-         )
-      )
-      {
-         return ActivityType.Race;
-      }
-
-      if(ContainsAny(normalizedCategories, normalizedText, ["golf"]))
-      {
-         return ActivityType.Tournament;
-      }
-
-      if(
-         ContainsAny(
-            normalizedCategories,
-            normalizedText,
             ["qualifier", "qualification", "kval"]
          )
       )
       {
          return ActivityType.Qualification;
+      }
+
+      if(ContainsAny(normalizedCategories, normalizedText, ["stage", "etapp"]))
+      {
+         return ActivityType.Stage;
       }
 
       if(
@@ -83,12 +69,62 @@ public static class BroadcastActivityTypeResolver
          return ActivityType.Championship;
       }
 
-      if(ContainsAny(normalizedCategories, normalizedText, ["stage", "etapp"]))
+      if(ContainsAny(normalizedCategories, normalizedText, ["golf"]))
       {
-         return ActivityType.Stage;
+         return ActivityType.Tournament;
+      }
+
+      if(
+         IsRaceSport(normalizedSportId) ||
+         ContainsAny(
+            normalizedCategories,
+            normalizedText,
+            [
+               SportIds.Motorsport,
+               SportIds.Motocross,
+               SportIds.Rally,
+               SportIds.Speedway,
+               SportIds.Cycling,
+               "cykel",
+               "mountainbike",
+               "mountain bike"
+            ]
+         )
+      )
+      {
+         return ActivityType.Race;
+      }
+
+      if(IsMatchSport(normalizedSportId))
+      {
+         return ActivityType.Match;
       }
 
       return null;
+   }
+
+   private static bool IsRaceSport(string normalizedSportId)
+   {
+      return normalizedSportId is
+         SportIds.Cycling or
+         SportIds.Motocross or
+         SportIds.Motorsport or
+         SportIds.Rally or
+         SportIds.Speedway;
+   }
+
+   private static bool IsMatchSport(string normalizedSportId)
+   {
+      return normalizedSportId is
+         SportIds.Basketball or
+         SportIds.BeachVolleyball or
+         SportIds.Darts or
+         SportIds.Football or
+         SportIds.Handball or
+         SportIds.IceHockey or
+         SportIds.TableTennis or
+         SportIds.Tennis or
+         SportIds.Volleyball;
    }
 
    private static bool ContainsTitleToken(
@@ -108,9 +144,8 @@ public static class BroadcastActivityTypeResolver
    )
    {
       return tokens.Any(token =>
-         normalizedCategories.Contains(
-            token,
-            StringComparer.OrdinalIgnoreCase
+         normalizedCategories.Any(category =>
+            ContainsTextToken(category, token)
          ) ||
          ContainsTextToken(normalizedText, token)
       );
@@ -118,17 +153,19 @@ public static class BroadcastActivityTypeResolver
 
    private static bool ContainsTextToken(string normalizedText, string token)
    {
-      if(token.Contains(' '))
+      var normalizedToken = NormalizeText(token);
+
+      if(normalizedToken.Contains(' '))
       {
          return normalizedText.Contains(
-            token,
+            normalizedToken,
             StringComparison.OrdinalIgnoreCase
          );
       }
 
       return normalizedText
          .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-         .Contains(token, StringComparer.OrdinalIgnoreCase);
+         .Contains(normalizedToken, StringComparer.OrdinalIgnoreCase);
    }
 
    private static string NormalizeText(string value)
@@ -166,9 +203,4 @@ public static class BroadcastActivityTypeResolver
       );
    }
 
-   private static string NormalizeToken(string value)
-   {
-      var normalized = NormalizeText(value);
-      return normalized.Replace(" ", string.Empty);
-   }
 }

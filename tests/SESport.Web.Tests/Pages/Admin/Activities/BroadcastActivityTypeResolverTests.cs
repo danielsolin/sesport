@@ -92,4 +92,77 @@ public sealed class BroadcastActivityTypeResolverTests
 
       Assert.Equal(ActivityType.Race, activityType);
    }
+
+   [Theory]
+   [InlineData("Cykel")]
+   [InlineData("Mountainbike")]
+   public void ResolveActivityTypeReturnsRaceForSwedishCyclingCategories(
+      string category
+   )
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Cross country Olympic",
+         null,
+         [category]
+      );
+
+      Assert.Equal(ActivityType.Race, activityType);
+   }
+
+   [Fact]
+   public void ResolveActivityTypeUsesCyclingSportId()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Cross country Olympic",
+         null,
+         ["Sport"],
+         SportIds.Cycling
+      );
+
+      Assert.Equal(ActivityType.Race, activityType);
+   }
+
+   [Theory]
+   [InlineData("Cycling stage", ActivityType.Stage)]
+   [InlineData("Cycling World Cup", ActivityType.Championship)]
+   public void ResolveActivityTypePrioritizesExplicitCompetitionTypes(
+      string title,
+      ActivityType expectedActivityType
+   )
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         title,
+         null,
+         ["Cykel"],
+         SportIds.Cycling
+      );
+
+      Assert.Equal(expectedActivityType, activityType);
+   }
+
+   [Fact]
+   public void ResolveActivityTypeReturnsMatchForKnownMatchSport()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Sweden vs Finland",
+         null,
+         [],
+         SportIds.Football
+      );
+
+      Assert.Equal(ActivityType.Match, activityType);
+   }
+
+   [Fact]
+   public void ResolveActivityTypeReturnsNullForUnknownSport()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Sports programme",
+         null,
+         [],
+         "unknown-sport"
+      );
+
+      Assert.Null(activityType);
+   }
 }

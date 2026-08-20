@@ -458,6 +458,78 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task
+      PrefillFromBroadcastsAsyncSuggestsRaceForCyclingMountainbike()
+   {
+      var organizationId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var startsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            $"Mountain Bike Organization {organizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            SportIds.Cycling
+         );
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            organizationId,
+            $"external-{Guid.NewGuid():N}",
+            $"fingerprint-{Guid.NewGuid():N}",
+            "channel-1",
+            "SVT",
+            "UCI Mountain Bike World Series, Mountainbike: " +
+               "Damer Elit - Cross country Olympic - Haute Savoie",
+            ["Cykel", "Cykel, Mountainbike", "Mountainbike"],
+            startsAt,
+            endsAt
+         );
+
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None,
+            clearParticipants: true
+         );
+
+         Assert.Equal(SportIds.Cycling, activity.SportId);
+         Assert.Equal(ActivityType.Race.ToString(), activity.ActivityType);
+      }
+      finally
+      {
+         try
+         {
+            await DeleteBroadcastAsync(dataSource, broadcastId);
+         }
+         finally
+         {
+            await DeleteEntityAsync(dataSource, organizationId);
+         }
+      }
+   }
+
+   [Fact]
    public async Task PrefillFromBroadcastsAsyncAddsMissingTeamOrgLink()
    {
       var organizationId = Guid.NewGuid();
