@@ -7,6 +7,11 @@ services or timer you want active.
 The SESport web services load `/home/daniel/sesport/.env` through
 `EnvironmentFile`. Keep the single active PostgreSQL connection there.
 
+The `sesport-dev.service` unit runs
+`/home/daniel/sesport/src/SESport.Web` with `dotnet watch`. Changes to source
+files and static assets are therefore available at `dev.sesport.se` without a
+publish step. Caddy proxies that hostname to port 5001.
+
 The `llama-server.service` unit invokes
 `/home/daniel/sesport/bin/llm-start.sh`. Keep that path stable and change the
 symlink target when switching the active model.

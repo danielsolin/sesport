@@ -41,6 +41,13 @@ https://localhost:7156
 http://localhost:5109
 ```
 
+## Development hostname
+
+On the web host, `dev.sesport.se` is served by `sesport-dev.service`. The
+service runs the project from `/home/daniel/sesport/src/SESport.Web` with
+`dotnet watch`, so source and static-file changes are picked up without
+publishing. Caddy forwards the hostname to the service on port 5001.
+
 The repository-root `.env` file is the source of truth for the single
 PostgreSQL database. The web app reads the database connection from process
 environment variables. Copy `.env.example` to `.env`, then load it into your
