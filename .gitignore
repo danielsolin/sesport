@@ -3,12 +3,10 @@
 /data/
 /tools/
 /jobs/
+/bin/
 /tests/SESport.BroadcastImporter.Tests/
 /tests/SESport.AI.Tests/AI/SesportWebToolsServerTests.cs
 **/bin/
-!/bin/
-!/android/**/bin/
-!/android/**/bin/**
 **/obj/
 *.swp
 *.user
