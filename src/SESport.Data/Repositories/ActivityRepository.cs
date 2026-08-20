@@ -1762,7 +1762,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                represented_entity.canonical_name
             ) as represented_entity_name,
             represented_entity.canonical_name
-               as represented_entity_canonical_name
+               as represented_entity_canonical_name,
+            participant_start.source_url
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
@@ -1771,8 +1772,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          join entity_watch_priorities priority
             on priority.id = person.watch_priority_id
          left join lateral (
-            select nullif(btrim(r.value_text), '') as start_time
+            select
+               nullif(btrim(r.value_text), '') as start_time,
+               start_source.url as source_url
             from activity_participant_ai_results r
+            left join sources start_source
+               on start_source.id = r.source_id
             where r.activity_id = al.activity_id
                and r.entity_id = person.id
                and r.job_id = '{{AiJobIds.FindParticipantsStart}}'
@@ -1889,7 +1894,10 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   : reader.GetString(15),
                RepresentedEntityCanonicalName = reader.IsDBNull(16)
                   ? null
-                  : reader.GetString(16)
+                  : reader.GetString(16),
+               StartTimeSourceUrl = reader.IsDBNull(17)
+                  ? null
+                  : reader.GetString(17)
             }
          );
       }

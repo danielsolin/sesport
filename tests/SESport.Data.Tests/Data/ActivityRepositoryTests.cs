@@ -1024,6 +1024,10 @@ public sealed class ActivityRepositoryTests
          );
          var participant = Assert.Single(activity.Participants);
          Assert.Equal("12:30", participant.StartTime);
+         Assert.Equal(
+            sourceUrl,
+            participant.StartTimeSourceUrl
+         );
 
          await using(var updateCommand = dataSource.CreateCommand(
             """

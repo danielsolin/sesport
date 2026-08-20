@@ -1288,6 +1288,15 @@
    white-space: nowrap;
 }
 
+.activity-participant-start-time-link {
+   color: inherit;
+   text-decoration: underline;
+}
+
+.activity-participant-start-time-link:hover {
+   color: var(--accent-strong);
+}
+
 .activity-participant-col-discipline {
    width: 1%;
    white-space: nowrap;

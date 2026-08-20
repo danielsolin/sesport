@@ -601,6 +601,8 @@ else
                                  "activity-participant-table-" +
                                  "has-start-time"
                               : "activity-participant-table";
+                        const string startTimeLinkClass =
+                           "activity-participant-start-time-link";
                         if(showDisciplineColumn)
                         {
                            participantTableClass +=
@@ -807,9 +809,31 @@ else
                                                 .FormatExactTimeText(
                                                    participant.StartTime
                                                 );
+                                          var sourceUrl =
+                                             participant.StartTimeSourceUrl;
+                                          var hasStartTimeSource =
+                                             !string.IsNullOrWhiteSpace(
+                                                participant.StartTime
+                                             ) &&
+                                             !string.IsNullOrWhiteSpace(
+                                                sourceUrl
+                                             );
                                           <td class=
                                          "activity-participant-col-start-time">
-                                             @participantStartTime
+                                             @if(hasStartTimeSource)
+                                             {
+                                                <a class=
+                                                   "@startTimeLinkClass"
+                                                   href="@sourceUrl"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer">
+                                                   @participantStartTime
+                                                </a>
+                                             }
+                                             else
+                                             {
+                                                @participantStartTime
+                                             }
                                           </td>
                                        }
                                        @if(showDisciplineColumn)

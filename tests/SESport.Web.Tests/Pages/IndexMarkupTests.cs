@@ -143,6 +143,14 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
       Assert.Contains(
+         "participant.StartTimeSourceUrl",
+         html
+      );
+      Assert.Contains(
+         "activity-participant-start-time-link",
+         html
+      );
+      Assert.Contains(
          "IndexModel.ShouldShowDisciplineColumn(",
          html
       );
@@ -181,8 +189,14 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-col-start-time {\n" +
-         "   width: 1%;\n" +
-         "   white-space: nowrap;",
+            "   width: 1%;\n" +
+            "   white-space: nowrap;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-start-time-link {\n" +
+            "   color: inherit;\n" +
+            "   text-decoration: underline;",
          css
       );
       Assert.Contains(
