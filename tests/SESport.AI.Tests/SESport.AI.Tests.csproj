@@ -21,8 +21,6 @@
    <ItemGroup>
       <ProjectReference Include="..\..\src\SESport.Core\SESport.Core.csproj" />
       <ProjectReference Include="..\..\src\SESport.AI\SESport.AI.csproj" />
-      <ProjectReference
-         Include="..\..\tools\SESport.WebTools\SESport.WebTools.csproj" />
       <Compile
          Include="..\TestSupport\TestEnvironmentBootstrap.cs"
          Link="TestEnvironmentBootstrap.cs"

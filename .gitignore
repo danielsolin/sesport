@@ -1,5 +1,9 @@
 .vs/
 .env
+/data/
+/tools/
+/tests/SESport.BroadcastImporter.Tests/
+/tests/SESport.AI.Tests/AI/SesportWebToolsServerTests.cs
 **/bin/
 !/bin/
 !/android/**/bin/
