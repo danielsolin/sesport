@@ -443,6 +443,12 @@ else
                         var sportIconCountryPath = PublicCountryFlag.GetPath(
                            activity.OrganizationCountryId
                         );
+                        var sportIconCountryTagClass =
+                           activity.OrganizationCountryId?.Trim()
+                              .ToLowerInvariant() is
+                              CountryIds.Europe or CountryIds.International
+                           ? "activity-entry-sport-country-tag-symbol"
+                           : null;
                         <span class="activity-entry-sport-icon"
                               role="img"
                               aria-label="@activity.SportName"
@@ -452,8 +458,10 @@ else
                         @if(sportIconCountryPath is not null)
                         {
                            <img class=
-                              "activity-entry-sport-country-tag"
+                              "activity-entry-sport-country-tag
+                              @sportIconCountryTagClass"
                               src="@sportIconCountryPath"
+                              asp-append-version="true"
                               alt=""
                               aria-hidden="true" />
                         }

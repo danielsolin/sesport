@@ -1468,6 +1468,17 @@
    pointer-events: none;
 }
 
+.activity-entry-sport-country-tag-symbol {
+   top: 40px;
+   right: 11px;
+   width: 18px;
+   height: 22px;
+   border: 0;
+   background: transparent;
+   box-shadow: none;
+   object-fit: contain;
+}
+
 .activity-teaser {
    color: var(--muted);
    font-size: 12px;

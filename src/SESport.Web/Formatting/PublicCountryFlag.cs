@@ -1,4 +1,5 @@
 using SESport.Core.Configuration;
+using SESport.Core.Domain;
 
 namespace SESport.Web.Formatting;
 
@@ -16,7 +17,9 @@ public static class PublicCountryFlag
          "pl",
          "pt",
          "uk",
-         "us"
+         "us",
+         CountryIds.Europe,
+         CountryIds.International
       };
 
    public static string? GetPath(string? countryId)
@@ -27,9 +30,15 @@ public static class PublicCountryFlag
       }
 
       var normalizedCountryId = countryId.Trim().ToLowerInvariant();
+      var isTwoLetterCountryId = normalizedCountryId.Length == 2 &&
+         normalizedCountryId.All(char.IsAsciiLetter);
+      var isInternationalCountryId = string.Equals(
+         normalizedCountryId,
+         CountryIds.International,
+         StringComparison.Ordinal
+      );
 
-      return normalizedCountryId.Length == 2 &&
-         normalizedCountryId.All(char.IsAsciiLetter) &&
+      return (isTwoLetterCountryId || isInternationalCountryId) &&
          AvailableCountryIds.Contains(normalizedCountryId)
          ? $"/images/flags/{normalizedCountryId}.svg"
          : null;

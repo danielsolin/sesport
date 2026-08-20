@@ -8,6 +8,8 @@ public sealed class PublicCountryFlagTests
    [InlineData("de")]
    [InlineData("DE")]
    [InlineData("pl")]
+   [InlineData("eu")]
+   [InlineData("INT")]
    public void GetPathReturnsPathForKnownCountry(string countryId)
    {
       var path = PublicCountryFlag.GetPath(countryId);
@@ -21,7 +23,7 @@ public sealed class PublicCountryFlagTests
    [Theory]
    [InlineData(null)]
    [InlineData("")]
-   [InlineData("int")]
+   [InlineData("xx")]
    [InlineData("unknown")]
    public void GetPathReturnsNullForUnknownCountry(string? countryId)
    {

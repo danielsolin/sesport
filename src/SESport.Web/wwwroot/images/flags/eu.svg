@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 12 16">
+   <circle cx="6" cy="8" r="5.8" fill="#003399" />
+   <defs>
+      <path id="star"
+            d="M 0 -0.9
+               L 0.26 -0.36
+               L 0.86 -0.28
+               L 0.43 0.14
+               L 0.53 0.73
+               L 0 0.45
+               L -0.53 0.73
+               L -0.43 0.14
+               L -0.86 -0.28
+               L -0.26 -0.36
+               Z" />
+   </defs>
+   <g fill="#ffcc00" stroke="#ffcc00" stroke-width=".14">
+      <use href="#star" transform="translate(6 3.7)" />
+      <use href="#star" transform="translate(8.15 4.28)" />
+      <use href="#star" transform="translate(9.72 5.85)" />
+      <use href="#star" transform="translate(10.3 8)" />
+      <use href="#star" transform="translate(9.72 10.15)" />
+      <use href="#star" transform="translate(8.15 11.72)" />
+      <use href="#star" transform="translate(6 12.3)" />
+      <use href="#star" transform="translate(3.85 11.72)" />
+      <use href="#star" transform="translate(2.28 10.15)" />
+      <use href="#star" transform="translate(1.7 8)" />
+      <use href="#star" transform="translate(2.28 5.85)" />
+      <use href="#star" transform="translate(3.85 4.28)" />
+   </g>
+</svg>
