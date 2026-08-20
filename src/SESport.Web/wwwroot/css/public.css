@@ -1429,7 +1429,6 @@
 }
 
 .activity-sources {
-   display: none;
    margin: 12px 0 0 10px;
    color: #397293;
    font-size: 10px;
@@ -1893,12 +1892,6 @@
 
    .activity-group-slot-participants {
       display: inline;
-   }
-}
-
-@media (orientation: landscape) {
-   .activity-sources {
-      display: block;
    }
 }
 

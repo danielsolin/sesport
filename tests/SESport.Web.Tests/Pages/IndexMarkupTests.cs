@@ -564,7 +564,7 @@ public sealed class IndexMarkupTests
    }
 
    [Fact]
-   public async Task IndexRendersLandscapeOnlySourceLinks()
+   public async Task IndexRendersSourceLinks()
    {
       var repoRoot = Path.GetFullPath(
          Path.Combine(AppContext.BaseDirectory, "../../../../..")
@@ -592,6 +592,15 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("@media (orientation: landscape)", css);
       Assert.Contains(".activity-sources", css);
+      Assert.DoesNotContain(
+         ".activity-sources {\n   display: none;",
+         css
+      );
+      Assert.DoesNotContain(
+         "@media (orientation: landscape) {\n" +
+            "   .activity-sources",
+         css
+      );
       Assert.Contains("margin: 12px 0 0 10px;", css);
       Assert.Contains(".activity-sources-table", css);
    }
