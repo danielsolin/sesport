@@ -5,6 +5,7 @@ After=network.target
 [Service]
 WorkingDirectory=/home/daniel/sesport
 ExecStart=/usr/bin/dotnet watch \
+   --non-interactive \
    --project /home/daniel/sesport/src/SESport.Web/SESport.Web.csproj \
    run --no-launch-profile --urls http://127.0.0.1:5001
 Restart=always
@@ -12,6 +13,7 @@ RestartSec=5
 User=daniel
 Environment=ASPNETCORE_ENVIRONMENT=Development
 Environment=DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER=1
+Environment=DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1
 Environment=WebStats__ReportDirectory=/home/daniel/sesport/data/web-stats
 EnvironmentFile=/home/daniel/sesport/.env
 
