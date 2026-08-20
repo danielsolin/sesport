@@ -961,6 +961,22 @@ else
                </div>
             </section>
       }
+      @if(Model.HasPublishedActivitiesTomorrow)
+      {
+         <div class="activity-tomorrow-link-row">
+            <span class="activity-tomorrow-link-line"></span>
+            <a class="activity-tomorrow-link"
+               asp-page="/Index"
+               asp-route-date="@DateDisplay.Format(
+                  Model.TomorrowDate
+               )"
+               asp-route-sport="@Model.Sport"
+               aria-label="Visa aktiviteter imorgon">
+               Imorgon
+            </a>
+            <span class="activity-tomorrow-link-line"></span>
+         </div>
+      }
    </div>
 }
 

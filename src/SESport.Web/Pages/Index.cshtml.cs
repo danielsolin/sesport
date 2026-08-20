@@ -40,6 +40,10 @@ public class IndexModel(
 
    public DateOnly CurrentDate { get; private set; }
 
+   public DateOnly TomorrowDate { get; private set; }
+
+   public bool HasPublishedActivitiesTomorrow { get; private set; }
+
    public int? TotalParticipantsCount { get; private set; }
 
    public IReadOnlyList<SportParticipantCount> SportParticipantCounts
@@ -58,6 +62,7 @@ public class IndexModel(
       );
       var sportToday = SportDay.Today(now).StartDate;
       SelectedDate = ParseDate(Date) ?? sportToday;
+      TomorrowDate = SelectedDate.AddDays(1);
       IsSportToday = SelectedDate == sportToday;
       DateOptions = BuildDateOptions(sportToday, SelectedDate, []);
 
@@ -68,6 +73,10 @@ public class IndexModel(
                sportToday,
                cancellationToken
             );
+         HasPublishedActivitiesTomorrow = ShouldShowTomorrowLink(
+            SelectedDate,
+            publishedDateCounts
+         );
          DateOptions = BuildDateOptions(
             sportToday,
             SelectedDate,
@@ -117,6 +126,15 @@ public class IndexModel(
          .Where(entityId => entityId != Guid.Empty)
          .Distinct()
          .Count();
+   }
+
+   internal static bool ShouldShowTomorrowLink(
+      DateOnly selectedDate,
+      IEnumerable<PublishedDateParticipantCount> publishedDateCounts
+   )
+   {
+      var tomorrowDate = selectedDate.AddDays(1);
+      return publishedDateCounts.Any(item => item.Date == tomorrowDate);
    }
 
    internal static bool ShouldShowDisciplineColumn(

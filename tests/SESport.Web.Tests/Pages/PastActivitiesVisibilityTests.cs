@@ -42,6 +42,13 @@ public sealed class PastActivitiesVisibilityTests
       Assert.DoesNotContain("isLatestPastActivity", page);
       Assert.DoesNotContain("pastActivityToggleIndex", page);
       Assert.Contains("data-activity-past-toggle", page);
+      Assert.Contains(
+         "Model.HasPublishedActivitiesTomorrow",
+         page
+      );
+      Assert.Contains("activity-tomorrow-link-row", page);
+      Assert.Contains("activity-tomorrow-link", page);
+      Assert.Contains("Model.TomorrowDate", page);
       var markerIndex = page.IndexOf(
          "if(timelineEntry.IsCurrentMarker)",
          StringComparison.Ordinal

@@ -52,6 +52,37 @@ public sealed class IndexModelTests
    }
 
    [Fact]
+   public void ShouldShowTomorrowLinkUsesTheSelectedDate()
+   {
+      var selectedDate = new DateOnly(2026, 8, 27);
+      var publishedDateCounts = new[]
+      {
+         new PublishedDateParticipantCount(
+            new DateOnly(2026, 8, 21),
+            4
+         )
+      };
+
+      Assert.False(
+         IndexModel.ShouldShowTomorrowLink(
+            selectedDate,
+            publishedDateCounts
+         )
+      );
+      Assert.True(
+         IndexModel.ShouldShowTomorrowLink(
+            selectedDate,
+            [
+               new PublishedDateParticipantCount(
+                  selectedDate.AddDays(1),
+                  4
+               )
+            ]
+         )
+      );
+   }
+
+   [Fact]
    public void ShouldShowDisciplineColumnHidesWhenValuesMatch()
    {
       var participants = new[]
