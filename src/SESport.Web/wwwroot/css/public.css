@@ -1853,6 +1853,12 @@
    }
 }
 
+@media (orientation: portrait) {
+   .public-contact-footer {
+      --activity-card-center-offset: 0px;
+   }
+}
+
 @media (orientation: landscape) and (min-width: 721px) {
    .sport-select {
       flex: 0 0 220px;

@@ -601,6 +601,12 @@ public sealed class IndexMarkupTests
             "   .activity-sources",
          css
       );
+      Assert.Contains(
+         "@media (orientation: portrait) {\n" +
+            "   .public-contact-footer {\n" +
+            "      --activity-card-center-offset: 0px;",
+         css
+      );
       Assert.Contains("margin: 12px 0 0 10px;", css);
       Assert.Contains(".activity-sources-table", css);
    }
