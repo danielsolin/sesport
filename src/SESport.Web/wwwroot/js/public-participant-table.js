@@ -6,7 +6,7 @@
    const inactiveCollapsedClass =
       "activity-participant-table-inactive-collapsed";
    const autoReloadMarkerKey = "sesport-public-auto-reload";
-   const restoreParticipantExpansion = hasAutoReloadMarker();
+   const restoreParticipantExpansion = consumeAutoReloadMarker();
    const expandedTableIds = restoreParticipantExpansion
       ? readExpandedTableIds()
       : new Set();
@@ -106,13 +106,17 @@
       }
    }
 
-   function hasAutoReloadMarker()
+   function consumeAutoReloadMarker()
    {
       try
       {
-         return window.sessionStorage.getItem(
-            autoReloadMarkerKey
-         ) === "true";
+         if(window.sessionStorage.getItem(autoReloadMarkerKey) !== "true")
+         {
+            return false;
+         }
+
+         window.sessionStorage.removeItem(autoReloadMarkerKey);
+         return true;
       }
       catch
       {

@@ -66,6 +66,10 @@ public sealed class IndexMarkupTests
          "window.sessionStorage.setItem(",
          participantScript
       );
+      Assert.Contains(
+         "window.sessionStorage.removeItem(",
+         participantScript
+      );
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-start-time", html);
