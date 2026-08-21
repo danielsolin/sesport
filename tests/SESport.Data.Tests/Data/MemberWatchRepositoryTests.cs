@@ -17,6 +17,7 @@ public sealed class MemberWatchRepositoryTests
       var inactiveActivityId = Guid.NewGuid();
       var draftActivityId = Guid.NewGuid();
       var nextActivityId = Guid.NewGuid();
+      var imageId = Guid.NewGuid();
       var now = new DateTimeOffset(
          2026,
          1,
@@ -33,6 +34,7 @@ public sealed class MemberWatchRepositoryTests
       {
          await InsertMemberAsync(dataSource, memberId);
          await InsertPersonAsync(dataSource, personId);
+         await InsertPrimaryImageAsync(dataSource, imageId, personId);
          await InsertOrganizationAsync(dataSource, organizationId);
          await InsertActivityGroupAsync(dataSource, activityGroupId);
          await InsertActivityAsync(
@@ -96,6 +98,7 @@ public sealed class MemberWatchRepositoryTests
          );
 
          var watch = Assert.Single(watches);
+         Assert.True(watch.HasPrimaryImage);
          Assert.NotNull(watch.NextActivity);
          Assert.Equal(
             "Newcastle - Liverpool",
@@ -109,6 +112,14 @@ public sealed class MemberWatchRepositoryTests
             ToUtc(new TimeOnly(17, 15)),
             watch.NextActivity.StartsAt
          );
+         var image = await repository.GetWatchedEntityPrimaryImageAsync(
+            memberId,
+            personId,
+            CancellationToken.None
+         );
+         Assert.NotNull(image);
+         Assert.Equal("image/jpeg", image.MimeType);
+         Assert.Equal(new byte[] { 1, 2, 3 }, image.Data);
       }
       finally
       {
@@ -338,6 +349,61 @@ public sealed class MemberWatchRepositoryTests
          TrackedEntityTypeIds.Person
       );
       command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertPrimaryImageAsync(
+      NpgsqlDataSource dataSource,
+      Guid imageId,
+      Guid entityId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         insert into entity_images (
+            id,
+            entity_id,
+            image_data,
+            mime_type,
+            pixel_width,
+            pixel_height,
+            source_kind,
+            source_url,
+            license_name,
+            review_status,
+            reviewed_at,
+            is_primary
+         )
+         values (
+            @id,
+            @entity_id,
+            @image_data,
+            'image/jpeg',
+            1,
+            1,
+            'test',
+            'https://example.test/watch-image',
+            'Test license',
+            @review_status,
+            @reviewed_at,
+            true
+         )
+         """
+      );
+      command.Parameters.AddWithValue("id", imageId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue(
+         "image_data",
+         new byte[] { 1, 2, 3 }
+      );
+      command.Parameters.AddWithValue(
+         "review_status",
+         EntityImageReviewStatusIds.Approved
+      );
+      command.Parameters.AddWithValue(
+         "reviewed_at",
+         new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
+      );
       await command.ExecuteNonQueryAsync();
    }
 

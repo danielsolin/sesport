@@ -109,17 +109,32 @@
          @foreach(var watch in Model.WatchedEntities)
          {
             var nextActivity = watch.NextActivity;
+            var primaryImageUrl = Url.Page(
+               "/Account/Watches",
+               "Image",
+               new { entityId = watch.Id }
+            );
             <li class="member-watch-result">
                <span class="member-watch-avatar"
                      aria-hidden="true">
-                  <svg viewBox="0 0 24 24"
-                       focusable="false"
-                       aria-hidden="true">
-                     <path fill="currentColor"
-                           d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
-                              1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
-                              4v2h16v-2c0-2.21-3.58-4-8-4Z" />
-                  </svg>
+                  @if(watch.HasPrimaryImage)
+                  {
+                     <img class="member-watch-image"
+                          src="@primaryImageUrl"
+                          alt=""
+                          aria-hidden="true" />
+                  }
+                  else
+                  {
+                     <svg viewBox="0 0 24 24"
+                          focusable="false"
+                          aria-hidden="true">
+                        <path fill="currentColor"
+                              d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
+                                 1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
+                                 4v2h16v-2c0-2.21-3.58-4-8-4Z" />
+                     </svg>
+                  }
                </span>
                <div class="member-watch-name">
                   @watch.Name

@@ -107,6 +107,49 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       return entities;
    }
 
+   public async Task<MemberPrimaryImage?>
+      GetWatchedEntityPrimaryImageAsync(
+      Guid memberId,
+      Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      var sql = $$"""
+         select
+            image.image_data,
+            image.mime_type
+         from entity_images image
+         join member_entity_watches watch
+            on watch.entity_id = image.entity_id
+         where watch.member_id = @member_id
+            and image.entity_id = @entity_id
+            and image.review_status =
+               '{{EntityImageReviewStatusIds.Approved}}'
+            and image.is_primary
+            and image.image_data is not null
+            and image.mime_type is not null
+            and image.mime_type ilike 'image/%'
+         limit 1
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("member_id", memberId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new MemberPrimaryImage(
+         reader.GetFieldValue<byte[]>(0),
+         reader.GetString(1)
+      );
+   }
+
    public async Task<bool> TryAddEntityWatchAsync(
       Guid memberId,
       Guid entityId,
@@ -167,12 +210,13 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    )
    {
       MemberNextActivity? nextActivity = null;
-      if(includesNextActivity && !reader.IsDBNull(4))
+      var hasPrimaryImage = reader.GetBoolean(4);
+      if(includesNextActivity && !reader.IsDBNull(5))
       {
          nextActivity = new MemberNextActivity(
-            reader.GetFieldValue<DateTimeOffset>(4),
-            reader.GetString(5),
-            reader.IsDBNull(6) ? null : reader.GetString(6)
+            reader.GetFieldValue<DateTimeOffset>(5),
+            reader.GetString(6),
+            reader.IsDBNull(7) ? null : reader.GetString(7)
          );
       }
 
@@ -181,7 +225,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          reader.GetString(1),
          reader.GetString(2),
          reader.GetString(3),
-         nextActivity
+         nextActivity,
+         hasPrimaryImage
       );
    }
 
@@ -255,7 +300,18 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             e.id,
             e.canonical_name,
             coalesce(s.display_name, s.name) as sport_name,
-            coalesce(context.related_names, '') as related_names
+            coalesce(context.related_names, '') as related_names,
+            exists (
+               select 1
+               from entity_images primary_image
+               where primary_image.entity_id = e.id
+                  and primary_image.review_status =
+                     '{{EntityImageReviewStatusIds.Approved}}'
+                  and primary_image.is_primary
+                  and primary_image.image_data is not null
+                  and primary_image.mime_type is not null
+                  and primary_image.mime_type ilike 'image/%'
+            ) as has_primary_image
             {{nextActivitySelect}}
          from entities e
          join sports s on s.id = e.sport_id

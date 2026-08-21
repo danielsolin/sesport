@@ -11,7 +11,8 @@ public sealed record MemberPersonListItem(
    string Name,
    string SportName,
    string RelatedNames,
-   MemberNextActivity? NextActivity = null
+   MemberNextActivity? NextActivity = null,
+   bool HasPrimaryImage = false
 )
 {
    public string DisplayInformation =>
@@ -24,4 +25,9 @@ public sealed record MemberNextActivity(
    DateTimeOffset StartsAt,
    string Title,
    string? RelatedOrganizationName
+);
+
+public sealed record MemberPrimaryImage(
+   byte[] Data,
+   string MimeType
 );

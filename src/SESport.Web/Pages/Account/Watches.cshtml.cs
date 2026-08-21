@@ -85,6 +85,22 @@ public sealed class WatchesModel(
          );
    }
 
+   public async Task<IActionResult> OnGetImageAsync(
+      Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      var image = await watchRepository.GetWatchedEntityPrimaryImageAsync(
+         GetMemberId(),
+         entityId,
+         cancellationToken
+      );
+
+      return image is null
+         ? NotFound()
+         : File(image.Data, image.MimeType);
+   }
+
    public async Task<IActionResult> OnGetSearchAsync(
       string? q,
       CancellationToken cancellationToken

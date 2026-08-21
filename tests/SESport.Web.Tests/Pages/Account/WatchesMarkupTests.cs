@@ -56,6 +56,8 @@ public sealed class WatchesMarkupTests
       Assert.Contains("RelatedOrganizationName", page);
       Assert.Contains("member-watch-next-activity", page);
       Assert.Contains("member-watch-avatar", page);
+      Assert.Contains("HasPrimaryImage", page);
+      Assert.Contains("member-watch-image", page);
       Assert.Contains("viewBox=\"0 0 24 24\"", page);
       Assert.DoesNotContain("autofocus", page);
       Assert.Contains(
@@ -68,6 +70,11 @@ public sealed class WatchesMarkupTests
       );
       Assert.Contains("pushSubscription", model);
       Assert.Contains("OnPostRegisterPushAsync", model);
+      Assert.Contains("OnGetImageAsync", model);
+      Assert.Contains(
+         "GetWatchedEntityPrimaryImageAsync",
+         model
+      );
       Assert.Contains("Skicka notis", model);
       Assert.Contains("Sortering: Namn", model);
       Assert.Contains("Sortering: Notis", model);
@@ -93,6 +100,9 @@ public sealed class WatchesMarkupTests
       Assert.Contains("flex: 0 0 40px;", css);
       Assert.Contains("color: #ffcc00;", css);
       Assert.Contains("opacity: 0.65;", css);
+      Assert.Contains("overflow: hidden;", css);
+      Assert.Contains(".member-watch-avatar img {", css);
+      Assert.Contains("object-fit: cover;", css);
       Assert.Contains("padding: 12px 12px 12px 8px;", css);
       Assert.Contains(
          ".member-watch-next-activity {",
