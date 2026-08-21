@@ -12,7 +12,8 @@ public sealed record MemberPersonListItem(
    string SportName,
    string RelatedNames,
    MemberNextActivity? NextActivity = null,
-   bool HasPrimaryImage = false
+   bool HasPrimaryImage = false,
+   MemberPrimaryImageSource? PrimaryImageSource = null
 )
 {
    public string DisplayInformation =>
@@ -30,4 +31,11 @@ public sealed record MemberNextActivity(
 public sealed record MemberPrimaryImage(
    byte[] Data,
    string MimeType
+);
+
+public sealed record MemberPrimaryImageSource(
+   string SourceUrl,
+   string? CreatorName,
+   string LicenseName,
+   string? LicenseUrl
 );

@@ -57,7 +57,11 @@ public sealed class WatchesMarkupTests
       Assert.Contains("member-watch-next-activity", page);
       Assert.Contains("member-watch-avatar", page);
       Assert.Contains("HasPrimaryImage", page);
+      Assert.Contains("PrimaryImageSource", page);
       Assert.Contains("member-watch-image", page);
+      Assert.Contains("member-watch-image-link", page);
+      Assert.Contains("member-watch-image-tooltip", page);
+      Assert.Contains("noopener noreferrer", page);
       Assert.Contains("loading=\"lazy\"", page);
       Assert.Contains("decoding=\"async\"", page);
       Assert.Contains("viewBox=\"0 0 24 24\"", page);
@@ -106,6 +110,8 @@ public sealed class WatchesMarkupTests
       Assert.Contains(".member-watch-avatar img {", css);
       Assert.Contains("object-fit: cover;", css);
       Assert.Contains("object-position: center top;", css);
+      Assert.Contains(".member-watch-image-container {", css);
+      Assert.Contains(":focus-within", css);
       Assert.Contains("padding: 12px 12px 12px 8px;", css);
       Assert.Contains(
          ".member-watch-next-activity {",

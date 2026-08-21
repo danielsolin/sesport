@@ -220,12 +220,23 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    {
       MemberNextActivity? nextActivity = null;
       var hasPrimaryImage = reader.GetBoolean(4);
-      if(includesNextActivity && !reader.IsDBNull(5))
+      MemberPrimaryImageSource? primaryImageSource = null;
+      if(hasPrimaryImage)
+      {
+         primaryImageSource = new MemberPrimaryImageSource(
+            reader.GetString(5),
+            reader.IsDBNull(6) ? null : reader.GetString(6),
+            reader.GetString(7),
+            reader.IsDBNull(8) ? null : reader.GetString(8)
+         );
+      }
+
+      if(includesNextActivity && !reader.IsDBNull(9))
       {
          nextActivity = new MemberNextActivity(
-            reader.GetFieldValue<DateTimeOffset>(5),
-            reader.GetString(6),
-            reader.IsDBNull(7) ? null : reader.GetString(7)
+            reader.GetFieldValue<DateTimeOffset>(9),
+            reader.GetString(10),
+            reader.IsDBNull(11) ? null : reader.GetString(11)
          );
       }
 
@@ -235,7 +246,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          reader.GetString(2),
          reader.GetString(3),
          nextActivity,
-         hasPrimaryImage
+         hasPrimaryImage,
+         primaryImageSource
       );
    }
 
@@ -310,20 +322,30 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             e.canonical_name,
             coalesce(s.display_name, s.name) as sport_name,
             coalesce(context.related_names, '') as related_names,
-            exists (
-               select 1
-               from entity_images primary_image
-               where primary_image.entity_id = e.id
-                  and primary_image.review_status =
-                     '{{EntityImageReviewStatusIds.Approved}}'
-                  and primary_image.is_primary
-                  and primary_image.image_data is not null
-                  and primary_image.mime_type is not null
-                  and primary_image.mime_type ilike 'image/%'
-            ) as has_primary_image
+            primary_image.source_url is not null as has_primary_image,
+            primary_image.source_url,
+            primary_image.creator_name,
+            primary_image.license_name,
+            primary_image.license_url
             {{nextActivitySelect}}
          from entities e
          join sports s on s.id = e.sport_id
+         left join lateral (
+            select
+               image.source_url,
+               image.creator_name,
+               image.license_name,
+               image.license_url
+            from entity_images image
+            where image.entity_id = e.id
+               and image.review_status =
+                  '{{EntityImageReviewStatusIds.Approved}}'
+               and image.is_primary
+               and image.image_data is not null
+               and image.mime_type is not null
+               and image.mime_type ilike 'image/%'
+            limit 1
+         ) primary_image on true
          left join lateral (
             select string_agg(
                coalesce(

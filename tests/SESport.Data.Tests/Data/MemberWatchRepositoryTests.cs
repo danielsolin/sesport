@@ -99,6 +99,15 @@ public sealed class MemberWatchRepositoryTests
 
          var watch = Assert.Single(watches);
          Assert.True(watch.HasPrimaryImage);
+         Assert.NotNull(watch.PrimaryImageSource);
+         Assert.Equal(
+            "https://example.test/watch-image",
+            watch.PrimaryImageSource.SourceUrl
+         );
+         Assert.Equal(
+            "Test license",
+            watch.PrimaryImageSource.LicenseName
+         );
          Assert.NotNull(watch.NextActivity);
          Assert.Equal(
             "Newcastle - Liverpool",

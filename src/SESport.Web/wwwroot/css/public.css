@@ -462,6 +462,56 @@
    overflow: hidden;
 }
 
+.member-watch-image-container {
+   position: relative;
+   flex: 0 0 40px;
+   width: 40px;
+   height: 40px;
+}
+
+.member-watch-image-link {
+   text-decoration: none;
+}
+
+.member-watch-image-link:focus-visible {
+   outline: 2px solid var(--accent-strong);
+   outline-offset: 3px;
+}
+
+.member-watch-image-tooltip {
+   position: absolute;
+   z-index: 20;
+   top: 50%;
+   left: calc(100% - 1px);
+   display: none;
+   flex-direction: column;
+   gap: 2px;
+   width: max-content;
+   max-width: 240px;
+   padding: 6px 8px;
+   border: 1px solid var(--line);
+   border-radius: 3px;
+   background: var(--surface);
+   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.16);
+   color: var(--text);
+   font-size: 11px;
+   font-weight: 400;
+   line-height: 1.25;
+   white-space: normal;
+   transform: translateY(-50%);
+}
+
+.member-watch-image-container:hover
+   .member-watch-image-tooltip,
+.member-watch-image-container:focus-within
+   .member-watch-image-tooltip {
+   display: flex;
+}
+
+.member-watch-image-tooltip a {
+   color: var(--accent-strong);
+}
+
 .member-watch-avatar svg {
    width: 24px;
    height: 24px;
