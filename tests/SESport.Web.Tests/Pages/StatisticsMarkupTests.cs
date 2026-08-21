@@ -65,6 +65,17 @@ public sealed class StatisticsMarkupTests
          ".statistics-heading .statistics-sport-select {",
          css
       );
+      Assert.Contains(
+         "flex-direction: row;\n" +
+            "      width: 100%;",
+         css
+      );
+      Assert.Contains(
+         "flex: 1 1 0;\n" +
+            "      width: auto;\n" +
+            "      min-width: 140px;",
+         css
+      );
       Assert.Contains(".statistics-table {", css);
       Assert.Contains(
          ".statistics-table-wrap {\n" +
