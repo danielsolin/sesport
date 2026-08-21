@@ -30,7 +30,7 @@ public sealed class MemberPushNotificationSenderTests
 
       using var document = JsonDocument.Parse(payload);
       Assert.Equal(
-         "Om 10 minuter: Armand Duplantis tävlar i Stavhopp. " +
+         "Om 10 minuter: Armand Duplantis deltar i Stavhopp. " +
          "Visas på SVT1, SVT Play.",
          document.RootElement.GetProperty("body").GetString()
       );

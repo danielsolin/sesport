@@ -3,6 +3,7 @@ namespace SESport.Web.Workers;
 public sealed class MemberPushNotificationWorker(
    IServiceScopeFactory scopeFactory,
    MemberPushOptions options,
+   IHostEnvironment environment,
    ILogger<MemberPushNotificationWorker> logger
 ) : BackgroundService
 {
@@ -10,6 +11,15 @@ public sealed class MemberPushNotificationWorker(
       CancellationToken stoppingToken
    )
    {
+      if(!IsWorkerAllowed(options, environment))
+      {
+         logger.LogInformation(
+            "Member push notification worker is disabled outside " +
+            "the explicitly enabled production service."
+         );
+         return;
+      }
+
       if(!options.IsConfigured)
       {
          logger.LogWarning(
@@ -35,6 +45,14 @@ public sealed class MemberPushNotificationWorker(
          when(stoppingToken.IsCancellationRequested)
       {
       }
+   }
+
+   internal static bool IsWorkerAllowed(
+      MemberPushOptions options,
+      IHostEnvironment environment
+   )
+   {
+      return environment.IsProduction() && options.WorkerEnabled;
    }
 
    private async Task SweepAsync(CancellationToken cancellationToken)

@@ -27,6 +27,11 @@ MemberPush__PrivateKey=<vapid_private_key>
 Never commit the private key. The public key is sent to the browser so it can
 create a subscription.
 
+The notification worker is an explicit production opt-in. The production
+systemd unit sets `MemberPush__WorkerEnabled=true`; do not add this setting to
+the shared `.env` file, development service, or local launch settings. The
+worker also refuses to start unless the host environment is `Production`.
+
 ## Database and service
 
 Apply the environment's schema migration procedure before restarting either

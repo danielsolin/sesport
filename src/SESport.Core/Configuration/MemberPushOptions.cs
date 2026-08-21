@@ -8,6 +8,8 @@ public sealed record MemberPushOptions
 
    public string PrivateKey { get; init; } = string.Empty;
 
+   public bool WorkerEnabled { get; init; } = false;
+
    public int DefaultNotificationLeadTimeMinutes { get; init; } =
       MemberNotificationLeadTimes.TenMinutes;
 

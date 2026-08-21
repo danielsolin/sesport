@@ -10,6 +10,7 @@ Restart=always
 RestartSec=5
 User=daniel
 Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=MemberPush__WorkerEnabled=true
 Environment=WebStats__ReportDirectory=/home/daniel/sesport/data/web-stats
 EnvironmentFile=/home/daniel/sesport/.env
 

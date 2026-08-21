@@ -14,6 +14,7 @@ User=daniel
 Environment=ASPNETCORE_ENVIRONMENT=Development
 Environment=DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER=1
 Environment=DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1
+# MemberPush__WorkerEnabled is intentionally not set for development.
 Environment=WebStats__ReportDirectory=/home/daniel/sesport/data/web-stats
 EnvironmentFile=/home/daniel/sesport/.env
 

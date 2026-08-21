@@ -121,7 +121,7 @@ public sealed class MemberPushNotificationSender(
       var leadTime = FormatLeadTime(notification.LeadTimeMinutes);
       var body = "Om " + leadTime + ": " +
          notification.PersonNames +
-         " tävlar i " + notification.ActivityTitle + ".";
+         " deltar i " + notification.ActivityTitle + ".";
       var channelNames = FormatChannelNames(notification.TvChannelName);
       if(channelNames.Length > 0)
       {
