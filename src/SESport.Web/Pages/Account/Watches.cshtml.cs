@@ -15,6 +15,9 @@ public sealed class WatchesModel(
 ) : PageModel
 {
    private const int MaxSearchResults = 5;
+   public const string SortQueryParameter = "sort";
+   public const string NameSortValue = "name";
+   public const string NextActivitySortValue = "next-activity";
 
    private static readonly JsonSerializerOptions JsonOptions = new()
    {
@@ -26,6 +29,14 @@ public sealed class WatchesModel(
       get;
       private set;
    } = [];
+
+   public string Sort { get; private set; } = NameSortValue;
+
+   public IReadOnlyList<MemberWatchSortOption> SortOptions { get; } =
+   [
+      new(NameSortValue, "Sortering: Namn"),
+      new(NextActivitySortValue, "Sortering: Notis")
+   ];
 
    public int NotificationLeadTimeMinutes
    {
@@ -50,12 +61,18 @@ public sealed class WatchesModel(
          ))
          .ToArray();
 
-   public async Task OnGetAsync(CancellationToken cancellationToken)
+   public async Task OnGetAsync(
+      string? sort,
+      CancellationToken cancellationToken
+   )
    {
       var memberId = GetMemberId();
+      var watchSort = NormalizeSort(sort);
+      Sort = ToSortValue(watchSort);
       WatchedEntities = await watchRepository.GetWatchedEntitiesAsync(
          memberId,
          DateTimeOffset.UtcNow,
+         watchSort,
          cancellationToken
       );
       NotificationLeadTimeMinutes =
@@ -199,6 +216,22 @@ public sealed class WatchesModel(
          : normalizedQuery;
    }
 
+   private static MemberWatchSort NormalizeSort(string? sort)
+   {
+      return sort switch
+      {
+         NextActivitySortValue => MemberWatchSort.NextActivity,
+         _ => MemberWatchSort.Name
+      };
+   }
+
+   private static string ToSortValue(MemberWatchSort sort)
+   {
+      return sort == MemberWatchSort.NextActivity
+         ? NextActivitySortValue
+         : NameSortValue;
+   }
+
    private static bool TryParsePushSubscription(
       string? json,
       out MemberPushSubscriptionInput subscription
@@ -298,5 +331,10 @@ public sealed class WatchesModel(
 
 public sealed record MemberNotificationLeadTimeOption(
    int Minutes,
+   string Label
+);
+
+public sealed record MemberWatchSortOption(
+   string Value,
    string Label
 );

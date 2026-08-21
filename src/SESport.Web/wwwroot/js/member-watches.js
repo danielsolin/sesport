@@ -4,8 +4,8 @@
    const inputSelector = "[data-member-watch-search-input]";
    const resultsSelector = "[data-member-watch-search-results]";
    const addFormSelector = "[data-member-watch-add-form]";
-   const notificationFormSelector =
-      "[data-member-watch-notification-form]";
+   const autoSubmitFormSelector =
+      "[data-member-watch-auto-submit-form]";
    const pushStatusSelector = "[data-member-watch-push-status]";
    const debounceMs = 220;
 
@@ -14,7 +14,7 @@
          initializePushStatus
       );
       root.querySelectorAll(containerSelector).forEach(initializeContainer);
-      root.querySelectorAll(notificationFormSelector).forEach(form => {
+      root.querySelectorAll(autoSubmitFormSelector).forEach(form => {
          if(!(form instanceof HTMLFormElement)
             || form.dataset.memberWatchInitialized === "true")
          {

@@ -1,5 +1,11 @@
 namespace SESport.Data.Models;
 
+public enum MemberWatchSort
+{
+   Name,
+   NextActivity
+}
+
 public sealed record MemberPersonListItem(
    Guid Id,
    string Name,

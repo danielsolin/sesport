@@ -37,7 +37,8 @@
    <form class="member-watches-notification-settings"
          method="post"
          asp-page-handler="SetNotificationLeadTime"
-         data-member-watch-notification-form>
+         data-member-watch-notification-form
+         data-member-watch-auto-submit-form>
       @Html.AntiForgeryToken()
       <select id="member-watch-notification-lead-time"
               name="notificationLeadTimeMinutes"
@@ -86,7 +87,24 @@
 
    @if(Model.WatchedEntities.Count > 0)
    {
-      <h2 class="member-watches-section-title">Dina bevakningar</h2>
+      <div class="member-watches-list-header">
+         <h2 class="member-watches-section-title">Dina bevakningar</h2>
+         <form class="member-watches-sort-settings"
+               method="get"
+               data-member-watch-auto-submit-form>
+            <select id="member-watch-sort"
+                    aria-label="Sortering"
+                    name="@WatchesModel.SortQueryParameter">
+               @foreach(var option in Model.SortOptions)
+               {
+                  <option value="@option.Value"
+                          selected="@(option.Value == Model.Sort)">
+                     @option.Label
+                  </option>
+               }
+            </select>
+         </form>
+      </div>
       <ul class="member-watch-results">
          @foreach(var watch in Model.WatchedEntities)
          {

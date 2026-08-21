@@ -1,5 +1,6 @@
 using Npgsql;
 using SESport.Core.Formatting;
+using SESport.Data.Models;
 using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
@@ -114,10 +115,151 @@ public sealed class MemberWatchRepositoryTests
          await DeleteTestDataAsync(
             dataSource,
             memberId,
-            personId,
+            [personId],
             organizationId,
             activityGroupId,
             [inactiveActivityId, draftActivityId, nextActivityId]
+         );
+      }
+   }
+
+   [Fact]
+   public async Task GetWatchedEntitiesSortsByNextActivityDescending()
+   {
+      var memberId = Guid.NewGuid();
+      var earliestPersonId = Guid.NewGuid();
+      var latestPersonId = Guid.NewGuid();
+      var noActivityPersonId = Guid.NewGuid();
+      var organizationId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var earliestActivityId = Guid.NewGuid();
+      var latestActivityId = Guid.NewGuid();
+      var now = new DateTimeOffset(
+         2026,
+         1,
+         1,
+         0,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      await using var dataSource = CreateDataSource();
+      var repository = new MemberWatchRepository(dataSource);
+
+      try
+      {
+         await InsertMemberAsync(dataSource, memberId);
+         await InsertPersonAsync(
+            dataSource,
+            earliestPersonId,
+            "Earliest Watch"
+         );
+         await InsertPersonAsync(
+            dataSource,
+            latestPersonId,
+            "Latest Watch"
+         );
+         await InsertPersonAsync(
+            dataSource,
+            noActivityPersonId,
+            "No Activity Watch"
+         );
+         await InsertOrganizationAsync(dataSource, organizationId);
+         await InsertActivityGroupAsync(dataSource, activityGroupId);
+         await InsertActivityAsync(
+            dataSource,
+            earliestActivityId,
+            "Earliest watch activity",
+            ToUtc(new TimeOnly(17, 0)),
+            ActivityPublicationStatusIds.Published,
+            now,
+            activityGroupId,
+            organizationId
+         );
+         await InsertActivityAsync(
+            dataSource,
+            latestActivityId,
+            "Latest watch activity",
+            ToUtc(new TimeOnly(18, 0)),
+            ActivityPublicationStatusIds.Published,
+            now,
+            activityGroupId,
+            organizationId
+         );
+         await InsertActivityLinkAsync(
+            dataSource,
+            earliestActivityId,
+            earliestPersonId
+         );
+         await InsertActivityLinkAsync(
+            dataSource,
+            latestActivityId,
+            latestPersonId
+         );
+         Assert.True(
+            await repository.TryAddEntityWatchAsync(
+               memberId,
+               earliestPersonId,
+               CancellationToken.None
+            )
+         );
+         Assert.True(
+            await repository.TryAddEntityWatchAsync(
+               memberId,
+               latestPersonId,
+               CancellationToken.None
+            )
+         );
+         Assert.True(
+            await repository.TryAddEntityWatchAsync(
+               memberId,
+               noActivityPersonId,
+               CancellationToken.None
+            )
+         );
+
+         var defaultWatches = await repository.GetWatchedEntitiesAsync(
+            memberId,
+            now,
+            CancellationToken.None
+         );
+
+         Assert.Equal(
+            new[]
+            {
+               earliestPersonId,
+               latestPersonId,
+               noActivityPersonId
+            },
+            defaultWatches.Select(watch => watch.Id)
+         );
+
+         var watches = await repository.GetWatchedEntitiesAsync(
+            memberId,
+            now,
+            MemberWatchSort.NextActivity,
+            CancellationToken.None
+         );
+
+         Assert.Equal(
+            new[]
+            {
+               earliestPersonId,
+               latestPersonId,
+               noActivityPersonId
+            },
+            watches.Select(watch => watch.Id)
+         );
+      }
+      finally
+      {
+         await DeleteTestDataAsync(
+            dataSource,
+            memberId,
+            [earliestPersonId, latestPersonId, noActivityPersonId],
+            organizationId,
+            activityGroupId,
+            [earliestActivityId, latestActivityId]
          );
       }
    }
@@ -159,7 +301,8 @@ public sealed class MemberWatchRepositoryTests
 
    private static async Task InsertPersonAsync(
       NpgsqlDataSource dataSource,
-      Guid personId
+      Guid personId,
+      string name = "Watch Test Person"
    )
    {
       await using var command = dataSource.CreateCommand(
@@ -177,7 +320,7 @@ public sealed class MemberWatchRepositoryTests
          )
          values (
             @id,
-            'Watch Test Person',
+            @canonical_name,
             @entity_type_id,
             'football',
             @country_id,
@@ -189,6 +332,7 @@ public sealed class MemberWatchRepositoryTests
          """
       );
       command.Parameters.AddWithValue("id", personId);
+      command.Parameters.AddWithValue("canonical_name", name);
       command.Parameters.AddWithValue(
          "entity_type_id",
          TrackedEntityTypeIds.Person
@@ -390,7 +534,7 @@ public sealed class MemberWatchRepositoryTests
    private static async Task DeleteTestDataAsync(
       NpgsqlDataSource dataSource,
       Guid memberId,
-      Guid personId,
+      IReadOnlyCollection<Guid> personIds,
       Guid organizationId,
       Guid activityGroupId,
       IReadOnlyCollection<Guid> activityIds
@@ -407,13 +551,14 @@ public sealed class MemberWatchRepositoryTests
          delete from activity_groups
          where id = @activity_group_id;
          delete from entities
-         where id in (@person_id, @organization_id);
+         where id = any(@person_ids)
+            or id = @organization_id;
          delete from members
          where id = @member_id;
          """
       );
       command.Parameters.AddWithValue("member_id", memberId);
-      command.Parameters.AddWithValue("person_id", personId);
+      command.Parameters.AddWithValue("person_ids", personIds.ToArray());
       command.Parameters.AddWithValue(
          "organization_id",
          organizationId

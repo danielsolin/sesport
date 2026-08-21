@@ -7,10 +7,26 @@ namespace SESport.Data.Repositories;
 
 public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 {
+   public Task<IReadOnlyList<MemberPersonListItem>>
+      GetWatchedEntitiesAsync(
+      Guid memberId,
+      DateTimeOffset now,
+      CancellationToken cancellationToken
+   )
+   {
+      return GetWatchedEntitiesAsync(
+         memberId,
+         now,
+         MemberWatchSort.Name,
+         cancellationToken
+      );
+   }
+
    public async Task<IReadOnlyList<MemberPersonListItem>>
       GetWatchedEntitiesAsync(
       Guid memberId,
       DateTimeOffset now,
+      MemberWatchSort sort,
       CancellationToken cancellationToken
    )
    {
@@ -23,7 +39,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          and watch.member_id = @member_id
          """,
          includeLimit: false,
-         includeNextActivity: true
+         includeNextActivity: true,
+         sort: sort
       );
 
       await using var command = dataSource.CreateCommand(sql);
@@ -69,7 +86,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          )
          """,
          includeLimit: true,
-         includeNextActivity: false
+         includeNextActivity: false,
+         sort: MemberWatchSort.Name
       );
 
       await using var command = dataSource.CreateCommand(sql);
@@ -171,7 +189,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       string additionalFromSql,
       string additionalWhereSql,
       bool includeLimit,
-      bool includeNextActivity
+      bool includeNextActivity,
+      MemberWatchSort sort
    )
    {
       var limitSql = includeLimit
@@ -220,6 +239,16 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          ) next_activity on true
          """
          : string.Empty;
+      var orderBySql = sort == MemberWatchSort.NextActivity &&
+         includeNextActivity
+         ? """
+            order by next_activity.starts_at asc nulls last,
+               e.canonical_name,
+               e.id
+            """
+         : """
+            order by e.canonical_name
+            """;
 
       return $$"""
          select
@@ -265,7 +294,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          {{additionalFromSql}}
          where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
             {{additionalWhereSql}}
-         order by e.canonical_name
+         {{orderBySql}}
          {{limitSql}}
          """;
    }

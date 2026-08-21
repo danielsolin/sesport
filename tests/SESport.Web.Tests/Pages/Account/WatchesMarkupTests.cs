@@ -41,6 +41,12 @@ public sealed class WatchesMarkupTests
       Assert.Contains("data-member-watch-push-activate", page);
       Assert.Contains("RegisterPush", page);
       Assert.Contains("SetNotificationLeadTime", page);
+      Assert.Contains("member-watches-sort-settings", page);
+      Assert.Contains(
+         "data-member-watch-auto-submit-form",
+         page
+      );
+      Assert.Contains("SortQueryParameter", page);
       Assert.Contains("NextActivity", page);
       Assert.Contains(
          "FormatLocalTimestampWithoutSeconds",
@@ -61,10 +67,13 @@ public sealed class WatchesMarkupTests
       Assert.Contains("pushSubscription", model);
       Assert.Contains("OnPostRegisterPushAsync", model);
       Assert.Contains("Skicka notis", model);
+      Assert.Contains("Sortering: Namn", model);
+      Assert.Contains("Sortering: Notis", model);
       Assert.Contains(
          "MemberNotificationLeadTimes.SupportedMinutes",
          model
       );
+      Assert.Contains("autoSubmitFormSelector", script);
       Assert.Contains("PushManager", script);
       Assert.Contains("requestPermission", script);
       Assert.Contains("push service error", script);
