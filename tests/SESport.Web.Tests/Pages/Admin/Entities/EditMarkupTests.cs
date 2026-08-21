@@ -14,7 +14,7 @@ public sealed class EditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/entity-linked-entities.js"
+         "src/SESport.Web/wwwroot/Admin/js/entity-linked-entities.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
@@ -41,7 +41,10 @@ public sealed class EditMarkupTests
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);
       Assert.DoesNotContain("data-multi-select", html);
       Assert.DoesNotContain("data-entity-linked-entities-chip", html);
-      Assert.Contains("entity-linked-entities.js", html);
+      Assert.Contains(
+         "src=\"~/Admin/js/entity-linked-entities.js\"",
+         html
+      );
       Assert.Contains("initializeEntityLinkedEntitiesPicker", script);
       Assert.Contains("data-entity-linked-entities-grid", script);
       Assert.Contains("data-entity-linked-entities-rows", script);

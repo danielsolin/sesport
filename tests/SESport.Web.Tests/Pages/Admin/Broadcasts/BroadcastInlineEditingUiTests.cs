@@ -10,20 +10,21 @@ public sealed class BroadcastInlineEditingUiTests
       );
       var siteJsPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/site.js"
       );
       var broadcastInlineEditJsPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/broadcast-inline-edit.js"
+         "src/SESport.Web/wwwroot/Admin/js/"
+            + "broadcast-inline-edit.js"
       );
       var groupAutocompleteJsPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/"
+         "src/SESport.Web/wwwroot/Admin/js/"
             + "broadcast-activity-group-autocomplete.js"
       );
       var organizationAutocompleteJsPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/"
+         "src/SESport.Web/wwwroot/Admin/js/"
             + "broadcast-organization-autocomplete.js"
       );
       var layoutPath = Path.Combine(
@@ -102,7 +103,27 @@ public sealed class BroadcastInlineEditingUiTests
          broadcastInlineEditJs
       );
       Assert.Contains(
-         "broadcast-activity-group-autocomplete.js",
+         "src=\"~/Admin/js/broadcast-inline-edit.js\"",
+         layout
+      );
+      Assert.Contains(
+         "src=\"~/Admin/js/broadcast-organization-autocomplete.js\"",
+         layout
+      );
+      Assert.Contains(
+         "src=\"~/Admin/js/broadcast-activity-group-autocomplete.js\"",
+         layout
+      );
+      Assert.DoesNotContain(
+         "src=\"~/js/broadcast-inline-edit.js\"",
+         layout
+      );
+      Assert.DoesNotContain(
+         "src=\"~/js/broadcast-organization-autocomplete.js\"",
+         layout
+      );
+      Assert.DoesNotContain(
+         "src=\"~/js/broadcast-activity-group-autocomplete.js\"",
          layout
       );
    }

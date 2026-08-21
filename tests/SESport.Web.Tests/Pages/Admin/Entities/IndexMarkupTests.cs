@@ -14,7 +14,7 @@ public sealed class IndexMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/entities-index.js"
+         "src/SESport.Web/wwwroot/Admin/js/entities-index.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
@@ -29,7 +29,10 @@ public sealed class IndexMarkupTests
       Assert.Contains("<summary class=\"button\">Todo</summary>", html);
       Assert.Contains("asp-page-handler=\"AddTodo\"", html);
       Assert.Contains("<textarea name=\"text\"", html);
-      Assert.Contains("entities-index.js", html);
+      Assert.Contains(
+         "src=\"~/Admin/js/entities-index.js\"",
+         html
+      );
       Assert.Contains("renderEntityRowHtml", script);
       Assert.Contains("count.textContent = value", script);
       Assert.Contains("data-person-facts-form", script);

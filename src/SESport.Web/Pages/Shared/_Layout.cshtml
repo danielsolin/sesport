@@ -99,9 +99,12 @@
          sizes="180x180" />
    <link rel="manifest" href="~/site.webmanifest" />
    <meta name="theme-color" content="#006aa8" />
-   <link rel="stylesheet"
-         href="~/vendor/multi-select-dropdown-js/MultiSelect.min.css"
-         asp-append-version="true" />
+   @if(isAdmin)
+   {
+      <link rel="stylesheet"
+            href="~/Admin/vendor/multi-select-dropdown-js/MultiSelect.min.css"
+            asp-append-version="true" />
+   }
    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
    @if(!isAdmin)
    {
@@ -177,14 +180,22 @@
    </main>
 
    @await RenderSectionAsync("Scripts", required: false)
-   <script src="~/vendor/multi-select-dropdown-js/MultiSelect.min.js"
-           asp-append-version="true"></script>
-   <script src="~/js/broadcast-inline-edit.js"
-           asp-append-version="true"></script>
-   <script src="~/js/broadcast-organization-autocomplete.js"
-           asp-append-version="true"></script>
-   <script src="~/js/broadcast-activity-group-autocomplete.js"
-           asp-append-version="true"></script>
-   <script src="~/js/site.js" asp-append-version="true"></script>
+   @if(isAdmin)
+   {
+      <script src="~/Admin/vendor/multi-select-dropdown-js/MultiSelect.min.js"
+              asp-append-version="true"></script>
+      <script src="~/Admin/js/broadcast-inline-edit.js"
+              asp-append-version="true"></script>
+      <script src="~/Admin/js/broadcast-organization-autocomplete.js"
+              asp-append-version="true"></script>
+      <script src="~/Admin/js/broadcast-activity-group-autocomplete.js"
+              asp-append-version="true"></script>
+      <script src="~/Admin/js/site.js"
+              asp-append-version="true"></script>
+   }
+   else
+   {
+      <script src="~/js/site.js" asp-append-version="true"></script>
+   }
 </body>
 </html>

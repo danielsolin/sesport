@@ -18,7 +18,10 @@ public sealed class PromptsEditMarkupTests
       Assert.Contains("data-codex-reasoning-field", html);
       Assert.Contains("Prompt.CodexReasoningEffort", html);
       Assert.Contains("CodexReasoningEffortOptions", html);
-      Assert.Contains("ai-prompt-edit.js", html);
+      Assert.Contains(
+         "src=\"~/Admin/js/ai-prompt-edit.js\"",
+         html
+      );
    }
 
    [Fact]
@@ -29,7 +32,7 @@ public sealed class PromptsEditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/ai-prompt-edit.js"
+         "src/SESport.Web/wwwroot/Admin/js/ai-prompt-edit.js"
       );
       var script = await File.ReadAllTextAsync(scriptPath);
 

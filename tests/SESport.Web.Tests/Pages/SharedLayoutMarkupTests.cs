@@ -3,7 +3,7 @@ namespace SESport.Core.Tests.Pages;
 public sealed class SharedLayoutMarkupTests
 {
    [Fact]
-   public async Task SharedLayoutLoadsPublicCssOnlyForNonAdminPages()
+   public async Task SharedLayoutSeparatesPublicAndAdminAssets()
    {
       var repoRoot = Path.GetFullPath(
          Path.Combine(AppContext.BaseDirectory, "../../../../..")
@@ -33,9 +33,36 @@ public sealed class SharedLayoutMarkupTests
          "src/SESport.Web/wwwroot/js/site.js"
       );
       var siteJs = await File.ReadAllTextAsync(siteJsPath);
+      var adminSiteJsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/Admin/js/site.js"
+      );
+      var adminSiteJs = await File.ReadAllTextAsync(adminSiteJsPath);
 
       Assert.Contains("public.css", html);
       Assert.Contains("site.css", html);
+      Assert.Contains(
+         "src=\"~/Admin/js/site.js\"",
+         html
+      );
+      Assert.Contains(
+         "src=\"~/js/site.js\"",
+         html
+      );
+      Assert.Contains(
+         "~/Admin/vendor/multi-select-dropdown-js/"
+            + "MultiSelect.min.css",
+         html
+      );
+      Assert.Contains(
+         "~/Admin/vendor/multi-select-dropdown-js/"
+            + "MultiSelect.min.js",
+         html
+      );
+      Assert.DoesNotContain(
+         "~/vendor/multi-select-dropdown-js/",
+         html
+      );
       Assert.Contains("!isAdmin", html);
       Assert.Contains("var broadcastsHref = Url.Page(", html);
       Assert.Contains("var activitiesHref = Url.Page(", html);
@@ -109,6 +136,22 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("function isMobileDevice()", siteJs);
       Assert.Contains(
          "window.navigator.userAgentData?.mobile",
+         siteJs
+      );
+      Assert.Contains(
+         "window.submitFilterForm = submitFilterForm;",
+         adminSiteJs
+      );
+      Assert.Contains(
+         "initializeBroadcastInlineEditing",
+         adminSiteJs
+      );
+      Assert.DoesNotContain(
+         "sesport-public-auto-reload",
+         adminSiteJs
+      );
+      Assert.DoesNotContain(
+         "initializeBroadcastInlineEditing",
          siteJs
       );
       Assert.DoesNotContain(".activity-entry-title {", siteCss);

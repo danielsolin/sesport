@@ -10,7 +10,7 @@ public sealed class IndexScriptTests
       );
       var jsPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/entities-index.js"
+         "src/SESport.Web/wwwroot/Admin/js/entities-index.js"
       );
       var cssPath = Path.Combine(
          repoRoot,

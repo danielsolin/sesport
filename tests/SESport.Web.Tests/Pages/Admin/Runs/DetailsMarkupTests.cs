@@ -20,7 +20,7 @@ public sealed class DetailsMarkupTests
       var toolTraceHtml = await File.ReadAllTextAsync(toolTracePath);
       var toolTraceScriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/run-tool-trace.js"
+         "src/SESport.Web/wwwroot/Admin/js/run-tool-trace.js"
       );
       var toolTraceScript = await File.ReadAllTextAsync(
          toolTraceScriptPath
@@ -55,7 +55,10 @@ public sealed class DetailsMarkupTests
       Assert.Contains("Max payload chars", html);
       Assert.Contains("DetailsModel.FormatJson(Model.Run.OutputText)", html);
       Assert.Contains("asp-for=\"ExecutionEnvironment\"", html);
-      Assert.Contains("run-tool-trace.js", html);
+      Assert.Contains(
+         "src=\"~/Admin/js/run-tool-trace.js\"",
+         html
+      );
       Assert.DoesNotContain("tool-trace-turn-header-main", html);
       Assert.Contains("tool-trace-turn-header-main", toolTraceHtml);
       Assert.Contains("Action details", toolTraceHtml);

@@ -7,4 +7,4 @@ Type=oneshot
 User=daniel
 WorkingDirectory=/home/daniel/sesport
 ExecStart=/usr/bin/flock -n /tmp/sesport-web-stats.lock \
-   /home/daniel/sesport/bin/web-stats-generate.sh --with-git
+   /home/daniel/sesport/bin/web-stats-generate.sh

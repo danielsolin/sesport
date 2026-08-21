@@ -50,9 +50,9 @@ sudo apt-get install goaccess
 sudo systemctl enable --now sesport-web-stats.timer
 ```
 
-The timer generates a report for the previous calendar day every night,
-commits the HTML reports in `data/web-stats`, and pushes them to the current
-branch.
+The timer generates a report for the previous calendar day every night and
+writes the HTML reports to `data/web-stats`. Requests under `/Admin` are
+excluded from the reports.
 
 The database cleanup timer runs once per hour, with a randomized delay of up
 to 30 minutes to avoid starting maintenance exactly on the hour.

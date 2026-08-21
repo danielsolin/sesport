@@ -14,7 +14,7 @@ public sealed class EditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/activity-participants.js"
+         "src/SESport.Web/wwwroot/Admin/js/activity-participants.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
@@ -52,11 +52,19 @@ public sealed class EditMarkupTests
       Assert.Contains("data-activity-group-picker", html);
       Assert.Contains("data-activity-group-search-url", html);
       Assert.Contains("data-activity-group-suggestions", html);
-      Assert.Contains("activity-group-autocomplete.js", html);
+      Assert.Contains(
+         "src=\"~/Admin/js/activity-group-autocomplete.js\"",
+         html
+      );
+      Assert.Contains(
+         "src=\"~/Admin/js/activity-participants.js\"",
+         html
+      );
       Assert.Contains("Create new group", await File.ReadAllTextAsync(
          Path.Combine(
             repoRoot,
-            "src/SESport.Web/wwwroot/js/activity-group-autocomplete.js"
+            "src/SESport.Web/wwwroot/Admin/js/"
+               + "activity-group-autocomplete.js"
          )
       ));
    }
@@ -147,7 +155,7 @@ public sealed class EditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/site.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
@@ -234,7 +242,7 @@ public sealed class EditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/site.js"
       );
       var endpointPath = Path.Combine(
          repoRoot,
