@@ -22,6 +22,25 @@
    <div>
       <h1>@ViewData["Title"]</h1>
    </div>
+   @if(Model.Activity.Id is not null)
+   {
+      <form method="post"
+            class="activity-ai-job-form"
+            asp-page-handler="RunAiJob"
+            asp-route-id="@Model.Activity.Id">
+         <input type="hidden"
+                name="returnUrl"
+                value="@Model.ReturnUrl" />
+         <label>
+            <select asp-for="SelectedAiJobId"
+                    aria-label="AI job"
+                    asp-items="Model.ActivityAiJobOptions"></select>
+         </label>
+         <button class="button button-primary" type="submit">
+            Run
+         </button>
+      </form>
+   }
 </section>
 
 @if (Model.LoadError is not null)
@@ -29,6 +48,15 @@
    <div class="notice notice-warning">
       @Model.LoadError
    </div>
+}
+
+@if(Model.AiJobError is not null)
+{
+   <div class="notice notice-error">@Model.AiJobError</div>
+}
+@if(Model.AiJobMessage is not null)
+{
+   <div class="notice">@Model.AiJobMessage</div>
 }
 
 @if(Model.Activity.Id is not null)

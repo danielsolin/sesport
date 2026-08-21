@@ -126,6 +126,63 @@ public sealed class EditMarkupTests
       Assert.Contains("Add source", html);
    }
 
+   [Fact]
+   public async Task EditPageOffersActivityAiJobRunner()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+      var css = await File.ReadAllTextAsync(cssPath);
+      var model = new SESport.Web.Pages.Admin.Activities.EditModel(
+         null!,
+         null!,
+         null!,
+         null!
+      );
+
+      Assert.Equal(
+         [
+            AiJobIds.FindActivityGroupFacts,
+            AiJobIds.FindParticipantsResult,
+            AiJobIds.FindParticipantsStart
+         ],
+         model.ActivityAiJobOptions.Select(option => option.Value)
+      );
+      Assert.Equal(
+         AiJobIds.FindParticipantsStart,
+         model.SelectedAiJobId
+      );
+      Assert.Contains("class=\"activity-ai-job-form\"", html);
+      Assert.Contains("asp-page-handler=\"RunAiJob\"", html);
+      Assert.Contains(
+         "asp-route-id=\"@Model.Activity.Id\"",
+         html
+      );
+      Assert.Contains("asp-for=\"SelectedAiJobId\"", html);
+      Assert.Contains(
+         "asp-items=\"Model.ActivityAiJobOptions\"",
+         html
+      );
+      Assert.Contains("aria-label=\"AI job\"", html);
+      Assert.Contains(">\n            Run\n", html);
+      Assert.Contains("OnPostRunAiJobAsync", await File.ReadAllTextAsync(
+         Path.Combine(
+            repoRoot,
+            "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml.cs"
+         )
+      ));
+      Assert.Contains(".activity-ai-job-form", css);
+   }
+
    [Theory]
    [InlineData("https://example.com/source", true)]
    [InlineData(" http://example.com/source ", true)]

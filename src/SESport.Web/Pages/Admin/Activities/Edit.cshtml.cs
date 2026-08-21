@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using SESport.Core.AI;
 using SESport.Core.Domain;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -21,6 +22,17 @@ public class EditModel(
 
    [BindProperty]
    public string? ReturnUrl { get; set; }
+
+   [BindProperty]
+   public string? SelectedAiJobId { get; set; } =
+      AiJobIds.FindParticipantsStart;
+
+   public IReadOnlyList<SelectListItem> ActivityAiJobOptions { get; } =
+   [
+      new(AiJobIds.FindActivityGroupFacts, AiJobIds.FindActivityGroupFacts),
+      new(AiJobIds.FindParticipantsResult, AiJobIds.FindParticipantsResult),
+      new(AiJobIds.FindParticipantsStart, AiJobIds.FindParticipantsStart)
+   ];
 
    public IReadOnlyList<SelectListItem> Entities { get; private set; } = [];
 
@@ -61,6 +73,12 @@ public class EditModel(
 
    [TempData]
    public string? SourceMessage { get; set; }
+
+   [TempData]
+   public string? AiJobError { get; set; }
+
+   [TempData]
+   public string? AiJobMessage { get; set; }
 
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
@@ -136,6 +154,63 @@ public class EditModel(
    )
    {
       return await SaveAsync(cancellationToken);
+   }
+
+   public async Task<IActionResult> OnPostRunAiJobAsync(
+      Guid id,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      var activity = await editService.LoadActivityAsync(
+         id,
+         cancellationToken
+      );
+
+      if(activity is null)
+      {
+         return NotFound();
+      }
+
+      var jobId = SelectedAiJobId;
+      if(!IsSupportedActivityAiJob(jobId))
+      {
+         AiJobError = "Select a valid activity AI job.";
+         return RedirectToEdit(id, returnUrl);
+      }
+
+      var selectedJobId = jobId!;
+
+      if(string.IsNullOrWhiteSpace(activity.Title))
+      {
+         AiJobError = selectedJobId switch
+         {
+            AiJobIds.FindActivityGroupFacts =>
+               "Title is required before finding facts.",
+            AiJobIds.FindParticipantsStart =>
+               "Title is required before finding a start time.",
+            _ => "Title is required before finding results."
+         };
+         return RedirectToEdit(id, returnUrl);
+      }
+
+      if(selectedJobId == AiJobIds.FindActivityGroupFacts &&
+         activity.ActivityGroupId is null)
+      {
+         AiJobError =
+            "Assign the activity to an ActivityGroup before finding " +
+            "group facts.";
+         return RedirectToEdit(id, returnUrl);
+      }
+
+      var runId = await editService.QueueActivityAiJobAsync(
+         selectedJobId,
+         activity,
+         cancellationToken
+      );
+      AiJobMessage = $"{selectedJobId} queued. Run ID: {runId}.";
+
+      return RedirectToEdit(id, returnUrl);
    }
 
    public async Task<IActionResult> OnPostDeleteParticipantAsync(
@@ -370,6 +445,17 @@ public class EditModel(
       }
 
       return returnUrl;
+   }
+
+   private bool IsSupportedActivityAiJob(string? jobId)
+   {
+      return jobId is not null && ActivityAiJobOptions.Any(
+         option => string.Equals(
+            option.Value,
+            jobId,
+            StringComparison.Ordinal
+         )
+      );
    }
 
    public static bool TryNormalizeSourceUrl(

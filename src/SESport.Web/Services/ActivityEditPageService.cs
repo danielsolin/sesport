@@ -544,6 +544,35 @@ public sealed class ActivityEditPageService(
       );
    }
 
+   public async Task<Guid> QueueActivityAiJobAsync(
+      string jobId,
+      ActivityEditModel activity,
+      CancellationToken cancellationToken
+   )
+   {
+      return jobId switch
+      {
+         AiJobIds.FindActivityGroupFacts => await QueueFactsAsync(
+            activity,
+            cancellationToken
+         ),
+         AiJobIds.FindParticipantsStart =>
+            await QueueFindParticipantsStartAsync(
+               activity,
+               cancellationToken
+            ),
+         AiJobIds.FindParticipantsResult =>
+            await QueueFindParticipantsResultAsync(
+               activity,
+               cancellationToken
+            ),
+         _ => throw new ArgumentException(
+            "The AI job is not supported for activities.",
+            nameof(jobId)
+         )
+      };
+   }
+
    public async Task<Guid> QueueFindParticipantsStartAsync(
       ActivityEditModel activity,
       CancellationToken cancellationToken
