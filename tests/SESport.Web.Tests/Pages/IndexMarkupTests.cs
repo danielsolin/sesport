@@ -155,10 +155,8 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("participant.DisciplineAliasName", html);
-      Assert.Contains("PublicParticipantTeamFlag.GetPath(", html);
-      Assert.Contains("participant.TeamCountryId", html);
-      Assert.Contains("hasPrimaryCountryTeam", html);
-      Assert.Contains("participant-country-flag", html);
+      Assert.DoesNotContain("PublicParticipantTeamFlag", html);
+      Assert.DoesNotContain("teamCountryFlagPath", html);
       Assert.Contains("participant.WatchPriority", html);
       Assert.Contains("participant.WatchPriority == 0", html);
       Assert.Contains("watchPriorityBadgeClass", html);
@@ -213,10 +211,6 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-team-name-landscape {\n" +
             "   display: inline;",
-         css
-      );
-      Assert.Contains(
-         ".activity-participant-col-name .participant-country-flag {",
          css
       );
       Assert.Contains(
