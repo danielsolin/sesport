@@ -22,5 +22,6 @@ public sealed record MemberActivityPushNotification(
    DateTimeOffset StartsAt,
    string PublicDateMode,
    int LeadTimeMinutes,
+   string? TvChannelName,
    IReadOnlyList<MemberPushSubscription> Subscriptions
 );

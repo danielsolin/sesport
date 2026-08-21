@@ -139,7 +139,8 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                coalesce(
                   member.push_notification_lead_time_minutes,
                   @default_lead_time_minutes
-               ) as lead_time_minutes
+               ) as lead_time_minutes,
+               activity.tv_channel_name
             from members member
             join member_entity_watches watch
                on watch.member_id = member.id
@@ -179,6 +180,7 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                member.id,
                activity.id,
                activity.title,
+               activity.tv_channel_name,
                activity.starts_at,
                activity_group.public_date_mode,
                member.push_notification_lead_time_minutes
@@ -235,6 +237,7 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
             candidates.starts_at,
             candidates.public_date_mode,
             candidates.lead_time_minutes,
+            candidates.tv_channel_name,
             subscription.id,
             subscription.endpoint,
             subscription.p256dh,
@@ -291,6 +294,7 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                   reader.GetFieldValue<DateTimeOffset>(4),
                   reader.GetString(5),
                   reader.GetInt32(6),
+                  reader.IsDBNull(7) ? null : reader.GetString(7),
                   []
                ),
                []
@@ -300,10 +304,10 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
 
          notificationData.Subscriptions.Add(
             new MemberPushSubscription(
-               reader.GetGuid(7),
-               reader.GetString(8),
+               reader.GetGuid(8),
                reader.GetString(9),
-               reader.GetString(10)
+               reader.GetString(10),
+               reader.GetString(11)
             )
          );
       }

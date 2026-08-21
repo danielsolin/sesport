@@ -119,9 +119,14 @@ public sealed class MemberPushNotificationSender(
          notification.PublicDateMode
       );
       var leadTime = FormatLeadTime(notification.LeadTimeMinutes);
-      var body = notification.PersonNames +
-         " deltar i " + notification.ActivityTitle +
-         " om " + leadTime + ".";
+      var body = "Om " + leadTime + ": " +
+         notification.PersonNames +
+         " tävlar i " + notification.ActivityTitle + ".";
+      var channelNames = FormatChannelNames(notification.TvChannelName);
+      if(channelNames.Length > 0)
+      {
+         body += " Visas på " + channelNames + ".";
+      }
 
       return JsonSerializer.Serialize(
          new
@@ -142,6 +147,20 @@ public sealed class MemberPushNotificationSender(
       return minutes == MemberNotificationLeadTimes.OneHourMinutes
          ? "en timme"
          : $"{minutes} minuter";
+   }
+
+   private static string FormatChannelNames(string? tvChannelName)
+   {
+      return string.Join(
+         ", ",
+         (tvChannelName ?? string.Empty)
+            .Split(
+               ',',
+               StringSplitOptions.TrimEntries |
+                  StringSplitOptions.RemoveEmptyEntries
+            )
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+      );
    }
 
    private static int GetTimeToLiveSeconds(
