@@ -5,7 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/sesport
+User=daniel
+Group=daniel
+Environment=HOME=/home/daniel
+WorkingDirectory=/home/daniel/sesport
 ExecStart=/usr/bin/unison sesport
 Restart=always
 RestartSec=30
