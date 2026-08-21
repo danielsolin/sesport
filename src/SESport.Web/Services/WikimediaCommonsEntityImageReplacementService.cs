@@ -24,8 +24,8 @@ internal sealed class WikimediaCommonsEntityImageReplacementService(
             .Where(value => !string.IsNullOrWhiteSpace(value))
       );
       var replacement = new EntityImageReplacement(
-         source.Url,
-         $"{image.PageId}:{source.RevisionId}:width-" +
+         image.Source.Url,
+         $"{image.PageId}:{image.Source.RevisionId}:width-" +
             image.Image.PixelWidth,
          image.Image.Data,
          image.Image.MimeType,

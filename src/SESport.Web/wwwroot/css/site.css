@@ -2220,21 +2220,19 @@ h2 {
 .entity-image-source-control {
    display: flex;
    align-items: flex-end;
+   align-self: flex-start;
    gap: 8px;
 }
 
 .entity-image-source-control label {
    flex: 1 1 auto;
    min-width: 0;
+   margin-bottom: 0;
 }
 
 .entity-image-source-control .button {
    flex: 0 0 auto;
    white-space: nowrap;
-}
-
-.entity-image-source-control input.is-unlocked {
-   background: var(--surface);
 }
 
 .form-grid {

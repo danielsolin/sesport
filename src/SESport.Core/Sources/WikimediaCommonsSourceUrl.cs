@@ -12,6 +12,7 @@ public static class WikimediaCommonsSourceUrl
 {
    private const string Host = "commons.wikimedia.org";
    private const string FilePagePath = "/w/index.php";
+   private const string WikiFilePathPrefix = "/wiki/";
    private const string FileTitlePrefix = "File:";
 
    public static bool TryParse(
@@ -33,25 +34,108 @@ public static class WikimediaCommonsSourceUrl
          ) ||
          !string.IsNullOrEmpty(parsedUrl.UserInfo) ||
          (parsedUrl.Port != -1 && parsedUrl.Port != 443) ||
-         !string.Equals(
-            parsedUrl.AbsolutePath,
-            FilePagePath,
-            StringComparison.Ordinal
-         ) ||
-         !string.IsNullOrEmpty(parsedUrl.Fragment) ||
-         !TryReadQueryValue(parsedUrl.Query, "title", out var fileTitle) ||
-         !TryReadQueryValue(parsedUrl.Query, "oldid", out var oldid) ||
-         !long.TryParse(
-            oldid,
-            NumberStyles.None,
-            CultureInfo.InvariantCulture,
-            out var revisionId
-         ) ||
-         revisionId <= 0)
+         !string.IsNullOrEmpty(parsedUrl.Fragment))
       {
          return false;
       }
 
+      string? fileTitle;
+      if(string.Equals(
+            parsedUrl.AbsolutePath,
+            FilePagePath,
+            StringComparison.Ordinal
+         ))
+      {
+         if(!TryReadQueryValue(
+               parsedUrl.Query,
+               "title",
+               out fileTitle
+            ))
+         {
+            return false;
+         }
+      }
+      else if(!parsedUrl.AbsolutePath.StartsWith(
+               WikiFilePathPrefix,
+               StringComparison.Ordinal
+            ) ||
+            !TryDecode(
+               parsedUrl.AbsolutePath[WikiFilePathPrefix.Length..],
+               out fileTitle
+            ))
+      {
+         return false;
+      }
+
+      if(fileTitle is null ||
+         !TryNormalizeFileTitle(fileTitle, out var canonicalTitle) ||
+         !TryReadOptionalQueryValue(
+            parsedUrl.Query,
+            "oldid",
+            out var oldid
+         ))
+      {
+         return false;
+      }
+
+      var revisionId = 0L;
+      if(oldid is not null &&
+         (!long.TryParse(
+            oldid,
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out revisionId
+         ) || revisionId <= 0))
+      {
+         return false;
+      }
+
+      reference = CreateReference(canonicalTitle, revisionId);
+      return true;
+   }
+
+   public static WikimediaCommonsImageReference WithRevision(
+      WikimediaCommonsImageReference source,
+      long revisionId
+   )
+   {
+      ArgumentNullException.ThrowIfNull(source);
+      if(revisionId <= 0)
+      {
+         throw new ArgumentOutOfRangeException(nameof(revisionId));
+      }
+
+      return CreateReference(source.FileTitle, revisionId);
+   }
+
+   private static WikimediaCommonsImageReference CreateReference(
+      string fileTitle,
+      long revisionId
+   )
+   {
+      var encodedTitle = Uri.EscapeDataString(fileTitle)
+         .Replace("%3A", ":", StringComparison.OrdinalIgnoreCase);
+      var canonicalUrl =
+         $"https://{Host}{FilePagePath}?title={encodedTitle}";
+      if(revisionId > 0)
+      {
+         canonicalUrl +=
+            $"&oldid={revisionId.ToString(CultureInfo.InvariantCulture)}";
+      }
+
+      return new WikimediaCommonsImageReference(
+         canonicalUrl,
+         fileTitle,
+         revisionId
+      );
+   }
+
+   private static bool TryNormalizeFileTitle(
+      string fileTitle,
+      out string canonicalTitle
+   )
+   {
+      canonicalTitle = string.Empty;
       if(!fileTitle.StartsWith(
             FileTitlePrefix,
             StringComparison.OrdinalIgnoreCase
@@ -66,18 +150,7 @@ public static class WikimediaCommonsSourceUrl
          return false;
       }
 
-      var canonicalTitle = FileTitlePrefix + fileName.Replace(' ', '_');
-      var encodedTitle = Uri.EscapeDataString(canonicalTitle)
-         .Replace("%3A", ":", StringComparison.OrdinalIgnoreCase);
-      var canonicalUrl =
-         $"https://{Host}{FilePagePath}?title={encodedTitle}" +
-         $"&oldid={revisionId.ToString(CultureInfo.InvariantCulture)}";
-
-      reference = new WikimediaCommonsImageReference(
-         canonicalUrl,
-         canonicalTitle,
-         revisionId
-      );
+      canonicalTitle = FileTitlePrefix + fileName.Replace(' ', '_');
       return true;
    }
 
@@ -87,7 +160,24 @@ public static class WikimediaCommonsSourceUrl
       out string value
    )
    {
-      value = string.Empty;
+      if(!TryReadOptionalQueryValue(query, key, out var optionalValue) ||
+         optionalValue is null)
+      {
+         value = string.Empty;
+         return false;
+      }
+
+      value = optionalValue;
+      return true;
+   }
+
+   private static bool TryReadOptionalQueryValue(
+      string query,
+      string key,
+      out string? value
+   )
+   {
+      value = null;
       var found = false;
 
       foreach(var part in query.TrimStart('?').Split(
@@ -107,16 +197,18 @@ public static class WikimediaCommonsSourceUrl
             continue;
          }
 
-         if(found || !TryDecode(part[(separator + 1)..], out value))
+         if(found ||
+            !TryDecode(part[(separator + 1)..], out var decodedValue))
          {
-            value = string.Empty;
+            value = null;
             return false;
          }
 
+         value = decodedValue;
          found = true;
       }
 
-      return found;
+      return true;
    }
 
    private static bool TryDecode(string value, out string decoded)

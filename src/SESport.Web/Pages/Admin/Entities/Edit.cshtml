@@ -185,15 +185,11 @@
             <input asp-for="Entity.FormativeClub" />
             <span asp-validation-for="Entity.FormativeClub"></span>
          </label>
-         <div class="entity-image-source-control"
-              data-entity-image-source-control>
-            <label data-entity-image-source-url-field>
+         <div class="entity-image-source-control">
+            <label>
                <span>Image source URL</span>
                <input asp-for="Entity.PrimaryImageSourceUrl"
-                      type="url"
-                      readonly
-                      data-entity-image-source-input
-                      title="Double-click to edit" />
+                      type="url" />
                <span asp-validation-for="Entity.PrimaryImageSourceUrl">
                </span>
             </label>
@@ -201,9 +197,7 @@
             {
                <button class="button"
                        type="submit"
-                       formaction="@replaceImageUrl"
-                       data-entity-image-replace-button
-                       hidden>
+                       formaction="@replaceImageUrl">
                   Replace image
                </button>
             }
@@ -468,7 +462,5 @@
 
 @section Scripts {
    <script src="~/Admin/js/entity-linked-entities.js"
-           asp-append-version="true"></script>
-   <script src="~/Admin/js/entity-image-source.js"
            asp-append-version="true"></script>
 }

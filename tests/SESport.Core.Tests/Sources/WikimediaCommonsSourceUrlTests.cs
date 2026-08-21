@@ -5,6 +5,28 @@ namespace SESport.Core.Tests.Sources;
 public sealed class WikimediaCommonsSourceUrlTests
 {
    [Fact]
+   public void TryParseAcceptsCurrentFilePageUrl()
+   {
+      var isValid = WikimediaCommonsSourceUrl.TryParse(
+         "https://commons.wikimedia.org/wiki/" +
+         "File:FREC_2021_Spielberg_Nr._17_Beganovic.jpg",
+         out var reference
+      );
+
+      Assert.True(isValid);
+      Assert.Equal(
+         "File:FREC_2021_Spielberg_Nr._17_Beganovic.jpg",
+         reference.FileTitle
+      );
+      Assert.Equal(0, reference.RevisionId);
+      Assert.Equal(
+         "https://commons.wikimedia.org/w/index.php?" +
+         "title=File:FREC_2021_Spielberg_Nr._17_Beganovic.jpg",
+         reference.Url
+      );
+   }
+
+   [Fact]
    public void TryParseReadsAndCanonicalizesFileRevisionUrl()
    {
       var isValid = WikimediaCommonsSourceUrl.TryParse(
@@ -29,11 +51,6 @@ public sealed class WikimediaCommonsSourceUrlTests
    }
 
    [Theory]
-   [InlineData("https://commons.wikimedia.org/wiki/File:Example.jpg")]
-   [InlineData(
-      "https://commons.wikimedia.org/w/index.php?" +
-      "title=File:Example.jpg"
-   )]
    [InlineData(
       "https://commons.wikimedia.org/w/index.php?" +
       "title=File:Example.jpg&oldid=not-a-number"
@@ -42,6 +59,7 @@ public sealed class WikimediaCommonsSourceUrlTests
       "https://en.wikipedia.org/w/index.php?" +
       "title=File:Example.jpg&oldid=123"
    )]
+   [InlineData("https://commons.wikimedia.org/wiki/Category:Example")]
    [InlineData(
       "https://commons.wikimedia.org/w/index.php?" +
       "title=Category:Example&oldid=123"

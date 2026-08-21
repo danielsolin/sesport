@@ -74,14 +74,20 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
       CancellationToken cancellationToken
    )
    {
+      var resolvedSource = source.RevisionId > 0
+         ? source
+         : await ResolveCurrentRevisionAsync(
+            source,
+            cancellationToken
+         );
       var imageInfo = await GetImageInfoAsync(
-         source,
+         resolvedSource,
          MainImageWidth,
          includeMetadata: true,
          cancellationToken
       );
       var thumbnailInfo = await GetImageInfoAsync(
-         source,
+         resolvedSource,
          ListThumbnailWidth,
          includeMetadata: false,
          cancellationToken
@@ -98,6 +104,7 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
       );
 
       return new WikimediaCommonsImageData(
+         resolvedSource,
          imageInfo.PageId,
          imageInfo.SourceTitle,
          imageInfo.CreatorName,
@@ -107,6 +114,53 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
          imageInfo.CopyrightNotice,
          image,
          thumbnail
+      );
+   }
+
+   private async Task<WikimediaCommonsImageReference>
+      ResolveCurrentRevisionAsync(
+         WikimediaCommonsImageReference source,
+         CancellationToken cancellationToken
+      )
+   {
+      var parameters = new Dictionary<string, string>
+      {
+         ["action"] = "query",
+         ["titles"] = source.FileTitle,
+         ["prop"] = "revisions",
+         ["rvprop"] = "ids",
+         ["format"] = "json",
+         ["formatversion"] = "2"
+      };
+      var responseBody = await GetJsonWithRetryAsync(
+         BuildApiUri(parameters),
+         cancellationToken
+      );
+
+      using var document = JsonDocument.Parse(responseBody);
+      var page = GetFirstPage(document.RootElement);
+      if(page is null ||
+         !page.Value.TryGetProperty(
+            "revisions",
+            out var revisions
+         ) ||
+         revisions.ValueKind != JsonValueKind.Array ||
+         revisions.GetArrayLength() == 0 ||
+         !revisions[0].TryGetProperty(
+            "revid",
+            out var revisionIdElement
+         ) ||
+         !revisionIdElement.TryGetInt64(out var revisionId) ||
+         revisionId <= 0)
+      {
+         throw new EntityImageReplacementException(
+            "The Wikimedia Commons file page was not found."
+         );
+      }
+
+      return WikimediaCommonsSourceUrl.WithRevision(
+         source,
+         revisionId
       );
    }
 
@@ -627,6 +681,7 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
 }
 
 internal sealed record WikimediaCommonsImageData(
+   WikimediaCommonsImageReference Source,
    long PageId,
    string SourceTitle,
    string? CreatorName,

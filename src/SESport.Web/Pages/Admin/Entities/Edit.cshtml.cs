@@ -131,8 +131,7 @@ public class EditModel(
          Entity.PrimaryImageSourceUrl = sourceUrl;
          ModelState.AddModelError(
             "Entity.PrimaryImageSourceUrl",
-            "Paste a valid Wikimedia Commons file revision URL " +
-            "containing title and oldid."
+            "Paste a valid Wikimedia Commons file URL."
          );
          await LoadOptionsAsync(cancellationToken);
          return Page();

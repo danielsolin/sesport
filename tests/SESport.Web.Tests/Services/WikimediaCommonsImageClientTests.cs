@@ -22,6 +22,12 @@ public sealed class WikimediaCommonsImageClientTests
       Assert.True(isValid);
       var result = await client.FetchAsync(source, CancellationToken.None);
 
+      Assert.Equal(
+         "https://commons.wikimedia.org/w/index.php?" +
+         "title=File:Example.jpg&oldid=42",
+         result.Source.Url
+      );
+      Assert.Equal(42, result.Source.RevisionId);
       Assert.Equal(123, result.PageId);
       Assert.Equal("File:Example.jpg", result.SourceTitle);
       Assert.Equal("Example Creator", result.CreatorName);
@@ -43,6 +49,38 @@ public sealed class WikimediaCommonsImageClientTests
       Assert.Contains(
          handler.Requests,
          request => request.Contains("iiurlwidth=72")
+      );
+   }
+
+   [Fact]
+   public async Task FetchAsyncResolvesCurrentFilePageRevision()
+   {
+      var handler = new FakeWikimediaHandler();
+      using var httpClient = new HttpClient(handler);
+      var client = new WikimediaCommonsImageClient(httpClient);
+      var isValid = WikimediaCommonsSourceUrl.TryParse(
+         "https://commons.wikimedia.org/wiki/File:Example.jpg",
+         out var source
+      );
+
+      Assert.True(isValid);
+      Assert.Equal(0, source.RevisionId);
+
+      var result = await client.FetchAsync(source, CancellationToken.None);
+
+      Assert.Equal(
+         "https://commons.wikimedia.org/w/index.php?" +
+         "title=File:Example.jpg&oldid=42",
+         result.Source.Url
+      );
+      Assert.Equal(42, result.Source.RevisionId);
+      Assert.Contains(
+         handler.Requests,
+         request => request.Contains("titles=File%3AExample.jpg")
+      );
+      Assert.Contains(
+         handler.Requests,
+         request => request.Contains("revids=42")
       );
    }
 
