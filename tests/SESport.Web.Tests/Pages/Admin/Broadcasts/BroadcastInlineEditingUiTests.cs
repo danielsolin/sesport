@@ -21,6 +21,11 @@ public sealed class BroadcastInlineEditingUiTests
          "src/SESport.Web/wwwroot/js/"
             + "broadcast-activity-group-autocomplete.js"
       );
+      var organizationAutocompleteJsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/"
+            + "broadcast-organization-autocomplete.js"
+      );
       var layoutPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/Pages/Shared/_Layout.cshtml"
@@ -30,6 +35,8 @@ public sealed class BroadcastInlineEditingUiTests
          await File.ReadAllTextAsync(broadcastInlineEditJsPath);
       var groupAutocompleteJs =
          await File.ReadAllTextAsync(groupAutocompleteJsPath);
+      var organizationAutocompleteJs =
+         await File.ReadAllTextAsync(organizationAutocompleteJsPath);
       var layout = await File.ReadAllTextAsync(layoutPath);
 
       Assert.Contains(
@@ -48,6 +55,15 @@ public sealed class BroadcastInlineEditingUiTests
       Assert.Contains(
          "broadcast-activity-group-suggestions-fixed",
          groupAutocompleteJs
+      );
+      Assert.Contains(
+         "function formatOrgSearchResult(item)",
+         organizationAutocompleteJs
+      );
+      Assert.Contains("item.sport", organizationAutocompleteJs);
+      Assert.Contains(
+         "`${item.text} (${item.sport})`",
+         organizationAutocompleteJs
       );
       Assert.Contains(
          "document.addEventListener(\"focusin\"",

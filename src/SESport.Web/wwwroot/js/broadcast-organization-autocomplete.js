@@ -150,8 +150,9 @@
             option.type = "button";
             option.className = "broadcast-org-entity-option";
             option.dataset.entityId = item.id;
-            option.dataset.entityLabel = item.text;
-            option.textContent = item.text;
+            const label = formatOrgSearchResult(item);
+            option.dataset.entityLabel = label;
+            option.textContent = label;
 
             option.addEventListener("click", event => {
                event.preventDefault();
@@ -480,10 +481,22 @@
             : typeof item.Name === "string"
                ? item.Name.trim()
                : "";
+      const sport = typeof item.sport === "string"
+         ? item.sport.trim()
+         : typeof item.Sport === "string"
+            ? item.Sport.trim()
+            : "";
 
       return id === "" || text === ""
          ? null
-         : { id, text };
+         : { id, text, sport };
+   }
+
+   function formatOrgSearchResult(item)
+   {
+      return item.sport === ""
+         ? item.text
+         : `${item.text} (${item.sport})`;
    }
 
    function getBroadcastOrganizationSearchUrl()
