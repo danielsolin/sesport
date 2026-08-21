@@ -80,10 +80,11 @@ formative club are nullable and constrained to person entities.
 
 Stores image bytes and metadata associated with an entity. The table keeps
 source, creator, license, attribution, file, and review metadata alongside
-the optional image binary. It supports candidate and approved images and
-permits at most one primary image per entity. PostgreSQL stores the image
-bytes directly so image metadata and content remain part of the same backup
-and transaction.
+the optional image binary. It also stores an optional source-provided
+thumbnail binary and its dimensions, MIME type, checksum, and media URL.
+It supports candidate and approved images and permits at most one primary
+image per entity. PostgreSQL stores the image bytes directly so image
+metadata and content remain part of the same backup and transaction.
 
 ### `entity_to_entity_links`
 

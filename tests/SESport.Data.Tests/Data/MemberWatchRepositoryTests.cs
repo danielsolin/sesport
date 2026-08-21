@@ -119,7 +119,7 @@ public sealed class MemberWatchRepositoryTests
          );
          Assert.NotNull(image);
          Assert.Equal("image/jpeg", image.MimeType);
-         Assert.Equal(new byte[] { 1, 2, 3 }, image.Data);
+         Assert.Equal(new byte[] { 9, 8 }, image.Data);
       }
       finally
       {
@@ -367,6 +367,10 @@ public sealed class MemberWatchRepositoryTests
             mime_type,
             pixel_width,
             pixel_height,
+            thumbnail_data,
+            thumbnail_mime_type,
+            thumbnail_pixel_width,
+            thumbnail_pixel_height,
             source_kind,
             source_url,
             license_name,
@@ -381,6 +385,10 @@ public sealed class MemberWatchRepositoryTests
             'image/jpeg',
             1,
             1,
+            @thumbnail_data,
+            'image/jpeg',
+            2,
+            2,
             'test',
             'https://example.test/watch-image',
             'Test license',
@@ -395,6 +403,10 @@ public sealed class MemberWatchRepositoryTests
       command.Parameters.AddWithValue(
          "image_data",
          new byte[] { 1, 2, 3 }
+      );
+      command.Parameters.AddWithValue(
+         "thumbnail_data",
+         new byte[] { 9, 8 }
       );
       command.Parameters.AddWithValue(
          "review_status",

@@ -58,6 +58,8 @@ public sealed class WatchesMarkupTests
       Assert.Contains("member-watch-avatar", page);
       Assert.Contains("HasPrimaryImage", page);
       Assert.Contains("member-watch-image", page);
+      Assert.Contains("loading=\"lazy\"", page);
+      Assert.Contains("decoding=\"async\"", page);
       Assert.Contains("viewBox=\"0 0 24 24\"", page);
       Assert.DoesNotContain("autofocus", page);
       Assert.Contains(

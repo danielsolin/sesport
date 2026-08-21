@@ -341,6 +341,31 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void EntityImageThumbnailMigrationAddsSmallImageStorage()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "033_entity_image_thumbnails.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.entity_images", migration);
+      Assert.Contains("thumbnail_data bytea", migration);
+      Assert.Contains("thumbnail_mime_type text", migration);
+      Assert.Contains("thumbnail_pixel_width integer", migration);
+      Assert.Contains("thumbnail_pixel_height integer", migration);
+      Assert.Contains("thumbnail_content_sha256 text", migration);
+      Assert.Contains("thumbnail_source_media_url text", migration);
+      Assert.Contains(
+         "entity_images_thumbnail_data_not_empty_check",
+         migration
+      );
+   }
+
+   [Fact]
    public void TodoMigrationDefinesOpenTodoStorage()
    {
       var migration = File.ReadAllText(

@@ -116,8 +116,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    {
       var sql = $$"""
          select
-            image.image_data,
-            image.mime_type
+            coalesce(image.thumbnail_data, image.image_data),
+            coalesce(image.thumbnail_mime_type, image.mime_type)
          from entity_images image
          join member_entity_watches watch
             on watch.entity_id = image.entity_id
@@ -126,9 +126,18 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             and image.review_status =
                '{{EntityImageReviewStatusIds.Approved}}'
             and image.is_primary
-            and image.image_data is not null
-            and image.mime_type is not null
-            and image.mime_type ilike 'image/%'
+            and coalesce(
+               image.thumbnail_data,
+               image.image_data
+            ) is not null
+            and coalesce(
+               image.thumbnail_mime_type,
+               image.mime_type
+            ) is not null
+            and coalesce(
+               image.thumbnail_mime_type,
+               image.mime_type
+            ) ilike 'image/%'
          limit 1
          """;
 
