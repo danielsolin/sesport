@@ -105,6 +105,7 @@ public sealed class WatchesMarkupTests
       Assert.Contains("overflow: hidden;", css);
       Assert.Contains(".member-watch-avatar img {", css);
       Assert.Contains("object-fit: cover;", css);
+      Assert.Contains("object-position: center top;", css);
       Assert.Contains("padding: 12px 12px 12px 8px;", css);
       Assert.Contains(
          ".member-watch-next-activity {",
