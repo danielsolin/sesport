@@ -4,7 +4,7 @@ The production and development web services send transactional mail through
 a local Postfix instance. Postfix delivers directly to recipient MX servers;
 HostUp's smarthost relay is not used by the application.
 
-The VPS is `207.2.120.181` and sends as `sesport.se`.
+The VPS uses a public server address and sends as `sesport.se`.
 
 ## Mail flow
 
@@ -61,7 +61,7 @@ sudo postconf -e \
   'inet_protocols = ipv4' \
   'mynetworks = 127.0.0.0/8 [::1]/128' \
   'relayhost =' \
-  'smtp_bind_address = 207.2.120.181' \
+  'smtp_bind_address = <public-ip>' \
   'smtp_tls_security_level = may' \
   'smtp_tls_loglevel = 1' \
   'smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt' \
@@ -74,8 +74,9 @@ sudo postconf -e \
   'disable_vrfy_command = yes'
 ```
 
-`smtp_bind_address` makes direct deliveries originate from the public VPS
-address. `relayhost` must remain empty.
+`smtp_bind_address` makes direct deliveries originate from the public server
+address. Replace `<public-ip>` with the server's public address.
+`relayhost` must remain empty.
 
 ## OpenDKIM
 
@@ -154,7 +155,7 @@ The following records are required in the authoritative DNS zone for
 
 | Name | Type | Value |
 | --- | --- | --- |
-| `sesport.se` | A | `207.2.120.181` |
+| `sesport.se` | A | `<public-ip>` |
 | `sesport.se` | TXT | SPF record below |
 | `sesport._domainkey` | TXT | Public value from `sesport.txt` |
 | `_dmarc` | TXT | `v=DMARC1; p=none` |
@@ -162,7 +163,7 @@ The following records are required in the authoritative DNS zone for
 The current SPF record is:
 
 ```text
-v=spf1 include:_spf.mx.cloudflare.net include:spf.hostup.se ip4:207.2.120.181 ~all
+v=spf1 include:_spf.mx.cloudflare.net include:spf.hostup.se ip4:<public-ip> ~all
 ```
 
 Keep one SPF TXT record for the domain. The HostUp include can be removed
@@ -171,21 +172,21 @@ later if the smarthost fallback is no longer needed.
 The current reverse DNS is managed by HostUp and must point to:
 
 ```text
-207.2.120.181 -> sesport.se
+<public-ip> -> sesport.se
 ```
 
 The `sesport.se` A record must resolve back to the same address before the
 PTR value is saved at HostUp.
 
 HostUp blocks outbound TCP port 25 by default. Request that port 25 be
-opened for `207.2.120.181` before enabling direct delivery. Verify outbound
+opened for `<public-ip>` before enabling direct delivery. Verify outbound
 connectivity to at least one recipient MX server after the change.
 
 The `_hostup` TXT record is only used to authorize the HostUp smarthost. It
 does not affect direct Postfix delivery and may remain as a fallback:
 
 ```text
-_hostup TXT "v=mc1 auth=207.2.120.181"
+_hostup TXT "v=mc1 auth=<public-ip>"
 ```
 
 The MX records remain Cloudflare's. Do not point the domain MX at this VPS
@@ -210,7 +211,7 @@ sudo opendkim-testkey -d sesport.se -s sesport \
 dig +short TXT sesport.se
 dig +short TXT sesport._domainkey.sesport.se
 dig +short TXT _dmarc.sesport.se
-dig +short -x 207.2.120.181
+dig +short -x <public-ip>
 ```
 
 The queue should normally be empty after delivery:

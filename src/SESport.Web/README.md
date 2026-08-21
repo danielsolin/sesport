@@ -104,7 +104,7 @@ Smtp__FromName=sesport
 
 HostUp authorizes the VPS through DNS. Add `include:spf.hostup.se` to the
 existing SPF record and add a TXT record for `_hostup.sesport.se` with
-`v=mc1 auth=207.2.120.181`. The relay does not require SMTP username or
+`v=mc1 auth=<public-ip>`. The relay does not require SMTP username or
 password for this VPS setup. Keep any future relay credentials in the
 host-local `.env` file, never in tracked files.
 
