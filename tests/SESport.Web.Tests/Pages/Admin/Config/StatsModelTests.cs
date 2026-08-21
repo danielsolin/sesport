@@ -28,7 +28,7 @@ public sealed class StatsModelTests : IDisposable
       );
       var model = CreateModel();
 
-      model.OnGet(null);
+      model.OnGet(null, null);
 
       Assert.Collection(
          model.Reports,
@@ -36,6 +36,44 @@ public sealed class StatsModelTests : IDisposable
          report => Assert.Equal("2026-07-24.html", report.FileName)
       );
       Assert.Equal("latest.html", model.SelectedReport?.FileName);
+      Assert.Equal(new DateOnly(2026, 7, 24), model.SelectedDate);
+   }
+
+   [Fact]
+   public void OnGetSelectsReportForRequestedDate()
+   {
+      Directory.CreateDirectory(reportDirectory);
+      File.WriteAllText(
+         Path.Combine(reportDirectory, "2026-07-24.html"),
+         "dated"
+      );
+      File.WriteAllText(
+         Path.Combine(reportDirectory, "2026-07-25.html"),
+         "dated"
+      );
+      var model = CreateModel();
+
+      model.OnGet(null, new DateOnly(2026, 7, 24));
+
+      Assert.Equal("2026-07-24.html", model.SelectedReport?.FileName);
+      Assert.Equal(new DateOnly(2026, 7, 24), model.SelectedDate);
+   }
+
+   [Fact]
+   public void OnGetKeepsRequestedDateWhenReportDoesNotExist()
+   {
+      Directory.CreateDirectory(reportDirectory);
+      File.WriteAllText(
+         Path.Combine(reportDirectory, "2026-07-24.html"),
+         "dated"
+      );
+      var model = CreateModel();
+      var requestedDate = new DateOnly(2026, 7, 25);
+
+      model.OnGet(null, requestedDate);
+
+      Assert.Null(model.SelectedReport);
+      Assert.Equal(requestedDate, model.SelectedDate);
    }
 
    [Fact]

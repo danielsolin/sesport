@@ -13,16 +13,36 @@ public sealed class StatsModel(WebStatsOptions options) : PageModel
 
    public WebStatsReport? SelectedReport { get; private set; }
 
-   public IActionResult OnGet(string? report)
+   public DateOnly? SelectedDate { get; private set; }
+
+   public string SelectedDateText => SelectedDate?.ToString(
+      ReportDateFormat,
+      CultureInfo.InvariantCulture
+   ) ?? string.Empty;
+
+   public IActionResult OnGet(string? report, DateOnly? date)
    {
       Reports = GetReports();
-      SelectedReport = Reports.FirstOrDefault(item =>
-         string.Equals(
-            item.FileName,
-            report,
-            StringComparison.Ordinal
-         )
-      ) ?? Reports.FirstOrDefault();
+
+      if(date.HasValue)
+      {
+         SelectedDate = date;
+         SelectedReport = Reports.FirstOrDefault(item =>
+            item.Date == date
+         );
+      }
+      else
+      {
+         SelectedReport = Reports.FirstOrDefault(item =>
+            string.Equals(
+               item.FileName,
+               report,
+               StringComparison.Ordinal
+            )
+         ) ?? Reports.FirstOrDefault();
+         SelectedDate = SelectedReport?.Date ?? Reports
+            .FirstOrDefault(item => item.Date.HasValue)?.Date;
+      }
 
       return Page();
    }
@@ -104,7 +124,8 @@ public sealed class StatsModel(WebStatsOptions options) : PageModel
       return new WebStatsReport(
          fileName,
          date.ToString(ReportDateFormat, CultureInfo.InvariantCulture),
-         path
+         path,
+         date
       );
    }
 }
@@ -112,5 +133,6 @@ public sealed class StatsModel(WebStatsOptions options) : PageModel
 public sealed record WebStatsReport(
    string FileName,
    string Title,
-   string Path
+   string Path,
+   DateOnly? Date = null
 );

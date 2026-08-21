@@ -459,10 +459,7 @@ h2 {
    color: var(--muted);
 }
 
-.stats-report-list {
-   display: flex;
-   flex-wrap: wrap;
-   gap: 6px;
+.stats-report-picker {
    margin-bottom: 12px;
 }
 

@@ -4,13 +4,6 @@
    ViewData["Title"] = "Web statistics";
 }
 
-<div class="page-heading compact-heading">
-   <h2>Web statistics</h2>
-   <p>
-      Anonymized statistics generated from the Caddy access log.
-   </p>
-</div>
-
 @if(Model.Reports.Count == 0)
 {
    <div class="notice notice-warning">
@@ -19,23 +12,31 @@
 }
 else
 {
-   <nav class="stats-report-list" aria-label="Available reports">
-      @foreach(var report in Model.Reports)
-      {
-         <a class="button"
-            asp-page="./Stats"
-            asp-route-report="@report.FileName">
-            @report.Title
-         </a>
-      }
-   </nav>
+   <form method="get" class="filter-form stats-report-picker">
+      <label>
+         <span>Date</span>
+         <input type="date"
+                name="@RouteKeys.Date"
+                value="@Model.SelectedDateText"
+                onchange="this.form.submit();" />
+      </label>
+   </form>
 
-   <iframe class="stats-report-frame"
-           title="@Model.SelectedReport!.Title"
-           src="@Url.Page(
-              "./Stats",
-              "Report",
-              new { file = Model.SelectedReport.FileName }
-           )">
-   </iframe>
+   @if(Model.SelectedReport is null)
+   {
+      <div class="notice notice-warning">
+         No report is available for the selected date.
+      </div>
+   }
+   else
+   {
+      <iframe class="stats-report-frame"
+              title="@Model.SelectedReport.Title"
+              src="@Url.Page(
+                 "./Stats",
+                 "Report",
+                 new { file = Model.SelectedReport.FileName }
+              )">
+      </iframe>
+   }
 }
