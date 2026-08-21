@@ -41,10 +41,41 @@
 
 <form method="post" class="edit-form">
    <input asp-for="Entity.Id" type="hidden" />
+   <input asp-for="Entity.HasPrimaryThumbnail" type="hidden" />
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
 
    <section class="form-section">
-      <h2>Entity</h2>
+      <div class="entity-edit-section-heading">
+         <h2>@(string.IsNullOrWhiteSpace(Model.Entity.CanonicalName)
+            ? "New Entity"
+            : Model.Entity.CanonicalName)</h2>
+         @if(Model.Entity.HasPrimaryThumbnail && Model.Entity.Id is not null)
+         {
+            var thumbnailUrl = Url.Page(
+               "/Admin/Entities/Edit",
+               "Thumbnail",
+               new { id = Model.Entity.Id }
+            );
+            <div class="entity-edit-thumbnail">
+               <img src="@thumbnailUrl"
+                    alt="@Model.Entity.CanonicalName"
+                    decoding="async" />
+            </div>
+         }
+         else
+         {
+            <div class="entity-edit-thumbnail" aria-hidden="true">
+               <svg viewBox="0 0 24 24"
+                    focusable="false"
+                    aria-hidden="true">
+                  <path fill="currentColor"
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
+                           1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
+                           4v2h16v-2c0-2.21-3.58-4-8-4Z" />
+               </svg>
+            </div>
+         }
+      </div>
       <div class="form-grid">
          <label>
             <span>Canonical name</span>

@@ -1,5 +1,6 @@
 using Npgsql;
 
+using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -758,6 +759,43 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task GetEntityForEditAsyncLoadsApprovedPrimaryThumbnail()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Thumbnail Entity {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      try
+      {
+         await InsertEntityAsync(dataSource, entityId, entityName);
+         await InsertEntityImageAsync(dataSource, entityId);
+
+         var loaded = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(loaded);
+         Assert.True(loaded!.HasPrimaryThumbnail);
+
+         var thumbnail = await repository.GetEntityPrimaryThumbnailAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(thumbnail);
+         Assert.Equal(new byte[] { 9, 8 }, thumbnail!.Data);
+         Assert.Equal("image/jpeg", thumbnail.MimeType);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
    public async Task UpdateEntityPersonFactsAsyncPreservesExistingValues()
    {
       var entityId = Guid.NewGuid();
@@ -1173,6 +1211,65 @@ public sealed class AdminRepositoryTests
       command.Parameters.AddWithValue(
          "alias_name",
          (object?)aliasName ?? DBNull.Value
+      );
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertEntityImageAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         insert into entity_images (
+            id,
+            entity_id,
+            image_data,
+            mime_type,
+            thumbnail_data,
+            thumbnail_mime_type,
+            source_kind,
+            source_url,
+            license_name,
+            review_status,
+            reviewed_at,
+            is_primary
+         )
+         values (
+            @id,
+            @entity_id,
+            @image_data,
+            'image/jpeg',
+            @thumbnail_data,
+            'image/jpeg',
+            'test',
+            'https://example.test/entity-image',
+            'Test license',
+            @review_status,
+            @reviewed_at,
+            true
+         )
+         """;
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
+      command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue(
+         "image_data",
+         new byte[] { 1, 2, 3 }
+      );
+      command.Parameters.AddWithValue(
+         "thumbnail_data",
+         new byte[] { 9, 8 }
+      );
+      command.Parameters.AddWithValue(
+         "review_status",
+         EntityImageReviewStatusIds.Approved
+      );
+      command.Parameters.AddWithValue(
+         "reviewed_at",
+         new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
       );
 
       await command.ExecuteNonQueryAsync();

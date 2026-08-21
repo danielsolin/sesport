@@ -144,6 +144,11 @@ public sealed record EntityActivityListItem(
    string PublicationStatus
 );
 
+public sealed record EntityPrimaryThumbnail(
+   byte[] Data,
+   string MimeType
+);
+
 public sealed record EntityMergeEntitySummary(
    Guid Id,
    string CanonicalName,
@@ -216,6 +221,8 @@ public sealed class EntityEditModel
    public string? FormativeClub { get; set; }
 
    public string? PersonGenderId { get; set; }
+
+   public bool HasPrimaryThumbnail { get; set; }
 
    public List<Guid> LinkedEntityIds { get; set; } = [];
 }

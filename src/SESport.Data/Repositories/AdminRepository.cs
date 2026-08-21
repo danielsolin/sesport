@@ -1125,7 +1125,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          FormativeClub = reader.IsDBNull(14)
             ? null
             : reader.GetString(14),
-         PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15)
+         PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15),
+         HasPrimaryThumbnail = reader.GetBoolean(16)
       };
 
       await reader.DisposeAsync();
@@ -1151,6 +1152,44 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       }
 
       return model;
+   }
+
+   public async Task<EntityPrimaryThumbnail?>
+      GetEntityPrimaryThumbnailAsync(
+      Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      var sql = $$"""
+         select
+            image.thumbnail_data,
+            image.thumbnail_mime_type
+         from entity_images image
+         where image.entity_id = @entity_id
+            and image.review_status =
+               '{{EntityImageReviewStatusIds.Approved}}'
+            and image.is_primary
+            and image.thumbnail_data is not null
+            and image.thumbnail_mime_type is not null
+            and image.thumbnail_mime_type ilike 'image/%'
+         limit 1
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new EntityPrimaryThumbnail(
+         reader.GetFieldValue<byte[]>(0),
+         reader.GetString(1)
+      );
    }
 
    public async Task<IReadOnlyList<EntityActivityListItem>>
@@ -1822,49 +1861,42 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
 
    private static string BuildEntitySql(bool includePersonGender)
    {
-      return includePersonGender
-         ? """
-            select
-               id,
-               canonical_name,
-               entity_type_id,
-               sport_id,
-               country_id,
-               country_relevance_kind_id,
-               country_relevance_reason,
-               watch_priority_id,
-               expected_stability_id,
-               alias_name,
-               bio,
-               birthdate,
-               height,
-               weight,
-               formative_club,
-               person_gender_id
-            from entities
-            where id = @id
-            """
-         : """
-            select
-               id,
-               canonical_name,
-               entity_type_id,
-               sport_id,
-               country_id,
-               country_relevance_kind_id,
-               country_relevance_reason,
-               watch_priority_id,
-               expected_stability_id,
-               alias_name,
-               bio,
-               birthdate,
-               height,
-               weight,
-               formative_club,
-               null::text as person_gender_id
-            from entities
-            where id = @id
-            """;
+      var personGenderColumn = includePersonGender
+         ? "person_gender_id"
+         : "null::text as person_gender_id";
+
+      return $$"""
+         select
+            id,
+            canonical_name,
+            entity_type_id,
+            sport_id,
+            country_id,
+            country_relevance_kind_id,
+            country_relevance_reason,
+            watch_priority_id,
+            expected_stability_id,
+            alias_name,
+            bio,
+            birthdate,
+            height,
+            weight,
+            formative_club,
+            {{personGenderColumn}},
+            exists (
+               select 1
+               from entity_images image
+               where image.entity_id = entities.id
+                  and image.review_status =
+                     '{{EntityImageReviewStatusIds.Approved}}'
+                  and image.is_primary
+                  and image.thumbnail_data is not null
+                  and image.thumbnail_mime_type is not null
+                  and image.thumbnail_mime_type ilike 'image/%'
+            ) as has_primary_thumbnail
+         from entities
+         where id = @id
+         """;
    }
 
    private async Task<string> BuildEntitySqlAsync(

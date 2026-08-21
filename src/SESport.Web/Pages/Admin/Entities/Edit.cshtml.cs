@@ -85,6 +85,21 @@ public class EditModel(
       return Entity.Id is null ? NotFound() : Page();
    }
 
+   public async Task<IActionResult> OnGetThumbnailAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      var thumbnail = await repository.GetEntityPrimaryThumbnailAsync(
+         id,
+         cancellationToken
+      );
+
+      return thumbnail is null
+         ? NotFound()
+         : File(thumbnail.Data, thumbnail.MimeType);
+   }
+
    public async Task<IActionResult> OnPostAsync(
       CancellationToken cancellationToken
    )
