@@ -62,6 +62,40 @@
          : expandedLabel;
    };
 
+   const scrollToActivityFromHash = () => {
+      const targetId = window.location.hash.slice(1);
+      if(targetId === "")
+      {
+         return;
+      }
+
+      const target = document.getElementById(targetId);
+      if(!(target instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const targetIsHidden = target.closest(
+         ".activity-past-activity-hidden"
+      ) !== null;
+      if(targetIsHidden && agenda.classList.contains(hiddenClass))
+      {
+         agenda.classList.remove(hiddenClass);
+         updateToggle();
+         saveExpandedState();
+      }
+
+      const scrollToTarget = () => {
+         target.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+         });
+      };
+      window.requestAnimationFrame(() => {
+         window.requestAnimationFrame(scrollToTarget);
+      });
+   };
+
    toggle.addEventListener("click", event => {
       event.preventDefault();
 
@@ -87,4 +121,5 @@
    }
 
    updateToggle();
+   scrollToActivityFromHash();
 })();

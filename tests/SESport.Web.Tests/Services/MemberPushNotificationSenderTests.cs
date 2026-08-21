@@ -10,9 +10,10 @@ public sealed class MemberPushNotificationSenderTests
    [Fact]
    public void CreatePayloadUsesTheNewNotificationText()
    {
+      var activityId = Guid.NewGuid();
       var notification = new MemberActivityPushNotification(
          Guid.NewGuid(),
-         Guid.NewGuid(),
+         activityId,
          "Stavhopp",
          "Armand Duplantis",
          DateTimeOffset.Parse("2026-08-21T18:00:00Z"),
@@ -33,6 +34,10 @@ public sealed class MemberPushNotificationSenderTests
          "Om 10 minuter: Armand Duplantis deltar i Stavhopp. " +
          "Visas på SVT1, SVT Play.",
          document.RootElement.GetProperty("body").GetString()
+      );
+      Assert.Equal(
+         "/?date=2026-08-21#activity-" + activityId.ToString("N"),
+         document.RootElement.GetProperty("url").GetString()
       );
    }
 }

@@ -43,6 +43,15 @@ public sealed class PastActivitiesVisibilityTests
       Assert.DoesNotContain("pastActivityToggleIndex", page);
       Assert.Contains("data-activity-past-toggle", page);
       Assert.Contains(
+         "var activityAnchorId = \"activity-\" + " +
+         "activity.Id.ToString(\"N\");",
+         page
+      );
+      Assert.Contains(
+         "<article id=\"@activityAnchorId\"",
+         page
+      );
+      Assert.Contains(
          "Model.HasPublishedActivitiesTomorrow",
          page
       );
@@ -78,6 +87,13 @@ public sealed class PastActivitiesVisibilityTests
       Assert.Contains("window.sessionStorage.setItem(", script);
       Assert.Contains("window.sessionStorage.removeItem(", script);
       Assert.Contains("window.location.href", script);
+      Assert.Contains("window.location.hash.slice(1)", script);
+      Assert.Contains("target.scrollIntoView({", script);
+      Assert.Contains(
+         "target.closest(\n" +
+         "         \".activity-past-activity-hidden\"",
+         script
+      );
       Assert.Contains(
          "window.requestAnimationFrame(() => {\n" +
          "         window.requestAnimationFrame(scrollToToggle);",

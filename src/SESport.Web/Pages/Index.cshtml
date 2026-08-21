@@ -292,6 +292,7 @@ else
 
          var agendaSection = timelineEntry.Section;
          var activity = agendaSection.Activities[0];
+         var activityAnchorId = "activity-" + activity.Id.ToString("N");
          var isGrouped = agendaSection.ActivityGroupTitle is not null;
          var tvChannels = agendaSection.Activities
             .SelectMany(item => (item.TvChannelName ?? string.Empty).Split(
@@ -423,7 +424,8 @@ else
                   </div>
                }
                <div class="activity-agenda-items">
-                  <article class="activity-entry">
+                  <article id="@activityAnchorId"
+                           class="activity-entry">
                      @if(agendaSection.IsOngoing)
                      {
                         <span class="activity-status-badge

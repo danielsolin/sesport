@@ -15,6 +15,8 @@ public sealed class MemberPushNotificationSender(
    ILogger<MemberPushNotificationSender> logger
 )
 {
+   private const string ActivityAnchorPrefix = "activity-";
+
    private static readonly JsonSerializerOptions JsonOptions = new()
    {
       PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -119,6 +121,8 @@ public sealed class MemberPushNotificationSender(
          notification.PublicDateMode
       );
       var leadTime = FormatLeadTime(notification.LeadTimeMinutes);
+      var activityAnchor = ActivityAnchorPrefix +
+         notification.ActivityId.ToString("N");
       var body = "Om " + leadTime + ": " +
          notification.PersonNames +
          " deltar i " + notification.ActivityTitle + ".";
@@ -133,10 +137,11 @@ public sealed class MemberPushNotificationSender(
          {
             title = "sesport",
             body,
-            url = "/?date=" + DateDisplay.Format(displayDate),
+            url = "/?date=" + DateDisplay.Format(displayDate) +
+               "#" + activityAnchor,
             icon = "/icon-192.png",
             badge = "/icon-192.png",
-            tag = "activity-" + notification.ActivityId.ToString("N")
+            tag = activityAnchor
          },
          JsonOptions
       );
