@@ -50,6 +50,15 @@ public sealed class StatisticsMarkupTests
       Assert.Contains(".statistics-heading {", css);
       Assert.Contains(".statistics-table {", css);
       Assert.Contains(
+         ".statistics-table-wrap {\n" +
+            "   overflow-x: auto;\n" +
+            "   border-radius: 12px;\n" +
+            "   background: #eef5fb;\n" +
+            "   color: #006aa8;\n" +
+            "}",
+         css
+      );
+      Assert.Contains(
          ".statistics-table thead th:last-child {\n" +
             "   text-align: right;\n" +
             "   white-space: nowrap;\n" +

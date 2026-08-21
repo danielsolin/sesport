@@ -153,27 +153,28 @@
 
 .statistics-table-wrap {
    overflow-x: auto;
-   border: 1px solid var(--line);
-   border-radius: 8px;
-   background: var(--surface);
+   border-radius: 12px;
+   background: #eef5fb;
+   color: #006aa8;
 }
 
 .statistics-table {
    width: 100%;
    border-collapse: collapse;
-   font-size: 13px;
+   color: inherit;
+   font-size: 12px;
 }
 
 .statistics-table th,
 .statistics-table td {
-   padding: 11px 14px;
-   border-bottom: 1px solid var(--line);
+   padding: 5px 8px;
+   border-bottom: 1px solid rgba(0, 106, 168, 0.22);
    text-align: left;
 }
 
 .statistics-table thead th {
-   background: var(--subgrid-header);
-   color: var(--muted);
+   background: transparent;
+   color: inherit;
    font-size: 11px;
    font-weight: 800;
    letter-spacing: 0.04em;
@@ -187,11 +188,11 @@
 
 .statistics-table tbody tr:hover th,
 .statistics-table tbody tr:hover td {
-   background: var(--subgrid-row-hover);
+   background: rgba(0, 106, 168, 0.08);
 }
 
 .statistics-table tbody th {
-   color: var(--text);
+   color: inherit;
    font-weight: 800;
 }
 
