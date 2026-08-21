@@ -717,6 +717,18 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
    }
 
+   private static void AddNullableParameter(
+      NpgsqlCommand command,
+      string name,
+      string? value
+   )
+   {
+      command.Parameters.AddWithValue(
+         name,
+         (object?)NormalizeNullable(value) ?? DBNull.Value
+      );
+   }
+
    public async Task<IReadOnlyList<EntityListItem>> SearchEntitiesAsync(
       string? term,
       CancellationToken cancellationToken,
@@ -1126,7 +1138,10 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
             ? null
             : reader.GetString(14),
          PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15),
-         HasPrimaryThumbnail = reader.GetBoolean(16)
+         HasPrimaryThumbnail = reader.GetBoolean(16),
+         PrimaryImageSourceUrl = reader.IsDBNull(17)
+            ? null
+            : reader.GetString(17)
       };
 
       await reader.DisposeAsync();
@@ -1190,6 +1205,212 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          reader.GetFieldValue<byte[]>(0),
          reader.GetString(1)
       );
+   }
+
+   public async Task ReplacePrimaryEntityImageAsync(
+      Guid entityId,
+      EntityImageReplacement replacement,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      await using var demoteCommand = new NpgsqlCommand(
+         """
+         update entity_images
+         set is_primary = false,
+             updated_at = now()
+         where entity_id = @entity_id
+            and is_primary
+         """,
+         connection,
+         transaction
+      );
+      demoteCommand.Parameters.AddWithValue("entity_id", entityId);
+      await demoteCommand.ExecuteNonQueryAsync(cancellationToken);
+
+      await using var insertCommand = new NpgsqlCommand(
+         """
+         insert into entity_images (
+            id,
+            entity_id,
+            image_data,
+            mime_type,
+            pixel_width,
+            pixel_height,
+            content_sha256,
+            thumbnail_data,
+            thumbnail_mime_type,
+            thumbnail_pixel_width,
+            thumbnail_pixel_height,
+            thumbnail_content_sha256,
+            thumbnail_source_media_url,
+            source_kind,
+            source_asset_id,
+            source_url,
+            source_media_url,
+            source_title,
+            creator_name,
+            creator_url,
+            license_name,
+            license_url,
+            copyright_notice,
+            attribution_text,
+            modification_description,
+            review_status,
+            review_note,
+            reviewed_at,
+            is_primary
+         )
+         values (
+            @id,
+            @entity_id,
+            @image_data,
+            @mime_type,
+            @pixel_width,
+            @pixel_height,
+            @content_sha256,
+            @thumbnail_data,
+            @thumbnail_mime_type,
+            @thumbnail_pixel_width,
+            @thumbnail_pixel_height,
+            @thumbnail_content_sha256,
+            @thumbnail_source_media_url,
+            @source_kind,
+            @source_asset_id,
+            @source_url,
+            @source_media_url,
+            @source_title,
+            @creator_name,
+            @creator_url,
+            @license_name,
+            @license_url,
+            @copyright_notice,
+            @attribution_text,
+            @modification_description,
+            @review_status,
+            @review_note,
+            now(),
+            true
+         )
+         """,
+         connection,
+         transaction
+      );
+      insertCommand.Parameters.AddWithValue("id", Guid.NewGuid());
+      insertCommand.Parameters.AddWithValue("entity_id", entityId);
+      insertCommand.Parameters.AddWithValue(
+         "image_data",
+         replacement.ImageData
+      );
+      insertCommand.Parameters.AddWithValue(
+         "mime_type",
+         replacement.MimeType
+      );
+      insertCommand.Parameters.AddWithValue(
+         "pixel_width",
+         replacement.PixelWidth
+      );
+      insertCommand.Parameters.AddWithValue(
+         "pixel_height",
+         replacement.PixelHeight
+      );
+      insertCommand.Parameters.AddWithValue(
+         "content_sha256",
+         replacement.ContentSha256
+      );
+      insertCommand.Parameters.AddWithValue(
+         "thumbnail_data",
+         replacement.ThumbnailData
+      );
+      insertCommand.Parameters.AddWithValue(
+         "thumbnail_mime_type",
+         replacement.ThumbnailMimeType
+      );
+      insertCommand.Parameters.AddWithValue(
+         "thumbnail_pixel_width",
+         replacement.ThumbnailPixelWidth
+      );
+      insertCommand.Parameters.AddWithValue(
+         "thumbnail_pixel_height",
+         replacement.ThumbnailPixelHeight
+      );
+      insertCommand.Parameters.AddWithValue(
+         "thumbnail_content_sha256",
+         replacement.ThumbnailContentSha256
+      );
+      insertCommand.Parameters.AddWithValue(
+         "thumbnail_source_media_url",
+         replacement.ThumbnailSourceMediaUrl
+      );
+      insertCommand.Parameters.AddWithValue(
+         "source_kind",
+         EntityImageSourceKindIds.WikimediaCommons
+      );
+      insertCommand.Parameters.AddWithValue(
+         "source_asset_id",
+         replacement.SourceAssetId
+      );
+      insertCommand.Parameters.AddWithValue(
+         "source_url",
+         replacement.SourceUrl
+      );
+      insertCommand.Parameters.AddWithValue(
+         "source_media_url",
+         replacement.SourceMediaUrl
+      );
+      insertCommand.Parameters.AddWithValue(
+         "source_title",
+         replacement.SourceTitle
+      );
+      AddNullableParameter(
+         insertCommand,
+         "creator_name",
+         replacement.CreatorName
+      );
+      AddNullableParameter(
+         insertCommand,
+         "creator_url",
+         replacement.CreatorUrl
+      );
+      insertCommand.Parameters.AddWithValue(
+         "license_name",
+         replacement.LicenseName
+      );
+      AddNullableParameter(
+         insertCommand,
+         "license_url",
+         replacement.LicenseUrl
+      );
+      AddNullableParameter(
+         insertCommand,
+         "copyright_notice",
+         replacement.CopyrightNotice
+      );
+      insertCommand.Parameters.AddWithValue(
+         "attribution_text",
+         replacement.AttributionText
+      );
+      insertCommand.Parameters.AddWithValue(
+         "modification_description",
+         replacement.ModificationDescription
+      );
+      insertCommand.Parameters.AddWithValue(
+         "review_status",
+         EntityImageReviewStatusIds.Approved
+      );
+      insertCommand.Parameters.AddWithValue(
+         "review_note",
+         replacement.ReviewNote
+      );
+
+      await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+      await transaction.CommitAsync(cancellationToken);
    }
 
    public async Task<IReadOnlyList<EntityActivityListItem>>
@@ -1893,7 +2114,16 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
                   and image.thumbnail_data is not null
                   and image.thumbnail_mime_type is not null
                   and image.thumbnail_mime_type ilike 'image/%'
-            ) as has_primary_thumbnail
+            ) as has_primary_thumbnail,
+            (
+               select image.source_url
+               from entity_images image
+               where image.entity_id = entities.id
+                  and image.review_status =
+                     '{{EntityImageReviewStatusIds.Approved}}'
+                  and image.is_primary
+               limit 1
+            ) as primary_image_source_url
          from entities
          where id = @id
          """;

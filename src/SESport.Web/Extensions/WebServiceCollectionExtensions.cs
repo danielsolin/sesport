@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace SESport.Web.Extensions;
 
 public static class WebServiceCollectionExtensions
@@ -35,6 +37,28 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<ActivityIndexPageService>();
       services.AddScoped<PublicActivityTimelineBuilder>();
       services.AddScoped<BroadcastParticipationService>();
+      services.AddHttpClient<WikimediaCommonsImageClient>(
+         client =>
+         {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+               "SESport EntityImageReplacement/1.0 " +
+               "(https://github.com/danielsolin/sesport)"
+            );
+            client.DefaultRequestHeaders.AcceptEncoding.ParseAdd(
+               "gzip, deflate, br"
+            );
+         }
+      ).ConfigurePrimaryHttpMessageHandler(
+         () => new HttpClientHandler
+         {
+            AutomaticDecompression = DecompressionMethods.All
+         }
+      );
+      services.AddScoped<
+         IEntityImageReplacementService,
+         WikimediaCommonsEntityImageReplacementService
+      >();
       services.AddHostedService<ActivityAiResultCatchUpWorker>();
       services.AddHostedService<AiPendingRunWorker>();
       services.AddHostedService<AiRunTimeoutWorker>();

@@ -25,7 +25,8 @@ public sealed class EditModelTests
          repository,
          sourceRepository,
          automationService,
-         new TestHostApplicationLifetime()
+         new TestHostApplicationLifetime(),
+         new CapturingEntityImageReplacementService()
       )
       {
          Entity = new EntityEditModel
@@ -84,7 +85,8 @@ public sealed class EditModelTests
          repository,
          sourceRepository,
          automationService,
-         new TestHostApplicationLifetime()
+         new TestHostApplicationLifetime(),
+         new CapturingEntityImageReplacementService()
       )
       {
          Entity = new EntityEditModel
@@ -143,6 +145,74 @@ public sealed class EditModelTests
    }
 
    [Fact]
+   public async Task OnPostReplaceImageAsyncValidatesCommonsRevisionUrl()
+   {
+      var entityName = $"Image Entity {Guid.NewGuid():N}";
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var automationService = new CapturingAiAutomationService();
+      var imageService = new CapturingEntityImageReplacementService();
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         automationService,
+         new TestHostApplicationLifetime(),
+         imageService
+      )
+      {
+         Entity = new EntityEditModel
+         {
+            CanonicalName = entityName,
+            EntityTypeId = TrackedEntityTypeIds.Organization,
+            SportId = "football",
+            CountryId = PrimaryCountry.Id,
+            CountryRelevanceKindId =
+               "NationalityOrSportingIdentity",
+            CountryRelevanceReason = "Test coverage",
+            WatchPriorityId = "tier_3",
+            ExpectedStabilityId = "short_term"
+         }
+      };
+
+      try
+      {
+         await model.OnPostAsync(CancellationToken.None);
+         Assert.NotNull(model.Entity.Id);
+         var entityId = model.Entity.Id.Value;
+         model.Entity.PrimaryImageSourceUrl =
+            " https://commons.wikimedia.org/w/index.php?" +
+            "title=File:Example.jpg&oldid=42 ";
+
+         var result = await model.OnPostReplaceImageAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.IsType<RedirectToPageResult>(result);
+         Assert.Equal(entityId, imageService.EntityId);
+         Assert.NotNull(imageService.Source);
+         Assert.Equal(42, imageService.Source!.RevisionId);
+         Assert.Equal(
+            "https://commons.wikimedia.org/w/index.php?" +
+            "title=File:Example.jpg&oldid=42",
+            imageService.Source.Url
+         );
+         Assert.Equal("Image replacement completed.", model.ImageMessage);
+      }
+      finally
+      {
+         if(model.Entity.Id is not null)
+         {
+            await repository.DeleteEntityAsync(
+               model.Entity.Id.Value,
+               CancellationToken.None
+            );
+         }
+      }
+   }
+
+   [Fact]
    public async Task OnPostAsyncTriggersAutomationForNewPerson()
    {
       var entityName = $"Person {Guid.NewGuid():N}";
@@ -155,7 +225,8 @@ public sealed class EditModelTests
          repository,
          sourceRepository,
          automationService,
-         new TestHostApplicationLifetime()
+         new TestHostApplicationLifetime(),
+         new CapturingEntityImageReplacementService()
       )
       {
          Entity = new EntityEditModel
@@ -223,6 +294,25 @@ public sealed class EditModelTests
       )
       {
          PersonCreatedEntityIds.Add(personEntityId);
+         return Task.CompletedTask;
+      }
+   }
+
+   private sealed class CapturingEntityImageReplacementService
+      : IEntityImageReplacementService
+   {
+      public Guid? EntityId { get; private set; }
+
+      public WikimediaCommonsImageReference? Source { get; private set; }
+
+      public Task ReplaceAsync(
+         Guid entityId,
+         WikimediaCommonsImageReference source,
+         CancellationToken cancellationToken
+      )
+      {
+         EntityId = entityId;
+         Source = source;
          return Task.CompletedTask;
       }
    }

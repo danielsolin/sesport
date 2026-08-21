@@ -224,5 +224,7 @@ public sealed class EntityEditModel
 
    public bool HasPrimaryThumbnail { get; set; }
 
+   public string? PrimaryImageSourceUrl { get; set; }
+
    public List<Guid> LinkedEntityIds { get; set; } = [];
 }

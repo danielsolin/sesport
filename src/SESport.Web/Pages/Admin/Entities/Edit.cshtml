@@ -4,6 +4,13 @@
    ViewData["Title"] = Model.Entity.Id is null ? "New Entity" : "Edit Entity";
    var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
    var entityLinkUpdateUrl = Url.Page("/Admin/Ajax/Update/EntityLink");
+   var replaceImageUrl = Model.Entity.Id is null
+      ? null
+      : Url.Page(
+         "/Admin/Entities/Edit",
+         "ReplaceImage",
+         new { id = Model.Entity.Id }
+      );
    var isPersonEntity = string.Equals(
       Model.Entity.EntityTypeId,
       TrackedEntityTypeIds.Person,
@@ -28,6 +35,16 @@
 @if (Model.LoadError is not null)
 {
    <div class="notice notice-warning">@Model.LoadError</div>
+}
+
+@if(Model.ImageError is not null)
+{
+   <div class="notice notice-error">@Model.ImageError</div>
+}
+
+@if(Model.ImageMessage is not null)
+{
+   <div class="notice">@Model.ImageMessage</div>
 }
 
 @if(Model.Entity.Id is not null)
@@ -168,6 +185,29 @@
             <input asp-for="Entity.FormativeClub" />
             <span asp-validation-for="Entity.FormativeClub"></span>
          </label>
+         <div class="entity-image-source-control"
+              data-entity-image-source-control>
+            <label data-entity-image-source-url-field>
+               <span>Image source URL</span>
+               <input asp-for="Entity.PrimaryImageSourceUrl"
+                      type="url"
+                      readonly
+                      data-entity-image-source-input
+                      title="Double-click to edit" />
+               <span asp-validation-for="Entity.PrimaryImageSourceUrl">
+               </span>
+            </label>
+            @if(replaceImageUrl is not null)
+            {
+               <button class="button"
+                       type="submit"
+                       formaction="@replaceImageUrl"
+                       data-entity-image-replace-button
+                       hidden>
+                  Replace image
+               </button>
+            }
+         </div>
       </div>
    </section>
 
@@ -428,5 +468,7 @@
 
 @section Scripts {
    <script src="~/Admin/js/entity-linked-entities.js"
+           asp-append-version="true"></script>
+   <script src="~/Admin/js/entity-image-source.js"
            asp-append-version="true"></script>
 }

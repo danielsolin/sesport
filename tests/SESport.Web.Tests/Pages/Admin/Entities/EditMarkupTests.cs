@@ -16,8 +16,15 @@ public sealed class EditMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/entity-linked-entities.js"
       );
+      var imageSourceScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/Admin/js/entity-image-source.js"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      var imageSourceScript = await File.ReadAllTextAsync(
+         imageSourceScriptPath
+      );
 
       Assert.Contains("data-entity-linked-entities-picker", html);
       Assert.Contains("data-entity-linked-entities-search-url", html);
@@ -38,6 +45,11 @@ public sealed class EditMarkupTests
       Assert.Contains("name=\"sourceUrl\"", html);
       Assert.Contains("type=\"url\"", html);
       Assert.Contains("Add source", html);
+      Assert.Contains("data-entity-image-source-control", html);
+      Assert.Contains("data-entity-image-source-input", html);
+      Assert.Contains("data-entity-image-replace-button", html);
+      Assert.Contains("ReplaceImage", html);
+      Assert.Contains("title=\"Double-click to edit\"", html);
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);
       Assert.DoesNotContain("data-multi-select", html);
       Assert.DoesNotContain("data-entity-linked-entities-chip", html);
@@ -53,5 +65,9 @@ public sealed class EditMarkupTests
       Assert.DoesNotContain("event.key === \"Backspace\"", script);
       Assert.DoesNotContain("chip", script);
       Assert.Contains("broadcast-org-entity-option", script);
+      Assert.Contains("data-entity-image-source-control", imageSourceScript);
+      Assert.Contains("dblclick", imageSourceScript);
+      Assert.Contains("input.readOnly = false", imageSourceScript);
+      Assert.Contains("replaceButton.hidden = false", imageSourceScript);
    }
 }

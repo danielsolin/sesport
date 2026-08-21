@@ -779,6 +779,10 @@ public sealed class AdminRepositoryTests
 
          Assert.NotNull(loaded);
          Assert.True(loaded!.HasPrimaryThumbnail);
+         Assert.Equal(
+            "https://example.test/entity-image",
+            loaded.PrimaryImageSourceUrl
+         );
 
          var thumbnail = await repository.GetEntityPrimaryThumbnailAsync(
             entityId,
@@ -788,6 +792,108 @@ public sealed class AdminRepositoryTests
          Assert.NotNull(thumbnail);
          Assert.Equal(new byte[] { 9, 8 }, thumbnail!.Data);
          Assert.Equal("image/jpeg", thumbnail.MimeType);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
+   public async Task ReplacePrimaryEntityImageAsyncKeepsOldImageAsHistory()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Replaced image entity {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      await InsertEntityAsync(dataSource, entityId, entityName);
+      await InsertEntityImageAsync(dataSource, entityId);
+
+      var replacement = new EntityImageReplacement(
+         "https://commons.wikimedia.org/w/index.php?title=File:New.jpg" +
+         "&oldid=123",
+         "123:123:width-500",
+         [4, 5, 6],
+         "image/jpeg",
+         500,
+         333,
+         new string('a', 64),
+         [7, 8],
+         "image/jpeg",
+         72,
+         48,
+         new string('b', 64),
+         "https://upload.wikimedia.org/new-thumb.jpg",
+         "https://upload.wikimedia.org/new.jpg",
+         "File:New.jpg",
+         "Example Creator",
+         "https://commons.wikimedia.org/wiki/User:Example",
+         "CC BY-SA 4.0",
+         "https://creativecommons.org/licenses/by-sa/4.0/",
+         "Example copyright notice",
+         "Example Creator, CC BY-SA 4.0",
+         "No local image processing.",
+         "Replaced during test."
+      );
+
+      try
+      {
+         await repository.ReplacePrimaryEntityImageAsync(
+            entityId,
+            replacement,
+            CancellationToken.None
+         );
+
+         await using var connection =
+            await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select source_url, source_kind, is_primary, review_status,
+               image_data, thumbnail_data
+            from entity_images
+            where entity_id = @entity_id
+            order by source_url
+            """;
+         command.Parameters.AddWithValue("entity_id", entityId);
+         await using var reader = await command.ExecuteReaderAsync();
+         var rows = new List<(string, string, bool, string, byte[], byte[])>();
+         while(await reader.ReadAsync())
+         {
+            rows.Add((
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.GetBoolean(2),
+               reader.GetString(3),
+               reader.GetFieldValue<byte[]>(4),
+               reader.GetFieldValue<byte[]>(5)
+            ));
+         }
+
+         Assert.Equal(2, rows.Count);
+         var oldImage = Assert.Single(
+            rows,
+            row => row.Item1 == "https://example.test/entity-image"
+         );
+         var newImage = Assert.Single(
+            rows,
+            row => row.Item1 == replacement.SourceUrl
+         );
+         Assert.False(oldImage.Item3);
+         Assert.True(newImage.Item3);
+         Assert.Equal(
+            EntityImageSourceKindIds.WikimediaCommons,
+            newImage.Item2
+         );
+         Assert.Equal(EntityImageReviewStatusIds.Approved, newImage.Item4);
+         Assert.Equal(new byte[] { 4, 5, 6 }, newImage.Item5);
+         Assert.Equal(new byte[] { 7, 8 }, newImage.Item6);
+
+         var loaded = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+         Assert.Equal(replacement.SourceUrl, loaded!.PrimaryImageSourceUrl);
       }
       finally
       {

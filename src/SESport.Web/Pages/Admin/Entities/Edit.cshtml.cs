@@ -10,7 +10,8 @@ public class EditModel(
    AdminRepository repository,
    SourceReferenceRepository sourceRepository,
    IAiAutomationService automationService,
-   IHostApplicationLifetime applicationLifetime
+   IHostApplicationLifetime applicationLifetime,
+   IEntityImageReplacementService imageReplacementService
 ) : PageModel
 {
    [BindProperty]
@@ -58,11 +59,16 @@ public class EditModel(
 
    public string? LoadError { get; private set; }
 
+   public string? ImageError { get; private set; }
+
    [TempData]
    public string? SourceError { get; set; }
 
    [TempData]
    public string? SourceMessage { get; set; }
+
+   [TempData]
+   public string? ImageMessage { get; set; }
 
    public async Task<IActionResult> OnGetAsync(
       Guid? id,
@@ -98,6 +104,69 @@ public class EditModel(
       return thumbnail is null
          ? NotFound()
          : File(thumbnail.Data, thumbnail.MimeType);
+   }
+
+   public async Task<IActionResult> OnPostReplaceImageAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      var entity = await repository.GetEntityForEditAsync(
+         id,
+         cancellationToken
+      );
+
+      if(entity is null)
+      {
+         return NotFound();
+      }
+
+      var sourceUrl = Entity.PrimaryImageSourceUrl;
+      if(!WikimediaCommonsSourceUrl.TryParse(
+            sourceUrl,
+            out var source
+         ))
+      {
+         Entity = entity;
+         Entity.PrimaryImageSourceUrl = sourceUrl;
+         ModelState.AddModelError(
+            "Entity.PrimaryImageSourceUrl",
+            "Paste a valid Wikimedia Commons file revision URL " +
+            "containing title and oldid."
+         );
+         await LoadOptionsAsync(cancellationToken);
+         return Page();
+      }
+
+      try
+      {
+         await imageReplacementService.ReplaceAsync(
+            id,
+            source,
+            cancellationToken
+         );
+      }
+      catch(EntityImageReplacementException exception)
+         when(!cancellationToken.IsCancellationRequested)
+      {
+         Entity = entity;
+         Entity.PrimaryImageSourceUrl = sourceUrl;
+         ImageError = exception.Message;
+         await LoadOptionsAsync(cancellationToken);
+         return Page();
+      }
+      catch(Exception exception)
+         when(!cancellationToken.IsCancellationRequested)
+      {
+         Entity = entity;
+         Entity.PrimaryImageSourceUrl = sourceUrl;
+         ImageError = this.LogUnexpectedError(exception);
+         await LoadOptionsAsync(cancellationToken);
+         return Page();
+      }
+
+      ImageMessage = "Image replacement completed.";
+      return RedirectToPage("./Edit", new { id });
    }
 
    public async Task<IActionResult> OnPostAsync(
