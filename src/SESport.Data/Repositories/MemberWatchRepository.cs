@@ -7,9 +7,6 @@ namespace SESport.Data.Repositories;
 
 public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 {
-   private const string TestActivityTitle = "Test Activity";
-   private const string TestActivitySlugPattern = "test-activity-%";
-
    public async Task<IReadOnlyList<MemberPersonListItem>>
       GetWatchedEntitiesAsync(
       Guid memberId,
@@ -279,13 +276,6 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    )
    {
       command.Parameters.AddWithValue("now", now);
-      command.Parameters.AddWithValue(
-         "test_activity_title",
-         TestActivityTitle
-      );
-      command.Parameters.AddWithValue(
-         "test_activity_slug_pattern",
-         TestActivitySlugPattern
-      );
+      PublicActivityQuerySupport.AddExclusionParameters(command);
    }
 }

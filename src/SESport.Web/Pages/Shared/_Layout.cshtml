@@ -36,6 +36,18 @@
    );
    var isPublicIndex = requestPath == "/" ||
       requestPath.Equals("/Index", StringComparison.OrdinalIgnoreCase);
+   var isPublicStatistics = requestPath.Equals(
+      "/statistik",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isPublicWatches = requestPath.Equals(
+      "/bevakningar",
+      StringComparison.OrdinalIgnoreCase
+   );
+   var isPublicLogin = requestPath.Equals(
+      "/login",
+      StringComparison.OrdinalIgnoreCase
+   );
    var publicFilterQuery = isPublicIndex
       ? Context.Request.QueryString.Value
       : PublicFilterPreferenceStore.ReadQueryString(
@@ -70,6 +82,15 @@
    var configClass = isConfig
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
+   var publicStatisticsClass = isPublicStatistics
+      ? "public-member-link is-active"
+      : "public-member-link";
+   var publicWatchesClass = isPublicWatches
+      ? "public-member-link is-active"
+      : "public-member-link";
+   var publicLoginClass = isPublicLogin
+      ? "public-member-link is-active"
+      : "public-member-link";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -149,17 +170,30 @@
          else
          {
             <div class="public-header-actions">
+               <a class="@publicStatisticsClass"
+                  asp-page="/Statistics"
+                  aria-current="@(
+                     isPublicStatistics ? "page" : null
+                  )">
+                  STATISTIK
+               </a>
                @if(isMember)
                {
-                  <a class="public-member-link"
-                     asp-page="/Account/Watches">
+                  <a class="@publicWatchesClass"
+                     asp-page="/Account/Watches"
+                     aria-current="@(
+                        isPublicWatches ? "page" : null
+                     )">
                      BEVAKNINGAR
                   </a>
                }
                else
                {
-                  <a class="public-member-link"
-                     asp-page="/Account/Login">
+                  <a class="@publicLoginClass"
+                     asp-page="/Account/Login"
+                     aria-current="@(
+                        isPublicLogin ? "page" : null
+                     )">
                      Logga in
                   </a>
                }

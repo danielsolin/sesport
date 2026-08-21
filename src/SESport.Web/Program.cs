@@ -56,6 +56,11 @@ var publicSiteOptions = builder.Configuration.GetSection(
    )
    .Get<PublicSiteOptions>() ??
    new PublicSiteOptions();
+var publicStatisticsOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.PublicStatisticsSection
+   )
+   .Get<PublicStatisticsOptions>() ??
+   new PublicStatisticsOptions();
 var webStatsOptions = configuredWebStatsOptions with
 {
    ReportDirectory = WebStatsReportDirectoryResolver.Resolve(
@@ -79,6 +84,7 @@ builder.Services.AddSingleton(memberPushOptions);
 builder.Services.AddSingleton(smtpEmailOptions);
 builder.Services.AddSingleton(webStatsOptions);
 builder.Services.AddSingleton(publicSiteOptions);
+builder.Services.AddSingleton(publicStatisticsOptions);
 builder.Services.AddHttpClient<PushServiceClient>();
 builder.Services.AddWebApplicationServices();
 builder.Services.AddAiPlatform();

@@ -1,0 +1,129 @@
+@page "/statistik"
+@model StatisticsModel
+@{
+   var selectedMonthOption = Model.MonthOptions.FirstOrDefault(
+      option => option.IsSelected
+   );
+}
+@section Head {
+   <title>
+      Månadens mesta utövare – @Model.SelectedMonthLabel – sesport
+   </title>
+   <meta name="description"
+         content="Månadens mesta svenska utövare i internationell sport." />
+}
+
+<section class="page-heading statistics-heading">
+   <div class="date-select statistics-month-select">
+      <div class="date-dropdown" data-date-dropdown>
+         <button class="date-dropdown-toggle"
+                 type="button"
+                 aria-label="Välj månad"
+                 aria-haspopup="listbox"
+                 aria-expanded="false"
+                 aria-controls="statistics-month-menu"
+                 data-date-dropdown-toggle>
+            <span class="date-option-content">
+               <span class="date-option-label">
+                  <span class="date-option-date">
+                     @(selectedMonthOption?.Label ??
+                        Model.SelectedMonthLabel)
+                  </span>
+               </span>
+            </span>
+            <span class="date-dropdown-chevron"
+                  aria-hidden="true"></span>
+         </button>
+         <div id="statistics-month-menu"
+              class="date-dropdown-menu statistics-month-menu"
+              role="listbox"
+              aria-label="Månad"
+              hidden
+              data-date-dropdown-menu>
+            @foreach(var month in Model.MonthOptions)
+            {
+               <a class="date-dropdown-option
+                  @(month.IsSelected ? "is-selected" : "")"
+                  asp-page="/Statistics"
+                  asp-route-month="@month.Value"
+                  role="option"
+                  aria-selected="@(
+                     month.IsSelected ? "true" : "false"
+                  )">
+                  <span class="date-option-content">
+                     <span class="date-option-label">
+                        @month.Label
+                     </span>
+                  </span>
+               </a>
+            }
+         </div>
+      </div>
+   </div>
+</section>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning statistics-notice">
+      Ett problem uppstod. Vänligen försök igen.
+   </div>
+}
+else if(Model.Statistics is not null)
+{
+   <section class="statistics-page"
+            aria-label="Månadens mest aktiva">
+      <div class="statistics-card-heading">
+         <div class="statistics-participant-count">
+            <span>MÅNADENS MEST AKTIVA AV TOTALT</span>
+            <strong>@Model.Statistics.ParticipantCount</strong>
+         </div>
+      </div>
+
+      @if(Model.Statistics.Leaders.Count == 0)
+      {
+         <div class="notice">
+            Det finns ingen publicerad statistik för vald månad.
+         </div>
+      }
+      else
+      {
+         <div class="statistics-table-wrap">
+            <table class="statistics-table">
+               <thead>
+                  <tr>
+                     <th scope="col">Plats</th>
+                     <th scope="col">Utövare</th>
+                     <th scope="col">Sport</th>
+                     <th scope="col">Dagar aktiv</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var leader in Model.Statistics.Leaders)
+                  {
+                     <tr>
+                        <td class="statistics-rank">@leader.Rank</td>
+                        <th scope="row">@leader.Name</th>
+                        <td>@leader.SportNames</td>
+                        <td class="statistics-points">
+                           @leader.Points
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+}
+
+<div class="public-contact-footer">
+   <a class="public-contact-link"
+      href="mailto:info@sesport.se">
+      info@sesport.se
+   </a>
+</div>
+
+@section Scripts {
+   <script src="~/js/public-date-select.js"
+           asp-append-version="true"></script>
+}

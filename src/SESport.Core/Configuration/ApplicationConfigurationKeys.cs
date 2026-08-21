@@ -19,4 +19,6 @@ public static class ApplicationConfigurationKeys
    public const string WebStatsSection = "WebStats";
 
    public const string PublicSiteSection = "PublicSite";
+
+   public const string PublicStatisticsSection = "PublicStatistics";
 }

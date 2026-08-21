@@ -29,19 +29,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          a.title
       """;
 
-   private const string TestActivityTitle = "Test Activity";
-   private const string TestActivitySlugPattern = "test-activity-%";
-
-   private const string PublicActivityExclusionClause = """
-      and not (
-         (
-            a.title = @test_activity_title
-            or coalesce(a.slug, '') like @test_activity_slug_pattern
-         )
-         and a.published_at is null
-      )
-      """;
-
    private static string BuildTimedDateFilterSql()
    {
       return $$"""
@@ -175,7 +162,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                on ag.id = a.activity_group_id
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
-               {{PublicActivityExclusionClause}}
+               {{PublicActivityQuerySupport.ExclusionClause}}
          )
          select
             dated.display_date,
@@ -208,7 +195,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          "first_date",
          firstDate
       );
-      AddPublicActivityExclusionParameters(command);
+      PublicActivityQuerySupport.AddExclusionParameters(command);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -238,7 +225,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
                and {{BuildTimedDateFilterSql()}}
-               {{PublicActivityExclusionClause}}
+               {{PublicActivityQuerySupport.ExclusionClause}}
          """,
          DefaultOrderClause,
          """
@@ -259,7 +246,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                SportDay.TimeZoneId
             );
             command.Parameters.AddWithValue("date", window.StartDate);
-            AddPublicActivityExclusionParameters(command);
+            PublicActivityQuerySupport.AddExclusionParameters(command);
          },
          cancellationToken
       );
@@ -267,20 +254,6 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       return await ApplyNationalTeamFlagsAsync(
          activities,
          cancellationToken
-      );
-   }
-
-   private static void AddPublicActivityExclusionParameters(
-      NpgsqlCommand command
-   )
-   {
-      command.Parameters.AddWithValue(
-         "test_activity_title",
-         TestActivityTitle
-      );
-      command.Parameters.AddWithValue(
-         "test_activity_slug_pattern",
-         TestActivitySlugPattern
       );
    }
 

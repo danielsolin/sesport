@@ -77,7 +77,16 @@ public sealed class SharedLayoutMarkupTests
       Assert.DoesNotContain("public-member-form", html);
       Assert.DoesNotContain("Account/Logout", html);
       Assert.Contains("class=\"public-header-actions\"", html);
-      Assert.Contains("class=\"public-member-link\"", html);
+      Assert.Contains("class=\"@publicLoginClass\"", html);
+      Assert.Contains("var isPublicStatistics = requestPath.Equals(", html);
+      Assert.Contains("var isPublicWatches = requestPath.Equals(", html);
+      Assert.Contains("var isPublicLogin = requestPath.Equals(", html);
+      Assert.Contains("var publicStatisticsClass = isPublicStatistics", html);
+      Assert.Contains("var publicWatchesClass = isPublicWatches", html);
+      Assert.Contains("var publicLoginClass = isPublicLogin", html);
+      Assert.Contains("isPublicStatistics ? \"page\" : null", html);
+      Assert.Contains("isPublicWatches ? \"page\" : null", html);
+      Assert.Contains("isPublicLogin ? \"page\" : null", html);
       Assert.Contains(
          "PublicFilterPreferenceStore.ReadQueryString",
          html
@@ -127,6 +136,10 @@ public sealed class SharedLayoutMarkupTests
          publicCss
       );
       Assert.Contains(".public-member-link {", publicCss);
+      Assert.Contains("display: inline-flex;", publicCss);
+      Assert.Contains("border-radius: 999px;", publicCss);
+      Assert.Contains("text-transform: uppercase;", publicCss);
+      Assert.Contains(".public-member-link.is-active {", publicCss);
       Assert.Contains(
          "const isRootPath = currentPath === \"/\";\n" +
          "   const isDesktopDevice = !isMobileDevice();\n\n" +
