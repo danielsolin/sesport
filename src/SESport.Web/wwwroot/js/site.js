@@ -1,9 +1,8 @@
 (() => {
    const currentPath = window.location.pathname.toLowerCase();
    const isRootPath = currentPath === "/";
-   const isDesktopDevice = !isMobileDevice();
 
-   if(isRootPath && !isDesktopDevice)
+   if(isRootPath)
    {
       const autoReloadMarkerKey = "sesport-public-auto-reload";
 
@@ -42,19 +41,4 @@
    window.addEventListener("pageshow", restoreGetForms);
    restoreGetForms();
 
-   function isMobileDevice()
-   {
-      const userAgentDataMobile =
-         window.navigator.userAgentData?.mobile;
-
-      if(typeof userAgentDataMobile === "boolean")
-      {
-         return userAgentDataMobile;
-      }
-
-      const userAgent = window.navigator.userAgent;
-      return /android|iphone|ipad|ipod|mobile/i.test(userAgent) ||
-         window.navigator.platform === "MacIntel" &&
-         window.navigator.maxTouchPoints > 1;
-   }
 })();
