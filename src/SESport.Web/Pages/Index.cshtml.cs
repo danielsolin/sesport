@@ -201,7 +201,10 @@ public class IndexModel(
                .Distinct()
                .Count()
          ))
-         .OrderBy(
+         .OrderByDescending(
+            item => item.ParticipantCount
+         )
+         .ThenBy(
             item => item.SportName,
             StringComparer.OrdinalIgnoreCase
          )

@@ -43,11 +43,28 @@ public sealed class StatisticsMarkupTests
       Assert.Contains("data-date-dropdown-toggle", html);
       Assert.Contains("data-date-dropdown-menu", html);
       Assert.Contains("asp-route-month=\"@month.Value\"", html);
+      Assert.Contains("Model.SportOptions", html);
+      Assert.Contains("Model.SelectedSportLabel", html);
+      Assert.Contains("@Model.SelectedSportLabel:", html);
+      Assert.Contains("Svenskar:", html);
+      Assert.Contains(
+         "asp-route-sport=\"@sport.SportId\"",
+         html
+      );
+      Assert.Contains("data-sport-dropdown", html);
+      Assert.Contains("data-sport-dropdown-toggle", html);
+      Assert.Contains("data-sport-dropdown-menu", html);
       Assert.Contains("Model.Statistics.Leaders", html);
       Assert.Contains("leader.Rank", html);
       Assert.Contains("leader.Points", html);
       Assert.Contains("public-date-select.js", html);
+      Assert.Contains("public-sport-select.js", html);
       Assert.Contains(".statistics-heading {", css);
+      Assert.Contains(".statistics-heading-controls {", css);
+      Assert.Contains(
+         ".statistics-heading .statistics-sport-select {",
+         css
+      );
       Assert.Contains(".statistics-table {", css);
       Assert.Contains(
          ".statistics-table-wrap {\n" +

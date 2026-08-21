@@ -20,9 +20,33 @@ public sealed class StatisticsModel(
       private set;
    } = [];
 
+   public IReadOnlyList<PublicStatisticsSportOption> SportOptions
+   {
+      get;
+      private set;
+   } = [];
+
    public DateOnly SelectedMonth { get; private set; }
 
+   public string SelectedMonthValue => FormatMonthValue(SelectedMonth);
+
    public string SelectedMonthLabel => FormatMonthLabel(SelectedMonth);
+
+   public int TotalParticipantCount { get; private set; }
+
+   public PublicStatisticsSportOption? SelectedSportOption =>
+      SportOptions.FirstOrDefault(option => string.Equals(
+         option.SportId,
+         Sport,
+         StringComparison.OrdinalIgnoreCase
+      ));
+
+   public string SelectedSportLabel =>
+      SelectedSportOption?.SportName ?? "Svenskar";
+
+   public int SelectedSportParticipantCount =>
+      SelectedSportOption?.ParticipantCount ??
+      TotalParticipantCount;
 
    public PublicStatisticsSnapshot? Statistics { get; private set; }
 
@@ -30,6 +54,9 @@ public sealed class StatisticsModel(
 
    [BindProperty(SupportsGet = true, Name = RouteKeys.Month)]
    public string? Month { get; set; }
+
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Sport)]
+   public string? Sport { get; set; }
 
    public async Task OnGetAsync(CancellationToken cancellationToken)
    {
@@ -53,10 +80,19 @@ public sealed class StatisticsModel(
 
       try
       {
+         var sportSnapshot =
+            await repository.GetMonthlySportOptionsAsync(
+               SelectedMonth,
+               cancellationToken
+            );
+         TotalParticipantCount = sportSnapshot.ParticipantCount;
+         SportOptions = sportSnapshot.Options;
+         Sport = NormalizeSportFilter(Sport, SportOptions);
          Statistics = await repository.GetMonthlyAsync(
             SelectedMonth,
             options.TopParticipantLimit,
-            cancellationToken
+            cancellationToken,
+            Sport
          );
       }
       catch(Exception exception)
@@ -64,6 +100,25 @@ public sealed class StatisticsModel(
       {
          LoadError = this.LogUnexpectedError(exception);
       }
+   }
+
+   internal static string? NormalizeSportFilter(
+      string? requestedSport,
+      IReadOnlyList<PublicStatisticsSportOption> sportOptions
+   )
+   {
+      if(string.IsNullOrWhiteSpace(requestedSport))
+      {
+         return null;
+      }
+
+      return sportOptions
+         .Select(option => option.SportId)
+         .FirstOrDefault(id => string.Equals(
+            id,
+            requestedSport.Trim(),
+            StringComparison.OrdinalIgnoreCase
+         ));
    }
 
    internal static IReadOnlyList<StatisticsMonthOption>

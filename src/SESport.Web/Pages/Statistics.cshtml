@@ -14,48 +14,120 @@
 }
 
 <section class="page-heading statistics-heading">
-   <div class="date-select statistics-month-select">
-      <div class="date-dropdown" data-date-dropdown>
-         <button class="date-dropdown-toggle"
-                 type="button"
-                 aria-label="Välj månad"
-                 aria-haspopup="listbox"
-                 aria-expanded="false"
-                 aria-controls="statistics-month-menu"
-                 data-date-dropdown-toggle>
-            <span class="date-option-content">
-               <span class="date-option-label">
-                  <span class="date-option-date">
-                     @(selectedMonthOption?.Label ??
-                        Model.SelectedMonthLabel)
-                  </span>
-               </span>
-            </span>
-            <span class="date-dropdown-chevron"
-                  aria-hidden="true"></span>
-         </button>
-         <div id="statistics-month-menu"
-              class="date-dropdown-menu statistics-month-menu"
-              role="listbox"
-              aria-label="Månad"
-              hidden
-              data-date-dropdown-menu>
-            @foreach(var month in Model.MonthOptions)
-            {
-               <a class="date-dropdown-option
-                  @(month.IsSelected ? "is-selected" : "")"
-                  asp-page="/Statistics"
-                  asp-route-month="@month.Value"
-                  role="option"
-                  aria-selected="@(
-                     month.IsSelected ? "true" : "false"
-                  )">
-                  <span class="date-option-content">
-                     <span class="date-option-label">
-                        @month.Label
+   <div class="statistics-heading-controls">
+      <div class="date-select statistics-month-select">
+         <div class="date-dropdown" data-date-dropdown>
+            <button class="date-dropdown-toggle"
+                    type="button"
+                    aria-label="Välj månad"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-controls="statistics-month-menu"
+                    data-date-dropdown-toggle>
+               <span class="date-option-content">
+                  <span class="date-option-label">
+                     <span class="date-option-date">
+                        @(selectedMonthOption?.Label ??
+                           Model.SelectedMonthLabel)
                      </span>
                   </span>
+               </span>
+               <span class="date-dropdown-chevron"
+                     aria-hidden="true"></span>
+            </button>
+            <div id="statistics-month-menu"
+                 class="date-dropdown-menu statistics-month-menu"
+                 role="listbox"
+                 aria-label="Månad"
+                 hidden
+                 data-date-dropdown-menu>
+               @foreach(var month in Model.MonthOptions)
+               {
+                  <a class="date-dropdown-option
+                     @(month.IsSelected ? "is-selected" : "")"
+                     asp-page="/Statistics"
+                     asp-route-month="@month.Value"
+                     asp-route-sport="@Model.Sport"
+                     role="option"
+                     aria-selected="@(
+                        month.IsSelected ? "true" : "false"
+                     )">
+                     <span class="date-option-content">
+                        <span class="date-option-label">
+                           @month.Label
+                        </span>
+                     </span>
+                  </a>
+               }
+            </div>
+         </div>
+      </div>
+
+      <div class="sport-select statistics-sport-select"
+           data-sport-dropdown>
+         <button class="sport-dropdown-toggle"
+                 type="button"
+                 aria-label="Välj sport"
+                 aria-haspopup="true"
+                 aria-expanded="false"
+                 aria-controls="statistics-sport-dropdown-menu"
+                 data-sport-dropdown-toggle>
+            <span class="sport-option-content">
+               <span class="sport-option-name">
+                  @Model.SelectedSportLabel:
+               </span>
+               <span class="sport-option-count">
+                  @Model.SelectedSportParticipantCount
+               </span>
+            </span>
+            <span class="sport-dropdown-chevron"
+                  aria-hidden="true"></span>
+         </button>
+         <div id="statistics-sport-dropdown-menu"
+              class="sport-dropdown-menu"
+              aria-label="Sportfilter"
+              data-sport-dropdown-menu>
+            <div class="index-participants">
+               <a class="index-participants-info
+                  index-participants-filter
+                  @(Model.Sport is null ? "is-selected" : "")"
+                  asp-page="/Statistics"
+                  asp-route-month="@Model.SelectedMonthValue"
+                  asp-route-sport="@string.Empty"
+                  aria-current="@(
+                     Model.Sport is null ? "true" : null
+                  )"
+                  aria-label="Visa alla sporter">
+                  <span>Svenskar:</span>
+                  <span class="index-participants-count
+                     index-participants-value">
+                     @Model.TotalParticipantCount
+                  </span>
                </a>
+            </div>
+            @foreach(var sport in Model.SportOptions)
+            {
+               var isSelected = string.Equals(
+                  Model.Sport,
+                  sport.SportId,
+                  StringComparison.OrdinalIgnoreCase
+               );
+               <div class="index-participants">
+                  <a class="index-participants-info
+                     index-participants-filter
+                     @(isSelected ? "is-selected" : "")"
+                     asp-page="/Statistics"
+                     asp-route-month="@Model.SelectedMonthValue"
+                     asp-route-sport="@sport.SportId"
+                     aria-current="@(isSelected ? "true" : null)"
+                     aria-label="Visa endast @sport.SportName">
+                     <span>@sport.SportName:</span>
+                     <span class="index-participants-count
+                        index-participants-value">
+                        @sport.ParticipantCount
+                     </span>
+                  </a>
+               </div>
             }
          </div>
       </div>
@@ -75,7 +147,7 @@ else if(Model.Statistics is not null)
       <div class="statistics-card-heading">
          <div class="statistics-participant-count">
             <span>MÅNADENS MEST AKTIVA AV TOTALT</span>
-            <strong>@Model.Statistics.ParticipantCount</strong>
+            <strong>@Model.SelectedSportParticipantCount</strong>
          </div>
       </div>
 
@@ -125,5 +197,7 @@ else if(Model.Statistics is not null)
 
 @section Scripts {
    <script src="~/js/public-date-select.js"
+           asp-append-version="true"></script>
+   <script src="~/js/public-sport-select.js"
            asp-append-version="true"></script>
 }

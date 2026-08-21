@@ -1,4 +1,5 @@
 using SESport.Core.Configuration;
+using SESport.Data.Models;
 using SESport.Web.Pages;
 
 namespace SESport.Core.Tests.Pages;
@@ -56,6 +57,27 @@ public sealed class StatisticsModelTests
       );
       Assert.Null(StatisticsModel.ParseMonth("2026-6"));
       Assert.Null(StatisticsModel.ParseMonth("2026-06-01"));
+   }
+
+   [Fact]
+   public void NormalizeSportFilterKeepsOnlyMonthlySportOptions()
+   {
+      var options = new PublicStatisticsSportOption[]
+      {
+         new("golf", "Golf", 2),
+         new("tennis", "Tennis", 1)
+      };
+
+      Assert.Equal(
+         "golf",
+         StatisticsModel.NormalizeSportFilter(" GOLF ", options)
+      );
+      Assert.Null(
+         StatisticsModel.NormalizeSportFilter("ski", options)
+      );
+      Assert.Null(
+         StatisticsModel.NormalizeSportFilter(null, options)
+      );
    }
 
    [Fact]

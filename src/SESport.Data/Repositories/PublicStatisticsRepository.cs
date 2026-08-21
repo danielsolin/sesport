@@ -11,11 +11,18 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
    public async Task<PublicStatisticsSnapshot> GetMonthlyAsync(
       DateOnly month,
       int leaderRankLimit,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      string? sportId = null
    )
    {
       var monthStart = new DateOnly(month.Year, month.Month, 1);
       var nextMonth = monthStart.AddMonths(1);
+      sportId = string.IsNullOrWhiteSpace(sportId)
+         ? null
+         : sportId.Trim();
+      var sportFilter = sportId is null
+         ? string.Empty
+         : "and activity.sport_id = @sport_id";
       var sql = $$"""
          with public_activities as (
             select
@@ -56,6 +63,7 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
                   '{{TrackedEntityTypeIds.Person}}'
             where activity.display_date >= @month_start
                and activity.display_date < @next_month
+               {{sportFilter}}
          ),
          person_counts as (
             select
@@ -122,6 +130,10 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
          Math.Max(leaderRankLimit, 1)
       );
       PublicActivityQuerySupport.AddExclusionParameters(command);
+      if(sportId is not null)
+      {
+         command.Parameters.AddWithValue("sport_id", sportId);
+      }
 
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -143,5 +155,109 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
       }
 
       return new PublicStatisticsSnapshot(participantCount, leaders);
+   }
+
+   public async Task<PublicStatisticsSportSnapshot>
+      GetMonthlySportOptionsAsync(
+         DateOnly month,
+         CancellationToken cancellationToken
+      )
+   {
+      var monthStart = new DateOnly(month.Year, month.Month, 1);
+      var nextMonth = monthStart.AddMonths(1);
+      var sql = $$"""
+         with public_activities as (
+            select
+               a.id,
+               a.sport_id,
+               case
+                  when a.starts_at is null then a.activity_date
+                  when coalesce(
+                     ag.public_date_mode,
+                     '{{ActivityGroupPublicDateModeIds.SportDay}}'
+                  ) =
+                     '{{ActivityGroupPublicDateModeIds.LocalCalendarDate}}'
+                  then (a.starts_at at time zone @time_zone)::date
+                  else (
+                     (a.starts_at at time zone @time_zone) - @cutoff
+                  )::date
+               end as display_date
+            from activities a
+            left join activity_groups ag
+               on ag.id = a.activity_group_id
+            where a.publication_status_id =
+               '{{ActivityPublicationStatusIds.Published}}'
+               {{PublicActivityQuerySupport.ExclusionClause}}
+         ),
+         person_sports as (
+            select distinct
+               person.id as person_id,
+               activity.sport_id
+            from public_activities activity
+            join activity_entity_links activity_link
+               on activity_link.activity_id = activity.id
+               and activity_link.is_active
+            join entities person
+               on person.id = activity_link.entity_id
+               and person.entity_type_id =
+                  '{{TrackedEntityTypeIds.Person}}'
+            where activity.display_date >= @month_start
+               and activity.display_date < @next_month
+         ),
+         total_participants as (
+            select count(distinct person_id)::int as participant_count
+            from person_sports
+         )
+         select
+            person_sports.sport_id,
+            coalesce(
+               nullif(s.display_name, ''),
+               s.name
+            ) as sport_name,
+            count(*)::int as participant_count,
+            total_participants.participant_count as total_participant_count
+         from person_sports
+         join sports s
+            on s.id = person_sports.sport_id
+         cross join total_participants
+         group by
+            person_sports.sport_id,
+            coalesce(
+               nullif(s.display_name, ''),
+               s.name
+            ),
+            total_participants.participant_count
+         order by count(*) desc, sport_name;
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("month_start", monthStart);
+      command.Parameters.AddWithValue("next_month", nextMonth);
+      command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
+      command.Parameters.AddWithValue(
+         "cutoff",
+         SportDay.Cutoff.ToTimeSpan()
+      );
+      PublicActivityQuerySupport.AddExclusionParameters(command);
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+      var options = new List<PublicStatisticsSportOption>();
+      var participantCount = 0;
+
+      while(await reader.ReadAsync(cancellationToken))
+      {
+         participantCount = reader.GetInt32(3);
+         options.Add(
+            new PublicStatisticsSportOption(
+               reader.GetString(0),
+               reader.GetString(1),
+               reader.GetInt32(2)
+            )
+         );
+      }
+
+      return new PublicStatisticsSportSnapshot(participantCount, options);
    }
 }

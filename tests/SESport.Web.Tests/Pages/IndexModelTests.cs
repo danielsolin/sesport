@@ -223,6 +223,37 @@ public sealed class IndexModelTests
    }
 
    [Fact]
+   public void CountParticipantsBySportSortsByParticipantCountDescending()
+   {
+      var firstPerson =
+         Guid.Parse("11111111-1111-1111-1111-111111111111");
+      var secondPerson =
+         Guid.Parse("22222222-2222-2222-2222-222222222222");
+      var activities = new[]
+      {
+         CreateActivity(
+            "Golf",
+            [firstPerson, secondPerson],
+            "golf",
+            "Golf"
+         ),
+         CreateActivity(
+            "Athletics",
+            [firstPerson],
+            "athletics",
+            "Athletics"
+         )
+      };
+
+      var counts = IndexModel.CountParticipantsBySport(activities);
+
+      Assert.Equal(
+         ["golf", "athletics"],
+         counts.Select(count => count.SportId)
+      );
+   }
+
+   [Fact]
    public void FilterActivitiesBySportUsesSelectedSportOnly()
    {
       var activities = new[]

@@ -18,5 +18,13 @@ public sealed class PublicStatisticsRepositoryTests
 
       Assert.Equal(0, result.ParticipantCount);
       Assert.Empty(result.Leaders);
+
+      var sportOptions = await repository.GetMonthlySportOptionsAsync(
+         new DateOnly(2199, 1, 1),
+         CancellationToken.None
+      );
+
+      Assert.Equal(0, sportOptions.ParticipantCount);
+      Assert.Empty(sportOptions.Options);
    }
 }

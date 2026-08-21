@@ -11,3 +11,14 @@ public sealed record PublicStatisticsLeader(
    string SportNames,
    int Points
 );
+
+public sealed record PublicStatisticsSportOption(
+   string SportId,
+   string SportName,
+   int ParticipantCount
+);
+
+public sealed record PublicStatisticsSportSnapshot(
+   int ParticipantCount,
+   IReadOnlyList<PublicStatisticsSportOption> Options
+);
