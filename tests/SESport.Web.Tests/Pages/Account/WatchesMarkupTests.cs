@@ -55,6 +55,8 @@ public sealed class WatchesMarkupTests
       Assert.Contains("NÄSTA:", page);
       Assert.Contains("RelatedOrganizationName", page);
       Assert.Contains("member-watch-next-activity", page);
+      Assert.Contains("member-watch-avatar", page);
+      Assert.Contains("viewBox=\"0 0 24 24\"", page);
       Assert.DoesNotContain("autofocus", page);
       Assert.Contains(
          "aria-label=\"När ska notisen skickas?\"",
@@ -87,6 +89,11 @@ public sealed class WatchesMarkupTests
       Assert.Contains("background: var(--subgrid-row);", css);
       Assert.Contains("border-left: 3px solid", css);
       Assert.Contains("gap: 6px;", css);
+      Assert.Contains(".member-watch-avatar {", css);
+      Assert.Contains("flex: 0 0 40px;", css);
+      Assert.Contains("color: #ffcc00;", css);
+      Assert.Contains("opacity: 0.65;", css);
+      Assert.Contains("padding: 12px 12px 12px 8px;", css);
       Assert.Contains(
          ".member-watch-next-activity {",
          css

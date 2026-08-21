@@ -76,6 +76,15 @@ with a type, sport, country, country relevance, stability, and watch priority.
 Person-specific fields such as gender, birthdate, height, weight, and
 formative club are nullable and constrained to person entities.
 
+### `entity_images`
+
+Stores image bytes and metadata associated with an entity. The table keeps
+source, creator, license, attribution, file, and review metadata alongside
+the optional image binary. It supports candidate and approved images and
+permits at most one primary image per entity. PostgreSQL stores the image
+bytes directly so image metadata and content remain part of the same backup
+and transaction.
+
 ### `entity_to_entity_links`
 
 Stores relationships between two entities, such as an athlete and a team.

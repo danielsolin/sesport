@@ -442,13 +442,33 @@
    align-items: center;
    justify-content: space-between;
    gap: 12px;
-   padding: 12px;
+   padding: 12px 12px 12px 8px;
    border: 1px solid var(--line);
    border-radius: 3px;
    background: var(--surface);
 }
 
+.member-watch-avatar {
+   display: flex;
+   flex: 0 0 40px;
+   align-items: center;
+   justify-content: center;
+   width: 40px;
+   height: 40px;
+   border: 1px solid var(--line);
+   border-radius: 50%;
+   background: #f1f6fa;
+   color: #ffcc00;
+}
+
+.member-watch-avatar svg {
+   width: 24px;
+   height: 24px;
+   opacity: 0.65;
+}
+
 .member-watch-name {
+   flex: 1 1 auto;
    min-width: 0;
    overflow-wrap: anywhere;
    font-weight: 700;

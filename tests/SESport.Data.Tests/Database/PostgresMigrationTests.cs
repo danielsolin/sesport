@@ -316,6 +316,31 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void EntityImagesMigrationDefinesImageMetadataStorage()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "032_entity_images.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("create table public.entity_images", migration);
+      Assert.Contains("references public.entities(id)", migration);
+      Assert.Contains("image_data bytea", migration);
+      Assert.Contains("source_url text not null", migration);
+      Assert.Contains("creator_name text", migration);
+      Assert.Contains("license_name text not null", migration);
+      Assert.Contains("attribution_text text", migration);
+      Assert.Contains("review_status text not null", migration);
+      Assert.Contains("entity_images_review_status_check", migration);
+      Assert.Contains("entity_images_entity_primary_unique", migration);
+      Assert.Contains("where is_primary", migration);
+   }
+
+   [Fact]
    public void TodoMigrationDefinesOpenTodoStorage()
    {
       var migration = File.ReadAllText(
