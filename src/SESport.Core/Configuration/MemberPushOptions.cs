@@ -13,12 +13,16 @@ public sealed record MemberPushOptions
    public int DefaultNotificationLeadTimeMinutes { get; init; } =
       MemberNotificationLeadTimes.TenMinutes;
 
+   public const int MinimumSweepIntervalSeconds = 5;
+
+   public const int DefaultClaimLeaseMinutes = 5;
+
    public int NotificationSweepIntervalSeconds { get; init; } = 30;
 
    public int NotificationBatchSize { get; init; } = 50;
 
    public TimeSpan NotificationClaimLease { get; init; } =
-      TimeSpan.FromMinutes(5);
+      TimeSpan.FromMinutes(DefaultClaimLeaseMinutes);
 
    public bool IsConfigured =>
       !string.IsNullOrWhiteSpace(Subject) &&

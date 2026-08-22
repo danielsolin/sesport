@@ -8,17 +8,6 @@ namespace SESport.Web.Services;
 
 internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
 {
-   private const int MainImageWidth = 500;
-   private const int ListThumbnailWidth = 72;
-   private const int MaximumImageBytes = 250_000;
-   private const int MaximumThumbnailBytes = 64_000;
-   private const int MaximumRetryAttempts = 4;
-   private const int MaximumRetryDelaySeconds = 60;
-
-   private static readonly Uri ApiUri = new(
-      "https://commons.wikimedia.org/w/api.php"
-   );
-
    private static readonly HashSet<string> SupportedMimeTypes =
    [
       "image/jpeg",
@@ -82,24 +71,24 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
          );
       var imageInfo = await GetImageInfoAsync(
          resolvedSource,
-         MainImageWidth,
+         WikimediaImageDefaults.MainImageWidth,
          includeMetadata: true,
          cancellationToken
       );
       var thumbnailInfo = await GetImageInfoAsync(
          resolvedSource,
-         ListThumbnailWidth,
+         WikimediaImageDefaults.ListThumbnailWidth,
          includeMetadata: false,
          cancellationToken
       );
       var image = await DownloadAsync(
          imageInfo,
-         MaximumImageBytes,
+         WikimediaImageDefaults.MaximumImageBytes,
          cancellationToken
       );
       var thumbnail = await DownloadAsync(
          thumbnailInfo,
-         MaximumThumbnailBytes,
+         WikimediaImageDefaults.MaximumThumbnailBytes,
          cancellationToken
       );
 
@@ -443,7 +432,7 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
       CancellationToken cancellationToken
    )
    {
-      if(attempt >= MaximumRetryAttempts)
+      if(attempt >= WikimediaImageDefaults.MaximumRetryAttempts)
       {
          response.Dispose();
          throw new EntityImageReplacementException(
@@ -455,8 +444,9 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
       if(delay is null || delay <= TimeSpan.Zero)
       {
          var seconds = Math.Min(
-            MaximumRetryDelaySeconds,
-            5 * Math.Pow(2, attempt)
+            WikimediaImageDefaults.MaximumRetryDelaySeconds,
+            WikimediaImageDefaults.RetryBackoffBaseSeconds *
+               Math.Pow(2, attempt)
          );
          delay = TimeSpan.FromSeconds(seconds);
       }
@@ -505,7 +495,7 @@ internal sealed class WikimediaCommonsImageClient(HttpClient httpClient)
             Uri.EscapeDataString(parameter.Key) + "=" +
             Uri.EscapeDataString(parameter.Value))
       );
-      return new Uri(ApiUri + "?" + query);
+      return new Uri(WikimediaImageDefaults.ApiUri + "?" + query);
    }
 
    private static JsonElement? GetFirstPage(JsonElement root)

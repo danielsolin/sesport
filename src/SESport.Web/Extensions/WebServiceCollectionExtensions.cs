@@ -40,7 +40,7 @@ public static class WebServiceCollectionExtensions
       services.AddHttpClient<WikimediaCommonsImageClient>(
          client =>
          {
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = WikimediaImageDefaults.HttpClientTimeout;
             client.DefaultRequestHeaders.UserAgent.ParseAdd(
                "SESport EntityImageReplacement/1.0 " +
                "(https://github.com/danielsolin/sesport)"

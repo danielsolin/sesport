@@ -1,4 +1,4 @@
-namespace SESport.Core.Members;
+namespace SESport.Core.Configuration;
 
 public static class MemberAuthenticationDefaults
 {

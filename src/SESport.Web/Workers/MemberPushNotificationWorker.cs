@@ -110,7 +110,10 @@ public sealed class MemberPushNotificationWorker(
    private TimeSpan GetSweepInterval()
    {
       return TimeSpan.FromSeconds(
-         Math.Max(5, options.NotificationSweepIntervalSeconds)
+         Math.Max(
+            MemberPushOptions.MinimumSweepIntervalSeconds,
+            options.NotificationSweepIntervalSeconds
+         )
       );
    }
 
@@ -118,6 +121,6 @@ public sealed class MemberPushNotificationWorker(
    {
       return options.NotificationClaimLease > TimeSpan.Zero
          ? options.NotificationClaimLease
-         : TimeSpan.FromMinutes(5);
+         : TimeSpan.FromMinutes(MemberPushOptions.DefaultClaimLeaseMinutes);
    }
 }
