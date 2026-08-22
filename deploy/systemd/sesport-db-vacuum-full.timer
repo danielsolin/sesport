@@ -1,0 +1,11 @@
+[Unit]
+Description=Run SESport full AI database vacuum nightly
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=sesport-db-vacuum-full.service
+
+[Install]
+WantedBy=timers.target

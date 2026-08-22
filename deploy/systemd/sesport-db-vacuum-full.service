@@ -1,0 +1,9 @@
+[Unit]
+Description=SESport full vacuum for AI job data
+
+[Service]
+Type=oneshot
+User=daniel
+WorkingDirectory=/home/daniel/sesport
+ExecStart=/usr/bin/flock -n /tmp/sesport-db-vacuum-full.lock \
+   /home/daniel/sesport/bin/db-vacuum-full.sh

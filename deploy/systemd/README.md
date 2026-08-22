@@ -30,6 +30,8 @@ access; do not run a second Unison service on the remote host.
 - `sesport-db-backup.timer`
 - `sesport-db-cleanup.service`
 - `sesport-db-cleanup.timer`
+- `sesport-db-vacuum-full.service`
+- `sesport-db-vacuum-full.timer`
 - `sesport-web-stats.service`
 - `sesport-web-stats.timer`
 - `sesport-unison.service` as a user service on the sync client
@@ -56,6 +58,14 @@ excluded from the reports.
 
 The database cleanup timer runs once per hour, with a randomized delay of up
 to 30 minutes to avoid starting maintenance exactly on the hour.
+
+The full AI database vacuum timer runs nightly at 03:30, with a randomized
+delay of up to 10 minutes. It rewrites only `ai_job_runs` and uses bounded
+lock and statement timeouts. Enable it with:
+
+```bash
+sudo systemctl enable --now sesport-db-vacuum-full.timer
+```
 
 ## Unison Two-Way Sync
 
