@@ -311,6 +311,12 @@
    background-color: #ffffff;
 }
 
+.member-watches-search-field input:focus {
+   border-color: var(--line);
+   outline: none;
+   box-shadow: 0 0 0 2px rgba(0, 106, 168, 0.18);
+}
+
 .member-watches-search-results {
    position: absolute;
    z-index: 10;
@@ -319,10 +325,12 @@
    left: 0;
    max-height: 420px;
    overflow-y: auto;
-   border: 1px solid var(--line);
+   border: 1px solid rgba(0, 106, 168, 0.45);
    border-radius: 4px;
    background: var(--surface);
-   box-shadow: 0 10px 24px rgba(20, 22, 20, 0.12);
+   box-shadow:
+      0 0 0 2px rgba(0, 106, 168, 0.18),
+      0 10px 24px rgba(20, 22, 20, 0.12);
 }
 
 .member-watches-search-results[hidden] {
