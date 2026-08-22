@@ -13,6 +13,7 @@ public sealed class MemberWatchRepositoryTests
       var memberId = Guid.NewGuid();
       var personId = Guid.NewGuid();
       var organizationId = Guid.NewGuid();
+      var nationalTeamId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
       var inactiveActivityId = Guid.NewGuid();
       var draftActivityId = Guid.NewGuid();
@@ -36,6 +37,23 @@ public sealed class MemberWatchRepositoryTests
          await InsertPersonAsync(dataSource, personId);
          await InsertPrimaryImageAsync(dataSource, imageId, personId);
          await InsertOrganizationAsync(dataSource, organizationId);
+         await InsertOrganizationAsync(
+            dataSource,
+            nationalTeamId,
+            TrackedEntityTypeIds.NationalTeam,
+            "Sweden National Team",
+            "Sweden"
+         );
+         await InsertEntityLinkAsync(
+            dataSource,
+            personId,
+            organizationId
+         );
+         await InsertEntityLinkAsync(
+            dataSource,
+            personId,
+            nationalTeamId
+         );
          await InsertActivityGroupAsync(dataSource, activityGroupId);
          await InsertActivityAsync(
             dataSource,
@@ -83,6 +101,13 @@ public sealed class MemberWatchRepositoryTests
             nextActivityId,
             personId
          );
+         var searchImage = await repository.GetPersonPrimaryImageAsync(
+            personId,
+            CancellationToken.None
+         );
+         Assert.NotNull(searchImage);
+         Assert.Equal("image/jpeg", searchImage.MimeType);
+         Assert.Equal(new byte[] { 9, 8 }, searchImage.Data);
          Assert.True(
             await repository.TryAddEntityWatchAsync(
                memberId,
@@ -90,6 +115,74 @@ public sealed class MemberWatchRepositoryTests
                CancellationToken.None
             )
          );
+         var searchResults = await repository.SearchPeopleAsync(
+            "Watch Test",
+            memberId,
+            5,
+            CancellationToken.None
+         );
+         var searchResult = Assert.Single(searchResults);
+         Assert.Equal(personId, searchResult.Id);
+         Assert.True(searchResult.IsWatched);
+         var partialNameResults = await repository.SearchPeopleAsync(
+            "Watch Per",
+            memberId,
+            100,
+            CancellationToken.None
+         );
+         Assert.Contains(
+            partialNameResults,
+            result => result.Id == personId
+         );
+         var sportAndNameResults = await repository.SearchPeopleAsync(
+            $"Watch {searchResult.SportName}",
+            memberId,
+            100,
+            CancellationToken.None
+         );
+         Assert.Contains(
+            sportAndNameResults,
+            result => result.Id == personId
+         );
+         var teamAndNameResults = await repository.SearchPeopleAsync(
+            "Watch Liverpool",
+            memberId,
+            100,
+            CancellationToken.None
+         );
+         Assert.Contains(
+            teamAndNameResults,
+            result => result.Id == personId
+         );
+         var nationalTeamAndNameResults =
+            await repository.SearchPeopleAsync(
+               "Watch Sweden",
+               memberId,
+               100,
+               CancellationToken.None
+            );
+         Assert.Contains(
+            nationalTeamAndNameResults,
+            result => result.Id == personId
+         );
+         var canonicalTeamAndNameResults =
+            await repository.SearchPeopleAsync(
+               "Watch Football Club",
+               memberId,
+               100,
+               CancellationToken.None
+            );
+         Assert.Contains(
+            canonicalTeamAndNameResults,
+            result => result.Id == personId
+         );
+         var teamResults = await repository.SearchPeopleAsync(
+            "liverpool",
+            memberId,
+            100,
+            CancellationToken.None
+         );
+         Assert.Contains(teamResults, result => result.Id == personId);
 
          var watches = await repository.GetWatchedEntitiesAsync(
             memberId,
@@ -121,14 +214,6 @@ public sealed class MemberWatchRepositoryTests
             ToUtc(new TimeOnly(17, 15)),
             watch.NextActivity.StartsAt
          );
-         var image = await repository.GetWatchedEntityPrimaryImageAsync(
-            memberId,
-            personId,
-            CancellationToken.None
-         );
-         Assert.NotNull(image);
-         Assert.Equal("image/jpeg", image.MimeType);
-         Assert.Equal(new byte[] { 9, 8 }, image.Data);
       }
       finally
       {
@@ -136,7 +221,7 @@ public sealed class MemberWatchRepositoryTests
             dataSource,
             memberId,
             [personId],
-            organizationId,
+            [organizationId, nationalTeamId],
             activityGroupId,
             [inactiveActivityId, draftActivityId, nextActivityId]
          );
@@ -277,7 +362,7 @@ public sealed class MemberWatchRepositoryTests
             dataSource,
             memberId,
             [earliestPersonId, latestPersonId, noActivityPersonId],
-            organizationId,
+            [organizationId],
             activityGroupId,
             [earliestActivityId, latestActivityId]
          );
@@ -465,7 +550,10 @@ public sealed class MemberWatchRepositoryTests
 
    private static async Task InsertOrganizationAsync(
       NpgsqlDataSource dataSource,
-      Guid organizationId
+      Guid organizationId,
+      string entityTypeId = TrackedEntityTypeIds.Club,
+      string canonicalName = "Liverpool Football Club",
+      string aliasName = "Liverpool F.C."
    )
    {
       await using var command = dataSource.CreateCommand(
@@ -484,7 +572,7 @@ public sealed class MemberWatchRepositoryTests
          )
          values (
             @id,
-            'Liverpool Football Club',
+            @canonical_name,
             @entity_type_id,
             'football',
             @country_id,
@@ -492,16 +580,18 @@ public sealed class MemberWatchRepositoryTests
             'Test coverage',
             'tier_3',
             'short_term',
-            'Liverpool F.C.'
+            @alias_name
          )
          """
       );
       command.Parameters.AddWithValue("id", organizationId);
+      command.Parameters.AddWithValue("canonical_name", canonicalName);
       command.Parameters.AddWithValue(
          "entity_type_id",
-         TrackedEntityTypeIds.Club
+         entityTypeId
       );
       command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
+      command.Parameters.AddWithValue("alias_name", aliasName);
       await command.ExecuteNonQueryAsync();
    }
 
@@ -618,11 +708,37 @@ public sealed class MemberWatchRepositoryTests
       await command.ExecuteNonQueryAsync();
    }
 
+   private static async Task InsertEntityLinkAsync(
+      NpgsqlDataSource dataSource,
+      Guid personId,
+      Guid organizationId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         values (
+            @id,
+            @source_entity_id,
+            @target_entity_id
+         )
+         """
+      );
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
+      command.Parameters.AddWithValue("source_entity_id", personId);
+      command.Parameters.AddWithValue("target_entity_id", organizationId);
+      await command.ExecuteNonQueryAsync();
+   }
+
    private static async Task DeleteTestDataAsync(
       NpgsqlDataSource dataSource,
       Guid memberId,
       IReadOnlyCollection<Guid> personIds,
-      Guid organizationId,
+      IReadOnlyCollection<Guid> organizationIds,
       Guid activityGroupId,
       IReadOnlyCollection<Guid> activityIds
    )
@@ -633,13 +749,18 @@ public sealed class MemberWatchRepositoryTests
          where member_id = @member_id;
          delete from activity_entity_links
          where activity_id = any(@activity_ids);
+         delete from entity_to_entity_links
+         where source_entity_id = any(@person_ids)
+            or target_entity_id = any(@person_ids)
+            or source_entity_id = any(@organization_ids)
+            or target_entity_id = any(@organization_ids);
          delete from activities
          where id = any(@activity_ids);
          delete from activity_groups
          where id = @activity_group_id;
          delete from entities
          where id = any(@person_ids)
-            or id = @organization_id;
+            or id = any(@organization_ids);
          delete from members
          where id = @member_id;
          """
@@ -647,8 +768,8 @@ public sealed class MemberWatchRepositoryTests
       command.Parameters.AddWithValue("member_id", memberId);
       command.Parameters.AddWithValue("person_ids", personIds.ToArray());
       command.Parameters.AddWithValue(
-         "organization_id",
-         organizationId
+         "organization_ids",
+         organizationIds.ToArray()
       );
       command.Parameters.AddWithValue(
          "activity_group_id",

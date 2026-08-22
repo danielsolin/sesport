@@ -448,6 +448,20 @@
    background: var(--surface);
 }
 
+@media (hover: hover) and (pointer: fine) {
+   .member-watch-result[data-member-watch-add-row] {
+      cursor: pointer;
+      transition:
+         border-color 120ms ease,
+         background-color 120ms ease;
+   }
+
+   .member-watch-result[data-member-watch-add-row]:hover {
+      border-color: var(--accent);
+      background: var(--subgrid-row-hover);
+   }
+}
+
 .member-watch-avatar {
    display: flex;
    flex: 0 0 40px;
@@ -551,6 +565,18 @@
 .member-watch-action-form {
    flex: 0 0 auto;
    margin: 0;
+}
+
+.member-watch-already-added-label {
+   flex: 0 0 auto;
+   padding: 6px 10px;
+   border: 1px solid var(--line);
+   border-radius: 3px;
+   background: var(--subgrid-row);
+   color: var(--muted);
+   font-size: 11px;
+   font-weight: 800;
+   white-space: nowrap;
 }
 
 .member-watch-action-button {

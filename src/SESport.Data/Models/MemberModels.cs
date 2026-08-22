@@ -13,7 +13,8 @@ public sealed record MemberPersonListItem(
    string RelatedNames,
    MemberNextActivity? NextActivity = null,
    bool HasPrimaryImage = false,
-   MemberPrimaryImageSource? PrimaryImageSource = null
+   MemberPrimaryImageSource? PrimaryImageSource = null,
+   bool IsWatched = false
 )
 {
    public string DisplayInformation =>

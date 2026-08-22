@@ -4,10 +4,12 @@
    const inputSelector = "[data-member-watch-search-input]";
    const resultsSelector = "[data-member-watch-search-results]";
    const addFormSelector = "[data-member-watch-add-form]";
+   const addRowSelector = "[data-member-watch-add-row]";
    const autoSubmitFormSelector =
       "[data-member-watch-auto-submit-form]";
    const pushStatusSelector = "[data-member-watch-push-status]";
-   const debounceMs = 220;
+   const minimumSearchLength = 2;
+   const debounceMs = 300;
 
    const initializeSearch = root => {
       root.querySelectorAll(pushStatusSelector).forEach(
@@ -480,7 +482,7 @@
          const query = input.value.trim();
          const requestId = ++state.requestId;
 
-         if(query === "")
+         if(query.length < minimumSearchLength)
          {
             hideResults();
             return;
@@ -543,7 +545,7 @@
             window.clearTimeout(state.timerId);
          }
 
-         if(input.value.trim() === "")
+         if(input.value.trim().length < minimumSearchLength)
          {
             closeResults();
             return;
@@ -562,7 +564,7 @@
       });
 
       input.addEventListener("focus", () => {
-         if(input.value.trim() !== "")
+         if(input.value.trim().length >= minimumSearchLength)
          {
             scheduleSearch();
          }
@@ -597,6 +599,43 @@
       form.addEventListener("submit", event => {
          event.preventDefault();
          scheduleSearch();
+      });
+
+      const submitAddForm = form => {
+         if(!(form instanceof HTMLFormElement))
+         {
+            return;
+         }
+
+         const button = form.querySelector(
+            ".member-watch-action-button"
+         );
+         if(!(button instanceof HTMLButtonElement) || button.disabled)
+         {
+            return;
+         }
+
+         form.requestSubmit(button);
+      };
+
+      results.addEventListener("click", event => {
+         const target = event.target;
+         if(!(target instanceof Element)
+            || target.closest(
+               "a, button, input, select, textarea, label, " +
+               ".member-watch-image-container"
+            ) !== null)
+         {
+            return;
+         }
+
+         const row = target.closest(addRowSelector);
+         if(!(row instanceof HTMLElement))
+         {
+            return;
+         }
+
+         submitAddForm(row.querySelector(addFormSelector));
       });
 
       const getExistingPushSubscription = async () => {

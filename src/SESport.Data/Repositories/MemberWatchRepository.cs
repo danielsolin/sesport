@@ -66,23 +66,35 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      var escapedQuery = query
-         .Trim()
-         .Replace("\\", "\\\\", StringComparison.Ordinal)
-         .Replace("%", "\\%", StringComparison.Ordinal)
-         .Replace("_", "\\_", StringComparison.Ordinal);
+      var searchTerms = query
+         .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+         .Select(term => term
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal)
+         )
+         .ToArray();
+      if(searchTerms.Length == 0)
+      {
+         return Array.Empty<MemberPersonListItem>();
+      }
+
       var sql = BuildPersonListSql(
          string.Empty,
          """
-         and (
-            e.canonical_name ilike @term escape '\'
-            or coalesce(e.alias_name, '') ilike @term escape '\'
-         )
          and not exists (
             select 1
-            from member_entity_watches existing_watch
-            where existing_watch.member_id = @member_id
-               and existing_watch.entity_id = e.id
+            from unnest(@search_terms::text[]) as search_term(term)
+            where not (
+               e.canonical_name ilike
+                  ('%' || search_term.term || '%') escape '\'
+               or coalesce(e.alias_name, '') ilike
+                  ('%' || search_term.term || '%') escape '\'
+               or coalesce(s.display_name, s.name) ilike
+                  ('%' || search_term.term || '%') escape '\'
+               or coalesce(context.related_search_names, '') ilike
+                  ('%' || search_term.term || '%') escape '\'
+            )
          )
          """,
          includeLimit: true,
@@ -91,7 +103,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       );
 
       await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("term", $"%{escapedQuery}%");
+      command.Parameters.AddWithValue("search_terms", searchTerms);
       command.Parameters.AddWithValue("member_id", memberId);
       command.Parameters.AddWithValue("max_results", maxResults);
       await using var reader = await command.ExecuteReaderAsync(
@@ -108,8 +120,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    }
 
    public async Task<MemberPrimaryImage?>
-      GetWatchedEntityPrimaryImageAsync(
-      Guid memberId,
+      GetPersonPrimaryImageAsync(
       Guid entityId,
       CancellationToken cancellationToken
    )
@@ -119,9 +130,10 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             coalesce(image.thumbnail_data, image.image_data),
             coalesce(image.thumbnail_mime_type, image.mime_type)
          from entity_images image
-         join member_entity_watches watch
-            on watch.entity_id = image.entity_id
-         where watch.member_id = @member_id
+         join entities person
+            on person.id = image.entity_id
+         where person.entity_type_id =
+            '{{TrackedEntityTypeIds.Person}}'
             and image.entity_id = @entity_id
             and image.review_status =
                '{{EntityImageReviewStatusIds.Approved}}'
@@ -142,7 +154,6 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          """;
 
       await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("member_id", memberId);
       command.Parameters.AddWithValue("entity_id", entityId);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -219,24 +230,25 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
    )
    {
       MemberNextActivity? nextActivity = null;
-      var hasPrimaryImage = reader.GetBoolean(4);
+      var isWatched = reader.GetBoolean(4);
+      var hasPrimaryImage = reader.GetBoolean(5);
       MemberPrimaryImageSource? primaryImageSource = null;
       if(hasPrimaryImage)
       {
          primaryImageSource = new MemberPrimaryImageSource(
-            reader.GetString(5),
-            reader.IsDBNull(6) ? null : reader.GetString(6),
-            reader.GetString(7),
-            reader.IsDBNull(8) ? null : reader.GetString(8)
+            reader.GetString(6),
+            reader.IsDBNull(7) ? null : reader.GetString(7),
+            reader.GetString(8),
+            reader.IsDBNull(9) ? null : reader.GetString(9)
          );
       }
 
-      if(includesNextActivity && !reader.IsDBNull(9))
+      if(includesNextActivity && !reader.IsDBNull(10))
       {
          nextActivity = new MemberNextActivity(
-            reader.GetFieldValue<DateTimeOffset>(9),
-            reader.GetString(10),
-            reader.IsDBNull(11) ? null : reader.GetString(11)
+            reader.GetFieldValue<DateTimeOffset>(10),
+            reader.GetString(11),
+            reader.IsDBNull(12) ? null : reader.GetString(12)
          );
       }
 
@@ -247,7 +259,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          reader.GetString(3),
          nextActivity,
          hasPrimaryImage,
-         primaryImageSource
+         primaryImageSource,
+         isWatched
       );
    }
 
@@ -322,6 +335,12 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             e.canonical_name,
             coalesce(s.display_name, s.name) as sport_name,
             coalesce(context.related_names, '') as related_names,
+            exists (
+               select 1
+               from member_entity_watches watch_status
+               where watch_status.member_id = @member_id
+                  and watch_status.entity_id = e.id
+            ) as is_watched,
             primary_image.source_url is not null as has_primary_image,
             primary_image.source_url,
             primary_image.creator_name,
@@ -353,14 +372,31 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
                   linked.canonical_name
                ),
                ', ' order by
-                  case linked.entity_type_id
-                     when '{{TrackedEntityTypeIds.Discipline}}' then 1
-                     when '{{TrackedEntityTypeIds.Team}}' then 2
-                     when '{{TrackedEntityTypeIds.Club}}' then 3
-                     else 4
+                     case linked.entity_type_id
+                        when '{{TrackedEntityTypeIds.Discipline}}' then 1
+                        when '{{TrackedEntityTypeIds.Team}}' then 2
+                        when '{{TrackedEntityTypeIds.NationalTeam}}' then 3
+                        when '{{TrackedEntityTypeIds.Club}}' then 4
+                        else 5
                   end,
                   linked.canonical_name
-            ) as related_names
+            ) as related_names,
+            string_agg(
+               concat_ws(
+                  ' ',
+                  nullif(btrim(linked.alias_name), ''),
+                  linked.canonical_name
+               ),
+               ', ' order by
+                     case linked.entity_type_id
+                        when '{{TrackedEntityTypeIds.Discipline}}' then 1
+                        when '{{TrackedEntityTypeIds.Team}}' then 2
+                        when '{{TrackedEntityTypeIds.NationalTeam}}' then 3
+                        when '{{TrackedEntityTypeIds.Club}}' then 4
+                        else 5
+                  end,
+                  linked.canonical_name
+            ) as related_search_names
             from entity_to_entity_links entity_link
             join entities linked on linked.id = case
                when entity_link.source_entity_id = e.id
@@ -374,6 +410,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
                and linked.entity_type_id in (
                   '{{TrackedEntityTypeIds.Discipline}}',
                   '{{TrackedEntityTypeIds.Team}}',
+                  '{{TrackedEntityTypeIds.NationalTeam}}',
                   '{{TrackedEntityTypeIds.Club}}'
                )
          ) context on true

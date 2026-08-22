@@ -20,6 +20,14 @@ public sealed class WatchesMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/js/member-watches.js"
       );
+      var searchResultsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Account/_WatchSearchResults.cshtml"
+      );
+      var avatarPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Account/_WatchPersonAvatar.cshtml"
+      );
       var cssPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/wwwroot/css/public.css"
@@ -32,6 +40,8 @@ public sealed class WatchesMarkupTests
       var page = await File.ReadAllTextAsync(pagePath);
       var model = await File.ReadAllTextAsync(modelPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      var searchResults = await File.ReadAllTextAsync(searchResultsPath);
+      var avatar = await File.ReadAllTextAsync(avatarPath);
       var css = await File.ReadAllTextAsync(cssPath);
       var worker = await File.ReadAllTextAsync(workerPath);
 
@@ -55,16 +65,32 @@ public sealed class WatchesMarkupTests
       Assert.Contains("NÄSTA:", page);
       Assert.Contains("RelatedOrganizationName", page);
       Assert.Contains("member-watch-next-activity", page);
-      Assert.Contains("member-watch-avatar", page);
-      Assert.Contains("HasPrimaryImage", page);
-      Assert.Contains("PrimaryImageSource", page);
-      Assert.Contains("member-watch-image", page);
-      Assert.Contains("member-watch-image-link", page);
-      Assert.Contains("member-watch-image-tooltip", page);
-      Assert.Contains("noopener noreferrer", page);
-      Assert.Contains("loading=\"lazy\"", page);
-      Assert.Contains("decoding=\"async\"", page);
-      Assert.Contains("viewBox=\"0 0 24 24\"", page);
+      Assert.Contains(
+         "PartialAsync(\"_WatchPersonAvatar\", watch)",
+         page
+      );
+      Assert.Contains("data-member-watch-add-row", searchResults);
+      Assert.Contains("member-watch-search-result", searchResults);
+      Assert.Contains("IsWatched", searchResults);
+      Assert.Contains("Redan tillagd", searchResults);
+      Assert.Contains(
+         "member-watch-already-added-label",
+         searchResults
+      );
+      Assert.Contains(
+         "PartialAsync(\"_WatchPersonAvatar\", person)",
+         searchResults
+      );
+      Assert.Contains("HasPrimaryImage", avatar);
+      Assert.Contains("PrimaryImageSource", avatar);
+      Assert.Contains("member-watch-avatar", avatar);
+      Assert.Contains("member-watch-image", avatar);
+      Assert.Contains("member-watch-image-link", avatar);
+      Assert.Contains("member-watch-image-tooltip", avatar);
+      Assert.Contains("noopener noreferrer", avatar);
+      Assert.Contains("loading=\"lazy\"", avatar);
+      Assert.Contains("decoding=\"async\"", avatar);
+      Assert.Contains("viewBox=\"0 0 24 24\"", avatar);
       Assert.DoesNotContain("autofocus", page);
       Assert.Contains(
          "aria-label=\"När ska notisen skickas?\"",
@@ -77,8 +103,9 @@ public sealed class WatchesMarkupTests
       Assert.Contains("pushSubscription", model);
       Assert.Contains("OnPostRegisterPushAsync", model);
       Assert.Contains("OnGetImageAsync", model);
+      Assert.Contains("MinimumSearchLength", model);
       Assert.Contains(
-         "GetWatchedEntityPrimaryImageAsync",
+         "GetPersonPrimaryImageAsync",
          model
       );
       Assert.Contains("Skicka notis", model);
@@ -94,6 +121,16 @@ public sealed class WatchesMarkupTests
       Assert.Contains("push service error", script);
       Assert.Contains("service-worker.js", script);
       Assert.Contains("pushSubscription", script);
+      Assert.Contains("data-member-watch-add-row", script);
+      Assert.Contains("requestSubmit", script);
+      Assert.Contains("target.closest(", script);
+      Assert.Contains("minimumSearchLength = 2", script);
+      Assert.Contains("debounceMs = 300", script);
+      Assert.Contains(
+         "query.length < minimumSearchLength",
+         script
+      );
+      Assert.Contains("minlength=\"2\"", page);
       Assert.Contains(
          ".member-watches-push-status.is-active {",
          css
@@ -120,6 +157,18 @@ public sealed class WatchesMarkupTests
       Assert.Contains("font-size: 10px;", css);
       Assert.Contains("padding: 8px 8px 8px 0;", css);
       Assert.Contains("padding: 12px 16px 12px 12px;", css);
+      Assert.Contains(
+         "@media (hover: hover) and (pointer: fine)",
+         css
+      );
+      Assert.Contains(
+         ".member-watch-result[data-member-watch-add-row]:hover",
+         css
+      );
+      Assert.Contains(
+         ".member-watch-already-added-label {",
+         css
+      );
       Assert.Contains("showNotification", worker);
       Assert.Contains("notificationclick", worker);
    }

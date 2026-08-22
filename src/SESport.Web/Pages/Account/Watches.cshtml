@@ -71,6 +71,7 @@
                    id="member-watches-search-input"
                    placeholder="Sök person"
                    aria-label="Sök person"
+                   minlength="2"
                    aria-controls="member-watch-search-results"
                    aria-expanded="false"
                    aria-autocomplete="list"
@@ -109,84 +110,8 @@
          @foreach(var watch in Model.WatchedEntities)
          {
             var nextActivity = watch.NextActivity;
-            var primaryImageUrl = Url.Page(
-               "/Account/Watches",
-               "Image",
-               new { entityId = watch.Id }
-            );
             <li class="member-watch-result">
-               @if(watch.HasPrimaryImage &&
-                  watch.PrimaryImageSource is not null)
-               {
-                  var imageSource = watch.PrimaryImageSource;
-                  var sourceTooltipId =
-                     $"member-watch-image-source-{watch.Id:N}";
-                  <span class="member-watch-image-container">
-                     <a class="member-watch-avatar
-                        member-watch-image-link"
-                        href="@imageSource.SourceUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Bildkälla för @watch.Name"
-                        aria-describedby="@sourceTooltipId">
-                        <img class="member-watch-image"
-                             src="@primaryImageUrl"
-                             alt=""
-                             loading="lazy"
-                             decoding="async"
-                             aria-hidden="true" />
-                     </a>
-                     <span class="member-watch-image-tooltip"
-                           id="@sourceTooltipId">
-                        @if(!string.IsNullOrWhiteSpace(
-                           imageSource.CreatorName
-                        ))
-                        {
-                           <span>Foto: @imageSource.CreatorName</span>
-                        }
-                        @if(!string.IsNullOrWhiteSpace(
-                           imageSource.LicenseUrl
-                        ))
-                        {
-                           <a href="@imageSource.LicenseUrl"
-                              target="_blank"
-                              rel="noopener noreferrer">
-                              @imageSource.LicenseName
-                           </a>
-                        }
-                        else
-                        {
-                           <span>@imageSource.LicenseName</span>
-                        }
-                        <span>Wikimedia Commons</span>
-                     </span>
-                  </span>
-               }
-               else if(watch.HasPrimaryImage)
-               {
-                  <span class="member-watch-avatar"
-                        aria-hidden="true">
-                     <img class="member-watch-image"
-                          src="@primaryImageUrl"
-                          alt=""
-                          loading="lazy"
-                          decoding="async" />
-                  </span>
-               }
-               else
-               {
-                  <span class="member-watch-avatar"
-                        aria-hidden="true">
-                     <svg viewBox="0 0 24 24"
-                          focusable="false"
-                          aria-hidden="true">
-                        <path fill="currentColor"
-                              d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
-                                 1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
-                                 4v2h16v-2c0-2.21-3.58-4-8-4Z" />
-                     </svg>
-                  </span>
-               }
+               @await Html.PartialAsync("_WatchPersonAvatar", watch)
                <div class="member-watch-name">
                   @watch.Name
                   <span class="member-watch-information">

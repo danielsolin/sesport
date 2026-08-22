@@ -15,6 +15,7 @@ public sealed class WatchesModel(
 ) : PageModel
 {
    private const int MaxSearchResults = 5;
+   private const int MinimumSearchLength = 2;
    public const string SortQueryParameter = "sort";
    public const string NameSortValue = "name";
    public const string NextActivitySortValue = "next-activity";
@@ -90,8 +91,7 @@ public sealed class WatchesModel(
       CancellationToken cancellationToken
    )
    {
-      var image = await watchRepository.GetWatchedEntityPrimaryImageAsync(
-         GetMemberId(),
+      var image = await watchRepository.GetPersonPrimaryImageAsync(
          entityId,
          cancellationToken
       );
@@ -107,7 +107,7 @@ public sealed class WatchesModel(
    )
    {
       var query = NormalizeQuery(q);
-      var results = query is null
+      var results = query is null || query.Length < MinimumSearchLength
          ? Array.Empty<MemberPersonListItem>()
          : await watchRepository.SearchPeopleAsync(
             query,
