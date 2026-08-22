@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.Poll;
@@ -33,7 +34,7 @@ public sealed class ParticipationStatusModel(
                cancellationToken
             );
 
-         if(WantsHtmlResponse())
+         if(this.WantsHtmlResponse())
          {
             var resultByBroadcastId = results.ToDictionary(
                result => result.Id
@@ -120,9 +121,4 @@ public sealed class ParticipationStatusModel(
          .ToList();
    }
 
-   private bool WantsHtmlResponse() =>
-      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
-         "text/html",
-         StringComparison.OrdinalIgnoreCase
-      ) == true;
 }

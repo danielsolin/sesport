@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
+using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Broadcasts;
 using System.Globalization;
 
@@ -254,7 +255,7 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
-            if(!WantsHtmlResponse())
+            if(!this.WantsHtmlResponse())
             {
                var broadcast = await repository.GetByIdAsync(
                   id,
@@ -332,7 +333,7 @@ public sealed class BroadcastFieldModel(
                });
             }
 
-            if(!WantsHtmlResponse())
+            if(!this.WantsHtmlResponse())
             {
                var broadcast = await repository.GetByIdAsync(
                   id,
@@ -404,7 +405,7 @@ public sealed class BroadcastFieldModel(
       CancellationToken cancellationToken
    )
    {
-      if(!WantsHtmlResponse())
+      if(!this.WantsHtmlResponse())
       {
          return new JsonResult(jsonPayload);
       }
@@ -462,12 +463,6 @@ public sealed class BroadcastFieldModel(
          )
       );
    }
-
-   private bool WantsHtmlResponse() =>
-      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
-         "text/html",
-         StringComparison.OrdinalIgnoreCase
-      ) == true;
 
    private async Task<Guid?> ValidateOrganizationEntityIdAsync(
       string? value,

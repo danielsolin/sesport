@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Data;
+using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Entities;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
@@ -55,7 +56,7 @@ public sealed class EntityLinkModel(AdminRepository repository)
                cancellationToken
             );
 
-         if(WantsHtmlResponse())
+         if(this.WantsHtmlResponse())
          {
             var entity = await repository.GetEntityForEditAsync(
                id,
@@ -118,9 +119,4 @@ public sealed class EntityLinkModel(AdminRepository repository)
       return action is "add" or "link" or "remove" or "unlink";
    }
 
-   private bool WantsHtmlResponse() =>
-      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
-         "text/html",
-         StringComparison.OrdinalIgnoreCase
-      ) == true;
 }

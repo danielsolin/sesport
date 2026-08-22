@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
+using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Broadcasts;
 using SESport.Web.Pages.Admin.Runs;
 
@@ -152,7 +153,7 @@ public sealed class RunFieldModel(
             checks = Array.Empty<object>()
          };
 
-      if(WantsHtmlResponse())
+      if(this.WantsHtmlResponse())
       {
          if(broadcastRepository is null)
          {
@@ -216,9 +217,4 @@ public sealed class RunFieldModel(
          .ToLowerInvariant() ?? string.Empty;
    }
 
-   private bool WantsHtmlResponse() =>
-      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
-         "text/html",
-         StringComparison.OrdinalIgnoreCase
-      ) == true;
 }

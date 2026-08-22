@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Data.Models;
+using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.Create;
@@ -79,7 +80,7 @@ public sealed class ParticipantEntityModel(
          new { id = template.Id }
       );
 
-      if(WantsHtmlResponse() &&
+      if(this.WantsHtmlResponse() &&
          broadcastId is not null &&
          broadcastId != Guid.Empty &&
          !string.IsNullOrWhiteSpace(editUrl))
@@ -113,9 +114,4 @@ public sealed class ParticipantEntityModel(
       entity.FormativeClub = null;
    }
 
-   private bool WantsHtmlResponse() =>
-      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
-         "text/html",
-         StringComparison.OrdinalIgnoreCase
-      ) == true;
 }
