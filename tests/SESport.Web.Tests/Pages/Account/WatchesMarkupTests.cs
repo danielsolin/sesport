@@ -45,18 +45,30 @@ public sealed class WatchesMarkupTests
       var css = await File.ReadAllTextAsync(cssPath);
       var worker = await File.ReadAllTextAsync(workerPath);
 
+      var titleIndex = page.IndexOf(
+         "<h1 class=\"member-watches-section-title\">BEVAKNINGAR</h1>",
+         StringComparison.Ordinal
+      );
+      var searchIndex = page.IndexOf(
+         "<div class=\"member-watches-search-container\"",
+         StringComparison.Ordinal
+      );
+      Assert.DoesNotContain("LÄGG TILL", page);
+      Assert.True(titleIndex >= 0);
+      Assert.True(searchIndex > titleIndex);
+      Assert.DoesNotContain("member-watches-sort-settings", page);
+      Assert.DoesNotContain("SortQueryParameter", model);
+      Assert.DoesNotContain("SortOptions", model);
       Assert.Contains("data-member-watch-push-configured", page);
       Assert.Contains("data-member-watch-vapid-public-key", page);
       Assert.Contains("data-member-watch-push-status", page);
       Assert.Contains("data-member-watch-push-activate", page);
       Assert.Contains("RegisterPush", page);
       Assert.Contains("SetNotificationLeadTime", page);
-      Assert.Contains("member-watches-sort-settings", page);
       Assert.Contains(
          "data-member-watch-auto-submit-form",
          page
       );
-      Assert.Contains("SortQueryParameter", page);
       Assert.Contains("NextActivity", page);
       Assert.Contains(
          "FormatLocalTimestampWithoutSeconds",
@@ -109,8 +121,6 @@ public sealed class WatchesMarkupTests
          model
       );
       Assert.Contains("Skicka notis", model);
-      Assert.Contains("Sortering: Namn", model);
-      Assert.Contains("Sortering: Notis", model);
       Assert.Contains(
          "MemberNotificationLeadTimes.SupportedMinutes",
          model
@@ -137,6 +147,7 @@ public sealed class WatchesMarkupTests
       );
       Assert.Contains("background: #f4faf4;", css);
       Assert.Contains("background: var(--subgrid-row);", css);
+      Assert.Contains("max-height: 360px;", css);
       Assert.Contains("border-left: 3px solid", css);
       Assert.Contains("gap: 6px;", css);
       Assert.Contains(".member-watch-avatar {", css);

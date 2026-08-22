@@ -7,26 +7,10 @@ namespace SESport.Data.Repositories;
 
 public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 {
-   public Task<IReadOnlyList<MemberPersonListItem>>
-      GetWatchedEntitiesAsync(
-      Guid memberId,
-      DateTimeOffset now,
-      CancellationToken cancellationToken
-   )
-   {
-      return GetWatchedEntitiesAsync(
-         memberId,
-         now,
-         MemberWatchSort.Name,
-         cancellationToken
-      );
-   }
-
    public async Task<IReadOnlyList<MemberPersonListItem>>
       GetWatchedEntitiesAsync(
       Guid memberId,
       DateTimeOffset now,
-      MemberWatchSort sort,
       CancellationToken cancellationToken
    )
    {
@@ -40,7 +24,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          """,
          includeLimit: false,
          includeNextActivity: true,
-         sort: sort
+         includeSearchRanking: false
       );
 
       await using var command = dataSource.CreateCommand(sql);
@@ -99,7 +83,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          """,
          includeLimit: true,
          includeNextActivity: false,
-         sort: MemberWatchSort.Name
+         includeSearchRanking: true
       );
 
       await using var command = dataSource.CreateCommand(sql);
@@ -269,7 +253,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       string additionalWhereSql,
       bool includeLimit,
       bool includeNextActivity,
-      MemberWatchSort sort
+      bool includeSearchRanking
    )
    {
       var limitSql = includeLimit
@@ -318,15 +302,23 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          ) next_activity on true
          """
          : string.Empty;
-      var orderBySql = sort == MemberWatchSort.NextActivity &&
-         includeNextActivity
+      var orderBySql = includeSearchRanking
          ? """
-            order by next_activity.starts_at asc nulls last,
+            order by
+               case when e.canonical_name ilike (
+                  (@search_terms::text[])[1] || '%'
+               ) escape '\'
+                  or coalesce(e.alias_name, '') ilike (
+                     (@search_terms::text[])[1] || '%'
+                  ) escape '\'
+                  then 0
+                  else 1
+               end,
                e.canonical_name,
                e.id
             """
          : """
-            order by e.canonical_name
+            order by e.canonical_name, e.id
             """;
 
       return $$"""

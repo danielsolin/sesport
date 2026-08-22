@@ -54,7 +54,7 @@
       </select>
    </form>
 
-   <h1 class="member-watches-section-title">LÄGG TILL</h1>
+   <h1 class="member-watches-section-title">BEVAKNINGAR</h1>
 
    <div class="member-watches-search-container"
         data-member-watch-search
@@ -94,24 +94,6 @@
 
    @if(Model.WatchedEntities.Count > 0)
    {
-      <div class="member-watches-list-header">
-         <h2 class="member-watches-section-title">Dina bevakningar</h2>
-         <form class="member-watches-sort-settings"
-               method="get"
-               data-member-watch-auto-submit-form>
-            <select id="member-watch-sort"
-                    aria-label="Sortering"
-                    name="@WatchesModel.SortQueryParameter">
-               @foreach(var option in Model.SortOptions)
-               {
-                  <option value="@option.Value"
-                          selected="@(option.Value == Model.Sort)">
-                     @option.Label
-                  </option>
-               }
-            </select>
-         </form>
-      </div>
       <ul class="member-watch-results">
          @foreach(var watch in Model.WatchedEntities)
          {
