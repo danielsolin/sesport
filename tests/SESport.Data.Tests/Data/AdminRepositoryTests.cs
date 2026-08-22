@@ -902,6 +902,39 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task DeletePrimaryEntityImageAsyncRemovesPrimaryImage()
+   {
+      var entityId = Guid.NewGuid();
+      var entityName = $"Removed image entity {entityId:N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      await InsertEntityAsync(dataSource, entityId, entityName);
+      await InsertEntityImageAsync(dataSource, entityId);
+
+      try
+      {
+         await repository.DeletePrimaryEntityImageAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         var loaded = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(loaded);
+         Assert.False(loaded!.HasPrimaryThumbnail);
+         Assert.Null(loaded.PrimaryImageSourceUrl);
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, entityId);
+      }
+   }
+
+   [Fact]
    public async Task UpdateEntityPersonFactsAsyncPreservesExistingValues()
    {
       var entityId = Guid.NewGuid();

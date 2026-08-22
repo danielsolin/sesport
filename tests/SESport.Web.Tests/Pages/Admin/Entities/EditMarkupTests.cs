@@ -55,6 +55,8 @@ public sealed class EditMarkupTests
       Assert.Contains("class=\"entity-image-source-control\"", html);
       Assert.Contains("<span>Image source URL</span>", html);
       Assert.Contains("ReplaceImage", html);
+      Assert.Contains("Replace\n", html);
+      Assert.DoesNotContain("Replace image", html);
       Assert.DoesNotContain("readonly", html);
       Assert.DoesNotContain("Double-click to edit", html);
       Assert.DoesNotContain("asp-items=\"Model.EntityLinkOptions\"", html);

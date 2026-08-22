@@ -1413,6 +1413,23 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       await transaction.CommitAsync(cancellationToken);
    }
 
+   public async Task DeletePrimaryEntityImageAsync(
+      Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         delete from entity_images
+         where entity_id = @entity_id
+            and is_primary
+         """
+      );
+      command.Parameters.AddWithValue("entity_id", entityId);
+
+      await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    public async Task<IReadOnlyList<EntityActivityListItem>>
       GetEntityActivitiesAsync(
          Guid entityId,

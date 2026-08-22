@@ -122,28 +122,41 @@ public class EditModel(
       }
 
       var sourceUrl = Entity.PrimaryImageSourceUrl;
-      if(!WikimediaCommonsSourceUrl.TryParse(
-            sourceUrl,
-            out var source
-         ))
-      {
-         Entity = entity;
-         Entity.PrimaryImageSourceUrl = sourceUrl;
-         ModelState.AddModelError(
-            "Entity.PrimaryImageSourceUrl",
-            "Paste a valid Wikimedia Commons file URL."
-         );
-         await LoadOptionsAsync(cancellationToken);
-         return Page();
-      }
 
       try
       {
-         await imageReplacementService.ReplaceAsync(
-            id,
-            source,
-            cancellationToken
-         );
+         if(string.IsNullOrWhiteSpace(sourceUrl))
+         {
+            await repository.DeletePrimaryEntityImageAsync(
+               id,
+               cancellationToken
+            );
+            ImageMessage = "Image removed.";
+         }
+         else
+         {
+            if(!WikimediaCommonsSourceUrl.TryParse(
+                  sourceUrl,
+                  out var source
+               ))
+            {
+               Entity = entity;
+               Entity.PrimaryImageSourceUrl = sourceUrl;
+               ModelState.AddModelError(
+                  "Entity.PrimaryImageSourceUrl",
+                  string.Empty
+               );
+               await LoadOptionsAsync(cancellationToken);
+               return Page();
+            }
+
+            await imageReplacementService.ReplaceAsync(
+               id,
+               source,
+               cancellationToken
+            );
+            ImageMessage = "Image replacement completed.";
+         }
       }
       catch(EntityImageReplacementException exception)
          when(!cancellationToken.IsCancellationRequested)
@@ -164,7 +177,6 @@ public class EditModel(
          return Page();
       }
 
-      ImageMessage = "Image replacement completed.";
       return RedirectToPage("./Edit", new { id });
    }
 

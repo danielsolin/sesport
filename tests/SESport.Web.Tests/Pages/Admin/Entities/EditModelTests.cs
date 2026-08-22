@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
+using Npgsql;
 using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -213,6 +215,137 @@ public sealed class EditModelTests
    }
 
    [Fact]
+   public async Task OnPostReplaceImageAsyncDoesNotRenderInvalidUrlMessage()
+   {
+      var entityName = $"Invalid image entity {Guid.NewGuid():N}";
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var automationService = new CapturingAiAutomationService();
+      var imageService = new CapturingEntityImageReplacementService();
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         automationService,
+         new TestHostApplicationLifetime(),
+         imageService
+      )
+      {
+         Entity = new EntityEditModel
+         {
+            CanonicalName = entityName,
+            EntityTypeId = TrackedEntityTypeIds.Organization,
+            SportId = "football",
+            CountryId = PrimaryCountry.Id,
+            CountryRelevanceKindId =
+               "NationalityOrSportingIdentity",
+            CountryRelevanceReason = "Test coverage",
+            WatchPriorityId = "tier_3",
+            ExpectedStabilityId = "short_term"
+         }
+      };
+
+      try
+      {
+         await model.OnPostAsync(CancellationToken.None);
+         Assert.NotNull(model.Entity.Id);
+         var entityId = model.Entity.Id.Value;
+         model.Entity.PrimaryImageSourceUrl =
+            "https://example.test/not-a-wikimedia-url";
+
+         var result = await model.OnPostReplaceImageAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.IsType<PageResult>(result);
+         var entry = model.ModelState["Entity.PrimaryImageSourceUrl"];
+         Assert.NotNull(entry);
+         Assert.Single(entry!.Errors);
+         Assert.Empty(entry.Errors[0].ErrorMessage);
+         Assert.Null(imageService.Source);
+      }
+      finally
+      {
+         if(model.Entity.Id is not null)
+         {
+            await repository.DeleteEntityAsync(
+               model.Entity.Id.Value,
+               CancellationToken.None
+            );
+         }
+      }
+   }
+
+   [Fact]
+   public async Task OnPostReplaceImageAsyncWithEmptyUrlRemovesImage()
+   {
+      var entityName = $"Removed image entity {Guid.NewGuid():N}";
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var automationService = new CapturingAiAutomationService();
+      var imageService = new CapturingEntityImageReplacementService();
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         automationService,
+         new TestHostApplicationLifetime(),
+         imageService
+      )
+      {
+         Entity = new EntityEditModel
+         {
+            CanonicalName = entityName,
+            EntityTypeId = TrackedEntityTypeIds.Organization,
+            SportId = "football",
+            CountryId = PrimaryCountry.Id,
+            CountryRelevanceKindId =
+               "NationalityOrSportingIdentity",
+            CountryRelevanceReason = "Test coverage",
+            WatchPriorityId = "tier_3",
+            ExpectedStabilityId = "short_term"
+         }
+      };
+
+      try
+      {
+         await model.OnPostAsync(CancellationToken.None);
+         Assert.NotNull(model.Entity.Id);
+         var entityId = model.Entity.Id.Value;
+         await InsertEntityImageAsync(dataSource, entityId);
+         model.Entity.PrimaryImageSourceUrl = "   ";
+
+         var result = await model.OnPostReplaceImageAsync(
+            entityId,
+            CancellationToken.None
+         );
+
+         Assert.IsType<RedirectToPageResult>(result);
+         Assert.Null(imageService.Source);
+         Assert.Equal("Image removed.", model.ImageMessage);
+
+         var loaded = await repository.GetEntityForEditAsync(
+            entityId,
+            CancellationToken.None
+         );
+         Assert.NotNull(loaded);
+         Assert.False(loaded!.HasPrimaryThumbnail);
+         Assert.Null(loaded.PrimaryImageSourceUrl);
+      }
+      finally
+      {
+         if(model.Entity.Id is not null)
+         {
+            await repository.DeleteEntityAsync(
+               model.Entity.Id.Value,
+               CancellationToken.None
+            );
+         }
+      }
+   }
+
+   [Fact]
    public async Task OnPostAsyncTriggersAutomationForNewPerson()
    {
       var entityName = $"Person {Guid.NewGuid():N}";
@@ -266,6 +399,65 @@ public sealed class EditModelTests
             );
          }
       }
+   }
+
+   private static async Task InsertEntityImageAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         insert into entity_images (
+            id,
+            entity_id,
+            image_data,
+            mime_type,
+            thumbnail_data,
+            thumbnail_mime_type,
+            source_kind,
+            source_url,
+            license_name,
+            review_status,
+            reviewed_at,
+            is_primary
+         )
+         values (
+            @id,
+            @entity_id,
+            @image_data,
+            'image/jpeg',
+            @thumbnail_data,
+            'image/jpeg',
+            'test',
+            'https://example.test/entity-image',
+            'Test license',
+            @review_status,
+            @reviewed_at,
+            true
+         )
+         """
+      );
+      command.Parameters.AddWithValue("id", Guid.NewGuid());
+      command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue(
+         "image_data",
+         new byte[] { 1, 2, 3 }
+      );
+      command.Parameters.AddWithValue(
+         "thumbnail_data",
+         new byte[] { 9, 8 }
+      );
+      command.Parameters.AddWithValue(
+         "review_status",
+         EntityImageReviewStatusIds.Approved
+      );
+      command.Parameters.AddWithValue(
+         "reviewed_at",
+         new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
+      );
+
+      await command.ExecuteNonQueryAsync();
    }
 
    private sealed class CapturingAiAutomationService : IAiAutomationService
