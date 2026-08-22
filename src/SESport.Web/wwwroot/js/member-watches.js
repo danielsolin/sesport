@@ -408,9 +408,27 @@
       };
 
       const hideResults = () => {
+         const status = results.querySelector(
+            "[data-member-watch-search-status]"
+         );
+
+         results.querySelectorAll(":scope > *").forEach(child => {
+            if(child !== status
+               && !(status instanceof Node && child.contains(status)))
+            {
+               child.remove();
+            }
+         });
+
+         if(status instanceof HTMLElement)
+         {
+            status.hidden = true;
+            status.classList.remove("is-error");
+            status.textContent = "";
+         }
+
          results.hidden = true;
          results.removeAttribute("aria-busy");
-         results.replaceChildren();
          setExpanded(false);
       };
 
@@ -432,32 +450,41 @@
       };
 
       const showStatus = text => {
-         const status = document.createElement("p");
-         status.className = "member-watches-search-status";
+         const status = results.querySelector(
+            "[data-member-watch-search-status]"
+         );
+
+         if(!(status instanceof HTMLElement))
+         {
+            return;
+         }
+
+         status.classList.remove("is-error");
          status.textContent = text;
-         results.replaceChildren(status);
+         status.hidden = false;
          results.hidden = false;
          setExpanded(true);
       };
 
       const showPushError = text => {
-         results.querySelector(
-            "[data-member-watch-push-status]"
-         )?.remove();
-         const status = document.createElement("p");
-         status.className =
-            "member-watches-search-status is-error";
-         status.dataset.memberWatchPushStatus = "true";
+         const status = results.querySelector(
+            "[data-member-watch-search-status]"
+         );
+
+         if(!(status instanceof HTMLElement))
+         {
+            return;
+         }
+
+         status.classList.add("is-error");
          status.textContent = text;
-         results.prepend(status);
+         status.hidden = false;
          results.hidden = false;
          setExpanded(true);
       };
 
       const renderResults = html => {
-         const template = document.createElement("template");
-         template.innerHTML = html;
-         results.replaceChildren(template.content.cloneNode(true));
+         window.replaceContentsWithPartialHtml(results, html);
          results.hidden = false;
          setExpanded(true);
       };
@@ -690,21 +717,17 @@
             if(subscription !== null)
             {
                let input = subscriptionInput;
-               if(!(input instanceof HTMLInputElement))
-               {
-                  input = document.createElement("input");
-                  input.type = "hidden";
-                  input.name = "pushSubscription";
-                  target.append(input);
-               }
 
-               input.value = JSON.stringify(subscription.toJSON());
+               if(input instanceof HTMLInputElement)
+               {
+                  input.value = JSON.stringify(subscription.toJSON());
+               }
             }
 
             if(subscription === null
                && subscriptionInput instanceof HTMLInputElement)
             {
-               subscriptionInput.remove();
+               subscriptionInput.value = "";
             }
 
             const response = await fetch(target.action, {

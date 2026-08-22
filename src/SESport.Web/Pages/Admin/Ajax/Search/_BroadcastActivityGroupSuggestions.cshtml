@@ -1,0 +1,29 @@
+@using SESport.Data.Models
+@model SESport.Web.Pages.Admin.Ajax.Search.ActivityGroupSuggestionViewModel
+
+<div data-partial-content>
+   @foreach(var group in Model.Results)
+   {
+      <button type="button"
+              class="broadcast-org-entity-option"
+              data-suggestion-kind="existing"
+              data-suggestion-id="@group.Id"
+              data-suggestion-text="@group.Label">
+         @group.Label
+      </button>
+   }
+   @if(!string.IsNullOrWhiteSpace(Model.Term))
+   {
+      <button type="button"
+              class="broadcast-org-entity-option"
+              data-suggestion-kind="create"
+              data-suggestion-id=""
+              data-suggestion-text="@Model.Term">
+         Create new group: @Model.Term
+      </button>
+   }
+   @if(Model.Results.Count == 0 && string.IsNullOrWhiteSpace(Model.Term))
+   {
+      <div class="broadcast-org-entity-empty">No matches</div>
+   }
+</div>

@@ -1,0 +1,256 @@
+@using Microsoft.AspNetCore.WebUtilities
+@using SESport.Core.Broadcast
+@model SESport.Web.Pages.Admin.Broadcasts.BroadcastParticipationRunsViewModel
+
+@{
+   var latestCheck = Model.LatestCheck;
+   var isOpen = Model.IsOpen;
+   var runsBodyHidden = isOpen ? null : "hidden";
+}
+
+<div class="broadcast-ai-check-runs"
+     data-participation-runs-open="@isOpen.ToString().ToLowerInvariant()"
+     data-participation-run-id="@Model.ParticipationRunId"
+     data-participation-status="@Model.ParticipationStatusId"
+     data-participation-final="@Model.IsFinal.ToString().ToLowerInvariant()">
+   <table class="broadcast-ai-check-runs-table"
+          data-participation-runs-open="@isOpen.ToString().ToLowerInvariant()">
+      <thead class="broadcast-ai-check-runs-head">
+         <tr>
+            <th colspan="4">
+               <div class="broadcast-ai-check-runs-summary-bar">
+                  <span class="broadcast-ai-check-runs-summary-text
+                     @Model.SummaryBadgeClass">
+                     @Model.SummaryText
+                  </span>
+                  <div class="broadcast-ai-check-runs-summary-actions">
+                     <button class="button broadcast-ai-check-toggle"
+                             type="button"
+                             data-participation-runs-toggle
+                             aria-expanded="@isOpen.ToString().ToLowerInvariant()"
+                             aria-label="@(isOpen ? "Hide participation runs" : "Show participation runs")">
+                        @(isOpen ? "−" : "+")
+                     </button>
+                  </div>
+               </div>
+            </th>
+         </tr>
+      </thead>
+      <tbody class="broadcast-ai-check-runs-body"
+             hidden="@runsBodyHidden">
+         @if(Model.IsPending)
+         {
+            <tr class="broadcast-ai-check-row">
+               <td class="broadcast-ai-check-summary-cell">
+                  <div class="broadcast-ai-check-line">
+                     <span class="broadcast-ai-check-pending">Queued</span>
+                  </div>
+               </td>
+               <td class="broadcast-ai-check-participants-cell"></td>
+               <td class="broadcast-ai-check-sources-cell"></td>
+               <td class="broadcast-ai-check-activity-cell">
+                  <a class="ses-nowrap"
+                     href="@Model.ActivityUrl(null)">
+                     Create Activity
+                  </a>
+               </td>
+            </tr>
+         }
+         else if(Model.Checks.Count == 0)
+         {
+            <tr class="broadcast-ai-check-row">
+               <td class="broadcast-ai-check-summary-cell">
+                  <span class="broadcast-ai-check-empty">Not checked yet</span>
+               </td>
+               <td class="broadcast-ai-check-participants-cell"></td>
+               <td class="broadcast-ai-check-sources-cell"></td>
+               <td class="broadcast-ai-check-activity-cell">
+                  <a class="ses-nowrap"
+                     href="@Model.ActivityUrl(null)">
+                     Create Activity
+                  </a>
+               </td>
+            </tr>
+         }
+         else
+         {
+            @foreach(var check in Model.Checks)
+            {
+               var hasError = !string.IsNullOrWhiteSpace(check.ErrorMessage);
+               var participation = check.Participation?.Trim() ?? string.Empty;
+               var isRunning = string.Equals(
+                  check.StatusId,
+                  "running",
+                  StringComparison.OrdinalIgnoreCase
+               );
+               var activityUrl = Model.ActivityUrl(check.RunId);
+               <tr class="broadcast-ai-check-row">
+                  <td class="broadcast-ai-check-summary-cell">
+                     @if(hasError)
+                     {
+                        <div class="broadcast-ai-check-line">
+                           <span class="status-pill status-pill-warning">Error</span>
+                        </div>
+                        <span class="broadcast-ai-check-error">
+                           @check.ErrorMessage
+                        </span>
+                     }
+                     else if(string.IsNullOrWhiteSpace(participation))
+                     {
+                        <div class="broadcast-ai-check-line">
+                           <span class="broadcast-ai-check-pending">
+                              @BroadcastParticipationRunsViewModel.FormatStatus(check.StatusId)
+                           </span>
+                           @if(isRunning && check.ToolRoundCount > 0)
+                           {
+                              <span class="broadcast-ai-check-rounds">
+                                 Rounds: @check.ToolRoundCount
+                              </span>
+                           }
+                        </div>
+                     }
+                     else
+                     {
+                        <div class="broadcast-ai-check-line">
+                           <span class="status-pill @(string.Equals(participation, "yes", StringComparison.OrdinalIgnoreCase)
+                              ? "status-pill-positive"
+                              : "status-pill-neutral")">
+                              @participation
+                           </span>
+                        </div>
+                     }
+                  </td>
+                  <td class="broadcast-ai-check-participants-cell">
+                     @if(check.Participants.Count > 0)
+                     {
+                        var creatable = check.Participants
+                           .Where(participant => participant.EditUrl is null && participant.TemplateEntityId is not null)
+                           .ToList();
+                        <div class="broadcast-ai-check-participants">
+                           @if(check.TemplateOptions.Count > 1 && creatable.Count > 0)
+                           {
+                              <label class="broadcast-ai-check-template-picker">
+                                 <span>Template for new people:</span>
+                                 <select class="broadcast-ai-check-template-select"
+                                         data-broadcast-participant-template-select
+                                         aria-label="Template for new people">
+                                    @foreach(var option in check.TemplateOptions)
+                                    {
+                                       <option value="@option.Id">@option.Name</option>
+                                    }
+                                 </select>
+                              </label>
+                           }
+                           @foreach(var participant in check.Participants)
+                           {
+                              var searchQuery = string.Join(
+                                 " ",
+                                 new[] { participant.Name, Model.OrganizationSportName }
+                                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                              );
+                              <div class="broadcast-ai-check-participant-row">
+                                 @if(participant.EditUrl is not null)
+                                 {
+                                    <a class="broadcast-ai-check-participant-link"
+                                       href="@participant.EditUrl"
+                                       title="Edit entity"
+                                       target="_blank"
+                                       rel="noreferrer noopener">
+                                       @participant.Name
+                                    </a>
+                                 }
+                                 else
+                                 {
+                                    <span>@participant.Name</span>
+                                    @if(participant.TemplateEntityId is not null)
+                                    {
+                                       <form method="post"
+                                             action="@Model.ParticipantCreateUrl"
+                                             class="broadcast-ai-check-participant-create-form"
+                                             data-ajax-success="replace">
+                                          @Html.AntiForgeryToken()
+                                          <input type="hidden" name="participantName" value="@participant.Name" />
+                                          <input type="hidden" name="templateEntityId" value="@participant.TemplateEntityId" class="broadcast-ai-check-participant-template-input" />
+                                          <input type="hidden" name="broadcastId" value="@Model.BroadcastId" />
+                                          <input type="hidden" name="organizationSportName" value="@Model.OrganizationSportName" />
+                                          <button type="submit"
+                                                  class="broadcast-ai-check-participant-create-button"
+                                                  title="Create entity"
+                                                  aria-label="Create entity for @participant.Name">
+                                             +
+                                          </button>
+                                       </form>
+                                    }
+                                    @if(!string.IsNullOrWhiteSpace(Model.SearchUrlBase))
+                                    {
+                                       <a class="ses-entity-search-link"
+                                          href="@Model.SearchUrlBase@Uri.EscapeDataString(searchQuery)"
+                                          target="_blank"
+                                          rel="noreferrer noopener"
+                                          title="Search for @participant.Name"
+                                          aria-label="Search for @participant.Name">
+                                          <span class="ses-icon-search"></span>
+                                       </a>
+                                    }
+                                 }
+                              </div>
+                           }
+                        </div>
+                     }
+                  </td>
+                  <td class="broadcast-ai-check-sources-cell">
+                     @if(check.SourceUrls.Count > 0)
+                     {
+                        <div class="broadcast-ai-check-sources">
+                           <div class="broadcast-ai-check-sources-list">
+                              @foreach(var sourceUrl in check.SourceUrls.Distinct(StringComparer.Ordinal))
+                              {
+                                 <a href="@sourceUrl"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    title="@sourceUrl">
+                                    @sourceUrl
+                                 </a>
+                              }
+                           </div>
+                        </div>
+                     }
+                  </td>
+                  <td class="broadcast-ai-check-activity-cell">
+                     @if(!string.IsNullOrWhiteSpace(activityUrl))
+                     {
+                        <div class="broadcast-ai-check-activity-links">
+                           <a class="ses-nowrap" href="@activityUrl">
+                              Create Activity
+                           </a>
+                           @if(check.RunId != Guid.Empty)
+                           {
+                              <a href="/Admin/Runs/Details/@check.RunId"
+                                 target="_blank"
+                                 rel="noreferrer noopener">
+                                 View Run
+                              </a>
+                           }
+                        </div>
+                     }
+                     @if(check.RunId != Guid.Empty && !string.Equals(check.StatusId, "archived", StringComparison.OrdinalIgnoreCase))
+                     {
+                        <form method="post"
+                              action="@Model.RunFieldUrl"
+                              class="broadcast-ai-check-archive-form"
+                              data-ajax-success="update-participation">
+                           @Html.AntiForgeryToken()
+                           <input type="hidden" name="id" value="@check.RunId" />
+                           <input type="hidden" name="field" value="archive" />
+                           <button type="submit" class="broadcast-ai-check-archive-link">
+                              Archive Run
+                           </button>
+                        </form>
+                     }
+                  </td>
+               </tr>
+            }
+         }
+      </tbody>
+   </table>
+</div>

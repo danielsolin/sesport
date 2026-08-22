@@ -1,0 +1,25 @@
+@using SESport.Data.Models
+@model IReadOnlyList<ActivityParticipantListItem>
+
+<div data-partial-content>
+   @if(Model.Count == 0)
+   {
+      <div class="broadcast-org-entity-empty">No matches</div>
+   }
+   else
+   {
+      @foreach(var participant in Model)
+      {
+         <button type="button"
+                 class="broadcast-org-entity-option"
+                 data-entity-id="@participant.Id"
+                 data-entity-text="@participant.Name"
+                 data-related-organizations="@participant.RelatedOrganizations"
+                 data-watch-priority="@participant.WatchPriority"
+                 data-gender="@participant.Gender"
+                 data-alias="@participant.Alias">
+            @participant.Name
+         </button>
+      }
+   }
+</div>

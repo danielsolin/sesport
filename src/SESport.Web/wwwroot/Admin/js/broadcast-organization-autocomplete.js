@@ -14,8 +14,6 @@
       window.getBroadcastInlineEditUrl;
    const postBroadcastInlineEditAsync =
       window.postBroadcastInlineEditAsync;
-   const updateBroadcastInlineEditCell =
-      window.updateBroadcastInlineEditCell;
    let keyboardTabFocusActive = false;
 
    window.initializeBroadcastOrganizationAutocomplete =
@@ -99,6 +97,41 @@
          isOpen: false
       };
 
+      suggestions.addEventListener("click", event => {
+         const target = event.target;
+         const option = target instanceof Element
+            ? target.closest(".broadcast-org-entity-option")
+            : null;
+
+         if(!(option instanceof HTMLElement))
+         {
+            return;
+         }
+
+         event.preventDefault();
+         event.stopPropagation();
+         const item = state.items.find(candidate =>
+            candidate.id === option.dataset.entityId
+         );
+
+         if(item)
+         {
+            void selectSuggestion(item);
+         }
+      });
+
+      suggestions.addEventListener("mousedown", event => {
+         const target = event.target;
+         const option = target instanceof Element
+            ? target.closest(".broadcast-org-entity-option")
+            : null;
+
+         if(option instanceof HTMLElement && document.activeElement === input)
+         {
+            event.preventDefault();
+         }
+      });
+
       const closeSuggestions = () => {
          if(state.timerId !== null)
          {
@@ -129,51 +162,16 @@
 
       setLockedState(true);
 
-      const renderSuggestions = items => {
-         suggestions.replaceChildren();
-         state.items = items;
+      const renderSuggestions = html => {
+         window.replaceContentsWithPartialHtml(suggestions, html);
+         state.items = Array.from(
+            suggestions.querySelectorAll(".broadcast-org-entity-option")
+         ).map(option => ({
+            id: (option.dataset.entityId ?? "").trim(),
+            text: (option.dataset.entityText ?? "").trim(),
+            label: (option.dataset.entityLabel ?? "").trim()
+         })).filter(item => item.id !== "" && item.text !== "");
          state.selectedIndex = -1;
-
-         if(items.length === 0)
-         {
-            const empty = document.createElement("div");
-            empty.className = "broadcast-org-entity-empty";
-            empty.textContent = "No matches";
-            suggestions.append(empty);
-            suggestions.hidden = false;
-            state.isOpen = true;
-            return;
-         }
-
-         items.forEach((item, index) => {
-            const option = document.createElement("button");
-            option.type = "button";
-            option.className = "broadcast-org-entity-option";
-            option.dataset.entityId = item.id;
-            const label = formatOrgSearchResult(item);
-            option.dataset.entityLabel = label;
-            option.textContent = label;
-
-            option.addEventListener("click", event => {
-               event.preventDefault();
-               event.stopPropagation();
-               void selectSuggestion(item);
-            });
-
-            option.addEventListener("mousedown", event => {
-               if(document.activeElement === input)
-               {
-                  event.preventDefault();
-               }
-            });
-
-            option.addEventListener("mouseenter", () => {
-               setActiveSuggestion(index);
-            });
-
-            suggestions.append(option);
-         });
-
          suggestions.hidden = false;
          state.isOpen = true;
       };
@@ -238,36 +236,17 @@
          const url = new URL(searchUrl, window.location.origin);
          url.searchParams.set("term", trimmedQuery);
          url.searchParams.set("organizationOnly", "true");
+         url.searchParams.set("format", "organization-suggestions");
 
          try
          {
-            const response = await fetch(url, {
-               headers: {
-                  Accept: "application/json"
-               }
-            });
-            const payload = await response.json();
+            const html = await window.loadPartialAsync(url);
 
             if(requestId !== state.requestId)
             {
                return;
             }
-
-            if(!response.ok)
-            {
-               throw new Error(
-                  payload?.error ||
-                     `Request failed with status ${response.status}`
-               );
-            }
-
-            const results = Array.isArray(payload.results)
-               ? payload.results
-                  .map(item => normalizeOrgSearchResult(item))
-                  .filter(item => item !== null)
-               : [];
-
-            renderSuggestions(results);
+            renderSuggestions(html);
          }
          catch
          {
@@ -492,13 +471,6 @@
          : { id, text, sport };
    }
 
-   function formatOrgSearchResult(item)
-   {
-      return item.sport === ""
-         ? item.text
-         : `${item.text} (${item.sport})`;
-   }
-
    function getBroadcastOrganizationSearchUrl()
    {
       const container = document.querySelector(
@@ -572,21 +544,29 @@
 
       try
       {
-         const payload = await postBroadcastInlineEditAsync(
+         const rowHtml = await postBroadcastInlineEditAsync(
             url,
             broadcastId,
             broadcastInlineEditOrganizationField,
             currentValue
          );
+         const rowContainer = cell.closest(
+            "tbody[data-broadcast-container]"
+         );
 
-         updateBroadcastInlineEditCell(cell, payload);
-         setBroadcastOrganizationLockState(container, true);
-         hiddenId.dataset.broadcastOrgOriginalValue = currentValue;
-         input.dataset.broadcastOrgOriginalLabel = input.value.trim();
-         if(document.activeElement === input)
+         if(!(rowContainer instanceof HTMLElement))
          {
-            input.blur();
+            throw new Error("Broadcast container not found.");
          }
+
+         const replacement = window.replaceElementWithPartialHtml(
+            rowContainer,
+            rowHtml
+         );
+         window.initializeBroadcastInlineEditing?.(replacement);
+         window.initializeBroadcastOrganizationAutocomplete?.(replacement);
+         window.initializeBroadcastActivityGroupAutocomplete?.(replacement);
+         void window.initializeParticipationRunsAsync?.(replacement);
       }
       catch(error)
       {

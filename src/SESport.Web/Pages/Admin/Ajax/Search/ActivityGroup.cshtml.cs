@@ -21,6 +21,25 @@ public sealed class ActivityGroupModel(
          organizationEntityId
       );
 
+      if(string.Equals(
+            Request.Query["format"],
+            "broadcast-suggestions",
+            StringComparison.OrdinalIgnoreCase
+         ) || string.Equals(
+            Request.Query["format"],
+            "activity-suggestions",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return Partial(
+            "_BroadcastActivityGroupSuggestions",
+            new ActivityGroupSuggestionViewModel(
+               results,
+               term?.Trim() ?? string.Empty
+            )
+         );
+      }
+
       return new JsonResult(new
       {
          results = results.Select(group => new

@@ -141,16 +141,11 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("text-transform: uppercase;", publicCss);
       Assert.Contains(".public-member-link.is-active {", publicCss);
       Assert.Contains(
-         "const isRootPath = currentPath === \"/\";\n" +
-         "   const isDesktopDevice = !isMobileDevice();\n\n" +
-         "   if(isRootPath && !isDesktopDevice)",
+         "const isRootPath = currentPath === \"/\";\n\n" +
+         "   if(isRootPath)",
          siteJs
       );
-      Assert.Contains("function isMobileDevice()", siteJs);
-      Assert.Contains(
-         "window.navigator.userAgentData?.mobile",
-         siteJs
-      );
+      Assert.Contains("partial-loader.js", html);
       Assert.Contains(
          "window.submitFilterForm = submitFilterForm;",
          adminSiteJs

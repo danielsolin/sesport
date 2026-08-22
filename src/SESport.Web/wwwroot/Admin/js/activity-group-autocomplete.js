@@ -7,6 +7,7 @@
       "[data-activity-group-creation-required]";
    const suggestionsSelector = "[data-activity-group-suggestions]";
    const sportSelector = "[name='Activity.SportId']";
+   const optionSelector = ".broadcast-org-entity-option";
 
    const initializePickers = () => {
       document.querySelectorAll(pickerSelector).forEach(initializePicker);
@@ -74,11 +75,9 @@
          suggestions.hidden = true;
          suggestions.replaceChildren();
       };
-
       const setCreationRequired = value => {
          creationRequired.value = value ? "true" : "false";
       };
-
       const restoreOriginal = () => {
          input.value = original.title;
          hiddenId.value = original.id;
@@ -86,21 +85,49 @@
          setCreationRequired(original.creationRequired);
          closeSuggestions();
       };
+      const setActiveSuggestion = index => {
+         const options = Array.from(
+            suggestions.querySelectorAll(optionSelector)
+         );
 
+         if(options.length === 0)
+         {
+            return;
+         }
+
+         state.selectedIndex = Math.max(
+            0,
+            Math.min(index, options.length - 1)
+         );
+         options.forEach((option, optionIndex) => {
+            option.classList.toggle(
+               "is-active",
+               optionIndex === state.selectedIndex
+            );
+         });
+      };
+      const renderSuggestions = html => {
+         window.replaceContentsWithPartialHtml(suggestions, html);
+         state.items = Array.from(
+            suggestions.querySelectorAll(optionSelector)
+         ).map(option => ({
+            kind: option.dataset.suggestionKind === "create"
+               ? "create"
+               : "existing",
+            id: (option.dataset.suggestionId ?? "").trim(),
+            text: (option.dataset.suggestionText ?? "").trim()
+         }));
+         state.selectedIndex = -1;
+         suggestions.hidden = false;
+      };
       const selectItem = item => {
-         if(!item || typeof item.text !== "string")
+         if(!item || item.text === "")
          {
             return;
          }
 
-         const text = item.text.trim();
-         if(text === "")
-         {
-            return;
-         }
-
-         input.value = text;
-         hiddenTitle.value = text;
+         input.value = item.text;
+         hiddenTitle.value = item.text;
 
          if(item.kind === "create")
          {
@@ -109,80 +136,12 @@
          }
          else
          {
-            hiddenId.value = item.id.trim();
+            hiddenId.value = item.id;
             setCreationRequired(false);
          }
 
          closeSuggestions();
       };
-
-      const setActiveSuggestion = index => {
-         const options = Array.from(
-            suggestions.querySelectorAll(
-               ".broadcast-org-entity-option"
-            )
-         );
-
-         if(options.length === 0)
-         {
-            return;
-         }
-
-         const nextIndex = Math.max(
-            0,
-            Math.min(index, options.length - 1)
-         );
-         state.selectedIndex = nextIndex;
-         options.forEach((option, optionIndex) => {
-            option.classList.toggle(
-               "is-active",
-               optionIndex === nextIndex
-            );
-         });
-      };
-
-      const renderSuggestions = items => {
-         suggestions.replaceChildren();
-         state.items = items;
-         state.selectedIndex = -1;
-
-         if(items.length === 0)
-         {
-            const empty = document.createElement("div");
-            empty.className = "broadcast-org-entity-empty";
-            empty.textContent = "No matches";
-            suggestions.append(empty);
-            suggestions.hidden = false;
-            return;
-         }
-
-         items.forEach((item, index) => {
-            const option = document.createElement("button");
-            option.type = "button";
-            option.className = "broadcast-org-entity-option";
-            option.textContent = item.kind === "create"
-               ? `Create new group: ${item.text}`
-               : item.text;
-
-            option.addEventListener("mousedown", event => {
-               if(document.activeElement === input)
-               {
-                  event.preventDefault();
-               }
-            });
-            option.addEventListener("mouseenter", () => {
-               setActiveSuggestion(index);
-            });
-            option.addEventListener("click", event => {
-               event.preventDefault();
-               selectItem(item);
-            });
-            suggestions.append(option);
-         });
-
-         suggestions.hidden = false;
-      };
-
       const search = async () => {
          const term = input.value.trim();
          const requestId = ++state.requestId;
@@ -192,35 +151,16 @@
             "sportId",
             picker.dataset.activityGroupSportId ?? ""
          );
+         url.searchParams.set("format", "activity-suggestions");
 
          try
          {
-            const response = await fetch(url, {
-               headers: { Accept: "application/json" }
-            });
-            const payload = await response.json();
+            const html = await window.loadPartialAsync(url);
 
-            if(requestId !== state.requestId)
+            if(requestId === state.requestId)
             {
-               return;
+               renderSuggestions(html);
             }
-
-            if(!response.ok)
-            {
-               throw new Error("Group search failed.");
-            }
-
-            const items = Array.isArray(payload.results)
-               ? payload.results
-                  .map(normalizeResult)
-                  .filter(item => item !== null)
-               : [];
-
-            if(term !== "")
-            {
-               items.push({ kind: "create", id: "", text: term });
-            }
-            renderSuggestions(items);
          }
          catch
          {
@@ -230,7 +170,6 @@
             }
          }
       };
-
       const scheduleSearch = () => {
          if(state.timerId !== null)
          {
@@ -243,13 +182,52 @@
          }, 180);
       };
 
+      suggestions.addEventListener("click", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+         const index = option instanceof HTMLElement
+            ? Array.from(suggestions.querySelectorAll(optionSelector))
+               .indexOf(option)
+            : -1;
+
+         if(index >= 0)
+         {
+            event.preventDefault();
+            selectItem(state.items[index]);
+         }
+      });
+      suggestions.addEventListener("mousedown", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+
+         if(option instanceof HTMLElement && document.activeElement === input)
+         {
+            event.preventDefault();
+         }
+      });
+      suggestions.addEventListener("mouseover", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+         const index = option instanceof HTMLElement
+            ? Array.from(suggestions.querySelectorAll(optionSelector))
+               .indexOf(option)
+            : -1;
+
+         if(index >= 0)
+         {
+            setActiveSuggestion(index);
+         }
+      });
+
       input.addEventListener("input", () => {
          hiddenId.value = "";
          hiddenTitle.value = input.value.trim();
          setCreationRequired(false);
          scheduleSearch();
       });
-
       input.addEventListener("focus", scheduleSearch);
       input.addEventListener("keydown", event => {
          if(suggestions.hidden)
@@ -275,11 +253,9 @@
          else if(event.key === "Enter")
          {
             event.preventDefault();
-            const item = state.items[Math.max(state.selectedIndex, 0)];
-            selectItem(item);
+            selectItem(state.items[Math.max(state.selectedIndex, 0)]);
          }
       });
-
       input.addEventListener("blur", () => {
          window.setTimeout(() => {
             if(picker.contains(document.activeElement))
@@ -301,23 +277,11 @@
 
       const sportInput = document.querySelector(sportSelector);
       sportInput?.addEventListener("change", () => {
-         picker.dataset.activityGroupSportId = sportInput.value;
-         scheduleSearch();
+         if(sportInput instanceof HTMLSelectElement)
+         {
+            picker.dataset.activityGroupSportId = sportInput.value;
+            scheduleSearch();
+         }
       });
-   }
-
-   function normalizeResult(item)
-   {
-      if(!(item && typeof item === "object"))
-      {
-         return null;
-      }
-
-      const id = typeof item.id === "string" ? item.id.trim() : "";
-      const text = typeof item.text === "string" ? item.text.trim() : "";
-
-      return id === "" || text === ""
-         ? null
-         : { kind: "existing", id, text };
    }
 })();

@@ -4,12 +4,12 @@
    const suggestionsSelector =
       "[data-entity-linked-entities-suggestions]";
    const gridSelector = "[data-entity-linked-entities-grid]";
-   const rowsSelector = "[data-entity-linked-entities-rows]";
    const rowSelector = "[data-entity-linked-entities-row]";
    const removeButtonSelector =
       "[data-entity-linked-entities-remove]";
    const hiddenInputSelector =
       "[data-entity-linked-entities-hidden-id]";
+   const optionSelector = ".broadcast-org-entity-option";
    const debounceMs = 180;
 
    window.initializeEntityLinkedEntitiesPicker =
@@ -36,7 +36,6 @@
 
       const input = picker.querySelector(inputSelector);
       const suggestions = picker.querySelector(suggestionsSelector);
-      const grid = picker.querySelector(gridSelector);
       const searchUrl = (picker.dataset.entityLinkedEntitiesSearchUrl ?? "")
          .trim();
       const updateUrl = (picker.dataset.entityLinkedEntitiesUpdateUrl ?? "")
@@ -53,7 +52,6 @@
 
       if(!(input instanceof HTMLInputElement)
          || !(suggestions instanceof HTMLElement)
-         || !(grid instanceof HTMLElement)
          || searchUrl === "")
       {
          return;
@@ -70,60 +68,69 @@
       };
 
       input.addEventListener("input", () => {
-         scheduleSearch(
-            state,
-            picker,
-            input,
-            suggestions,
-            searchUrl,
-            excludeEntityId,
-            organizationOnly,
-            maxResults,
-            grid,
-            updateUrl,
-            isExistingEntity
-         );
+         scheduleSearch(state, picker, input, suggestions, searchUrl);
       });
 
       input.addEventListener("focus", () => {
          if(input.value.trim() !== "")
          {
-            scheduleSearch(
+            scheduleSearch(state, picker, input, suggestions, searchUrl);
+         }
+      });
+
+      input.addEventListener("keydown", event => {
+         handleKeyDown(event, state, picker, input, suggestions);
+      });
+
+      suggestions.addEventListener("click", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+         const item = option instanceof HTMLElement
+            ? getItemFromOption(option)
+            : null;
+
+         if(item)
+         {
+            event.preventDefault();
+            void selectSuggestionAsync(
+               item,
                state,
                picker,
                input,
                suggestions,
                searchUrl,
                excludeEntityId,
-               organizationOnly,
-               maxResults,
-               grid,
-               updateUrl,
-               isExistingEntity
+               isExistingEntity,
+               updateUrl
             );
          }
       });
 
-      input.addEventListener("keydown", event => {
-         handleKeyDown(
-            event,
-            state,
-            picker,
-            input,
-            suggestions,
-            excludeEntityId,
-            updateUrl,
-            isExistingEntity
-         );
+      suggestions.addEventListener("mousedown", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+
+         if(option instanceof HTMLElement && document.activeElement === input)
+         {
+            event.preventDefault();
+         }
       });
 
-      input.addEventListener("blur", () => {
-         window.setTimeout(() => {
-            if(!picker.contains(document.activeElement))
-            {
-               closeSuggestions(state, suggestions);
-            }
-         }, 120);
+      suggestions.addEventListener("mouseover", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+         const options = Array.from(
+            suggestions.querySelectorAll(optionSelector)
+         );
+         const index = options.indexOf(option);
+
+         if(index >= 0)
+         {
+            setActiveSuggestion(state, suggestions, index);
+         }
       });
 
       picker.addEventListener("click", event => {
@@ -138,44 +145,32 @@
 
          event.preventDefault();
          event.stopPropagation();
-
-         const row = removeButton.closest(rowSelector);
-
-         if(!(row instanceof HTMLElement))
-         {
-            return;
-         }
-
          void removeRowAsync(
             state,
-            row,
             picker,
             input,
             suggestions,
             searchUrl,
             excludeEntityId,
-            organizationOnly,
-            maxResults,
-            grid,
+            isExistingEntity,
             updateUrl,
-            isExistingEntity
+            removeButton.closest(rowSelector),
+            organizationOnly,
+            maxResults
          );
+      });
+
+      input.addEventListener("blur", () => {
+         window.setTimeout(() => {
+            if(!picker.contains(document.activeElement))
+            {
+               closeSuggestions(state, suggestions);
+            }
+         }, 120);
       });
    }
 
-   function scheduleSearch(
-      state,
-      picker,
-      input,
-      suggestions,
-      searchUrl,
-      excludeEntityId,
-      organizationOnly,
-      maxResults,
-      grid,
-      updateUrl,
-      isExistingEntity
-   )
+   function scheduleSearch(state, picker, input, suggestions, searchUrl)
    {
       if(state.timerId !== null)
       {
@@ -184,35 +179,11 @@
 
       state.timerId = window.setTimeout(() => {
          state.timerId = null;
-         void search(
-            state,
-            picker,
-            input,
-            suggestions,
-            searchUrl,
-            excludeEntityId,
-            organizationOnly,
-            maxResults,
-            grid,
-            updateUrl,
-            isExistingEntity
-         );
+         void search(state, picker, input, suggestions, searchUrl);
       }, debounceMs);
    }
 
-   async function search(
-      state,
-      picker,
-      input,
-      suggestions,
-      searchUrl,
-      excludeEntityId,
-      organizationOnly,
-      maxResults,
-      grid,
-      updateUrl,
-      isExistingEntity
-   )
+   async function search(state, picker, input, suggestions, searchUrl)
    {
       const query = input.value.trim();
 
@@ -224,7 +195,18 @@
 
       const requestId = ++state.requestId;
       const url = new URL(searchUrl, window.location.origin);
+      const organizationOnly = (
+         picker.dataset.organizationOnly ?? "true"
+      ).trim().toLowerCase() !== "false";
+      const maxResults = Number.parseInt(
+         picker.dataset.maxResults ?? "",
+         10
+      );
+      const excludeEntityId = (picker.dataset.entityId ?? "").trim();
+      const grid = picker.querySelector(gridSelector);
+
       url.searchParams.set("term", query);
+      url.searchParams.set("format", "linked-entity-suggestions");
       url.searchParams.set(
          "organizationOnly",
          organizationOnly ? "true" : "false"
@@ -241,15 +223,18 @@
          url.searchParams.set("maxResults", String(maxResults));
       }
 
+      getSelectedEntityIds(grid).forEach(entityId => {
+         url.searchParams.append("selectedEntityIds", entityId);
+      });
+
       try
       {
          const response = await fetch(url, {
             headers: {
-               Accept: "application/json"
+               Accept: "text/html"
             }
          });
-
-         const payload = await response.json();
+         const html = await response.text();
 
          if(requestId !== state.requestId)
          {
@@ -261,27 +246,7 @@
             throw new Error("Entity search failed.");
          }
 
-         const selectedIds = new Set(getSelectedEntityIds(grid));
-         state.pendingEntityIds.forEach(id => {
-            selectedIds.add(id);
-         });
-         const results = Array.isArray(payload.results)
-            ? payload.results
-               .map(normalizeResult)
-               .filter(item => item !== null)
-               .filter(item => !selectedIds.has(item.id))
-            : [];
-
-         renderSuggestions(
-            state,
-            picker,
-            suggestions,
-            input,
-            results,
-            excludeEntityId,
-            updateUrl,
-            isExistingEntity
-         );
+         renderSuggestions(state, suggestions, html);
       }
       catch
       {
@@ -292,78 +257,17 @@
       }
    }
 
-   function renderSuggestions(
-      state,
-      picker,
-      suggestions,
-      input,
-      items,
-      entityId,
-      updateUrl,
-      isExistingEntity
-   )
+   function renderSuggestions(state, suggestions, html)
    {
-      suggestions.replaceChildren();
-      state.items = items;
+      window.replaceContentsWithPartialHtml(suggestions, html);
+      state.items = Array.from(
+         suggestions.querySelectorAll(optionSelector)
+      ).map(getItemFromOption).filter(item => item !== null);
       state.selectedIndex = -1;
-
-      if(items.length === 0)
-      {
-         const empty = document.createElement("div");
-         empty.className = "broadcast-org-entity-empty";
-         empty.textContent = "No matches";
-         suggestions.append(empty);
-         suggestions.hidden = false;
-         return;
-      }
-
-      items.forEach((item, index) => {
-         const option = document.createElement("button");
-         option.type = "button";
-         option.className = "broadcast-org-entity-option";
-         option.dataset.entityId = item.id;
-         option.textContent = formatItemText(item);
-
-         option.addEventListener("click", event => {
-            event.preventDefault();
-            void selectSuggestionAsync(
-               item,
-               picker,
-               suggestions,
-               state,
-               entityId,
-               updateUrl,
-               isExistingEntity
-            );
-         });
-
-         option.addEventListener("mousedown", event => {
-            if(document.activeElement === input)
-            {
-               event.preventDefault();
-            }
-         });
-
-         option.addEventListener("mouseenter", () => {
-            setActiveSuggestion(state, suggestions, index);
-         });
-
-         suggestions.append(option);
-      });
-
       suggestions.hidden = false;
    }
 
-   function handleKeyDown(
-      event,
-      state,
-      picker,
-      input,
-      suggestions,
-      excludeEntityId,
-      updateUrl,
-      isExistingEntity
-   )
+   function handleKeyDown(event, state, picker, input, suggestions)
    {
       if(suggestions.hidden)
       {
@@ -399,14 +303,20 @@
 
          if(item)
          {
+            const updateUrl = (
+               picker.dataset.entityLinkedEntitiesUpdateUrl ?? ""
+            ).trim();
+            const excludeEntityId = (picker.dataset.entityId ?? "").trim();
             void selectSuggestionAsync(
                item,
-               picker,
-               suggestions,
                state,
+               picker,
+               input,
+               suggestions,
+               picker.dataset.entityLinkedEntitiesSearchUrl ?? "",
                excludeEntityId,
-               updateUrl,
-               isExistingEntity
+               excludeEntityId !== "",
+               updateUrl
             );
          }
       }
@@ -415,7 +325,7 @@
    function setActiveSuggestion(state, suggestions, index)
    {
       const options = Array.from(
-         suggestions.querySelectorAll(".broadcast-org-entity-option")
+         suggestions.querySelectorAll(optionSelector)
       );
 
       if(options.length === 0)
@@ -433,19 +343,19 @@
 
    async function selectSuggestionAsync(
       item,
-      picker,
-      suggestions,
       state,
-      entityId,
-      updateUrl,
-      isExistingEntity
+      picker,
+      input,
+      suggestions,
+      searchUrl,
+      excludeEntityId,
+      isExistingEntity,
+      updateUrl
    )
    {
       const grid = picker.querySelector(gridSelector);
-      const input = picker.querySelector(inputSelector);
 
-      if(!(grid instanceof HTMLElement)
-         || !(input instanceof HTMLInputElement))
+      if(!(grid instanceof HTMLElement))
       {
          return;
       }
@@ -459,231 +369,158 @@
          return;
       }
 
-      if(isExistingEntity && updateUrl !== "" && entityId !== "")
-      {
-         state.pendingEntityIds.add(item.id);
+      state.pendingEntityIds.add(item.id);
 
-         try
+      try
+      {
+         if(isExistingEntity && updateUrl !== "" && excludeEntityId !== "")
          {
-            await postEntityLinkAsync(updateUrl, entityId, "add", item.id);
-         }
-         catch(error)
-         {
-            window.alert(
-               error instanceof Error
-                  ? error.message
-                  : "Linked entity update failed."
+            const html = await postEntityLinkAsync(
+               updateUrl,
+               excludeEntityId,
+               "add",
+               item.id
             );
-            return;
+            replaceGrid(grid, html);
          }
-         finally
+         else
          {
-            state.pendingEntityIds.delete(item.id);
+            const selectedIds = [...getSelectedEntityIds(grid), item.id];
+            const html = await loadGridAsync(
+               searchUrl,
+               excludeEntityId,
+               selectedIds
+            );
+            replaceGrid(grid, html);
          }
       }
-
-      appendSelectedRow(grid, item);
-
-      input.value = "";
-      closeSuggestions(state, suggestions);
-      input.focus();
-   }
-
-   function appendSelectedRow(grid, item)
-   {
-      if(!(grid instanceof HTMLElement))
+      catch(error)
       {
-         return;
+         window.alert(
+            error instanceof Error
+               ? error.message
+               : "Linked entity update failed."
+         );
       }
-
-      const rows = ensureEntityLinkedEntitiesTable(grid);
-
-      if(!(rows instanceof HTMLElement))
+      finally
       {
-         return;
+         state.pendingEntityIds.delete(item.id);
+         input.value = "";
+         closeSuggestions(state, suggestions);
+         input.focus();
       }
-
-      const row = document.createElement("tr");
-      row.dataset.entityLinkedEntitiesRow = item.id;
-      row.dataset.entityId = item.id;
-      row.append(
-         createCell(createEntityLink(item)),
-         createCell(document.createTextNode(item.entityType)),
-         createCell(document.createTextNode(item.sport)),
-         createActionCell(item)
-      );
-      rows.append(row);
-   }
-
-   function ensureEntityLinkedEntitiesTable(grid)
-   {
-      const existingRows = grid.querySelector(rowsSelector);
-
-      if(existingRows instanceof HTMLElement)
-      {
-         return existingRows;
-      }
-
-      const wrap = document.createElement("div");
-      wrap.className = "admin-table-wrap";
-      wrap.innerHTML = `
-         <table class="admin-table admin-table-compact
-                       entity-linked-entities-table">
-            <thead>
-               <tr>
-                  <th>Name</th>
-                  <th>Entity Type</th>
-                  <th>Sport</th>
-                  <th></th>
-               </tr>
-            </thead>
-            <tbody data-entity-linked-entities-rows></tbody>
-         </table>
-      `;
-      grid.replaceChildren(wrap);
-
-      return grid.querySelector(rowsSelector);
-   }
-
-   function createCell(content)
-   {
-      const cell = document.createElement("td");
-      cell.append(content);
-      return cell;
-   }
-
-   function createActionCell(item)
-   {
-      const cell = document.createElement("td");
-      cell.className = "table-actions";
-
-      const hidden = document.createElement("input");
-      hidden.type = "hidden";
-      hidden.name = "Entity.LinkedEntityIds";
-      hidden.value = item.id;
-      hidden.dataset.entityLinkedEntitiesHiddenId = "true";
-
-      const removeButton = document.createElement("button");
-      removeButton.type = "button";
-      removeButton.dataset.entityLinkedEntitiesRemove = "true";
-      removeButton.setAttribute("aria-label", `Remove ${item.text}`);
-      removeButton.textContent = "Delete";
-
-      cell.append(hidden, removeButton);
-      return cell;
-   }
-
-   function createEntityLink(item)
-   {
-      const link = document.createElement("a");
-      link.href = `/Admin/Entities/Edit/${encodeURIComponent(item.id)}`;
-      link.textContent = item.text;
-      return link;
-   }
-
-   function getSelectedEntityIds(grid)
-   {
-      return Array.from(grid.querySelectorAll(hiddenInputSelector))
-         .map(input => input instanceof HTMLInputElement ? input.value : "")
-         .map(value => value.trim())
-         .filter(value => value !== "");
    }
 
    async function removeRowAsync(
       state,
-      row,
       picker,
       input,
       suggestions,
       searchUrl,
       excludeEntityId,
-      organizationOnly,
-      maxResults,
-      grid,
+      isExistingEntity,
       updateUrl,
-      isExistingEntity
+      row,
+      organizationOnly,
+      maxResults
    )
    {
+      if(!(row instanceof HTMLElement))
+      {
+         return;
+      }
+
       const entityId = (row.dataset.entityId ?? "").trim();
+      const grid = picker.querySelector(gridSelector);
 
-      if(entityId === "")
-      {
-         row.remove();
-         renderEmptyGridIfNeeded(grid);
-         return;
-      }
-
-      if(state.pendingEntityIds.has(entityId))
+      if(entityId === ""
+         || !(grid instanceof HTMLElement)
+         || state.pendingEntityIds.has(entityId))
       {
          return;
       }
 
-      if(isExistingEntity && updateUrl !== "" && excludeEntityId !== "")
-      {
-         state.pendingEntityIds.add(entityId);
+      state.pendingEntityIds.add(entityId);
 
-         try
+      try
+      {
+         let html;
+
+         if(isExistingEntity && updateUrl !== "" && excludeEntityId !== "")
          {
-            await postEntityLinkAsync(
+            html = await postEntityLinkAsync(
                updateUrl,
                excludeEntityId,
                "remove",
                entityId
             );
          }
-         catch(error)
+         else
          {
-            window.alert(
-               error instanceof Error
-                  ? error.message
-                  : "Linked entity update failed."
+            html = await loadGridAsync(
+               searchUrl,
+               excludeEntityId,
+               getSelectedEntityIds(grid).filter(id => id !== entityId),
+               organizationOnly,
+               maxResults
             );
-            return;
          }
-         finally
-         {
-            state.pendingEntityIds.delete(entityId);
-         }
+
+         replaceGrid(grid, html);
       }
-
-      row.remove();
-      renderEmptyGridIfNeeded(grid);
-
-      if(input.value.trim() !== "")
+      catch(error)
       {
-         scheduleSearch(
-            state,
-            picker,
-            input,
-            suggestions,
-            searchUrl,
-            excludeEntityId,
-            organizationOnly,
-            maxResults,
-            grid,
-            updateUrl,
-            isExistingEntity
+         window.alert(
+            error instanceof Error
+               ? error.message
+               : "Linked entity update failed."
          );
       }
-   }
-
-   function renderEmptyGridIfNeeded(grid)
-   {
-      const rows = grid.querySelector(rowsSelector);
-
-      if(!(rows instanceof HTMLElement) || rows.children.length === 0)
+      finally
       {
-         renderEmptyGrid(grid);
+         state.pendingEntityIds.delete(entityId);
       }
    }
 
-   function renderEmptyGrid(grid)
+   async function loadGridAsync(
+      searchUrl,
+      excludeEntityId,
+      selectedIds
+   )
    {
-      const notice = document.createElement("div");
-      notice.className = "notice";
-      notice.dataset.entityLinkedEntitiesEmpty = "true";
-      notice.textContent = "No linked entities.";
-      grid.replaceChildren(notice);
+      const url = new URL(searchUrl, window.location.origin);
+      url.searchParams.set("format", "linked-entity-grid");
+
+      if(excludeEntityId !== "")
+      {
+         url.searchParams.set("excludeEntityId", excludeEntityId);
+      }
+
+      selectedIds.forEach(entityId => {
+         url.searchParams.append("selectedEntityIds", entityId);
+      });
+
+      const response = await fetch(url, {
+         headers: {
+            Accept: "text/html"
+         }
+      });
+      const responseText = await response.text();
+
+      if(!response.ok)
+      {
+         throw new Error(
+            responseText.trim() ||
+               `Request failed with status ${response.status}`
+         );
+      }
+
+      return responseText;
+   }
+
+   function replaceGrid(grid, html)
+   {
+      window.replaceElementWithPartialHtml(grid, html);
    }
 
    async function postEntityLinkAsync(
@@ -694,11 +531,13 @@
    )
    {
       const formData = new URLSearchParams();
-      const token = getAntiForgeryToken();
+      const tokenInput = document.querySelector(
+         "input[name='__RequestVerificationToken']"
+      );
 
-      if(token)
+      if(tokenInput instanceof HTMLInputElement)
       {
-         formData.append("__RequestVerificationToken", token);
+         formData.append("__RequestVerificationToken", tokenInput.value);
       }
 
       formData.append("id", entityId);
@@ -709,49 +548,33 @@
          method: "post",
          body: formData,
          headers: {
-            Accept: "application/json"
+            Accept: "text/html"
          }
       });
       const responseText = await response.text();
-      const trimmedResponseText = responseText.trim();
-      let payload = null;
-
-      if(trimmedResponseText !== "")
-      {
-         try
-         {
-            payload = JSON.parse(trimmedResponseText);
-         }
-         catch
-         {
-            payload = null;
-         }
-      }
 
       if(!response.ok)
       {
          throw new Error(
-            payload?.error ||
-               trimmedResponseText ||
+            responseText.trim() ||
                `Request failed with status ${response.status}`
          );
       }
 
-      return payload ?? {};
+      return responseText;
    }
 
-   function getAntiForgeryToken()
+   function getSelectedEntityIds(grid)
    {
-      const tokenInput = document.querySelector(
-         "input[name='__RequestVerificationToken']"
-      );
-
-      if(!(tokenInput instanceof HTMLInputElement))
+      if(!(grid instanceof HTMLElement))
       {
-         return "";
+         return [];
       }
 
-      return tokenInput.value;
+      return Array.from(grid.querySelectorAll(hiddenInputSelector))
+         .map(input => input instanceof HTMLInputElement ? input.value : "")
+         .map(value => value.trim())
+         .filter(value => value !== "");
    }
 
    function closeSuggestions(state, suggestions)
@@ -769,52 +592,24 @@
       suggestions.replaceChildren();
    }
 
-   function normalizeResult(item)
+   function getItemFromOption(option)
    {
-      if(!(item && typeof item === "object"))
+      if(!(option instanceof HTMLElement))
       {
          return null;
       }
 
-      const id = normalizeString(item.id);
-      const name = normalizeString(item.name);
+      const id = (option.dataset.entityId ?? "").trim();
+      const text = (option.dataset.entityText ?? option.textContent ?? "")
+         .trim();
 
-      if(id === "" || name === "")
-      {
-         return null;
-      }
-
-      return {
-         id,
-         text: name,
-         entityType: normalizeString(item.entityType),
-         sport: normalizeString(item.sport)
-      };
-   }
-
-   function formatItemText(item)
-   {
-      const parts = [];
-      const entityType = normalizeString(item.entityType);
-      const sport = normalizeString(item.sport);
-
-      if(entityType !== "")
-      {
-         parts.push(entityType);
-      }
-
-      if(sport !== "")
-      {
-         parts.push(sport);
-      }
-
-      return parts.length === 0
-         ? item.text
-         : `${item.text} (${parts.join(", ")})`;
-   }
-
-   function normalizeString(value)
-   {
-      return typeof value === "string" ? value.trim() : "";
+      return id === "" || text === ""
+         ? null
+         : {
+            id,
+            text,
+            entityType: (option.dataset.entityType ?? "").trim(),
+            sport: (option.dataset.entitySport ?? "").trim()
+         };
    }
 })();

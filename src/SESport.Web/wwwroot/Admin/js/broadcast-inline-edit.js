@@ -2,17 +2,7 @@
    const broadcastInlineEditUrlSelector =
       "[data-broadcast-inline-edit-url]";
    const broadcastResultsSelector = "[data-broadcast-results]";
-   const broadcastInlineEditFieldSelector =
-      "[data-broadcast-inline-edit-field]";
-   const broadcastInlineEditTitleField = "title";
-   const broadcastInlineEditChannelField = "channel";
-   const broadcastInlineEditStartTimeField = "start-time";
-   const broadcastInlineEditEndTimeField = "end-time";
-   const broadcastInlineEditDescriptionField = "description";
-   const broadcastInlineEditCategoriesField = "categories";
-   const broadcastInlineEditOrganizationField = "organization";
-   const broadcastInlineEditGroupField = "group";
-   const broadcastInlineEditPlaceholders = Object.freeze({
+   const placeholders = Object.freeze({
       title: "Add title..",
       channel: "Add channel..",
       "start-time": "Add start time..",
@@ -22,52 +12,22 @@
       organization: "Add organization..",
       group: "Add group.."
    });
-   const broadcastInlineEditInputSelector =
-      "[data-broadcast-inline-edit-input]";
-   const broadcastInlineEditDisplaySelector =
-      "[data-broadcast-inline-edit-display]";
-   const broadcastTitleTextSelector = "[data-broadcast-title-text]";
-   const broadcastDescriptionTextSelector =
-      "[data-broadcast-description-text]";
-   const broadcastTitleSearchLinkSelector =
-      "[data-broadcast-title-search-link]";
-   const broadcastCategoriesListSelector =
-      "[data-broadcast-categories-list]";
-   const broadcastGroupTextSelector = "[data-broadcast-group-text]";
-   const broadcastOrganizationInputSelector = "[data-org-entity-input]";
-   const broadcastOrganizationIdSelector = "[data-org-entity-id]";
 
    window.getBroadcastInlineEditUrl = getBroadcastInlineEditUrl;
    window.postBroadcastInlineEditAsync = postBroadcastInlineEditAsync;
-   window.updateBroadcastInlineEditCell = updateBroadcastInlineEditCell;
-   window.renderBroadcastCategories = renderBroadcastCategories;
-   window.getBroadcastInlineEditPlaceholder =
-      getBroadcastInlineEditPlaceholder;
+   window.getBroadcastInlineEditPlaceholder = getBroadcastInlineEditPlaceholder;
    window.getBroadcastSearchUrlBase = getBroadcastSearchUrlBase;
    window.getAntiForgeryToken = getAntiForgeryToken;
 
-   function getBroadcastInlineEditPlaceholder(field)
-   {
-      const normalizedField = typeof field === "string"
-         ? field.trim()
-         : "";
-
-      return broadcastInlineEditPlaceholders[normalizedField]
-         ?? "Add value..";
-   }
-
    function getBroadcastInlineEditUrl()
    {
-      const container = document.querySelector(broadcastInlineEditUrlSelector);
+      const container = document.querySelector(
+         broadcastInlineEditUrlSelector
+      );
 
-      if(!(container instanceof HTMLElement))
-      {
-         return "";
-      }
-
-      const url = container.dataset.broadcastInlineEditUrl;
-
-      return typeof url === "string" ? url.trim() : "";
+      return container instanceof HTMLElement
+         ? (container.dataset.broadcastInlineEditUrl ?? "").trim()
+         : "";
    }
 
    async function postBroadcastInlineEditAsync(
@@ -95,597 +55,88 @@
          formData.append("activityGroupId", activityGroupId);
       }
 
-      const response = await fetch(url, {
+      appendBroadcastContext(formData);
+
+      return window.loadPartialAsync(url, {
          method: "post",
-         body: formData,
-         headers: {
-            Accept: "application/json"
-         }
+         body: formData
       });
-      const responseText = await response.text();
-      const trimmedResponseText = responseText.trim();
-      let payload = null;
-
-      if(trimmedResponseText !== "")
-      {
-         try
-         {
-            payload = JSON.parse(trimmedResponseText);
-         }
-         catch
-         {
-            payload = null;
-         }
-      }
-
-      if(!response.ok)
-      {
-         throw new Error(
-            payload?.error ||
-               trimmedResponseText ||
-               `Request failed with status ${response.status}`
-         );
-      }
-
-      return payload ?? {};
    }
 
-   function updateBroadcastInlineEditCell(cell, payload)
+   function appendBroadcastContext(formData)
    {
-      if(!(cell instanceof HTMLElement) || !payload)
+      const container = document.querySelector(broadcastResultsSelector);
+
+      if(!(container instanceof HTMLElement))
       {
          return;
       }
 
-      const field = typeof payload.field === "string"
-         ? payload.field.trim()
-         : "";
+      appendDataValue(formData, "date", container.dataset.broadcastDate);
+      appendDataValue(
+         formData,
+         "sortColumn",
+         container.dataset.broadcastSortColumn
+      );
+      appendDataValue(
+         formData,
+         "sortAsc",
+         container.dataset.broadcastSortAsc
+      );
+      appendDataValue(
+         formData,
+         "showHidden",
+         container.dataset.broadcastShowHidden
+      );
+      appendDataValue(
+         formData,
+         "hideReplays",
+         container.dataset.broadcastHideReplays
+      );
 
-      if(field === broadcastInlineEditTitleField)
+      let selectedSports = [];
+
+      try
       {
-         const nextValue = typeof payload.value === "string"
-            ? payload.value.trim()
-            : "";
-
-         if(nextValue === "")
-         {
-            return;
-         }
-
-         cell.dataset.broadcastInlineEditValue = nextValue;
-         const input = cell.querySelector(
-            broadcastInlineEditInputSelector
+         const parsed = JSON.parse(
+            container.dataset.broadcastSelectedSports ?? "[]"
          );
-
-         if(input instanceof HTMLInputElement)
-         {
-            input.value = nextValue;
-            input.dataset.broadcastInlineEditOriginalValue = nextValue;
-         }
-
-         const titleText = cell.querySelector(broadcastTitleTextSelector);
-
-         if(titleText instanceof HTMLElement)
-         {
-            setBroadcastInlineEditDisplayText(
-               titleText,
-               nextValue,
-               getBroadcastInlineEditPlaceholder(field)
-            );
-         }
-
-         const searchLink = cell.querySelector(
-            broadcastTitleSearchLinkSelector
-         );
-         const searchUrlBase = getBroadcastSearchUrlBase();
-
-         if(searchLink instanceof HTMLAnchorElement &&
-            searchUrlBase !== "")
-         {
-            searchLink.href = `${searchUrlBase}${
-               encodeURIComponent(nextValue)
-            }`;
-         }
-
-         return;
+         selectedSports = Array.isArray(parsed) ? parsed : [];
+      }
+      catch
+      {
+         selectedSports = [];
       }
 
-      if(field === broadcastInlineEditDescriptionField)
+      selectedSports
+         .filter(sport => typeof sport === "string" && sport.trim() !== "")
+         .forEach(sport => formData.append("SelectedSports", sport));
+   }
+
+   function appendDataValue(formData, name, value)
+   {
+      if(typeof value === "string" && value.trim() !== "")
       {
-         const nextValue = typeof payload.value === "string"
-            ? payload.value.trim()
-            : "";
-         const input = cell.querySelector(
-            broadcastInlineEditInputSelector
-         );
-
-         cell.dataset.broadcastInlineEditValue = nextValue;
-
-         if(input instanceof HTMLInputElement)
-         {
-            input.value = nextValue;
-            input.dataset.broadcastInlineEditOriginalValue = nextValue;
-         }
-
-         const descriptionText = cell.querySelector(
-            broadcastDescriptionTextSelector
-         );
-
-         if(descriptionText instanceof HTMLElement)
-         {
-            setBroadcastInlineEditDisplayText(
-               descriptionText,
-               nextValue,
-               getBroadcastInlineEditPlaceholder(field)
-            );
-         }
-
-         return;
-      }
-
-      if(field === broadcastInlineEditChannelField
-         || field === broadcastInlineEditStartTimeField
-         || field === broadcastInlineEditEndTimeField)
-      {
-         const nextValue = typeof payload.value === "string"
-            ? payload.value.trim()
-            : "";
-
-         if(nextValue === "")
-         {
-            return;
-         }
-
-         cell.dataset.broadcastInlineEditValue = nextValue;
-         const input = cell.querySelector(
-            broadcastInlineEditInputSelector
-         );
-
-         if(input instanceof HTMLInputElement)
-         {
-            input.value = nextValue;
-            input.dataset.broadcastInlineEditOriginalValue = nextValue;
-         }
-
-         const display = cell.querySelector(
-            broadcastInlineEditDisplaySelector
-         );
-
-         if(display instanceof HTMLElement)
-         {
-            setBroadcastInlineEditDisplayText(
-               display,
-               nextValue,
-               getBroadcastInlineEditPlaceholder(field)
-            );
-         }
-
-         return;
-      }
-
-      if(field === broadcastInlineEditCategoriesField)
-      {
-         const categories = normalizeBroadcastCategories(payload.value);
-         const list = cell.querySelector(broadcastCategoriesListSelector);
-         const input = cell.querySelector(broadcastInlineEditInputSelector);
-
-         cell.dataset.broadcastInlineEditValue = categories.join(", ");
-         cell.dataset.broadcastCategoriesJson = JSON.stringify(categories);
-
-         if(input instanceof HTMLInputElement)
-         {
-            input.value = categories.join(", ");
-            input.dataset.broadcastInlineEditOriginalValue =
-               input.value;
-         }
-
-         if(!(list instanceof HTMLElement))
-         {
-            return;
-         }
-
-         renderBroadcastCategories(list, categories);
-         return;
-      }
-
-      if(field === broadcastInlineEditOrganizationField)
-      {
-         const nextValue = typeof payload.value === "string"
-            ? payload.value.trim()
-            : "";
-         const input = cell.querySelector(broadcastOrganizationInputSelector);
-         const hiddenId = cell.querySelector(broadcastOrganizationIdSelector);
-
-         cell.dataset.broadcastInlineEditValue = nextValue;
-
-         if(hiddenId instanceof HTMLInputElement)
-         {
-            hiddenId.value = nextValue;
-            hiddenId.dataset.broadcastOrgOriginalValue = nextValue;
-         }
-
-         if(input instanceof HTMLInputElement)
-         {
-            input.dataset.broadcastOrgOriginalLabel = input.value.trim();
-         }
-
-         window.setBroadcastOrganizationLockState?.(cell, nextValue !== "");
-         updateBroadcastGroupCell(cell, payload);
-         return;
-      }
-
-      if(field === broadcastInlineEditGroupField)
-      {
-         updateBroadcastGroupCell(cell, payload);
+         formData.append(name, value);
       }
    }
 
-   function updateBroadcastGroupCell(cell, payload)
+   function getBroadcastInlineEditPlaceholder(field)
    {
-      if(!(cell instanceof HTMLElement) || !payload)
-      {
-         return;
-      }
-
-      const row = cell.closest("tr[data-broadcast-row='true']");
-      const groupCell = row?.querySelector(broadcastGroupTextSelector);
-
-      if(!(groupCell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      if(typeof payload.organizationEntityId === "string")
-      {
-         const organizationEntityId = payload.organizationEntityId.trim();
-
-         if(organizationEntityId === "")
-         {
-            delete groupCell.dataset.broadcastOrganizationEntityId;
-         }
-         else
-         {
-            groupCell.dataset.broadcastOrganizationEntityId =
-               organizationEntityId;
-         }
-      }
-
-      const activityGroupId = typeof payload.activityGroupId === "string"
-         ? payload.activityGroupId.trim()
-         : "";
-      const activityGroupTitle = typeof payload.activityGroupTitle === "string"
-         ? payload.activityGroupTitle.trim()
-         : "";
-      const activityGroupDraftTitle =
-         typeof payload.activityGroupDraftTitle === "string"
-            ? payload.activityGroupDraftTitle.trim()
-            : "";
-      const activityGroupSourceKindId = typeof payload.activityGroupSourceKindId
-         === "string"
-         ? payload.activityGroupSourceKindId.trim()
-         : "";
-      const payloadValue = typeof payload.value === "string"
-         ? payload.value.trim()
-         : "";
-      const groupValue = typeof payload.groupValue === "string"
-         ? payload.groupValue.trim()
-         : "";
-      const groupText = typeof payload.groupText === "string"
-         ? payload.groupText.trim()
-         : "";
-      const editableValue = groupValue
-         || activityGroupTitle
-         || activityGroupDraftTitle
-         || payloadValue
-         || groupText;
-      const displayValue = groupText || (
-         activityGroupSourceKindId !== ""
-            ? (activityGroupId !== ""
-               ? editableValue
-               : `NEW: ${editableValue}`)
-            : "-"
-      );
-
-      syncBroadcastGroupCell(
-         groupCell,
-         displayValue,
-         editableValue,
-         activityGroupId,
-         activityGroupSourceKindId
-      );
-
-      if(activityGroupId === "")
-      {
-         return;
-      }
-
-      document
-         .querySelectorAll(broadcastGroupTextSelector)
-         .forEach(otherCell => {
-            if(!(otherCell instanceof HTMLElement))
-            {
-               return;
-            }
-
-            if((otherCell.dataset.broadcastActivityGroupId ?? "").trim() !==
-               activityGroupId)
-            {
-               return;
-            }
-
-            syncBroadcastGroupCell(
-               otherCell,
-               displayValue,
-               editableValue,
-               activityGroupId,
-               activityGroupSourceKindId
-            );
-         });
-   }
-
-   function syncBroadcastGroupCell(
-      cell,
-      displayValue,
-      editableValue,
-      activityGroupId,
-      activityGroupSourceKindId
-   )
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const sourceKindId = typeof activityGroupSourceKindId === "string"
-         ? activityGroupSourceKindId.trim()
-         : "";
-      const editable = sourceKindId !== "";
-      const nextDisplayValue = typeof displayValue === "string"
-         ? displayValue.trim()
-         : "";
-      const nextEditableValue = typeof editableValue === "string"
-         ? editableValue.trim()
-         : "";
-      const nextActivityGroupId = typeof activityGroupId === "string"
-         ? activityGroupId.trim()
+      const normalizedField = typeof field === "string"
+         ? field.trim()
          : "";
 
-      cell.dataset.broadcastGroupText = nextDisplayValue;
-
-      if(!editable)
-      {
-         cell.classList.remove("broadcast-inline-editable");
-         delete cell.dataset.broadcastInlineEditField;
-         delete cell.dataset.broadcastInlineEditValue;
-         delete cell.dataset.broadcastActivityGroupId;
-         delete cell.dataset.broadcastActivityGroupSourceKindId;
-         cell.title = nextDisplayValue;
-
-         const display = cell.querySelector(
-            broadcastInlineEditDisplaySelector
-         );
-         const input = cell.querySelector(
-            broadcastInlineEditInputSelector
-         );
-
-         if(display instanceof HTMLElement)
-         {
-            setBroadcastInlineEditDisplayText(
-               display,
-               nextDisplayValue,
-               getBroadcastInlineEditPlaceholder(
-                  broadcastInlineEditGroupField
-               )
-            );
-            display.hidden = false;
-         }
-
-         if(input instanceof HTMLInputElement)
-         {
-            input.value = nextEditableValue;
-            input.hidden = true;
-         }
-
-         const hiddenGroupId = cell.querySelector(
-            "[data-broadcast-activity-group-id-input]"
-         );
-
-         if(hiddenGroupId instanceof HTMLInputElement)
-         {
-            hiddenGroupId.value = "";
-         }
-
-         window.initializeBroadcastActivityGroupAutocomplete?.(cell);
-         return;
-      }
-
-      cell.classList.add("broadcast-inline-editable");
-      const broadcastRow = cell.closest("tr[data-broadcast-row='true']");
-      const broadcastId = (
-         cell.dataset.broadcastId
-         ?? broadcastRow?.dataset.broadcastId
-         ?? ""
-      ).trim();
-
-      if(broadcastId !== "")
-      {
-         cell.dataset.broadcastId = broadcastId;
-      }
-
-      cell.dataset.broadcastInlineEditField = broadcastInlineEditGroupField;
-      cell.dataset.broadcastInlineEditValue = nextEditableValue;
-      cell.dataset.broadcastActivityGroupSourceKindId = sourceKindId;
-
-      if(nextActivityGroupId !== "")
-      {
-         cell.dataset.broadcastActivityGroupId = nextActivityGroupId;
-      }
-      else
-      {
-         delete cell.dataset.broadcastActivityGroupId;
-      }
-
-      cell.title = "Double-click to edit";
-
-      let display = cell.querySelector(broadcastInlineEditDisplaySelector);
-      let input = cell.querySelector(broadcastInlineEditInputSelector);
-
-      if(!(display instanceof HTMLElement) ||
-         !(input instanceof HTMLInputElement))
-      {
-         cell.replaceChildren();
-
-         display = document.createElement("div");
-         display.dataset.broadcastInlineEditDisplay = "true";
-
-         input = document.createElement("input");
-         input.className = "broadcast-inline-edit-input";
-         input.dataset.broadcastInlineEditInput = "true";
-         input.type = "text";
-         input.autocomplete = "off";
-         input.spellcheck = false;
-         input.setAttribute("aria-label", "Edit group title");
-         input.hidden = true;
-         input.tabIndex = -1;
-
-         cell.append(display, input);
-      }
-
-      setBroadcastInlineEditDisplayText(
-         display,
-         nextDisplayValue,
-         getBroadcastInlineEditPlaceholder(
-            broadcastInlineEditGroupField
-         )
-      );
-      display.hidden = false;
-      input.value = nextEditableValue;
-      input.dataset.broadcastInlineEditOriginalValue = nextEditableValue;
-      input.hidden = true;
-      input.disabled = false;
-
-      const hiddenGroupId = cell.querySelector(
-         "[data-broadcast-activity-group-id-input]"
-      );
-
-      if(hiddenGroupId instanceof HTMLInputElement)
-      {
-         hiddenGroupId.value = nextActivityGroupId;
-      }
-
-      window.initializeBroadcastInlineEditing?.(cell);
-      window.initializeBroadcastActivityGroupAutocomplete?.(cell);
+      return placeholders[normalizedField] ?? "Add value..";
    }
 
    function getBroadcastSearchUrlBase()
    {
       const container = document.querySelector(broadcastResultsSelector);
 
-      if(!(container instanceof HTMLElement))
-      {
-         return "";
-      }
-
-      const url = container.dataset.searchUrlBase;
-
-      return typeof url === "string" ? url.trim() : "";
-   }
-
-   function renderBroadcastCategories(list, categories)
-   {
-      if(!(list instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const items = normalizeBroadcastCategories(categories);
-
-      list.replaceChildren();
-
-      if(items.length === 0)
-      {
-         const placeholder = document.createElement("span");
-         placeholder.className = "inline-edit-placeholder";
-         placeholder.textContent = getBroadcastInlineEditPlaceholder(
-            broadcastInlineEditCategoriesField
-         );
-         list.append(placeholder);
-         return;
-      }
-
-      items.forEach(category => {
-         const span = document.createElement("span");
-         span.textContent = category;
-         list.append(span);
-      });
-   }
-
-   function setBroadcastInlineEditDisplayText(
-      display,
-      value,
-      placeholder
-   )
-   {
-      if(!(display instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const normalizedValue = typeof value === "string"
-         ? value.trim()
+      return container instanceof HTMLElement
+         ? (container.dataset.searchUrlBase ?? "").trim()
          : "";
-      const normalizedPlaceholder = typeof placeholder === "string"
-         ? placeholder.trim()
-         : "Add value..";
-
-      display.textContent = normalizedValue || normalizedPlaceholder;
-      display.classList.toggle(
-         "inline-edit-placeholder",
-         normalizedValue === ""
-      );
-   }
-
-   function normalizeBroadcastCategories(categories)
-   {
-      if(Array.isArray(categories))
-      {
-         return categories
-            .map(item => typeof item === "string" ? item.trim() : "")
-            .filter(item => item !== "");
-      }
-
-      if(typeof categories === "string")
-      {
-         const trimmed = categories.trim();
-
-         if(trimmed === "")
-         {
-            return [];
-         }
-
-         try
-         {
-            const parsed = JSON.parse(trimmed);
-
-            if(Array.isArray(parsed))
-            {
-               return parsed
-                  .map(item => typeof item === "string" ? item.trim() : "")
-                  .filter(item => item !== "");
-            }
-         }
-         catch
-         {
-            // Fall back to the legacy comma-separated representation.
-         }
-
-         return trimmed
-            .split(",")
-            .map(item => item.trim())
-            .filter(item => item !== "");
-      }
-
-      return [];
    }
 
    function getAntiForgeryToken()
@@ -694,11 +145,8 @@
          "input[name='__RequestVerificationToken']"
       );
 
-      if(tokenField instanceof HTMLInputElement)
-      {
-         return tokenField.value;
-      }
-
-      return "";
+      return tokenField instanceof HTMLInputElement
+         ? tokenField.value
+         : "";
    }
 })();

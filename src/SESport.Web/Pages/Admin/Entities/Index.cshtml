@@ -65,6 +65,7 @@
                 value="@Model.DateText"
                 data-entity-date-filter
                 onchange="this.form.submit();" />
+         @await Html.PartialAsync("/Pages/Shared/_AdminDateStepper.cshtml")
       </label>
       <label>
          <span>Type</span>
@@ -128,13 +129,6 @@ else
       </div>
       <div class="admin-table-wrap"
            data-entity-inline-edit-url="@entityFieldUrl">
-         <select hidden aria-hidden="true"
-                 data-entity-watch-priority-template>
-            @foreach(var option in Model.GetWatchPriorityOptions(null))
-            {
-               <option value="@option.Value">@option.Text</option>
-            }
-         </select>
          <table class="admin-table admin-table-hover entities-table">
             <colgroup>
                <col class="entities-col-name" />
@@ -182,7 +176,17 @@ else
                   <th></th>
                </tr>
             </thead>
-            <tbody data-entity-list-body></tbody>
+            @await Html.PartialAsync(
+               "/Pages/Admin/Entities/_EntityRows.cshtml",
+               new EntityRowsViewModel(
+                  Model.Entities,
+                  searchUrlBase,
+                  personFactsUrl ?? string.Empty,
+                  Model.WatchPriorities,
+                  PersonGenderIds.Female,
+                  PersonGenderIds.Male
+               )
+            )
          </table>
       </div>
    </div>

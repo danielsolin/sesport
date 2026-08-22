@@ -16,17 +16,25 @@ public sealed class EditMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/activity-participants.js"
       );
+      var partialPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/_ActivityParticipantSelection.cshtml"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      var partial = await File.ReadAllTextAsync(partialPath);
 
-      Assert.Contains("data-activity-participant-remove", html);
+      Assert.Contains("data-activity-participant-selection", partial);
+      Assert.Contains("data-activity-participant-remove", partial);
       Assert.Contains("data-activity-participant-remove", script);
-      Assert.Contains("removeParticipantRow", script);
-      Assert.Contains("renderEmptyParticipantsNotice", script);
-      Assert.Contains("Delete", html);
+      Assert.Contains("participant-selection", script);
+      Assert.Contains("replaceElementWithPartialHtml", script);
+      Assert.DoesNotContain("createElement", script);
+      Assert.DoesNotContain("innerHTML", script);
+      Assert.Contains("Delete", partial);
       Assert.Contains("SetParticipantActive", html);
-      Assert.Contains("Deactivate", html);
-      Assert.Contains("Reactivate", html);
+      Assert.Contains("Deactivate", partial);
+      Assert.Contains("Reactivate", partial);
    }
 
    [Fact]
@@ -40,6 +48,13 @@ public sealed class EditMarkupTests
          "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
+      var suggestions = await File.ReadAllTextAsync(
+         Path.Combine(
+            repoRoot,
+            "src/SESport.Web/Pages/Admin/Ajax/Search/"
+               + "_BroadcastActivityGroupSuggestions.cshtml"
+         )
+      );
 
       Assert.Contains("<span>Organization</span>", html);
       Assert.DoesNotContain("Related organization", html);
@@ -60,13 +75,7 @@ public sealed class EditMarkupTests
          "src=\"~/Admin/js/activity-participants.js\"",
          html
       );
-      Assert.Contains("Create new group", await File.ReadAllTextAsync(
-         Path.Combine(
-            repoRoot,
-            "src/SESport.Web/wwwroot/Admin/js/"
-               + "activity-group-autocomplete.js"
-         )
-      ));
+      Assert.Contains("Create new group", suggestions);
    }
 
    [Fact]

@@ -213,6 +213,8 @@
       @RenderBody()
    </main>
 
+<script src="~/Admin/js/partial-loader.js"
+        asp-append-version="true"></script>
    @await RenderSectionAsync("Scripts", required: false)
    @if(isAdmin)
    {

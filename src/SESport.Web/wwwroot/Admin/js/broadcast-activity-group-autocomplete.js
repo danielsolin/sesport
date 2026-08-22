@@ -12,7 +12,9 @@
 
    if(document.readyState === "loading")
    {
-      document.addEventListener("DOMContentLoaded", initializePickers);
+      document.addEventListener("DOMContentLoaded", () => {
+         initializePickers();
+      });
    }
    else
    {
@@ -43,10 +45,15 @@
 
    function initializePickers(root = document)
    {
-      const pickers = root instanceof Element &&
-         root.matches(pickerSelector)
-         ? [root]
-         : root.querySelectorAll(pickerSelector);
+      const scope = root instanceof Element ||
+         root instanceof Document ||
+         root instanceof DocumentFragment
+         ? root
+         : document;
+      const pickers = scope instanceof Element &&
+         scope.matches(pickerSelector)
+         ? [scope]
+         : scope.querySelectorAll(pickerSelector);
 
       pickers.forEach(initializePicker);
    }
@@ -89,6 +96,59 @@
          items: []
       };
 
+      suggestions.addEventListener("click", event => {
+         const target = event.target;
+         const option = target instanceof Element
+            ? target.closest(optionSelector)
+            : null;
+
+         if(!(option instanceof HTMLElement))
+         {
+            return;
+         }
+
+         event.preventDefault();
+         const item = state.items.find(candidate =>
+            candidate.id === (option.dataset.suggestionId ?? "") &&
+            candidate.text === (option.dataset.suggestionText ?? "")
+         );
+
+         if(item)
+         {
+            void selectItem(item);
+         }
+      });
+
+      suggestions.addEventListener("mousedown", event => {
+         const target = event.target;
+         const option = target instanceof Element
+            ? target.closest(optionSelector)
+            : null;
+
+         if(option instanceof HTMLElement && document.activeElement === input)
+         {
+            event.preventDefault();
+         }
+      });
+
+      suggestions.addEventListener("mouseover", event => {
+         const target = event.target;
+         const option = target instanceof Element
+            ? target.closest(optionSelector)
+            : null;
+         const options = Array.from(
+            suggestions.querySelectorAll(optionSelector)
+         );
+         const index = option instanceof HTMLElement
+            ? options.indexOf(option)
+            : -1;
+
+         if(index >= 0)
+         {
+            setActiveSuggestion(index);
+         }
+      });
+
       const closeSuggestions = () => {
          if(state.timerId !== null)
          {
@@ -103,57 +163,22 @@
          suggestions.replaceChildren();
       };
 
-      const renderSuggestions = items => {
-         suggestions.replaceChildren();
-         state.items = items;
+      const renderSuggestions = html => {
+         window.replaceContentsWithPartialHtml(suggestions, html);
+         state.items = Array.from(
+            suggestions.querySelectorAll(optionSelector)
+         ).map(option => ({
+            kind: option.dataset.suggestionKind === "create"
+               ? "create"
+               : "existing",
+            id: (option.dataset.suggestionId ?? "").trim(),
+            text: (option.dataset.suggestionText ?? "").trim()
+         }));
          state.selectedIndex = -1;
-
-         if(items.length === 0)
-         {
-            const empty = document.createElement("div");
-            empty.className = "broadcast-org-entity-empty";
-            empty.textContent = "No matches";
-            suggestions.append(empty);
-            showSuggestions();
-            return;
-         }
-
-         items.forEach((item, index) => {
-            const option = document.createElement("button");
-            option.type = "button";
-            option.className = "broadcast-org-entity-option";
-            option.textContent = item.kind === "create"
-               ? `Create new group: ${item.text}`
-               : item.text;
-
-            option.addEventListener("mousedown", event => {
-               if(document.activeElement === input)
-               {
-                  event.preventDefault();
-               }
-            });
-            option.addEventListener("mouseenter", () => {
-               setActiveSuggestion(index);
-            });
-            option.addEventListener("click", event => {
-               event.preventDefault();
-               void selectItem(item);
-            });
-            suggestions.append(option);
-         });
-
          showSuggestions();
       };
 
-      const positionSuggestions = () => {
-         const inputRect = input.getBoundingClientRect();
-         suggestions.style.left = `${inputRect.left}px`;
-         suggestions.style.top = `${inputRect.bottom + 2}px`;
-         suggestions.style.width = `${inputRect.width}px`;
-      };
-
       const showSuggestions = () => {
-         positionSuggestions();
          suggestions.hidden = false;
       };
 
@@ -193,7 +218,7 @@
 
          try
          {
-            const payload =
+            const rowHtml =
                await window.postBroadcastInlineEditAsync(
                   url,
                   broadcastId,
@@ -201,7 +226,23 @@
                   item.text,
                   item.id
                );
-            window.updateBroadcastInlineEditCell?.(cell, payload);
+            const rowContainer = cell.closest(
+               "tbody[data-broadcast-container]"
+            );
+
+            if(!(rowContainer instanceof HTMLElement))
+            {
+               throw new Error("Broadcast container not found.");
+            }
+
+            const replacement = window.replaceElementWithPartialHtml(
+               rowContainer,
+               rowHtml
+            );
+            window.initializeBroadcastInlineEditing?.(replacement);
+            window.initializeBroadcastOrganizationAutocomplete?.(replacement);
+            window.initializeBroadcastActivityGroupAutocomplete?.(replacement);
+            void window.initializeParticipationRunsAsync?.(replacement);
          }
          catch(error)
          {
@@ -269,30 +310,17 @@
          const url = new URL(searchUrl, window.location.origin);
          url.searchParams.set("term", term);
          url.searchParams.set("organizationEntityId", organizationId);
+         url.searchParams.set("format", "broadcast-suggestions");
 
          try
          {
-            const response = await fetch(url, {
-               headers: { Accept: "application/json" }
-            });
-            const payload = await response.json();
+            const html = await window.loadPartialAsync(url);
 
-            if(requestId !== state.requestId || !response.ok)
+            if(requestId !== state.requestId)
             {
                return;
             }
-
-            const items = Array.isArray(payload.results)
-               ? payload.results
-                  .map(normalizeResult)
-                  .filter(item => item !== null)
-               : [];
-
-            if(term !== "")
-            {
-               items.push({ kind: "create", id: "", text: term });
-            }
-            renderSuggestions(items);
+            renderSuggestions(html);
          }
          catch
          {
@@ -349,20 +377,4 @@
       });
    }
 
-   function normalizeResult(item)
-   {
-      if(!item || typeof item !== "object")
-      {
-         return null;
-      }
-
-      const id = typeof item.id === "string" ? item.id.trim() : "";
-      const text = typeof item.text === "string"
-         ? item.text.trim()
-         : "";
-
-      return id !== "" && text !== ""
-         ? { kind: "existing", id, text }
-         : null;
-   }
 })();

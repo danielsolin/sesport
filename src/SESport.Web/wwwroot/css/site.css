@@ -918,9 +918,14 @@ h2 {
 }
 
 .broadcast-activity-group-suggestions-fixed {
-   position: fixed;
-   z-index: 1000;
-   right: auto;
+   position: absolute;
+   top: calc(100% + 2px);
+   left: 0;
+   right: 0;
+}
+
+.broadcast-activity-group-picker {
+   position: relative;
 }
 
 .broadcast-org-entity-option,

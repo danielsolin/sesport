@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
 using SESport.Data.Models;
+using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.Create;
 
@@ -17,7 +18,9 @@ public sealed class ParticipantEntityModel(
    public async Task<IActionResult> OnPostAsync(
       string participantName,
       Guid templateEntityId,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      Guid? broadcastId = null,
+      string? organizationSportName = null
    )
    {
       participantName = BroadcastParticipantNameFormatter.Format(
@@ -71,12 +74,33 @@ public sealed class ParticipantEntityModel(
          return this.UnexpectedJsonError(exception);
       }
 
+      var editUrl = Url.Page(
+         "/Admin/Entities/Edit",
+         new { id = template.Id }
+      );
+
+      if(WantsHtmlResponse() &&
+         broadcastId is not null &&
+         broadcastId != Guid.Empty &&
+         !string.IsNullOrWhiteSpace(editUrl))
+      {
+         return Partial(
+            "/Pages/Admin/Broadcasts/_BroadcastParticipant.cshtml",
+            new BroadcastParticipantCreatedViewModel(
+               template.CanonicalName,
+               editUrl,
+               ViewData["SearchUrl"] as string ?? string.Empty,
+               organizationSportName
+            )
+         );
+      }
+
       return new JsonResult(new
       {
          created = true,
          entityId = template.Id,
          canonicalName = template.CanonicalName,
-         editUrl = Url.Page("/Admin/Entities/Edit", new { id = template.Id })
+         editUrl
       });
    }
 
@@ -88,4 +112,10 @@ public sealed class ParticipantEntityModel(
       entity.Weight = null;
       entity.FormativeClub = null;
    }
+
+   private bool WantsHtmlResponse() =>
+      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
+         "text/html",
+         StringComparison.OrdinalIgnoreCase
+      ) == true;
 }

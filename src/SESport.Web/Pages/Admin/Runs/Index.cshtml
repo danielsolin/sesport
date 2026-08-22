@@ -21,6 +21,7 @@
                    name="@RouteKeys.Date"
                    value="@Model.DateText"
                    onchange="submitFilterForm(this);" />
+            @await Html.PartialAsync("/Pages/Shared/_AdminDateStepper.cshtml")
          </label>
          <label>
             <span>Job</span>

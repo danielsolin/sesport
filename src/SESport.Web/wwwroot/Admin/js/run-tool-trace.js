@@ -119,7 +119,10 @@
             throw new Error(`Request failed with ${response.status}.`);
          }
 
-         host.innerHTML = await response.text();
+         window.replaceContentsWithPartialHtml(
+            host,
+            await response.text()
+         );
          restoreOpenPanels(openPanels);
 
          const statusSource = host.querySelector("[data-run-status]");

@@ -1,0 +1,202 @@
+@using System.Globalization
+@using SESport.Core.Domain
+@using SESport.Web.Pages
+@model SESport.Web.Pages.Admin.Entities.EntityRowsViewModel
+
+<tbody data-entity-list-partial-body>
+   @foreach(var entity in Model.Entities)
+   {
+      var entityId = entity.Id.ToString();
+      var editUrl = Url.Page(
+         "/Admin/Entities/Edit",
+         new { id = entity.Id }
+      );
+      var deleteUrl = Url.Page(
+         "/Admin/Entities/Index",
+         null,
+         new { handler = "Delete", id = entity.Id }
+      );
+      var relatedDisplay = string.Join(
+         ", ",
+         new[]
+         {
+            entity.RelatedEntityNames,
+            entity.RelatedPersonCount > 0
+               ? $"P:{entity.RelatedPersonCount}"
+               : null
+         }.Where(value => !string.IsNullOrWhiteSpace(value))
+      );
+      var searchQuery = string.Join(
+         " ",
+         new[] { entity.Name, entity.Sport }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+      );
+      var isPerson = string.Equals(
+         entity.EntityType,
+         TrackedEntityTypeIds.Person,
+         StringComparison.OrdinalIgnoreCase
+      );
+      var ageQuery = $"{entity.Name} {entity.Sport} ålder";
+      var heightQuery = $"{entity.Name} {entity.Sport} längd";
+      var weightQuery = $"{entity.Name} {entity.Sport} vikt";
+      var clubQuery = $"{entity.Name} {entity.Sport} moderklubb";
+      var gender = entity.PersonGenderId switch
+      {
+         var value when value == Model.FemaleGenderId => "F",
+         var value when value == Model.MaleGenderId => "M",
+         _ => string.Empty
+      };
+      var age = entity.Birthdate is DateOnly birthdate
+         ? $"{SESport.Web.Pages.IndexModel.CalculateAge(
+               birthdate,
+               DateOnly.FromDateTime(DateTime.Now)
+            )} ({birthdate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)})"
+         : null;
+      var watchPriorityPlaceholder = "Add watch priority..";
+      var watchPriorityIsEmpty = string.IsNullOrWhiteSpace(
+         entity.WatchPriority
+      );
+      <tr data-entity-row-id="@entityId"
+          data-entity-row-name="@entity.Name"
+          data-entity-row-related="@entity.RelatedEntityNames">
+         <td>
+            <a href="@editUrl">
+               <span class="entity-list-type">@entity.EntityType</span>
+               <strong>@entity.Name</strong>
+            </a>
+            <a class="ses-entity-search-link"
+               href="@Model.SearchUrlBase@Uri.EscapeDataString(searchQuery)"
+               target="_blank"
+               rel="noreferrer">
+               <span class="ses-icon-search"></span>
+            </a>
+         </td>
+         <td>@relatedDisplay</td>
+         <td>@entity.Sport</td>
+         <td>@gender</td>
+         <td>
+            @if(age is not null)
+            {
+               @age
+            }
+            else
+            {
+               <a class="ses-entity-search-link
+                         ses-entity-search-link-missing"
+                  href="@Model.SearchUrlBase@Uri.EscapeDataString(ageQuery)"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Search for missing age"
+                  title="Search for missing age">
+                  <span class="ses-icon-search"></span>
+               </a>
+            }
+         </td>
+         <td>
+            @if(entity.Height is int height)
+            {
+               @($"{height}cm")
+            }
+            else
+            {
+               <a class="ses-entity-search-link
+                         ses-entity-search-link-missing"
+                  href="@Model.SearchUrlBase@Uri.EscapeDataString(heightQuery)"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Search for missing height"
+                  title="Search for missing height">
+                  <span class="ses-icon-search"></span>
+               </a>
+            }
+         </td>
+         <td>
+            @if(entity.Weight is int weight)
+            {
+               @($"{weight}kg")
+            }
+            else
+            {
+               <a class="ses-entity-search-link
+                         ses-entity-search-link-missing"
+                  href="@Model.SearchUrlBase@Uri.EscapeDataString(weightQuery)"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Search for missing weight"
+                  title="Search for missing weight">
+                  <span class="ses-icon-search"></span>
+               </a>
+            }
+         </td>
+         <td>
+            @if(!string.IsNullOrWhiteSpace(entity.FormativeClub))
+            {
+               @entity.FormativeClub
+            }
+            else
+            {
+               <a class="ses-entity-search-link
+                         ses-entity-search-link-missing"
+                  href="@Model.SearchUrlBase@Uri.EscapeDataString(clubQuery)"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Search for missing formative club"
+                  title="Search for missing formative club">
+                  <span class="ses-icon-search"></span>
+               </a>
+            }
+         </td>
+         <td class="entity-inline-editable"
+             data-entity-inline-edit-field="watch-priority"
+             data-entity-inline-edit-value="@entity.WatchPriorityId"
+             data-entity-inline-edit-placeholder="@watchPriorityPlaceholder"
+             title="Double-click to edit">
+            <div class="entity-inline-edit-display"
+                 data-entity-inline-edit-display>
+               <span class="@(watchPriorityIsEmpty
+                  ? "inline-edit-placeholder"
+                  : null)"
+                     title="@entity.WatchPriority">
+                  @(watchPriorityIsEmpty
+                     ? watchPriorityPlaceholder
+                     : entity.WatchPriority)
+               </span>
+            </div>
+            <select class="entity-inline-edit-input"
+                    data-entity-inline-edit-input
+                    hidden>
+               @foreach(var option in Model.WatchPriorities)
+               {
+                  <option value="@option.Id"
+                          selected="@(option.Id == entity.WatchPriorityId
+                             ? "selected"
+                             : null)">
+                     @option.Label
+                  </option>
+               }
+            </select>
+         </td>
+         <td class="table-actions">
+            @if(isPerson && !string.IsNullOrWhiteSpace(Model.PersonFactsUrl))
+            {
+               <form method="post" data-person-facts-form>
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="id" value="@entityId" />
+                  <button class="broadcast-participation-check-link"
+                          type="submit"
+                          data-person-facts-url="@Model.PersonFactsUrl">
+                     Facts
+                  </button>
+                  <span class="form-status" data-person-facts-status></span>
+               </form>
+            }
+            <form method="post"
+                  action="@deleteUrl"
+                  onsubmit="return confirm('Sure?');">
+               @Html.AntiForgeryToken()
+               <button type="submit">Delete</button>
+            </form>
+         </td>
+      </tr>
+   }
+</tbody>

@@ -1,0 +1,22 @@
+@model SESport.Web.Pages.Admin.Broadcasts.BroadcastParticipantCreatedViewModel
+
+<div class="broadcast-ai-check-participant-row">
+   <a class="broadcast-ai-check-participant-link"
+      href="@Model.EditUrl"
+      title="Edit entity"
+      target="_blank"
+      rel="noreferrer noopener">
+      @Model.Name
+   </a>
+   @if(!string.IsNullOrWhiteSpace(Model.SearchUrlBase))
+   {
+      <a class="ses-entity-search-link"
+         href="@Model.SearchUrlBase@Uri.EscapeDataString(Model.SearchQuery)"
+         target="_blank"
+         rel="noreferrer noopener"
+         title="Search for @Model.Name"
+         aria-label="Search for @Model.Name">
+         <span class="ses-icon-search"></span>
+      </a>
+   }
+</div>

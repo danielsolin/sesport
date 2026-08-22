@@ -3,13 +3,12 @@
    const inputSelector = "[data-activity-participant-input]";
    const idSelector = "[data-activity-participant-id]";
    const suggestionsSelector = "[data-activity-participant-suggestions]";
-   const hiddenInputsSelector = "[data-activity-participant-hidden-inputs]";
    const hiddenIdSelector = "[data-activity-participant-hidden-id]";
-   const gridSelector = "[data-activity-participant-grid]";
-   const rowsSelector = "[data-activity-participant-rows]";
+   const selectionSelector = "[data-activity-participant-selection]";
    const removeButtonSelector = "[data-activity-participant-remove]";
    const addFormSelector = "#add-participant-form";
    const addEntityIdSelector = "[data-add-participant-entity-id]";
+   const optionSelector = ".broadcast-org-entity-option";
 
    document.addEventListener("DOMContentLoaded", () => {
       document.addEventListener("click", handleRemoveParticipantClick);
@@ -18,7 +17,8 @@
 
    function initializePicker(picker)
    {
-      if(!(picker instanceof HTMLElement))
+      if(!(picker instanceof HTMLElement)
+         || picker.dataset.activityParticipantInitialized === "true")
       {
          return;
       }
@@ -39,6 +39,8 @@
       {
          return;
       }
+
+      picker.dataset.activityParticipantInitialized = "true";
 
       if(organizationEntityId === "")
       {
@@ -76,7 +78,63 @@
       });
 
       input.addEventListener("keydown", event => {
-         handleKeyDown(event, state, input, hiddenId, suggestions);
+         handleKeyDown(
+            event,
+            state,
+            input,
+            hiddenId,
+            suggestions,
+            searchUrl,
+            organizationEntityId
+         );
+      });
+
+      suggestions.addEventListener("click", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+         const item = option instanceof HTMLElement
+            ? getItemFromOption(option)
+            : null;
+
+         if(item)
+         {
+            event.preventDefault();
+            selectSuggestion(
+               item,
+               input,
+               suggestions,
+               state,
+               searchUrl,
+               organizationEntityId
+            );
+         }
+      });
+
+      suggestions.addEventListener("mousedown", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+
+         if(option instanceof HTMLElement && document.activeElement === input)
+         {
+            event.preventDefault();
+         }
+      });
+
+      suggestions.addEventListener("mouseover", event => {
+         const option = event.target instanceof Element
+            ? event.target.closest(optionSelector)
+            : null;
+         const options = Array.from(
+            suggestions.querySelectorAll(optionSelector)
+         );
+         const index = options.indexOf(option);
+
+         if(index >= 0)
+         {
+            setActiveSuggestion(state, suggestions, index);
+         }
       });
 
       input.addEventListener("blur", () => {
@@ -122,12 +180,11 @@
       organizationEntityId
    )
    {
-      const query = input.value.trim();
-
       const requestId = ++state.requestId;
       const url = new URL(searchUrl, window.location.origin);
-      url.searchParams.set("term", query);
+      url.searchParams.set("term", input.value.trim());
       url.searchParams.set("organizationEntityId", organizationEntityId);
+      url.searchParams.set("format", "participant-suggestions");
 
       getSelectedEntityIds().forEach(entityId => {
          url.searchParams.append("excludedEntityIds", entityId);
@@ -137,10 +194,10 @@
       {
          const response = await fetch(url, {
             headers: {
-               Accept: "application/json"
+               Accept: "text/html"
             }
          });
-         const payload = await response.json();
+         const html = await response.text();
 
          if(requestId !== state.requestId)
          {
@@ -152,11 +209,7 @@
             throw new Error("Participant search failed.");
          }
 
-         const results = Array.isArray(payload.results)
-            ? payload.results.map(normalizeResult).filter(item => item !== null)
-            : [];
-
-         renderSuggestions(state, suggestions, input, results);
+         renderSuggestions(state, suggestions, html);
       }
       catch
       {
@@ -167,52 +220,25 @@
       }
    }
 
-   function renderSuggestions(state, suggestions, input, items)
+   function renderSuggestions(state, suggestions, html)
    {
-      suggestions.replaceChildren();
-      state.items = items;
+      window.replaceContentsWithPartialHtml(suggestions, html);
+      state.items = Array.from(
+         suggestions.querySelectorAll(optionSelector)
+      ).map(getItemFromOption).filter(item => item !== null);
       state.selectedIndex = -1;
-
-      if(items.length === 0)
-      {
-         const empty = document.createElement("div");
-         empty.className = "broadcast-org-entity-empty";
-         empty.textContent = "No matches";
-         suggestions.append(empty);
-         suggestions.hidden = false;
-         return;
-      }
-
-      items.forEach((item, index) => {
-         const option = document.createElement("button");
-         option.type = "button";
-         option.className = "broadcast-org-entity-option";
-         option.dataset.entityId = item.id;
-         option.textContent = item.text;
-
-         option.addEventListener("click", event => {
-            event.preventDefault();
-            selectSuggestion(item, input, suggestions, state);
-         });
-
-         option.addEventListener("mousedown", event => {
-            if(document.activeElement === input)
-            {
-               event.preventDefault();
-            }
-         });
-
-         option.addEventListener("mouseenter", () => {
-            setActiveSuggestion(state, suggestions, index);
-         });
-
-         suggestions.append(option);
-      });
-
       suggestions.hidden = false;
    }
 
-   function handleKeyDown(event, state, input, hiddenId, suggestions)
+   function handleKeyDown(
+      event,
+      state,
+      input,
+      hiddenId,
+      suggestions,
+      searchUrl,
+      organizationEntityId
+   )
    {
       if(suggestions.hidden)
       {
@@ -249,7 +275,14 @@
 
          if(item)
          {
-            selectSuggestion(item, input, suggestions, state);
+            selectSuggestion(
+               item,
+               input,
+               suggestions,
+               state,
+               searchUrl,
+               organizationEntityId
+            );
          }
       }
    }
@@ -257,7 +290,7 @@
    function setActiveSuggestion(state, suggestions, index)
    {
       const options = Array.from(
-         suggestions.querySelectorAll(".broadcast-org-entity-option")
+         suggestions.querySelectorAll(optionSelector)
       );
 
       if(options.length === 0)
@@ -273,7 +306,14 @@
       });
    }
 
-   function selectSuggestion(item, input, suggestions, state)
+   function selectSuggestion(
+      item,
+      input,
+      suggestions,
+      state,
+      searchUrl,
+      organizationEntityId
+   )
    {
       input.value = "";
       closeSuggestions(state, suggestions);
@@ -282,7 +322,11 @@
 
       if(activityId === "")
       {
-         addUnsavedParticipant(item);
+         void loadParticipantSelectionAsync(
+            searchUrl,
+            organizationEntityId,
+            [...getSelectedEntityIds(), item.id]
+         );
          return;
       }
 
@@ -299,112 +343,46 @@
       form.submit();
    }
 
-   function addUnsavedParticipant(item)
+   async function loadParticipantSelectionAsync(
+      searchUrl,
+      organizationEntityId,
+      selectedEntityIds
+   )
    {
-      if(getSelectedEntityIds().includes(item.id))
+      const selection = document.querySelector(selectionSelector);
+
+      if(!(selection instanceof HTMLElement))
       {
          return;
       }
 
-      const hiddenInputs = document.querySelector(hiddenInputsSelector);
+      const url = new URL(searchUrl, window.location.origin);
+      url.searchParams.set("format", "participant-selection");
+      url.searchParams.set("organizationEntityId", organizationEntityId);
+      selectedEntityIds.forEach(entityId => {
+         url.searchParams.append("selectedEntityIds", entityId);
+      });
 
-      if(hiddenInputs instanceof HTMLElement)
+      try
       {
-         const input = document.createElement("input");
-         input.type = "hidden";
-         input.name = "Activity.LinkedEntityIds";
-         input.value = item.id;
-         input.dataset.activityParticipantHiddenId = "true";
-         hiddenInputs.append(input);
+         const response = await fetch(url, {
+            headers: {
+               Accept: "text/html"
+            }
+         });
+         const html = await response.text();
+
+         if(!response.ok)
+         {
+            throw new Error("Participant selection update failed.");
+         }
+
+         window.replaceElementWithPartialHtml(selection, html);
       }
-
-      renderUnsavedParticipantRow(item);
-   }
-
-   function renderUnsavedParticipantRow(item)
-   {
-      const grid = document.querySelector(gridSelector);
-
-      if(!(grid instanceof HTMLElement))
+      catch(error)
       {
-         return;
+         console.error(error);
       }
-
-      ensureUnsavedTable(grid);
-      const rows = grid.querySelector(rowsSelector);
-
-      if(!(rows instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const row = document.createElement("tr");
-      row.dataset.activityParticipantRow = item.id;
-      row.append(
-         createCell(createEntityLink(item)),
-         createCell(document.createTextNode(item.relatedOrganizations)),
-         createCell(document.createTextNode(item.watchPriority)),
-         createCell(document.createTextNode(item.gender)),
-         createCell(document.createTextNode(item.alias)),
-         createActionCell()
-      );
-      rows.append(row);
-   }
-
-   function ensureUnsavedTable(grid)
-   {
-      if(grid.querySelector(rowsSelector))
-      {
-         return;
-      }
-
-      const wrap = document.createElement("div");
-      wrap.className = "admin-table-wrap";
-      wrap.innerHTML = `
-         <table class="admin-table admin-table-compact">
-            <thead>
-               <tr>
-                  <th>Name</th>
-                  <th>Related (orgs)</th>
-                  <th>Watch Priority</th>
-                  <th>Gender</th>
-                  <th>Alias</th>
-                  <th></th>
-               </tr>
-            </thead>
-            <tbody data-activity-participant-rows></tbody>
-         </table>
-      `;
-      grid.replaceChildren(wrap);
-   }
-
-   function createCell(content)
-   {
-      const cell = document.createElement("td");
-      cell.append(content);
-      return cell;
-   }
-
-   function createActionCell()
-   {
-      const cell = document.createElement("td");
-      cell.className = "table-actions";
-
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = "Delete";
-      button.dataset.activityParticipantRemove = "true";
-
-      cell.append(button);
-      return cell;
-   }
-
-   function createEntityLink(item)
-   {
-      const link = document.createElement("a");
-      link.href = `/Admin/Entities/Edit/${encodeURIComponent(item.id)}`;
-      link.textContent = item.text;
-      return link;
    }
 
    function getActivityId()
@@ -439,8 +417,17 @@
       }
 
       const row = button.closest("[data-activity-participant-row]");
+      const picker = document.querySelector(pickerSelector);
+      const organizationEntityId = picker instanceof HTMLElement
+         ? (picker.dataset.organizationEntityId ?? "").trim()
+         : "";
+      const searchUrl = picker instanceof HTMLElement
+         ? (picker.dataset.activityParticipantSearchUrl ?? "").trim()
+         : "";
 
-      if(!(row instanceof HTMLElement))
+      if(!(row instanceof HTMLElement)
+         || !(picker instanceof HTMLElement)
+         || searchUrl === "")
       {
          return;
       }
@@ -452,55 +439,11 @@
          return;
       }
 
-      removeParticipantRow(entityId, row);
-   }
-
-   function removeParticipantRow(entityId, row)
-   {
-      const rows = row.parentElement;
-      const grid = rows instanceof HTMLElement ? rows.closest(gridSelector)
-         : null;
-
-      removeHiddenParticipantInput(entityId);
-      row.remove();
-
-      if(!(grid instanceof HTMLElement))
-      {
-         return;
-      }
-
-      if(rows instanceof HTMLElement && rows.children.length > 0)
-      {
-         return;
-      }
-
-      renderEmptyParticipantsNotice(grid);
-   }
-
-   function removeHiddenParticipantInput(entityId)
-   {
-      document.querySelectorAll(hiddenIdSelector).forEach(input => {
-         if(!(input instanceof HTMLInputElement))
-         {
-            return;
-         }
-
-         if(input.value.trim() !== entityId)
-         {
-            return;
-         }
-
-         input.remove();
-      });
-   }
-
-   function renderEmptyParticipantsNotice(grid)
-   {
-      const notice = document.createElement("div");
-      notice.className = "notice";
-      notice.dataset.activityParticipantEmpty = "true";
-      notice.textContent = "No participants.";
-      grid.replaceChildren(notice);
+      void loadParticipantSelectionAsync(
+         searchUrl,
+         organizationEntityId,
+         getSelectedEntityIds().filter(id => id !== entityId)
+      );
    }
 
    function closeSuggestions(state, suggestions)
@@ -518,33 +461,28 @@
       suggestions.replaceChildren();
    }
 
-   function normalizeResult(item)
+   function getItemFromOption(option)
    {
-      if(!(item && typeof item === "object"))
+      if(!(option instanceof HTMLElement))
       {
          return null;
       }
 
-      const id = normalizeString(item.id);
-      const text = normalizeString(item.text);
+      const id = (option.dataset.entityId ?? "").trim();
+      const text = (option.dataset.entityText ?? option.textContent ?? "")
+         .trim();
 
-      if(id === "" || text === "")
-      {
-         return null;
-      }
-
-      return {
-         id,
-         text,
-         relatedOrganizations: normalizeString(item.relatedOrganizations),
-         watchPriority: normalizeString(item.watchPriority),
-         gender: normalizeString(item.gender),
-         alias: normalizeString(item.alias)
-      };
-   }
-
-   function normalizeString(value)
-   {
-      return typeof value === "string" ? value.trim() : "";
+      return id === "" || text === ""
+         ? null
+         : {
+            id,
+            text,
+            relatedOrganizations: (
+               option.dataset.relatedOrganizations ?? ""
+            ).trim(),
+            watchPriority: (option.dataset.watchPriority ?? "").trim(),
+            gender: (option.dataset.gender ?? "").trim(),
+            alias: (option.dataset.alias ?? "").trim()
+         };
    }
 })();

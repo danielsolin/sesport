@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.Broadcast;
-using SESport.Core.Formatting;
+using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.List;
 
@@ -13,7 +13,14 @@ public sealed class BroadcastModel(
 {
    public async Task<IActionResult> OnPostAsync(
       Guid id,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      [FromForm(Name = RouteKeys.Date)] DateOnly? date,
+      [FromForm(Name = RouteKeys.SortColumn)] string? sortColumn,
+      [FromForm(Name = RouteKeys.SortAsc)] bool sortAsc = true,
+      [FromForm(Name = RouteKeys.ShowHidden)] bool showHidden = false,
+      [FromForm(Name = RouteKeys.HideReplays)] bool hideReplays = false,
+      [FromForm(Name = RouteKeys.SelectedSports)]
+         List<string>? selectedSports = null
    )
    {
       if(id == Guid.Empty)
@@ -34,57 +41,20 @@ public sealed class BroadcastModel(
       );
       var refreshedBroadcast = broadcasts[0];
 
-      return new JsonResult(new
-      {
-         broadcast = new
-         {
-            id = refreshedBroadcast.Id.ToString(),
-            sourceKey = refreshedBroadcast.SourceKey,
-            sourceLabel = BroadcastListDisplayFormatter.FormatSourceLabel(
-               refreshedBroadcast.SourceKey
-            ),
-            timeText = refreshedBroadcast.TimeText,
-            timeOnlyText = TimeTextFormatter.FormatTimeOnlyText(
-               refreshedBroadcast.TimeText
-            ),
-            startTimeText = refreshedBroadcast.StartTimeText,
-            endTimeText = refreshedBroadcast.EndTimeText,
-            channelName = refreshedBroadcast.ChannelName,
-            title = refreshedBroadcast.Title,
-            description = refreshedBroadcast.Description,
-            categories = refreshedBroadcast.Categories,
-            isReplay = refreshedBroadcast.IsReplay,
-            originalAirDate = DateDisplay.Format(
-               refreshedBroadcast.OriginalAirDate
-            ),
-            isHidden = refreshedBroadcast.IsHidden,
-            organizationEntityId =
-               refreshedBroadcast.OrganizationEntityId?.ToString(),
-            organizationEntityName = refreshedBroadcast.OrganizationEntityName,
-            groupValue = BroadcastListDisplayFormatter.FormatGroupValue(
-               refreshedBroadcast.Title,
-               refreshedBroadcast.ActivityGroupTitle,
-               refreshedBroadcast.ActivityGroupDraftTitle
-            ),
-            activityGroupId =
-               refreshedBroadcast.ActivityGroupId?.ToString(),
-            activityGroupTitle = refreshedBroadcast.ActivityGroupTitle,
-            activityGroupDraftTitle =
-               refreshedBroadcast.ActivityGroupDraftTitle,
-            activityGroupSourceKindId =
-               refreshedBroadcast.ActivityGroupSourceKindId,
-            activityGroupSourceActivityId =
-               refreshedBroadcast.ActivityGroupSourceActivityId?.ToString(),
-            groupText = BroadcastListDisplayFormatter.FormatGroupText(
-               refreshedBroadcast.Title,
-               refreshedBroadcast.ActivityGroupSourceKindId,
-               refreshedBroadcast.ActivityGroupId,
-               refreshedBroadcast.ActivityGroupTitle,
-               refreshedBroadcast.ActivityGroupDraftTitle
-            ),
-            participationStatusId =
-               refreshedBroadcast.ParticipationCheck?.StatusId
-         }
-      });
+      return Partial(
+         "/Pages/Admin/Broadcasts/_BroadcastRow.cshtml",
+         BroadcastRowViewModel.Create(
+            refreshedBroadcast,
+            Url,
+            Request,
+            date,
+            sortColumn,
+            sortAsc,
+            showHidden,
+            hideReplays,
+            selectedSports,
+            ViewData["SearchUrl"] as string
+         )
+      );
    }
 }

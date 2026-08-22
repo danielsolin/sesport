@@ -1,0 +1,86 @@
+@model SESport.Web.Pages.Admin.Activities.ActivityParticipantSelectionViewModel
+
+<div data-activity-participant-selection>
+   <div data-activity-participant-hidden-inputs>
+      @foreach(var participant in Model.Participants)
+      {
+         <input type="hidden"
+                name="Activity.LinkedEntityIds"
+                value="@participant.Id"
+                data-activity-participant-hidden-id />
+      }
+   </div>
+   <div data-activity-participant-grid>
+      @if(Model.Participants.Count == 0)
+      {
+         <div class="notice" data-activity-participant-empty>
+            No participants.
+         </div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact">
+               <thead>
+                  <tr>
+                     <th>Name</th>
+                     <th>Related (orgs)</th>
+                     <th>Watch Priority</th>
+                     <th>Gender</th>
+                     <th>Alias</th>
+                     <th></th>
+                  </tr>
+               </thead>
+               <tbody data-activity-participant-rows>
+                  @foreach(var participant in Model.Participants)
+                  {
+                     var deleteFormId =
+                        $"delete-participant-{participant.Id:N}";
+                     var statusFormId =
+                        $"status-participant-{participant.Id:N}";
+                     <tr class="@(
+                            participant.IsActive
+                               ? null
+                               : "activity-participant-inactive"
+                         )"
+                         data-activity-participant-row="@participant.Id">
+                        <td>
+                           <a asp-page="/Admin/Entities/Edit"
+                              asp-route-id="@participant.Id">
+                              @participant.Name
+                           </a>
+                        </td>
+                        <td>@participant.RelatedOrganizations</td>
+                        <td>@participant.WatchPriority</td>
+                        <td>@participant.Gender</td>
+                        <td>@participant.Alias</td>
+                        <td class="table-actions">
+                           @if(Model.ActivityId is not null)
+                           {
+                              <button type="submit"
+                                      form="@statusFormId">
+                                 @(participant.IsActive
+                                    ? "Deactivate"
+                                    : "Reactivate")
+                              </button>
+                              <button type="submit"
+                                      form="@deleteFormId">
+                                 Delete
+                              </button>
+                           }
+                           else
+                           {
+                              <button type="button"
+                                      data-activity-participant-remove>
+                                 Delete
+                              </button>
+                           }
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </div>
+</div>

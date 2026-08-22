@@ -17,38 +17,57 @@ public sealed class ParticipationPollingUiTests
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/site.js"
       );
+      var rowPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastRow.cshtml"
+      );
+      var runsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastParticipationRuns.cshtml"
+      );
+      var resultsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Ajax/Poll/_ParticipationStatusResults.cshtml"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      var row = await File.ReadAllTextAsync(rowPath);
+      var runs = await File.ReadAllTextAsync(runsPath);
+      var results = await File.ReadAllTextAsync(resultsPath);
 
-      Assert.Contains("data-check-participation-row", html);
-      Assert.Contains("data-ajax-success=\"toggle-visibility\"", html);
-      Assert.Contains("data-participation-cell", html);
-      Assert.Contains("broadcast.ActivityGroupParticipants", html);
-      Assert.Contains("data-broadcast-group-participants", html);
+      Assert.Contains("data-broadcast-results", html);
+      Assert.Contains("data-check-participation-row", row);
+      Assert.Contains("data-ajax-success=\"toggle-visibility\"", row);
+      Assert.Contains("data-participation-cell", row);
+      Assert.Contains("data-broadcast-group-participants", row);
       Assert.Contains(
          "data-broadcast-group-participants-clear",
-         html
+         row
       );
-      Assert.Contains("data-broadcast-activity-link", html);
-      Assert.Contains("Create Activity", html);
-      Assert.Contains("data-broadcast-categories-list", html);
-      Assert.DoesNotContain("_BroadcastParticipationRuns", html);
-      Assert.DoesNotContain("broadcast-ai-check-retry", html);
+      Assert.Contains("data-broadcast-activity-link", row);
+      Assert.Contains("Create Activity", runs);
+      Assert.Contains("data-broadcast-categories-list", row);
+      Assert.Contains("_BroadcastParticipationRuns", results);
+      Assert.Contains(
+         "/Pages/Admin/Broadcasts/_BroadcastParticipationRuns.cshtml",
+         results
+      );
+      Assert.DoesNotContain(
+         "\"/Admin/Broadcasts/_BroadcastParticipationRuns",
+         results
+      );
+      Assert.DoesNotContain("broadcast-ai-check-retry", runs);
       Assert.Contains("initializeParticipationRunsAsync", script);
       Assert.Contains("initializeBroadcastParticipantClearing", script);
       Assert.Contains("clearParticipantsQueryKey", script);
       Assert.Contains("participantList.remove()", script);
-      Assert.Contains("setNoParticipationHistoryCell", script);
-      Assert.Contains("renderBroadcastCategories", script);
       Assert.Contains("participationQueuedFromRunId", script);
-      Assert.Contains("isStaleQueuedResult", script);
       Assert.Contains("getParticipationRunId", script);
       Assert.Contains("const queuingParticipationIds = new Set()", script);
       Assert.Contains("queuingParticipationIds.has(broadcastId)", script);
       Assert.Contains("queuingParticipationIds.delete(broadcastId)", script);
-      Assert.DoesNotContain("syncParticipationCheckButton", script);
       var checkButtonIndex = html.IndexOf(
-         "data-check-participation-row",
+         "data-broadcast-results",
          StringComparison.Ordinal
       );
       var checkButtonContext = html[
@@ -56,29 +75,18 @@ public sealed class ParticipationPollingUiTests
       ];
       Assert.DoesNotContain("@if", checkButtonContext);
       Assert.Contains("updateBroadcastVisibilityAsync", script);
-      Assert.Contains("headCell.colSpan = 4", script);
-      Assert.Contains("function getParticipationValue", script);
-      Assert.Contains("createParticipantSearchLink", script);
-      Assert.Contains("templateOptions", script);
-      Assert.Contains("createParticipantTemplatePicker", script);
-      Assert.Contains(
-         "broadcast-ai-check-participant-template-input",
-         script
-      );
-      Assert.Contains("getParticipationSportName", script);
-      Assert.Contains("organizationSportName", script);
-      Assert.Contains("encodeURIComponent(searchQuery)", script);
-      Assert.Contains("check.participation", script);
+      Assert.Contains("getPartialRootFromHtml", script);
+      Assert.Contains("replaceContentsWithPartialHtml", script);
+      Assert.DoesNotContain("createElement", script);
+      Assert.DoesNotContain("innerHTML", script);
+      Assert.Contains("broadcast-ai-check-participant-template-input", runs);
+      Assert.Contains("organizationSportName", runs);
       Assert.Contains("syncReplacementCount", script);
       Assert.Contains("ajaxCountTarget", script);
       Assert.Contains("ajaxCountValue", script);
       Assert.Contains(
-         "const broadcastCountSelector = \"[data-broadcast-count]\";",
-         script
-      );
-      Assert.Contains(
-         "visibilityForm.dataset.ajaxDecrementTarget =",
-         script
+         "data-participation-partial",
+         results
       );
    }
 }

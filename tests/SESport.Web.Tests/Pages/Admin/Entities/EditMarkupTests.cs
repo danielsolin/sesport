@@ -16,23 +16,32 @@ public sealed class EditMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/entity-linked-entities.js"
       );
+      var partialPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Entities/_EntityLinkedEntitiesGrid.cshtml"
+      );
       var cssPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/wwwroot/css/site.css"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      var partial = await File.ReadAllTextAsync(partialPath);
       var css = await File.ReadAllTextAsync(cssPath);
 
       Assert.Contains("data-entity-linked-entities-picker", html);
       Assert.Contains("data-entity-linked-entities-search-url", html);
       Assert.Contains("data-entity-linked-entities-update-url", html);
-      Assert.Contains("data-entity-linked-entities-grid", html);
-      Assert.Contains("data-entity-linked-entities-rows", html);
-      Assert.Contains("data-entity-linked-entities-suggestions", html);
-      Assert.Contains("data-entity-linked-entities-remove", html);
-      Assert.Contains("entity-linked-entities-table", html);
-      Assert.Contains("Entity.LinkedEntityIds", html);
+      Assert.Contains("data-entity-linked-entities-picker", html);
+      Assert.Contains("data-entity-linked-entities-grid", partial);
+      Assert.Contains(
+         "/Pages/Admin/Entities/_EntityLinkedEntitiesGrid.cshtml",
+         html
+      );
+      Assert.Contains("data-entity-linked-entities-rows", partial);
+      Assert.Contains("data-entity-linked-entities-remove", partial);
+      Assert.Contains("entity-linked-entities-table", partial);
+      Assert.Contains("Entity.LinkedEntityIds", partial);
       Assert.Contains("data-organization-only=\"false\"", html);
       Assert.Contains("data-person-birthdate-field", html);
       Assert.Contains("Entity.Birthdate", html);
@@ -56,10 +65,13 @@ public sealed class EditMarkupTests
          html
       );
       Assert.Contains("initializeEntityLinkedEntitiesPicker", script);
-      Assert.Contains("data-entity-linked-entities-grid", script);
-      Assert.Contains("data-entity-linked-entities-rows", script);
       Assert.Contains("data-entity-linked-entities-row", script);
       Assert.Contains("data-entity-linked-entities-remove", script);
+      Assert.Contains("linked-entity-suggestions", script);
+      Assert.Contains("linked-entity-grid", script);
+      Assert.Contains("replaceContentsWithPartialHtml", script);
+      Assert.DoesNotContain("createElement", script);
+      Assert.DoesNotContain("innerHTML", script);
       Assert.DoesNotContain("event.key === \"Backspace\"", script);
       Assert.DoesNotContain("chip", script);
       Assert.Contains("broadcast-org-entity-option", script);

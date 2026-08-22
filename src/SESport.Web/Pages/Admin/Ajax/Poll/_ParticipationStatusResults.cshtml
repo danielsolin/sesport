@@ -1,0 +1,14 @@
+@model IReadOnlyList<SESport.Web.Pages.Admin.Broadcasts.BroadcastParticipationRunsViewModel>
+
+<div data-participation-partial-results>
+   @foreach(var result in Model)
+   {
+      <div data-participation-partial
+           data-broadcast-id="@result.BroadcastId">
+         @await Html.PartialAsync(
+            "/Pages/Admin/Broadcasts/_BroadcastParticipationRuns.cshtml",
+            result
+         )
+      </div>
+   }
+</div>

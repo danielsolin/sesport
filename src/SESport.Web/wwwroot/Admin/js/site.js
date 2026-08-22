@@ -32,7 +32,6 @@
    const participationRunsToggleSelector =
       "[data-participation-runs-toggle]";
    const participationCellSelector = "[data-participation-cell]";
-   const participantCreateUrlSelector = "[data-create-participant-url]";
    const participationStatusUrlSelector =
       "[data-check-participation-status-url]";
    const adminDateInputSelector = "input[type='date']";
@@ -65,8 +64,6 @@
       "[data-broadcast-inline-edit-field]";
    const broadcastInlineEditUrlSelector =
       "[data-broadcast-inline-edit-url]";
-   const broadcastCategoriesListSelector =
-      "[data-broadcast-categories-list]";
    const broadcastResultsSelector = "[data-broadcast-results]";
    const broadcastRowSelector = "tr[data-broadcast-row='true']";
    const broadcastRunsRowSelector =
@@ -77,26 +74,10 @@
       "[data-broadcast-activity-link]";
    const clearParticipantsQueryKey = "clearParticipants";
    const broadcastInlineEditTitleField = "title";
-   const broadcastInlineEditDescriptionField = "description";
-   const broadcastInlineEditChannelField = "channel";
-   const broadcastInlineEditStartTimeField = "start-time";
-   const broadcastInlineEditEndTimeField = "end-time";
-   const broadcastInlineEditCategoriesField = "categories";
-   const broadcastInlineEditOrganizationField = "organization";
-   const broadcastInlineEditGroupField = "group";
-   const broadcastCountSelector = "[data-broadcast-count]";
    const getBroadcastInlineEditUrl =
       window.getBroadcastInlineEditUrl;
    const postBroadcastInlineEditAsync =
       window.postBroadcastInlineEditAsync;
-   const updateBroadcastInlineEditCell =
-      window.updateBroadcastInlineEditCell;
-   const getBroadcastInlineEditPlaceholder =
-      window.getBroadcastInlineEditPlaceholder;
-   const renderBroadcastCategories =
-      window.renderBroadcastCategories;
-   const getBroadcastSearchUrlBase =
-      window.getBroadcastSearchUrlBase;
    const getAntiForgeryToken = window.getAntiForgeryToken;
    const pendingParticipationIds = new Set();
    const queuingParticipationIds = new Set();
@@ -124,6 +105,8 @@
    window.initializeEntityInlineEditing = initializeEntityInlineEditing;
    window.initializeBroadcastInlineEditing =
       initializeBroadcastInlineEditing;
+   window.initializeParticipationRunsAsync =
+      initializeParticipationRunsAsync;
    initializeTeaserGeneration();
    initializeActivityStartChecks();
    initializeActivityResultChecks();
@@ -161,11 +144,14 @@
 
       try
       {
+         const expectsHtml = form.dataset.ajaxSuccess ===
+            "update-participation"
+            || form.dataset.ajaxSuccess === "replace";
          const response = await fetch(form.action, {
             method: form.method || "post",
             body: new FormData(form),
             headers: {
-               Accept: "application/json"
+               Accept: expectsHtml ? "text/html" : "application/json"
             }
          });
 
@@ -253,6 +239,34 @@
       await replaceFromFormAsync(form);
    });
 
+   document.addEventListener("change", event => {
+      const select = event.target;
+
+      if(!(select instanceof HTMLSelectElement)
+         || !select.matches("[data-broadcast-participant-template-select]"))
+      {
+         return;
+      }
+
+      const participants = select.closest(
+         ".broadcast-ai-check-participants"
+      );
+
+      if(!(participants instanceof HTMLElement))
+      {
+         return;
+      }
+
+      participants.querySelectorAll(
+         ".broadcast-ai-check-participant-template-input"
+      ).forEach(input => {
+         if(input instanceof HTMLInputElement)
+         {
+            input.value = select.value;
+         }
+      });
+   });
+
    async function updateParticipationFromResponseAsync(response)
    {
       if(!(response instanceof Response))
@@ -260,27 +274,8 @@
          return;
       }
 
-      let payload = null;
-
-      try
-      {
-         payload = await response.clone().json();
-      }
-      catch
-      {
-         return;
-      }
-
-      if(Array.isArray(payload?.results))
-      {
-         payload.results.forEach(updateParticipationCellByResult);
-         return;
-      }
-
-      if(payload?.result)
-      {
-         updateParticipationCellByResult(payload.result);
-      }
+      const html = await response.text();
+      replaceParticipationCellsFromHtml(html);
    }
 
    function decrementCounter(selector)
@@ -359,11 +354,12 @@
       }
 
       const target = form.closest(broadcastRowSelector);
+      const container = target?.closest("tbody[data-broadcast-container]");
       const showHidden = isBroadcastShowHiddenEnabled(form);
       const preserveScroll = form.dataset.ajaxPreserveScroll === "true";
       const scrollX = preserveScroll ? window.scrollX : 0;
       const scrollY = preserveScroll ? window.scrollY : 0;
-      const rowPayload = await fetchBroadcastRowAsync(form);
+      const rowHtml = await fetchBroadcastRowAsync(form);
 
       if(hidden && !showHidden)
       {
@@ -382,28 +378,31 @@
          return;
       }
 
-      if(!rowPayload)
+      if(!(container instanceof HTMLElement) || !rowHtml)
       {
          return;
       }
 
-      const nextRows = createBroadcastRows(rowPayload, form, target);
-      const nextMainRow = nextRows?.firstElementChild;
-      const nextRunsRow = nextMainRow?.nextElementSibling;
+      let nextContainer;
 
-      if(!(nextRows instanceof DocumentFragment)
-         || !(nextMainRow instanceof HTMLElement)
-         || !(nextRunsRow instanceof HTMLElement))
+      try
+      {
+         nextContainer = window.replaceElementWithPartialHtml(
+            container,
+            rowHtml
+         );
+      }
+      catch
       {
          return;
       }
 
-      replaceBroadcastRowPair(target, nextMainRow, nextRunsRow);
+      const nextMainRow = nextContainer.querySelector(broadcastRowSelector);
 
-      initializeBroadcastInlineEditing(nextMainRow);
-      window.initializeBroadcastOrganizationAutocomplete?.(nextMainRow);
-      initializeParticipationRunsAsync(nextRunsRow);
-      initializeParticipationPolling(nextRunsRow);
+      initializeBroadcastInlineEditing(nextContainer);
+      window.initializeBroadcastOrganizationAutocomplete?.(nextContainer);
+      initializeParticipationRunsAsync(nextContainer);
+      initializeParticipationPolling(nextContainer);
 
       if(preserveScroll)
       {
@@ -428,7 +427,7 @@
             method: "post",
             body: new FormData(form),
             headers: {
-               Accept: "application/json"
+               Accept: "text/html"
             }
          });
 
@@ -437,8 +436,7 @@
             throw new Error(`Request failed with status ${response.status}`);
          }
 
-         const payload = await response.json();
-         return payload?.broadcast ?? null;
+         return await response.text();
       }
       catch
       {
@@ -472,30 +470,30 @@
       return input instanceof HTMLInputElement && input.checked;
    }
 
-   function getBroadcastVisibilityLabels()
-   {
-      const container = document.querySelector(broadcastResultsSelector);
-
-      if(!(container instanceof HTMLElement))
-      {
-         return {
-            show: "",
-            hide: "",
-            check: ""
-         };
-      }
-
-      return {
-         show: container.dataset.broadcastShowLabel || "",
-         hide: container.dataset.broadcastHideLabel || "",
-         check: container.dataset.broadcastCheckLabel || ""
-      };
-   }
-
    function removeBroadcastRowPair(target)
    {
       if(!(target instanceof HTMLElement))
       {
+         return;
+      }
+
+      const container = target.closest("tbody[data-broadcast-container]");
+
+      if(container instanceof HTMLElement)
+      {
+         const broadcastId = (target.dataset.broadcastId ?? "").trim();
+         container.remove();
+
+         if(broadcastId !== "")
+         {
+            pendingParticipationIds.delete(broadcastId);
+         }
+
+         if(pendingParticipationIds.size === 0)
+         {
+            stopParticipationPolling();
+         }
+
          return;
       }
 
@@ -520,27 +518,6 @@
       }
    }
 
-   function replaceBroadcastRowPair(target, nextMainRow, nextRunsRow)
-   {
-      if(!(target instanceof HTMLElement)
-         || !(nextMainRow instanceof HTMLElement)
-         || !(nextRunsRow instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const currentRunsRow = getBroadcastRunsRow(target);
-
-      target.before(nextMainRow, nextRunsRow);
-
-      if(currentRunsRow instanceof HTMLElement)
-      {
-         currentRunsRow.remove();
-      }
-
-      target.remove();
-   }
-
    function getBroadcastRunsRow(target)
    {
       if(!(target instanceof HTMLElement))
@@ -563,487 +540,6 @@
       }
 
       return nextRow;
-   }
-
-   function createBroadcastRows(broadcast, form, target)
-   {
-      if(!(broadcast && typeof broadcast === "object"))
-      {
-         return null;
-      }
-
-      const fragment = document.createDocumentFragment();
-      const labels = getBroadcastVisibilityLabels();
-      const sourceForm = form instanceof HTMLFormElement ? form : null;
-      const sourceRunsRow = getBroadcastRunsRow(target);
-      const sourceRunsCell =
-         sourceRunsRow?.querySelector(participationCellSelector) ?? null;
-      const searchUrlBase = getBroadcastSearchUrlBase();
-      const showHidden = isBroadcastShowHiddenEnabled(form);
-      const broadcastId = normalizeString(broadcast.id);
-      const title = normalizeString(broadcast.title);
-      const timeOnlyText = normalizeString(broadcast.timeOnlyText);
-      const startTimeText = normalizeString(broadcast.startTimeText)
-         || getBroadcastTimePart(timeOnlyText, 0);
-      const endTimeText = normalizeString(broadcast.endTimeText)
-         || getBroadcastTimePart(timeOnlyText, 1);
-      const channelName = normalizeString(broadcast.channelName);
-      const description = normalizeNullableString(broadcast.description);
-      const categories = normalizeBroadcastCategories(broadcast.categories);
-      const originalAirDate = normalizeNullableString(
-         broadcast.originalAirDate
-      );
-      const sourceLabel = normalizeString(broadcast.sourceLabel)
-         || normalizeString(broadcast.sourceKey);
-      const organizationEntityId = normalizeNullableString(
-         broadcast.organizationEntityId
-      );
-      const organizationEntityName = normalizeNullableString(
-         broadcast.organizationEntityName
-      );
-      const organizationSportName = normalizeNullableString(
-         broadcast.organizationSportName
-      );
-      const activityGroupId = normalizeNullableString(
-         broadcast.activityGroupId
-      );
-      const activityGroupTitle = normalizeNullableString(
-         broadcast.activityGroupTitle
-      );
-      const activityGroupDraftTitle = normalizeNullableString(
-         broadcast.activityGroupDraftTitle
-      );
-      const activityGroupSourceKindId = normalizeNullableString(
-         broadcast.activityGroupSourceKindId
-      );
-      const groupValue = normalizeNullableString(broadcast.groupValue)
-         || activityGroupTitle
-         || activityGroupDraftTitle
-         || title;
-      const groupText = normalizeNullableString(broadcast.groupText) || "-";
-      const participationStatusId = normalizeNullableString(
-         broadcast.participationStatusId
-      );
-      const isHidden = Boolean(broadcast.isHidden);
-      const isReplay = Boolean(broadcast.isReplay);
-      const activityUrlBase = sourceRunsCell instanceof HTMLElement
-         ? (sourceRunsCell.dataset.activityUrlBase ?? "").trim()
-         : "";
-      const checkParticipationUrl = sourceRunsCell instanceof HTMLElement
-         ? (sourceRunsCell.dataset.checkParticipationUrl ?? "").trim()
-         : "";
-
-      if(broadcastId === ""
-         || title === ""
-         || startTimeText === ""
-         || endTimeText === "")
-      {
-         return null;
-      }
-
-      const mainRow = document.createElement("tr");
-      mainRow.className = "broadcast-participation-main-row";
-      mainRow.dataset.broadcastRow = "true";
-      mainRow.dataset.broadcastId = broadcastId;
-      mainRow.dataset.participationStatus = participationStatusId || "";
-
-      const sourceCell = document.createElement("td");
-      sourceCell.className = "broadcasts-col-source";
-      sourceCell.textContent = sourceLabel;
-
-      const channelCell = document.createElement("td");
-      channelCell.className = "broadcasts-col-channel";
-      channelCell.append(
-         createBroadcastInlineEditor(
-            broadcastId,
-            broadcastInlineEditChannelField,
-            channelName,
-            "Edit broadcast channel",
-            "text",
-            "div",
-            "ses-nowrap"
-         )
-      );
-
-      const timeCell = document.createElement("td");
-      timeCell.className = "broadcasts-col-time";
-      const timeEditors = document.createElement("div");
-      timeEditors.className = "broadcast-time-editors";
-      timeEditors.append(
-         createBroadcastInlineEditor(
-            broadcastId,
-            broadcastInlineEditStartTimeField,
-            startTimeText,
-            "Edit broadcast start time",
-            "time",
-            "strong",
-            "ses-nowrap"
-         )
-      );
-      const timeSeparator = document.createElement("span");
-      timeSeparator.className = "broadcast-time-separator";
-      timeSeparator.textContent = "–";
-      timeEditors.append(timeSeparator);
-      timeEditors.append(
-         createBroadcastInlineEditor(
-            broadcastId,
-            broadcastInlineEditEndTimeField,
-            endTimeText,
-            "Edit broadcast end time",
-            "time",
-            "strong",
-            "ses-nowrap"
-         )
-      );
-      timeCell.append(timeEditors);
-
-      const titleCell = document.createElement("td");
-      titleCell.className = "broadcasts-col-broadcast";
-
-      const titleEditor = document.createElement("div");
-      titleEditor.className = "broadcast-inline-editable";
-      titleEditor.dataset.broadcastId = broadcastId;
-      titleEditor.dataset.broadcastInlineEditField = "title";
-      titleEditor.dataset.broadcastInlineEditValue = title;
-      titleEditor.title = "Double-click to edit";
-
-      const titleDisplay = document.createElement("div");
-      titleDisplay.dataset.broadcastInlineEditDisplay = "true";
-      const titleStrong = document.createElement("strong");
-      titleStrong.dataset.broadcastTitleText = "true";
-      const titlePlaceholder = getBroadcastInlineEditPlaceholderText(
-         broadcastInlineEditTitleField
-      );
-      titleStrong.textContent = title || titlePlaceholder;
-      titleStrong.classList.toggle("inline-edit-placeholder", title === "");
-      titleDisplay.append(titleStrong);
-
-      const searchLink = document.createElement("a");
-      searchLink.className = "ses-entity-search-link";
-      searchLink.dataset.broadcastTitleSearchLink = "true";
-      searchLink.target = "_blank";
-      searchLink.href = searchUrlBase === ""
-         ? ""
-         : `${searchUrlBase}${encodeURIComponent(title)}`;
-      searchLink.tabIndex = -1;
-      const searchIcon = document.createElement("span");
-      searchIcon.className = "ses-icon-search";
-      searchLink.append(searchIcon);
-      titleDisplay.append(searchLink);
-
-      const titleInput = document.createElement("input");
-      titleInput.className = "broadcast-inline-edit-input";
-      titleInput.dataset.broadcastInlineEditInput = "true";
-      titleInput.type = "text";
-      titleInput.value = title;
-      titleInput.autocomplete = "off";
-      titleInput.spellcheck = false;
-      titleInput.setAttribute("aria-label", "Edit broadcast title");
-      titleInput.hidden = true;
-      titleInput.tabIndex = -1;
-
-      titleEditor.append(titleDisplay, titleInput);
-
-      const descriptionEditor = document.createElement("div");
-      descriptionEditor.className = "broadcast-inline-editable";
-      descriptionEditor.dataset.broadcastId = broadcastId;
-      descriptionEditor.dataset.broadcastInlineEditField =
-         "description";
-      descriptionEditor.dataset.broadcastInlineEditValue = description;
-      descriptionEditor.title = "Double-click to edit";
-
-      const descriptionDisplay = document.createElement("div");
-      descriptionDisplay.dataset.broadcastInlineEditDisplay = "true";
-      const descriptionText = document.createElement("span");
-      descriptionText.dataset.broadcastDescriptionText = "true";
-      const descriptionPlaceholder =
-         getBroadcastInlineEditPlaceholderText(
-            broadcastInlineEditDescriptionField
-         );
-      descriptionText.textContent = description || descriptionPlaceholder;
-      descriptionText.classList.toggle(
-         "inline-edit-placeholder",
-         description === ""
-      );
-      descriptionDisplay.append(descriptionText);
-
-      const descriptionInput = document.createElement("input");
-      descriptionInput.className = "broadcast-inline-edit-input";
-      descriptionInput.dataset.broadcastInlineEditInput = "true";
-      descriptionInput.type = "text";
-      descriptionInput.value = description;
-      descriptionInput.autocomplete = "off";
-      descriptionInput.spellcheck = false;
-      descriptionInput.setAttribute(
-         "aria-label",
-         "Edit broadcast description"
-      );
-      descriptionInput.hidden = true;
-      descriptionInput.tabIndex = -1;
-
-      descriptionEditor.append(descriptionDisplay, descriptionInput);
-      titleCell.append(titleEditor, descriptionEditor);
-
-      if(isReplay && originalAirDate !== "")
-      {
-         const replayDisplay = document.createElement("div");
-         replayDisplay.textContent = `Repris från ${originalAirDate}`;
-         titleCell.append(replayDisplay);
-      }
-
-      const organizationCell = document.createElement("td");
-      organizationCell.className =
-         "broadcasts-col-organization broadcast-inline-editable";
-      organizationCell.dataset.broadcastId = broadcastId;
-      organizationCell.dataset.broadcastInlineEditField = "organization";
-      organizationCell.dataset.broadcastInlineEditValue =
-         organizationEntityId || "";
-      organizationCell.dataset.broadcastInlineEditLabel =
-         organizationEntityName || "";
-      organizationCell.title = "Double-click to edit";
-      const organizationWrap = document.createElement("div");
-      organizationWrap.className = "broadcast-org-autocomplete is-locked";
-      organizationWrap.dataset.orgEntityAutocomplete = "true";
-      const organizationInput = document.createElement("input");
-      organizationInput.className = "broadcast-org-entity-input";
-      organizationInput.type = "text";
-      organizationInput.setAttribute("aria-label", "Organization entity");
-      organizationInput.dataset.orgEntityInput = "true";
-      organizationInput.autocomplete = "off";
-      organizationInput.spellcheck = false;
-      organizationInput.readOnly = true;
-      organizationInput.value = organizationEntityName || "";
-      organizationInput.tabIndex = 0;
-      const organizationHidden = document.createElement("input");
-      organizationHidden.type = "hidden";
-      organizationHidden.dataset.orgEntityId = "true";
-      organizationHidden.value = organizationEntityId || "";
-      const organizationSuggestions = document.createElement("div");
-      organizationSuggestions.className =
-         "broadcast-org-entity-suggestions";
-      organizationSuggestions.dataset.orgEntitySuggestions = "true";
-      organizationSuggestions.hidden = true;
-      organizationWrap.append(
-         organizationInput,
-         organizationHidden,
-         organizationSuggestions
-      );
-      organizationCell.append(organizationWrap);
-
-      const groupCell = document.createElement("td");
-      const groupEditable = activityGroupSourceKindId !== "";
-
-      groupCell.className = groupEditable
-         ? "broadcasts-col-group broadcast-inline-editable"
-         : "broadcasts-col-group";
-      groupCell.dataset.broadcastGroupText = groupText;
-
-      if(groupEditable)
-      {
-         groupCell.dataset.broadcastId = broadcastId;
-         groupCell.dataset.broadcastInlineEditField =
-            broadcastInlineEditGroupField;
-         groupCell.dataset.broadcastInlineEditValue = groupValue;
-         groupCell.dataset.broadcastActivityGroupSourceKindId =
-            activityGroupSourceKindId;
-         groupCell.dataset.broadcastActivityGroupId = activityGroupId;
-         groupCell.title = "Double-click to edit";
-
-         const groupDisplay = document.createElement("div");
-         groupDisplay.dataset.broadcastInlineEditDisplay = "true";
-         groupDisplay.textContent = groupText;
-
-         const groupInput = document.createElement("input");
-         groupInput.className = "broadcast-inline-edit-input";
-         groupInput.dataset.broadcastInlineEditInput = "true";
-         groupInput.type = "text";
-         groupInput.value = groupValue;
-         groupInput.autocomplete = "off";
-         groupInput.spellcheck = false;
-         groupInput.setAttribute("aria-label", "Edit group title");
-         groupInput.hidden = true;
-         groupInput.tabIndex = -1;
-
-         groupCell.append(groupDisplay, groupInput);
-      }
-      else
-      {
-         groupCell.title = groupText;
-         groupCell.textContent = groupText;
-      }
-
-      const categoriesCell = document.createElement("td");
-      categoriesCell.className =
-         "broadcasts-col-categories broadcast-inline-editable";
-      categoriesCell.dataset.broadcastId = broadcastId;
-      categoriesCell.dataset.broadcastInlineEditField = "categories";
-      categoriesCell.dataset.broadcastInlineEditValue =
-         categories.join(", ");
-      categoriesCell.dataset.broadcastCategoriesJson =
-         JSON.stringify(categories);
-      categoriesCell.title = "Double-click to edit";
-      const categoriesDisplay = document.createElement("div");
-      categoriesDisplay.dataset.broadcastInlineEditDisplay = "true";
-      const categoriesList = document.createElement("div");
-      categoriesList.className = "broadcast-categories-list";
-      categoriesList.dataset.broadcastCategoriesList = "true";
-      if(typeof renderBroadcastCategories === "function")
-      {
-         renderBroadcastCategories(categoriesList, categories);
-      }
-      categoriesDisplay.append(categoriesList);
-      const categoriesInput = document.createElement("input");
-      categoriesInput.className = "broadcast-inline-edit-input";
-      categoriesInput.dataset.broadcastInlineEditInput = "true";
-      categoriesInput.type = "text";
-      categoriesInput.value = categories.join(", ");
-      categoriesInput.autocomplete = "off";
-      categoriesInput.spellcheck = false;
-      categoriesInput.setAttribute("aria-label", "Edit categories");
-      categoriesInput.hidden = true;
-      categoriesInput.tabIndex = -1;
-      categoriesCell.append(categoriesDisplay, categoriesInput);
-
-      const actionsCell = document.createElement("td");
-      actionsCell.className = "broadcasts-col-actions table-actions";
-      const actionsStack = document.createElement("div");
-      actionsStack.className = "table-actions-stack";
-
-      if((participationStatusId || "").toLowerCase() !== "running"
-         && checkParticipationUrl !== "")
-      {
-         const checkButton = document.createElement("button");
-         checkButton.type = "button";
-         checkButton.className = "broadcast-participation-check-link";
-         checkButton.dataset.checkParticipationRow = "true";
-         checkButton.dataset.checkParticipationUrl = checkParticipationUrl;
-         checkButton.dataset.broadcastId = broadcastId;
-         checkButton.textContent = labels.check;
-         checkButton.tabIndex = -1;
-         actionsStack.append(checkButton);
-      }
-
-      const visibilityForm = document.createElement("form");
-      visibilityForm.method = "post";
-      visibilityForm.action = sourceForm?.action ?? "";
-      visibilityForm.dataset.ajaxSuccess = "toggle-visibility";
-      visibilityForm.dataset.ajaxRemoveTarget = "tr";
-      visibilityForm.dataset.ajaxPreserveScroll = "true";
-      if(!showHidden)
-      {
-         visibilityForm.dataset.ajaxDecrementTarget =
-            broadcastCountSelector;
-      }
-      appendHiddenBroadcastVisibilityFields(
-         visibilityForm,
-         sourceForm,
-         broadcastId,
-         isHidden,
-         showHidden
-      );
-
-      const visibilityButton = document.createElement("button");
-      visibilityButton.type = "submit";
-      visibilityButton.textContent = isHidden
-         ? labels.show
-         : labels.hide;
-      visibilityButton.tabIndex = -1;
-      visibilityForm.append(visibilityButton);
-      actionsStack.append(visibilityForm);
-      actionsCell.append(actionsStack);
-
-      setBroadcastRowTabOrder(mainRow);
-
-      mainRow.append(
-         sourceCell,
-         channelCell,
-         timeCell,
-         titleCell,
-         organizationCell,
-         groupCell,
-         categoriesCell,
-         actionsCell
-      );
-
-      const runsRow = document.createElement("tr");
-      runsRow.className = "broadcast-participation-runs-row";
-      runsRow.dataset.broadcastId = broadcastId;
-      runsRow.dataset.participationStatus = participationStatusId || "";
-
-      const spacerCell = document.createElement("td");
-      spacerCell.className = "broadcast-participation-spacer";
-
-      const runsCell = document.createElement("td");
-      runsCell.className = "broadcast-participation-runs-cell";
-      runsCell.colSpan = 7;
-      runsCell.dataset.participationCell = "true";
-      runsCell.dataset.broadcastId = broadcastId;
-      runsCell.dataset.participationRunId = "";
-      runsCell.dataset.participationStatus = participationStatusId || "";
-      runsCell.dataset.checkParticipationUrl = checkParticipationUrl;
-      runsCell.dataset.organizationSportName =
-         organizationSportName || "";
-      runsCell.dataset.activityUrlBase = activityUrlBase;
-      runsRow.append(spacerCell, runsCell);
-
-      fragment.append(mainRow, runsRow);
-      return fragment;
-   }
-
-   function createBroadcastInlineEditor(
-      broadcastId,
-      field,
-      value,
-      ariaLabel,
-      inputType,
-      displayTagName,
-      displayClassName
-   )
-   {
-      const editor = document.createElement("div");
-      editor.className = "broadcast-inline-editable";
-      editor.dataset.broadcastId = broadcastId;
-      editor.dataset.broadcastInlineEditField = field;
-      editor.dataset.broadcastInlineEditValue = value;
-      editor.title = "Double-click to edit";
-
-      const display = document.createElement(displayTagName);
-      display.className = displayClassName;
-      display.dataset.broadcastInlineEditDisplay = "true";
-      const placeholder = getBroadcastInlineEditPlaceholderText(field);
-      display.textContent = value || placeholder;
-      display.classList.toggle("inline-edit-placeholder", value === "");
-
-      const input = document.createElement("input");
-      input.className = "broadcast-inline-edit-input";
-      input.dataset.broadcastInlineEditInput = "true";
-      input.type = inputType;
-      input.value = value;
-      input.autocomplete = "off";
-      input.spellcheck = false;
-      input.setAttribute("aria-label", ariaLabel);
-      if(inputType === "time")
-      {
-         input.step = "60";
-      }
-      input.hidden = true;
-      input.tabIndex = -1;
-
-      editor.append(display, input);
-      return editor;
-   }
-
-   function getBroadcastInlineEditPlaceholderText(field)
-   {
-      return typeof getBroadcastInlineEditPlaceholder === "function"
-         ? getBroadcastInlineEditPlaceholder(field)
-         : "Add value..";
-   }
-
-   function getBroadcastTimePart(timeOnlyText, index)
-   {
-      const parts = timeOnlyText.split("-");
-      return normalizeString(parts[index]);
    }
 
    function setBroadcastRowTabOrder(row)
@@ -1071,62 +567,6 @@
       });
    }
 
-   function appendHiddenBroadcastVisibilityFields(
-      form,
-      sourceForm,
-      broadcastId,
-      isHidden,
-      showHidden
-   )
-   {
-      if(!(form instanceof HTMLFormElement))
-      {
-         return;
-      }
-
-      if(sourceForm instanceof HTMLFormElement)
-      {
-         sourceForm.querySelectorAll("input").forEach(input => {
-            if(!(input instanceof HTMLInputElement) || input.type !== "hidden")
-            {
-               return;
-            }
-
-            if(["id", "isHidden", "ShowHidden"].includes(input.name))
-            {
-               return;
-            }
-
-            form.append(input.cloneNode(true));
-         });
-      }
-
-      ensureHiddenInput(form, "id", broadcastId);
-      ensureHiddenInput(form, "isHidden", String(isHidden));
-      ensureHiddenInput(form, "ShowHidden", String(showHidden));
-   }
-
-   function ensureHiddenInput(form, name, value)
-   {
-      if(!(form instanceof HTMLFormElement))
-      {
-         return;
-      }
-
-      const selector = `input[name='${name}']`;
-      let input = form.querySelector(selector);
-
-      if(!(input instanceof HTMLInputElement))
-      {
-         input = document.createElement("input");
-         input.type = "hidden";
-         input.name = name;
-         form.append(input);
-      }
-
-      input.value = value;
-   }
-
    function normalizeString(value)
    {
       if(typeof value !== "string")
@@ -1150,63 +590,6 @@
       }
 
       return value.trim();
-   }
-
-   function normalizeBroadcastCategories(categories)
-   {
-      if(Array.isArray(categories))
-      {
-         return categories
-            .map(item => typeof item === "string" ? item.trim() : "")
-            .filter(item => item !== "");
-      }
-
-      if(typeof categories === "string")
-      {
-         const trimmed = categories.trim();
-
-         if(trimmed === "")
-         {
-            return [];
-         }
-
-         try
-         {
-            const parsed = JSON.parse(trimmed);
-
-            if(Array.isArray(parsed))
-            {
-               return parsed
-                  .map(item => typeof item === "string" ? item.trim() : "")
-                  .filter(item => item !== "");
-            }
-         }
-         catch
-         {
-            // Fall back to the legacy comma-separated representation.
-         }
-
-         return trimmed
-            .split(",")
-            .map(item => item.trim())
-            .filter(item => item !== "");
-      }
-
-      return [];
-   }
-
-   function getBroadcastCategoriesFromCell(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return [];
-      }
-
-      return normalizeBroadcastCategories(
-         cell.dataset.broadcastCategoriesJson
-            ?? cell.dataset.broadcastInlineEditValue
-            ?? ""
-      );
    }
 
    function initializeCheckboxToggles(root = document)
@@ -1303,26 +686,12 @@
          select.dataset.personGenderVisibilityInitialized = "true";
 
          const update = () => {
-            genderField.style.display =
-               select.value.trim().toLowerCase() === "person"
-                  ? ""
-                  : "none";
-            birthdateField.style.display =
-               select.value.trim().toLowerCase() === "person"
-                  ? ""
-                  : "none";
-            heightField.style.display =
-               select.value.trim().toLowerCase() === "person"
-                  ? ""
-                  : "none";
-            weightField.style.display =
-               select.value.trim().toLowerCase() === "person"
-                  ? ""
-                  : "none";
-            formativeClubField.style.display =
-               select.value.trim().toLowerCase() === "person"
-                  ? ""
-                  : "none";
+            const isPerson = select.value.trim().toLowerCase() === "person";
+            genderField.hidden = !isPerson;
+            birthdateField.hidden = !isPerson;
+            heightField.hidden = !isPerson;
+            weightField.hidden = !isPerson;
+            formativeClubField.hidden = !isPerson;
          };
 
          select.addEventListener("change", update);
@@ -1357,8 +726,6 @@
             return;
          }
 
-         input.dataset.adminDateStepperInitialized = "true";
-
          const label = input.closest("label");
 
          if(label instanceof HTMLLabelElement)
@@ -1366,22 +733,26 @@
             label.classList.add("admin-date-field");
          }
 
-         const stepper = document.createElement("div");
-         stepper.className = "admin-date-stepper";
+         const stepper = input.nextElementSibling;
+         const previousButton = stepper?.querySelector(
+            "[data-admin-date-step='-1']"
+         );
+         const clearButton = stepper?.querySelector(
+            "[data-admin-date-clear]"
+         );
+         const nextButton = stepper?.querySelector(
+            "[data-admin-date-step='1']"
+         );
 
-         const previousButton = createAdminDateStepperButton(
-            "<<",
-            "Previous day"
-         );
-         const clearButton = createAdminDateStepperButton(
-            "clear",
-            "Clear date",
-            "admin-date-stepper-clear"
-         );
-         const nextButton = createAdminDateStepperButton(
-            ">>",
-            "Next day"
-         );
+         if(!(stepper instanceof HTMLElement)
+            || !(previousButton instanceof HTMLButtonElement)
+            || !(clearButton instanceof HTMLButtonElement)
+            || !(nextButton instanceof HTMLButtonElement))
+         {
+            return;
+         }
+
+         input.dataset.adminDateStepperInitialized = "true";
 
          previousButton.addEventListener("click", () => {
             shiftAdminDateInput(input, -1);
@@ -1393,27 +764,7 @@
             shiftAdminDateInput(input, 1);
          });
 
-         stepper.append(previousButton, clearButton, nextButton);
-         input.after(stepper);
       });
-   }
-
-   function createAdminDateStepperButton(
-      text,
-      label,
-      className = ""
-   )
-   {
-      const button = document.createElement("button");
-
-      button.type = "button";
-      button.className = className
-         ? `admin-date-stepper-button ${className}`
-         : "admin-date-stepper-button";
-      button.setAttribute("aria-label", label);
-      button.textContent = text;
-
-      return button;
    }
 
    function clearAdminDateInput(input)
@@ -1975,18 +1326,6 @@
          }
       );
 
-      root.querySelectorAll(broadcastCategoriesListSelector).forEach(list => {
-         const cell = list.closest(broadcastInlineEditCellSelector);
-         const value = cell instanceof HTMLElement
-            ? getBroadcastCategoriesFromCell(cell)
-            : [];
-
-         if(typeof renderBroadcastCategories === "function")
-         {
-            renderBroadcastCategories(list, value);
-         }
-      });
-
       root.querySelectorAll(broadcastRowSelector).forEach(row => {
          setBroadcastRowTabOrder(row);
       });
@@ -2125,43 +1464,8 @@
 
       try
       {
-         const payload = await postParticipationStatusAsync(url, broadcastIds);
-         const results = Array.isArray(payload?.results)
-            ? payload.results
-            : [];
-         const resultsByBroadcastId = new Map();
-
-         results.forEach(result => {
-            if(!result || typeof result !== "object")
-            {
-               return;
-            }
-
-            const broadcastId = typeof result.id === "string"
-               ? result.id.trim()
-               : "";
-
-            if(broadcastId !== "")
-            {
-               resultsByBroadcastId.set(broadcastId, result);
-            }
-         });
-
-         cells.forEach(cell => {
-            const broadcastId = (cell.dataset.broadcastId ?? "").trim();
-            const result = broadcastIds.includes(broadcastId)
-               ? resultsByBroadcastId.get(broadcastId)
-               : null;
-
-            if(result)
-            {
-               updateParticipationCell(cell, result);
-            }
-            else
-            {
-               setNoParticipationHistoryCell(cell);
-            }
-         });
+         const html = await postParticipationStatusAsync(url, broadcastIds);
+         replaceParticipationCellsFromHtml(html, cells);
 
          initializeParticipationPolling(root);
       }
@@ -2554,15 +1858,30 @@
 
       try
       {
-         const payload = await postBroadcastInlineEditAsync(
+         const rowHtml = await postBroadcastInlineEditAsync(
             url,
             broadcastId,
             field,
             currentValue
          );
+         const container = cell.closest(
+            "tbody[data-broadcast-container]"
+         );
 
-         updateBroadcastInlineEditCell(cell, payload);
-         restoreBroadcastInlineEditInput(input);
+         if(!(container instanceof HTMLElement))
+         {
+            throw new Error("Broadcast container not found.");
+         }
+
+         const replacement = window.replaceElementWithPartialHtml(
+            container,
+            rowHtml
+         );
+         initializeBroadcastInlineEditing(replacement);
+         window.initializeBroadcastOrganizationAutocomplete?.(replacement);
+         window.initializeBroadcastActivityGroupAutocomplete?.(replacement);
+         void initializeParticipationRunsAsync(replacement);
+         initializeParticipationPolling(replacement);
       }
       catch(error)
       {
@@ -2654,7 +1973,6 @@
       const originalLabel = button.textContent ?? "Check";
       button.disabled = true;
       button.textContent = "Checking...";
-      setPendingParticipationCell(cell);
 
       try
       {
@@ -2670,35 +1988,19 @@
             {
                cell.dataset.participationQueuedFromRunId = previousRunId;
             }
-            setQueuedParticipationCell(cell);
+            const pendingHtml = await postParticipationStatusAsync(
+               getParticipationStatusUrl(),
+               [broadcastId],
+               true
+            );
+            replaceParticipationCellsFromHtml(pendingHtml);
             startParticipationPolling();
             return;
          }
-
-         const result = Array.isArray(payload.results)
-            ? payload.results[0]
-            : null;
-
-         if(!result)
-         {
-            throw new Error("No participation result returned.");
-         }
-
-         updateParticipationCell(cell, result);
       }
       catch(error)
       {
-         const message = error instanceof Error
-            ? error.message
-            : "Participation check failed.";
-
-         updateParticipationCell(cell, {
-            error: message,
-            runId: null,
-            swedishParticipation: null,
-            participants: [],
-            sourceUrls: []
-         });
+         console.error(error);
       }
       finally
       {
@@ -2796,28 +2098,6 @@
       }
 
       return payload ?? {};
-   }
-
-   function setQueuedParticipationCell(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      cell.replaceChildren();
-      const pendingCheck = normalizeParticipationCheckResult({
-         statusId: "pending"
-      });
-      const { wrapper, body } = createParticipationRunsShell(
-         cell,
-         [pendingCheck]
-      );
-      body.append(createParticipationRunBlock(cell, pendingCheck));
-
-      cell.dataset.participationStatus = "pending";
-      updateParticipationRowStatus(cell, "pending");
-      cell.append(wrapper);
    }
 
    function initializeParticipationPolling(root = document)
@@ -2950,59 +2230,13 @@
             return;
          }
 
-         const payload = await postParticipationStatusAsync(
+         const html = await postParticipationStatusAsync(
             url,
             [...pendingParticipationIds]
          );
-
-         if(!payload || !Array.isArray(payload.results))
-         {
-            return;
-         }
-
-         payload.results.forEach(result => {
-            if(!result || typeof result !== "object")
-            {
-               return;
-            }
-
-            const broadcastId = typeof result.id === "string"
-               ? result.id
-               : "";
-            const cell = getParticipationCellByBroadcastId(broadcastId);
-            const statusId = typeof result.statusId === "string"
-               ? result.statusId.trim()
-               : "";
-            const resultRunId = typeof result.runId === "string"
-               ? result.runId.trim()
-               : "";
-            const participation = getParticipationValue(result);
-            const isFinal =
-               (typeof result.error === "string"
-                  && result.error.trim() !== "") ||
-               participation !== "" ||
-               statusId === "completed" ||
-               statusId === "failed";
-            const queuedFromRunId = cell instanceof HTMLElement
-               ? (cell.dataset.participationQueuedFromRunId ?? "").trim()
-               : "";
-            const isStaleQueuedResult =
-               isFinal &&
-               queuedFromRunId !== "" &&
-               resultRunId !== "" &&
-               resultRunId === queuedFromRunId;
-
-            if(isStaleQueuedResult)
-            {
-               return;
-            }
-
-            updateParticipationCellByResult(result);
-
-            if(broadcastId && isFinal)
-            {
-               pendingParticipationIds.delete(broadcastId);
-            }
+         const finalIds = replaceParticipationCellsFromHtml(html);
+         finalIds.forEach(broadcastId => {
+            pendingParticipationIds.delete(broadcastId);
          });
 
          if(pendingParticipationIds.size === 0)
@@ -3037,7 +2271,11 @@
          : "";
    }
 
-   async function postParticipationStatusAsync(url, selectedIds)
+   async function postParticipationStatusAsync(
+      url,
+      selectedIds,
+      pending = false
+   )
    {
       const formData = new URLSearchParams();
       const token = getAntiForgeryToken();
@@ -3051,39 +2289,148 @@
          formData.append("broadcastIds", id);
       });
 
+      if(pending)
+      {
+         formData.append("pending", "true");
+      }
+
       const response = await fetch(url, {
          method: "post",
          body: formData,
          headers: {
-            Accept: "application/json"
+            Accept: "text/html"
          }
       });
       const responseText = await response.text();
-      const trimmedResponseText = responseText.trim();
-      let payload = null;
-
-      if(trimmedResponseText !== "")
-      {
-         try
-         {
-            payload = JSON.parse(trimmedResponseText);
-         }
-         catch
-         {
-            payload = null;
-         }
-      }
 
       if(!response.ok)
       {
-         throw new Error(createParticipationErrorMessage(
-            response.status,
-            payload?.error,
-            trimmedResponseText
-         ));
+         throw new Error(
+            responseText.trim() ||
+               `Request failed with status ${response.status}`
+         );
       }
 
-      return payload ?? {};
+      return responseText;
+   }
+
+   function replaceParticipationCellsFromHtml(html, requestedCells = null)
+   {
+      const finalIds = new Set();
+      const partialRoot = window.getPartialRootFromHtml(html);
+      const cells = requestedCells ?? Array.from(
+         document.querySelectorAll(participationCellSelector)
+      );
+      const cellsById = new Map(
+         cells
+            .filter(cell => cell instanceof HTMLElement)
+            .map(cell => [cell.dataset.broadcastId ?? "", cell])
+      );
+
+      partialRoot.querySelectorAll("[data-participation-partial]")
+         .forEach(partial => {
+            if(!(partial instanceof HTMLElement))
+            {
+               return;
+            }
+
+            const broadcastId = (partial.dataset.broadcastId ?? "").trim();
+            const cell = cellsById.get(broadcastId)
+               ?? getParticipationCellByBroadcastId(broadcastId);
+            const rendered = partial.firstElementChild;
+
+            if(!(cell instanceof HTMLElement)
+               || !(rendered instanceof HTMLElement))
+            {
+               return;
+            }
+
+            const queuedFromRunId = (
+               cell.dataset.participationQueuedFromRunId ?? ""
+            ).trim();
+            const renderedRunId = (
+               rendered.dataset.participationRunId ?? ""
+            ).trim();
+            const isFinal = rendered.dataset.participationFinal === "true";
+
+            if(isFinal && queuedFromRunId !== ""
+               && renderedRunId === queuedFromRunId)
+            {
+               return;
+            }
+
+            const isOpen = cell.querySelector(
+               ".broadcast-ai-check-runs-body"
+            )?.hidden === false;
+
+            window.replaceContentsWithPartialHtml(
+               cell,
+               rendered.outerHTML
+            );
+
+            if(rendered.dataset.participationRunId)
+            {
+               cell.dataset.participationRunId =
+                  rendered.dataset.participationRunId;
+            }
+            else
+            {
+               delete cell.dataset.participationRunId;
+            }
+
+            if(rendered.dataset.participationStatus)
+            {
+               cell.dataset.participationStatus =
+                  rendered.dataset.participationStatus;
+            }
+            else
+            {
+               delete cell.dataset.participationStatus;
+            }
+
+            restoreParticipationRunsOpen(cell, isOpen);
+
+            if(isFinal)
+            {
+               finalIds.add(broadcastId);
+            }
+         });
+
+      return finalIds;
+   }
+
+   function restoreParticipationRunsOpen(cell, isOpen)
+   {
+      if(!(cell instanceof HTMLElement))
+      {
+         return;
+      }
+
+      const table = cell.querySelector(".broadcast-ai-check-runs-table");
+      const body = cell.querySelector(".broadcast-ai-check-runs-body");
+      const toggle = cell.querySelector(
+         "[data-participation-runs-toggle]"
+      );
+
+      if(body instanceof HTMLElement)
+      {
+         body.hidden = !isOpen;
+      }
+
+      if(table instanceof HTMLElement)
+      {
+         table.dataset.participationRunsOpen = String(isOpen);
+      }
+
+      if(toggle instanceof HTMLButtonElement)
+      {
+         toggle.setAttribute("aria-expanded", String(isOpen));
+         toggle.setAttribute(
+            "aria-label",
+            isOpen ? "Hide participation runs" : "Show participation runs"
+         );
+         toggle.textContent = isOpen ? "−" : "+";
+      }
    }
 
    async function pollRunStatusesAsync()
@@ -3428,34 +2775,6 @@
       return payload ?? {};
    }
 
-   function updateParticipationCellByResult(result)
-   {
-      if(!result || typeof result !== "object")
-      {
-         return;
-      }
-
-      const broadcastId = typeof result.id === "string"
-         ? result.id
-         : "";
-
-      if(broadcastId === "")
-      {
-         return;
-      }
-
-      const cell = document.querySelector(
-         `${participationCellSelector}[data-broadcast-id='${broadcastId}']`
-      );
-
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      updateParticipationCell(cell, result);
-   }
-
    function getParticipationCellByBroadcastId(broadcastId)
    {
       if(typeof broadcastId !== "string" || broadcastId.trim() === "")
@@ -3790,296 +3109,6 @@
       }
    }
 
-   function updateParticipationCell(cell, result)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const isOpen = isParticipationRunsOpen(cell);
-      cell.replaceChildren();
-      const checks = normalizeParticipationChecks(result);
-
-      if(checks.length === 0)
-      {
-         const { wrapper, body } = createParticipationRunsShell(
-            cell,
-            checks,
-            isOpen
-         );
-         cell.append(wrapper);
-         updateParticipationRunId(cell, "");
-         updateParticipationRowStatus(cell, "");
-         body.append(createParticipationNoHistoryRunBlock(cell));
-         return;
-      }
-
-      const { wrapper, body } = createParticipationRunsShell(
-         cell,
-         checks,
-         isOpen
-      );
-      cell.append(wrapper);
-
-      const latestCheck = checks[0];
-
-      const statusId = typeof latestCheck.statusId === "string"
-         ? latestCheck.statusId.trim()
-         : "";
-      updateParticipationRunId(cell, latestCheck.runId);
-      if(statusId !== "")
-      {
-         cell.dataset.participationStatus = statusId;
-         updateParticipationRowStatus(cell, statusId);
-      }
-      else
-      {
-         updateParticipationRowStatus(cell, "");
-      }
-
-      const latestWrapper = createParticipationRunBlock(cell, latestCheck);
-
-      body.append(latestWrapper);
-
-      checks.slice(1).forEach(check => {
-         body.append(createParticipationRunBlock(cell, check));
-      });
-
-      initializeParticipationRowChecks(cell);
-   }
-
-   function setNoParticipationHistoryCell(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const isOpen = isParticipationRunsOpen(cell);
-      cell.replaceChildren();
-      const { wrapper, body } = createParticipationRunsShell(
-         cell,
-         [],
-         isOpen
-      );
-      body.append(createParticipationNoHistoryRunBlock(cell));
-
-      updateParticipationRunId(cell, "");
-      updateParticipationRowStatus(cell, "");
-      cell.append(wrapper);
-   }
-
-   function normalizeParticipationChecks(result)
-   {
-      if(!result || typeof result !== "object")
-      {
-         return [];
-      }
-
-      if(Array.isArray(result.checks))
-      {
-         return result.checks
-            .map(check => normalizeParticipationCheckResult(check))
-            .filter(check => check !== null);
-      }
-
-      return [
-         normalizeParticipationCheckResult(result)
-      ].filter(check => check !== null);
-   }
-
-   function normalizeParticipationCheckResult(check)
-   {
-      if(!check || typeof check !== "object")
-      {
-         return null;
-      }
-
-      const statusId = typeof check.statusId === "string"
-         ? check.statusId.trim()
-         : "";
-      const runId = typeof check.runId === "string"
-         ? check.runId.trim()
-         : "";
-      const error = typeof check.errorMessage === "string"
-         ? check.errorMessage.trim()
-         : typeof check.error === "string"
-            ? check.error.trim()
-            : "";
-
-      const participants = Array.isArray(check.participants)
-         ? check.participants
-         : Array.isArray(check.Participants)
-            ? check.Participants
-            : [];
-      const templateOptions = Array.isArray(check.templateOptions)
-         ? check.templateOptions
-         : Array.isArray(check.TemplateOptions)
-            ? check.TemplateOptions
-            : [];
-
-      return {
-         runId,
-         statusId,
-         toolRoundCount: typeof check.toolRoundCount === "number"
-            ? check.toolRoundCount
-            : 0,
-         swedishParticipation: getParticipationValue(check),
-         participants,
-         templateOptions: templateOptions
-            .map(normalizeParticipantTemplateOption)
-            .filter(option => option !== null),
-         sourceUrls: Array.isArray(check.sourceUrls)
-            ? check.sourceUrls
-               .filter(url => typeof url === "string" && url.trim() !== "")
-            : [],
-         error,
-         summaryText: typeof check.summaryText === "string"
-            && check.summaryText.trim() !== ""
-            ? check.summaryText.trim()
-               : getParticipationValue(check) === ""
-                  ? formatParticipationStatus(statusId)
-                  : statusId
-      };
-   }
-
-   function normalizeParticipantTemplateOption(option)
-   {
-      if(!option || typeof option !== "object")
-      {
-         return null;
-      }
-
-      const id = typeof option.id === "string"
-         ? option.id.trim()
-         : typeof option.Id === "string"
-            ? option.Id.trim()
-            : "";
-      const name = typeof option.name === "string"
-         ? option.name.trim()
-         : typeof option.Name === "string"
-            ? option.Name.trim()
-            : "";
-
-      return id !== "" && name !== ""
-         ? { id, name }
-         : null;
-   }
-
-   function getParticipationValue(check)
-   {
-      if(!check || typeof check !== "object")
-      {
-         return "";
-      }
-
-      if(typeof check.swedishParticipation === "string")
-      {
-         return check.swedishParticipation.trim();
-      }
-
-      if(typeof check.participation === "string")
-      {
-         return check.participation.trim();
-      }
-
-      return typeof check.Participation === "string"
-         ? check.Participation.trim()
-         : "";
-   }
-
-   function createParticipationRunsShell(
-      cell,
-      checks,
-      isOpen = false
-   )
-   {
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check-runs";
-      wrapper.dataset.participationRunsOpen = String(isOpen);
-
-      const table = document.createElement("table");
-      table.className = "broadcast-ai-check-runs-table";
-      table.dataset.participationRunsOpen = String(isOpen);
-
-      const head = document.createElement("thead");
-      head.className = "broadcast-ai-check-runs-head";
-      const headRow = document.createElement("tr");
-      const headCell = document.createElement("th");
-      headCell.colSpan = 4;
-
-      const headerBar = document.createElement("div");
-      headerBar.className = "broadcast-ai-check-runs-summary-bar";
-
-      const summaryCheck = selectParticipationSummaryCheck(checks);
-      const summaryText = document.createElement("span");
-      summaryText.className = [
-         "broadcast-ai-check-runs-summary-text",
-         getParticipationSummaryBadgeClass(summaryCheck)
-      ].filter(value => value !== "").join(" ");
-      summaryText.textContent = formatParticipationRunsSummaryText(
-         summaryCheck
-      );
-      headerBar.append(summaryText);
-
-      const actions = document.createElement("div");
-      actions.className = "broadcast-ai-check-runs-summary-actions";
-
-      const toggleButton = document.createElement("button");
-      toggleButton.className = "button broadcast-ai-check-toggle";
-      toggleButton.type = "button";
-      toggleButton.dataset.participationRunsToggle = "true";
-      toggleButton.setAttribute("aria-expanded", String(isOpen));
-      toggleButton.setAttribute(
-         "aria-label",
-         isOpen ? "Hide participation runs" : "Show participation runs"
-      );
-      toggleButton.textContent = isOpen ? "−" : "+";
-      toggleButton.tabIndex = -1;
-      actions.append(toggleButton);
-
-      headerBar.append(actions);
-      headCell.append(headerBar);
-      headRow.append(headCell);
-      head.append(headRow);
-
-      const body = document.createElement("tbody");
-      body.className = "broadcast-ai-check-runs-body";
-      body.hidden = !isOpen;
-
-      table.append(head, body);
-      wrapper.append(table);
-
-      return { wrapper, body };
-   }
-
-   function formatParticipationRunsSummaryText(check)
-   {
-      if(!check || typeof check !== "object")
-      {
-         return "Not checked yet";
-      }
-
-      const participation = typeof check.swedishParticipation === "string"
-         ? check.swedishParticipation.trim()
-         : "";
-
-      if(participation.toLowerCase() === "yes")
-      {
-         const participantCount = Array.isArray(check.participants)
-            ? check.participants.length
-            : 0;
-
-         return `YES: ${participantCount}`;
-      }
-
-      return typeof check.summaryText === "string" &&
-         check.summaryText.trim() !== ""
-         ? check.summaryText.trim()
-         : "Not checked yet";
-   }
-
    function toggleParticipationRuns(toggleButton)
    {
       if(!(toggleButton instanceof HTMLButtonElement))
@@ -4112,406 +3141,6 @@
       toggleButton.textContent = isOpen ? "−" : "+";
    }
 
-   function getParticipationSummaryBadgeClass(check)
-   {
-      if(!check || typeof check !== "object")
-      {
-         return "";
-      }
-
-      const participation = typeof check.swedishParticipation === "string"
-         ? check.swedishParticipation.trim().toLowerCase()
-         : "";
-
-      switch(participation)
-      {
-         case "yes":
-            return "tool-trace-badge tool-trace-badge-result";
-         case "no":
-            return "tool-trace-badge tool-trace-badge-temperature";
-         case "unknown":
-            return "tool-trace-badge tool-trace-badge-count";
-         default:
-            return "";
-      }
-   }
-
-   function selectParticipationSummaryCheck(checks)
-   {
-      if(!Array.isArray(checks) || checks.length === 0)
-      {
-         return null;
-      }
-
-      const normalizedChecks = checks.filter(check =>
-         check && typeof check === "object");
-
-      return normalizedChecks.find(check =>
-            getParticipationSummaryPriority(check) === 0)
-         ?? normalizedChecks.find(check =>
-            getParticipationSummaryPriority(check) === 1)
-         ?? normalizedChecks.find(check =>
-            getParticipationSummaryPriority(check) === 2)
-         ?? normalizedChecks[0]
-         ?? null;
-   }
-
-   function getParticipationSummaryPriority(check)
-   {
-      if(!check || typeof check !== "object")
-      {
-         return Number.POSITIVE_INFINITY;
-      }
-
-      const participation = typeof check.swedishParticipation === "string"
-         ? check.swedishParticipation.trim().toLowerCase()
-         : "";
-
-      switch(participation)
-      {
-         case "yes":
-            return 0;
-         case "no":
-            return 1;
-         case "unknown":
-            return 2;
-         default:
-            return Number.POSITIVE_INFINITY;
-      }
-   }
-
-   function isParticipationRunsOpen(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return false;
-      }
-
-      const body = cell.querySelector(".broadcast-ai-check-runs-body");
-
-      return body instanceof HTMLElement ? !body.hidden : false;
-   }
-
-   function createParticipationEmptyRunBlock(cell)
-   {
-      const row = document.createElement("tr");
-      row.className = "broadcast-ai-check-row";
-
-      const summaryCell = document.createElement("td");
-      summaryCell.className = "broadcast-ai-check-summary-cell";
-
-      const participantsCell = document.createElement("td");
-      participantsCell.className = "broadcast-ai-check-participants-cell";
-
-      const sourcesCell = document.createElement("td");
-      sourcesCell.className = "broadcast-ai-check-sources-cell";
-
-      const activityCell = document.createElement("td");
-      activityCell.className = "broadcast-ai-check-activity-cell";
-
-      const fallback = document.createElement("span");
-      fallback.className = "broadcast-ai-check-empty";
-      fallback.textContent = "Not checked yet";
-      summaryCell.append(fallback);
-
-      row.append(
-         summaryCell,
-         participantsCell,
-         sourcesCell,
-         activityCell
-      );
-
-      return row;
-   }
-
-   function createParticipationNoHistoryRunBlock(cell)
-   {
-      const row = createParticipationEmptyRunBlock(cell);
-      const activityCell = row.querySelector(
-         ".broadcast-ai-check-activity-cell"
-      );
-      const activityLink = createParticipationActivityLink(cell, "");
-
-      if(activityCell instanceof HTMLElement && activityLink)
-      {
-         activityCell.append(activityLink);
-      }
-
-      return row;
-   }
-
-   function createParticipationRunBlock(cell, check)
-   {
-      const row = document.createElement("tr");
-      row.className = "broadcast-ai-check-row";
-
-      const summaryCell = document.createElement("td");
-      summaryCell.className = "broadcast-ai-check-summary-cell";
-
-      const participantsCell = document.createElement("td");
-      participantsCell.className = "broadcast-ai-check-participants-cell";
-
-      const sourcesCell = document.createElement("td");
-      sourcesCell.className = "broadcast-ai-check-sources-cell";
-
-      const activityCell = document.createElement("td");
-      activityCell.className = "broadcast-ai-check-activity-cell";
-
-      if(check.error !== "")
-      {
-         const line = document.createElement("div");
-         line.className = "broadcast-ai-check-line";
-
-         const pill = document.createElement("span");
-         pill.className = "status-pill status-pill-warning";
-         pill.textContent = "Error";
-         line.append(pill);
-
-         const error = document.createElement("span");
-         error.className = "broadcast-ai-check-error";
-         error.textContent = check.error;
-         summaryCell.append(line, error);
-
-         if(check.participants.length > 0)
-         {
-            participantsCell.append(
-               createParticipationParticipantsBlock(
-                  check.participants,
-                  cell,
-                  check.templateOptions
-               )
-            );
-         }
-
-         const sources =
-            createParticipationSourcesBlock(check.sourceUrls, check.runId);
-
-         if(sources)
-         {
-            sourcesCell.append(sources);
-         }
-
-         const activityLink = createParticipationActivityLink(
-            cell,
-            check.runId
-         );
-
-         if(activityLink)
-         {
-            activityCell.append(activityLink);
-         }
-
-         const archiveForm = createParticipationArchiveForm(cell, check);
-
-         if(archiveForm)
-         {
-            activityCell.append(archiveForm);
-         }
-
-         row.append(
-            summaryCell,
-            participantsCell,
-            sourcesCell,
-            activityCell
-         );
-         return row;
-      }
-
-      if(check.swedishParticipation === "")
-      {
-         const line = document.createElement("div");
-         line.className = "broadcast-ai-check-line";
-
-         const pending = document.createElement("span");
-         pending.className = "broadcast-ai-check-pending";
-         pending.textContent = formatParticipationStatus(check.statusId);
-         line.append(pending);
-
-         if(check.statusId === "running")
-         {
-            const rounds = createParticipationRoundsLabel(
-               check.toolRoundCount,
-               true
-            );
-
-            if(rounds)
-            {
-               line.append(rounds);
-            }
-         }
-
-         summaryCell.append(line);
-
-         if(check.participants.length > 0)
-         {
-            participantsCell.append(
-               createParticipationParticipantsBlock(
-                  check.participants,
-                  cell,
-                  check.templateOptions
-               )
-            );
-         }
-
-         const activityLink = createParticipationActivityLink(
-            cell,
-            check.runId
-         );
-
-         if(activityLink)
-         {
-            activityCell.append(activityLink);
-         }
-
-         const archiveForm = createParticipationArchiveForm(cell, check);
-
-         if(archiveForm)
-         {
-            activityCell.append(archiveForm);
-         }
-
-         row.append(
-            summaryCell,
-            participantsCell,
-            sourcesCell,
-            activityCell
-         );
-         return row;
-      }
-
-      const result = {
-         runId: check.runId,
-         statusId: check.statusId,
-         toolRoundCount: check.toolRoundCount,
-         swedishParticipation: check.swedishParticipation,
-         participants: check.participants,
-         sourceUrls: check.sourceUrls
-      };
-
-      summaryCell.append(createParticipationSummaryLine(cell, result));
-
-      const sources =
-         createParticipationSourcesBlock(check.sourceUrls, check.runId);
-
-      if(sources)
-      {
-         sourcesCell.append(sources);
-      }
-
-      const activityLink = createParticipationActivityLink(
-         cell,
-         check.runId
-      );
-
-      if(activityLink)
-      {
-         activityCell.append(activityLink);
-      }
-
-      const archiveForm = createParticipationArchiveForm(cell, check);
-
-      if(archiveForm)
-      {
-         activityCell.append(archiveForm);
-      }
-
-      if(check.participants.length > 0)
-      {
-         participantsCell.append(
-            createParticipationParticipantsBlock(
-               check.participants,
-               cell,
-               check.templateOptions
-            )
-         );
-      }
-
-      row.append(
-         summaryCell,
-         participantsCell,
-         sourcesCell,
-         activityCell
-      );
-      return row;
-   }
-
-   function createParticipationArchiveForm(cell, check)
-   {
-      if(!(cell instanceof HTMLElement) ||
-         !check ||
-         typeof check.runId !== "string" ||
-         check.runId.trim() === "" ||
-         (typeof check.statusId === "string" &&
-            check.statusId.trim().toLowerCase() === "archived"))
-      {
-         return null;
-      }
-
-      const urlContainer = document.querySelector(runInlineEditUrlSelector);
-
-      if(!(urlContainer instanceof HTMLElement) ||
-         typeof urlContainer.dataset.runInlineEditUrl !== "string" ||
-         urlContainer.dataset.runInlineEditUrl.trim() === "")
-      {
-         return null;
-      }
-
-      const form = document.createElement("form");
-      form.className = "broadcast-ai-check-archive-form";
-      form.method = "post";
-      form.action = urlContainer.dataset.runInlineEditUrl.trim();
-      form.dataset.ajaxSuccess = "update-participation";
-
-      const token = getAntiForgeryToken();
-
-      if(token)
-      {
-         const tokenInput = document.createElement("input");
-         tokenInput.type = "hidden";
-         tokenInput.name = "__RequestVerificationToken";
-         tokenInput.value = token;
-         form.append(tokenInput);
-      }
-
-      const idInput = document.createElement("input");
-      idInput.type = "hidden";
-      idInput.name = "id";
-      idInput.value = check.runId.trim();
-
-      const fieldInput = document.createElement("input");
-      fieldInput.type = "hidden";
-      fieldInput.name = "field";
-      fieldInput.value = "archive";
-
-      const button = document.createElement("button");
-      button.type = "submit";
-      button.className = "broadcast-ai-check-archive-link";
-      button.textContent = "Archive Run";
-
-      form.append(idInput, fieldInput, button);
-
-      return form;
-   }
-
-   function updateParticipationRunId(cell, runId)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      if(typeof runId === "string" && runId.trim() !== "")
-      {
-         cell.dataset.participationRunId = runId.trim();
-      }
-      else
-      {
-         delete cell.dataset.participationRunId;
-      }
-
-      delete cell.dataset.participationQueuedFromRunId;
-   }
-
    function getParticipationRunId(cell)
    {
       if(!(cell instanceof HTMLElement))
@@ -4522,441 +3151,6 @@
       return typeof cell.dataset.participationRunId === "string"
          ? cell.dataset.participationRunId.trim()
          : "";
-   }
-
-   function updateParticipationRowStatus(cell, statusId)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const row = cell.closest("tr");
-
-      if(!(row instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const normalizedStatusId = typeof statusId === "string"
-         ? statusId.trim().toLowerCase()
-         : "";
-      const broadcastId = typeof cell.dataset.broadcastId === "string"
-         ? cell.dataset.broadcastId.trim()
-         : "";
-      const mainRow = broadcastId === ""
-         ? null
-         : document.querySelector(
-            `tr[data-broadcast-row='true'][data-broadcast-id='${broadcastId}']`
-         );
-
-      if(normalizedStatusId === "running"
-         || normalizedStatusId === "pending")
-      {
-         row.dataset.participationStatus = normalizedStatusId;
-         if(mainRow instanceof HTMLElement && mainRow !== row)
-         {
-            mainRow.dataset.participationStatus = normalizedStatusId;
-         }
-      }
-      else
-      {
-         delete row.dataset.participationStatus;
-         if(mainRow instanceof HTMLElement && mainRow !== row)
-         {
-            delete mainRow.dataset.participationStatus;
-         }
-      }
-   }
-
-   function formatParticipationStatus(statusId)
-   {
-      if(typeof statusId !== "string" || statusId.trim() === "")
-      {
-         return "Not checked yet";
-      }
-
-      switch(statusId.trim())
-      {
-         case "running":
-            return "Running";
-         case "pending":
-            return "Queued";
-         case "completed":
-            return "Completed";
-         case "failed":
-            return "Failed";
-         default:
-            return statusId.trim();
-      }
-   }
-
-   function setPendingParticipationCell(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return;
-      }
-
-      const isOpen = isParticipationRunsOpen(cell);
-      cell.replaceChildren();
-      const pendingCheck = normalizeParticipationCheckResult({
-         statusId: "pending"
-      });
-      const { wrapper, body } = createParticipationRunsShell(
-         cell,
-         [pendingCheck],
-         isOpen
-      );
-      body.append(createParticipationRunBlock(cell, pendingCheck));
-
-      updateParticipationRowStatus(cell, "pending");
-      cell.append(wrapper);
-   }
-
-   function createParticipationSummaryLine(cell, result)
-   {
-      const line = document.createElement("div");
-      line.className = "broadcast-ai-check-line";
-
-      const participation = typeof result.swedishParticipation === "string"
-         && result.swedishParticipation.trim() !== ""
-         ? result.swedishParticipation.trim()
-         : "Unknown";
-      const pill = document.createElement("span");
-      const isPositive = participation.toLowerCase() === "yes";
-
-      pill.className = [
-         "status-pill",
-         isPositive ? "status-pill-positive" : "status-pill-neutral"
-      ].join(" ");
-      pill.textContent = participation;
-      line.append(pill);
-
-      return line;
-   }
-
-   function createParticipationActionButton(
-      cell,
-      text,
-      baseClass = "broadcast-ai-check-action",
-      extraClass = ""
-   )
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return null;
-      }
-
-      const url = cell.dataset.checkParticipationUrl;
-      const broadcastId = cell.dataset.broadcastId;
-
-      if(!url || !broadcastId)
-      {
-         return null;
-      }
-
-      const button = document.createElement("button");
-      button.className = ["button", baseClass, extraClass]
-         .filter(value => value !== "")
-         .join(" ");
-      button.type = "button";
-      button.textContent = text;
-      button.dataset.checkParticipationRow = "true";
-      button.dataset.checkParticipationUrl = url;
-      button.dataset.broadcastId = broadcastId;
-
-      return button;
-   }
-
-   function createParticipationActivityLink(cell, runId = "")
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return null;
-      }
-
-      const activityUrlBase = typeof cell.dataset.activityUrlBase === "string"
-         ? cell.dataset.activityUrlBase.trim()
-         : "";
-
-      if(activityUrlBase === "")
-      {
-         return null;
-      }
-
-      const url = new URL(activityUrlBase, window.location.origin);
-      const normalizedRunId = typeof runId === "string"
-         ? runId.trim()
-         : "";
-
-      if(normalizedRunId !== "")
-      {
-         url.searchParams.set(
-            "participationRunId",
-            normalizedRunId
-         );
-      }
-
-      if(cell.dataset.clearParticipants === "true")
-      {
-         url.searchParams.set(clearParticipantsQueryKey, "true");
-      }
-
-      const link = document.createElement("a");
-      link.href = `${url.pathname}${url.search}${url.hash}`;
-      link.className = "ses-nowrap";
-      link.textContent = "Create Activity";
-
-      const runLink = createParticipationRunLink(runId);
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check-activity-links";
-      wrapper.append(link);
-
-      if(runLink)
-      {
-         wrapper.append(runLink);
-      }
-
-      return wrapper;
-   }
-
-   function createParticipationSourcesBlock(sourceUrls, runId)
-   {
-      if(!Array.isArray(sourceUrls))
-      {
-         return null;
-      }
-
-      const urls = [];
-      const seen = new Set();
-
-      sourceUrls.forEach(url => {
-         if(typeof url !== "string")
-         {
-            return;
-         }
-
-         const trimmed = url.trim();
-
-         if(trimmed === "" || seen.has(trimmed))
-         {
-            return;
-         }
-
-         seen.add(trimmed);
-         urls.push(trimmed);
-      });
-
-      if(urls.length === 0)
-      {
-         return null;
-      }
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check-sources";
-
-      const list = document.createElement("div");
-      list.className = "broadcast-ai-check-sources-list";
-
-      urls.forEach(url => {
-         const link = document.createElement("a");
-         link.href = url;
-         link.target = "_blank";
-         link.rel = "noreferrer noopener";
-         link.title = url;
-         link.textContent = url;
-         list.append(link);
-      });
-
-      wrapper.append(list);
-
-      return wrapper;
-   }
-
-   function createParticipationRoundsLabel(
-      toolRoundCount,
-      includeZero = false
-   )
-   {
-      if(typeof toolRoundCount !== "number"
-         || !Number.isFinite(toolRoundCount)
-         || toolRoundCount < 0
-         || (toolRoundCount === 0 && !includeZero))
-      {
-         return null;
-      }
-
-      const label = document.createElement("span");
-      label.className = "broadcast-ai-check-rounds";
-      label.textContent = `Rounds: ${toolRoundCount}`;
-      return label;
-   }
-
-   function createParticipationParticipantsBlock(
-      participants,
-      cell,
-      templateOptions = []
-   )
-   {
-      if(!Array.isArray(participants) || participants.length === 0)
-      {
-         return null;
-      }
-
-      const names = participants
-         .map(participant =>
-            typeof participant === "string"
-               ? {
-                  name: formatParticipantName(participant),
-                  editUrl: null,
-                  templateEntityId: null
-               }
-               : normalizeParticipantItem(participant))
-         .filter(participant => participant !== null);
-
-      if(names.length === 0)
-      {
-         return null;
-      }
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check-participants";
-      const sportName = getParticipationSportName(cell);
-      const normalizedTemplateOptions = templateOptions
-         .map(normalizeParticipantTemplateOption)
-         .filter(option => option !== null);
-      const hasCreatableParticipants = names.some(participant =>
-         participant.editUrl === null &&
-         participant.templateEntityId !== null
-      );
-
-      if(normalizedTemplateOptions.length > 1 &&
-         hasCreatableParticipants)
-      {
-         const templatePicker = createParticipantTemplatePicker(
-            normalizedTemplateOptions,
-            names
-         );
-         wrapper.append(templatePicker.container);
-         templatePicker.select.addEventListener("change", () => {
-            const templateInputs = wrapper.querySelectorAll(
-               ".broadcast-ai-check-participant-template-input"
-            );
-            templateInputs.forEach(input => {
-               input.value = templatePicker.select.value;
-            });
-         });
-      }
-
-      names.forEach(participant => {
-         wrapper.append(createParticipantRow(participant, sportName));
-      });
-
-      return wrapper;
-   }
-
-   function createParticipantTemplatePicker(options, participants)
-   {
-      const container = document.createElement("label");
-      container.className = "broadcast-ai-check-template-picker";
-
-      const label = document.createElement("span");
-      label.textContent = "Template for new people:";
-
-      const select = document.createElement("select");
-      select.className = "broadcast-ai-check-template-select";
-      select.setAttribute(
-         "aria-label",
-         "Template for new people"
-      );
-
-      options.forEach(option => {
-         const optionElement = document.createElement("option");
-         optionElement.value = option.id;
-         optionElement.textContent = option.name;
-         select.append(optionElement);
-      });
-
-      const defaultTemplateId = participants.find(participant =>
-         participant.editUrl === null &&
-         participant.templateEntityId !== null
-      )?.templateEntityId;
-
-      if(defaultTemplateId)
-      {
-         select.value = defaultTemplateId;
-      }
-
-      container.append(label, select);
-      return { container, select };
-   }
-
-   function getParticipationSportName(cell)
-   {
-      if(!(cell instanceof HTMLElement))
-      {
-         return "";
-      }
-
-      return normalizeString(cell.dataset.organizationSportName);
-   }
-
-   function createParticipationErrorBlock(
-      cell,
-      errorMessage,
-      runId,
-      sourceUrls
-   )
-   {
-      const wrapper = document.createElement("div");
-      wrapper.className = "broadcast-ai-check";
-
-      const line = document.createElement("div");
-      line.className = "broadcast-ai-check-line";
-
-      const pill = document.createElement("span");
-      pill.className = "status-pill status-pill-warning";
-      pill.textContent = "Error";
-      line.append(pill);
-
-      const runLink = createParticipationRunLink(runId);
-
-      if(runLink)
-      {
-         line.append(runLink);
-      }
-
-      const error = document.createElement("span");
-      error.className = "broadcast-ai-check-error";
-      error.textContent = errorMessage;
-
-      wrapper.append(line, error);
-
-      const sources = createParticipationSourcesBlock(sourceUrls, runId);
-
-      if(sources)
-      {
-         wrapper.append(sources);
-      }
-
-      return wrapper;
-   }
-
-   function createParticipationRunLink(runId)
-   {
-      if(typeof runId !== "string" || runId.trim() === "")
-      {
-         return null;
-      }
-
-      const link = document.createElement("a");
-      link.href = `/Admin/Runs/Details/${encodeURIComponent(runId)}`;
-      link.target = "_blank";
-      link.rel = "noreferrer noopener";
-      link.textContent = "View Run";
-      return link;
    }
 
    function createParticipationErrorMessage(
@@ -5197,225 +3391,6 @@
       }
    }
 
-
-   function createParticipantRow(participant, sportName)
-   {
-      const item = normalizeParticipantItem(participant);
-
-      if(item === null)
-      {
-         return document.createElement("div");
-      }
-
-      const row = document.createElement("div");
-      row.className = "broadcast-ai-check-participant-row";
-      row.append(createParticipantInlineNode(item));
-
-      const createForm = createParticipantCreateForm(item);
-
-      if(createForm)
-      {
-         row.append(createForm);
-      }
-
-      const searchLink = createParticipantSearchLink(item, sportName);
-
-      if(searchLink)
-      {
-         row.append(searchLink);
-      }
-
-      return row;
-   }
-
-   function createParticipantInlineNode(participant)
-   {
-      const item = normalizeParticipantItem(participant);
-
-      if(item === null)
-      {
-         const span = document.createElement("span");
-         span.textContent = "";
-         return span;
-      }
-
-      if(item.editUrl !== null)
-      {
-         const anchor = document.createElement("a");
-         anchor.href = item.editUrl;
-         anchor.textContent = item.name;
-         anchor.className = "broadcast-ai-check-participant-link";
-         anchor.title = "Edit entity";
-         anchor.target = "_blank";
-         anchor.rel = "noreferrer noopener";
-         return anchor;
-      }
-
-      const span = document.createElement("span");
-      span.textContent = item.name;
-      return span;
-   }
-
-   function createParticipantCreateForm(participant)
-   {
-      const item = normalizeParticipantItem(participant);
-
-      if(item === null ||
-         item.editUrl !== null ||
-         item.templateEntityId === null)
-      {
-         return null;
-      }
-
-      const form = document.createElement("form");
-      form.method = "post";
-      form.action = getParticipantCreateUrl();
-      form.dataset.ajaxSuccess = "replace";
-      form.className = "broadcast-ai-check-participant-create-form";
-
-      const token = getAntiForgeryToken();
-
-      if(token !== "")
-      {
-         const tokenInput = document.createElement("input");
-         tokenInput.type = "hidden";
-         tokenInput.name = "__RequestVerificationToken";
-         tokenInput.value = token;
-         form.append(tokenInput);
-      }
-
-      const nameInput = document.createElement("input");
-      nameInput.type = "hidden";
-      nameInput.name = "participantName";
-      nameInput.value = item.name;
-
-      const templateInput = document.createElement("input");
-      templateInput.type = "hidden";
-      templateInput.name = "templateEntityId";
-      templateInput.value = item.templateEntityId;
-      templateInput.className =
-         "broadcast-ai-check-participant-template-input";
-
-      const button = document.createElement("button");
-      button.type = "submit";
-      button.className = "broadcast-ai-check-participant-create-button";
-      button.textContent = "+";
-      button.title = "Create entity";
-      button.setAttribute("aria-label", `Create entity for ${item.name}`);
-      button.tabIndex = -1;
-
-      form.append(nameInput, templateInput, button);
-      return form;
-   }
-
-   function createParticipantSearchLink(participant, sportName)
-   {
-      const item = normalizeParticipantItem(participant);
-      const searchUrlBase = getBroadcastSearchUrlBase();
-      const searchQuery = [item?.name, normalizeString(sportName)]
-         .filter(value => value)
-         .join(" ");
-
-      if(item === null ||
-         item.editUrl !== null ||
-         searchUrlBase === "")
-      {
-         return null;
-      }
-
-      const link = document.createElement("a");
-      link.className = "ses-entity-search-link";
-      link.href = `${searchUrlBase}${encodeURIComponent(searchQuery)}`;
-      link.target = "_blank";
-      link.rel = "noreferrer noopener";
-      link.title = `Search for ${item.name}`;
-      link.setAttribute("aria-label", `Search for ${item.name}`);
-
-      const icon = document.createElement("span");
-      icon.className = "ses-icon-search";
-      link.append(icon);
-      return link;
-   }
-
-   function normalizeParticipantItem(participant)
-   {
-      if(!(participant && typeof participant === "object"))
-      {
-         return null;
-      }
-
-      const name = typeof participant.Name === "string"
-         ? formatParticipantName(participant.Name)
-         : typeof participant.name === "string"
-            ? formatParticipantName(participant.name)
-            : "";
-      const editUrl = typeof participant.EditUrl === "string"
-         && participant.EditUrl.trim() !== ""
-         ? participant.EditUrl.trim()
-         : typeof participant.editUrl === "string"
-            && participant.editUrl.trim() !== ""
-            ? participant.editUrl.trim()
-            : null;
-      const templateEntityId = typeof participant.TemplateEntityId === "string"
-         && participant.TemplateEntityId.trim() !== ""
-         ? participant.TemplateEntityId.trim()
-         : typeof participant.templateEntityId === "string"
-            && participant.templateEntityId.trim() !== ""
-            ? participant.templateEntityId.trim()
-            : null;
-
-      return name === ""
-         ? null
-         : { name, editUrl, templateEntityId };
-   }
-
-   function formatParticipantName(value)
-   {
-      if(typeof value !== "string")
-      {
-         return "";
-      }
-
-      return value.trim()
-         .replace(/\s+/gu, " ")
-         .replace(/\p{L}+/gu, word => isShoutedParticipantWord(word)
-            ? word.toLocaleLowerCase("en-US")
-               .replace(/^\p{L}/u, first => first.toLocaleUpperCase("en-US"))
-            : word);
-   }
-
-   function isShoutedParticipantWord(value)
-   {
-      const letters = Array.from(value)
-         .filter(character => /\p{L}/u.test(character));
-
-      return letters.length >= 2
-         && letters.every(character =>
-            character === character.toLocaleUpperCase("en-US"));
-   }
-
-   function isValidParticipantItem(participant)
-   {
-      return normalizeParticipantItem(participant) !== null;
-   }
-
-   function getParticipantCreateUrl()
-   {
-      const container = document.querySelector(
-         participantCreateUrlSelector
-      );
-
-      if(!(container instanceof HTMLElement))
-      {
-         return window.location.href;
-      }
-
-      const url = container.dataset.createParticipantUrl;
-
-      return typeof url === "string" && url.trim() !== ""
-         ? url.trim()
-         : window.location.href;
-   }
 
    function createResponsePreview(responseText)
    {
@@ -5854,29 +3829,6 @@
          return;
       }
 
-      let payload = null;
-
-      try
-      {
-         payload = await response.clone().json();
-      }
-      catch
-      {
-         return;
-      }
-
-      const editUrl = typeof payload.editUrl === "string"
-         ? payload.editUrl.trim()
-         : "";
-      const canonicalName = typeof payload.canonicalName === "string"
-         ? payload.canonicalName.trim()
-         : "";
-
-      if(editUrl === "" || canonicalName === "")
-      {
-         return;
-      }
-
       const row = form.closest(".broadcast-ai-check-participant-row");
 
       if(!(row instanceof HTMLElement))
@@ -5884,26 +3836,8 @@
          return;
       }
 
-      const link = document.createElement("a");
-      link.className = "broadcast-ai-check-participant-link";
-      link.href = editUrl;
-      link.target = "_blank";
-      link.rel = "noreferrer noopener";
-      link.title = "Edit entity";
-      link.textContent = canonicalName;
-
-      const nameNode = row.firstElementChild;
-
-      if(nameNode instanceof Node)
-      {
-         row.replaceChild(link, nameNode);
-      }
-      else
-      {
-         row.prepend(link);
-      }
-
-      form.remove();
+      const html = await response.text();
+      window.replaceElementWithPartialHtml(row, html);
    }
 
    function getFormUrl(form)

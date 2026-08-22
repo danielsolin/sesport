@@ -1,15 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.Poll;
 
 public sealed class ParticipationStatusModel(
-   BroadcastParticipationService participationService
+   BroadcastParticipationService participationService,
+   AdminBroadcastRepository broadcastRepository
 ) : PageModel
 {
    public async Task<IActionResult> OnPostAsync(
       List<Guid> broadcastIds,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      bool pending = false
    )
    {
       try
@@ -30,6 +33,44 @@ public sealed class ParticipationStatusModel(
                cancellationToken
             );
 
+         if(WantsHtmlResponse())
+         {
+            var resultByBroadcastId = results.ToDictionary(
+               result => result.Id
+            );
+            var partialResults = new List<BroadcastParticipationRunsViewModel>();
+
+            foreach(var broadcastId in normalizedBroadcastIds)
+            {
+               var broadcast = await broadcastRepository.GetByIdAsync(
+                  broadcastId,
+                  cancellationToken
+               );
+
+               if(broadcast is null)
+               {
+                  continue;
+               }
+
+               resultByBroadcastId.TryGetValue(
+                  broadcastId,
+                  out var result
+               );
+               partialResults.Add(
+                  CreateViewModel(
+                     broadcast,
+                     result,
+                     pending
+                  )
+               );
+            }
+
+            return Partial(
+               "_ParticipationStatusResults",
+               partialResults
+            );
+         }
+
          return new JsonResult(new
          {
             results
@@ -42,6 +83,33 @@ public sealed class ParticipationStatusModel(
       }
    }
 
+   private BroadcastParticipationRunsViewModel CreateViewModel(
+      SESport.Data.Models.BroadcastListItem broadcast,
+      BroadcastParticipationCheckResult? result,
+      bool pending
+   )
+   {
+      var activityRouteValues = new Dictionary<string, string?>
+      {
+         [$"{RouteKeys.BroadcastIds}[0]"] = broadcast.Id.ToString(),
+         [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
+      };
+
+      return new BroadcastParticipationRunsViewModel(
+         broadcast.Id,
+         broadcast.OrganizationSportName,
+         Url.Page("/Admin/Activities/Edit", activityRouteValues),
+         Url.Page("/Admin/Ajax/Create/ParticipationCheck"),
+         Url.Page("/Admin/Ajax/Update/RunField"),
+         Url.Page("/Admin/Ajax/Create/ParticipantEntity"),
+         ViewData["SearchUrl"] as string ?? string.Empty,
+         result?.Checks ?? [],
+         false,
+         pending,
+         false
+      );
+   }
+
    private static List<Guid> NormalizeBroadcastIds(
       IEnumerable<Guid> ids
    )
@@ -51,4 +119,10 @@ public sealed class ParticipationStatusModel(
          .Distinct()
          .ToList();
    }
+
+   private bool WantsHtmlResponse() =>
+      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
+         "text/html",
+         StringComparison.OrdinalIgnoreCase
+      ) == true;
 }

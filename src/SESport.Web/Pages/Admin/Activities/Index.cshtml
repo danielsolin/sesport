@@ -67,9 +67,10 @@
       <label>
          <span>Date</span>
          <input type="date"
-                name="@RouteKeys.Date"
-                value="@Model.DateText"
-                onchange="this.form.submit();" />
+             name="@RouteKeys.Date"
+             value="@Model.DateText"
+             onchange="this.form.submit();" />
+      @await Html.PartialAsync("/Pages/Shared/_AdminDateStepper.cshtml")
       </label>
       <div class="filter-sports">
          <label asp-for="SelectedSports">

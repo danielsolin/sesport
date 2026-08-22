@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
+using SESport.Web.Pages.Admin.Broadcasts;
 using SESport.Web.Pages.Admin.Runs;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
 public sealed class RunFieldModel(
    AiRepository repository,
-   BroadcastParticipationService participationService
+   BroadcastParticipationService participationService,
+   AdminBroadcastRepository? broadcastRepository = null
 ) : PageModel
 {
    public async Task<IActionResult> OnPostAsync(
@@ -150,6 +152,53 @@ public sealed class RunFieldModel(
             checks = Array.Empty<object>()
          };
 
+      if(WantsHtmlResponse())
+      {
+         if(broadcastRepository is null)
+         {
+            return new JsonResult(new
+            {
+               updated = true,
+               field = "archive",
+               result
+            });
+         }
+
+         var broadcast = await broadcastRepository.GetByIdAsync(
+            broadcastId,
+            cancellationToken
+         );
+
+         if(broadcast is null)
+         {
+            return NotFound();
+         }
+
+         var activityRouteValues = new Dictionary<string, string?>
+         {
+            [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
+            [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
+         };
+         var viewModel = new BroadcastParticipationRunsViewModel(
+            broadcastId,
+            broadcast.OrganizationSportName,
+            Url.Page("/Admin/Activities/Edit", activityRouteValues),
+            Url.Page("/Admin/Ajax/Create/ParticipationCheck"),
+            Url.Page("/Admin/Ajax/Update/RunField"),
+            Url.Page("/Admin/Ajax/Create/ParticipantEntity"),
+            ViewData["SearchUrl"] as string ?? string.Empty,
+            results.FirstOrDefault()?.Checks ?? [],
+            false,
+            false,
+            false
+         );
+
+         return Partial(
+            "/Pages/Admin/Ajax/Poll/_ParticipationStatusResults.cshtml",
+            new[] { viewModel }
+         );
+      }
+
       return new JsonResult(new
       {
          updated = true,
@@ -166,4 +215,10 @@ public sealed class RunFieldModel(
          .Replace("_", string.Empty, StringComparison.Ordinal)
          .ToLowerInvariant() ?? string.Empty;
    }
+
+   private bool WantsHtmlResponse() =>
+      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
+         "text/html",
+         StringComparison.OrdinalIgnoreCase
+      ) == true;
 }

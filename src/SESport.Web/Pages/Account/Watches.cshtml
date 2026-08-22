@@ -83,7 +83,13 @@
            id="member-watch-search-results"
            data-member-watch-search-results
            aria-live="polite"
-           hidden></div>
+           hidden>
+         <div data-member-watch-search-partial>
+            <p class="member-watches-search-status"
+               data-member-watch-search-status
+               hidden></p>
+         </div>
+      </div>
    </div>
 
    @if(Model.WatchedEntities.Count > 0)

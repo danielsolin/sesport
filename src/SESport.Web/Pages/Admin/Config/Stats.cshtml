@@ -19,6 +19,7 @@ else
                 name="@RouteKeys.Date"
                 value="@Model.SelectedDateText"
                 onchange="this.form.submit();" />
+         @await Html.PartialAsync("/Pages/Shared/_AdminDateStepper.cshtml")
       </label>
    </form>
 

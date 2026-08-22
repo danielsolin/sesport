@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
+using SESport.Web.Pages.Admin.Broadcasts;
 using System.Globalization;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;
 
 public sealed class BroadcastFieldModel(
    AdminBroadcastRepository repository,
-   AdminRepository adminRepository
+   AdminRepository adminRepository,
+   BroadcastParticipationService? participationService = null
 ) : PageModel
 {
    public async Task<IActionResult> OnPostAsync(
@@ -16,7 +18,14 @@ public sealed class BroadcastFieldModel(
       string field,
       string? value,
       CancellationToken cancellationToken,
-      Guid? activityGroupId = null
+      Guid? activityGroupId = null,
+      [FromForm(Name = RouteKeys.Date)] DateOnly? date = null,
+      [FromForm(Name = RouteKeys.SortColumn)] string? sortColumn = null,
+      [FromForm(Name = RouteKeys.SortAsc)] bool sortAsc = true,
+      [FromForm(Name = RouteKeys.ShowHidden)] bool showHidden = false,
+      [FromForm(Name = RouteKeys.HideReplays)] bool hideReplays = false,
+      [FromForm(Name = RouteKeys.SelectedSports)]
+         List<string>? selectedSports = null
    )
    {
       field = field?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -47,12 +56,22 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
-            return new JsonResult(new
-            {
-               updated = true,
-               field = "title",
-               value
-            });
+            return await RenderRowOrJsonAsync(
+               id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
+               new
+               {
+                  updated = true,
+                  field = "title",
+                  value
+               },
+               cancellationToken
+            );
          }
 
          if(string.Equals(field, "channel", StringComparison.Ordinal))
@@ -68,12 +87,22 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
-            return new JsonResult(new
-            {
-               updated = true,
-               field = "channel",
-               value
-            });
+            return await RenderRowOrJsonAsync(
+               id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
+               new
+               {
+                  updated = true,
+                  field = "channel",
+                  value
+               },
+               cancellationToken
+            );
          }
 
          if(string.Equals(field, "start-time", StringComparison.Ordinal)
@@ -128,14 +157,24 @@ public sealed class BroadcastFieldModel(
                ? timeUpdate.StartTimeText
                : timeUpdate.EndTimeText;
 
-            return new JsonResult(new
-            {
-               updated = true,
-               field,
-               value = updatedValue,
-               startTimeText = timeUpdate.StartTimeText,
-               endTimeText = timeUpdate.EndTimeText
-            });
+            return await RenderRowOrJsonAsync(
+               id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
+               new
+               {
+                  updated = true,
+                  field,
+                  value = updatedValue,
+                  startTimeText = timeUpdate.StartTimeText,
+                  endTimeText = timeUpdate.EndTimeText
+               },
+               cancellationToken
+            );
          }
 
          if(string.Equals(field, "description", StringComparison.Ordinal))
@@ -146,12 +185,22 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
-            return new JsonResult(new
-            {
-               updated = true,
-               field = "description",
-               value = value ?? string.Empty
-            });
+            return await RenderRowOrJsonAsync(
+               id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
+               new
+               {
+                  updated = true,
+                  field = "description",
+                  value = value ?? string.Empty
+               },
+               cancellationToken
+            );
          }
 
          if(string.Equals(field, "categories", StringComparison.Ordinal))
@@ -164,12 +213,22 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
-            return new JsonResult(new
-            {
-               updated = true,
-               field = "categories",
-               value = categories
-            });
+            return await RenderRowOrJsonAsync(
+               id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
+               new
+               {
+                  updated = true,
+                  field = "categories",
+                  value = categories
+               },
+               cancellationToken
+            );
          }
 
          if(string.Equals(field, "organization", StringComparison.Ordinal))
@@ -195,43 +254,57 @@ public sealed class BroadcastFieldModel(
                cancellationToken
             );
 
-            var broadcast = await repository.GetByIdAsync(
+            if(!WantsHtmlResponse())
+            {
+               var broadcast = await repository.GetByIdAsync(
+                  id,
+                  cancellationToken
+               );
+
+               return new JsonResult(new
+               {
+                  updated = true,
+                  field = "organization",
+                  value = organizationEntityId?.ToString() ?? string.Empty,
+                  organizationEntityId = broadcast?.OrganizationEntityId
+                     ?.ToString() ?? string.Empty,
+                  groupValue = broadcast is null
+                     ? string.Empty
+                     : BroadcastListDisplayFormatter.FormatGroupValue(
+                        broadcast.Title,
+                        broadcast.ActivityGroupTitle,
+                        broadcast.ActivityGroupDraftTitle
+                     ),
+                  activityGroupId =
+                     broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
+                  activityGroupTitle = broadcast?.ActivityGroupTitle
+                     ?? string.Empty,
+                  activityGroupDraftTitle = broadcast?.ActivityGroupDraftTitle
+                     ?? string.Empty,
+                  activityGroupSourceKindId =
+                     broadcast?.ActivityGroupSourceKindId ?? string.Empty,
+                  groupText = broadcast is null
+                     ? "-"
+                     : BroadcastListDisplayFormatter.FormatGroupText(
+                        broadcast.Title,
+                        broadcast.ActivityGroupSourceKindId,
+                        broadcast.ActivityGroupId,
+                        broadcast.ActivityGroupTitle,
+                        broadcast.ActivityGroupDraftTitle
+                     )
+               });
+            }
+
+            return await RenderRowAsync(
                id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
                cancellationToken
             );
-
-            return new JsonResult(new
-            {
-               updated = true,
-               field = "organization",
-               value = organizationEntityId?.ToString() ?? string.Empty,
-               organizationEntityId = broadcast?.OrganizationEntityId
-                  ?.ToString() ?? string.Empty,
-               groupValue = broadcast is null
-                  ? string.Empty
-                  : BroadcastListDisplayFormatter.FormatGroupValue(
-                     broadcast.Title,
-                     broadcast.ActivityGroupTitle,
-                     broadcast.ActivityGroupDraftTitle
-                  ),
-               activityGroupId =
-                  broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
-               activityGroupTitle =
-                  broadcast?.ActivityGroupTitle ?? string.Empty,
-               activityGroupDraftTitle =
-                  broadcast?.ActivityGroupDraftTitle ?? string.Empty,
-               activityGroupSourceKindId =
-                  broadcast?.ActivityGroupSourceKindId ?? string.Empty,
-               groupText = broadcast is null
-                  ? "-"
-                  : BroadcastListDisplayFormatter.FormatGroupText(
-                     broadcast.Title,
-                     broadcast.ActivityGroupSourceKindId,
-                     broadcast.ActivityGroupId,
-                     broadcast.ActivityGroupTitle,
-                     broadcast.ActivityGroupDraftTitle
-                  )
-            });
          }
 
          if(string.Equals(field, "group", StringComparison.Ordinal))
@@ -259,41 +332,55 @@ public sealed class BroadcastFieldModel(
                });
             }
 
-            var broadcast = await repository.GetByIdAsync(
+            if(!WantsHtmlResponse())
+            {
+               var broadcast = await repository.GetByIdAsync(
+                  id,
+                  cancellationToken
+               );
+
+               return new JsonResult(new
+               {
+                  updated = true,
+                  field = "group",
+                  value,
+                  groupValue = broadcast is null
+                     ? value
+                     : BroadcastListDisplayFormatter.FormatGroupValue(
+                        broadcast.Title,
+                        broadcast.ActivityGroupTitle,
+                        broadcast.ActivityGroupDraftTitle
+                     ),
+                  activityGroupId =
+                     broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
+                  activityGroupTitle = broadcast?.ActivityGroupTitle
+                     ?? string.Empty,
+                  activityGroupDraftTitle = broadcast?.ActivityGroupDraftTitle
+                     ?? string.Empty,
+                  activityGroupSourceKindId =
+                     broadcast?.ActivityGroupSourceKindId ?? string.Empty,
+                  groupText = broadcast is null
+                     ? value
+                     : BroadcastListDisplayFormatter.FormatGroupText(
+                        broadcast.Title,
+                        broadcast.ActivityGroupSourceKindId,
+                        broadcast.ActivityGroupId,
+                        broadcast.ActivityGroupTitle,
+                        broadcast.ActivityGroupDraftTitle
+                     )
+               });
+            }
+
+            return await RenderRowAsync(
                id,
+               date,
+               sortColumn,
+               sortAsc,
+               showHidden,
+               hideReplays,
+               selectedSports,
                cancellationToken
             );
-
-            return new JsonResult(new
-            {
-               updated = true,
-               field = "group",
-               value,
-               groupValue = broadcast is null
-                  ? value
-                  : BroadcastListDisplayFormatter.FormatGroupValue(
-                     broadcast.Title,
-                     broadcast.ActivityGroupTitle,
-                     broadcast.ActivityGroupDraftTitle
-                  ),
-               activityGroupId =
-                  broadcast?.ActivityGroupId?.ToString() ?? string.Empty,
-               activityGroupTitle =
-                  broadcast?.ActivityGroupTitle ?? string.Empty,
-               activityGroupDraftTitle =
-                  broadcast?.ActivityGroupDraftTitle ?? string.Empty,
-               activityGroupSourceKindId =
-                  broadcast?.ActivityGroupSourceKindId ?? string.Empty,
-               groupText = broadcast is null
-                  ? value
-                  : BroadcastListDisplayFormatter.FormatGroupText(
-                     broadcast.Title,
-                     broadcast.ActivityGroupSourceKindId,
-                     broadcast.ActivityGroupId,
-                     broadcast.ActivityGroupTitle,
-                     broadcast.ActivityGroupDraftTitle
-                  )
-            });
          }
 
          return BadRequest(new { error = "Unsupported field." });
@@ -304,6 +391,83 @@ public sealed class BroadcastFieldModel(
          return this.UnexpectedJsonError(exception);
       }
    }
+
+   private async Task<IActionResult> RenderRowOrJsonAsync(
+      Guid id,
+      DateOnly? date,
+      string? sortColumn,
+      bool sortAsc,
+      bool showHidden,
+      bool hideReplays,
+      IReadOnlyList<string>? selectedSports,
+      object jsonPayload,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!WantsHtmlResponse())
+      {
+         return new JsonResult(jsonPayload);
+      }
+
+      return await RenderRowAsync(
+         id,
+         date,
+         sortColumn,
+         sortAsc,
+         showHidden,
+         hideReplays,
+         selectedSports,
+         cancellationToken
+      );
+   }
+
+   private async Task<IActionResult> RenderRowAsync(
+      Guid id,
+      DateOnly? date,
+      string? sortColumn,
+      bool sortAsc,
+      bool showHidden,
+      bool hideReplays,
+      IReadOnlyList<string>? selectedSports,
+      CancellationToken cancellationToken
+   )
+   {
+      var broadcast = await repository.GetByIdAsync(id, cancellationToken);
+
+      if(broadcast is null)
+      {
+         return NotFound(new { error = "Broadcast not found." });
+      }
+
+      var broadcasts = participationService is null
+         ? [broadcast]
+         : await participationService.ApplyParticipationChecksAsync(
+            [broadcast],
+            cancellationToken
+         );
+
+      return Partial(
+         "/Pages/Admin/Broadcasts/_BroadcastRow.cshtml",
+         BroadcastRowViewModel.Create(
+            broadcasts[0],
+            Url,
+            Request,
+            date,
+            sortColumn,
+            sortAsc,
+            showHidden,
+            hideReplays,
+            selectedSports,
+            ViewData["SearchUrl"] as string
+         )
+      );
+   }
+
+   private bool WantsHtmlResponse() =>
+      PageContext?.HttpContext?.Request.Headers.Accept.ToString().Contains(
+         "text/html",
+         StringComparison.OrdinalIgnoreCase
+      ) == true;
 
    private async Task<Guid?> ValidateOrganizationEntityIdAsync(
       string? value,

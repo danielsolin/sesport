@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Data.Models;
+using SESport.Web.Pages.Admin.Activities;
+
 namespace SESport.Web.Pages.Admin.Ajax.Search;
 
 public sealed class ActivityParticipantModel(
@@ -11,10 +14,32 @@ public sealed class ActivityParticipantModel(
       Guid? organizationEntityId,
       string? term,
       Guid[]? excludedEntityIds,
+      Guid[]? selectedEntityIds,
+      string? format,
       CancellationToken cancellationToken
    )
    {
       term = term?.Trim() ?? string.Empty;
+
+      if(string.Equals(
+            format?.Trim(),
+            "participant-selection",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         var participants = await editService.LoadParticipantsAsync(
+            new ActivityEditModel
+            {
+               LinkedEntityIds = selectedEntityIds?.ToList() ?? []
+            },
+            cancellationToken
+         );
+
+         return Partial(
+            "/Pages/Admin/Activities/_ActivityParticipantSelection.cshtml",
+            new ActivityParticipantSelectionViewModel(participants, null)
+         );
+      }
 
       if(organizationEntityId is null)
       {
@@ -27,6 +52,15 @@ public sealed class ActivityParticipantModel(
          excludedEntityIds ?? [],
          cancellationToken
       );
+
+      if(string.Equals(
+            format?.Trim(),
+            "participant-suggestions",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return Partial("_ParticipantSuggestions", results);
+      }
 
       return new JsonResult(new
       {

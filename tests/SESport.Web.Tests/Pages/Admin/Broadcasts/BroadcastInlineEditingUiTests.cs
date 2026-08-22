@@ -27,6 +27,14 @@ public sealed class BroadcastInlineEditingUiTests
          "src/SESport.Web/wwwroot/Admin/js/"
             + "broadcast-organization-autocomplete.js"
       );
+      var rowPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastRow.cshtml"
+      );
+      var organizationSuggestionsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Ajax/Search/_OrganizationSuggestions.cshtml"
+      );
       var layoutPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/Pages/Shared/_Layout.cshtml"
@@ -38,34 +46,27 @@ public sealed class BroadcastInlineEditingUiTests
          await File.ReadAllTextAsync(groupAutocompleteJsPath);
       var organizationAutocompleteJs =
          await File.ReadAllTextAsync(organizationAutocompleteJsPath);
+      var row = await File.ReadAllTextAsync(rowPath);
+      var organizationSuggestions =
+         await File.ReadAllTextAsync(organizationSuggestionsPath);
       var layout = await File.ReadAllTextAsync(layoutPath);
 
       Assert.Contains(
          "window.initializeBroadcastInlineEditing =",
          siteJs
       );
-      Assert.Contains(
-         "descriptionEditor.dataset.broadcastInlineEditField",
-         siteJs
-      );
-      Assert.Contains(
-         "window.initializeBroadcastInlineEditing?.(cell);",
-         broadcastInlineEditJs
-      );
+      Assert.Contains("replaceElementWithPartialHtml", siteJs);
+      Assert.Contains("loadPartialAsync", broadcastInlineEditJs);
       Assert.Contains("organizationEntityId", groupAutocompleteJs);
       Assert.Contains(
          "broadcast-activity-group-suggestions-fixed",
          groupAutocompleteJs
       );
-      Assert.Contains(
-         "function formatOrgSearchResult(item)",
-         organizationAutocompleteJs
-      );
-      Assert.Contains("item.sport", organizationAutocompleteJs);
-      Assert.Contains(
-         "`${item.text} (${item.sport})`",
-         organizationAutocompleteJs
-      );
+      Assert.Contains("format\", \"organization-suggestions\"", organizationAutocompleteJs);
+      Assert.Contains("replaceContentsWithPartialHtml", organizationAutocompleteJs);
+      Assert.Contains("entity.Sport", organizationSuggestions);
+      Assert.Contains("data-broadcast-inline-edit-field=\"channel\"", row);
+      Assert.Contains("data-broadcast-categories-list", row);
       Assert.Contains(
          "document.addEventListener(\"focusin\"",
          groupAutocompleteJs
@@ -74,34 +75,20 @@ public sealed class BroadcastInlineEditingUiTests
          "document.addEventListener(\"input\"",
          groupAutocompleteJs
       );
+      Assert.Contains(
+         "document.addEventListener(\"DOMContentLoaded\", () =>",
+         groupAutocompleteJs
+      );
+      Assert.Contains("root instanceof Document", groupAutocompleteJs);
       Assert.Contains("activityGroupId", broadcastInlineEditJs);
-      Assert.Contains(
-         "broadcastInlineEditDescriptionField = \"description\"",
-         broadcastInlineEditJs
-      );
-      Assert.Contains(
-         "broadcastInlineEditChannelField = \"channel\"",
-         broadcastInlineEditJs
-      );
-      Assert.Contains(
-         "broadcastInlineEditStartTimeField = \"start-time\"",
-         broadcastInlineEditJs
-      );
-      Assert.Contains(
-         "broadcastInlineEditEndTimeField = \"end-time\"",
-         broadcastInlineEditJs
-      );
-      Assert.Contains(
-         "broadcastDescriptionTextSelector",
-         broadcastInlineEditJs
-      );
+      Assert.Contains("description: \"Add description..\"", broadcastInlineEditJs);
+      Assert.Contains("channel: \"Add channel..\"", broadcastInlineEditJs);
+      Assert.Contains("\"start-time\": \"Add start time..\"", broadcastInlineEditJs);
+      Assert.Contains("\"end-time\": \"Add end time..\"", broadcastInlineEditJs);
       Assert.Contains("Add description..", broadcastInlineEditJs);
       Assert.Contains("Add categories..", broadcastInlineEditJs);
-      Assert.Contains("inline-edit-placeholder", broadcastInlineEditJs);
-      Assert.Contains(
-         "data-broadcast-description-text",
-         broadcastInlineEditJs
-      );
+      Assert.DoesNotContain("createElement", broadcastInlineEditJs);
+      Assert.DoesNotContain("innerHTML", broadcastInlineEditJs);
       Assert.Contains(
          "src=\"~/Admin/js/broadcast-inline-edit.js\"",
          layout

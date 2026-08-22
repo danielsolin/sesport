@@ -12,53 +12,58 @@ public sealed class IndexMarkupTests
          repoRoot,
          "src/SESport.Web/Pages/Admin/Broadcasts/Index.cshtml"
       );
+      var rowPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastRow.cshtml"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
+      var row = await File.ReadAllTextAsync(rowPath);
+      var markup = html + row;
 
       Assert.Contains(
          "data-ajax-count-target=\"[data-broadcast-count]\"",
-         html
+         markup
       );
       Assert.Contains(
          "data-ajax-count-value=\"@Model.Broadcasts.Count\"",
-         html
+         markup
       );
-      Assert.Contains("broadcastCountDecrementTarget", html);
-      Assert.Contains("data-ajax-decrement-target=", html);
+      Assert.Contains("data-ajax-decrement-target=", markup);
       Assert.Contains("filter-form-count", html);
       Assert.Contains("Broadcasts:", html);
       Assert.Contains("data-broadcast-count", html);
       Assert.Contains(
          "name=\"@RouteKeys.ShowHidden\"",
-         html
+         markup
       );
       Assert.Contains("value=\"false\"", html);
       Assert.Contains(
          "data-broadcast-inline-edit-field=\"title\"",
-         html
+         markup
       );
       Assert.Contains(
          "data-broadcast-inline-edit-field=\"description\"",
-         html
+         markup
       );
       Assert.Contains(
          "data-broadcast-inline-edit-field=\"channel\"",
-         html
+         markup
       );
       Assert.Contains(
          "\"start-time\"",
-         html
+         markup
       );
       Assert.Contains(
          "\"end-time\"",
-         html
+         markup
       );
-      Assert.Contains("data-broadcast-description-text", html);
-      Assert.Contains("Add description..", html);
-      Assert.Contains("Add categories..", html);
-      Assert.Contains("Edit broadcast description", html);
-      Assert.Contains("Edit broadcast channel", html);
-      Assert.Contains("Edit broadcast start time", html);
-      Assert.Contains("Edit broadcast end time", html);
+      Assert.Contains("data-broadcast-description-text", row);
+      Assert.Contains("Add description..", row);
+      Assert.Contains("Add categories..", row);
+      Assert.Contains("Edit broadcast description", row);
+      Assert.Contains("Edit broadcast channel", row);
+      Assert.Contains("Edit broadcast start time", row);
+      Assert.Contains("Edit broadcast end time", row);
       Assert.Contains("<summary class=\"button\">Todo</summary>", html);
       Assert.Contains("asp-page-handler=\"AddTodo\"", html);
       Assert.Contains("<textarea name=\"text\"", html);

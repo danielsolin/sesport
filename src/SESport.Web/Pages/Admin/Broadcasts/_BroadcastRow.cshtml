@@ -1,0 +1,359 @@
+@using SESport.Core.Broadcast
+@using SESport.Core.Formatting
+@using System.Text.Json
+@model SESport.Web.Pages.Admin.Broadcasts.BroadcastRowViewModel
+
+@{
+   var broadcast = Model.Broadcast;
+   var airDate = broadcast.IsReplay ? broadcast.OriginalAirDate : null;
+   var sourceLabel = BroadcastListDisplayFormatter.FormatSourceLabel(
+      broadcast.SourceKey
+   );
+   var groupEditable = string.Equals(
+      broadcast.ActivityGroupSourceKindId,
+      BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+      StringComparison.Ordinal
+   ) || broadcast.OrganizationEntityId is not null;
+   var groupValue = BroadcastListDisplayFormatter.FormatGroupValue(
+      broadcast.Title,
+      broadcast.ActivityGroupTitle,
+      broadcast.ActivityGroupDraftTitle
+   );
+   var groupText = BroadcastListDisplayFormatter.FormatGroupText(
+      broadcast.Title,
+      broadcast.ActivityGroupSourceKindId,
+      broadcast.ActivityGroupId,
+      broadcast.ActivityGroupTitle,
+      broadcast.ActivityGroupDraftTitle
+   );
+   var categoriesText = BroadcastListDisplayFormatter.FormatCategoriesText(
+      broadcast.Categories
+   );
+   var descriptionEmpty = string.IsNullOrWhiteSpace(broadcast.Description);
+}
+
+<tbody data-broadcast-container
+       data-broadcast-id="@broadcast.Id">
+   <tr class="broadcast-participation-main-row"
+       data-broadcast-row="true"
+       data-broadcast-id="@broadcast.Id"
+       data-participation-status="@broadcast.ParticipationCheck?.StatusId">
+      <td class="broadcasts-col-source">
+         @sourceLabel
+      </td>
+      <td class="broadcasts-col-channel">
+         <div class="broadcast-inline-editable"
+              data-broadcast-id="@broadcast.Id"
+              data-broadcast-inline-edit-field="channel"
+              data-broadcast-inline-edit-value="@broadcast.ChannelName"
+              title="Double-click to edit">
+            <div class="ses-nowrap" data-broadcast-inline-edit-display>
+               @broadcast.ChannelName
+            </div>
+            <input class="broadcast-inline-edit-input"
+                   data-broadcast-inline-edit-input
+                   type="text"
+                   value="@broadcast.ChannelName"
+                   autocomplete="off"
+                   spellcheck="false"
+                   aria-label="Edit broadcast channel"
+                   hidden />
+         </div>
+      </td>
+      <td class="broadcasts-col-time">
+         <div class="broadcast-time-editors">
+            <div class="broadcast-inline-editable"
+                 data-broadcast-id="@broadcast.Id"
+                 data-broadcast-inline-edit-field="start-time"
+                 data-broadcast-inline-edit-value="@broadcast.StartTimeText"
+                 title="Double-click to edit">
+               <strong class="ses-nowrap" data-broadcast-inline-edit-display>
+                  @broadcast.StartTimeText
+               </strong>
+               <input class="broadcast-inline-edit-input"
+                      data-broadcast-inline-edit-input
+                      type="time"
+                      value="@broadcast.StartTimeText"
+                      step="60"
+                      aria-label="Edit broadcast start time"
+                      hidden />
+            </div>
+            <span class="broadcast-time-separator">–</span>
+            <div class="broadcast-inline-editable"
+                 data-broadcast-id="@broadcast.Id"
+                 data-broadcast-inline-edit-field="end-time"
+                 data-broadcast-inline-edit-value="@broadcast.EndTimeText"
+                 title="Double-click to edit">
+               <strong class="ses-nowrap" data-broadcast-inline-edit-display>
+                  @broadcast.EndTimeText
+               </strong>
+               <input class="broadcast-inline-edit-input"
+                      data-broadcast-inline-edit-input
+                      type="time"
+                      value="@broadcast.EndTimeText"
+                      step="60"
+                      aria-label="Edit broadcast end time"
+                      hidden />
+            </div>
+         </div>
+      </td>
+      <td class="broadcasts-col-broadcast">
+         <div class="broadcast-inline-editable"
+              data-broadcast-id="@broadcast.Id"
+              data-broadcast-inline-edit-field="title"
+              data-broadcast-inline-edit-value="@broadcast.Title"
+              title="Double-click to edit">
+            <div data-broadcast-inline-edit-display>
+               <strong data-broadcast-title-text>@broadcast.Title</strong>
+               <a class="ses-entity-search-link"
+                  data-broadcast-title-search-link
+                  href="@Model.SearchUrlBase@broadcast.Title"
+                  target="_blank">
+                  <span class="ses-icon-search"></span>
+               </a>
+            </div>
+            <input class="broadcast-inline-edit-input"
+                   data-broadcast-inline-edit-input
+                   type="text"
+                   value="@broadcast.Title"
+                   autocomplete="off"
+                   spellcheck="false"
+                   aria-label="Edit broadcast title"
+                   hidden />
+         </div>
+         <div class="broadcast-inline-editable"
+              data-broadcast-id="@broadcast.Id"
+              data-broadcast-inline-edit-field="description"
+              data-broadcast-inline-edit-value="@broadcast.Description"
+              title="Double-click to edit">
+            <div data-broadcast-inline-edit-display>
+               <span class="@(descriptionEmpty ? "inline-edit-placeholder" : null)"
+                     data-broadcast-description-text>
+                  @(descriptionEmpty ? "Add description.." : broadcast.Description)
+               </span>
+            </div>
+            <input class="broadcast-inline-edit-input"
+                   data-broadcast-inline-edit-input
+                   type="text"
+                   value="@broadcast.Description"
+                   autocomplete="off"
+                   spellcheck="false"
+                   aria-label="Edit broadcast description"
+                   hidden />
+         </div>
+         @if(airDate is not null)
+         {
+            <span>Repris från @airDate</span>
+         }
+      </td>
+      <td class="broadcasts-col-organization broadcast-inline-editable"
+          data-broadcast-id="@broadcast.Id"
+          data-broadcast-inline-edit-field="organization"
+          data-broadcast-inline-edit-value="@broadcast.OrganizationEntityId"
+          data-broadcast-inline-edit-label="@broadcast.OrganizationEntityName"
+          title="Double-click to edit">
+         <div class="broadcast-org-autocomplete is-locked"
+              data-org-entity-autocomplete>
+            <input class="broadcast-org-entity-input"
+                   type="text"
+                   aria-label="Organization entity"
+                   data-org-entity-input
+                   autocomplete="off"
+                   spellcheck="false"
+                   readonly
+                   value="@broadcast.OrganizationEntityName" />
+            <input type="hidden"
+                   data-org-entity-id
+                   value="@broadcast.OrganizationEntityId" />
+            <div class="broadcast-org-entity-suggestions"
+                 data-org-entity-suggestions
+                 hidden></div>
+         </div>
+      </td>
+      @if(groupEditable)
+      {
+         <td class="broadcasts-col-group broadcast-inline-editable"
+             data-broadcast-id="@broadcast.Id"
+             data-broadcast-group-text="@groupText"
+             data-broadcast-inline-edit-field="group"
+             data-broadcast-inline-edit-value="@groupValue"
+             data-broadcast-organization-entity-id="@broadcast.OrganizationEntityId"
+             data-broadcast-activity-group-source-kind-id="@broadcast.ActivityGroupSourceKindId"
+             data-broadcast-activity-group-id="@broadcast.ActivityGroupId"
+             title="Double-click to edit">
+            <div data-broadcast-inline-edit-display>@groupText</div>
+            @if(broadcast.ActivityGroupParticipants.Count > 0)
+            {
+               <small class="broadcast-group-participants"
+                      data-broadcast-group-participants>
+                  @foreach(var participant in broadcast.ActivityGroupParticipants)
+                  {
+                     <span>@participant.Name</span>
+                  }
+               </small>
+               <button type="button"
+                       class="broadcast-group-participants-clear"
+                       data-broadcast-group-participants-clear
+                       data-broadcast-id="@broadcast.Id">
+                  Clear
+               </button>
+            }
+            <div class="broadcast-activity-group-picker"
+                 data-broadcast-activity-group-picker
+                 data-broadcast-activity-group-search-url="@Model.ActivityGroupSearchUrl">
+               <input class="broadcast-inline-edit-input"
+                      data-broadcast-inline-edit-input
+                      data-broadcast-activity-group-input
+                      type="text"
+                      value="@groupValue"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-label="Edit group title"
+                      hidden />
+               <input type="hidden"
+                      data-broadcast-activity-group-id-input
+                      value="@broadcast.ActivityGroupId" />
+               <div class="broadcast-org-entity-suggestions"
+                    data-broadcast-activity-group-suggestions
+                    hidden></div>
+            </div>
+         </td>
+      }
+      else
+      {
+         <td class="broadcasts-col-group"
+             data-broadcast-group-text="@groupText"
+             data-broadcast-organization-entity-id="@broadcast.OrganizationEntityId"
+             title="@groupText">
+            <div data-broadcast-inline-edit-display>@groupText</div>
+            @if(broadcast.ActivityGroupParticipants.Count > 0)
+            {
+               <small class="broadcast-group-participants"
+                      data-broadcast-group-participants>
+                  @foreach(var participant in broadcast.ActivityGroupParticipants)
+                  {
+                     <span>@participant.Name</span>
+                  }
+               </small>
+               <button type="button"
+                       class="broadcast-group-participants-clear"
+                       data-broadcast-group-participants-clear
+                       data-broadcast-id="@broadcast.Id">
+                  Clear
+               </button>
+            }
+            <div class="broadcast-activity-group-picker"
+                 data-broadcast-activity-group-picker
+                 data-broadcast-activity-group-search-url="@Model.ActivityGroupSearchUrl">
+               <input class="broadcast-inline-edit-input"
+                      data-broadcast-inline-edit-input
+                      data-broadcast-activity-group-input
+                      type="text"
+                      value="@groupValue"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-label="Edit group title"
+                      hidden />
+               <input type="hidden"
+                      data-broadcast-activity-group-id-input
+                      value="@broadcast.ActivityGroupId" />
+               <div class="broadcast-org-entity-suggestions"
+                    data-broadcast-activity-group-suggestions
+                    hidden></div>
+            </div>
+         </td>
+      }
+      <td class="broadcasts-col-categories broadcast-inline-editable"
+          data-broadcast-id="@broadcast.Id"
+          data-broadcast-inline-edit-field="categories"
+          data-broadcast-inline-edit-value="@categoriesText"
+          data-broadcast-categories-json="@JsonSerializer.Serialize(broadcast.Categories)"
+          title="Double-click to edit">
+         <div data-broadcast-inline-edit-display>
+            <div class="broadcast-categories-list"
+                 data-broadcast-categories-list>
+               @if(broadcast.Categories.Count == 0)
+               {
+                  <span class="inline-edit-placeholder">Add categories..</span>
+               }
+               else
+               {
+                  @foreach(var category in broadcast.Categories)
+                  {
+                     <span>@category</span>
+                  }
+               }
+            </div>
+         </div>
+         <input class="broadcast-inline-edit-input"
+                data-broadcast-inline-edit-input
+                type="text"
+                value="@categoriesText"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Edit categories"
+                hidden />
+      </td>
+      <td class="broadcasts-col-actions table-actions">
+         <div class="table-actions-stack">
+            <div class="table-actions-primary">
+               <button type="button"
+                       class="broadcast-participation-check-link"
+                       data-check-participation-row
+                       data-check-participation-url="@Model.CheckParticipationUrl"
+                       data-broadcast-id="@broadcast.Id">
+                  Check
+               </button>
+               <form method="post"
+                     action="@Model.HideBroadcastUrl"
+                     data-ajax-success="toggle-visibility"
+                     data-ajax-remove-target="tbody"
+                     data-ajax-preserve-scroll="true"
+                     data-ajax-decrement-target="@(Model.ShowHidden ? null : "[data-broadcast-count]")">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="id" value="@broadcast.Id" />
+                  <input type="hidden" name="@RouteKeys.Date" value="@Model.Date" />
+                  <input type="hidden" name="isHidden" value="@broadcast.IsHidden.ToString()" />
+                  <input type="hidden" name="@RouteKeys.SortColumn" value="@Model.SortColumn" />
+                  <input type="hidden" name="@RouteKeys.SortAsc" value="@Model.SortAsc.ToString()" />
+                  <input type="hidden" name="@RouteKeys.ShowHidden" value="@Model.ShowHidden.ToString()" />
+                  @if(Model.HideReplays)
+                  {
+                     <input type="hidden" name="@RouteKeys.HideReplays" value="true" />
+                  }
+                  @foreach(var sport in Model.SelectedSports.Where(value => !string.IsNullOrWhiteSpace(value)))
+                  {
+                     <input type="hidden" name="SelectedSports" value="@sport" />
+                  }
+                  <button type="submit">
+                     @(broadcast.IsHidden
+                        ? IndexModel.BroadcastVisibilityShowLabel
+                        : IndexModel.BroadcastVisibilityHideLabel)
+                  </button>
+               </form>
+            </div>
+            <a class="broadcast-activity-link"
+               data-broadcast-activity-link
+               data-broadcast-id="@broadcast.Id"
+               href="@Model.ActivityUrl">
+               Create Activity
+            </a>
+         </div>
+      </td>
+   </tr>
+   <tr class="broadcast-participation-runs-row"
+       data-broadcast-id="@broadcast.Id"
+       data-participation-status="@broadcast.ParticipationCheck?.StatusId">
+      <td class="broadcast-participation-spacer"></td>
+      <td class="broadcast-participation-runs-cell"
+          colspan="7"
+          data-participation-cell
+          data-broadcast-id="@broadcast.Id"
+          data-participation-run-id="@broadcast.ParticipationCheck?.RunId"
+          data-participation-status="@broadcast.ParticipationCheck?.StatusId"
+          data-check-participation-url="@Model.CheckParticipationUrl"
+          data-organization-sport-name="@broadcast.OrganizationSportName"
+          data-activity-url-base="@Model.ActivityUrl">
+      </td>
+   </tr>
+</tbody>
