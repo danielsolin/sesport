@@ -90,21 +90,6 @@ public sealed class WebPageContentClient : IWebPageContentClient
       );
    }
 
-   internal static string BuildBrowserUserAgent(string browserVersion)
-   {
-      return WebPageContentFetchSupport.BuildBrowserUserAgent(browserVersion);
-   }
-
-   internal static string ApplyResponseCutoff(string text)
-   {
-      return WebPageContentFetchSupport.ApplyResponseCutoff(text);
-   }
-
-   internal static string? GetCountryDisplayName(string? countryCode)
-   {
-      return WebPageContentFetchSupport.GetCountryDisplayName(countryCode);
-   }
-
    private async Task<WebPageContent?> FetchWithRetryAsync(
       Uri absoluteUrl,
       CancellationToken cancellationToken

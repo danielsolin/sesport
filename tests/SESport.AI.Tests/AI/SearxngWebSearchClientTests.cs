@@ -541,47 +541,6 @@ public class SearxngWebSearchClientTests
       Assert.Equal("SearXNG/mojeek", response.Provider);
    }
 
-   [Fact]
-   public async Task SearchRecentCombinesDayAndWeekResults()
-   {
-      var handler = new SequenceHandler(
-         new SequenceHandler.ResponseSpec(
-            HttpStatusCode.OK,
-            CreateRecentResponseJson(
-               ("Today", "https://example.test/today")
-            )
-         ),
-         new SequenceHandler.ResponseSpec(
-            HttpStatusCode.OK,
-            CreateRecentResponseJson(
-               ("Today", "https://example.test/today"),
-               ("This week", "https://example.test/week")
-            )
-         )
-      );
-      var client = new SearxngWebSearchClient(
-         new HttpClient(handler),
-         new SearxngWebSearchClientOptions(),
-         CreateFastRateLimiter()
-      );
-
-      var response = await client.SearchRecentAsync(
-         "Tre Kronor",
-         3,
-         CancellationToken.None
-      );
-
-      Assert.Equal(2, handler.RequestCount);
-      Assert.Contains("time_range=day", handler.RequestBodies[0]);
-      Assert.Contains("time_range=week", handler.RequestBodies[1]);
-      Assert.Contains("engines=yahoo", handler.RequestBodies[0]);
-      Assert.Contains("engines=yahoo", handler.RequestBodies[1]);
-      Assert.Equal(
-         ["Today", "This week"],
-         response.Results.Select(result => result.Title)
-      );
-   }
-
    private static string CreateResponseJson()
    {
       return JsonSerializer.Serialize(new
@@ -717,27 +676,6 @@ public class SearxngWebSearchClientTests
             url = result.Url,
             content = result.Content
          }),
-         unresponsive_engines = Array.Empty<object>()
-      });
-   }
-
-   private static string CreateRecentResponseJson(
-      params (string Title, string Url)[] results
-   )
-   {
-      return JsonSerializer.Serialize(new
-      {
-         query = "Tre Kronor",
-         results = results.Select(result => new
-         {
-            title = result.Title,
-            url = result.Url,
-            content = result.Title
-         }),
-         answers = Array.Empty<object>(),
-         corrections = Array.Empty<string>(),
-         infoboxes = Array.Empty<object>(),
-         suggestions = Array.Empty<string>(),
          unresponsive_engines = Array.Empty<object>()
       });
    }

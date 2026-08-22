@@ -116,7 +116,6 @@ activity-related broadcast data without accessing a database.
 Examples:
 
 - `Broadcast` and `BroadcastImportRun` are the core import records.
-- `BroadcastXmlParser` parses XMLTV-style broadcast input.
 - `BroadcastParticipationCheckParser` maps an AI participation response to a
   typed result.
 - `BroadcastEntityFilter` and `BroadcastParticipantNameFormatter` apply
@@ -194,7 +193,6 @@ Examples:
 - `DateDisplay` defines invariant date and time display formats.
 - `TimeZoneHelper` resolves time zones and converts values to and from UTC.
 - `TimeTextFormatter` extracts displayable time text from source strings.
-- `PercentageDisplayFormatter` formats decimal ratios for display.
 - `UnicodeTextSanitizer` removes invalid null and surrogate characters.
 
 AI-specific summaries are kept in `SESport.Core.AI`; this namespace should

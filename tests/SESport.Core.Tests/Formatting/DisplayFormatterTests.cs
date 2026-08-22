@@ -40,19 +40,4 @@ public class DisplayFormatterTests
       Assert.Equal(expected, result);
    }
 
-   [Fact]
-   public void FormatWholePercent_TruncatesFraction()
-   {
-      var result = PercentageDisplayFormatter.FormatWholePercent(0.956m);
-
-      Assert.Equal("95", result);
-   }
-
-   [Fact]
-   public void FormatWholePercent_ReturnsEmptyStringForMissingValue()
-   {
-      var result = PercentageDisplayFormatter.FormatWholePercent(null);
-
-      Assert.Empty(result);
-   }
 }

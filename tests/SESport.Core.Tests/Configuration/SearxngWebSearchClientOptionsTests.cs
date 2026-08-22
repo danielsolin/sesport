@@ -32,16 +32,5 @@ public sealed class SearxngWebSearchClientOptionsTests
          ],
          options.Engines
       );
-      Assert.Equal(
-         [
-            "yahoo",
-            "privacywall",
-            "duckduckgo",
-            "mojeek",
-            "resulthunter",
-            "gmx"
-         ],
-         options.RecentEngines
-      );
    }
 }

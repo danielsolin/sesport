@@ -18,54 +18,6 @@ public sealed class ActivityBroadcastPrefillBuilderTests
    }
 
    [Fact]
-   public void SelectLinkedEntityIdsMatchesParticipantNamesStrictly()
-   {
-      var aliceId = Guid.NewGuid();
-      var bobId = Guid.NewGuid();
-      var entities =
-         new[]
-         {
-         new BroadcastEntityOption(
-            aliceId,
-            " Alice ",
-            TrackedEntityTypeIds.Person,
-            "Tennis",
-            ""
-         ),
-         new BroadcastEntityOption(
-            Guid.NewGuid(),
-            "Alice",
-            "Organization",
-            "Tennis",
-            ""
-         ),
-         new BroadcastEntityOption(
-            bobId,
-            "Bob",
-            TrackedEntityTypeIds.Person,
-            "Hockey",
-               ""
-            )
-         };
-      var participationCheck = new BroadcastParticipationCheck(
-         Guid.NewGuid(),
-         "completed",
-         1,
-         "Yes",
-         ["alice", " BOB ", "Unknown", "alice"],
-         [],
-         null
-      );
-
-      var matched = BroadcastActivityPrefillBuilder.SelectLinkedEntityIds(
-         entities,
-         participationCheck
-      );
-
-      Assert.Equal([aliceId, bobId], matched);
-   }
-
-   [Fact]
    public void CreateEvidenceCommentIncludesAiContext()
    {
       var broadcast = new BroadcastActivitySource(

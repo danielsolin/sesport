@@ -332,7 +332,7 @@ public static class BroadcastEntityFilter
       );
    }
 
-   public static string NormalizeLooseName(string value)
+   private static string NormalizeLooseName(string value)
    {
       var normalized = NormalizeName(value);
       var builder = new StringBuilder(normalized.Length);

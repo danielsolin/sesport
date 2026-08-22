@@ -57,16 +57,6 @@ internal static class LlamaStructuredOutputRepair
       return ResponsesOutputValidator.IsEmptyOutputFailure(exception);
    }
 
-   public static bool ShouldRepair(
-      string stage,
-      string outputMode,
-      AiPromptDefinition prompt
-   )
-   {
-      return string.Equals(stage, "final", StringComparison.Ordinal) &&
-         CanRepair(outputMode, prompt);
-   }
-
    public static void ApplyRepairPrompt(JsonArray messages)
    {
       ApplyRepairPrompt(messages, GetRepairPrompt());

@@ -51,63 +51,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          cancellationToken,
          searchAttempt,
          includeSocialMedia,
-         null,
          Options.Engines
-      );
-   }
-
-   public async Task<WebSearchResponse> SearchRecentAsync(
-      string query,
-      int maxResults,
-      CancellationToken cancellationToken,
-      bool includeSocialMedia = false
-   )
-   {
-      if(string.IsNullOrWhiteSpace(query))
-      {
-         return new WebSearchResponse([]);
-      }
-
-      var dayResponse = await SearchWithRetryAsync(
-         query,
-         maxResults,
-         cancellationToken,
-         0,
-         includeSocialMedia,
-         "day",
-         Options.RecentEngines
-      );
-      var resultLimit = Math.Clamp(
-         maxResults,
-         1,
-         WebSearchDefaults.MaxSearchResults
-      );
-
-      if(dayResponse.Results.Count >= resultLimit)
-      {
-         return dayResponse;
-      }
-
-      var weekResponse = await SearchWithRetryAsync(
-         query,
-         maxResults,
-         cancellationToken,
-         0,
-         includeSocialMedia,
-         "week",
-         Options.RecentEngines
-      );
-      var mergedResults = dayResponse.Results
-         .Concat(weekResponse.Results)
-         .GroupBy(result => result.Url, StringComparer.OrdinalIgnoreCase)
-         .Select(group => group.First())
-         .Take(resultLimit)
-         .ToList();
-
-      return new WebSearchResponse(
-         mergedResults,
-         "SearXNG/recent",
-         "time_range=day,week"
       );
    }
 
@@ -117,7 +61,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       CancellationToken cancellationToken,
       int searchAttempt,
       bool includeSocialMedia,
-      string? timeRange,
       IReadOnlyList<string> configuredEngines
    )
    {
@@ -162,8 +105,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                   maxResults,
                   cancellationToken,
                   engine,
-                  includeSocialMedia,
-                  timeRange
+                  includeSocialMedia
                );
 
                if(response.Results.Count > 0)
@@ -244,8 +186,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
       int maxResults,
       CancellationToken cancellationToken,
       string engine,
-      bool includeSocialMedia,
-      string? timeRange
+      bool includeSocialMedia
    )
    {
       Logger?.LogDebug(
@@ -260,11 +201,6 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          ["format"] = "json",
          ["engines"] = engine
       };
-
-      if(!string.IsNullOrWhiteSpace(timeRange))
-      {
-         formValues["time_range"] = timeRange;
-      }
 
       using var request = new HttpRequestMessage(HttpMethod.Post, SearchUri)
       {

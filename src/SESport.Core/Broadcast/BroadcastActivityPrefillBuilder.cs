@@ -18,23 +18,6 @@ public static class BroadcastActivityPrefillBuilder
          .ToList();
    }
 
-   public static IReadOnlyList<Guid> SelectLinkedEntityIds(
-      IReadOnlyList<BroadcastEntityOption> entities,
-      BroadcastParticipationCheck? participationCheck
-   )
-   {
-      if(participationCheck is null ||
-         participationCheck.Participants.Count == 0)
-      {
-         return [];
-      }
-
-      return BroadcastEntityFilter.MatchPersonEntityIds(
-         entities,
-         participationCheck.Participants
-      );
-   }
-
    public static string CreateActivityTitle(
       BroadcastActivitySource broadcast,
       IReadOnlyList<BroadcastEntityOption> entities,

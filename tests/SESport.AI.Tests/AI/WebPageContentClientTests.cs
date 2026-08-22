@@ -1852,7 +1852,7 @@ public class WebPageContentClientTests
    [Fact]
    public void BuildBrowserUserAgentUsesBrowserMajorVersion()
    {
-      var userAgent = WebPageContentClient.BuildBrowserUserAgent(
+      var userAgent = WebPageContentFetchSupport.BuildBrowserUserAgent(
          "HeadlessChrome/143.0.7499.0"
       );
 
@@ -1869,7 +1869,7 @@ public class WebPageContentClientTests
          WebPageFetchDefaults.MaxResponseCharacters + 1
       );
 
-      var result = WebPageContentClient.ApplyResponseCutoff(text);
+      var result = WebPageContentFetchSupport.ApplyResponseCutoff(text);
 
       Assert.EndsWith(WebPageFetchDefaults.CutoffMarker, result);
       Assert.Equal(
@@ -1883,7 +1883,7 @@ public class WebPageContentClientTests
    {
       var text = "Short text.";
 
-      var result = WebPageContentClient.ApplyResponseCutoff(text);
+      var result = WebPageContentFetchSupport.ApplyResponseCutoff(text);
 
       Assert.Equal(text, result);
    }
@@ -1893,23 +1893,23 @@ public class WebPageContentClientTests
    {
       Assert.Equal(
          PrimaryCountry.CountryName,
-         WebPageContentClient.GetCountryDisplayName(
+        WebPageContentFetchSupport.GetCountryDisplayName(
             PrimaryCountry.TwoLetterCode
          )
       );
       Assert.Equal(
          PrimaryCountry.CountryName,
-         WebPageContentClient.GetCountryDisplayName(
+         WebPageContentFetchSupport.GetCountryDisplayName(
             PrimaryCountry.ThreeLetterCode
          )
       );
-      Assert.Equal("Norway", WebPageContentClient.GetCountryDisplayName("NO"));
-      Assert.Equal("Spain", WebPageContentClient.GetCountryDisplayName("ES"));
+      Assert.Equal("Norway", WebPageContentFetchSupport.GetCountryDisplayName("NO"));
+      Assert.Equal("Spain", WebPageContentFetchSupport.GetCountryDisplayName("ES"));
       Assert.Equal(
          "Belgium",
-         WebPageContentClient.GetCountryDisplayName("BEL")
+         WebPageContentFetchSupport.GetCountryDisplayName("BEL")
       );
-      Assert.Null(WebPageContentClient.GetCountryDisplayName("??"));
+      Assert.Null(WebPageContentFetchSupport.GetCountryDisplayName("??"));
    }
 
    private static byte[] CreatePdfBytes()
