@@ -63,21 +63,32 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          return Array.Empty<MemberPersonListItem>();
       }
 
+      var canonicalNameSql = NormalizeSearchSql("e.canonical_name");
+      var aliasNameSql = NormalizeSearchSql(
+         "coalesce(e.alias_name, '')"
+      );
+      var sportNameSql = NormalizeSearchSql(
+         "coalesce(s.display_name, s.name)"
+      );
+      var relatedSearchNamesSql = NormalizeSearchSql(
+         "coalesce(context.related_search_names, '')"
+      );
+      var searchTermSql = NormalizeSearchSql("search_term.term");
       var sql = BuildPersonListSql(
          string.Empty,
-         """
+         $$"""
          and not exists (
             select 1
             from unnest(@search_terms::text[]) as search_term(term)
             where not (
-               e.canonical_name ilike
-                  ('%' || search_term.term || '%') escape '\'
-               or coalesce(e.alias_name, '') ilike
-                  ('%' || search_term.term || '%') escape '\'
-               or coalesce(s.display_name, s.name) ilike
-                  ('%' || search_term.term || '%') escape '\'
-               or coalesce(context.related_search_names, '') ilike
-                  ('%' || search_term.term || '%') escape '\'
+               {{canonicalNameSql}} ilike
+                  ('%' || {{searchTermSql}} || '%') escape '\'
+               or {{aliasNameSql}} ilike
+                  ('%' || {{searchTermSql}} || '%') escape '\'
+               or {{sportNameSql}} ilike
+                  ('%' || {{searchTermSql}} || '%') escape '\'
+               or {{relatedSearchNamesSql}} ilike
+                  ('%' || {{searchTermSql}} || '%') escape '\'
             )
          )
          """,
@@ -302,14 +313,40 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          ) next_activity on true
          """
          : string.Empty;
+      var firstNameSql = NormalizeSearchSql(
+         "split_part(btrim(e.canonical_name), ' ', 1)"
+      );
+      var lastNameSql = NormalizeSearchSql(
+         "reverse(split_part(reverse(btrim(e.canonical_name)), ' ', 1))"
+      );
+      var firstSearchTermSql = NormalizeSearchSql(
+         "(@search_terms::text[])[1]"
+      );
+      var secondSearchTermSql = NormalizeSearchSql(
+         "(@search_terms::text[])[2]"
+      );
+      var canonicalNameSql = NormalizeSearchSql("e.canonical_name");
+      var aliasNameSql = NormalizeSearchSql(
+         "coalesce(e.alias_name, '')"
+      );
       var orderBySql = includeSearchRanking
-         ? """
+         ? $$"""
             order by
-               case when e.canonical_name ilike (
-                  (@search_terms::text[])[1] || '%'
+               case when
+                  {{firstNameSql}} ilike (
+                     {{firstSearchTermSql}} || '%'
+                  ) escape '\'
+                  and {{lastNameSql}} ilike (
+                     {{secondSearchTermSql}} || '%'
+                  ) escape '\'
+                  then 0
+                  else 1
+               end,
+               case when {{canonicalNameSql}} ilike (
+                  {{firstSearchTermSql}} || '%'
                ) escape '\'
-                  or coalesce(e.alias_name, '') ilike (
-                     (@search_terms::text[])[1] || '%'
+                  or {{aliasNameSql}} ilike (
+                     {{firstSearchTermSql}} || '%'
                   ) escape '\'
                   then 0
                   else 1
@@ -412,6 +449,33 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             {{additionalWhereSql}}
          {{orderBySql}}
          {{limitSql}}
+         """;
+   }
+
+   private static string NormalizeSearchSql(string expression)
+   {
+      return $$"""
+         regexp_replace(
+            normalize(
+               replace(
+                  replace(
+                     replace(
+                        lower(normalize({{expression}}, NFC)),
+                        'å',
+                        chr(57344)
+                     ),
+                     'ä',
+                     chr(57345)
+                  ),
+                  'ö',
+                  chr(57346)
+               ),
+               NFD
+            ),
+            U&'[\0300-\036f\1ab0-\1aff\1dc0-\1dff\20d0-\20ff\fe20-\fe2f]',
+            '',
+            'g'
+         )
          """;
    }
 

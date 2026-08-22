@@ -6,49 +6,66 @@
       "Image",
       new { entityId = Model.Id }
    );
+   var disableImageSourceLink =
+      ViewData["DisableImageSourceLink"] is true;
 }
 
 @if(Model.HasPrimaryImage && Model.PrimaryImageSource is not null)
 {
    var imageSource = Model.PrimaryImageSource;
-   var sourceTooltipId =
-      $"member-watch-image-source-{Model.Id:N}";
-   <span class="member-watch-image-container">
-      <a class="member-watch-avatar
-         member-watch-image-link"
-         href="@imageSource.SourceUrl"
-         target="_blank"
-         rel="noopener noreferrer"
-         aria-label="Bildkälla för @Model.Name"
-         aria-describedby="@sourceTooltipId">
+   @if(disableImageSourceLink)
+   {
+      <span class="member-watch-avatar"
+            aria-hidden="true">
          <img class="member-watch-image"
               src="@primaryImageUrl"
               alt=""
               loading="lazy"
               decoding="async"
               aria-hidden="true" />
-      </a>
-      <span class="member-watch-image-tooltip"
-            id="@sourceTooltipId">
-         @if(!string.IsNullOrWhiteSpace(imageSource.CreatorName))
-         {
-            <span>Foto: @imageSource.CreatorName</span>
-         }
-         @if(!string.IsNullOrWhiteSpace(imageSource.LicenseUrl))
-         {
-            <a href="@imageSource.LicenseUrl"
-               target="_blank"
-               rel="noopener noreferrer">
-               @imageSource.LicenseName
-            </a>
-         }
-         else
-         {
-            <span>@imageSource.LicenseName</span>
-         }
-         <span>Wikimedia Commons</span>
       </span>
-   </span>
+   }
+   else
+   {
+      var sourceTooltipId =
+         $"member-watch-image-source-{Model.Id:N}";
+      <span class="member-watch-image-container">
+         <a class="member-watch-avatar
+            member-watch-image-link"
+            href="@imageSource.SourceUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Bildkälla för @Model.Name"
+            aria-describedby="@sourceTooltipId">
+            <img class="member-watch-image"
+                 src="@primaryImageUrl"
+                 alt=""
+                 loading="lazy"
+                 decoding="async"
+                 aria-hidden="true" />
+         </a>
+         <span class="member-watch-image-tooltip"
+               id="@sourceTooltipId">
+            @if(!string.IsNullOrWhiteSpace(imageSource.CreatorName))
+            {
+               <span>Foto: @imageSource.CreatorName</span>
+            }
+            @if(!string.IsNullOrWhiteSpace(imageSource.LicenseUrl))
+            {
+               <a href="@imageSource.LicenseUrl"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  @imageSource.LicenseName
+               </a>
+            }
+            else
+            {
+               <span>@imageSource.LicenseName</span>
+            }
+            <span>Wikimedia Commons</span>
+         </span>
+      </span>
+   }
 }
 else if(Model.HasPrimaryImage)
 {

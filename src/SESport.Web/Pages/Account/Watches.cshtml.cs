@@ -14,9 +14,6 @@ public sealed class WatchesModel(
    MemberPushOptions pushOptions
 ) : PageModel
 {
-   private const int MaxSearchResults = 5;
-   private const int MinimumSearchLength = 2;
-
    private static readonly JsonSerializerOptions JsonOptions = new()
    {
       PropertyNameCaseInsensitive = true
@@ -90,12 +87,13 @@ public sealed class WatchesModel(
    )
    {
       var query = NormalizeQuery(q);
-      var results = query is null || query.Length < MinimumSearchLength
+      var results = query is null || query.Length <
+         MemberWatchDefaults.MinimumSearchLength
          ? Array.Empty<MemberPersonListItem>()
          : await watchRepository.SearchPeopleAsync(
             query,
             GetMemberId(),
-            MaxSearchResults,
+            MemberWatchDefaults.MaxSearchResults,
             cancellationToken
          );
 

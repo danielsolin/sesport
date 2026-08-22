@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
 @using SESport.Data.Models
 @model IReadOnlyList<MemberPersonListItem>
 
@@ -19,7 +20,11 @@
                 data-member-watch-add-row="@(
                    person.IsWatched ? null : "true"
                 )">
-               @await Html.PartialAsync("_WatchPersonAvatar", person)
+               @await Html.PartialAsync("_WatchPersonAvatar", person,
+                  new ViewDataDictionary(ViewData)
+                  {
+                     ["DisableImageSourceLink"] = true
+                  })
                <span class="member-watch-name">
                   @person.Name
                   <span class="member-watch-information">

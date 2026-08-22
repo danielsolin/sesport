@@ -286,6 +286,111 @@ public sealed class MemberWatchRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task SearchPeoplePrioritizesFirstAndLastNamePrefixes()
+   {
+      var memberId = Guid.NewGuid();
+      var matchingPersonId = Guid.NewGuid();
+      var otherPersonId = Guid.NewGuid();
+      await using var dataSource = CreateDataSource();
+      var repository = new MemberWatchRepository(dataSource);
+
+      try
+      {
+         await InsertMemberAsync(dataSource, memberId);
+         await InsertPersonAsync(
+            dataSource,
+            matchingPersonId,
+            "Niklas Lemke"
+         );
+         await InsertPersonAsync(
+            dataSource,
+            otherPersonId,
+            "Niklas Aldén"
+         );
+
+         var results = await repository.SearchPeopleAsync(
+            "niklas l",
+            memberId,
+            100,
+            CancellationToken.None
+         );
+
+         Assert.Equal(matchingPersonId, results[0].Id);
+         Assert.Contains(results, result => result.Id == otherPersonId);
+      }
+      finally
+      {
+         await DeleteTestDataAsync(
+            dataSource,
+            memberId,
+            [matchingPersonId, otherPersonId],
+            [],
+            Guid.Empty,
+            []
+         );
+      }
+   }
+
+   [Fact]
+   public async Task SearchPeopleIgnoresAccentsButKeepsSwedishLettersDistinct()
+   {
+      var memberId = Guid.NewGuid();
+      var accentedPersonId = Guid.NewGuid();
+      var swedishPersonId = Guid.NewGuid();
+      await using var dataSource = CreateDataSource();
+      var repository = new MemberWatchRepository(dataSource);
+
+      try
+      {
+         await InsertMemberAsync(dataSource, memberId);
+         await InsertPersonAsync(
+            dataSource,
+            accentedPersonId,
+            "Franzén"
+         );
+         await InsertPersonAsync(
+            dataSource,
+            swedishPersonId,
+            "Åke"
+         );
+
+         var accentInsensitiveResults =
+            await repository.SearchPeopleAsync(
+               "franzen",
+               memberId,
+               100,
+               CancellationToken.None
+            );
+         var swedishLetterResults = await repository.SearchPeopleAsync(
+            "ake",
+            memberId,
+            100,
+            CancellationToken.None
+         );
+
+         Assert.Contains(
+            accentInsensitiveResults,
+            result => result.Id == accentedPersonId
+         );
+         Assert.DoesNotContain(
+            swedishLetterResults,
+            result => result.Id == swedishPersonId
+         );
+      }
+      finally
+      {
+         await DeleteTestDataAsync(
+            dataSource,
+            memberId,
+            [accentedPersonId, swedishPersonId],
+            [],
+            Guid.Empty,
+            []
+         );
+      }
+   }
+
    private static DateTimeOffset ToUtc(TimeOnly time)
    {
       return TimeZoneHelper.ToUtc(

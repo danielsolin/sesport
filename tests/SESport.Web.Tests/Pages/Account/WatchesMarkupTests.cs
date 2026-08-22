@@ -90,11 +90,17 @@ public sealed class WatchesMarkupTests
          searchResults
       );
       Assert.Contains(
-         "PartialAsync(\"_WatchPersonAvatar\", person)",
+         "PartialAsync(\"_WatchPersonAvatar\", person,",
          searchResults
       );
+      Assert.Contains(
+         "new ViewDataDictionary(ViewData)",
+         searchResults
+      );
+      Assert.Contains("DisableImageSourceLink", searchResults);
       Assert.Contains("HasPrimaryImage", avatar);
       Assert.Contains("PrimaryImageSource", avatar);
+      Assert.Contains("disableImageSourceLink", avatar);
       Assert.Contains("member-watch-avatar", avatar);
       Assert.Contains("member-watch-image", avatar);
       Assert.Contains("member-watch-image-link", avatar);
@@ -115,7 +121,22 @@ public sealed class WatchesMarkupTests
       Assert.Contains("pushSubscription", model);
       Assert.Contains("OnPostRegisterPushAsync", model);
       Assert.Contains("OnGetImageAsync", model);
-      Assert.Contains("MinimumSearchLength", model);
+      Assert.Contains(
+         "MemberWatchDefaults.MinimumSearchLength",
+         model
+      );
+      Assert.Contains(
+         "MemberWatchDefaults.MaxSearchResults",
+         model
+      );
+      Assert.DoesNotContain(
+         "private const int MaxSearchResults",
+         model
+      );
+      Assert.DoesNotContain(
+         "private const int MinimumSearchLength",
+         model
+      );
       Assert.Contains(
          "GetPersonPrimaryImageAsync",
          model
@@ -147,7 +168,7 @@ public sealed class WatchesMarkupTests
       );
       Assert.Contains("background: #f4faf4;", css);
       Assert.Contains("background: var(--subgrid-row);", css);
-      Assert.Contains("max-height: 360px;", css);
+      Assert.Contains("max-height: 420px;", css);
       Assert.Contains("border-left: 3px solid", css);
       Assert.Contains("gap: 6px;", css);
       Assert.Contains(".member-watch-avatar {", css);
