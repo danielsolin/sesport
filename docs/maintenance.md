@@ -7,6 +7,8 @@ Use this for recurring repo clean-up.
 - Delete helpers with one real call site if they add no value.
 - Remove commented-out code and dead branches.
 - Back removals with `rg` and a build or test run.
+- Code that only gets called by tests are considered dead unless it's some kind
+  of special case..
 
 ## Keep Code Where It Belongs
 
