@@ -78,6 +78,8 @@ public sealed record PublicActivityParticipant(
 {
    public int? WatchPriority { get; init; }
 
+   public bool IsWatchedByMember { get; init; }
+
    public string? StartTimeSourceUrl { get; init; }
 
    public bool HasRepresentedEntity { get; init; }

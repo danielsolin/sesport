@@ -49,6 +49,13 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-date-dropdown", html);
       Assert.Contains("data-date-dropdown-toggle", html);
       Assert.Contains("data-date-dropdown-menu", html);
+      Assert.Contains("RouteKeys.Watched", html);
+      Assert.Contains("date-dropdown-watch-option", html);
+      Assert.Contains("Bevakade", html);
+      Assert.DoesNotContain("Mina bevakningar", html);
+      Assert.Contains("IsDateSeparator", html);
+      Assert.Contains("IsTodayDateSeparator", html);
+      Assert.Contains("activity-date-separator-row", html);
       Assert.Contains("public-date-select.js", html);
       Assert.Contains(
          "sesport-public-participant-expansions",
@@ -163,8 +170,20 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("teamCountryFlagPath", html);
       Assert.Contains("participant.WatchPriority", html);
       Assert.Contains("participant.WatchPriority == 0", html);
+      Assert.Contains("participant.IsWatchedByMember", html);
+      Assert.Contains(
+         "var isWatchedParticipant =\n" +
+         "                                       participant.IsWatchedByMember;",
+         html
+      );
+      Assert.Contains("activity-participant-watched", html);
+      Assert.Contains("activity-participant-watched-badge", html);
       Assert.Contains("watchPriorityBadgeClass", html);
       Assert.Contains("★", html);
+      Assert.True(
+         html.IndexOf("@if(participant.WatchPriority == 0)") <
+         html.IndexOf("activity-participant-watched-badge")
+      );
       Assert.DoesNotContain(
          "activity-participant-watch-priority-highest",
          html
@@ -189,6 +208,10 @@ public sealed class IndexMarkupTests
          "   display: inline-flex;",
          css
       );
+      Assert.Contains(".activity-participant-watched", css);
+      Assert.Contains(".activity-participant-watched-badge", css);
+      Assert.Contains(".activity-date-separator-label", css);
+      Assert.Contains(".activity-date-separator-label.is-today", css);
       Assert.Contains(
          ".activity-participant-col-start-time {\n" +
             "   width: 1%;\n" +

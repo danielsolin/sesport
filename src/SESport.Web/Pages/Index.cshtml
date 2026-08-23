@@ -5,7 +5,8 @@
       Model.PublicSiteOptions.MaxVisibleParticipants;
    var isFilteredView =
       Request.Query.ContainsKey(RouteKeys.Date) ||
-      Request.Query.ContainsKey(RouteKeys.Sport);
+      Request.Query.ContainsKey(RouteKeys.Sport) ||
+      Request.Query.ContainsKey(RouteKeys.Watched);
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
    var hasPastActivities = Model.TimelineEntries.Any(
@@ -15,6 +16,7 @@
       entry => entry.Section?.HasEnded == false
    );
    var shouldAutoExpandPastActivities =
+      !Model.IsWatchedActivitiesView &&
       IndexModel.ShouldAutoExpandPastActivities(
          Model.IsSportToday,
          hasPastActivities,
@@ -22,9 +24,11 @@
          Model.UntimedActivities.Count > 0
       );
    var shouldHidePastActivities = Model.IsSportToday &&
+      !Model.IsWatchedActivitiesView &&
       hasPastActivities &&
       !shouldAutoExpandPastActivities;
-   var shouldRenderPastActivitiesToggle = Model.IsSportToday &&
+   var shouldRenderPastActivitiesToggle = !Model.IsWatchedActivitiesView &&
+      Model.IsSportToday &&
       hasPastActivities;
 }
 @section Head {
@@ -76,12 +80,21 @@
                     aria-controls="date-dropdown-menu"
                     data-date-dropdown-toggle>
                <span class="date-option-content">
-                  <span class="date-option-day">
-                     @selectedDateOption.DayLabel
-                  </span>
-                  <span class="date-option-date">
-                     @selectedDateOption.DateLabel
-                  </span>
+                  @if(Model.IsWatchedActivitiesView)
+                  {
+                     <span class="date-option-watch-label">
+                        Bevakade
+                     </span>
+                  }
+                  else
+                  {
+                     <span class="date-option-day">
+                        @selectedDateOption.DayLabel
+                     </span>
+                     <span class="date-option-date">
+                        @selectedDateOption.DateLabel
+                     </span>
+                  }
                </span>
                <span class="date-dropdown-chevron"
                      aria-hidden="true"></span>
@@ -92,19 +105,58 @@
                  aria-label="Datum"
                  hidden
                  data-date-dropdown-menu>
+               @if(Model.IsMember)
+               {
+                  <a class="date-dropdown-option
+                     date-dropdown-watch-option
+                     @(Model.IsWatchedActivitiesView ? "is-selected" : "")"
+                     asp-page="/Index"
+                     asp-route-watched="true"
+                     role="option"
+                     aria-selected="@(
+                        Model.IsWatchedActivitiesView
+                           ? "true"
+                           : "false"
+                     )">
+                     <span class="date-option-content">
+                        <span class="date-option-watch-label">
+                           Bevakade
+                        </span>
+                     </span>
+                  </a>
+               }
+               else
+               {
+                  <a class="date-dropdown-option
+                     date-dropdown-watch-option"
+                     asp-page="/Account/Login">
+                     <span class="date-option-content">
+                        <span class="date-option-watch-label">
+                           Logga in för bevakningar
+                        </span>
+                     </span>
+                  </a>
+               }
                @foreach(var dateOption in Model.DateOptions)
                {
                   <a class="date-dropdown-option
-                     @(dateOption.IsSelected ? "is-selected" : "")"
+                     @(dateOption.IsSelected &&
+                        !Model.IsWatchedActivitiesView
+                        ? "is-selected"
+                        : "")"
                      asp-page="/Index"
                      asp-route-date="@dateOption.Value"
                      asp-route-sport="@Model.Sport"
                      role="option"
                      aria-selected="@(
-                        dateOption.IsSelected ? "true" : "false"
+                        dateOption.IsSelected &&
+                        !Model.IsWatchedActivitiesView
+                           ? "true"
+                           : "false"
                      )">
                      <span class="date-option-content">
-                        @if(dateOption.IsSelected)
+                        @if(dateOption.IsSelected &&
+                           !Model.IsWatchedActivitiesView)
                         {
                            <span class="date-option-label">
                               <span class="date-option-day">
@@ -180,6 +232,9 @@
                      index-participants-filter
                      @(Model.Sport is null ? "is-selected" : "")"
                      asp-page="/Index"
+                     asp-route-watched="@(Model.IsWatchedActivitiesView
+                        ? "true"
+                        : null)"
                      asp-route-date="@DateDisplay.Format(
                         Model.SelectedDate
                      )"
@@ -206,6 +261,9 @@
                         index-participants-filter
                         @(isSelected ? "is-selected" : "")"
                         asp-page="/Index"
+                        asp-route-watched="@(Model.IsWatchedActivitiesView
+                           ? "true"
+                           : null)"
                         asp-route-date="@DateDisplay.Format(
                            Model.SelectedDate
                         )"
@@ -233,13 +291,26 @@
    </div>
 }
 else if(Model.TimelineEntries.Count == 0 &&
+   Model.IsWatchedActivitiesView &&
+   !Model.IsMember)
+{
+   <div class="notice">
+      Logga in för att se aktiviteter för dina bevakningar.
+      <a class="button button-primary"
+         asp-page="/Account/Login">
+         Logga in
+      </a>
+   </div>
+}
+else if(Model.TimelineEntries.Count == 0 &&
    Model.UntimedActivities.Count == 0)
 {
    <div class="notice">
-      @(
-         "Vi har inte lyckats identifiera några internationellt " +
-         "sportande svenskar på valt datum... :-("
-      )
+      @(Model.IsWatchedActivitiesView
+         ? "Det finns inga publicerade framtida aktiviteter för dina " +
+            "bevakningar just nu."
+         : "Vi har inte lyckats identifiera några internationellt " +
+            "sportande svenskar på valt datum... :-(")
    </div>
 }
 else
@@ -254,6 +325,19 @@ else
             timelineIndex++)
       {
          var timelineEntry = Model.TimelineEntries[timelineIndex];
+         if(timelineEntry.IsDateSeparator)
+         {
+            <div class="activity-date-separator-row">
+               <span class="activity-date-separator-line"></span>
+               <span class="activity-date-separator-label
+                  @(timelineEntry.IsTodayDateSeparator ? "is-today" : "")">
+                  @timelineEntry.DateSeparatorLabel
+               </span>
+               <span class="activity-date-separator-line"></span>
+            </div>
+            continue;
+         }
+
          if(timelineEntry.IsCurrentMarker)
          {
             @if(shouldRenderPastActivitiesToggle)
@@ -733,6 +817,8 @@ else
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
+                                    var isWatchedParticipant =
+                                       participant.IsWatchedByMember;
                                     var activeParticipantIndex = participants
                                        .Take(participantIndex)
                                        .Count(
@@ -746,6 +832,15 @@ else
                                           ? "activity-participant-row-" +
                                              "collapsed"
                                           : null;
+                                    if(isWatchedParticipant)
+                                    {
+                                       rowClass = string.IsNullOrWhiteSpace(
+                                          rowClass
+                                       )
+                                          ? "activity-participant-watched"
+                                          : rowClass +
+                                             " activity-participant-watched";
+                                    }
                                     <tr class="@rowClass"
                                         data-participant-name=
                                            "@participant.Name"
@@ -759,13 +854,6 @@ else
                                        <td class="activity-participant-name
                                           activity-participant-col-name">
                                           @participant.Name
-                                          @if(!participant.IsActive)
-                                          {
-                                             <span class=
-                                       "activity-participant-out-badge">
-                                                UTE
-                                             </span>
-                                          }
                                           @if(participant.WatchPriority == 0)
                                           {
                                              <span class=
@@ -774,6 +862,21 @@ else
                                                    aria-label=
                                                       "Highest watch priority">
                                                 ★
+                                             </span>
+                                          }
+                                          @if(isWatchedParticipant)
+                                          {
+                                             <span class=
+                                                "activity-participant-watched-badge"
+                                                aria-label="Bevakad person">
+                                                Bevakad
+                                             </span>
+                                          }
+                                          @if(!participant.IsActive)
+                                          {
+                                             <span class=
+                                       "activity-participant-out-badge">
+                                                UTE
                                              </span>
                                           }
                                        </td>
@@ -936,7 +1039,8 @@ else
                </div>
             </section>
       }
-      @if(Model.HasPublishedActivitiesTomorrow)
+      @if(Model.HasPublishedActivitiesTomorrow &&
+         !Model.IsWatchedActivitiesView)
       {
          <div class="activity-tomorrow-link-row">
             <span class="activity-tomorrow-link-line"></span>

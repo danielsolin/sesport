@@ -2,6 +2,8 @@ namespace SESport.Core.Configuration;
 
 public static class MemberNotificationLeadTimes
 {
+   public const int NoNotificationsMinutes = 0;
+
    public const int OneHourMinutes = 60;
 
    public const int ThirtyMinutes = 30;
@@ -10,6 +12,7 @@ public static class MemberNotificationLeadTimes
 
    public static IReadOnlyList<int> SupportedMinutes { get; } =
    [
+      NoNotificationsMinutes,
       OneHourMinutes,
       ThirtyMinutes,
       TenMinutes
@@ -29,6 +32,6 @@ public static class MemberNotificationLeadTimes
 
       return IsSupported(defaultMinutes)
          ? defaultMinutes
-         : TenMinutes;
+         : NoNotificationsMinutes;
    }
 }

@@ -31,8 +31,12 @@ public sealed class WatchesModel(
       private set;
    } = MemberNotificationLeadTimes.Normalize(
       null,
-      MemberNotificationLeadTimes.TenMinutes
+      MemberNotificationLeadTimes.NoNotificationsMinutes
    );
+
+   public bool NotificationsEnabled =>
+      NotificationLeadTimeMinutes >
+      MemberNotificationLeadTimes.NoNotificationsMinutes;
 
    public bool PushNotificationsConfigured => pushOptions.IsConfigured;
 
@@ -62,7 +66,7 @@ public sealed class WatchesModel(
                memberId,
                cancellationToken
             ),
-            pushOptions.DefaultNotificationLeadTimeMinutes
+            MemberNotificationLeadTimes.NoNotificationsMinutes
          );
    }
 
@@ -108,7 +112,11 @@ public sealed class WatchesModel(
    {
       var memberId = GetMemberId();
       if(pushOptions.IsConfigured
-         && !string.IsNullOrWhiteSpace(pushSubscription))
+         && !string.IsNullOrWhiteSpace(pushSubscription)
+         && await HasEnabledNotificationsAsync(
+            memberId,
+            cancellationToken
+         ))
       {
          if(!TryParsePushSubscription(
                pushSubscription,
@@ -143,6 +151,10 @@ public sealed class WatchesModel(
          !TryParsePushSubscription(
             pushSubscription,
             out var parsedSubscription
+         ) ||
+         !await HasEnabledNotificationsAsync(
+            GetMemberId(),
+            cancellationToken
          ))
       {
          return BadRequest(
@@ -293,9 +305,27 @@ public sealed class WatchesModel(
 
    private static string FormatLeadTime(int minutes)
    {
+      if(minutes == MemberNotificationLeadTimes.NoNotificationsMinutes)
+      {
+         return "Skicka inga notiser";
+      }
+
       return minutes == MemberNotificationLeadTimes.OneHourMinutes
          ? "Skicka notis 1 timme före"
          : $"Skicka notis {minutes} minuter före";
+   }
+
+   private async Task<bool> HasEnabledNotificationsAsync(
+      Guid memberId,
+      CancellationToken cancellationToken
+   )
+   {
+      var minutes = await pushRepository
+         .GetNotificationLeadTimeMinutesAsync(
+            memberId,
+            cancellationToken
+         );
+      return minutes > MemberNotificationLeadTimes.NoNotificationsMinutes;
    }
 
    private sealed record PushSubscriptionRequest(

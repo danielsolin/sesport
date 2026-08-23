@@ -639,6 +639,155 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedFutureForMemberWatchesFiltersActivities()
+   {
+      var memberId = Guid.NewGuid();
+      var watchedPersonId = Guid.NewGuid();
+      var otherPersonId = Guid.NewGuid();
+      var futureActivityId = Guid.NewGuid();
+      var inactiveActivityId = Guid.NewGuid();
+      var draftActivityId = Guid.NewGuid();
+      var pastActivityId = Guid.NewGuid();
+      var futureDate = DistantActivityDate.AddDays(1);
+      var now = ToUtc(DistantActivityDate);
+      var activityIds = new[]
+      {
+         futureActivityId,
+         inactiveActivityId,
+         draftActivityId,
+         pastActivityId
+      };
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertMemberAsync(dataSource, memberId);
+         await InsertEntityAsync(
+            dataSource,
+            watchedPersonId,
+            "Watched Future Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            otherPersonId,
+            "Other Future Person",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertMemberWatchAsync(
+            dataSource,
+            memberId,
+            watchedPersonId
+         );
+         await InsertActivityAsync(
+            dataSource,
+            futureActivityId,
+            futureDate,
+            ToUtc(futureDate),
+            ActivityPublicationStatusIds.Published
+         );
+         await InsertActivityAsync(
+            dataSource,
+            inactiveActivityId,
+            futureDate,
+            ToUtc(futureDate, new TimeOnly(13, 0)),
+            ActivityPublicationStatusIds.Published
+         );
+         await InsertActivityAsync(
+            dataSource,
+            draftActivityId,
+            futureDate,
+            ToUtc(futureDate, new TimeOnly(14, 0)),
+            ActivityPublicationStatusIds.Draft
+         );
+         await InsertActivityAsync(
+            dataSource,
+            pastActivityId,
+            DistantActivityDate.AddDays(-1),
+            ToUtc(DistantActivityDate.AddDays(-1)),
+            ActivityPublicationStatusIds.Published
+         );
+         foreach(var activityId in activityIds)
+         {
+            await InsertActivityEntityLinkAsync(
+               dataSource,
+               activityId,
+               watchedPersonId
+            );
+         }
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            futureActivityId,
+            otherPersonId
+         );
+         await SetActivityLinkActiveAsync(
+            dataSource,
+            inactiveActivityId,
+            watchedPersonId,
+            false
+         );
+
+         var activities =
+            await repository.GetPublishedFutureForMemberWatchesAsync(
+               memberId,
+               now,
+               CancellationToken.None
+            );
+
+         var activity = Assert.Single(activities);
+         Assert.Equal(futureActivityId, activity.Id);
+         Assert.True(
+            Assert.Single(
+               activity.Participants,
+               participant => participant.Id == watchedPersonId
+            ).IsWatchedByMember
+         );
+         Assert.False(
+            Assert.Single(
+               activity.Participants,
+               participant => participant.Id == otherPersonId
+            ).IsWatchedByMember
+         );
+
+         var dateActivities =
+            await repository.GetPublishedForDateAsync(
+               futureDate,
+               CancellationToken.None,
+               memberId
+            );
+         var dateActivity = Assert.Single(
+            dateActivities,
+            item => item.Id == futureActivityId
+         );
+         Assert.True(
+            Assert.Single(
+               dateActivity.Participants,
+               participant => participant.Id == watchedPersonId
+            ).IsWatchedByMember
+         );
+      }
+      finally
+      {
+         foreach(var activityId in activityIds)
+         {
+            await DeleteActivityEntityLinksAsync(dataSource, activityId);
+            await DeleteActivityAsync(dataSource, activityId);
+         }
+
+         await DeleteMemberWatchAsync(
+            dataSource,
+            memberId,
+            watchedPersonId
+         );
+         await DeleteMemberAsync(dataSource, memberId);
+         await DeleteEntityAsync(dataSource, watchedPersonId);
+         await DeleteEntityAsync(dataSource, otherPersonId);
+      }
+   }
+
+   [Fact]
    public async Task GetActivitiesAsyncPrefersOrganizationAliasName()
    {
       var selectedDate = DistantActivityDate;
@@ -1813,9 +1962,14 @@ public sealed class ActivityRepositoryTests
 
    private static DateTimeOffset ToUtc(DateOnly date)
    {
+      return ToUtc(date, new TimeOnly(12, 0));
+   }
+
+   private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
+   {
       return TimeZoneHelper.ToUtc(
          date,
-         new TimeOnly(12, 0),
+         time,
          SportDay.TimeZoneId
       );
    }
@@ -1995,6 +2149,109 @@ public sealed class ActivityRepositoryTests
          representedEntityId ?? (object)DBNull.Value
       );
 
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertMemberAsync(
+      NpgsqlDataSource dataSource,
+      Guid memberId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         insert into members (
+            id,
+            email,
+            email_normalized
+         )
+         values (
+            @id,
+            @email,
+            @email_normalized
+         )
+         """
+      );
+      var email = $"activity-watch-test-{memberId:N}@example.test";
+      command.Parameters.AddWithValue("id", memberId);
+      command.Parameters.AddWithValue("email", email);
+      command.Parameters.AddWithValue("email_normalized", email);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task InsertMemberWatchAsync(
+      NpgsqlDataSource dataSource,
+      Guid memberId,
+      Guid entityId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         insert into member_entity_watches (
+            member_id,
+            entity_id
+         )
+         values (
+            @member_id,
+            @entity_id
+         )
+         """
+      );
+      command.Parameters.AddWithValue("member_id", memberId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task SetActivityLinkActiveAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId,
+      Guid entityId,
+      bool isActive
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         update activity_entity_links
+         set is_active = @is_active
+         where activity_id = @activity_id
+            and entity_id = @entity_id
+         """
+      );
+      command.Parameters.AddWithValue("is_active", isActive);
+      command.Parameters.AddWithValue("activity_id", activityId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteMemberWatchAsync(
+      NpgsqlDataSource dataSource,
+      Guid memberId,
+      Guid entityId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         delete from member_entity_watches
+         where member_id = @member_id
+            and entity_id = @entity_id
+         """
+      );
+      command.Parameters.AddWithValue("member_id", memberId);
+      command.Parameters.AddWithValue("entity_id", entityId);
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteMemberAsync(
+      NpgsqlDataSource dataSource,
+      Guid memberId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         delete from members
+         where id = @id
+         """
+      );
+      command.Parameters.AddWithValue("id", memberId);
       await command.ExecuteNonQueryAsync();
    }
 

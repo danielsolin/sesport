@@ -6,33 +6,37 @@
 }
 
 <section class="member-watches-page">
-   <div class="member-watches-push-status"
-        data-member-watch-push-status
-        data-member-watch-push-configured="@(
-           Model.PushNotificationsConfigured ? "true" : "false"
-        )"
-        data-member-watch-vapid-public-key="@Model.PushPublicKey"
-        aria-live="polite">
-      <p data-member-watch-push-status-text>
-         Kontrollerar notiser...
-      </p>
-      <button class="member-watch-action-button
-         member-watches-push-action"
-              type="button"
-              data-member-watch-push-activate
-              hidden>
-         AKTIVERA NOTISER
-      </button>
-      <form method="post"
-            asp-page-handler="RegisterPush"
-            data-member-watch-push-registration-form
-            hidden>
-         @Html.AntiForgeryToken()
-         <input type="hidden"
-                name="pushSubscription"
-                data-member-watch-push-subscription />
-      </form>
-   </div>
+   @if(Model.NotificationsEnabled)
+   {
+      <div class="member-watches-push-status"
+           data-member-watch-push-status
+           data-member-watch-notifications-enabled="true"
+           data-member-watch-push-configured="@(
+              Model.PushNotificationsConfigured ? "true" : "false"
+           )"
+           data-member-watch-vapid-public-key="@Model.PushPublicKey"
+           aria-live="polite">
+         <p data-member-watch-push-status-text>
+            Kontrollerar notiser...
+         </p>
+         <button class="member-watch-action-button
+            member-watches-push-action"
+                 type="button"
+                 data-member-watch-push-activate
+                 hidden>
+            AKTIVERA NOTISER
+         </button>
+         <form method="post"
+               asp-page-handler="RegisterPush"
+               data-member-watch-push-registration-form
+               hidden>
+            @Html.AntiForgeryToken()
+            <input type="hidden"
+                   name="pushSubscription"
+                   data-member-watch-push-subscription />
+         </form>
+      </div>
+   }
 
    <form class="member-watches-notification-settings"
          method="post"
@@ -59,6 +63,9 @@
    <div class="member-watches-search-container"
         data-member-watch-search
         data-member-watch-search-url="@searchUrl"
+        data-member-watch-notifications-enabled="@(
+           Model.NotificationsEnabled ? "true" : "false"
+        )"
         data-member-watch-push-configured="@(
            Model.PushNotificationsConfigured ? "true" : "false"
         )"

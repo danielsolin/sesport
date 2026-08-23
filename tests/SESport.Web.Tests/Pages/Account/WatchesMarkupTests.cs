@@ -60,6 +60,10 @@ public sealed class WatchesMarkupTests
       Assert.DoesNotContain("SortQueryParameter", model);
       Assert.DoesNotContain("SortOptions", model);
       Assert.Contains("data-member-watch-push-configured", page);
+      Assert.Contains(
+         "data-member-watch-notifications-enabled",
+         page
+      );
       Assert.Contains("data-member-watch-vapid-public-key", page);
       Assert.Contains("data-member-watch-push-status", page);
       Assert.Contains("data-member-watch-push-activate", page);
@@ -142,12 +146,19 @@ public sealed class WatchesMarkupTests
          model
       );
       Assert.Contains("Skicka notis", model);
+      Assert.Contains("Skicka inga notiser", model);
+      Assert.Contains("NotificationsEnabled", model);
       Assert.Contains(
          "MemberNotificationLeadTimes.SupportedMinutes",
          model
       );
       Assert.Contains("autoSubmitFormSelector", script);
       Assert.Contains("PushManager", script);
+      Assert.Contains(
+         "memberWatchNotificationsEnabled",
+         script
+      );
+      Assert.Contains("!notificationsEnabled", script);
       Assert.Contains("requestPermission", script);
       Assert.Contains("push service error", script);
       Assert.Contains("service-worker.js", script);

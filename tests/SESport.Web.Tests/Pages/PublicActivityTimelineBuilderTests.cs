@@ -6,6 +6,122 @@ namespace SESport.Core.Tests.Pages;
 public class PublicActivityTimelineBuilderTests
 {
    [Fact]
+   public void BuildFutureSeparatesActivitiesByDisplayDate()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         8,
+         26,
+         12,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var firstDate = new DateOnly(2026, 8, 27);
+      var secondDate = new DateOnly(2026, 8, 29);
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "First",
+            firstDate,
+            TimeZoneHelper.ToUtc(
+               firstDate,
+               new TimeOnly(10, 0),
+               SportDay.TimeZoneId
+            )
+         ),
+         CreateActivity(
+            "Second",
+            firstDate,
+            TimeZoneHelper.ToUtc(
+               firstDate,
+               new TimeOnly(12, 0),
+               SportDay.TimeZoneId
+            )
+         ),
+         CreateActivity(
+            "Third",
+            secondDate,
+            TimeZoneHelper.ToUtc(
+               secondDate,
+               new TimeOnly(10, 0),
+               SportDay.TimeZoneId
+            )
+         )
+      };
+
+      var timeline = builder.BuildFuture(activities, now);
+
+      Assert.Equal(
+         ["Torsdag 27 augusti", "Lördag 29 augusti"],
+         timeline.TimelineEntries
+            .Where(entry => entry.IsDateSeparator)
+            .Select(entry => entry.DateSeparatorLabel)
+      );
+      Assert.Equal(
+         ["First", "Second", "Third"],
+         timeline.TimelineEntries
+            .Where(entry => entry.Section is not null)
+            .Select(entry => entry.Section!.Activities[0].Title)
+      );
+      Assert.DoesNotContain(
+         timeline.TimelineEntries,
+         entry => entry.IsCurrentMarker
+      );
+   }
+
+   [Fact]
+   public void BuildFutureLabelsTodayAsIdag()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         8,
+         26,
+         12,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var today = SportDay.GetSportDate(now);
+      var tomorrow = today.AddDays(1);
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Today",
+            today,
+            TimeZoneHelper.ToUtc(
+               today,
+               new TimeOnly(18, 0),
+               SportDay.TimeZoneId
+            )
+         ),
+         CreateActivity(
+            "Tomorrow",
+            tomorrow,
+            TimeZoneHelper.ToUtc(
+               tomorrow,
+               new TimeOnly(10, 0),
+               SportDay.TimeZoneId
+            )
+         )
+      };
+
+      var timeline = builder.BuildFuture(activities, now);
+      var separators = timeline.TimelineEntries
+         .Where(entry => entry.IsDateSeparator)
+         .ToArray();
+
+      Assert.Equal(
+         ["Idag", "Torsdag 27 augusti"],
+         separators.Select(entry => entry.DateSeparatorLabel)
+      );
+      Assert.True(separators[0].IsTodayDateSeparator);
+      Assert.False(separators[1].IsTodayDateSeparator);
+   }
+
+   [Fact]
    public void Build_ShowsEarlierAndFutureActivities()
    {
       var now = new DateTimeOffset(2026, 6, 12, 12, 0, 0, TimeSpan.Zero);

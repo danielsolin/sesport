@@ -47,6 +47,11 @@
          return;
       }
 
+      if(status.dataset.memberWatchNotificationsEnabled !== "true")
+      {
+         return;
+      }
+
       const statusText = status.querySelector(
          "[data-member-watch-push-status-text]"
       );
@@ -378,10 +383,14 @@
       const searchUrl = (
          container.dataset.memberWatchSearchUrl ?? ""
       ).trim();
+      const notificationsEnabled =
+         container.dataset.memberWatchNotificationsEnabled === "true";
       const pushConfigured =
          container.dataset.memberWatchPushConfigured === "true";
       const serviceWorkerRegistrationPromise =
-         pushConfigured && "serviceWorker" in navigator
+         notificationsEnabled
+            && pushConfigured
+            && "serviceWorker" in navigator
             ? navigator.serviceWorker.register(
                "/service-worker.js",
                { scope: "/" }
@@ -666,7 +675,8 @@
       });
 
       const getExistingPushSubscription = async () => {
-         if(!pushConfigured
+         if(!notificationsEnabled
+            || !pushConfigured
             || !("serviceWorker" in navigator)
             || !("PushManager" in window)
             || serviceWorkerRegistrationPromise === null)

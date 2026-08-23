@@ -11,7 +11,7 @@ public sealed record MemberPushOptions
    public bool WorkerEnabled { get; init; } = false;
 
    public int DefaultNotificationLeadTimeMinutes { get; init; } =
-      MemberNotificationLeadTimes.TenMinutes;
+      MemberNotificationLeadTimes.NoNotificationsMinutes;
 
    public const int MinimumSweepIntervalSeconds = 5;
 

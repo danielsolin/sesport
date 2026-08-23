@@ -17,14 +17,52 @@ public sealed class PublicActivityTimelineBuilder
    )
    {
       var visibleActivities = activities.ToList();
-
       var timedActivities = visibleActivities
          .Where(HasLocalStartTime)
          .ToList();
-      var untimedActivities = visibleActivities
-         .Where(activity => !HasLocalStartTime(activity))
-         .ToList();
+      var timelineEntries = CreateTimelineEntries(
+         CreateTimedSections(timedActivities, now),
+         selectedDate,
+         now
+      );
 
+      return new PublicActivityTimelineViewModel(
+         timelineEntries,
+         visibleActivities
+            .Where(activity => !HasLocalStartTime(activity))
+            .ToList(),
+         visibleActivities.Count > 0
+      );
+   }
+
+   public PublicActivityTimelineViewModel BuildFuture(
+      IEnumerable<ActivityListItem> activities,
+      DateTimeOffset now
+   )
+   {
+      var visibleActivities = activities.ToList();
+      var timedActivities = visibleActivities
+         .Where(HasLocalStartTime)
+         .ToList();
+      var timelineEntries = CreateFutureTimelineEntries(
+         CreateTimedSections(timedActivities, now),
+         SportDay.GetSportDate(now)
+      );
+
+      return new PublicActivityTimelineViewModel(
+         timelineEntries,
+         visibleActivities
+            .Where(activity => !HasLocalStartTime(activity))
+            .ToList(),
+         visibleActivities.Count > 0
+      );
+   }
+
+   private static IReadOnlyList<ActivityAgendaSection> CreateTimedSections(
+      IReadOnlyList<ActivityListItem> timedActivities,
+      DateTimeOffset now
+   )
+   {
       var groupedActivityIds = timedActivities
          .Where(activity =>
             activity.ActivityGroupId is not null &&
@@ -70,17 +108,7 @@ public sealed class PublicActivityTimelineBuilder
          )
          .ToList();
 
-      var timelineEntries = CreateTimelineEntries(
-         timedSections,
-         selectedDate,
-         now
-      );
-
-      return new PublicActivityTimelineViewModel(
-         timelineEntries,
-         untimedActivities,
-         visibleActivities.Count > 0
-      );
+      return timedSections;
    }
 
    private static IReadOnlyList<PublicActivityTimelineEntry>
@@ -117,6 +145,59 @@ public sealed class PublicActivityTimelineBuilder
       }
 
       return entries;
+   }
+
+   private static IReadOnlyList<PublicActivityTimelineEntry>
+      CreateFutureTimelineEntries(
+         IReadOnlyList<ActivityAgendaSection> timedSections,
+         DateOnly todayDate
+      )
+   {
+      var entries = new List<PublicActivityTimelineEntry>();
+      DateOnly? previousDisplayDate = null;
+
+      foreach(var section in timedSections)
+      {
+         var displayDate = ActivityDisplayDateResolver.Resolve(
+            section.TimelineSlot.Activity.StartsAt!.Value,
+            section.TimelineSlot.Activity.PublicDateMode
+         );
+         if(displayDate != previousDisplayDate)
+         {
+            entries.Add(
+               new PublicActivityTimelineEntry(
+                  null,
+                  null,
+                  FormatDateSeparator(displayDate, todayDate),
+                  displayDate == todayDate
+               )
+            );
+            previousDisplayDate = displayDate;
+         }
+
+         entries.Add(new PublicActivityTimelineEntry(null, section));
+      }
+
+      return entries;
+   }
+
+   private static string FormatDateSeparator(
+      DateOnly date,
+      DateOnly todayDate
+   )
+   {
+      if(date == todayDate)
+      {
+         return "Idag";
+      }
+
+      var culture = CultureInfo.GetCultureInfo(
+         PrimaryCountry.CultureName
+      );
+      var dayLabel = culture.TextInfo.ToTitleCase(
+         date.ToString("dddd", culture)
+      );
+      return $"{dayLabel} {date.ToString("d MMMM", culture)}";
    }
 
    private static int GetTimelineOrder(
@@ -429,8 +510,12 @@ public sealed record PublicActivityTimelineViewModel(
 
 public sealed record PublicActivityTimelineEntry(
    string? CurrentMarkerLabel,
-   ActivityAgendaSection? Section
+   ActivityAgendaSection? Section,
+   string? DateSeparatorLabel = null,
+   bool IsTodayDateSeparator = false
 )
 {
    public bool IsCurrentMarker => CurrentMarkerLabel is not null;
+
+   public bool IsDateSeparator => DateSeparatorLabel is not null;
 }

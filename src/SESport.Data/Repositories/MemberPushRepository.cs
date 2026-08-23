@@ -162,6 +162,7 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                and activity.starts_at > @now
                and person.entity_type_id =
                   '{{TrackedEntityTypeIds.Person}}'
+               and member.push_notification_lead_time_minutes > 0
                and notification.sent_at is null
                and (
                   notification.claimed_at is null

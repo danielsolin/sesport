@@ -949,7 +949,8 @@
 }
 
 .activity-past-toggle-row,
-.activity-tomorrow-link-row {
+.activity-tomorrow-link-row,
+.activity-date-separator-row {
    display: flex;
    align-items: center;
    gap: 12px;
@@ -962,7 +963,8 @@
 }
 
 .activity-past-toggle-line,
-.activity-tomorrow-link-line {
+.activity-tomorrow-link-line,
+.activity-date-separator-line {
    flex: 1;
    height: 1px;
    background:
@@ -1003,6 +1005,27 @@
 .activity-tomorrow-link:focus-visible {
    outline: 2px solid rgba(0, 106, 168, 0.45);
    outline-offset: 2px;
+}
+
+.activity-date-separator-label {
+   display: inline-flex;
+   align-items: center;
+   padding: 7px 14px;
+   border: 1px solid rgba(0, 106, 168, 0.32);
+   border-radius: 999px;
+   background: rgba(0, 106, 168, 0.08);
+   color: var(--accent-strong);
+   font-size: 12px;
+   font-weight: 800;
+   letter-spacing: 0.04em;
+   white-space: nowrap;
+}
+
+.activity-date-separator-label.is-today {
+   border-color: rgba(255, 204, 0, 0.45);
+   background: rgba(255, 204, 0, 0.22);
+   color: var(--accent);
+   box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
 }
 
 .activity-past-activities-hidden
@@ -1572,6 +1595,31 @@
 
 .activity-participant-name {
    font-weight: 750;
+}
+
+.activity-participant-watched {
+   background: rgba(0, 106, 168, 0.08);
+}
+
+.activity-participant-watched .activity-participant-name {
+   color: var(--accent-strong);
+   font-weight: 850;
+}
+
+.activity-participant-watched-badge {
+   display: inline-flex;
+   align-items: center;
+   margin-left: 6px;
+   padding: 1px 5px;
+   border: 1px solid rgba(0, 106, 168, 0.45);
+   border-radius: 999px;
+   background: rgba(0, 106, 168, 0.1);
+   color: var(--accent-strong);
+   font-size: 9px;
+   font-weight: 800;
+   line-height: 1.2;
+   white-space: nowrap;
+   vertical-align: 1px;
 }
 
 .activity-participant-col-start-time {

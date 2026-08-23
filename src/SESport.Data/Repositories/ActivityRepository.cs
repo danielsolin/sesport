@@ -127,11 +127,60 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
    public async Task<IReadOnlyList<ActivityListItem>> GetPublishedForDateAsync(
       DateOnly date,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      Guid? watchedByMemberId = null
    )
    {
       return await GetPublishedActivitiesAsync(
          SportDay.ForDate(date),
+         cancellationToken,
+         watchedByMemberId
+      );
+   }
+
+   public async Task<IReadOnlyList<ActivityListItem>>
+      GetPublishedFutureForMemberWatchesAsync(
+         Guid memberId,
+         DateTimeOffset now,
+         CancellationToken cancellationToken
+      )
+   {
+      var activities = await QueryActivityListAsync(
+         $$"""
+            where a.publication_status_id =
+               '{{ActivityPublicationStatusIds.Published}}'
+               and a.starts_at > @now
+               and exists (
+                  select 1
+                  from activity_entity_links watched_link
+                  join member_entity_watches watch
+                     on watch.entity_id = watched_link.entity_id
+                     and watch.member_id = @member_id
+                  join entities watched_person
+                     on watched_person.id = watched_link.entity_id
+                  where watched_link.activity_id = a.id
+                     and watched_link.is_active
+                     and watched_person.entity_type_id =
+                        '{{TrackedEntityTypeIds.Person}}'
+               )
+               {{PublicActivityQuerySupport.ExclusionClause}}
+         """,
+         TimedOrderClause,
+         """
+         coalesce(s.display_name, s.name)
+         """,
+         command =>
+         {
+            command.Parameters.AddWithValue("member_id", memberId);
+            command.Parameters.AddWithValue("now", now);
+            PublicActivityQuerySupport.AddExclusionParameters(command);
+         },
+         cancellationToken,
+         watchedByMemberId: memberId
+      );
+
+      return await ApplyNationalTeamFlagsAsync(
+         activities,
          cancellationToken
       );
    }
@@ -217,7 +266,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    private async Task<IReadOnlyList<ActivityListItem>>
       GetPublishedActivitiesAsync(
          SportDayWindow window,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         Guid? watchedByMemberId = null
       )
    {
       var activities = await QueryActivityListAsync(
@@ -248,7 +298,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             command.Parameters.AddWithValue("date", window.StartDate);
             PublicActivityQuerySupport.AddExclusionParameters(command);
          },
-         cancellationToken
+         cancellationToken,
+         watchedByMemberId: watchedByMemberId
       );
 
       return await ApplyNationalTeamFlagsAsync(
@@ -1577,7 +1628,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       string orderClause,
       string sportNameExpression,
       Action<NpgsqlCommand>? configureCommand,
-      CancellationToken cancellationToken
+      CancellationToken cancellationToken,
+      Guid? watchedByMemberId = null
    )
    {
       var sql = CreateActivityListSql(
@@ -1594,6 +1646,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       );
       var participantsByActivity = await GetPublicParticipantsAsync(
          activities.Select(activity => activity.Id).ToArray(),
+         watchedByMemberId,
          cancellationToken
       );
       var sourcesByActivity = await GetActivitySourcesAsync(
@@ -1696,6 +1749,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       IReadOnlyList<PublicActivityParticipant>
    >> GetPublicParticipantsAsync(
       Guid[] activityIds,
+      Guid? watchedByMemberId,
       CancellationToken cancellationToken
    )
    {
@@ -1707,6 +1761,16 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          >();
       }
 
+      var watchedByMemberSql = watchedByMemberId is null
+         ? "false"
+         : """
+            exists (
+               select 1
+               from member_entity_watches member_watch
+               where member_watch.member_id = @member_id
+                  and member_watch.entity_id = person.id
+            )
+            """;
       var sql = $$"""
          select distinct
             al.activity_id,
@@ -1736,7 +1800,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
             ) as represented_entity_name,
             represented_entity.canonical_name
                as represented_entity_canonical_name,
-            participant_start.source_url
+            participant_start.source_url,
+            {{watchedByMemberSql}} as is_watched_by_member
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
@@ -1822,6 +1887,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("activity_ids", activityIds);
+      if(watchedByMemberId is not null)
+      {
+         command.Parameters.AddWithValue(
+            "member_id",
+            watchedByMemberId.Value
+         );
+      }
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -1870,7 +1942,8 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
                   : reader.GetString(16),
                StartTimeSourceUrl = reader.IsDBNull(17)
                   ? null
-                  : reader.GetString(17)
+                  : reader.GetString(17),
+               IsWatchedByMember = reader.GetBoolean(18)
             }
          );
       }

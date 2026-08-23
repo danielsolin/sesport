@@ -4,6 +4,7 @@ using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace SESport.Web.Pages;
 
@@ -33,6 +34,13 @@ public class IndexModel(
 
    [BindProperty(SupportsGet = true, Name = RouteKeys.Sport)]
    public string? Sport { get; set; }
+
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Watched)]
+   public bool Watched { get; set; }
+
+   public bool IsWatchedActivitiesView { get; private set; }
+
+   public bool IsMember { get; private set; }
 
    public DateOnly SelectedDate { get; private set; }
 
@@ -64,6 +72,9 @@ public class IndexModel(
       SelectedDate = ParseDate(Date) ?? sportToday;
       TomorrowDate = SelectedDate.AddDays(1);
       IsSportToday = SelectedDate == sportToday;
+      IsWatchedActivitiesView = Watched;
+      var memberId = TryGetMemberId();
+      IsMember = memberId is not null;
       DateOptions = BuildDateOptions(sportToday, SelectedDate, []);
 
       try
@@ -82,9 +93,46 @@ public class IndexModel(
             SelectedDate,
             publishedDateCounts
          );
+
+         if(IsWatchedActivitiesView)
+         {
+            HasPublishedActivitiesTomorrow = false;
+            if(memberId is null)
+            {
+               return;
+            }
+
+            var watchedActivities =
+               await repository.GetPublishedFutureForMemberWatchesAsync(
+                  memberId.Value,
+                  now,
+                  cancellationToken
+               );
+            TotalParticipantsCount = CountParticipants(watchedActivities);
+            SportParticipantCounts = CountParticipantsBySport(
+               watchedActivities
+            );
+            Sport = NormalizeSportFilter(
+               Sport,
+               SportParticipantCounts
+            );
+            var filteredWatchedActivities = FilterActivitiesBySport(
+               watchedActivities,
+               Sport
+            );
+            var watchedTimeline = timelineBuilder.BuildFuture(
+               filteredWatchedActivities,
+               now
+            );
+            TimelineEntries = watchedTimeline.TimelineEntries;
+            UntimedActivities = watchedTimeline.UntimedActivities;
+            return;
+         }
+
          var activities = await repository.GetPublishedForDateAsync(
             SelectedDate,
-            cancellationToken
+            cancellationToken,
+            memberId
          );
          TotalParticipantsCount = CountParticipants(activities);
          SportParticipantCounts =
@@ -115,6 +163,16 @@ public class IndexModel(
       {
          LoadError = this.LogUnexpectedError(exception);
       }
+   }
+
+   private Guid? TryGetMemberId()
+   {
+      var memberIdValue = User.FindFirstValue(
+         MemberClaimTypes.MemberId
+      );
+      return Guid.TryParse(memberIdValue, out var memberId)
+         ? memberId
+         : null;
    }
 
    internal static int CountParticipants(

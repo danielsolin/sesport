@@ -293,6 +293,29 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void MemberPushDefaultMigrationMakesNotificationsOptIn()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "035_member_push_notifications_default_off.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("set default 0", migration);
+      Assert.Contains(
+         "push_notification_lead_time_minutes is null",
+         migration
+      );
+      Assert.Contains(
+         "or push_notification_lead_time_minutes >= 0",
+         migration
+      );
+   }
+
+   [Fact]
    public void MemberPushEndpointMigrationMakesSubscriptionsDeviceUnique()
    {
       var migration = File.ReadAllText(
