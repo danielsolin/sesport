@@ -45,28 +45,53 @@ browsers).
 
 ## Running
 
+The server speaks MCP over **Streamable HTTP** (stateless) and is intended to
+run as a long-lived process, so the Playwright/web stack stays warm across
+sessions. It is deployed as the `sesport-mcp.service` systemd unit:
+
+```sh
+sudo systemctl enable --now sesport-mcp.service
+systemctl status sesport-mcp.service
+```
+
+The unit runs the published build and listens on loopback:
+
+```
+SESPORT_MCP_URL=http://127.0.0.1:5110   # overridable
+```
+
+To run it manually (for development) instead of via systemd:
+
 ```sh
 dotnet run --project src/SESport.MCP
 ```
 
-The server speaks MCP over stdio (newline-delimited JSON-RPC).
+After a code change, republish and restart the unit:
+
+```sh
+dotnet publish src/SESport.MCP/SESport.MCP.csproj -c Release \
+  -o src/SESport.MCP/publish
+sudo systemctl restart sesport-mcp.service
+```
 
 ## Registering with Codex CLI
 
+Point Codex at the running Streamable HTTP endpoint (not a child command):
+
 ```sh
-codex mcp add sesport-web \
-  --env SearXNG__BaseUrl="$SESPORT_SEARXNG_BASE_URL" \
-  -- dotnet run --project /home/daniel/sesport/src/SESport.MCP
+codex mcp add sesport-web --url http://127.0.0.1:5110/
 ```
 
-or from within `/home/daniel/sesport`:
+or add it to `~/.codex/config.toml`:
 
-```sh
-codex mcp add sesport-web -- dotnet run --project src/SESport.MCP
+```toml
+[mcp_servers.sesport-web]
+url = "http://127.0.0.1:5110/"
 ```
 
 Verify the registration:
 
 ```sh
 codex mcp list
+codex mcp get sesport-web
 ```

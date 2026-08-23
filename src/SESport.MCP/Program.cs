@@ -1,15 +1,19 @@
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.Configuration;
 using SESport.MCP;
 
-var services = new ServiceCollection();
-services.AddLogging();
+var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.UseUrls(
+   Environment.GetEnvironmentVariable("SESPORT_MCP_URL")
+      ?? "http://127.0.0.1:5110"
+);
+
+builder.Services.AddLogging();
 
 var searxngOptions = new ConfigurationBuilder()
    .AddEnvironmentVariables()
@@ -17,42 +21,45 @@ var searxngOptions = new ConfigurationBuilder()
    .GetSection(ApplicationConfigurationKeys.SearxngSection)
    .Get<SearxngWebSearchClientOptions>() ??
    new SearxngWebSearchClientOptions();
-services.AddSingleton(searxngOptions);
+builder.Services.AddSingleton(searxngOptions);
 
-services.AddSingleton<SearchRateLimiter>();
-services.AddSingleton<WebSearchCache>();
-services.AddHttpClient<SearxngWebSearchClient>(
+builder.Services.AddSingleton<SearchRateLimiter>();
+builder.Services.AddSingleton<WebSearchCache>();
+builder.Services.AddHttpClient<SearxngWebSearchClient>(
    client => client.Timeout = AiDefaults.SearxngHttpClientTimeout
 );
-services.AddScoped<IWebSearchClient>(
+builder.Services.AddScoped<IWebSearchClient>(
    serviceProvider => new CachedWebSearchClient(
       serviceProvider.GetRequiredService<SearxngWebSearchClient>(),
       serviceProvider.GetRequiredService<WebSearchCache>(),
       serviceProvider.GetRequiredService<SearxngWebSearchClientOptions>()
    )
 );
-services.AddHttpClient<
+builder.Services.AddHttpClient<
    IWebPageContentClient,
    WebPageContentClient
 >(
    client =>
       client.Timeout = AiDefaults.WebPageContentHttpClientTimeout
 );
-services.AddScoped<WebSearchTool>();
-services.AddScoped<WebPageTool>();
+builder.Services.AddScoped<WebSearchTool>();
+builder.Services.AddScoped<WebPageTool>();
 
-var mcpBuilder = services.AddMcpServer();
 var serializerOptions = new JsonSerializerOptions
 {
    DefaultIgnoreCondition = JsonIgnoreCondition.Never,
    TypeInfoResolver = new DefaultJsonTypeInfoResolver()
 };
-mcpBuilder
-   .WithStdioServerTransport()
+
+builder.Services.AddMcpServer()
+   .WithHttpTransport(options =>
+   {
+      options.SessionMode = HttpServerSessionMode.Stateless;
+   })
    .WithTools<WebSearchTool>(serializerOptions)
    .WithTools<WebPageTool>(serializerOptions);
 
-var serviceProvider = services.BuildServiceProvider();
-await using var scope = serviceProvider.CreateAsyncScope();
-var mcpServer = scope.ServiceProvider.GetRequiredService<McpServer>();
-await mcpServer.RunAsync();
+var app = builder.Build();
+
+app.MapMcp();
+app.Run();

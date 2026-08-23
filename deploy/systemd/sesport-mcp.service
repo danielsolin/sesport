@@ -1,0 +1,26 @@
+[Unit]
+Description=SESport MCP (web research tools over Streamable HTTP)
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=daniel
+WorkingDirectory=/home/daniel/sesport/src/SESport.MCP
+
+Environment=HOME=/home/daniel
+Environment=DOTNET_CLI_HOME=/home/daniel
+Environment=DOTNET_NOLOGO=true
+Environment=SESPORT_MCP_URL=http://127.0.0.1:5110
+EnvironmentFile=/home/daniel/sesport/.env
+
+ExecStart=/usr/bin/dotnet /home/daniel/sesport/src/SESport.MCP/publish/SESport.MCP.dll
+
+Restart=always
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

@@ -17,3 +17,4 @@ artifacts/publish-dev/
 ./artifacts/screenshots/*
 android/keys/
 data/db-backups/
+**/publish/
