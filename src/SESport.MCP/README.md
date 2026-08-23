@@ -14,6 +14,20 @@ to the existing clients in `SESport.AI`:
 No filtering, summarization, or result shaping happens in this project.
 `include_social_media` is hard-coded to `false` in the current version.
 
+### Structured content serialization
+
+The tools opt into MCP structured content, so the SDK generates an output
+schema from the return type and validates the serialized response against it.
+`WebPageContent` and `WebSearchResponse` have nullable properties that are
+regularly `null`; the default JSON serialization omits those, and the
+validator then fails with `must have required property 'publishedAt'`.
+
+To keep the internal `SESport.AI` records untouched, the server registers the
+tools with explicit `JsonSerializerOptions` (`DefaultIgnoreCondition = Never`,
+plus the `DefaultJsonTypeInfoResolver` that System.Text.Json 9+ requires
+before options are marked read-only). This emits `null` values explicitly so
+the response always satisfies the schema.
+
 ## Configuration
 
 The server reads the same environment configuration as `SESport.Web`, in

@@ -42,10 +42,15 @@ services.AddScoped<WebSearchTool>();
 services.AddScoped<WebPageTool>();
 
 var mcpBuilder = services.AddMcpServer();
+var serializerOptions = new JsonSerializerOptions
+{
+   DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+   TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+};
 mcpBuilder
    .WithStdioServerTransport()
-   .WithTools<WebSearchTool>()
-   .WithTools<WebPageTool>();
+   .WithTools<WebSearchTool>(serializerOptions)
+   .WithTools<WebPageTool>(serializerOptions);
 
 var serviceProvider = services.BuildServiceProvider();
 await using var scope = serviceProvider.CreateAsyncScope();
