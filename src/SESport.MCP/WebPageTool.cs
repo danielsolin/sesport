@@ -17,7 +17,7 @@ public sealed class WebPageTool
       UseStructuredContent = true
    )]
    [Description(
-      "Fetches a web page through the project's existing web page " +
+      "Fetches a web page through SESport's existing web page " +
          "content pipeline and returns the raw WebPageContent " +
          "unchanged."
    )]

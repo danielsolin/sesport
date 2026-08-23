@@ -17,7 +17,7 @@ public sealed class WebSearchTool
       UseStructuredContent = true
    )]
    [Description(
-      "Searches the web through the project's local SearXNG instance " +
+      "Searches the web through SESport's local SearXNG instance " +
          "and returns the raw WebSearchResponse (results, provider, " +
          "details)."
    )]
