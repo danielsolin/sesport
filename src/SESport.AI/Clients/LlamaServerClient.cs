@@ -35,7 +35,8 @@ public sealed class LlamaServerClient : IAiProviderClient
       DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
    };
 
-   public string Kind => AiProviderKinds.LlamaServer;
+   public IReadOnlyCollection<string> Kinds =>
+      [AiProviderKinds.LlamaServer];
 
    public LlamaServerClient(
       HttpClient httpClient,

@@ -5,7 +5,7 @@ namespace SESport.AI.Clients;
 
 public interface IAiProviderClient
 {
-   string Kind { get; }
+   IReadOnlyCollection<string> Kinds { get; }
 
    JsonObject CreateRequestPayload(
       AiProviderDefinition provider,

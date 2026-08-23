@@ -14,13 +14,17 @@
       return;
    }
 
-   const codexProviderKind = field.dataset.codexProviderKind ?? "";
+   const codexProviderKinds = (field.dataset.codexProviderKinds ?? "")
+      .split(",")
+      .map(kind => kind.trim())
+      .filter(Boolean);
    const defaultEffort = field.dataset.defaultEffort ?? "";
 
    const syncReasoningField = () => {
       const selectedOption = jobSelect.selectedOptions[0];
-      const isCodex = selectedOption?.dataset.providerKind ===
-         codexProviderKind;
+      const isCodex = codexProviderKinds.includes(
+         selectedOption?.dataset.providerKind ?? ""
+      );
 
       field.hidden = !isCodex;
       reasoningSelect.disabled = !isCodex;

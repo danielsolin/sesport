@@ -20,7 +20,8 @@ public sealed class OpenRouterClient : IAiProviderClient
       DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
    };
 
-   public string Kind => AiProviderKinds.OpenRouter;
+   public IReadOnlyCollection<string> Kinds =>
+      [AiProviderKinds.OpenRouter];
 
    public OpenRouterClient(HttpClient httpClient)
    {

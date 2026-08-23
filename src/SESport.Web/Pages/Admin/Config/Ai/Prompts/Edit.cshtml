@@ -61,7 +61,7 @@
             <span asp-validation-for="Prompt.Version"></span>
          </label>
          <label data-codex-reasoning-field
-                data-codex-provider-kind="@AiProviderKinds.CodexCli"
+                data-codex-provider-kinds="@AiProviderKinds.CodexCli,@AiProviderKinds.CodexCliLocal"
                 data-default-effort="@CodexReasoningEfforts.Default"
                 hidden="@(Model.IsCodexPrompt ? null : "hidden")">
             <span>Reasoning effort</span>

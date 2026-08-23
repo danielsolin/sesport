@@ -1094,6 +1094,7 @@ public class DetailsModel(
       ParseCodexToolTrace(IReadOnlyList<JsonElement> entries)
    {
       var actionTurns = new List<ToolTraceTurnBuilder>();
+      var diagnosticNotes = new List<ToolTraceNoteViewModel>();
       var usageNotes = new List<ToolTraceNoteViewModel>();
       string? assistantContent = null;
 
@@ -1123,6 +1124,26 @@ public class DetailsModel(
             ))
             {
                assistantContent = GetString(item.Value, "text");
+               continue;
+            }
+
+            if(string.Equals(
+               itemType,
+               "error",
+               StringComparison.Ordinal
+            ))
+            {
+               var message = GetString(item.Value, "message");
+
+               if(!string.IsNullOrWhiteSpace(message))
+               {
+                  diagnosticNotes.Add(new ToolTraceNoteViewModel(
+                     "Codex diagnostic",
+                     message,
+                     null
+                  ));
+               }
+
                continue;
             }
 
@@ -1164,12 +1185,14 @@ public class DetailsModel(
          {
             AssistantContent = assistantContent
          };
+         assistantTurn.Notes.AddRange(diagnosticNotes);
          assistantTurn.Notes.AddRange(usageNotes);
          return [assistantTurn.ToViewModel()];
       }
 
       var finalTurn = actionTurns[^1];
       finalTurn.AssistantContent = assistantContent;
+      finalTurn.Notes.AddRange(diagnosticNotes);
       finalTurn.Notes.AddRange(usageNotes);
 
       return actionTurns

@@ -23,7 +23,8 @@ public sealed class GoogleTranslateClient : IAiProviderClient
       this.translationFetcher = translationFetcher;
    }
 
-   public string Kind => AiProviderKinds.GoogleTranslate;
+   public IReadOnlyCollection<string> Kinds =>
+      [AiProviderKinds.GoogleTranslate];
 
    public JsonObject CreateRequestPayload(
       AiProviderDefinition provider,

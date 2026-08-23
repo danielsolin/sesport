@@ -25,6 +25,10 @@ public sealed class AiProviderEditModel
 
    public string? ApiKeySource { get; set; }
 
+   public string? CodexProfile { get; set; }
+
+   public string? CodexSystemInstruction { get; set; }
+
    public string RequestOptionsJson { get; set; } = "{}";
 
    public string? ConditionalToolsJson { get; set; }

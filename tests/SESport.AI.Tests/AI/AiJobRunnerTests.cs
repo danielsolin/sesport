@@ -404,7 +404,7 @@ public class AiJobRunnerTests
 
    private sealed class ThrowingProviderClient : IAiProviderClient
    {
-      public string Kind => "llama-server";
+      public IReadOnlyCollection<string> Kinds => ["llama-server"];
 
       public JsonObject CreateRequestPayload(
          AiProviderDefinition provider,
@@ -444,7 +444,7 @@ public class AiJobRunnerTests
 
    private sealed class SuccessfulProviderClient : IAiProviderClient
    {
-      public string Kind => "llama-server";
+      public IReadOnlyCollection<string> Kinds => ["llama-server"];
 
       public JsonObject CreateRequestPayload(
          AiProviderDefinition provider,
@@ -503,7 +503,7 @@ public class AiJobRunnerTests
 
    private sealed class CapturingProviderClient : IAiProviderClient
    {
-      public string Kind => "llama-server";
+      public IReadOnlyCollection<string> Kinds => ["llama-server"];
 
       public AiRenderedPrompt? RenderedPrompt { get; private set; }
 
@@ -562,7 +562,7 @@ public class AiJobRunnerTests
    private sealed class ProgressReportingProviderClient
       : IAiProviderClient
    {
-      public string Kind => "llama-server";
+      public IReadOnlyCollection<string> Kinds => ["llama-server"];
 
       public JsonObject CreateRequestPayload(
          AiProviderDefinition provider,

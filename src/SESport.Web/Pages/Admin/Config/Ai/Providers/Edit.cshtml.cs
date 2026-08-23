@@ -2,11 +2,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.AI;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Providers;
 
 public class EditModel(AiAdminRepository repository) : PageModel
 {
+   private static readonly JsonSerializerOptions IndentedJsonOptions = new()
+   {
+      WriteIndented = true
+   };
+
    [BindProperty]
    public AiProviderEditModel Provider { get; set; } = new();
 
@@ -26,6 +32,9 @@ public class EditModel(AiAdminRepository repository) : PageModel
          id,
          cancellationToken
       ) ?? new AiProviderEditModel();
+      Provider.RequestOptionsJson = FormatJson(
+         RemoveDedicatedCodexOptions(Provider.RequestOptionsJson)
+      ) ?? "{}";
 
       return Provider.OriginalId is null ? NotFound() : Page();
    }
@@ -89,6 +98,52 @@ public class EditModel(AiAdminRepository repository) : PageModel
       catch(JsonException)
       {
          ModelState.AddModelError(fieldName, "Must be valid JSON.");
+      }
+   }
+
+   private static string? FormatJson(string? json)
+   {
+      if(string.IsNullOrWhiteSpace(json))
+      {
+         return json;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(json);
+         return JsonSerializer.Serialize(
+            document.RootElement,
+            IndentedJsonOptions
+         );
+      }
+      catch(JsonException)
+      {
+         return json;
+      }
+   }
+
+   private static string? RemoveDedicatedCodexOptions(string? json)
+   {
+      if(string.IsNullOrWhiteSpace(json))
+      {
+         return json;
+      }
+
+      try
+      {
+         var options = JsonNode.Parse(json) as JsonObject;
+         if(options is null)
+         {
+            return json;
+         }
+
+         options.Remove("codex_profile");
+         options.Remove("codex_system_instruction");
+         return options.ToJsonString();
+      }
+      catch(JsonException)
+      {
+         return json;
       }
    }
 }

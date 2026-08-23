@@ -23,6 +23,10 @@ public sealed class CodexCliClient : IAiProviderClient
    private const string ModelArgument = "--model";
    private const string ChangeDirectoryArgument = "--cd";
    private const string SkipGitCheckArgument = "--skip-git-repo-check";
+   private const string ProfileArgument = "--profile";
+   private const string RequestOptionsProfileKey = "codex_profile";
+   private const string RequestOptionsSystemInstructionKey =
+      "codex_system_instruction";
    private const string NeverColorValue = "never";
    private const string ReasoningEffortConfigKey =
       "model_reasoning_effort";
@@ -54,7 +58,17 @@ public sealed class CodexCliClient : IAiProviderClient
       this.logger = logger;
    }
 
-   public string Kind => AiProviderKinds.CodexCli;
+   public IReadOnlyCollection<string> Kinds
+   {
+      get
+      {
+         return
+         [
+            AiProviderKinds.CodexCli,
+            AiProviderKinds.CodexCliLocal
+         ];
+      }
+   }
 
    public JsonObject CreateRequestPayload(
       AiProviderDefinition provider,
@@ -72,7 +86,7 @@ public sealed class CodexCliClient : IAiProviderClient
          ["ephemeral"] = true,
          ["live_web_search"] = job.RequiresWebSearch,
          ["working_directory"] = GetWorkingDirectory(),
-         ["prompt"] = BuildAgentPrompt(job, prompt, renderedPrompt)
+         ["prompt"] = BuildAgentPrompt(provider, job, prompt, renderedPrompt)
       };
 
       if(!string.IsNullOrWhiteSpace(provider.Model))
@@ -115,7 +129,7 @@ public sealed class CodexCliClient : IAiProviderClient
       var requestJson = requestPayload.ToJsonString();
       var trace = new JsonArray();
       var workingDirectory = GetWorkingDirectory();
-      var promptText = BuildAgentPrompt(job, prompt, renderedPrompt);
+      var promptText = BuildAgentPrompt(provider, job, prompt, renderedPrompt);
       var temporaryDirectory = CreateTemporaryDirectory();
       var outputPath = Path.Combine(
          temporaryDirectory,
@@ -317,6 +331,84 @@ public sealed class CodexCliClient : IAiProviderClient
       }
    }
 
+   private static (string[] IntroLines, string ToolLine) GetAgentIntro(
+      AiProviderDefinition provider
+   )
+   {
+      var systemInstruction = ReadRequestOption(
+         provider,
+         RequestOptionsSystemInstructionKey
+      );
+
+      if(!string.IsNullOrWhiteSpace(systemInstruction))
+      {
+         return (
+            systemInstruction
+               .Trim()
+               .Split('\n', StringSplitOptions.RemoveEmptyEntries),
+            string.Empty
+         );
+      }
+
+      return (
+         ["You are the full Codex agent executing an SESport AI job."],
+         "Use the available Codex tools and repository context as needed."
+      );
+   }
+
+   private static string? GetProfile(AiProviderDefinition provider)
+   {
+      var profile = ReadRequestOption(provider, RequestOptionsProfileKey);
+      return string.IsNullOrWhiteSpace(profile) ? null : profile.Trim();
+   }
+
+   private static string? ReadRequestOption(
+      AiProviderDefinition provider,
+      string key
+   )
+   {
+      if(string.IsNullOrWhiteSpace(provider.RequestOptionsJson))
+      {
+         return null;
+      }
+
+      var options = JsonNode.Parse(provider.RequestOptionsJson) as JsonObject;
+      if(options is null)
+      {
+         return null;
+      }
+
+      if(!options.TryGetPropertyValue(key, out var value))
+      {
+         return null;
+      }
+
+      return value is JsonValue stringValue ? stringValue.ToString() : value?.ToJsonString();
+   }
+
+   private static bool IsCodexCliKind(string kind)
+   {
+      return string.Equals(
+         kind,
+         AiProviderKinds.CodexCli,
+         StringComparison.Ordinal
+      )
+         || string.Equals(
+            kind,
+            AiProviderKinds.CodexCliLocal,
+            StringComparison.Ordinal
+         );
+   }
+
+   private static bool IsCodexCliLocal(AiProviderDefinition provider)
+   {
+      return string.Equals(
+         provider.Kind,
+         AiProviderKinds.CodexCliLocal,
+         StringComparison.Ordinal
+      );
+   }
+
    private CodexCliInvocation CreateInvocation(
       AiProviderDefinition provider,
       AiPromptDefinition prompt,
@@ -335,6 +427,12 @@ public sealed class CodexCliClient : IAiProviderClient
       }
 
       arguments.Add(ExecCommand);
+
+      if(IsCodexCliLocal(provider) && GetProfile(provider) is { } profile)
+      {
+         arguments.Add(ProfileArgument);
+         arguments.Add(profile);
+      }
 
       var reasoningEffort = GetReasoningEffort(provider, prompt);
       if(reasoningEffort is not null)
@@ -385,11 +483,7 @@ public sealed class CodexCliClient : IAiProviderClient
       AiPromptDefinition prompt
    )
    {
-      if(!string.Equals(
-         provider.Kind,
-         AiProviderKinds.CodexCli,
-         StringComparison.Ordinal
-      ))
+      if(!IsCodexCliKind(provider.Kind))
       {
          return null;
       }
@@ -421,19 +515,20 @@ public sealed class CodexCliClient : IAiProviderClient
    }
 
    private static string BuildAgentPrompt(
+      AiProviderDefinition provider,
       AiJobDefinition job,
       AiPromptDefinition prompt,
       AiRenderedPrompt renderedPrompt
    )
    {
       var builder = new StringBuilder();
-      builder.AppendLine(
-         "You are the full Codex agent executing an SESport AI job."
-      );
+      var (introLines, toolLine) = GetAgentIntro(provider);
+      foreach(var line in introLines)
+      {
+         builder.AppendLine(line);
+      }
       builder.AppendLine($"Job ID: {job.Id}");
-      builder.AppendLine(
-         "Use the available Codex tools and repository context as needed."
-      );
+      builder.AppendLine(toolLine);
       builder.AppendLine(
          "Complete the configured task and return the final answer only."
       );

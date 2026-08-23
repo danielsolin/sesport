@@ -288,6 +288,51 @@ public sealed class DetailsModelTests
    }
 
    [Fact]
+   public void ParseToolTraceRendersCodexErrorEventsAsDiagnostics()
+   {
+      var turns = DetailsModel.ParseToolTrace(
+         """
+         [
+           {
+             "type": "thread.started",
+             "thread_id": "thread-1"
+           },
+           {
+             "type": "item.completed",
+             "item": {
+               "id": "item-0",
+               "type": "error",
+               "message": "Model metadata for `qwen3.8-27b` not found."
+             }
+           },
+           {
+             "type": "item.completed",
+             "item": {
+               "id": "exec-1",
+               "type": "command_execution",
+               "command": "printf 'done\\n'",
+               "status": "completed",
+               "exit_code": 0,
+               "aggregated_output": "done\\n"
+             }
+           }
+         ]
+         """
+      );
+
+      var turn = Assert.Single(turns);
+      var action = Assert.Single(turn.CodexActions);
+      Assert.Equal("command_execution", action.Name);
+      Assert.Equal(1, turn.Turn);
+      var note = Assert.Single(turn.Notes);
+      Assert.Equal("Codex diagnostic", note.Title);
+      Assert.Equal(
+         "Model metadata for `qwen3.8-27b` not found.",
+         note.Content
+      );
+   }
+
+   [Fact]
    public void GetToolRoundCountUsesStoredValueOnly()
    {
       Assert.Equal(

@@ -668,7 +668,7 @@ public sealed class AiJobRunner(
    private IAiProviderClient GetProviderClient(string kind)
    {
       var providerClient = providerClients.FirstOrDefault(client =>
-         string.Equals(client.Kind, kind, StringComparison.Ordinal)
+         client.Kinds.Contains(kind)
       );
 
       if(providerClient is null)

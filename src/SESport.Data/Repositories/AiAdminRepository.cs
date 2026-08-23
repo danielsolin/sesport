@@ -2,6 +2,8 @@ using Npgsql;
 
 using NpgsqlTypes;
 
+using System.Text.Json.Nodes;
+
 using SESport.Core.AI;
 
 namespace SESport.Data.Repositories;
@@ -182,6 +184,10 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Model = ReadNullableString(reader, 4),
          ApiKeySource = ReadNullableString(reader, 5),
          RequestOptionsJson = ReadNullableString(reader, 6) ?? "{}",
+         CodexProfile = ReadCodexProfile(ReadNullableString(reader, 6)),
+         CodexSystemInstruction = ReadCodexSystemInstruction(
+            ReadNullableString(reader, 6)
+         ),
          Enabled = reader.GetBoolean(7)
       };
    }
@@ -666,9 +672,87 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       AddJsonbParameter(
          command,
          "request_options",
-         model.RequestOptionsJson
+         BuildProviderRequestOptions(model)
       );
       command.Parameters.AddWithValue("enabled", model.Enabled);
+   }
+
+   private static string BuildProviderRequestOptions(AiProviderEditModel model)
+   {
+      var requestOptions = string.IsNullOrWhiteSpace(model.RequestOptionsJson)
+         ? "{}"
+         : model.RequestOptionsJson;
+      var node = JsonNode.Parse(requestOptions) as JsonObject
+         ?? new JsonObject();
+
+      SetRequestOption(node, "codex_profile", model.CodexProfile);
+      SetRequestOption(
+         node,
+         "codex_system_instruction",
+         model.CodexSystemInstruction
+      );
+
+      return node.ToJsonString();
+   }
+
+   private static void SetRequestOption(
+      JsonObject node,
+      string key,
+      string? value
+   )
+   {
+      var trimmed = value?.Trim();
+      if(string.IsNullOrWhiteSpace(trimmed))
+      {
+         node.Remove(key);
+         return;
+      }
+
+      node[key] = trimmed;
+   }
+
+   private static string? ReadCodexSystemInstruction(string? requestOptionsJson)
+   {
+      if(string.IsNullOrWhiteSpace(requestOptionsJson))
+      {
+         return null;
+      }
+
+      var node = JsonNode.Parse(requestOptionsJson) as JsonObject;
+      if(node is null)
+      {
+         return null;
+      }
+
+      if(node.TryGetPropertyValue("codex_system_instruction", out var value))
+      {
+         return value is JsonValue stringValue
+            ? stringValue.ToString()
+            : value?.ToJsonString();
+      }
+
+      return null;
+   }
+
+   private static string? ReadCodexProfile(string? requestOptionsJson)
+   {
+      if(string.IsNullOrWhiteSpace(requestOptionsJson))
+      {
+         return null;
+      }
+
+      var node = JsonNode.Parse(requestOptionsJson) as JsonObject;
+      if(node is null)
+      {
+         return null;
+      }
+
+      if(node.TryGetPropertyValue("codex_profile", out var profile))
+      {
+         return profile is JsonValue value ? value.ToString() : profile?.ToJsonString();
+      }
+
+      return null;
    }
 
    private static void AddJobParameters(

@@ -186,6 +186,20 @@ The prompt editor exposes a `Reasoning effort` setting for `codex-cli`
 jobs. It is passed to `codex exec` as `model_reasoning_effort` through
 `--config`; the default is `medium`, and other providers ignore the setting.
 
+The provider edit form exposes `Codex profile` and `Codex system instruction`
+fields for `codex-cli` and `codex-cli-local` providers. They are stored in
+the provider's `request_options` JSON as `codex_profile` and
+`codex_system_instruction`; the dedicated fields own those reserved keys and
+the raw request-options editor omits them. The system instruction replaces the
+default agent intro lines in the job prompt; a blank value keeps the default.
+The profile
+is only applied to `codex-cli-local` providers and selects the model and
+model provider from `~/.codex/config.toml` or
+`~/.codex/local.config.toml` via `--profile`; `codex-cli` providers ignore
+it and keep using the configured model. `codex-cli-local` providers run the
+same full-access Codex agent as `codex-cli`, so a local provider typically
+sets a profile such as `local` and leaves the model field empty.
+
 The host can configure the executable and working directory with the
 `CodexCli__ExecutablePath` and `CodexCli__WorkingDirectory` configuration
 keys. `CodexCli__TimeoutSeconds` controls the process timeout and defaults to

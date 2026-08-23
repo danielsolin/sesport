@@ -20,11 +20,9 @@ public class EditModel(AiAdminRepository repository) : PageModel
    public IReadOnlyList<string> CodexReasoningEffortOptions =>
       CodexReasoningEfforts.Values;
 
-   public bool IsCodexPrompt => string.Equals(
-      GetSelectedProviderKind(),
-      AiProviderKinds.CodexCli,
-      StringComparison.Ordinal
-   );
+   public bool IsCodexPrompt => GetSelectedProviderKind() is
+      AiProviderKinds.CodexCli or
+      AiProviderKinds.CodexCliLocal;
 
    public string? LoadError { get; private set; }
 

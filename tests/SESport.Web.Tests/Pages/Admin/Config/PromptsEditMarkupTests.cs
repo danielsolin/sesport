@@ -16,6 +16,8 @@ public sealed class PromptsEditMarkupTests
 
       Assert.Contains("data-provider-kind", html);
       Assert.Contains("data-codex-reasoning-field", html);
+      Assert.Contains("data-codex-provider-kinds", html);
+      Assert.Contains("AiProviderKinds.CodexCliLocal", html);
       Assert.Contains("Prompt.CodexReasoningEffort", html);
       Assert.Contains("CodexReasoningEffortOptions", html);
       Assert.Contains(
@@ -37,6 +39,7 @@ public sealed class PromptsEditMarkupTests
       var script = await File.ReadAllTextAsync(scriptPath);
 
       Assert.Contains("selectedOption?.dataset.providerKind", script);
+      Assert.Contains("codexProviderKinds.includes", script);
       Assert.Contains("field.hidden = !isCodex", script);
       Assert.Contains("reasoningSelect.disabled = !isCodex", script);
    }

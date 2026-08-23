@@ -50,6 +50,15 @@ public sealed class CodexCliClientTests
       Assert.Contains("--output-last-message", runner.Invocation.Arguments);
       Assert.Contains("--output-schema", runner.Invocation.Arguments);
       Assert.Contains("--model", runner.Invocation.Arguments);
+      var modelIndex = Array.IndexOf(
+         runner.Invocation.Arguments.ToArray(),
+         "--model"
+      );
+      Assert.True(modelIndex >= 0);
+      Assert.Equal(
+         "gpt-5.6-luna",
+         runner.Invocation.Arguments[modelIndex + 1]
+      );
       Assert.Contains("--config", runner.Invocation.Arguments);
       Assert.Contains(
          "model_reasoning_effort=\"medium\"",
@@ -161,6 +170,89 @@ public sealed class CodexCliClientTests
       Assert.Contains(
          "model_reasoning_effort=\"low\"",
          runner.Invocation!.Arguments
+      );
+   }
+
+   [Fact]
+   public async Task GenerateAsyncUsesLocalProfileForCodexCliLocal()
+   {
+      var runner = new RecordingProcessRunner(
+         new CodexCliProcessResult(
+            0,
+            CreateJsonl(CreateOutput("Yes")),
+            "",
+            CreateOutput("Yes")
+         )
+      );
+      var client = CreateClient(runner);
+      var provider = CreateProvider() with
+      {
+         Id = "codex-cli-local",
+         Label = "Codex CLI (local)",
+         Kind = AiProviderKinds.CodexCliLocal,
+         Model = null,
+         RequestOptionsJson =
+            "{\"codex_profile\":\"local\",\"codex_system_instruction\":\"Du är en lokal Codex-agent.\\nAnvänd curl mot http://127.0.0.1:5110/ för web_search och web_get_page.\"}"
+      };
+
+      await client.GenerateAsync(
+         provider,
+         CreateJob(),
+         CreatePrompt(CodexReasoningEfforts.Low),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      var profileIndex = Array.IndexOf(
+         runner.Invocation!.Arguments.ToArray(),
+         "--profile"
+      );
+      Assert.True(profileIndex >= 0);
+      Assert.Equal("local", runner.Invocation.Arguments[profileIndex + 1]);
+      Assert.DoesNotContain("--model", runner.Invocation.Arguments);
+      Assert.Contains(
+         "model_reasoning_effort=\"low\"",
+         runner.Invocation.Arguments
+      );
+      Assert.Contains("Du är en lokal Codex-agent.", runner.Invocation.Prompt);
+      Assert.Contains("http://127.0.0.1:5110/", runner.Invocation.Prompt);
+      Assert.DoesNotContain(
+         "You are the full Codex agent",
+         runner.Invocation.Prompt
+      );
+   }
+
+   [Fact]
+   public async Task GenerateAsyncIgnoresProfileForStandardCodexCli()
+   {
+      var runner = new RecordingProcessRunner(
+         new CodexCliProcessResult(
+            0,
+            CreateJsonl(CreateOutput("Yes")),
+            "",
+            CreateOutput("Yes")
+         )
+      );
+      var client = CreateClient(runner);
+      var provider = CreateProvider() with
+      {
+         RequestOptionsJson = "{\"codex_profile\":\"local\"}"
+      };
+
+      await client.GenerateAsync(
+         provider,
+         CreateJob(),
+         CreatePrompt(),
+         CreateRenderedPrompt(),
+         "{}",
+         CancellationToken.None
+      );
+
+      Assert.DoesNotContain("--profile", runner.Invocation!.Arguments);
+      Assert.Contains(
+         "You are the full Codex agent",
+         runner.Invocation.Prompt
       );
    }
 
