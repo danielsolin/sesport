@@ -36,9 +36,14 @@ public sealed record BroadcastRowViewModel(
    {
       var activityRouteValues = new Dictionary<string, string?>
       {
-         [$"{RouteKeys.BroadcastIds}[0]"] = broadcast.Id.ToString(),
-         [RouteKeys.ReturnUrl] = request.Path + request.QueryString
+         [$"{RouteKeys.BroadcastIds}[0]"] = broadcast.Id.ToString()
       };
+
+      var returnUrl = GetActivityReturnUrl(request);
+      if(returnUrl is not null)
+      {
+         activityRouteValues[RouteKeys.ReturnUrl] = returnUrl;
+      }
 
       return new BroadcastRowViewModel(
          broadcast,
@@ -54,5 +59,21 @@ public sealed record BroadcastRowViewModel(
          hideReplays,
          selectedSports?.ToArray() ?? []
       );
+   }
+
+   internal static string? GetActivityReturnUrl(HttpRequest request)
+   {
+      var path = request.Path.Value;
+      if(string.IsNullOrWhiteSpace(path)
+         || path.Equals("/Admin/Ajax", StringComparison.OrdinalIgnoreCase)
+         || path.StartsWith(
+            "/Admin/Ajax/",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return null;
+      }
+
+      return request.Path + request.QueryString;
    }
 }
