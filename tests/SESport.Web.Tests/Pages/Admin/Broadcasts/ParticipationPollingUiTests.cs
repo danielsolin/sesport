@@ -15,7 +15,15 @@ public sealed class ParticipationPollingUiTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/Admin/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/admin-broadcasts.js"
+      );
+      var formsScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/Admin/js/admin-forms.js"
+      );
+      var sharedScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/Admin/js/admin-shared.js"
       );
       var rowPath = Path.Combine(
          repoRoot,
@@ -35,6 +43,10 @@ public sealed class ParticipationPollingUiTests
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
+      script += Environment.NewLine +
+         await File.ReadAllTextAsync(formsScriptPath);
+      script += Environment.NewLine +
+         await File.ReadAllTextAsync(sharedScriptPath);
       var row = await File.ReadAllTextAsync(rowPath);
       var runs = await File.ReadAllTextAsync(runsPath);
       var results = await File.ReadAllTextAsync(resultsPath);

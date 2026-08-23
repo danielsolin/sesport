@@ -14,7 +14,7 @@ public sealed class RunPollingUiTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/Admin/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/admin-runs.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);

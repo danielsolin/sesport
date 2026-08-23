@@ -239,7 +239,7 @@ public sealed class EditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/Admin/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/admin-activity-ai.js"
       );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
@@ -326,7 +326,7 @@ public sealed class EditMarkupTests
       );
       var scriptPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/wwwroot/Admin/js/site.js"
+         "src/SESport.Web/wwwroot/Admin/js/admin-activity-ai.js"
       );
       var endpointPath = Path.Combine(
          repoRoot,

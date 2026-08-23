@@ -12,6 +12,10 @@ public sealed class BroadcastInlineEditingUiTests
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/site.js"
       );
+      var adminBroadcastsJsPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/Admin/js/admin-broadcasts.js"
+      );
       var broadcastInlineEditJsPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/"
@@ -40,6 +44,8 @@ public sealed class BroadcastInlineEditingUiTests
          "src/SESport.Web/Pages/Shared/_Layout.cshtml"
       );
       var siteJs = await File.ReadAllTextAsync(siteJsPath);
+      var adminBroadcastsJs =
+         await File.ReadAllTextAsync(adminBroadcastsJsPath);
       var broadcastInlineEditJs =
          await File.ReadAllTextAsync(broadcastInlineEditJsPath);
       var groupAutocompleteJs =
@@ -55,7 +61,7 @@ public sealed class BroadcastInlineEditingUiTests
          "window.initializeBroadcastInlineEditing =",
          siteJs
       );
-      Assert.Contains("replaceElementWithPartialHtml", siteJs);
+      Assert.Contains("replaceElementWithPartialHtml", adminBroadcastsJs);
       Assert.Contains("loadPartialAsync", broadcastInlineEditJs);
       Assert.Contains("organizationEntityId", groupAutocompleteJs);
       Assert.Contains(

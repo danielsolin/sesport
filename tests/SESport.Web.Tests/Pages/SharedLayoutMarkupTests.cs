@@ -146,6 +146,12 @@ public sealed class SharedLayoutMarkupTests
          siteJs
       );
       Assert.Contains("partial-loader.js", html);
+      Assert.Contains("admin-shared.js", html);
+      Assert.Contains("admin-forms.js", html);
+      Assert.Contains("admin-activity-ai.js", html);
+      Assert.Contains("admin-broadcasts.js", html);
+      Assert.Contains("admin-runs.js", html);
+      Assert.Contains("admin-entities.js", html);
       Assert.Contains(
          "window.submitFilterForm = submitFilterForm;",
          adminSiteJs
