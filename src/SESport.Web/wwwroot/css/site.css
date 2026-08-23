@@ -1002,11 +1002,35 @@ h2 {
    background: var(--warning-bg);
 }
 
-.admin-table-hover tbody tr[data-participation-status="running"] > td {
+.admin-table-hover
+   tbody
+   tr.broadcast-participation-runs-row:has(
+      > td[data-participation-status="running"],
+      .broadcast-ai-check-runs[data-participation-status="running"]
+   ) > td,
+.admin-table-hover
+   tbody
+   tr.broadcast-participation-main-row:has(
+      + tr.broadcast-participation-runs-row > td[data-participation-status="running"],
+      + tr.broadcast-participation-runs-row
+         .broadcast-ai-check-runs[data-participation-status="running"]
+   ) > td {
    background: #fff6d9;
 }
 
-.admin-table-hover tbody tr[data-participation-status="pending"] > td {
+.admin-table-hover
+   tbody
+   tr.broadcast-participation-runs-row:has(
+      > td[data-participation-status="pending"],
+      .broadcast-ai-check-runs[data-participation-status="pending"]
+   ) > td,
+.admin-table-hover
+   tbody
+   tr.broadcast-participation-main-row:has(
+      + tr.broadcast-participation-runs-row > td[data-participation-status="pending"],
+      + tr.broadcast-participation-runs-row
+         .broadcast-ai-check-runs[data-participation-status="pending"]
+   ) > td {
    background: #eef7ff;
 }
 
@@ -1020,13 +1044,33 @@ h2 {
 
 .admin-table-hover
    tbody
-   tr[data-participation-status="running"]:hover > td {
+   tr.broadcast-participation-runs-row:has(
+      > td[data-participation-status="running"],
+      .broadcast-ai-check-runs[data-participation-status="running"]
+   ):hover > td,
+.admin-table-hover
+   tbody
+   tr.broadcast-participation-main-row:has(
+      + tr.broadcast-participation-runs-row > td[data-participation-status="running"],
+      + tr.broadcast-participation-runs-row
+         .broadcast-ai-check-runs[data-participation-status="running"]
+   ):hover > td {
    background: #fbeebb;
 }
 
 .admin-table-hover
    tbody
-   tr[data-participation-status="pending"]:hover > td {
+   tr.broadcast-participation-runs-row:has(
+      > td[data-participation-status="pending"],
+      .broadcast-ai-check-runs[data-participation-status="pending"]
+   ):hover > td,
+.admin-table-hover
+   tbody
+   tr.broadcast-participation-main-row:has(
+      + tr.broadcast-participation-runs-row > td[data-participation-status="pending"],
+      + tr.broadcast-participation-runs-row
+         .broadcast-ai-check-runs[data-participation-status="pending"]
+   ):hover > td {
    background: #ddeeff;
 }
 

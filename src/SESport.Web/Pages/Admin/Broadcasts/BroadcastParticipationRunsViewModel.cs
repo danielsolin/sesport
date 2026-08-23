@@ -26,7 +26,9 @@ public sealed record BroadcastParticipationRunsViewModel(
 
    public string? ParticipationRunId => LatestCheck?.RunId.ToString();
 
-   public string? ParticipationStatusId => LatestCheck?.StatusId;
+   public string? ParticipationStatusId => IsPending
+      ? "pending"
+      : LatestCheck?.StatusId;
 
    public bool IsFinal => !IsPending && LatestCheck is not null &&
       !string.Equals(

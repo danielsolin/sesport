@@ -29,11 +29,16 @@ public sealed class ParticipationPollingUiTests
          repoRoot,
          "src/SESport.Web/Pages/Admin/Ajax/Poll/_ParticipationStatusResults.cshtml"
       );
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
       var row = await File.ReadAllTextAsync(rowPath);
       var runs = await File.ReadAllTextAsync(runsPath);
       var results = await File.ReadAllTextAsync(resultsPath);
+      var css = await File.ReadAllTextAsync(cssPath);
 
       Assert.Contains("data-broadcast-results", html);
       Assert.Contains("data-check-participation-row", row);
@@ -87,6 +92,18 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains(
          "data-participation-partial",
          results
+      );
+      Assert.Contains(
+         "tr.broadcast-participation-runs-row:has(",
+         css
+      );
+      Assert.Contains(
+         "tr.broadcast-participation-main-row:has(",
+         css
+      );
+      Assert.Contains(
+         ".broadcast-ai-check-runs[data-participation-status=\"pending\"]",
+         css
       );
    }
 }
