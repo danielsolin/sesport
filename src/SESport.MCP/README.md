@@ -6,10 +6,10 @@ web research tools to external MCP clients such as Codex CLI.
 The server is a pure wrapper. It registers two tools and forwards each call
 to the existing clients in `SESport.AI`:
 
-| Tool         | Forwards to                          | Returns                          |
-|--------------|--------------------------------------|----------------------------------|
-| `web_search` | `IWebSearchClient.SearchAsync`       | `WebSearchResponse`              |
-| `web_get_page` | `IWebPageContentClient.FetchAsync`   | `WebPageContent`                 |
+| Tool           | Forwards to                          | Returns              |
+|--------------  |--------------------------------------|----------------------|
+| `web_search`   | `IWebSearchClient.SearchAsync`       | `WebSearchResponse`  |
+| `web_get_page` | `IWebPageContentClient.FetchAsync`   | `WebPageContent`     |
 
 No filtering, summarization, or result shaping happens in this project.
 `include_social_media` is hard-coded to `false` in the current version.
