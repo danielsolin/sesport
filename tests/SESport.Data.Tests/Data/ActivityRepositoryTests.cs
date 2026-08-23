@@ -645,6 +645,7 @@ public sealed class ActivityRepositoryTests
       var watchedPersonId = Guid.NewGuid();
       var otherPersonId = Guid.NewGuid();
       var futureActivityId = Guid.NewGuid();
+      var ongoingActivityId = Guid.NewGuid();
       var inactiveActivityId = Guid.NewGuid();
       var draftActivityId = Guid.NewGuid();
       var pastActivityId = Guid.NewGuid();
@@ -653,6 +654,7 @@ public sealed class ActivityRepositoryTests
       var activityIds = new[]
       {
          futureActivityId,
+         ongoingActivityId,
          inactiveActivityId,
          draftActivityId,
          pastActivityId
@@ -687,6 +689,14 @@ public sealed class ActivityRepositoryTests
             futureDate,
             ToUtc(futureDate),
             ActivityPublicationStatusIds.Published
+         );
+         await InsertActivityAsync(
+            dataSource,
+            ongoingActivityId,
+            DistantActivityDate,
+            now.AddHours(-1),
+            ActivityPublicationStatusIds.Published,
+            endsAt: now.AddHours(1)
          );
          await InsertActivityAsync(
             dataSource,
@@ -736,17 +746,34 @@ public sealed class ActivityRepositoryTests
                CancellationToken.None
             );
 
-         var activity = Assert.Single(activities);
-         Assert.Equal(futureActivityId, activity.Id);
+         Assert.Equal(2, activities.Count);
+         var ongoingActivity = Assert.Single(
+            activities,
+            item => item.Id == ongoingActivityId
+         );
+         var futureActivity = Assert.Single(
+            activities,
+            item => item.Id == futureActivityId
+         );
+         Assert.DoesNotContain(
+            activities,
+            item => item.Id == pastActivityId
+         );
          Assert.True(
             Assert.Single(
-               activity.Participants,
+               ongoingActivity.Participants,
+               participant => participant.Id == watchedPersonId
+            ).IsWatchedByMember
+         );
+         Assert.True(
+            Assert.Single(
+               futureActivity.Participants,
                participant => participant.Id == watchedPersonId
             ).IsWatchedByMember
          );
          Assert.False(
             Assert.Single(
-               activity.Participants,
+               futureActivity.Participants,
                participant => participant.Id == otherPersonId
             ).IsWatchedByMember
          );
@@ -1891,7 +1918,8 @@ public sealed class ActivityRepositoryTests
       DateOnly activityDate,
       DateTimeOffset startsAt,
       string publicationStatus = ActivityPublicationStatusIds.Draft,
-      Guid? activityGroupId = null
+      Guid? activityGroupId = null,
+      DateTimeOffset? endsAt = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1907,6 +1935,8 @@ public sealed class ActivityRepositoryTests
             activity_date,
             local_start_time,
             starts_at,
+            local_end_time,
+            ends_at,
             time_zone_id,
             publication_status_id,
             tv_channel_name,
@@ -1924,6 +1954,8 @@ public sealed class ActivityRepositoryTests
             @activity_date,
             @local_start_time,
             @starts_at,
+            @local_end_time,
+            @ends_at,
             'Europe/Stockholm',
             @publication_status,
             null,
@@ -1944,6 +1976,19 @@ public sealed class ActivityRepositoryTests
          startsAt.ToLocalTime().TimeOfDay
       );
       command.Parameters.AddWithValue("starts_at", startsAt);
+      command.Parameters.AddWithValue(
+         "local_end_time",
+         endsAt is null
+            ? (object)DBNull.Value
+            : TimeZoneHelper.ToLocal(
+               endsAt.Value,
+               SportDay.TimeZoneId
+            ).TimeOfDay
+      );
+      command.Parameters.AddWithValue(
+         "ends_at",
+         (object?)endsAt ?? DBNull.Value
+      );
       command.Parameters.AddWithValue(
          "publication_status",
          publicationStatus

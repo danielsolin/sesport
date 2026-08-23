@@ -149,7 +149,11 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          $$"""
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
-               and a.starts_at > @now
+               and a.starts_at is not null
+               and (
+                  a.starts_at > @now
+                  or a.ends_at > @now
+               )
                and exists (
                   select 1
                   from activity_entity_links watched_link
