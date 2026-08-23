@@ -64,16 +64,51 @@ public sealed record BroadcastRowViewModel(
    internal static string? GetActivityReturnUrl(HttpRequest request)
    {
       var path = request.Path.Value;
-      if(string.IsNullOrWhiteSpace(path)
-         || path.Equals("/Admin/Ajax", StringComparison.OrdinalIgnoreCase)
-         || path.StartsWith(
-            "/Admin/Ajax/",
-            StringComparison.OrdinalIgnoreCase
-         ))
+      if(string.IsNullOrWhiteSpace(path))
       {
          return null;
       }
 
+      if(IsAjaxPath(path))
+      {
+         return GetSameOriginRefererReturnUrl(request);
+      }
+
       return request.Path + request.QueryString;
+   }
+
+   private static string? GetSameOriginRefererReturnUrl(
+      HttpRequest request
+   )
+   {
+      var referer = request.Headers.Referer.ToString();
+      if(!Uri.TryCreate(referer, UriKind.Absolute, out var refererUri)
+         || !string.Equals(
+            refererUri.Host,
+            request.Host.Host,
+            StringComparison.OrdinalIgnoreCase
+         )
+         || request.Host.Port is int requestPort
+            && refererUri.Port != requestPort)
+      {
+         return null;
+      }
+
+      var path = refererUri.AbsolutePath;
+      if(string.IsNullOrWhiteSpace(path) || IsAjaxPath(path))
+      {
+         return null;
+      }
+
+      return path + refererUri.Query;
+   }
+
+   private static bool IsAjaxPath(string path)
+   {
+      return path.Equals("/Admin/Ajax", StringComparison.OrdinalIgnoreCase)
+         || path.StartsWith(
+            "/Admin/Ajax/",
+            StringComparison.OrdinalIgnoreCase
+         );
    }
 }

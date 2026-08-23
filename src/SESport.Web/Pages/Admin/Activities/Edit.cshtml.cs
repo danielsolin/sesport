@@ -400,9 +400,10 @@ public class EditModel(
 
       await editService.SaveAsync(Activity, cancellationToken);
 
-      if(ReturnUrl is not null)
+      var returnUrl = GetLocalReturnUrl(ReturnUrl);
+      if(returnUrl is not null)
       {
-         return LocalRedirect(ReturnUrl);
+         return LocalRedirect(returnUrl);
       }
 
       return RedirectToPage("./Index");
@@ -439,12 +440,27 @@ public class EditModel(
    private string? GetLocalReturnUrl(string? returnUrl)
    {
       if(string.IsNullOrWhiteSpace(returnUrl)
+         || IsAjaxReturnUrl(returnUrl)
          || !Url.IsLocalUrl(returnUrl))
       {
          return null;
       }
 
       return returnUrl;
+   }
+
+   internal static bool IsAjaxReturnUrl(string returnUrl)
+   {
+      var queryIndex = returnUrl.IndexOf('?', StringComparison.Ordinal);
+      var path = queryIndex >= 0
+         ? returnUrl[..queryIndex]
+         : returnUrl;
+
+      return path.Equals("/Admin/Ajax", StringComparison.OrdinalIgnoreCase)
+         || path.StartsWith(
+            "/Admin/Ajax/",
+            StringComparison.OrdinalIgnoreCase
+         );
    }
 
    private bool IsSupportedActivityAiJob(string? jobId)

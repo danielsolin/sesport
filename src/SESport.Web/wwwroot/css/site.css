@@ -2360,6 +2360,10 @@ label {
    font-weight: 700;
 }
 
+[hidden] {
+   display: none !important;
+}
+
 label span {
    font-size: 12px;
    line-height: 1.2;

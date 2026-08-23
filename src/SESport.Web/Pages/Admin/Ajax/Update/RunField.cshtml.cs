@@ -177,9 +177,13 @@ public sealed class RunFieldModel(
 
          var activityRouteValues = new Dictionary<string, string?>
          {
-            [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString(),
-            [RouteKeys.ReturnUrl] = Request.Path + Request.QueryString
+            [$"{RouteKeys.BroadcastIds}[0]"] = broadcastId.ToString()
          };
+         var returnUrl = BroadcastRowViewModel.GetActivityReturnUrl(Request);
+         if(returnUrl is not null)
+         {
+            activityRouteValues[RouteKeys.ReturnUrl] = returnUrl;
+         }
          var viewModel = new BroadcastParticipationRunsViewModel(
             broadcastId,
             broadcast.OrganizationSportName,

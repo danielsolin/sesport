@@ -209,6 +209,24 @@ public sealed class EditMarkupTests
       Assert.Equal(expected, isValid);
    }
 
+   [Theory]
+   [InlineData("/Admin/Ajax/Update/BroadcastField", true)]
+   [InlineData("/Admin/Ajax/Update/BroadcastField?date=2026-08-23", true)]
+   [InlineData("/Admin/Ajax/Poll/ParticipationStatus", true)]
+   [InlineData("/Admin/Activities/Index", false)]
+   public void AjaxReturnUrlsAreRejected(
+      string returnUrl,
+      bool expected
+   )
+   {
+      Assert.Equal(
+         expected,
+         SESport.Web.Pages.Admin.Activities.EditModel.IsAjaxReturnUrl(
+            returnUrl
+         )
+      );
+   }
+
    [Fact]
    public async Task EditPageShowsFactsAsSubgrid()
    {

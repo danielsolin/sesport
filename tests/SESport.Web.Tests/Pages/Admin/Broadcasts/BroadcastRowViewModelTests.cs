@@ -9,6 +9,8 @@ public sealed class BroadcastRowViewModelTests
    [Theory]
    [InlineData("/Admin/Ajax/Update/BroadcastField")]
    [InlineData("/Admin/Ajax/List/Broadcast")]
+   [InlineData("/Admin/Ajax/Poll/ParticipationStatus")]
+   [InlineData("/Admin/Ajax/Update/RunField")]
    [InlineData("/Admin/Ajax")]
    public void AjaxRequestsDoNotBecomeActivityReturnUrls(string path)
    {
@@ -40,5 +42,41 @@ public sealed class BroadcastRowViewModelTests
          "/Admin/Broadcasts/Index?date=2026-08-23&sortColumn=Time",
          returnUrl
       );
+   }
+
+   [Fact]
+   public void AjaxRequestsKeepTheSameOriginBroadcastsReferer()
+   {
+      var context = new DefaultHttpContext();
+      context.Request.Host = new HostString("localhost", 5109);
+      context.Request.Path = "/Admin/Ajax/Update/BroadcastField";
+      context.Request.Headers.Referer =
+         "http://localhost:5109/Admin/Broadcasts/Index?" +
+         "date=2026-08-23&sortColumn=Time";
+
+      var returnUrl = BroadcastRowViewModel.GetActivityReturnUrl(
+         context.Request
+      );
+
+      Assert.Equal(
+         "/Admin/Broadcasts/Index?date=2026-08-23&sortColumn=Time",
+         returnUrl
+      );
+   }
+
+   [Fact]
+   public void AjaxRequestsIgnoreExternalReferers()
+   {
+      var context = new DefaultHttpContext();
+      context.Request.Host = new HostString("localhost", 5109);
+      context.Request.Path = "/Admin/Ajax/Update/BroadcastField";
+      context.Request.Headers.Referer =
+         "https://example.com/Admin/Broadcasts/Index";
+
+      var returnUrl = BroadcastRowViewModel.GetActivityReturnUrl(
+         context.Request
+      );
+
+      Assert.Null(returnUrl);
    }
 }

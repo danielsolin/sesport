@@ -84,5 +84,11 @@ public sealed class EditMarkupTests
          css
       );
       Assert.Contains("align-self: flex-start;", css);
+      Assert.Contains(
+         "[hidden] {\n" +
+         "   display: none !important;\n" +
+         "}",
+         css
+      );
    }
 }
