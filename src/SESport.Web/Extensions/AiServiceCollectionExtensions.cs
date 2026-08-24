@@ -13,9 +13,18 @@ public static class AiServiceCollectionExtensions
    )
    {
       services.AddScoped<AiRepository>();
+      services.AddScoped<AiJobDefinitionRepository>();
+      services.AddScoped<AiJobRunRepository>();
+      services.AddScoped<AiRunApplicationRepository>();
       services.AddScoped<AiAutomationRepository>();
-      services.AddScoped<IAiJobDefinitionRepository, AiRepository>();
-      services.AddScoped<IAiJobRunRepository, AiRepository>();
+      services.AddScoped<IAiJobDefinitionRepository>(
+         serviceProvider => serviceProvider
+            .GetRequiredService<AiJobDefinitionRepository>()
+      );
+      services.AddScoped<IAiJobRunRepository>(
+         serviceProvider => serviceProvider
+            .GetRequiredService<AiJobRunRepository>()
+      );
       services.AddScoped<AiAdminRepository>();
       services.AddSingleton<AiJobExecutionGate>();
       services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();

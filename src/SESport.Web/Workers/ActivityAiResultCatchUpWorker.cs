@@ -12,8 +12,10 @@ public sealed class ActivityAiResultCatchUpWorker(
       try
       {
          using var scope = scopeFactory.CreateScope();
-         var aiRepository = scope.ServiceProvider
-            .GetRequiredService<AiRepository>();
+         var applicationRepository = scope.ServiceProvider
+            .GetRequiredService<AiRunApplicationRepository>();
+         var runRepository = scope.ServiceProvider
+            .GetRequiredService<AiJobRunRepository>();
          var activityRepository = scope.ServiceProvider
             .GetRequiredService<ActivityRepository>();
          var factRepository = scope.ServiceProvider
@@ -21,18 +23,18 @@ public sealed class ActivityAiResultCatchUpWorker(
          var participantResultService = scope.ServiceProvider
             .GetRequiredService<ActivityParticipantAiResultService>();
 
-         var runs = await aiRepository
+         var runs = await applicationRepository
                .GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
                AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
             );
 
-         var factsRuns = await aiRepository
+         var factsRuns = await applicationRepository
                .GetUnappliedCompletedActivityGroupFactsRunsAsync(
                AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
             );
-         var participantRuns = await aiRepository
+         var participantRuns = await applicationRepository
                .GetUnappliedCompletedActivityParticipantResultRunIdsAsync(
                AiWorkerDefaults.ActivityAiResultCatchUpMaxRuns,
                stoppingToken
@@ -83,7 +85,7 @@ public sealed class ActivityAiResultCatchUpWorker(
 
             if(createdFacts.Count > 0)
             {
-               await aiRepository.RecordApplicationAsync(
+               await runRepository.RecordApplicationAsync(
                   run.RunId,
                   AiJobRunApplicationTargetTypes.ActivityGroup,
                   run.ActivityGroupId.ToString(),
