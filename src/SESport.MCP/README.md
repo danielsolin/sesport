@@ -3,15 +3,20 @@
 An MCP (Model Context Protocol) server that exposes the project's existing
 web research tools to external MCP clients such as Codex CLI.
 
-The server is a pure wrapper. It registers two tools and forwards each call
-to the existing clients in `SESport.AI`:
+The server registers three tools and forwards calls to the existing clients
+and page-search support in `SESport.AI`:
 
 | Tool           | Forwards to                          | Returns              |
 |--------------  |--------------------------------------|----------------------|
 | `web_search`   | `IWebSearchClient.SearchAsync`       | `WebSearchResponse`  |
-| `web_get_page` | `IWebPageContentClient.FetchAsync`   | `WebPageContent`     |
+| `web_get_page` | `IWebPageContentClient.FetchAsync`   | `WebPageToolResponse` |
+| `web_find_in_page` | `IWebPageContentClient.FetchAsync` and `WebPageToolSupport.FindInPage` | text |
 
-No filtering, summarization, or result shaping happens in this project.
+The server does not summarize the fetched content. The MCP response projects
+the fetcher result to the public response contract and deliberately omits the
+the internal `MainTextFull` field; `MainText` retains the shared
+`WebPageFetchDefaults.MaxResponseCharacters` cutoff and ends with `[CUTOFF]`
+when truncation occurs. Use `web_find_in_page` to find text beyond the cutoff.
 `include_social_media` is hard-coded to `false` in the current version.
 
 ### Structured content serialization

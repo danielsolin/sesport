@@ -16,17 +16,20 @@ public sealed class WebPageTool
       Name = "web_get_page",
       UseStructuredContent = true
    )]
-   [Description(
-      "Fetches a web page through SESport's existing web page " +
-         "content pipeline and returns the raw WebPageContent " +
-         "unchanged."
-   )]
-   public Task<WebPageContent?> FetchPageAsync(
+   [WebGetPageDescription]
+   public async Task<WebPageToolResponse?> FetchPageAsync(
       [Description("The absolute URL of the page to fetch.")]
       string url,
       CancellationToken cancellationToken = default
    )
    {
-      return PageContentClient.FetchAsync(url, cancellationToken);
+      var content = await PageContentClient.FetchAsync(
+         url,
+         cancellationToken
+      );
+
+      return content is null
+         ? null
+         : WebPageToolResponse.From(content);
    }
 }

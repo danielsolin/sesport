@@ -44,6 +44,7 @@ builder.Services.AddHttpClient<
 );
 builder.Services.AddScoped<WebSearchTool>();
 builder.Services.AddScoped<WebPageTool>();
+builder.Services.AddScoped<WebFindInPageTool>();
 
 var serializerOptions = new JsonSerializerOptions
 {
@@ -57,7 +58,8 @@ builder.Services.AddMcpServer()
       options.SessionMode = HttpServerSessionMode.Stateless;
    })
    .WithTools<WebSearchTool>(serializerOptions)
-   .WithTools<WebPageTool>(serializerOptions);
+   .WithTools<WebPageTool>(serializerOptions)
+   .WithTools<WebFindInPageTool>(serializerOptions);
 
 var app = builder.Build();
 
