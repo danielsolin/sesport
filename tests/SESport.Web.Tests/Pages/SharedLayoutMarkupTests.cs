@@ -184,5 +184,23 @@ public sealed class SharedLayoutMarkupTests
             StringComparison.Ordinal
          )
       );
+      Assert.True(
+         html.IndexOf(
+            "asp-page=\"/Admin/Runs/Index\"",
+            StringComparison.Ordinal
+         ) < html.IndexOf(
+            "asp-page=\"/Admin/Members/Index\"",
+            StringComparison.Ordinal
+         )
+      );
+      Assert.True(
+         html.IndexOf(
+            "asp-page=\"/Admin/Members/Index\"",
+            StringComparison.Ordinal
+         ) < html.IndexOf(
+            "asp-page=\"/Admin/Config/Index\"",
+            StringComparison.Ordinal
+         )
+      );
    }
 }

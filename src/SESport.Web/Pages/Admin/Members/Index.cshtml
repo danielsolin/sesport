@@ -1,0 +1,84 @@
+@page
+@model SESport.Web.Pages.Admin.Members.IndexModel
+@{
+   ViewData["Title"] = "Members";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <h1>Members</h1>
+   </div>
+</section>
+
+@if (Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table admin-table-hover members-table">
+      <colgroup>
+         <col class="members-col-email" />
+         <col class="members-col-created" />
+         <col class="members-col-last-login" />
+         <col class="members-col-watches" />
+         <col class="members-col-push-sent" />
+         <col class="members-col-login-created" />
+         <col class="members-col-login-consumed" />
+      </colgroup>
+      <thead>
+         <tr>
+            <th>Email</th>
+            <th>Created</th>
+            <th>Last login</th>
+            <th>Watches</th>
+            <th>Push sent</th>
+            <th>Logins created</th>
+            <th>Logins used</th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var member in Model.Members)
+         {
+            <tr>
+               <td class="members-email-cell">@member.Email</td>
+               <td class="members-date-cell">
+                  @TimeDisplay.FormatLocalDate(member.CreatedAt)
+                  @TimeDisplay.FormatLocalTimeWithoutSeconds(
+                     member.CreatedAt
+                  )
+               </td>
+               <td class="members-date-cell">
+                  @if (member.LastLoginAt is not null)
+                  {
+                     @TimeDisplay.FormatLocalDate(
+                        member.LastLoginAt.Value
+                     )
+                     @TimeDisplay.FormatLocalTimeWithoutSeconds(
+                        member.LastLoginAt.Value
+                     )
+                  }
+                  else
+                  {
+                     <span>-</span>
+                  }
+               </td>
+               <td class="members-count-cell">
+                  @member.WatchCount
+               </td>
+               <td class="members-count-cell">
+                  @member.PushNotificationSentCount
+               </td>
+               <td class="members-count-cell">
+                  @member.LoginTokenCreatedCount
+               </td>
+               <td class="members-count-cell">
+                  @member.LoginTokenConsumedCount
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

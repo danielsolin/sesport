@@ -1130,6 +1130,61 @@ h2 {
    min-width: 0;
 }
 
+.members-table {
+   min-width: 0;
+}
+
+.members-col-email {
+   width: 27%;
+}
+
+.members-col-created {
+   width: 13%;
+}
+
+.members-col-last-login {
+   width: 16%;
+}
+
+.members-col-watches {
+   width: 10%;
+}
+
+.members-col-push-sent {
+   width: 10%;
+}
+
+.members-col-login-created {
+   width: 12%;
+}
+
+.members-col-login-consumed {
+   width: 12%;
+}
+
+.members-email-cell {
+   overflow-wrap: anywhere;
+}
+
+.members-date-cell {
+   white-space: nowrap;
+}
+
+.members-table .members-count-cell {
+   text-align: center;
+   white-space: nowrap;
+}
+
+.members-table th,
+.members-table td {
+   padding: 6px 8px;
+   line-height: 1.2;
+}
+
+.members-table th {
+   white-space: nowrap;
+}
+
 .ai-runs-col-started {
    width: 10%;
 }

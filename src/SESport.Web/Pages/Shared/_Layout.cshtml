@@ -5,6 +5,10 @@
       "/Admin/Runs",
       StringComparison.OrdinalIgnoreCase
    );
+   var isMembers = requestPath.StartsWith(
+      "/Admin/Members",
+      StringComparison.OrdinalIgnoreCase
+   );
    var isDashboard = requestPath.StartsWith(
       "/Admin/Dashboard",
       StringComparison.OrdinalIgnoreCase
@@ -68,6 +72,9 @@
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
    var runsClass = isRuns
+      ? $"{adminMenuLink} is-active"
+      : adminMenuLink;
+   var membersClass = isMembers
       ? $"{adminMenuLink} is-active"
       : adminMenuLink;
    var broadcastsClass = isBroadcasts
@@ -160,6 +167,10 @@
                <a class="@runsClass"
                   asp-page="/Admin/Runs/Index">
                   Runs
+               </a>
+               <a class="@membersClass"
+                  asp-page="/Admin/Members/Index">
+                  Members
                </a>
                <a class="@configClass"
                   asp-page="/Admin/Config/Index">

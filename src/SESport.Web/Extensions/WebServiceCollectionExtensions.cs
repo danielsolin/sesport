@@ -18,6 +18,7 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<PublicStatisticsRepository>();
       services.AddScoped<TodoRepository>();
       services.AddScoped<MemberRepository>();
+      services.AddScoped<AdminMemberRepository>();
       services.AddScoped<MemberWatchRepository>();
       services.AddScoped<MemberPushRepository>();
       services.AddScoped<MemberPushNotificationSender>();

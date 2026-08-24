@@ -1,5 +1,16 @@
 namespace SESport.Data.Models;
 
+public sealed record AdminMemberListItem(
+   Guid Id,
+   string Email,
+   DateTimeOffset CreatedAt,
+   DateTimeOffset? LastLoginAt,
+   int WatchCount,
+   int PushNotificationSentCount,
+   int LoginTokenCreatedCount,
+   int LoginTokenConsumedCount
+);
+
 public sealed record MemberPersonListItem(
    Guid Id,
    string Name,
