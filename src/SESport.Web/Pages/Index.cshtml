@@ -1,4 +1,5 @@
 @page
+@using SESport.Core.Sources
 @model IndexModel
 @{
    var maxVisibleParticipants =
@@ -378,16 +379,40 @@ else
          var activity = agendaSection.Activities[0];
          var activityAnchorId = "activity-" + activity.Id.ToString("N");
          var isGrouped = agendaSection.ActivityGroupTitle is not null;
+         var allActivitySources = agendaSection.Activities
+            .SelectMany(item => item.Sources)
+            .ToList();
+         var streamSources = SourceDisplay.OrderDistinctByUrl(
+            allActivitySources.Where(source =>
+               string.Equals(
+                  source.Kind,
+                  SourceKinds.StreamLink,
+                  StringComparison.OrdinalIgnoreCase
+               )
+            )
+         );
          var tvChannels = agendaSection.Activities
             .SelectMany(item => (item.TvChannelName ?? string.Empty).Split(
                ',',
                StringSplitOptions.TrimEntries |
                   StringSplitOptions.RemoveEmptyEntries
             ))
+            .Concat(
+               streamSources
+                  .Select(source => source.Title)
+                  .Where(title => !string.IsNullOrWhiteSpace(title))
+                  .Select(title => title!)
+            )
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
          var activitySources = SourceDisplay.OrderDistinctByUrl(
-            agendaSection.Activities.SelectMany(item => item.Sources)
+            allActivitySources.Where(source =>
+               !string.Equals(
+                  source.Kind,
+                  SourceKinds.StreamLink,
+                  StringComparison.OrdinalIgnoreCase
+               )
+            )
          );
          var dayPhaseClass = agendaSection.DayPhase switch
          {
@@ -464,9 +489,34 @@ else
                         aria-label="TV-kanaler">
                         @foreach(var channel in tvChannels)
                         {
-                           <span class="activity-channel-chip">
-                              @channel
-                           </span>
+                           var streamSource =
+                              SourceDisplay.FindStreamLinkForChannel(
+                                 streamSources,
+                                 channel
+                              );
+                           if(streamSource is null)
+                           {
+                              <span class="activity-channel-chip">
+                                 @channel
+                              </span>
+                           }
+                           else
+                           {
+                              <a class="activity-channel-chip
+                                 activity-channel-chip-link"
+                                 href="@streamSource.Url"
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 aria-label="Öppna stream hos @channel">
+                                 @channel
+                                 <svg class="activity-channel-chip-stream-icon"
+                                      viewBox="0 0 12 12"
+                                      aria-hidden="true"
+                                      focusable="false">
+                                    <path d="M3 2v8l6-4-6-4Z"></path>
+                                 </svg>
+                              </a>
+                           }
                         }
                      </div>
                   }
@@ -602,6 +652,26 @@ else
                         <ol class="activity-group-schedule">
                            @foreach(var slot in agendaSection.Slots)
                            {
+                              var slotStreamSources = slot.Activity.Sources
+                                 .Where(source => string.Equals(
+                                    source.Kind,
+                                    SourceKinds.StreamLink,
+                                    StringComparison.OrdinalIgnoreCase
+                                 ))
+                                 .ToList();
+                              var slotChannels = slot.TvChannels
+                                 .Concat(
+                                    slotStreamSources
+                                       .Select(source => source.Title)
+                                       .Where(title =>
+                                          !string.IsNullOrWhiteSpace(title)
+                                       )
+                                       .Select(title => title!)
+                                 )
+                                 .Distinct(
+                                    StringComparer.OrdinalIgnoreCase
+                                 )
+                                 .ToList();
                               string[] slotParticipantNames =
                                  slot.ShowParticipantNames
                                     ? slot.Activity
@@ -618,21 +688,51 @@ else
                               <li class="activity-group-schedule-item
                                  @(slot.IsOngoing ? "is-ongoing" : "")
                                  @(slot.HasEnded ? "has-ended" : "")
-                                 @(slot.TvChannels.Count > 0
+                                 @(slotChannels.Count > 0
                                     ? "has-tv-channels"
                                     : "")">
-                                 @if(slot.TvChannels.Count > 0)
+                                 @if(slotChannels.Count > 0)
                                  {
                                     <div class="activity-channel-list
                                        activity-group-slot-channel-list"
                                        aria-label="TV-kanaler">
                                        @foreach(var channel in
-                                          slot.TvChannels)
+                                          slotChannels)
                                        {
-                                          <span class=
-                                             "activity-channel-chip">
-                                             @channel
-                                          </span>
+                                          var streamSource =
+                                             SourceDisplay
+                                                .FindStreamLinkForChannel(
+                                                   slotStreamSources,
+                                                   channel
+                                                );
+                                          if(streamSource is null)
+                                          {
+                                             <span class=
+                                                "activity-channel-chip">
+                                                @channel
+                                             </span>
+                                          }
+                                          else
+                                          {
+                                             <a class=
+                                                "activity-channel-chip
+                                                activity-channel-chip-link"
+                                                href="@streamSource.Url"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label="Öppna stream hos
+                                                   @channel">
+                                                @channel
+                                                <svg class="
+                                                   activity-channel-chip-stream-icon"
+                                                   viewBox="0 0 12 12"
+                                                   aria-hidden="true"
+                                                   focusable="false">
+                                                   <path d="M3 2v8l6-4-6-4Z">
+                                                   </path>
+                                                </svg>
+                                             </a>
+                                          }
                                        }
                                     </div>
                                  }

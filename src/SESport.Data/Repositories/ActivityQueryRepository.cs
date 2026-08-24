@@ -1129,7 +1129,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          select
             s.correlation_id,
             s.kind,
-            s.url
+            s.url,
+            s.title
          from sources s
          where s.correlation_type = @correlation_type
             and s.correlation_id = any(@activity_ids)
@@ -1173,7 +1174,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          activitySources.Add(
             new ActivitySourceListItem(
                reader.GetString(1),
-               reader.GetString(2)
+               reader.GetString(2),
+               reader.IsDBNull(3) ? null : reader.GetString(3)
             )
          );
       }

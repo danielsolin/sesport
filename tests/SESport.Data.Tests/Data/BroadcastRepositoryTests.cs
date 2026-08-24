@@ -1,6 +1,8 @@
 using Npgsql;
 
 using SESport.Core.Broadcast;
+using SESport.Core.Sources;
+using SESport.Data.Models;
 using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
@@ -310,6 +312,218 @@ public sealed class BroadcastRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task SaveAsyncPersistsOneCurrentStreamLinkPerProvider()
+   {
+      var broadcastId = Guid.NewGuid();
+      var importRunId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var firstUrl =
+         "https://max.prf.hn/click/camref:1011l3PaYv/" +
+         $"pubref:test/destination:https://play.hbomax.com/" +
+         $"video/watch/{uniqueSuffix}?utm_source=universal_search";
+      var normalizedFirstUrl =
+         $"https://play.hbomax.com/video/watch/" +
+         $"{uniqueSuffix}?utm_source=universal_search";
+      var secondUrl = $"https://stream.example/{uniqueSuffix}/second";
+      var importRun = new BroadcastImportRun(
+         importRunId,
+         sourceKey,
+         new Uri("https://example.invalid/broadcasts"),
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow,
+         BroadcastImportRunStatus.Completed,
+         1
+      );
+      var broadcast = new global::SESport.Core.Broadcast.Broadcast(
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "stream",
+         "Viaplay",
+         "Test stream",
+         null,
+         ["Fotboll"],
+         false,
+         null,
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2),
+         "Europe/Stockholm",
+         null,
+         null
+      )
+      {
+         StreamLinks = [new BroadcastStreamLink("Viaplay", firstUrl)]
+      };
+
+      await using var dataSource = CreateDataSource();
+      var repository = new BroadcastImportRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+
+      try
+      {
+         await repository.SaveAsync(
+            importRun,
+            [broadcast],
+            CancellationToken.None
+         );
+
+         var firstSources = await sourceRepository.GetByCorrelationAsync(
+            SourceCorrelationTypes.Broadcast,
+            broadcastId.ToString(),
+            SourceKinds.StreamLink,
+            CancellationToken.None
+         );
+         var firstSource = Assert.Single(firstSources);
+         Assert.Equal("Viaplay", firstSource.Title);
+         Assert.Equal(normalizedFirstUrl, firstSource.Url);
+
+         await repository.SaveAsync(
+            importRun,
+            [broadcast with
+            {
+               StreamLinks = [new BroadcastStreamLink("Viaplay", secondUrl)]
+            }],
+            CancellationToken.None
+         );
+
+         var secondSources = await sourceRepository.GetByCorrelationAsync(
+            SourceCorrelationTypes.Broadcast,
+            broadcastId.ToString(),
+            SourceKinds.StreamLink,
+            CancellationToken.None
+         );
+         var secondSource = Assert.Single(secondSources);
+         Assert.Equal(secondUrl, secondSource.Url);
+      }
+      finally
+      {
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Broadcast,
+            broadcastId.ToString(),
+            CancellationToken.None
+         );
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteImportRunAsync(dataSource, importRunId);
+      }
+   }
+
+   [Fact]
+   public async Task SaveAsyncUpdatesStreamLinkOnAlreadyLinkedActivity()
+   {
+      var broadcastId = Guid.NewGuid();
+      var importRunId = Guid.NewGuid();
+      Guid? activityId = null;
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var firstUrl = $"https://stream.example/{uniqueSuffix}/first";
+      var secondUrl = $"https://stream.example/{uniqueSuffix}/second";
+      var importRun = new BroadcastImportRun(
+         importRunId,
+         sourceKey,
+         new Uri("https://example.invalid/broadcasts"),
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow,
+         BroadcastImportRunStatus.Completed,
+         1
+      );
+      var broadcast = new global::SESport.Core.Broadcast.Broadcast(
+         broadcastId,
+         sourceKey,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "stream",
+         "Viaplay",
+         "Linked stream",
+         null,
+         ["Fotboll"],
+         false,
+         null,
+         DateTimeOffset.UtcNow,
+         DateTimeOffset.UtcNow.AddHours(2),
+         "Europe/Stockholm",
+         null,
+         null
+      )
+      {
+         StreamLinks = [new BroadcastStreamLink("Viaplay", firstUrl)]
+      };
+
+      await using var dataSource = CreateDataSource();
+      var broadcastRepository = new BroadcastImportRepository(dataSource);
+      var activityRepository = new ActivityRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+
+      try
+      {
+         await broadcastRepository.SaveAsync(
+            importRun,
+            [broadcast],
+            CancellationToken.None
+         );
+
+         activityId = await activityRepository.SaveAsync(
+            new ActivityEditModel
+            {
+               Title = "Linked stream",
+               ActivityType = "Match",
+               SportId = "football",
+               ActivityDate = DistantActivityDate,
+               LocalStartTime = new TimeOnly(12, 0),
+               LocalEndTime = new TimeOnly(14, 0),
+               TimeZoneId = SportDay.TimeZoneId,
+               IsPublished = true,
+               BroadcastIds = [broadcastId]
+            },
+            CancellationToken.None
+         );
+
+         await broadcastRepository.SaveAsync(
+            importRun,
+            [broadcast with
+            {
+               StreamLinks = [new BroadcastStreamLink("Viaplay", secondUrl)]
+            }],
+            CancellationToken.None
+         );
+
+         var activitySources = await sourceRepository.GetByCorrelationAsync(
+            SourceCorrelationTypes.Activity,
+            activityId.Value.ToString(),
+            SourceKinds.StreamLink,
+            CancellationToken.None
+         );
+         var activitySource = Assert.Single(activitySources);
+         Assert.Equal(secondUrl, activitySource.Url);
+      }
+      finally
+      {
+         if(activityId is not null)
+         {
+            await sourceRepository.DeleteByCorrelationAsync(
+               SourceCorrelationTypes.Activity,
+               activityId.Value.ToString(),
+               CancellationToken.None
+            );
+            await DeleteActivityBroadcastLinksAsync(
+               dataSource,
+               activityId.Value
+            );
+            await DeleteActivityAsync(dataSource, activityId.Value);
+         }
+
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Broadcast,
+            broadcastId.ToString(),
+            CancellationToken.None
+         );
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteImportRunAsync(dataSource, importRunId);
+      }
+   }
+
    private static async Task InsertBroadcastAsync(
       NpgsqlDataSource dataSource,
       Guid broadcastId,
@@ -427,6 +641,38 @@ public sealed class BroadcastRepositoryTests
          where id = @id
          """;
       command.Parameters.AddWithValue("id", broadcastId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from activities
+         where id = @id
+         """;
+      command.Parameters.AddWithValue("id", activityId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task DeleteActivityBroadcastLinksAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityId
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync();
+      await using var command = connection.CreateCommand();
+      command.CommandText = """
+         delete from activity_broadcast_links
+         where activity_id = @activity_id
+         """;
+      command.Parameters.AddWithValue("activity_id", activityId);
 
       await command.ExecuteNonQueryAsync();
    }

@@ -17,4 +17,7 @@ public sealed record Broadcast(
    string TimeZoneId,
    string? RawProgrammeXml,
    string? ImageUrl
-);
+)
+{
+   public IReadOnlyList<BroadcastStreamLink> StreamLinks { get; init; } = [];
+}

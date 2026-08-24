@@ -138,6 +138,13 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
          model.BroadcastIds,
          cancellationToken
       );
+      await BroadcastStreamSourcePersistence.CopyToActivityAsync(
+         connection,
+         transaction,
+         id,
+         model.BroadcastIds,
+         cancellationToken
+      );
       await SynchronizeActivityGroupDatesAsync(
          connection,
          transaction,

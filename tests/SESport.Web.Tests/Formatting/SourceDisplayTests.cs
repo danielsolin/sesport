@@ -8,6 +8,7 @@ public sealed class SourceDisplayTests
 {
    [Theory]
    [InlineData(SourceKinds.ActivityEvidence, "Aktivitet")]
+   [InlineData(SourceKinds.StreamLink, "Stream")]
    [InlineData(SourceKinds.ParticipationEvidence, "Deltagande")]
    [InlineData(SourceKinds.ParticipantStartEvidence, "Starttid")]
    [InlineData(SourceKinds.ParticipantStarEvidence, "Stjärna")]
@@ -23,6 +24,23 @@ public sealed class SourceDisplayTests
    public void FormatKindUsesOneWordFallbackForUnknownKinds()
    {
       Assert.Equal("Källa", SourceDisplay.FormatKind("Unknown"));
+   }
+
+   [Fact]
+   public void FindStreamLinkForChannelMatchesProviderTitle()
+   {
+      var source = new ActivitySourceListItem(
+         SourceKinds.StreamLink,
+         "https://stream.example/activity",
+         "Viaplay"
+      );
+
+      var result = SourceDisplay.FindStreamLinkForChannel(
+         [source],
+         "viaplay"
+      );
+
+      Assert.Same(source, result);
    }
 
    [Fact]

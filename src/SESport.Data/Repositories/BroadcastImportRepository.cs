@@ -68,7 +68,7 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
 
       foreach(var broadcast in broadcasts)
       {
-         var inserted = await UpsertBroadcastAsync(
+         var upsertResult = await UpsertBroadcastAsync(
             connection,
             transaction,
             importRun.Id,
@@ -76,7 +76,21 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
             cancellationToken
          );
 
-         if(inserted)
+         await BroadcastStreamSourcePersistence.UpsertForBroadcastAsync(
+            connection,
+            transaction,
+            upsertResult.Id,
+            broadcast.StreamLinks,
+            cancellationToken
+         );
+         await BroadcastStreamSourcePersistence.CopyToLinkedActivitiesAsync(
+            connection,
+            transaction,
+            upsertResult.Id,
+            cancellationToken
+         );
+
+         if(upsertResult.Inserted)
          {
             insertedCount++;
             continue;
@@ -239,7 +253,7 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   private static async Task<bool> UpsertBroadcastAsync(
+   private static async Task<BroadcastUpsertResult> UpsertBroadcastAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
       Guid importRunId,
@@ -323,7 +337,7 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
                source.starts_at, source.ends_at, source.time_zone_id,
                source.raw_programme_xml, source.image_url
             )
-         returning merge_action()
+         returning target.id, merge_action()
          """;
 
       await using var command = new NpgsqlCommand(sql, connection, transaction);
@@ -369,9 +383,23 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
          (object?)broadcast.ImageUrl ?? DBNull.Value
       );
 
-      var action = (string)(await command.ExecuteScalarAsync(
+      await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
-      ))!;
-      return action.Equals("INSERT", StringComparison.OrdinalIgnoreCase);
+      );
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         throw new InvalidOperationException(
+            $"Unable to upsert broadcast '{broadcast.Id}'."
+         );
+      }
+
+      var id = reader.GetGuid(0);
+      var action = reader.GetString(1);
+      return new BroadcastUpsertResult(
+         id,
+         action.Equals("INSERT", StringComparison.OrdinalIgnoreCase)
+      );
    }
+
+   private sealed record BroadcastUpsertResult(Guid Id, bool Inserted);
 }

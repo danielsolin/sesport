@@ -8,6 +8,8 @@ public static class SourceKinds
 
    public const string ActivityEvidence = "ActivityEvidence";
 
+   public const string StreamLink = "StreamLink";
+
    public const string ParticipationEvidence = "ParticipationEvidence";
 
    public const string ParticipantStartEvidence =

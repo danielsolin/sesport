@@ -13,11 +13,33 @@ public static class SourceDisplay
       return kind switch
       {
          SourceKinds.ActivityEvidence => "Aktivitet",
+         SourceKinds.StreamLink => "Stream",
          SourceKinds.ParticipationEvidence => "Deltagande",
          SourceKinds.ParticipantStartEvidence => "Starttid",
          SourceKinds.ParticipantStarEvidence => "Stjärna",
          _ => "Källa"
       };
+   }
+
+   public static ActivitySourceListItem? FindStreamLinkForChannel(
+      IEnumerable<ActivitySourceListItem> sources,
+      string channel
+   )
+   {
+      var normalizedChannel = channel.Trim();
+
+      return sources.FirstOrDefault(source =>
+         string.Equals(
+            source.Kind,
+            SourceKinds.StreamLink,
+            StringComparison.OrdinalIgnoreCase
+         ) &&
+         string.Equals(
+            source.Title?.Trim(),
+            normalizedChannel,
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
    }
 
    public static IReadOnlyList<ActivitySourceListItem>

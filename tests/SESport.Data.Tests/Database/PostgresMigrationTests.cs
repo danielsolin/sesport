@@ -620,6 +620,26 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void StreamLinkMigrationAddsIdempotentSourceIndex()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "036_stream_link_source_uniqueness.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "create unique index if not exists " +
+            "sources_stream_link_correlation_url_uidx",
+         migration
+      );
+      Assert.Contains("where kind = 'streamlink'", migration);
+   }
+
+   [Fact]
    public void ActivityParticipantMigrationRequiresPersonEntities()
    {
       var migration = File.ReadAllText(

@@ -598,6 +598,11 @@ public sealed class IndexMarkupTests
       );
 
       Assert.Contains("Källor+", html);
+      Assert.Contains("SourceKinds.StreamLink", html);
+      Assert.Contains("activity-channel-chip-link", html);
+      Assert.Contains("activity-channel-chip-stream-icon", html);
+      Assert.Contains("<path d=\"M3 2v8l6-4-6-4Z\"></path>", html);
+      Assert.Contains("SourceDisplay.FindStreamLinkForChannel(", html);
       Assert.Contains("SourceDisplay.FormatKind(", html);
       Assert.Contains("source.Kind", html);
       Assert.Contains("target=\"_blank\"", html);
@@ -630,5 +635,7 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("margin: 12px 0 0 10px;", css);
       Assert.Contains(".activity-sources-table", css);
+      Assert.Contains(".activity-channel-chip-link", css);
+      Assert.Contains(".activity-channel-chip-stream-icon", css);
    }
 }

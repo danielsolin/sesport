@@ -1540,6 +1540,29 @@
    white-space: nowrap;
 }
 
+.activity-channel-chip-link {
+   gap: 3px;
+   color: var(--accent-strong);
+   text-decoration: none;
+}
+
+.activity-channel-chip-stream-icon {
+   width: 9px;
+   height: 9px;
+   flex: 0 0 9px;
+   fill: currentColor;
+}
+
+.activity-channel-chip-link:hover {
+   border-color: var(--accent-strong);
+   background: rgba(0, 106, 168, 0.08);
+}
+
+.activity-channel-chip-link:focus-visible {
+   outline: 2px solid rgba(0, 106, 168, 0.45);
+   outline-offset: 2px;
+}
+
 .activity-group-schedule {
    display: grid;
    gap: 8px;

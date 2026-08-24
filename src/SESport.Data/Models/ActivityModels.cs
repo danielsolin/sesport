@@ -59,7 +59,8 @@ public sealed record ActivityListItem(
 
 public sealed record ActivitySourceListItem(
    string Kind,
-   string Url
+   string Url,
+   string? Title = null
 );
 
 public sealed record PublicActivityParticipant(
