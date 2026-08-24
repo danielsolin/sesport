@@ -96,12 +96,16 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("asp-page=\"/Account/Login\"", html);
       Assert.Contains("Logga in", html);
       Assert.Contains("INSTÄLLNINGAR", html);
+      Assert.Contains("class=\"public-about-link\"", html);
+      Assert.Contains("href=\"/om\"", html);
+      Assert.Contains("aria-label=\"Om sesport\"", html);
       Assert.DoesNotContain("Logga ut", html);
       Assert.Contains("class=\"public-contact-footer\"", index);
       Assert.Contains("class=\"public-contact-link\"", index);
       Assert.Contains("href=\"mailto:info@sesport.se\"", index);
       Assert.Contains(".public-contact-footer {", publicCss);
       Assert.Contains(".public-contact-link {", publicCss);
+      Assert.Contains(".public-about-link {", publicCss);
       Assert.Contains(
          ".page-shell {\n" +
             "   padding-top: 24px;\n" +
