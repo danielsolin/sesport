@@ -52,6 +52,10 @@
       "/login",
       StringComparison.OrdinalIgnoreCase
    );
+   var isPublicAbout = requestPath.Equals(
+      "/om",
+      StringComparison.OrdinalIgnoreCase
+   );
    var publicFilterQuery = isPublicIndex
       ? Context.Request.QueryString.Value
       : PublicFilterPreferenceStore.ReadQueryString(
@@ -98,6 +102,9 @@
    var publicLoginClass = isPublicLogin
       ? "public-member-link is-active"
       : "public-member-link";
+   var publicAboutClass = isPublicAbout
+      ? "public-about-link is-active"
+      : "public-about-link";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -208,9 +215,12 @@
                      Logga in
                   </a>
                }
-               <a class="public-about-link"
+               <a class="@publicAboutClass"
                   href="/om"
-                  aria-label="Om sesport">
+                  aria-label="Om sesport"
+                  aria-current="@(
+                     isPublicAbout ? "page" : null
+                  )">
                   ?
                </a>
             </div>

@@ -81,9 +81,11 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("var isPublicStatistics = requestPath.Equals(", html);
       Assert.Contains("var isPublicWatches = requestPath.Equals(", html);
       Assert.Contains("var isPublicLogin = requestPath.Equals(", html);
+      Assert.Contains("var isPublicAbout = requestPath.Equals(", html);
       Assert.Contains("var publicStatisticsClass = isPublicStatistics", html);
       Assert.Contains("var publicWatchesClass = isPublicWatches", html);
       Assert.Contains("var publicLoginClass = isPublicLogin", html);
+      Assert.Contains("var publicAboutClass = isPublicAbout", html);
       Assert.Contains("isPublicStatistics ? \"page\" : null", html);
       Assert.Contains("isPublicWatches ? \"page\" : null", html);
       Assert.Contains("isPublicLogin ? \"page\" : null", html);
@@ -96,9 +98,10 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("asp-page=\"/Account/Login\"", html);
       Assert.Contains("Logga in", html);
       Assert.Contains("INSTÄLLNINGAR", html);
-      Assert.Contains("class=\"public-about-link\"", html);
       Assert.Contains("href=\"/om\"", html);
       Assert.Contains("aria-label=\"Om sesport\"", html);
+      Assert.Contains("class=\"@publicAboutClass\"", html);
+      Assert.Contains("isPublicAbout ? \"page\" : null", html);
       Assert.DoesNotContain("Logga ut", html);
       Assert.Contains("class=\"public-contact-footer\"", index);
       Assert.Contains("class=\"public-contact-link\"", index);
@@ -106,6 +109,7 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains(".public-contact-footer {", publicCss);
       Assert.Contains(".public-contact-link {", publicCss);
       Assert.Contains(".public-about-link {", publicCss);
+      Assert.Contains(".public-about-link.is-active {", publicCss);
       Assert.Contains(
          ".page-shell {\n" +
             "   padding-top: 24px;\n" +
