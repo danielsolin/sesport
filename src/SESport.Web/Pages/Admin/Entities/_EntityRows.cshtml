@@ -6,6 +6,7 @@
 <tbody data-entity-list-partial-body>
    @foreach(var entity in Model.Entities)
    {
+      var searchUrlBase = Model.ResolvedSearchUrlBase;
       var entityId = entity.Id.ToString();
       var editUrl = Url.Page(
          "/Admin/Entities/Edit",
@@ -65,7 +66,7 @@
                <strong>@entity.Name</strong>
             </a>
             <a class="ses-entity-search-link"
-               href="@Model.SearchUrlBase@Uri.EscapeDataString(searchQuery)"
+               href="@searchUrlBase@Uri.EscapeDataString(searchQuery)"
                target="_blank"
                rel="noreferrer">
                <span class="ses-icon-search"></span>
@@ -83,7 +84,7 @@
             {
                <a class="ses-entity-search-link
                          ses-entity-search-link-missing"
-                  href="@Model.SearchUrlBase@Uri.EscapeDataString(ageQuery)"
+                  href="@searchUrlBase@Uri.EscapeDataString(ageQuery)"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Search for missing age"
@@ -101,7 +102,7 @@
             {
                <a class="ses-entity-search-link
                          ses-entity-search-link-missing"
-                  href="@Model.SearchUrlBase@Uri.EscapeDataString(heightQuery)"
+                  href="@searchUrlBase@Uri.EscapeDataString(heightQuery)"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Search for missing height"
@@ -119,7 +120,7 @@
             {
                <a class="ses-entity-search-link
                          ses-entity-search-link-missing"
-                  href="@Model.SearchUrlBase@Uri.EscapeDataString(weightQuery)"
+                  href="@searchUrlBase@Uri.EscapeDataString(weightQuery)"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Search for missing weight"
@@ -137,7 +138,7 @@
             {
                <a class="ses-entity-search-link
                          ses-entity-search-link-missing"
-                  href="@Model.SearchUrlBase@Uri.EscapeDataString(clubQuery)"
+                  href="@searchUrlBase@Uri.EscapeDataString(clubQuery)"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Search for missing formative club"

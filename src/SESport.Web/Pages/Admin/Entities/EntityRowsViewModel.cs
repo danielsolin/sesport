@@ -1,3 +1,4 @@
+using SESport.Core.Configuration;
 using SESport.Data.Models;
 
 namespace SESport.Web.Pages.Admin.Entities;
@@ -9,4 +10,10 @@ public sealed record EntityRowsViewModel(
    IReadOnlyList<ReferenceRow> WatchPriorities,
    string FemaleGenderId,
    string MaleGenderId
-);
+)
+{
+   public string ResolvedSearchUrlBase =>
+      string.IsNullOrWhiteSpace(SearchUrlBase)
+         ? $"{WebSearchDefaults.GoogleSearchBaseUrl}?q="
+         : SearchUrlBase;
+}

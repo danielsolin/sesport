@@ -28,6 +28,7 @@ public sealed class IndexScriptTests
       Assert.Contains("data-person-facts-status", js);
       Assert.Contains("Facts job failed.", js);
       Assert.Contains("ses-entity-search-link-missing", partial);
+      Assert.Contains("ResolvedSearchUrlBase", partial);
       Assert.Contains("Search for missing age", partial);
       Assert.Contains("replaceContentsWithPartialHtml", js);
       Assert.Contains("DOMContentLoaded", js);
