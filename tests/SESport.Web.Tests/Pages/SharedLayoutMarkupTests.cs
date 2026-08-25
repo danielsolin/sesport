@@ -38,6 +38,13 @@ public sealed class SharedLayoutMarkupTests
          "src/SESport.Web/wwwroot/Admin/js/site.js"
       );
       var adminSiteJs = await File.ReadAllTextAsync(adminSiteJsPath);
+      var publicHeaderMenuScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/public-header-menu.js"
+      );
+      var publicHeaderMenuScript = await File.ReadAllTextAsync(
+         publicHeaderMenuScriptPath
+      );
 
       Assert.Contains("public.css", html);
       Assert.Contains("site.css", html);
@@ -77,6 +84,20 @@ public sealed class SharedLayoutMarkupTests
       Assert.DoesNotContain("public-member-form", html);
       Assert.DoesNotContain("Account/Logout", html);
       Assert.Contains("class=\"public-header-actions\"", html);
+      Assert.Contains(
+         "class=\"public-header-primary-links\"",
+         html
+      );
+      Assert.Contains(
+         "class=\"public-header-secondary-menu\"",
+         html
+      );
+      Assert.Contains("data-public-header-menu", html);
+      Assert.Contains("data-member-authenticated", html);
+      Assert.Contains("public-header-menu.js", html);
+      Assert.Contains("TABLÅ", html);
+      Assert.Contains("BEVAKNINGAR", html);
+      Assert.Contains("MENY", html);
       Assert.Contains("class=\"@publicLoginClass\"", html);
       Assert.Contains("var isPublicStatistics = requestPath.Equals(", html);
       Assert.Contains("var isPublicWatches = requestPath.Equals(", html);
@@ -90,13 +111,29 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("isPublicWatches ? \"page\" : null", html);
       Assert.Contains("isPublicLogin ? \"page\" : null", html);
       Assert.Contains(
+         "PublicFilterPreferenceStore.ReadScheduleUrl",
+         html
+      );
+      Assert.Contains(
+         "PublicFilterPreferenceStore.ReadWatchedUrl",
+         html
+      );
+      Assert.Contains(
+         "PublicFilterPreferenceStore.ReadStatisticsUrl",
+         html
+      );
+      Assert.DoesNotContain(
          "PublicFilterPreferenceStore.ReadPublicActivityUrl",
          html
       );
       Assert.Contains("var isPublicWatchedIndex = requestPath.Equals(", html);
       Assert.Contains("PublicRoutePaths.Watched", html);
-      Assert.Contains("publicIndexHref", html);
-      Assert.Contains("href=\"@publicIndexHref\"", html);
+      Assert.Contains("publicScheduleHref", html);
+      Assert.Contains("href=\"@publicScheduleHref\"", html);
+      Assert.Contains("publicWatchedHref", html);
+      Assert.Contains("href=\"@publicWatchedHref\"", html);
+      Assert.Contains("publicStatisticsHref", html);
+      Assert.DoesNotContain("publicIndexHref", html);
       Assert.Contains("asp-page=\"/Account/Login\"", html);
       Assert.Contains("Logga in", html);
       Assert.Contains("INSTÄLLNINGAR", html);
@@ -110,8 +147,15 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("href=\"mailto:info@sesport.se\"", index);
       Assert.Contains(".public-contact-footer {", publicCss);
       Assert.Contains(".public-contact-link {", publicCss);
-      Assert.Contains(".public-about-link {", publicCss);
-      Assert.Contains(".public-about-link.is-active {", publicCss);
+      Assert.DoesNotContain(".public-about-link", publicCss);
+      Assert.Contains(".public-header-primary-links {", publicCss);
+      Assert.Contains(".public-header-menu-toggle {", publicCss);
+      Assert.Contains("margin-left: 24px;", publicCss);
+      Assert.Contains(
+         ".public-header-secondary-menu[open]",
+         publicCss
+      );
+      Assert.Contains("background: #006aa8;", publicCss);
       Assert.Contains(
          ".page-shell {\n" +
             "   padding-top: 24px;\n" +
@@ -150,6 +194,13 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("border-radius: 999px;", publicCss);
       Assert.Contains("text-transform: uppercase;", publicCss);
       Assert.Contains(".public-member-link.is-active {", publicCss);
+      Assert.Contains("closeMenusWhenClickedOutside", publicHeaderMenuScript);
+      Assert.Contains("\"pointerdown\"", publicHeaderMenuScript);
+      Assert.Contains("!menu.contains(target)", publicHeaderMenuScript);
+      Assert.Contains(
+         "menu.removeAttribute(\"open\")",
+         publicHeaderMenuScript
+      );
       Assert.Contains(
          "const isRootPath = currentPath === \"/\";\n\n" +
          "   if(isRootPath)",

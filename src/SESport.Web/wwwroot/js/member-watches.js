@@ -1,4 +1,10 @@
 (() => {
+   const isMember = document.body?.dataset.memberAuthenticated === "true";
+   if(!isMember)
+   {
+      return;
+   }
+
    const containerSelector = "[data-member-watch-search]";
    const formSelector = "[data-member-watch-search-form]";
    const inputSelector = "[data-member-watch-search-input]";

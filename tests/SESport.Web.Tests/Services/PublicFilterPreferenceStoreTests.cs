@@ -13,7 +13,7 @@ public sealed class PublicFilterPreferenceStoreTests
       true,
       "/bevakade?sport=football"
    )]
-   public void SaveWritesTheCurrentPublicActivityUrl(
+   public void SaveWritesTheScopedPublicActivityUrl(
       bool watched,
       string expectedUrl
    )
@@ -30,22 +30,65 @@ public sealed class PublicFilterPreferenceStoreTests
       var setCookie = Uri.UnescapeDataString(
          context.Response.Headers.SetCookie.ToString()
       );
+      var expectedCookieName = watched
+         ? PublicFilterPreferenceStore.WatchedCookieName
+         : PublicFilterPreferenceStore.ScheduleCookieName;
 
       Assert.Contains(
-         $"{PublicFilterPreferenceStore.CookieName}={expectedUrl}",
+         $"{expectedCookieName}={expectedUrl}",
          setCookie
       );
    }
 
    [Fact]
-   public void ReadPublicActivityUrlAcceptsTheWatchedRoute()
+   public void SaveStatisticsWritesTheStatisticsUrl()
+   {
+      var context = new DefaultHttpContext();
+
+      PublicFilterPreferenceStore.SaveStatistics(
+         context.Response,
+         "2026-08",
+         "football"
+      );
+
+      var setCookie = Uri.UnescapeDataString(
+         context.Response.Headers.SetCookie.ToString()
+      );
+
+      Assert.Contains(
+         $"{PublicFilterPreferenceStore.StatisticsCookieName}=" +
+            "/statistik?month=2026-08&sport=football",
+         setCookie
+      );
+   }
+
+   [Fact]
+   public void ReadScheduleUrlAcceptsTheScheduleRoute()
    {
       var context = new DefaultHttpContext();
       context.Request.Headers.Cookie =
-         $"{PublicFilterPreferenceStore.CookieName}=" +
+         $"{PublicFilterPreferenceStore.ScheduleCookieName}=" +
+         "/?date=2026-08-25&sport=football";
+
+      var value = PublicFilterPreferenceStore.ReadScheduleUrl(
+         context.Request
+      );
+
+      Assert.Equal(
+         "/?date=2026-08-25&sport=football",
+         value
+      );
+   }
+
+   [Fact]
+   public void ReadWatchedUrlAcceptsTheWatchedRoute()
+   {
+      var context = new DefaultHttpContext();
+      context.Request.Headers.Cookie =
+         $"{PublicFilterPreferenceStore.WatchedCookieName}=" +
          "/bevakade?sport=football";
 
-      var value = PublicFilterPreferenceStore.ReadPublicActivityUrl(
+      var value = PublicFilterPreferenceStore.ReadWatchedUrl(
          context.Request
       );
 
@@ -53,14 +96,47 @@ public sealed class PublicFilterPreferenceStoreTests
    }
 
    [Fact]
-   public void ReadPublicActivityUrlRejectsExternalPaths()
+   public void ReadStatisticsUrlAcceptsTheStatisticsRoute()
    {
       var context = new DefaultHttpContext();
       context.Request.Headers.Cookie =
-         $"{PublicFilterPreferenceStore.CookieName}=" +
+         $"{PublicFilterPreferenceStore.StatisticsCookieName}=" +
+         "/statistik?month=2026-08&sport=football";
+
+      var value = PublicFilterPreferenceStore.ReadStatisticsUrl(
+         context.Request
+      );
+
+      Assert.Equal(
+         "/statistik?month=2026-08&sport=football",
+         value
+      );
+   }
+
+   [Fact]
+   public void ReadScheduleUrlRejectsTheWatchedRoute()
+   {
+      var context = new DefaultHttpContext();
+      context.Request.Headers.Cookie =
+         $"{PublicFilterPreferenceStore.ScheduleCookieName}=" +
+         "/bevakade?sport=football";
+
+      var value = PublicFilterPreferenceStore.ReadScheduleUrl(
+         context.Request
+      );
+
+      Assert.Null(value);
+   }
+
+   [Fact]
+   public void ReadWatchedUrlRejectsExternalPaths()
+   {
+      var context = new DefaultHttpContext();
+      context.Request.Headers.Cookie =
+         $"{PublicFilterPreferenceStore.WatchedCookieName}=" +
          "https://example.com/bevakade";
 
-      var value = PublicFilterPreferenceStore.ReadPublicActivityUrl(
+      var value = PublicFilterPreferenceStore.ReadWatchedUrl(
          context.Request
       );
 

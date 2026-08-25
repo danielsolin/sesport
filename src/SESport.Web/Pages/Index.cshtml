@@ -84,6 +84,8 @@
 
 <section class="page-heading index-heading">
    <div class="index-heading-left">
+      @if(!Model.IsWatchedActivitiesView)
+      {
       <div class="date-select">
          <div class="date-dropdown" data-date-dropdown>
             <button class="date-dropdown-toggle"
@@ -94,21 +96,12 @@
                     aria-controls="date-dropdown-menu"
                     data-date-dropdown-toggle>
                <span class="date-option-content">
-                  @if(Model.IsWatchedActivitiesView)
-                  {
-                     <span class="date-option-watch-label">
-                        Bevakade
-                     </span>
-                  }
-                  else
-                  {
-                     <span class="date-option-day">
-                        @selectedDateOption.DayLabel
-                     </span>
-                     <span class="date-option-date">
-                        @selectedDateOption.DateLabel
-                     </span>
-                  }
+                  <span class="date-option-day">
+                     @selectedDateOption.DayLabel
+                  </span>
+                  <span class="date-option-date">
+                     @selectedDateOption.DateLabel
+                  </span>
                </span>
                <span class="date-dropdown-chevron"
                      aria-hidden="true"></span>
@@ -119,37 +112,6 @@
                  aria-label="Datum"
                  hidden
                  data-date-dropdown-menu>
-               @if(Model.IsMember)
-               {
-                  <a class="date-dropdown-option
-                     date-dropdown-watch-option
-                     @(Model.IsWatchedActivitiesView ? "is-selected" : "")"
-                     href="@PublicRoutePaths.Watched"
-                     role="option"
-                     aria-selected="@(
-                        Model.IsWatchedActivitiesView
-                           ? "true"
-                           : "false"
-                     )">
-                     <span class="date-option-content">
-                        <span class="date-option-watch-label">
-                           Bevakade
-                        </span>
-                     </span>
-                  </a>
-               }
-               else
-               {
-                  <a class="date-dropdown-option
-                     date-dropdown-watch-option"
-                     asp-page="/Account/Login">
-                     <span class="date-option-content">
-                        <span class="date-option-watch-label">
-                           Logga in för bevakningar
-                        </span>
-                     </span>
-                  </a>
-               }
                @foreach(var dateOption in Model.DateOptions)
                {
                   var dateUrl = PublicRoutePaths.Home + "?date=" +
@@ -162,21 +124,14 @@
                      );
                   }
                   <a class="date-dropdown-option
-                     @(dateOption.IsSelected &&
-                        !Model.IsWatchedActivitiesView
-                        ? "is-selected"
-                        : "")"
+                     @(dateOption.IsSelected ? "is-selected" : "")"
                      href="@dateUrl"
                      role="option"
                      aria-selected="@(
-                        dateOption.IsSelected &&
-                        !Model.IsWatchedActivitiesView
-                           ? "true"
-                           : "false"
+                        dateOption.IsSelected ? "true" : "false"
                      )">
                      <span class="date-option-content">
-                        @if(dateOption.IsSelected &&
-                           !Model.IsWatchedActivitiesView)
+                        @if(dateOption.IsSelected)
                         {
                            <span class="date-option-label">
                               <span class="date-option-day">
@@ -212,6 +167,7 @@
             </div>
          </div>
       </div>
+      }
       @if(Model.TotalParticipantsCount is not null)
       {
          var selectedSport = Model.SportParticipantCounts
@@ -311,7 +267,9 @@ else if(Model.TimelineEntries.Count == 0 &&
    !Model.IsMember)
 {
    <div class="notice">
-      Logga in för att se aktiviteter för dina bevakningar.
+      Logga in for att följa dina bevakningar.
+      <br />
+      <br />
       <a class="button button-primary"
          asp-page="/Account/Login">
          Logga in

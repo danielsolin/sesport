@@ -39,6 +39,14 @@
       );
    let installPrompt = null;
 
+   if("serviceWorker" in navigator)
+   {
+      navigator.serviceWorker.register(
+         "/service-worker.js",
+         { scope: "/" }
+      ).catch(() => null);
+   }
+
    const wasDismissed = () => {
       try
       {

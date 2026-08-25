@@ -65,8 +65,16 @@ public sealed class IndexMarkupTests
       Assert.Contains("publicActivitySportUrl", html);
       Assert.Contains("var dateUrl = PublicRoutePaths.Home", html);
       Assert.DoesNotContain("asp-route-watched", html);
-      Assert.Contains("date-dropdown-watch-option", html);
-      Assert.Contains("Bevakade", html);
+      Assert.Contains(
+         "@if(!Model.IsWatchedActivitiesView)",
+         html
+      );
+      Assert.DoesNotContain("date-dropdown-watch-option", html);
+      Assert.DoesNotContain("Bevakade", html);
+      Assert.Contains(
+         "Logga in for att följa dina bevakningar.",
+         html
+      );
       Assert.DoesNotContain("Mina bevakningar", html);
       Assert.Contains("IsDateSeparator", html);
       Assert.Contains("IsTodayDateSeparator", html);

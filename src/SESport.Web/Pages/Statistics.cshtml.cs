@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Domain;
 using SESport.Data.Models;
+using SESport.Web.Preferences;
 using System.Globalization;
 
 namespace SESport.Web.Pages;
@@ -87,6 +88,11 @@ public sealed class StatisticsModel(
          TotalParticipantCount = sportSnapshot.ParticipantCount;
          SportOptions = sportSnapshot.Options;
          Sport = NormalizeSportFilter(Sport, SportOptions);
+         PublicFilterPreferenceStore.SaveStatistics(
+            HttpContext.Response,
+            SelectedMonthValue,
+            Sport
+         );
          Statistics = await repository.GetMonthlyAsync(
             SelectedMonth,
             options.TopParticipantLimit,

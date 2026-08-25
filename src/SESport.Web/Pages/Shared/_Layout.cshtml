@@ -45,7 +45,7 @@
       StringComparison.OrdinalIgnoreCase
    );
    var isPublicStatistics = requestPath.Equals(
-      "/statistik",
+      PublicRoutePaths.Statistics,
       StringComparison.OrdinalIgnoreCase
    );
    var isPublicWatches = requestPath.Equals(
@@ -60,15 +60,24 @@
       "/om",
       StringComparison.OrdinalIgnoreCase
    );
-   var isPublicActivityIndex = isPublicIndex || isPublicWatchedIndex;
-   var publicIndexPath = isPublicWatchedIndex
-      ? PublicRoutePaths.Watched
-      : PublicRoutePaths.Home;
-   var publicIndexHref = isPublicActivityIndex
-      ? publicIndexPath + Context.Request.QueryString.Value
-      : PublicFilterPreferenceStore.ReadPublicActivityUrl(
+   var publicScheduleHref = isPublicIndex
+      ? PublicRoutePaths.Home + Context.Request.QueryString.Value
+      : PublicFilterPreferenceStore.ReadScheduleUrl(
          Context.Request
       ) ?? PublicRoutePaths.Home;
+   var publicWatchedHref = isPublicWatchedIndex
+      ? PublicRoutePaths.Watched + Context.Request.QueryString.Value
+      : PublicFilterPreferenceStore.ReadWatchedUrl(
+         Context.Request
+      ) ?? PublicRoutePaths.Watched;
+   var publicStatisticsHref = isPublicStatistics
+      ? PublicRoutePaths.Statistics + Context.Request.QueryString.Value
+      : PublicFilterPreferenceStore.ReadStatisticsUrl(
+         Context.Request
+      ) ?? PublicRoutePaths.Statistics;
+   var publicBrandHref = isPublicWatchedIndex
+      ? publicWatchedHref
+      : publicScheduleHref;
    var isEntities = requestPath.StartsWith(
       "/Admin/Entities",
       StringComparison.OrdinalIgnoreCase
@@ -102,6 +111,12 @@
    var publicStatisticsClass = isPublicStatistics
       ? "public-member-link is-active"
       : "public-member-link";
+   var publicScheduleClass = isPublicIndex
+      ? "public-member-link is-active"
+      : "public-member-link";
+   var publicWatchedIndexClass = isPublicWatchedIndex
+      ? "public-member-link is-active"
+      : "public-member-link";
    var publicWatchesClass = isPublicWatches
       ? "public-member-link is-active"
       : "public-member-link";
@@ -109,8 +124,8 @@
       ? "public-member-link is-active"
       : "public-member-link";
    var publicAboutClass = isPublicAbout
-      ? "public-about-link is-active"
-      : "public-about-link";
+      ? "public-member-link is-active"
+      : "public-member-link";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -154,10 +169,10 @@
             asp-append-version="true" />
    }
 </head>
-<body>
+<body data-member-authenticated="@(isMember ? "true" : "false")">
    <header class="site-header">
       <div class="site-header-main">
-         <a class="brand" href="@publicIndexHref">sesport</a>
+         <a class="brand" href="@publicBrandHref">sesport</a>
          @if(isAdmin)
          {
             <nav class="admin-top-menu" aria-label="Admin sections">
@@ -194,41 +209,66 @@
          else
          {
             <div class="public-header-actions">
-               <a class="@publicStatisticsClass"
-                  asp-page="/Statistics"
-                  aria-current="@(
-                     isPublicStatistics ? "page" : null
-                  )">
-                  STATISTIK
-               </a>
-               @if(isMember)
-               {
-                  <a class="@publicWatchesClass"
-                     asp-page="/Account/Watches"
+               <div class="public-header-primary-links">
+                  <a class="@publicScheduleClass"
+                     href="@publicScheduleHref"
                      aria-current="@(
-                        isPublicWatches ? "page" : null
+                        isPublicIndex ? "page" : null
                      )">
-                     INSTÄLLNINGAR
+                     TABLÅ
                   </a>
-               }
-               else
-               {
-                  <a class="@publicLoginClass"
-                     asp-page="/Account/Login"
+                  <a class="@publicWatchedIndexClass"
+                     href="@publicWatchedHref"
                      aria-current="@(
-                        isPublicLogin ? "page" : null
+                        isPublicWatchedIndex ? "page" : null
                      )">
-                     Logga in
+                     BEVAKNINGAR
                   </a>
-               }
-               <a class="@publicAboutClass"
-                  href="/om"
-                  aria-label="Om sesport"
-                  aria-current="@(
-                     isPublicAbout ? "page" : null
-                  )">
-                  ?
-               </a>
+               </div>
+               <details class="public-header-secondary-menu"
+                        data-public-header-menu
+                        open>
+                  <summary class="public-header-menu-toggle">
+                     MENY
+                  </summary>
+                  <div class="public-header-secondary-links">
+                     <a class="@publicStatisticsClass"
+                        href="@publicStatisticsHref"
+                        aria-current="@(
+                           isPublicStatistics ? "page" : null
+                        )">
+                        STATISTIK
+                     </a>
+                     @if(isMember)
+                     {
+                        <a class="@publicWatchesClass"
+                           asp-page="/Account/Watches"
+                           aria-current="@(
+                              isPublicWatches ? "page" : null
+                           )">
+                           INSTÄLLNINGAR
+                        </a>
+                     }
+                     else
+                     {
+                        <a class="@publicLoginClass"
+                           asp-page="/Account/Login"
+                           aria-current="@(
+                              isPublicLogin ? "page" : null
+                           )">
+                           Logga in
+                        </a>
+                     }
+                     <a class="@publicAboutClass"
+                        href="/om"
+                        aria-label="Om sesport"
+                        aria-current="@(
+                           isPublicAbout ? "page" : null
+                     )">
+                        Om sesport
+                     </a>
+                  </div>
+               </details>
             </div>
          }
       </div>
@@ -247,6 +287,11 @@
 
 <script src="~/Admin/js/partial-loader.js"
         asp-append-version="true"></script>
+   @if(!isAdmin)
+   {
+      <script src="~/js/public-header-menu.js"
+              asp-append-version="true"></script>
+   }
    @await RenderSectionAsync("Scripts", required: false)
    @if(isAdmin)
    {
