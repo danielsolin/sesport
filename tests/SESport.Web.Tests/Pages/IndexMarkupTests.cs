@@ -344,26 +344,22 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("activity-group-slot-status", css);
       Assert.Contains("activity-time-channel-list", html);
       Assert.Contains("activity-group-slot-channel-list", html);
-      Assert.Contains("activity-analog-clock", html);
+      Assert.DoesNotContain("activity-analog-clock", html);
+      Assert.DoesNotContain("activity-clock-hour-hand", html);
+      Assert.DoesNotContain("activity-clock-minute-hand", html);
+      Assert.DoesNotContain("activity-clock-center", html);
+      Assert.DoesNotContain("activity-analog-clock", css);
+      Assert.DoesNotContain("activity-clock-hour-hand", css);
+      Assert.DoesNotContain("activity-clock-minute-hand", css);
+      Assert.DoesNotContain("activity-clock-center", css);
       Assert.Contains(
-         ".activity-analog-clock {\n   display: none;",
-         css
-      );
-      Assert.Contains(
-         "@media (orientation: landscape) and (min-width: 721px) {\n" +
-            "   .activity-analog-clock {\n" +
-            "      display: block;",
-         css
-      );
-      Assert.Contains(
-         ".activity-time-channel-list {\n" +
-            "      margin-top: 27px;",
+         "margin: 27px 0 0 4px;",
          css
       );
       Assert.Contains(
          ".activity-agenda-section-grouped " +
             ".activity-time-channel-list {\n" +
-            "      margin-top: 23px;",
+            "   margin-top: 23px;",
          css
       );
       Assert.Contains(
