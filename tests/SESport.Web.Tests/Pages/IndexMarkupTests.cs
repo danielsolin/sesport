@@ -344,6 +344,28 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("activity-group-slot-status", css);
       Assert.Contains("activity-time-channel-list", html);
       Assert.Contains("activity-group-slot-channel-list", html);
+      Assert.Contains("activity-analog-clock", html);
+      Assert.Contains(
+         ".activity-analog-clock {\n   display: none;",
+         css
+      );
+      Assert.Contains(
+         "@media (orientation: landscape) and (min-width: 721px) {\n" +
+            "   .activity-analog-clock {\n" +
+            "      display: block;",
+         css
+      );
+      Assert.Contains(
+         ".activity-time-channel-list {\n" +
+            "      margin-top: 27px;",
+         css
+      );
+      Assert.Contains(
+         ".activity-agenda-section-grouped " +
+            ".activity-time-channel-list {\n" +
+            "      margin-top: 23px;",
+         css
+      );
       Assert.Contains(
          "string[] slotParticipantNames =",
          html
