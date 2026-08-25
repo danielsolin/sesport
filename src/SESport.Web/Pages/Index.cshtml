@@ -640,7 +640,8 @@ else
                            }
                         </span>
                      </h3>
-                     <h2 class="activity-entry-title">
+                     <h2 class="activity-entry-title"
+                         data-activity-title-fit>
                         @(agendaSection.ActivityGroupTitle ?? activity.Title)
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(
@@ -747,7 +748,8 @@ else
                                  </span>
                                  <span class="activity-group-slot-content">
                                     <span class=
-                                       "activity-group-slot-title">
+                                       "activity-group-slot-title"
+                                       data-activity-title-fit>
                                        @slot.Activity.Title
                                        @if(slotParticipantNames.Length > 0)
                                        {
@@ -1184,5 +1186,7 @@ else
    <script src="~/js/public-participant-table.js"
            asp-append-version="true"></script>
    <script src="~/js/public-past-activities.js"
+           asp-append-version="true"></script>
+   <script src="~/js/public-activity-title-fit.js"
            asp-append-version="true"></script>
 }

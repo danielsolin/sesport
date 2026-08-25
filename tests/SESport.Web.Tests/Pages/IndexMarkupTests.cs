@@ -20,10 +20,17 @@ public sealed class IndexMarkupTests
          repoRoot,
          "src/SESport.Web/wwwroot/js/public-participant-table.js"
       );
+      var titleFitScriptPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/js/public-activity-title-fit.js"
+      );
       var html = await File.ReadAllTextAsync(htmlPath);
       var css = await File.ReadAllTextAsync(cssPath);
       var participantScript = await File.ReadAllTextAsync(
          participantScriptPath
+      );
+      var titleFitScript = await File.ReadAllTextAsync(
+         titleFitScriptPath
       );
 
       Assert.Contains("index-participants-info", html);
@@ -65,6 +72,11 @@ public sealed class IndexMarkupTests
       Assert.Contains("IsTodayDateSeparator", html);
       Assert.Contains("activity-date-separator-row", html);
       Assert.Contains("public-date-select.js", html);
+      Assert.Contains("data-activity-title-fit", html);
+      Assert.Contains("public-activity-title-fit.js", html);
+      Assert.Contains("ResizeObserver", titleFitScript);
+      Assert.Contains("scrollWidth", titleFitScript);
+      Assert.Contains("fontSize", titleFitScript);
       Assert.Contains(
          "sesport-public-participant-expansions",
          participantScript
@@ -340,8 +352,29 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-entry-title {\n" +
          "   position: relative;\n" +
+         "   min-width: 0;\n" +
          "   margin-top: 4px;\n" +
          "   margin-bottom: 0px;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-slot-title {\n" +
+         "   display: block;\n" +
+         "   min-width: 0;",
+         css
+      );
+      Assert.Contains(
+         ".activity-agenda-items {\n" +
+         "   display: grid;\n" +
+         "   gap: 10px;\n" +
+         "   align-self: stretch;\n" +
+         "   min-width: 0;",
+         css
+      );
+      Assert.Contains(
+         ".activity-entry {\n" +
+         "   position: relative;\n" +
+         "   min-width: 0;",
          css
       );
       Assert.DoesNotContain(
