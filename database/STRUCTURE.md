@@ -1,8 +1,8 @@
 # Database structure
 
 This document describes the PostgreSQL schema used by SESport. The schema is
-split into reference data, sports content, broadcast ingestion, and AI
-execution data.
+split into reference data, sports content, broadcast ingestion, member
+features, and AI execution data.
 
 ## Design principles
 
@@ -159,6 +159,12 @@ replay state, visibility, and optional entity/activity references support both
 deduplication and editorial matching. The fingerprint is globally unique so
 that equivalent records from different sources can converge on one row.
 
+### `broadcast_channel_links`
+
+Stores canonical broadcast channel names and their URLs. Each row also keeps
+alternative names, active state, and update timestamps so channel links can be
+maintained independently from imported broadcast rows.
+
 ### `broadcast_ignore`
 
 Stores active rules for excluding broadcasts during ingestion. Rules can be
@@ -172,6 +178,38 @@ Stores manually entered editorial tasks. Each task is classified as applying
 to broadcasts, activities, or entities. `correlation_id` is nullable so that
 future versions can associate a task with one specific record without
 changing the table shape.
+
+## Member and notification model
+
+### `members`
+
+Stores passwordless member accounts, normalized email identities, verification
+and login timestamps, and the member's push-notification lead-time setting. A
+default lead time of zero keeps push notifications disabled until configured.
+
+### `member_login_tokens`
+
+Stores hashed, one-time login tokens used by the passwordless member flow.
+Tokens retain their request, expiry, and consumption timestamps and are owned
+by their member.
+
+### `member_entity_watches`
+
+Associates members with the entities they follow. The composite primary key
+allows one watch per member and entity, and deleting either owner removes the
+watch.
+
+### `member_push_subscriptions`
+
+Stores Web Push subscriptions for members, including the endpoint and the
+cryptographic subscription keys required to deliver a notification. A single
+endpoint belongs to at most one member.
+
+### `member_activity_push_notifications`
+
+Tracks the notification lifecycle for a member and activity: when it is
+scheduled, claimed, sent, and last updated. Its composite key prevents
+duplicate notification records for the same member and activity.
 
 ## AI configuration and execution
 
