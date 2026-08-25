@@ -1,10 +1,4 @@
 using Npgsql;
-
-using SESport.Core.Broadcast;
-using SESport.Core.Configuration;
-using SESport.Core.Domain;
-using SESport.Core.Formatting;
-using SESport.Core.Sources;
 using SESport.Data.Models;
 
 namespace SESport.Data.Repositories;

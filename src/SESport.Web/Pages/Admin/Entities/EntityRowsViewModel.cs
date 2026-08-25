@@ -1,4 +1,3 @@
-using SESport.Core.Configuration;
 using SESport.Data.Models;
 
 namespace SESport.Web.Pages.Admin.Entities;

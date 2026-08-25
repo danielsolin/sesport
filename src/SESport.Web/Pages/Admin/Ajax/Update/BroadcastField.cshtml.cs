@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
-using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Broadcasts;
 using System.Globalization;
 

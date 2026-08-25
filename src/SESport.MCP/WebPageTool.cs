@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace SESport.MCP;
 
 public sealed class WebPageTool

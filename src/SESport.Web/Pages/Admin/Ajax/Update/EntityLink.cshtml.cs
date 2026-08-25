@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Data;
-using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Entities;
 
 namespace SESport.Web.Pages.Admin.Ajax.Update;

@@ -1,4 +1,3 @@
-using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
 using System.Globalization;

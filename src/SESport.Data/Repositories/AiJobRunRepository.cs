@@ -1,7 +1,6 @@
 using Npgsql;
 using NpgsqlTypes;
 using SESport.Core.AI;
-using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
@@ -1214,14 +1213,6 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
    )
    {
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-   }
-
-   private static Guid? ReadNullableGuid(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
    }
 
    private static DateOnly? ReadNullableDateOnly(
