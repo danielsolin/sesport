@@ -73,10 +73,13 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-date-separator-row", html);
       Assert.Contains("public-date-select.js", html);
       Assert.Contains("data-activity-title-fit", html);
+      Assert.Contains("data-activity-slot-fit", html);
+      Assert.Contains("data-activity-slot-time", html);
       Assert.Contains("public-activity-title-fit.js", html);
       Assert.Contains("ResizeObserver", titleFitScript);
       Assert.Contains("scrollWidth", titleFitScript);
       Assert.Contains("fontSize", titleFitScript);
+      Assert.Contains("data-activity-slot-fit", titleFitScript);
       Assert.Contains(
          "sesport-public-participant-expansions",
          participantScript
@@ -455,19 +458,30 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
+         "      .activity-group-schedule-item.has-tv-channels {\n" +
+         "      display: grid;\n" +
+         "      grid-template-columns: auto minmax(0, 1fr);\n" +
+         "      grid-template-rows: auto auto;",
+         css
+      );
+      Assert.Contains(
+         ".activity-agenda-section-grouped\n" +
          "      .activity-group-schedule-item.has-tv-channels\n" +
          "      .activity-group-slot-channel-list {\n" +
-         "      display: none;",
+         "      display: flex;\n" +
+         "      flex-wrap: wrap;\n" +
+         "      min-width: 0;\n" +
+         "      max-width: 100%;\n" +
+         "      grid-column: 1 / -1;\n" +
+         "      grid-row: 2;\n" +
+         "      justify-content: flex-start;",
          css
       );
       Assert.Contains(
-         "grid-template-columns: auto minmax(0, 1fr) auto;",
-         css
-      );
-      Assert.Contains(
-         "grid-column: 3;\n" +
-         "      grid-row: 1;\n" +
-         "      justify-content: flex-end;",
+         ".activity-agenda-section-grouped\n" +
+         "      .activity-group-schedule-item.has-tv-channels\n" +
+         "      .activity-group-slot-title {\n" +
+         "      white-space: nowrap;",
          css
       );
       Assert.Contains(

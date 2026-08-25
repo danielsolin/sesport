@@ -697,7 +697,12 @@ else
                                  @(slot.HasEnded ? "has-ended" : "")
                                  @(slotChannels.Count > 0
                                     ? "has-tv-channels"
-                                    : "")">
+                                    : "")"
+                                    data-activity-slot-fit="@(
+                                       slotChannels.Count > 0
+                                          ? "true"
+                                          : null
+                                    )">
                                  @if(slotChannels.Count > 0)
                                  {
                                     <div class="activity-channel-list
@@ -743,7 +748,8 @@ else
                                        }
                                     </div>
                                  }
-                                 <span class="activity-group-slot-time">
+                                 <span class="activity-group-slot-time"
+                                       data-activity-slot-time>
                                     @slot.StartTimeLabel
                                  </span>
                                  <span class="activity-group-slot-content">

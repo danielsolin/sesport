@@ -1,63 +1,99 @@
 (() => {
    "use strict";
 
+   const titleSelector = "[data-activity-title-fit]";
+   const slotSelector = "[data-activity-slot-fit]";
+   const isElement = value => value instanceof HTMLElement;
+   const slotRows = Array.from(
+      document.querySelectorAll(slotSelector)
+   ).filter(isElement);
    const titleElements = Array.from(
-      document.querySelectorAll("[data-activity-title-fit]")
-   ).filter(title => title instanceof HTMLElement);
+      document.querySelectorAll(titleSelector)
+   ).filter(title =>
+      isElement(title) && title.closest(slotSelector) === null
+   );
 
-   if(titleElements.length === 0)
+   if(titleElements.length === 0 && slotRows.length === 0)
    {
       return;
    }
 
-   const baseFontSizes = new Map();
    const minimumScale = 0.68;
+   const baseFontSizes = new Map();
 
-   titleElements.forEach(title => {
+   const readFontSize = element => {
       const fontSize = Number.parseFloat(
-         window.getComputedStyle(title).fontSize
+         window.getComputedStyle(element).fontSize
       );
+      return Number.isFinite(fontSize) ? fontSize : null;
+   };
 
-      if(Number.isFinite(fontSize))
+   const rememberFontSize = element => {
+      const fontSize = readFontSize(element);
+
+      if(fontSize !== null)
       {
-         baseFontSizes.set(title, fontSize);
+         baseFontSizes.set(element, fontSize);
+      }
+   };
+
+   titleElements.forEach(rememberFontSize);
+
+   const slotElements = new Map();
+   slotRows.forEach(row => {
+      const elements = [
+         row.querySelector("[data-activity-slot-time]"),
+         row.querySelector(titleSelector)
+      ].filter(isElement);
+
+      elements.forEach(rememberFontSize);
+      if(elements.length > 0)
+      {
+         slotElements.set(row, elements);
       }
    });
 
-   const fits = title => title.scrollWidth <= title.clientWidth + 1;
+   const fits = element => element.scrollWidth <= element.clientWidth + 1;
 
-   const fitTitle = title => {
-      const baseFontSize = baseFontSizes.get(title);
+   const setScale = (elements, scale) => {
+      elements.forEach(element => {
+         const baseFontSize = baseFontSizes.get(element);
+         if(baseFontSize !== undefined)
+         {
+            element.style.fontSize = `${baseFontSize * scale}px`;
+         }
+      });
+   };
 
-      if(baseFontSize === undefined || title.clientWidth === 0)
+   const fitElements = (elements, fitsAtCurrentSize) => {
+      if(elements.some(element =>
+            !baseFontSizes.has(element) || element.clientWidth === 0
+         ))
       {
          return;
       }
 
-      title.style.fontSize = `${baseFontSize}px`;
-
-      if(fits(title))
+      setScale(elements, 1);
+      if(fitsAtCurrentSize())
       {
          return;
       }
 
-      const minimumFontSize = baseFontSize * minimumScale;
-      title.style.fontSize = `${minimumFontSize}px`;
-
-      if(!fits(title))
+      setScale(elements, minimumScale);
+      if(!fitsAtCurrentSize())
       {
          return;
       }
 
-      let low = minimumFontSize;
-      let high = baseFontSize;
+      let low = minimumScale;
+      let high = 1;
 
       for(let attempt = 0; attempt < 12; attempt++)
       {
          const candidate = (low + high) / 2;
-         title.style.fontSize = `${candidate}px`;
+         setScale(elements, candidate);
 
-         if(fits(title))
+         if(fitsAtCurrentSize())
          {
             high = candidate;
          }
@@ -67,10 +103,25 @@
          }
       }
 
-      title.style.fontSize = `${high}px`;
+      setScale(elements, high);
    };
 
-   const fitTitles = () => {
+   const fitTitle = title => {
+      fitElements(
+         [title],
+         () => fits(title)
+      );
+   };
+
+   const fitSlot = (row, elements) => {
+      fitElements(
+         elements,
+         () => fits(row) && elements.every(fits)
+      );
+   };
+
+   const fitAll = () => {
+      slotElements.forEach(fitSlot);
       titleElements.forEach(fitTitle);
    };
 
@@ -83,7 +134,7 @@
 
       frameId = window.requestAnimationFrame(() => {
          frameId = 0;
-         fitTitles();
+         fitAll();
       });
    };
 
@@ -91,6 +142,7 @@
    {
       const observer = new ResizeObserver(scheduleFit);
       titleElements.forEach(title => observer.observe(title));
+      slotRows.forEach(row => observer.observe(row));
    }
 
    window.addEventListener("resize", scheduleFit, { passive: true });
