@@ -31,6 +31,8 @@
    var shouldRenderPastActivitiesToggle = !Model.IsWatchedActivitiesView &&
       Model.IsSportToday &&
       hasPastActivities;
+   var streamIconClass =
+      "activity-channel-chip-stream-icon";
 }
 @section Head {
    <title>@Model.PublicSiteOptions.PageDescription – sesport</title>
@@ -489,12 +491,12 @@ else
                         aria-label="TV-kanaler">
                         @foreach(var channel in tvChannels)
                         {
-                           var streamSource =
-                              SourceDisplay.FindStreamLinkForChannel(
+                           var channelUrl =
+                              SourceDisplay.FindChannelLinkUrlForChannel(
                                  streamSources,
                                  channel
                               );
-                           if(streamSource is null)
+                           if(channelUrl is null)
                            {
                               <span class="activity-channel-chip">
                                  @channel
@@ -504,12 +506,12 @@ else
                            {
                               <a class="activity-channel-chip
                                  activity-channel-chip-link"
-                                 href="@streamSource.Url"
+                                 href="@channelUrl"
                                  target="_blank"
                                  rel="noopener noreferrer"
                                  aria-label="Öppna stream hos @channel">
                                  @channel
-                                 <svg class="activity-channel-chip-stream-icon"
+                                 <svg class="@streamIconClass"
                                       viewBox="0 0 12 12"
                                       aria-hidden="true"
                                       focusable="false">
@@ -699,13 +701,13 @@ else
                                        @foreach(var channel in
                                           slotChannels)
                                        {
-                                          var streamSource =
+                                          var channelUrl =
                                              SourceDisplay
-                                                .FindStreamLinkForChannel(
+                                                .FindChannelLinkUrlForChannel(
                                                    slotStreamSources,
                                                    channel
                                                 );
-                                          if(streamSource is null)
+                                          if(channelUrl is null)
                                           {
                                              <span class=
                                                 "activity-channel-chip">
@@ -717,14 +719,13 @@ else
                                              <a class=
                                                 "activity-channel-chip
                                                 activity-channel-chip-link"
-                                                href="@streamSource.Url"
+                                                href="@channelUrl"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 aria-label="Öppna stream hos
                                                    @channel">
                                                 @channel
-                                                <svg class="
-                                                   activity-channel-chip-stream-icon"
+                                                <svg class="@streamIconClass"
                                                    viewBox="0 0 12 12"
                                                    aria-hidden="true"
                                                    focusable="false">
@@ -834,6 +835,8 @@ else
                         var watchPriorityBadgeClass =
                            "activity-participant-watch-" +
                            "priority-badge";
+                        var watchedParticipantBadgeClass =
+                           "activity-participant-watched-badge";
                         <div class="activity-participant-table-wrap">
                            <div class="activity-participant-table-frame">
                               <table id="@participantTableId"
@@ -967,7 +970,7 @@ else
                                           @if(isWatchedParticipant)
                                           {
                                              <span class=
-                                                "activity-participant-watched-badge"
+                                                "@watchedParticipantBadgeClass"
                                                 aria-label="Bevakad person">
                                                 Bevakad
                                              </span>

@@ -1,3 +1,4 @@
+using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
 using System.Globalization;
@@ -40,6 +41,16 @@ public static class SourceDisplay
             StringComparison.OrdinalIgnoreCase
          )
       );
+   }
+
+   public static string? FindChannelLinkUrlForChannel(
+      IEnumerable<ActivitySourceListItem> sources,
+      string channel
+   )
+   {
+      var streamSource = FindStreamLinkForChannel(sources, channel);
+      return streamSource?.Url ??
+         BroadcastChannelLinkCatalog.Find(channel)?.Url;
    }
 
    public static IReadOnlyList<ActivitySourceListItem>

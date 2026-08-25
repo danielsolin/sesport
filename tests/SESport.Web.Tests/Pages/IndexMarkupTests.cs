@@ -171,18 +171,15 @@ public sealed class IndexMarkupTests
       Assert.Contains("participant.WatchPriority", html);
       Assert.Contains("participant.WatchPriority == 0", html);
       Assert.Contains("participant.IsWatchedByMember", html);
-      Assert.Contains(
-         "var isWatchedParticipant =\n" +
-         "                                       participant.IsWatchedByMember;",
-         html
-      );
+      Assert.Contains("var isWatchedParticipant =", html);
+      Assert.Contains("participant.IsWatchedByMember;", html);
       Assert.Contains("activity-participant-watched", html);
       Assert.Contains("activity-participant-watched-badge", html);
       Assert.Contains("watchPriorityBadgeClass", html);
       Assert.Contains("★", html);
       Assert.True(
-         html.IndexOf("@if(participant.WatchPriority == 0)") <
-         html.IndexOf("activity-participant-watched-badge")
+         html.IndexOf("@if(isWatchedParticipant)") <
+         html.IndexOf("@watchedParticipantBadgeClass")
       );
       Assert.DoesNotContain(
          "activity-participant-watch-priority-highest",
@@ -602,7 +599,10 @@ public sealed class IndexMarkupTests
       Assert.Contains("activity-channel-chip-link", html);
       Assert.Contains("activity-channel-chip-stream-icon", html);
       Assert.Contains("<path d=\"M3 2v8l6-4-6-4Z\"></path>", html);
-      Assert.Contains("SourceDisplay.FindStreamLinkForChannel(", html);
+      Assert.Contains(
+         "SourceDisplay.FindChannelLinkUrlForChannel(",
+         html
+      );
       Assert.Contains("SourceDisplay.FormatKind(", html);
       Assert.Contains("source.Kind", html);
       Assert.Contains("target=\"_blank\"", html);

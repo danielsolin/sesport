@@ -44,6 +44,45 @@ public sealed class SourceDisplayTests
    }
 
    [Fact]
+   public void FindChannelLinkUrlUsesFixedChannelCatalogAsFallback()
+   {
+      var result = SourceDisplay.FindChannelLinkUrlForChannel(
+         [],
+         "SVT1"
+      );
+
+      Assert.Equal(
+         "https://www.svtplay.se/kanaler/svt1?start=auto",
+         result
+      );
+   }
+
+   [Fact]
+   public void FindChannelLinkUrlPrefersActivitySpecificStreamLink()
+   {
+      var source = new ActivitySourceListItem(
+         SourceKinds.StreamLink,
+         "https://stream.example/svt1-event",
+         "SVT1"
+      );
+
+      var result = SourceDisplay.FindChannelLinkUrlForChannel(
+         [source],
+         "SVT1"
+      );
+
+      Assert.Equal("https://stream.example/svt1-event", result);
+   }
+
+   [Fact]
+   public void FindChannelLinkUrlReturnsNullForUnmappedChannel()
+   {
+      Assert.Null(
+         SourceDisplay.FindChannelLinkUrlForChannel([], "Eurosport 1")
+      );
+   }
+
+   [Fact]
    public void OrderDistinctByUrlKeepsOneRowAndSortsByTranslatedKind()
    {
       var sources = new[]
