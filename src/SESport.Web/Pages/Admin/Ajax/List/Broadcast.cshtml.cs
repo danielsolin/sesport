@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-
-using SESport.Core.Broadcast;
 using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.List;

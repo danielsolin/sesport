@@ -1,5 +1,4 @@
 using Npgsql;
-using SESport.Core.Broadcast;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -2096,7 +2095,7 @@ public sealed class ActivityRepositoryTests
       command.Parameters.AddWithValue(
          "local_end_time",
          endsAt is null
-            ? (object)DBNull.Value
+            ? DBNull.Value
             : TimeZoneHelper.ToLocal(
                endsAt.Value,
                SportDay.TimeZoneId

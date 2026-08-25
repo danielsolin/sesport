@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using SESport.Core.Broadcast;
-using SESport.Core.Formatting;
 using SESport.Data.Models;
 
 namespace SESport.Web.Pages.Admin.Broadcasts;

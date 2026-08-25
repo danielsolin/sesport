@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SESport.Web.Extensions;
 using SESport.Web.Pages.Admin.Broadcasts;
 
 namespace SESport.Web.Pages.Admin.Ajax.Poll;

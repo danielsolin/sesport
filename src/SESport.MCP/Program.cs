@@ -1,8 +1,4 @@
-using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.AspNetCore;
-using ModelContextProtocol.Server;
-using SESport.AI.WebPages;
-using SESport.AI.WebSearch;
 using SESport.Core.Configuration;
 using SESport.MCP;
 

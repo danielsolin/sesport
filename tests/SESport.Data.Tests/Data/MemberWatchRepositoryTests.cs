@@ -1,6 +1,5 @@
 using Npgsql;
 using SESport.Core.Formatting;
-using SESport.Data.Models;
 using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
@@ -687,7 +686,7 @@ public sealed class MemberWatchRepositoryTests
          "published_at",
          publicationStatus == ActivityPublicationStatusIds.Published
             ? publishedAt
-            : (object)DBNull.Value
+            : DBNull.Value
       );
       command.Parameters.AddWithValue(
          "activity_group_id",

@@ -1,14 +1,7 @@
 using Npgsql;
 using NpgsqlTypes;
-using SESport.Core.AI;
-using SESport.Core.Broadcast;
 using SESport.Core.Domain;
-using SESport.Core.Formatting;
-using SESport.Core.Sources;
 using SESport.Data.Models;
-using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace SESport.Data.Repositories;
 

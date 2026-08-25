@@ -1,7 +1,6 @@
-using System.Text.Json;
-
 using SESport.AI.WebPages;
 using SESport.MCP;
+using System.Text.Json;
 
 namespace SESport.Core.Tests.MCP;
 
