@@ -1703,7 +1703,7 @@
 }
 
 .activity-participant-watched {
-   background: rgba(0, 106, 168, 0.08);
+   background: transparent;
 }
 
 .activity-participant-watched .activity-participant-name {
