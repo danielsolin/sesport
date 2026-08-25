@@ -343,10 +343,20 @@ else
          var timelineEntry = Model.TimelineEntries[timelineIndex];
          if(timelineEntry.IsDateSeparator)
          {
-            <div class="activity-date-separator-row">
+            var dateSeparatorModifier = Model.IsWatchedActivitiesView
+               ? "is-watched"
+               : timelineEntry.IsTodayDateSeparator
+                  ? "is-today"
+                  : "";
+            var dateSeparatorRowModifier =
+               Model.IsWatchedActivitiesView && timelineIndex > 0
+                  ? "is-watched"
+                  : "";
+            <div class="activity-date-separator-row
+               @dateSeparatorRowModifier">
                <span class="activity-date-separator-line"></span>
                <span class="activity-date-separator-label
-                  @(timelineEntry.IsTodayDateSeparator ? "is-today" : "")">
+                  @dateSeparatorModifier">
                   @timelineEntry.DateSeparatorLabel
                </span>
                <span class="activity-date-separator-line"></span>
