@@ -45,12 +45,13 @@ public static class SourceDisplay
 
    public static string? FindChannelLinkUrlForChannel(
       IEnumerable<ActivitySourceListItem> sources,
-      string channel
+      string channel,
+      BroadcastChannelLinkCatalog catalog
    )
    {
       var streamSource = FindStreamLinkForChannel(sources, channel);
       return streamSource?.Url ??
-         BroadcastChannelLinkCatalog.Find(channel)?.Url;
+         catalog.Find(channel)?.Url;
    }
 
    public static IReadOnlyList<ActivitySourceListItem>

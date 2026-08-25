@@ -1,3 +1,4 @@
+using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;
 using SESport.Web.Formatting;
@@ -44,17 +45,15 @@ public sealed class SourceDisplayTests
    }
 
    [Fact]
-   public void FindChannelLinkUrlUsesFixedChannelCatalogAsFallback()
+   public void FindChannelLinkUrlUsesDatabaseCatalogAsFallback()
    {
       var result = SourceDisplay.FindChannelLinkUrlForChannel(
          [],
-         "SVT1"
+         "SVT1",
+         CreateCatalog()
       );
 
-      Assert.Equal(
-         "https://www.svtplay.se/kanaler/svt1?start=auto",
-         result
-      );
+      Assert.Equal("svt1-link", result);
    }
 
    [Fact]
@@ -68,7 +67,8 @@ public sealed class SourceDisplayTests
 
       var result = SourceDisplay.FindChannelLinkUrlForChannel(
          [source],
-         "SVT1"
+         "SVT1",
+         new BroadcastChannelLinkCatalog([])
       );
 
       Assert.Equal("https://stream.example/svt1-event", result);
@@ -85,7 +85,8 @@ public sealed class SourceDisplayTests
 
       var result = SourceDisplay.FindChannelLinkUrlForChannel(
          [source],
-         "Viaplay"
+         "Viaplay",
+         new BroadcastChannelLinkCatalog([])
       );
 
       Assert.Equal("https://stream.example/viaplay-event", result);
@@ -95,7 +96,11 @@ public sealed class SourceDisplayTests
    public void FindChannelLinkUrlReturnsNullForUnmappedChannel()
    {
       Assert.Null(
-         SourceDisplay.FindChannelLinkUrlForChannel([], "Unknown Channel")
+         SourceDisplay.FindChannelLinkUrlForChannel(
+            [],
+            "Unknown Channel",
+            new BroadcastChannelLinkCatalog([])
+         )
       );
    }
 
@@ -136,6 +141,13 @@ public sealed class SourceDisplayTests
       Assert.Equal(
          SourceKinds.ActivityEvidence,
          ordered[0].Kind
+      );
+   }
+
+   private static BroadcastChannelLinkCatalog CreateCatalog()
+   {
+      return new BroadcastChannelLinkCatalog(
+         [new("SVT1", "svt1-link", [])]
       );
    }
 }

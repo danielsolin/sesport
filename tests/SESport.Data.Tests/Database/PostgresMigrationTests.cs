@@ -640,6 +640,32 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void BroadcastChannelLinkMigrationDefinesLinkCatalog()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "037_broadcast_channel_links.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "create table public.broadcast_channel_links",
+         migration
+      );
+      Assert.Contains("canonical_name text primary key", migration);
+      Assert.Contains("url text not null", migration);
+      Assert.Contains("aliases text[]", migration);
+      Assert.Contains("is_active boolean", migration);
+      Assert.Contains(
+         "broadcast_channel_links_active_name_idx",
+         migration
+      );
+   }
+
+   [Fact]
    public void ActivityParticipantMigrationRequiresPersonEntities()
    {
       var migration = File.ReadAllText(
