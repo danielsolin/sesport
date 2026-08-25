@@ -325,7 +325,7 @@ public sealed class BroadcastRepositoryTests
          $"video/watch/{uniqueSuffix}?utm_source=universal_search";
       var normalizedFirstUrl =
          $"https://play.hbomax.com/video/watch/" +
-         $"{uniqueSuffix}?utm_source=universal_search";
+         $"{uniqueSuffix}";
       var secondUrl = $"https://stream.example/{uniqueSuffix}/second";
       var importRun = new BroadcastImportRun(
          importRunId,
