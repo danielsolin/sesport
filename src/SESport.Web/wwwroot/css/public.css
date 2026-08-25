@@ -1555,11 +1555,14 @@
 
 .activity-group-slot-content {
    min-width: 0;
+   overflow: hidden;
 }
 
 .activity-group-slot-title {
    display: block;
    min-width: 0;
+   max-width: 100%;
+   overflow: hidden;
    font-weight: 750;
 }
 
@@ -2214,7 +2217,6 @@
    }
 
    .activity-agenda-section-grouped
-      .activity-group-schedule-item.has-tv-channels
       .activity-group-slot-title {
       white-space: nowrap;
    }

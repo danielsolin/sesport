@@ -113,10 +113,10 @@
       );
    };
 
-   const fitSlot = (row, elements) => {
+   const fitSlot = elements => {
       fitElements(
          elements,
-         () => fits(row) && elements.every(fits)
+         () => elements.every(fits)
       );
    };
 

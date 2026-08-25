@@ -74,6 +74,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("public-date-select.js", html);
       Assert.Contains("data-activity-title-fit", html);
       Assert.Contains("data-activity-slot-fit", html);
+      Assert.Contains("data-activity-slot-fit=\"true\"", html);
       Assert.Contains("data-activity-slot-time", html);
       Assert.Contains("public-activity-title-fit.js", html);
       Assert.Contains("ResizeObserver", titleFitScript);
@@ -363,7 +364,15 @@ public sealed class IndexMarkupTests
       Assert.Contains(
          ".activity-group-slot-title {\n" +
          "   display: block;\n" +
-         "   min-width: 0;",
+         "   min-width: 0;\n" +
+         "   max-width: 100%;\n" +
+         "   overflow: hidden;",
+         css
+      );
+      Assert.Contains(
+         ".activity-group-slot-content {\n" +
+         "   min-width: 0;\n" +
+         "   overflow: hidden;",
          css
       );
       Assert.Contains(
@@ -479,7 +488,6 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-agenda-section-grouped\n" +
-         "      .activity-group-schedule-item.has-tv-channels\n" +
          "      .activity-group-slot-title {\n" +
          "      white-space: nowrap;",
          css
