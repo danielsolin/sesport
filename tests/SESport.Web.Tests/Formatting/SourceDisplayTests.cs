@@ -75,10 +75,27 @@ public sealed class SourceDisplayTests
    }
 
    [Fact]
+   public void FindChannelLinkUrlPrefersViaplayEventLinkOverFallback()
+   {
+      var source = new ActivitySourceListItem(
+         SourceKinds.StreamLink,
+         "https://stream.example/viaplay-event",
+         "Viaplay"
+      );
+
+      var result = SourceDisplay.FindChannelLinkUrlForChannel(
+         [source],
+         "Viaplay"
+      );
+
+      Assert.Equal("https://stream.example/viaplay-event", result);
+   }
+
+   [Fact]
    public void FindChannelLinkUrlReturnsNullForUnmappedChannel()
    {
       Assert.Null(
-         SourceDisplay.FindChannelLinkUrlForChannel([], "Eurosport 1")
+         SourceDisplay.FindChannelLinkUrlForChannel([], "Unknown Channel")
       );
    }
 

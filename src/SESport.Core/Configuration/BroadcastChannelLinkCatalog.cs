@@ -74,6 +74,46 @@ public static class BroadcastChannelLinkCatalog
          []
       ),
       new(
+         "Viaplay",
+         "https://viaplay.se/se-sv/",
+         []
+      ),
+      new(
+         "V Sport 1",
+         "https://viaplay.se/se-sv/",
+         ["V Sport1"]
+      ),
+      new(
+         "V Sport Premium",
+         "https://viaplay.se/se-sv/",
+         []
+      ),
+      new(
+         "V Sport Golf",
+         "https://viaplay.se/se-sv/",
+         []
+      ),
+      new(
+         "V Sport Extra",
+         "https://viaplay.se/se-sv/",
+         []
+      ),
+      new(
+         "Disney+",
+         "https://www.disneyplus.com/sv-se",
+         ["Disney +"]
+      ),
+      new(
+         "Eurosport 1",
+         "https://www.max.com/se/sv/sports",
+         ["Eurosport 1 HD"]
+      ),
+      new(
+         "Eurosport 2",
+         "https://www.max.com/se/sv/sports",
+         ["Eurosport 2 HD"]
+      ),
+      new(
          "Viaplay Sport",
          "https://viaplay.se/se-sv/viaplay-sport-tv",
          []
