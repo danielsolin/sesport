@@ -54,7 +54,7 @@ public sealed class VerifyModelTests
       var result = await model.OnGetAsync(CancellationToken.None);
 
       var redirect = Assert.IsType<LocalRedirectResult>(result);
-      Assert.Equal("/bevakningar", redirect.Url);
+      Assert.Equal("/installningar", redirect.Url);
    }
 
    private sealed class FakeMemberRepository(Member member)

@@ -82,7 +82,8 @@
    </div>
 </aside>
 
-<section class="page-heading index-heading">
+<section class="page-heading index-heading
+   @(Model.IsWatchedActivitiesView ? "index-heading-watched" : "")">
    <div class="index-heading-left">
       @if(!Model.IsWatchedActivitiesView)
       {

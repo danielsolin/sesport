@@ -69,6 +69,7 @@ public sealed class IndexMarkupTests
          "@if(!Model.IsWatchedActivitiesView)",
          html
       );
+      Assert.Contains("index-heading-watched", html);
       Assert.DoesNotContain("date-dropdown-watch-option", html);
       Assert.DoesNotContain("Bevakade", html);
       Assert.Contains(
@@ -92,12 +93,15 @@ public sealed class IndexMarkupTests
       Assert.Contains("fitsAroundSportIcon", titleFitScript);
       Assert.Contains("activity-entry-sport-icon", titleFitScript);
       Assert.Contains("minimumScale = 0.8", titleFitScript);
-      Assert.Contains("narrowMinimumScale = 0.68", titleFitScript);
+      Assert.Contains("narrowMinimumScale = 0.4", titleFitScript);
+      Assert.DoesNotContain("narrowActivityCardWidth", titleFitScript);
+      Assert.DoesNotContain("getTitleMinimumScale", titleFitScript);
+      Assert.Contains("low = candidate", titleFitScript);
+      Assert.Contains("high = candidate", titleFitScript);
       Assert.Contains(
-         "narrowActivityCardWidth = 220",
+         "fitAll();\n   scheduleFit();",
          titleFitScript
       );
-      Assert.Contains("getTitleMinimumScale", titleFitScript);
       Assert.Contains("fontSize", titleFitScript);
       Assert.Contains("data-activity-slot-fit", titleFitScript);
       Assert.Contains(
@@ -252,6 +256,12 @@ public sealed class IndexMarkupTests
       Assert.Contains(".activity-participant-watched-badge", css);
       Assert.Contains(".activity-date-separator-label", css);
       Assert.Contains(".activity-date-separator-label.is-today", css);
+      Assert.Contains(
+         "@media (orientation: portrait) {\n" +
+            "   .index-heading-watched .index-heading-left {",
+         css
+      );
+      Assert.Contains(".index-heading-watched .sport-select", css);
       Assert.Contains(
          ".activity-participant-col-start-time {\n" +
             "   width: 1%;\n" +

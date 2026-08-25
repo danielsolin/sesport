@@ -109,7 +109,7 @@ password for this VPS setup. Keep any future relay credentials in the
 host-local `.env` file, never in tracked files.
 
 The login token is single-use and expires after fifteen minutes by default.
-Members can add person watches from /bevakningar. The page shows whether push
+Members can add person watches from /installningar. The page shows whether push
 is active in the current browser and can activate it for the device. Adding a
 watch also registers the browser push subscription as a fallback.
 
@@ -123,7 +123,7 @@ MemberPush__PrivateKey=<vapid_private_key>
 ~~~
 
 The default notification lead time is ten minutes. Members can choose one
-hour, thirty minutes, or ten minutes before an activity on /bevakningar.
+hour, thirty minutes, or ten minutes before an activity on /installningar.
 
 SearXNG is used only by AI runs. Run it locally on the machine that runs
 AI jobs and point the application at that local instance:

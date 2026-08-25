@@ -19,8 +19,7 @@
    }
 
    const minimumScale = 0.8;
-   const narrowMinimumScale = 0.68;
-   const narrowActivityCardWidth = 220;
+   const narrowMinimumScale = 0.4;
    const baseFontSizes = new Map();
 
    const readFontSize = element => {
@@ -97,14 +96,6 @@
    const fitsTitle = title =>
       fits(title) && fitsAroundSportIcon(title);
 
-   const getTitleMinimumScale = title => {
-      const activityEntry = title.closest(".activity-entry");
-      return activityEntry !== null &&
-         activityEntry.clientWidth < narrowActivityCardWidth
-         ? narrowMinimumScale
-         : minimumScale;
-   };
-
    const setScale = (elements, scale) => {
       elements.forEach(element => {
          const baseFontSize = baseFontSizes.get(element);
@@ -118,7 +109,8 @@
    const fitElements = (
       elements,
       fitsAtCurrentSize,
-      minimumScaleForElements
+      minimumScaleForElements,
+      fallbackMinimumScale = null
    ) => {
       if(elements.some(element =>
             !baseFontSizes.has(element) || element.clientWidth === 0
@@ -136,7 +128,18 @@
       setScale(elements, minimumScaleForElements);
       if(!fitsAtCurrentSize())
       {
-         return;
+         if(fallbackMinimumScale === null)
+         {
+            return;
+         }
+
+         setScale(elements, fallbackMinimumScale);
+         if(!fitsAtCurrentSize())
+         {
+            return;
+         }
+
+         minimumScaleForElements = fallbackMinimumScale;
       }
 
       let low = minimumScaleForElements;
@@ -149,22 +152,23 @@
 
          if(fitsAtCurrentSize())
          {
-            high = candidate;
+            low = candidate;
          }
          else
          {
-            low = candidate;
+            high = candidate;
          }
       }
 
-      setScale(elements, high);
+      setScale(elements, low);
    };
 
    const fitTitle = title => {
       fitElements(
          [title],
          () => fitsTitle(title),
-         getTitleMinimumScale(title)
+         minimumScale,
+         narrowMinimumScale
       );
    };
 
@@ -202,6 +206,7 @@
    }
 
    window.addEventListener("resize", scheduleFit, { passive: true });
+   fitAll();
    scheduleFit();
 
    if(document.fonts?.ready)

@@ -11,7 +11,7 @@ public sealed class PublicFilterPreferenceStoreTests
    )]
    [InlineData(
       true,
-      "/bevakade?sport=football"
+      "/bevakningar?sport=football"
    )]
    public void SaveWritesTheScopedPublicActivityUrl(
       bool watched,
@@ -86,13 +86,13 @@ public sealed class PublicFilterPreferenceStoreTests
       var context = new DefaultHttpContext();
       context.Request.Headers.Cookie =
          $"{PublicFilterPreferenceStore.WatchedCookieName}=" +
-         "/bevakade?sport=football";
+         "/bevakningar?sport=football";
 
       var value = PublicFilterPreferenceStore.ReadWatchedUrl(
          context.Request
       );
 
-      Assert.Equal("/bevakade?sport=football", value);
+      Assert.Equal("/bevakningar?sport=football", value);
    }
 
    [Fact]
@@ -119,7 +119,7 @@ public sealed class PublicFilterPreferenceStoreTests
       var context = new DefaultHttpContext();
       context.Request.Headers.Cookie =
          $"{PublicFilterPreferenceStore.ScheduleCookieName}=" +
-         "/bevakade?sport=football";
+         "/bevakningar?sport=football";
 
       var value = PublicFilterPreferenceStore.ReadScheduleUrl(
          context.Request
@@ -134,7 +134,7 @@ public sealed class PublicFilterPreferenceStoreTests
       var context = new DefaultHttpContext();
       context.Request.Headers.Cookie =
          $"{PublicFilterPreferenceStore.WatchedCookieName}=" +
-         "https://example.com/bevakade";
+         "https://example.com/bevakningar";
 
       var value = PublicFilterPreferenceStore.ReadWatchedUrl(
          context.Request

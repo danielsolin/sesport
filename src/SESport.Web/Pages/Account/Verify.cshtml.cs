@@ -60,7 +60,7 @@ public sealed class VerifyModel(
             }
          );
 
-         return LocalRedirect("/bevakningar");
+         return LocalRedirect(PublicRoutePaths.Settings);
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)

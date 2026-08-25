@@ -45,6 +45,7 @@ public sealed class WatchesMarkupTests
       var css = await File.ReadAllTextAsync(cssPath);
       var worker = await File.ReadAllTextAsync(workerPath);
 
+      Assert.Contains("@page \"/installningar\"", page);
       var titleIndex = page.IndexOf(
          "<h1 class=\"member-watches-section-title\">BEVAKNINGAR</h1>",
          StringComparison.Ordinal
