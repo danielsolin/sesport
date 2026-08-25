@@ -417,8 +417,6 @@ public sealed record ActivityAgendaSection(
    IReadOnlyList<PublicActivityParticipant> Participants,
    string RelatedOrganizationEntities,
    ActivityDayPhase DayPhase,
-   string ClockHourAngle,
-   string ClockMinuteAngle,
    string? EndTimeLabel,
    bool IsOngoing,
    bool HasEnded,

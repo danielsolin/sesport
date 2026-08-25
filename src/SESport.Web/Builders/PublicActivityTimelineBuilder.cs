@@ -274,7 +274,6 @@ public sealed class PublicActivityTimelineBuilder
          timelineSlot.Activity.StartsAt!.Value,
          SportDay.TimeZoneId
       );
-      var timelineTime = TimeOnly.FromDateTime(timelineStart.DateTime);
       var timelineTimeLabel =
          PublicTimeDisplay.FormatApproximateTimeText(
             timelineSlot.Activity.TimeText,
@@ -291,8 +290,6 @@ public sealed class PublicActivityTimelineBuilder
          participants,
          activity.RelatedOrganizationEntities,
          GetDayPhase(timelineStart.Hour),
-         GetHourHandAngle(timelineTime),
-         $"{timelineTime.Minute * 6}deg",
          timelineEndTimeLabel,
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
@@ -480,14 +477,6 @@ public sealed class PublicActivityTimelineBuilder
       )
          ? time.Hour * 60 + time.Minute
          : null;
-   }
-
-   private static string GetHourHandAngle(TimeOnly localStart)
-   {
-      var angle = (localStart.Hour % 12 * 30) +
-         (localStart.Minute * 0.5);
-
-      return FormattableString.Invariant($"{angle:0.#}deg");
    }
 
    private static ActivityDayPhase GetDayPhase(int hour)
