@@ -39,8 +39,8 @@ public static class AiServiceCollectionExtensions
       services.AddScoped<IAiAutomationService, AiAutomationService>();
       services.AddScoped<TextTranslationService>();
       services.AddScoped<IAiJobProcessor, AiJobPostProcessor>();
-      // OpenRouter is dormant for AI jobs. Keep registration available for
-      // archived configs, but do not assume LlamaServerClient feature parity.
+      // OpenRouter client registered for potential future use. Currently not actively used
+      // in production scenarios, but kept available for flexibility.
       services.AddHttpClient<OpenRouterClient>(client =>
       {
          client.Timeout = AiDefaults.OpenRouterHttpClientTimeout;
