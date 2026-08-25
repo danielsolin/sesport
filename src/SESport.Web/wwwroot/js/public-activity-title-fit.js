@@ -18,7 +18,9 @@
       return;
    }
 
-   const minimumScale = 0.68;
+   const minimumScale = 0.8;
+   const narrowMinimumScale = 0.68;
+   const narrowActivityCardWidth = 220;
    const baseFontSizes = new Map();
 
    const readFontSize = element => {
@@ -55,6 +57,54 @@
 
    const fits = element => element.scrollWidth <= element.clientWidth + 1;
 
+   const getTextLineRects = element => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return Array.from(range.getClientRects()).filter(rect =>
+         rect.width > 0 && rect.height > 0
+      );
+   };
+
+   const fitsAroundSportIcon = title => {
+      const activityEntry = title.closest(".activity-entry");
+      if(activityEntry === null)
+      {
+         return true;
+      }
+
+      const obstacles = Array.from(
+         activityEntry.querySelectorAll(
+            ".activity-entry-sport-icon, " +
+               ".activity-entry-sport-country-tag"
+         )
+      ).filter(isElement);
+      if(obstacles.length === 0)
+      {
+         return true;
+      }
+
+      const textLines = getTextLineRects(title);
+      return obstacles.every(obstacle => {
+         const obstacleRect = obstacle.getBoundingClientRect();
+         return textLines.every(textLine =>
+            textLine.bottom <= obstacleRect.top ||
+            textLine.top >= obstacleRect.bottom ||
+            textLine.right <= obstacleRect.left
+         );
+      });
+   };
+
+   const fitsTitle = title =>
+      fits(title) && fitsAroundSportIcon(title);
+
+   const getTitleMinimumScale = title => {
+      const activityEntry = title.closest(".activity-entry");
+      return activityEntry !== null &&
+         activityEntry.clientWidth < narrowActivityCardWidth
+         ? narrowMinimumScale
+         : minimumScale;
+   };
+
    const setScale = (elements, scale) => {
       elements.forEach(element => {
          const baseFontSize = baseFontSizes.get(element);
@@ -65,7 +115,11 @@
       });
    };
 
-   const fitElements = (elements, fitsAtCurrentSize) => {
+   const fitElements = (
+      elements,
+      fitsAtCurrentSize,
+      minimumScaleForElements
+   ) => {
       if(elements.some(element =>
             !baseFontSizes.has(element) || element.clientWidth === 0
          ))
@@ -79,13 +133,13 @@
          return;
       }
 
-      setScale(elements, minimumScale);
+      setScale(elements, minimumScaleForElements);
       if(!fitsAtCurrentSize())
       {
          return;
       }
 
-      let low = minimumScale;
+      let low = minimumScaleForElements;
       let high = 1;
 
       for(let attempt = 0; attempt < 12; attempt++)
@@ -109,14 +163,16 @@
    const fitTitle = title => {
       fitElements(
          [title],
-         () => fits(title)
+         () => fitsTitle(title),
+         getTitleMinimumScale(title)
       );
    };
 
    const fitSlot = elements => {
       fitElements(
          elements,
-         () => elements.every(fits)
+         () => elements.every(fits),
+         minimumScale
       );
    };
 

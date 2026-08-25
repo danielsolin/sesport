@@ -87,6 +87,17 @@ public sealed class IndexMarkupTests
       Assert.Contains("public-activity-title-fit.js", html);
       Assert.Contains("ResizeObserver", titleFitScript);
       Assert.Contains("scrollWidth", titleFitScript);
+      Assert.Contains("getClientRects", titleFitScript);
+      Assert.Contains("getBoundingClientRect", titleFitScript);
+      Assert.Contains("fitsAroundSportIcon", titleFitScript);
+      Assert.Contains("activity-entry-sport-icon", titleFitScript);
+      Assert.Contains("minimumScale = 0.8", titleFitScript);
+      Assert.Contains("narrowMinimumScale = 0.68", titleFitScript);
+      Assert.Contains(
+         "narrowActivityCardWidth = 220",
+         titleFitScript
+      );
+      Assert.Contains("getTitleMinimumScale", titleFitScript);
       Assert.Contains("fontSize", titleFitScript);
       Assert.Contains("data-activity-slot-fit", titleFitScript);
       Assert.Contains(

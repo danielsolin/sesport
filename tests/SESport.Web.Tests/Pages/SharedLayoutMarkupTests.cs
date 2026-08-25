@@ -196,6 +196,7 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains(".public-member-link.is-active {", publicCss);
       Assert.Contains("closeMenusWhenClickedOutside", publicHeaderMenuScript);
       Assert.Contains("\"pointerdown\"", publicHeaderMenuScript);
+      Assert.Contains("if(!portraitQuery.matches)", publicHeaderMenuScript);
       Assert.Contains("!menu.contains(target)", publicHeaderMenuScript);
       Assert.Contains(
          "menu.removeAttribute(\"open\")",

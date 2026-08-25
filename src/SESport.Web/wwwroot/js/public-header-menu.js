@@ -25,6 +25,11 @@
    };
 
    const closeMenusWhenClickedOutside = event => {
+      if(!portraitQuery.matches)
+      {
+         return;
+      }
+
       const target = event.target;
       if(!(target instanceof Node))
       {
