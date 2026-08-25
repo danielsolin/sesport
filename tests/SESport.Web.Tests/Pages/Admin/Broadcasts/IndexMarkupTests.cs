@@ -49,6 +49,8 @@ public sealed class IndexMarkupTests
          "data-broadcast-inline-edit-field=\"channel\"",
          markup
       );
+      Assert.Contains("broadcast-channel-list", row);
+      Assert.Contains("data-broadcast-inline-edit-display", row);
       Assert.Contains(
          "\"start-time\"",
          markup

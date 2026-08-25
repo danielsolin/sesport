@@ -39,6 +39,17 @@ public static class BroadcastListDisplayFormatter
       return string.Join(", ", categories);
    }
 
+   public static IReadOnlyList<string> SplitChannelNames(
+      string? channelNames
+   )
+   {
+      return (channelNames ?? string.Empty).Split(
+         ',',
+         StringSplitOptions.RemoveEmptyEntries
+            | StringSplitOptions.TrimEntries
+      );
+   }
+
    public static string FormatSourceLabel(string sourceKey)
    {
       return sourceKey switch

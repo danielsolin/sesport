@@ -29,6 +29,9 @@
    var categoriesText = BroadcastListDisplayFormatter.FormatCategoriesText(
       broadcast.Categories
    );
+   var channelNames = BroadcastListDisplayFormatter.SplitChannelNames(
+      broadcast.ChannelName
+   );
    var descriptionEmpty = string.IsNullOrWhiteSpace(broadcast.Description);
 }
 
@@ -46,8 +49,12 @@
               data-broadcast-inline-edit-field="channel"
               data-broadcast-inline-edit-value="@broadcast.ChannelName"
               title="Double-click to edit">
-            <div class="ses-nowrap" data-broadcast-inline-edit-display>
-               @broadcast.ChannelName
+            <div class="broadcast-channel-list"
+                 data-broadcast-inline-edit-display>
+               @foreach(var channelName in channelNames)
+               {
+                  <div class="ses-nowrap">@channelName</div>
+               }
             </div>
             <input class="broadcast-inline-edit-input"
                    data-broadcast-inline-edit-input

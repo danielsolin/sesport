@@ -15,6 +15,16 @@ public class BroadcastListDisplayFormatterTests
    }
 
    [Fact]
+   public void SplitChannelNames_ReturnsTrimmedNonEmptyNames()
+   {
+      var result = BroadcastListDisplayFormatter.SplitChannelNames(
+         " SVT1,  SVT2 ,, TV4 "
+      );
+
+      Assert.Equal(["SVT1", "SVT2", "TV4"], result);
+   }
+
+   [Fact]
    public void FormatSourceLabel_ReturnsCompactLabel()
    {
       Assert.Equal(
