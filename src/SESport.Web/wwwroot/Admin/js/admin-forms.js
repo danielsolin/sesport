@@ -1,6 +1,9 @@
 // Admin UI forms and controls.
 // Loaded before site.js; the files intentionally share the classic-script scope.
 
+const filterSubmitDebounceMs = 250;
+const filterSubmitTimers = new WeakMap();
+
 document.addEventListener("submit", async event => {
    const form = event.target;
 
@@ -458,7 +461,32 @@ function refreshCheckboxControls(root = document)
 function submitFilterForm(field)
 {
    normalizeExclusiveEmptyOption(field);
-   field.form?.requestSubmit();
+   const form = field.form;
+
+   if(!(form instanceof HTMLFormElement))
+   {
+      return;
+   }
+
+   const pendingTimer = filterSubmitTimers.get(form);
+   if(pendingTimer !== undefined)
+   {
+      window.clearTimeout(pendingTimer);
+      filterSubmitTimers.delete(form);
+   }
+
+   if(field instanceof HTMLInputElement
+      && (field.type === "search" || field.type === "text"))
+   {
+      const timer = window.setTimeout(() => {
+         filterSubmitTimers.delete(form);
+         form.requestSubmit();
+      }, filterSubmitDebounceMs);
+      filterSubmitTimers.set(form, timer);
+      return;
+   }
+
+   form.requestSubmit();
 }
 
 async function replaceFromFormAsync(form)

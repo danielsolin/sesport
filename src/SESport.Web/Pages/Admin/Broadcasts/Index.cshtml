@@ -49,7 +49,7 @@
 
 <section class="form-section">
       <form method="get"
-         class="filter-form"
+         class="filter-form broadcast-filter-form"
          data-ajax-count-target="[data-broadcast-count]"
          data-ajax-replace-target="[data-broadcast-results]">
       <input type="hidden"
@@ -58,6 +58,14 @@
       <input type="hidden"
              name="@RouteKeys.SortAsc"
              value="@Model.SortAsc.ToString()" />
+      <label>
+         <span>Titel</span>
+         <input type="search"
+                name="@RouteKeys.TitleFilter"
+                value="@Model.TitleFilter"
+                autocomplete="off"
+                oninput="submitFilterForm(this);" />
+      </label>
       <label>
          <span>Date</span>
          <input type="date"

@@ -68,6 +68,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       bool hideReplays,
       bool showHidden,
       IReadOnlyCollection<string> categories,
+      string? titleFilter,
       CancellationToken cancellationToken
    )
    {
@@ -78,6 +79,14 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       var hiddenFilterSql = showHidden
          ? ""
          : "and hidden_at is null";
+      titleFilter = titleFilter?.Trim() ?? string.Empty;
+      var titleFilterSql = titleFilter == string.Empty
+         ? ""
+         : "and broadcasts.title ilike @title_filter escape '\\'";
+      var escapedTitleFilter = titleFilter
+         .Replace("\\", "\\\\", StringComparison.Ordinal)
+         .Replace("%", "\\%", StringComparison.Ordinal)
+         .Replace("_", "\\_", StringComparison.Ordinal);
 
       var sql = $$"""
          select
@@ -114,6 +123,7 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
             {{hiddenFilterSql}}
             and (@hide_replays = false or broadcasts.is_replay = false)
             and (@category_count = 0 or broadcasts.categories && @categories)
+            {{titleFilterSql}}
          order by
             broadcasts.starts_at,
             broadcasts.channel_name nulls last,
@@ -127,6 +137,13 @@ public sealed class AdminBroadcastRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("hide_replays", hideReplays);
       command.Parameters.AddWithValue("category_count", categories.Count);
       command.Parameters.AddWithValue("categories", categories.ToArray());
+      if(titleFilter != string.Empty)
+      {
+         command.Parameters.AddWithValue(
+            "title_filter",
+            $"%{escapedTitleFilter}%"
+         );
+      }
 
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken

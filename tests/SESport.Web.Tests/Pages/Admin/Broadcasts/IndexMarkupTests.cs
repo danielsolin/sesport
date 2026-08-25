@@ -19,7 +19,30 @@ public sealed class IndexMarkupTests
       var html = await File.ReadAllTextAsync(htmlPath);
       var row = await File.ReadAllTextAsync(rowPath);
       var markup = html + row;
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
+      var css = await File.ReadAllTextAsync(cssPath);
 
+      Assert.Contains(
+         "class=\"filter-form broadcast-filter-form\"",
+         html
+      );
+      Assert.Contains(
+         "name=\"@RouteKeys.TitleFilter\"",
+         html
+      );
+      Assert.Contains("type=\"search\"", html);
+      Assert.Contains(
+         "oninput=\"submitFilterForm(this);\"",
+         html
+      );
+      Assert.Contains(
+         ".broadcast-filter-form .filter-sports",
+         css
+      );
+      Assert.Contains("min-width: min(100%, 260px);", css);
       Assert.Contains(
          "data-ajax-count-target=\"[data-broadcast-count]\"",
          markup

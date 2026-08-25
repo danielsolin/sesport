@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 
 using SESport.Web.Pages.Admin.Broadcasts;
+using SESport.Web.Routing;
 
 namespace SESport.Core.Tests.Pages.Admin.Broadcasts;
 
@@ -52,6 +53,34 @@ public sealed class IndexModelTests
       Assert.Equal([string.Empty], model.SelectedSports);
       Assert.False(model.ShowHidden);
       Assert.False(model.HideReplays);
+   }
+
+   [Fact]
+   public async Task OnGetAsyncTrimsTitleFilter()
+   {
+      var model = CreateModel();
+      model.TitleFilter = " Arsenal ";
+      model.PageContext = new PageContext
+      {
+         HttpContext = CreateContext("")
+      };
+
+      await model.OnGetAsync(CancellationToken.None);
+
+      Assert.Equal("Arsenal", model.TitleFilter);
+   }
+
+   [Fact]
+   public void GetSortRouteValuesKeepsTitleFilter()
+   {
+      var model = CreateModel();
+      model.TitleFilter = "arsenal";
+
+      var routeValues = model.GetSortRouteValues(
+         IndexModel.BroadcastSortColumn
+      );
+
+      Assert.Equal("arsenal", routeValues[RouteKeys.TitleFilter]);
    }
 
    private static IndexModel CreateModel()

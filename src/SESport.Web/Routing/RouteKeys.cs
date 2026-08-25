@@ -13,6 +13,7 @@ public static class RouteKeys
    public const string Status = "status";
    public const string SortColumn = "sortColumn";
    public const string SortAsc = "sortAsc";
+   public const string TitleFilter = "title";
    public const string ReturnUrl = "returnUrl";
    public const string BroadcastIds = "broadcastIds";
    public const string ParticipationRunId = "participationRunId";

@@ -35,6 +35,9 @@ public class IndexModel(
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public DateOnly? Date { get; set; }
 
+   [BindProperty(SupportsGet = true, Name = RouteKeys.TitleFilter)]
+   public string? TitleFilter { get; set; } = string.Empty;
+
    [BindProperty(SupportsGet = true, Name = RouteKeys.HideReplays)]
    public bool HideReplays { get; set; }
 
@@ -107,6 +110,11 @@ public class IndexModel(
          SelectedSports
       );
       routeValues[RouteKeys.SortColumn] = sortColumn;
+
+      if(!string.IsNullOrWhiteSpace(TitleFilter))
+      {
+         routeValues[RouteKeys.TitleFilter] = TitleFilter;
+      }
 
       return routeValues;
    }
@@ -208,6 +216,7 @@ public class IndexModel(
    private async Task LoadAsync(CancellationToken cancellationToken)
    {
       SelectedDate = datePreferenceStore.ResolveDate(HttpContext, Date);
+      TitleFilter = TitleFilter?.Trim() ?? string.Empty;
 
       try
       {
@@ -244,6 +253,7 @@ public class IndexModel(
             HideReplays,
             ShowHidden,
             normalizedSports,
+            TitleFilter,
             cancellationToken
          );
          Broadcasts = SortBroadcasts(Broadcasts, SortColumn, SortAsc);

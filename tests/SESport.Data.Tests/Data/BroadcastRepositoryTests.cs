@@ -10,6 +10,102 @@ namespace SESport.Core.Tests.Data;
 public sealed class BroadcastRepositoryTests
 {
    [Fact]
+   public async Task GetByDateAsyncFiltersByTitleCaseInsensitively()
+   {
+      var date = new DateOnly(2199, 12, 1);
+      var startsAt = new DateTimeOffset(
+         2199,
+         12,
+         1,
+         12,
+         0,
+         0,
+         TimeSpan.Zero
+      );
+      var endsAt = startsAt.AddHours(2);
+      var broadcastIds = new[]
+      {
+         Guid.NewGuid(),
+         Guid.NewGuid(),
+         Guid.NewGuid()
+      };
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var suffix = Guid.NewGuid().ToString("N");
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminBroadcastRepository(dataSource);
+
+      try
+      {
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastIds[0],
+            sourceKey,
+            $"external-1-{suffix}",
+            $"fingerprint-1-{suffix}",
+            "channel-1",
+            "Test channel",
+            "Arsenal v Chelsea",
+            ["Fotboll"],
+            startsAt,
+            endsAt
+         );
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastIds[1],
+            sourceKey,
+            $"external-2-{suffix}",
+            $"fingerprint-2-{suffix}",
+            "channel-2",
+            "Test channel",
+            "Liverpool v Arsenal",
+            ["Fotboll"],
+            startsAt,
+            endsAt
+         );
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastIds[2],
+            sourceKey,
+            $"external-3-{suffix}",
+            $"fingerprint-3-{suffix}",
+            "channel-3",
+            "Test channel",
+            "Bayern Munich",
+            ["Fotboll"],
+            startsAt,
+            endsAt
+         );
+
+         var broadcasts = await repository.GetByDateAsync(
+            date,
+            false,
+            false,
+            [],
+            "arsenal",
+            CancellationToken.None
+         );
+
+         Assert.Equal(2, broadcasts.Count);
+         Assert.All(
+            broadcasts,
+            broadcast => Assert.Contains(
+               "arsenal",
+               broadcast.Title,
+               StringComparison.OrdinalIgnoreCase
+            )
+         );
+      }
+      finally
+      {
+         foreach(var broadcastId in broadcastIds)
+         {
+            await DeleteBroadcastAsync(dataSource, broadcastId);
+         }
+      }
+   }
+
+   [Fact]
    public async Task HideIgnoredBroadcastsAsyncHidesMatchingBroadcasts()
    {
       var broadcastId = Guid.NewGuid();
