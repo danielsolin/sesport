@@ -78,6 +78,18 @@ normalization, browser fallbacks, PDF handling, and image OCR.
 AI code receives persistence contracts and configuration through interfaces and
 options. It does not issue SQL or create PostgreSQL connections.
 
+### `SESport.MCP`
+
+The MCP server exposes selected web research capabilities to external MCP
+clients such as Codex CLI. It is intentionally a thin host: it owns the MCP
+transport, tool contracts, and response serialization, while forwarding the
+actual search and page-fetch work to `SESport.AI`.
+
+It does not introduce a separate domain or persistence layer. The server
+normally runs as a stateless Streamable HTTP service on loopback. Its detailed
+configuration, tools, and deployment instructions are in the
+[`SESport.MCP` guide](src/SESport.MCP/README.md).
+
 ### `SESport.Web`
 
 The executable host is an ASP.NET Core Razor Pages application. It composes
@@ -257,6 +269,7 @@ setup fails.
 src/SESport.Core/   Shared domain, contracts, configuration, and parsers
 src/SESport.Data/   PostgreSQL access and repositories
 src/SESport.AI/     AI providers, jobs, search, pages, and OCR
+src/SESport.MCP/    MCP host for external web research tools
 src/SESport.Web/    Razor Pages host, UI, services, and workers
 database/           Schema migrations and database documentation
 tests/              Unit, integration, AI, web, and parser tests
@@ -268,6 +281,7 @@ docs/               Focused operational and subsystem documentation
 - [`SESport.Core` guide](src/SESport.Core/README.md)
 - [`SESport.Data` guide](src/SESport.Data/README.md)
 - [`SESport.AI` guide](src/SESport.AI/README.md)
+- [`SESport.MCP` guide](src/SESport.MCP/README.md)
 - [`SESport.Web` guide](src/SESport.Web/README.md)
 - [`Database guide`](database/README.md)
 - [`AI platform notes`](docs/ai-platform.md)
