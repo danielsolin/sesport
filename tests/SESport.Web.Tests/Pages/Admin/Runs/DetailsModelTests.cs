@@ -9,7 +9,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatToolCallReturnsCompactFindSignature()
    {
-      var toolCall = new DetailsModel.ToolTraceCallViewModel(
+      var toolCall = new AiRunToolTracePresenter.ToolTraceCallViewModel(
          "call_1",
          WebToolNames.FindInPage,
          """
@@ -22,14 +22,14 @@ public sealed class DetailsModelTests
 
       Assert.Equal(
          $"{WebToolNames.FindInPage}('s2_8','Sweden')",
-         DetailsModel.FormatToolCall(toolCall)
+         AiRunToolTracePresenter.FormatToolCall(toolCall)
       );
    }
 
    [Fact]
    public void FormatToolCallReturnsCompactSearchSignature()
    {
-      var toolCall = new DetailsModel.ToolTraceCallViewModel(
+      var toolCall = new AiRunToolTracePresenter.ToolTraceCallViewModel(
          "call_1",
          WebToolNames.Search,
          """
@@ -42,7 +42,7 @@ public sealed class DetailsModelTests
 
       Assert.Equal(
          $"{WebToolNames.Search}('Belgien runt Etapp 2 participants',5)",
-         DetailsModel.FormatToolCall(toolCall)
+         AiRunToolTracePresenter.FormatToolCall(toolCall)
       );
    }
 
@@ -51,7 +51,7 @@ public sealed class DetailsModelTests
    {
       Assert.Equal(
          $"{WebToolNames.GetPage} x 12 (8)",
-         DetailsModel.FormatToolCallSummary(
+         AiRunToolTracePresenter.FormatToolCallSummary(
             WebToolNames.GetPage,
             12,
             8
@@ -62,7 +62,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void FormatCodexActionSummaryExplainsMissingSearchDetails()
    {
-      var action = new DetailsModel.ToolTraceCodexActionViewModel(
+      var action = new AiRunToolTracePresenter.ToolTraceCodexActionViewModel(
          "web_search",
          "search-1",
          null,
@@ -78,7 +78,7 @@ public sealed class DetailsModelTests
 
       Assert.Equal(
          "No query or result reported",
-         DetailsModel.FormatCodexActionSummary(action)
+         AiRunToolTracePresenter.FormatCodexActionSummary(action)
       );
    }
 
@@ -106,7 +106,7 @@ public sealed class DetailsModelTests
    {
       Assert.Equal(
          "tool-trace-badge tool-trace-badge-submit-report",
-         DetailsModel.GetToolBadgeCssClass(WebToolNames.SubmitReport)
+         AiRunToolTracePresenter.GetToolBadgeCssClass(WebToolNames.SubmitReport)
       );
    }
 
@@ -119,7 +119,7 @@ public sealed class DetailsModelTests
          "Tool request failed in llama-server structured output parsing. " +
          "Retrying with tools.";
 
-      var turns = DetailsModel.ParseToolTrace(
+      var turns = AiRunToolTracePresenter.ParseToolTrace(
          $$"""
          [
            {
@@ -168,7 +168,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void ParseToolTraceParsesCodexJsonlEvents()
    {
-      var turns = DetailsModel.ParseToolTrace(
+      var turns = AiRunToolTracePresenter.ParseToolTrace(
          """
          [
            {
@@ -269,15 +269,15 @@ public sealed class DetailsModelTests
       Assert.Equal("done\n", commandAction.AggregatedOutput);
       Assert.Equal(
          commandAction.Command,
-         DetailsModel.FormatCodexActionSummary(commandAction)
+         AiRunToolTracePresenter.FormatCodexActionSummary(commandAction)
       );
       Assert.Equal(
          "completed, exit 0",
-         DetailsModel.FormatCodexActionResult(commandAction)
+         AiRunToolTracePresenter.FormatCodexActionResult(commandAction)
       );
       Assert.Equal(
          "5",
-         DetailsModel.FormatCodexActionOutputCount(
+         AiRunToolTracePresenter.FormatCodexActionOutputCount(
             commandAction.OutputCharacterCount
          )
       );
@@ -290,7 +290,7 @@ public sealed class DetailsModelTests
    [Fact]
    public void ParseToolTraceRendersCodexErrorEventsAsDiagnostics()
    {
-      var turns = DetailsModel.ParseToolTrace(
+      var turns = AiRunToolTracePresenter.ParseToolTrace(
          """
          [
            {

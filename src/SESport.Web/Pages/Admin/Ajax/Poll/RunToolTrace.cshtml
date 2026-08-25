@@ -2,6 +2,8 @@
 @model SESport.Web.Pages.Admin.Ajax.Poll.RunToolTraceModel
 @using SESport.Core.AI
 @using SESport.Web.Pages.Admin.Runs
+@using TracePresenter =
+   SESport.Web.Pages.Admin.Runs.AiRunToolTracePresenter
 @{
    Layout = null;
 }
@@ -98,15 +100,15 @@
                            {
                               var action = turn.CodexActions[0];
                               var actionSummary =
-                                 DetailsModel.FormatCodexActionSummary(
+                                 TracePresenter.FormatCodexActionSummary(
                                     action
                                  );
                               var actionResult =
-                                 DetailsModel.FormatCodexActionResult(
+                                 TracePresenter.FormatCodexActionResult(
                                     action
                                  );
                               var outputCount =
-                                 DetailsModel.FormatCodexActionOutputCount(
+                                 TracePresenter.FormatCodexActionOutputCount(
                                     action.OutputCharacterCount
                                  );
                               <span
@@ -167,15 +169,15 @@
                               @foreach(var action in turn.CodexActions)
                               {
                                  var actionSummary =
-                                    DetailsModel.FormatCodexActionSummary(
+                                    TracePresenter.FormatCodexActionSummary(
                                        action
                                     );
                                  var actionResult =
-                                    DetailsModel.FormatCodexActionResult(
+                                    TracePresenter.FormatCodexActionResult(
                                        action
                                     );
                                  var outputCount =
-                                    DetailsModel.FormatCodexActionOutputCount(
+                                    TracePresenter.FormatCodexActionOutputCount(
                                        action.OutputCharacterCount
                                     );
                                  <details class="tool-trace-action">
@@ -456,7 +458,7 @@
                                  <div class="tool-trace-item">
                                     <div class="tool-trace-item-title">
                                        <code>
-                                          @DetailsModel.FormatToolCall(
+                                          @TracePresenter.FormatToolCall(
                                              toolCall
                                           )
                                        </code>

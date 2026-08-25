@@ -13,6 +13,8 @@ namespace SESport.Data.Repositories;
 public sealed class ActivityRepository(NpgsqlDataSource dataSource)
 {
    private readonly ActivityQueryRepository queries = new(dataSource);
+   private readonly ActivityGroupQueryRepository groupQueries =
+      new(dataSource);
    private readonly ActivityParticipantRepository participants =
       new(dataSource);
    private readonly ActivityMutationRepository mutations = new(dataSource);
@@ -113,7 +115,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken,
       Guid? organizationEntityId = null
    ) =>
-      queries.SearchActivityGroupOptionsAsync(
+      groupQueries.SearchActivityGroupOptionsAsync(
          term,
          sportId,
          cancellationToken,
@@ -131,7 +133,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       Guid? excludedActivityId,
       CancellationToken cancellationToken
    ) =>
-      queries.GetOtherGroupDescriptionsAsync(
+      groupQueries.GetOtherGroupDescriptionsAsync(
          activityGroupId,
          excludedActivityId,
          cancellationToken
@@ -141,26 +143,26 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       Guid id,
       CancellationToken cancellationToken
    ) =>
-      queries.GetActivityGroupIdAsync(id, cancellationToken);
+      groupQueries.GetActivityGroupIdAsync(id, cancellationToken);
 
    public Task<string?> GetActivityGroupTitleAsync(
       Guid id,
       CancellationToken cancellationToken
    ) =>
-      queries.GetActivityGroupTitleAsync(id, cancellationToken);
+      groupQueries.GetActivityGroupTitleAsync(id, cancellationToken);
 
    public Task<ActivityGroupEditModel?> GetActivityGroupForEditAsync(
       Guid id,
       CancellationToken cancellationToken
    ) =>
-      queries.GetActivityGroupForEditAsync(id, cancellationToken);
+      groupQueries.GetActivityGroupForEditAsync(id, cancellationToken);
 
    public Task<IReadOnlyList<ActivityGroupActivityListItem>>
       GetActivitiesForGroupEditAsync(
          Guid activityGroupId,
          CancellationToken cancellationToken
       ) =>
-      queries.GetActivitiesForGroupEditAsync(
+      groupQueries.GetActivitiesForGroupEditAsync(
          activityGroupId,
          cancellationToken
       );
@@ -170,7 +172,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          Guid activityGroupId,
          CancellationToken cancellationToken
       ) =>
-      queries.GetSourcesForGroupEditAsync(
+      groupQueries.GetSourcesForGroupEditAsync(
          activityGroupId,
          cancellationToken
       );
@@ -181,7 +183,7 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          IReadOnlyCollection<Guid> activityGroupIds,
          CancellationToken cancellationToken
       ) =>
-      queries.GetActivityGroupParticipantsAsync(
+      groupQueries.GetActivityGroupParticipantsAsync(
          activityGroupIds,
          cancellationToken
       );

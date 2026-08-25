@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
 using SESport.Web.Pages.Admin.Runs;
+using TracePresenter =
+   SESport.Web.Pages.Admin.Runs.AiRunToolTracePresenter;
 
 namespace SESport.Web.Pages.Admin.Ajax.Poll;
 
@@ -10,17 +12,18 @@ public sealed class RunToolTraceModel(AiRepository repository) : PageModel
 {
    public AiRunDetail Run { get; private set; } = null!;
 
-   public IReadOnlyList<DetailsModel.ToolTraceTurnViewModel> Turns
+   public IReadOnlyList<TracePresenter.ToolTraceTurnViewModel> Turns
    {
       get;
       private set;
    } = [];
 
-   public IReadOnlyList<DetailsModel.ToolTraceBadgeViewModel> SummaryBadges
+   public IReadOnlyList<TracePresenter.ToolTraceBadgeViewModel>
+      SummaryBadges
    {
       get
       {
-         return DetailsModel.BuildToolTraceSummaryBadges(Turns);
+         return TracePresenter.BuildToolTraceSummaryBadges(Turns);
       }
    }
 
@@ -37,7 +40,7 @@ public sealed class RunToolTraceModel(AiRepository repository) : PageModel
       }
 
       Run = run;
-      Turns = DetailsModel.ParseToolTrace(run.ToolTraceJson);
+      Turns = TracePresenter.ParseToolTrace(run.ToolTraceJson);
 
       return Page();
    }
