@@ -145,6 +145,10 @@ builder.Services.AddRazorPages(
    {
       options.Conventions.AuthorizeFolder("/Admin", "Admin");
       options.Conventions.AllowAnonymousToPage("/Admin/Login");
+      options.Conventions.AddPageRoute(
+         "/Index",
+         PublicRoutePaths.Watched
+      );
    }
 );
 

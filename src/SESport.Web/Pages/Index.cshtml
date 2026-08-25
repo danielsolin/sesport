@@ -8,7 +8,17 @@
    var isFilteredView =
       Request.Query.ContainsKey(RouteKeys.Date) ||
       Request.Query.ContainsKey(RouteKeys.Sport) ||
-      Request.Query.ContainsKey(RouteKeys.Watched);
+      Request.Query.ContainsKey(RouteKeys.Watched) ||
+      Model.IsWatchedActivitiesView;
+   var publicActivityPath = Model.IsWatchedActivitiesView
+      ? PublicRoutePaths.Watched
+      : PublicRoutePaths.Home;
+   var selectedDateQueryValue = Uri.EscapeDataString(
+      DateDisplay.Format(Model.SelectedDate)
+   );
+   var publicActivityAllSportsUrl = Model.IsWatchedActivitiesView
+      ? publicActivityPath
+      : $"{publicActivityPath}?date={selectedDateQueryValue}";
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
    var hasPastActivities = Model.TimelineEntries.Any(
@@ -114,8 +124,7 @@
                   <a class="date-dropdown-option
                      date-dropdown-watch-option
                      @(Model.IsWatchedActivitiesView ? "is-selected" : "")"
-                     asp-page="/Index"
-                     asp-route-watched="true"
+                     href="@PublicRoutePaths.Watched"
                      role="option"
                      aria-selected="@(
                         Model.IsWatchedActivitiesView
@@ -143,14 +152,21 @@
                }
                @foreach(var dateOption in Model.DateOptions)
                {
+                  var dateUrl = PublicRoutePaths.Home + "?date=" +
+                     Uri.EscapeDataString(dateOption.Value);
+                  var normalizedSport = Model.Sport?.Trim();
+                  if(!string.IsNullOrWhiteSpace(normalizedSport))
+                  {
+                     dateUrl += "&sport=" + Uri.EscapeDataString(
+                        normalizedSport
+                     );
+                  }
                   <a class="date-dropdown-option
                      @(dateOption.IsSelected &&
                         !Model.IsWatchedActivitiesView
                         ? "is-selected"
                         : "")"
-                     asp-page="/Index"
-                     asp-route-date="@dateOption.Value"
-                     asp-route-sport="@Model.Sport"
+                     href="@dateUrl"
                      role="option"
                      aria-selected="@(
                         dateOption.IsSelected &&
@@ -235,13 +251,7 @@
                   <a class="index-participants-info
                      index-participants-filter
                      @(Model.Sport is null ? "is-selected" : "")"
-                     asp-page="/Index"
-                     asp-route-watched="@(Model.IsWatchedActivitiesView
-                        ? "true"
-                        : null)"
-                     asp-route-date="@DateDisplay.Format(
-                        Model.SelectedDate
-                     )"
+                     href="@publicActivityAllSportsUrl"
                      aria-current="@(
                         Model.Sport is null ? "true" : null
                      )"
@@ -260,18 +270,20 @@
                      sport.SportId,
                      StringComparison.OrdinalIgnoreCase
                   );
+                  var sportQuery = "sport=" + Uri.EscapeDataString(
+                     sport.SportId
+                  );
+                  var publicActivitySportUrl =
+                     Model.IsWatchedActivitiesView
+                        ? $"{publicActivityPath}?{sportQuery}"
+                        : $"{publicActivityPath}?date={
+                           selectedDateQueryValue
+                        }&{sportQuery}";
                   <div class="index-participants">
                      <a class="index-participants-info
                         index-participants-filter
                         @(isSelected ? "is-selected" : "")"
-                        asp-page="/Index"
-                        asp-route-watched="@(Model.IsWatchedActivitiesView
-                           ? "true"
-                           : null)"
-                        asp-route-date="@DateDisplay.Format(
-                           Model.SelectedDate
-                        )"
-                        asp-route-sport="@sport.SportId"
+                        href="@publicActivitySportUrl"
                         aria-current="@(isSelected ? "true" : null)"
                         aria-label="Visa endast @sport.SportName">
                         <span>@sport.SportName:</span>

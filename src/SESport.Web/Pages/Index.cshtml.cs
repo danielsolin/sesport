@@ -62,7 +62,9 @@ public class IndexModel(
 
    public string? LoadError { get; private set; }
 
-   public async Task OnGetAsync(CancellationToken cancellationToken)
+   public async Task<IActionResult> OnGetAsync(
+      CancellationToken cancellationToken
+   )
    {
       var now = DateTimeOffset.UtcNow;
       CurrentDate = DateOnly.FromDateTime(
@@ -72,7 +74,30 @@ public class IndexModel(
       SelectedDate = ParseDate(Date) ?? sportToday;
       TomorrowDate = SelectedDate.AddDays(1);
       IsSportToday = SelectedDate == sportToday;
-      IsWatchedActivitiesView = Watched;
+      IsWatchedActivitiesView = Watched || string.Equals(
+         HttpContext.Request.Path.Value,
+         PublicRoutePaths.Watched,
+         StringComparison.OrdinalIgnoreCase
+      );
+      if(IsWatchedActivitiesView &&
+         string.Equals(
+            HttpContext.Request.Path.Value,
+            PublicRoutePaths.Watched,
+            StringComparison.OrdinalIgnoreCase
+         ) &&
+         HttpContext.Request.Query.ContainsKey(RouteKeys.Date))
+      {
+         var sport = HttpContext.Request.Query[
+            RouteKeys.Sport
+         ].FirstOrDefault()?.Trim();
+         var redirectUrl = PublicRoutePaths.Watched;
+         if(!string.IsNullOrWhiteSpace(sport))
+         {
+            redirectUrl += "?sport=" + Uri.EscapeDataString(sport);
+         }
+
+         return Redirect(redirectUrl);
+      }
       var memberId = TryGetMemberId();
       IsMember = memberId is not null;
       DateOptions = BuildDateOptions(sportToday, SelectedDate, []);
@@ -99,7 +124,13 @@ public class IndexModel(
             HasPublishedActivitiesTomorrow = false;
             if(memberId is null)
             {
-               return;
+               PublicFilterPreferenceStore.Save(
+                  HttpContext.Response,
+                  SelectedDate,
+                  null,
+                  watched: true
+               );
+               return Page();
             }
 
             var watchedActivities =
@@ -116,6 +147,12 @@ public class IndexModel(
                Sport,
                SportParticipantCounts
             );
+            PublicFilterPreferenceStore.Save(
+               HttpContext.Response,
+               SelectedDate,
+               Sport,
+               watched: true
+            );
             var filteredWatchedActivities = FilterActivitiesBySport(
                watchedActivities,
                Sport
@@ -126,7 +163,7 @@ public class IndexModel(
             );
             TimelineEntries = watchedTimeline.TimelineEntries;
             UntimedActivities = watchedTimeline.UntimedActivities;
-            return;
+            return Page();
          }
 
          var activities = await repository.GetPublishedForDateAsync(
@@ -144,7 +181,8 @@ public class IndexModel(
          PublicFilterPreferenceStore.Save(
             HttpContext.Response,
             SelectedDate,
-            Sport
+            Sport,
+            watched: false
          );
          var filteredActivities = FilterActivitiesBySport(
             activities,
@@ -163,6 +201,8 @@ public class IndexModel(
       {
          LoadError = this.LogUnexpectedError(exception);
       }
+
+      return Page();
    }
 
    private Guid? TryGetMemberId()

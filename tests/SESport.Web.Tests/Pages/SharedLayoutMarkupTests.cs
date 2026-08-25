@@ -90,9 +90,11 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("isPublicWatches ? \"page\" : null", html);
       Assert.Contains("isPublicLogin ? \"page\" : null", html);
       Assert.Contains(
-         "PublicFilterPreferenceStore.ReadQueryString",
+         "PublicFilterPreferenceStore.ReadPublicActivityUrl",
          html
       );
+      Assert.Contains("var isPublicWatchedIndex = requestPath.Equals(", html);
+      Assert.Contains("PublicRoutePaths.Watched", html);
       Assert.Contains("publicIndexHref", html);
       Assert.Contains("href=\"@publicIndexHref\"", html);
       Assert.Contains("asp-page=\"/Account/Login\"", html);

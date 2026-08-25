@@ -40,6 +40,10 @@
    );
    var isPublicIndex = requestPath == "/" ||
       requestPath.Equals("/Index", StringComparison.OrdinalIgnoreCase);
+   var isPublicWatchedIndex = requestPath.Equals(
+      PublicRoutePaths.Watched,
+      StringComparison.OrdinalIgnoreCase
+   );
    var isPublicStatistics = requestPath.Equals(
       "/statistik",
       StringComparison.OrdinalIgnoreCase
@@ -56,13 +60,15 @@
       "/om",
       StringComparison.OrdinalIgnoreCase
    );
-   var publicFilterQuery = isPublicIndex
-      ? Context.Request.QueryString.Value
-      : PublicFilterPreferenceStore.ReadQueryString(
+   var isPublicActivityIndex = isPublicIndex || isPublicWatchedIndex;
+   var publicIndexPath = isPublicWatchedIndex
+      ? PublicRoutePaths.Watched
+      : PublicRoutePaths.Home;
+   var publicIndexHref = isPublicActivityIndex
+      ? publicIndexPath + Context.Request.QueryString.Value
+      : PublicFilterPreferenceStore.ReadPublicActivityUrl(
          Context.Request
-      );
-   var publicIndexHref = (Url.Page("/Index") ?? "/") +
-      (publicFilterQuery ?? string.Empty);
+      ) ?? PublicRoutePaths.Home;
    var isEntities = requestPath.StartsWith(
       "/Admin/Entities",
       StringComparison.OrdinalIgnoreCase
