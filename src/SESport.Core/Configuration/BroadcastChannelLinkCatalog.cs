@@ -74,6 +74,96 @@ public static class BroadcastChannelLinkCatalog
          []
       ),
       new(
+         "TV4 Fotboll",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Hockey",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Motor",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Play",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Play Sport",
+         "https://www.tv4play.se/sport",
+         []
+      ),
+      new(
+         "TV4 Sportkanalen",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Sport Live 1",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Sport Live 2",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "TV4 Tennis",
+         "https://www.tv4play.se/kanaler",
+         []
+      ),
+      new(
+         "Allente",
+         "https://www.allente.se/tv-guide/",
+         []
+      ),
+      new(
+         "Apple TV",
+         "https://tv.apple.com/se",
+         []
+      ),
+      new(
+         "DAZN Sverige",
+         "https://www.dazn.com/en-SE/home",
+         []
+      ),
+      new(
+         "DBET",
+         "https://www.dbet.com/sv/",
+         []
+      ),
+      new(
+         "Expressen",
+         "https://livesport.expressen.se/sv/",
+         []
+      ),
+      new(
+         "HBO Max",
+         "https://www.max.com/se/sv/sports",
+         []
+      ),
+      new(
+         "Kanal 9",
+         "https://www.allente.se/tv-guide/",
+         []
+      ),
+      new(
+         "Prime Video",
+         "https://www.primevideo.com/-/sv/sports",
+         []
+      ),
+      new(
+         "Sportbladet Plus",
+         "https://www.aftonbladet.se/sportbladet",
+         []
+      ),
+      new(
          "Viaplay",
          "https://viaplay.se/se-sv/",
          []
@@ -99,6 +189,11 @@ public static class BroadcastChannelLinkCatalog
          []
       ),
       new(
+         "V Sport Football",
+         "https://viaplay.se/se-sv/",
+         []
+      ),
+      new(
          "Disney+",
          "https://www.disneyplus.com/sv-se",
          ["Disney +"]
@@ -116,6 +211,16 @@ public static class BroadcastChannelLinkCatalog
       new(
          "Viaplay Sport",
          "https://viaplay.se/se-sv/viaplay-sport-tv",
+         []
+      ),
+      new(
+         "V Sport Motor",
+         "https://viaplay.se/se-sv/",
+         []
+      ),
+      new(
+         "V Sport Ultra HD",
+         "https://viaplay.se/se-sv/",
          []
       )
    ];
