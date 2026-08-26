@@ -102,11 +102,14 @@
 }
 
 .public-header-primary-links,
-.public-header-secondary-menu,
 .public-header-secondary-links {
    display: flex;
    align-items: center;
    gap: 12px;
+}
+
+.public-header-secondary-menu {
+   display: block;
 }
 
 .public-header-primary-links {
