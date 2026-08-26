@@ -252,7 +252,7 @@ public sealed class AiRunApplicationRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         var correlationId = ReadNullableString(reader, 0);
+         var correlationId = PostgresHelpers.ReadNullableString(reader, 0);
 
          if(!Guid.TryParse(correlationId, out var broadcastId))
          {
@@ -262,9 +262,9 @@ public sealed class AiRunApplicationRepository(NpgsqlDataSource dataSource)
          var runId = reader.GetGuid(1);
          var statusId = reader.GetString(2);
          var toolRoundCount = reader.GetInt32(3);
-         var outputText = ReadNullableString(reader, 4);
-         var rawResponseText = ReadNullableString(reader, 5);
-         var errorMessage = ReadNullableString(reader, 6);
+         var outputText = PostgresHelpers.ReadNullableString(reader, 4);
+         var rawResponseText = PostgresHelpers.ReadNullableString(reader, 5);
+         var errorMessage = PostgresHelpers.ReadNullableString(reader, 6);
 
          if(!checks.TryGetValue(broadcastId, out var history))
          {
@@ -290,13 +290,6 @@ public sealed class AiRunApplicationRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-   }
 }
 
 public sealed record CompletedActivityTeaserRun(

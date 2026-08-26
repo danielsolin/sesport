@@ -1,5 +1,4 @@
 using Npgsql;
-using NpgsqlTypes;
 using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
@@ -452,47 +451,49 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          PromptVersion: reader.GetInt32(4),
          SystemPrompt: reader.GetString(5),
          UserPromptTemplate: reader.GetString(6),
-         PromptTemperature: ReadNullableDecimal(reader, 7),
-         PromptMaxOutputTokens: ReadNullableInt32(reader, 8),
-         PromptMaxToolRounds: ReadNullableInt32(reader, 9),
+         PromptTemperature: PostgresHelpers.ReadNullableDecimal(reader, 7),
+         PromptMaxOutputTokens: PostgresHelpers.ReadNullableInt32(reader, 8),
+         PromptMaxToolRounds: PostgresHelpers.ReadNullableInt32(reader, 9),
          MaxOutputTokens: reader.GetInt32(11),
-         PromptOutputSchemaJson: ReadNullableString(reader, 12),
+         PromptOutputSchemaJson: PostgresHelpers.ReadNullableString(reader, 12),
          PromptRequestOptionsJson: reader.GetString(13),
          ProviderId: reader.GetString(14),
          ProviderLabel: reader.GetString(15),
          ProviderKind: reader.GetString(16),
-         ProviderBaseAddress: ReadNullableString(reader, 17),
-         ProviderModel: ReadNullableString(reader, 18),
-         ProviderApiKeySource: ReadNullableString(reader, 19),
+         ProviderBaseAddress: PostgresHelpers.ReadNullableString(reader, 17),
+         ProviderModel: PostgresHelpers.ReadNullableString(reader, 18),
+         ProviderApiKeySource: PostgresHelpers.ReadNullableString(reader, 19),
          ProviderRequestOptionsJson: reader.GetString(20),
          StatusId: reader.GetString(21),
-         CorrelationId: ReadNullableString(reader, 22),
+         CorrelationId: PostgresHelpers.ReadNullableString(reader, 22),
          InputPayloadJson: reader.GetString(23),
-         RenderedSystemPrompt: ReadNullableString(reader, 24),
+         RenderedSystemPrompt: PostgresHelpers.ReadNullableString(reader, 24),
          RenderedPrompt: reader.GetString(25),
-         RawRequestJson: ReadNullableString(reader, 26),
-         RawResponseJson: ReadNullableString(reader, 27),
-         ToolTraceJson: ReadNullableString(reader, 28),
+         RawRequestJson: PostgresHelpers.ReadNullableString(reader, 26),
+         RawResponseJson: PostgresHelpers.ReadNullableString(reader, 27),
+         ToolTraceJson: PostgresHelpers.ReadNullableString(reader, 28),
          ToolRoundCount: reader.GetInt32(29),
          ConversationCharacterCount: reader.GetInt32(30),
-         OutputText: ReadNullableString(reader, 31),
-         ErrorMessage: ReadNullableString(reader, 32),
+         OutputText: PostgresHelpers.ReadNullableString(reader, 31),
+         ErrorMessage: PostgresHelpers.ReadNullableString(reader, 32),
          StartedAt: reader.GetFieldValue<DateTimeOffset>(33),
          CompletedAt: ReadNullableDateTimeOffset(reader, 34),
-         DurationSeconds: ReadNullableDecimal(reader, 35),
-         InputTokens: ReadNullableInt32(reader, 36),
-         OutputTokens: ReadNullableInt32(reader, 37),
-         ReasoningTokens: ReadNullableInt32(reader, 38),
-         ExecutionEnvironment: ReadNullableString(reader, 39),
+         DurationSeconds: PostgresHelpers.ReadNullableDecimal(reader, 35),
+         InputTokens: PostgresHelpers.ReadNullableInt32(reader, 36),
+         OutputTokens: PostgresHelpers.ReadNullableInt32(reader, 37),
+         ReasoningTokens: PostgresHelpers.ReadNullableInt32(reader, 38),
+         ExecutionEnvironment: PostgresHelpers.ReadNullableString(reader, 39),
          JobOutputMode: reader.GetString(40),
          JobRequiresWebSearch: reader.GetBoolean(41),
          JobIncludeSocialMedia: reader.GetBoolean(42),
-         JobToolsJson: ReadNullableString(reader, 43),
-         JobConditionalToolsJson: ReadNullableString(reader, 44),
-         JobToolCallMaxTokens: ReadNullableInt32(reader, 45),
-         PromptMinToolRounds: ReadNullableInt32(reader, 10),
+         JobToolsJson: PostgresHelpers.ReadNullableString(reader, 43),
+         JobConditionalToolsJson:
+            PostgresHelpers.ReadNullableString(reader, 44),
+         JobToolCallMaxTokens: PostgresHelpers.ReadNullableInt32(reader, 45),
+         PromptMinToolRounds: PostgresHelpers.ReadNullableInt32(reader, 10),
          DiagnosticPayloadPurgedAt: ReadNullableDateTimeOffset(reader, 46),
-         PromptCodexReasoningEffort: ReadNullableString(reader, 47)
+         PromptCodexReasoningEffort:
+            PostgresHelpers.ReadNullableString(reader, 47)
       );
    }
 
@@ -890,7 +891,7 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("id", runId);
-      AddJsonbParameter(command, "tool_trace", toolTraceJson);
+      PostgresHelpers.AddJsonbParameter(command, "tool_trace", toolTraceJson);
       command.Parameters.AddWithValue("tool_round_count", toolRoundCount);
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
@@ -954,8 +955,12 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          "job_include_social_media",
          run.JobIncludeSocialMedia
       );
-      AddJsonbParameter(command, "job_tools_json", run.JobToolsJson);
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "job_tools_json",
+         run.JobToolsJson
+      );
+      PostgresHelpers.AddJsonbParameter(
          command,
          "job_conditional_tools_json",
          run.JobConditionalToolsJson
@@ -974,12 +979,12 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          "prompt_user_prompt_template",
          run.PromptUserPromptTemplate
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "prompt_output_schema_json",
          run.PromptOutputSchemaJson
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "prompt_request_options_json",
          run.PromptRequestOptionsJson
@@ -1023,7 +1028,7 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          "provider_api_key_source",
          run.ProviderApiKeySource
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "provider_request_options_json",
          run.ProviderRequestOptionsJson
@@ -1033,16 +1038,32 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          "correlation_id",
          (object?)run.CorrelationId ?? DBNull.Value
       );
-      AddJsonbParameter(command, "input_payload", run.InputPayloadJson);
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "input_payload",
+         run.InputPayloadJson
+      );
       command.Parameters.AddWithValue("rendered_prompt", run.RenderedPrompt);
       AddNullableStringParameter(
          command,
          "rendered_system_prompt",
          run.RenderedSystemPrompt
       );
-      AddJsonbParameter(command, "raw_request", run.RawRequestJson);
-      AddJsonbParameter(command, "raw_response", run.RawResponseJson);
-      AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "raw_request",
+         run.RawRequestJson
+      );
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "raw_response",
+         run.RawResponseJson
+      );
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "tool_trace",
+         run.ToolTraceJson
+      );
       command.Parameters.AddWithValue("tool_round_count", run.ToolRoundCount);
       command.Parameters.AddWithValue(
          "conversation_character_count",
@@ -1103,9 +1124,21 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          "prompt_user_prompt_template",
          run.PromptUserPromptTemplate
       );
-      AddJsonbParameter(command, "raw_request", run.RawRequestJson);
-      AddJsonbParameter(command, "raw_response", run.RawResponseJson);
-      AddJsonbParameter(command, "tool_trace", run.ToolTraceJson);
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "raw_request",
+         run.RawRequestJson
+      );
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "raw_response",
+         run.RawResponseJson
+      );
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "tool_trace",
+         run.ToolTraceJson
+      );
       command.Parameters.AddWithValue("tool_round_count", run.ToolRoundCount);
       command.Parameters.AddWithValue(
          "conversation_character_count",
@@ -1141,23 +1174,6 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   private static void AddJsonbParameter(
-      NpgsqlCommand command,
-      string name,
-      string? value
-   )
-   {
-      var normalizedValue = PostgreSqlJson.Normalize(value);
-      var jsonValue = (object?)normalizedValue ?? DBNull.Value;
-
-      command.Parameters.Add(
-         new NpgsqlParameter(name, NpgsqlDbType.Jsonb)
-         {
-            Value = jsonValue
-         }
-      );
-   }
-
    private static void AddNullableStringParameter(
       NpgsqlCommand command,
       string name,
@@ -1175,22 +1191,22 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       return new AiRunListItem(
          reader.GetGuid(0),
          reader.GetString(1),
-         ReadNullableString(reader, 2),
+         PostgresHelpers.ReadNullableString(reader, 2),
          reader.GetString(3),
-         ReadNullableString(reader, 4),
+         PostgresHelpers.ReadNullableString(reader, 4),
          ReadNullableDateOnly(reader, 5),
          reader.GetString(6),
-         ReadNullableString(reader, 7),
+         PostgresHelpers.ReadNullableString(reader, 7),
          reader.GetString(8),
          reader.GetInt32(9),
          reader.GetInt32(12),
          AiRunSummaryFormatter.Format(
-            ReadNullableString(reader, 13),
+            PostgresHelpers.ReadNullableString(reader, 13),
             reader.GetString(1),
-            ReadNullableString(reader, 14)
+            PostgresHelpers.ReadNullableString(reader, 14)
          ),
          reader.GetFieldValue<DateTimeOffset>(10),
-         ReadNullableDecimal(reader, 11)
+         PostgresHelpers.ReadNullableDecimal(reader, 11)
       );
    }
 
@@ -1207,14 +1223,6 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       };
    }
 
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-   }
-
    private static DateOnly? ReadNullableDateOnly(
       NpgsqlDataReader reader,
       int ordinal
@@ -1223,14 +1231,6 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       return reader.IsDBNull(ordinal)
          ? null
          : reader.GetFieldValue<DateOnly>(ordinal);
-   }
-
-   private static decimal? ReadNullableDecimal(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
    }
 
    private static DateTimeOffset? ReadNullableDateTimeOffset(
@@ -1243,11 +1243,4 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
          : reader.GetFieldValue<DateTimeOffset>(ordinal);
    }
 
-   private static int? ReadNullableInt32(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
-   }
 }

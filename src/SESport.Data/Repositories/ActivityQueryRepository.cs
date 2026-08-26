@@ -1361,11 +1361,6 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          : reader.GetFieldValue<Guid[]>(ordinal);
    }
 
-   private static object BlankToDbNull(string? value)
-   {
-      return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
-   }
-
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)
    {
       return TimeZoneHelper.ToUtc(date, time, SportDay.TimeZoneId);

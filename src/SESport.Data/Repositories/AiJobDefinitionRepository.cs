@@ -45,16 +45,16 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
       return new AiJobDefinition(
          reader.GetString(0),
          reader.GetString(1),
-         ReadNullableString(reader, 2),
+         PostgresHelpers.ReadNullableString(reader, 2),
          reader.GetString(3),
          reader.GetString(6),
-         ReadNullableString(reader, 7),
-         ReadNullableString(reader, 8),
-         ReadNullableInt32(reader, 9),
+         PostgresHelpers.ReadNullableString(reader, 7),
+         PostgresHelpers.ReadNullableString(reader, 8),
+         PostgresHelpers.ReadNullableInt32(reader, 9),
          reader.GetBoolean(10),
          reader.GetBoolean(13),
-         ReadNullableGuid(reader, 12),
-         ReadNullableString(reader, 4),
+         PostgresHelpers.ReadNullableGuid(reader, 12),
+         PostgresHelpers.ReadNullableString(reader, 4),
          reader.GetInt32(5),
          reader.GetBoolean(11)
       );
@@ -130,14 +130,14 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
          promptReader.GetInt32(2),
          promptReader.GetString(3),
          promptReader.GetString(4),
-         ReadNullableString(promptReader, 5),
-         ReadNullableString(promptReader, 6) ?? "{}",
-         ReadNullableDecimal(promptReader, 7),
-         ReadNullableInt32(promptReader, 8),
-         ReadNullableInt32(promptReader, 9),
+         PostgresHelpers.ReadNullableString(promptReader, 5),
+         PostgresHelpers.ReadNullableString(promptReader, 6) ?? "{}",
+         PostgresHelpers.ReadNullableDecimal(promptReader, 7),
+         PostgresHelpers.ReadNullableInt32(promptReader, 8),
+         PostgresHelpers.ReadNullableInt32(promptReader, 9),
          promptReader.GetBoolean(11),
-         ReadNullableInt32(promptReader, 10),
-         ReadNullableString(promptReader, 12)
+         PostgresHelpers.ReadNullableInt32(promptReader, 10),
+         PostgresHelpers.ReadNullableString(promptReader, 12)
       );
    }
 
@@ -182,14 +182,14 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
          reader.GetInt32(2),
          reader.GetString(3),
          reader.GetString(4),
-         ReadNullableString(reader, 5),
-         ReadNullableString(reader, 6) ?? "{}",
-         ReadNullableDecimal(reader, 7),
-         ReadNullableInt32(reader, 8),
-         ReadNullableInt32(reader, 9),
+         PostgresHelpers.ReadNullableString(reader, 5),
+         PostgresHelpers.ReadNullableString(reader, 6) ?? "{}",
+         PostgresHelpers.ReadNullableDecimal(reader, 7),
+         PostgresHelpers.ReadNullableInt32(reader, 8),
+         PostgresHelpers.ReadNullableInt32(reader, 9),
          reader.GetBoolean(11),
-         ReadNullableInt32(reader, 10),
-         ReadNullableString(reader, 12)
+         PostgresHelpers.ReadNullableInt32(reader, 10),
+         PostgresHelpers.ReadNullableString(reader, 12)
       );
    }
 
@@ -237,14 +237,14 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
       reader.GetInt32(2),
       reader.GetString(3),
       reader.GetString(4),
-      ReadNullableString(reader, 5),
-      ReadNullableString(reader, 6) ?? "{}",
-      ReadNullableDecimal(reader, 7),
-      ReadNullableInt32(reader, 8),
-      ReadNullableInt32(reader, 9),
+      PostgresHelpers.ReadNullableString(reader, 5),
+      PostgresHelpers.ReadNullableString(reader, 6) ?? "{}",
+      PostgresHelpers.ReadNullableDecimal(reader, 7),
+      PostgresHelpers.ReadNullableInt32(reader, 8),
+      PostgresHelpers.ReadNullableInt32(reader, 9),
       reader.GetBoolean(11),
-      ReadNullableInt32(reader, 10),
-      ReadNullableString(reader, 12)
+      PostgresHelpers.ReadNullableInt32(reader, 10),
+      PostgresHelpers.ReadNullableString(reader, 12)
    );
    }
 
@@ -282,28 +282,12 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
          reader.GetString(0),
          reader.GetString(1),
          reader.GetString(2),
-         ReadNullableString(reader, 3),
-         ReadNullableString(reader, 4),
-         ReadNullableString(reader, 5),
+         PostgresHelpers.ReadNullableString(reader, 3),
+         PostgresHelpers.ReadNullableString(reader, 4),
+         PostgresHelpers.ReadNullableString(reader, 5),
          reader.GetString(6),
          reader.GetBoolean(7)
       );
-   }
-
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-   }
-
-   private static Guid? ReadNullableGuid(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
    }
 
    private static DateOnly? ReadNullableDateOnly(
@@ -316,14 +300,6 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
          : reader.GetFieldValue<DateOnly>(ordinal);
    }
 
-   private static decimal? ReadNullableDecimal(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
-   }
-
    private static DateTimeOffset? ReadNullableDateTimeOffset(
       NpgsqlDataReader reader,
       int ordinal
@@ -334,11 +310,4 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
          : reader.GetFieldValue<DateTimeOffset>(ordinal);
    }
 
-   private static int? ReadNullableInt32(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
-   }
 }

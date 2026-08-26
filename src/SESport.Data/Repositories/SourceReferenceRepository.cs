@@ -225,19 +225,11 @@ public sealed class SourceReferenceRepository(NpgsqlDataSource dataSource)
          reader.GetString(2),
          reader.GetString(3),
          reader.GetString(4),
-         ReadNullableString(reader, 5),
-         ReadNullableString(reader, 6),
+         PostgresHelpers.ReadNullableString(reader, 5),
+         PostgresHelpers.ReadNullableString(reader, 6),
          reader.GetFieldValue<DateTimeOffset>(7),
          reader.GetFieldValue<DateTimeOffset>(8)
       );
-   }
-
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
    }
 
    private static DateTimeOffset ToDateTimeOffset(object? value)

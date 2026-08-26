@@ -1,5 +1,4 @@
 using Npgsql;
-using NpgsqlTypes;
 using SESport.Core.AI;
 using System.Text.Json.Nodes;
 
@@ -131,8 +130,8 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(0),
                reader.GetString(1),
                reader.GetString(2),
-               ReadNullableString(reader, 3),
-               ReadNullableString(reader, 4),
+               PostgresHelpers.ReadNullableString(reader, 3),
+               PostgresHelpers.ReadNullableString(reader, 4),
                reader.GetBoolean(5)
             )
          );
@@ -177,13 +176,16 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Id = reader.GetString(0),
          Label = reader.GetString(1),
          Kind = reader.GetString(2),
-         BaseAddress = ReadNullableString(reader, 3),
-         Model = ReadNullableString(reader, 4),
-         ApiKeySource = ReadNullableString(reader, 5),
-         RequestOptionsJson = ReadNullableString(reader, 6) ?? "{}",
-         CodexProfile = ReadCodexProfile(ReadNullableString(reader, 6)),
+         BaseAddress = PostgresHelpers.ReadNullableString(reader, 3),
+         Model = PostgresHelpers.ReadNullableString(reader, 4),
+         ApiKeySource = PostgresHelpers.ReadNullableString(reader, 5),
+         RequestOptionsJson =
+            PostgresHelpers.ReadNullableString(reader, 6) ?? "{}",
+         CodexProfile = ReadCodexProfile(
+            PostgresHelpers.ReadNullableString(reader, 6)
+         ),
          CodexSystemInstruction = ReadCodexSystemInstruction(
-            ReadNullableString(reader, 6)
+            PostgresHelpers.ReadNullableString(reader, 6)
          ),
          Enabled = reader.GetBoolean(7)
       };
@@ -288,7 +290,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
                reader.GetString(3),
                reader.GetInt32(4),
                reader.GetString(5),
-               ReadNullableInt32(reader, 6),
+               PostgresHelpers.ReadNullableInt32(reader, 6),
                reader.GetBoolean(7)
             )
          );
@@ -353,15 +355,16 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          OriginalId = reader.GetString(0),
          Id = reader.GetString(0),
          Label = reader.GetString(1),
-         Description = ReadNullableString(reader, 2),
+         Description = PostgresHelpers.ReadNullableString(reader, 2),
          ProviderId = reader.GetString(3),
-         Model = ReadNullableString(reader, 4),
+         Model = PostgresHelpers.ReadNullableString(reader, 4),
          QueuePriority = reader.GetInt32(5),
          OutputMode = reader.GetString(6),
-         ToolsJson = ReadNullableString(reader, 7),
-         ConditionalToolsJson = ReadNullableString(reader, 8),
-         ToolCallMaxTokens = ReadNullableInt32(reader, 9),
-         ActivePromptId = ReadNullableGuid(reader, 10)?.ToString(),
+         ToolsJson = PostgresHelpers.ReadNullableString(reader, 7),
+         ConditionalToolsJson = PostgresHelpers.ReadNullableString(reader, 8),
+         ToolCallMaxTokens = PostgresHelpers.ReadNullableInt32(reader, 9),
+         ActivePromptId =
+            PostgresHelpers.ReadNullableGuid(reader, 10)?.ToString(),
          RequiresWebSearch = reader.GetBoolean(11),
          IncludeSocialMedia = reader.GetBoolean(12),
          Enabled = reader.GetBoolean(13)
@@ -575,14 +578,15 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          Version = reader.GetInt32(2),
          SystemPrompt = reader.GetString(3),
          UserPromptTemplate = reader.GetString(4),
-         OutputSchemaJson = ReadNullableString(reader, 5),
-         RequestOptionsJson = ReadNullableString(reader, 6) ?? "{}",
-         Temperature = ReadNullableDecimal(reader, 7),
-         MaxOutputTokens = ReadNullableInt32(reader, 8),
-         MaxToolRounds = ReadNullableInt32(reader, 9),
-         MinToolRounds = ReadNullableInt32(reader, 10),
+         OutputSchemaJson = PostgresHelpers.ReadNullableString(reader, 5),
+         RequestOptionsJson =
+            PostgresHelpers.ReadNullableString(reader, 6) ?? "{}",
+         Temperature = PostgresHelpers.ReadNullableDecimal(reader, 7),
+         MaxOutputTokens = PostgresHelpers.ReadNullableInt32(reader, 8),
+         MaxToolRounds = PostgresHelpers.ReadNullableInt32(reader, 9),
+         MinToolRounds = PostgresHelpers.ReadNullableInt32(reader, 10),
          Enabled = reader.GetBoolean(11),
-         CodexReasoningEffort = ReadNullableString(reader, 12)
+         CodexReasoningEffort = PostgresHelpers.ReadNullableString(reader, 12)
       };
    }
 
@@ -656,17 +660,17 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("kind", model.Kind.Trim());
       command.Parameters.AddWithValue(
          "base_address",
-         BlankToDbNull(model.BaseAddress)
+         PostgresHelpers.BlankToDbNull(model.BaseAddress)
       );
       command.Parameters.AddWithValue(
          "model",
-         BlankToDbNull(model.Model)
+         PostgresHelpers.BlankToDbNull(model.Model)
       );
       command.Parameters.AddWithValue(
          "api_key_source",
-         BlankToDbNull(model.ApiKeySource)
+         PostgresHelpers.BlankToDbNull(model.ApiKeySource)
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "request_options",
          BuildProviderRequestOptions(model)
@@ -746,7 +750,9 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
 
       if(node.TryGetPropertyValue("codex_profile", out var profile))
       {
-         return profile is JsonValue value ? value.ToString() : profile?.ToJsonString();
+         return profile is JsonValue value
+            ? value.ToString()
+            : profile?.ToJsonString();
       }
 
       return null;
@@ -762,14 +768,21 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("label", model.Label.Trim());
       command.Parameters.AddWithValue(
          "description",
-         BlankToDbNull(model.Description)
+         PostgresHelpers.BlankToDbNull(model.Description)
       );
       command.Parameters.AddWithValue("provider_id", model.ProviderId.Trim());
-      command.Parameters.AddWithValue("model", BlankToDbNull(model.Model));
+      command.Parameters.AddWithValue(
+         "model",
+         PostgresHelpers.BlankToDbNull(model.Model)
+      );
       command.Parameters.AddWithValue("queue_priority", model.QueuePriority);
       command.Parameters.AddWithValue("output_mode", model.OutputMode.Trim());
-      AddJsonbParameter(command, "tools_json", model.ToolsJson);
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
+         command,
+         "tools_json",
+         model.ToolsJson
+      );
+      PostgresHelpers.AddJsonbParameter(
          command,
          "conditional_tools_json",
          model.ConditionalToolsJson
@@ -780,7 +793,7 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue(
          "active_prompt_id",
-         BlankToDbNullGuid(model.ActivePromptId)
+         PostgresHelpers.BlankToDbNullGuid(model.ActivePromptId)
       );
       command.Parameters.AddWithValue(
          "requires_web_search",
@@ -810,12 +823,12 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          "user_prompt_template",
          model.UserPromptTemplate.Trim()
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "output_schema",
          model.OutputSchemaJson
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "request_options",
          model.RequestOptionsJson
@@ -838,53 +851,9 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
       );
       command.Parameters.AddWithValue(
          "codex_reasoning_effort",
-         BlankToDbNull(model.CodexReasoningEffort)
+         PostgresHelpers.BlankToDbNull(model.CodexReasoningEffort)
       );
       command.Parameters.AddWithValue("enabled", model.Enabled);
-   }
-
-   private static void AddJsonbParameter(
-      NpgsqlCommand command,
-      string name,
-      string? value
-   )
-   {
-      var normalizedValue = PostgreSqlJson.Normalize(value);
-
-      command.Parameters.Add(
-         new NpgsqlParameter(name, NpgsqlDbType.Jsonb)
-         {
-            Value = (object?)normalizedValue ?? DBNull.Value
-         }
-      );
-   }
-
-   private static object BlankToDbNull(string? value)
-   {
-      return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
-   }
-
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-   }
-
-   private static Guid? ReadNullableGuid(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
-   }
-
-   private static object BlankToDbNullGuid(string? value)
-   {
-      return string.IsNullOrWhiteSpace(value)
-         ? DBNull.Value
-         : Guid.Parse(value.Trim());
    }
 
    private static AiPromptListItem ReadPromptListItem(
@@ -898,28 +867,13 @@ public sealed class AiAdminRepository(NpgsqlDataSource dataSource)
          reader.GetInt32(3),
          reader.GetString(4),
          reader.GetString(5),
-         ReadNullableDecimal(reader, 6),
-         ReadNullableInt32(reader, 7),
-         ReadNullableInt32(reader, 8),
-         ReadNullableInt32(reader, 9),
+         PostgresHelpers.ReadNullableDecimal(reader, 6),
+         PostgresHelpers.ReadNullableInt32(reader, 7),
+         PostgresHelpers.ReadNullableInt32(reader, 8),
+         PostgresHelpers.ReadNullableInt32(reader, 9),
          reader.GetBoolean(10),
          reader.GetBoolean(11)
       );
    }
 
-   private static decimal? ReadNullableDecimal(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
-   }
-
-   private static int? ReadNullableInt32(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
-   }
 }

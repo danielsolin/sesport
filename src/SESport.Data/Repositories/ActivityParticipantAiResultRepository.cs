@@ -1,5 +1,4 @@
 using Npgsql;
-using NpgsqlTypes;
 using SESport.Core.AI;
 using SESport.Core.Sources;
 using SESport.Data.Models;
@@ -138,7 +137,7 @@ public sealed class ActivityParticipantAiResultRepository(
          "value_text",
          (object?)valueText ?? DBNull.Value
       );
-      AddJsonbParameter(
+      PostgresHelpers.AddJsonbParameter(
          command,
          "value_json",
          JsonSerializer.Serialize(valueText)
@@ -194,10 +193,10 @@ public sealed class ActivityParticipantAiResultRepository(
          var builder = new Builder(
             reader.GetString(0),
             reader.GetString(1),
-            ReadNullableGuid(reader, 2),
-            ReadNullableString(reader, 3),
+            PostgresHelpers.ReadNullableGuid(reader, 2),
+            PostgresHelpers.ReadNullableString(reader, 3),
             AiRunSummaryFormatter.Format(
-               ReadNullableString(reader, 4),
+               PostgresHelpers.ReadNullableString(reader, 4),
                reader.GetString(1)
             ),
             ReadNullableDateTimeOffset(reader, 5),
@@ -259,9 +258,9 @@ public sealed class ActivityParticipantAiResultRepository(
 
          var id = reader.GetGuid(0);
          var entityId = reader.GetGuid(2);
-         var entityName = ReadNullableString(reader, 3);
+         var entityName = PostgresHelpers.ReadNullableString(reader, 3);
          var fieldKey = reader.GetString(4);
-         var valueText = ReadNullableString(reader, 5);
+         var valueText = PostgresHelpers.ReadNullableString(reader, 5);
          var valueJson = reader.GetString(6);
          var source = ReadSourceEvidence(reader, 8, 9, 10);
 
@@ -467,7 +466,7 @@ public sealed class ActivityParticipantAiResultRepository(
          "value_text",
          (object?)value.ValueText ?? DBNull.Value
       );
-      AddJsonbParameter(command, "value_json", value.ValueJson);
+      PostgresHelpers.AddJsonbParameter(command, "value_json", value.ValueJson);
       command.Parameters.AddWithValue("source_id", sourceId);
       command.Parameters.AddWithValue("sort_order", sortOrder);
       await command.ExecuteNonQueryAsync(cancellationToken);
@@ -549,29 +548,9 @@ public sealed class ActivityParticipantAiResultRepository(
    {
       return new SourceEvidenceDraft(
          reader.GetString(urlOrdinal),
-         ReadNullableString(reader, titleOrdinal),
-         ReadNullableString(reader, excerptOrdinal)
+         PostgresHelpers.ReadNullableString(reader, titleOrdinal),
+         PostgresHelpers.ReadNullableString(reader, excerptOrdinal)
       );
-   }
-
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetString(ordinal);
-   }
-
-   private static Guid? ReadNullableGuid(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetGuid(ordinal);
    }
 
    private static DateTimeOffset? ReadNullableDateTimeOffset(
@@ -582,21 +561,6 @@ public sealed class ActivityParticipantAiResultRepository(
       return reader.IsDBNull(ordinal)
          ? null
          : reader.GetFieldValue<DateTimeOffset>(ordinal);
-   }
-
-   private static void AddJsonbParameter(
-      NpgsqlCommand command,
-      string name,
-      string? value
-   )
-   {
-      var normalizedValue = PostgreSqlJson.Normalize(value);
-      command.Parameters.Add(
-         new NpgsqlParameter(name, NpgsqlDbType.Jsonb)
-         {
-            Value = (object?)normalizedValue ?? DBNull.Value
-         }
-      );
    }
 
    private sealed class Builder(

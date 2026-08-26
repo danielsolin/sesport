@@ -644,11 +644,11 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
          command.Parameters.AddWithValue("url", source.Url.Trim());
          command.Parameters.AddWithValue(
             "title",
-            BlankToDbNull(source.Title)
+            PostgresHelpers.BlankToDbNull(source.Title)
          );
          command.Parameters.AddWithValue(
             "excerpt",
-            BlankToDbNull(source.Excerpt)
+            PostgresHelpers.BlankToDbNull(source.Excerpt)
          );
          command.Parameters.AddWithValue("observed_at", DateTimeOffset.UtcNow);
          await command.ExecuteNonQueryAsync(cancellationToken);
@@ -838,11 +838,11 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("title", model.Title.Trim());
       command.Parameters.AddWithValue(
          "description",
-         BlankToDbNull(model.Description)
+         PostgresHelpers.BlankToDbNull(model.Description)
       );
       command.Parameters.AddWithValue(
          "teaser",
-         BlankToDbNull(model.Teaser)
+         PostgresHelpers.BlankToDbNull(model.Teaser)
       );
       command.Parameters.AddWithValue("activity_type_id", model.ActivityType);
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
@@ -870,7 +870,7 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue("publication_status_id", status);
       command.Parameters.AddWithValue(
          "tv_channel_name",
-         BlankToDbNull(model.TvChannelName)
+         PostgresHelpers.BlankToDbNull(model.TvChannelName)
       );
       command.Parameters.AddWithValue(
          "activity_group_id",
@@ -1008,8 +1008,4 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
          .Trim('-');
    }
 
-   private static object BlankToDbNull(string? value)
-   {
-      return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
-   }
 }

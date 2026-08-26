@@ -226,8 +226,8 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
                reader.GetString(2),
                reader.GetString(3),
                reader.GetString(4),
-               ReadNullableString(reader, 5),
-               ReadNullableString(reader, 6),
+               PostgresHelpers.ReadNullableString(reader, 5),
+               PostgresHelpers.ReadNullableString(reader, 6),
                reader.GetFieldValue<DateTimeOffset>(7),
                reader.GetFieldValue<DateTimeOffset>(8)
             )
@@ -844,14 +844,6 @@ public sealed class FactRepository(NpgsqlDataSource dataSource)
          Title = NormalizeNullableText(source.Title),
          Excerpt = NormalizeNullableText(source.Excerpt)
       };
-   }
-
-   private static string? ReadNullableString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
    }
 
    private static string? NormalizeNullableText(string? text)
