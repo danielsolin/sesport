@@ -1123,14 +1123,21 @@ else
       @if(Model.HasPublishedActivitiesTomorrow &&
          !Model.IsWatchedActivitiesView)
       {
+         var tomorrowUrl = PublicRoutePaths.Home + "?date=" +
+            Uri.EscapeDataString(
+               DateDisplay.Format(Model.TomorrowDate)
+            );
+         var normalizedSport = Model.Sport?.Trim();
+         if(!string.IsNullOrWhiteSpace(normalizedSport))
+         {
+            tomorrowUrl += "&sport=" + Uri.EscapeDataString(
+               normalizedSport
+            );
+         }
          <div class="activity-tomorrow-link-row">
             <span class="activity-tomorrow-link-line"></span>
             <a class="activity-tomorrow-link"
-               asp-page="/Index"
-               asp-route-date="@DateDisplay.Format(
-                  Model.TomorrowDate
-               )"
-               asp-route-sport="@Model.Sport"
+               href="@tomorrowUrl"
                aria-label="Visa aktiviteter imorgon">
                Imorgon
             </a>
