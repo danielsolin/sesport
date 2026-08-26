@@ -80,9 +80,17 @@ public sealed class WatchesModel(
          cancellationToken
       );
 
-      return image is null
-         ? NotFound()
-         : File(image.Data, image.MimeType);
+      if(image is null)
+      {
+         return NotFound();
+      }
+
+      return CachedImageResponse.Create(
+         Response,
+         image.Data,
+         image.MimeType,
+         MemberWatchDefaults.ImageCacheDuration
+      );
    }
 
    public async Task<IActionResult> OnGetSearchAsync(
