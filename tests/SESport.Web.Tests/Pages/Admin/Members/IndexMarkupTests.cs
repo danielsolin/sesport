@@ -16,6 +16,8 @@ public sealed class IndexMarkupTests
 
       Assert.Contains("admin-table admin-table-hover members-table", html);
       Assert.Contains("@member.Email", html);
+      Assert.Contains("asp-page=\"./Details\"", html);
+      Assert.Contains("asp-route-id=\"@member.Id\"", html);
       Assert.Contains("member.CreatedAt", html);
       Assert.Contains("member.LastLoginAt", html);
       Assert.Contains("@member.WatchCount", html);

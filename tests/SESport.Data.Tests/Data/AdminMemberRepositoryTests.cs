@@ -123,6 +123,14 @@ public sealed class AdminMemberRepositoryTests
          Assert.Equal(1, memberWithWatches.PushNotificationSentCount);
          Assert.Equal(3, memberWithWatches.LoginTokenCreatedCount);
          Assert.Equal(2, memberWithWatches.LoginTokenConsumedCount);
+
+         var memberDetails = await repository.GetMemberAsync(
+            memberWithWatchesId,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(memberDetails);
+         Assert.Equal(memberWithWatches, memberDetails);
       }
       finally
       {

@@ -1,0 +1,122 @@
+@page "{id:guid}"
+@model SESport.Web.Pages.Admin.Members.DetailsModel
+@using SESport.Data.Models
+@{
+   ViewData["Title"] = "Member";
+}
+
+<section class="page-heading page-heading-row">
+   <div>
+      <h1>@Model.Member?.Email</h1>
+   </div>
+   <a class="button"
+      asp-page="./Index">
+      Back
+   </a>
+</section>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+else if(Model.Member is not null)
+{
+   <section class="form-section">
+      <dl class="detail-grid">
+         <div>
+            <dt>Created</dt>
+            <dd>
+               @TimeDisplay.FormatLocalDate(Model.Member.CreatedAt)
+               @TimeDisplay.FormatLocalTimeWithoutSeconds(
+                  Model.Member.CreatedAt
+               )
+            </dd>
+         </div>
+         <div>
+            <dt>Last login</dt>
+            <dd>
+               @if(Model.Member.LastLoginAt is not null)
+               {
+                  @TimeDisplay.FormatLocalDate(
+                     Model.Member.LastLoginAt.Value
+                  )
+                  @TimeDisplay.FormatLocalTimeWithoutSeconds(
+                     Model.Member.LastLoginAt.Value
+                  )
+               }
+               else
+               {
+                  <span>-</span>
+               }
+            </dd>
+         </div>
+         <div>
+            <dt>Watches</dt>
+            <dd>@Model.Member.WatchCount</dd>
+         </div>
+         <div>
+            <dt>Push sent</dt>
+            <dd>@Model.Member.PushNotificationSentCount</dd>
+         </div>
+         <div>
+            <dt>Logins created</dt>
+            <dd>@Model.Member.LoginTokenCreatedCount</dd>
+         </div>
+         <div>
+            <dt>Logins used</dt>
+            <dd>@Model.Member.LoginTokenConsumedCount</dd>
+         </div>
+      </dl>
+   </section>
+
+   <section class="form-section">
+      <h2>Watches</h2>
+      @if(Model.Watches.Count == 0)
+      {
+         <div class="notice">None</div>
+      }
+      else
+      {
+         <div class="admin-table-wrap">
+            <table class="admin-table admin-table-compact">
+               <thead>
+                  <tr>
+                     <th>Person</th>
+                     <th>Sport</th>
+                     <th>Related names</th>
+                     <th>Next activity</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @foreach(var watch in Model.Watches)
+                  {
+                     <tr>
+                        <td>@watch.Name</td>
+                        <td>@watch.SportName</td>
+                        <td>@watch.RelatedNames</td>
+                        <td>
+                           @if(watch.NextActivity is not null)
+                           {
+                              var nextActivityTimestamp =
+                                 TimeDisplay
+                                    .FormatLocalTimestampWithoutSeconds(
+                                       watch.NextActivity.StartsAt
+                                    );
+                              <span>@nextActivityTimestamp</span>
+                              <span>@watch.NextActivity.Title</span>
+                           }
+                           else
+                           {
+                              <span>-</span>
+                           }
+                        </td>
+                     </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      }
+   </section>
+}

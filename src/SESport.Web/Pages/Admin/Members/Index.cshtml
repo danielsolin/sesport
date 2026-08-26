@@ -43,7 +43,12 @@
          @foreach (var member in Model.Members)
          {
             <tr>
-               <td class="members-email-cell">@member.Email</td>
+               <td class="members-email-cell">
+                  <a asp-page="./Details"
+                     asp-route-id="@member.Id">
+                     @member.Email
+                  </a>
+               </td>
                <td class="members-date-cell">
                   @TimeDisplay.FormatLocalDate(member.CreatedAt)
                   @TimeDisplay.FormatLocalTimeWithoutSeconds(
