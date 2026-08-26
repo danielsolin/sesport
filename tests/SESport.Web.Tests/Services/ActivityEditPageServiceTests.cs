@@ -736,7 +736,7 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
-   public async Task PrefillFromBroadcastsAsyncDoesNotReuseExistingGroup()
+   public async Task PrefillFromBroadcastsAsyncReusesMatchingExistingGroup()
    {
       var organizationId = Guid.NewGuid();
       var personId = Guid.NewGuid();
@@ -848,9 +848,10 @@ public sealed class ActivityEditPageServiceTests
             CancellationToken.None
          );
 
-         Assert.Null(activity.ActivityGroupId);
-         Assert.True(activity.ActivityGroupCreationRequired);
-         Assert.Empty(activity.LinkedEntityIds);
+         Assert.Equal(activityGroupId, activity.ActivityGroupId);
+         Assert.Equal(title, activity.ActivityGroupTitle);
+         Assert.False(activity.ActivityGroupCreationRequired);
+         Assert.Equal([personId], activity.LinkedEntityIds);
 
          var broadcast = Assert.IsType<BroadcastListItem>(
             await broadcastRepository.GetByIdAsync(
@@ -876,8 +877,9 @@ public sealed class ActivityEditPageServiceTests
             true
          );
 
-         Assert.Null(clearedActivity.ActivityGroupId);
-         Assert.True(clearedActivity.ActivityGroupCreationRequired);
+         Assert.Equal(activityGroupId, clearedActivity.ActivityGroupId);
+         Assert.Equal(title, clearedActivity.ActivityGroupTitle);
+         Assert.False(clearedActivity.ActivityGroupCreationRequired);
          Assert.Empty(clearedActivity.LinkedEntityIds);
          Assert.Null(clearedActivity.ParticipationRunId);
       }
@@ -1271,6 +1273,70 @@ public sealed class ActivityEditPageServiceTests
          await DeleteLinksAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task SaveAsyncReusesMatchingActivityGroupWhenRequired()
+   {
+      var activityGroupId = Guid.NewGuid();
+      var title = $"Existing group {Guid.NewGuid():N}";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         title,
+         "football",
+         DistantActivityDate,
+         DistantActivityDate
+      );
+
+      Guid? savedActivityId = null;
+
+      try
+      {
+         var model = new ActivityEditModel
+         {
+            Title = title,
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = DistantActivityDate,
+            LocalStartTime = new TimeOnly(12, 0),
+            LocalEndTime = new TimeOnly(14, 0),
+            TimeZoneId = SportDay.TimeZoneId,
+            ActivityGroupTitle = title,
+            ActivityGroupCreationRequired = true
+         };
+
+         savedActivityId = await repository.SaveAsync(
+            model,
+            CancellationToken.None
+         );
+
+         Assert.Equal(activityGroupId, model.ActivityGroupId);
+         Assert.False(model.ActivityGroupCreationRequired);
+         var savedActivity = await repository.GetForEditAsync(
+            savedActivityId.Value,
+            CancellationToken.None
+         );
+         Assert.Equal(
+            activityGroupId,
+            savedActivity?.ActivityGroupId
+         );
+      }
+      finally
+      {
+         if(savedActivityId is not null)
+         {
+            await repository.DeleteAsync(
+               savedActivityId.Value,
+               CancellationToken.None
+            );
+         }
+
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
       }
    }
 

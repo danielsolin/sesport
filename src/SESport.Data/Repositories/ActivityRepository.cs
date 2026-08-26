@@ -116,6 +116,19 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
          organizationEntityId
       );
 
+   public Task<Guid?> FindMatchingActivityGroupIdAsync(
+      string title,
+      string sportId,
+      DateOnly activityDate,
+      CancellationToken cancellationToken
+   ) =>
+      groupQueries.FindMatchingActivityGroupIdAsync(
+         title,
+         sportId,
+         activityDate,
+         cancellationToken
+      );
+
    public Task<ActivityEditModel?> GetForEditAsync(
       Guid id,
       CancellationToken cancellationToken

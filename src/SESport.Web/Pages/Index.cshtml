@@ -611,7 +611,7 @@ else
                      </h3>
                      <h2 class="activity-entry-title"
                          data-activity-title-fit>
-                        @(agendaSection.ActivityGroupTitle ?? activity.Title)
+                        @activity.Title
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(
                         activity.Description
@@ -1123,16 +1123,23 @@ else
       @if(Model.HasPublishedActivitiesTomorrow &&
          !Model.IsWatchedActivitiesView)
       {
+         var tomorrowUrl = PublicRoutePaths.Home + "?date=" +
+            Uri.EscapeDataString(
+               DateDisplay.Format(Model.TomorrowDate)
+            );
+         var normalizedSport = Model.Sport?.Trim();
+         if(!string.IsNullOrWhiteSpace(normalizedSport))
+         {
+            tomorrowUrl += "&sport=" + Uri.EscapeDataString(
+               normalizedSport
+            );
+         }
          <div class="activity-tomorrow-link-row">
             <span class="activity-tomorrow-link-line"></span>
             <a class="activity-tomorrow-link"
-               asp-page="/Index"
-               asp-route-date="@DateDisplay.Format(
-                  Model.TomorrowDate
-               )"
-               asp-route-sport="@Model.Sport"
-               aria-label="Visa aktiviteter imorgon">
-               Imorgon
+               href="@tomorrowUrl"
+               aria-label="Visa aktiviteter @Model.NextDateLinkLabel">
+               @Model.NextDateLinkLabel
             </a>
             <span class="activity-tomorrow-link-line"></span>
          </div>

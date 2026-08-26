@@ -64,6 +64,11 @@ public sealed class IndexMarkupTests
       Assert.Contains("publicActivityAllSportsUrl", html);
       Assert.Contains("publicActivitySportUrl", html);
       Assert.Contains("var dateUrl = PublicRoutePaths.Home", html);
+      Assert.Contains(
+         "var tomorrowUrl = PublicRoutePaths.Home + \"?date=\"",
+         html
+      );
+      Assert.Contains("href=\"@tomorrowUrl\"", html);
       Assert.DoesNotContain("asp-route-watched", html);
       Assert.Contains(
          "@if(!Model.IsWatchedActivitiesView)",

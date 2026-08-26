@@ -686,6 +686,22 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
          ? model.Title.Trim()
          : model.ActivityGroupTitle.Trim();
 
+      var existingActivityGroupId =
+         await FindMatchingActivityGroupIdAsync(
+            connection,
+            transaction,
+            activityGroupTitle,
+            model.SportId,
+            model.ActivityDate.Value,
+            cancellationToken
+         );
+      if(existingActivityGroupId is not null)
+      {
+         model.ActivityGroupId = existingActivityGroupId;
+         model.ActivityGroupCreationRequired = false;
+         return;
+      }
+
       var activityGroupId = Guid.NewGuid();
       const string sql = """
          insert into activity_groups (
@@ -714,6 +730,45 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
       model.ActivityGroupId = activityGroupId;
       model.ActivityGroupCreationRequired = false;
+   }
+
+   private static async Task<Guid?> FindMatchingActivityGroupIdAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      string title,
+      string sportId,
+      DateOnly activityDate,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id
+         from activity_groups
+         where sport_id = @sport_id
+            and title = @title
+            and start_date <= @activity_date
+            and end_date >= @activity_date
+         order by
+            (end_date - start_date),
+            start_date desc,
+            id
+         limit 1
+         """;
+
+      await using var command = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("sport_id", sportId.Trim());
+      command.Parameters.AddWithValue("title", title.Trim());
+      command.Parameters.Add(
+         "activity_date",
+         NpgsqlDbType.Date
+      ).Value = activityDate;
+
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+      return result is null || result is DBNull ? null : (Guid)result;
    }
 
    private static async Task<Guid?> GetActivityGroupIdAsync(

@@ -56,10 +56,12 @@
          selectedIndex: -1,
          items: []
       };
+      const isCreationRequired = () =>
+         creationRequired.value.trim().toLowerCase() === "true";
       const original = {
          id: hiddenId.value.trim(),
          title: hiddenTitle.value.trim(),
-         creationRequired: creationRequired.value === "true"
+         creationRequired: isCreationRequired()
       };
 
       const closeSuggestions = () => {
@@ -263,8 +265,7 @@
                return;
             }
 
-            if(creationRequired.value !== "true"
-               && hiddenId.value.trim() === "")
+            if(!isCreationRequired() && hiddenId.value.trim() === "")
             {
                restoreOriginal();
             }

@@ -78,15 +78,16 @@
    @if (Model.Activity.ActivityGroupCreationRequired)
    {
       <div class="notice notice-warning">
-         A new ActivityGroup will be created when you save this activity.
+         A new activity group will be created when you save this activity.
       </div>
    }
    else if (Model.Activity.Id is null &&
             Model.Activity.BroadcastIds.Count > 0 &&
             Model.Activity.ActivityGroupId is not null)
    {
-      <div class="notice">
-         This activity will reuse an existing ActivityGroup.
+      <div class="notice notice-success">
+         This activity will reuse the existing activity group
+         "@Model.Activity.ActivityGroupTitle".
       </div>
    }
    @foreach (var broadcastId in Model.Activity.BroadcastIds)

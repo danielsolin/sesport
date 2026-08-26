@@ -63,10 +63,9 @@ public sealed class PublicActivityTimelineBuilder
       DateTimeOffset now
    )
    {
-      var groupedActivityIds = timedActivities
+      var groupedActivityGroups = timedActivities
          .Where(activity =>
             activity.ActivityGroupId is not null &&
-            !activity.IsTeamSport &&
             !activity.NoGrouping
          )
          .GroupBy(activity => new
@@ -75,23 +74,23 @@ public sealed class PublicActivityTimelineBuilder
                activity.StartsAt!.Value,
                activity.PublicDateMode
             ),
-            GroupId = activity.ActivityGroupId!.Value
+            GroupId = activity.ActivityGroupId!.Value,
+            TeamSportTitle = activity.IsTeamSport
+               ? NormalizeActivityTitleForGrouping(activity.Title)
+               : null
          })
          .Where(group => group.Count() > 1)
+         .ToList();
+      var groupedActivityIds = groupedActivityGroups
          .SelectMany(group => group.Select(activity => activity.Id))
          .ToHashSet();
 
-      var groupedSections = timedActivities
-         .Where(activity => groupedActivityIds.Contains(activity.Id))
-         .GroupBy(activity => new
-         {
-            DisplayDate = ActivityDisplayDateResolver.Resolve(
-               activity.StartsAt!.Value,
-               activity.PublicDateMode
-            ),
-            GroupId = activity.ActivityGroupId!.Value
-         })
-         .Select(group => CreateSection(group.ToList(), now));
+      var groupedSections = groupedActivityGroups
+         .Select(group => CreateSection(
+            group.ToList(),
+            now,
+            showGroupedLayout: group.Key.TeamSportTitle is null
+         ));
       var individualSections = timedActivities
          .Where(activity => !groupedActivityIds.Contains(activity.Id))
          .Select(activity => CreateSection([activity], now));
@@ -240,7 +239,8 @@ public sealed class PublicActivityTimelineBuilder
 
    private static ActivityAgendaSection CreateSection(
       IReadOnlyList<ActivityListItem> activities,
-      DateTimeOffset now
+      DateTimeOffset now,
+      bool showGroupedLayout = false
    )
    {
       var orderedActivities = activities
@@ -252,6 +252,9 @@ public sealed class PublicActivityTimelineBuilder
          })
          .ToList();
       var activity = orderedActivities[0];
+      var latestActivity = orderedActivities
+         .Where(item => item.EndsAt is not null)
+         .MaxBy(item => item.EndsAt);
       var participants = MergeParticipants(orderedActivities);
       var hasDifferentParticipantSets =
          HasDifferentActiveParticipantSets(orderedActivities);
@@ -271,18 +274,22 @@ public sealed class PublicActivityTimelineBuilder
          ?? slots.FirstOrDefault(slot => slot.Activity.StartsAt >= now)
          ?? slots[^1];
       var timelineStart = TimeZoneHelper.ToLocal(
-         timelineSlot.Activity.StartsAt!.Value,
+         activity.StartsAt!.Value,
          SportDay.TimeZoneId
       );
       var timelineTimeLabel =
          PublicTimeDisplay.FormatApproximateTimeText(
-            timelineSlot.Activity.TimeText,
-            timelineSlot.Activity.LocalStartTime
+            activity.TimeText,
+            activity.LocalStartTime
          );
       var timelineEndTimeLabel =
          PublicTimeDisplay.FormatApproximateTime(
-            timelineSlot.Activity.LocalEndTime
+            latestActivity?.LocalEndTime
          );
+      var activityGroupTitle = showGroupedLayout &&
+         orderedActivities.Count > 1
+            ? activity.ActivityGroupTitle
+            : null;
 
       return new ActivityAgendaSection(
          timelineTimeLabel,
@@ -293,9 +300,7 @@ public sealed class PublicActivityTimelineBuilder
          timelineEndTimeLabel,
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
-         orderedActivities.Count > 1
-            ? activity.ActivityGroupTitle
-            : null,
+         activityGroupTitle,
          hasDifferentParticipantSets,
          slots,
          timelineSlot
@@ -345,6 +350,18 @@ public sealed class PublicActivityTimelineBuilder
          participant => GetNormalizedNameParts(participant.Name)
             .Any(part => titleParts.Contains(part))
       );
+   }
+
+   private static string NormalizeActivityTitleForGrouping(string title)
+   {
+      return string.Join(
+         ' ',
+         title.Split(
+            [' ', '\t', '\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         )
+      ).ToUpperInvariant();
    }
 
    private static HashSet<string> GetNormalizedNameParts(string value)

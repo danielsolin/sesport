@@ -50,6 +50,8 @@ public class IndexModel(
 
    public DateOnly TomorrowDate { get; private set; }
 
+   public string NextDateLinkLabel { get; private set; } = string.Empty;
+
    public bool HasPublishedActivitiesTomorrow { get; private set; }
 
    public int? TotalParticipantsCount { get; private set; }
@@ -73,6 +75,10 @@ public class IndexModel(
       var sportToday = SportDay.Today(now).StartDate;
       SelectedDate = ParseDate(Date) ?? sportToday;
       TomorrowDate = SelectedDate.AddDays(1);
+      NextDateLinkLabel = FormatNextDateLinkLabel(
+         TomorrowDate,
+         CurrentDate
+      );
       IsSportToday = SelectedDate == sportToday;
       IsWatchedActivitiesView = Watched || string.Equals(
          HttpContext.Request.Path.Value,
@@ -233,6 +239,16 @@ public class IndexModel(
    {
       var tomorrowDate = selectedDate.AddDays(1);
       return publishedDateCounts.Any(item => item.Date == tomorrowDate);
+   }
+
+   internal static string FormatNextDateLinkLabel(
+      DateOnly targetDate,
+      DateOnly todayDate
+   )
+   {
+      var dayLabel = FormatDateOptionDayLabel(targetDate, todayDate);
+      var dateLabel = FormatDateOptionDateLabel(targetDate);
+      return $"{dayLabel} {dateLabel}";
    }
 
    internal static bool ShouldShowDisciplineColumn(

@@ -535,7 +535,7 @@ public class PublicActivityTimelineBuilderTests
             entry => !entry.IsCurrentMarker
          ).Section!;
 
-      Assert.Equal("≈13:00", middaySection.TimeLabel);
+      Assert.Equal("≈08:15", middaySection.TimeLabel);
    }
 
    [Fact]
@@ -1050,6 +1050,61 @@ public class PublicActivityTimelineBuilderTests
          Assert.Null(section.ActivityGroupTitle);
          Assert.Single(section.Activities);
       });
+   }
+
+   [Fact]
+   public void BuildConsolidatesSameTeamSportTitleIntoRegularActivityCard()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Football: Match",
+            selectedDate,
+            now.AddHours(2),
+            now.AddHours(4),
+            groupId,
+            "Football League",
+            true,
+            "Viaplay"
+         ),
+         CreateActivity(
+            "Football: Match",
+            selectedDate,
+            now.AddHours(1),
+            now.AddHours(5),
+            groupId,
+            "Football League",
+            true,
+            "V Sport Football"
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.Null(section.ActivityGroupTitle);
+      Assert.Equal(2, section.Activities.Count);
+      Assert.Equal("≈09:00", section.TimeLabel);
+      Assert.Equal("≈13:00", section.EndTimeLabel);
+      Assert.Equal(
+         ["V Sport Football", "Viaplay"],
+         section.Slots.SelectMany(slot => slot.TvChannels)
+      );
    }
 
    private static ActivityListItem CreateActivity(

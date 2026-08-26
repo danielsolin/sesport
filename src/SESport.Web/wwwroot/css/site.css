@@ -258,6 +258,12 @@ h2 {
    color: var(--warning);
 }
 
+.notice-success {
+   border-color: #a8d5b2;
+   background: #edf7ee;
+   color: #2c6b38;
+}
+
 .notice-error {
    border-color: #e0aaaa;
    background: #fff5f5;
