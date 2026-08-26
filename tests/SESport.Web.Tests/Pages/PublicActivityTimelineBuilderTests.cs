@@ -479,6 +479,7 @@ public class PublicActivityTimelineBuilderTests
          entry => !entry.IsCurrentMarker
       ).Section!;
       Assert.Equal("Rally Polen", section.ActivityGroupTitle);
+      Assert.Equal("Rally Polen", section.DisplayTitle);
       Assert.Equal(3, section.Activities.Count);
       Assert.Equal(
          ["08:15", "09:45", "13:00"],
@@ -1156,6 +1157,10 @@ public class PublicActivityTimelineBuilderTests
       ).Section!;
 
       Assert.Null(section.ActivityGroupTitle);
+      Assert.Equal(
+         "Göransson/Galloway - Krajicek/Mektić",
+         section.DisplayTitle
+      );
       Assert.Equal(2, section.Activities.Count);
       Assert.Equal(
          ["TV4 Play", "TV4 Tennis"],

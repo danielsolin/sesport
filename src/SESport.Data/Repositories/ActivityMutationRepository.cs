@@ -741,22 +741,8 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
-         select id
-         from activity_groups
-         where sport_id = @sport_id
-            and title = @title
-            and start_date <= @activity_date
-            and end_date >= @activity_date
-         order by
-            (end_date - start_date),
-            start_date desc,
-            id
-         limit 1
-         """;
-
       await using var command = new NpgsqlCommand(
-         sql,
+         ActivityGroupQueryRepository.FindMatchingActivityGroupSql,
          connection,
          transaction
       );
