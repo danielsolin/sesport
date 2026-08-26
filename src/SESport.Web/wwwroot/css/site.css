@@ -2325,6 +2325,16 @@ h2 {
    object-position: center top;
 }
 
+.entity-edit-thumbnail-link {
+   color: inherit;
+   text-decoration: none;
+}
+
+.entity-edit-thumbnail-link:focus-visible {
+   outline: 2px solid var(--accent-strong);
+   outline-offset: 3px;
+}
+
 .entity-edit-thumbnail svg {
    width: 28px;
    height: 28px;

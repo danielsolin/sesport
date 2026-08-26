@@ -11,6 +11,8 @@
          "ReplaceImage",
          new { id = Model.Entity.Id }
       );
+   var imageSourceUrl = Model.Entity.PrimaryImageSourceUrl;
+   var hasImageSourceUrl = !string.IsNullOrWhiteSpace(imageSourceUrl);
    var isPersonEntity = string.Equals(
       Model.Entity.EntityTypeId,
       TrackedEntityTypeIds.Person,
@@ -73,24 +75,63 @@
                "Thumbnail",
                new { id = Model.Entity.Id }
             );
-            <div class="entity-edit-thumbnail">
-               <img src="@thumbnailUrl"
-                    alt="@Model.Entity.CanonicalName"
-                    decoding="async" />
-            </div>
+            @if(hasImageSourceUrl)
+            {
+               <a class="entity-edit-thumbnail
+                  entity-edit-thumbnail-link"
+                  href="@imageSourceUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Image source for
+                     @Model.Entity.CanonicalName">
+                  <img src="@thumbnailUrl"
+                       alt="@Model.Entity.CanonicalName"
+                       decoding="async" />
+               </a>
+            }
+            else
+            {
+               <div class="entity-edit-thumbnail">
+                  <img src="@thumbnailUrl"
+                       alt="@Model.Entity.CanonicalName"
+                       decoding="async" />
+               </div>
+            }
          }
          else
          {
-            <div class="entity-edit-thumbnail" aria-hidden="true">
-               <svg viewBox="0 0 24 24"
-                    focusable="false"
-                    aria-hidden="true">
-                  <path fill="currentColor"
-                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
-                           1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
-                           4v2h16v-2c0-2.21-3.58-4-8-4Z" />
-               </svg>
-            </div>
+            @if(hasImageSourceUrl)
+            {
+               <a class="entity-edit-thumbnail
+                  entity-edit-thumbnail-link"
+                  href="@imageSourceUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Image source for
+                     @Model.Entity.CanonicalName">
+                  <svg viewBox="0 0 24 24"
+                       focusable="false"
+                       aria-hidden="true">
+                     <path fill="currentColor"
+                           d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
+                              1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
+                              4v2h16v-2c0-2.21-3.58-4-8-4Z" />
+                  </svg>
+               </a>
+            }
+            else
+            {
+               <div class="entity-edit-thumbnail" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"
+                       focusable="false"
+                       aria-hidden="true">
+                     <path fill="currentColor"
+                           d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
+                              1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
+                              4v2h16v-2c0-2.21-3.58-4-8-4Z" />
+                  </svg>
+               </div>
+            }
          }
       </div>
       <div class="form-grid">

@@ -54,6 +54,10 @@ public sealed class EditMarkupTests
       Assert.Contains("Add source", html);
       Assert.Contains("class=\"entity-image-source-control\"", html);
       Assert.Contains("<span>Image source URL</span>", html);
+      Assert.Contains("hasImageSourceUrl", html);
+      Assert.Contains("entity-edit-thumbnail-link", html);
+      Assert.Contains("href=\"@imageSourceUrl\"", html);
+      Assert.Contains("target=\"_blank\"", html);
       Assert.Contains("ReplaceImage", html);
       Assert.Contains("Replace\n", html);
       Assert.DoesNotContain("Replace image", html);
@@ -84,6 +88,7 @@ public sealed class EditMarkupTests
          css
       );
       Assert.Contains("align-self: flex-start;", css);
+      Assert.Contains(".entity-edit-thumbnail-link", css);
       Assert.Contains(
          "[hidden] {\n" +
          "   display: none !important;\n" +
