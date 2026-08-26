@@ -1707,7 +1707,7 @@
 }
 
 .activity-participant-watched .activity-participant-name {
-   color: var(--accent-strong);
+   color: inherit;
    font-weight: 850;
 }
 
