@@ -1107,6 +1107,125 @@ public class PublicActivityTimelineBuilderTests
       );
    }
 
+   [Fact]
+   public void BuildConsolidatesNonTeamSportChannelVariants()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Göransson/Galloway - Krajicek/Mektić",
+            selectedDate,
+            now.AddHours(2),
+            now.AddHours(4),
+            groupId,
+            "Winston-Salem Open",
+            tvChannelName: "TV4 Tennis",
+            sportId: "tennis",
+            sportName: "Tennis"
+         ),
+         CreateActivity(
+            "Göransson/Galloway - Krajicek/Mektić",
+            selectedDate,
+            now.AddHours(1),
+            now.AddHours(5),
+            groupId,
+            "Winston-Salem Open",
+            tvChannelName: "TV4 Play",
+            sportId: "tennis",
+            sportName: "Tennis"
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.Null(section.ActivityGroupTitle);
+      Assert.Equal(2, section.Activities.Count);
+      Assert.Equal(
+         ["TV4 Play", "TV4 Tennis"],
+         section.Slots.SelectMany(slot => slot.TvChannels)
+      );
+   }
+
+   [Fact]
+   public void BuildKeepsDifferentParticipantVariantsGroupedNormally()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var firstParticipantId = Guid.NewGuid();
+      var secondParticipantId = Guid.NewGuid();
+      var builder = new PublicActivityTimelineBuilder();
+      var firstActivity = CreateActivity(
+         "Göransson/Galloway - Krajicek/Mektić",
+         selectedDate,
+         now.AddHours(2),
+         now.AddHours(4),
+         groupId,
+         "Winston-Salem Open",
+         tvChannelName: "TV4 Tennis",
+         sportId: "tennis",
+         sportName: "Tennis"
+      ) with
+      {
+         RelatedPersonEntities = "First participant",
+         RelatedPersonEntityIds = [firstParticipantId],
+         ActiveRelatedPersonEntityIds = [firstParticipantId]
+      };
+      var secondActivity = CreateActivity(
+         "Göransson/Galloway - Krajicek/Mektić",
+         selectedDate,
+         now.AddHours(1),
+         now.AddHours(5),
+         groupId,
+         "Winston-Salem Open",
+         tvChannelName: "TV4 Play",
+         sportId: "tennis",
+         sportName: "Tennis"
+      ) with
+      {
+         RelatedPersonEntities = "Second participant",
+         RelatedPersonEntityIds = [secondParticipantId],
+         ActiveRelatedPersonEntityIds = [secondParticipantId]
+      };
+
+      var timeline = builder.Build(
+         [firstActivity, secondActivity],
+         selectedDate,
+         now
+      );
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.Equal("Winston-Salem Open", section.ActivityGroupTitle);
+      Assert.Equal(2, section.Activities.Count);
+   }
+
    private static ActivityListItem CreateActivity(
       string title,
       DateOnly activityDate,
@@ -1116,7 +1235,9 @@ public class PublicActivityTimelineBuilderTests
       string? activityGroupTitle = null,
       bool isTeamSport = false,
       string? tvChannelName = null,
-      string publicDateMode = ActivityGroupPublicDateModeIds.SportDay
+      string publicDateMode = ActivityGroupPublicDateModeIds.SportDay,
+      string sportId = "football",
+      string sportName = "Football"
    )
    {
       return new ActivityListItem(
@@ -1125,8 +1246,8 @@ public class PublicActivityTimelineBuilderTests
          null,
          null,
          "Match",
-         "football",
-         "Football",
+         sportId,
+         sportName,
          null,
          startsAt is null
             ? activityDate.ToString("yyyy-MM-dd")

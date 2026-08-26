@@ -86,11 +86,20 @@ public sealed class PublicActivityTimelineBuilder
          .ToHashSet();
 
       var groupedSections = groupedActivityGroups
-         .Select(group => CreateSection(
-            group.ToList(),
-            now,
-            showGroupedLayout: group.Key.TeamSportTitle is null
-         ));
+         .Select(group =>
+         {
+            var activities = group.ToList();
+            var isInvisibleChannelVariantGroup =
+               group.Key.TeamSportTitle is null &&
+               IsInvisibleChannelVariantGroup(activities);
+
+            return CreateSection(
+               activities,
+               now,
+               showGroupedLayout: !isInvisibleChannelVariantGroup &&
+                  group.Key.TeamSportTitle is null
+            );
+         });
       var individualSections = timedActivities
          .Where(activity => !groupedActivityIds.Contains(activity.Id))
          .Select(activity => CreateSection([activity], now));
@@ -324,6 +333,110 @@ public sealed class PublicActivityTimelineBuilder
                GetActiveParticipantIds(activity)
             )
          );
+   }
+
+   private static bool IsInvisibleChannelVariantGroup(
+      IReadOnlyList<ActivityListItem> activities
+   )
+   {
+      if(activities.Count < 2)
+      {
+         return false;
+      }
+
+      var first = activities[0];
+      var channelNames = new HashSet<string>(
+         StringComparer.OrdinalIgnoreCase
+      );
+      foreach(var activity in activities)
+      {
+         if(!HasSameNonBroadcastIdentity(first, activity) ||
+            string.IsNullOrWhiteSpace(activity.TvChannelName))
+         {
+            return false;
+         }
+
+         channelNames.Add(activity.TvChannelName.Trim());
+      }
+
+      return channelNames.Count > 1;
+   }
+
+   private static bool HasSameNonBroadcastIdentity(
+      ActivityListItem first,
+      ActivityListItem candidate
+   )
+   {
+      return first.ActivityGroupId == candidate.ActivityGroupId &&
+         first.NoGrouping == candidate.NoGrouping &&
+         string.Equals(
+            NormalizeActivityTitleForGrouping(first.Title),
+            NormalizeActivityTitleForGrouping(candidate.Title),
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.Description,
+            candidate.Description,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.Teaser,
+            candidate.Teaser,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.ActivityType,
+            candidate.ActivityType,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.SportId,
+            candidate.SportId,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.PublicDateMode,
+            candidate.PublicDateMode,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.RelatedPersonEntities,
+            candidate.RelatedPersonEntities,
+            StringComparison.Ordinal
+         ) &&
+         HaveSameEntityIds(
+            first.RelatedPersonEntityIds,
+            candidate.RelatedPersonEntityIds
+         ) &&
+         HaveSameEntityIds(
+            first.ActiveRelatedPersonEntityIds,
+            candidate.ActiveRelatedPersonEntityIds
+         ) &&
+         string.Equals(
+            first.RelatedOrganizationEntities,
+            candidate.RelatedOrganizationEntities,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.RelatedOrganizationCanonicalEntities,
+            candidate.RelatedOrganizationCanonicalEntities,
+            StringComparison.Ordinal
+         ) &&
+         string.Equals(
+            first.OrganizationCountryId,
+            candidate.OrganizationCountryId,
+            StringComparison.Ordinal
+         ) &&
+         first.HasNationalTeamRelatedOrganization ==
+            candidate.HasNationalTeamRelatedOrganization;
+   }
+
+   private static bool HaveSameEntityIds(
+      Guid[] firstIds,
+      Guid[] candidateIds
+   )
+   {
+      return firstIds.ToHashSet().SetEquals(candidateIds);
    }
 
    private static HashSet<Guid> GetActiveParticipantIds(
