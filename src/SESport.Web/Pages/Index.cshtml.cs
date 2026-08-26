@@ -516,6 +516,7 @@ public sealed record ActivityAgendaSection(
    bool IsOngoing,
    bool HasEnded,
    string? ActivityGroupTitle,
+   string DisplayTitle,
    bool HasDifferentParticipantSets,
    IReadOnlyList<ActivityAgendaSlot> Slots,
    ActivityAgendaSlot TimelineSlot

@@ -305,6 +305,9 @@ public sealed class PublicActivityTimelineBuilder
          orderedActivities.Count > 1
             ? activity.ActivityGroupTitle
             : null;
+      var displayTitle = string.IsNullOrWhiteSpace(activityGroupTitle)
+         ? activity.Title
+         : activityGroupTitle!;
 
       return new ActivityAgendaSection(
          timelineTimeLabel,
@@ -316,6 +319,7 @@ public sealed class PublicActivityTimelineBuilder
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
          activityGroupTitle,
+         displayTitle,
          hasDifferentParticipantSets,
          slots,
          timelineSlot
