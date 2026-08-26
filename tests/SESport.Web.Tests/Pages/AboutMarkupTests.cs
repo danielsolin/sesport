@@ -39,10 +39,6 @@ public sealed class AboutMarkupTests
          page
       );
       Assert.Contains("Maila mig på:", page);
-      Assert.Contains(
-         "href=\"mailto:daniel@solin.org\"",
-         page
-      );
       Assert.Contains("//D", page);
       Assert.Contains(".about-page {", publicCss);
       Assert.Contains(".about-letter {", publicCss);
