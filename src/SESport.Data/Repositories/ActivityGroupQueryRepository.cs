@@ -69,6 +69,39 @@ public sealed class ActivityGroupQueryRepository(
       );
    }
 
+   public async Task<Guid?> FindMatchingActivityGroupIdAsync(
+      string title,
+      string sportId,
+      DateOnly activityDate,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select id
+         from activity_groups
+         where sport_id = @sport_id
+            and title = @title
+            and start_date <= @activity_date
+            and end_date >= @activity_date
+         order by
+            (end_date - start_date),
+            start_date desc,
+            id
+         limit 1
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("sport_id", sportId.Trim());
+      command.Parameters.AddWithValue("title", title.Trim());
+      command.Parameters.Add(
+         "activity_date",
+         NpgsqlDbType.Date
+      ).Value = activityDate;
+
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+      return result is null || result is DBNull ? null : (Guid)result;
+   }
+
    public async Task<IReadOnlyList<string>> GetOtherGroupDescriptionsAsync(
       Guid activityGroupId,
       Guid? excludedActivityId,

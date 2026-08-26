@@ -230,17 +230,55 @@ public sealed class ActivityEditPageService(
    )
    {
       var isNew = activity.Id is null;
-      var createsActivityGroup = activity.ActivityGroupId is null &&
-         activity.ActivityGroupCreationRequired;
+      var broadcastSource = await ResolveBroadcastActivitySourceAsync(
+         activity.BroadcastIds,
+         cancellationToken
+      );
+
+      if(isNew &&
+         activity.ActivityGroupId is null &&
+         string.Equals(
+            broadcastSource?.ActivityGroupSourceKindId,
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            StringComparison.Ordinal
+         ))
+      {
+         activity.ActivityGroupCreationRequired = true;
+      }
 
       if(activity.ActivityGroupCreationRequired &&
          activity.ActivityGroupId is null)
       {
-         activity.ActivityGroupTitle = await ResolveActivityGroupTitleAsync(
-            activity.BroadcastIds,
-            cancellationToken
+         activity.ActivityGroupTitle = ResolveActivityGroupTitle(
+            broadcastSource
          ) ?? activity.ActivityGroupTitle;
+
+         if(activity.ActivityDate is not null &&
+            !string.IsNullOrWhiteSpace(activity.ActivityGroupTitle) &&
+            !string.IsNullOrWhiteSpace(activity.SportId))
+         {
+            activity.ActivityGroupId = await repository
+               .FindMatchingActivityGroupIdAsync(
+                  activity.ActivityGroupTitle,
+                  activity.SportId,
+                  activity.ActivityDate.Value,
+                  cancellationToken
+               );
+
+            if(activity.ActivityGroupId is not null)
+            {
+               activity.ActivityGroupTitle = await repository
+                  .GetActivityGroupTitleAsync(
+                     activity.ActivityGroupId.Value,
+                     cancellationToken
+                  );
+               activity.ActivityGroupCreationRequired = false;
+            }
+         }
       }
+
+      var createsActivityGroup = activity.ActivityGroupId is null &&
+         activity.ActivityGroupCreationRequired;
 
       var activityId = await repository.SaveAsync(
          activity,
@@ -312,6 +350,12 @@ public sealed class ActivityEditPageService(
       activity.BroadcastIds = [firstBroadcast.Id];
       activity.OrganizationEntityId = firstBroadcast.EntityId;
       activity.TvChannelName = firstBroadcast.ChannelName;
+      activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
+
+      if(!string.IsNullOrWhiteSpace(firstBroadcast.EntitySportId))
+      {
+         activity.SportId = firstBroadcast.EntitySportId;
+      }
 
       if(clearParticipants)
       {
@@ -333,21 +377,51 @@ public sealed class ActivityEditPageService(
                   activity.ActivityGroupId.Value,
                   cancellationToken
                );
-            if(!clearParticipants)
-            {
-               var participantsByGroup = await repository
-                  .GetActivityGroupParticipantsAsync(
-                     [activity.ActivityGroupId.Value],
-                     cancellationToken
-                  );
-               if(participantsByGroup.TryGetValue(
-                     activity.ActivityGroupId.Value,
-                     out var knownParticipants
-                  ))
-               {
-                  groupParticipants = knownParticipants;
-               }
-            }
+            groupParticipants = await LoadActivityGroupParticipantsAsync(
+               activity.ActivityGroupId.Value,
+               clearParticipants,
+               cancellationToken
+            );
+         }
+      }
+
+      if(activity.ActivityGroupId is null &&
+         string.Equals(
+            firstBroadcast.ActivityGroupSourceKindId,
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+            StringComparison.Ordinal
+         ) &&
+         activity.ActivityDate is not null &&
+         !string.IsNullOrWhiteSpace(activity.SportId))
+      {
+         var groupTitle = firstBroadcast.ActivityGroupDraftTitle;
+         if(string.IsNullOrWhiteSpace(groupTitle))
+         {
+            groupTitle = firstBroadcast.Title;
+         }
+
+         activity.ActivityGroupTitle = groupTitle;
+
+         activity.ActivityGroupId = await repository
+            .FindMatchingActivityGroupIdAsync(
+               groupTitle,
+               activity.SportId,
+               activity.ActivityDate.Value,
+               cancellationToken
+            );
+
+         if(activity.ActivityGroupId is not null)
+         {
+            activity.ActivityGroupTitle = await repository
+               .GetActivityGroupTitleAsync(
+                  activity.ActivityGroupId.Value,
+                  cancellationToken
+               );
+            groupParticipants = await LoadActivityGroupParticipantsAsync(
+               activity.ActivityGroupId.Value,
+               clearParticipants,
+               cancellationToken
+            );
          }
       }
 
@@ -395,11 +469,6 @@ public sealed class ActivityEditPageService(
       );
       activity.Description = firstBroadcast.Description;
 
-      if(!string.IsNullOrWhiteSpace(firstBroadcast.EntitySportId))
-      {
-         activity.SportId = firstBroadcast.EntitySportId;
-      }
-
       activity.ActivityType =
          BroadcastActivityTypeResolver.ResolveActivityType(
             firstBroadcast.Title,
@@ -422,7 +491,6 @@ public sealed class ActivityEditPageService(
          )
          .ToList() ?? [];
 
-      activity.ActivityDate = DateOnly.FromDateTime(localStart.DateTime);
       activity.LocalStartTime = TimeOnly.FromDateTime(localStart.DateTime);
       var localEnd = TimeZoneHelper.ToLocal(
          firstBroadcast.EndsAt,
@@ -453,10 +521,37 @@ public sealed class ActivityEditPageService(
       return firstBroadcast.EntityId;
    }
 
-   private async Task<string?> ResolveActivityGroupTitleAsync(
-      IReadOnlyCollection<Guid> broadcastIds,
-      CancellationToken cancellationToken
-   )
+   private async Task<IReadOnlyList<ActivityGroupParticipant>>
+      LoadActivityGroupParticipantsAsync(
+         Guid activityGroupId,
+         bool clearParticipants,
+         CancellationToken cancellationToken
+      )
+   {
+      if(clearParticipants)
+      {
+         return [];
+      }
+
+      var participantsByGroup = await repository
+         .GetActivityGroupParticipantsAsync(
+            [activityGroupId],
+            cancellationToken
+         );
+
+      return participantsByGroup.TryGetValue(
+         activityGroupId,
+         out var knownParticipants
+      )
+         ? knownParticipants
+         : [];
+   }
+
+   private async Task<BroadcastActivitySource?>
+      ResolveBroadcastActivitySourceAsync(
+         IReadOnlyCollection<Guid> broadcastIds,
+         CancellationToken cancellationToken
+      )
    {
       var normalizedIds = NormalizeBroadcastIds(broadcastIds);
 
@@ -475,17 +570,21 @@ public sealed class ActivityEditPageService(
          return null;
       }
 
-      var draftBroadcast = broadcasts.FirstOrDefault(
-         broadcast =>
-            !string.IsNullOrWhiteSpace(broadcast.ActivityGroupDraftTitle)
-      );
+      return broadcasts[0];
+   }
 
-      if(draftBroadcast is not null)
+   private static string? ResolveActivityGroupTitle(
+      BroadcastActivitySource? broadcast
+   )
+   {
+      if(broadcast is null)
       {
-         return draftBroadcast.ActivityGroupDraftTitle;
+         return null;
       }
 
-      return broadcasts[0].Title;
+      return !string.IsNullOrWhiteSpace(broadcast.ActivityGroupDraftTitle)
+         ? broadcast.ActivityGroupDraftTitle
+         : broadcast.Title;
    }
 
    public async Task<Guid> QueueTeaserAsync(

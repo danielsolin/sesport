@@ -79,6 +79,32 @@ public sealed class EditMarkupTests
    }
 
    [Fact]
+   public async Task EditPageStylesExistingActivityGroupNoticeAsSuccess()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var html = await File.ReadAllTextAsync(
+         Path.Combine(
+            repoRoot,
+            "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+         )
+      );
+      var css = await File.ReadAllTextAsync(
+         Path.Combine(repoRoot, "src/SESport.Web/wwwroot/css/site.css")
+      );
+
+      Assert.Contains("class=\"notice notice-success\"", html);
+      Assert.Contains(
+         "This activity will reuse the existing activity group",
+         html
+      );
+      Assert.Contains("@Model.Activity.ActivityGroupTitle", html);
+      Assert.Contains(".notice-success", css);
+      Assert.Contains("color: #2c6b38", css);
+   }
+
+   [Fact]
    public async Task EditPagePostsUnsavedPrefilledSources()
    {
       var repoRoot = Path.GetFullPath(
