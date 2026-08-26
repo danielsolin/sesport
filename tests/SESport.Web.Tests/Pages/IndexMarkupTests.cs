@@ -45,6 +45,7 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("Svenskar:", html);
+      Assert.Contains("Alla bevakade", html);
       Assert.Contains("SportParticipantCounts", html);
       Assert.Contains(
          "aria-label=\"Visa endast @sport.SportName\"",

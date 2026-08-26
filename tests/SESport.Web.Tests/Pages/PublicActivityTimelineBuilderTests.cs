@@ -1,5 +1,6 @@
 using SESport.Core.Formatting;
 using SESport.Data.Models;
+using SESport.Web.Pages;
 
 namespace SESport.Core.Tests.Pages;
 
@@ -1159,6 +1160,13 @@ public class PublicActivityTimelineBuilderTests
       Assert.Equal(
          ["TV4 Play", "TV4 Tennis"],
          section.Slots.SelectMany(slot => slot.TvChannels)
+      );
+
+      var sportCounts = IndexModel.CountActivityCardsBySport(timeline);
+
+      Assert.Equal(
+         [new SportParticipantCount("tennis", "Tennis", 1)],
+         sportCounts
       );
    }
 

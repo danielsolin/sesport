@@ -7,6 +7,23 @@ namespace SESport.Data.Repositories;
 
 public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 {
+   public async Task<int> GetWatchedEntityCountAsync(
+      Guid memberId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select count(*)::integer
+         from member_entity_watches
+         where member_id = @member_id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("member_id", memberId);
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+      return Convert.ToInt32(result);
+   }
+
    public async Task<IReadOnlyList<MemberPersonListItem>>
       GetWatchedEntitiesAsync(
       Guid memberId,

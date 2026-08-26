@@ -7,6 +7,55 @@ namespace SESport.Core.Tests.Data;
 public sealed class MemberWatchRepositoryTests
 {
    [Fact]
+   public async Task GetWatchedEntityCountCountsAllMemberWatches()
+   {
+      var memberId = Guid.NewGuid();
+      var firstPersonId = Guid.NewGuid();
+      var secondPersonId = Guid.NewGuid();
+      await using var dataSource = CreateDataSource();
+      var repository = new MemberWatchRepository(dataSource);
+
+      try
+      {
+         await InsertMemberAsync(dataSource, memberId);
+         await InsertPersonAsync(dataSource, firstPersonId);
+         await InsertPersonAsync(dataSource, secondPersonId);
+         Assert.True(
+            await repository.TryAddEntityWatchAsync(
+               memberId,
+               firstPersonId,
+               CancellationToken.None
+            )
+         );
+         Assert.True(
+            await repository.TryAddEntityWatchAsync(
+               memberId,
+               secondPersonId,
+               CancellationToken.None
+            )
+         );
+
+         var count = await repository.GetWatchedEntityCountAsync(
+            memberId,
+            CancellationToken.None
+         );
+
+         Assert.Equal(2, count);
+      }
+      finally
+      {
+         await DeleteTestDataAsync(
+            dataSource,
+            memberId,
+            [firstPersonId, secondPersonId],
+            [],
+            Guid.Empty,
+            []
+         );
+      }
+   }
+
+   [Fact]
    public async Task GetWatchedEntitiesIncludesNextPublishedActiveActivity()
    {
       var memberId = Guid.NewGuid();

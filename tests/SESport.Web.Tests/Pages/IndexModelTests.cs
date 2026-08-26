@@ -244,7 +244,7 @@ public sealed class IndexModelTests
    }
 
    [Fact]
-   public void CountParticipantsBySportSortsByParticipantCountDescending()
+   public void CountParticipantsBySportSortsAlphabetically()
    {
       var firstPerson =
          Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -269,7 +269,7 @@ public sealed class IndexModelTests
       var counts = IndexModel.CountParticipantsBySport(activities);
 
       Assert.Equal(
-         ["golf", "athletics"],
+         ["athletics", "golf"],
          counts.Select(count => count.SportId)
       );
    }

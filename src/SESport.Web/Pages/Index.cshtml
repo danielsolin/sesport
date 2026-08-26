@@ -19,6 +19,9 @@
    var publicActivityAllSportsUrl = Model.IsWatchedActivitiesView
       ? publicActivityPath
       : $"{publicActivityPath}?date={selectedDateQueryValue}";
+   var allSportsLabel = Model.IsWatchedActivitiesView
+      ? "Alla bevakade"
+      : "Svenskar:";
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
    var hasPastActivities = Model.TimelineEntries.Any(
@@ -178,7 +181,9 @@
                StringComparison.OrdinalIgnoreCase
             ));
          var selectedSportName = selectedSport?.SportName ??
-            "Svenskar";
+            (Model.IsWatchedActivitiesView
+               ? "Alla bevakade"
+               : "Svenskar");
          var selectedSportCount = selectedSport?.ParticipantCount ??
             Model.TotalParticipantsCount;
          <div class="sport-select" data-sport-dropdown>
@@ -190,12 +195,21 @@
                     aria-controls="sport-dropdown-menu"
                     data-sport-dropdown-toggle>
                <span class="sport-option-content">
-                  <span class="sport-option-name">
-                     @selectedSportName:
-                  </span>
-                  <span class="sport-option-count">
-                     @selectedSportCount
-                  </span>
+                  @if(Model.IsWatchedActivitiesView && selectedSport is null)
+                  {
+                     <span class="sport-option-name">
+                        @selectedSportName
+                     </span>
+                  }
+                  else
+                  {
+                     <span class="sport-option-name">
+                        @selectedSportName:
+                     </span>
+                     <span class="sport-option-count">
+                        @selectedSportCount
+                     </span>
+                  }
                </span>
                <span class="sport-dropdown-chevron"
                      aria-hidden="true"></span>
@@ -213,11 +227,14 @@
                         Model.Sport is null ? "true" : null
                      )"
                      aria-label="Visa alla sporter">
-                     <span>Svenskar:</span>
-                     <span class="index-participants-count
-                        index-participants-value">
-                        @Model.TotalParticipantsCount
-                     </span>
+                     <span>@allSportsLabel</span>
+                     @if(!Model.IsWatchedActivitiesView)
+                     {
+                        <span class="index-participants-count
+                           index-participants-value">
+                           @Model.TotalParticipantsCount
+                        </span>
+                     }
                   </a>
                </div>
                @foreach(var sport in Model.SportParticipantCounts)

@@ -10,6 +10,7 @@ namespace SESport.Web.Pages;
 
 public class IndexModel(
    ActivityRepository repository,
+   MemberWatchRepository memberWatchRepository,
    PublicActivityTimelineBuilder timelineBuilder,
    PublicSiteOptions publicSiteOptions
 ) : PageModel
@@ -145,9 +146,17 @@ public class IndexModel(
                   now,
                   cancellationToken
                );
-            TotalParticipantsCount = CountParticipants(watchedActivities);
-            SportParticipantCounts = CountParticipantsBySport(
-               watchedActivities
+            TotalParticipantsCount =
+               await memberWatchRepository.GetWatchedEntityCountAsync(
+                  memberId.Value,
+                  cancellationToken
+               );
+            var allWatchedTimeline = timelineBuilder.BuildFuture(
+               watchedActivities,
+               now
+            );
+            SportParticipantCounts = CountActivityCardsBySport(
+               allWatchedTimeline
             );
             Sport = NormalizeSportFilter(
                Sport,
@@ -298,6 +307,43 @@ public class IndexModel(
          IEnumerable<ActivityListItem> activities
       )
    {
+      return CountBySport(
+         activities,
+         group => group
+            .SelectMany(activity => activity.ActiveRelatedPersonEntityIds)
+            .Where(entityId => entityId != Guid.Empty)
+            .Distinct()
+            .Count()
+      );
+   }
+
+   internal static IReadOnlyList<SportParticipantCount>
+      CountActivitiesBySport(
+         IEnumerable<ActivityListItem> activities
+      )
+   {
+      return CountBySport(
+         activities,
+         group => group.Count()
+      );
+   }
+
+   internal static IReadOnlyList<SportParticipantCount>
+      CountActivityCardsBySport(
+         PublicActivityTimelineViewModel timeline
+      )
+   {
+      var cardActivities = timeline.TimelineEntries
+         .Where(entry => entry.Section is not null)
+         .Select(entry => entry.Section!.Activities[0]);
+      return CountActivitiesBySport(cardActivities);
+   }
+
+   private static IReadOnlyList<SportParticipantCount> CountBySport(
+      IEnumerable<ActivityListItem> activities,
+      Func<IEnumerable<ActivityListItem>, int> countSelector
+   )
+   {
       return activities
          .GroupBy(
             activity => activity.SportId,
@@ -309,16 +355,9 @@ public class IndexModel(
                .Select(activity => activity.SportName)
                .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name))
                ?? group.Key,
-            group
-               .SelectMany(activity => activity.ActiveRelatedPersonEntityIds)
-               .Where(entityId => entityId != Guid.Empty)
-               .Distinct()
-               .Count()
+            countSelector(group)
          ))
-         .OrderByDescending(
-            item => item.ParticipantCount
-         )
-         .ThenBy(
+         .OrderBy(
             item => item.SportName,
             StringComparer.OrdinalIgnoreCase
          )
