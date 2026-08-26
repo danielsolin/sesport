@@ -194,18 +194,24 @@ public sealed class PublicActivityTimelineBuilder
       DateOnly todayDate
    )
    {
+      var culture = CultureInfo.GetCultureInfo(
+         PrimaryCountry.CultureName
+      );
       if(date == todayDate)
       {
          return "Idag";
       }
 
-      var culture = CultureInfo.GetCultureInfo(
-         PrimaryCountry.CultureName
-      );
+      var dateLabel = date.ToString("d MMMM", culture);
+      if(date == todayDate.AddDays(1))
+      {
+         return $"Imorgon {dateLabel}";
+      }
+
       var dayLabel = culture.TextInfo.ToTitleCase(
          date.ToString("dddd", culture)
       );
-      return $"{dayLabel} {date.ToString("d MMMM", culture)}";
+      return $"{dayLabel} {dateLabel}";
    }
 
    private static int GetTimelineOrder(

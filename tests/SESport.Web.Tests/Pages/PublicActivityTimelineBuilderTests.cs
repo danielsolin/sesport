@@ -55,7 +55,7 @@ public class PublicActivityTimelineBuilderTests
       var timeline = builder.BuildFuture(activities, now);
 
       Assert.Equal(
-         ["Torsdag 27 augusti", "Lördag 29 augusti"],
+         ["Imorgon 27 augusti", "Lördag 29 augusti"],
          timeline.TimelineEntries
             .Where(entry => entry.IsDateSeparator)
             .Select(entry => entry.DateSeparatorLabel)
@@ -115,7 +115,7 @@ public class PublicActivityTimelineBuilderTests
          .ToArray();
 
       Assert.Equal(
-         ["Idag", "Torsdag 27 augusti"],
+         ["Idag", "Imorgon 27 augusti"],
          separators.Select(entry => entry.DateSeparatorLabel)
       );
       Assert.True(separators[0].IsTodayDateSeparator);
