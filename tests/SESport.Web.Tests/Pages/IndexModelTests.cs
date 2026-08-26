@@ -82,6 +82,27 @@ public sealed class IndexModelTests
       );
    }
 
+   [Theory]
+   [InlineData(2026, 8, 27, 2026, 8, 26, "Imorgon 27 augusti")]
+   [InlineData(2026, 8, 28, 2026, 8, 26, "Fredag 28 augusti")]
+   public void FormatNextDateLinkLabelIncludesRelativeDayAndDate(
+      int targetYear,
+      int targetMonth,
+      int targetDay,
+      int todayYear,
+      int todayMonth,
+      int todayDay,
+      string expectedLabel
+   )
+   {
+      var label = IndexModel.FormatNextDateLinkLabel(
+         new DateOnly(targetYear, targetMonth, targetDay),
+         new DateOnly(todayYear, todayMonth, todayDay)
+      );
+
+      Assert.Equal(expectedLabel, label);
+   }
+
    [Fact]
    public void ShouldShowDisciplineColumnHidesWhenValuesMatch()
    {
