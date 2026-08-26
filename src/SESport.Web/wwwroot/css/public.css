@@ -2413,6 +2413,12 @@
    }
 }
 
+@media (max-width: 720px) and (orientation: portrait) {
+   .activity-group-description {
+      display: block;
+   }
+}
+
 @media (max-width: 720px) {
    .about-letter {
       padding: 32px 24px;
