@@ -107,6 +107,7 @@ public class IndexModel(
       }
       var memberId = TryGetMemberId();
       IsMember = memberId is not null;
+      // Keep the date selector renderable if loading published counts fails.
       DateOptions = BuildDateOptions(sportToday, SelectedDate, []);
 
       try
@@ -398,22 +399,9 @@ public class IndexModel(
          ));
    }
 
-   internal static IReadOnlyList<string> SplitParticipantNames(
-      string? participants
-   )
-   {
-      return string.IsNullOrWhiteSpace(participants)
-         ? []
-         : participants.Split(
-               ", ",
-               StringSplitOptions.RemoveEmptyEntries |
-               StringSplitOptions.TrimEntries
-            );
-   }
-
    internal static int? CalculateAge(DateOnly? birthdate, DateOnly today)
    {
-      if(birthdate is null)
+      if(birthdate is null || birthdate.Value > today)
       {
          return null;
       }
@@ -508,7 +496,6 @@ public sealed record ActivityAgendaSection(
    bool HasEnded,
    string? ActivityGroupTitle,
    string DisplayTitle,
-   bool HasDifferentParticipantSets,
    IReadOnlyList<ActivityAgendaSlot> Slots,
    ActivityAgendaSlot TimelineSlot
 );

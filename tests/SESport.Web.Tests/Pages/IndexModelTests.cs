@@ -295,13 +295,16 @@ public sealed class IndexModelTests
    }
 
    [Fact]
-   public void SplitParticipantNames_TrimsAndSplitsNames()
+   public void CalculateAgeReturnsNullForFutureBirthdate()
    {
-      var names = IndexModel.SplitParticipantNames(
-         " Anna, Björn ,  Cecilia "
+      var today = new DateOnly(2026, 8, 27);
+
+      var age = IndexModel.CalculateAge(
+         today.AddDays(1),
+         today
       );
 
-      Assert.Equal(["Anna", "Björn", "Cecilia"], names);
+      Assert.Null(age);
    }
 
    [Fact]

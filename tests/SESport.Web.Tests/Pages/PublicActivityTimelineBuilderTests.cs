@@ -772,7 +772,6 @@ public class PublicActivityTimelineBuilderTests
          ["First", "Second"],
          section.Participants.Select(participant => participant.Name)
       );
-      Assert.True(section.HasDifferentParticipantSets);
       Assert.All(
          section.Slots,
          slot => Assert.True(slot.ShowParticipantNames)
@@ -826,7 +825,6 @@ public class PublicActivityTimelineBuilderTests
          entry => !entry.IsCurrentMarker
       ).Section!;
 
-      Assert.False(section.HasDifferentParticipantSets);
       Assert.All(
          section.Slots,
          slot => Assert.False(slot.ShowParticipantNames)
@@ -885,7 +883,6 @@ public class PublicActivityTimelineBuilderTests
          entry => !entry.IsCurrentMarker
       ).Section!;
 
-      Assert.True(section.HasDifferentParticipantSets);
       Assert.False(section.Slots[0].ShowParticipantNames);
       Assert.True(section.Slots[1].ShowParticipantNames);
    }

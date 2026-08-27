@@ -8,6 +8,11 @@ namespace SESport.Web.Formatting;
 public static class SourceDisplay
 {
    private const int ExcerptPreviewLength = 20;
+   private static readonly StringComparer PrimaryCountryKindComparer =
+      StringComparer.Create(
+         CultureInfo.GetCultureInfo(PrimaryCountry.CultureName),
+         true
+      );
 
    public static string FormatKind(string kind)
    {
@@ -59,17 +64,12 @@ public static class SourceDisplay
          IEnumerable<ActivitySourceListItem> sources
       )
    {
-      var kindComparer = StringComparer.Create(
-         CultureInfo.GetCultureInfo(PrimaryCountry.CultureName),
-         true
-      );
-
       return sources
          .GroupBy(source => source.Url, StringComparer.OrdinalIgnoreCase)
          .Select(group => group
             .OrderBy(
                source => FormatKind(source.Kind),
-               kindComparer
+               PrimaryCountryKindComparer
             )
             .ThenBy(source => source.Kind, StringComparer.OrdinalIgnoreCase)
             .ThenBy(source => source.Url, StringComparer.OrdinalIgnoreCase)
@@ -77,7 +77,7 @@ public static class SourceDisplay
          )
          .OrderBy(
             source => FormatKind(source.Kind),
-            kindComparer
+            PrimaryCountryKindComparer
          )
          .ThenBy(source => source.Url, StringComparer.OrdinalIgnoreCase)
          .ToList();

@@ -11,6 +11,9 @@ namespace SESport.Web.Builders;
 
 public sealed class PublicActivityTimelineBuilder
 {
+   private static readonly CultureInfo PrimaryCountryCulture =
+      CultureInfo.GetCultureInfo(PrimaryCountry.CultureName);
+
    public PublicActivityTimelineViewModel Build(
       IEnumerable<ActivityListItem> activities,
       DateOnly selectedDate,
@@ -187,22 +190,19 @@ public sealed class PublicActivityTimelineBuilder
       DateOnly todayDate
    )
    {
-      var culture = CultureInfo.GetCultureInfo(
-         PrimaryCountry.CultureName
-      );
       if(date == todayDate)
       {
          return "Idag";
       }
 
-      var dateLabel = date.ToString("d MMMM", culture);
+      var dateLabel = date.ToString("d MMMM", PrimaryCountryCulture);
       if(date == todayDate.AddDays(1))
       {
          return $"Imorgon {dateLabel}";
       }
 
-      var dayLabel = culture.TextInfo.ToTitleCase(
-         date.ToString("dddd", culture)
+      var dayLabel = PrimaryCountryCulture.TextInfo.ToTitleCase(
+         date.ToString("dddd", PrimaryCountryCulture)
       );
       return $"{dayLabel} {dateLabel}";
    }
@@ -314,7 +314,6 @@ public sealed class PublicActivityTimelineBuilder
          slots.All(slot => slot.HasEnded),
          activityGroupTitle,
          displayTitle,
-         hasDifferentParticipantSets,
          slots,
          timelineSlot
       );
