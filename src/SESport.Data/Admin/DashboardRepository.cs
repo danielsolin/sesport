@@ -5,6 +5,7 @@ using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Sources;
+using SESport.Data.Activities;
 using SESport.Data.Models;
 
 namespace SESport.Data.Admin;
@@ -78,7 +79,41 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
          left join activity_stats using(date)
          order by dates.date;
 
-         with upcoming as (
+         with public_activity_variants as (
+            select
+               a.id,
+               a.activity_group_id,
+               a.updated_at,
+               coalesce(ag.no_grouping, false) as no_grouping,
+               coalesce(s.is_team_sport, false) as is_team_sport,
+               upper(regexp_replace(
+                  btrim(a.title),
+                  '[[:space:]]+',
+                  ' ',
+                  'g'
+               )) as normalized_title,
+               case
+                  when coalesce(
+                     ag.public_date_mode,
+                     '{{ActivityGroupPublicDateModeIds.SportDay}}'
+                  ) =
+                     '{{ActivityGroupPublicDateModeIds.LocalCalendarDate}}'
+                  then (a.starts_at at time zone @time_zone)::date
+                  else (
+                     (a.starts_at at time zone @time_zone) -
+                     @sport_day_cutoff
+                  )::date
+               end as display_date
+            from activities a
+            left join activity_groups ag
+               on ag.id = a.activity_group_id
+            join sports s on s.id = a.sport_id
+            where a.publication_status_id = @published_status
+               and a.starts_at is not null
+               and a.ends_at is not null
+               {{PublicActivityQuerySupport.ExclusionClause}}
+         ),
+         upcoming as (
             select
                a.id,
                a.activity_date,
@@ -142,6 +177,68 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                               and nullif(
                                  btrim(result.value_text), ''
                               ) is not null
+                        )
+                        and not exists (
+                           select 1
+                           from public_activity_variants current_variant
+                           join public_activity_variants variant
+                              on variant.activity_group_id =
+                                 current_variant.activity_group_id
+                              and variant.display_date =
+                                 current_variant.display_date
+                              and not variant.no_grouping
+                              and variant.id <> current_variant.id
+                              and (
+                                 not current_variant.is_team_sport
+                                 or variant.normalized_title =
+                                    current_variant.normalized_title
+                              )
+                           where current_variant.id = a.id
+                              and not current_variant.no_grouping
+                              and exists (
+                                 select 1
+                                 from activity_entity_links variant_link
+                                 join entities variant_participant
+                                    on variant_participant.id =
+                                       variant_link.entity_id
+                                 where variant_link.activity_id = variant.id
+                                    and variant_link.entity_id =
+                                       participant_link.entity_id
+                                    and variant_link.is_active
+                                    and variant_participant.entity_type_id =
+                                       @person_type
+                                    and exists (
+                                       select 1
+                                       from lateral (
+                                          select nullif(
+                                             btrim(
+                                                variant_result.value_text
+                                             ),
+                                             ''
+                                          ) as start_time
+                                          from
+                                             activity_participant_ai_results
+                                                variant_result
+                                          where variant_result.activity_id =
+                                             variant.id
+                                             and variant_result.entity_id =
+                                                variant_link.entity_id
+                                             and variant_result.job_id =
+                                                @participant_start_job_id
+                                             and variant_result.field_key =
+                                                @participant_start_field_key
+                                             and variant_result.updated_at >=
+                                                variant.updated_at
+                                          order by
+                                             variant_result.updated_at desc,
+                                             variant_result.sort_order asc,
+                                             variant_result.id desc
+                                          limit 1
+                                       ) variant_start
+                                       where
+                                          variant_start.start_time is not null
+                                    )
+                              )
                         )
                   ) as missing_participant_start_time,
                a.publication_status_id = @published_status
@@ -382,6 +479,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
          "completed_import_status",
          BroadcastImportRunStatus.Completed.ToString()
       );
+      PublicActivityQuerySupport.AddExclusionParameters(command);
    }
 
    private static async Task<IReadOnlyList<DashboardDateSummary>>
