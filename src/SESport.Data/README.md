@@ -18,7 +18,7 @@ The normal runtime path is:
 ```text
 SESport.Web or an import tool
     -> NpgsqlDataSource
-SESport.Data.Repositories
+SESport.Data feature namespaces
     -> parameterized SQL and row mapping
 PostgreSQL
     -> SESport.Data.Models
@@ -60,11 +60,19 @@ services.
 
 ```text
 src/SESport.Data/
-|-- Models/          Query, command, and result models for repositories
-|-- Repositories/    PostgreSQL repositories and SQL
+|-- Activities/      Activity and participant repositories and SQL
+|-- Admin/           Administration, dashboard, and todo repositories
+|-- AI/              AI repositories and SQL
+|-- Broadcasts/      Broadcast repositories and SQL
+|-- Entities/        Entity repositories and SQL
+|-- Facts/           Fact repository and SQL
+|-- Members/         Member and watch repositories and SQL
 |-- PostgresDataSourceFactory.cs
 |-- PostgreSqlJson.cs
+|-- Sources/         Source reference repository and SQL
+|-- Statistics/      Public statistics repository and SQL
 |-- EntityLinkEntityNotFoundException.cs
+|-- Models/          Query, command, and result models for repositories
 ```
 
 The directory layout mirrors the namespaces. The root namespace contains the
@@ -111,33 +119,44 @@ AI participant results, and the admin dashboard. If a type becomes a shared
 domain concept rather than a persistence projection, it belongs in
 `SESport.Core` instead.
 
-### `SESport.Data.Repositories`
+### Repository namespaces
 
-This namespace contains the concrete PostgreSQL repositories. Each repository
-owns SQL and mapping for a coherent persistence area and accepts an
-`NpgsqlDataSource` through dependency injection. Methods are asynchronous and
-accept cancellation tokens for request and worker cancellation.
+There is no shared repository namespace. Concrete PostgreSQL repositories are
+grouped in namespaces directly below `SESport.Data`. Each
+repository owns SQL and mapping for a coherent persistence area and accepts an
+`NpgsqlDataSource` through dependency injection. The class names retain the
+`Repository` suffix, so the namespace names do not repeat it.
 
-Examples:
+- `SESport.Data.Activities` contains activity, group, participant, and public
+  activity query repositories.
+- `SESport.Data.Admin` contains administration, dashboard, and todo
+  repositories.
+- `SESport.Data.AI` contains AI definition, run, application, automation, and
+  administration repositories.
+- `SESport.Data.Broadcasts` contains broadcast administration, channel-link,
+  import, and stream-source persistence.
+- `SESport.Data.Entities` contains entity query, mutation, merge, and facade
+  repositories.
+- `SESport.Data.Facts`, `SESport.Data.Sources`, and
+  `SESport.Data.Statistics` contain their corresponding persistence areas.
+- `SESport.Data.Members` contains member, watch, and push-notification
+  repositories.
 
-- `ActivityRepository` handles activity, group, participant, and related
-  activity-list queries and writes.
-- `AdminRepository` handles reference data, entities, entity links, and
-  entity merge operations.
-- `AiRepository` handles AI definitions, runs, claims, diagnostics, and the
-  Core AI repository contracts.
-- `BroadcastImportRepository` performs transactional broadcast imports and
-  supports explicit connection ownership for standalone tools.
+Examples of the resulting type names:
 
-Other repositories keep narrower areas separate:
+- `SESport.Data.Activities.ActivityRepository` handles activity, group,
+  participant, and related activity-list queries and writes.
+- `SESport.Data.Admin.AdminRepository` handles reference data, entities,
+  entity links, and entity merge operations.
+- `SESport.Data.AI.AiRepository` handles AI definitions, runs, claims,
+  diagnostics, and the Core AI repository contracts.
+- `SESport.Data.Broadcasts.BroadcastImportRepository` performs transactional
+  broadcast imports and supports explicit connection ownership for standalone
+  tools.
 
-- `AdminBroadcastRepository` handles broadcast administration.
-- `AiAdminRepository` handles editable AI provider, job, prompt, and
-  automation configuration.
-- `AiAutomationRepository` reads enabled automation job identifiers.
-- `ActivityParticipantAiResultRepository` stores AI participant results.
-- `DashboardRepository`, `FactRepository`, and `SourceReferenceRepository`
-  serve their corresponding read and write areas.
+The directory layout mirrors the namespaces. A repository may call another
+repository namespace when a shared persistence operation is required, but
+each feature keeps its own SQL and row mapping together.
 
 ## Persistence areas
 
@@ -211,7 +230,7 @@ The data project itself does not start PostgreSQL or run migrations.
 
 When adding data access code:
 
-- Put SQL and Npgsql operations in `Repositories`.
+- Put SQL and Npgsql operations in the feature namespace that owns them.
 - Put repository query, command, and result DTOs in `Models`.
 - Put reusable domain concepts, identifiers, and repository contracts in
   `SESport.Core`.
@@ -219,16 +238,16 @@ When adding data access code:
 - Put configuration binding and service registration in the executable host.
 - Keep a repository focused on one coherent persistence area.
 
-The current namespace graph is intentionally acyclic:
+The namespace graph is intentionally acyclic:
 
 ```text
-SESport.Data.Repositories
+SESport.Data.<feature>
     -> SESport.Data.Models
     -> SESport.Core
 SESport.Data
     -> SESport.Core.Configuration
 ```
 
-No namespace restructuring is required at present. A future split should be
-driven by a new persistence boundary or an actual dependency cycle, rather
-than by creating namespaces that merely mirror individual SQL tables.
+Feature namespaces should represent coherent persistence areas, not individual
+SQL tables. New repositories should join the closest existing feature
+namespace unless they introduce a genuinely separate persistence area.

@@ -1,6 +1,5 @@
 using Npgsql;
 
-using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
 

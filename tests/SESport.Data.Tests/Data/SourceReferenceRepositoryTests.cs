@@ -1,5 +1,4 @@
 using SESport.Core.Sources;
-using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Data;
 

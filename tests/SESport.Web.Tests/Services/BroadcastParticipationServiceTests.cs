@@ -7,7 +7,6 @@ using SESport.AI.Jobs;
 using SESport.Core.Broadcast;
 using SESport.Core.Configuration;
 using SESport.Data.Models;
-using SESport.Data.Repositories;
 
 namespace SESport.Core.Tests.Services;
 

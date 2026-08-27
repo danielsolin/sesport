@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
 
 using SESport.Core.Configuration;
-using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Entities;
 
 namespace SESport.Core.Tests.Pages.Admin.Entities;

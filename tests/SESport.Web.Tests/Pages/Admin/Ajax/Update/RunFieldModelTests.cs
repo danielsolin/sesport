@@ -4,7 +4,6 @@ using Npgsql;
 
 using SESport.AI.Jobs;
 using SESport.Core.Configuration;
-using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Ajax.Update;
 
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Update;

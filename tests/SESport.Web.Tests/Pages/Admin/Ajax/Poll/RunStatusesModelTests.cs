@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using Npgsql;
 
-using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Ajax.Poll;
 
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Poll;
