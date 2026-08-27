@@ -202,7 +202,7 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("activeParticipantCount", html);
-      Assert.Contains("hasInactiveParticipants", html);
+      Assert.Contains("hasCollapsibleInactiveParticipants", html);
       Assert.Contains("shouldCombineParticipantToggles", html);
       Assert.Contains("activity-participant-toggle", html);
       Assert.Contains("participant.StartTime", html);
@@ -314,7 +314,8 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-table-inactive-collapsed\n" +
-         "   .activity-participant-inactive {\n" +
+         "   .activity-participant-inactive:" +
+         "not(.activity-participant-watched) {\n" +
          "   display: none;",
          css
       );
