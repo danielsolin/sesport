@@ -340,6 +340,7 @@ public sealed class MemberWatchRepositoryTests
       var memberId = Guid.NewGuid();
       var matchingPersonId = Guid.NewGuid();
       var otherPersonId = Guid.NewGuid();
+      var uniqueFirstName = $"Niklas{memberId:N}";
       await using var dataSource = CreateDataSource();
       var repository = new MemberWatchRepository(dataSource);
 
@@ -349,16 +350,16 @@ public sealed class MemberWatchRepositoryTests
          await InsertPersonAsync(
             dataSource,
             matchingPersonId,
-            "Niklas Lemke"
+            $"{uniqueFirstName} Lemke"
          );
          await InsertPersonAsync(
             dataSource,
             otherPersonId,
-            "Niklas Aldén"
+            $"{uniqueFirstName} Aldén"
          );
 
          var results = await repository.SearchPeopleAsync(
-            "niklas l",
+            $"{uniqueFirstName} l",
             memberId,
             100,
             CancellationToken.None

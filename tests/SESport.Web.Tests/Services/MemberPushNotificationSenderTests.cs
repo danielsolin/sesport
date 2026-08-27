@@ -39,4 +39,33 @@ public sealed class MemberPushNotificationSenderTests
          document.RootElement.GetProperty("url").GetString()
       );
    }
+
+   [Fact]
+   public void CreatePayloadLimitsPersonNamesToTheConfiguredDefault()
+   {
+      var notification = new MemberActivityPushNotification(
+         Guid.NewGuid(),
+         Guid.NewGuid(),
+         "Stavhopp",
+         "First Person, Second Person, Third Person, Fourth Person",
+         DateTimeOffset.Parse("2026-08-21T18:00:00Z"),
+         "sport-day",
+         10,
+         null,
+         []
+      );
+
+      var method = typeof(MemberPushNotificationSender).GetMethod(
+         "CreatePayload",
+         BindingFlags.NonPublic | BindingFlags.Static
+      )!;
+      var payload = (string)method.Invoke(null, [notification])!;
+
+      using var document = JsonDocument.Parse(payload);
+      Assert.Equal(
+         "Om 10 minuter: First Person, Second Person, Third Person " +
+         "med flera deltar i Stavhopp.",
+         document.RootElement.GetProperty("body").GetString()
+      );
+   }
 }
