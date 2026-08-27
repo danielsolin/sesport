@@ -36,7 +36,10 @@ public sealed class MemberPushNotificationSender(
       {
          Subject = options.Subject
       };
-      var payload = CreatePayload(notification);
+      var payload = CreatePayloadWithPersonLimit(
+         notification,
+         options.MaxVisiblePersonNames
+      );
       var timeToLive = GetTimeToLiveSeconds(notification, now);
       var successfulDeliveries = 0;
       var permanentFailures = 0;
@@ -116,6 +119,17 @@ public sealed class MemberPushNotificationSender(
       MemberActivityPushNotification notification
    )
    {
+      return CreatePayloadWithPersonLimit(
+         notification,
+         MemberPushOptions.DefaultMaxVisiblePersonNames
+      );
+   }
+
+   private static string CreatePayloadWithPersonLimit(
+      MemberActivityPushNotification notification,
+      int maxVisiblePersonNames
+   )
+   {
       var displayDate = ActivityDisplayDateResolver.Resolve(
          notification.StartsAt,
          notification.PublicDateMode
@@ -123,8 +137,12 @@ public sealed class MemberPushNotificationSender(
       var leadTime = FormatLeadTime(notification.LeadTimeMinutes);
       var activityAnchor = ActivityAnchorPrefix +
          notification.ActivityId.ToString("N");
+      var personNames = FormatPersonNames(
+         notification.PersonNames,
+         maxVisiblePersonNames
+      );
       var body = "Om " + leadTime + ": " +
-         notification.PersonNames +
+         personNames +
          " deltar i " + notification.ActivityTitle + ".";
       var channelNames = FormatChannelNames(notification.TvChannelName);
       if(channelNames.Length > 0)
@@ -145,6 +163,26 @@ public sealed class MemberPushNotificationSender(
          },
          JsonOptions
       );
+   }
+
+   private static string FormatPersonNames(
+      string personNames,
+      int maxVisiblePersonNames
+   )
+   {
+      var names = personNames.Split(
+         ',',
+         StringSplitOptions.TrimEntries |
+            StringSplitOptions.RemoveEmptyEntries
+      );
+      var visibleNames = names.Take(
+         Math.Max(1, maxVisiblePersonNames)
+      );
+      var formattedNames = string.Join(", ", visibleNames);
+
+      return names.Length > maxVisiblePersonNames
+         ? formattedNames + " med flera"
+         : formattedNames;
    }
 
    private static string FormatLeadTime(int minutes)

@@ -13,6 +13,11 @@ public sealed record MemberPushOptions
    public int DefaultNotificationLeadTimeMinutes { get; init; } =
       MemberNotificationLeadTimes.NoNotificationsMinutes;
 
+   public const int DefaultMaxVisiblePersonNames = 3;
+
+   public int MaxVisiblePersonNames { get; init; } =
+      DefaultMaxVisiblePersonNames;
+
    public const int MinimumSweepIntervalSeconds = 5;
 
    public const int DefaultClaimLeaseMinutes = 5;
