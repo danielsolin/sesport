@@ -34,6 +34,7 @@
       "/Admin",
       StringComparison.OrdinalIgnoreCase
    );
+   var htmlLanguage = isAdmin ? "en" : "sv";
    var isMember = Context.User.Claims.Any(claim =>
       claim.Type == MemberClaimTypes.MemberId &&
       !string.IsNullOrWhiteSpace(claim.Value)
@@ -128,7 +129,7 @@
       : "public-member-link";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@htmlLanguage">
 <head>
    <meta charset="utf-8" />
    <meta name="viewport"
