@@ -407,13 +407,7 @@ else
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
          var activitySources = SourceDisplay.OrderDistinctByUrl(
-            allActivitySources.Where(source =>
-               !string.Equals(
-                  source.Kind,
-                  SourceKinds.StreamLink,
-                  StringComparison.OrdinalIgnoreCase
-               )
-            )
+            allActivitySources
          );
          var dayPhaseClass = agendaSection.DayPhase switch
          {
