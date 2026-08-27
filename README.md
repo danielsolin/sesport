@@ -5,6 +5,9 @@ heterogeneous sport, broadcast, editorial, and research data into a
 normalized, source-aware model that can be queried and presented through a
 web application.
 
+The current and only live implementation of sesport is available at
+[sesport.se](https://sesport.se).
+
 The system is designed around a configurable primary-country context, but the
 domain model and runtime are intended to support any country. Country
 relevance is data and configuration, not a separate application variant.
