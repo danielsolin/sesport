@@ -9,6 +9,35 @@ The system is designed around a configurable primary-country context, but the
 domain model and runtime are intended to support any country. Country
 relevance is data and configuration, not a separate application variant.
 
+## Core concept: country representation
+
+sesport is about identifying when a country is represented in international
+sport. The relevant fact is not a person's nationality or general association
+with a country, but whether a person or team represents the configured primary
+country in a specific competition.
+
+This creates two separate concepts:
+
+- **Activity relevance**: an activity is in scope when it belongs to an
+  international competition and the primary country is represented by a
+  person, team, or national team.
+- **Person participation**: the system may still store and process individual
+  participants as `Person` entities. A person who is part of a relevant team
+  is relevant to the activity's team context, but is not automatically a
+  person representing the primary country individually.
+
+The international competition is the important context. A match between two
+teams from the same country is still relevant when it takes place in an
+international tournament. Domestic leagues and other domestic competitions
+remain outside this scope, even when the primary country is represented.
+
+Representation must be established from the competition or activity context
+and reliable evidence. It must not be inferred solely from nationality,
+citizenship, birthplace, name, or other general person facts. This distinction
+allows the platform to present country representation at activity level while
+preserving person-based participant data, enrichment, watching, and historical
+records.
+
 ## Technical purpose
 
 The platform has four closely related responsibilities:
@@ -273,7 +302,6 @@ src/SESport.MCP/    MCP host for external web research tools
 src/SESport.Web/    Razor Pages host, UI, services, and workers
 database/           Schema migrations and database documentation
 tests/              Unit, integration, AI, web, and parser tests
-docs/               Focused operational and subsystem documentation
 ```
 
 ## Further reading
@@ -284,4 +312,3 @@ docs/               Focused operational and subsystem documentation
 - [`SESport.MCP` guide](src/SESport.MCP/README.md)
 - [`SESport.Web` guide](src/SESport.Web/README.md)
 - [`Database guide`](database/README.md)
-- [`AI platform notes`](docs/ai-platform.md)
