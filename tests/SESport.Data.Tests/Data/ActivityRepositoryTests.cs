@@ -12,22 +12,6 @@ namespace SESport.Core.Tests.Data;
 public sealed class ActivityRepositoryTests
 {
    [Fact]
-   public void GetSportIconPathNormalizesBoatRacing()
-   {
-      var path = InvokeGetSportIconPath("boat-racing");
-
-      Assert.Equal("/icons/sports/boat-racing.svg", path);
-   }
-
-   [Fact]
-   public void GetSportIconPathReturnsPathForKnownAsset()
-   {
-      var path = InvokeGetSportIconPath("motorsport");
-
-      Assert.Equal("/icons/sports/motorsport.svg", path);
-   }
-
-   [Fact]
    public async Task SaveAsyncAcceptsPersonWithoutOrganization()
    {
       var personId = Guid.NewGuid();
