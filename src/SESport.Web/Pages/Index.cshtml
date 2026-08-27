@@ -792,21 +792,28 @@ else
                         var activeParticipantCount = participants.Count(
                            participant => participant.IsActive
                         );
-                        var hasInactiveParticipants = participants.Any(
-                           participant => !participant.IsActive
-                        );
+                        var hasCollapsibleInactiveParticipants =
+                           participants.Any(
+                              participant =>
+                                 !participant.IsActive &&
+                                 !participant.IsWatchedByMember
+                           );
+                        var shouldCollapseParticipants = participants
+                           .Where(participant => participant.IsActive)
+                           .Skip(maxVisibleParticipants)
+                           .Any(
+                              participant =>
+                                 !participant.IsWatchedByMember
+                           );
                         var shouldCollapseInactiveParticipants =
                            IndexModel.ShouldCollapseInactiveParticipants(
                               activeParticipantCount,
-                              hasInactiveParticipants
+                              hasCollapsibleInactiveParticipants
                            );
-                        var shouldCollapseParticipants =
-                           activeParticipantCount >
-                              maxVisibleParticipants;
                         var shouldCombineParticipantToggles =
                            IndexModel.ShouldCombineParticipantToggles(
                               shouldCollapseParticipants,
-                              hasInactiveParticipants
+                              hasCollapsibleInactiveParticipants
                            );
                         if(shouldCollapseParticipants)
                         {
@@ -919,6 +926,7 @@ else
                                     var rowClass = !participant.IsActive
                                        ? "activity-participant-inactive"
                                        : shouldCollapseParticipants &&
+                                          !isWatchedParticipant &&
                                           activeParticipantIndex >=
                                              maxVisibleParticipants
                                           ? "activity-participant-row-" +
@@ -1073,7 +1081,7 @@ else
                                  Visa alla
                               </button>
                            }
-                           @if(hasInactiveParticipants &&
+                           @if(hasCollapsibleInactiveParticipants &&
                               !shouldCombineParticipantToggles)
                            {
                               var inactiveParticipantsAreCollapsed =

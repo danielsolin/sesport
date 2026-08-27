@@ -1837,7 +1837,7 @@
 }
 
 .activity-participant-table-inactive-collapsed
-   .activity-participant-inactive {
+   .activity-participant-inactive:not(.activity-participant-watched) {
    display: none;
 }
 
