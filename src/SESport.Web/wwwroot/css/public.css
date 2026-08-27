@@ -1870,6 +1870,14 @@
    display: none;
 }
 
+.activity-sources-toggle::after {
+   content: "+";
+}
+
+.activity-sources[open] .activity-sources-toggle::after {
+   content: "−";
+}
+
 .activity-sources-toggle:hover {
    color: var(--accent-strong);
 }

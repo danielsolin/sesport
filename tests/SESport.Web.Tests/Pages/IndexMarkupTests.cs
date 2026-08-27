@@ -716,7 +716,8 @@ public sealed class IndexMarkupTests
          Path.Combine(repoRoot, "src/SESport.Web/wwwroot/css/public.css")
       );
 
-      Assert.Contains("Källor+", html);
+      Assert.Contains("Källor", html);
+      Assert.DoesNotContain("Källor+", html);
       Assert.Contains("SourceKinds.StreamLink", html);
       Assert.Contains("activity-channel-chip-link", html);
       Assert.Contains("activity-channel-chip-stream-icon", html);
@@ -757,6 +758,15 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains("margin: 12px 0 0 10px;", css);
       Assert.Contains(".activity-sources-table", css);
+      Assert.Contains(
+         ".activity-sources-toggle::after {\n" +
+            "   content: \"+\";\n" +
+            "}\n\n" +
+            ".activity-sources[open] .activity-sources-toggle::after {\n" +
+            "   content: \"−\";\n" +
+            "}",
+         css
+      );
       Assert.Contains(".activity-channel-chip-link", css);
       Assert.Contains(".activity-channel-chip-stream-icon", css);
    }
