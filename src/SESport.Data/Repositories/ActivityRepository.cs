@@ -1,6 +1,6 @@
 using Npgsql;
+
 using SESport.Data.Models;
-using System.Text.RegularExpressions;
 
 namespace SESport.Data.Repositories;
 
@@ -303,21 +303,4 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       ActivityQueryRepository.GetLinkedOrganizationNamesLateralSql(
          entityAlias
       );
-
-   private static string? GetSportIconPath(string? iconId)
-   {
-      if(string.IsNullOrWhiteSpace(iconId))
-      {
-         return null;
-      }
-
-      var fileName = Regex.Replace(
-            iconId.Trim().ToLowerInvariant(),
-            "[^a-z0-9_-]+",
-            "-"
-         )
-         .Trim('-');
-
-      return $"/icons/sports/{fileName}.svg";
-   }
 }

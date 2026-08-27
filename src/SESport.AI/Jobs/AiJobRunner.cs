@@ -1,7 +1,9 @@
+using System.Text.Json;
+
 using Microsoft.Extensions.Logging;
+
 using SESport.AI.Clients;
 using SESport.Core.AI;
-using System.Text.Json;
 
 namespace SESport.AI.Jobs;
 

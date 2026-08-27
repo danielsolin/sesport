@@ -1,9 +1,11 @@
+using System.Text;
+
 using Npgsql;
+
 using SESport.Core.AI;
 using SESport.Core.Configuration;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
-using System.Text;
 
 namespace SESport.Data.Repositories;
 

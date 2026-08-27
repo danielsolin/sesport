@@ -1,7 +1,8 @@
-using SESport.Core.Formatting;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+
+using SESport.Core.Formatting;
 
 namespace SESport.Data;
 

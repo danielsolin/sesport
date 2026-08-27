@@ -1,6 +1,7 @@
+using System.Text.Json;
+
 using SESport.AI.Jobs;
 using SESport.Core.Configuration;
-using System.Text.Json;
 
 namespace SESport.Core.Tests.Services;
 

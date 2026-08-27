@@ -1,7 +1,9 @@
+using System.Globalization;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
 using SESport.Core.Formatting;
-using System.Globalization;
 
 namespace SESport.Web.Pages.Admin.Config;
 

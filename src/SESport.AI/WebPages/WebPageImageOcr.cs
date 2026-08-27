@@ -1,6 +1,7 @@
-using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Globalization;
+
+using Microsoft.Extensions.Logging;
 
 namespace SESport.AI.WebPages;
 

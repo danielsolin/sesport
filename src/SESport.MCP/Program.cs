@@ -1,4 +1,5 @@
 using ModelContextProtocol.AspNetCore;
+
 using SESport.Core.Configuration;
 using SESport.MCP;
 

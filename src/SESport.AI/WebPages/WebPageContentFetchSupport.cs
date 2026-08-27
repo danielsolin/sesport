@@ -1,8 +1,11 @@
-using Microsoft.Playwright;
-using SESport.Core.Formatting;
 using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
+
+using Microsoft.Playwright;
+
+using SESport.Core.Formatting;
+
 using UglyToad.PdfPig;
 
 namespace SESport.AI.WebPages;

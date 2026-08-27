@@ -1,6 +1,7 @@
-using SESport.Core.AI;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+
+using SESport.Core.AI;
 
 namespace SESport.AI.Protocols;
 

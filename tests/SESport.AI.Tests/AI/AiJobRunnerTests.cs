@@ -1,6 +1,7 @@
+using System.Text.Json.Nodes;
+
 using SESport.AI.Clients;
 using SESport.AI.Jobs;
-using System.Text.Json.Nodes;
 
 namespace SESport.Core.Tests.AI;
 

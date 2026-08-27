@@ -1,6 +1,8 @@
-using Npgsql;
-using SESport.Core.AI;
 using System.Text.Json.Nodes;
+
+using Npgsql;
+
+using SESport.Core.AI;
 
 namespace SESport.Data.Repositories;
 

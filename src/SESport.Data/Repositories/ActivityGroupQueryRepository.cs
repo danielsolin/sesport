@@ -1,6 +1,7 @@
 using Npgsql;
+
 using NpgsqlTypes;
-using SESport.Core.Broadcast;
+
 using SESport.Core.Domain;
 using SESport.Core.Sources;
 using SESport.Data.Models;

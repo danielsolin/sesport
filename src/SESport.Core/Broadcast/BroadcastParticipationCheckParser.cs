@@ -1,5 +1,6 @@
-using SESport.Core.Configuration;
 using System.Text.Json;
+
+using SESport.Core.Configuration;
 
 namespace SESport.Core.Broadcast;
 

@@ -1,9 +1,10 @@
+using System.Globalization;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
 using SESport.Core.Domain;
 using SESport.Data.Models;
-using SESport.Web.Preferences;
-using System.Globalization;
 
 namespace SESport.Web.Pages;
 

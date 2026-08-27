@@ -1,11 +1,12 @@
-using SESport.AI.Protocols;
-using SESport.Core.AI;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+
+using SESport.AI.Protocols;
+using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 

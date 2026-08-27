@@ -1,7 +1,8 @@
+using System.Text.Json;
+
 using SESport.AI.Jobs;
 using SESport.Core.AI;
 using SESport.Core.Domain;
-using System.Text.Json;
 
 namespace SESport.Web.Services;
 

@@ -1,10 +1,12 @@
-using Microsoft.Extensions.Logging;
-using SESport.AI.Protocols;
-using SESport.Core.AI;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+
+using Microsoft.Extensions.Logging;
+
+using SESport.AI.Protocols;
+using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 

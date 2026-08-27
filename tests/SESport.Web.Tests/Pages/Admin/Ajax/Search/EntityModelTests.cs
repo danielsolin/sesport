@@ -1,9 +1,12 @@
+using System.Text.Json;
+
 using Microsoft.AspNetCore.Mvc;
+
 using Npgsql;
+
 using SESport.Core.Configuration;
 using SESport.Data.Repositories;
 using SESport.Web.Pages.Admin.Ajax.Search;
-using System.Text.Json;
 
 namespace SESport.Core.Tests.Pages.Admin.Ajax.Search;
 

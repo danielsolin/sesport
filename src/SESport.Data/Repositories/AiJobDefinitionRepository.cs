@@ -1,4 +1,5 @@
 using Npgsql;
+
 using SESport.Core.AI;
 
 namespace SESport.Data.Repositories;

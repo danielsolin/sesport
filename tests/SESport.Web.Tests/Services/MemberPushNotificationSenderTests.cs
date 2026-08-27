@@ -1,6 +1,7 @@
-using SESport.Data.Models;
 using System.Reflection;
 using System.Text.Json;
+
+using SESport.Data.Models;
 
 namespace SESport.Core.Tests.Services;
 

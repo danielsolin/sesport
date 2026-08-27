@@ -1,4 +1,5 @@
 using Npgsql;
+
 using SESport.Data.Models;
 
 namespace SESport.Data.Repositories;

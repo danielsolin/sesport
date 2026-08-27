@@ -1,4 +1,5 @@
 using Npgsql;
+
 using SESport.Core.Configuration;
 using SESport.Data.Models;
 

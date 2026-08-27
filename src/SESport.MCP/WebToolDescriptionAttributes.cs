@@ -1,5 +1,6 @@
-using SESport.Core.Configuration;
 using System.Globalization;
+
+using SESport.Core.Configuration;
 
 namespace SESport.MCP;
 

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
+
 using Npgsql;
+
 using SESport.Core.Configuration;
 using SESport.Core.Sources;
 using SESport.Data.Models;

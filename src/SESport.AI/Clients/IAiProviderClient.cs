@@ -1,5 +1,6 @@
-using SESport.Core.AI;
 using System.Text.Json.Nodes;
+
+using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 
