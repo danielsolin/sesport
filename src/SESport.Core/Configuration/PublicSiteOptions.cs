@@ -8,5 +8,5 @@ public sealed record PublicSiteOptions
    public string PageDescription { get; init; } =
       "Svenskar i internationell sport på TV";
 
-   public int MaxVisibleParticipants { get; init; } = 10;
+   public int MaxVisibleParticipants { get; init; } = 3;
 }
