@@ -150,6 +150,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
                and a.starts_at is not null
+               and a.ends_at is not null
                and (
                   a.starts_at > @now
                   or a.ends_at > @now
@@ -215,6 +216,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                on ag.id = a.activity_group_id
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
+               and a.starts_at is not null
+               and a.ends_at is not null
                {{PublicActivityQuerySupport.ExclusionClause}}
          )
          select
@@ -278,6 +281,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          $$"""
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
+               and a.starts_at is not null
+               and a.ends_at is not null
                and {{BuildTimedDateFilterSql()}}
                {{PublicActivityQuerySupport.ExclusionClause}}
          """,

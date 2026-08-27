@@ -1450,18 +1450,6 @@
    padding-right: 125px;
 }
 
-.activity-time-badge-muted {
-   background: #e8ece7;
-   color: var(--muted);
-}
-
-.activity-time-count {
-   padding-left: 4px;
-   color: var(--muted);
-   font-size: 12px;
-   font-weight: 700;
-}
-
 .activity-agenda-items {
    display: grid;
    gap: 10px;
@@ -1469,10 +1457,6 @@
    min-width: 0;
    padding-left: 14px;
    max-width: 800px;
-}
-
-.activity-agenda-section-untimed .activity-agenda-items {
-   border-left-style: dashed;
 }
 
 .activity-entry {

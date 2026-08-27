@@ -79,7 +79,7 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("date-dropdown-watch-option", html);
       Assert.DoesNotContain("Bevakade", html);
       Assert.Contains(
-         "Logga in for att följa dina bevakningar.",
+         "Logga in för att följa dina bevakningar.",
          html
       );
       Assert.DoesNotContain("Mina bevakningar", html);
@@ -133,6 +133,11 @@ public sealed class IndexMarkupTests
       Assert.DoesNotContain("date-select-input", html);
       Assert.Contains("activity-participant-col-name", html);
       Assert.Contains("activity-participant-col-start-time", html);
+      Assert.Contains(
+         "activity-participant-col-start-time\"\n" +
+            "                                           aria-sort=\"none\"",
+         html
+      );
       Assert.Contains("activity-participant-col-discipline", html);
       Assert.Contains(
          "data-participant-sort=\n" +
@@ -365,11 +370,11 @@ public sealed class IndexMarkupTests
          "sortTable(table, \"start-time\", \"ascending\");",
          participantScript
       );
-      Assert.Contains(
+      Assert.DoesNotContain(
          "table.dataset.participantSortKey = \"start-time\";",
          participantScript
       );
-      Assert.Contains(
+      Assert.DoesNotContain(
          "updateSortHeaders(table, \"start-time\", \"ascending\");",
          participantScript
       );

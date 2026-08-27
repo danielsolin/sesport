@@ -624,6 +624,92 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedForDateAsyncExcludesActivitiesWithoutEndTime()
+   {
+      var activityId = Guid.NewGuid();
+      var selectedDate = DistantActivityDate;
+      var startsAt = TimeZoneHelper.ToUtc(
+         selectedDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         activityId,
+         selectedDate,
+         startsAt,
+         ActivityPublicationStatusIds.Published,
+         omitEndTime: true
+      );
+
+      try
+      {
+         var activities = await repository.GetPublishedForDateAsync(
+            selectedDate,
+            CancellationToken.None
+         );
+
+         Assert.DoesNotContain(
+            activities,
+            activity => activity.Id == activityId
+         );
+      }
+      finally
+      {
+         await DeleteActivityAsync(dataSource, activityId);
+      }
+   }
+
+   [Fact]
+   public async Task GetPublishedDateCountsExcludesActivitiesWithoutEndTime()
+   {
+      var validDate = DistantActivityDate.AddDays(10);
+      var invalidDate = validDate.AddDays(1);
+      var validActivityId = Guid.NewGuid();
+      var invalidActivityId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      await InsertActivityAsync(
+         dataSource,
+         validActivityId,
+         validDate,
+         ToUtc(validDate, new TimeOnly(12, 0)),
+         ActivityPublicationStatusIds.Published
+      );
+      await InsertActivityAsync(
+         dataSource,
+         invalidActivityId,
+         invalidDate,
+         ToUtc(invalidDate, new TimeOnly(12, 0)),
+         ActivityPublicationStatusIds.Published,
+         omitEndTime: true
+      );
+
+      try
+      {
+         var dates =
+            await repository.GetPublishedDateParticipantCountsFromAsync(
+               validDate,
+               CancellationToken.None
+            );
+
+         Assert.Contains(dates, item => item.Date == validDate);
+         Assert.DoesNotContain(dates, item => item.Date == invalidDate);
+      }
+      finally
+      {
+         await DeleteActivityAsync(dataSource, validActivityId);
+         await DeleteActivityAsync(dataSource, invalidActivityId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedFutureForMemberWatchesFiltersActivities()
    {
       var memberId = Guid.NewGuid();
@@ -634,6 +720,7 @@ public sealed class ActivityRepositoryTests
       var inactiveActivityId = Guid.NewGuid();
       var draftActivityId = Guid.NewGuid();
       var pastActivityId = Guid.NewGuid();
+      var noEndActivityId = Guid.NewGuid();
       var futureDate = DistantActivityDate.AddDays(1);
       var now = ToUtc(DistantActivityDate);
       var activityIds = new[]
@@ -642,7 +729,8 @@ public sealed class ActivityRepositoryTests
          ongoingActivityId,
          inactiveActivityId,
          draftActivityId,
-         pastActivityId
+         pastActivityId,
+         noEndActivityId
       };
 
       await using var dataSource = CreateDataSource();
@@ -689,6 +777,14 @@ public sealed class ActivityRepositoryTests
             futureDate,
             ToUtc(futureDate, new TimeOnly(13, 0)),
             ActivityPublicationStatusIds.Published
+         );
+         await InsertActivityAsync(
+            dataSource,
+            noEndActivityId,
+            futureDate,
+            ToUtc(futureDate, new TimeOnly(15, 0)),
+            ActivityPublicationStatusIds.Published,
+            omitEndTime: true
          );
          await InsertActivityAsync(
             dataSource,
@@ -743,6 +839,10 @@ public sealed class ActivityRepositoryTests
          Assert.DoesNotContain(
             activities,
             item => item.Id == pastActivityId
+         );
+         Assert.DoesNotContain(
+            activities,
+            item => item.Id == noEndActivityId
          );
          Assert.True(
             Assert.Single(
@@ -2020,9 +2120,13 @@ public sealed class ActivityRepositoryTests
       DateTimeOffset startsAt,
       string publicationStatus = ActivityPublicationStatusIds.Draft,
       Guid? activityGroupId = null,
-      DateTimeOffset? endsAt = null
+      DateTimeOffset? endsAt = null,
+      bool omitEndTime = false
    )
    {
+      DateTimeOffset? resolvedEndsAt = omitEndTime
+         ? null
+         : endsAt ?? startsAt.AddHours(1);
       await using var connection = await dataSource.OpenConnectionAsync();
       await using var command = connection.CreateCommand();
       command.CommandText = $$"""
@@ -2079,16 +2183,16 @@ public sealed class ActivityRepositoryTests
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue(
          "local_end_time",
-         endsAt is null
+         resolvedEndsAt is null
             ? DBNull.Value
             : TimeZoneHelper.ToLocal(
-               endsAt.Value,
+               resolvedEndsAt.Value,
                SportDay.TimeZoneId
             ).TimeOfDay
       );
       command.Parameters.AddWithValue(
          "ends_at",
-         (object?)endsAt ?? DBNull.Value
+         (object?)resolvedEndsAt ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "publication_status",

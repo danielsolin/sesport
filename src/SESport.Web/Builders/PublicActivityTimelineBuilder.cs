@@ -17,21 +17,17 @@ public sealed class PublicActivityTimelineBuilder
       DateTimeOffset now
    )
    {
-      var visibleActivities = activities.ToList();
-      var timedActivities = visibleActivities
-         .Where(HasLocalStartTime)
+      var visibleActivities = activities
+         .Where(HasCompleteTimeRange)
          .ToList();
       var timelineEntries = CreateTimelineEntries(
-         CreateTimedSections(timedActivities, now),
+         CreateTimedSections(visibleActivities, now),
          selectedDate,
          now
       );
 
       return new PublicActivityTimelineViewModel(
          timelineEntries,
-         visibleActivities
-            .Where(activity => !HasLocalStartTime(activity))
-            .ToList(),
          visibleActivities.Count > 0
       );
    }
@@ -41,20 +37,16 @@ public sealed class PublicActivityTimelineBuilder
       DateTimeOffset now
    )
    {
-      var visibleActivities = activities.ToList();
-      var timedActivities = visibleActivities
-         .Where(HasLocalStartTime)
+      var visibleActivities = activities
+         .Where(HasCompleteTimeRange)
          .ToList();
       var timelineEntries = CreateFutureTimelineEntries(
-         CreateTimedSections(timedActivities, now),
+         CreateTimedSections(visibleActivities, now),
          SportDay.GetSportDate(now)
       );
 
       return new PublicActivityTimelineViewModel(
          timelineEntries,
-         visibleActivities
-            .Where(activity => !HasLocalStartTime(activity))
-            .ToList(),
          visibleActivities.Count > 0
       );
    }
@@ -248,9 +240,10 @@ public sealed class PublicActivityTimelineBuilder
       );
    }
 
-   private static bool HasLocalStartTime(ActivityListItem activity)
+   private static bool HasCompleteTimeRange(ActivityListItem activity)
    {
-      return activity.TimeText.Contains(' ');
+      return activity.StartsAt is not null &&
+         activity.EndsAt is not null;
    }
 
    private static ActivityAgendaSection CreateSection(
@@ -561,10 +554,9 @@ public sealed class PublicActivityTimelineBuilder
             activity.LocalStartTime
          ),
          PublicTimeDisplay.FormatExactTime(activity.LocalEndTime),
-         activity.EndsAt is not null &&
-            activity.StartsAt <= now &&
+         activity.StartsAt <= now &&
             activity.EndsAt > now,
-         activity.EndsAt is not null && activity.EndsAt <= now,
+         activity.EndsAt <= now,
          SplitTvChannelNames(activity.TvChannelName),
          showParticipantNames
       );
@@ -634,7 +626,6 @@ public sealed class PublicActivityTimelineBuilder
 
 public sealed record PublicActivityTimelineViewModel(
    IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries,
-   IReadOnlyList<ActivityListItem> UntimedActivities,
    bool HasVisibleActivities
 );
 

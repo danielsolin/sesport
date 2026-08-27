@@ -5,6 +5,8 @@
 @{
    var maxVisibleParticipants =
       Model.PublicSiteOptions.MaxVisibleParticipants;
+   var highestWatchPriorityLabel =
+      "Högsta bevakningsprioritet";
    var isFilteredView =
       Request.Query.ContainsKey(RouteKeys.Date) ||
       Request.Query.ContainsKey(RouteKeys.Sport) ||
@@ -35,15 +37,10 @@
       IndexModel.ShouldAutoExpandPastActivities(
          Model.IsSportToday,
          hasPastActivities,
-         hasActiveOrUpcomingActivities,
-         Model.UntimedActivities.Count > 0
+         hasActiveOrUpcomingActivities
       );
    var shouldHidePastActivities = Model.IsSportToday &&
       !Model.IsWatchedActivitiesView &&
-      hasPastActivities &&
-      !shouldAutoExpandPastActivities;
-   var shouldRenderPastActivitiesToggle = !Model.IsWatchedActivitiesView &&
-      Model.IsSportToday &&
       hasPastActivities &&
       !shouldAutoExpandPastActivities;
    var streamIconClass =
@@ -136,27 +133,16 @@
                         dateOption.IsSelected ? "true" : "false"
                      )">
                      <span class="date-option-content">
-                        @if(dateOption.IsSelected)
-                        {
-                           <span class="date-option-label">
-                              <span class="date-option-day">
-                                 @dateOption.DayLabel
-                              </span>
-                              <span class="date-option-date">
-                                 @dateOption.DateLabel
-                              </span>
+                        <span class="date-option-label">
+                           <span class="date-option-day">
+                              @dateOption.DayLabel
                            </span>
-                        }
-                        else
-                        {
-                           <span class="date-option-label">
-                              <span class="date-option-day">
-                                 @dateOption.DayLabel
-                              </span>
-                              <span class="date-option-date">
-                                 @dateOption.DateLabel
-                              </span>
+                           <span class="date-option-date">
+                              @dateOption.DateLabel
                            </span>
+                        </span>
+                        @if(!dateOption.IsSelected)
+                        {
                            <span class="date-option-participant-count">
                               <img class="date-option-country-flag"
                                    src="~/images/flags/se.svg"
@@ -286,7 +272,7 @@ else if(Model.TimelineEntries.Count == 0 &&
    !Model.IsMember)
 {
    <div class="notice">
-      Logga in for att följa dina bevakningar.
+      Logga in för att följa dina bevakningar.
       <br />
       <br />
       <a class="button button-primary"
@@ -295,8 +281,7 @@ else if(Model.TimelineEntries.Count == 0 &&
       </a>
    </div>
 }
-else if(Model.TimelineEntries.Count == 0 &&
-   Model.UntimedActivities.Count == 0)
+else if(!Model.HasVisibleActivities)
 {
    <div class="notice">
       @(Model.IsWatchedActivitiesView
@@ -343,7 +328,7 @@ else
 
          if(timelineEntry.IsCurrentMarker)
          {
-            @if(shouldRenderPastActivitiesToggle)
+            @if(shouldHidePastActivities)
             {
                <div class="activity-past-toggle-row">
                   <span class="activity-past-toggle-line"></span>
@@ -852,7 +837,8 @@ else
                                     @if(showStartTimeColumn)
                                     {
                                        <th class=
-                                          "activity-participant-col-start-time">
+                                          "activity-participant-col-start-time"
+                                           aria-sort="none">
                                           <button type="button"
                                                   data-participant-sort=
                                                      "start-time">
@@ -901,6 +887,7 @@ else
                                  </tr>
                               </thead>
                               <tbody>
+                                 @{ var activeParticipantCountBeforeRow = 0; }
                                  @for(var participantIndex = 0;
                                        participantIndex <
                                           participants.Count;
@@ -919,11 +906,12 @@ else
                                     );
                                     var isWatchedParticipant =
                                        participant.IsWatchedByMember;
-                                    var activeParticipantIndex = participants
-                                       .Take(participantIndex)
-                                       .Count(
-                                          item => item.IsActive
-                                       );
+                                    var activeParticipantIndex =
+                                       activeParticipantCountBeforeRow;
+                                    if(participant.IsActive)
+                                    {
+                                       activeParticipantCountBeforeRow++;
+                                    }
                                     var rowClass = !participant.IsActive
                                        ? "activity-participant-inactive"
                                        : shouldCollapseParticipants &&
@@ -960,8 +948,9 @@ else
                                              <span class=
                                                 "@watchPriorityBadgeClass"
                                                    role="img"
-                                                   aria-label=
-                                                      "Highest watch priority">
+                                                   aria-label="@(
+                                                      highestWatchPriorityLabel
+                                                   )">
                                                 ★
                                              </span>
                                           }

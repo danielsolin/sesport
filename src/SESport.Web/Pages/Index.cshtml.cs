@@ -17,6 +17,9 @@ public class IndexModel(
    PublicSiteOptions publicSiteOptions
 ) : PageModel
 {
+   private static readonly CultureInfo PrimaryCountryCulture =
+      CultureInfo.GetCultureInfo(PrimaryCountry.CultureName);
+
    public PublicSiteOptions PublicSiteOptions { get; } = publicSiteOptions;
 
    public IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries
@@ -24,11 +27,7 @@ public class IndexModel(
       get; private set;
    } = [];
 
-   public IReadOnlyList<ActivityListItem> UntimedActivities
-   {
-      get;
-      private set;
-   } = [];
+   public bool HasVisibleActivities { get; private set; }
 
    public IReadOnlyList<DateOption> DateOptions { get; private set; } = [];
 
@@ -80,7 +79,7 @@ public class IndexModel(
       TomorrowDate = SelectedDate.AddDays(1);
       NextDateLinkLabel = FormatNextDateLinkLabel(
          TomorrowDate,
-         CurrentDate
+         sportToday
       );
       IsSportToday = SelectedDate == sportToday;
       IsWatchedActivitiesView = Watched || string.Equals(
@@ -88,8 +87,7 @@ public class IndexModel(
          PublicRoutePaths.Watched,
          StringComparison.OrdinalIgnoreCase
       );
-      if(IsWatchedActivitiesView &&
-         string.Equals(
+      if(string.Equals(
             HttpContext.Request.Path.Value,
             PublicRoutePaths.Watched,
             StringComparison.OrdinalIgnoreCase
@@ -179,7 +177,7 @@ public class IndexModel(
                now
             );
             TimelineEntries = watchedTimeline.TimelineEntries;
-            UntimedActivities = watchedTimeline.UntimedActivities;
+            HasVisibleActivities = watchedTimeline.HasVisibleActivities;
             return Page();
          }
 
@@ -211,7 +209,7 @@ public class IndexModel(
             now
          );
          TimelineEntries = timeline.TimelineEntries;
-         UntimedActivities = timeline.UntimedActivities;
+         HasVisibleActivities = timeline.HasVisibleActivities;
       }
       catch(Exception exception)
          when(!cancellationToken.IsCancellationRequested)
@@ -278,14 +276,12 @@ public class IndexModel(
    internal static bool ShouldAutoExpandPastActivities(
       bool isSportToday,
       bool hasPastActivities,
-      bool hasActiveOrUpcomingActivities,
-      bool hasUntimedActivities
+      bool hasActiveOrUpcomingActivities
    )
    {
       return isSportToday &&
          hasPastActivities &&
-         !hasActiveOrUpcomingActivities &&
-         !hasUntimedActivities;
+         !hasActiveOrUpcomingActivities;
    }
 
    internal static bool ShouldCollapseInactiveParticipants(
@@ -481,28 +477,21 @@ public class IndexModel(
       DateOnly todayDate
    )
    {
-      var culture = CultureInfo.GetCultureInfo(
-         PrimaryCountry.CultureName
-      );
       var label = date == todayDate
          ? "Idag"
          : date == todayDate.AddDays(1)
             ? "Imorgon"
-            : culture.TextInfo.ToTitleCase(
-               date.ToString("dddd", culture)
+            : PrimaryCountryCulture.TextInfo.ToTitleCase(
+               date.ToString("dddd", PrimaryCountryCulture)
             );
       return label;
    }
 
    private static string FormatDateOptionDateLabel(DateOnly date)
    {
-      var culture = CultureInfo.GetCultureInfo(
-         PrimaryCountry.CultureName
-      );
-
       return date.ToString(
          "d MMMM",
-         culture
+         PrimaryCountryCulture
       );
    }
 

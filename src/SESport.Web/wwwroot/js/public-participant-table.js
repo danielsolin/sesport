@@ -36,13 +36,6 @@
          });
       });
 
-      if(table.classList.contains("activity-participant-table-has-start-time"))
-      {
-         table.dataset.participantSortKey = "start-time";
-         table.dataset.participantSortDirection = "ascending";
-         updateSortHeaders(table, "start-time", "ascending");
-      }
-
       const collapseButton = getCollapseButton(table);
       const collapseIncludesInactive =
          collapseButton !== null &&

@@ -139,11 +139,6 @@ public class PublicActivityTimelineBuilderTests
             "Future",
             selectedDate,
             now.AddHours(1)
-         ),
-         CreateActivity(
-            "Untimed",
-            selectedDate,
-            null
          )
       };
 
@@ -163,10 +158,51 @@ public class PublicActivityTimelineBuilderTests
          "Future",
          timeline.TimelineEntries[2].Section!.Activities[0].Title
       );
+   }
+
+   [Fact]
+   public void BuildExcludesActivitiesWithoutCompleteTimeRange()
+   {
+      var now = new DateTimeOffset(2026, 6, 12, 12, 0, 0, TimeSpan.Zero);
+      var selectedDate = SportDay.GetSportDate(now);
+      var builder = new PublicActivityTimelineBuilder();
+      var activities = new[]
+      {
+         CreateActivity(
+            "Complete",
+            selectedDate,
+            now.AddHours(1)
+         ),
+         CreateActivity(
+            "Without end",
+            selectedDate,
+            now.AddHours(2),
+            omitEndTime: true
+         ),
+         CreateActivity(
+            "Without start",
+            selectedDate,
+            null
+         )
+      };
+
+      var timeline = builder.Build(activities, selectedDate, now);
+
+      Assert.True(timeline.HasVisibleActivities);
       Assert.Equal(
-         ["Untimed"],
-         timeline.UntimedActivities.Select(a => a.Title)
+         ["Complete"],
+         timeline.TimelineEntries
+            .Where(entry => entry.Section is not null)
+            .Select(entry => entry.Section!.Activities[0].Title)
       );
+
+      var invalidTimeline = builder.Build(
+         activities.Skip(1),
+         selectedDate,
+         now
+      );
+      Assert.False(invalidTimeline.HasVisibleActivities);
+      Assert.Empty(invalidTimeline.TimelineEntries);
    }
 
    [Fact]
@@ -1250,9 +1286,13 @@ public class PublicActivityTimelineBuilderTests
       string? tvChannelName = null,
       string publicDateMode = ActivityGroupPublicDateModeIds.SportDay,
       string sportId = "football",
-      string sportName = "Football"
+      string sportName = "Football",
+      bool omitEndTime = false
    )
    {
+      var resolvedEndsAt = omitEndTime
+         ? null
+         : endsAt ?? startsAt?.AddHours(1);
       return new ActivityListItem(
          Guid.NewGuid(),
          title,
@@ -1273,12 +1313,12 @@ public class PublicActivityTimelineBuilderTests
          string.Empty
       )
       {
-         EndsAt = endsAt,
-         LocalEndTime = endsAt is null
+         EndsAt = resolvedEndsAt,
+         LocalEndTime = resolvedEndsAt is null
             ? null
             : TimeOnly.FromDateTime(
                TimeZoneHelper.ToLocal(
-                  endsAt.Value,
+                  resolvedEndsAt.Value,
                   SportDay.TimeZoneId
                ).DateTime
             ),

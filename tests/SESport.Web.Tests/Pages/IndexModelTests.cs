@@ -147,24 +147,21 @@ public sealed class IndexModelTests
    }
 
    [Theory]
-   [InlineData(true, true, false, false, true)]
-   [InlineData(true, true, true, false, false)]
-   [InlineData(true, true, false, true, false)]
-   [InlineData(false, true, false, false, false)]
-   [InlineData(true, false, false, false, false)]
+   [InlineData(true, true, false, true)]
+   [InlineData(true, true, true, false)]
+   [InlineData(false, true, false, false)]
+   [InlineData(true, false, false, false)]
    public void ShouldAutoExpandPastActivitiesOnlyWhenTheDayIsFinished(
       bool isSportToday,
       bool hasPastActivities,
       bool hasActiveOrUpcomingActivities,
-      bool hasUntimedActivities,
       bool expected
    )
    {
       var result = IndexModel.ShouldAutoExpandPastActivities(
          isSportToday,
          hasPastActivities,
-         hasActiveOrUpcomingActivities,
-         hasUntimedActivities
+         hasActiveOrUpcomingActivities
       );
 
       Assert.Equal(expected, result);
