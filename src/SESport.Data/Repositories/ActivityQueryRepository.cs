@@ -757,29 +757,107 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
       }
 
       const string sql = """
+         with requested_activities as (
+            select
+               id,
+               activity_group_id
+            from activities
+            where id = any(@activity_ids)
+         ),
+         matched_sources as (
+            select
+               requested.id as activity_id,
+               s.kind,
+               s.url,
+               s.title,
+               s.observed_at,
+               s.created_at,
+               s.id as source_id
+            from requested_activities requested
+            join sources s
+               on s.correlation_type = @activity_correlation_type
+               and s.correlation_id = requested.id::text
+            union all
+            select
+               requested.id as activity_id,
+               s.kind,
+               s.url,
+               s.title,
+               s.observed_at,
+               s.created_at,
+               s.id as source_id
+            from requested_activities requested
+            join sources s
+               on s.correlation_type = @activity_group_correlation_type
+               and s.correlation_id = requested.activity_group_id::text
+            where requested.activity_group_id is not null
+            union all
+            select
+               requested.id as activity_id,
+               s.kind,
+               s.url,
+               s.title,
+               s.observed_at,
+               s.created_at,
+               s.id as source_id
+            from requested_activities requested
+            join activities sibling
+               on sibling.activity_group_id = requested.activity_group_id
+               and sibling.id <> requested.id
+            join sources s
+               on s.correlation_type = @activity_correlation_type
+               and s.correlation_id = sibling.id::text
+               and s.kind = @participation_evidence_kind
+            where requested.activity_group_id is not null
+               and not exists (
+                  select 1
+                  from sources own_source
+                  where own_source.kind = @participation_evidence_kind
+                     and (
+                        (
+                           own_source.correlation_type =
+                              @activity_correlation_type
+                           and own_source.correlation_id =
+                              requested.id::text
+                        )
+                        or (
+                           own_source.correlation_type =
+                              @activity_group_correlation_type
+                           and own_source.correlation_id =
+                              requested.activity_group_id::text
+                        )
+                     )
+               )
+         )
          select
-            s.correlation_id,
-            s.kind,
-            s.url,
-            s.title
-         from sources s
-         where s.correlation_type = @correlation_type
-            and s.correlation_id = any(@activity_ids)
+            activity_id,
+            kind,
+            url,
+            title
+         from matched_sources
          order by
-            s.correlation_id,
-            s.observed_at desc,
-            s.created_at desc,
-            s.id desc
+            activity_id,
+            observed_at desc,
+            created_at desc,
+            source_id desc
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue(
-         "correlation_type",
+         "activity_correlation_type",
          SourceCorrelationTypes.Activity
       );
       command.Parameters.AddWithValue(
+         "activity_group_correlation_type",
+         SourceCorrelationTypes.ActivityGroup
+      );
+      command.Parameters.AddWithValue(
+         "participation_evidence_kind",
+         SourceKinds.ParticipationEvidence
+      );
+      command.Parameters.AddWithValue(
          "activity_ids",
-         activityIds.Select(id => id.ToString()).ToArray()
+         activityIds
       );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
@@ -791,10 +869,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         if(!Guid.TryParse(reader.GetString(0), out var activityId))
-         {
-            continue;
-         }
+         var activityId = reader.GetGuid(0);
 
          if(!sources.TryGetValue(activityId, out var activitySources))
          {
