@@ -32,6 +32,15 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    ) =>
       jobRuns.GetRunAsync(id, cancellationToken);
 
+   public Task<AiRunReference?> GetOriginatingActivityRunAsync(
+      Guid activityId,
+      CancellationToken cancellationToken
+   ) =>
+      jobRuns.GetOriginatingActivityRunAsync(
+         activityId,
+         cancellationToken
+      );
+
    public Task<Guid?> GetExistingRunIdAsync(
       string jobId,
       string correlationId,

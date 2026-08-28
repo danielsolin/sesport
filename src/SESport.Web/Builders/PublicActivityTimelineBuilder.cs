@@ -72,7 +72,7 @@ public sealed class PublicActivityTimelineBuilder
             ),
             GroupId = activity.ActivityGroupId!.Value,
             TeamSportTitle = activity.IsTeamSport
-               ? NormalizeActivityTitleForGrouping(activity.Title)
+               ? ActivityTitleNormalizer.NormalizeForGrouping(activity.Title)
                : null
          })
          .Where(group => group.Count() > 1)
@@ -373,8 +373,8 @@ public sealed class PublicActivityTimelineBuilder
       return first.ActivityGroupId == candidate.ActivityGroupId &&
          first.NoGrouping == candidate.NoGrouping &&
          string.Equals(
-            NormalizeActivityTitleForGrouping(first.Title),
-            NormalizeActivityTitleForGrouping(candidate.Title),
+            ActivityTitleNormalizer.NormalizeForGrouping(first.Title),
+            ActivityTitleNormalizer.NormalizeForGrouping(candidate.Title),
             StringComparison.Ordinal
          ) &&
          string.Equals(
@@ -466,18 +466,6 @@ public sealed class PublicActivityTimelineBuilder
          participant => GetNormalizedNameParts(participant.Name)
             .Any(part => titleParts.Contains(part))
       );
-   }
-
-   private static string NormalizeActivityTitleForGrouping(string title)
-   {
-      return string.Join(
-         ' ',
-         title.Split(
-            [' ', '\t', '\r', '\n'],
-            StringSplitOptions.RemoveEmptyEntries |
-               StringSplitOptions.TrimEntries
-         )
-      ).ToUpperInvariant();
    }
 
    private static HashSet<string> GetNormalizedNameParts(string value)

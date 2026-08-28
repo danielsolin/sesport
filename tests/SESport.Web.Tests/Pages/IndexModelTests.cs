@@ -1,5 +1,6 @@
 using System.Reflection;
 
+using SESport.Core.Configuration;
 using SESport.Data.Models;
 using SESport.Web.Pages;
 
@@ -144,6 +145,86 @@ public sealed class IndexModelTests
       var result = IndexModel.ShouldShowDisciplineColumn(participants);
 
       Assert.True(result);
+   }
+
+   [Fact]
+   public void ShouldHideRepresentedEntityColumnForSamePrimaryCountryTeam()
+   {
+      var teamId = Guid.NewGuid();
+      var participants = new[]
+      {
+         CreateParticipant("Anna", null) with
+         {
+            HasNonNationalTeamRepresentation = true,
+            RepresentedEntityId = teamId,
+            RepresentedEntityCountryId = PrimaryCountry.Id
+         },
+         CreateParticipant("Björn", null) with
+         {
+            HasNonNationalTeamRepresentation = true,
+            RepresentedEntityId = teamId,
+            RepresentedEntityCountryId = PrimaryCountry.Id
+         }
+      };
+
+      var result = IndexModel.ShouldHideRepresentedEntityColumn(
+         participants
+      );
+
+      Assert.True(result);
+   }
+
+   [Fact]
+   public void ShouldNotHideRepresentedEntityColumnForDifferentTeams()
+   {
+      var participants = new[]
+      {
+         CreateParticipant("Anna", null) with
+         {
+            HasNonNationalTeamRepresentation = true,
+            RepresentedEntityId = Guid.NewGuid(),
+            RepresentedEntityCountryId = PrimaryCountry.Id
+         },
+         CreateParticipant("Björn", null) with
+         {
+            HasNonNationalTeamRepresentation = true,
+            RepresentedEntityId = Guid.NewGuid(),
+            RepresentedEntityCountryId = PrimaryCountry.Id
+         }
+      };
+
+      var result = IndexModel.ShouldHideRepresentedEntityColumn(
+         participants
+      );
+
+      Assert.False(result);
+   }
+
+   [Fact]
+   public void ShouldNotHideRepresentedEntityColumnForForeignTeam()
+   {
+      var teamId = Guid.NewGuid();
+      var participants = new[]
+      {
+         CreateParticipant("Anna", null) with
+         {
+            HasNonNationalTeamRepresentation = true,
+            RepresentedEntityId = teamId,
+            RepresentedEntityCountryId = "pl"
+         },
+         CreateParticipant("Björn", null) with
+         {
+            HasNonNationalTeamRepresentation = true,
+            RepresentedEntityId = teamId,
+            RepresentedEntityCountryId = "pl"
+         }
+      };
+
+      var result = IndexModel.ShouldHideRepresentedEntityColumn(
+         participants
+      );
+
+      Assert.False(result);
    }
 
    [Theory]

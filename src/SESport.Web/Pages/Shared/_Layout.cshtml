@@ -129,7 +129,8 @@
       : "public-member-link";
 }
 <!DOCTYPE html>
-<html lang="@htmlLanguage">
+<html lang="@htmlLanguage"
+      class="@(isAdmin ? "admin-page" : string.Empty)">
 <head>
    <meta charset="utf-8" />
    <meta name="viewport"
@@ -282,7 +283,7 @@
       }
    </header>
 
-   <main class="page-shell">
+   <main class="page-shell@(isAdmin ? " page-shell-admin" : string.Empty)">
       @RenderBody()
    </main>
 

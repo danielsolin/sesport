@@ -154,6 +154,19 @@ public sealed class BroadcastActivityTypeResolverTests
    }
 
    [Fact]
+   public void ResolveActivityTypeReturnsEventForAthletics()
+   {
+      var activityType = BroadcastActivityTypeResolver.ResolveActivityType(
+         "Diamond League: Final",
+         "Athletics from Brussels",
+         ["Friidrott"],
+         SportIds.Athletics
+      );
+
+      Assert.Equal(ActivityType.Event, activityType);
+   }
+
+   [Fact]
    public void ResolveActivityTypeReturnsNullForUnknownSport()
    {
       var activityType = BroadcastActivityTypeResolver.ResolveActivityType(

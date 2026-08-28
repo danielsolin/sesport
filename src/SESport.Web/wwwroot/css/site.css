@@ -22,8 +22,12 @@ html {
    scrollbar-gutter: stable;
 }
 
+html.admin-page {
+   scrollbar-gutter: auto;
+}
+
 @supports not (scrollbar-gutter: stable) {
-   html {
+   html:not(.admin-page) {
       overflow-y: scroll;
    }
 }
@@ -132,6 +136,12 @@ a:hover {
    width: min(1120px, calc(100% - 32px));
    margin: 0 auto;
    padding: 36px 0 64px;
+}
+
+.page-shell-admin {
+   width: auto;
+   margin-left: 1.0rem;
+   margin-right: 0.5rem;
 }
 
 .page-heading {
@@ -957,6 +967,12 @@ h2 {
    cursor: pointer;
 }
 
+.broadcast-org-entity-related {
+   display: block;
+   color: var(--muted);
+   font-size: 12px;
+}
+
 .broadcast-org-entity-option:hover,
 .broadcast-org-entity-option.is-active {
    background: rgba(0, 106, 168, 0.08);
@@ -967,7 +983,7 @@ h2 {
 }
 
 .broadcasts-col-actions {
-   width: 64px;
+   width: 65px;
 }
 
 .entities-table td {

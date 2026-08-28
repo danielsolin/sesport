@@ -1,3 +1,4 @@
+using SESport.Core.AI;
 using SESport.Core.Domain;
 
 namespace SESport.Data.Models;
@@ -87,6 +88,10 @@ public sealed record PublicActivityParticipant(
 
    public bool HasNonNationalTeamRepresentation { get; init; }
 
+   public Guid? RepresentedEntityId { get; init; }
+
+   public string? RepresentedEntityCountryId { get; init; }
+
    public string? RepresentedEntityName { get; init; }
 
    public string? RepresentedEntityCanonicalName { get; init; }
@@ -112,6 +117,12 @@ public sealed record LookupOption(string Id, string Label);
 public sealed record ActivityGroupParticipant(
    Guid Id,
    string Name
+);
+
+public sealed record ActivityMergeCandidate(
+   Guid Id,
+   string Title,
+   string? Description
 );
 
 public sealed class ActivityGroupEditModel
@@ -215,4 +226,10 @@ public sealed class ActivityEditModel
    public bool ActivityGroupCreationRequired { get; set; }
 
    public string? TvChannelName { get; set; }
+
+   public Guid? AutoMergeActivityId { get; set; }
+
+   public string? AutoMergeActivityTitle { get; set; }
+
+   public AiRunReference? OriginatingAiRun { get; set; }
 }

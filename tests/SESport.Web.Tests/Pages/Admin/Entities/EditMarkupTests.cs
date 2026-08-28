@@ -20,6 +20,11 @@ public sealed class EditMarkupTests
          repoRoot,
          "src/SESport.Web/Pages/Admin/Entities/_EntityLinkedEntitiesGrid.cshtml"
       );
+      var suggestionPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Ajax/Search/"
+            + "_EntityLinkedEntitySuggestions.cshtml"
+      );
       var cssPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/wwwroot/css/site.css"
@@ -27,6 +32,7 @@ public sealed class EditMarkupTests
       var html = await File.ReadAllTextAsync(htmlPath);
       var script = await File.ReadAllTextAsync(scriptPath);
       var partial = await File.ReadAllTextAsync(partialPath);
+      var suggestions = await File.ReadAllTextAsync(suggestionPath);
       var css = await File.ReadAllTextAsync(cssPath);
 
       Assert.Contains("data-entity-linked-entities-picker", html);
@@ -42,6 +48,9 @@ public sealed class EditMarkupTests
       Assert.Contains("data-entity-linked-entities-remove", partial);
       Assert.Contains("entity-linked-entities-table", partial);
       Assert.Contains("Entity.LinkedEntityIds", partial);
+      Assert.Contains("@entity.RelatedEntityNames", suggestions);
+      Assert.Contains("broadcast-org-entity-related", suggestions);
+      Assert.Contains("Related:", suggestions);
       Assert.Contains("data-organization-only=\"false\"", html);
       Assert.Contains("data-person-birthdate-field", html);
       Assert.Contains("Entity.Birthdate", html);
@@ -89,6 +98,7 @@ public sealed class EditMarkupTests
       );
       Assert.Contains("align-self: flex-start;", css);
       Assert.Contains(".entity-edit-thumbnail-link", css);
+      Assert.Contains(".broadcast-org-entity-related", css);
       Assert.Contains(
          "[hidden] {\n" +
          "   display: none !important;\n" +

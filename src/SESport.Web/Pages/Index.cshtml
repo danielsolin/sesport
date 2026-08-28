@@ -747,12 +747,16 @@ else
                            IndexModel.ShouldShowDisciplineColumn(
                               participants
                            );
+                        var hideRepresentedEntityColumn =
+                           IndexModel.ShouldHideRepresentedEntityColumn(
+                              participants
+                           );
                         var showRepresentedEntityColumn =
                            participants.Any(
                               participant =>
                                  participant
                                     .HasNonNationalTeamRepresentation
-                           );
+                           ) && !hideRepresentedEntityColumn;
                         var representedEntityColumnClass =
                            "activity-participant-col-represented";
                         var representedTableClass =

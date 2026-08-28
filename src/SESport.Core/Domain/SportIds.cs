@@ -2,6 +2,7 @@ namespace SESport.Core.Domain;
 
 public static class SportIds
 {
+   public const string Athletics = "athletics";
    public const string Basketball = "basketball";
    public const string BeachVolleyball = "beach-volleyball";
    public const string Cycling = "cycling";

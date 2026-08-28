@@ -112,6 +112,14 @@ public sealed record AiRunListItem(
    decimal? DurationSeconds
 );
 
+public sealed record AiRunReference(
+   Guid Id,
+   string JobId,
+   string JobLabel,
+   string StatusId,
+   DateTimeOffset StartedAt
+);
+
 public sealed record AiRunDetail(
    Guid Id,
    string JobId,

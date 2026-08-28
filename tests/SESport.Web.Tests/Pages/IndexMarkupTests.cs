@@ -155,6 +155,7 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("showRepresentedEntityColumn", html);
+      Assert.Contains("ShouldHideRepresentedEntityColumn", html);
       Assert.Contains("HasNonNationalTeamRepresentation", html);
       Assert.Contains(
          "activity-participant-table-has-" +

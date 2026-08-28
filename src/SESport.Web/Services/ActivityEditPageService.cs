@@ -114,7 +114,23 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
-      return await repository.GetForEditAsync(id, cancellationToken);
+      var activity = await repository.GetForEditAsync(
+         id,
+         cancellationToken
+      );
+
+      if(activity?.Id is not Guid activityId)
+      {
+         return activity;
+      }
+
+      activity.OriginatingAiRun = await runRepository
+         .GetOriginatingActivityRunAsync(
+            activityId,
+            cancellationToken
+         );
+
+      return activity;
    }
 
    public async Task<IReadOnlyList<LookupOption>>
@@ -277,6 +293,36 @@ public sealed class ActivityEditPageService(
          }
       }
 
+      activity.AutoMergeActivityId = null;
+      activity.AutoMergeActivityTitle = null;
+      if(isNew && activity.BroadcastIds.Count > 0)
+      {
+         var autoMergeCandidate = await repository
+            .FindAutoMergeActivityAsync(activity, cancellationToken);
+
+         if(autoMergeCandidate is not null)
+         {
+            var merged = await repository.MergeBroadcastIntoActivityAsync(
+               autoMergeCandidate.Id,
+               activity,
+               cancellationToken
+            );
+            if(merged)
+            {
+               await RecordParticipationApplicationAsync(
+                  activity,
+                  autoMergeCandidate.Id,
+                  cancellationToken
+               );
+               await broadcastRepository.HideAsync(
+                  NormalizeBroadcastIds(activity.BroadcastIds),
+                  cancellationToken
+               );
+               return;
+            }
+         }
+      }
+
       var createsActivityGroup = activity.ActivityGroupId is null &&
          activity.ActivityGroupCreationRequired;
 
@@ -286,10 +332,9 @@ public sealed class ActivityEditPageService(
       );
       if(activity.ParticipationRunId is not null)
       {
-         await participationService.RecordApplicationAsync(
-            activity.ParticipationRunId.Value,
+         await RecordParticipationApplicationAsync(
+            activity,
             activityId,
-            activity.BroadcastIds,
             cancellationToken
          );
       }
@@ -518,7 +563,35 @@ public sealed class ActivityEditPageService(
             .ToList();
       }
 
+      var autoMergeCandidate = await repository
+         .FindAutoMergeActivityAsync(activity, cancellationToken);
+      activity.AutoMergeActivityId = autoMergeCandidate?.Id;
+      activity.AutoMergeActivityTitle = autoMergeCandidate?.Title;
+      if(autoMergeCandidate is not null)
+      {
+         activity.Description = autoMergeCandidate.Description;
+      }
+
       return firstBroadcast.EntityId;
+   }
+
+   private async Task RecordParticipationApplicationAsync(
+      ActivityEditModel activity,
+      Guid activityId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(activity.ParticipationRunId is null)
+      {
+         return;
+      }
+
+      await participationService.RecordApplicationAsync(
+         activity.ParticipationRunId.Value,
+         activityId,
+         activity.BroadcastIds,
+         cancellationToken
+      );
    }
 
    private async Task<IReadOnlyList<ActivityGroupParticipant>>

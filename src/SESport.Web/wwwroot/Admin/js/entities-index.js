@@ -95,6 +95,7 @@
 
          let debounceTimer = null;
          let activeController = null;
+         let searchGeneration = 0;
 
          const currentQuery = () => field.value.trim();
          const getSelectedValues = select => select instanceof HTMLSelectElement
@@ -134,17 +135,24 @@
             setEmptyState(false);
             setEntityCount(0);
          };
+         const abortActiveSearch = () => {
+            searchGeneration++;
+
+            if(activeController instanceof AbortController)
+            {
+               activeController.abort();
+               activeController = null;
+            }
+         };
          const fetchAndRenderAsync = async (
             query,
             typeIds,
             sportIds
          ) => {
-            if(activeController instanceof AbortController)
-            {
-               activeController.abort();
-            }
+            abortActiveSearch();
 
             const controller = new AbortController();
+            const generation = searchGeneration;
             activeController = controller;
 
             try
@@ -182,6 +190,12 @@
                });
                const html = await response.text();
 
+               if(controller.signal.aborted
+                  || generation !== searchGeneration)
+               {
+                  return;
+               }
+
                if(!response.ok)
                {
                   throw new Error(
@@ -209,25 +223,29 @@
                }
             }
          };
+         const refreshSearch = () => {
+            const query = currentQuery();
+            const typeIds = getSelectedValues(getTypeFilter());
+            const sportIds = getSelectedValues(getSportFilter());
+
+            setCookie(cookieName, query);
+            setCookie(typeCookieName, typeIds.join(","));
+            setCookie(sportCookieName, sportIds.join(","));
+
+            if(query === "" && typeIds.length === 0
+               && sportIds.length === 0 && activityDate === "")
+            {
+               abortActiveSearch();
+               clearRows();
+               return;
+            }
+
+            void fetchAndRenderAsync(query, typeIds, sportIds);
+         };
          const scheduleSearch = () => {
             window.clearTimeout(debounceTimer);
             debounceTimer = window.setTimeout(() => {
-               const query = currentQuery();
-               const typeIds = getSelectedValues(getTypeFilter());
-               const sportIds = getSelectedValues(getSportFilter());
-
-               setCookie(cookieName, query);
-               setCookie(typeCookieName, typeIds.join(","));
-               setCookie(sportCookieName, sportIds.join(","));
-
-               if(query === "" && typeIds.length === 0
-                  && sportIds.length === 0 && activityDate === "")
-               {
-                  clearRows();
-                  return;
-               }
-
-               void fetchAndRenderAsync(query, typeIds, sportIds);
+               refreshSearch();
             }, debounceMs);
          };
 
@@ -235,6 +253,13 @@
          field.addEventListener("change", scheduleSearch);
          initialTypeFilter?.addEventListener("change", scheduleSearch);
          initialSportFilter?.addEventListener("change", scheduleSearch);
+         window.addEventListener("pagehide", abortActiveSearch);
+         window.addEventListener("pageshow", event => {
+            if(event.persisted)
+            {
+               refreshSearch();
+            }
+         });
 
          const initialQuery = currentQuery();
          const initialTypeIds = getSelectedValues(initialTypeFilter);

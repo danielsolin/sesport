@@ -238,6 +238,7 @@ public static class BroadcastEntityFilter
       {
          var firstMismatchIndex = -1;
          var secondMismatchIndex = -1;
+         var mismatchCount = 0;
 
          for(var i = 0; i < left.Length; i++)
          {
@@ -246,21 +247,27 @@ public static class BroadcastEntityFilter
                continue;
             }
 
-            if(firstMismatchIndex >= 0)
+            mismatchCount++;
+            if(mismatchCount == 1)
+            {
+               firstMismatchIndex = i;
+            }
+            else if(mismatchCount == 2)
             {
                secondMismatchIndex = i;
-               break;
             }
-
-            firstMismatchIndex = i;
+            else
+            {
+               return false;
+            }
          }
 
-         if(firstMismatchIndex < 0)
+         if(mismatchCount == 0)
          {
             return false;
          }
 
-         if(secondMismatchIndex < 0)
+         if(mismatchCount == 1)
          {
             return true;
          }
