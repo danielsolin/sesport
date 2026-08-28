@@ -967,6 +967,12 @@ h2 {
    cursor: pointer;
 }
 
+.broadcast-org-entity-related {
+   display: block;
+   color: var(--muted);
+   font-size: 12px;
+}
+
 .broadcast-org-entity-option:hover,
 .broadcast-org-entity-option.is-active {
    background: rgba(0, 106, 168, 0.08);

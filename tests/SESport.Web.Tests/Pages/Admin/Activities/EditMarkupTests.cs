@@ -105,6 +105,30 @@ public sealed class EditMarkupTests
    }
 
    [Fact]
+   public async Task EditPageShowsAutoMergeNotice()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var html = await File.ReadAllTextAsync(
+         Path.Combine(
+            repoRoot,
+            "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+         )
+      );
+
+      var autoMergeNotice =
+         "Den här aktiviteten kommer att slås ihop med en " +
+         "befintlig aktivitet";
+      Assert.Contains(autoMergeNotice, html);
+      Assert.Contains(
+         "Model.Activity.AutoMergeActivityTitle",
+         html
+      );
+      Assert.Contains("class=\"notice notice-success\"", html);
+   }
+
+   [Fact]
    public async Task EditPagePostsUnsavedPrefilledSources()
    {
       var repoRoot = Path.GetFullPath(

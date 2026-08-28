@@ -16,7 +16,15 @@
                  data-entity-text="@entity.Name"
                  data-entity-type="@entity.EntityType"
                  data-entity-sport="@entity.Sport">
-            @entity.Name (@entity.EntityType, @entity.Sport)
+            <span>
+               @entity.Name (@entity.EntityType, @entity.Sport)
+            </span>
+            @if(!string.IsNullOrWhiteSpace(entity.RelatedEntityNames))
+            {
+               <span class="broadcast-org-entity-related">
+                  Related: @entity.RelatedEntityNames
+               </span>
+            }
          </button>
       }
    }

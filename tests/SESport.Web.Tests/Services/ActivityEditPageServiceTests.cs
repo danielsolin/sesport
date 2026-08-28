@@ -8,6 +8,7 @@ using Npgsql;
 using SESport.AI.Jobs;
 using SESport.Core.Configuration;
 using SESport.Core.Formatting;
+using SESport.Core.Sources;
 using SESport.Data.Models;
 
 namespace SESport.Core.Tests.Services;
@@ -890,6 +891,209 @@ public sealed class ActivityEditPageServiceTests
          await DeleteParticipationRunAsync(dataSource, runId);
          await DeleteBroadcastAsync(dataSource, broadcastId);
          await DeleteActivityAsync(dataSource, activityId);
+         await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
+   public async Task AutoMergePrefillUsesExistingDescriptionAndSaveMerges()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var activityGroupId = Guid.NewGuid();
+      var uniqueSuffix = Guid.NewGuid().ToString("N");
+      var sourceKey = $"test-source-{uniqueSuffix}";
+      var title = $"Auto merge activity {uniqueSuffix}";
+      var existingDescription = $"Existing description {uniqueSuffix}";
+      var broadcastDescription = $"Broadcast description {uniqueSuffix}";
+      var streamUrl = $"https://stream.example/{uniqueSuffix}";
+      var startsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var activityRepository = new ActivityRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var broadcastRepository = new AdminBroadcastRepository(dataSource);
+
+      await InsertRelatedEntityAsync(
+         dataSource,
+         organizationId,
+         $"Organization {organizationId:N}",
+         TrackedEntityTypeIds.Organization,
+         "football"
+      );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
+      await InsertEntityLinkAsync(dataSource, personId, organizationId);
+      await InsertActivityGroupAsync(
+         dataSource,
+         activityGroupId,
+         title,
+         "football",
+         DistantActivityDate,
+         DistantActivityDate
+      );
+
+      var existingActivityId = await activityRepository.SaveAsync(
+         new ActivityEditModel
+         {
+            Title = title,
+            Description = existingDescription,
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = DistantActivityDate,
+            LocalStartTime = new TimeOnly(12, 0),
+            LocalEndTime = new TimeOnly(14, 0),
+            TimeZoneId = SportDay.TimeZoneId,
+            IsPublished = true,
+            TvChannelName = "Viaplay",
+            LinkedEntityIds = [personId],
+            OrganizationEntityId = organizationId,
+            ActivityGroupId = activityGroupId
+         },
+         CancellationToken.None
+      );
+
+      await InsertBroadcastAsync(
+         dataSource,
+         broadcastId,
+         sourceKey,
+         organizationId,
+         $"external-{uniqueSuffix}",
+         $"fingerprint-{uniqueSuffix}",
+         "tv4-play",
+         "TV4 Play",
+         title,
+         ["football"],
+         startsAt,
+         endsAt,
+         activityGroupDraftTitle: title,
+         activityGroupSourceKindId:
+            BroadcastActivitySourceKindIds.ActivityGroupForActivity,
+         description: broadcastDescription
+      );
+      await sourceRepository.CreateAsync(
+         SourceCorrelationTypes.Broadcast,
+         broadcastId.ToString(),
+         SourceKinds.StreamLink,
+         streamUrl,
+         "TV4 Play",
+         null,
+         DateTimeOffset.UtcNow,
+         CancellationToken.None
+      );
+
+      try
+      {
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Equal(existingActivityId, activity.AutoMergeActivityId);
+         Assert.Equal(title, activity.AutoMergeActivityTitle);
+         Assert.Equal(existingDescription, activity.Description);
+         Assert.NotEqual(broadcastDescription, activity.Description);
+
+         await fixture.Service.SaveAsync(activity, CancellationToken.None);
+
+         var activityIds = await GetActivityIdsAsync(
+            dataSource,
+            activityGroupId
+         );
+         Assert.Equal([existingActivityId], activityIds);
+
+         var mergedActivity = await activityRepository.GetForEditAsync(
+            existingActivityId,
+            CancellationToken.None
+         );
+         Assert.NotNull(mergedActivity);
+         Assert.Equal(existingDescription, mergedActivity!.Description);
+         Assert.Equal(
+            "Viaplay, TV4 Play",
+            mergedActivity.TvChannelName
+         );
+
+         var streamSources = await sourceRepository.GetByCorrelationAsync(
+            SourceCorrelationTypes.Activity,
+            existingActivityId.ToString(),
+            SourceKinds.StreamLink,
+            CancellationToken.None
+         );
+         Assert.Contains(
+            streamSources,
+            source => source.Url == streamUrl &&
+               source.Title == "TV4 Play"
+         );
+
+         var broadcast = await broadcastRepository.GetByIdAsync(
+            broadcastId,
+            CancellationToken.None
+         );
+         Assert.True(broadcast?.IsHidden == true);
+         Assert.Empty(fixture.AutomationService.ActivityCreatedIds);
+         Assert.Empty(fixture.AutomationService.ActivityGroupCreatedIds);
+
+         await using var broadcastLinkCommand = dataSource.CreateCommand(
+            """
+            select count(*)
+            from activity_broadcast_links
+            where activity_id = @activity_id
+               and broadcast_id = @broadcast_id
+            """
+         );
+         broadcastLinkCommand.Parameters.AddWithValue(
+            "activity_id",
+            existingActivityId
+         );
+         broadcastLinkCommand.Parameters.AddWithValue(
+            "broadcast_id",
+            broadcastId
+         );
+         Assert.Equal(
+            1L,
+            (long)(await broadcastLinkCommand.ExecuteScalarAsync())!
+         );
+      }
+      finally
+      {
+         await sourceRepository.DeleteByCorrelationAsync(
+            SourceCorrelationTypes.Broadcast,
+            broadcastId.ToString(),
+            CancellationToken.None
+         );
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+
+         foreach(var activityId in await GetActivityIdsAsync(
+            dataSource,
+            activityGroupId
+         ))
+         {
+            await DeleteActivityAsync(dataSource, activityId);
+         }
+
          await DeleteActivityGroupAsync(dataSource, activityGroupId);
          await DeleteLinksAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, personId);
@@ -1972,6 +2176,32 @@ public sealed class ActivityEditPageServiceTests
       );
    }
 
+   private static async Task<IReadOnlyList<Guid>> GetActivityIdsAsync(
+      NpgsqlDataSource dataSource,
+      Guid activityGroupId
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         select id
+         from activities
+         where activity_group_id = @activity_group_id
+         order by id
+         """
+      );
+      command.Parameters.AddWithValue("activity_group_id", activityGroupId);
+
+      await using var reader = await command.ExecuteReaderAsync();
+      var activityIds = new List<Guid>();
+
+      while(await reader.ReadAsync())
+      {
+         activityIds.Add(reader.GetGuid(0));
+      }
+
+      return activityIds;
+   }
+
    private static void AssertActivityGroupTitle(
       NpgsqlDataSource dataSource,
       Guid activityGroupId,
@@ -2107,7 +2337,8 @@ public sealed class ActivityEditPageServiceTests
       DateTimeOffset endsAt,
       string? activityGroupDraftTitle = null,
       string? activityGroupSourceKindId = null,
-      Guid? activityGroupSourceActivityId = null
+      Guid? activityGroupSourceActivityId = null,
+      string? description = null
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -2143,7 +2374,7 @@ public sealed class ActivityEditPageServiceTests
             @channel_id,
             @channel_name,
             @title,
-            null,
+            @description,
             @categories,
             false,
             null,
@@ -2167,6 +2398,10 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("channel_id", channelId);
       command.Parameters.AddWithValue("channel_name", channelName);
       command.Parameters.AddWithValue("title", title);
+      command.Parameters.AddWithValue(
+         "description",
+         (object?)description ?? DBNull.Value
+      );
       command.Parameters.AddWithValue("categories", categories);
       command.Parameters.AddWithValue("starts_at", startsAt);
       command.Parameters.AddWithValue("ends_at", endsAt);

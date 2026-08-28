@@ -49,4 +49,27 @@ public sealed class BroadcastEntityFilterTests
 
       Assert.Equal([entityId], matched);
    }
+
+   [Fact]
+   public void MatchPersonEntityIdsRejectsUnrelatedTransposedPrefixes()
+   {
+      var entityId = Guid.NewGuid();
+      var entities = new[]
+      {
+         new BroadcastEntityOption(
+            entityId,
+            "Albin Sundsvik",
+            TrackedEntityTypeIds.Person,
+            "ice-hockey",
+            ""
+         )
+      };
+
+      var matched = BroadcastEntityFilter.MatchPersonEntityIds(
+         entities,
+         ["Lars Johansson"]
+      );
+
+      Assert.Empty(matched);
+   }
 }
