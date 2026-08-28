@@ -33,6 +33,10 @@ public sealed class IndexScriptTests
       Assert.Contains("replaceContentsWithPartialHtml", js);
       Assert.Contains("DOMContentLoaded", js);
       Assert.Contains("initializeEntitySearch();", js);
+      Assert.Contains("let searchGeneration = 0;", js);
+      Assert.Contains("generation !== searchGeneration", js);
+      Assert.Contains("window.addEventListener(\"pagehide\"", js);
+      Assert.Contains("window.addEventListener(\"pageshow\"", js);
       Assert.DoesNotContain("createElement", js);
       Assert.DoesNotContain("innerHTML", js);
       Assert.Contains(".ses-entity-search-link-missing {", css);
