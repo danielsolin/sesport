@@ -192,7 +192,10 @@ internal static class WebPageBrowserPageFetcher
 
          lastContent = content;
 
-         if(attempt < WebPageFetchDefaults.BrowserNavigationRetryAttempts)
+         if(ShouldRetryStrategy(
+            content,
+            attempt
+         ))
          {
             await Task.Delay(
                WebPageFetchDefaults.BrowserNavigationRetryDelay,
@@ -202,6 +205,17 @@ internal static class WebPageBrowserPageFetcher
       }
 
       return lastContent;
+   }
+
+   private static bool ShouldRetryStrategy(
+      WebPageContent? content,
+      int attempt
+   )
+   {
+      return attempt < WebPageFetchDefaults.BrowserNavigationRetryAttempts &&
+         (content is null ||
+            (content.FetchErrorKind is null &&
+             string.IsNullOrWhiteSpace(content.FetchErrorMessage)));
    }
 
    private static async Task<IResponse?> NavigateAsync(

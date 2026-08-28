@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace SESport.AI.WebSearch;
 
 public sealed class SearchRateLimiter
@@ -10,22 +12,31 @@ public sealed class SearchRateLimiter
    private DateTimeOffset nextRequestAt = DateTimeOffset.MinValue;
 
    public SearchRateLimiter()
-      : this(new WebSearchRateLimitOptions(), null)
+      : this(new WebSearchRateLimitOptions(), null, null)
+   {
+   }
+
+   public SearchRateLimiter(ILogger<SearchRateLimiter> logger)
+      : this(new WebSearchRateLimitOptions(), null, logger)
    {
    }
 
    internal SearchRateLimiter(
       WebSearchRateLimitOptions options,
-      TimeProvider? timeProvider = null
+      TimeProvider? timeProvider = null,
+      ILogger<SearchRateLimiter>? logger = null
    )
    {
       Options = options;
       TimeProvider = timeProvider ?? TimeProvider.System;
+      Logger = logger;
    }
 
    private WebSearchRateLimitOptions Options { get; }
 
    private TimeProvider TimeProvider { get; }
+
+   private ILogger<SearchRateLimiter>? Logger { get; }
 
    public async Task<bool> TryWaitAsync(
       string engine,
@@ -50,6 +61,12 @@ public sealed class SearchRateLimiter
 
          if(requestDelay > TimeSpan.Zero)
          {
+            Logger?.LogInformation(
+               "SearXNG request for {Engine} is waiting {Delay} " +
+               "for the global request interval.",
+               engine,
+               requestDelay
+            );
             await Task.Delay(
                requestDelay,
                TimeProvider,
@@ -85,18 +102,31 @@ public sealed class SearchRateLimiter
             return;
          }
 
+         Logger?.LogWarning(
+            "All SearXNG engines are on cooldown. Waiting {Delay} " +
+            "before retrying.",
+            cooldownDelay
+         );
          await Task.Delay(cooldownDelay, TimeProvider, cancellationToken);
       }
    }
 
    public void RegisterRateLimitedFailure(string engine)
    {
-      RegisterCooldown(engine, Options.RateLimitedCooldown);
+      RegisterCooldown(
+         engine,
+         Options.RateLimitedCooldown,
+         "rate-limited"
+      );
    }
 
    public void RegisterTransientFailure(string engine)
    {
-      RegisterCooldown(engine, Options.TransientFailureCooldown);
+      RegisterCooldown(
+         engine,
+         Options.TransientFailureCooldown,
+         "transient failure"
+      );
    }
 
    private TimeSpan GetEngineCooldownDelay(string engine)
@@ -179,7 +209,11 @@ public sealed class SearchRateLimiter
       }
    }
 
-   private void RegisterCooldown(string engine, TimeSpan cooldown)
+   private void RegisterCooldown(
+      string engine,
+      TimeSpan cooldown,
+      string reason
+   )
    {
       var cooldownUntil = TimeProvider.GetUtcNow() + cooldown;
 
@@ -195,5 +229,13 @@ public sealed class SearchRateLimiter
 
          engineCooldowns[engine] = cooldownUntil;
       }
+
+      Logger?.LogWarning(
+         "SearXNG engine {Engine} entered cooldown after {Reason}. " +
+         "Cooldown is {Cooldown}.",
+         engine,
+         reason,
+         cooldown
+      );
    }
 }

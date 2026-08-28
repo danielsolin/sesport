@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 
 namespace SESport.AI.WebPages;
@@ -290,6 +291,27 @@ public sealed class WebPageContentClient : IWebPageContentClient
             primaryHtml,
             absoluteUrl
          );
+      var primaryHtmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
+         NullLogger.Instance,
+         static (_, _) => Task.FromResult<WebPageContent?>(null),
+         primaryHtml,
+         absoluteUrl,
+         cancellationToken
+      );
+
+      if(IsRichContent(primaryHtmlContent))
+      {
+         logger.LogInformation(
+            "Primary HTML response was sufficient for {Url}; " +
+            "skipping browser renderer.",
+            absoluteUrl
+         );
+         return MergePrimaryRelevantContent(
+            primaryHtmlContent,
+            primaryRelevantLinks,
+            primaryRelevantImages
+         );
+      }
 
       try
       {
@@ -545,6 +567,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
          !string.IsNullOrWhiteSpace(content.FetchErrorMessage) ||
          (!content.HasBodyText &&
             content.RelevantImages is not { Count: > 0 });
+   }
+
+   private static bool IsRichContent(WebPageContent? content)
+   {
+      return !HasFetchFailure(content) &&
+         content!.MainTextFull.Length >=
+            WebPageFetchDefaults.RichContentMinimumCharacters;
    }
 
    private static WebPageContent? MergePrimaryRelevantContent(

@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
+using Microsoft.Extensions.Logging;
+
 using SESport.AI.Protocols;
 using SESport.Core.AI;
 
@@ -24,12 +26,18 @@ public sealed class OpenRouterClient : IAiProviderClient
    public IReadOnlyCollection<string> Kinds =>
       [AiProviderKinds.OpenRouter];
 
-   public OpenRouterClient(HttpClient httpClient)
+   public OpenRouterClient(
+      HttpClient httpClient,
+      ILogger<OpenRouterClient>? logger = null
+   )
    {
       HttpClient = httpClient;
+      Logger = logger;
    }
 
    private HttpClient HttpClient { get; }
+
+   private ILogger<OpenRouterClient>? Logger { get; }
 
    public JsonObject CreateRequestPayload(
       AiProviderDefinition provider,
@@ -136,6 +144,15 @@ public sealed class OpenRouterClient : IAiProviderClient
             retry < AiDefaults.OpenRouterMaxRateLimitRetries)
          {
             var retryAfter = GetRetryAfter(response, rawResponse);
+            Logger?.LogWarning(
+               "OpenRouter returned HTTP 429 for provider {ProviderId} " +
+               "with model {Model} on attempt {Attempt}. Retrying in " +
+               "{Delay}.",
+               provider.Id,
+               provider.Model,
+               retry + 1,
+               retryAfter
+            );
             await Task.Delay(retryAfter, cancellationToken);
             continue;
          }
