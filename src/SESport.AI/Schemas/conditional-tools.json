@@ -1,0 +1,29 @@
+[
+   {
+      "when": {
+         "job_id": "decide-swedish-participation",
+         "output_mode": "json_object",
+         "requires_web_search": true,
+         "prompt_output_schema_present": true
+      },
+      "tools": [
+         {
+            "type": "function",
+            "function": {
+               "name": "submit_report",
+               "parameters": {
+                  "$ref": "prompt.output_schema"
+               },
+               "description": "Submit the complete final report when research has identified at least one supported participant. Use web tools instead if no participant has been identified."
+            }
+         }
+      ],
+      "behavior": "submit_report",
+      "tool_patches": [
+         {
+            "path": "function.parameters.properties.Participants.minItems",
+            "value": 1
+         }
+      ]
+   }
+]
