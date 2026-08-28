@@ -135,6 +135,12 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    ) =>
       queries.GetForEditAsync(id, cancellationToken);
 
+   public Task<ActivityMergeCandidate?> FindAutoMergeActivityAsync(
+      ActivityEditModel model,
+      CancellationToken cancellationToken
+   ) =>
+      queries.FindAutoMergeActivityAsync(model, cancellationToken);
+
    public Task<IReadOnlyList<string>> GetOtherGroupDescriptionsAsync(
       Guid activityGroupId,
       Guid? excludedActivityId,
@@ -269,6 +275,17 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    ) =>
       mutations.SaveAsync(model, cancellationToken);
+
+   public Task<bool> MergeBroadcastIntoActivityAsync(
+      Guid targetActivityId,
+      ActivityEditModel model,
+      CancellationToken cancellationToken
+   ) =>
+      mutations.MergeBroadcastIntoActivityAsync(
+         targetActivityId,
+         model,
+         cancellationToken
+      );
 
    public Task DeleteAsync(
       Guid id,

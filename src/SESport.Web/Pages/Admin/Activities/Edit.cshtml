@@ -43,6 +43,14 @@
    }
 </section>
 
+@if(Model.Activity.AutoMergeActivityTitle is not null)
+{
+   <div class="notice notice-success">
+      Den här aktiviteten kommer att slås ihop med en befintlig aktivitet
+      '@Model.Activity.AutoMergeActivityTitle'.
+   </div>
+}
+
 @if (Model.LoadError is not null)
 {
    <div class="notice notice-warning">
@@ -73,6 +81,8 @@
    <input asp-for="Activity.Id" type="hidden" />
    <input asp-for="Activity.ParticipationRunId" type="hidden" />
    <input asp-for="Activity.TimeZoneId" type="hidden" />
+   <input asp-for="Activity.AutoMergeActivityId" type="hidden" />
+   <input asp-for="Activity.AutoMergeActivityTitle" type="hidden" />
    <input asp-for="ReturnUrl" type="hidden" />
    <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
    @if (Model.Activity.ActivityGroupCreationRequired)

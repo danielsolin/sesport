@@ -114,6 +114,12 @@ public sealed record ActivityGroupParticipant(
    string Name
 );
 
+public sealed record ActivityMergeCandidate(
+   Guid Id,
+   string Title,
+   string? Description
+);
+
 public sealed class ActivityGroupEditModel
 {
    public Guid Id { get; set; }
@@ -215,4 +221,8 @@ public sealed class ActivityEditModel
    public bool ActivityGroupCreationRequired { get; set; }
 
    public string? TvChannelName { get; set; }
+
+   public Guid? AutoMergeActivityId { get; set; }
+
+   public string? AutoMergeActivityTitle { get; set; }
 }

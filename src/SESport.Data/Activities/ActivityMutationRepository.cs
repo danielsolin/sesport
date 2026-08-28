@@ -160,6 +160,105 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
       return id;
    }
 
+   public async Task<bool> MergeBroadcastIntoActivityAsync(
+      Guid targetActivityId,
+      ActivityEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      string? existingChannelName;
+      await using(
+         var loadCommand = new NpgsqlCommand(
+            """
+            select tv_channel_name
+            from activities
+            where id = @activity_id
+            for update
+            """,
+            connection,
+            transaction
+         )
+      )
+      {
+         loadCommand.Parameters.AddWithValue(
+            "activity_id",
+            targetActivityId
+         );
+         var channelValue = await loadCommand.ExecuteScalarAsync(
+            cancellationToken
+         );
+         existingChannelName = channelValue as string;
+      }
+
+      if(existingChannelName is null &&
+         !await ActivityExistsAsync(
+            connection,
+            transaction,
+            targetActivityId,
+            cancellationToken
+         ))
+      {
+         return false;
+      }
+
+      var mergedChannelName = MergeChannelNames(
+         existingChannelName,
+         model.TvChannelName
+      );
+      await using(var updateCommand = new NpgsqlCommand(
+         """
+         update activities
+         set tv_channel_name = @tv_channel_name,
+            updated_at = now()
+         where id = @activity_id
+         """,
+         connection,
+         transaction
+      ))
+      {
+         updateCommand.Parameters.AddWithValue(
+            "activity_id",
+            targetActivityId
+         );
+         updateCommand.Parameters.Add(
+            "tv_channel_name",
+            NpgsqlDbType.Text
+         ).Value = (object?)mergedChannelName ?? DBNull.Value;
+         await updateCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      await AppendSourcesAsync(
+         connection,
+         transaction,
+         targetActivityId,
+         model.Sources,
+         cancellationToken
+      );
+      await AddBroadcastLinksAsync(
+         connection,
+         transaction,
+         targetActivityId,
+         model.BroadcastIds,
+         cancellationToken
+      );
+      await BroadcastStreamSourcePersistence.CopyToActivityAsync(
+         connection,
+         transaction,
+         targetActivityId,
+         model.BroadcastIds,
+         cancellationToken
+      );
+      await transaction.CommitAsync(cancellationToken);
+      return true;
+   }
+
    private static async Task AddBroadcastLinksAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
@@ -194,6 +293,119 @@ public sealed class ActivityMutationRepository(NpgsqlDataSource dataSource)
          broadcastIds.Distinct().ToArray()
       );
       await command.ExecuteNonQueryAsync(cancellationToken);
+   }
+
+   private static async Task<bool> ActivityExistsAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid activityId,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var command = new NpgsqlCommand(
+         "select exists (select 1 from activities where id = @activity_id)",
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("activity_id", activityId);
+      return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
+   }
+
+   private static async Task AppendSourcesAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid activityId,
+      IEnumerable<ActivitySourceEditModel> sources,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         insert into sources (
+            id,
+            correlation_type,
+            correlation_id,
+            kind,
+            url,
+            title,
+            excerpt,
+            observed_at
+         )
+         select
+            @id,
+            @correlation_type,
+            @correlation_id,
+            @kind,
+            @url,
+            @title,
+            @excerpt,
+            @observed_at
+         where not exists (
+            select 1
+            from sources existing
+            where existing.correlation_type = @correlation_type
+               and existing.correlation_id = @correlation_id
+               and existing.kind = @kind
+               and existing.url = @url
+         )
+         """;
+
+      foreach(var source in sources)
+      {
+         if(string.IsNullOrWhiteSpace(source.Url))
+         {
+            continue;
+         }
+
+         await using var command = new NpgsqlCommand(
+            sql,
+            connection,
+            transaction
+         );
+         command.Parameters.AddWithValue("id", Guid.NewGuid());
+         command.Parameters.AddWithValue(
+            "correlation_type",
+            SourceCorrelationTypes.Activity
+         );
+         command.Parameters.AddWithValue(
+            "correlation_id",
+            activityId.ToString()
+         );
+         command.Parameters.AddWithValue(
+            "kind",
+            string.IsNullOrWhiteSpace(source.Kind)
+               ? SourceKinds.ActivityEvidence
+               : source.Kind.Trim()
+         );
+         command.Parameters.AddWithValue("url", source.Url.Trim());
+         command.Parameters.AddWithValue(
+            "title",
+            PostgresHelpers.BlankToDbNull(source.Title)
+         );
+         command.Parameters.AddWithValue(
+            "excerpt",
+            PostgresHelpers.BlankToDbNull(source.Excerpt)
+         );
+         command.Parameters.AddWithValue("observed_at", source.ObservedAt);
+         await command.ExecuteNonQueryAsync(cancellationToken);
+      }
+   }
+
+   private static string? MergeChannelNames(
+      string? existingChannelName,
+      string? incomingChannelName
+   )
+   {
+      var names = new[] { existingChannelName, incomingChannelName }
+         .Where(value => !string.IsNullOrWhiteSpace(value))
+         .SelectMany(value => value!.Split(
+            ',',
+            StringSplitOptions.TrimEntries |
+               StringSplitOptions.RemoveEmptyEntries
+         ))
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray();
+
+      return names.Length == 0 ? null : string.Join(", ", names);
    }
 
    public async Task DeleteAsync(

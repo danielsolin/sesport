@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 
 using Npgsql;
 
+using NpgsqlTypes;
+
 using SESport.Core.AI;
 using SESport.Core.Broadcast;
 using SESport.Core.Domain;
@@ -699,6 +701,167 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
       }
 
       return model;
+   }
+
+   public async Task<ActivityMergeCandidate?> FindAutoMergeActivityAsync(
+      ActivityEditModel model,
+      CancellationToken cancellationToken
+   )
+   {
+      if(model.ActivityGroupId is null ||
+         model.ActivityDate is null ||
+         model.LocalStartTime is null ||
+         model.LocalEndTime is null ||
+         string.IsNullOrWhiteSpace(model.Title) ||
+         string.IsNullOrWhiteSpace(model.ActivityType) ||
+         string.IsNullOrWhiteSpace(model.SportId) ||
+         string.IsNullOrWhiteSpace(model.TvChannelName))
+      {
+         return null;
+      }
+
+      var sql = $$"""
+         with input_participants as (
+            select coalesce(
+               array_agg(e.id),
+               '{}'::uuid[]
+            ) as entity_ids
+            from entities e
+            where e.id = any(@linked_entity_ids)
+               and e.entity_type_id in (
+                  '{{TrackedEntityTypeIds.Person}}',
+                  '{{TrackedEntityTypeIds.NationalTeam}}',
+                  '{{TrackedEntityTypeIds.Pair}}'
+               )
+         ),
+         candidate_participants as (
+            select
+               a.id,
+               coalesce(
+                  array_agg(distinct link.entity_id) filter (
+                     where e.entity_type_id in (
+                        '{{TrackedEntityTypeIds.Person}}',
+                        '{{TrackedEntityTypeIds.NationalTeam}}',
+                        '{{TrackedEntityTypeIds.Pair}}'
+                     )
+                  ),
+                  '{}'::uuid[]
+               ) as entity_ids,
+               coalesce(
+                  array_agg(distinct link.entity_id) filter (
+                     where e.entity_type_id in (
+                        '{{TrackedEntityTypeIds.Person}}',
+                        '{{TrackedEntityTypeIds.NationalTeam}}',
+                        '{{TrackedEntityTypeIds.Pair}}'
+                     )
+                        and link.is_active
+                  ),
+                  '{}'::uuid[]
+               ) as active_entity_ids
+            from activities a
+            left join activity_entity_links link
+               on link.activity_id = a.id
+            left join entities e on e.id = link.entity_id
+            where a.activity_group_id = @activity_group_id
+            group by a.id
+         )
+         select
+            a.id,
+            a.title,
+            a.description
+         from activities a
+         join activity_groups ag on ag.id = a.activity_group_id
+         join candidate_participants participants
+            on participants.id = a.id
+         cross join input_participants input
+         where (
+               @excluded_activity_id is null
+               or a.id <> @excluded_activity_id
+            )
+            and a.activity_group_id = @activity_group_id
+            and a.activity_date = @activity_date
+            and a.starts_at is not null
+            and a.ends_at is not null
+            and not ag.no_grouping
+            and upper(btrim(regexp_replace(
+               a.title,
+               '[ \t\r\n]+',
+               ' ',
+               'g'
+            ))) = @normalized_title
+            and a.teaser is not distinct from @teaser
+            and a.activity_type_id = @activity_type_id
+            and a.sport_id = @sport_id
+            and a.tv_channel_name is not null
+            and btrim(a.tv_channel_name) <> ''
+            and upper(btrim(a.tv_channel_name)) <>
+               upper(btrim(@tv_channel_name))
+            and participants.entity_ids @> input.entity_ids
+            and input.entity_ids @> participants.entity_ids
+            and participants.active_entity_ids @> input.entity_ids
+            and input.entity_ids @> participants.active_entity_ids
+            and {{GetActivityOrganizationEntityIdSql("a")}}
+               is not distinct from @organization_entity_id
+         order by
+            a.starts_at,
+            a.created_at,
+            a.id
+         limit 1
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "activity_group_id",
+         model.ActivityGroupId.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_date",
+         model.ActivityDate.Value
+      );
+      command.Parameters.AddWithValue(
+         "activity_type_id",
+         model.ActivityType.Trim()
+      );
+      command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
+      command.Parameters.AddWithValue(
+         "normalized_title",
+         ActivityTitleNormalizer.NormalizeForGrouping(model.Title)
+      );
+      command.Parameters.Add(
+         "teaser",
+         NpgsqlDbType.Text
+      ).Value = (object?)model.Teaser ?? DBNull.Value;
+      command.Parameters.Add(
+         "tv_channel_name",
+         NpgsqlDbType.Text
+      ).Value = model.TvChannelName.Trim();
+      command.Parameters.Add(
+         "organization_entity_id",
+         NpgsqlDbType.Uuid
+      ).Value = (object?)model.OrganizationEntityId ?? DBNull.Value;
+      command.Parameters.Add(
+         "excluded_activity_id",
+         NpgsqlDbType.Uuid
+      ).Value = (object?)model.Id ?? DBNull.Value;
+      command.Parameters.AddWithValue(
+         "linked_entity_ids",
+         model.LinkedEntityIds
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToArray()
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      return await reader.ReadAsync(cancellationToken)
+         ? new ActivityMergeCandidate(
+            reader.GetGuid(0),
+            reader.GetString(1),
+            reader.IsDBNull(2) ? null : reader.GetString(2)
+         )
+         : null;
    }
 
    private async Task<IReadOnlyList<ActivityListItem>> QueryActivityListAsync(
