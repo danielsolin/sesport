@@ -100,7 +100,17 @@ public static class BroadcastActivityTypeResolver
          return ActivityType.Match;
       }
 
+      if(IsAthleticsSport(normalizedSportId))
+      {
+         return ActivityType.Event;
+      }
+
       return null;
+   }
+
+   private static bool IsAthleticsSport(string normalizedSportId)
+   {
+      return normalizedSportId == SportIds.Athletics;
    }
 
    private static bool IsRaceSport(string normalizedSportId)

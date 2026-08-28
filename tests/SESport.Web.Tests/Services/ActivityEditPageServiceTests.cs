@@ -1017,6 +1017,25 @@ public sealed class ActivityEditPageServiceTests
          Assert.Equal(existingDescription, activity.Description);
          Assert.NotEqual(broadcastDescription, activity.Description);
 
+         var unknownTypeCandidate =
+            await activityRepository.FindAutoMergeActivityAsync(
+               new ActivityEditModel
+               {
+                  Title = title,
+                  ActivityType = string.Empty,
+                  SportId = "football",
+                  ActivityDate = DistantActivityDate,
+                  LocalStartTime = new TimeOnly(12, 0),
+                  LocalEndTime = new TimeOnly(14, 0),
+                  TvChannelName = "TV4 Play",
+                  LinkedEntityIds = [personId],
+                  OrganizationEntityId = organizationId,
+                  ActivityGroupId = activityGroupId
+               },
+               CancellationToken.None
+            );
+         Assert.Equal(existingActivityId, unknownTypeCandidate?.Id);
+
          await fixture.Service.SaveAsync(activity, CancellationToken.None);
 
          var activityIds = await GetActivityIdsAsync(

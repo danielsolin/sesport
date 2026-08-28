@@ -713,7 +713,6 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          model.LocalStartTime is null ||
          model.LocalEndTime is null ||
          string.IsNullOrWhiteSpace(model.Title) ||
-         string.IsNullOrWhiteSpace(model.ActivityType) ||
          string.IsNullOrWhiteSpace(model.SportId) ||
          string.IsNullOrWhiteSpace(model.TvChannelName))
       {
@@ -790,7 +789,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                'g'
             ))) = @normalized_title
             and a.teaser is not distinct from @teaser
-            and a.activity_type_id = @activity_type_id
+            and (
+               @activity_type_id is null
+               or a.activity_type_id = @activity_type_id
+            )
             and a.sport_id = @sport_id
             and a.tv_channel_name is not null
             and btrim(a.tv_channel_name) <> ''
@@ -818,10 +820,12 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          "activity_date",
          model.ActivityDate.Value
       );
-      command.Parameters.AddWithValue(
+      command.Parameters.Add(
          "activity_type_id",
-         model.ActivityType.Trim()
-      );
+         NpgsqlDbType.Text
+      ).Value = string.IsNullOrWhiteSpace(model.ActivityType)
+         ? DBNull.Value
+         : model.ActivityType.Trim();
       command.Parameters.AddWithValue("sport_id", model.SportId.Trim());
       command.Parameters.AddWithValue(
          "normalized_title",

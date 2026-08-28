@@ -6,6 +6,7 @@ public enum ActivityType
    Race,
    Practice,
    Tournament,
+   Event,
    Stage,
    Championship,
    Qualification,
