@@ -7,7 +7,11 @@ services or timer you want active.
 The SESport web services load `/home/daniel/sesport/.env` through
 `EnvironmentFile`. Keep the single active PostgreSQL connection there.
 
-The `sesport-dev.service` unit runs
+The `dotnet-run.service` unit runs the local development web app from
+`/home/daniel/sesport/src/SESport.Web` with `dotnet run --no-build` on port
+5109. It does not enable Browser Refresh or Hot Reload.
+
+The separate `sesport-dev.service` unit runs
 `/home/daniel/sesport/src/SESport.Web` with `dotnet watch`. Changes to source
 files and static assets are therefore available at `dev.sesport.se` without a
 publish step. Caddy proxies that hostname to port 5001.
@@ -31,6 +35,7 @@ instead of spawning a per-thread child process. Republish
 
 - `llama-server.service`
 - `searxng.service` for local AI-run machines only
+- `dotnet-run.service`
 - `sesport.service`
 - `sesport-dev.service`
 - `sesport-mcp.service`

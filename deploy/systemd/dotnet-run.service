@@ -1,0 +1,30 @@
+[Unit]
+Description=SESport Web
+After=network.target llama-server.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=daniel
+WorkingDirectory=/home/daniel/sesport/src/SESport.Web
+
+Environment=HOME=/home/daniel
+Environment=DOTNET_CLI_HOME=/home/daniel
+Environment=DOTNET_NOLOGO=true
+Environment=ASPNETCORE_ENVIRONMENT=Development
+EnvironmentFile=/home/daniel/sesport/.env
+
+ExecStart=/usr/bin/dotnet \
+   run \
+   --no-build \
+   --urls http://0.0.0.0:5109
+
+Restart=always
+RestartSec=2
+
+KillSignal=SIGTERM
+TimeoutStopSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
