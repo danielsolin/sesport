@@ -3,7 +3,7 @@ namespace SESport.Core.Tests.Pages.Admin.Runs;
 public sealed class DetailsMarkupTests
 {
    [Fact]
-   public async Task DetailsPageDoesNotShowToolsDescription()
+   public async Task DetailsPageUsesOneShotToolTraceLoading()
    {
       var repoRoot = Path.GetFullPath(
          Path.Combine(AppContext.BaseDirectory, "../../../../..")
@@ -100,13 +100,14 @@ public sealed class DetailsMarkupTests
       );
       Assert.DoesNotContain("Full trace", toolTraceHtml);
       Assert.Contains("Round", toolTraceHtml);
-      Assert.Contains("pollIntervalMilliseconds = 10000", toolTraceScript);
       Assert.Contains("updateToolTrace()", toolTraceScript);
-      Assert.Contains(
-         "host.dataset.runStatus !== \"running\"",
-         toolTraceScript
-      );
-      Assert.Contains("data-run-status", toolTraceHtml);
+      Assert.DoesNotContain("pollIntervalMilliseconds", toolTraceScript);
+      Assert.DoesNotContain("Next update in", toolTraceScript);
+      Assert.DoesNotContain("setInterval", toolTraceScript);
+      Assert.DoesNotContain("setTimeout", toolTraceScript);
+      Assert.DoesNotContain("host.dataset.runStatus", toolTraceScript);
+      Assert.DoesNotContain("data-run-status", toolTraceHtml);
+      Assert.DoesNotContain("Updates automatically", toolTraceHtml);
       Assert.DoesNotContain("Tools description", html);
    }
 

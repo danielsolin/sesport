@@ -6,6 +6,8 @@ public static class ApplicationConfigurationKeys
 
    public const string CodexCliSection = "CodexCli";
 
+   public const string OpenCodeCliSection = "OpenCodeCli";
+
    public const string MemberAuthSection = "MemberAuth";
 
    public const string MemberPushSection = "MemberPush";

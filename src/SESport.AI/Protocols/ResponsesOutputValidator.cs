@@ -122,22 +122,128 @@ public static class ResponsesOutputValidator
       }
 
       var trimmed = outputText.Trim();
-      var match = FencedJsonRegex.Match(trimmed);
+      string? firstFencedContent = null;
 
-      if(!match.Success)
+      foreach(Match match in FencedJsonRegex.Matches(trimmed))
       {
-         return trimmed;
+         var fencedContent = match.Groups["content"].Value.Trim();
+         firstFencedContent ??= fencedContent;
+
+         var fencedJson = ExtractEmbeddedJson(fencedContent);
+
+         if(fencedJson is not null)
+         {
+            return fencedJson;
+         }
       }
 
-      return match.Groups["content"].Value.Trim();
+      return ExtractEmbeddedJson(trimmed) ?? firstFencedContent ?? trimmed;
    }
 
    private static readonly Regex FencedJsonRegex = new(
-      @"^\s*```(?:json)?\s*(?<content>.*?)\s*```\s*$",
+      @"```(?:json)?\s*(?<content>.*?)\s*```",
       RegexOptions.IgnoreCase |
       RegexOptions.Singleline |
       RegexOptions.CultureInvariant
    );
+
+   private static string? ExtractEmbeddedJson(string text)
+   {
+      for(var start = 0; start < text.Length; start++)
+      {
+         if(text[start] is not ('{' or '['))
+         {
+            continue;
+         }
+
+         var end = FindJsonValueEnd(text, start);
+
+         if(end < 0)
+         {
+            continue;
+         }
+
+         var candidate = text[start..(end + 1)];
+
+         try
+         {
+            using var document = JsonDocument.Parse(candidate);
+            return candidate;
+         }
+         catch(JsonException)
+         {
+            // Continue searching when a brace in prose was not JSON.
+         }
+      }
+
+      return null;
+   }
+
+   private static int FindJsonValueEnd(string text, int start)
+   {
+      var expectedClosings = new Stack<char>();
+      var inString = false;
+      var isEscaped = false;
+
+      for(var index = start; index < text.Length; index++)
+      {
+         var character = text[index];
+
+         if(inString)
+         {
+            if(isEscaped)
+            {
+               isEscaped = false;
+            }
+            else if(character == '\\')
+            {
+               isEscaped = true;
+            }
+            else if(character == '"')
+            {
+               inString = false;
+            }
+
+            continue;
+         }
+
+         if(character == '"')
+         {
+            inString = true;
+            continue;
+         }
+
+         if(character == '{')
+         {
+            expectedClosings.Push('}');
+            continue;
+         }
+
+         if(character == '[')
+         {
+            expectedClosings.Push(']');
+            continue;
+         }
+
+         if(character != '}' && character != ']')
+         {
+            continue;
+         }
+
+         if(expectedClosings.Count == 0 ||
+            expectedClosings.Pop() != character)
+         {
+            return -1;
+         }
+
+         if(expectedClosings.Count == 0)
+         {
+            return index;
+         }
+      }
+
+      return -1;
+   }
 
    private static bool IsMessageItem(JsonElement item)
    {

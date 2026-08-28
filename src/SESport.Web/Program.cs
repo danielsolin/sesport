@@ -29,6 +29,11 @@ var codexCliOptions = builder.Configuration.GetSection(
    )
    .Get<CodexCliOptions>() ??
    new CodexCliOptions();
+var openCodeCliOptions = builder.Configuration.GetSection(
+      ApplicationConfigurationKeys.OpenCodeCliSection
+   )
+   .Get<OpenCodeCliOptions>() ??
+   new OpenCodeCliOptions();
 var searxngOptions = builder.Configuration.GetSection(
       ApplicationConfigurationKeys.SearxngSection
    )
@@ -88,6 +93,7 @@ builder.Services.AddSingleton(
 );
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(codexCliOptions);
+builder.Services.AddSingleton(openCodeCliOptions);
 builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddSingleton(memberAuthOptions);
 builder.Services.AddSingleton(memberPushOptions);

@@ -22,7 +22,8 @@ SESport.AI.Jobs
     -> repository contracts in SESport.Core.AI
     -> IAiProviderClient
 SESport.AI.Clients
-    -> LlamaServerClient, OpenRouterClient, or GoogleTranslateClient
+    -> LlamaServerClient, OpenCodeCliClient, OpenRouterClient,
+       or GoogleTranslateClient
     -> Protocols, Llama, WebSearch, and WebPages as needed
 SESport.Web
     -> post-processes the completed AiJobResult
@@ -213,6 +214,29 @@ WebKit when those browser runtimes are available on the host.
 These dependencies are host concerns. The AI project receives their clients
 or options through constructors and does not own deployment or process
 startup.
+
+### OpenCode CLI provider
+
+The `opencode-cli` provider runs `opencode run` as the local OpenCode agent.
+It uses OpenCode's normal user configuration, default model, configured MCP
+servers, project context, and agent behavior. SESport passes the rendered
+prompt and configured output schema as the single user message and does not
+add provider-specific agent instructions or issue MCP requests itself.
+
+The command uses JSON events for progress and maps OpenCode text, reasoning,
+and tool events into the common AI run trace. It intentionally does not pass
+the SESport model, tool definitions, or web-search flag to OpenCode. The
+OpenCode installation and its configuration are the source of truth for those
+settings.
+
+The host can configure the executable and working directory with the
+`OpenCodeCli__ExecutablePath` and `OpenCodeCli__WorkingDirectory` configuration
+keys. `OpenCodeCli__TimeoutSeconds` controls the process timeout and defaults
+to 20 minutes. The process inherits the host user's OpenCode environment.
+When no working directory is configured, the client uses the Git repository
+root when it can find one above the host process directory. When the default
+executable name is used, an installed `~/.opencode/bin/opencode` is preferred
+when present.
 
 ## Maintaining the structure
 

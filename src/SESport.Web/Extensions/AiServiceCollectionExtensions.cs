@@ -50,6 +50,7 @@ public static class AiServiceCollectionExtensions
          client.Timeout = AiDefaults.LlamaServerHttpClientTimeout;
       });
       services.AddTransient<CodexCliClient>();
+      services.AddTransient<OpenCodeCliClient>();
       services.AddTransient<GoogleTranslateClient>();
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<OpenRouterClient>()
@@ -59,6 +60,9 @@ public static class AiServiceCollectionExtensions
       );
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<CodexCliClient>()
+      );
+      services.AddTransient<IAiProviderClient>(serviceProvider =>
+         serviceProvider.GetRequiredService<OpenCodeCliClient>()
       );
       services.AddTransient<IAiProviderClient>(serviceProvider =>
          serviceProvider.GetRequiredService<GoogleTranslateClient>()

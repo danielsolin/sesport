@@ -11,22 +11,10 @@
 <div data-run-tool-trace-partial>
 <section class="form-section">
    <div class="run-tool-trace-poll-status"
-        data-run-status="@Model.Run.StatusId"
         role="status">
       <span class="run-tool-trace-spinner" aria-hidden="true"></span>
       <span data-run-tool-trace-status>
-         @if(string.Equals(
-            Model.Run.StatusId,
-            AiJobRunStatusIds.Running,
-            StringComparison.Ordinal
-         ))
-         {
-            <text>Updates automatically every 5 seconds</text>
-         }
-         else
-         {
-            <text>Tool trace loaded</text>
-         }
+         Tool trace loaded
       </span>
    </div>
    <details class="run-data-details"

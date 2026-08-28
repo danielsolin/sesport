@@ -6,6 +6,8 @@ public static class AiProviderKinds
 
    public const string CodexCliLocal = "codex-cli-local";
 
+   public const string OpenCodeCli = "opencode-cli";
+
    public const string GoogleTranslate = "google-translate";
 
    public const string LlamaServer = "llama-server";
