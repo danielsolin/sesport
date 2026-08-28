@@ -1119,7 +1119,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             represented_entity.canonical_name
                as represented_entity_canonical_name,
             participant_start.source_url,
-            {{watchedByMemberSql}} as is_watched_by_member
+            {{watchedByMemberSql}} as is_watched_by_member,
+            represented_entity.id as represented_entity_id,
+            represented_entity.country_id
+               as represented_entity_country_id
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
@@ -1261,7 +1264,13 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                StartTimeSourceUrl = reader.IsDBNull(17)
                   ? null
                   : reader.GetString(17),
-               IsWatchedByMember = reader.GetBoolean(18)
+               IsWatchedByMember = reader.GetBoolean(18),
+               RepresentedEntityId = reader.IsDBNull(19)
+                  ? null
+                  : reader.GetGuid(19),
+               RepresentedEntityCountryId = reader.IsDBNull(20)
+                  ? null
+                  : reader.GetString(20)
             }
          );
       }

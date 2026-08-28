@@ -274,6 +274,33 @@ public class IndexModel(
       return disciplineValues.Skip(1).Any();
    }
 
+   internal static bool ShouldHideRepresentedEntityColumn(
+      IReadOnlyList<PublicActivityParticipant> participants
+   )
+   {
+      if(participants.Count == 0)
+      {
+         return false;
+      }
+
+      var representedEntityIds = participants
+         .Select(participant => participant.RepresentedEntityId)
+         .Distinct()
+         .ToArray();
+
+      return representedEntityIds.Length == 1 &&
+         representedEntityIds[0] is not null &&
+         participants.All(
+            participant =>
+               participant.HasNonNationalTeamRepresentation &&
+               string.Equals(
+                  participant.RepresentedEntityCountryId,
+                  PrimaryCountry.Id,
+                  StringComparison.OrdinalIgnoreCase
+               )
+         );
+   }
+
    internal static bool ShouldAutoExpandPastActivities(
       bool isSportToday,
       bool hasPastActivities,

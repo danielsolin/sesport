@@ -87,6 +87,10 @@ public sealed record PublicActivityParticipant(
 
    public bool HasNonNationalTeamRepresentation { get; init; }
 
+   public Guid? RepresentedEntityId { get; init; }
+
+   public string? RepresentedEntityCountryId { get; init; }
+
    public string? RepresentedEntityName { get; init; }
 
    public string? RepresentedEntityCanonicalName { get; init; }
