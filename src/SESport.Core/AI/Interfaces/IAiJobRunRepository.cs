@@ -12,6 +12,11 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
+   Task<AiRunReference?> GetOriginatingActivityRunAsync(
+      Guid activityId,
+      CancellationToken cancellationToken
+   );
+
    Task<Guid?> GetExistingRunIdAsync(
       string jobId,
       string correlationId,

@@ -1,3 +1,4 @@
+using SESport.Core.AI;
 using SESport.Core.Domain;
 
 namespace SESport.Data.Models;
@@ -229,4 +230,6 @@ public sealed class ActivityEditModel
    public Guid? AutoMergeActivityId { get; set; }
 
    public string? AutoMergeActivityTitle { get; set; }
+
+   public AiRunReference? OriginatingAiRun { get; set; }
 }

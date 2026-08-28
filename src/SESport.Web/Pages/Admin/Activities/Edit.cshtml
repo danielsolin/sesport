@@ -3,7 +3,7 @@
 @{
    ViewData["Title"] = Model.Activity.Id is null
       ? "New Activity"
-      : "Edit Activity";
+      : Model.Activity.Title;
    var generateTeaserUrl = Url.Page(
       "/Admin/Ajax/Create/ActivityTeaser"
    );
@@ -16,6 +16,7 @@
    var aiResultValueUrl = Url.Page(
       "/Admin/Ajax/Update/ActivityParticipantAiResultValue"
    );
+   var originatingAiRun = Model.Activity.OriginatingAiRun;
 }
 
 <section class="page-heading page-heading-row">
@@ -108,14 +109,11 @@
    }
    <section class="form-section"
             data-activity-ai-results>
-      <h2>Activity</h2>
       <div class="form-grid">
          <label>
-            <span>Organization</span>
-            <select asp-for="Activity.OrganizationEntityId"
-                    asp-items="Model.OrganizationEntities">
-               <option value="">Select organization</option>
-            </select>
+            <span>Title</span>
+            <input asp-for="Activity.Title" />
+            <span asp-validation-for="Activity.Title"></span>
          </label>
          <label>
             <span>Group</span>
@@ -149,9 +147,11 @@
       </div>
       <div class="form-grid">
          <label>
-            <span>Title</span>
-            <input asp-for="Activity.Title" />
-            <span asp-validation-for="Activity.Title"></span>
+            <span>Organization</span>
+            <select asp-for="Activity.OrganizationEntityId"
+                    asp-items="Model.OrganizationEntities">
+               <option value="">Select organization</option>
+            </select>
          </label>
          <label>
             <span>Activity type</span>
@@ -456,7 +456,7 @@
       {
          <div class="notice">@Model.SourceMessage</div>
       }
-      @if(Model.Activity.Sources.Count == 0)
+      @if(Model.Activity.Sources.Count == 0 && originatingAiRun is null)
       {
          <div class="notice">
             No related sources.
@@ -518,6 +518,31 @@
                            </a>
                         </td>
                         <td>@source.Title</td>
+                     </tr>
+                  }
+                  @if(originatingAiRun is not null)
+                  {
+                     var runDetailsUrl = Url.Page(
+                        "/Admin/Runs/Details",
+                        new { id = originatingAiRun.Id }
+                     );
+                     <tr class="activity-ai-origin-source">
+                        <td>
+                           @TimeDisplay.FormatLocalTimestamp(
+                              originatingAiRun.StartedAt
+                           )
+                        </td>
+                        <td>DecideParticipation</td>
+                        <td>
+                           <a class="source-url"
+                              href="@runDetailsUrl">
+                              <code>@originatingAiRun.JobLabel</code>
+                           </a>
+                        </td>
+                        <td>
+                           Run <code>@originatingAiRun.Id</code>
+                           (<code>@originatingAiRun.StatusId</code>)
+                        </td>
                      </tr>
                   }
                </tbody>

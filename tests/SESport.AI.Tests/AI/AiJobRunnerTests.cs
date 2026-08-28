@@ -748,6 +748,14 @@ public class AiJobRunnerTests
          );
       }
 
+      public Task<AiRunReference?> GetOriginatingActivityRunAsync(
+         Guid activityId,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult<AiRunReference?>(null);
+      }
+
       public Task<bool> TryClaimRunAsync(
          Guid id,
          CancellationToken cancellationToken

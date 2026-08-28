@@ -114,7 +114,23 @@ public sealed class ActivityEditPageService(
       CancellationToken cancellationToken
    )
    {
-      return await repository.GetForEditAsync(id, cancellationToken);
+      var activity = await repository.GetForEditAsync(
+         id,
+         cancellationToken
+      );
+
+      if(activity?.Id is not Guid activityId)
+      {
+         return activity;
+      }
+
+      activity.OriginatingAiRun = await runRepository
+         .GetOriginatingActivityRunAsync(
+            activityId,
+            cancellationToken
+         );
+
+      return activity;
    }
 
    public async Task<IReadOnlyList<LookupOption>>

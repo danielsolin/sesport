@@ -499,6 +499,57 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       );
    }
 
+   public async Task<AiRunReference?> GetOriginatingActivityRunAsync(
+      Guid activityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         select
+            r.id,
+            r.job_id,
+            coalesce(r.job_label, j.label, ''),
+            r.status_id,
+            r.started_at
+         from ai_job_run_applications app
+         join ai_job_runs r on r.id = app.run_id
+         left join ai_jobs j on j.id = r.job_id
+         where app.target_type = @target_type
+            and app.target_id = @target_id
+            and r.job_id = @job_id
+         order by app.applied_at asc, r.started_at asc, r.id asc
+         limit 1
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue(
+         "target_type",
+         AiJobRunApplicationTargetTypes.Activity
+      );
+      command.Parameters.AddWithValue("target_id", activityId.ToString());
+      command.Parameters.AddWithValue(
+         "job_id",
+         AiJobIds.DecidePrimaryCountryParticipation
+      );
+
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      if(!await reader.ReadAsync(cancellationToken))
+      {
+         return null;
+      }
+
+      return new AiRunReference(
+         Id: reader.GetGuid(0),
+         JobId: reader.GetString(1),
+         JobLabel: reader.GetString(2),
+         StatusId: reader.GetString(3),
+         StartedAt: reader.GetFieldValue<DateTimeOffset>(4)
+      );
+   }
+
    public Task<Guid?> GetExistingRunIdAsync(
       string jobId,
       string correlationId,
