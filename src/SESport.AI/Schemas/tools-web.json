@@ -29,13 +29,17 @@
          "name": "web_get_page",
          "parameters": {
             "type": "object",
-            "required": ["url"],
+            "required": [
+               "url"
+            ],
             "properties": {
-               "url": { "type": "string" }
+               "url": {
+                  "type": "string"
+               }
             },
             "additionalProperties": false
          },
-         "description": "Fetch text and relevant page/PDF links from a URL."
+         "description": "Fetch page text from a URL."
       }
    },
    {
@@ -58,8 +62,7 @@
             },
             "additionalProperties": false
          },
-         "description":
-            "Find case-insensitive text; return compact matching lines."
+         "description": "Do case-insensitive text search in a page."
       }
    }
 ]
