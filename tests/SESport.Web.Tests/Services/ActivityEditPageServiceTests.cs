@@ -1619,6 +1619,55 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task SaveAsyncKeepsActivityWhenAutomationFails()
+   {
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var title = $"Automation failure {Guid.NewGuid():N}";
+      Guid? savedActivityId = null;
+
+      fixture.AutomationService.ThrowOnActivityCreated = true;
+
+      try
+      {
+         var activity = new ActivityEditModel
+         {
+            Title = title,
+            ActivityType = ActivityType.Match.ToString(),
+            SportId = "football",
+            ActivityDate = DistantActivityDate,
+            TimeZoneId = SportDay.TimeZoneId
+         };
+
+         await fixture.Service.SaveAsync(
+            activity,
+            CancellationToken.None
+         );
+
+         var activityInfo = await GetActivityInfoAsync(
+            dataSource,
+            title,
+            DistantActivityDate,
+            "football"
+         );
+         savedActivityId = activityInfo.ActivityId;
+
+         Assert.NotEqual(Guid.Empty, savedActivityId);
+         Assert.Contains(
+            savedActivityId.Value,
+            fixture.AutomationService.ActivityCreatedIds
+         );
+      }
+      finally
+      {
+         if(savedActivityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, savedActivityId.Value);
+         }
+      }
+   }
+
+   [Fact]
    public async Task LoadOtherGroupDescriptionsAsyncShowsDescriptionsForCreate()
    {
       var activityGroupId = Guid.NewGuid();
@@ -2252,6 +2301,8 @@ public sealed class ActivityEditPageServiceTests
    {
       public CancellationToken CancellationToken { get; private set; }
 
+      public bool ThrowOnActivityCreated { get; set; }
+
       public List<Guid> ActivityCreatedIds { get; } = [];
 
       public List<Guid> ActivityGroupCreatedIds { get; } = [];
@@ -2263,6 +2314,14 @@ public sealed class ActivityEditPageServiceTests
       {
          CancellationToken = cancellationToken;
          ActivityCreatedIds.Add(activityId);
+
+         if(ThrowOnActivityCreated)
+         {
+            throw new InvalidOperationException(
+               "Activity automation failed."
+            );
+         }
+
          return Task.CompletedTask;
       }
 

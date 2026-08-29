@@ -595,40 +595,41 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          where a.id = @id
          """;
 
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", id);
-      await using var reader = await command.ExecuteReaderAsync(
-         cancellationToken
-      );
-
-      if(!await reader.ReadAsync(cancellationToken))
+      ActivityEditModel model;
+      await using (var command = dataSource.CreateCommand(sql))
       {
-         return null;
+         command.Parameters.AddWithValue("id", id);
+         await using var reader = await command.ExecuteReaderAsync(
+            cancellationToken
+         );
+
+         if(!await reader.ReadAsync(cancellationToken))
+         {
+            return null;
+         }
+
+         model = new ActivityEditModel
+         {
+            Id = reader.GetGuid(0),
+            Title = reader.GetString(1),
+            Description = ReadString(reader, 2),
+            Teaser = ReadString(reader, 3),
+            ActivityType = reader.GetString(4),
+            SportId = reader.GetString(5),
+            ActivityDate = reader.GetFieldValue<DateOnly>(6),
+            LocalStartTime = ReadTimeOnly(reader, 7),
+            LocalEndTime = ReadTimeOnly(reader, 8),
+            TimeZoneId = reader.GetString(9),
+            IsPublished =
+               reader.GetString(10) == ActivityPublicationStatusIds.Published,
+            TvChannelName = ReadString(reader, 11),
+            ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
+            ActivityGroupTitle = ReadString(reader, 13),
+            OrganizationEntityId = reader.IsDBNull(14)
+               ? null
+               : reader.GetGuid(14)
+         };
       }
-
-      var model = new ActivityEditModel
-      {
-         Id = reader.GetGuid(0),
-         Title = reader.GetString(1),
-         Description = ReadString(reader, 2),
-         Teaser = ReadString(reader, 3),
-         ActivityType = reader.GetString(4),
-         SportId = reader.GetString(5),
-         ActivityDate = reader.GetFieldValue<DateOnly>(6),
-         LocalStartTime = ReadTimeOnly(reader, 7),
-         LocalEndTime = ReadTimeOnly(reader, 8),
-         TimeZoneId = reader.GetString(9),
-         IsPublished =
-            reader.GetString(10) == ActivityPublicationStatusIds.Published,
-         TvChannelName = ReadString(reader, 11),
-         ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
-         ActivityGroupTitle = ReadString(reader, 13),
-         OrganizationEntityId = reader.IsDBNull(14)
-            ? null
-            : reader.GetGuid(14)
-      };
-
-      await reader.DisposeAsync();
 
       const string linkSql = """
          select entity_id, organization_entity_id
@@ -637,31 +638,33 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          order by id
          """;
 
-      await using var linkCommand = dataSource.CreateCommand(linkSql);
-      linkCommand.Parameters.AddWithValue("id", id);
-      await using var linkReader = await linkCommand.ExecuteReaderAsync(
-         cancellationToken
-      );
       Guid? legacyOrganizationEntityId = null;
       var hasLegacyOrganizationConflict = false;
-
-      while(await linkReader.ReadAsync(cancellationToken))
+      await using (var linkCommand = dataSource.CreateCommand(linkSql))
       {
-         model.LinkedEntityIds.Add(linkReader.GetGuid(0));
+         linkCommand.Parameters.AddWithValue("id", id);
+         await using var linkReader = await linkCommand.ExecuteReaderAsync(
+            cancellationToken
+         );
 
-         if(linkReader.IsDBNull(1))
+         while(await linkReader.ReadAsync(cancellationToken))
          {
-            continue;
-         }
+            model.LinkedEntityIds.Add(linkReader.GetGuid(0));
 
-         var organizationEntityId = linkReader.GetGuid(1);
-         if(legacyOrganizationEntityId is null)
-         {
-            legacyOrganizationEntityId = organizationEntityId;
-         }
-         else if(legacyOrganizationEntityId != organizationEntityId)
-         {
-            hasLegacyOrganizationConflict = true;
+            if(linkReader.IsDBNull(1))
+            {
+               continue;
+            }
+
+            var organizationEntityId = linkReader.GetGuid(1);
+            if(legacyOrganizationEntityId is null)
+            {
+               legacyOrganizationEntityId = organizationEntityId;
+            }
+            else if(legacyOrganizationEntityId != organizationEntityId)
+            {
+               hasLegacyOrganizationConflict = true;
+            }
          }
       }
 
@@ -679,25 +682,27 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          order by observed_at desc, created_at desc, id desc
          """;
 
-      await using var sourceCommand = dataSource.CreateCommand(sourceSql);
-      sourceCommand.Parameters.AddWithValue("id", id.ToString());
-      await using var sourceReader = await sourceCommand.ExecuteReaderAsync(
-         cancellationToken
-      );
-
-      while(await sourceReader.ReadAsync(cancellationToken))
+      await using (var sourceCommand = dataSource.CreateCommand(sourceSql))
       {
-         model.Sources.Add(
-            new ActivitySourceEditModel
-            {
-               Id = sourceReader.GetGuid(0),
-               Kind = sourceReader.GetString(1),
-               Url = sourceReader.GetString(2),
-               Title = ReadString(sourceReader, 3),
-               Excerpt = ReadString(sourceReader, 4),
-               ObservedAt = sourceReader.GetFieldValue<DateTimeOffset>(5)
-            }
+         sourceCommand.Parameters.AddWithValue("id", id.ToString());
+         await using var sourceReader = await sourceCommand.ExecuteReaderAsync(
+            cancellationToken
          );
+
+         while(await sourceReader.ReadAsync(cancellationToken))
+         {
+            model.Sources.Add(
+               new ActivitySourceEditModel
+               {
+                  Id = sourceReader.GetGuid(0),
+                  Kind = sourceReader.GetString(1),
+                  Url = sourceReader.GetString(2),
+                  Title = ReadString(sourceReader, 3),
+                  Excerpt = ReadString(sourceReader, 4),
+                  ObservedAt = sourceReader.GetFieldValue<DateTimeOffset>(5)
+               }
+            );
+         }
       }
 
       return model;

@@ -345,17 +345,49 @@ public sealed class ActivityEditPageService(
 
       if(createsActivityGroup && activity.ActivityGroupId is not null)
       {
-         await automationService.HandleActivityGroupCreatedAsync(
-            activity.ActivityGroupId.Value,
-            applicationLifetime.ApplicationStopping
+         await TryHandleAutomationAsync(
+            AiAutomationEventIds.ActivityGroupCreated,
+            activityId,
+            cancellationToken =>
+               automationService.HandleActivityGroupCreatedAsync(
+                  activity.ActivityGroupId.Value,
+                  cancellationToken
+               )
          );
       }
 
       if(isNew)
       {
-         await automationService.HandleActivityCreatedAsync(
+         await TryHandleAutomationAsync(
+            AiAutomationEventIds.ActivityCreated,
             activityId,
-            applicationLifetime.ApplicationStopping
+            cancellationToken =>
+               automationService.HandleActivityCreatedAsync(
+                  activityId,
+                  cancellationToken
+               )
+         );
+      }
+   }
+
+   private async Task TryHandleAutomationAsync(
+      string eventId,
+      Guid activityId,
+      Func<CancellationToken, Task> handler
+   )
+   {
+      try
+      {
+         await handler(applicationLifetime.ApplicationStopping);
+      }
+      catch(Exception exception)
+      {
+         logger.LogError(
+            exception,
+            "Activity {ActivityId} was saved, but AI automation " +
+               "event {EventId} failed.",
+            activityId,
+            eventId
          );
       }
    }

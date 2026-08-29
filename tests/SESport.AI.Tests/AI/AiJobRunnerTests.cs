@@ -186,6 +186,39 @@ public class AiJobRunnerTests
    }
 
    [Fact]
+   public async Task RunAsyncUsesIndependentTokenForToolTracePersistence()
+   {
+      using var progressCancellation = new CancellationTokenSource();
+      progressCancellation.Cancel();
+
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new ProgressReportingProviderClient(
+         progressCancellation.Token
+      );
+      var runRepository = new RecordingRunRepository();
+      var executionGate = new AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      await runner.RunAsync(
+         new AiJobRequest("job", """{"event":"test"}"""),
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         CancellationToken.None,
+         runRepository.ToolTraceCancellationToken
+      );
+   }
+
+   [Fact]
    public async Task QueueAsyncStoresPendingRun()
    {
       var jobRepository = new RecordingJobDefinitionRepository();
@@ -563,6 +596,15 @@ public class AiJobRunnerTests
    private sealed class ProgressReportingProviderClient
       : IAiProviderClient
    {
+      private readonly CancellationToken progressCancellationToken;
+
+      public ProgressReportingProviderClient(
+         CancellationToken progressCancellationToken = default
+      )
+      {
+         this.progressCancellationToken = progressCancellationToken;
+      }
+
       public IReadOnlyCollection<string> Kinds => ["llama-server"];
 
       public JsonObject CreateRequestPayload(
@@ -594,12 +636,12 @@ public class AiJobRunnerTests
             await toolTraceUpdated(
                """[{"kind":"tool","turn":1}]""",
                1,
-               cancellationToken
+               progressCancellationToken
             );
             await toolTraceUpdated(
                """[{"kind":"tool","turn":1},{"kind":"tool","turn":2}]""",
                2,
-               cancellationToken
+               progressCancellationToken
             );
          }
 
@@ -640,6 +682,11 @@ public class AiJobRunnerTests
       public int UpdateCallCount { get; private set; }
 
       public bool FailRunCalled { get; private set; }
+
+      public CancellationToken ToolTraceCancellationToken {
+         get;
+         private set;
+      }
 
       public Task StoreAsync(
          AiJobRun run,
@@ -848,6 +895,8 @@ public class AiJobRunnerTests
          CancellationToken cancellationToken
       )
       {
+         ToolTraceCancellationToken = cancellationToken;
+
          StoredRun = StoredRun is null
             ? null
             : StoredRun with

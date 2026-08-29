@@ -191,11 +191,13 @@ public sealed class AiJobRunner(
 
          try
          {
+            // Trace persistence is best effort. Do not cancel an Npgsql
+            // command with the provider process token while it is active.
             await runRepository.UpdateToolTraceAsync(
                run.Id,
                toolTraceJson,
                progressToolRoundCount,
-               progressCancellationToken
+               CancellationToken.None
             );
          }
          catch(Exception exception)
