@@ -265,13 +265,14 @@ public sealed class PublicActivityTimelineBuilder
          .Where(item => item.EndsAt is not null)
          .MaxBy(item => item.EndsAt);
       var participants = MergeParticipants(orderedActivities);
-      var hasDifferentParticipantSets =
-         HasDifferentActiveParticipantSets(orderedActivities);
+      var fullParticipantIds = GetActiveParticipantIds(participants);
       var slots = orderedActivities
          .Select(item => CreateSlot(
             item,
             now,
-            hasDifferentParticipantSets &&
+            !fullParticipantIds.SetEquals(
+               GetActiveParticipantIds(item.Participants)
+            ) &&
                !TitleContainsActiveParticipantNameParts(
                   item.Title,
                   item.Participants
@@ -317,25 +318,6 @@ public sealed class PublicActivityTimelineBuilder
          slots,
          timelineSlot
       );
-   }
-
-   private static bool HasDifferentActiveParticipantSets(
-      IReadOnlyList<ActivityListItem> activities
-   )
-   {
-      if(activities.Count < 2)
-      {
-         return false;
-      }
-
-      var firstParticipantIds = GetActiveParticipantIds(activities[0]);
-      return activities
-         .Skip(1)
-         .Any(activity =>
-            !firstParticipantIds.SetEquals(
-               GetActiveParticipantIds(activity)
-            )
-         );
    }
 
    private static bool IsInvisibleChannelVariantGroup(
@@ -443,10 +425,10 @@ public sealed class PublicActivityTimelineBuilder
    }
 
    private static HashSet<Guid> GetActiveParticipantIds(
-      ActivityListItem activity
+      IReadOnlyList<PublicActivityParticipant> participants
    )
    {
-      return activity.Participants
+      return participants
          .Where(participant => participant.IsActive)
          .Select(participant => participant.Id)
          .ToHashSet();

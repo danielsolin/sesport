@@ -832,6 +832,55 @@ public class PublicActivityTimelineBuilderTests
    }
 
    [Fact]
+   public void BuildHidesNamesWhenAnotherGroupedActivityHasNoParticipants()
+   {
+      var now = new DateTimeOffset(
+         2026,
+         7,
+         26,
+         8,
+         0,
+         0,
+         TimeSpan.FromHours(2)
+      );
+      var selectedDate = new DateOnly(2026, 7, 26);
+      var groupId = Guid.NewGuid();
+      var first = CreateActivity(
+         "Round 1",
+         selectedDate,
+         now.AddMinutes(15),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = [CreateParticipant("Participant", "08:15")]
+      };
+      var second = CreateActivity(
+         "Round 2",
+         selectedDate,
+         now.AddHours(1),
+         activityGroupId: groupId,
+         activityGroupTitle: "Tournament"
+      ) with
+      {
+         Participants = []
+      };
+
+      var builder = new PublicActivityTimelineBuilder();
+      var timeline = builder.Build(
+         [first, second],
+         selectedDate,
+         now
+      );
+      var section = Assert.Single(
+         timeline.TimelineEntries,
+         entry => !entry.IsCurrentMarker
+      ).Section!;
+
+      Assert.False(section.Slots[0].ShowParticipantNames);
+   }
+
+   [Fact]
    public void BuildHidesParticipantNamesAlreadyPresentInActivityTitle()
    {
       var now = new DateTimeOffset(
