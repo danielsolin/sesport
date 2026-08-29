@@ -788,6 +788,14 @@ public class AiJobRunnerTests
          return Task.FromResult(true);
       }
 
+      public Task<bool> UnarchiveRunAsync(
+         Guid id,
+         CancellationToken cancellationToken
+      )
+      {
+         return Task.FromResult(true);
+      }
+
       public Task FailRunAsync(
          Guid id,
          string errorMessage,

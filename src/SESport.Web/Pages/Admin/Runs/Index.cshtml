@@ -142,6 +142,22 @@
                         @Html.AntiForgeryToken()
                         <button type="submit">Delete</button>
                      </form>
+                     @if(string.Equals(
+                        run.StatusId,
+                        AiJobRunStatusIds.Archived,
+                        StringComparison.OrdinalIgnoreCase
+                     ))
+                     {
+                        <form method="post"
+                              action="@Url.Page(
+                                 "/Admin/Runs/Index",
+                                 "Unarchive",
+                                 Model.GetUnarchiveRouteValues(run.Id)
+                              )">
+                           @Html.AntiForgeryToken()
+                           <button type="submit">Unarchive</button>
+                        </form>
+                     }
                   </div>
                </td>
             </tr>

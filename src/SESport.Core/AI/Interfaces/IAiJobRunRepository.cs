@@ -49,6 +49,11 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
+   Task<bool> UnarchiveRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   );
+
    Task FailRunAsync(
       Guid id,
       string errorMessage,

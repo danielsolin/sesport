@@ -1295,6 +1295,7 @@ h2 {
 
 .ai-runs-table-actions {
    display: flex;
+   flex-direction: column;
    gap: 4px;
    align-items: center;
    white-space: nowrap;

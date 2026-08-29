@@ -821,6 +821,36 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       return await reader.ReadAsync(cancellationToken);
    }
 
+   public async Task<bool> UnarchiveRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update ai_job_runs
+         set status_id = @completed_status
+         where id = @id
+            and status_id = @archived_status
+         returning id
+         """;
+
+      await using var command = dataSource.CreateCommand(sql);
+      command.Parameters.AddWithValue("id", id);
+      command.Parameters.AddWithValue(
+         "archived_status",
+         AiJobRunStatusIds.Archived
+      );
+      command.Parameters.AddWithValue(
+         "completed_status",
+         AiJobRunStatusIds.Completed
+      );
+      await using var reader = await command.ExecuteReaderAsync(
+         cancellationToken
+      );
+
+      return await reader.ReadAsync(cancellationToken);
+   }
+
    public async Task FailRunAsync(
       Guid id,
       string errorMessage,

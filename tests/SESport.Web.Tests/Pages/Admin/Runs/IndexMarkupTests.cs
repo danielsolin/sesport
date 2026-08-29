@@ -25,6 +25,8 @@ public sealed class IndexMarkupTests
       Assert.Contains("ai-runs-name-link", html);
       Assert.Contains("GetDetailsRouteValues(run.Id)", html);
       Assert.Contains("GetDeleteRouteValues(run.Id)", html);
+      Assert.Contains("GetUnarchiveRouteValues(run.Id)", html);
+      Assert.Contains(">Unarchive<", html);
       Assert.Contains("AntiForgeryToken", html);
       Assert.Contains("multiple=\"multiple\"", html);
       Assert.DoesNotContain(">Apply<", html);

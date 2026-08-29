@@ -858,6 +858,60 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
+   public async Task UnarchiveRunAsyncRestoresCompletedStatus()
+   {
+      var providerId = $"test-provider-{Guid.NewGuid():N}";
+      var jobId = $"test-job-{Guid.NewGuid():N}";
+      var promptId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AiRepository(dataSource);
+
+      await InsertProviderAsync(dataSource, providerId);
+      await InsertJobAsync(dataSource, jobId, providerId);
+      await InsertPromptAsync(dataSource, promptId, jobId);
+      await InsertRunAsync(
+         dataSource,
+         runId,
+         jobId,
+         promptId,
+         providerId,
+         statusId: AiJobRunStatusIds.Archived
+      );
+
+      try
+      {
+         var unarchived = await repository.UnarchiveRunAsync(
+            runId,
+            CancellationToken.None
+         );
+
+         Assert.True(unarchived);
+
+         await using var connection = await dataSource.OpenConnectionAsync();
+         await using var command = connection.CreateCommand();
+         command.CommandText = """
+            select status_id
+            from ai_job_runs
+            where id = @id
+            """;
+         command.Parameters.AddWithValue("id", runId);
+
+         await using var reader = await command.ExecuteReaderAsync();
+         Assert.True(await reader.ReadAsync());
+         Assert.Equal(AiJobRunStatusIds.Completed, reader.GetString(0));
+      }
+      finally
+      {
+         await DeleteRunAsync(dataSource, runId);
+         await DeletePromptAsync(dataSource, promptId);
+         await DeleteJobAsync(dataSource, jobId);
+         await DeleteProviderAsync(dataSource, providerId);
+      }
+   }
+
+   [Fact]
    public async Task FailStaleRunningRunsAsyncMarksOldRunsAsFailed()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";

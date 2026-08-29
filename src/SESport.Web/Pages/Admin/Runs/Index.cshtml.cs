@@ -115,6 +115,22 @@ public class IndexModel(
       );
    }
 
+   public async Task<IActionResult> OnPostUnarchiveAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!await repository.UnarchiveRunAsync(id, cancellationToken))
+      {
+         return NotFound();
+      }
+
+      return RedirectToPage(
+         "./Index",
+         GetFilterRouteValues()
+      );
+   }
+
    public IReadOnlyList<SelectListItem> GetExecutionEnvironmentOptions(
       string? selectedExecutionEnvironment
    )
@@ -241,6 +257,11 @@ public class IndexModel(
    }
 
    public Dictionary<string, string> GetDeleteRouteValues(Guid id)
+   {
+      return GetDetailsRouteValues(id);
+   }
+
+   public Dictionary<string, string> GetUnarchiveRouteValues(Guid id)
    {
       return GetDetailsRouteValues(id);
    }

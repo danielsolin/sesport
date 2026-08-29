@@ -173,6 +173,12 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    ) =>
       jobRuns.ArchiveRunAsync(id, cancellationToken);
 
+   public Task<bool> UnarchiveRunAsync(
+      Guid id,
+      CancellationToken cancellationToken
+   ) =>
+      jobRuns.UnarchiveRunAsync(id, cancellationToken);
+
    public Task FailRunAsync(
       Guid id,
       string errorMessage,
