@@ -9,4 +9,6 @@ public sealed record PublicSiteOptions
       "Svenskar i internationell sport på TV";
 
    public int MaxVisibleParticipants { get; init; } = 3;
+
+   public IReadOnlyList<string> BlockedSourceHosts { get; init; } = [];
 }

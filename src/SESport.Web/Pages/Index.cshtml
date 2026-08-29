@@ -5,6 +5,8 @@
 @{
    var maxVisibleParticipants =
       Model.PublicSiteOptions.MaxVisibleParticipants;
+   var blockedSourceHosts =
+      Model.PublicSiteOptions.BlockedSourceHosts;
    var highestWatchPriorityLabel =
       "Högsta bevakningsprioritet";
    var isFilteredView =
@@ -368,6 +370,10 @@ else
          var isGrouped = agendaSection.ActivityGroupTitle is not null;
          var allActivitySources = agendaSection.Activities
             .SelectMany(item => item.Sources)
+            .Where(source => SourceDisplay.IsPubliclyVisibleSourceUrl(
+               source.Url,
+               blockedSourceHosts
+            ))
             .ToList();
          var streamSources = SourceDisplay.OrderDistinctByUrl(
             allActivitySources.Where(source =>
@@ -631,6 +637,13 @@ else
                                     SourceKinds.StreamLink,
                                     StringComparison.OrdinalIgnoreCase
                                  ))
+                                 .Where(source =>
+                                    SourceDisplay
+                                       .IsPubliclyVisibleSourceUrl(
+                                          source.Url,
+                                          blockedSourceHosts
+                                       )
+                                 )
                                  .ToList();
                               var slotChannels = slot.TvChannels
                                  .Concat(
@@ -989,7 +1002,12 @@ else
                                              ) &&
                                              !string.IsNullOrWhiteSpace(
                                                 sourceUrl
-                                             );
+                                             ) &&
+                                             SourceDisplay
+                                                .IsPubliclyVisibleSourceUrl(
+                                                   sourceUrl,
+                                                   blockedSourceHosts
+                                                );
                                           <td class=
                                          "activity-participant-col-start-time">
                                              @if(hasStartTimeSource)

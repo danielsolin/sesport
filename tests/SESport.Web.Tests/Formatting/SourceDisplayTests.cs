@@ -104,6 +104,24 @@ public sealed class SourceDisplayTests
       );
    }
 
+   [Theory]
+   [InlineData("https://blocked.example/event", false)]
+   [InlineData("https://subdomain.blocked.example/event", false)]
+   [InlineData("https://blocked.example.other/event", true)]
+   [InlineData("https://allowed.example/event", true)]
+   public void IsPubliclyVisibleSourceUrlMatchesConfiguredHost(
+      string sourceUrl,
+      bool expected
+   )
+   {
+      var result = SourceDisplay.IsPubliclyVisibleSourceUrl(
+         sourceUrl,
+         ["blocked.example"]
+      );
+
+      Assert.Equal(expected, result);
+   }
+
    [Fact]
    public void OrderDistinctByUrlKeepsOneRowAndSortsByTranslatedKind()
    {

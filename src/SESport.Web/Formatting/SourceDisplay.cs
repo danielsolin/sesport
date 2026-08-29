@@ -27,6 +27,53 @@ public static class SourceDisplay
       };
    }
 
+   public static bool IsPubliclyVisibleSourceUrl(
+      string? sourceUrl,
+      IEnumerable<string> blockedSourceHosts
+   )
+   {
+      if(
+         string.IsNullOrWhiteSpace(sourceUrl) ||
+         !Uri.TryCreate(
+            sourceUrl,
+            UriKind.Absolute,
+            out var parsedUrl
+         )
+      )
+      {
+         return true;
+      }
+
+      var sourceHost = parsedUrl.Host.TrimEnd('.');
+
+      return !blockedSourceHosts.Any(blockedHost =>
+         IsBlockedHost(sourceHost, blockedHost)
+      );
+   }
+
+   private static bool IsBlockedHost(
+      string sourceHost,
+      string blockedHost
+   )
+   {
+      var normalizedBlockedHost = blockedHost.Trim().Trim('.');
+
+      if(string.IsNullOrWhiteSpace(normalizedBlockedHost))
+      {
+         return false;
+      }
+
+      return string.Equals(
+            sourceHost,
+            normalizedBlockedHost,
+            StringComparison.OrdinalIgnoreCase
+         ) ||
+         sourceHost.EndsWith(
+            "." + normalizedBlockedHost,
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
    public static ActivitySourceListItem? FindStreamLinkForChannel(
       IEnumerable<ActivitySourceListItem> sources,
       string channel
