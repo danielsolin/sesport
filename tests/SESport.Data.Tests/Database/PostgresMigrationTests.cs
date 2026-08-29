@@ -521,6 +521,32 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void ParticipantAiResultsSurviveSourceDeletion()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "038_preserve_ai_results_on_source_delete.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains(
+         "alter column source_id drop not null",
+         migration
+      );
+      Assert.Contains(
+         "drop constraint activity_participant_ai_results_source_id_fkey",
+         migration
+      );
+      Assert.Contains(
+         "on delete set null",
+         migration
+      );
+   }
+
+   [Fact]
    public void FactSourceLinksMigrationConnectsFactsAndSources()
    {
       var migration = File.ReadAllText(

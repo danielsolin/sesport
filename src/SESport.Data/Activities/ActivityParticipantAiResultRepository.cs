@@ -233,7 +233,7 @@ public sealed class ActivityParticipantAiResultRepository(
             src.excerpt
          from activity_participant_ai_results r
          left join entities e on e.id = r.entity_id
-         join sources src on src.id = r.source_id
+         left join sources src on src.id = r.source_id
          where r.activity_id = @activity_id
          order by r.job_id, r.sort_order, r.id
          """;
@@ -541,13 +541,18 @@ public sealed class ActivityParticipantAiResultRepository(
       return id;
    }
 
-   private static SourceEvidenceDraft ReadSourceEvidence(
+   private static SourceEvidenceDraft? ReadSourceEvidence(
       NpgsqlDataReader reader,
       int urlOrdinal,
       int titleOrdinal,
       int excerptOrdinal
    )
    {
+      if(reader.IsDBNull(urlOrdinal))
+      {
+         return null;
+      }
+
       return new SourceEvidenceDraft(
          reader.GetString(urlOrdinal),
          PostgresHelpers.ReadNullableString(reader, titleOrdinal),
@@ -617,7 +622,7 @@ public sealed class ActivityParticipantAiResultRepository(
          string fieldKey,
          string? valueText,
          string valueJson,
-         SourceEvidenceDraft source
+         SourceEvidenceDraft? source
       )
       {
          var value = new ValueBuilder(
@@ -628,9 +633,13 @@ public sealed class ActivityParticipantAiResultRepository(
             valueText,
             valueJson
          );
-         value.Sources.Add(source);
+         if(source is not null)
+         {
+            value.Sources.Add(source);
+            AddCheckedSource(source);
+         }
+
          Values.Add(value);
-         AddCheckedSource(source);
          return value;
       }
 

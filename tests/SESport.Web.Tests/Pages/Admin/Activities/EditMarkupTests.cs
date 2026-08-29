@@ -186,6 +186,46 @@ public sealed class EditMarkupTests
    }
 
    [Fact]
+   public async Task EditPageOffersSourceDeletionAction()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml"
+      );
+      var cssPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/wwwroot/css/site.css"
+      );
+      var pageModelPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Activities/Edit.cshtml.cs"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+      var css = await File.ReadAllTextAsync(cssPath);
+      var pageModel = await File.ReadAllTextAsync(pageModelPath);
+
+      Assert.Contains("source-actions-column", html);
+      Assert.Contains("form=\"delete-source-@source.Id\"", html);
+      Assert.Contains("DeleteSource", html);
+      Assert.Contains(
+         "onsubmit=\"return confirm('Are you sure?');\"",
+         html
+      );
+      Assert.Contains(
+         ".entity-sources-table .source-actions-column",
+         css
+      );
+      Assert.Contains("OnPostDeleteSourceAsync", pageModel);
+      Assert.Contains(
+         "source.CorrelationType != SourceCorrelationTypes.Activity",
+         pageModel
+      );
+   }
+
+   [Fact]
    public async Task EditPageOffersActivityAiJobRunner()
    {
       var repoRoot = Path.GetFullPath(

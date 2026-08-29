@@ -1226,6 +1226,7 @@ public sealed class ActivityRepositoryTests
       var resultRepository = new ActivityParticipantAiResultRepository(
          dataSource
       );
+      var sourceRepository = new SourceReferenceRepository(dataSource);
       var jobContext = await LoadJobContextAsync(
          dataSource,
          AiJobIds.FindParticipantsStart
@@ -1289,6 +1290,44 @@ public sealed class ActivityRepositoryTests
             sourceUrl,
             participant.StartTimeSourceUrl
          );
+
+         var persistedSource = Assert.Single(
+            await sourceRepository.GetByCorrelationAsync(
+               SourceCorrelationTypes.Activity,
+               activityId.ToString(),
+               SourceKinds.ParticipantStartEvidence,
+               CancellationToken.None
+            )
+         );
+         await sourceRepository.DeleteAsync(
+            persistedSource.Id,
+            CancellationToken.None
+         );
+
+         var retainedResultSet = Assert.Single(
+            await resultRepository.GetForActivityAsync(
+               activityId,
+               CancellationToken.None
+            )
+         );
+         var retainedValue = Assert.Single(retainedResultSet.Values);
+         Assert.Equal("12:30", retainedValue.ValueText);
+         Assert.Empty(retainedValue.Sources);
+
+         var activitiesAfterSourceDelete =
+            await repository.GetPublishedForDateAsync(
+               selectedDate,
+               CancellationToken.None
+            );
+         var activityAfterSourceDelete = Assert.Single(
+            activitiesAfterSourceDelete,
+            item => item.Id == activityId
+         );
+         var participantAfterSourceDelete = Assert.Single(
+            activityAfterSourceDelete.Participants
+         );
+         Assert.Equal("12:30", participantAfterSourceDelete.StartTime);
+         Assert.Null(participantAfterSourceDelete.StartTimeSourceUrl);
 
          await using(var updateCommand = dataSource.CreateCommand(
             """

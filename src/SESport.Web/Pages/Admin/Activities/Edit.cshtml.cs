@@ -293,6 +293,37 @@ public class EditModel(
       return RedirectToEdit(id, returnUrl);
    }
 
+   public async Task<IActionResult> OnPostDeleteSourceAsync(
+      Guid id,
+      Guid sourceId,
+      string? returnUrl,
+      CancellationToken cancellationToken
+   )
+   {
+      var source = await sourceRepository.GetAsync(
+         sourceId,
+         cancellationToken
+      );
+
+      if(source is null ||
+         source.CorrelationType != SourceCorrelationTypes.Activity ||
+         source.CorrelationId != id.ToString())
+      {
+         return NotFound();
+      }
+
+      await sourceRepository.DeleteAsync(sourceId, cancellationToken);
+
+      return RedirectToPage(
+         "./Edit",
+         new
+         {
+            id,
+            returnUrl = GetLocalReturnUrl(returnUrl)
+         }
+      );
+   }
+
    public async Task<IActionResult> OnPostSetParticipantActiveAsync(
       Guid id,
       Guid entityId,

@@ -574,6 +574,10 @@ h2 {
    width: 14%;
 }
 
+.entity-sources-table .source-actions-column {
+   width: 4rem;
+}
+
 .entity-sources-table .source-excerpt-column {
    width: 14%;
 }

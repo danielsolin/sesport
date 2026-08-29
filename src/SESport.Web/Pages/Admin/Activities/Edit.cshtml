@@ -472,6 +472,7 @@
                   <col class="source-kind-column" />
                   <col class="source-url-column" />
                   <col class="source-title-column" />
+                  <col class="source-actions-column" />
                </colgroup>
                <thead>
                   <tr>
@@ -479,6 +480,7 @@
                      <th>Kind</th>
                      <th>Source</th>
                      <th>Title</th>
+                     <th></th>
                   </tr>
                </thead>
                <tbody>
@@ -518,6 +520,15 @@
                            </a>
                         </td>
                         <td>@source.Title</td>
+                        <td class="table-actions">
+                           @if(source.Id is not null)
+                           {
+                              <button type="submit"
+                                      form="delete-source-@source.Id">
+                                 Delete
+                              </button>
+                           }
+                        </td>
                      </tr>
                   }
                   @if(originatingAiRun is not null)
@@ -543,6 +554,7 @@
                            Run <code>@originatingAiRun.Id</code>
                            (<code>@originatingAiRun.StatusId</code>)
                         </td>
+                        <td></td>
                      </tr>
                   }
                </tbody>
@@ -581,6 +593,21 @@
       </button>
    </section>
 </form>
+
+@foreach(var source in Model.Activity.Sources)
+{
+   @if(source.Id is Guid sourceId)
+   {
+      <form id="delete-source-@sourceId"
+            method="post"
+            asp-page-handler="DeleteSource"
+            asp-route-id="@Model.Activity.Id"
+            asp-route-sourceId="@sourceId"
+            onsubmit="return confirm('Are you sure?');">
+         <input asp-for="ReturnUrl" type="hidden" />
+      </form>
+   }
+}
 
 @foreach(var fact in Model.Facts)
 {
