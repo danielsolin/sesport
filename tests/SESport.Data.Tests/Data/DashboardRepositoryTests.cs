@@ -57,6 +57,59 @@ public sealed class DashboardRepositoryTests
    }
 
    [Fact]
+   public async Task GetAsyncReportsOneMissingStartTimeForPublicGroup()
+   {
+      var activityDate = DistantActivityDate;
+      var now = ToUtc(activityDate, new TimeOnly(8, 0));
+      var activityGroupId = Guid.NewGuid();
+      var currentActivityId = Guid.NewGuid();
+      var variantActivityId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var runId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+
+      try
+      {
+         await InsertTestDataAsync(
+            dataSource,
+            activityDate,
+            activityGroupId,
+            currentActivityId,
+            variantActivityId,
+            personId,
+            runId,
+            string.Empty,
+            true
+         );
+
+         var repository = new DashboardRepository(dataSource);
+         var dashboard = await repository.GetAsync(
+            now,
+            CancellationToken.None
+         );
+         var groupIssues = dashboard.ActivityIssues
+            .Where(item => item.Id == currentActivityId ||
+               item.Id == variantActivityId)
+            .ToList();
+
+         var issue = Assert.Single(groupIssues);
+         Assert.True(issue.HasMissingParticipantStartTime);
+      }
+      finally
+      {
+         await DeleteTestDataAsync(
+            dataSource,
+            activityGroupId,
+            currentActivityId,
+            variantActivityId,
+            personId,
+            runId
+         );
+      }
+   }
+
+   [Fact]
    public async Task GetAsyncReturnsCoverageAndHealth()
    {
       await using var dataSource = CreateDataSource();
@@ -104,7 +157,9 @@ public sealed class DashboardRepositoryTests
       Guid currentActivityId,
       Guid variantActivityId,
       Guid personId,
-      Guid runId
+      Guid runId,
+      string variantStartTime = "10:30",
+      bool includeDescription = false
    )
    {
       var currentStartsAt = ToUtc(activityDate, new TimeOnly(10, 0));
@@ -180,7 +235,9 @@ public sealed class DashboardRepositoryTests
          (
             @current_activity_id,
             @current_title,
-            null,
+            case when @include_description
+               then 'Dashboard grouping test'
+            end,
             'Match',
             'golf',
             @activity_date,
@@ -198,7 +255,9 @@ public sealed class DashboardRepositoryTests
          (
             @variant_activity_id,
             @variant_title,
-            null,
+            case when @include_description
+               then 'Dashboard grouping test'
+            end,
             'Match',
             'golf',
             @activity_date,
@@ -296,8 +355,8 @@ public sealed class DashboardRepositoryTests
             @run_id,
             @person_id,
             @field_key,
-            '10:30',
-            '"10:30"'::jsonb,
+            @variant_start_time,
+            to_jsonb(@variant_start_time::text),
             @source_id,
             0
          );
@@ -393,6 +452,14 @@ public sealed class DashboardRepositoryTests
       command.Parameters.AddWithValue(
          "field_key",
          ActivityParticipantAiFieldKeys.StartTime
+      );
+      command.Parameters.AddWithValue(
+         "variant_start_time",
+         variantStartTime
+      );
+      command.Parameters.AddWithValue(
+         "include_description",
+         includeDescription
       );
 
       await command.ExecuteNonQueryAsync();

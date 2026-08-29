@@ -84,14 +84,18 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                a.id,
                a.activity_group_id,
                a.updated_at,
+               a.created_at,
                coalesce(ag.no_grouping, false) as no_grouping,
                coalesce(s.is_team_sport, false) as is_team_sport,
-               upper(regexp_replace(
-                  btrim(a.title),
-                  '[[:space:]]+',
-                  ' ',
-                  'g'
-               )) as normalized_title,
+               case
+                  when coalesce(s.is_team_sport, false)
+                  then upper(regexp_replace(
+                     btrim(a.title),
+                     '[[:space:]]+',
+                     ' ',
+                     'g'
+                  ))
+               end as normalized_title,
                case
                   when coalesce(
                      ag.public_date_mode,
@@ -240,7 +244,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                                     )
                               )
                         )
-                  ) as missing_participant_start_time,
+                  ) as activity_missing_participant_start_time,
                a.publication_status_id = @published_status
                   and exists (
                      select 1
@@ -278,6 +282,56 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                   )
                ) at time zone a.time_zone_id
                ) > @now
+         ),
+         missing_start_groups as (
+            select
+               variant.activity_group_id,
+               variant.display_date,
+               variant.is_team_sport,
+               variant.normalized_title,
+               (
+                  array_agg(
+                     variant.id
+                     order by variant.created_at, variant.id
+                  )
+               )[1] as representative_id
+            from public_activity_variants variant
+            join upcoming activity
+               on activity.id = variant.id
+            where variant.activity_group_id is not null
+               and not variant.no_grouping
+               and activity.activity_missing_participant_start_time
+            group by
+               variant.activity_group_id,
+               variant.display_date,
+               variant.is_team_sport,
+               variant.normalized_title
+         ),
+         dashboard_issues as (
+            select
+               activity.*,
+               activity.activity_missing_participant_start_time
+                  and (
+                     public_variant.id is null
+                     or public_variant.activity_group_id is null
+                     or public_variant.no_grouping
+                     or coalesce(
+                        missing_group.representative_id = activity.id,
+                        false
+                     )
+                  ) as missing_participant_start_time
+            from upcoming activity
+            left join public_activity_variants public_variant
+               on public_variant.id = activity.id
+            left join missing_start_groups missing_group
+               on missing_group.activity_group_id =
+                  public_variant.activity_group_id
+               and missing_group.display_date =
+                  public_variant.display_date
+               and missing_group.is_team_sport =
+                  public_variant.is_team_sport
+               and missing_group.normalized_title is not distinct from
+                  public_variant.normalized_title
          )
          select
             id,
@@ -292,7 +346,7 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             missing_participant_start_time,
             participant_missing_person_data,
             participant_activity_date
-         from upcoming
+         from dashboard_issues
          where publication_status_id = @draft_status
             or missing_description
             or no_participants
