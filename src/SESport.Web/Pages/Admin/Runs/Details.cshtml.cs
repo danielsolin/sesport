@@ -19,6 +19,7 @@ public class DetailsModel(
       "Conversation history summary:";
    private const string DiagnosticPayloadPurgedMessage =
       "Removed by retention policy.";
+   private const string OpenCodeReasoningEventType = "reasoning";
 
    public AiRunDetail? Run { get; private set; }
 
@@ -510,6 +511,11 @@ public class DetailsModel(
    public static TokenUsageViewModel? BuildTokenUsage(AiRunDetail run)
    {
       var usage = ParseTokenUsage(run.RawResponseJson);
+      var isOpenCode = string.Equals(
+         run.ProviderKind,
+         AiProviderKinds.OpenCodeCli,
+         StringComparison.Ordinal
+      );
       var inputTokens = run.InputTokens ?? ReadTokenCount(
          usage,
          "input_tokens",
@@ -537,6 +543,14 @@ public class DetailsModel(
          "cache_write_tokens",
          "cache_creation_tokens"
       );
+
+      if(isOpenCode && inputTokens is not null)
+      {
+         inputTokens = inputTokens.Value +
+            (cachedInputTokens ?? 0) +
+            (cacheWriteInputTokens ?? 0);
+      }
+
       var uncachedInputTokens = ReadTokenCount(
          usage,
          "input_uncached_tokens",
@@ -558,6 +572,14 @@ public class DetailsModel(
          "output_tokens_details",
          "reasoning_tokens"
       );
+      var hasUnreportedReasoning = isOpenCode &&
+         reasoningTokens == 0 &&
+         HasOpenCodeReasoningContent(run.RawResponseJson);
+
+      if(hasUnreportedReasoning)
+      {
+         reasoningTokens = null;
+      }
 
       if(uncachedInputTokens is null &&
          inputTokens is not null &&
@@ -578,7 +600,8 @@ public class DetailsModel(
          uncachedInputTokens is null &&
          cacheWriteInputTokens is null &&
          outputTokens is null &&
-         reasoningTokens is null)
+         reasoningTokens is null &&
+         !hasUnreportedReasoning)
       {
          return null;
       }
@@ -589,7 +612,8 @@ public class DetailsModel(
          uncachedInputTokens,
          cacheWriteInputTokens,
          outputTokens,
-         reasoningTokens
+         reasoningTokens,
+         hasUnreportedReasoning
       );
    }
 
@@ -650,6 +674,56 @@ public class DetailsModel(
       {
          return null;
       }
+   }
+
+   private static bool HasOpenCodeReasoningContent(
+      string? rawResponseJson
+   )
+   {
+      if(string.IsNullOrWhiteSpace(rawResponseJson))
+      {
+         return false;
+      }
+
+      try
+      {
+         using var document = JsonDocument.Parse(rawResponseJson);
+         var root = document.RootElement;
+
+         if(!root.TryGetProperty("events", out var events) ||
+            events.ValueKind != JsonValueKind.Array)
+         {
+            return false;
+         }
+
+         foreach(var eventNode in events.EnumerateArray())
+         {
+            if(!eventNode.TryGetProperty("type", out var type) ||
+               type.ValueKind != JsonValueKind.String ||
+               !string.Equals(
+                  type.GetString(),
+                  OpenCodeReasoningEventType,
+                  StringComparison.Ordinal
+               ) ||
+               !eventNode.TryGetProperty("part", out var part) ||
+               part.ValueKind != JsonValueKind.Object ||
+               !part.TryGetProperty("text", out var text) ||
+               text.ValueKind != JsonValueKind.String)
+            {
+               continue;
+            }
+
+            if(!string.IsNullOrWhiteSpace(text.GetString()))
+            {
+               return true;
+            }
+         }
+      }
+      catch(JsonException)
+      {
+      }
+
+      return false;
    }
 
    private static int? ReadNestedTokenCount(
@@ -785,6 +859,7 @@ public class DetailsModel(
       int? UncachedInputTokens,
       int? CacheWriteInputTokens,
       int? OutputTokens,
-      int? ReasoningTokens
+      int? ReasoningTokens,
+      bool HasUnreportedReasoning = false
    );
 }

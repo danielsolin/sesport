@@ -16,7 +16,8 @@ EnvironmentFile=/home/daniel/sesport/.env
 
 ExecStart=/usr/bin/dotnet \
    run \
-   --no-build \
+   --configuration Release \
+   --no-launch-profile \
    --urls http://0.0.0.0:5109
 
 Restart=always

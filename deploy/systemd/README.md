@@ -7,9 +7,15 @@ services or timer you want active.
 The SESport web services load `/home/daniel/sesport/.env` through
 `EnvironmentFile`. Keep the single active PostgreSQL connection there.
 
-The `dotnet-run.service` unit runs the local development web app from
-`/home/daniel/sesport/src/SESport.Web` with `dotnet run --no-build` on port
-5109. It does not enable Browser Refresh or Hot Reload.
+The `dotnet-run.service` unit runs the local web app from
+`/home/daniel/sesport/src/SESport.Web` with the Release build configuration
+and the Development runtime environment. It builds on start with:
+
+```text
+dotnet run --configuration Release
+```
+
+It does not enable Browser Refresh or Hot Reload.
 
 The separate `sesport-dev.service` unit runs
 `/home/daniel/sesport/src/SESport.Web` with `dotnet watch`. Changes to source

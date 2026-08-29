@@ -188,13 +188,23 @@
                   )</dd>
                </div>
             }
-            @if(Model.TokenUsage.ReasoningTokens is not null)
+            @if(Model.TokenUsage.ReasoningTokens is not null ||
+               Model.TokenUsage.HasUnreportedReasoning)
             {
                <div>
                   <dt>Reasoning tokens</dt>
-                  <dd>@DetailsModel.FormatTokenCount(
-                     Model.TokenUsage.ReasoningTokens
-                  )</dd>
+                  <dd>
+                     @if(Model.TokenUsage.ReasoningTokens is not null)
+                     {
+                        @DetailsModel.FormatTokenCount(
+                           Model.TokenUsage.ReasoningTokens
+                        )
+                     }
+                     else
+                     {
+                        <span>N/A</span>
+                     }
+                  </dd>
                </div>
             }
          </dl>
