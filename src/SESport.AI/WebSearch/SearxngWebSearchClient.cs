@@ -133,7 +133,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                   throw;
                }
 
-               LogRetryWait(
+               LogRetry(
                   engine,
                   query,
                   exception.Message,
@@ -150,7 +150,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
                   throw;
                }
 
-               LogRetryWait(
+               LogRetry(
                   engine,
                   query,
                   exception.Message,
@@ -315,7 +315,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
          code is System.Net.HttpStatusCode.GatewayTimeout;
    }
 
-   private void LogRetryWait(
+   private void LogRetry(
       string engine,
       string query,
       string reason,
@@ -324,7 +324,7 @@ public sealed class SearxngWebSearchClient : IWebSearchClient
    {
       Logger?.LogWarning(
          "SearXNG search failed for {Query} using {Engine} with " +
-         "{FailureType}: {Reason}. Waiting before retrying.",
+         "{FailureType}: {Reason} Trying next engine.",
          query,
          engine,
          failureType,
