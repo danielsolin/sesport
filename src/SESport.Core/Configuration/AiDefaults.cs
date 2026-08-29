@@ -12,7 +12,7 @@ public static class AiDefaults
    public const int OpenRouterMaxRateLimitRetries = 5;
 
    public static readonly TimeSpan OpenRouterHttpClientTimeout =
-      TimeSpan.FromSeconds(300);
+      TimeSpan.FromMinutes(90);
    public static readonly TimeSpan LlamaServerHttpClientTimeout =
       TimeSpan.FromMinutes(20);
    public static readonly TimeSpan SearxngHttpClientTimeout =

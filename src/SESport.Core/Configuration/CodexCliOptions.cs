@@ -8,5 +8,5 @@ public sealed class CodexCliOptions
 
    public string? WorkingDirectory { get; set; }
 
-   public int TimeoutSeconds { get; set; } = 1200;
+   public int TimeoutSeconds { get; set; } = 3600;
 }
