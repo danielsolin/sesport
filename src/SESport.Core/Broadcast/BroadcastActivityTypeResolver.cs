@@ -120,6 +120,7 @@ public static class BroadcastActivityTypeResolver
          SportIds.Motocross or
          SportIds.Motorsport or
          SportIds.Rally or
+         SportIds.Sailing or
          SportIds.Speedway;
    }
 

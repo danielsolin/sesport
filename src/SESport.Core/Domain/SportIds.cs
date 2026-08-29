@@ -13,6 +13,7 @@ public static class SportIds
    public const string Motocross = "motocross";
    public const string Motorsport = "motorsport";
    public const string Rally = "rally";
+   public const string Sailing = "sailing";
    public const string Speedway = "speedway";
    public const string TableTennis = "table-tennis";
    public const string Tennis = "tennis";
