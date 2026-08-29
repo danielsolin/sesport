@@ -25,15 +25,15 @@ public class BroadcastListDisplayFormatterTests
    }
 
    [Fact]
-   public void FormatSourceLabel_ReturnsCompactLabel()
+   public void FormatSourceLabel_ReturnsNeutralLabel()
    {
       Assert.Equal(
-         "U",
-         BroadcastListDisplayFormatter.FormatSourceLabel("tvnu")
+         "S",
+         BroadcastListDisplayFormatter.FormatSourceLabel("source-a")
       );
       Assert.Equal(
-         "M",
-         BroadcastListDisplayFormatter.FormatSourceLabel("tvmatchen")
+         "S",
+         BroadcastListDisplayFormatter.FormatSourceLabel("source-b")
       );
    }
 

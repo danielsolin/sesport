@@ -53,12 +53,7 @@ public static class BroadcastListDisplayFormatter
 
    public static string FormatSourceLabel(string sourceKey)
    {
-      return sourceKey switch
-      {
-         "tvnu" => "U",
-         "tvmatchen" => "M",
-         _ => sourceKey
-      };
+      return string.IsNullOrWhiteSpace(sourceKey) ? "-" : "S";
    }
 
    public static string FormatGroupValue(

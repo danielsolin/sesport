@@ -43,8 +43,8 @@ public sealed class StreamLinkUrlNormalizerTests
    public void TryNormalizeRemovesTrackingQueryParameters()
    {
       var normalized = StreamLinkUrlNormalizer.TryNormalize(
-         "https://play.example/video?id=123&utm_source=tv.nu&" +
-         "tag=tvnu0f-21",
+         "https://play.example/video?id=123&utm_source=search.example&" +
+         "tag=campaign0f-21",
          out var normalizedUrl
       );
 
