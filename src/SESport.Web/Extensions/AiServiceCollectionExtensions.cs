@@ -27,6 +27,7 @@ public static class AiServiceCollectionExtensions
       );
       services.AddScoped<AiAdminRepository>();
       services.AddSingleton<AiJobExecutionGate>();
+      services.AddSingleton<AiPendingRunWakeSignal>();
       services.AddSingleton<IAiPromptRenderer, TemplatePromptRenderer>();
       services.AddSingleton<SearchRateLimiter>();
       services.AddSingleton<WebSearchCache>();

@@ -5,7 +5,8 @@ namespace SESport.Web.Workers;
 
 public sealed class AiPendingRunWorker(
    IServiceScopeFactory scopeFactory,
-   ILogger<AiPendingRunWorker> logger
+   ILogger<AiPendingRunWorker> logger,
+   AiPendingRunWakeSignal pendingRunWakeSignal
 ) : BackgroundService
 {
    protected override async Task ExecuteAsync(
@@ -39,16 +40,11 @@ public sealed class AiPendingRunWorker(
                   continue;
                }
 
-               if(activeRuns.Count > 0)
-               {
-                  await Task.WhenAny(activeRuns.Values);
-                  continue;
-               }
-
-               await Task.Delay(
-                  AiWorkerDefaults.PendingRunPollInterval,
+               await WaitForWorkAsync(
+                  activeRuns.Values,
                   stoppingToken
                );
+               continue;
             }
             catch(OperationCanceledException)
                when(stoppingToken.IsCancellationRequested)
@@ -72,6 +68,37 @@ public sealed class AiPendingRunWorker(
       finally
       {
          await ObserveAllRunsAsync(activeRuns, stoppingToken);
+      }
+   }
+
+   private async Task WaitForWorkAsync(
+      IEnumerable<Task> activeRuns,
+      CancellationToken stoppingToken
+   )
+   {
+      using var waitCancellation =
+         CancellationTokenSource.CreateLinkedTokenSource(
+            stoppingToken
+         );
+      var signalTask = pendingRunWakeSignal.WaitAsync(
+         waitCancellation.Token
+      ).AsTask();
+      var pollTask = Task.Delay(
+         AiWorkerDefaults.PendingRunPollInterval,
+         waitCancellation.Token
+      );
+      var waitTasks = activeRuns
+         .Append(signalTask)
+         .Append(pollTask)
+         .ToArray();
+
+      try
+      {
+         await Task.WhenAny(waitTasks);
+      }
+      finally
+      {
+         waitCancellation.Cancel();
       }
    }
 

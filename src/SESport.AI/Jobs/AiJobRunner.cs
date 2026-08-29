@@ -13,7 +13,8 @@ public sealed class AiJobRunner(
    IEnumerable<IAiProviderClient> providerClients,
    IAiJobRunRepository runRepository,
    AiJobExecutionGate executionGate,
-   ILogger<AiJobRunner>? logger = null
+   ILogger<AiJobRunner>? logger = null,
+   AiPendingRunWakeSignal? pendingRunWakeSignal = null
 ) : IAiJobRunner, IAiJobProcessor
 {
    public async Task<Guid> QueueAsync(
@@ -27,6 +28,7 @@ public sealed class AiJobRunner(
       );
 
       await runRepository.StoreAsync(context.Run, cancellationToken);
+      pendingRunWakeSignal?.Notify();
       return context.Run.Id;
    }
 
