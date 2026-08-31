@@ -229,18 +229,21 @@ public sealed class ActivityGroupQueryRepository(
    {
       const string sql = """
          select
-            id,
-            title,
-            description,
-            activity_date,
-            local_start_time,
-            local_end_time
-         from activities
-         where activity_group_id = @activity_group_id
+            a.id,
+            a.title,
+            a.description,
+            a.activity_date,
+            a.local_start_time,
+            a.local_end_time,
+            organization.canonical_name
+         from activities a
+         left join entities organization
+            on organization.id = a.organization_entity_id
+         where a.activity_group_id = @activity_group_id
          order by
-            activity_date,
-            local_start_time nulls last,
-            title
+            a.activity_date,
+            a.local_start_time nulls last,
+            a.title
          """;
 
       await using var command = dataSource.CreateCommand(sql);
@@ -264,6 +267,12 @@ public sealed class ActivityGroupQueryRepository(
                ActivityQueryRepository.ReadTimeOnly(reader, 4),
                ActivityQueryRepository.ReadTimeOnly(reader, 5)
             )
+            {
+               OrganizationName = ActivityQueryRepository.ReadString(
+                  reader,
+                  6
+               )
+            }
          );
       }
 

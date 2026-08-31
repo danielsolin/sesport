@@ -171,7 +171,9 @@ public sealed class ActivityEditPageServiceTests
    public async Task QueueFactsAsyncTargetsActivityGroup()
    {
       var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
       var activityGroupId = Guid.NewGuid();
+      Guid? activityId = null;
 
       await using var dataSource = CreateDataSource();
       var fixture = CreateFixture(dataSource);
@@ -183,12 +185,28 @@ public sealed class ActivityEditPageServiceTests
          TrackedEntityTypeIds.Organization,
          "football"
       );
+      await InsertRelatedEntityAsync(
+         dataSource,
+         personId,
+         $"Person {personId:N}",
+         TrackedEntityTypeIds.Person,
+         "football"
+      );
       await InsertActivityGroupAsync(
          dataSource,
          activityGroupId,
          "Diamond League London",
          "football",
          DistantActivityDate,
+         DistantActivityDate
+      );
+      activityId = await InsertActivityAsync(
+         dataSource,
+         activityGroupId,
+         organizationId,
+         personId,
+         $"Group facts activity {activityGroupId:N}",
+         "football",
          DistantActivityDate
       );
 
@@ -222,10 +240,20 @@ public sealed class ActivityEditPageServiceTests
             "Diamond League London",
             document.RootElement.GetProperty("title").GetString()
          );
+         Assert.Equal(
+            "Diamond League",
+            document.RootElement.GetProperty("type").GetString()
+         );
       }
       finally
       {
+         if(activityId is not null)
+         {
+            await DeleteActivityAsync(dataSource, activityId.Value);
+         }
+
          await DeleteActivityGroupAsync(dataSource, activityGroupId);
+         await DeleteEntityAsync(dataSource, personId);
          await DeleteEntityAsync(dataSource, organizationId);
       }
    }

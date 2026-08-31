@@ -96,13 +96,18 @@ public sealed class ActivityAiInputBuilder(
          .Where(description => !string.IsNullOrWhiteSpace(description))
          .Distinct(StringComparer.Ordinal)
          .ToList();
+      var organizationNames = activities
+         .Select(activity => activity.OrganizationName?.Trim())
+         .Where(name => !string.IsNullOrWhiteSpace(name))
+         .Distinct(StringComparer.Ordinal)
+         .ToList();
 
       return JsonSerializer.Serialize(
          new
          {
             event_name = group.Title,
             title = group.Title,
-            type = string.Empty,
+            type = string.Join(", ", organizationNames),
             description = string.Join(
                Environment.NewLine,
                descriptions

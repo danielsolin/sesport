@@ -150,7 +150,10 @@ public sealed record ActivityGroupActivityListItem(
    DateOnly ActivityDate,
    TimeOnly? LocalStartTime,
    TimeOnly? LocalEndTime
-);
+)
+{
+   public string? OrganizationName { get; init; }
+}
 
 public sealed record ActivityGroupSourceListItem(
    string Kind,
