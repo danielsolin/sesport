@@ -19,17 +19,6 @@
 
 html {
    min-height: 100%;
-   scrollbar-gutter: stable;
-}
-
-html.admin-page {
-   scrollbar-gutter: auto;
-}
-
-@supports not (scrollbar-gutter: stable) {
-   html:not(.admin-page) {
-      overflow-y: scroll;
-   }
 }
 
 body {
