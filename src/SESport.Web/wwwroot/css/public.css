@@ -1005,14 +1005,30 @@
    transform: translateX(-5px);
 }
 
+.date-dropdown-toggle [data-date-option-fit] {
+   flex-wrap: nowrap;
+   min-width: 0;
+   overflow: hidden;
+}
+
 .date-option-day,
 .date-option-date {
    white-space: nowrap;
 }
 
+[data-date-option-fit] .date-option-day,
+[data-date-option-fit] .date-option-date {
+   flex-shrink: 0;
+}
+
 .date-option-label {
    display: inline-flex;
    column-gap: 0.3em;
+}
+
+.date-dropdown-option [data-date-option-fit] .date-option-label {
+   min-width: 0;
+   overflow: hidden;
 }
 
 .date-option-participant-count {
@@ -1026,6 +1042,7 @@
 .date-dropdown-option .date-option-content {
    display: grid;
    grid-template-columns: minmax(0, 1fr) 48px;
+   column-gap: 4px;
    width: 100%;
 }
 

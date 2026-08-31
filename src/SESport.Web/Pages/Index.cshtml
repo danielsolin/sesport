@@ -100,7 +100,8 @@
                     aria-expanded="false"
                     aria-controls="date-dropdown-menu"
                     data-date-dropdown-toggle>
-               <span class="date-option-content">
+               <span class="date-option-content"
+                     data-date-option-fit>
                   <span class="date-option-day">
                      @selectedDateOption.DayLabel
                   </span>
@@ -141,7 +142,8 @@
                      aria-selected="@(
                         dateOption.IsSelected ? "true" : "false"
                      )">
-                     <span class="date-option-content">
+                     <span class="date-option-content"
+                           data-date-option-fit>
                         <span class="date-option-label">
                            <span class="date-option-day">
                               @dateOption.DayLabel

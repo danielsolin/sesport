@@ -12,12 +12,132 @@
    const options = Array.from(
       dropdown.querySelectorAll(".date-dropdown-option")
    );
+   const fitTargets = Array.from(
+      dropdown.querySelectorAll("[data-date-option-fit]")
+   ).filter(target => target instanceof HTMLElement);
 
    if(!(toggle instanceof HTMLButtonElement) ||
       !(menu instanceof HTMLElement))
    {
       return;
    }
+
+   const minimumScale = 0.6;
+   const baseFontSizes = new Map();
+   fitTargets.forEach(target => {
+      const fontSize = Number.parseFloat(
+         window.getComputedStyle(target).fontSize
+      );
+      if(Number.isFinite(fontSize))
+      {
+         baseFontSizes.set(target, fontSize);
+      }
+   });
+
+   const measuredElements = target => [
+      target.querySelector(".date-option-label"),
+      ...target.querySelectorAll(
+         ".date-option-day, .date-option-date"
+      ),
+      target.querySelector(".date-option-participant-count")
+   ].filter(element => element instanceof HTMLElement);
+
+   const fits = target => {
+      const label = target.querySelector(".date-option-label");
+      if(label instanceof HTMLElement &&
+         (label.clientWidth === 0 ||
+          label.scrollWidth > label.clientWidth))
+      {
+         return false;
+      }
+
+      const count = target.querySelector(
+         ".date-option-participant-count"
+      );
+      if(count instanceof HTMLElement &&
+         (count.clientWidth === 0 ||
+          count.scrollWidth > count.clientWidth))
+      {
+         return false;
+      }
+
+      if(label instanceof HTMLElement)
+      {
+         return true;
+      }
+
+      const elements = measuredElements(target);
+      if(elements.length === 0)
+      {
+         return target.clientWidth > 0 &&
+            target.scrollWidth <= target.clientWidth + 1;
+      }
+
+      const targetRect = target.getBoundingClientRect();
+      return elements.every(element => {
+         const rect = element.getBoundingClientRect();
+         return rect.left >= targetRect.left - 1 &&
+            rect.right <= targetRect.right + 1;
+      });
+   };
+
+   const fitDateText = target => {
+      const baseFontSize = baseFontSizes.get(target);
+      if(baseFontSize === undefined || target.clientWidth === 0)
+      {
+         return;
+      }
+
+      target.style.fontSize = `${baseFontSize}px`;
+      const fitsAtBaseSize = fits(target);
+      if(fitsAtBaseSize)
+      {
+         return;
+      }
+
+      target.style.fontSize = `${baseFontSize * minimumScale}px`;
+      if(!fits(target))
+      {
+         return;
+      }
+
+      let low = minimumScale;
+      let high = 1;
+
+      for(let attempt = 0; attempt < 12; attempt++)
+      {
+         const candidate = (low + high) / 2;
+         target.style.fontSize = `${baseFontSize * candidate}px`;
+
+         if(fits(target))
+         {
+            low = candidate;
+         }
+         else
+         {
+            high = candidate;
+         }
+      }
+
+      target.style.fontSize = `${baseFontSize * low}px`;
+   };
+
+   const fitAllDateText = () => {
+      fitTargets.forEach(fitDateText);
+   };
+
+   let fitFrame = 0;
+   const scheduleFit = () => {
+      if(fitFrame !== 0)
+      {
+         return;
+      }
+
+      fitFrame = window.requestAnimationFrame(() => {
+         fitFrame = 0;
+         fitAllDateText();
+      });
+   };
 
    const close = (restoreFocus = false) => {
       menu.hidden = true;
@@ -34,6 +154,7 @@
       menu.hidden = false;
       toggle.setAttribute("aria-expanded", "true");
       dropdown.classList.add("is-open");
+      scheduleFit();
 
       const selected = options.find(option =>
          option.getAttribute("aria-selected") === "true"
@@ -89,4 +210,22 @@
          close();
       }
    });
+
+   if(fitTargets.length > 0)
+   {
+      if(typeof ResizeObserver === "function")
+      {
+         const observer = new ResizeObserver(scheduleFit);
+         fitTargets.forEach(target => observer.observe(target));
+      }
+
+      window.addEventListener("resize", scheduleFit, { passive: true });
+      fitAllDateText();
+      scheduleFit();
+
+      if(document.fonts?.ready)
+      {
+         document.fonts.ready.then(scheduleFit);
+      }
+   }
 })();
