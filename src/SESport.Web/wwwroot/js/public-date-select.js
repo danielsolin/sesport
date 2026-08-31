@@ -15,6 +15,7 @@
    const fitTargets = Array.from(
       dropdown.querySelectorAll("[data-date-option-fit]")
    ).filter(target => target instanceof HTMLElement);
+   const chevron = dropdown.querySelector(".date-dropdown-chevron");
 
    if(!(toggle instanceof HTMLButtonElement) ||
       !(menu instanceof HTMLElement))
@@ -22,7 +23,7 @@
       return;
    }
 
-   const minimumScale = 0.6;
+   const minimumScale = 0.5;
    const baseFontSizes = new Map();
    fitTargets.forEach(target => {
       const fontSize = Number.parseFloat(
@@ -74,10 +75,16 @@
       }
 
       const targetRect = target.getBoundingClientRect();
+      const chevronRect = chevron instanceof HTMLElement
+         ? chevron.getBoundingClientRect()
+         : null;
+      const availableRight = chevronRect === null
+         ? targetRect.right
+         : Math.min(targetRect.right, chevronRect.left - 4);
       return elements.every(element => {
          const rect = element.getBoundingClientRect();
          return rect.left >= targetRect.left - 1 &&
-            rect.right <= targetRect.right + 1;
+            rect.right <= availableRight;
       });
    };
 
