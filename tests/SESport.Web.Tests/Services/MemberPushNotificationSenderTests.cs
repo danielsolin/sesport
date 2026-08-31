@@ -31,13 +31,22 @@ public sealed class MemberPushNotificationSenderTests
 
       using var document = JsonDocument.Parse(payload);
       Assert.Equal(
-         "Om 10 minuter: Armand Duplantis deltar i Stavhopp. " +
+         "Armand Duplantis deltar i Stavhopp. Start 20:00. " +
          "Visas på SVT1, SVT Play.",
          document.RootElement.GetProperty("body").GetString()
       );
       Assert.Equal(
          "/?date=2026-08-21#activity-" + activityId.ToString("N"),
          document.RootElement.GetProperty("url").GetString()
+      );
+      Assert.Equal(
+         DateTimeOffset.Parse("2026-08-21T18:00:00Z"),
+         document.RootElement.GetProperty("expiresAt")
+            .GetDateTimeOffset()
+      );
+      Assert.True(
+         document.RootElement.GetProperty("sentAt")
+            .GetDateTimeOffset() <= DateTimeOffset.UtcNow
       );
    }
 
@@ -64,8 +73,8 @@ public sealed class MemberPushNotificationSenderTests
 
       using var document = JsonDocument.Parse(payload);
       Assert.Equal(
-         "Om 10 minuter: First Person, Second Person, Third Person " +
-         "med flera deltar i Stavhopp.",
+         "First Person, Second Person, Third Person med flera " +
+         "deltar i Stavhopp. Start 20:00.",
          document.RootElement.GetProperty("body").GetString()
       );
    }

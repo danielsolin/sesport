@@ -215,5 +215,11 @@ public sealed class WatchesMarkupTests
       );
       Assert.Contains("showNotification", worker);
       Assert.Contains("notificationclick", worker);
+      Assert.Contains("expiresAt", worker);
+      Assert.Contains("pushsubscriptionchange", worker);
+      Assert.Contains(
+         "sesport-push-subscription-change",
+         script
+      );
    }
 }

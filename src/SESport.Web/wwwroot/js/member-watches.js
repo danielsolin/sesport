@@ -258,9 +258,36 @@
          return subscription;
       };
 
+      const getSubscriptionJson = subscription => {
+         if(subscription === null
+            || typeof subscription !== "object")
+         {
+            return null;
+         }
+
+         const serializedSubscription =
+            typeof subscription.toJSON === "function"
+               ? subscription.toJSON()
+               : subscription;
+         return serializedSubscription !== null
+            && typeof serializedSubscription === "object"
+            ? serializedSubscription
+            : null;
+      };
+
       const registerSubscription = async subscription => {
+         const serializedSubscription = getSubscriptionJson(
+            subscription
+         );
+         if(serializedSubscription === null)
+         {
+            throw createPushError(
+               "Webbläsaren skickade en ogiltig notisprenumeration."
+            );
+         }
+
          subscriptionInput.value = JSON.stringify(
-            subscription.toJSON()
+            serializedSubscription
          );
          const response = await fetch(registrationForm.action, {
             method: "POST",
@@ -284,6 +311,43 @@
          activateButton.hidden = "Notification" in window
             && Notification.permission === "denied";
       };
+
+      if("serviceWorker" in navigator)
+      {
+         navigator.serviceWorker.addEventListener(
+            "message",
+            event => {
+               const data = event.data;
+               if(data === null
+                  || typeof data !== "object"
+                  || data.type !==
+                     "sesport-push-subscription-change")
+               {
+                  return;
+               }
+
+               if(data.subscription === null)
+               {
+                  setMessage(
+                     "Notiser behöver aktiveras igen.",
+                     "error"
+                  );
+                  activateButton.hidden = false;
+                  return;
+               }
+
+               void registerSubscription(data.subscription)
+                  .then(() => {
+                     setMessage(
+                        "Notiser är aktiva på den här enheten.",
+                        "active"
+                     );
+                     activateButton.hidden = true;
+                  })
+                  .catch(showError);
+            }
+         );
+      }
 
       const inspect = async () => {
          if(!pushConfigured || vapidPublicKey === "")

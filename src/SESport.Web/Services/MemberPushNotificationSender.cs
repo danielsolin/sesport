@@ -7,6 +7,7 @@ using Lib.Net.Http.WebPush.Authentication;
 using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
+using SESport.Web.Formatting;
 
 namespace SESport.Web.Services;
 
@@ -40,7 +41,8 @@ public sealed class MemberPushNotificationSender(
       };
       var payload = CreatePayloadWithPersonLimit(
          notification,
-         options.MaxVisiblePersonNames
+         options.MaxVisiblePersonNames,
+         now
       );
       var timeToLive = GetTimeToLiveSeconds(notification, now);
       var successfulDeliveries = 0;
@@ -123,29 +125,33 @@ public sealed class MemberPushNotificationSender(
    {
       return CreatePayloadWithPersonLimit(
          notification,
-         MemberPushOptions.DefaultMaxVisiblePersonNames
+         MemberPushOptions.DefaultMaxVisiblePersonNames,
+         DateTimeOffset.UtcNow
       );
    }
 
    private static string CreatePayloadWithPersonLimit(
       MemberActivityPushNotification notification,
-      int maxVisiblePersonNames
+      int maxVisiblePersonNames,
+      DateTimeOffset sentAt
    )
    {
       var displayDate = ActivityDisplayDateResolver.Resolve(
          notification.StartsAt,
          notification.PublicDateMode
       );
-      var leadTime = FormatLeadTime(notification.LeadTimeMinutes);
       var activityAnchor = ActivityAnchorPrefix +
          notification.ActivityId.ToString("N");
       var personNames = FormatPersonNames(
          notification.PersonNames,
          maxVisiblePersonNames
       );
-      var body = "Om " + leadTime + ": " +
-         personNames +
-         " deltar i " + notification.ActivityTitle + ".";
+      var startTime = TimeDisplay.FormatLocalTimeWithoutSeconds(
+         notification.StartsAt
+      );
+      var body = personNames +
+         " deltar i " + notification.ActivityTitle +
+         ". Start " + startTime + ".";
       var channelNames = FormatChannelNames(notification.TvChannelName);
       if(channelNames.Length > 0)
       {
@@ -161,7 +167,9 @@ public sealed class MemberPushNotificationSender(
                "#" + activityAnchor,
             icon = "/icon-192.png",
             badge = "/icon-192.png",
-            tag = activityAnchor
+            tag = activityAnchor,
+            sentAt = sentAt.ToUniversalTime(),
+            expiresAt = notification.StartsAt.ToUniversalTime()
          },
          JsonOptions
       );
@@ -185,13 +193,6 @@ public sealed class MemberPushNotificationSender(
       return names.Length > maxVisiblePersonNames
          ? formattedNames + " med flera"
          : formattedNames;
-   }
-
-   private static string FormatLeadTime(int minutes)
-   {
-      return minutes == MemberNotificationLeadTimes.OneHourMinutes
-         ? "en timme"
-         : $"{minutes} minuter";
    }
 
    private static string FormatChannelNames(string? tvChannelName)
