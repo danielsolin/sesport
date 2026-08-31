@@ -40,8 +40,69 @@ public sealed class PublicFilterPreferenceStoreTests
       );
    }
 
-   [Fact]
-   public void SaveStatisticsWritesTheStatisticsUrl()
+    [Theory]
+    [InlineData(
+       false,
+       "/?date=2026-08-25&sport=football&country=uk"
+    )]
+    [InlineData(
+       true,
+       "/bevakningar?sport=football&country=uk"
+    )]
+    public void SaveWritesTheCountryWhenSelected(
+       bool watched,
+       string expectedUrl
+    )
+    {
+       var context = new DefaultHttpContext();
+
+       PublicFilterPreferenceStore.Save(
+          context.Response,
+          new DateOnly(2026, 8, 25),
+          "football",
+          watched,
+          "uk"
+       );
+
+       var setCookie = Uri.UnescapeDataString(
+          context.Response.Headers.SetCookie.ToString()
+       );
+       var expectedCookieName = watched
+          ? PublicFilterPreferenceStore.WatchedCookieName
+          : PublicFilterPreferenceStore.ScheduleCookieName;
+
+       Assert.Contains(
+          $"{expectedCookieName}={expectedUrl}",
+          setCookie
+       );
+    }
+
+    [Fact]
+    public void SaveIgnoresCountryWithoutSport()
+    {
+       var context = new DefaultHttpContext();
+
+       PublicFilterPreferenceStore.Save(
+          context.Response,
+          new DateOnly(2026, 8, 25),
+          null,
+          false,
+          "uk"
+       );
+
+       var setCookie = Uri.UnescapeDataString(
+          context.Response.Headers.SetCookie.ToString()
+       );
+
+       Assert.Equal(
+          $"{PublicFilterPreferenceStore.ScheduleCookieName}=" +
+             "/?date=2026-08-25",
+          setCookie.Split(';')[0]
+       );
+    }
+
+    [Fact]
+    public void SaveStatisticsWritesTheStatisticsUrl()
    {
       var context = new DefaultHttpContext();
 

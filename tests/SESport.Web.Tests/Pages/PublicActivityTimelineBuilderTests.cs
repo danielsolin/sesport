@@ -1249,13 +1249,14 @@ public class PublicActivityTimelineBuilderTests
          section.Slots.SelectMany(slot => slot.TvChannels)
       );
 
-      var sportCounts = IndexModel.CountActivityCardsBySport(timeline);
+       var sportCounts = IndexModel.CountActivityCardsBySport(timeline);
 
-      Assert.Equal(
-         [new SportParticipantCount("tennis", "Tennis", 1)],
-         sportCounts
-      );
-   }
+       var count = Assert.Single(sportCounts);
+       Assert.Equal("tennis", count.SportId);
+       Assert.Equal("Tennis", count.SportName);
+       Assert.Equal(1, count.ParticipantCount);
+       Assert.Empty(count.Countries);
+    }
 
    [Fact]
    public void BuildKeepsDifferentParticipantVariantsGroupedNormally()

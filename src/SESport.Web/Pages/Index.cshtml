@@ -9,11 +9,12 @@
       Model.PublicSiteOptions.BlockedSourceHosts;
    var highestWatchPriorityLabel =
       "Högsta bevakningsprioritet";
-   var isFilteredView =
-      Request.Query.ContainsKey(RouteKeys.Date) ||
-      Request.Query.ContainsKey(RouteKeys.Sport) ||
-      Request.Query.ContainsKey(RouteKeys.Watched) ||
-      Model.IsWatchedActivitiesView;
+    var isFilteredView =
+       Request.Query.ContainsKey(RouteKeys.Date) ||
+       Request.Query.ContainsKey(RouteKeys.Sport) ||
+       Request.Query.ContainsKey(RouteKeys.Country) ||
+       Request.Query.ContainsKey(RouteKeys.Watched) ||
+       Model.IsWatchedActivitiesView;
    var publicActivityPath = Model.IsWatchedActivitiesView
       ? PublicRoutePaths.Watched
       : PublicRoutePaths.Home;
@@ -23,9 +24,9 @@
    var publicActivityAllSportsUrl = Model.IsWatchedActivitiesView
       ? publicActivityPath
       : $"{publicActivityPath}?date={selectedDateQueryValue}";
-   var allSportsLabel = Model.IsWatchedActivitiesView
-      ? "Alla bevakade"
-      : "Svenskar:";
+    var allSportsLabel = Model.IsWatchedActivitiesView
+       ? "Alla bevakade"
+       : "Svenskar";
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
    var hasPastActivities = Model.TimelineEntries.Any(
@@ -118,15 +119,21 @@
                  data-date-dropdown-menu>
                @foreach(var dateOption in Model.DateOptions)
                {
-                  var dateUrl = PublicRoutePaths.Home + "?date=" +
-                     Uri.EscapeDataString(dateOption.Value);
-                  var normalizedSport = Model.Sport?.Trim();
-                  if(!string.IsNullOrWhiteSpace(normalizedSport))
-                  {
-                     dateUrl += "&sport=" + Uri.EscapeDataString(
-                        normalizedSport
-                     );
-                  }
+                   var dateUrl = PublicRoutePaths.Home + "?date=" +
+                      Uri.EscapeDataString(dateOption.Value);
+                   var normalizedSport = Model.Sport?.Trim();
+                   if(!string.IsNullOrWhiteSpace(normalizedSport))
+                   {
+                      dateUrl += "&sport=" + Uri.EscapeDataString(
+                         normalizedSport
+                      );
+                      var normalizedCountry = Model.Country?.Trim();
+                      if(!string.IsNullOrWhiteSpace(normalizedCountry))
+                      {
+                         dateUrl += "&country=" +
+                            Uri.EscapeDataString(normalizedCountry);
+                      }
+                   }
                   <a class="date-dropdown-option
                      @(dateOption.IsSelected ? "is-selected" : "")"
                      href="@dateUrl"
@@ -169,12 +176,20 @@
                sport.SportId,
                StringComparison.OrdinalIgnoreCase
             ));
-         var selectedSportName = selectedSport?.SportName ??
-            (Model.IsWatchedActivitiesView
-               ? "Alla bevakade"
-               : "Svenskar");
-         var selectedSportCount = selectedSport?.ParticipantCount ??
-            Model.TotalParticipantsCount;
+          var selectedSportName = selectedSport?.SportName ??
+             (Model.IsWatchedActivitiesView
+                ? "Alla bevakade"
+                : "Svenskar");
+          var selectedCountry = selectedSport?.Countries
+             .FirstOrDefault(country => string.Equals(
+                Model.Country,
+                country.CountryId,
+                StringComparison.OrdinalIgnoreCase
+             ));
+          var selectedCountryFlagPath =
+             PublicCountryFlag.GetPath(selectedCountry?.CountryId);
+          var selectedSportCount = selectedSport?.ParticipantCount ??
+             Model.TotalParticipantsCount;
          <div class="sport-select" data-sport-dropdown>
             <button class="sport-dropdown-toggle"
                     type="button"
@@ -190,15 +205,24 @@
                         @selectedSportName
                      </span>
                   }
-                  else
-                  {
-                     <span class="sport-option-name">
-                        @selectedSportName:
-                     </span>
-                     <span class="sport-option-count">
-                        @selectedSportCount
-                     </span>
-                  }
+                   else
+                   {
+                       <span class="sport-option-name">
+                          @selectedSportName
+                       </span>
+                      @if(selectedCountryFlagPath is not null)
+                      {
+                         <img class="sport-country-flag"
+                              src="@selectedCountryFlagPath"
+                              asp-append-version="true"
+                              alt=""
+                              aria-hidden="true" />
+                      }
+                      <span class="sport-option-count">
+                         @(selectedCountry?.ParticipantCount ??
+                            selectedSportCount)
+                      </span>
+                   }
                </span>
                <span class="sport-dropdown-chevron"
                      aria-hidden="true"></span>
@@ -226,37 +250,96 @@
                      }
                   </a>
                </div>
-               @foreach(var sport in Model.SportParticipantCounts)
-               {
-                  var isSelected = string.Equals(
-                     Model.Sport,
-                     sport.SportId,
-                     StringComparison.OrdinalIgnoreCase
-                  );
-                  var sportQuery = "sport=" + Uri.EscapeDataString(
-                     sport.SportId
-                  );
-                  var publicActivitySportUrl =
-                     Model.IsWatchedActivitiesView
-                        ? $"{publicActivityPath}?{sportQuery}"
-                        : $"{publicActivityPath}?date={
-                           selectedDateQueryValue
-                        }&{sportQuery}";
-                  <div class="index-participants">
-                     <a class="index-participants-info
-                        index-participants-filter
-                        @(isSelected ? "is-selected" : "")"
-                        href="@publicActivitySportUrl"
-                        aria-current="@(isSelected ? "true" : null)"
-                        aria-label="Visa endast @sport.SportName">
-                        <span>@sport.SportName:</span>
-                        <span class="index-participants-count
-                           index-participants-value">
-                           @sport.ParticipantCount
-                        </span>
-                     </a>
-                  </div>
-               }
+                @foreach(var sport in Model.SportParticipantCounts)
+                {
+                   var isSelected = string.Equals(
+                      Model.Sport,
+                      sport.SportId,
+                      StringComparison.OrdinalIgnoreCase
+                   );
+                   var sportQuery = "sport=" + Uri.EscapeDataString(
+                      sport.SportId
+                   );
+                   var publicActivitySportUrl =
+                      Model.IsWatchedActivitiesView
+                         ? $"{publicActivityPath}?{sportQuery}"
+                         : $"{publicActivityPath}?date={
+                            selectedDateQueryValue
+                         }&{sportQuery}";
+                   @if(sport.Countries.Count >= 2)
+                   {
+                      @foreach(var country in sport.Countries)
+                      {
+                         var isSelectedCountry = isSelected &&
+                            string.Equals(
+                               Model.Country,
+                               country.CountryId,
+                               StringComparison.OrdinalIgnoreCase
+                            );
+                         var countryFlagPath =
+                            PublicCountryFlag.GetPath(
+                               country.CountryId
+                            );
+                         var countryQuery = sportQuery +
+                            "&country=" +
+                            Uri.EscapeDataString(country.CountryId);
+                         var publicActivitySportCountryUrl =
+                            Model.IsWatchedActivitiesView
+                               ? $"{publicActivityPath}?{countryQuery}"
+                               : $"{publicActivityPath}?date={
+                                  selectedDateQueryValue
+                               }&{countryQuery}";
+                         <div class="index-participants">
+                            <a class="index-participants-info
+                               index-participants-filter
+                               sport-country-row
+                               @(isSelectedCountry
+                                  ? "is-selected" : "")"
+                               href="@publicActivitySportCountryUrl"
+                               aria-current="@(
+                                  isSelectedCountry
+                                     ? "true" : null
+                               )"
+                               aria-label="Visa endast @sport.SportName i @(
+                                  PublicCountryName.GetDisplayName(
+                                     country.CountryId
+                                  )
+                               )">
+                               <span>@sport.SportName</span>
+                               @if(countryFlagPath is not null)
+                               {
+                                  <img class="sport-country-flag"
+                                       src="@countryFlagPath"
+                                       asp-append-version="true"
+                                       alt=""
+                                       aria-hidden="true" />
+                               }
+                               <span class="index-participants-count
+                                  index-participants-value">
+                                  @country.ParticipantCount
+                               </span>
+                            </a>
+                         </div>
+                      }
+                   }
+                   else
+                   {
+                      <div class="index-participants">
+                         <a class="index-participants-info
+                            index-participants-filter
+                            @(isSelected ? "is-selected" : "")"
+                            href="@publicActivitySportUrl"
+                            aria-current="@(isSelected ? "true" : null)"
+                            aria-label="Visa endast @sport.SportName">
+                            <span>@sport.SportName</span>
+                            <span class="index-participants-count
+                               index-participants-value">
+                               @sport.ParticipantCount
+                            </span>
+                         </a>
+                      </div>
+                   }
+                }
             </div>
          </div>
       }
@@ -1158,13 +1241,19 @@ else
             Uri.EscapeDataString(
                DateDisplay.Format(Model.TomorrowDate)
             );
-         var normalizedSport = Model.Sport?.Trim();
-         if(!string.IsNullOrWhiteSpace(normalizedSport))
-         {
-            tomorrowUrl += "&sport=" + Uri.EscapeDataString(
-               normalizedSport
-            );
-         }
+          var normalizedSport = Model.Sport?.Trim();
+          if(!string.IsNullOrWhiteSpace(normalizedSport))
+          {
+             tomorrowUrl += "&sport=" + Uri.EscapeDataString(
+                normalizedSport
+             );
+             var normalizedCountry = Model.Country?.Trim();
+             if(!string.IsNullOrWhiteSpace(normalizedCountry))
+             {
+                tomorrowUrl += "&country=" +
+                   Uri.EscapeDataString(normalizedCountry);
+             }
+          }
          <div class="activity-tomorrow-link-row">
             <span class="activity-tomorrow-link-line"></span>
             <a class="activity-tomorrow-link"

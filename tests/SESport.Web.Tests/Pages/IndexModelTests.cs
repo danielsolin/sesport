@@ -311,16 +311,18 @@ public sealed class IndexModelTests
 
       var counts = IndexModel.CountParticipantsBySport(activities);
 
-      Assert.Equal(2, counts.Count);
-      Assert.Equal(
-         new SportParticipantCount("golf", "Golf", 2),
-         counts[0]
-      );
-      Assert.Equal(
-         new SportParticipantCount("tennis", "Tennis", 1),
-         counts[1]
-      );
-   }
+       Assert.Equal(2, counts.Count);
+       var golf = counts[0];
+       Assert.Equal("golf", golf.SportId);
+       Assert.Equal("Golf", golf.SportName);
+       Assert.Equal(2, golf.ParticipantCount);
+       Assert.Empty(golf.Countries);
+       var tennis = counts[1];
+       Assert.Equal("tennis", tennis.SportId);
+       Assert.Equal("Tennis", tennis.SportName);
+       Assert.Equal(1, tennis.ParticipantCount);
+       Assert.Empty(tennis.Countries);
+    }
 
    [Fact]
    public void CountParticipantsBySportSortsAlphabetically()
@@ -367,13 +369,106 @@ public sealed class IndexModelTests
          "GOLF"
       );
 
-      Assert.Single(filtered);
-      Assert.Equal("Golf", filtered[0].Title);
-      Assert.Equal(
-         activities,
-         IndexModel.FilterActivitiesBySport(activities, null)
-      );
-   }
+       Assert.Single(filtered);
+       Assert.Equal("Golf", filtered[0].Title);
+       Assert.Equal(
+          activities,
+          IndexModel.FilterActivitiesBySport(activities, null)
+       );
+    }
+
+    [Fact]
+    public void CountParticipantsBySportGroupsCountriesWhenAllHaveCountry()
+    {
+       var firstPerson =
+          Guid.Parse("11111111-1111-1111-1111-111111111111");
+       var secondPerson =
+          Guid.Parse("22222222-2222-2222-2222-222222222222");
+       var activities = new[]
+       {
+          CreateActivity(
+             "Fotboll A",
+             [firstPerson],
+             "football",
+             "Fotboll",
+             "uk"
+          ),
+          CreateActivity(
+             "Fotboll B",
+             [secondPerson],
+             "football",
+             "Fotboll",
+             "fr"
+          ),
+          CreateActivity(
+             "Fotboll C",
+             [firstPerson, secondPerson],
+             "football",
+             "Fotboll",
+             "uk"
+          )
+       };
+
+       var counts = IndexModel.CountParticipantsBySport(activities);
+
+       var football = Assert.Single(counts);
+       Assert.Equal(2, football.ParticipantCount);
+       Assert.Equal(
+          [
+             new SportCountryParticipantCount("uk", 2),
+             new SportCountryParticipantCount("fr", 1)
+          ],
+          football.Countries
+       );
+    }
+
+    [Fact]
+    public void CountParticipantsBySportSkipsCountriesWhenAnyActivityLacksCountry()
+    {
+       var firstPerson =
+          Guid.Parse("11111111-1111-1111-1111-111111111111");
+       var activities = new[]
+       {
+          CreateActivity(
+             "Golf A",
+             [firstPerson],
+             "golf",
+             "Golf",
+             "uk"
+          ),
+          CreateActivity("Golf B", [firstPerson], "golf", "Golf")
+       };
+
+       var counts = IndexModel.CountParticipantsBySport(activities);
+
+       var golf = Assert.Single(counts);
+       Assert.Equal(1, golf.ParticipantCount);
+       Assert.Empty(golf.Countries);
+    }
+
+    [Fact]
+    public void FilterActivitiesBySportUsesSelectedCountryWithinSport()
+    {
+       var activities = new[]
+       {
+          CreateActivity("Golf A", [], "golf", "Golf", "uk"),
+          CreateActivity("Golf B", [], "golf", "Golf", "fr"),
+          CreateActivity("Tennis", [], "tennis", "Tennis", "uk")
+       };
+
+       var filtered = IndexModel.FilterActivitiesBySport(
+          activities,
+          "golf",
+          "UK"
+       );
+
+       var only = Assert.Single(filtered);
+       Assert.Equal("Golf A", only.Title);
+       Assert.Equal(
+          activities.Where(activity => activity.SportId == "golf"),
+          IndexModel.FilterActivitiesBySport(activities, "golf")
+       );
+    }
 
    [Fact]
    public void CalculateAgeReturnsNullForFutureBirthdate()
@@ -458,34 +553,36 @@ public sealed class IndexModelTests
       Assert.Equal("Torsdag 23 juli", selectedOption.Label);
    }
 
-   private static ActivityListItem CreateActivity(
-      string title,
-      Guid[] participantIds,
-      string sportId = "football",
-      string sportName = "Football"
-   )
-   {
-      return new ActivityListItem(
-         Guid.NewGuid(),
-         title,
-         null,
-         null,
-         "Match",
-         sportId,
-         sportName,
-         null,
-         "2026-06-26",
-         null,
-         null,
-         "Published",
-         string.Empty,
-         participantIds,
-         string.Empty
-      )
-      {
-         ActiveRelatedPersonEntityIds = participantIds
-      };
-   }
+    private static ActivityListItem CreateActivity(
+       string title,
+       Guid[] participantIds,
+       string sportId = "football",
+       string sportName = "Football",
+       string? organizationCountryId = null
+    )
+    {
+       return new ActivityListItem(
+          Guid.NewGuid(),
+          title,
+          null,
+          null,
+          "Match",
+          sportId,
+          sportName,
+          null,
+          "2026-06-26",
+          null,
+          null,
+          "Published",
+          string.Empty,
+          participantIds,
+          string.Empty
+       )
+       {
+          ActiveRelatedPersonEntityIds = participantIds,
+          OrganizationCountryId = organizationCountryId
+       };
+    }
 
    private static PublicActivityParticipant CreateParticipant(
       string name,

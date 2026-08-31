@@ -2189,6 +2189,25 @@
    font-size: 15px;
 }
 
+.sport-country-flag {
+   display: block;
+   flex: 0 0 auto;
+   width: 16px;
+   height: auto;
+}
+
+.sport-option-content .sport-country-flag {
+   align-self: center;
+}
+
+.sport-dropdown-menu .sport-country-row {
+   grid-template-columns: auto auto 1fr;
+}
+
+.sport-dropdown-menu .sport-country-row .index-participants-count {
+   justify-self: end;
+}
+
 @media (orientation: portrait), (max-width: 720px) {
    .public-contact-footer {
       --activity-card-center-offset: 64px;

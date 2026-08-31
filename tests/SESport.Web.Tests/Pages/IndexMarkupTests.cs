@@ -44,7 +44,7 @@ public sealed class IndexMarkupTests
          "Model.PublicSiteOptions.MaxVisibleParticipants",
          html
       );
-      Assert.Contains("Svenskar:", html);
+      Assert.Contains("Svenskar", html);
       Assert.Contains("Alla bevakade", html);
       Assert.Contains("SportParticipantCounts", html);
       Assert.Contains(

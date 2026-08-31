@@ -1,4 +1,5 @@
 using SESport.Core.Formatting;
+using SESport.Web.Routing;
 
 namespace SESport.Web.Preferences;
 
@@ -38,23 +39,31 @@ public static class PublicFilterPreferenceStore
       );
    }
 
-   public static void Save(
-      HttpResponse response,
-      DateOnly selectedDate,
-      string? sport,
-      bool watched
-   )
-   {
-      var queryString = watched
-         ? string.Empty
-         : "?date=" + DateDisplay.Format(selectedDate);
-      var normalizedSport = sport?.Trim();
-      if(!string.IsNullOrWhiteSpace(normalizedSport))
-      {
-         queryString += queryString.Length == 0 ? "?sport=" : "&sport=";
-         queryString +=
-            Uri.EscapeDataString(normalizedSport);
-      }
+    public static void Save(
+       HttpResponse response,
+       DateOnly selectedDate,
+       string? sport,
+       bool watched,
+       string? country = null
+    )
+    {
+       var queryString = watched
+          ? string.Empty
+          : "?date=" + DateDisplay.Format(selectedDate);
+       var normalizedSport = sport?.Trim();
+       if(!string.IsNullOrWhiteSpace(normalizedSport))
+       {
+          queryString += queryString.Length == 0 ? "?sport=" : "&sport=";
+          queryString +=
+             Uri.EscapeDataString(normalizedSport);
+          var normalizedCountry = country?.Trim();
+          if(!string.IsNullOrWhiteSpace(normalizedCountry))
+          {
+             queryString +=
+                "&" + RouteKeys.Country + "=" +
+                Uri.EscapeDataString(normalizedCountry);
+          }
+       }
 
       var path = watched
          ? PublicRoutePaths.Watched
