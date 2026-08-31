@@ -14,8 +14,71 @@
    const autoSubmitFormSelector =
       "[data-member-watch-auto-submit-form]";
    const pushStatusSelector = "[data-member-watch-push-status]";
+   const pushSubscriptionChangeMessageType =
+      "sesport-push-subscription-change";
+   const pushStatusControllers = new Map();
    const minimumSearchLength = 2;
    const debounceMs = 300;
+
+   const getConnectedPushStatusControllers = () => {
+      const controllers = [];
+      for(const [status, controller] of pushStatusControllers)
+      {
+         if(!status.isConnected)
+         {
+            pushStatusControllers.delete(status);
+            continue;
+         }
+
+         controllers.push(controller);
+      }
+
+      return controllers;
+   };
+
+   const handlePushSubscriptionChange = event => {
+      const data = event.data;
+      if(data === null
+         || typeof data !== "object"
+         || data.type !== pushSubscriptionChangeMessageType)
+      {
+         return;
+      }
+
+      const controllers = getConnectedPushStatusControllers();
+      if(controllers.length === 0)
+      {
+         return;
+      }
+
+      if(data.subscription === null)
+      {
+         controllers.forEach(controller => {
+            controller.showActivationRequired();
+         });
+         return;
+      }
+
+      void controllers[0].registerSubscription(data.subscription)
+         .then(() => {
+            getConnectedPushStatusControllers().forEach(
+               controller => controller.showActive()
+            );
+         })
+         .catch(error => {
+            getConnectedPushStatusControllers().forEach(
+               controller => controller.showError(error)
+            );
+         });
+   };
+
+   if("serviceWorker" in navigator)
+   {
+      navigator.serviceWorker.addEventListener(
+         "message",
+         handlePushSubscriptionChange
+      );
+   }
 
    const initializeSearch = root => {
       root.querySelectorAll(pushStatusSelector).forEach(
@@ -312,42 +375,28 @@
             && Notification.permission === "denied";
       };
 
-      if("serviceWorker" in navigator)
-      {
-         navigator.serviceWorker.addEventListener(
-            "message",
-            event => {
-               const data = event.data;
-               if(data === null
-                  || typeof data !== "object"
-                  || data.type !==
-                     "sesport-push-subscription-change")
-               {
-                  return;
-               }
-
-               if(data.subscription === null)
-               {
-                  setMessage(
-                     "Notiser behöver aktiveras igen.",
-                     "error"
-                  );
-                  activateButton.hidden = false;
-                  return;
-               }
-
-               void registerSubscription(data.subscription)
-                  .then(() => {
-                     setMessage(
-                        "Notiser är aktiva på den här enheten.",
-                        "active"
-                     );
-                     activateButton.hidden = true;
-                  })
-                  .catch(showError);
-            }
+      const showActive = () => {
+         setMessage(
+            "Notiser är aktiva på den här enheten.",
+            "active"
          );
-      }
+         activateButton.hidden = true;
+      };
+
+      const showActivationRequired = () => {
+         setMessage(
+            "Notiser behöver aktiveras igen.",
+            "error"
+         );
+         activateButton.hidden = false;
+      };
+
+      pushStatusControllers.set(status, {
+         registerSubscription,
+         showActive,
+         showActivationRequired,
+         showError
+      });
 
       const inspect = async () => {
          if(!pushConfigured || vapidPublicKey === "")
@@ -386,20 +435,12 @@
             const subscription = await getExistingSubscription();
             if(subscription === null)
             {
-               setMessage(
-                  "Notiser är inte aktiva på den här enheten.",
-                  "error"
-               );
-               activateButton.hidden = false;
+               showActivationRequired();
                return;
             }
 
             await registerSubscription(subscription);
-            setMessage(
-               "Notiser är aktiva på den här enheten.",
-               "active"
-            );
-            activateButton.hidden = true;
+            showActive();
          }
          catch(error)
          {
@@ -416,11 +457,7 @@
          {
             const subscription = await getPushSubscription();
             await registerSubscription(subscription);
-            setMessage(
-               "Notiser är aktiva på den här enheten.",
-               "active"
-            );
-            activateButton.hidden = true;
+            showActive();
          }
          catch(error)
          {

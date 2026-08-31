@@ -221,5 +221,7 @@ public sealed class WatchesMarkupTests
          "sesport-push-subscription-change",
          script
       );
+      Assert.Contains("pushStatusControllers", script);
+      Assert.Contains("handlePushSubscriptionChange", script);
    }
 }

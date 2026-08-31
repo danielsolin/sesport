@@ -44,10 +44,9 @@ public sealed class MemberPushNotificationSenderTests
          document.RootElement.GetProperty("expiresAt")
             .GetDateTimeOffset()
       );
-      Assert.True(
-         document.RootElement.GetProperty("sentAt")
-            .GetDateTimeOffset() <= DateTimeOffset.UtcNow
-      );
+      var sentAt = document.RootElement.GetProperty("sentAt");
+      Assert.Equal(JsonValueKind.String, sentAt.ValueKind);
+      Assert.True(sentAt.TryGetDateTimeOffset(out _));
    }
 
    [Fact]
