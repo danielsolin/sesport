@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Net;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 using Microsoft.Playwright;
@@ -51,6 +53,43 @@ internal static class WebPageContentFetchSupport
       @"<h(?<level>[1-6])\b[^>]*>(?<content>.*?)</h\k<level>>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
+   private static readonly Regex HtmlMetaRegex = new(
+      @"<meta\b(?<attrs>[^>]*)>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlTimeRegex = new(
+      @"<time\b(?<attrs>[^>]*)>(?<content>.*?)</time>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlScriptRegex = new(
+      @"<script\b(?<attrs>[^>]*)>(?<content>.*?)</script>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex HtmlTagRegex = new(
+      @"</?(?<name>[a-zA-Z][a-zA-Z0-9:-]*)(?<attrs>[^>]*)>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex TemplatePlaceholderRegex = new(
+      @"\{\{[^{}\r\n]{1,200}\}\}",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex TemplateDirectiveRegex = new(
+      @"(?<![\p{L}\p{N}])(?:v-[\w:-]+|:[\w:-]+|@[\w:-]+)" +
+      @"\s*(?:=\s*)?(?:""[^""\r\n]*""|'[^'\r\n]*'|[^\s]+)?",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex PlaceholderHeadingRegex = new(
+      @"^header\s+\d+$",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
+   private static readonly Regex PlaceholderHeadingLineRegex = new(
+      @"^\s*header\s+\d+\s*$",
+      RegexOptions.IgnoreCase | RegexOptions.Multiline |
+         RegexOptions.CultureInvariant | RegexOptions.Compiled
+   );
    private static readonly Regex IncompleteContentMarkerRegex = new(
       @"\b(?:TBD|Loading(?:\s*\.\.\.)?|No\s+(?:data|results))\b",
       RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
@@ -67,8 +106,8 @@ internal static class WebPageContentFetchSupport
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
    private static readonly Regex HtmlBoilerplateBlockRegex = new(
-      @"<(?:header|nav|footer|aside|script|style|noscript)\b[^>]*>.*?</" +
-      @"(?:header|nav|footer|aside|script|style|noscript)>",
+      @"<(?<tag>header|nav|footer|aside|script|style|noscript)\b" +
+      @"[^>]*>.*?</\k<tag>>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
    private static readonly Regex HtmlSelectBlockRegex = new(
@@ -474,6 +513,75 @@ internal static class WebPageContentFetchSupport
       );
    }
 
+   internal static DateTimeOffset? ExtractPublishedAt(string html)
+   {
+      foreach(Match match in HtmlMetaRegex.Matches(html))
+      {
+         var attributes = match.Groups["attrs"].Value;
+
+         if(!IsPublishedDateMetadata(attributes) ||
+            !TryGetAttributeValue(
+               attributes,
+               "content",
+               out var content
+            ) ||
+            !TryParsePublishedDate(content, out var publishedAt))
+         {
+            continue;
+         }
+
+         return publishedAt;
+      }
+
+      foreach(Match match in HtmlScriptRegex.Matches(html))
+      {
+         var attributes = match.Groups["attrs"].Value;
+
+         if(!IsJsonLdScript(attributes) ||
+            !TryExtractPublishedDateFromJson(
+               match.Groups["content"].Value,
+               out var publishedAt
+            ))
+         {
+            continue;
+         }
+
+         return publishedAt;
+      }
+
+      foreach(Match match in HtmlTimeRegex.Matches(html))
+      {
+         var attributes = match.Groups["attrs"].Value;
+
+         if(!TryGetAttributeValue(
+               attributes,
+               "itemprop",
+               out var itemProperty
+            ) ||
+            !string.Equals(
+               itemProperty,
+               "datePublished",
+               StringComparison.OrdinalIgnoreCase
+            ) ||
+            !TryGetTimeDateValue(match, out var publishedAt))
+         {
+            continue;
+         }
+
+         return publishedAt;
+      }
+
+      foreach(Match match in HtmlTimeRegex.Matches(html))
+      {
+         if(TryGetTimeDateValue(match, out var publishedAt))
+         {
+            return publishedAt;
+         }
+      }
+
+      return null;
+   }
+
    internal static string ExtractHtmlTextWithEmbeddedState(string html)
    {
       var tableText = ExtractStructuredTableText(html);
@@ -514,8 +622,10 @@ internal static class WebPageContentFetchSupport
                StripTags(match.Groups["content"].Value)
             )
          );
+         headingText = RemoveTemplateArtifacts(headingText);
 
-         if(string.IsNullOrWhiteSpace(headingText))
+         if(string.IsNullOrWhiteSpace(headingText) ||
+            PlaceholderHeadingRegex.IsMatch(headingText))
          {
             continue;
          }
@@ -537,20 +647,214 @@ internal static class WebPageContentFetchSupport
       }
 
       var matches = IncompleteContentMarkerRegex.Matches(normalizedText);
+      var hasTemplateMarkup = TemplatePlaceholderRegex.IsMatch(
+         normalizedText
+      ) ||
+         TemplateDirectiveRegex.IsMatch(normalizedText) ||
+         PlaceholderHeadingLineRegex.IsMatch(normalizedText);
+      var warnings = new List<string>();
 
-      if(matches.Count <
+      if(matches.Count >=
          WebPageFetchDefaults.IncompleteContentMinimumMarkerCount)
+      {
+         var markers = matches
+            .Select(match => match.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+         warnings.Add(
+            $"placeholder content was detected ({string.Join(", ", markers)})"
+         );
+      }
+
+      if(hasTemplateMarkup)
+      {
+         warnings.Add("template markup was detected");
+      }
+
+      if(warnings.Count == 0)
       {
          return null;
       }
 
-      var markers = matches
-         .Select(match => match.Value)
-         .Distinct(StringComparer.OrdinalIgnoreCase)
-         .ToArray();
+      return "Rendered page may be incomplete; " +
+         $"{string.Join("; ", warnings)}.";
+   }
 
-      return "Rendered page may be incomplete; placeholder content " +
-         $"was detected ({string.Join(", ", markers)}).";
+   internal static string RemoveTemplateArtifacts(string text)
+   {
+      if(string.IsNullOrWhiteSpace(text))
+      {
+         return string.Empty;
+      }
+
+      var cleanedText = TemplatePlaceholderRegex.Replace(text, " ");
+      cleanedText = TemplateDirectiveRegex.Replace(cleanedText, " ");
+      cleanedText = PlaceholderHeadingLineRegex.Replace(cleanedText, " ");
+      return NormalizeText(cleanedText);
+   }
+
+   private static bool IsPublishedDateMetadata(string attributes)
+   {
+      foreach(var attributeName in new[]
+      {
+         "property",
+         "name",
+         "itemprop"
+      })
+      {
+         if(!TryGetAttributeValue(
+               attributes,
+               attributeName,
+               out var value
+            ))
+         {
+            continue;
+         }
+
+         var normalizedValue = value
+            .Replace(":", string.Empty, StringComparison.Ordinal)
+            .Replace("-", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal)
+            .ToLowerInvariant();
+
+         if(normalizedValue is
+            "articlepublishedtime" or
+            "publishedtime" or
+            "datepublished" or
+            "publishdate")
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool IsJsonLdScript(string attributes)
+   {
+      return TryGetAttributeValue(
+            attributes,
+            "type",
+            out var type
+         ) &&
+         string.Equals(
+            type,
+            "application/ld+json",
+            StringComparison.OrdinalIgnoreCase
+         );
+   }
+
+   private static bool TryExtractPublishedDateFromJson(
+      string content,
+      out DateTimeOffset publishedAt
+   )
+   {
+      publishedAt = default;
+
+      try
+      {
+         using var document = JsonDocument.Parse(
+            WebUtility.HtmlDecode(content).Trim()
+         );
+         var result = FindPublishedDate(document.RootElement);
+
+         if(result is not DateTimeOffset value)
+         {
+            return false;
+         }
+
+         publishedAt = value;
+         return true;
+      }
+      catch(JsonException)
+      {
+         return false;
+      }
+   }
+
+   private static DateTimeOffset? FindPublishedDate(JsonElement element)
+   {
+      switch(element.ValueKind)
+      {
+         case JsonValueKind.Object:
+            foreach(var property in element.EnumerateObject())
+            {
+               if(string.Equals(
+                     property.Name,
+                     "datePublished",
+                     StringComparison.OrdinalIgnoreCase
+                  ) &&
+                  property.Value.ValueKind == JsonValueKind.String &&
+                  TryParsePublishedDate(
+                     property.Value.GetString(),
+                     out var publishedAt
+                  ))
+               {
+                  return publishedAt;
+               }
+            }
+
+            foreach(var property in element.EnumerateObject())
+            {
+               var nestedDate = FindPublishedDate(property.Value);
+
+               if(nestedDate is not null)
+               {
+                  return nestedDate;
+               }
+            }
+
+            break;
+         case JsonValueKind.Array:
+            foreach(var item in element.EnumerateArray())
+            {
+               var nestedDate = FindPublishedDate(item);
+
+               if(nestedDate is not null)
+               {
+                  return nestedDate;
+               }
+            }
+
+            break;
+      }
+
+      return null;
+   }
+
+   private static bool TryGetTimeDateValue(
+      Match match,
+      out DateTimeOffset publishedAt
+   )
+   {
+      var attributes = match.Groups["attrs"].Value;
+      var value = TryGetAttributeValue(
+         attributes,
+         "datetime",
+         out var datetime
+      )
+         ? datetime
+         : WebUtility.HtmlDecode(
+            StripTags(match.Groups["content"].Value)
+         ).Trim();
+
+      return TryParsePublishedDate(value, out publishedAt);
+   }
+
+   private static bool TryParsePublishedDate(
+      string? value,
+      out DateTimeOffset publishedAt
+   )
+   {
+      return DateTimeOffset.TryParse(
+         value,
+         CultureInfo.InvariantCulture,
+         DateTimeStyles.AllowWhiteSpaces |
+            DateTimeStyles.AssumeUniversal |
+            DateTimeStyles.AdjustToUniversal,
+         out publishedAt
+      );
    }
 
    internal static IReadOnlyList<WebPageRelevantLink>
@@ -1098,7 +1402,164 @@ internal static class WebPageContentFetchSupport
    private static string RemoveBoilerplateHtml(string html)
    {
       var withoutBoilerplate = HtmlBoilerplateBlockRegex.Replace(html, " ");
-      return HtmlSelectBlockRegex.Replace(withoutBoilerplate, " ");
+      withoutBoilerplate = HtmlSelectBlockRegex.Replace(
+         withoutBoilerplate,
+         " "
+      );
+      return RemoveAttributedBoilerplateBlocks(withoutBoilerplate);
+   }
+
+   private static string RemoveAttributedBoilerplateBlocks(string html)
+   {
+      var builder = new StringBuilder();
+      var lastIndex = 0;
+      var skippedDepth = 0;
+
+      foreach(Match match in HtmlTagRegex.Matches(html))
+      {
+         var isClosingTag = match.Value.StartsWith(
+            "</",
+            StringComparison.Ordinal
+         );
+         var isVoidTag = IsVoidHtmlElement(
+            match.Groups["name"].Value,
+            match.Groups["attrs"].Value
+         );
+
+         if(skippedDepth == 0)
+         {
+            builder.Append(html[lastIndex..match.Index]);
+
+            if(!isClosingTag &&
+               !isVoidTag &&
+               HasBoilerplateAttributes(match.Groups["attrs"].Value))
+            {
+               skippedDepth = 1;
+            }
+            else
+            {
+               builder.Append(match.Value);
+            }
+         }
+         else if(!isClosingTag && !isVoidTag)
+         {
+            skippedDepth++;
+         }
+         else if(isClosingTag)
+         {
+            skippedDepth--;
+         }
+
+         lastIndex = match.Index + match.Length;
+      }
+
+      if(skippedDepth == 0)
+      {
+         builder.Append(html[lastIndex..]);
+      }
+
+      return builder.ToString();
+   }
+
+   private static bool HasBoilerplateAttributes(string attributes)
+   {
+      if(TryGetAttributeValue(
+            attributes,
+            "role",
+            out var role
+         ) &&
+         string.Equals(
+            role,
+            "dialog",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return true;
+      }
+
+      if(TryGetAttributeValue(
+            attributes,
+            "aria-modal",
+            out var ariaModal
+         ) &&
+         string.Equals(
+            ariaModal,
+            "true",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return true;
+      }
+
+      if(TryGetAttributeValue(
+            attributes,
+            "data-nosnippet",
+            out var noSnippet
+         ) &&
+         string.Equals(
+            noSnippet,
+            "true",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return true;
+      }
+
+      foreach(var attributeName in new[]
+      {
+         "id",
+         "class"
+      })
+      {
+         if(!TryGetAttributeValue(
+               attributes,
+               attributeName,
+               out var value
+            ))
+         {
+            continue;
+         }
+
+         var normalizedValue = value.ToLowerInvariant();
+
+         if(normalizedValue.Contains("cookie", StringComparison.Ordinal) ||
+            normalizedValue.Contains("consent", StringComparison.Ordinal) ||
+            normalizedValue.Contains("privacy", StringComparison.Ordinal) ||
+            normalizedValue.Contains("modal", StringComparison.Ordinal) ||
+            normalizedValue.Contains("overlay", StringComparison.Ordinal))
+         {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static bool IsVoidHtmlElement(string name, string attributes)
+   {
+      if(attributes.TrimEnd().EndsWith(
+            "/",
+            StringComparison.Ordinal
+         ))
+      {
+         return true;
+      }
+
+      return name.ToLowerInvariant() is
+         "area" or
+         "base" or
+         "br" or
+         "col" or
+         "embed" or
+         "hr" or
+         "img" or
+         "input" or
+         "link" or
+         "meta" or
+         "param" or
+         "source" or
+         "track" or
+         "wbr";
    }
 
    private static bool TryGetAttributeValue(

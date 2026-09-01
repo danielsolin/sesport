@@ -295,12 +295,16 @@ internal static class WebPageBrowserPageFetcher
       var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
          "element => element.innerHTML"
       ).WaitAsync(cancellationToken);
-      var normalizedText =
-         WebPageContentFetchSupport
-            .ExtractHtmlTextWithEmbeddedState(bodyHtml);
       var headings = WebPageContentFetchSupport.ExtractHtmlHeadings(
          bodyHtml
       );
+      var extractedText =
+         WebPageContentFetchSupport
+            .ExtractHtmlTextWithEmbeddedState(bodyHtml);
+      var renderWarning = WebPageContentFetchSupport
+         .DetectIncompleteContentWarning(extractedText);
+      var normalizedText = WebPageContentFetchSupport
+         .RemoveTemplateArtifacts(extractedText);
 
       var blockedSignature = WebPageBlockDetection
          .FindBlockedSignature(
@@ -312,8 +316,13 @@ internal static class WebPageBrowserPageFetcher
          string.IsNullOrWhiteSpace(normalizedText);
       var unsuccessfulStatus = navigationStatus is int httpStatus &&
          (httpStatus < 200 || httpStatus >= 300);
+      var softErrorSignature = WebPageBlockDetection
+         .FindSoftErrorSignature(title, normalizedText);
 
-      if(blockedSignature is not null || blockedStatus || unsuccessfulStatus)
+      if(blockedSignature is not null ||
+         blockedStatus ||
+         unsuccessfulStatus ||
+         softErrorSignature is not null)
       {
          var statusText = navigationStatus is int status
             ? $" HTTP {status}."
@@ -321,11 +330,14 @@ internal static class WebPageBrowserPageFetcher
          var reason = unsuccessfulStatus
             ? "Browser renderer returned an unsuccessful HTTP response." +
                statusText
+            : softErrorSignature is not null
+            ? "Browser renderer returned a not-found page: " +
+               softErrorSignature + "." + statusText
             : blockedSignature is not null
             ? "Browser renderer returned a blocked page: " +
                blockedSignature + "." + statusText
             : "Browser renderer returned no content." + statusText;
-         var errorKind = unsuccessfulStatus
+         var errorKind = unsuccessfulStatus || softErrorSignature is not null
             ? WebPageFetchErrorKind.HttpError
             : WebPageFetchErrorKind.BrowserBlocked;
 
@@ -342,7 +354,7 @@ internal static class WebPageBrowserPageFetcher
       return new WebPageContent(
          string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
          absoluteUrlString,
-         null,
+         WebPageContentFetchSupport.ExtractPublishedAt(renderedHtml),
          headings,
          WebPageContentFetchSupport.ApplyResponseCutoff(
             normalizedText
@@ -351,8 +363,7 @@ internal static class WebPageBrowserPageFetcher
          normalizedText,
          Fetcher: "playwright",
          BrowserStrategy: browserStrategy,
-         RenderWarning: WebPageContentFetchSupport
-            .DetectIncompleteContentWarning(normalizedText),
+         RenderWarning: renderWarning,
          RelevantLinks:
             WebPageContentFetchSupport.MergeRelevantLinks(
                renderedRelevantLinks,

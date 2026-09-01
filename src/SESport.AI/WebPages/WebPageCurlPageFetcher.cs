@@ -169,8 +169,13 @@ internal static class WebPageCurlPageFetcher
       }
 
       var title = WebPageContentFetchSupport.ExtractHtmlTitle(body);
-      var text =
+      var extractedText =
          WebPageContentFetchSupport.ExtractHtmlTextWithEmbeddedState(body);
+      var renderWarning = WebPageContentFetchSupport
+         .DetectIncompleteContentWarning(extractedText);
+      var text = WebPageContentFetchSupport.RemoveTemplateArtifacts(
+         extractedText
+      );
 
       if(string.IsNullOrWhiteSpace(text))
       {
@@ -185,6 +190,21 @@ internal static class WebPageCurlPageFetcher
             title,
             WebPageFetchErrorKind.BrowserBlocked,
             "Curl fallback produced no text.",
+            "curl"
+         );
+      }
+
+      var softErrorSignature = WebPageBlockDetection
+         .FindSoftErrorSignature(title, text);
+
+      if(softErrorSignature is not null)
+      {
+         return WebPageContentFetchSupport.BuildFailureContent(
+            absoluteUrl,
+            title,
+            WebPageFetchErrorKind.HttpError,
+            "Curl response indicated a not-found page: " +
+            $"{softErrorSignature}.",
             "curl"
          );
       }
@@ -219,7 +239,7 @@ internal static class WebPageCurlPageFetcher
       return new WebPageContent(
          title ?? absoluteUrl.ToString(),
          absoluteUrl.ToString(),
-         null,
+         WebPageContentFetchSupport.ExtractPublishedAt(body),
          WebPageContentFetchSupport.ExtractHtmlHeadings(body),
          WebPageContentFetchSupport.ApplyResponseCutoff(text),
          true,
@@ -227,8 +247,7 @@ internal static class WebPageCurlPageFetcher
          Fetcher: "curl",
          RelevantLinks: WebPageContentFetchSupport
             .ExtractRelevantLinksFromHtml(body, absoluteUrl),
-         RenderWarning: WebPageContentFetchSupport
-            .DetectIncompleteContentWarning(text)
+         RenderWarning: renderWarning
       );
    }
 

@@ -28,6 +28,7 @@ public static class WebPageFetchDefaults
    public const string CutoffMarker = "[CUTOFF]";
    public const int MaxResponseCharacters = 50000;
    public const int IncompleteContentMinimumMarkerCount = 3;
+   public const int SoftErrorMaximumTextCharacters = 5000;
    public const int RichContentMinimumCharacters = 1000;
    public const int MaxRelevantLinkCount = 20;
    public const int MaxTransientRetryAttempts = 3;

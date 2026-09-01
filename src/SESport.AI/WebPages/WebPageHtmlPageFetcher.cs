@@ -74,8 +74,13 @@ internal static class WebPageHtmlPageFetcher
          }
 
          var title = WebPageContentFetchSupport.ExtractHtmlTitle(html);
-         var text = WebPageContentFetchSupport
+         var extractedText = WebPageContentFetchSupport
             .ExtractHtmlTextWithEmbeddedState(html);
+         var renderWarning = WebPageContentFetchSupport
+            .DetectIncompleteContentWarning(extractedText);
+         var text = WebPageContentFetchSupport.RemoveTemplateArtifacts(
+            extractedText
+         );
 
          if(string.IsNullOrWhiteSpace(text))
          {
@@ -106,6 +111,21 @@ internal static class WebPageHtmlPageFetcher
                   ? "HTML fallback produced no text."
                   : "HTML fallback was blocked.",
                cancellationToken
+            );
+         }
+
+         var softErrorSignature = WebPageBlockDetection
+            .FindSoftErrorSignature(title, text);
+
+         if(softErrorSignature is not null)
+         {
+            return WebPageContentFetchSupport.BuildFailureContent(
+               absoluteUrl,
+               title,
+               WebPageFetchErrorKind.HttpError,
+               "HTML response indicated a not-found page: " +
+               $"{softErrorSignature}.",
+               "html"
             );
          }
 
@@ -146,7 +166,7 @@ internal static class WebPageHtmlPageFetcher
          return new WebPageContent(
             title ?? absoluteUrlString,
             absoluteUrlString,
-            null,
+            WebPageContentFetchSupport.ExtractPublishedAt(html),
             WebPageContentFetchSupport.ExtractHtmlHeadings(html),
             WebPageContentFetchSupport.ApplyResponseCutoff(text),
             true,
@@ -154,8 +174,7 @@ internal static class WebPageHtmlPageFetcher
             Fetcher: "html",
             RelevantLinks: WebPageContentFetchSupport
                .ExtractRelevantLinksFromHtml(html, absoluteUrl),
-            RenderWarning: WebPageContentFetchSupport
-               .DetectIncompleteContentWarning(text)
+            RenderWarning: renderWarning
          );
       }
       catch(OperationCanceledException)

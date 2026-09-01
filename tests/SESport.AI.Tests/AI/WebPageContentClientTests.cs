@@ -922,6 +922,31 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public void ExtractEmbeddedStateSkipsEncodedAndScriptConfiguration()
+   {
+      const string html = """
+         <script type="application/json">
+            {
+               "articleTitle": "Useful article",
+               "art_title": "eyJmb28iOiJiYXIifQ==",
+               "imageExt": "jpg|jpeg|png",
+               "valueName": "search_term_string",
+               "scriptValue": "function replace(data-lazy-src)"
+            }
+         </script>
+         """;
+
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+
+      Assert.Contains("Useful article", text);
+      Assert.DoesNotContain("eyJmb28iOiJiYXIifQ==", text);
+      Assert.DoesNotContain("jpg|jpeg|png", text);
+      Assert.DoesNotContain("search_term_string", text);
+      Assert.DoesNotContain("function replace", text);
+   }
+
+   [Fact]
    public async Task HtmlFetcherExtractsHeadingsAndRenderWarning()
    {
       using var response = new HttpResponseMessage(HttpStatusCode.OK)
@@ -954,6 +979,112 @@ public class WebPageContentClientTests
       Assert.NotNull(page);
       Assert.Equal(["H1: Bracket", "H2: Round one"], page!.Headings);
       Assert.Contains("TBD", page.RenderWarning);
+   }
+
+   [Fact]
+   public async Task HtmlFetcherDetectsSoftNotFoundPage()
+   {
+      using var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new StringContent(
+            """
+            <html>
+               <head><title>Official site</title></head>
+               <body>
+                  <main>
+                     <h1>Let!</h1>
+                     <p>This page does not exist.</p>
+                  </main>
+               </body>
+            </html>
+            """
+         )
+      };
+
+      var page = await WebPageHtmlPageFetcher.FetchAsync(
+         NullLogger.Instance,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         response,
+         new Uri("https://example.test/soft-not-found"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal(
+         WebPageFetchErrorKind.HttpError,
+         page!.FetchErrorKind
+      );
+      Assert.False(page.HasBodyText);
+      Assert.Contains("this page does not exist", page.FetchErrorMessage);
+   }
+
+   [Fact]
+   public async Task HtmlFetcherExtractsPublishedAtAndCleansTemplates()
+   {
+      using var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new StringContent(
+            """
+            <html>
+               <head>
+                  <meta property="article:published_time"
+                        content="2026-08-30T06:41:37+00:00" />
+               </head>
+               <body>
+                  <div role="dialog">
+                     <p>Cookie consent settings</p>
+                  </div>
+                  <main>
+                     <h1>Article title</h1>
+                     <h2>{{profile.title}}</h2>
+                     <h2>Header 2</h2>
+                     <p>Useful article text {{profile.summary}}</p>
+                  </main>
+               </body>
+            </html>
+            """
+         )
+      };
+
+      var page = await WebPageHtmlPageFetcher.FetchAsync(
+         NullLogger.Instance,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         response,
+         new Uri("https://example.test/article"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal(
+         DateTimeOffset.Parse("2026-08-30T06:41:37+00:00"),
+         page!.PublishedAt
+      );
+      Assert.Equal(["H1: Article title"], page.Headings);
+      Assert.Contains("Useful article text", page.MainText);
+      Assert.DoesNotContain("Cookie consent", page.MainText);
+      Assert.DoesNotContain("{{profile.summary}}", page.MainText);
+      Assert.DoesNotContain("Header 2", page.MainText);
+      Assert.Contains("template markup", page.RenderWarning);
+   }
+
+   [Fact]
+   public void PublishedAtFallsBackToJsonLd()
+   {
+      const string html = """
+         <script type="application/ld+json">
+            {
+               "@type": "NewsArticle",
+               "datePublished": "2026-08-30T06:41:37+00:00"
+            }
+         </script>
+         """;
+
+      var publishedAt = WebPageContentFetchSupport.ExtractPublishedAt(html);
+
+      Assert.Equal(
+         DateTimeOffset.Parse("2026-08-30T06:41:37+00:00"),
+         publishedAt
+      );
    }
 
    [Fact]

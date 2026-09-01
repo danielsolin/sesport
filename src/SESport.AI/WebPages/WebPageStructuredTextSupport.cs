@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SESport.AI.WebPages;
@@ -7,23 +8,33 @@ internal static class WebPageStructuredTextSupport
    private static readonly string[] PresentationPropertyTokens =
    [
       "animation",
+      "aria",
+      "banner",
       "background",
       "border",
       "boxshadow",
       "class",
       "color",
+      "consent",
+      "cookie",
       "config",
       "css",
       "display",
+      "excludeuri",
+      "fileext",
       "font",
       "height",
+      "imageext",
       "layout",
       "margin",
       "opacity",
       "option",
       "padd",
+      "pattern",
+      "placeholder",
       "position",
       "radius",
+      "regex",
       "selector",
       "setting",
       "shadow",
@@ -32,6 +43,8 @@ internal static class WebPageStructuredTextSupport
       "template",
       "theme",
       "transform",
+      "urltemplate",
+      "valuename",
       "width",
       "zindex"
    ];
@@ -122,9 +135,14 @@ internal static class WebPageStructuredTextSupport
    {
       return value.Contains("://", StringComparison.Ordinal) ||
          value.Contains("/", StringComparison.Ordinal) ||
-         value.Contains("rrn:", StringComparison.Ordinal) ||
-         value.Contains("urn:", StringComparison.Ordinal) ||
-         value.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ||
+      value.Contains("rrn:", StringComparison.Ordinal) ||
+      value.Contains("urn:", StringComparison.Ordinal) ||
+      value.Contains("data-lazy-", StringComparison.Ordinal) ||
+      value.Contains("document.", StringComparison.Ordinal) ||
+      value.Contains("function(", StringComparison.Ordinal) ||
+      value.Contains("replace(", StringComparison.Ordinal) ||
+      value.Contains("=>", StringComparison.Ordinal) ||
+      value.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ||
          value.StartsWith("rgb(", StringComparison.OrdinalIgnoreCase) ||
          value.All(char.IsDigit) ||
          Regex.IsMatch(
@@ -132,12 +150,35 @@ internal static class WebPageStructuredTextSupport
             @"^[0-9a-fA-F]{12,}$",
             RegexOptions.CultureInvariant
          ) ||
+         LooksLikeEncodedJson(value) ||
          value.StartsWith("eyJ", StringComparison.Ordinal) &&
          value.Length >= 20 &&
          value.All(character =>
             char.IsLetterOrDigit(character) ||
             character is '-' or '_' or '.'
          );
+   }
+
+   private static bool LooksLikeEncodedJson(string value)
+   {
+      if(!value.StartsWith("eyJ", StringComparison.Ordinal) ||
+         value.Length < 20)
+      {
+         return false;
+      }
+
+      try
+      {
+         var decodedBytes = Convert.FromBase64String(value);
+         var decodedValue = Encoding.UTF8.GetString(decodedBytes).TrimStart();
+
+         return decodedValue.StartsWith("{", StringComparison.Ordinal) ||
+            decodedValue.StartsWith("[", StringComparison.Ordinal);
+      }
+      catch(FormatException)
+      {
+         return false;
+      }
    }
 
    private static bool IsLikelyPresentationConfiguration(

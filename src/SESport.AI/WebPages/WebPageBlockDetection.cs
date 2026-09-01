@@ -35,6 +35,25 @@ internal static class WebPageBlockDetection
       "malicious bots",
       "checking your browser"
    ];
+   private static readonly string[] StrongSoftErrorSignatures =
+   [
+      "this page does not exist",
+      "this page doesn't exist",
+      "requested page could not be found",
+      "the requested page could not be found",
+      "sidan kunde inte hittas",
+      "sidan finns inte",
+      "sidan hittades inte"
+   ];
+   private static readonly string[] ShortPageSoftErrorSignatures =
+   [
+      "404 not found",
+      "error 404",
+      "page not found",
+      "content not found",
+      "page is unavailable",
+      "page could not be found"
+   ];
 
    internal static bool IsBlocked(
       string? title,
@@ -62,5 +81,51 @@ internal static class WebPageBlockDetection
 
       return signatures.FirstOrDefault(signature =>
          combinedText.Contains(signature, StringComparison.OrdinalIgnoreCase));
+   }
+
+   internal static string? FindSoftErrorSignature(
+      string? title,
+      string text
+   )
+   {
+      var normalizedTitle = WebPageContentFetchSupport.NormalizeText(title);
+      var normalizedText = WebPageContentFetchSupport.NormalizeText(text);
+
+      var titleSignature = StrongSoftErrorSignatures
+         .Concat(ShortPageSoftErrorSignatures)
+         .FirstOrDefault(signature =>
+            normalizedTitle.Contains(
+               signature,
+               StringComparison.OrdinalIgnoreCase
+            ));
+
+      if(titleSignature is not null)
+      {
+         return titleSignature;
+      }
+
+      var strongSignature = StrongSoftErrorSignatures.FirstOrDefault(
+         signature => normalizedText.Contains(
+            signature,
+            StringComparison.OrdinalIgnoreCase
+         )
+      );
+
+      if(strongSignature is not null)
+      {
+         return strongSignature;
+      }
+
+      if(normalizedText.Length >
+         WebPageFetchDefaults.SoftErrorMaximumTextCharacters)
+      {
+         return null;
+      }
+
+      return ShortPageSoftErrorSignatures.FirstOrDefault(signature =>
+         normalizedText.Contains(
+            signature,
+            StringComparison.OrdinalIgnoreCase
+         ));
    }
 }
