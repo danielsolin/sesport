@@ -147,13 +147,15 @@ internal static class WebPageHtmlPageFetcher
             title ?? absoluteUrlString,
             absoluteUrlString,
             null,
-            [],
+            WebPageContentFetchSupport.ExtractHtmlHeadings(html),
             WebPageContentFetchSupport.ApplyResponseCutoff(text),
             true,
             text,
             Fetcher: "html",
             RelevantLinks: WebPageContentFetchSupport
-               .ExtractRelevantLinksFromHtml(html, absoluteUrl)
+               .ExtractRelevantLinksFromHtml(html, absoluteUrl),
+            RenderWarning: WebPageContentFetchSupport
+               .DetectIncompleteContentWarning(text)
          );
       }
       catch(OperationCanceledException)

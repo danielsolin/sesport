@@ -20,7 +20,8 @@ internal static class LlamaPageToolFormatter
       IReadOnlyList<string>? highlightedRows,
       string? mainText,
       string? fetchErrorMessage = null,
-      WebPageFetchErrorKind? fetchErrorKind = null
+      WebPageFetchErrorKind? fetchErrorKind = null,
+      string? renderWarning = null
    )
    {
       var builder = new StringBuilder();
@@ -48,6 +49,12 @@ internal static class LlamaPageToolFormatter
          {
             builder.AppendLine($"- {heading}");
          }
+      }
+
+      if(!string.IsNullOrWhiteSpace(renderWarning))
+      {
+         builder.AppendLine("Render warning:");
+         builder.AppendLine(renderWarning.Trim());
       }
 
       var pdfLinks = relevantLinks?
@@ -823,6 +830,7 @@ internal static class LlamaPageToolFormatter
       {
          WebPageFetchErrorKind.BrowserBlocked => "Browser blocked",
          WebPageFetchErrorKind.Timeout => "Timeout",
+         WebPageFetchErrorKind.HttpError => "HTTP error",
          _ => "Fetch error"
       };
    }

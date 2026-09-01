@@ -1,3 +1,5 @@
+using System.Net;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -254,6 +256,34 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       using(response)
       {
+         if(!response.IsSuccessStatusCode)
+         {
+            if(response.StatusCode is
+               HttpStatusCode.Unauthorized or
+               HttpStatusCode.Forbidden or
+               HttpStatusCode.TooManyRequests)
+            {
+               return await FetchRenderedPageWithoutPrimaryResponseAsync(
+                  absoluteUrl,
+                  cancellationToken,
+                  WebPageFetchErrorKind.HttpError
+               );
+            }
+
+            var reason = string.IsNullOrWhiteSpace(response.ReasonPhrase)
+               ? "HTTP error"
+               : response.ReasonPhrase.Trim();
+
+            return WebPageContentFetchSupport.BuildFailureContent(
+               absoluteUrl,
+               null,
+               WebPageFetchErrorKind.HttpError,
+               $"HTTP {(int)response.StatusCode} {reason} while " +
+               $"fetching {absoluteUrl}.",
+               "http"
+            );
+         }
+
          if(WebPageContentFetchSupport.IsPdfResponse(response, absoluteUrl))
          {
             return await WebPagePdfPageFetcher.FetchAsync(
@@ -572,7 +602,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
    private static bool IsRichContent(WebPageContent? content)
    {
       return !HasFetchFailure(content) &&
-         content!.MainTextFull.Length >=
+         string.IsNullOrWhiteSpace(content!.RenderWarning) &&
+         content.MainTextFull.Length >=
             WebPageFetchDefaults.RichContentMinimumCharacters;
    }
 

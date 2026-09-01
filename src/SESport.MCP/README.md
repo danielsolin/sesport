@@ -9,15 +9,18 @@ and page-search support in `SESport.AI`:
 | Tool           | Forwards to                          | Returns              |
 |--------------  |--------------------------------------|----------------------|
 | `web_search`   | `IWebSearchClient.SearchAsync`       | `WebSearchResponse`  |
-| `web_get_page` | `IWebPageContentClient.FetchAsync`   | `WebPageToolResponse` |
-| `web_find_in_page` | `IWebPageContentClient.FetchAsync` and `WebPageToolSupport.FindInPage` | text |
+| `web_get_page` | `IWebPageContentClient.FetchAsync` | `WebPageToolResponse` |
+| `web_find_in_page` | `IWebPageContentClient.FetchAsync` | text |
 
 The server does not summarize the fetched content. The MCP response projects
 the fetcher result to the public response contract and deliberately omits the
-the internal `MainTextFull` field; `MainText` retains the shared
+internal `MainTextFull`, `RelevantLinks`, and `RelevantImages` fields;
+`MainText` retains the shared
 `WebPageFetchDefaults.MaxResponseCharacters` cutoff and ends with `[CUTOFF]`
 when truncation occurs. Use `web_find_in_page` to find text beyond the cutoff.
-`include_social_media` is hard-coded to `false` in the current version.
+The response includes `RenderWarning` when placeholder content suggests that
+the rendered page may be incomplete. `include_social_media` is hard-coded to
+`false` in the current version.
 
 ### Structured content serialization
 

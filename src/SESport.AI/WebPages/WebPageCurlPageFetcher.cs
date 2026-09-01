@@ -162,7 +162,7 @@ internal static class WebPageCurlPageFetcher
          return WebPageContentFetchSupport.BuildFailureContent(
             absoluteUrl,
             null,
-            WebPageFetchErrorKind.BrowserBlocked,
+            WebPageFetchErrorKind.HttpError,
             $"Curl fallback returned HTTP {statusCode}.",
             "curl"
          );
@@ -220,15 +220,15 @@ internal static class WebPageCurlPageFetcher
          title ?? absoluteUrl.ToString(),
          absoluteUrl.ToString(),
          null,
-         [],
+         WebPageContentFetchSupport.ExtractHtmlHeadings(body),
          WebPageContentFetchSupport.ApplyResponseCutoff(text),
          true,
          text,
          Fetcher: "curl",
-         RelevantLinks: WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
-            body,
-            absoluteUrl
-         )
+         RelevantLinks: WebPageContentFetchSupport
+            .ExtractRelevantLinksFromHtml(body, absoluteUrl),
+         RenderWarning: WebPageContentFetchSupport
+            .DetectIncompleteContentWarning(text)
       );
    }
 

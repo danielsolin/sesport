@@ -13,5 +13,6 @@ public sealed record WebPageContent(
    string? Fetcher = null,
    string? BrowserStrategy = null,
    IReadOnlyList<WebPageRelevantLink>? RelevantLinks = null,
-   IReadOnlyList<WebPageImageCandidate>? RelevantImages = null
+   IReadOnlyList<WebPageImageCandidate>? RelevantImages = null,
+   string? RenderWarning = null
 );

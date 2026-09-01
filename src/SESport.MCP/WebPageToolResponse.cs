@@ -11,8 +11,7 @@ public sealed record WebPageToolResponse(
    WebPageFetchErrorKind? FetchErrorKind = null,
    string? Fetcher = null,
    string? BrowserStrategy = null,
-   IReadOnlyList<WebPageRelevantLink>? RelevantLinks = null,
-   IReadOnlyList<WebPageImageCandidate>? RelevantImages = null
+   string? RenderWarning = null
 )
 {
    public static WebPageToolResponse From(WebPageContent content)
@@ -30,8 +29,7 @@ public sealed record WebPageToolResponse(
          content.FetchErrorKind,
          content.Fetcher,
          content.BrowserStrategy,
-         content.RelevantLinks,
-         content.RelevantImages
+         content.RenderWarning
       );
    }
 }

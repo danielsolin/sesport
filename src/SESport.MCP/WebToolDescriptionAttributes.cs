@@ -31,13 +31,16 @@ internal static class WebToolDescriptions
       );
 
    public static string GetPage =>
-      "Fetches a web page through SESport's existing web page " +
-      "content pipeline and returns its text and page metadata. " +
+      "Fetches an HTML page or PDF through SESport's existing web page " +
+      "content pipeline and returns its text, headings, and metadata. " +
+      "HTML pages are rendered in a browser when the initial response is " +
+      "not sufficient. " +
       "The returned main text is limited to " +
       MaxResponseCharactersText +
       " characters. When more content exists, it ends with " +
       "[CUTOFF]; use web_find_in_page with the same URL to find text " +
-      "beyond the cutoff.";
+      "beyond the cutoff. RenderWarning indicates likely placeholder " +
+      "content such as TBD or Loading.";
 
    public static string FindInPage =>
       "Searches the full fetched web page case-insensitively and returns " +

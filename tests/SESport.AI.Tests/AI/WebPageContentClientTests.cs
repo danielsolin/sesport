@@ -240,6 +240,78 @@ public class WebPageContentClientTests
       Assert.Null(page);
    }
 
+   [Fact]
+   public async Task FetchReturnsHttpErrorForNonSuccessResponse()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new RecordingHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.NotFound)
+         )),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(null);
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/missing",
+         CancellationToken.None
+      );
+
+      Assert.Equal(0, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal(
+         WebPageFetchErrorKind.HttpError,
+         page!.FetchErrorKind
+      );
+      Assert.Equal(
+         "HTTP 404 Not Found while fetching " +
+         "https://example.test/missing.",
+         page.FetchErrorMessage
+      );
+      Assert.Empty(page.MainText);
+      Assert.False(page.HasBodyText);
+   }
+
+   [Fact]
+   public async Task FetchTriesBrowserForForbiddenResponse()
+   {
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new RecordingHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.Forbidden)
+         )),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Browser title",
+                  "https://example.test/forbidden",
+                  null,
+                  [],
+                  "Browser body.",
+                  true,
+                  "Browser body.",
+                  Fetcher: "playwright"
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/forbidden",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("playwright", page!.Fetcher);
+      Assert.Equal("Browser body.", page.MainText);
+   }
+
    [Theory]
    [InlineData("http://localhost/admin")]
    [InlineData("http://service.localhost/admin")]
@@ -312,6 +384,47 @@ public class WebPageContentClientTests
       Assert.NotNull(page);
       Assert.Equal("Null fallback title", page!.Title);
       Assert.Contains("Null fallback body.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchUsesBrowserWhenPrimaryContentHasPlaceholders()
+   {
+      var browserCalls = 0;
+      var primaryText = string.Join(
+         Environment.NewLine,
+         ["TBD", "TBD", "TBD", new string('x', 1000)]
+      );
+      var primaryHtml =
+         "<html><body><main>" + primaryText + "</main></body></html>";
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(primaryHtml)),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Rendered title",
+                  "https://example.test/rendered",
+                  null,
+                  ["H1: Rendered title"],
+                  "Rendered body.",
+                  true,
+                  "Rendered body.",
+                  Fetcher: "playwright"
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/rendered",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("playwright", page!.Fetcher);
+      Assert.Equal("Rendered body.", page.MainText);
    }
 
    [Fact]
@@ -776,6 +889,71 @@ public class WebPageContentClientTests
          "playerName: Kristoffer Ventura",
          text
       );
+   }
+
+   [Fact]
+   public void ExtractEmbeddedStateSkipsPresentationConfiguration()
+   {
+      const string html = """
+         <html>
+            <body>
+               <script type="application/json">
+                  {
+                     "excl_padd": "0 0 2px",
+                     "f_vid_title_font_title":
+                        "Video pop-up article title",
+                     "articleTitle": "Useful article",
+                     "categoryName": "Tennis"
+                  }
+               </script>
+            </body>
+         </html>
+         """;
+
+      var text = WebPageContentFetchSupport
+         .ExtractHtmlTextWithEmbeddedState(html);
+
+      Assert.DoesNotContain("excl_padd", text);
+      Assert.DoesNotContain("Video pop-up article title", text);
+      Assert.Contains(
+         "articleTitle: Useful article | categoryName: Tennis",
+         text
+      );
+   }
+
+   [Fact]
+   public async Task HtmlFetcherExtractsHeadingsAndRenderWarning()
+   {
+      using var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new StringContent(
+            """
+            <html>
+               <head><title>Bracket</title></head>
+               <body>
+                  <header><h2>Site navigation</h2></header>
+                  <main>
+                     <h1>Bracket</h1>
+                     <h2>Round one</h2>
+                     <p>TBD TBD TBD</p>
+                  </main>
+               </body>
+            </html>
+            """
+         )
+      };
+
+      var page = await WebPageHtmlPageFetcher.FetchAsync(
+         NullLogger.Instance,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         response,
+         new Uri("https://example.test/bracket"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Equal(["H1: Bracket", "H2: Round one"], page!.Headings);
+      Assert.Contains("TBD", page.RenderWarning);
    }
 
    [Fact]

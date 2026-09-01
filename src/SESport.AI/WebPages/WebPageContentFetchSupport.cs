@@ -47,6 +47,15 @@ internal static class WebPageContentFetchSupport
       @"li|main|p|section|tr)>",
       RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
    );
+   private static readonly Regex HtmlHeadingRegex = new(
+      @"<h(?<level>[1-6])\b[^>]*>(?<content>.*?)</h\k<level>>",
+      RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+   );
+   private static readonly Regex IncompleteContentMarkerRegex = new(
+      @"\b(?:TBD|Loading(?:\s*\.\.\.)?|No\s+(?:data|results))\b",
+      RegexOptions.IgnoreCase | RegexOptions.CultureInvariant |
+         RegexOptions.Compiled
+   );
    private static readonly Regex HtmlAttributeRegex = new(
       @"\b(?<name>[a-zA-Z0-9:-]+)\s*=\s*(?:" +
       @"""(?<value>[^""]*)""|'(?<value>[^']*)')",
@@ -486,6 +495,62 @@ internal static class WebPageContentFetchSupport
             }.Where(text => !string.IsNullOrWhiteSpace(text))
          )
       );
+   }
+
+   internal static IReadOnlyList<string> ExtractHtmlHeadings(string html)
+   {
+      if(string.IsNullOrWhiteSpace(html))
+      {
+         return [];
+      }
+
+      var sourceHtml = ExtractRelevantLinkSourceHtml(html);
+      var headings = new List<string>();
+
+      foreach(Match match in HtmlHeadingRegex.Matches(sourceHtml))
+      {
+         var headingText = NormalizeText(
+            WebUtility.HtmlDecode(
+               StripTags(match.Groups["content"].Value)
+            )
+         );
+
+         if(string.IsNullOrWhiteSpace(headingText))
+         {
+            continue;
+         }
+
+         var level = match.Groups["level"].Value;
+         headings.Add($"H{level}: {headingText}");
+      }
+
+      return headings;
+   }
+
+   internal static string? DetectIncompleteContentWarning(string? text)
+   {
+      var normalizedText = NormalizeText(text);
+
+      if(string.IsNullOrWhiteSpace(normalizedText))
+      {
+         return null;
+      }
+
+      var matches = IncompleteContentMarkerRegex.Matches(normalizedText);
+
+      if(matches.Count <
+         WebPageFetchDefaults.IncompleteContentMinimumMarkerCount)
+      {
+         return null;
+      }
+
+      var markers = matches
+         .Select(match => match.Value)
+         .Distinct(StringComparer.OrdinalIgnoreCase)
+         .ToArray();
+
+      return "Rendered page may be incomplete; placeholder content " +
+         $"was detected ({string.Join(", ", markers)}).";
    }
 
    internal static IReadOnlyList<WebPageRelevantLink>

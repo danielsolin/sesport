@@ -4,6 +4,46 @@ namespace SESport.AI.WebPages;
 
 internal static class WebPageStructuredTextSupport
 {
+   private static readonly string[] PresentationPropertyTokens =
+   [
+      "animation",
+      "background",
+      "border",
+      "boxshadow",
+      "class",
+      "color",
+      "config",
+      "css",
+      "display",
+      "font",
+      "height",
+      "layout",
+      "margin",
+      "opacity",
+      "option",
+      "padd",
+      "position",
+      "radius",
+      "selector",
+      "setting",
+      "shadow",
+      "spacing",
+      "style",
+      "template",
+      "theme",
+      "transform",
+      "width",
+      "zindex"
+   ];
+
+   private static readonly Regex CssConfigurationValueRegex = new(
+      @"^[+-]?(?:\d+(?:\.\d+)?|\.\d+)" +
+      @"(?:px|em|rem|%|vh|vw|vmin|vmax|pt|pc|in|cm|mm|ex|ch|s|ms)?" +
+      @"(?:\s+[+-]?(?:\d+(?:\.\d+)?|\.\d+)" +
+      @"(?:px|em|rem|%|vh|vw|vmin|vmax|pt|pc|in|cm|mm|ex|ch|s|ms)?){1,7}$",
+      RegexOptions.CultureInvariant | RegexOptions.Compiled
+   );
+
    private static string NormalizeText(string? text)
    {
       return WebPageContentFetchSupport.NormalizeText(text);
@@ -26,6 +66,11 @@ internal static class WebPageStructuredTextSupport
       }
 
       if(IsLikelyMachineValue(normalizedValue))
+      {
+         return false;
+      }
+
+      if(IsLikelyPresentationConfiguration(propertyName, normalizedValue))
       {
          return false;
       }
@@ -86,7 +131,35 @@ internal static class WebPageStructuredTextSupport
             value,
             @"^[0-9a-fA-F]{12,}$",
             RegexOptions.CultureInvariant
+         ) ||
+         value.StartsWith("eyJ", StringComparison.Ordinal) &&
+         value.Length >= 20 &&
+         value.All(character =>
+            char.IsLetterOrDigit(character) ||
+            character is '-' or '_' or '.'
          );
+   }
+
+   private static bool IsLikelyPresentationConfiguration(
+      string? propertyName,
+      string value
+   )
+   {
+      if(CssConfigurationValueRegex.IsMatch(value))
+      {
+         return true;
+      }
+
+      if(string.IsNullOrWhiteSpace(propertyName))
+      {
+         return false;
+      }
+
+      var normalizedPropertyName = propertyName.Trim().ToLowerInvariant();
+
+      return PresentationPropertyTokens.Any(token =>
+         normalizedPropertyName.Contains(token, StringComparison.Ordinal)
+      );
    }
 
    private static bool IsLikelyHumanReadable(string value)

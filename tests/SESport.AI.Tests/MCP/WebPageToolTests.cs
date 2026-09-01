@@ -21,7 +21,24 @@ public sealed class WebPageToolTests
             "Capped main text",
             true,
             internalFullText,
-            Fetcher: "test"
+            Fetcher: "test",
+            RelevantLinks:
+            [
+               new WebPageRelevantLink(
+                  "Entry list",
+                  "https://example.test/entries.pdf"
+               )
+            ],
+            RelevantImages:
+            [
+               new WebPageImageCandidate(
+                  "https://example.test/entries.png",
+                  900,
+                  600,
+                  "Entry list"
+               )
+            ],
+            RenderWarning: "Placeholder content was detected."
          )
       );
       var tool = new WebPageTool(client);
@@ -36,6 +53,11 @@ public sealed class WebPageToolTests
       Assert.DoesNotContain("MainTextFull", serialized);
       Assert.DoesNotContain("mainTextFull", serialized);
       Assert.DoesNotContain(internalFullText, serialized);
+      Assert.DoesNotContain("RelevantLinks", serialized);
+      Assert.DoesNotContain("RelevantImages", serialized);
+      Assert.DoesNotContain("entries.pdf", serialized);
+      Assert.DoesNotContain("entries.png", serialized);
+      Assert.Contains("RenderWarning", serialized);
    }
 
    private sealed class StubWebPageContentClient(

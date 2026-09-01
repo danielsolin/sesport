@@ -1757,7 +1757,8 @@ public sealed class LlamaServerClient : IAiProviderClient
             ),
             pageContent.MainText,
             pageContent.FetchErrorMessage,
-            pageContent.FetchErrorKind
+            pageContent.FetchErrorKind,
+            pageContent.RenderWarning
          );
       }
 

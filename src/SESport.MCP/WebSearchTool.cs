@@ -15,8 +15,9 @@ public sealed class WebSearchTool
    )]
    [Description(
       "Searches the web through SESport's local SearXNG instance " +
-         "and returns the raw WebSearchResponse (results, provider, " +
-         "details)."
+      "and returns the raw WebSearchResponse (results, provider, " +
+      "details). Standard search operators such as site:, filetype:, " +
+      "and quoted exact phrases are passed to SearXNG."
    )]
    public Task<WebSearchResponse> WebSearchAsync(
       [Description("The search query.")]

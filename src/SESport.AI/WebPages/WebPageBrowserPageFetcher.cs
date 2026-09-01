@@ -298,6 +298,9 @@ internal static class WebPageBrowserPageFetcher
       var normalizedText =
          WebPageContentFetchSupport
             .ExtractHtmlTextWithEmbeddedState(bodyHtml);
+      var headings = WebPageContentFetchSupport.ExtractHtmlHeadings(
+         bodyHtml
+      );
 
       var blockedSignature = WebPageBlockDetection
          .FindBlockedSignature(
@@ -307,21 +310,29 @@ internal static class WebPageBrowserPageFetcher
          );
       var blockedStatus = navigationStatus is 401 or 403 or 429 &&
          string.IsNullOrWhiteSpace(normalizedText);
+      var unsuccessfulStatus = navigationStatus is int httpStatus &&
+         (httpStatus < 200 || httpStatus >= 300);
 
-      if(blockedSignature is not null || blockedStatus)
+      if(blockedSignature is not null || blockedStatus || unsuccessfulStatus)
       {
          var statusText = navigationStatus is int status
             ? $" HTTP {status}."
             : string.Empty;
-         var reason = blockedSignature is not null
+         var reason = unsuccessfulStatus
+            ? "Browser renderer returned an unsuccessful HTTP response." +
+               statusText
+            : blockedSignature is not null
             ? "Browser renderer returned a blocked page: " +
                blockedSignature + "." + statusText
             : "Browser renderer returned no content." + statusText;
+         var errorKind = unsuccessfulStatus
+            ? WebPageFetchErrorKind.HttpError
+            : WebPageFetchErrorKind.BrowserBlocked;
 
          return WebPageContentFetchSupport.BuildFailureContent(
             absoluteUrl,
             title,
-            WebPageFetchErrorKind.BrowserBlocked,
+            errorKind,
             reason,
             "playwright",
             browserStrategy
@@ -332,7 +343,7 @@ internal static class WebPageBrowserPageFetcher
          string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
          absoluteUrlString,
          null,
-         [],
+         headings,
          WebPageContentFetchSupport.ApplyResponseCutoff(
             normalizedText
          ),
@@ -340,6 +351,8 @@ internal static class WebPageBrowserPageFetcher
          normalizedText,
          Fetcher: "playwright",
          BrowserStrategy: browserStrategy,
+         RenderWarning: WebPageContentFetchSupport
+            .DetectIncompleteContentWarning(normalizedText),
          RelevantLinks:
             WebPageContentFetchSupport.MergeRelevantLinks(
                renderedRelevantLinks,
