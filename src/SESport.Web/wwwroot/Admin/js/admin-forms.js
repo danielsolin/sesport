@@ -85,7 +85,6 @@ document.addEventListener("submit", async event => {
       }
 
       decrementCounter(form.dataset.ajaxDecrementTarget);
-      refreshCheckboxControls();
    }
    catch(error)
    {
@@ -146,68 +145,6 @@ document.addEventListener("change", event => {
       }
    });
 });
-
-function initializeCheckboxToggles(root = document)
-{
-   root.querySelectorAll(checkboxToggleSelector).forEach(toggle => {
-      if(!(toggle instanceof HTMLButtonElement))
-      {
-         return;
-      }
-
-      if(toggle.dataset.checkboxToggleInitialized === "true")
-      {
-         return;
-      }
-
-      toggle.dataset.checkboxToggleInitialized = "true";
-      updateCheckboxToggle(toggle);
-
-      toggle.addEventListener("click", () => {
-         const checkboxes = getCheckboxGroup(toggle);
-         const shouldSelect = checkboxes.some(checkbox => !checkbox.checked);
-
-         checkboxes.forEach(checkbox => {
-            if(checkbox.checked === shouldSelect)
-            {
-               return;
-            }
-
-            checkbox.checked = shouldSelect;
-            checkbox.dispatchEvent(new Event("change", { bubbles: true }));
-         });
-
-         updateCheckboxToggle(toggle);
-      });
-
-      getCheckboxGroup(toggle).forEach(checkbox => {
-         checkbox.addEventListener("change", () => {
-            updateCheckboxToggle(toggle);
-         });
-      });
-   });
-}
-
-function initializeCheckboxVisibility(root = document)
-{
-   root.querySelectorAll(checkboxVisibilitySelector).forEach(target => {
-      if(target.dataset.checkboxVisibilityInitialized === "true")
-      {
-         return;
-      }
-
-      target.dataset.checkboxVisibilityInitialized = "true";
-      updateCheckboxVisibility(target);
-
-      getCheckboxesForGroup(
-         target.dataset.visibleWhenCheckboxGroup
-      ).forEach(checkbox => {
-         checkbox.addEventListener("change", () => {
-            updateCheckboxVisibility(target);
-         });
-      });
-   });
-}
 
 function initializePersonGenderVisibility(root = document)
 {
@@ -401,63 +338,6 @@ function formatAdminDateValue(date)
    return `${year}-${month}-${day}`;
 }
 
-function updateCheckboxVisibility(target)
-{
-   const checkboxes = getCheckboxesForGroup(
-      target.dataset.visibleWhenCheckboxGroup
-   );
-   const hasSelection = checkboxes.some(checkbox => checkbox.checked);
-
-   target.hidden = !hasSelection;
-}
-
-function getCheckboxGroup(toggle)
-{
-   const groupName = toggle.dataset.checkboxToggle;
-
-   return getCheckboxesForGroup(groupName);
-}
-
-function getCheckboxesForGroup(groupName)
-{
-   if(!groupName)
-   {
-      return [];
-   }
-
-   return Array
-      .from(document.querySelectorAll("[data-checkbox-group]"))
-      .filter(checkbox => checkbox instanceof HTMLInputElement)
-      .filter(checkbox => checkbox.type === "checkbox")
-      .filter(checkbox => checkbox.dataset.checkboxGroup === groupName)
-      .filter(checkbox => !checkbox.disabled);
-}
-
-function updateCheckboxToggle(toggle)
-{
-   const checkboxes = getCheckboxGroup(toggle);
-   const allSelected = checkboxes.length > 0
-      && checkboxes.every(checkbox => checkbox.checked);
-   const label = allSelected
-      ? toggle.dataset.unselectLabel
-      : toggle.dataset.selectLabel;
-
-   toggle.textContent = label
-      || (allSelected ? "Unselect all" : "Select all");
-   toggle.disabled = checkboxes.length === 0;
-}
-
-function refreshCheckboxControls(root = document)
-{
-   root.querySelectorAll(checkboxToggleSelector).forEach(toggle => {
-      updateCheckboxToggle(toggle);
-   });
-
-   root.querySelectorAll(checkboxVisibilitySelector).forEach(target => {
-      updateCheckboxVisibility(target);
-   });
-}
-
 function submitFilterForm(field)
 {
    normalizeExclusiveEmptyOption(field);
@@ -536,8 +416,6 @@ async function replaceFromFormAsync(form)
 
       target.replaceWith(nextTarget);
       initializeAdminDateSteppers(nextTarget);
-      initializeCheckboxToggles(nextTarget);
-      initializeCheckboxVisibility(nextTarget);
       initializeTeaserGeneration(nextTarget);
       initializeParticipationRowChecks(nextTarget);
       void initializeParticipationRunsAsync(nextTarget);
@@ -603,8 +481,6 @@ async function replaceTargetFromFormAsync(form)
       target.replaceWith(nextTarget);
       syncReplacementCount(form, nextTarget);
       initializeAdminDateSteppers(nextTarget);
-      initializeCheckboxToggles(nextTarget);
-      initializeCheckboxVisibility(nextTarget);
       initializeTeaserGeneration(nextTarget);
       initializeParticipationRowChecks(nextTarget);
       void initializeParticipationRunsAsync(nextTarget);

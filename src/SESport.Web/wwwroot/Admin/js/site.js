@@ -7,8 +7,6 @@
    initializeExclusiveEmptySelects();
    initializeMultiSelectScrollRetention();
    initializeMultiSelectClearButtons();
-   initializeCheckboxToggles();
-   initializeCheckboxVisibility();
    window.initializeEntitySearch?.(document);
    initializePersonGenderVisibility();
    initializeGetFormRestoration();

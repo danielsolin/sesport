@@ -305,8 +305,9 @@ async function pollRunStatusesAsync()
          stopRunPolling();
       }
    }
-   catch
+   catch(error)
    {
+      console.error("Run status polling failed:", error);
    }
    finally
    {

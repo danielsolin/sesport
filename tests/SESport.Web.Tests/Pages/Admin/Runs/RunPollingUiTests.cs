@@ -25,5 +25,6 @@ public sealed class RunPollingUiTests
       Assert.Contains("runSummaryCellSelector", script);
       Assert.Contains("resultSummary", script);
       Assert.Contains("updateRunRow(row, result);", script);
+      Assert.Contains("Run status polling failed:", script);
    }
 }

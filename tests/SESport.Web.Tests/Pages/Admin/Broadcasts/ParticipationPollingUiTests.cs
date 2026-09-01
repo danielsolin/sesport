@@ -25,6 +25,11 @@ public sealed class ParticipationPollingUiTests
          repoRoot,
          "src/SESport.Web/wwwroot/Admin/js/admin-shared.js"
       );
+      var participationCheckPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Ajax/Create",
+         "ParticipationCheck.cshtml.cs"
+      );
       var rowPath = Path.Combine(
          repoRoot,
          "src/SESport.Web/Pages/Admin/Broadcasts/_BroadcastRow.cshtml"
@@ -47,6 +52,9 @@ public sealed class ParticipationPollingUiTests
          await File.ReadAllTextAsync(formsScriptPath);
       script += Environment.NewLine +
          await File.ReadAllTextAsync(sharedScriptPath);
+      var participationCheck = await File.ReadAllTextAsync(
+         participationCheckPath
+      );
       var row = await File.ReadAllTextAsync(rowPath);
       var runs = await File.ReadAllTextAsync(runsPath);
       var results = await File.ReadAllTextAsync(resultsPath);
@@ -80,6 +88,19 @@ public sealed class ParticipationPollingUiTests
       Assert.Contains("participantList.remove()", script);
       Assert.Contains("participationQueuedFromRunId", script);
       Assert.Contains("getParticipationRunId", script);
+      Assert.Contains(
+         "const statusUrl = getParticipationStatusUrl();",
+         script
+      );
+      Assert.Contains(
+         "const statusHtml = await postParticipationStatusAsync(",
+         script
+      );
+      Assert.Contains(
+         "Participation status polling failed:",
+         script
+      );
+      Assert.Contains("queued = true", participationCheck);
       Assert.Contains("const queuingParticipationIds = new Set()", script);
       Assert.Contains("queuingParticipationIds.has(broadcastId)", script);
       Assert.Contains("queuingParticipationIds.delete(broadcastId)", script);

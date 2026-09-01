@@ -4,8 +4,6 @@
 const enhancedFormSelector =
    "form[data-ajax-success]:not([data-ajax-success=''])";
 const replacementFormSelector = "form[data-ajax-replace-target]";
-const checkboxToggleSelector = "[data-checkbox-toggle]";
-const checkboxVisibilitySelector = "[data-visible-when-checkbox-group]";
 const entityTypeSelectSelector = "[data-entity-type-select]";
 const personGenderFieldSelector = "[data-person-gender-field]";
 const personBirthdateFieldSelector =
@@ -92,31 +90,6 @@ const getFormSelector = "form[method='get']";
 const exclusiveEmptySelectSelector = "select[data-empty-option='exclusive']";
 const exclusiveEmptySelectStates = new WeakMap();
 const multiSelectScrollPositions = new WeakMap();
-function normalizeString(value)
-{
-   if(typeof value !== "string")
-   {
-      return "";
-   }
-
-   return value.trim();
-}
-
-function normalizeNullableString(value)
-{
-   if(value === null || typeof value === "undefined")
-   {
-      return "";
-   }
-
-   if(typeof value !== "string")
-   {
-      return String(value).trim();
-   }
-
-   return value.trim();
-}
-
 function isTouchEditInteraction()
 {
    const mediaQuery = window.matchMedia?.(

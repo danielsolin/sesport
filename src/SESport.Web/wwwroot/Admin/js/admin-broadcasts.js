@@ -804,6 +804,28 @@ async function checkParticipationRowAsync(button)
          startParticipationPolling();
          return;
       }
+
+      const statusUrl = getParticipationStatusUrl();
+
+      if(statusUrl === "")
+      {
+         return;
+      }
+
+      const statusHtml = await postParticipationStatusAsync(
+         statusUrl,
+         [broadcastId]
+      );
+      const finalIds = replaceParticipationCellsFromHtml(statusHtml);
+
+      finalIds.forEach(finalId => {
+         pendingParticipationIds.delete(finalId);
+      });
+
+      if(pendingParticipationIds.size === 0)
+      {
+         stopParticipationPolling();
+      }
    }
    catch(error)
    {
@@ -998,8 +1020,9 @@ async function pollParticipationStatusesAsync()
          stopParticipationPolling();
       }
    }
-   catch
+   catch(error)
    {
+      console.error("Participation status polling failed:", error);
    }
    finally
    {
