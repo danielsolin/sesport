@@ -142,11 +142,11 @@ public sealed class SharedLayoutMarkupTests
       Assert.Contains("class=\"@publicAboutClass\"", html);
       Assert.Contains("isPublicAbout ? \"page\" : null", html);
       Assert.DoesNotContain("Logga ut", html);
-      Assert.Contains("class=\"public-contact-footer\"", index);
-      Assert.Contains("class=\"public-contact-link\"", index);
-      Assert.Contains("href=\"mailto:info@sesport.se\"", index);
-      Assert.Contains(".public-contact-footer {", publicCss);
-      Assert.Contains(".public-contact-link {", publicCss);
+      Assert.DoesNotContain("public-contact-footer", index);
+      Assert.DoesNotContain("public-contact-link", index);
+      Assert.DoesNotContain("mailto:info@sesport.se", index);
+      Assert.DoesNotContain(".public-contact-footer {", publicCss);
+      Assert.DoesNotContain(".public-contact-link {", publicCss);
       Assert.DoesNotContain(".public-about-link", publicCss);
       Assert.Contains(".public-header-primary-links {", publicCss);
       Assert.Contains(".public-header-menu-toggle {", publicCss);
@@ -160,33 +160,6 @@ public sealed class SharedLayoutMarkupTests
          ".page-shell {\n" +
             "   padding-top: 24px;\n" +
             "   padding-bottom: 24px;",
-         publicCss
-      );
-      Assert.Contains(
-         "width: calc(\n" +
-            "      100% -\n" +
-            "      var(--activity-card-center-offset) -\n" +
-            "      var(--activity-card-center-offset)",
-         publicCss
-      );
-      Assert.Contains(
-         "margin: 64px 0 0\n" +
-            "      calc(\n" +
-            "         var(--activity-card-center-offset) +\n" +
-            "         var(--activity-card-center-offset)",
-         publicCss
-      );
-      Assert.Contains("padding-bottom: 0;", publicCss);
-      Assert.Contains(
-         "--activity-card-center-offset: 94px;",
-         publicCss
-      );
-      Assert.DoesNotContain(
-         "transform: translateX(var(--activity-card-center-offset));",
-         publicCss
-      );
-      Assert.Contains(
-         "--activity-card-center-offset: 64px;",
          publicCss
       );
       Assert.Contains(".public-member-link {", publicCss);
