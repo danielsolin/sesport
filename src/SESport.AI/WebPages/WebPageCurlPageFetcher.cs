@@ -12,6 +12,12 @@ internal static class WebPageCurlPageFetcher
       CancellationToken cancellationToken
    )
    {
+      var stopwatch = Stopwatch.StartNew();
+      logger.LogInformation(
+         "Curl fetch started for {Url}.",
+         absoluteUrl
+      );
+
       try
       {
          var output = await RunCurlAsync(
@@ -22,13 +28,32 @@ internal static class WebPageCurlPageFetcher
 
          if(string.IsNullOrWhiteSpace(output))
          {
+            logger.LogWarning(
+               "Curl fetch returned no output for {Url} after " +
+               "{ElapsedMilliseconds} ms.",
+               absoluteUrl,
+               stopwatch.ElapsedMilliseconds
+            );
             return null;
          }
 
-         return ParseCurlOutput(logger, output, absoluteUrl);
+         var content = ParseCurlOutput(logger, output, absoluteUrl);
+         logger.LogInformation(
+            "Curl fetch completed for {Url} after {ElapsedMilliseconds} ms. " +
+            "ErrorKind: {ErrorKind}.",
+            absoluteUrl,
+            stopwatch.ElapsedMilliseconds,
+            content?.FetchErrorKind
+         );
+         return content;
       }
       catch(OperationCanceledException)
       {
+         logger.LogWarning(
+            "Curl fetch canceled for {Url} after {ElapsedMilliseconds} ms.",
+            absoluteUrl,
+            stopwatch.ElapsedMilliseconds
+         );
          throw;
       }
       catch(Exception exception)
@@ -169,10 +194,11 @@ internal static class WebPageCurlPageFetcher
       }
 
       var title = WebPageContentFetchSupport.ExtractHtmlTitle(body);
+      var visibleText = WebPageContentFetchSupport.ExtractHtmlText(body);
       var extractedText =
          WebPageContentFetchSupport.ExtractHtmlTextWithEmbeddedState(body);
       var renderWarning = WebPageContentFetchSupport
-         .DetectIncompleteContentWarning(extractedText);
+         .DetectIncompleteContentWarning(visibleText);
       var text = WebPageContentFetchSupport.RemoveTemplateArtifacts(
          extractedText
       );
@@ -195,7 +221,7 @@ internal static class WebPageCurlPageFetcher
       }
 
       var softErrorSignature = WebPageBlockDetection
-         .FindSoftErrorSignature(title, text);
+         .FindSoftErrorSignature(title, visibleText);
 
       if(softErrorSignature is not null)
       {
@@ -211,13 +237,13 @@ internal static class WebPageCurlPageFetcher
 
       if(WebPageBlockDetection.IsBlocked(
          title,
-         text,
+         visibleText,
          WebPageBlockSource.CurlFallback
       ))
       {
          var blockedSignature = WebPageBlockDetection.FindBlockedSignature(
             title,
-            text,
+            visibleText,
             WebPageBlockSource.CurlFallback
          );
 

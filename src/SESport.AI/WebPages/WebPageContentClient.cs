@@ -1,8 +1,8 @@
+using System.Diagnostics;
 using System.Net;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 
 namespace SESport.AI.WebPages;
@@ -25,8 +25,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       Task<string>> imageTextFetcher;
 
    [ActivatorUtilitiesConstructor]
-   public WebPageContentClient(HttpClient httpClient)
-      : this(httpClient, null, null, null)
+   public WebPageContentClient(
+      HttpClient httpClient,
+      ILogger<WebPageContentClient>? logger = null
+   )
+      : this(httpClient, null, logger, null)
    {
    }
 
@@ -52,6 +55,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
       this.browserPageFetcher = browserPageFetcher ??
          ((uri, cancellationToken) =>
             WebPageBrowserPageFetcher.FetchAsync(
+               this.logger,
                this.browserUserAgentFetcher,
                uri,
                cancellationToken
@@ -87,10 +91,36 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return null;
       }
 
-      return await FetchWithRetryAsync(
-         absoluteUrl,
-         cancellationToken
-      );
+      using var timeoutSource =
+         CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      timeoutSource.CancelAfter(WebPageFetchDefaults.TotalFetchTimeout);
+      var stopwatch = Stopwatch.StartNew();
+
+      try
+      {
+         return await FetchWithRetryAsync(
+            absoluteUrl,
+            timeoutSource.Token
+         ).WaitAsync(timeoutSource.Token);
+      }
+      catch(OperationCanceledException)
+         when(timeoutSource.IsCancellationRequested &&
+            !cancellationToken.IsCancellationRequested)
+      {
+         logger.LogWarning(
+            "Web page fetch timed out for {Url} after " +
+            "{ElapsedMilliseconds} ms; returning a timeout result.",
+            absoluteUrl,
+            stopwatch.ElapsedMilliseconds
+         );
+         return WebPageContentFetchSupport.BuildFailureContent(
+            absoluteUrl,
+            null,
+            WebPageFetchErrorKind.Timeout,
+            "Web page fetch exceeded its configured total timeout.",
+            "timeout"
+         );
+      }
    }
 
    private async Task<WebPageContent?> FetchWithRetryAsync(
@@ -122,7 +152,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
             await DelayTransientRetryAsync(
                attempt,
                absoluteUrl,
-               exception.Message,
+               WebPageFetchLogging.SummarizeException(exception),
                cancellationToken
             );
          }
@@ -174,7 +204,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       CancellationToken cancellationToken
    )
    {
-      var browserUserAgent = await this.browserUserAgentFetcher();
+      var browserUserAgent = await this.browserUserAgentFetcher()
+         .WaitAsync(cancellationToken);
       using var request = new HttpRequestMessage(HttpMethod.Get, absoluteUrl);
       request.Headers.Accept.ParseAdd(
          "text/html,application/xhtml+xml,application/xml;q=0.9," +
@@ -192,12 +223,24 @@ public sealed class WebPageContentClient : IWebPageContentClient
 
       request.Headers.TryAddWithoutValidation("User-Agent", browserUserAgent);
       HttpResponseMessage response;
+      var requestStopwatch = Stopwatch.StartNew();
+      logger.LogInformation(
+         "Primary HTTP request started for {Url}.",
+         absoluteUrl
+      );
 
       try
       {
          response = await httpClient.SendAsync(
             request,
             cancellationToken
+         );
+         logger.LogInformation(
+            "Primary HTTP request completed for {Url} with status " +
+            "{Status} after {ElapsedMilliseconds} ms.",
+            absoluteUrl,
+            response.StatusCode,
+            requestStopwatch.ElapsedMilliseconds
          );
       }
       catch(OperationCanceledException)
@@ -211,10 +254,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       )
       {
          logger.LogWarning(
-            exception,
             "Primary HTTP request failed for {Url}; " +
-            "trying browser renderer without HTTP fallback.",
-            absoluteUrl
+            "trying browser renderer without HTTP fallback. Reason: " +
+            "{Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
 
          return await FetchRenderedPageWithoutPrimaryResponseAsync(
@@ -226,10 +270,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(TaskCanceledException exception)
       {
          logger.LogWarning(
-            exception,
             "Primary HTTP request timed out for {Url}; " +
-            "trying browser renderer without HTTP fallback.",
-            absoluteUrl
+            "trying browser renderer without HTTP fallback. Reason: " +
+            "{Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
 
          return await FetchRenderedPageWithoutPrimaryResponseAsync(
@@ -241,10 +286,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(TimeoutException exception)
       {
          logger.LogWarning(
-            exception,
             "Primary HTTP request timed out for {Url}; " +
-            "trying browser renderer without HTTP fallback.",
-            absoluteUrl
+            "trying browser renderer without HTTP fallback. Reason: " +
+            "{Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
 
          return await FetchRenderedPageWithoutPrimaryResponseAsync(
@@ -322,14 +368,14 @@ public sealed class WebPageContentClient : IWebPageContentClient
             absoluteUrl
          );
       var primaryHtmlContent = await WebPageHtmlPageFetcher.FetchHtmlAsync(
-         NullLogger.Instance,
+         this.logger,
          static (_, _) => Task.FromResult<WebPageContent?>(null),
          primaryHtml,
          absoluteUrl,
          cancellationToken
       );
 
-      if(IsRichContent(primaryHtmlContent))
+      if(IsRichContent(primaryHtmlContent, primaryHtml))
       {
          logger.LogInformation(
             "Primary HTML response was sufficient for {Url}; " +
@@ -343,6 +389,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
          );
       }
 
+      logger.LogInformation(
+         "Primary HTML response was not sufficient for {Url}; " +
+         "starting Playwright renderer.",
+         absoluteUrl
+      );
       try
       {
          var renderedContent = await this.browserPageFetcher(
@@ -379,11 +430,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(WebPageFetchException exception)
       {
          logger.LogWarning(
-            exception,
             "Playwright renderer failed for {Url} using strategy " +
-            "{Strategy}; using primary HTML response.",
+            "{Strategy}; using primary HTML response. ErrorKind: " +
+            "{ErrorKind}. Reason: {Reason}.",
             absoluteUrl,
-            exception.BrowserStrategy ?? "unknown"
+            exception.BrowserStrategy ?? "unknown",
+            exception.ErrorKind,
+            exception.Message
          );
          return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
@@ -404,10 +457,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(TimeoutException exception)
       {
          logger.LogWarning(
-            exception,
             "Playwright renderer timed out for {Url}; " +
-            "using primary HTML response.",
-            absoluteUrl
+            "using primary HTML response. Reason: {Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
          return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
@@ -423,10 +476,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(PlaywrightException exception)
       {
          logger.LogWarning(
-            exception,
             "Playwright renderer failed for {Url}; " +
-            "using primary HTML response.",
-            absoluteUrl
+            "using primary HTML response. Reason: {Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
          return await FetchPrimaryHtmlFallbackAsync(
             primaryHtml,
@@ -482,6 +535,11 @@ public sealed class WebPageContentClient : IWebPageContentClient
       string? browserFailureMessage = null;
       string? browserFailureStrategy = null;
 
+      logger.LogInformation(
+         "Starting Playwright renderer for {Url} without a primary HTTP " +
+         "response.",
+         absoluteUrl
+      );
       try
       {
          var renderedContent = await this.browserPageFetcher(
@@ -508,11 +566,13 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(WebPageFetchException exception)
       {
          logger.LogWarning(
-            exception,
             "Playwright failed for {Url} using strategy {Strategy}; " +
-            "falling back to curl.",
+            "falling back to curl. ErrorKind: {ErrorKind}. Reason: " +
+            "{Reason}.",
             absoluteUrl,
-            exception.BrowserStrategy ?? "unknown"
+            exception.BrowserStrategy ?? "unknown",
+            exception.ErrorKind,
+            exception.Message
          );
          browserFailureKind = exception.ErrorKind;
          browserFailureMessage = exception.Message;
@@ -526,9 +586,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(TimeoutException exception)
       {
          logger.LogWarning(
-            exception,
-            "Playwright timed out for {Url}; falling back to curl.",
-            absoluteUrl
+            "Playwright timed out for {Url}; falling back to curl. " +
+            "Reason: {Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
          browserFailureKind = WebPageFetchErrorKind.Timeout;
          browserFailureMessage = exception.Message;
@@ -536,9 +597,10 @@ public sealed class WebPageContentClient : IWebPageContentClient
       catch(PlaywrightException exception)
       {
          logger.LogWarning(
-            exception,
-            "Playwright failed for {Url}; falling back to curl.",
-            absoluteUrl
+            "Playwright failed for {Url}; falling back to curl. " +
+            "Reason: {Reason}.",
+            absoluteUrl,
+            WebPageFetchLogging.SummarizeException(exception)
          );
          browserFailureKind = WebPageFetchErrorKind.BrowserBlocked;
          browserFailureMessage = exception.Message;
@@ -599,11 +661,19 @@ public sealed class WebPageContentClient : IWebPageContentClient
             content.RelevantImages is not { Count: > 0 });
    }
 
-   private static bool IsRichContent(WebPageContent? content)
+   private static bool IsRichContent(
+      WebPageContent? content,
+      string primaryHtml
+   )
    {
+      var visibleText = WebPageContentFetchSupport
+         .RemoveTemplateArtifacts(
+            WebPageContentFetchSupport.ExtractHtmlText(primaryHtml)
+         );
+
       return !HasFetchFailure(content) &&
          string.IsNullOrWhiteSpace(content!.RenderWarning) &&
-         content.MainTextFull.Length >=
+         visibleText.Length >=
             WebPageFetchDefaults.RichContentMinimumCharacters;
    }
 

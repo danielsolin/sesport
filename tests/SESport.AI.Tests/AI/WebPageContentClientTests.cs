@@ -1019,6 +1019,113 @@ public class WebPageContentClientTests
    }
 
    [Fact]
+   public async Task HtmlFetcherIgnoresSoftErrorTextInEmbeddedState()
+   {
+      using var response = new HttpResponseMessage(HttpStatusCode.OK)
+      {
+         Content = new StringContent(
+            """
+            <html>
+               <head><title>Live schedule</title></head>
+               <body>
+                  <main>
+                     <h1>Live schedule</h1>
+                     <p>Useful schedule data.</p>
+                  </main>
+                  <script type="application/json">
+                     {
+                        "translations": {
+                           "error": {
+                              "404": "This page does not exist."
+                           },
+                           "refresh":
+                              "Last refreshed {{time}} seconds ago."
+                        }
+                     }
+                  </script>
+               </body>
+            </html>
+            """
+         )
+      };
+
+      var page = await WebPageHtmlPageFetcher.FetchAsync(
+         NullLogger.Instance,
+         (_, _) => Task.FromResult<WebPageContent?>(null),
+         response,
+         new Uri("https://example.test/embedded-error-translation"),
+         CancellationToken.None
+      );
+
+      Assert.NotNull(page);
+      Assert.Null(page!.FetchErrorKind);
+      Assert.Null(page.FetchErrorMessage);
+      Assert.Null(page.RenderWarning);
+      Assert.Contains("Useful schedule data.", page.MainText);
+   }
+
+   [Fact]
+   public async Task FetchUsesBrowserWhenOnlyEmbeddedStateIsRich()
+   {
+      var embeddedPhrase =
+         "Embedded state contains useful schedule information for the " +
+         "requested page";
+      var embeddedState = string.Join(
+         ",",
+         Enumerable.Range(1, 12).Select(index =>
+            $"\"label{index}\":\"{embeddedPhrase} {index}\"")
+      );
+      var html =
+         """
+         <html>
+            <head><title>Dynamic schedule</title></head>
+            <body>
+               <main>
+                  <h1>Dynamic schedule</h1>
+                  <p>Loading schedule.</p>
+               </main>
+               <script type="application/json">
+                  {"state": {
+         """ + embeddedState +
+         """
+                  }}
+               </script>
+            </body>
+         </html>
+         """;
+      var browserCalls = 0;
+      var client = CreateClient(
+         new HttpClient(new HtmlRecordingHandler(html)),
+         (_, _) =>
+         {
+            browserCalls++;
+            return Task.FromResult<WebPageContent?>(
+               new WebPageContent(
+                  "Rendered schedule",
+                  "https://example.test/dynamic-schedule",
+                  null,
+                  ["H1: Rendered schedule"],
+                  "Rendered schedule rows.",
+                  true,
+                  "Rendered schedule rows.",
+                  Fetcher: "playwright"
+               )
+            );
+         }
+      );
+
+      var page = await client.FetchAsync(
+         "https://example.test/dynamic-schedule",
+         CancellationToken.None
+      );
+
+      Assert.Equal(1, browserCalls);
+      Assert.NotNull(page);
+      Assert.Equal("playwright", page!.Fetcher);
+      Assert.Contains("Rendered schedule rows.", page.MainText);
+   }
+
+   [Fact]
    public async Task HtmlFetcherExtractsPublishedAtAndCleansTemplates()
    {
       using var response = new HttpResponseMessage(HttpStatusCode.OK)
@@ -2215,8 +2322,14 @@ public class WebPageContentClientTests
             PrimaryCountry.ThreeLetterCode
          )
       );
-      Assert.Equal("Norway", WebPageContentFetchSupport.GetCountryDisplayName("NO"));
-      Assert.Equal("Spain", WebPageContentFetchSupport.GetCountryDisplayName("ES"));
+      Assert.Equal(
+         "Norway",
+         WebPageContentFetchSupport.GetCountryDisplayName("NO")
+      );
+      Assert.Equal(
+         "Spain",
+         WebPageContentFetchSupport.GetCountryDisplayName("ES")
+      );
       Assert.Equal(
          "Belgium",
          WebPageContentFetchSupport.GetCountryDisplayName("BEL")

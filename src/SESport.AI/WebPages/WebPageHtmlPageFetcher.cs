@@ -74,10 +74,11 @@ internal static class WebPageHtmlPageFetcher
          }
 
          var title = WebPageContentFetchSupport.ExtractHtmlTitle(html);
+         var visibleText = WebPageContentFetchSupport.ExtractHtmlText(html);
          var extractedText = WebPageContentFetchSupport
             .ExtractHtmlTextWithEmbeddedState(html);
          var renderWarning = WebPageContentFetchSupport
-            .DetectIncompleteContentWarning(extractedText);
+            .DetectIncompleteContentWarning(visibleText);
          var text = WebPageContentFetchSupport.RemoveTemplateArtifacts(
             extractedText
          );
@@ -115,7 +116,7 @@ internal static class WebPageHtmlPageFetcher
          }
 
          var softErrorSignature = WebPageBlockDetection
-            .FindSoftErrorSignature(title, text);
+            .FindSoftErrorSignature(title, visibleText);
 
          if(softErrorSignature is not null)
          {
@@ -136,14 +137,14 @@ internal static class WebPageHtmlPageFetcher
 
          if(WebPageBlockDetection.IsBlocked(
             title,
-            text,
+            visibleText,
             WebPageBlockSource.HtmlFallback
          ))
          {
             var blockedSignature = WebPageBlockDetection
                .FindBlockedSignature(
                   title,
-                  text,
+                  visibleText,
                   WebPageBlockSource.HtmlFallback
                );
 

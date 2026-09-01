@@ -1,5 +1,7 @@
 using ModelContextProtocol.AspNetCore;
 
+using Microsoft.Extensions.Logging;
+
 using SESport.Core.Configuration;
 using SESport.MCP;
 
@@ -11,6 +13,10 @@ builder.WebHost.UseUrls(
 );
 
 builder.Services.AddLogging();
+builder.Logging.AddFilter(
+   "System.Net.Http.HttpClient.IWebPageContentClient",
+   LogLevel.Warning
+);
 
 var searxngOptions = new ConfigurationBuilder()
    .AddEnvironmentVariables()

@@ -32,9 +32,6 @@ public static class WebPageFetchDefaults
    public const int RichContentMinimumCharacters = 1000;
    public const int MaxRelevantLinkCount = 20;
    public const int MaxTransientRetryAttempts = 3;
-   public const int BrowserNavigationRetryAttempts = 2;
-   public static readonly TimeSpan BrowserNavigationRetryDelay =
-      TimeSpan.FromSeconds(2);
    public const int CurlMaxTimeSeconds = 30;
    public static readonly IReadOnlyList<TimeSpan> TransientRetryDelays =
    [
@@ -45,6 +42,11 @@ public static class WebPageFetchDefaults
 
    public static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
+   public static readonly TimeSpan TotalFetchTimeout =
+      TimeSpan.FromSeconds(60);
+   public static readonly TimeSpan BrowserStrategyAttemptMemoryDuration =
+      TimeSpan.FromMinutes(30);
+   public const int BrowserStrategyAttemptMemoryMaximumUrlCount = 1000;
    public static readonly TimeSpan BrowserLoadStateTimeout =
       TimeSpan.FromSeconds(30);
    public static readonly TimeSpan BrowserContentStabilityTimeout =

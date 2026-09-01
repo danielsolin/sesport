@@ -85,11 +85,13 @@ internal static class WebPageBlockDetection
 
    internal static string? FindSoftErrorSignature(
       string? title,
-      string text
+      string visibleText
    )
    {
       var normalizedTitle = WebPageContentFetchSupport.NormalizeText(title);
-      var normalizedText = WebPageContentFetchSupport.NormalizeText(text);
+      var normalizedText = WebPageContentFetchSupport.NormalizeText(
+         visibleText
+      );
 
       var titleSignature = StrongSoftErrorSignatures
          .Concat(ShortPageSoftErrorSignatures)

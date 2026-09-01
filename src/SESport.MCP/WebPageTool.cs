@@ -1,12 +1,20 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace SESport.MCP;
 
 public sealed class WebPageTool
 {
    private readonly IWebPageContentClient PageContentClient;
+   private readonly ILogger<WebPageTool> Logger;
 
-   public WebPageTool(IWebPageContentClient pageContentClient)
+   public WebPageTool(
+      IWebPageContentClient pageContentClient,
+      ILogger<WebPageTool>? logger = null
+   )
    {
       PageContentClient = pageContentClient;
+      Logger = logger ?? NullLogger<WebPageTool>.Instance;
    }
 
    [McpServerTool(
@@ -20,13 +28,25 @@ public sealed class WebPageTool
       CancellationToken cancellationToken = default
    )
    {
-      var content = await PageContentClient.FetchAsync(
-         url,
-         cancellationToken
-      );
+      try
+      {
+         var content = await PageContentClient.FetchAsync(
+            url,
+            cancellationToken
+         );
 
-      return content is null
-         ? null
-         : WebPageToolResponse.From(content);
+         return content is null
+            ? null
+            : WebPageToolResponse.From(content);
+      }
+      catch(OperationCanceledException)
+      {
+         Logger.LogWarning(
+            "web_get_page canceled while fetching {Url}; returning no " +
+            "result.",
+            url
+         );
+         return null;
+      }
    }
 }
