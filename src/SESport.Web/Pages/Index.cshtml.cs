@@ -14,20 +14,13 @@ public class IndexModel(
    ActivityRepository repository,
    MemberWatchRepository memberWatchRepository,
    PublicActivityTimelineBuilder timelineBuilder,
-   PublicSiteOptions publicSiteOptions,
-   BroadcastChannelLinkRepository channelLinkRepository
+   PublicSiteOptions publicSiteOptions
 ) : PageModel
 {
    private static readonly CultureInfo PrimaryCountryCulture =
       CultureInfo.GetCultureInfo(PrimaryCountry.CultureName);
 
    public PublicSiteOptions PublicSiteOptions { get; } = publicSiteOptions;
-
-   public BroadcastChannelLinkCatalog ChannelLinkCatalog
-   {
-      get;
-      private set;
-   } = new([]);
 
    public IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries
    {
@@ -130,11 +123,6 @@ public class IndexModel(
 
       try
       {
-         ChannelLinkCatalog = new BroadcastChannelLinkCatalog(
-            await channelLinkRepository.GetActiveDefinitionsAsync(
-               cancellationToken
-            )
-         );
          var publishedDateCounts =
             await repository.GetPublishedDateParticipantCountsFromAsync(
                sportToday,

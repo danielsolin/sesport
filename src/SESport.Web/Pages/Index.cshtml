@@ -1,5 +1,6 @@
 @page
 @using SESport.Core.Sources
+@inject BroadcastChannelLinkCatalog ChannelLinkCatalog
 @model IndexModel
 @{
    var maxVisibleParticipants =
@@ -550,7 +551,7 @@ else
                               SourceDisplay.FindChannelLinkUrlForChannel(
                                  streamSources,
                                  channel,
-                                 Model.ChannelLinkCatalog
+                                 ChannelLinkCatalog
                               );
                            if(channelUrl is null)
                            {
@@ -771,7 +772,7 @@ else
                                                 .FindChannelLinkUrlForChannel(
                                                    slotStreamSources,
                                                    channel,
-                                                   Model.ChannelLinkCatalog
+                                                   ChannelLinkCatalog
                                                 );
                                           if(channelUrl is null)
                                           {

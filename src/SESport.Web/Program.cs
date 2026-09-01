@@ -82,7 +82,15 @@ var dataSource = PostgresDataSourceFactory.CreateDefault(
       ApplicationConfigurationKeys.DefaultConnectionString
    )
 );
+var channelLinkRepository = new BroadcastChannelLinkRepository(dataSource);
+var channelLinkDefinitions =
+   await channelLinkRepository.GetActiveDefinitionsAsync(
+      CancellationToken.None
+   );
 builder.Services.AddSingleton(dataSource);
+builder.Services.AddSingleton(
+   new BroadcastChannelLinkCatalog(channelLinkDefinitions)
+);
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(codexCliOptions);
 builder.Services.AddSingleton(openCodeCliOptions);

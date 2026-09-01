@@ -17,6 +17,11 @@
    <a class="button" asp-page="./Index">Back</a>
 </div>
 
+<div class="notice notice-warning">
+   Changes are loaded when the server starts. Restart the server after
+   saving changes for them to appear on the public site.
+</div>
+
 @if(Model.LoadError is not null)
 {
    <div class="notice notice-warning">

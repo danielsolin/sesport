@@ -32,6 +32,11 @@ public sealed class BroadcastChannelLinksMarkupTests
       Assert.Contains("Link.OriginalCanonicalName", editModel);
       Assert.Contains("ValidateUniqueNamesAsync", editModel);
       Assert.Contains("asp-for=\"Link.IsActive\"", editPage);
+      Assert.Contains(
+         "Changes are loaded when the server starts.",
+         editPage
+      );
+      Assert.Contains("Restart the server after", editPage);
       Assert.Contains("Broadcast Channel Links", indexPage);
       Assert.Contains(
          "/Admin/Config/BroadcastChannelLinks",
