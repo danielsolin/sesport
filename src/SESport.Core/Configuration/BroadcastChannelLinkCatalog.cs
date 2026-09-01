@@ -26,6 +26,34 @@ public sealed record BroadcastChannelLinkDefinition(
    }
 }
 
+public sealed record BroadcastChannelLinkRow(
+   string CanonicalName,
+   string Url,
+   IReadOnlyList<string> Aliases,
+   bool IsActive,
+   DateTimeOffset UpdatedAt
+)
+{
+   public bool Matches(string channelName)
+   {
+      return MatchesName(CanonicalName, channelName) ||
+         Aliases.Any(alias => MatchesName(alias, channelName));
+   }
+
+   private static bool MatchesName(
+      string expectedName,
+      string actualName
+   )
+   {
+      return string.Equals(
+         PrimaryCountry.NormalizeBroadcastChannelName(expectedName)
+            .Trim(),
+         PrimaryCountry.NormalizeBroadcastChannelName(actualName).Trim(),
+         StringComparison.OrdinalIgnoreCase
+      );
+   }
+}
+
 public sealed class BroadcastChannelLinkCatalog
 {
    public BroadcastChannelLinkCatalog(

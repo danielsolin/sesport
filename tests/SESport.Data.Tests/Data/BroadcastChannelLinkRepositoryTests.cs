@@ -1,6 +1,5 @@
 using Npgsql;
 
-
 namespace SESport.Core.Tests.Data;
 
 public sealed class BroadcastChannelLinkRepositoryTests
@@ -51,6 +50,86 @@ public sealed class BroadcastChannelLinkRepositoryTests
       }
    }
 
+   [Fact]
+   public async Task SaveAsyncInsertsAndUpdatesAndReadsActiveState()
+   {
+      var canonicalName = $"Test Link Channel {Guid.NewGuid():N}";
+      await using var dataSource = CreateDataSource();
+
+      try
+      {
+         var repository = new BroadcastChannelLinkRepository(dataSource);
+         await repository.SaveAsync(
+            null,
+            canonicalName,
+            "https://example.test/one",
+            ["Alias One"],
+            true,
+            CancellationToken.None
+         );
+
+         var saved = await repository.GetByNameAsync(
+            canonicalName,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(saved);
+         Assert.Equal("https://example.test/one", saved!.Url);
+         Assert.Equal(["Alias One"], saved.Aliases);
+         Assert.True(saved.IsActive);
+
+         await repository.SaveAsync(
+            canonicalName,
+            canonicalName,
+            "https://example.test/two",
+            ["Alias Two"],
+            false,
+            CancellationToken.None
+         );
+
+         var updated = await repository.GetByNameAsync(
+            canonicalName,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(updated);
+         Assert.Equal("https://example.test/two", updated!.Url);
+         Assert.Equal(["Alias Two"], updated.Aliases);
+         Assert.False(updated.IsActive);
+         var row = Assert.Single(
+            await repository.GetAllAsync(CancellationToken.None),
+            item => item.CanonicalName == canonicalName
+         );
+         Assert.Equal("https://example.test/two", row.Url);
+         Assert.False(row.IsActive);
+         Assert.DoesNotContain(
+            await repository.GetActiveDefinitionsAsync(
+               CancellationToken.None
+            ),
+            item => item.CanonicalName == canonicalName
+         );
+      }
+      finally
+      {
+         await DeleteAsync(dataSource, canonicalName);
+      }
+   }
+
+   [Fact]
+   public async Task GetByNameAsyncReturnsNullForMissingRow()
+   {
+      await using var dataSource = CreateDataSource();
+
+      var result = await new BroadcastChannelLinkRepository(
+         dataSource
+      ).GetByNameAsync(
+         $"Missing Channel {Guid.NewGuid():N}",
+         CancellationToken.None
+      );
+
+      Assert.Null(result);
+   }
+
    private static async Task InsertAsync(
       NpgsqlDataSource dataSource,
       string canonicalName,
@@ -79,18 +158,19 @@ public sealed class BroadcastChannelLinkRepositoryTests
 
    private static async Task DeleteAsync(
       NpgsqlDataSource dataSource,
-      string activeName,
-      string inactiveName
+      params string[] canonicalNames
    )
    {
-      const string sql = """
-         delete from broadcast_channel_links
-         where canonical_name in (@active_name, @inactive_name)
-         """;
+      foreach(var canonicalName in canonicalNames)
+      {
+         const string sql = """
+            delete from broadcast_channel_links
+            where canonical_name = @canonical_name
+            """;
 
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("active_name", activeName);
-      command.Parameters.AddWithValue("inactive_name", inactiveName);
-      await command.ExecuteNonQueryAsync();
+         await using var command = dataSource.CreateCommand(sql);
+         command.Parameters.AddWithValue("canonical_name", canonicalName);
+         await command.ExecuteNonQueryAsync();
+      }
    }
 }

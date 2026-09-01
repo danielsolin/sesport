@@ -1,5 +1,4 @@
 @page
-@inject BroadcastChannelLinkCatalog ChannelLinkCatalog
 @using SESport.Core.Sources
 @model IndexModel
 @{
@@ -551,7 +550,7 @@ else
                               SourceDisplay.FindChannelLinkUrlForChannel(
                                  streamSources,
                                  channel,
-                                 ChannelLinkCatalog
+                                 Model.ChannelLinkCatalog
                               );
                            if(channelUrl is null)
                            {
@@ -772,7 +771,7 @@ else
                                                 .FindChannelLinkUrlForChannel(
                                                    slotStreamSources,
                                                    channel,
-                                                   ChannelLinkCatalog
+                                                   Model.ChannelLinkCatalog
                                                 );
                                           if(channelUrl is null)
                                           {

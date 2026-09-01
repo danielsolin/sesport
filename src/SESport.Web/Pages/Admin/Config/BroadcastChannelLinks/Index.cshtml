@@ -1,0 +1,66 @@
+@page
+@model SESport.Web.Pages.Admin.Config.BroadcastChannelLinks.IndexModel
+@{
+   ViewData["Title"] = "Broadcast Channel Links";
+}
+
+<div class="page-heading page-heading-row compact-heading">
+   <div>
+      <h2>Broadcast Channel Links</h2>
+      <p>
+         Canonical channel names and the public pages they link to.
+         Inactive rows are hidden from the site.
+      </p>
+   </div>
+   <a class="button button-primary" asp-page="./Edit">
+      New channel link
+   </a>
+</div>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<div class="admin-table-wrap">
+   <table class="admin-table">
+      <thead>
+         <tr>
+            <th>Channel</th>
+            <th>Aliases</th>
+            <th>URL</th>
+            <th>Active</th>
+            <th>Updated</th>
+            <th></th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var row in Model.Rows)
+         {
+            <tr>
+               <td>@row.CanonicalName</td>
+               <td>
+                  @(string.Join(", ", row.Aliases))
+               </td>
+               <td><code>@row.Url</code></td>
+               <td>@(row.IsActive ? "Yes" : "No")</td>
+               <td>@row.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+               <td class="table-actions">
+                  <a asp-page="./Edit"
+                     asp-route-canonicalName="@row.CanonicalName">
+                     Edit
+                  </a>
+                  <form method="post"
+                        asp-page-handler="Delete"
+                        asp-route-canonicalName="@row.CanonicalName"
+                        onsubmit="return confirm('Sure?');">
+                     <button type="submit">Delete</button>
+                  </form>
+               </td>
+            </tr>
+         }
+      </tbody>
+   </table>
+</div>

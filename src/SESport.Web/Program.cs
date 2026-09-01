@@ -82,15 +82,7 @@ var dataSource = PostgresDataSourceFactory.CreateDefault(
       ApplicationConfigurationKeys.DefaultConnectionString
    )
 );
-var channelLinkRepository = new BroadcastChannelLinkRepository(dataSource);
-var channelLinkDefinitions =
-   await channelLinkRepository.GetActiveDefinitionsAsync(
-      CancellationToken.None
-   );
 builder.Services.AddSingleton(dataSource);
-builder.Services.AddSingleton(
-   new BroadcastChannelLinkCatalog(channelLinkDefinitions)
-);
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(codexCliOptions);
 builder.Services.AddSingleton(openCodeCliOptions);
@@ -176,11 +168,6 @@ app.Logger.LogInformation(
    searxngOptions.BaseUrl ??
       SearxngWebSearchClientOptions.DefaultBaseUrl
 );
-app.Logger.LogInformation(
-   "Loaded {Count} broadcast channel links from the database.",
-   channelLinkDefinitions.Count
-);
-
 if(!app.Environment.IsDevelopment())
 {
    app.UseExceptionHandler("/Error");

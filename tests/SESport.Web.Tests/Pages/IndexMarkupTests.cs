@@ -713,6 +713,9 @@ public sealed class IndexMarkupTests
       var html = await File.ReadAllTextAsync(
          Path.Combine(repoRoot, "src/SESport.Web/Pages/Index.cshtml")
       );
+      var model = await File.ReadAllTextAsync(
+         Path.Combine(repoRoot, "src/SESport.Web/Pages/Index.cshtml.cs")
+      );
       var css = await File.ReadAllTextAsync(
          Path.Combine(repoRoot, "src/SESport.Web/wwwroot/css/public.css")
       );
@@ -727,6 +730,16 @@ public sealed class IndexMarkupTests
          "SourceDisplay.FindChannelLinkUrlForChannel(",
          html
       );
+      Assert.DoesNotContain(
+         "@inject BroadcastChannelLinkCatalog",
+         html
+      );
+      Assert.Contains("Model.ChannelLinkCatalog", html);
+      Assert.Contains(
+         "BroadcastChannelLinkRepository channelLinkRepository",
+         model
+      );
+      Assert.Contains("GetActiveDefinitionsAsync", model);
       Assert.Contains("SourceDisplay.FormatKind(", html);
       Assert.Contains("source.Kind", html);
       Assert.Contains("target=\"_blank\"", html);

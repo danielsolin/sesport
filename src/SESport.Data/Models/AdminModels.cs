@@ -228,3 +228,16 @@ public sealed class EntityEditModel
 
    public List<Guid> LinkedEntityIds { get; set; } = [];
 }
+
+public sealed class BroadcastChannelLinkEditModel
+{
+   public string? OriginalCanonicalName { get; set; }
+
+   public string CanonicalName { get; set; } = string.Empty;
+
+   public string Url { get; set; } = string.Empty;
+
+   public string Aliases { get; set; } = string.Empty;
+
+   public bool IsActive { get; set; } = true;
+}

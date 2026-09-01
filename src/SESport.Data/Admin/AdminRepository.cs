@@ -1,5 +1,7 @@
 using Npgsql;
 
+using SESport.Core.Configuration;
+using SESport.Data.Broadcasts;
 using SESport.Data.Entities;
 using SESport.Data.Models;
 
@@ -10,6 +12,8 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    private readonly AdminReferenceRepository references = new(dataSource);
    private readonly EntityRepository entities = new(dataSource);
    private readonly EntityMergeRepository merges = new(dataSource);
+   private readonly BroadcastChannelLinkRepository channelLinks =
+      new(dataSource);
 
    public IReadOnlyList<ReferenceTableInfo> GetReferenceTables() =>
       references.GetReferenceTables();
@@ -29,6 +33,40 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
    public Task<IReadOnlyList<BroadcastIgnoreRuleListItem>>
       GetBroadcastIgnoreRulesAsync(CancellationToken cancellationToken) =>
       references.GetBroadcastIgnoreRulesAsync(cancellationToken);
+
+   public Task<IReadOnlyList<BroadcastChannelLinkRow>>
+      GetBroadcastChannelLinksAsync(CancellationToken cancellationToken) =>
+      channelLinks.GetAllAsync(cancellationToken);
+
+   public Task<BroadcastChannelLinkRow?>
+      GetBroadcastChannelLinkAsync(
+         string canonicalName,
+         CancellationToken cancellationToken
+      ) =>
+      channelLinks.GetByNameAsync(canonicalName, cancellationToken);
+
+   public Task SaveBroadcastChannelLinkAsync(
+      string? originalCanonicalName,
+      string canonicalName,
+      string url,
+      IReadOnlyList<string> aliases,
+      bool isActive,
+      CancellationToken cancellationToken
+   ) =>
+      channelLinks.SaveAsync(
+         originalCanonicalName,
+         canonicalName,
+         url,
+         aliases,
+         isActive,
+         cancellationToken
+      );
+
+   public Task DeleteBroadcastChannelLinkAsync(
+      string canonicalName,
+      CancellationToken cancellationToken
+   ) =>
+      channelLinks.DeleteAsync(canonicalName, cancellationToken);
 
    public Task<IReadOnlyList<CountryReferenceRow>>
       GetCountryReferenceRowsAsync(CancellationToken cancellationToken) =>

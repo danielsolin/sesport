@@ -1,0 +1,61 @@
+@page
+@model SESport.Web.Pages.Admin.Config.BroadcastChannelLinks.EditModel
+@{
+   ViewData["Title"] = Model.Link.OriginalCanonicalName is null
+      ? "New Broadcast Channel Link"
+      : $"Edit {Model.Link.OriginalCanonicalName}";
+}
+
+<div class="page-heading page-heading-row compact-heading">
+   <div>
+      <h2>@ViewData["Title"]</h2>
+      <p>
+         The canonical name is the key used to match broadcasts.
+         Aliases are comma-separated extra names.
+      </p>
+   </div>
+   <a class="button" asp-page="./Index">Back</a>
+</div>
+
+@if(Model.LoadError is not null)
+{
+   <div class="notice notice-warning">
+      @Model.LoadError
+   </div>
+}
+
+<form method="post" class="edit-form">
+   <input asp-for="Link.OriginalCanonicalName" type="hidden" />
+
+   <div asp-validation-summary="ModelOnly" class="notice notice-error"></div>
+
+   <section class="form-section">
+      <h2>Channel link</h2>
+      <div class="form-grid">
+         <label>
+            <span>Channel name</span>
+            <input asp-for="Link.CanonicalName"
+                   readonly="@(Model.Link.OriginalCanonicalName is not null)" />
+            <span asp-validation-for="Link.CanonicalName"></span>
+         </label>
+         <label>
+            <span>URL</span>
+            <input asp-for="Link.Url" />
+            <span asp-validation-for="Link.Url"></span>
+         </label>
+         <label>
+            <span>Aliases</span>
+            <input asp-for="Link.Aliases" placeholder="SVT Sport, SVT1" />
+         </label>
+         <label class="check-row">
+            <input asp-for="Link.IsActive" type="checkbox" />
+            <span>Active</span>
+         </label>
+      </div>
+   </section>
+
+   <section class="form-actions">
+      <a class="button" asp-page="./Index">Cancel</a>
+      <button class="button button-primary" type="submit">Save</button>
+   </section>
+</form>

@@ -13,6 +13,7 @@ public static class WebServiceCollectionExtensions
       services.AddScoped<SourceReferenceRepository>();
       services.AddScoped<ActivityParticipantAiResultRepository>();
       services.AddScoped<AdminRepository>();
+      services.AddScoped<BroadcastChannelLinkRepository>();
       services.AddScoped<AdminBroadcastRepository>();
       services.AddScoped<DashboardRepository>();
       services.AddScoped<PublicStatisticsRepository>();

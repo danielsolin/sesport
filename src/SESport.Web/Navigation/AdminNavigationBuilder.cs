@@ -36,6 +36,10 @@ public static class AdminNavigationBuilder
          "Broadcast Ignore Rules",
          "/Admin/Config/BroadcastIgnoreRules"
       );
+      var broadcastChannelLinksItem = new AdminNavItem(
+         "Broadcast Channel Links",
+         "/Admin/Config/BroadcastChannelLinks"
+      );
 
       if(activityTypesIndex >= 0)
       {
@@ -43,10 +47,15 @@ public static class AdminNavigationBuilder
             activityTypesIndex + 1,
             broadcastIgnoreRulesItem
          );
+         referenceItems.Insert(
+            activityTypesIndex + 2,
+            broadcastChannelLinksItem
+         );
       }
       else
       {
          referenceItems.Add(broadcastIgnoreRulesItem);
+         referenceItems.Add(broadcastChannelLinksItem);
       }
 
       return

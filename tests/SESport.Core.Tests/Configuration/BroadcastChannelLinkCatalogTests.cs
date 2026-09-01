@@ -83,6 +83,21 @@ public sealed class BroadcastChannelLinkCatalogTests
    }
 
    [Fact]
+   public void RowMatchesCanonicalNameAndAlias()
+   {
+      var row = new BroadcastChannelLinkRow(
+         "SVT1",
+         "https://example.test/svt1",
+         ["SVT 1"],
+         true,
+         DateTimeOffset.UtcNow
+      );
+
+      Assert.True(row.Matches("SE - SVT 1"));
+      Assert.False(row.Matches("SVT2"));
+   }
+
+   [Fact]
    public void DefinitionsHaveUniqueCanonicalNamesAndAliases()
    {
       var names = CreateCatalog().Definitions
