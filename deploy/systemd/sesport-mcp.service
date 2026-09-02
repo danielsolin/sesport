@@ -11,10 +11,14 @@ WorkingDirectory=/home/daniel/sesport/src/SESport.MCP
 Environment=HOME=/home/daniel
 Environment=DOTNET_CLI_HOME=/home/daniel
 Environment=DOTNET_NOLOGO=true
+Environment=ASPNETCORE_ENVIRONMENT=Development
 Environment=SESPORT_MCP_URL=http://127.0.0.1:5110
 EnvironmentFile=/home/daniel/sesport/.env
 
-ExecStart=/usr/bin/dotnet /home/daniel/sesport/src/SESport.MCP/publish/SESport.MCP.dll
+ExecStart=/usr/bin/dotnet \
+   run \
+   --configuration Release \
+   --no-launch-profile
 
 Restart=always
 RestartSec=2

@@ -30,12 +30,13 @@ The `sesport-unison.service` unit is a user service for the local two-way
 sync client. The remote host only needs a matching Unison binary and SSH
 access; do not run a second Unison service on the remote host.
 
-The `sesport-mcp.service` unit runs the published `SESport.MCP` server, which
+The `sesport-mcp.service` unit runs `SESport.MCP` directly from
+`src/SESport.MCP` with `dotnet run --configuration Release`. It builds on
+start, so restarting the unit recompiles changed source files. The server
 exposes the project's web research tools (`web_search`, `web_get_page`) over
-Streamable HTTP on loopback (`http://127.0.0.1:5110/`). It runs as a long-lived
-process so the Playwright/web stack stays warm; Codex CLI connects to the URL
-instead of spawning a per-thread child process. Republish
-`src/SESport.MCP` and restart the unit after code changes.
+Streamable HTTP on loopback (`http://127.0.0.1:5110/`). It runs as a
+long-lived process so the Playwright/web stack stays warm; Codex CLI connects
+to the URL instead of spawning a per-thread child process.
 
 ## Units
 
@@ -64,12 +65,10 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now sesport.service
 ```
 
-The MCP unit runs a published build, so publish it before first start. It
-listens on loopback only and needs no public hostname:
+The MCP unit builds from the project source on start. It listens on loopback
+only and needs no public hostname:
 
 ```bash
-dotnet publish src/SESport.MCP/SESport.MCP.csproj -c Release \
-  -o src/SESport.MCP/publish
 sudo systemctl enable --now sesport-mcp.service
 ```
 

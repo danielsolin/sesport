@@ -62,7 +62,8 @@ sudo systemctl enable --now sesport-mcp.service
 systemctl status sesport-mcp.service
 ```
 
-The unit runs the published build and listens on loopback:
+The unit runs the project directly with `dotnet run --configuration Release`,
+builds changed source files when it starts, and listens on loopback:
 
 ```
 SESPORT_MCP_URL=http://127.0.0.1:5110   # overridable
@@ -74,11 +75,9 @@ To run it manually (for development) instead of via systemd:
 dotnet run --project src/SESport.MCP
 ```
 
-After a code change, republish and restart the unit:
+After a code change, restart the unit to build and run the updated source:
 
 ```sh
-dotnet publish src/SESport.MCP/SESport.MCP.csproj -c Release \
-  -o src/SESport.MCP/publish
 sudo systemctl restart sesport-mcp.service
 ```
 
