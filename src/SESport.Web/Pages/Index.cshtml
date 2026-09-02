@@ -188,8 +188,14 @@
                 country.CountryId,
                 StringComparison.OrdinalIgnoreCase
              ));
+          var selectedCountryForDisplay = selectedCountry ??
+             (selectedSport?.Countries.Count == 1
+                ? selectedSport.Countries[0]
+                : null);
           var selectedCountryFlagPath =
-             PublicCountryFlag.GetPath(selectedCountry?.CountryId);
+             PublicCountryFlag.GetPath(
+                selectedCountryForDisplay?.CountryId
+             );
           var selectedSportCount = selectedSport?.ParticipantCount ??
              Model.TotalParticipantsCount;
          <div class="sport-select" data-sport-dropdown>
@@ -268,16 +274,18 @@
                          : $"{publicActivityPath}?date={
                             selectedDateQueryValue
                          }&{sportQuery}";
-                   @if(sport.Countries.Count >= 2)
+                   @if(sport.Countries.Count >= 1)
                    {
                       @foreach(var country in sport.Countries)
                       {
+                         var isOnlyCountry = sport.Countries.Count == 1;
                          var isSelectedCountry = isSelected &&
-                            string.Equals(
-                               Model.Country,
-                               country.CountryId,
-                               StringComparison.OrdinalIgnoreCase
-                            );
+                            (string.Equals(
+                                 Model.Country,
+                                 country.CountryId,
+                                 StringComparison.OrdinalIgnoreCase
+                              ) ||
+                              (Model.Country is null && isOnlyCountry));
                          var countryFlagPath =
                             PublicCountryFlag.GetPath(
                                country.CountryId

@@ -47,6 +47,9 @@ public sealed class IndexMarkupTests
       Assert.Contains("Svenskar", html);
       Assert.Contains("Alla bevakade", html);
       Assert.Contains("SportParticipantCounts", html);
+      Assert.Contains("selectedSport?.Countries.Count == 1", html);
+      Assert.Contains("@if(sport.Countries.Count >= 1)", html);
+      Assert.Contains("sport-country-row", html);
       Assert.Contains(
          "aria-label=\"Visa endast @sport.SportName\"",
          html
