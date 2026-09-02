@@ -14,10 +14,9 @@ relevance is data and configuration, not a separate application variant.
 
 ## Core concept: country representation
 
-sesport is about identifying when a country is represented in international
-sport. The relevant fact is not a person's nationality or general association
-with a country, but whether a person or team represents the configured primary
-country in a specific competition.
+A person or team is relevant when it represents the primary country at the
+international level. A citizen of the primary country who has chosen to
+represent another country is not relevant.
 
 This creates two separate concepts:
 
@@ -33,13 +32,6 @@ The international competition is the important context. A match between two
 teams from the same country is still relevant when it takes place in an
 international tournament. Domestic leagues and other domestic competitions
 remain outside this scope, even when the primary country is represented.
-
-Representation must be established from the competition or activity context
-and reliable evidence. It must not be inferred solely from nationality,
-citizenship, birthplace, name, or other general person facts. This distinction
-allows the platform to present country representation at activity level while
-preserving person-based participant data, enrichment, watching, and historical
-records.
 
 ## Technical purpose
 
