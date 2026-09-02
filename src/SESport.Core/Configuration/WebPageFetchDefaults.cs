@@ -31,6 +31,7 @@ public static class WebPageFetchDefaults
    public const int SoftErrorMaximumTextCharacters = 5000;
    public const int RichContentMinimumCharacters = 1000;
    public const int MaxRelevantLinkCount = 20;
+   public const int MaxFindInPageSnippetCount = 50;
    public const int MaxTransientRetryAttempts = 3;
    public const int CurlMaxTimeSeconds = 30;
    public static readonly IReadOnlyList<TimeSpan> TransientRetryDelays =

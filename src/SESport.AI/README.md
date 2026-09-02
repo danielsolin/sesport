@@ -2,8 +2,8 @@
 
 `SESport.AI` is the runtime layer for the project's AI-assisted sport
 research and enrichment. It turns a configured AI job into a provider request,
-optionally gives the model controlled web tools, validates the result, and
-returns an `AiJobResult` to the application layer.
+validates the result, and returns an `AiJobResult` to the application layer.
+Web search and page fetching are hosted by `SESport.MCP`.
 
 The project is deliberately a runtime library rather than a complete AI
 application. Job definitions, prompts, providers, and run records are shared
@@ -22,9 +22,8 @@ SESport.AI.Jobs
     -> repository contracts in SESport.Core.AI
     -> IAiProviderClient
 SESport.AI.Clients
-    -> LlamaServerClient, OpenCodeCliClient, OpenRouterClient,
-       or GoogleTranslateClient
-    -> Protocols, Llama, WebSearch, and WebPages as needed
+    -> CodexCliClient, OpenCodeCliClient, or GoogleTranslateClient
+    -> external harnesses or provider-specific services
 SESport.Web
     -> post-processes the completed AiJobResult
 ```
@@ -35,11 +34,11 @@ executes the run itself. The run repository is an abstraction from
 `SESport.Core.AI`; the concrete PostgreSQL repository is in
 `SESport.Data`.
 
-The active research provider is `LlamaServerClient`. Its tool loop can search
-with SearXNG, fetch and normalize web pages, inspect relevant images with OCR,
-and submit a structured report. `OpenRouterClient` remains available for
-archived configurations, while `GoogleTranslateClient` adapts translation
-jobs to the same provider contract.
+The Web host registers the external-harness adapters and the translation
+adapter. `LlamaServerClient` and `OpenRouterClient` are obsolete compatibility
+clients and are not registered by the host. The legacy Llama client and its
+tool-loop support remain in this project under `Clients/Legacy`; they are
+kept only for compatibility with older provider configurations.
 
 ## Architectural boundaries
 
@@ -48,9 +47,11 @@ jobs to the same provider contract.
 - `SESport.Core.AI` owns job, prompt, provider, run, and result contracts.
 - `SESport.Core.Configuration` owns option types and configuration defaults.
 - `SESport.Web` owns dependency-injection composition and host workers.
+- `SESport.MCP` owns the web-search and page-fetch implementations exposed to
+  external harnesses.
 - `SESport.Data` implements the repository contracts and owns PostgreSQL.
 - Provider wire formats stay in `Protocols`, not in provider client classes.
-- Provider-specific Llama behavior stays in `Llama`, not in generic clients.
+- Legacy Llama behavior is isolated under `Clients/Legacy`.
 
 This keeps the AI library usable with another host or persistence adapter.
 The host supplies repositories, configuration, HTTP clients, logging, and the
@@ -61,16 +62,15 @@ worker lifecycle through dependency injection.
 ```text
 src/SESport.AI/
 |-- Clients/       External AI provider adapters and provider contract
+|-- Clients/Legacy/ Llama and OpenRouter compatibility adapters
 |-- Jobs/          Job execution, prompt rendering, and execution gate
-|-- Llama/         llama-server request and tool-loop implementation details
 |-- Protocols/     Shared provider request/response wire-format helpers
-|-- WebPages/      Safe page fetching, extraction, normalization, and OCR
-|-- WebSearch/     SearXNG search, caching, rotation, and rate limiting
-|-- Schemas/       JSON schemas supplied to structured-output jobs
+|-- Clients/Legacy/Schemas/ Archived Llama tool JSON schemas
 ```
 
-The directory layout mirrors the namespaces. `Schemas` contains resources,
-not C# types, and therefore has no corresponding namespace.
+The web implementation is in `src/SESport.MCP`. The legacy Llama tool loop is
+kept in `src/SESport.AI/Clients/Legacy`; its namespace remains unchanged so
+existing callers can be migrated separately from this physical move.
 
 ## Namespace overview
 
@@ -84,8 +84,8 @@ response back to `AiJobResult`.
 Examples:
 
 - `IAiProviderClient` is the provider boundary used by `AiJobRunner`.
-- `LlamaServerClient` runs the active llama-server integration.
-- `OpenRouterClient` adapts the OpenRouter-compatible HTTP API.
+- `CodexCliClient` and `OpenCodeCliClient` launch the external AI harnesses.
+- `OpenRouterClient` is retained under `Clients/Legacy` for compatibility.
 - `GoogleTranslateClient` handles translation jobs through a browser-backed
   translation request.
 
@@ -104,20 +104,6 @@ Examples:
 - `IAiJobRunner`, `IAiJobProcessor`, and `IAiPromptRenderer` are the public
   seams used by the host and by tests.
 
-### `SESport.AI.Llama`
-
-This namespace contains implementation details specific to the llama-server
-tool loop. It is intentionally internal-facing: callers should use
-`LlamaServerClient` and the provider contract rather than these helpers.
-
-Examples:
-
-- `LlamaRequestFactory` creates initial, tool-round, and final requests.
-- `LlamaConversationTrimmer` keeps conversations within the configured size
-  budget while preserving the latest useful context.
-- `LlamaResponseReader` parses model responses and tool calls.
-- `LlamaToolTrace` records tool and reasoning diagnostics for a run.
-
 ### `SESport.AI.Protocols`
 
 This namespace contains wire-format helpers shared by more than one provider
@@ -131,50 +117,24 @@ Examples:
 - `ResponsesOutputValidator` extracts and validates structured output.
 - `AiRequestJsonSerializer` serializes captured provider request payloads.
 
-### `SESport.AI.WebPages`
+### Legacy compatibility code
 
-This namespace retrieves and normalizes page content for AI research. It
-validates URLs, retries transient failures, chooses HTML, browser, cURL, or
-PDF retrieval paths, extracts relevant links and images, and can append OCR
-text from images. The public page contract lives here with its implementation
-and page result models.
-
-Examples:
-
-- `IWebPageContentClient` is the injectable page-content contract.
-- `WebPageContentClient` coordinates fetching, retries, normalization, and
-  image-text enrichment.
-- `WebPageContent` is the normalized page result returned to callers.
-- `WebPageImageOcr` extracts text from downloaded images using Tesseract.
-
-### `SESport.AI.WebSearch`
-
-This namespace provides web search to AI jobs. The SearXNG client rotates
-configured engines, applies recent-search fallbacks, retries transient and
-rate-limit failures, and applies a rate limiter. The caching decorator avoids
-repeating equivalent searches, while a relevance guard rejects clearly
-irrelevant result sets.
-
-Examples:
-
-- `IWebSearchClient` is the injectable search contract.
-- `SearxngWebSearchClient` calls the local SearXNG service.
-- `CachedWebSearchClient` decorates a search client with an in-memory cache.
-- `SearchRateLimiter` coordinates global and per-engine cooldowns.
+The old `LlamaServerClient` and its Llama tool-loop helpers live under
+`src/SESport.AI/Clients/Legacy`. They are obsolete and are not registered by
+the Web host. The MCP README documents the active web tools and their runtime
+configuration.
 
 ## Configuration and external services
 
-Option types and defaults are in `SESport.Core.Configuration`, including
-Llama-server, SearXNG, page-fetch, cache, and rate-limit settings. The web
-host binds configuration and registers the implementations in
-`AiServiceCollectionExtensions`.
+Option types and defaults are in `SESport.Core.Configuration`. The Web host
+binds AI configuration and registers the active adapters in
+`AiServiceCollectionExtensions`; the MCP host binds SearXNG and page-fetch
+configuration for its own web tools.
 
 AI jobs may require the following runtime dependencies:
 
-- a configured AI provider, usually a local llama-server instance;
-- local SearXNG at `http://127.0.0.1:8088/` for web research;
-- Playwright Chromium for browser-backed fetching and translation;
-- Tesseract with English language data for image OCR.
+- a configured external AI harness;
+- Playwright Chromium for browser-backed translation.
 
 ### Codex CLI provider
 
@@ -207,13 +167,12 @@ keys. `CodexCli__TimeoutSeconds` controls the process timeout and defaults to
 20 minutes. The provider intentionally runs with full Codex access for its
 agent-backed use case.
 
-Browser-backed page fetching uses Chromium as its baseline and opportunistically
-tries Playwright's alternate Chromium mode, installed Chrome, Firefox, or
-WebKit when those browser runtimes are available on the host.
+`GoogleTranslateClient` uses a browser-backed translation request. The MCP
+README documents the separate Playwright and Tesseract requirements for web
+page fetching and image OCR.
 
-These dependencies are host concerns. The AI project receives their clients
-or options through constructors and does not own deployment or process
-startup.
+These dependencies are host concerns. The AI project receives its clients or
+options through constructors and does not own deployment or process startup.
 
 ### OpenCode CLI provider
 
@@ -244,8 +203,8 @@ When adding code, place it according to the dependency it owns:
 
 - add a new provider adapter to `Clients`;
 - add provider wire-format code shared by adapters to `Protocols`;
-- add Llama-only request or tool-loop code to `Llama`;
-- add search or page-fetch behavior to `WebSearch` or `WebPages`;
+- add new web-search or page-fetch behavior to `SESport.MCP`;
+- keep old Llama request or tool-loop code under `Clients/Legacy`;
 - add execution workflow code to `Jobs`;
 - add shared job models or configuration to `SESport.Core`.
 

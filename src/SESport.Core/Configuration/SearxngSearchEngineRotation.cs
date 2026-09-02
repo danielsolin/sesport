@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 
-namespace SESport.AI.WebSearch;
+namespace SESport.Core.Configuration;
 
-internal static class SearxngSearchEngineRotation
+public static class SearxngSearchEngineRotation
 {
-   internal static IReadOnlyList<string> NormalizeEngines(
+   public static IReadOnlyList<string> NormalizeEngines(
       IReadOnlyList<string>? engines
    )
    {
@@ -22,7 +22,7 @@ internal static class SearxngSearchEngineRotation
       return new ReadOnlyCollection<string>(normalizedEngines);
    }
 
-   internal static string GetEngineForAttempt(
+   public static string GetEngineForAttempt(
       IReadOnlyList<string>? engines,
       int searchAttempt
    )
@@ -39,7 +39,7 @@ internal static class SearxngSearchEngineRotation
       return normalizedEngines[index];
    }
 
-   internal static int GetEngineCount(IReadOnlyList<string>? engines)
+   public static int GetEngineCount(IReadOnlyList<string>? engines)
    {
       return NormalizeEngines(engines).Count;
    }

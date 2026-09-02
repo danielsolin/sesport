@@ -1,6 +1,4 @@
-using SESport.AI.Llama;
-
-namespace SESport.AI.WebPages;
+namespace SESport.MCP;
 
 public static class WebPageToolSupport
 {
@@ -13,7 +11,7 @@ public static class WebPageToolSupport
          ? pageContent.MainText
          : pageContent.MainTextFull;
       var matchingCountryEntries =
-         LlamaPageToolFormatter.ExtractMatchingCountryEntries(
+         WebPageFindSupport.ExtractMatchingCountryEntries(
             searchText,
             find
          );
@@ -26,8 +24,8 @@ public static class WebPageToolSupport
          );
       }
 
-      return LlamaPageToolFormatter.FormatFindMatchesForTool(
-         LlamaPageToolFormatter.FindPageMatches(pageContent, find)
+      return WebPageFindSupport.FormatFindMatchesForTool(
+         WebPageFindSupport.FindPageMatches(pageContent, find)
       );
    }
 }

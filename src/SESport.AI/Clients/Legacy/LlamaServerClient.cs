@@ -14,6 +14,9 @@ using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 
+[Obsolete(
+   "Legacy provider retained for compatibility; use the external harness."
+)]
 public sealed class LlamaServerClient : IAiProviderClient
 {
    // Rough character budget for the in-memory chat history.

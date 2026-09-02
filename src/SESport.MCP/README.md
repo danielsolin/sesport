@@ -1,16 +1,16 @@
 # SESport.MCP
 
-An MCP (Model Context Protocol) server that exposes the project's existing
-web research tools to external MCP clients such as Codex CLI.
+An MCP (Model Context Protocol) server that exposes the project's web research
+tools to external MCP clients such as Codex CLI.
 
-The server registers three tools and forwards calls to the existing clients
-and page-search support in `SESport.AI`:
+The server registers three tools and owns the search and page-fetch
+implementations behind them:
 
-| Tool           | Forwards to                          | Returns              |
-|--------------  |--------------------------------------|----------------------|
-| `web_search`   | `IWebSearchClient.SearchAsync`       | `WebSearchResponse`  |
-| `web_get_page` | `IWebPageContentClient.FetchAsync` | `WebPageToolResponse` |
-| `web_find_in_page` | `IWebPageContentClient.FetchAsync` | text |
+| Tool | Implementation | Returns |
+| --- | --- | --- |
+| `web_search` | `IWebSearchClient` | `WebSearchResponse` |
+| `web_get_page` | `IWebPageContentClient` | `WebPageToolResponse` |
+| `web_find_in_page` | `IWebPageContentClient` | text |
 
 The server does not summarize the fetched content. The MCP response projects
 the fetcher result to the public response contract and deliberately omits the
@@ -30,7 +30,7 @@ schema from the return type and validates the serialized response against it.
 regularly `null`; the default JSON serialization omits those, and the
 validator then fails with `must have required property 'publishedAt'`.
 
-To keep the internal `SESport.AI` records untouched, the server registers the
+To keep the shared records untouched, the server registers the
 tools with explicit `JsonSerializerOptions` (`DefaultIgnoreCondition = Never`,
 plus the `DefaultJsonTypeInfoResolver` that System.Text.Json 9+ requires
 before options are marked read-only). This emits `null` values explicitly so
@@ -38,18 +38,22 @@ the response always satisfies the schema.
 
 ## Configuration
 
-The server reads the same environment configuration as `SESport.Web`, in
-particular the `SearXNG__*` variables (see the repository-root `.env`).
+The server reads its environment configuration, in particular the `SearXNG__*`
+variables (see the repository-root `.env`).
 Load the environment before starting the server:
 
 ```sh
 . ./.env
 ```
 
-`web_get_page` uses the same fetcher pipeline as the web app, including the
+`web_get_page` uses the fetcher pipeline hosted by this server, including the
 Playwright browser fetcher, so the Playwright browsers must be installed on
 the machine running the server (`playwright install` / `dotnet` Playwright
-browsers).
+browsers). Tesseract with English language data is required for image OCR.
+
+The MCP project owns web tools only. Legacy AI provider clients, including
+Llama and OpenRouter, remain in `SESport.AI/Clients/Legacy` and are not
+registered by this server.
 
 ## Running
 

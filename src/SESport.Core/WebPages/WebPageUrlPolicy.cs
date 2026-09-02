@@ -1,11 +1,13 @@
 using System.Net;
 using System.Net.Sockets;
 
+using SESport.Core.Configuration;
+
 namespace SESport.AI.WebPages;
 
-internal static class WebPageUrlPolicy
+public static class WebPageUrlPolicy
 {
-   internal static bool TryValidate(
+   public static bool TryValidate(
       string url,
       out Uri absoluteUrl,
       out string error

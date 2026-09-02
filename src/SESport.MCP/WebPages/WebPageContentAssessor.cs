@@ -18,7 +18,9 @@ internal static class WebPageContentAssessor
    /// </param>
    /// <param name="renderWarning">Incomplete-content warning, if any.</param>
    /// <param name="headingCount">Number of extracted headings.</param>
-   /// <param name="hasPublishedAt">Whether publication metadata was found.</param>
+   /// <param name="hasPublishedAt">
+   /// Whether publication metadata was found.
+   /// </param>
    /// <param name="relevantLinkCount">Number of relevant links.</param>
    /// <param name="blockSource">Which signature set applies.</param>
    internal static WebPageAssessment Assess(

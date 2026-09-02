@@ -34,11 +34,6 @@ var openCodeCliOptions = builder.Configuration.GetSection(
    )
    .Get<OpenCodeCliOptions>() ??
    new OpenCodeCliOptions();
-var searxngOptions = builder.Configuration.GetSection(
-      ApplicationConfigurationKeys.SearxngSection
-   )
-   .Get<SearxngWebSearchClientOptions>() ??
-   new SearxngWebSearchClientOptions();
 var memberAuthOptions = builder.Configuration.GetSection(
       ApplicationConfigurationKeys.MemberAuthSection
    )
@@ -94,7 +89,6 @@ builder.Services.AddSingleton(
 builder.Services.AddSingleton(adminOptions);
 builder.Services.AddSingleton(codexCliOptions);
 builder.Services.AddSingleton(openCodeCliOptions);
-builder.Services.AddSingleton(searxngOptions);
 builder.Services.AddSingleton(memberAuthOptions);
 builder.Services.AddSingleton(memberPushOptions);
 builder.Services.AddSingleton(smtpEmailOptions);
@@ -166,15 +160,6 @@ var app = builder.Build();
 app.Logger.LogInformation(
    "Execution environment: {ExecutionEnvironment}",
    ExecutionEnvironment.Current
-);
-app.Logger.LogInformation(
-   "SearXNG env vars present in process: baseUrl={HasBaseUrl}",
-   ConfigurationEnvironment.HasSearxngBaseUrl
-);
-app.Logger.LogInformation(
-   "SearXNG config bound: baseUrl={BaseUrl}",
-   searxngOptions.BaseUrl ??
-      SearxngWebSearchClientOptions.DefaultBaseUrl
 );
 if(!app.Environment.IsDevelopment())
 {
