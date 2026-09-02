@@ -34,14 +34,14 @@ public class IndexModel(
    [BindProperty(SupportsGet = true, Name = RouteKeys.Date)]
    public string? Date { get; set; }
 
-    [BindProperty(SupportsGet = true, Name = RouteKeys.Sport)]
-    public string? Sport { get; set; }
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Sport)]
+   public string? Sport { get; set; }
 
-    [BindProperty(SupportsGet = true, Name = RouteKeys.Country)]
-    public string? Country { get; set; }
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Country)]
+   public string? Country { get; set; }
 
-    [BindProperty(SupportsGet = true, Name = RouteKeys.Watched)]
-    public bool Watched { get; set; }
+   [BindProperty(SupportsGet = true, Name = RouteKeys.Watched)]
+   public bool Watched { get; set; }
 
    public bool IsWatchedActivitiesView { get; private set; }
 
@@ -97,24 +97,24 @@ public class IndexModel(
          ) &&
          HttpContext.Request.Query.ContainsKey(RouteKeys.Date))
       {
-          var sport = HttpContext.Request.Query[
-             RouteKeys.Sport
-          ].FirstOrDefault()?.Trim();
-          var country = HttpContext.Request.Query[
-             RouteKeys.Country
-          ].FirstOrDefault()?.Trim();
-          var redirectUrl = PublicRoutePaths.Watched;
-          if(!string.IsNullOrWhiteSpace(sport))
-          {
-             redirectUrl += "?sport=" + Uri.EscapeDataString(sport);
-             if(!string.IsNullOrWhiteSpace(country))
-             {
-                redirectUrl += "&" + RouteKeys.Country + "=" +
-                   Uri.EscapeDataString(country);
-             }
-          }
+         var sport = HttpContext.Request.Query[
+            RouteKeys.Sport
+         ].FirstOrDefault()?.Trim();
+         var country = HttpContext.Request.Query[
+            RouteKeys.Country
+         ].FirstOrDefault()?.Trim();
+         var redirectUrl = PublicRoutePaths.Watched;
+         if(!string.IsNullOrWhiteSpace(sport))
+         {
+            redirectUrl += "?sport=" + Uri.EscapeDataString(sport);
+            if(!string.IsNullOrWhiteSpace(country))
+            {
+               redirectUrl += "&" + RouteKeys.Country + "=" +
+                  Uri.EscapeDataString(country);
+            }
+         }
 
-          return Redirect(redirectUrl);
+         return Redirect(redirectUrl);
       }
       var memberId = TryGetMemberId();
       IsMember = memberId is not null;
@@ -170,26 +170,26 @@ public class IndexModel(
             SportParticipantCounts = CountActivityCardsBySport(
                allWatchedTimeline
             );
-             Sport = NormalizeSportFilter(
-                Sport,
-                SportParticipantCounts
-             );
-             Country = NormalizeCountryFilter(
-                Country,
-                GetSelectedSportCount(Sport)
-             );
-             PublicFilterPreferenceStore.Save(
-                HttpContext.Response,
-                SelectedDate,
-                Sport,
-                watched: true,
-                Country
-             );
-             var filteredWatchedActivities = FilterActivitiesBySport(
-                watchedActivities,
-                Sport,
-                Country
-             );
+            Sport = NormalizeSportFilter(
+               Sport,
+               SportParticipantCounts
+            );
+            Country = NormalizeCountryFilter(
+               Country,
+               GetSelectedSportCount(Sport)
+            );
+            PublicFilterPreferenceStore.Save(
+               HttpContext.Response,
+               SelectedDate,
+               Sport,
+               watched: true,
+               Country
+            );
+            var filteredWatchedActivities = FilterActivitiesBySport(
+               watchedActivities,
+               Sport,
+               Country
+            );
             var watchedTimeline = timelineBuilder.BuildFuture(
                filteredWatchedActivities,
                now
@@ -207,26 +207,26 @@ public class IndexModel(
          TotalParticipantsCount = CountParticipants(activities);
          SportParticipantCounts =
             CountParticipantsBySport(activities);
-          Sport = NormalizeSportFilter(
-             Sport,
-             SportParticipantCounts
-          );
-          Country = NormalizeCountryFilter(
-             Country,
-             GetSelectedSportCount(Sport)
-          );
-          PublicFilterPreferenceStore.Save(
-             HttpContext.Response,
-             SelectedDate,
-             Sport,
-             watched: false,
-             Country
-          );
-          var filteredActivities = FilterActivitiesBySport(
-             activities,
-             Sport,
-             Country
-          );
+         Sport = NormalizeSportFilter(
+            Sport,
+            SportParticipantCounts
+         );
+         Country = NormalizeCountryFilter(
+            Country,
+            GetSelectedSportCount(Sport)
+         );
+         PublicFilterPreferenceStore.Save(
+            HttpContext.Response,
+            SelectedDate,
+            Sport,
+            watched: false,
+            Country
+         );
+         var filteredActivities = FilterActivitiesBySport(
+            activities,
+            Sport,
+            Country
+         );
          var timeline = timelineBuilder.Build(
             filteredActivities,
             SelectedDate,
@@ -388,154 +388,154 @@ public class IndexModel(
       return CountActivitiesBySport(cardActivities);
    }
 
-    private static IReadOnlyList<SportParticipantCount> CountBySport(
-       IEnumerable<ActivityListItem> activities,
-       Func<IEnumerable<ActivityListItem>, int> countSelector
-    )
-    {
-       return activities
-          .GroupBy(
-             activity => activity.SportId,
-             StringComparer.OrdinalIgnoreCase
-          )
-          .Select(group => new SportParticipantCount(
-             group.Key,
-             group
-                .Select(activity => activity.SportName)
-                .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name))
-                ?? group.Key,
-             countSelector(group),
-             CountCountriesBySport(group, countSelector)
-          ))
-          .OrderBy(
-             item => item.SportName,
-             StringComparer.OrdinalIgnoreCase
-          )
-          .ToArray();
-    }
+   private static IReadOnlyList<SportParticipantCount> CountBySport(
+      IEnumerable<ActivityListItem> activities,
+      Func<IEnumerable<ActivityListItem>, int> countSelector
+   )
+   {
+      return activities
+         .GroupBy(
+            activity => activity.SportId,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .Select(group => new SportParticipantCount(
+            group.Key,
+            group
+               .Select(activity => activity.SportName)
+               .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name))
+               ?? group.Key,
+            countSelector(group),
+            CountCountriesBySport(group, countSelector)
+         ))
+         .OrderBy(
+            item => item.SportName,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .ToArray();
+   }
 
-    private static IReadOnlyList<SportCountryParticipantCount>
-       CountCountriesBySport(
-          IGrouping<string, ActivityListItem> activities,
-          Func<IEnumerable<ActivityListItem>, int> countSelector
-       )
-    {
-       if(!activities
-            .All(activity =>
-               !string.IsNullOrWhiteSpace(
-                  activity.OrganizationCountryId
-               )
-            )
-       )
-       {
-          return [];
-       }
+   private static IReadOnlyList<SportCountryParticipantCount>
+      CountCountriesBySport(
+         IGrouping<string, ActivityListItem> activities,
+         Func<IEnumerable<ActivityListItem>, int> countSelector
+      )
+   {
+      if(!activities
+           .All(activity =>
+              !string.IsNullOrWhiteSpace(
+                 activity.OrganizationCountryId
+              )
+           )
+      )
+      {
+         return [];
+      }
 
-       return activities
-          .GroupBy(
-             activity => activity.OrganizationCountryId!
-                .Trim()
-                .ToLowerInvariant(),
-             StringComparer.OrdinalIgnoreCase
-          )
-          .Select(group => new SportCountryParticipantCount(
-             group.Key,
-             countSelector(group)
-          ))
-          .OrderByDescending(country => country.ParticipantCount)
-          .ThenBy(
-             country => country.CountryId,
-             StringComparer.OrdinalIgnoreCase
-          )
-          .ToArray();
-    }
+      return activities
+         .GroupBy(
+            activity => activity.OrganizationCountryId!
+               .Trim()
+               .ToLowerInvariant(),
+            StringComparer.OrdinalIgnoreCase
+         )
+         .Select(group => new SportCountryParticipantCount(
+            group.Key,
+            countSelector(group)
+         ))
+         .OrderByDescending(country => country.ParticipantCount)
+         .ThenBy(
+            country => country.CountryId,
+            StringComparer.OrdinalIgnoreCase
+         )
+         .ToArray();
+   }
 
-    internal static IReadOnlyList<ActivityListItem>
-       FilterActivitiesBySport(
-          IEnumerable<ActivityListItem> activities,
-          string? sportId,
-          string? countryId = null
-       )
-    {
-       if(string.IsNullOrWhiteSpace(sportId))
-       {
-          return activities.ToArray();
-       }
+   internal static IReadOnlyList<ActivityListItem>
+      FilterActivitiesBySport(
+         IEnumerable<ActivityListItem> activities,
+         string? sportId,
+         string? countryId = null
+      )
+   {
+      if(string.IsNullOrWhiteSpace(sportId))
+      {
+         return activities.ToArray();
+      }
 
-       var filtered = activities
-          .Where(activity => string.Equals(
-             activity.SportId,
-             sportId,
-             StringComparison.OrdinalIgnoreCase
-          ));
-       if(!string.IsNullOrWhiteSpace(countryId))
-       {
-          var normalizedCountryId = countryId.Trim();
-          filtered = filtered
-             .Where(activity => string.Equals(
-                activity.OrganizationCountryId?.Trim(),
-                normalizedCountryId,
-                StringComparison.OrdinalIgnoreCase
-             ));
-       }
+      var filtered = activities
+         .Where(activity => string.Equals(
+            activity.SportId,
+            sportId,
+            StringComparison.OrdinalIgnoreCase
+         ));
+      if(!string.IsNullOrWhiteSpace(countryId))
+      {
+         var normalizedCountryId = countryId.Trim();
+         filtered = filtered
+            .Where(activity => string.Equals(
+               activity.OrganizationCountryId?.Trim(),
+               normalizedCountryId,
+               StringComparison.OrdinalIgnoreCase
+            ));
+      }
 
-       return filtered.ToArray();
-    }
+      return filtered.ToArray();
+   }
 
-    private static string? NormalizeSportFilter(
-       string? sportId,
-       IReadOnlyList<SportParticipantCount> sportCounts
-    )
-    {
-       if(string.IsNullOrWhiteSpace(sportId))
-       {
-          return null;
-       }
+   private static string? NormalizeSportFilter(
+      string? sportId,
+      IReadOnlyList<SportParticipantCount> sportCounts
+   )
+   {
+      if(string.IsNullOrWhiteSpace(sportId))
+      {
+         return null;
+      }
 
-       return sportCounts
-          .Select(sport => sport.SportId)
-          .FirstOrDefault(id => string.Equals(
-             id,
-             sportId.Trim(),
-             StringComparison.OrdinalIgnoreCase
-          ));
-    }
+      return sportCounts
+         .Select(sport => sport.SportId)
+         .FirstOrDefault(id => string.Equals(
+            id,
+            sportId.Trim(),
+            StringComparison.OrdinalIgnoreCase
+         ));
+   }
 
-    private SportParticipantCount? GetSelectedSportCount(
-       string? sportId
-    )
-    {
-       if(string.IsNullOrWhiteSpace(sportId))
-       {
-          return null;
-       }
+   private SportParticipantCount? GetSelectedSportCount(
+      string? sportId
+   )
+   {
+      if(string.IsNullOrWhiteSpace(sportId))
+      {
+         return null;
+      }
 
-       return SportParticipantCounts
-          .FirstOrDefault(sport => string.Equals(
-             sport.SportId,
-             sportId,
-             StringComparison.OrdinalIgnoreCase
-          ));
-    }
+      return SportParticipantCounts
+         .FirstOrDefault(sport => string.Equals(
+            sport.SportId,
+            sportId,
+            StringComparison.OrdinalIgnoreCase
+         ));
+   }
 
-    private static string? NormalizeCountryFilter(
-       string? countryId,
-       SportParticipantCount? sportCount
-    )
-    {
-       if(string.IsNullOrWhiteSpace(countryId))
-       {
-          return null;
-       }
+   private static string? NormalizeCountryFilter(
+      string? countryId,
+      SportParticipantCount? sportCount
+   )
+   {
+      if(string.IsNullOrWhiteSpace(countryId))
+      {
+         return null;
+      }
 
-       return sportCount?.Countries
-          .Select(country => country.CountryId)
-          .FirstOrDefault(id => string.Equals(
-             id,
-             countryId.Trim(),
-             StringComparison.OrdinalIgnoreCase
-          ));
-    }
+      return sportCount?.Countries
+         .Select(country => country.CountryId)
+         .FirstOrDefault(id => string.Equals(
+            id,
+            countryId.Trim(),
+            StringComparison.OrdinalIgnoreCase
+         ));
+   }
 
    internal static int? CalculateAge(DateOnly? birthdate, DateOnly today)
    {

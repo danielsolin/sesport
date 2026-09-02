@@ -2,9 +2,9 @@ namespace SESport.Web.Routing;
 
 public static class RouteKeys
 {
-    public const string Date = "date";
-    public const string Sport = "sport";
-    public const string Country = "country";
+   public const string Date = "date";
+   public const string Sport = "sport";
+   public const string Country = "country";
    public const string Watched = "watched";
    public const string Month = "month";
    public const string JobId = "jobId";

@@ -7,8 +7,6 @@ global using Microsoft.Extensions.DependencyInjection;
 
 global using ModelContextProtocol.Server;
 
-global using SESport.Core.Configuration;
-global using SESport.Core.Domain;
-
 global using SESport.AI.WebPages;
 global using SESport.AI.WebSearch;
+global using SESport.Core.Configuration;

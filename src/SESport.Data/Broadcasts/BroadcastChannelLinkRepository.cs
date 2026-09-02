@@ -26,7 +26,7 @@ public sealed class BroadcastChannelLinkRepository(
          cancellationToken
       );
 
-      if (!await reader.ReadAsync(cancellationToken))
+      if(!await reader.ReadAsync(cancellationToken))
       {
          return null;
       }

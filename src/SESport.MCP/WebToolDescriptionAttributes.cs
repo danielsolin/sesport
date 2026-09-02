@@ -1,7 +1,5 @@
 using System.Globalization;
 
-using SESport.Core.Configuration;
-
 namespace SESport.MCP;
 
 [AttributeUsage(AttributeTargets.Method)]

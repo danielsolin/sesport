@@ -683,7 +683,8 @@ public class AiJobRunnerTests
 
       public bool FailRunCalled { get; private set; }
 
-      public CancellationToken ToolTraceCancellationToken {
+      public CancellationToken ToolTraceCancellationToken
+      {
          get;
          private set;
       }

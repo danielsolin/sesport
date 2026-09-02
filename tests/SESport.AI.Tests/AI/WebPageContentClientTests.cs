@@ -1,15 +1,7 @@
-using System.Net;
-
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 
 using SESport.AI.Llama;
 using SESport.AI.WebPages;
-
-using UglyToad.PdfPig.Content;
-using UglyToad.PdfPig.Core;
-using UglyToad.PdfPig.Fonts.Standard14Fonts;
-using UglyToad.PdfPig.Writer;
 
 namespace SESport.Core.Tests.AI;
 

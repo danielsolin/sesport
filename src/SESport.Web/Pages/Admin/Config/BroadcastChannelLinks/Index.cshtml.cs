@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using SESport.Data.Models;
-
 namespace SESport.Web.Pages.Admin.Config.BroadcastChannelLinks;
 
 public class IndexModel(AdminRepository repository) : PageModel

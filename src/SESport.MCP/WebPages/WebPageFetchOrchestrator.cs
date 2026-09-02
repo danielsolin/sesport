@@ -1,7 +1,5 @@
 using UglyToad.PdfPig;
 
-using Microsoft.Extensions.Logging;
-
 namespace SESport.AI.WebPages;
 
 /// <summary>

@@ -1,8 +1,5 @@
 using ModelContextProtocol.AspNetCore;
 
-using Microsoft.Extensions.Logging;
-
-using SESport.Core.Configuration;
 using SESport.MCP;
 
 var builder = WebApplication.CreateBuilder(args);

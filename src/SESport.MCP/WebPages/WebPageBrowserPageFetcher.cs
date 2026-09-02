@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.Text.Json;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
 namespace SESport.AI.WebPages;

@@ -596,7 +596,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          """;
 
       ActivityEditModel model;
-      await using (var command = dataSource.CreateCommand(sql))
+      await using(var command = dataSource.CreateCommand(sql))
       {
          command.Parameters.AddWithValue("id", id);
          await using var reader = await command.ExecuteReaderAsync(
@@ -640,7 +640,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
 
       Guid? legacyOrganizationEntityId = null;
       var hasLegacyOrganizationConflict = false;
-      await using (var linkCommand = dataSource.CreateCommand(linkSql))
+      await using(var linkCommand = dataSource.CreateCommand(linkSql))
       {
          linkCommand.Parameters.AddWithValue("id", id);
          await using var linkReader = await linkCommand.ExecuteReaderAsync(
@@ -682,7 +682,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          order by observed_at desc, created_at desc, id desc
          """;
 
-      await using (var sourceCommand = dataSource.CreateCommand(sourceSql))
+      await using(var sourceCommand = dataSource.CreateCommand(sourceSql))
       {
          sourceCommand.Parameters.AddWithValue("id", id.ToString());
          await using var sourceReader = await sourceCommand.ExecuteReaderAsync(

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace SESport.AI.WebSearch;
 
 public sealed class SearchRateLimiter
