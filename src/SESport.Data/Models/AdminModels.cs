@@ -131,7 +131,12 @@ public sealed record EntityLinkOption(
 public sealed record EntityNameOption(
    Guid Id,
    string Name
-);
+)
+{
+   public string? PrimaryCountryParticipationStatusId { get; init; }
+
+   public string? PrimaryCountryParticipationReason { get; init; }
+}
 
 public sealed record EntityActivityListItem(
    Guid Id,
@@ -221,6 +226,10 @@ public sealed class EntityEditModel
    public string? FormativeClub { get; set; }
 
    public string? PersonGenderId { get; set; }
+
+   public string? PrimaryCountryParticipationStatusId { get; set; }
+
+   public string? PrimaryCountryParticipationReason { get; set; }
 
    public bool HasPrimaryThumbnail { get; set; }
 

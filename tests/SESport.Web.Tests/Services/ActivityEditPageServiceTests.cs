@@ -489,6 +489,100 @@ public sealed class ActivityEditPageServiceTests
    }
 
    [Fact]
+   public async Task PrefillFromBroadcastsAsyncSkipsOtherCountryPerson()
+   {
+      var organizationId = Guid.NewGuid();
+      var personId = Guid.NewGuid();
+      var broadcastId = Guid.NewGuid();
+      var sourceKey = $"test-source-{Guid.NewGuid():N}";
+      var personName = $"Excluded Person {personId:N}";
+      var startsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(12, 0),
+         SportDay.TimeZoneId
+      );
+      var endsAt = TimeZoneHelper.ToUtc(
+         DistantActivityDate,
+         new TimeOnly(14, 0),
+         SportDay.TimeZoneId
+      );
+
+      await using var dataSource = CreateDataSource();
+      var fixture = CreateFixture(dataSource);
+      var jobContext = await LoadParticipationJobContextAsync(
+         dataSource,
+         "decide-swedish-participation"
+      );
+      var runId = Guid.NewGuid();
+
+      try
+      {
+         await InsertRelatedEntityAsync(
+            dataSource,
+            organizationId,
+            $"Organization {organizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            "football"
+         );
+         await InsertRelatedEntityAsync(
+            dataSource,
+            personId,
+            personName,
+            TrackedEntityTypeIds.Person,
+            "football"
+         );
+         await SetPrimaryCountryParticipationStatusAsync(
+            dataSource,
+            personId,
+            "Represents another country."
+         );
+         await InsertEntityLinkAsync(dataSource, personId, organizationId);
+         await InsertBroadcastAsync(
+            dataSource,
+            broadcastId,
+            sourceKey,
+            organizationId,
+            $"external-{Guid.NewGuid():N}",
+            $"fingerprint-{Guid.NewGuid():N}",
+            "channel-1",
+            "Viaplay",
+            "Broadcast title",
+            ["football"],
+            startsAt,
+            endsAt
+         );
+         await InsertRunAsync(
+            dataSource,
+            runId,
+            "decide-swedish-participation",
+            jobContext.PromptId,
+            jobContext.ProviderId,
+            broadcastId.ToString(),
+            personName
+         );
+
+         var activity = new ActivityEditModel();
+
+         await fixture.Service.PrefillFromBroadcastsAsync(
+            activity,
+            [broadcastId],
+            null,
+            CancellationToken.None
+         );
+
+         Assert.Empty(activity.LinkedEntityIds);
+      }
+      finally
+      {
+         await DeleteParticipationRunAsync(dataSource, runId);
+         await DeleteBroadcastAsync(dataSource, broadcastId);
+         await DeleteLinksAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, organizationId);
+      }
+   }
+
+   [Fact]
    public async Task
       PrefillFromBroadcastsAsyncSuggestsRaceForCyclingMountainbike()
    {
@@ -2631,6 +2725,30 @@ public sealed class ActivityEditPageServiceTests
       command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
       command.Parameters.AddWithValue("entity_type_id", entityTypeId);
       command.Parameters.AddWithValue("sport_id", sportId);
+
+      await command.ExecuteNonQueryAsync();
+   }
+
+   private static async Task SetPrimaryCountryParticipationStatusAsync(
+      NpgsqlDataSource dataSource,
+      Guid entityId,
+      string reason
+   )
+   {
+      await using var command = dataSource.CreateCommand(
+         """
+         update entities
+         set primary_country_participation_status_id = @status_id,
+             primary_country_participation_reason = @reason
+         where id = @id
+         """
+      );
+      command.Parameters.AddWithValue("id", entityId);
+      command.Parameters.AddWithValue(
+         "status_id",
+         PrimaryCountryParticipationStatusIds.RepresentsOtherCountry
+      );
+      command.Parameters.AddWithValue("reason", reason);
 
       await command.ExecuteNonQueryAsync();
    }

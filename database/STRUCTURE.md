@@ -74,7 +74,9 @@ activity relationship table.
 Stores the canonical identities followed by SESport. An entity is associated
 with a type, sport, country, country relevance, stability, and watch priority.
 Person-specific fields such as gender, birthdate, height, weight, and
-formative club are nullable and constrained to person entities.
+formative club are nullable and constrained to person entities. Person
+entities may also have a primary-country participation status and optional
+explanation when they should not be counted for the primary country.
 
 ### `entity_images`
 

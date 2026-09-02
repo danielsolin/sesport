@@ -2124,6 +2124,10 @@ h2 {
    text-decoration: underline;
 }
 
+.broadcast-ai-check-participant-link.broadcast-ai-check-participant-excluded {
+   color: var(--warning);
+}
+
 .broadcast-ai-check-participant-create-form {
    display: inline-flex;
    margin: 0;

@@ -119,6 +119,37 @@ public sealed class BroadcastParticipationServiceTests
    }
 
    [Fact]
+   public void GetParticipantDisplayItemsMarksExcludedExistingEntities()
+   {
+      var entityId = Guid.NewGuid();
+      var reason = "Represents Switzerland internationally.";
+      var entityIdsByName = new Dictionary<string, Guid>
+      {
+         [BroadcastEntityFilter.NormalizeName("Ludvig Johnson")] = entityId
+      };
+      var options = new[]
+      {
+         new EntityNameOption(entityId, "Ludvig Johnson")
+         {
+            PrimaryCountryParticipationStatusId =
+               PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+            PrimaryCountryParticipationReason = reason
+         }
+      };
+
+      var result = BroadcastParticipationService.GetParticipantDisplayItems(
+         ["Ludvig Johnson"],
+         entityIdsByName,
+         options
+      );
+
+      var participant = Assert.Single(result);
+      Assert.True(participant.IsExcludedFromPrimaryCountryParticipation);
+      Assert.Equal(reason, participant.PrimaryCountryParticipationReason);
+      Assert.Equal($"/Admin/Entities/Edit/{entityId}", participant.EditUrl);
+   }
+
+   [Fact]
    public void GetParticipantDisplayItemsUsesFirstTemplateOptionWhenNeeded()
    {
       var templateId = Guid.NewGuid();

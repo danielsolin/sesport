@@ -289,7 +289,9 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                height,
                weight,
                formative_club,
-               person_gender_id
+               person_gender_id,
+               primary_country_participation_status_id,
+               primary_country_participation_reason
             )
             values (
                @id,
@@ -307,7 +309,9 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                @height,
                @weight,
                @formative_club,
-               @person_gender_id
+               @person_gender_id,
+               @primary_country_participation_status_id,
+               @primary_country_participation_reason
             )
             """
          : """
@@ -326,7 +330,9 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                birthdate,
                height,
                weight,
-               formative_club
+               formative_club,
+               primary_country_participation_status_id,
+               primary_country_participation_reason
             )
             values (
                @id,
@@ -343,7 +349,9 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                @birthdate,
                @height,
                @weight,
-               @formative_club
+               @formative_club,
+               @primary_country_participation_status_id,
+               @primary_country_participation_reason
             )
             """;
    }
@@ -369,6 +377,10 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                weight = @weight,
                formative_club = @formative_club,
                person_gender_id = @person_gender_id,
+               primary_country_participation_status_id =
+                  @primary_country_participation_status_id,
+               primary_country_participation_reason =
+                  @primary_country_participation_reason,
                updated_at = now()
             where id = @id
             """
@@ -389,6 +401,10 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                height = @height,
                weight = @weight,
                formative_club = @formative_club,
+               primary_country_participation_status_id =
+                  @primary_country_participation_status_id,
+               primary_country_participation_reason =
+                  @primary_country_participation_reason,
                updated_at = now()
             where id = @id
             """;
@@ -728,6 +744,16 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          "person_gender_id",
          (object?)NormalizePersonGenderId(model) ?? DBNull.Value
       );
+      command.Parameters.AddWithValue(
+         "primary_country_participation_status_id",
+         (object?)NormalizePrimaryCountryParticipationStatusId(model)
+            ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "primary_country_participation_reason",
+         (object?)NormalizePrimaryCountryParticipationReason(model)
+            ?? DBNull.Value
+      );
    }
 
    private static string? NormalizeAliasName(string? aliasName)
@@ -756,6 +782,36 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
       return string.IsNullOrWhiteSpace(model.PersonGenderId)
          ? null
          : model.PersonGenderId.Trim();
+   }
+
+   private static string? NormalizePrimaryCountryParticipationStatusId(
+      EntityEditModel model
+   )
+   {
+      if(!string.Equals(
+         model.EntityTypeId,
+         TrackedEntityTypeIds.Person,
+         StringComparison.OrdinalIgnoreCase
+      ) ||
+         !string.Equals(
+            model.PrimaryCountryParticipationStatusId,
+            PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+            StringComparison.Ordinal
+         ))
+      {
+         return null;
+      }
+
+      return PrimaryCountryParticipationStatusIds.RepresentsOtherCountry;
+   }
+
+   private static string? NormalizePrimaryCountryParticipationReason(
+      EntityEditModel model
+   )
+   {
+      return NormalizePrimaryCountryParticipationStatusId(model) is null
+         ? null
+         : NormalizeNullable(model.PrimaryCountryParticipationReason);
    }
 
    private static async Task SaveEntityLinksAsync(

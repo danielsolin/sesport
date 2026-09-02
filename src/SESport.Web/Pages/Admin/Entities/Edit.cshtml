@@ -444,9 +444,33 @@
       </div>
       <label>
          <span>Relevance reason</span>
-         <textarea asp-for="Entity.CountryRelevanceReason" rows="3"></textarea>
+         <textarea asp-for="Entity.CountryRelevanceReason"
+                   rows="3"></textarea>
          <span asp-validation-for="Entity.CountryRelevanceReason"></span>
       </label>
+      <div class="form-grid">
+         <label data-person-participation-status-field
+                hidden="@(isPersonEntity ? null : "hidden")">
+            <span>Participation status</span>
+            <select asp-for="Entity.PrimaryCountryParticipationStatusId">
+               <option value="">Normal</option>
+               @foreach(var status in Model.PrimaryCountryParticipationStatuses)
+               {
+                  <option value="@status.Id">@status.Label</option>
+               }
+            </select>
+            <span asp-validation-for=
+               "Entity.PrimaryCountryParticipationStatusId"></span>
+         </label>
+         <label data-person-participation-reason-field
+                hidden="@(isPersonEntity ? null : "hidden")">
+            <span>Participation explanation (optional)</span>
+            <textarea asp-for="Entity.PrimaryCountryParticipationReason"
+                      rows="3"></textarea>
+            <span asp-validation-for=
+               "Entity.PrimaryCountryParticipationReason"></span>
+         </label>
+      </div>
    </section>
 
    <section class="form-actions">

@@ -12,6 +12,10 @@ const personHeightFieldSelector = "[data-person-height-field]";
 const personWeightFieldSelector = "[data-person-weight-field]";
 const personFormativeClubFieldSelector =
    "[data-person-formative-club-field]";
+const personParticipationStatusFieldSelector =
+   "[data-person-participation-status-field]";
+const personParticipationReasonFieldSelector =
+   "[data-person-participation-reason-field]";
 const entityInlineEditUrlSelector = "[data-entity-inline-edit-url]";
 const entityInlineEditCellSelector =
    "[data-entity-inline-edit-field]";

@@ -165,12 +165,20 @@ function initializePersonGenderVisibility(root = document)
       const formativeClubField = form?.querySelector(
          personFormativeClubFieldSelector
       );
+      const participationStatusField = form?.querySelector(
+         personParticipationStatusFieldSelector
+      );
+      const participationReasonField = form?.querySelector(
+         personParticipationReasonFieldSelector
+      );
 
       if(!(genderField instanceof HTMLElement)
          || !(birthdateField instanceof HTMLElement)
          || !(heightField instanceof HTMLElement)
          || !(weightField instanceof HTMLElement)
-         || !(formativeClubField instanceof HTMLElement))
+         || !(formativeClubField instanceof HTMLElement)
+         || !(participationStatusField instanceof HTMLElement)
+         || !(participationReasonField instanceof HTMLElement))
       {
          return;
       }
@@ -184,6 +192,8 @@ function initializePersonGenderVisibility(root = document)
          heightField.hidden = !isPerson;
          weightField.hidden = !isPerson;
          formativeClubField.hidden = !isPerson;
+         participationStatusField.hidden = !isPerson;
+         participationReasonField.hidden = !isPerson;
       };
 
       select.addEventListener("change", update);

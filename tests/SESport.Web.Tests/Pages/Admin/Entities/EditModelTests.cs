@@ -77,6 +77,71 @@ public sealed class EditModelTests
    }
 
    [Fact]
+   public async Task OnPostAsyncPersistsPrimaryCountryParticipationStatus()
+   {
+      var entityName = $"Status Person {Guid.NewGuid():N}";
+      var reason = "Represents Switzerland internationally.";
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+      var sourceRepository = new SourceReferenceRepository(dataSource);
+      var model = new EditModel(
+         repository,
+         sourceRepository,
+         new CapturingAiAutomationService(),
+         new TestHostApplicationLifetime(),
+         new CapturingEntityImageReplacementService()
+      )
+      {
+         Entity = new EntityEditModel
+         {
+            CanonicalName = entityName,
+            EntityTypeId = TrackedEntityTypeIds.Person,
+            SportId = "football",
+            CountryId = PrimaryCountry.Id,
+            CountryRelevanceKindId =
+               "NationalityOrSportingIdentity",
+            CountryRelevanceReason = "Test coverage",
+            WatchPriorityId = "tier_3",
+            ExpectedStabilityId = "short_term",
+            PrimaryCountryParticipationStatusId =
+               PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+            PrimaryCountryParticipationReason = reason
+         }
+      };
+
+      try
+      {
+         var result = await model.OnPostAsync(CancellationToken.None);
+
+         Assert.IsType<RedirectToPageResult>(result);
+         Assert.NotNull(model.Entity.Id);
+
+         var loaded = await repository.GetEntityForEditAsync(
+            model.Entity.Id.Value,
+            CancellationToken.None
+         );
+
+         Assert.NotNull(loaded);
+         Assert.Equal(
+            PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+            loaded!.PrimaryCountryParticipationStatusId
+         );
+         Assert.Equal(reason, loaded.PrimaryCountryParticipationReason);
+      }
+      finally
+      {
+         if(model.Entity.Id is not null)
+         {
+            await repository.DeleteEntityAsync(
+               model.Entity.Id.Value,
+               CancellationToken.None
+            );
+         }
+      }
+   }
+
+   [Fact]
    public async Task OnPostAddSourceAsyncPersistsNormalizedEntitySource()
    {
       var entityName = $"Source Entity {Guid.NewGuid():N}";

@@ -893,6 +893,9 @@ public sealed class ActivityEditPageService(
             organizationEntityId.Value,
             cancellationToken
          );
+      var entityOptionsById = entityOptions
+         .GroupBy(option => option.Id)
+         .ToDictionary(group => group.Key, group => group.First());
       var entityIdsByName = BroadcastEntityFilter.CreateNameLookup(
          entityOptions,
          entity => entity.Name,
@@ -934,7 +937,11 @@ public sealed class ActivityEditPageService(
          {
             foreach(var linkedEntityId in linkedEntity.LinkedEntityIds)
             {
-               if(!selectablePersonIds.Contains(linkedEntityId) ||
+               if(IsExcludedFromPrimaryCountryParticipation(
+                     entityOptionsById,
+                     linkedEntityId
+                  ) ||
+                  !selectablePersonIds.Contains(linkedEntityId) ||
                   !seenEntityIds.Add(linkedEntityId))
                {
                   continue;
@@ -947,6 +954,10 @@ public sealed class ActivityEditPageService(
          }
 
          if(linkedEntity.Id is null ||
+            IsExcludedFromPrimaryCountryParticipation(
+               entityOptionsById,
+               linkedEntity.Id.Value
+            ) ||
             !selectablePersonIds.Contains(linkedEntity.Id.Value) ||
             !seenEntityIds.Add(linkedEntity.Id.Value))
          {
@@ -957,6 +968,19 @@ public sealed class ActivityEditPageService(
       }
 
       return linkedEntityIds;
+   }
+
+   private static bool IsExcludedFromPrimaryCountryParticipation(
+      IReadOnlyDictionary<Guid, EntityNameOption> entityOptionsById,
+      Guid entityId
+   )
+   {
+      return entityOptionsById.TryGetValue(entityId, out var entityOption) &&
+         string.Equals(
+            entityOption.PrimaryCountryParticipationStatusId,
+            PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+            StringComparison.Ordinal
+         );
    }
 
    private static List<Guid> NormalizeBroadcastIds(

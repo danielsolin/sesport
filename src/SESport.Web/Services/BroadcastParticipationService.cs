@@ -346,6 +346,9 @@ public sealed class BroadcastParticipationService(
          IReadOnlyList<EntityNameOption>? participantEntityOptions = null
       )
    {
+      var participantOptionsById = participantEntityOptions?
+         .GroupBy(option => option.Id)
+         .ToDictionary(group => group.Key, group => group.First());
       Guid? templateEntityId = null;
 
       foreach(var participantName in participantNames)
@@ -378,11 +381,33 @@ public sealed class BroadcastParticipationService(
                   out var entityId
                ))
             {
-               return new BroadcastParticipantDisplayItem(
+               var displayItem = new BroadcastParticipantDisplayItem(
                   displayName,
                   $"/Admin/Entities/Edit/{entityId}",
                   null
                );
+
+               if(participantOptionsById is not null &&
+                  participantOptionsById.TryGetValue(
+                     entityId,
+                     out var entityOption
+                  ) &&
+                  string.Equals(
+                     entityOption.PrimaryCountryParticipationStatusId,
+                     PrimaryCountryParticipationStatusIds
+                        .RepresentsOtherCountry,
+                     StringComparison.Ordinal
+                  ))
+               {
+                  displayItem = displayItem with
+                  {
+                     IsExcludedFromPrimaryCountryParticipation = true,
+                     PrimaryCountryParticipationReason =
+                        entityOption.PrimaryCountryParticipationReason
+                  };
+               }
+
+               return displayItem;
             }
 
             return new BroadcastParticipantDisplayItem(
@@ -573,7 +598,12 @@ public sealed record BroadcastParticipantDisplayItem(
    string Name,
    string? EditUrl,
    Guid? TemplateEntityId
-);
+)
+{
+   public bool IsExcludedFromPrimaryCountryParticipation { get; init; }
+
+   public string? PrimaryCountryParticipationReason { get; init; }
+}
 
 public sealed record BroadcastParticipantTemplateOption(
    Guid Id,

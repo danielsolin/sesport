@@ -148,12 +148,32 @@
                                  new[] { participant.Name, Model.OrganizationSportName }
                                     .Where(value => !string.IsNullOrWhiteSpace(value))
                               );
+                              var participantClass =
+                                 "broadcast-ai-check-participant-link";
+                              var participantTitle = "Edit entity";
+                              var participationReason =
+                                 participant.PrimaryCountryParticipationReason;
+                              if(participant
+                                    .IsExcludedFromPrimaryCountryParticipation)
+                              {
+                                 participantClass +=
+                                    " broadcast-ai-check-participant-excluded";
+                                 participantTitle =
+                                    "Represents another country";
+                                 if(!string.IsNullOrWhiteSpace(
+                                       participationReason
+                                    ))
+                                 {
+                                    participantTitle += ": " +
+                                       participationReason;
+                                 }
+                              }
                               <div class="broadcast-ai-check-participant-row">
                                  @if(participant.EditUrl is not null)
                                  {
-                                    <a class="broadcast-ai-check-participant-link"
+                                    <a class="@participantClass"
                                        href="@participant.EditUrl"
-                                       title="Edit entity"
+                                       title="@participantTitle"
                                        target="_blank"
                                        rel="noreferrer noopener">
                                        @participant.Name

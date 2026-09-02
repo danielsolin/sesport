@@ -419,10 +419,16 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             ? null
             : reader.GetString(14),
          PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15),
-         HasPrimaryThumbnail = reader.GetBoolean(16),
-         PrimaryImageSourceUrl = reader.IsDBNull(17)
+         PrimaryCountryParticipationStatusId = reader.IsDBNull(16)
             ? null
-            : reader.GetString(17)
+            : reader.GetString(16),
+         PrimaryCountryParticipationReason = reader.IsDBNull(17)
+            ? null
+            : reader.GetString(17),
+         HasPrimaryThumbnail = reader.GetBoolean(18),
+         PrimaryImageSourceUrl = reader.IsDBNull(19)
+            ? null
+            : reader.GetString(19)
       };
 
       await reader.DisposeAsync();
@@ -890,11 +896,17 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
       )
    {
       const string sql = $$"""
-         select id, name
+         select
+            id,
+            name,
+            status_id,
+            status_reason
          from (
             select
                e.id,
-               e.canonical_name as name
+               e.canonical_name as name,
+               e.primary_country_participation_status_id as status_id,
+               e.primary_country_participation_reason as status_reason
             from entities e
             where e.entity_type_id in (
                '{{TrackedEntityTypeIds.Person}}',
@@ -903,7 +915,9 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             union all
             select
                e.id,
-               e.alias_name as name
+               e.alias_name as name,
+               e.primary_country_participation_status_id as status_id,
+               e.primary_country_participation_reason as status_reason
             from entities e
             where e.entity_type_id in (
                '{{TrackedEntityTypeIds.Person}}',
@@ -927,6 +941,14 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1)
             )
+            {
+               PrimaryCountryParticipationStatusId = reader.IsDBNull(2)
+                  ? null
+                  : reader.GetString(2),
+               PrimaryCountryParticipationReason = reader.IsDBNull(3)
+                  ? null
+                  : reader.GetString(3)
+            }
          );
       }
 
@@ -944,7 +966,9 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             select distinct
                e.id,
                e.canonical_name,
-               e.alias_name
+               e.alias_name,
+               e.primary_country_participation_status_id,
+               e.primary_country_participation_reason
             from entities e
             where e.entity_type_id in (
                '{{TrackedEntityTypeIds.Person}}',
@@ -959,16 +983,24 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                         and l.source_entity_id = e.id)
                )
          )
-         select id, name
+         select
+            id,
+            name,
+            status_id,
+            status_reason
          from (
             select
                id,
-               canonical_name as name
+               canonical_name as name,
+               primary_country_participation_status_id as status_id,
+               primary_country_participation_reason as status_reason
             from linked_persons
             union all
             select
                id,
-               alias_name as name
+               alias_name as name,
+               primary_country_participation_status_id as status_id,
+               primary_country_participation_reason as status_reason
             from linked_persons
             where alias_name is not null
          ) names
@@ -993,6 +1025,14 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1)
             )
+            {
+               PrimaryCountryParticipationStatusId = reader.IsDBNull(2)
+                  ? null
+                  : reader.GetString(2),
+               PrimaryCountryParticipationReason = reader.IsDBNull(3)
+                  ? null
+                  : reader.GetString(3)
+            }
          );
       }
 
@@ -1010,7 +1050,9 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             select
                e.id,
                e.canonical_name,
-               e.alias_name
+               e.alias_name,
+               e.primary_country_participation_status_id,
+               e.primary_country_participation_reason
             from entities e
             where e.entity_type_id in (
                '{{TrackedEntityTypeIds.Person}}',
@@ -1028,7 +1070,9 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             select distinct
                person.id,
                person.canonical_name,
-               person.alias_name
+               person.alias_name,
+               person.primary_country_participation_status_id,
+               person.primary_country_participation_reason
             from entities person
             join entity_to_entity_links person_team_link
                on person_team_link.source_entity_id = person.id
@@ -1053,16 +1097,24 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             where person.entity_type_id =
                '{{TrackedEntityTypeIds.Person}}'
          )
-         select id, name
+         select
+            id,
+            name,
+            status_id,
+            status_reason
          from (
             select
                id,
-               canonical_name as name
+               canonical_name as name,
+               primary_country_participation_status_id as status_id,
+               primary_country_participation_reason as status_reason
             from linked_participants
             union all
             select
                id,
-               alias_name as name
+               alias_name as name,
+               primary_country_participation_status_id as status_id,
+               primary_country_participation_reason as status_reason
             from linked_participants
             where alias_name is not null
          ) names
@@ -1087,6 +1139,14 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                reader.GetGuid(0),
                reader.GetString(1)
             )
+            {
+               PrimaryCountryParticipationStatusId = reader.IsDBNull(2)
+                  ? null
+                  : reader.GetString(2),
+               PrimaryCountryParticipationReason = reader.IsDBNull(3)
+                  ? null
+                  : reader.GetString(3)
+            }
          );
       }
 
@@ -1179,6 +1239,8 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             weight,
             formative_club,
             {{personGenderColumn}},
+            primary_country_participation_status_id,
+            primary_country_participation_reason,
             exists (
                select 1
                from entity_images image

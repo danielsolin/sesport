@@ -40,6 +40,17 @@ public class EditModel(
 
    public IReadOnlyList<LookupOption> PersonGenders { get; private set; } = [];
 
+   public IReadOnlyList<LookupOption> PrimaryCountryParticipationStatuses
+   {
+      get;
+   } =
+   [
+      new LookupOption(
+         PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+         "Represents another country"
+      )
+   ];
+
    public IReadOnlyList<EntityLinkOption> LinkedEntityOptions
    {
       get;
@@ -403,6 +414,49 @@ public class EditModel(
          ModelState.AddModelError(
             "Entity.PersonGenderId",
             "Person gender is only valid for person entities."
+         );
+      }
+
+      if(!string.IsNullOrWhiteSpace(
+            Entity.PrimaryCountryParticipationStatusId
+         ) &&
+         !string.Equals(
+            Entity.EntityTypeId,
+            TrackedEntityTypeIds.Person,
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         ModelState.AddModelError(
+            "Entity.PrimaryCountryParticipationStatusId",
+            "Participation status is only valid for person entities."
+         );
+      }
+
+      if(!string.IsNullOrWhiteSpace(
+            Entity.PrimaryCountryParticipationStatusId
+         ) &&
+         !string.Equals(
+            Entity.PrimaryCountryParticipationStatusId,
+            PrimaryCountryParticipationStatusIds.RepresentsOtherCountry,
+            StringComparison.Ordinal
+         ))
+      {
+         ModelState.AddModelError(
+            "Entity.PrimaryCountryParticipationStatusId",
+            "Select a valid participation status."
+         );
+      }
+
+      if(!string.IsNullOrWhiteSpace(
+            Entity.PrimaryCountryParticipationReason
+         ) &&
+         string.IsNullOrWhiteSpace(
+            Entity.PrimaryCountryParticipationStatusId
+         ))
+      {
+         ModelState.AddModelError(
+            "Entity.PrimaryCountryParticipationReason",
+            "Participation explanation requires a participation status."
          );
       }
    }
