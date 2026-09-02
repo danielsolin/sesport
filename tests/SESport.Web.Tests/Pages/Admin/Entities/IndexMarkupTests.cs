@@ -3,6 +3,32 @@ namespace SESport.Core.Tests.Pages.Admin.Entities;
 public sealed class IndexMarkupTests
 {
    [Fact]
+   public async Task EntityFilterMultiSelectsUseLightTheme()
+   {
+      var repoRoot = Path.GetFullPath(
+         Path.Combine(AppContext.BaseDirectory, "../../../../..")
+      );
+      var htmlPath = Path.Combine(
+         repoRoot,
+         "src/SESport.Web/Pages/Admin/Entities/Index.cshtml"
+      );
+      var html = await File.ReadAllTextAsync(htmlPath);
+
+      Assert.Contains(
+         "class=\"ses-multiselect entity-type-filter\"\n"
+         + "                    data-multi-select\n"
+         + "                    data-theme=\"light\"",
+         html
+      );
+      Assert.Contains(
+         "class=\"ses-multiselect entity-sport-filter\"\n"
+         + "                    data-multi-select\n"
+         + "                    data-theme=\"light\"",
+         html
+      );
+   }
+
+   [Fact]
    public async Task IndexPageExposesEntityInlineEditingHooks()
    {
       var repoRoot = Path.GetFullPath(
