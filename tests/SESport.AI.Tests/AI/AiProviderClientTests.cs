@@ -10,6 +10,8 @@ using SESport.AI.Llama;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 
+#pragma warning disable CS0618 // Intentional legacy provider coverage.
+
 namespace SESport.Core.Tests.AI;
 
 public class AiProviderClientTests
@@ -2580,6 +2582,8 @@ public class AiProviderClientTests
       Assert.Equal("Translated text", result.OutputText);
       Assert.Equal(2, handler.RequestBodies.Count);
    }
+
+#pragma warning restore CS0618
 
    [Fact]
    public async Task GoogleTranslateGenerateAsyncTranslatesText()

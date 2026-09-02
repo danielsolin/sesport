@@ -16,7 +16,9 @@ public class AiProviderApiKeySourceTests
       try
       {
          var handler = new RecordingHandler();
+#pragma warning disable CS0618 // Intentional legacy provider coverage.
          var client = new OpenRouterClient(new HttpClient(handler));
+#pragma warning restore CS0618
          var provider = CreateProvider(
             "environment:TEST_API_KEY",
             "openrouter"
