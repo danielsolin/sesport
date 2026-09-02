@@ -1698,11 +1698,13 @@ public sealed class LlamaServerClient : IAiProviderClient
          ""
       );
 
+      // A repeated call returns the recorded result only when clean
+      // successful content is cached. Failed attempts stay retryable.
       if(LlamaToolCallHistory.TryGetRepeatedResult(
          signature,
          toolState.PageCallHistory,
          out var repeatedResult
-      ))
+      ) && HasCleanCachedContent(toolState, pageTarget.Url))
       {
          toolState.LastPageFetcher =
             LlamaPageToolSupport.TryGetCachedPageFetcher(
@@ -1819,14 +1821,16 @@ public sealed class LlamaServerClient : IAiProviderClient
       var signature = LlamaToolCallHistory.BuildPageCallSignature(
          WebToolNames.FindInPage,
          pageTarget.Url,
-         find
+        find
       );
 
+      // A repeated call returns the recorded result only when clean
+      // successful content is cached. Failed attempts stay retryable.
       if(LlamaToolCallHistory.TryGetRepeatedResult(
          signature,
          toolState.PageCallHistory,
          out var repeatedResult
-      ))
+      ) && HasCleanCachedContent(toolState, pageTarget.Url))
       {
          toolState.LastPageFetcher =
             LlamaPageToolSupport.TryGetCachedPageFetcher(
@@ -1907,17 +1911,107 @@ public sealed class LlamaServerClient : IAiProviderClient
       CancellationToken cancellationToken
    )
    {
-      if(toolState.PageContentCache.TryGetValue(url, out var cachedContent))
+      // Only clean successful content is cached as page content. Null,
+      // timeout, blocked and error results are never cached, so a failed
+      // fetch can be attempted again later in the same loop.
+      if(toolState.PageContentCache.TryGetValue(url, out var cachedContent)
+         && IsCachablePageContent(cachedContent))
       {
          return cachedContent;
       }
 
+      Task<WebPageContent?>? fetchTask;
+      lock(toolState.PageInFlight)
+      {
+         if(!toolState.PageInFlight.TryGetValue(url, out var inFlight))
+         {
+            // Negative throttle: once the attempt budget for this URL is
+            // exhausted the last failure is replayed instead of fetching
+            // again. The budget is per loop and distinct from the clean
+            // content cache.
+            if(toolState.PageFetchAttempts.GetValueOrDefault(url) >=
+               AiDefaults.LlamaPageFetchMaxAttemptsPerUrl &&
+               toolState.PageFailureContent.TryGetValue(
+                  url,
+                  out var recordedFailure
+               ))
+            {
+               return recordedFailure;
+            }
+
+            toolState.PageFetchAttempts[url] =
+               toolState.PageFetchAttempts.GetValueOrDefault(url) + 1;
+
+            fetchTask = FetchAndRecordAsync(
+               url,
+               toolState,
+               cancellationToken
+            );
+            toolState.PageInFlight[url] = fetchTask;
+         }
+         else
+         {
+            fetchTask = inFlight;
+         }
+      }
+
+      if(fetchTask is null)
+      {
+         throw new InvalidOperationException(
+            "No in-flight fetch task was found or started."
+         );
+      }
+
+      // Concurrent duplicate fetches for one URL share the same task.
+      var pageContent = await fetchTask;
+
+      lock(toolState.PageInFlight)
+      {
+         toolState.PageInFlight.Remove(url);
+      }
+
+      return pageContent;
+   }
+
+   private async Task<WebPageContent?> FetchAndRecordAsync(
+      string url,
+      ToolLoopState toolState,
+      CancellationToken cancellationToken
+   )
+   {
       var pageContent = await WebPageContentClient.FetchAsync(
          url,
          cancellationToken
       );
-      toolState.PageContentCache[url] = pageContent;
+
+      if(IsCachablePageContent(pageContent))
+      {
+         toolState.PageContentCache[url] = pageContent;
+      }
+      else
+      {
+         // The last failure is kept separately so the loop can replay
+         // it once the attempt budget for this URL is exhausted.
+         toolState.PageFailureContent[url] = pageContent;
+      }
+
       return pageContent;
+   }
+
+   private static bool HasCleanCachedContent(
+      ToolLoopState toolState,
+      string url
+   )
+   {
+      return toolState.PageContentCache.TryGetValue(url, out var cached)
+         && IsCachablePageContent(cached);
+   }
+
+   private static bool IsCachablePageContent(WebPageContent? pageContent)
+   {
+      return pageContent is not null &&
+         pageContent.FetchErrorMessage is null &&
+         pageContent.FetchErrorKind is null;
    }
 
    private sealed record ResponseEnvelope(
@@ -1937,7 +2031,23 @@ public sealed class LlamaServerClient : IAiProviderClient
 
       public string? LastBrowserStrategy { get; set; }
 
+      // Clean successful page content only. Failed attempts are never
+      // stored here so they stay retryable within the loop.
       public Dictionary<string, WebPageContent?> PageContentCache { get; } =
+         new(StringComparer.OrdinalIgnoreCase);
+
+      // In-flight fetches shared by concurrent duplicate calls for the
+      // same URL.
+      public Dictionary<string, Task<WebPageContent?>> PageInFlight { get; }
+         = new(StringComparer.OrdinalIgnoreCase);
+
+      // Last failed fetch per URL. Distinct from the clean content
+      // cache; replayed when the attempt budget for the URL is spent.
+      public Dictionary<string, WebPageContent?> PageFailureContent { get; }
+         = new(StringComparer.OrdinalIgnoreCase);
+
+      // Number of fetch attempts made per URL in this loop.
+      public Dictionary<string, int> PageFetchAttempts { get; } =
          new(StringComparer.OrdinalIgnoreCase);
 
       public Dictionary<string, LlamaToolCallRecord> ToolCallHistory { get; } =

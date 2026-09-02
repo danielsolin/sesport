@@ -39,14 +39,23 @@ public static class WebPageFetchDefaults
       TimeSpan.FromSeconds(5),
       TimeSpan.FromSeconds(10)
    ];
+   public const int MaxTransientHttpRetries = 2;
+   public const int MaxRedirectHops = 5;
+   public const int ShortPageUsableMinimumCharacters = 200;
+   public static readonly TimeSpan MinBrowserStageBudget =
+      TimeSpan.FromSeconds(15);
+   public static readonly TimeSpan MinCurlStageBudget =
+      TimeSpan.FromSeconds(5);
+   public static readonly TimeSpan BrowserPreferenceLifetime =
+      TimeSpan.FromMinutes(60);
+   public const int BrowserPreferenceMaximumOriginCount = 500;
+   public static readonly TimeSpan BrowserLaunchFailureCooldown =
+      TimeSpan.FromMinutes(5);
 
    public static readonly TimeSpan BrowserNavigationTimeout =
       TimeSpan.FromSeconds(30);
    public static readonly TimeSpan TotalFetchTimeout =
       TimeSpan.FromSeconds(60);
-   public static readonly TimeSpan BrowserStrategyAttemptMemoryDuration =
-      TimeSpan.FromMinutes(30);
-   public const int BrowserStrategyAttemptMemoryMaximumUrlCount = 1000;
    public static readonly TimeSpan BrowserLoadStateTimeout =
       TimeSpan.FromSeconds(30);
    public static readonly TimeSpan BrowserContentStabilityTimeout =

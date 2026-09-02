@@ -6,25 +6,36 @@ using Microsoft.Playwright;
 
 namespace SESport.AI.WebPages;
 
+internal sealed record WebPageBrowserRenderResult(
+   string FullHtml,
+   string BodyHtml,
+   string Title,
+   IReadOnlyList<WebPageImageCandidate> RelevantImages,
+   int? NavigationStatus,
+   string StrategyId
+);
+
+internal sealed record WebPageBrowserStrategyAttempt(
+   string StrategyId,
+   bool Launched,
+   bool Rendered,
+   int? NavigationStatus,
+   string? FailureSummary,
+   WebPageFetchErrorKind? ErrorKind
+);
+
+internal sealed record WebPageBrowserOutcome(
+   WebPageBrowserRenderResult? Render,
+   IReadOnlyList<WebPageBrowserStrategyAttempt> Attempts
+);
+
 internal static class WebPageBrowserPageFetcher
 {
-   private static readonly object StrategyHistoryLock = new();
-   private static readonly Dictionary<string, BrowserStrategyHistory>
-      StrategyHistoryByUrl = new(StringComparer.Ordinal);
-
-   private static readonly BrowserStrategy[] BrowserStrategies =
-   [
-      new("chromium-bundled", BrowserEngine.Chromium, null, true),
-      new("chromium-channel", BrowserEngine.Chromium, "chromium", false),
-      new("chrome-channel", BrowserEngine.Chromium, "chrome", false),
-      new("firefox-bundled", BrowserEngine.Firefox, null, false),
-      new("webkit-bundled", BrowserEngine.Webkit, null, false)
-   ];
-
-   internal static async Task<WebPageContent?> FetchAsync(
+   internal static async Task<WebPageBrowserOutcome> FetchAsync(
       ILogger logger,
       Func<Task<string>> browserUserAgentFetcher,
       Uri absoluteUrl,
+      IReadOnlyList<BrowserStrategyDescriptor> strategies,
       CancellationToken cancellationToken
    )
    {
@@ -36,172 +47,64 @@ internal static class WebPageBrowserPageFetcher
          absoluteUrl
       );
 
+      var attempts = new List<WebPageBrowserStrategyAttempt>();
+      WebPageBrowserRenderResult? lastRender = null;
+
       try
       {
-         if(!TryReserveNextStrategy(absoluteUrl, out var strategy))
-         {
-            logger.LogWarning(
-               "No unused Playwright strategy remains for {Url}; " +
-               "skipping browser fetch.",
-               absoluteUrl
-            );
-            return null;
-         }
-
          var browserUserAgent = await browserUserAgentFetcher()
             .WaitAsync(cancellationToken);
-         logger.LogInformation(
-            "Playwright fetch {FetchId} obtained browser user agent for " +
-            "{Url}.",
-            fetchId,
-            absoluteUrl
-         );
 
-         logger.LogInformation(
-            "Playwright fetch {FetchId} creating browser session for " +
-            "{Url}.",
-            fetchId,
-            absoluteUrl
-         );
          using var playwright = await Playwright.CreateAsync()
             .WaitAsync(cancellationToken);
-         logger.LogInformation(
-            "Playwright fetch {FetchId} created browser session for {Url}.",
-            fetchId,
-            absoluteUrl
-         );
-         WebPageContent? lastBlockedContent = null;
-         WebPageFetchException? lastException = null;
 
-         while(true)
+         foreach(var strategy in strategies)
          {
-            var strategyStopwatch = Stopwatch.StartNew();
-            logger.LogInformation(
-               "Playwright strategy {Strategy} ({FetchId}) started for " +
-               "{Url}.",
-               strategy.Id,
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var (attempt, render) = await TryStrategyAsync(
+               logger,
                fetchId,
-               absoluteUrl
-            );
-
-            try
-            {
-               var content = await FetchWithStrategyAsync(
-                  logger,
-                  fetchId,
-                  playwright,
-                  strategy,
-                  browserUserAgent,
-                  absoluteUrl,
-                  cancellationToken
-               );
-
-               if(IsUsableContent(content))
-               {
-                  logger.LogInformation(
-                     "Playwright strategy {Strategy} ({FetchId}) succeeded " +
-                     "for {Url} after {ElapsedMilliseconds} ms.",
-                     strategy.Id,
-                     fetchId,
-                     absoluteUrl,
-                     strategyStopwatch.ElapsedMilliseconds
-                  );
-                  return content;
-               }
-
-               logger.LogWarning(
-                  "Playwright strategy {Strategy} ({FetchId}) returned " +
-                  "unusable content for {Url} after " +
-                  "{ElapsedMilliseconds} ms. ErrorKind: {ErrorKind}.",
-                  strategy.Id,
-                  fetchId,
-                  absoluteUrl,
-                  strategyStopwatch.ElapsedMilliseconds,
-                  content?.FetchErrorKind
-               );
-
-               if(content?.FetchErrorKind is not null)
-               {
-                  lastBlockedContent = content;
-               }
-            }
-            catch(OperationCanceledException)
-               when(cancellationToken.IsCancellationRequested)
-            {
-               throw;
-            }
-            catch(TimeoutException exception)
-            {
-               lastException = new WebPageFetchException(
-                  WebPageFetchErrorKind.Timeout,
-                  WebPageFetchLogging.SummarizeException(exception),
-                  exception,
-                  strategy.Id
-               );
-               logger.LogWarning(
-                  "Playwright strategy {Strategy} ({FetchId}) timed out " +
-                  "for {Url} after {ElapsedMilliseconds} ms. Reason: " +
-                  "{Reason}.",
-                  strategy.Id,
-                  fetchId,
-                  absoluteUrl,
-                  strategyStopwatch.ElapsedMilliseconds,
-                  WebPageFetchLogging.SummarizeException(exception)
-               );
-            }
-            catch(PlaywrightException exception)
-            {
-               lastException = new WebPageFetchException(
-                  WebPageFetchErrorKind.BrowserBlocked,
-                  WebPageFetchLogging.SummarizeException(exception),
-                  exception,
-                  strategy.Id
-               );
-               logger.LogWarning(
-                  "Playwright strategy {Strategy} ({FetchId}) failed for " +
-                  "{Url} after {ElapsedMilliseconds} ms. Reason: {Reason}.",
-                  strategy.Id,
-                  fetchId,
-                  absoluteUrl,
-                  strategyStopwatch.ElapsedMilliseconds,
-                  WebPageFetchLogging.SummarizeException(exception)
-               );
-            }
-
-            if(!TryReserveNextStrategy(absoluteUrl, out strategy))
-            {
-               break;
-            }
-         }
-
-         if(lastBlockedContent is not null)
-         {
-            logger.LogWarning(
-               "Playwright fetch {FetchId} completed without usable " +
-               "content for {Url} after {ElapsedMilliseconds} ms; " +
-               "returning the last browser result.",
-               fetchId,
+               playwright,
+               strategy,
+               browserUserAgent,
                absoluteUrl,
-               fetchStopwatch.ElapsedMilliseconds
+               cancellationToken
             );
-            return lastBlockedContent;
-         }
 
-         if(lastException is not null)
-         {
-            throw lastException;
-         }
+            attempts.Add(attempt);
 
-         logger.LogWarning(
-            "Playwright fetch {FetchId} returned no content for {Url} " +
-            "after {ElapsedMilliseconds} ms.",
-            fetchId,
-            absoluteUrl,
-            fetchStopwatch.ElapsedMilliseconds
-         );
-         return null;
+            if(render is not null)
+            {
+               lastRender = render;
+
+               // A usable render ends the strategy loop. An empty,
+               // blocked, or challenged render does not: the remaining
+               // strategies may still get through.
+               var assessment = WebPageHtmlCandidate.FromRendered(
+                  render.FullHtml,
+                  render.BodyHtml,
+                  render.Title,
+                  render.RelevantImages,
+                  absoluteUrl
+               ).Assess(WebPageBlockSource.Browser);
+
+               var challenged = render.NavigationStatus is
+                  401 or 403 or 429 or >= 500;
+
+               if(!challenged &&
+                  assessment.Classification is not
+                     (WebPageContentClassification.Blocked or
+                      WebPageContentClassification.Empty or
+                      WebPageContentClassification.NeedsRendering))
+               {
+                  break;
+               }
+            }
+         }
       }
       catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
       {
          logger.LogWarning(
             "Playwright fetch {FetchId} canceled for {Url} after " +
@@ -212,23 +115,7 @@ internal static class WebPageBrowserPageFetcher
          );
          throw;
       }
-      catch(TimeoutException exception)
-      {
-         logger.LogWarning(
-            "Playwright fetch {FetchId} timed out for {Url} after " +
-            "{ElapsedMilliseconds} ms. Reason: {Reason}.",
-            fetchId,
-            absoluteUrl,
-            fetchStopwatch.ElapsedMilliseconds,
-            WebPageFetchLogging.SummarizeException(exception)
-         );
-         throw new WebPageFetchException(
-            WebPageFetchErrorKind.Timeout,
-            WebPageFetchLogging.SummarizeException(exception),
-            exception
-         );
-      }
-      catch(PlaywrightException exception)
+      catch(Exception exception)
       {
          logger.LogWarning(
             "Playwright fetch {FetchId} failed for {Url} after " +
@@ -237,11 +124,6 @@ internal static class WebPageBrowserPageFetcher
             absoluteUrl,
             fetchStopwatch.ElapsedMilliseconds,
             WebPageFetchLogging.SummarizeException(exception)
-         );
-         throw new WebPageFetchException(
-            WebPageFetchErrorKind.BrowserBlocked,
-            WebPageFetchLogging.SummarizeException(exception),
-            exception
          );
       }
       finally
@@ -254,6 +136,8 @@ internal static class WebPageBrowserPageFetcher
             fetchStopwatch.ElapsedMilliseconds
          );
       }
+
+      return new WebPageBrowserOutcome(lastRender, attempts);
    }
 
    internal static BrowserNewContextOptions BuildContextOptions(
@@ -278,11 +162,14 @@ internal static class WebPageBrowserPageFetcher
       return options;
    }
 
-   private static async Task<WebPageContent?> FetchWithStrategyAsync(
+   private static async Task<
+      (WebPageBrowserStrategyAttempt Attempt,
+       WebPageBrowserRenderResult? Render)
+   > TryStrategyAsync(
       ILogger logger,
       string fetchId,
       IPlaywright playwright,
-      BrowserStrategy strategy,
+      BrowserStrategyDescriptor strategy,
       string browserUserAgent,
       Uri absoluteUrl,
       CancellationToken cancellationToken
@@ -296,66 +183,38 @@ internal static class WebPageBrowserPageFetcher
          _ => throw new ArgumentOutOfRangeException()
       };
 
-      var browserStopwatch = Stopwatch.StartNew();
+      var strategyStopwatch = Stopwatch.StartNew();
       logger.LogInformation(
-         "Playwright strategy {Strategy} ({FetchId}) launching {Engine} " +
-         "for {Url}.",
+         "Playwright strategy {Strategy} ({FetchId}) launching " +
+         "{Engine} for {Url}.",
          strategy.Id,
          fetchId,
          strategy.Engine,
          absoluteUrl
       );
-      await using var browser = await browserType.LaunchAsync(
-         new BrowserTypeLaunchOptions
-         {
-            Channel = strategy.Channel,
-            Headless = true
-         }
-      ).WaitAsync(cancellationToken);
-      logger.LogInformation(
-         "Playwright strategy {Strategy} ({FetchId}) launched browser for " +
-         "{Url} after {ElapsedMilliseconds} ms.",
-         strategy.Id,
-         fetchId,
-         absoluteUrl,
-         browserStopwatch.ElapsedMilliseconds
-      );
 
-      var userAgent = strategy.UseBrowserUserAgent
-         ? browserUserAgent
-         : null;
-      await using var context = await browser.NewContextAsync(
-         BuildContextOptions(userAgent)
-      ).WaitAsync(cancellationToken);
-      logger.LogInformation(
-         "Playwright strategy {Strategy} ({FetchId}) created browser " +
-         "context for {Url} after {ElapsedMilliseconds} ms.",
-         strategy.Id,
-         fetchId,
-         absoluteUrl,
-         browserStopwatch.ElapsedMilliseconds
-      );
-
-      await using var page = await context.NewPageAsync()
-         .WaitAsync(cancellationToken);
-      logger.LogInformation(
-         "Playwright strategy {Strategy} ({FetchId}) created page for {Url} " +
-         "after {ElapsedMilliseconds} ms.",
-         strategy.Id,
-         fetchId,
-         absoluteUrl,
-         browserStopwatch.ElapsedMilliseconds
-      );
-      var strategyStopwatch = Stopwatch.StartNew();
-      logger.LogInformation(
-         "Playwright strategy {Strategy} ({FetchId}) started for {Url}.",
-         strategy.Id,
-         fetchId,
-         absoluteUrl
-      );
-
+      var launched = false;
       try
       {
+         await using var browser = await browserType.LaunchAsync(
+            new BrowserTypeLaunchOptions
+            {
+               Channel = strategy.Channel,
+               Headless = true
+            }
+         ).WaitAsync(cancellationToken);
+         launched = true;
+
+         var userAgent = strategy.UseBrowserUserAgent
+            ? browserUserAgent
+            : null;
+         await using var context = await browser.NewContextAsync(
+            BuildContextOptions(userAgent)
+         ).WaitAsync(cancellationToken);
+
+         await using var page = await context.NewPageAsync()
+            .WaitAsync(cancellationToken);
+
          var navigationResponse = await NavigateAsync(
             logger,
             fetchId,
@@ -364,125 +223,261 @@ internal static class WebPageBrowserPageFetcher
             absoluteUrl,
             cancellationToken
          );
-         var content = await ReadPageContentAsync(
+         var navigationStatus = navigationResponse?.Status;
+
+         var render = await ReadRenderAsync(
             logger,
             fetchId,
             strategy.Id,
             page,
             absoluteUrl,
-            navigationResponse?.Status,
+            navigationStatus,
             cancellationToken
          );
 
-         if(IsUsableContent(content))
-         {
-            logger.LogInformation(
-               "Playwright strategy {Strategy} ({FetchId}) succeeded for " +
-               "{Url} after {ElapsedMilliseconds} ms.",
-               strategy.Id,
-               fetchId,
-               absoluteUrl,
-               strategyStopwatch.ElapsedMilliseconds
-            );
-            return content;
-         }
-
-         logger.LogWarning(
-            "Playwright strategy {Strategy} ({FetchId}) returned unusable " +
-            "content for {Url} after " +
-            "{ElapsedMilliseconds} ms. ErrorKind: {ErrorKind}.",
-            strategy.Id,
-            fetchId,
-            absoluteUrl,
-            strategyStopwatch.ElapsedMilliseconds,
-            content?.FetchErrorKind
-         );
-         return content;
-      }
-      catch(OperationCanceledException)
-      {
-         logger.LogWarning(
-            "Playwright strategy {Strategy} ({FetchId}) canceled for " +
-            "{Url} after " +
-            "{ElapsedMilliseconds} ms.",
+         logger.LogInformation(
+            "Playwright strategy {Strategy} ({FetchId}) rendered {Url} " +
+            "after {ElapsedMilliseconds} ms.",
             strategy.Id,
             fetchId,
             absoluteUrl,
             strategyStopwatch.ElapsedMilliseconds
          );
+
+         return (
+            new WebPageBrowserStrategyAttempt(
+               strategy.Id,
+               true,
+               true,
+               navigationStatus,
+               null,
+               null
+            ),
+            render
+         );
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
          throw;
       }
+      catch(TimeoutException exception)
+      {
+         logger.LogWarning(
+            "Playwright strategy {Strategy} ({FetchId}) timed out for " +
+            "{Url} after {ElapsedMilliseconds} ms. Reason: {Reason}.",
+            strategy.Id,
+            fetchId,
+            absoluteUrl,
+            strategyStopwatch.ElapsedMilliseconds,
+            WebPageFetchLogging.SummarizeException(exception)
+         );
+
+         return (
+            new WebPageBrowserStrategyAttempt(
+               strategy.Id,
+               launched,
+               false,
+               null,
+               WebPageFetchLogging.SummarizeException(exception),
+               WebPageFetchErrorKind.Timeout
+            ),
+            null
+         );
+      }
+      catch(PlaywrightException exception)
+      {
+         logger.LogWarning(
+            "Playwright strategy {Strategy} ({FetchId}) failed for {Url} " +
+            "after {ElapsedMilliseconds} ms. Reason: {Reason}.",
+            strategy.Id,
+            fetchId,
+            absoluteUrl,
+            strategyStopwatch.ElapsedMilliseconds,
+            WebPageFetchLogging.SummarizeException(exception)
+         );
+
+         return (
+            new WebPageBrowserStrategyAttempt(
+               strategy.Id,
+               launched,
+               false,
+               null,
+               WebPageFetchLogging.SummarizeException(exception),
+               WebPageFetchErrorKind.BrowserBlocked
+            ),
+            null
+         );
+      }
+      catch(Exception exception)
+      {
+         logger.LogWarning(
+            "Playwright strategy {Strategy} ({FetchId}) failed for {Url} " +
+            "after {ElapsedMilliseconds} ms. Reason: {Reason}.",
+            strategy.Id,
+            fetchId,
+            absoluteUrl,
+            strategyStopwatch.ElapsedMilliseconds,
+            WebPageFetchLogging.SummarizeException(exception)
+         );
+
+         return (
+            new WebPageBrowserStrategyAttempt(
+               strategy.Id,
+               launched,
+               false,
+               null,
+               WebPageFetchLogging.SummarizeException(exception),
+               WebPageFetchErrorKind.BrowserBlocked
+            ),
+            null
+         );
+      }
    }
 
-   private static bool TryReserveNextStrategy(
+   private static async Task<WebPageBrowserRenderResult> ReadRenderAsync(
+      ILogger logger,
+      string fetchId,
+      string strategy,
+      IPage page,
       Uri absoluteUrl,
-      out BrowserStrategy strategy
+      int? navigationStatus,
+      CancellationToken cancellationToken
    )
    {
-      strategy = null!;
-      var now = DateTimeOffset.UtcNow;
-      var urlKey = absoluteUrl.AbsoluteUri;
+      var readStopwatch = Stopwatch.StartNew();
+      logger.LogInformation(
+         "Playwright content read ({FetchId}) started for {Url}; " +
+         "strategy {Strategy}.",
+         fetchId,
+         absoluteUrl,
+         strategy
+      );
 
-      lock(StrategyHistoryLock)
+      var loadStateStopwatch = Stopwatch.StartNew();
+      logger.LogInformation(
+         "Playwright NetworkIdle wait ({FetchId}) started for {Url}; " +
+         "strategy {Strategy}.",
+         fetchId,
+         absoluteUrl,
+         strategy
+      );
+      try
       {
-         RemoveExpiredStrategyHistories(now);
-
-         if(!StrategyHistoryByUrl.TryGetValue(
-            urlKey,
-            out var history
-         ))
-         {
-            TrimStrategyHistoriesIfNeeded();
-            history = new BrowserStrategyHistory();
-            StrategyHistoryByUrl.Add(urlKey, history);
-         }
-
-         foreach(var candidate in BrowserStrategies)
-         {
-            if(history.AttemptedStrategyIds.Add(candidate.Id))
+         await page.WaitForLoadStateAsync(
+            LoadState.NetworkIdle,
+            new PageWaitForLoadStateOptions
             {
-               history.LastTouched = now;
-               strategy = candidate;
-               return true;
+               Timeout = (float)
+                  WebPageFetchDefaults.BrowserLoadStateTimeout
+                     .TotalMilliseconds
             }
-         }
+         ).WaitAsync(cancellationToken);
+         logger.LogInformation(
+            "Playwright NetworkIdle wait ({FetchId}) completed for {Url}; " +
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms.",
+            fetchId,
+            absoluteUrl,
+            strategy,
+            loadStateStopwatch.ElapsedMilliseconds
+         );
       }
-
-      return false;
-   }
-
-   private static void RemoveExpiredStrategyHistories(
-      DateTimeOffset now
-   )
-   {
-      var expiredKeys = StrategyHistoryByUrl
-         .Where(entry => now - entry.Value.LastTouched >=
-            WebPageFetchDefaults.BrowserStrategyAttemptMemoryDuration)
-         .Select(entry => entry.Key)
-         .ToArray();
-
-      foreach(var key in expiredKeys)
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
       {
-         StrategyHistoryByUrl.Remove(key);
+         logger.LogWarning(
+            "Playwright NetworkIdle wait ({FetchId}) canceled for {Url}; " +
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms.",
+            fetchId,
+            absoluteUrl,
+            strategy,
+            loadStateStopwatch.ElapsedMilliseconds
+         );
+         throw;
       }
-   }
-
-   private static void TrimStrategyHistoriesIfNeeded()
-   {
-      while(StrategyHistoryByUrl.Count >=
-         WebPageFetchDefaults.BrowserStrategyAttemptMemoryMaximumUrlCount)
+      catch(TimeoutException)
       {
-         var oldest = StrategyHistoryByUrl
-            .OrderBy(entry => entry.Value.LastTouched)
-            .FirstOrDefault();
-
-         if(oldest.Key is null)
-         {
-            return;
-         }
-
-         StrategyHistoryByUrl.Remove(oldest.Key);
+         logger.LogWarning(
+            "Playwright NetworkIdle wait ({FetchId}) timed out for {Url}; " +
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms. " +
+            "Continuing.",
+            fetchId,
+            absoluteUrl,
+            strategy,
+            loadStateStopwatch.ElapsedMilliseconds
+         );
       }
+      catch(PlaywrightException exception)
+      {
+         logger.LogWarning(
+            "Playwright NetworkIdle wait ({FetchId}) failed for {Url}; " +
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms. " +
+            "Continuing. Reason: {Reason}.",
+            fetchId,
+            absoluteUrl,
+            strategy,
+            loadStateStopwatch.ElapsedMilliseconds,
+            WebPageFetchLogging.SummarizeException(exception)
+         );
+      }
+
+      cancellationToken.ThrowIfCancellationRequested();
+
+      await ScrollThroughPageAsync(
+         logger,
+         fetchId,
+         strategy,
+         page,
+         absoluteUrl,
+         cancellationToken
+      );
+      await WaitForContentStabilityAsync(
+         logger,
+         fetchId,
+         strategy,
+         page,
+         absoluteUrl,
+         cancellationToken
+      );
+
+      logger.LogInformation(
+         "Playwright content extraction ({FetchId}) started for {Url}; " +
+         "strategy {Strategy}.",
+         fetchId,
+         absoluteUrl,
+         strategy
+      );
+
+      var title = await page.TitleAsync()
+         .WaitAsync(cancellationToken);
+      var renderedHtml = await page.ContentAsync()
+         .WaitAsync(cancellationToken);
+      var relevantImages = await ExtractRelevantImagesAsync(page)
+         .WaitAsync(cancellationToken);
+      await page.EvaluateAsync(
+         WebPageNormalizationScript.Build()
+      ).WaitAsync(cancellationToken);
+      var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
+         "element => element.innerHTML"
+      ).WaitAsync(cancellationToken);
+
+      logger.LogInformation(
+         "Playwright content read ({FetchId}) completed for {Url}; " +
+         "strategy {Strategy}, after {ElapsedMilliseconds} ms.",
+         fetchId,
+         absoluteUrl,
+         strategy,
+         readStopwatch.ElapsedMilliseconds
+      );
+
+      return new WebPageBrowserRenderResult(
+         renderedHtml,
+         bodyHtml,
+         title ?? "",
+         relevantImages,
+         navigationStatus,
+         strategy
+      );
    }
 
    private static async Task<IResponse?> NavigateAsync(
@@ -529,11 +524,11 @@ internal static class WebPageBrowserPageFetcher
          return response;
       }
       catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
       {
          logger.LogWarning(
             "Playwright navigation ({FetchId}) canceled for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms.",
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms.",
             fetchId,
             absoluteUrl,
             strategy,
@@ -548,8 +543,8 @@ internal static class WebPageBrowserPageFetcher
          // the browser is allowed to continue.
          logger.LogWarning(
             "Playwright navigation ({FetchId}) timed out for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms. Continuing with the current page.",
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms. " +
+            "Continuing with the current page.",
             fetchId,
             absoluteUrl,
             strategy,
@@ -557,274 +552,6 @@ internal static class WebPageBrowserPageFetcher
          );
          return null;
       }
-   }
-
-   private static async Task<WebPageContent?> ReadPageContentAsync(
-      ILogger logger,
-      string fetchId,
-      string strategy,
-      IPage page,
-      Uri absoluteUrl,
-      int? navigationStatus,
-      CancellationToken cancellationToken
-   )
-   {
-      var readStopwatch = Stopwatch.StartNew();
-      logger.LogInformation(
-         "Playwright content read ({FetchId}) started for {Url}; " +
-         "strategy {Strategy}.",
-         fetchId,
-         absoluteUrl,
-         strategy
-      );
-
-      var loadStateStopwatch = Stopwatch.StartNew();
-      logger.LogInformation(
-         "Playwright NetworkIdle wait ({FetchId}) started for {Url}; " +
-         "strategy {Strategy}.",
-         fetchId,
-         absoluteUrl,
-         strategy
-      );
-      try
-      {
-         await page.WaitForLoadStateAsync(
-            LoadState.NetworkIdle,
-            new PageWaitForLoadStateOptions
-            {
-               Timeout = (float)
-                  WebPageFetchDefaults.BrowserLoadStateTimeout
-                     .TotalMilliseconds
-            }
-         ).WaitAsync(cancellationToken);
-         logger.LogInformation(
-            "Playwright NetworkIdle wait ({FetchId}) completed for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms.",
-            fetchId,
-            absoluteUrl,
-            strategy,
-            loadStateStopwatch.ElapsedMilliseconds
-         );
-      }
-      catch(OperationCanceledException)
-      {
-         logger.LogWarning(
-            "Playwright NetworkIdle wait ({FetchId}) canceled for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms.",
-            fetchId,
-            absoluteUrl,
-            strategy,
-            loadStateStopwatch.ElapsedMilliseconds
-         );
-         throw;
-      }
-      catch(TimeoutException)
-      {
-         logger.LogWarning(
-            "Playwright NetworkIdle wait ({FetchId}) timed out for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms. Continuing.",
-            fetchId,
-            absoluteUrl,
-            strategy,
-            loadStateStopwatch.ElapsedMilliseconds
-         );
-      }
-      catch(PlaywrightException exception)
-      {
-         logger.LogWarning(
-            "Playwright NetworkIdle wait ({FetchId}) failed for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms. Continuing. Reason: {Reason}.",
-            fetchId,
-            absoluteUrl,
-            strategy,
-            loadStateStopwatch.ElapsedMilliseconds,
-            WebPageFetchLogging.SummarizeException(exception)
-         );
-      }
-
-      cancellationToken.ThrowIfCancellationRequested();
-      await ScrollThroughPageAsync(
-         logger,
-         fetchId,
-         strategy,
-         page,
-         absoluteUrl,
-         cancellationToken
-      );
-      await WaitForContentStabilityAsync(
-         logger,
-         fetchId,
-         strategy,
-         page,
-         absoluteUrl,
-         cancellationToken
-      );
-
-      logger.LogInformation(
-         "Playwright content extraction ({FetchId}) started for {Url}; " +
-         "strategy {Strategy}.",
-         fetchId,
-         absoluteUrl,
-         strategy
-      );
-
-      var absoluteUrlString = absoluteUrl.ToString();
-      var title = await page.TitleAsync()
-         .WaitAsync(cancellationToken);
-      var renderedHtml = await page.ContentAsync()
-         .WaitAsync(cancellationToken);
-      var renderedRelevantLinks =
-         WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
-            renderedHtml,
-            absoluteUrl
-         );
-      var relevantImages = await ExtractRelevantImagesAsync(page)
-         .WaitAsync(cancellationToken);
-      await page.EvaluateAsync(
-         WebPageNormalizationScript.Build()
-      ).WaitAsync(cancellationToken);
-      var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
-         "element => element.innerHTML"
-      ).WaitAsync(cancellationToken);
-      var headings = WebPageContentFetchSupport.ExtractHtmlHeadings(
-         bodyHtml
-      );
-      var extractedText =
-         WebPageContentFetchSupport
-            .ExtractHtmlTextWithEmbeddedState(bodyHtml);
-      var normalizedText = WebPageContentFetchSupport
-         .RemoveTemplateArtifacts(extractedText);
-      var visibleText = WebPageContentFetchSupport.ExtractHtmlText(bodyHtml);
-      var renderWarning = WebPageContentFetchSupport
-         .DetectIncompleteContentWarning(visibleText);
-
-      var blockedSignature = WebPageBlockDetection
-         .FindBlockedSignature(
-            title,
-            visibleText,
-            WebPageBlockSource.Browser
-         );
-      var blockedStatus = navigationStatus is 401 or 403 or 429 &&
-         string.IsNullOrWhiteSpace(normalizedText);
-      var unsuccessfulStatus = navigationStatus is int httpStatus &&
-         (httpStatus < 200 || httpStatus >= 300);
-      var softErrorSignature = WebPageBlockDetection
-         .FindSoftErrorSignature(title, visibleText);
-
-      if(blockedSignature is not null ||
-         blockedStatus ||
-         unsuccessfulStatus ||
-         softErrorSignature is not null)
-      {
-         var statusText = navigationStatus is int status
-            ? $" HTTP {status}."
-            : string.Empty;
-         var reason = unsuccessfulStatus
-            ? "Browser renderer returned an unsuccessful HTTP response." +
-               statusText
-            : softErrorSignature is not null
-            ? "Browser renderer returned a not-found page: " +
-               softErrorSignature + "." + statusText
-            : blockedSignature is not null
-            ? "Browser renderer returned a blocked page: " +
-               blockedSignature + "." + statusText
-            : "Browser renderer returned no content." + statusText;
-         var errorKind = unsuccessfulStatus || softErrorSignature is not null
-            ? WebPageFetchErrorKind.HttpError
-            : WebPageFetchErrorKind.BrowserBlocked;
-
-         logger.LogWarning(
-            "Playwright content read ({FetchId}) produced a failure for " +
-            "{Url}; strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms. ErrorKind: {ErrorKind}.",
-            fetchId,
-            absoluteUrl,
-            strategy,
-            readStopwatch.ElapsedMilliseconds,
-            errorKind
-         );
-         return WebPageContentFetchSupport.BuildFailureContent(
-            absoluteUrl,
-            title,
-            errorKind,
-            reason,
-            "playwright",
-            strategy
-         );
-      }
-
-      var content = new WebPageContent(
-         string.IsNullOrWhiteSpace(title) ? absoluteUrlString : title,
-         absoluteUrlString,
-         WebPageContentFetchSupport.ExtractPublishedAt(renderedHtml),
-         headings,
-         WebPageContentFetchSupport.ApplyResponseCutoff(
-            normalizedText
-         ),
-         !string.IsNullOrWhiteSpace(normalizedText),
-         normalizedText,
-         Fetcher: "playwright",
-         BrowserStrategy: strategy,
-         RenderWarning: renderWarning,
-         RelevantLinks:
-            WebPageContentFetchSupport.MergeRelevantLinks(
-               renderedRelevantLinks,
-               WebPageContentFetchSupport.ExtractRelevantLinksFromHtml(
-                  bodyHtml,
-                  absoluteUrl
-               )
-            ),
-         RelevantImages: relevantImages
-      );
-
-      logger.LogInformation(
-         "Playwright content read ({FetchId}) completed for {Url}; " +
-         "strategy {Strategy}, after " +
-         "{ElapsedMilliseconds} ms. Text characters: {TextCharacters}; " +
-         "images: {ImageCount}; render warning: {RenderWarning}.",
-         fetchId,
-         absoluteUrl,
-         strategy,
-         readStopwatch.ElapsedMilliseconds,
-         normalizedText.Length,
-         relevantImages.Length,
-         renderWarning ?? "none"
-      );
-      return content;
-   }
-
-   private static bool IsUsableContent(WebPageContent? content)
-   {
-      return content is not null &&
-         content.FetchErrorKind is null &&
-         string.IsNullOrWhiteSpace(content.FetchErrorMessage) &&
-         (content.HasBodyText ||
-            content.RelevantImages is { Count: > 0 });
-   }
-
-   private enum BrowserEngine
-   {
-      Chromium,
-      Firefox,
-      Webkit
-   }
-
-   private sealed record BrowserStrategy(
-      string Id,
-      BrowserEngine Engine,
-      string? Channel,
-      bool UseBrowserUserAgent
-   );
-
-   private sealed class BrowserStrategyHistory
-   {
-      internal HashSet<string> AttemptedStrategyIds { get; } = [];
-
-      internal DateTimeOffset LastTouched { get; set; }
    }
 
    private static async Task<WebPageImageCandidate[]>
@@ -984,8 +711,8 @@ internal static class WebPageBrowserPageFetcher
             .WaitAsync(cancellationToken);
          logger.LogInformation(
             "Playwright page scroll ({FetchId}) completed for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms with {Steps} steps.",
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms with " +
+            "{Steps} steps.",
             fetchId,
             absoluteUrl,
             strategy,
@@ -994,11 +721,12 @@ internal static class WebPageBrowserPageFetcher
          );
       }
       catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
       {
          logger.LogWarning(
             "Playwright page scroll ({FetchId}) canceled for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms at step {Steps}.",
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms at step " +
+            "{Steps}.",
             fetchId,
             absoluteUrl,
             strategy,
@@ -1076,8 +804,8 @@ internal static class WebPageBrowserPageFetcher
 
          logger.LogInformation(
             "Playwright content stability ({FetchId}) completed for " +
-            "{Url}; strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms. Stable: {Stable}.",
+            "{Url}; strategy {Strategy}, after {ElapsedMilliseconds} ms. " +
+            "Stable: {Stable}.",
             fetchId,
             absoluteUrl,
             strategy,
@@ -1086,11 +814,11 @@ internal static class WebPageBrowserPageFetcher
          );
       }
       catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
       {
          logger.LogWarning(
             "Playwright content stability ({FetchId}) canceled for {Url}; " +
-            "strategy {Strategy}, after " +
-            "{ElapsedMilliseconds} ms.",
+            "strategy {Strategy}, after {ElapsedMilliseconds} ms.",
             fetchId,
             absoluteUrl,
             strategy,
