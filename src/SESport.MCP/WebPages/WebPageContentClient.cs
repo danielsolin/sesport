@@ -5,13 +5,15 @@ namespace SESport.AI.WebPages;
 public sealed class WebPageContentClient : IWebPageContentClient
 {
    private readonly WebPageFetchOrchestrator _orchestrator;
+   private readonly WebPageContentCache? _pageCache;
 
    [ActivatorUtilitiesConstructor]
    public WebPageContentClient(
       HttpClient httpClient,
-      ILogger<WebPageContentClient>? logger = null
+      ILogger<WebPageContentClient>? logger = null,
+      WebPageContentCache? pageCache = null
    )
-      : this(httpClient, null, logger, null, null, null)
+      : this(httpClient, null, logger, null, null, null, pageCache)
    {
    }
 
@@ -24,7 +26,8 @@ public sealed class WebPageContentClient : IWebPageContentClient
       Func<Uri, int, CancellationToken,
          Task<WebPageHttpResponse>>? curlTransport,
       Func<IReadOnlyList<WebPageImageCandidate>,
-         CancellationToken, Task<string>>? imageTextFetcher
+         CancellationToken, Task<string>>? imageTextFetcher,
+      WebPageContentCache? pageCache = null
    )
    {
       var effectiveLogger = logger ??
@@ -68,6 +71,7 @@ public sealed class WebPageContentClient : IWebPageContentClient
          effectiveCurlTransport,
          effectiveImageTextFetcher
       );
+      _pageCache = pageCache;
    }
 
    public Task<WebPageContent?> FetchAsync(
@@ -84,6 +88,15 @@ public sealed class WebPageContentClient : IWebPageContentClient
          return Task.FromResult<WebPageContent?>(null);
       }
 
-      return _orchestrator.FetchAsync(absoluteUrl, cancellationToken);
+      if(_pageCache is null)
+      {
+         return _orchestrator.FetchAsync(absoluteUrl, cancellationToken);
+      }
+
+      return _pageCache.GetOrFetchAsync(
+         absoluteUrl,
+         cancellationToken,
+         token => _orchestrator.FetchAsync(absoluteUrl, token)
+      );
    }
 }

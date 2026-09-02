@@ -25,6 +25,7 @@ builder.Services.AddSingleton(searxngOptions);
 
 builder.Services.AddSingleton<SearchRateLimiter>();
 builder.Services.AddSingleton<WebSearchCache>();
+builder.Services.AddSingleton<WebPageContentCache>();
 builder.Services.AddHttpClient<SearxngWebSearchClient>(
    client => client.Timeout = AiDefaults.SearxngHttpClientTimeout
 );
@@ -41,6 +42,13 @@ builder.Services.AddHttpClient<
 >(
    client =>
       client.Timeout = AiDefaults.WebPageContentHttpClientTimeout
+).ConfigurePrimaryHttpMessageHandler(
+   () => new HttpClientHandler
+   {
+      AllowAutoRedirect = false,
+      AutomaticDecompression =
+         System.Net.DecompressionMethods.All
+   }
 );
 builder.Services.AddScoped<WebSearchTool>();
 builder.Services.AddScoped<WebPageTool>();

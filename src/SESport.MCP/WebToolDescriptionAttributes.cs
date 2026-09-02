@@ -47,6 +47,12 @@ internal static class WebToolDescriptions
          CultureInfo.InvariantCulture
       );
 
+   private static string MaximumResponseBytesText =>
+      WebPageFetchDefaults.MaximumResponseBytes.ToString(
+         "N0",
+         CultureInfo.InvariantCulture
+      );
+
    public static string GetPage =>
       "Fetches an HTML page or PDF through SESport's existing web page " +
       "content pipeline and returns its text, headings, and metadata. " +
@@ -57,7 +63,9 @@ internal static class WebToolDescriptions
       MaxResponseCharactersText +
       " characters. When more content exists, it ends with " +
       "[CUTOFF]; use web_find_in_page with the same URL to find text " +
-      "beyond the cutoff. RenderWarning indicates likely placeholder " +
+      "beyond the cutoff. Responses larger than " +
+      MaximumResponseBytesText +
+      " bytes are rejected. RenderWarning indicates likely placeholder " +
       "content such as TBD or Loading.";
 
    public static string FindInPage =>

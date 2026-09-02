@@ -34,19 +34,6 @@ internal static class WebPageContentAssessor
       WebPageBlockSource blockSource
    )
    {
-      var softNotFoundSignature = WebPageBlockDetection
-         .FindSoftErrorSignature(title, visibleText);
-
-      if(softNotFoundSignature is not null)
-      {
-         return new WebPageAssessment(
-            WebPageContentClassification.NotFound,
-            $"not-found marker: {softNotFoundSignature}",
-            null,
-            softNotFoundSignature
-         );
-      }
-
       var blockSignature = WebPageBlockDetection.FindBlockedSignature(
          title,
          visibleText,
@@ -60,6 +47,19 @@ internal static class WebPageContentAssessor
             $"block marker: {blockSignature}",
             blockSignature,
             null
+         );
+      }
+
+      var softNotFoundSignature = WebPageBlockDetection
+         .FindSoftErrorSignature(title, visibleText);
+
+      if(softNotFoundSignature is not null)
+      {
+         return new WebPageAssessment(
+            WebPageContentClassification.NotFound,
+            $"not-found marker: {softNotFoundSignature}",
+            null,
+            softNotFoundSignature
          );
       }
 

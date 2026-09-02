@@ -54,7 +54,11 @@ internal sealed class WebPageFetchOrchestrator
       try
       {
          var result = await RunAsync(url, budget, budget.DeadlineToken);
-         return await AppendImageTextAsync(result, budget.DeadlineToken);
+         return await AppendImageTextAsync(
+            result,
+            budget,
+            budget.DeadlineToken
+         );
       }
       catch(OperationCanceledException)
          when(budget.CallerCanceled)
@@ -80,6 +84,7 @@ internal sealed class WebPageFetchOrchestrator
 
    private async Task<WebPageContent?> AppendImageTextAsync(
       WebPageContent? page,
+      WebPageFetchBudget budget,
       CancellationToken token
    )
    {
@@ -97,10 +102,20 @@ internal sealed class WebPageFetchOrchestrator
          return page;
       }
 
+      if(budget.Remaining <= TimeSpan.Zero)
+      {
+         return page;
+      }
+
       string imageText;
       try
       {
          imageText = await _imageTextFetcher(images, token);
+      }
+      catch(OperationCanceledException)
+         when(!budget.CallerCanceled)
+      {
+         return page;
       }
       catch(OperationCanceledException)
       {
@@ -186,6 +201,16 @@ internal sealed class WebPageFetchOrchestrator
          );
       }
 
+      if(httpResponse?.ErrorKind ==
+         WebPageFetchErrorKind.ResponseTooLarge)
+      {
+         ledger.Add(
+            "decision",
+            "Direct HTTP response exceeded the configured byte limit."
+         );
+         return BuildResponseTooLargeFailure(url, "http");
+      }
+
       if(IsPdfResponse(httpResponse))
       {
          return await HandlePdfAsync(
@@ -203,7 +228,13 @@ internal sealed class WebPageFetchOrchestrator
       WebPageAssessment? bestAssessment = null;
       WebPageAssessment? blockedAssessment = null;
 
-      if(ShouldFailNotFound(httpResponse, htmlEvidence.Assessment))
+      var directNotFoundEvidence =
+         httpResponse is { StatusCode: 404 or 410 } &&
+         htmlEvidence.Assessment?.Classification ==
+            WebPageContentClassification.NotFound;
+
+      if(ShouldFailNotFound(httpResponse, htmlEvidence.Assessment) &&
+         !directNotFoundEvidence)
       {
          ledger.Add("decision", "Direct HTTP proved not-found.");
          return BuildNotFoundFailure(url, htmlEvidence.Assessment);
@@ -296,6 +327,15 @@ internal sealed class WebPageFetchOrchestrator
                $"Redirect blocked: {curlRedirectError}"
             );
          }
+         else if(curlResponse.ErrorKind ==
+            WebPageFetchErrorKind.ResponseTooLarge)
+         {
+            ledger.Add(
+               "decision",
+               "Curl response exceeded the configured byte limit."
+            );
+            return BuildResponseTooLargeFailure(url, "curl");
+         }
          else if(IsPdfResponse(curlResponse))
          {
             var pdfResult = await HandlePdfAsync(
@@ -338,7 +378,14 @@ internal sealed class WebPageFetchOrchestrator
                   "decision",
                   "Curl proved not-found."
                );
-               return BuildNotFoundFailure(url, curlEvidence.Assessment);
+               if(directNotFoundEvidence ||
+                  httpResponse is { StatusCode: 404 or 410 })
+               {
+                  return BuildNotFoundFailure(
+                     url,
+                     curlEvidence.Assessment
+                  );
+               }
             }
 
             if(httpResponse is { StatusCode: 404 or 410 } &&
@@ -380,7 +427,8 @@ internal sealed class WebPageFetchOrchestrator
          bestAssessment,
          blockedAssessment,
          ledger,
-         budget
+         budget,
+         directNotFoundEvidence
       );
    }
 
@@ -437,6 +485,10 @@ internal sealed class WebPageFetchOrchestrator
          var delay = WebPageFetchDefaults.TransientRetryDelays[attempt];
          if(budget.Remaining < delay)
          {
+            ledger.Add(
+               "http",
+               "Retry skipped: not enough budget remains."
+            );
             return response;
          }
 
@@ -463,18 +515,29 @@ internal sealed class WebPageFetchOrchestrator
    )
    {
       string? pdfError = null;
+      var httpEffectiveUrl = httpResponse?.EffectiveUrl ?? url;
 
       if(httpResponse?.Body is { Length: > 0 } body)
       {
-         var extraction = ExtractPdfText(body, url);
+         var extraction = ExtractPdfText(body, httpEffectiveUrl);
          if(extraction.Success)
          {
             ledger.Add(stage, "PDF text extracted successfully.");
-            return BuildPdfSuccess(url, stage, extraction);
+            return BuildPdfSuccess(
+               httpEffectiveUrl,
+               stage,
+               extraction
+            );
          }
 
          pdfError = extraction.Error ?? "Unknown PDF error.";
          ledger.Add(stage, $"PDF extraction failed: {pdfError}");
+      }
+
+      if(httpResponse?.ErrorKind ==
+         WebPageFetchErrorKind.ResponseTooLarge)
+      {
+         return BuildResponseTooLargeFailure(url, stage);
       }
 
       if(!allowCurlFallback ||
@@ -490,14 +553,27 @@ internal sealed class WebPageFetchOrchestrator
       );
       ledger.Add("curl", DescribeResponse(curlResponse));
 
+      if(curlResponse.ErrorKind ==
+         WebPageFetchErrorKind.ResponseTooLarge)
+      {
+         return BuildResponseTooLargeFailure(url, "curl");
+      }
+
       if(curlResponse.Body is { Length: > 0 } curlBody &&
          IsPdfResponse(curlResponse))
       {
-         var extraction = ExtractPdfText(curlBody, url);
+         var extraction = ExtractPdfText(
+            curlBody,
+            curlResponse.EffectiveUrl
+         );
          if(extraction.Success)
          {
             ledger.Add("curl", "PDF text extracted successfully.");
-            return BuildPdfSuccess(url, "curl", extraction);
+            return BuildPdfSuccess(
+               curlResponse.EffectiveUrl,
+               "curl",
+               extraction
+            );
          }
 
          pdfError = extraction.Error ?? pdfError;
@@ -593,30 +669,52 @@ internal sealed class WebPageFetchOrchestrator
          return BrowserStageEvidence.None;
       }
 
+      var renderUrl = url;
+      if(render.EffectiveUrl is { } effectiveUrl)
+      {
+         if(!WebPageUrlPolicy.TryValidate(
+            effectiveUrl.ToString(),
+            out var validatedUrl,
+            out _
+         ))
+         {
+            ledger.Add(
+               "browser",
+               "Final browser URL was rejected by the URL policy."
+            );
+            return BrowserStageEvidence.None;
+         }
+
+         renderUrl = validatedUrl;
+      }
+
       var candidate = WebPageHtmlCandidate.FromRendered(
          render.FullHtml,
          render.BodyHtml,
          render.Title,
          render.RelevantImages,
-         url
+         renderUrl
       );
       var assessment = candidate.Assess(WebPageBlockSource.Browser);
-
-      var successfulAttempt = outcome.Attempts.LastOrDefault(
-         attempt => attempt.StrategyId == render.StrategyId
-      );
-
-      if(successfulAttempt is
-         { Launched: true, Rendered: true, ErrorKind: null })
-      {
-         _browserStrategyPolicy.ReportSuccess(url, render.StrategyId);
-      }
 
       var cleanStatus = render.NavigationStatus is
          null or >= 200 and < 300;
 
       if(assessment.IsSuccess && cleanStatus)
       {
+         var successfulAttempt = outcome.Attempts.LastOrDefault(
+            attempt => attempt.StrategyId == render.StrategyId
+         );
+
+         if(!render.ContentTruncated && successfulAttempt is
+            { Launched: true, Rendered: true, ErrorKind: null })
+         {
+            _browserStrategyPolicy.ReportSuccess(
+               url,
+               render.StrategyId
+            );
+         }
+
          return new BrowserStageEvidence(
             candidate,
             assessment,
@@ -653,7 +751,8 @@ internal sealed class WebPageFetchOrchestrator
       WebPageAssessment? bestAssessment,
       WebPageAssessment? blockedAssessment,
       WebPageFetchLedger ledger,
-      WebPageFetchBudget budget
+      WebPageFetchBudget budget,
+      bool directNotFoundEvidence
    )
    {
       if(bestCandidate is { TextContent.Length: > 0 } candidate &&
@@ -699,6 +798,18 @@ internal sealed class WebPageFetchOrchestrator
             null,
             WebPageFetchErrorKind.BrowserBlocked,
             $"The page is behind a block or challenge. {summary}",
+            "http"
+         );
+      }
+
+      if(directNotFoundEvidence)
+      {
+         return WebPageContentFetchSupport.BuildFailureContent(
+            url,
+            null,
+            WebPageFetchErrorKind.HttpError,
+            "Direct HTTP reported that the page was not found, but " +
+               "independent confirmation was unavailable. " + summary,
             "http"
          );
       }
@@ -755,6 +866,21 @@ internal sealed class WebPageFetchOrchestrator
       );
    }
 
+   private static WebPageContent BuildResponseTooLargeFailure(
+      Uri url,
+      string fetcher
+   )
+   {
+      return WebPageContentFetchSupport.BuildFailureContent(
+         url,
+         null,
+         WebPageFetchErrorKind.ResponseTooLarge,
+         "The response exceeded the configured maximum of " +
+            $"{WebPageFetchDefaults.MaximumResponseBytes} bytes.",
+         fetcher
+      );
+   }
+
    private static WebPageContent BuildPdfSuccess(
       Uri url,
       string fetcher,
@@ -782,6 +908,15 @@ internal sealed class WebPageFetchOrchestrator
       string? warning = null
    )
    {
+      var renderWarning = warning ?? candidate.RenderWarning;
+      if(render?.ContentTruncated == true)
+      {
+         renderWarning = string.IsNullOrWhiteSpace(renderWarning)
+            ? "Rendered content was truncated at the response limit."
+            : renderWarning +
+               " Rendered content was truncated at the response limit.";
+      }
+
       return new WebPageContent(
          candidate.Title is { Length: > 0 }
             ? candidate.Title
@@ -798,7 +933,7 @@ internal sealed class WebPageFetchOrchestrator
          BrowserStrategy: render?.StrategyId,
          RelevantLinks: candidate.RelevantLinks,
          RelevantImages: candidate.RelevantImages,
-         RenderWarning: warning ?? candidate.RenderWarning
+         RenderWarning: renderWarning
       );
    }
 
@@ -839,6 +974,11 @@ internal sealed class WebPageFetchOrchestrator
       if(response is null)
       {
          return true;
+      }
+
+      if(response.ErrorKind is not null)
+      {
+         return false;
       }
 
       if(response.TransportError is not null)
@@ -948,6 +1088,7 @@ internal sealed class WebPageFetchOrchestrator
       if(status is 404 or 410)
       {
          return assessment?.Classification is
+            WebPageContentClassification.NotFound or
             WebPageContentClassification.Empty or
             WebPageContentClassification.Blocked;
       }
@@ -983,6 +1124,13 @@ internal sealed class WebPageFetchOrchestrator
       if(response.RedirectPolicyError is { } redirectError)
       {
          return $"Redirect rejected: {redirectError}";
+      }
+
+      if(response.ErrorKind is { } errorKind)
+      {
+         return errorKind == WebPageFetchErrorKind.ResponseTooLarge
+            ? "Response exceeded the configured byte limit."
+            : errorKind.ToString();
       }
 
       if(response.TransportError is { } transportError)

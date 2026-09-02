@@ -22,6 +22,12 @@ The response includes `RenderWarning` when placeholder content suggests that
 the rendered page may be incomplete. `include_social_media` is hard-coded to
 `false` in the current version.
 
+Clean page results are cached for a short period and equivalent concurrent
+requests share one fetch. Failed, empty, partial, and warning-bearing results
+are not stored as clean cache entries. The page pipeline follows redirects
+manually, checks each target with the basic URL policy, and limits downloaded
+responses to `WebPageFetchDefaults.MaximumResponseBytes`.
+
 ### Structured content serialization
 
 The tools opt into MCP structured content, so the SDK generates an output
@@ -50,6 +56,10 @@ Load the environment before starting the server:
 Playwright browser fetcher, so the Playwright browsers must be installed on
 the machine running the server (`playwright install` / `dotnet` Playwright
 browsers). Tesseract with English language data is required for image OCR.
+
+The URL policy intentionally covers the current internal deployment's basic
+needs: only HTTP(S), ordinary public hostnames, and literal public IP
+addresses are accepted. It is not a custom DNS or general SSRF subsystem.
 
 The MCP project owns web tools only. Legacy AI provider clients, including
 Llama and OpenRouter, remain in `SESport.AI/Clients/Legacy` and are not
@@ -90,13 +100,13 @@ sudo systemctl restart sesport-mcp.service
 Point Codex at the running Streamable HTTP endpoint (not a child command):
 
 ```sh
-codex mcp add sesport-web --url http://127.0.0.1:5110/
+codex mcp add sesport --url http://127.0.0.1:5110/
 ```
 
 or add it to `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers.sesport-web]
+[mcp_servers.sesport]
 url = "http://127.0.0.1:5110/"
 ```
 
@@ -104,5 +114,5 @@ Verify the registration:
 
 ```sh
 codex mcp list
-codex mcp get sesport-web
+codex mcp get sesport
 ```

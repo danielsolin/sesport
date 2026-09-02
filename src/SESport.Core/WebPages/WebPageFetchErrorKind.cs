@@ -4,5 +4,6 @@ public enum WebPageFetchErrorKind
 {
    BrowserBlocked,
    Timeout,
-   HttpError
+   HttpError,
+   ResponseTooLarge
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace SESport.AI.WebPages;
 
 /// <summary>
@@ -9,6 +11,8 @@ internal sealed class WebPageFetchBudget : IDisposable
 {
    private readonly CancellationTokenSource _deadlineTokenSource;
    private readonly CancellationToken _callerToken;
+   private readonly Stopwatch stopwatch = Stopwatch.StartNew();
+   private readonly TimeSpan totalTimeout;
 
    internal WebPageFetchBudget(
       TimeSpan totalTimeout,
@@ -16,6 +20,7 @@ internal sealed class WebPageFetchBudget : IDisposable
    )
    {
       _callerToken = callerToken;
+      this.totalTimeout = totalTimeout;
       DeadlineUtc = DateTimeOffset.UtcNow + totalTimeout;
       _deadlineTokenSource =
          CancellationTokenSource.CreateLinkedTokenSource(callerToken);
@@ -29,8 +34,8 @@ internal sealed class WebPageFetchBudget : IDisposable
    internal bool CallerCanceled => _callerToken.IsCancellationRequested;
 
    internal TimeSpan Remaining =>
-      DateTimeOffset.UtcNow < DeadlineUtc
-         ? DeadlineUtc - DateTimeOffset.UtcNow
+      totalTimeout > stopwatch.Elapsed
+         ? totalTimeout - stopwatch.Elapsed
          : TimeSpan.Zero;
 
    public void Dispose()

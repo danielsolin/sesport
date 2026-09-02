@@ -36,9 +36,11 @@ internal static class WebPageImageOcr
          );
       }
 
-      return string.Join(
-         Environment.NewLine + Environment.NewLine,
-         sections
+      return WebPageContentFetchSupport.ApplyResponseCutoff(
+         string.Join(
+            Environment.NewLine + Environment.NewLine,
+            sections
+         )
       );
    }
 
@@ -103,11 +105,29 @@ internal static class WebPageImageOcr
          return null;
       }
 
-      var imageBytes = await DownloadImageAsync(
-         httpClient,
-         imageUri,
-         cancellationToken
-      );
+      byte[]? imageBytes;
+      try
+      {
+         imageBytes = await DownloadImageAsync(
+            httpClient,
+            imageUri,
+            cancellationToken
+         );
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(Exception exception)
+      {
+         logger.LogWarning(
+            exception,
+            "Unable to download image for OCR: {ImageUrl}.",
+            image.Url
+         );
+         return null;
+      }
 
       if(imageBytes is null)
       {
@@ -159,60 +179,110 @@ internal static class WebPageImageOcr
       CancellationToken cancellationToken
    )
    {
-      using var request = new HttpRequestMessage(HttpMethod.Get, imageUri);
-      using var response = await httpClient.SendAsync(
-         request,
-         HttpCompletionOption.ResponseHeadersRead,
-         cancellationToken
-      );
-
-      if(!response.IsSuccessStatusCode ||
-         response.Content.Headers.ContentType?.MediaType is not
-         { } mediaType ||
-         !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+      var currentUri = imageUri;
+      var visitedUris = new HashSet<string>(StringComparer.Ordinal)
       {
-         return null;
-      }
+         WebPageUrlPolicy.GetCanonicalCacheKey(currentUri)
+      };
 
-      var contentLength = response.Content.Headers.ContentLength;
-
-      if(contentLength >
-         WebPageFetchDefaults.ImageOcrMaximumBytes)
+      for(var hop = 0;
+         hop <= WebPageFetchDefaults.MaxRedirectHops;
+         hop++)
       {
-         return null;
-      }
-
-      await using var source = await response.Content.ReadAsStreamAsync(
-         cancellationToken
-      );
-      await using var destination = new MemoryStream();
-      var buffer = new byte[81920];
-
-      while(true)
-      {
-         var bytesRead = await source.ReadAsync(
-            buffer,
+         using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            currentUri
+         );
+         using var response = await httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
             cancellationToken
          );
 
-         if(bytesRead == 0)
+         if(WebPageHttpTransport.IsRedirectStatus(
+            (int)response.StatusCode
+         ))
          {
-            break;
+            if(hop >= WebPageFetchDefaults.MaxRedirectHops)
+            {
+               return null;
+            }
+
+            var location = response.Headers.Location;
+            if(location is null)
+            {
+               return null;
+            }
+
+            var target = new Uri(currentUri, location);
+            if(!WebPageUrlPolicy.TryValidate(
+               target.ToString(),
+               out var validatedTarget,
+               out _
+            ) || !visitedUris.Add(
+               WebPageUrlPolicy.GetCanonicalCacheKey(validatedTarget)
+            ))
+            {
+               return null;
+            }
+
+            currentUri = validatedTarget;
+            continue;
          }
 
-         if(destination.Length + bytesRead >
+         if(!response.IsSuccessStatusCode ||
+            response.Content.Headers.ContentType?.MediaType is not
+            { } mediaType ||
+            !mediaType.StartsWith(
+               "image/",
+               StringComparison.OrdinalIgnoreCase
+            ))
+         {
+            return null;
+         }
+
+         var contentLength = response.Content.Headers.ContentLength;
+
+         if(contentLength >
             WebPageFetchDefaults.ImageOcrMaximumBytes)
          {
             return null;
          }
 
-         await destination.WriteAsync(
-            buffer.AsMemory(0, bytesRead),
+         await using var source = await response.Content.ReadAsStreamAsync(
             cancellationToken
          );
+         await using var destination = new MemoryStream();
+         var buffer = new byte[81920];
+
+         while(true)
+         {
+            var bytesRead = await source.ReadAsync(
+               buffer,
+               cancellationToken
+            );
+
+            if(bytesRead == 0)
+            {
+               break;
+            }
+
+            if(destination.Length + bytesRead >
+               WebPageFetchDefaults.ImageOcrMaximumBytes)
+            {
+               return null;
+            }
+
+            await destination.WriteAsync(
+               buffer.AsMemory(0, bytesRead),
+               cancellationToken
+            );
+         }
+
+         return destination.ToArray();
       }
 
-      return destination.ToArray();
+      return null;
    }
 
    private static async Task<string> RunTesseractAsync(

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 using Microsoft.Playwright;
 
@@ -10,7 +11,9 @@ internal sealed record WebPageBrowserRenderResult(
    string Title,
    IReadOnlyList<WebPageImageCandidate> RelevantImages,
    int? NavigationStatus,
-   string StrategyId
+   string StrategyId,
+   Uri? EffectiveUrl = null,
+   bool ContentTruncated = false
 );
 
 internal sealed record WebPageBrowserStrategyAttempt(
@@ -458,6 +461,21 @@ internal static class WebPageBrowserPageFetcher
       var bodyHtml = await page.Locator("body").EvaluateAsync<string>(
          "element => element.innerHTML"
       ).WaitAsync(cancellationToken);
+      var boundedFullHtml = LimitHtml(
+         renderedHtml,
+         out var fullHtmlTruncated
+      );
+      var boundedBodyHtml = LimitHtml(
+         bodyHtml,
+         out var bodyHtmlTruncated
+      );
+      var effectiveUrl = Uri.TryCreate(
+         page.Url,
+         UriKind.Absolute,
+         out var parsedEffectiveUrl
+      ) && parsedEffectiveUrl.Scheme is "http" or "https"
+         ? parsedEffectiveUrl
+         : null;
 
       logger.LogInformation(
          "Playwright content read ({FetchId}) completed for {Url}; " +
@@ -469,13 +487,44 @@ internal static class WebPageBrowserPageFetcher
       );
 
       return new WebPageBrowserRenderResult(
-         renderedHtml,
-         bodyHtml,
+         boundedFullHtml,
+         boundedBodyHtml,
          title ?? "",
          relevantImages,
          navigationStatus,
-         strategy
+         strategy,
+         effectiveUrl,
+         fullHtmlTruncated || bodyHtmlTruncated
       );
+   }
+
+   private static string LimitHtml(string html, out bool truncated)
+   {
+      var maximumBytes = WebPageFetchDefaults.MaximumResponseBytes;
+      if(Encoding.UTF8.GetByteCount(html) <= maximumBytes)
+      {
+         truncated = false;
+         return html;
+      }
+
+      var low = 0;
+      var high = Math.Min(html.Length, maximumBytes);
+      while(low < high)
+      {
+         var middle = (low + high + 1) / 2;
+         if(Encoding.UTF8.GetByteCount(html.AsSpan(0, middle)) <=
+            maximumBytes)
+         {
+            low = middle;
+         }
+         else
+         {
+            high = middle - 1;
+         }
+      }
+
+      truncated = true;
+      return html[..low];
    }
 
    private static async Task<IResponse?> NavigateAsync(

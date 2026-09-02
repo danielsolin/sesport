@@ -7,6 +7,16 @@ namespace SESport.AI.WebPages;
 
 public static class WebPageUrlPolicy
 {
+   public static string GetCanonicalCacheKey(Uri absoluteUrl)
+   {
+      var builder = new UriBuilder(absoluteUrl)
+      {
+         Fragment = string.Empty
+      };
+
+      return builder.Uri.AbsoluteUri;
+   }
+
    public static bool TryValidate(
       string url,
       out Uri absoluteUrl,

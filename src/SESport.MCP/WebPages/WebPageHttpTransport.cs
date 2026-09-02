@@ -15,6 +15,10 @@ internal static class WebPageHttpTransport
    )
    {
       var currentUrl = url;
+      var visitedUrls = new HashSet<string>(StringComparer.Ordinal)
+      {
+         WebPageUrlPolicy.GetCanonicalCacheKey(currentUrl)
+      };
 
       for(var hop = 0;
          hop <= WebPageFetchDefaults.MaxRedirectHops;
@@ -26,6 +30,7 @@ internal static class WebPageHttpTransport
                CreateRequestMessage(currentUrl, browserUserAgent);
             using var response = await httpClient.SendAsync(
                request,
+               HttpCompletionOption.ResponseHeadersRead,
                cancellationToken
             );
 
@@ -33,6 +38,16 @@ internal static class WebPageHttpTransport
 
             if(IsRedirectStatus(statusCode))
             {
+               if(hop >= WebPageFetchDefaults.MaxRedirectHops)
+               {
+                  return WebPageHttpResponse.Failure(
+                     url,
+                     "Too many redirects " +
+                        $"(limit {WebPageFetchDefaults.MaxRedirectHops}).",
+                     currentUrl
+                  );
+               }
+
                var location = response.Headers.Location;
 
                if(location is null)
@@ -58,13 +73,46 @@ internal static class WebPageHttpTransport
                   );
                }
 
+               if(!visitedUrls.Add(
+                  WebPageUrlPolicy.GetCanonicalCacheKey(validatedTarget)
+               ))
+               {
+                  return WebPageHttpResponse.Failure(
+                     url,
+                     "Redirect loop detected.",
+                     currentUrl
+                  );
+               }
+
                currentUrl = validatedTarget;
                continue;
             }
 
-            var body = await response.Content.ReadAsByteArrayAsync(
+            var contentLength = response.Content.Headers.ContentLength;
+            if(contentLength > WebPageFetchDefaults.MaximumResponseBytes)
+            {
+               return WebPageHttpResponse.ResponseTooLarge(
+                  url,
+                  currentUrl,
+                  statusCode,
+                  response.Content.Headers.ContentType?.MediaType
+               );
+            }
+
+            var bodyResult = await ReadBodyAsync(
+               response.Content,
                cancellationToken
             );
+
+            if(bodyResult.IsTooLarge)
+            {
+               return WebPageHttpResponse.ResponseTooLarge(
+                  url,
+                  currentUrl,
+                  statusCode,
+                  response.Content.Headers.ContentType?.MediaType
+               );
+            }
 
             return new WebPageHttpResponse(
                url,
@@ -72,7 +120,7 @@ internal static class WebPageHttpTransport
                currentUrl != url,
                statusCode,
                response.Content.Headers.ContentType?.MediaType,
-               body,
+               bodyResult.Body,
                null,
                null
             );
@@ -94,8 +142,42 @@ internal static class WebPageHttpTransport
       return WebPageHttpResponse.Failure(
          url,
          $"Too many redirects (limit " +
-         $"{WebPageFetchDefaults.MaxRedirectHops})."
+         $"{WebPageFetchDefaults.MaxRedirectHops}).",
+         currentUrl
       );
+   }
+
+   private static async Task<BodyReadResult> ReadBodyAsync(
+      HttpContent content,
+      CancellationToken cancellationToken
+   )
+   {
+      await using var stream = await content.ReadAsStreamAsync(
+         cancellationToken
+      );
+      using var body = new MemoryStream();
+      var buffer = new byte[81920];
+
+      while(true)
+      {
+         var bytesRead = await stream.ReadAsync(
+            buffer,
+            cancellationToken
+         );
+
+         if(bytesRead == 0)
+         {
+            return new BodyReadResult(body.ToArray(), false);
+         }
+
+         if(body.Length > WebPageFetchDefaults.MaximumResponseBytes -
+            bytesRead)
+         {
+            return new BodyReadResult([], true);
+         }
+
+         body.Write(buffer, 0, bytesRead);
+      }
    }
 
    internal static HttpRequestMessage CreateRequestMessage(
@@ -127,4 +209,6 @@ internal static class WebPageHttpTransport
    {
       return statusCode is 300 or 301 or 302 or 303 or 307 or 308;
    }
+
+   private sealed record BodyReadResult(byte[] Body, bool IsTooLarge);
 }

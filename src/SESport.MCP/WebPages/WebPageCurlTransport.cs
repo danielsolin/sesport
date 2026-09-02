@@ -13,6 +13,7 @@ namespace SESport.AI.WebPages;
 internal static class WebPageCurlTransport
 {
    private const string EndMarker = "__SESPORT_CURL_END__";
+   private const int CurlFileSizeExceededExitCode = 63;
 
    internal static async Task<WebPageHttpResponse> SendAsync(
       Uri url,
@@ -21,6 +22,10 @@ internal static class WebPageCurlTransport
    )
    {
       var currentUrl = url;
+      var visitedUrls = new HashSet<string>(StringComparer.Ordinal)
+      {
+         WebPageUrlPolicy.GetCanonicalCacheKey(currentUrl)
+      };
 
       for(var hop = 0;
          hop <= WebPageFetchDefaults.MaxRedirectHops;
@@ -31,6 +36,16 @@ internal static class WebPageCurlTransport
             maxTimeSeconds,
             cancellationToken
          );
+
+         if(result.ErrorKind == WebPageFetchErrorKind.ResponseTooLarge)
+         {
+            return WebPageHttpResponse.ResponseTooLarge(
+               url,
+               currentUrl,
+               result.StatusCode,
+               result.ContentType
+            );
+         }
 
          if(result.TransportError is not null)
          {
@@ -44,6 +59,16 @@ internal static class WebPageCurlTransport
 
          if(WebPageHttpTransport.IsRedirectStatus(statusCode))
          {
+            if(hop >= WebPageFetchDefaults.MaxRedirectHops)
+            {
+               return WebPageHttpResponse.Failure(
+                  url,
+                  "Too many redirects " +
+                     $"(limit {WebPageFetchDefaults.MaxRedirectHops}).",
+                  currentUrl
+               );
+            }
+
             var location = FindHeaderValue(result.Headers, "location");
 
             if(location is null)
@@ -69,6 +94,17 @@ internal static class WebPageCurlTransport
                );
             }
 
+            if(!visitedUrls.Add(
+               WebPageUrlPolicy.GetCanonicalCacheKey(validatedTarget)
+            ))
+            {
+               return WebPageHttpResponse.Failure(
+                  url,
+                  "Redirect loop detected.",
+                  currentUrl
+               );
+            }
+
             currentUrl = validatedTarget;
             continue;
          }
@@ -88,7 +124,8 @@ internal static class WebPageCurlTransport
       return WebPageHttpResponse.Failure(
          url,
          $"Too many redirects (limit " +
-         $"{WebPageFetchDefaults.MaxRedirectHops})."
+         $"{WebPageFetchDefaults.MaxRedirectHops}).",
+         currentUrl
       );
    }
 
@@ -123,6 +160,10 @@ internal static class WebPageCurlTransport
          processStartInfo.ArgumentList.Add("--compressed");
          processStartInfo.ArgumentList.Add("--max-time");
          processStartInfo.ArgumentList.Add(maxTimeSeconds.ToString());
+         processStartInfo.ArgumentList.Add("--max-filesize");
+         processStartInfo.ArgumentList.Add(
+            WebPageFetchDefaults.MaximumResponseBytes.ToString()
+         );
          processStartInfo.ArgumentList.Add("--output");
          processStartInfo.ArgumentList.Add(bodyPath);
 
@@ -177,6 +218,20 @@ internal static class WebPageCurlTransport
 
          var stdout = await stdoutTask;
          var stderr = await stderrTask;
+
+         if(File.Exists(bodyPath) &&
+            new FileInfo(bodyPath).Length >
+               WebPageFetchDefaults.MaximumResponseBytes)
+         {
+            return new CurlRunResult(
+               null,
+               null,
+               [],
+               [],
+               null,
+               WebPageFetchErrorKind.ResponseTooLarge
+            );
+         }
 
          byte[] body;
          try
@@ -238,6 +293,18 @@ internal static class WebPageCurlTransport
       byte[] body
    )
    {
+      if(exitCode == CurlFileSizeExceededExitCode)
+      {
+         return new CurlRunResult(
+            null,
+            null,
+            [],
+            body,
+            null,
+            WebPageFetchErrorKind.ResponseTooLarge
+         );
+      }
+
       var markerIndex = stdout.IndexOf(EndMarker, StringComparison.Ordinal);
 
       if(markerIndex < 0)
@@ -388,6 +455,7 @@ internal static class WebPageCurlTransport
       string? ContentType,
       IReadOnlyList<KeyValuePair<string, string>> Headers,
       byte[] Body,
-      string? TransportError
+      string? TransportError,
+      WebPageFetchErrorKind? ErrorKind = null
    );
 }

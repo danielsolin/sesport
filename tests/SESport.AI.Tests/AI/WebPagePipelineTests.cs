@@ -347,7 +347,7 @@ public class WebPagePipelineTests
    }
 
    [Fact]
-   public async Task FetchReturnsNotFoundFor404WithMarkerText()
+   public async Task FetchRetainsNotFoundWhenCurlConfirmationFails()
    {
       var curlCalls = 0;
       var html =
@@ -383,8 +383,8 @@ public class WebPagePipelineTests
          CancellationToken.None
       );
 
-      // A 404 with a not-found marker is terminal: curl must not run.
-      Assert.Equal(0, curlCalls);
+      // Direct 404 evidence is retained when independent confirmation fails.
+      Assert.Equal(1, curlCalls);
       Assert.NotNull(page);
       Assert.Equal(
          WebPageFetchErrorKind.HttpError,
@@ -892,7 +892,35 @@ public class WebPagePipelineTests
    }
 
    [Fact]
-   public async Task TooManyRedirectsFail()
+   public async Task DirectTransportRejectsOversizedResponse()
+   {
+      var client = new HttpClient(new RecordingHandler(_ =>
+      {
+         var response = new HttpResponseMessage(HttpStatusCode.OK)
+         {
+            Content = new ByteArrayContent([])
+         };
+         response.Content.Headers.ContentLength =
+            (long)WebPageFetchDefaults.MaximumResponseBytes + 1;
+         return response;
+      }));
+
+      var response = await WebPageHttpTransport.SendAsync(
+         client,
+         new Uri("https://example.test/large"),
+         TestBrowserUserAgent,
+         CancellationToken.None
+      );
+
+      Assert.Equal(
+         WebPageFetchErrorKind.ResponseTooLarge,
+         response.ErrorKind
+      );
+      Assert.Equal(200, response.StatusCode);
+   }
+
+   [Fact]
+   public async Task RedirectLoopFails()
    {
       var response = await WebPageHttpTransport.SendAsync(
          new HttpClient(new RecordingHandler(request =>
@@ -909,7 +937,7 @@ public class WebPagePipelineTests
       );
 
       Assert.NotNull(response.TransportError);
-      Assert.Contains("Too many redirects", response.TransportError);
+      Assert.Contains("Redirect loop detected", response.TransportError);
    }
 
    [Fact]

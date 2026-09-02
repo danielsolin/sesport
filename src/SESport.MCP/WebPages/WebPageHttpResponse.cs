@@ -12,25 +12,47 @@ internal sealed record WebPageHttpResponse(
    string? ContentType,
    byte[] Body,
    string? TransportError,
-   string? RedirectPolicyError
+   string? RedirectPolicyError,
+   WebPageFetchErrorKind? ErrorKind = null
 )
 {
    internal bool IsTransportFailure => StatusCode is null;
 
    internal static WebPageHttpResponse Failure(
       Uri requestedUrl,
-      string transportError
+      string transportError,
+      Uri? effectiveUrl = null
    )
    {
       return new WebPageHttpResponse(
          requestedUrl,
-         requestedUrl,
-         false,
+         effectiveUrl ?? requestedUrl,
+         effectiveUrl is not null && effectiveUrl != requestedUrl,
          null,
          null,
          [],
          transportError,
          null
+      );
+   }
+
+   internal static WebPageHttpResponse ResponseTooLarge(
+      Uri requestedUrl,
+      Uri effectiveUrl,
+      int? statusCode,
+      string? contentType
+   )
+   {
+      return new WebPageHttpResponse(
+         requestedUrl,
+         effectiveUrl,
+         effectiveUrl != requestedUrl,
+         statusCode,
+         contentType,
+         [],
+         null,
+         null,
+         WebPageFetchErrorKind.ResponseTooLarge
       );
    }
 
