@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using SESport.AI.WebPages;
+using SESport.Core.Formatting;
 
 namespace SESport.AI.Llama;
 
@@ -801,7 +802,7 @@ internal static class LlamaPageToolFormatter
          .ReplaceLineEndings(" ")
          .Trim();
 
-      normalized = WebPageContentFetchSupport.NormalizeGluedTableCellText(
+      normalized = WebPageTextNormalization.NormalizeGluedTableCellText(
          normalized
       );
 

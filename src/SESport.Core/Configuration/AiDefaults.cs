@@ -20,6 +20,11 @@ public static class AiDefaults
    public static readonly TimeSpan WebPageContentHttpClientTimeout =
       TimeSpan.FromSeconds(30);
 
+   // Maximum page fetch attempts per URL in one Llama tool loop. Failed
+   // attempts are retried until this budget is exhausted; the last
+   // failure is then replayed instead of fetching again.
+   public const int LlamaPageFetchMaxAttemptsPerUrl = 3;
+
    public static readonly TimeSpan GoogleTranslatePageTimeout =
       TimeSpan.FromSeconds(60);
    public static readonly TimeSpan GoogleTranslateStabilityDelay =

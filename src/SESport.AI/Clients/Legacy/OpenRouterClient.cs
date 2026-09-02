@@ -12,8 +12,10 @@ using SESport.Core.AI;
 
 namespace SESport.AI.Clients;
 
-// OpenRouter client adapter for potential future use. Currently not actively used
-// in production scenarios but maintained for flexibility.
+// Legacy OpenRouter client retained for archived configurations only.
+[Obsolete(
+   "Legacy provider retained for compatibility; use the external harness."
+)]
 public sealed class OpenRouterClient : IAiProviderClient
 {
    private static readonly JsonSerializerOptions JsonOptions = new(

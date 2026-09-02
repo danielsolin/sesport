@@ -12,6 +12,7 @@ the runtime and infrastructure layers:
 SESport.Core
     <- SESport.AI
     <- SESport.Data
+    <- SESport.MCP
     <- SESport.Web
     <- tools and tests
 ```
@@ -38,6 +39,8 @@ SESport.Web
     -> domain types, AI contracts, configuration options
 SESport.AI
     -> AI contracts, source models, defaults, and formatting helpers
+SESport.MCP
+    -> web-tool implementations and response models
 SESport.Data
     -> domain types, AI repository contracts, and configuration defaults
 tools
@@ -51,9 +54,10 @@ while `SESport.Core.Configuration` supplies the option types and defaults.
 ## Architectural boundaries
 
 - Core must remain free of PostgreSQL, Npgsql, Playwright, and provider SDKs.
-- Core must not depend on `SESport.AI`, `SESport.Data`, or `SESport.Web`.
+- Core must not depend on `SESport.AI`, `SESport.Data`, `SESport.MCP`, or
+  `SESport.Web`.
 - Domain rules belong in Core when they are shared by more than one host.
-- Provider-specific behavior belongs in `SESport.AI`, not in Core AI models.
+- AI provider-specific behavior belongs in `SESport.AI`, not in Core AI models.
 - SQL and persistence mapping belong in `SESport.Data`.
 - Host-specific configuration binding belongs in the executable project.
 - Country-specific behavior uses `PrimaryCountry`, not hard-coded country
@@ -227,9 +231,9 @@ Examples:
 - `SourceKinds` and `SourceCorrelationTypes` define stable source categories
   and correlation targets.
 
-Source types are contracts and value objects only. Fetching pages and calling
-search providers belong to `SESport.AI`; storing references belongs to
-`SESport.Data`.
+Source types are contracts and value objects only. Web-tool contracts and
+defaults are shared from Core; fetching pages and calling search providers
+belong to `SESport.MCP`. Storing references belongs to `SESport.Data`.
 
 ## Dependency layout
 

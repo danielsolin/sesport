@@ -6,7 +6,8 @@ site and the manual administration interface.
 ## Prerequisites
 
 - .NET 10 SDK
-- Tesseract OCR with English language data on machines that run AI jobs
+- Tesseract OCR with English language data on machines that run the MCP
+  web-tools service
 
 On Ubuntu, install the OCR dependency with:
 
@@ -125,8 +126,9 @@ MemberPush__PrivateKey=<vapid_private_key>
 The default notification lead time is ten minutes. Members can choose one
 hour, thirty minutes, or ten minutes before an activity on /installningar.
 
-SearXNG is used only by AI runs. Run it locally on the machine that runs
-AI jobs and point the application at that local instance:
+SearXNG is used by the external AI harness through the local MCP server. Run
+it on the machine that runs the MCP service and point that service at the local
+instance:
 
 ```bash
 docker compose up -d searxng
@@ -142,7 +144,7 @@ The file in `deploy/searxng/settings.yml` is an override, not a
 full replacement. Keep `use_default_settings: true` there so the
 container merges our local tweaks with the image defaults.
 
-The application defaults to `http://127.0.0.1:8088/` for SearXNG. The
+The MCP service defaults to `http://127.0.0.1:8088/` for SearXNG. The
 service is not part of the public `*.sesport.se` deployment surface.
 
 ## Sport Date Rule

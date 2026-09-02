@@ -72,15 +72,16 @@ The solution is split into projects with explicit dependency boundaries:
                  |                                     |
         +--------v---------+                  +--------v---------+
         | SESport.Data     |                  | SESport.AI       |
-        | SQL and Npgsql   |                  | AI and research  |
+        | SQL and Npgsql   |                  | AI jobs/providers|
         +--------+---------+                  +--------+---------+
                  |                                     |
                  v                                     v
-          PostgreSQL database                 AI providers,
-                                               search, pages, OCR
+          PostgreSQL database                 external AI harnesses
 
-        SESport.Data and SESport.AI both depend on SESport.Core.
+        SESport.Data, SESport.AI, and SESport.MCP depend on SESport.Core.
         SESport.Core has no infrastructure or provider dependency.
+
+        External AI harnesses use SESport.MCP for web search and page fetches.
 ```
 
 ### `SESport.Core`
@@ -104,8 +105,9 @@ It does not contain Razor Pages or AI provider execution.
 ### `SESport.AI`
 
 The AI runtime provides provider adapters, prompt rendering, structured-output
-validation, queued and direct job execution, web search, page retrieval and
-normalization, browser fallbacks, PDF handling, and image OCR.
+validation, and queued and direct job execution. Current jobs use external AI
+harnesses; the in-process Llama and OpenRouter adapters remain only as legacy
+compatibility code.
 
 AI code receives persistence contracts and configuration through interfaces and
 options. It does not issue SQL or create PostgreSQL connections.
@@ -113,9 +115,8 @@ options. It does not issue SQL or create PostgreSQL connections.
 ### `SESport.MCP`
 
 The MCP server exposes selected web research capabilities to external MCP
-clients such as Codex CLI. It is intentionally a thin host: it owns the MCP
-transport, tool contracts, and response serialization, while forwarding the
-actual search and page-fetch work to `SESport.AI`.
+clients such as Codex CLI. It owns the MCP transport, tool contracts, search,
+page fetching, normalization, browser fallbacks, PDF handling, and image OCR.
 
 It does not introduce a separate domain or persistence layer. The server
 normally runs as a stateless Streamable HTTP service on loopback. Its detailed
@@ -187,7 +188,7 @@ Web or automation event
         -> job and prompt selection
         -> persisted AI run
         -> worker claim and provider execution
-        -> optional search, page fetch, and OCR
+        -> external harness and its MCP web tools, when needed
         -> structured result validation
         -> persisted result and source links
         -> explicit domain post-processing
@@ -198,10 +199,10 @@ the input, rendered prompt, selected configuration, status, timing, usage
 metadata, and diagnostic trace needed to understand what happened after a
 configuration changes.
 
-The active provider can use a local model server. Other provider adapters are
-available through the same contract. Web research uses a local SearXNG
-instance by default, and page retrieval can use HTTP, browser, PDF, or OCR
-paths depending on the source.
+Current AI jobs use configured external harnesses. The legacy provider adapters
+remain available through the same contract for compatibility. Web research is
+provided by the local MCP service, which uses SearXNG and can retrieve pages
+through HTTP, browser, PDF, or OCR paths depending on the source.
 
 ## Configuration and dependencies
 
@@ -221,10 +222,10 @@ The repository-root `.env` file is the source of truth for the one active
 application database. The web process does not load `.env` automatically;
 deployment or the invoking shell must provide the variables.
 
-AI jobs that use web research require a SearXNG service. The default base URL
-is `http://127.0.0.1:8088/`. Browser-backed fetching requires the applicable
-Playwright browser runtime, and image OCR requires Tesseract with the needed
-language data.
+The MCP web tools require a SearXNG service when search is used. The default
+base URL is `http://127.0.0.1:8088/`. Browser-backed fetching requires the
+applicable Playwright browser runtime, and image OCR requires Tesseract with
+the needed language data.
 
 Optional host features use configuration for administration, passwordless
 member email, Web Push, SMTP, web statistics, and provider-specific settings.
@@ -255,7 +256,7 @@ The solution targets the .NET 10 SDK.
 3. Apply schema migrations using the migration procedure configured for
    the environment.
 
-4. Start SearXNG if the application will run AI jobs:
+4. Start SearXNG if the MCP web tools will be used:
 
    ```bash
    docker compose up -d searxng
@@ -300,7 +301,7 @@ setup fails.
 ```text
 src/SESport.Core/   Shared domain, contracts, configuration, and parsers
 src/SESport.Data/   PostgreSQL access and repositories
-src/SESport.AI/     AI providers, jobs, search, pages, and OCR
+src/SESport.AI/     AI providers, jobs, and execution
 src/SESport.MCP/    MCP host for external web research tools
 src/SESport.Web/    Razor Pages host, UI, services, and workers
 database/           Schema migrations and database documentation
