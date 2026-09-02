@@ -1,5 +1,8 @@
 using ModelContextProtocol.AspNetCore;
 
+using SESport.Data;
+using SESport.Data.Activities;
+
 using SESport.MCP;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +25,19 @@ var searxngOptions = new ConfigurationBuilder()
    .Get<SearxngWebSearchClientOptions>() ??
    new SearxngWebSearchClientOptions();
 builder.Services.AddSingleton(searxngOptions);
+
+var dataSource = PostgresDataSourceFactory.CreateDefault(
+   builder.Configuration.GetConnectionString(
+      ApplicationConfigurationKeys.DefaultConnectionString
+   )
+);
+builder.Services.AddSingleton(dataSource);
+builder.Services.AddSingleton(
+   builder.Configuration.GetSection(
+      ActivityDatabaseToolOptions.SectionName
+   ).Get<ActivityDatabaseToolOptions>() ?? new ActivityDatabaseToolOptions()
+);
+builder.Services.AddScoped<ActivityReadRepository>();
 
 builder.Services.AddSingleton<SearchRateLimiter>();
 builder.Services.AddSingleton<WebSearchCache>();
@@ -53,6 +69,7 @@ builder.Services.AddHttpClient<
 builder.Services.AddScoped<WebSearchTool>();
 builder.Services.AddScoped<WebPageTool>();
 builder.Services.AddScoped<WebFindInPageTool>();
+builder.Services.AddScoped<DatabaseActivityTool>();
 
 var serializerOptions = new JsonSerializerOptions
 {
@@ -67,7 +84,8 @@ builder.Services.AddMcpServer()
    })
    .WithTools<WebSearchTool>(serializerOptions)
    .WithTools<WebPageTool>(serializerOptions)
-   .WithTools<WebFindInPageTool>(serializerOptions);
+   .WithTools<WebFindInPageTool>(serializerOptions)
+   .WithTools<DatabaseActivityTool>(serializerOptions);
 
 var app = builder.Build();
 

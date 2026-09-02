@@ -1,16 +1,32 @@
 # SESport.MCP
 
 An MCP (Model Context Protocol) server that exposes the project's web research
-tools to external MCP clients such as Codex CLI.
+and activity lookup tools to external MCP clients such as Codex CLI.
 
-The server registers three tools and owns the search and page-fetch
-implementations behind them:
+The server registers five tools and owns the search, page-fetch, and activity
+lookup implementations behind them:
 
 | Tool | Implementation | Returns |
 | --- | --- | --- |
 | `web_search` | `IWebSearchClient` | `WebSearchResponse` |
 | `web_get_page` | `IWebPageContentClient` | `WebPageToolResponse` |
 | `web_find_in_page` | `IWebPageContentClient` | text |
+| `db_search_activity` | `ActivityReadRepository` | activity summaries |
+| `db_get_activity` | `ActivityReadRepository` | activity details |
+
+`db_search_activity` searches published activities using at least one of
+`text`, `date`, or `sport`. Text and sport matching are case-insensitive. The
+sport value is matched against the database ID, name, and display name; no
+sport list is hard-coded in the server. Search results use the same activity
+grouping identity as the public timeline, so one activity is not returned
+multiple times because of grouped rows or broadcast variants. Use the
+returned UUID with `db_get_activity`.
+
+`db_get_activity` returns one activity with its core schedule, group and
+organization context, and person participants. Participant rows include
+their birth date, formative club, and any stored start time.
+The response intentionally omits facts, source metadata, broadcasts,
+publication state, teaser, TV channel, and other operational relations.
 
 The server does not summarize the fetched content. The MCP response projects
 the fetcher result to the public response contract and deliberately omits the
@@ -61,9 +77,9 @@ The URL policy intentionally covers the current internal deployment's basic
 needs: only HTTP(S), ordinary public hostnames, and literal public IP
 addresses are accepted. It is not a custom DNS or general SSRF subsystem.
 
-The MCP project owns web tools only. Legacy AI provider clients, including
-Llama and OpenRouter, remain in `SESport.AI/Clients/Legacy` and are not
-registered by this server.
+The MCP project owns the web and database lookup tools. Legacy AI provider
+clients, including Llama and OpenRouter, remain in
+`SESport.AI/Clients/Legacy` and are not registered by this server.
 
 ## Running
 
