@@ -67,7 +67,7 @@ public interface IAiJobRunRepository
       CancellationToken cancellationToken
    );
 
-   Task UpdateAsync(
+   Task<bool> UpdateAsync(
       AiJobRun run,
       CancellationToken cancellationToken
    );

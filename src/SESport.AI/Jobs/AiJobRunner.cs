@@ -109,6 +109,15 @@ public sealed class AiJobRunner(
             runId
          );
       }
+      catch(AiJobFailurePersistenceException exception)
+      {
+         logger?.LogError(
+            exception,
+            "AI run {RunId} failed, but its final failure state could " +
+            "not be verified. The run was left unchanged.",
+            runId
+         );
+      }
       catch(Exception exception)
       {
          logger?.LogError(
@@ -250,7 +259,7 @@ public sealed class AiJobRunner(
             ).TotalSeconds
          };
 
-         await PersistRunWithRetryAsync(run, cancellationToken);
+         await PersistFailedRunAsync(run, cancellationToken);
 
          return new AiJobResult(
             run.Id,
@@ -285,7 +294,7 @@ public sealed class AiJobRunner(
             ).TotalSeconds
          };
 
-         await PersistRunWithRetryAsync(run, cancellationToken);
+         await PersistFailedRunAsync(run, cancellationToken);
 
          return new AiJobResult(
             run.Id,
@@ -383,6 +392,32 @@ public sealed class AiJobRunner(
       }
    }
 
+   private async Task PersistFailedRunAsync(
+      AiJobRun run,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         await PersistRunWithRetryAsync(run, cancellationToken);
+      }
+      catch(AiRunPersistenceException exception)
+      {
+         if(await IsFailedRunPersistedAsync(
+            run.Id,
+            cancellationToken
+         ))
+         {
+            return;
+         }
+
+         throw new AiJobFailurePersistenceException(
+            run.Id,
+            exception
+         );
+      }
+   }
+
    private async Task PersistRunWithRetryAsync(
       AiJobRun run,
       CancellationToken cancellationToken
@@ -398,7 +433,13 @@ public sealed class AiJobRunner(
       {
          try
          {
-            await runRepository.UpdateAsync(run, cancellationToken);
+            if(!await runRepository.UpdateAsync(run, cancellationToken))
+            {
+               throw new InvalidOperationException(
+                  "AI run update did not affect an existing run."
+               );
+            }
+
             return;
          }
          catch(OperationCanceledException)
@@ -470,6 +511,40 @@ public sealed class AiJobRunner(
       }
    }
 
+   private async Task<bool> IsFailedRunPersistedAsync(
+      Guid runId,
+      CancellationToken cancellationToken
+   )
+   {
+      try
+      {
+         var persistedRun = await runRepository.GetRunAsync(
+            runId,
+            cancellationToken
+         );
+
+         return string.Equals(
+            persistedRun?.StatusId,
+            AiJobRunStatusIds.Failed,
+            StringComparison.Ordinal
+         );
+      }
+      catch(OperationCanceledException)
+         when(cancellationToken.IsCancellationRequested)
+      {
+         throw;
+      }
+      catch(Exception exception)
+      {
+         logger?.LogWarning(
+            exception,
+            "Unable to verify failure state for AI run {RunId}.",
+            runId
+         );
+         return false;
+      }
+   }
+
    private static TimeSpan GetRunPersistenceRetryDelay(int attempt)
    {
       var retryDelays = AiWorkerDefaults.RunPersistenceRetryDelays;
@@ -496,6 +571,14 @@ public sealed class AiJobRunner(
       Exception innerException
    ) : Exception(
       $"Unable to persist completed AI run '{runId}'.",
+      innerException
+   );
+
+   private sealed class AiJobFailurePersistenceException(
+      Guid runId,
+      Exception innerException
+   ) : Exception(
+      $"Unable to persist failed AI run '{runId}'.",
       innerException
    );
 
