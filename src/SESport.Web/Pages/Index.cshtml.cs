@@ -22,6 +22,18 @@ public class IndexModel(
 
    public PublicSiteOptions PublicSiteOptions { get; } = publicSiteOptions;
 
+   public PublicSportRoute? SportRoute { get; private set; }
+
+   public bool IsPublicSportPage => SportRoute is not null &&
+      !IsWatchedActivitiesView;
+
+   public string CanonicalUrl => PublicRoutePaths.BuildAbsoluteUrl(
+      PublicSiteOptions.CanonicalHomeUrl,
+      IsPublicSportPage
+         ? SportRoute!.Path
+         : PublicRoutePaths.Home
+   );
+
    public IReadOnlyList<PublicActivityTimelineEntry> TimelineEntries
    {
       get; private set;
@@ -85,11 +97,18 @@ public class IndexModel(
          sportToday
       );
       IsSportToday = SelectedDate == sportToday;
+      SportRoute = PublicSportRoutes.FindByPath(
+         HttpContext.Request.Path.Value
+      );
       IsWatchedActivitiesView = Watched || string.Equals(
          HttpContext.Request.Path.Value,
          PublicRoutePaths.Watched,
          StringComparison.OrdinalIgnoreCase
       );
+      if(SportRoute is not null && !IsWatchedActivitiesView)
+      {
+         Sport = SportRoute.SportId;
+      }
       if(string.Equals(
             HttpContext.Request.Path.Value,
             PublicRoutePaths.Watched,
@@ -207,10 +226,9 @@ public class IndexModel(
          TotalParticipantsCount = CountParticipants(activities);
          SportParticipantCounts =
             CountParticipantsBySport(activities);
-         Sport = NormalizeSportFilter(
-            Sport,
-            SportParticipantCounts
-         );
+         Sport = SportRoute is null
+            ? NormalizeSportFilter(Sport, SportParticipantCounts)
+            : SportRoute.SportId;
          Country = NormalizeCountryFilter(
             Country,
             GetSelectedSportCount(Sport)

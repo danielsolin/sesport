@@ -9,6 +9,11 @@
    <title>
       Månadens mesta utövare – @Model.SelectedMonthLabel – sesport
    </title>
+   <link rel="canonical" href="@Model.CanonicalUrl" />
+   @if(Model.ShouldNoIndex)
+   {
+      <meta name="robots" content="noindex,follow" />
+   }
    <meta name="description"
          content="Månadens mesta svenska utövare i internationell sport." />
 }

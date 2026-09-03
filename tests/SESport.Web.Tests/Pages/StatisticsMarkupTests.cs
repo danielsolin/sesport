@@ -20,6 +20,8 @@ public sealed class StatisticsMarkupTests
       var css = await File.ReadAllTextAsync(cssPath);
 
       Assert.Contains("@page \"/statistik\"", html);
+      Assert.Contains("Model.CanonicalUrl", html);
+      Assert.Contains("Model.ShouldNoIndex", html);
       Assert.Contains(
          "aria-label=\"Månadens mest aktiva\"",
          html

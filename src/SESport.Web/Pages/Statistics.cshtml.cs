@@ -10,7 +10,8 @@ namespace SESport.Web.Pages;
 
 public sealed class StatisticsModel(
    PublicStatisticsRepository repository,
-   PublicStatisticsOptions options
+   PublicStatisticsOptions options,
+   PublicSiteOptions publicSiteOptions
 ) : PageModel
 {
    public const string MonthFormat = "yyyy-MM";
@@ -52,6 +53,15 @@ public sealed class StatisticsModel(
    public PublicStatisticsSnapshot? Statistics { get; private set; }
 
    public string? LoadError { get; private set; }
+
+   public bool ShouldNoIndex => IsFilteredView || LoadError is not null;
+
+   public bool IsFilteredView => Request.Query.Count > 0;
+
+   public string CanonicalUrl => PublicRoutePaths.BuildAbsoluteUrl(
+      publicSiteOptions.CanonicalHomeUrl,
+      PublicRoutePaths.Statistics
+   );
 
    [BindProperty(SupportsGet = true, Name = RouteKeys.Month)]
    public string? Month { get; set; }

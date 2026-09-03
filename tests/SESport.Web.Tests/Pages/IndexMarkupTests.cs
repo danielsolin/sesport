@@ -51,7 +51,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("@if(sport.Countries.Count >= 1)", html);
       Assert.Contains("sport-country-row", html);
       Assert.Contains(
-         "aria-label=\"Visa endast @sport.SportName\"",
+         "aria-label=\"Visa endast @sportDisplayName\"",
          html
       );
       Assert.Contains("index-participants-filter", html);
@@ -63,16 +63,27 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-date-dropdown", html);
       Assert.Contains("data-date-dropdown-toggle", html);
       Assert.Contains("data-date-dropdown-menu", html);
-      Assert.Contains("RouteKeys.Watched", html);
+      Assert.Contains("Request.Query.Count > 0", html);
       Assert.Contains("PublicRoutePaths.Watched", html);
       Assert.Contains("publicActivityAllSportsUrl", html);
       Assert.Contains("publicActivitySportUrl", html);
-      Assert.Contains("var dateUrl = PublicRoutePaths.Home", html);
       Assert.Contains(
-         "var tomorrowUrl = PublicRoutePaths.Home + \"?date=\"",
+         "var datePath = Model.IsPublicSportPage",
+         html
+      );
+      Assert.Contains(
+         "var tomorrowPath = Model.IsPublicSportPage",
          html
       );
       Assert.Contains("href=\"@tomorrowUrl\"", html);
+      Assert.Contains("PublicSportRoutes.GetPath", html);
+      Assert.Contains("Model.CanonicalUrl", html);
+      Assert.Contains("shouldNoIndex", html);
+      Assert.Contains(
+         "class=\"public-page-title visually-hidden\"",
+         html
+      );
+      Assert.Contains(".visually-hidden {", css);
       Assert.DoesNotContain("asp-route-watched", html);
       Assert.Contains(
          "@if(!Model.IsWatchedActivitiesView)",

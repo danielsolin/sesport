@@ -9,24 +9,34 @@
       Model.PublicSiteOptions.BlockedSourceHosts;
    var highestWatchPriorityLabel =
       "Högsta bevakningsprioritet";
-    var isFilteredView =
-       Request.Query.ContainsKey(RouteKeys.Date) ||
-       Request.Query.ContainsKey(RouteKeys.Sport) ||
-       Request.Query.ContainsKey(RouteKeys.Country) ||
-       Request.Query.ContainsKey(RouteKeys.Watched) ||
-       Model.IsWatchedActivitiesView;
+   var isFilteredView =
+      Request.Query.Count > 0 ||
+      Model.IsWatchedActivitiesView;
+   var shouldNoIndex = isFilteredView ||
+      Model.LoadError is not null ||
+      (Model.IsPublicSportPage && !Model.HasVisibleActivities);
    var publicActivityPath = Model.IsWatchedActivitiesView
       ? PublicRoutePaths.Watched
       : PublicRoutePaths.Home;
+   var hasDateQuery = Request.Query.ContainsKey(RouteKeys.Date);
    var selectedDateQueryValue = Uri.EscapeDataString(
       DateDisplay.Format(Model.SelectedDate)
    );
    var publicActivityAllSportsUrl = Model.IsWatchedActivitiesView
       ? publicActivityPath
-      : $"{publicActivityPath}?date={selectedDateQueryValue}";
-    var allSportsLabel = Model.IsWatchedActivitiesView
-       ? "Alla bevakade"
-       : "Svenskar";
+      : !hasDateQuery && Model.IsSportToday
+         ? PublicRoutePaths.Home
+         : $"{publicActivityPath}?date={selectedDateQueryValue}";
+   var allSportsLabel = Model.IsWatchedActivitiesView
+      ? "Alla bevakade"
+      : "Svenskar";
+   var pageTitle = Model.SportRoute is null
+      ? Model.PublicSiteOptions.PageDescription
+      : $"{Model.SportRoute.DisplayName} – " +
+         Model.PublicSiteOptions.PageDescription;
+   var pageDescription = Model.SportRoute is null
+      ? Model.PublicSiteOptions.PageDescription
+      : $"Se svenska utövare inom {Model.SportRoute.DisplayName} på TV.";
    var selectedDateOption = Model.DateOptions
       .First(option => option.IsSelected);
    var hasPastActivities = Model.TimelineEntries.Any(
@@ -50,21 +60,21 @@
       "activity-channel-chip-stream-icon";
 }
 @section Head {
-   <title>@Model.PublicSiteOptions.PageDescription – sesport</title>
+   <title>@pageTitle – sesport</title>
    <link rel="canonical"
-         href="@Model.PublicSiteOptions.CanonicalHomeUrl" />
-   @if(isFilteredView)
+         href="@Model.CanonicalUrl" />
+   @if(shouldNoIndex)
    {
       <meta name="robots" content="noindex,follow" />
    }
    <meta name="description"
-         content="@Model.PublicSiteOptions.PageDescription" />
-   <meta property="og:title" content="sesport" />
+         content="@pageDescription" />
+   <meta property="og:title" content="@pageTitle" />
    <meta property="og:description"
-         content="@Model.PublicSiteOptions.PageDescription" />
-   <meta name="twitter:title" content="sesport" />
+         content="@pageDescription" />
+   <meta name="twitter:title" content="@pageTitle" />
    <meta name="twitter:description"
-         content="@Model.PublicSiteOptions.PageDescription" />
+         content="@pageDescription" />
 }
 
 <aside class="public-install-promotion"
@@ -85,6 +95,14 @@
       </button>
    </div>
 </aside>
+
+@if(!Model.IsWatchedActivitiesView)
+{
+   <h1 class="public-page-title visually-hidden">
+      @(Model.SportRoute?.DisplayName ??
+         Model.PublicSiteOptions.PageDescription)
+   </h1>
+}
 
 <section class="page-heading index-heading
    @(Model.IsWatchedActivitiesView ? "index-heading-watched" : "")">
@@ -120,20 +138,25 @@
                  data-date-dropdown-menu>
                @foreach(var dateOption in Model.DateOptions)
                {
-                   var dateUrl = PublicRoutePaths.Home + "?date=" +
+                   var datePath = Model.IsPublicSportPage
+                      ? Model.SportRoute!.Path
+                      : PublicRoutePaths.Home;
+                   var dateUrl = datePath + "?date=" +
                       Uri.EscapeDataString(dateOption.Value);
-                   var normalizedSport = Model.Sport?.Trim();
+                   var normalizedSport = Model.IsPublicSportPage
+                      ? null
+                      : Model.Sport?.Trim();
                    if(!string.IsNullOrWhiteSpace(normalizedSport))
                    {
                       dateUrl += "&sport=" + Uri.EscapeDataString(
                          normalizedSport
                       );
-                      var normalizedCountry = Model.Country?.Trim();
-                      if(!string.IsNullOrWhiteSpace(normalizedCountry))
-                      {
-                         dateUrl += "&country=" +
-                            Uri.EscapeDataString(normalizedCountry);
-                      }
+                   }
+                   var normalizedCountry = Model.Country?.Trim();
+                   if(!string.IsNullOrWhiteSpace(normalizedCountry))
+                   {
+                      dateUrl += "&country=" +
+                         Uri.EscapeDataString(normalizedCountry);
                    }
                   <a class="date-dropdown-option
                      @(dateOption.IsSelected ? "is-selected" : "")"
@@ -179,6 +202,7 @@
                StringComparison.OrdinalIgnoreCase
             ));
           var selectedSportName = selectedSport?.SportName ??
+             Model.SportRoute?.DisplayName ??
              (Model.IsWatchedActivitiesView
                 ? "Alla bevakade"
                 : "Svenskar");
@@ -197,7 +221,9 @@
                 selectedCountryForDisplay?.CountryId
              );
           var selectedSportCount = selectedSport?.ParticipantCount ??
-             Model.TotalParticipantsCount;
+             (Model.IsPublicSportPage
+                ? 0
+                : Model.TotalParticipantsCount);
          <div class="sport-select" data-sport-dropdown>
             <button class="sport-dropdown-toggle"
                     type="button"
@@ -268,12 +294,27 @@
                    var sportQuery = "sport=" + Uri.EscapeDataString(
                       sport.SportId
                    );
+                   var sportRoutePath = PublicSportRoutes.GetPath(
+                      sport.SportId
+                   );
+                   var hasFriendlySportRoute =
+                      !Model.IsWatchedActivitiesView &&
+                      sportRoutePath is not null;
                    var publicActivitySportUrl =
-                      Model.IsWatchedActivitiesView
-                         ? $"{publicActivityPath}?{sportQuery}"
-                         : $"{publicActivityPath}?date={
-                            selectedDateQueryValue
-                         }&{sportQuery}";
+                      hasFriendlySportRoute
+                         ? sportRoutePath! + (
+                            !hasDateQuery && Model.IsSportToday
+                               ? string.Empty
+                               : "?date=" + selectedDateQueryValue
+                           )
+                         : Model.IsWatchedActivitiesView
+                            ? $"{publicActivityPath}?{sportQuery}"
+                            : $"{publicActivityPath}?date={
+                               selectedDateQueryValue
+                            }&{sportQuery}";
+                   var sportDisplayName = PublicSportRoutes.FindBySportId(
+                      sport.SportId
+                   )?.DisplayName ?? sport.SportName;
                    @if(sport.Countries.Count >= 1)
                    {
                       @foreach(var country in sport.Countries)
@@ -294,11 +335,19 @@
                             "&country=" +
                             Uri.EscapeDataString(country.CountryId);
                          var publicActivitySportCountryUrl =
-                            Model.IsWatchedActivitiesView
-                               ? $"{publicActivityPath}?{countryQuery}"
-                               : $"{publicActivityPath}?date={
-                                  selectedDateQueryValue
-                               }&{countryQuery}";
+                            hasFriendlySportRoute
+                               ? publicActivitySportUrl + (
+                                  publicActivitySportUrl.Contains("?")
+                                     ? "&"
+                                     : "?"
+                                ) + "country=" + Uri.EscapeDataString(
+                                   country.CountryId
+                                )
+                               : Model.IsWatchedActivitiesView
+                                  ? $"{publicActivityPath}?{countryQuery}"
+                                  : $"{publicActivityPath}?date={
+                                     selectedDateQueryValue
+                                  }&{countryQuery}";
                          <div class="index-participants">
                             <a class="index-participants-info
                                index-participants-filter
@@ -310,8 +359,8 @@
                                   isSelectedCountry
                                      ? "true" : null
                                )"
-                               aria-label="Visa endast @sport.SportName">
-                               <span>@sport.SportName</span>
+                               aria-label="Visa endast @sportDisplayName">
+                               <span>@sportDisplayName</span>
                                @if(countryFlagPath is not null)
                                {
                                   <img class="sport-country-flag"
@@ -336,8 +385,8 @@
                             @(isSelected ? "is-selected" : "")"
                             href="@publicActivitySportUrl"
                             aria-current="@(isSelected ? "true" : null)"
-                            aria-label="Visa endast @sport.SportName">
-                            <span>@sport.SportName</span>
+                            aria-label="Visa endast @sportDisplayName">
+                            <span>@sportDisplayName</span>
                             <span class="index-participants-count
                                index-participants-value">
                                @sport.ParticipantCount
@@ -1243,22 +1292,26 @@ else
       @if(Model.HasPublishedActivitiesTomorrow &&
          !Model.IsWatchedActivitiesView)
       {
-         var tomorrowUrl = PublicRoutePaths.Home + "?date=" +
+         var tomorrowPath = Model.IsPublicSportPage
+            ? Model.SportRoute!.Path
+            : PublicRoutePaths.Home;
+         var tomorrowUrl = tomorrowPath + "?date=" +
             Uri.EscapeDataString(
                DateDisplay.Format(Model.TomorrowDate)
             );
           var normalizedSport = Model.Sport?.Trim();
-          if(!string.IsNullOrWhiteSpace(normalizedSport))
+          if(!Model.IsPublicSportPage &&
+             !string.IsNullOrWhiteSpace(normalizedSport))
           {
              tomorrowUrl += "&sport=" + Uri.EscapeDataString(
                 normalizedSport
              );
-             var normalizedCountry = Model.Country?.Trim();
-             if(!string.IsNullOrWhiteSpace(normalizedCountry))
-             {
-                tomorrowUrl += "&country=" +
-                   Uri.EscapeDataString(normalizedCountry);
-             }
+          }
+          var normalizedCountry = Model.Country?.Trim();
+          if(!string.IsNullOrWhiteSpace(normalizedCountry))
+          {
+             tomorrowUrl += "&country=" +
+                Uri.EscapeDataString(normalizedCountry);
           }
          <div class="activity-tomorrow-link-row">
             <span class="activity-tomorrow-link-line"></span>

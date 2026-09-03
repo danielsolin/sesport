@@ -1,6 +1,17 @@
 @page "/om"
+@inject PublicSiteOptions PublicSiteOptions
 @{
     ViewData["Title"] = "Om";
+    var canonicalUrl = PublicRoutePaths.BuildAbsoluteUrl(
+        PublicSiteOptions.CanonicalHomeUrl,
+        "/om"
+    );
+}
+@section Head {
+    <title>Om sesport – Svenskar i internationell sport på TV</title>
+    <link rel="canonical" href="@canonicalUrl" />
+    <meta name="description"
+          content="Om sesport och varför sajten finns." />
 }
 
 <div class="about-page">

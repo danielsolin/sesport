@@ -1,0 +1,13 @@
+@page "/sitemap.xml"
+@model SitemapModel
+@{
+   Layout = null;
+}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+@foreach(var url in Model.Urls)
+{
+   <url>
+      <loc>@url</loc>
+   </url>
+}
+</urlset>

@@ -16,6 +16,8 @@ public sealed class AboutMarkupTests
       );
 
       Assert.Contains("@page \"/om\"", page);
+      Assert.Contains("<link rel=\"canonical\"", page);
+      Assert.Contains("Om sesport och varför sajten finns.", page);
       Assert.Contains("<article class=\"about-letter\">", page);
       Assert.Contains("Hej!", page);
       Assert.Contains(

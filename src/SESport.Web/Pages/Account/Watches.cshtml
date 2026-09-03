@@ -4,6 +4,10 @@
    ViewData["Title"] = "Bevakningar";
    var searchUrl = Url.Page("/Account/Watches", "Search");
 }
+@section Head {
+   <title>Bevakningar – sesport</title>
+   <meta name="robots" content="noindex,follow" />
+}
 
 <section class="member-watches-page">
    @if(Model.NotificationsEnabled)

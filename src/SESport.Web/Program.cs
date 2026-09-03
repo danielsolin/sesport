@@ -152,6 +152,13 @@ builder.Services.AddRazorPages(
          "/Index",
          PublicRoutePaths.Watched
       );
+      foreach(var sportRoute in PublicSportRoutes.All)
+      {
+         options.Conventions.AddPageRoute(
+            "/Index",
+            sportRoute.Path
+         );
+      }
    }
 );
 
