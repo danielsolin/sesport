@@ -814,6 +814,115 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedDateCountsCanFilterBySportAndCountry()
+   {
+      var danishActivityDate = DistantActivityDate.AddDays(1100);
+      var swedishActivityDate = danishActivityDate.AddDays(1);
+      var danishActivityId = Guid.NewGuid();
+      var swedishActivityId = Guid.NewGuid();
+      var danishOrganizationId = Guid.NewGuid();
+      var swedishOrganizationId = Guid.NewGuid();
+      var danishPersonId = Guid.NewGuid();
+      var swedishPersonId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertEntityAsync(
+            dataSource,
+            danishOrganizationId,
+            $"Date count Denmark {danishOrganizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            countryId: "dk"
+         );
+         await InsertEntityAsync(
+            dataSource,
+            swedishOrganizationId,
+            $"Date count Sweden {swedishOrganizationId:N}",
+            TrackedEntityTypeIds.Organization,
+            countryId: PrimaryCountry.Id
+         );
+         await InsertEntityAsync(
+            dataSource,
+            danishPersonId,
+            $"Date count Danish person {danishPersonId:N}",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            swedishPersonId,
+            $"Date count Swedish person {swedishPersonId:N}",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertActivityAsync(
+            dataSource,
+            danishActivityId,
+            danishActivityDate,
+            ToUtc(danishActivityDate),
+            ActivityPublicationStatusIds.Published,
+            sportId: "football",
+            organizationEntityId: danishOrganizationId
+         );
+         await InsertActivityAsync(
+            dataSource,
+            swedishActivityId,
+            swedishActivityDate,
+            ToUtc(swedishActivityDate),
+            ActivityPublicationStatusIds.Published,
+            sportId: "football",
+            organizationEntityId: swedishOrganizationId
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            danishActivityId,
+            danishPersonId
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            swedishActivityId,
+            swedishPersonId
+         );
+
+         var danishFootballDates =
+            await repository.GetPublishedDateParticipantCountsFromAsync(
+               danishActivityDate,
+               CancellationToken.None,
+               "football",
+               "DK"
+            );
+         var danishCount = Assert.Single(
+            danishFootballDates,
+            item => item.Date == danishActivityDate
+         );
+         Assert.Equal(1, danishCount.ParticipantCount);
+         var otherCountryCount = Assert.Single(
+            danishFootballDates,
+            item => item.Date == swedishActivityDate
+         );
+         Assert.Equal(0, otherCountryCount.ParticipantCount);
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(
+            dataSource,
+            danishActivityId
+         );
+         await DeleteActivityEntityLinksAsync(
+            dataSource,
+            swedishActivityId
+         );
+         await DeleteActivityAsync(dataSource, danishActivityId);
+         await DeleteActivityAsync(dataSource, swedishActivityId);
+         await DeleteEntityAsync(dataSource, danishPersonId);
+         await DeleteEntityAsync(dataSource, swedishPersonId);
+         await DeleteEntityAsync(dataSource, danishOrganizationId);
+         await DeleteEntityAsync(dataSource, swedishOrganizationId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedFutureForMemberWatchesFiltersActivities()
    {
       var memberId = Guid.NewGuid();
@@ -2267,7 +2376,8 @@ public sealed class ActivityRepositoryTests
       Guid? activityGroupId = null,
       DateTimeOffset? endsAt = null,
       bool omitEndTime = false,
-      string sportId = "football"
+      string sportId = "football",
+      Guid? organizationEntityId = null
    )
    {
       DateTimeOffset? resolvedEndsAt = omitEndTime
@@ -2283,6 +2393,7 @@ public sealed class ActivityRepositoryTests
             teaser,
             activity_type_id,
             sport_id,
+            organization_entity_id,
             activity_date,
             local_start_time,
             starts_at,
@@ -2302,6 +2413,7 @@ public sealed class ActivityRepositoryTests
             null,
             'Match',
             @sport_id,
+            @organization_entity_id,
             @activity_date,
             @local_start_time,
             @starts_at,
@@ -2345,6 +2457,10 @@ public sealed class ActivityRepositoryTests
          publicationStatus
       );
       command.Parameters.AddWithValue("sport_id", sportId);
+      command.Parameters.AddWithValue(
+         "organization_entity_id",
+         (object?)organizationEntityId ?? DBNull.Value
+      );
       command.Parameters.AddWithValue(
          "slug",
          $"test-activity-{activityId:N}"
