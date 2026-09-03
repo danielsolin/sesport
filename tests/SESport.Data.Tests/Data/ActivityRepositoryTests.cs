@@ -710,6 +710,99 @@ public sealed class ActivityRepositoryTests
    }
 
    [Fact]
+   public async Task GetPublishedDateCountsCanFilterBySport()
+   {
+      var activityDate = DistantActivityDate.AddDays(1000);
+      var footballActivityId = Guid.NewGuid();
+      var cyclingActivityId = Guid.NewGuid();
+      var footballPersonId = Guid.NewGuid();
+      var cyclingPersonId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new ActivityRepository(dataSource);
+
+      try
+      {
+         await InsertEntityAsync(
+            dataSource,
+            footballPersonId,
+            $"Date count football {footballPersonId:N}",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertEntityAsync(
+            dataSource,
+            cyclingPersonId,
+            $"Date count cycling {cyclingPersonId:N}",
+            TrackedEntityTypeIds.Person
+         );
+         await InsertActivityAsync(
+            dataSource,
+            footballActivityId,
+            activityDate,
+            ToUtc(activityDate),
+            ActivityPublicationStatusIds.Published,
+            sportId: "football"
+         );
+         await InsertActivityAsync(
+            dataSource,
+            cyclingActivityId,
+            activityDate,
+            ToUtc(activityDate, new TimeOnly(13, 0)),
+            ActivityPublicationStatusIds.Published,
+            sportId: "cycling"
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            footballActivityId,
+            footballPersonId
+         );
+         await InsertActivityEntityLinkAsync(
+            dataSource,
+            cyclingActivityId,
+            cyclingPersonId
+         );
+
+         var allDates =
+            await repository.GetPublishedDateParticipantCountsFromAsync(
+               activityDate,
+               CancellationToken.None
+            );
+         var allCount = Assert.Single(
+            allDates,
+            item => item.Date == activityDate
+         );
+         Assert.Equal(2, allCount.ParticipantCount);
+
+         var footballDates =
+            await repository.GetPublishedDateParticipantCountsFromAsync(
+               activityDate,
+               CancellationToken.None,
+               "football"
+            );
+         var footballCount = Assert.Single(
+            footballDates,
+            item => item.Date == activityDate
+         );
+         Assert.Equal(1, footballCount.ParticipantCount);
+      }
+      finally
+      {
+         await DeleteActivityEntityLinksAsync(
+            dataSource,
+            footballActivityId
+         );
+         await DeleteActivityEntityLinksAsync(
+            dataSource,
+            cyclingActivityId
+         );
+         await DeleteActivityAsync(dataSource, footballActivityId);
+         await DeleteActivityAsync(dataSource, cyclingActivityId);
+         await DeleteEntityAsync(dataSource, footballPersonId);
+         await DeleteEntityAsync(dataSource, cyclingPersonId);
+      }
+   }
+
+   [Fact]
    public async Task GetPublishedFutureForMemberWatchesFiltersActivities()
    {
       var memberId = Guid.NewGuid();
@@ -2162,7 +2255,8 @@ public sealed class ActivityRepositoryTests
       string publicationStatus = ActivityPublicationStatusIds.Draft,
       Guid? activityGroupId = null,
       DateTimeOffset? endsAt = null,
-      bool omitEndTime = false
+      bool omitEndTime = false,
+      string sportId = "football"
    )
    {
       DateTimeOffset? resolvedEndsAt = omitEndTime
@@ -2196,7 +2290,7 @@ public sealed class ActivityRepositoryTests
             null,
             null,
             'Match',
-            'football',
+            @sport_id,
             @activity_date,
             @local_start_time,
             @starts_at,
@@ -2239,6 +2333,7 @@ public sealed class ActivityRepositoryTests
          "publication_status",
          publicationStatus
       );
+      command.Parameters.AddWithValue("sport_id", sportId);
       command.Parameters.AddWithValue(
          "slug",
          $"test-activity-{activityId:N}"

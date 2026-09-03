@@ -195,9 +195,14 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
    public async Task<IReadOnlyList<PublishedDateParticipantCount>>
       GetPublishedDateParticipantCountsFromAsync(
          DateOnly firstDate,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         string? sportId = null
       )
    {
+      var normalizedSportId = sportId?.Trim();
+      var sportFilter = string.IsNullOrWhiteSpace(normalizedSportId)
+         ? string.Empty
+         : "and a.sport_id = @sport_id";
       var sql = $$"""
          with dated_activities as (
             select
@@ -220,6 +225,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                '{{ActivityPublicationStatusIds.Published}}'
                and a.starts_at is not null
                and a.ends_at is not null
+               {{sportFilter}}
                {{PublicActivityQuerySupport.ExclusionClause}}
          )
          select
@@ -253,6 +259,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          "first_date",
          firstDate
       );
+      if(!string.IsNullOrWhiteSpace(normalizedSportId))
+      {
+         command.Parameters.AddWithValue("sport_id", normalizedSportId);
+      }
       PublicActivityQuerySupport.AddExclusionParameters(command);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken

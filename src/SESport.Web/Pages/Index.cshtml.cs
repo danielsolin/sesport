@@ -145,7 +145,8 @@ public class IndexModel(
          var publishedDateCounts =
             await repository.GetPublishedDateParticipantCountsFromAsync(
                sportToday,
-               cancellationToken
+               cancellationToken,
+               Sport
             );
          HasPublishedActivitiesTomorrow = ShouldShowTomorrowLink(
             SelectedDate,

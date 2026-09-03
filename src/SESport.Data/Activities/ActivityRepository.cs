@@ -52,11 +52,13 @@ public sealed class ActivityRepository(NpgsqlDataSource dataSource)
    public Task<IReadOnlyList<PublishedDateParticipantCount>>
       GetPublishedDateParticipantCountsFromAsync(
          DateOnly firstDate,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         string? sportId = null
       ) =>
       queries.GetPublishedDateParticipantCountsFromAsync(
          firstDate,
-         cancellationToken
+         cancellationToken,
+         sportId
       );
 
    public Task<IReadOnlyList<EntityOption>> GetEntityOptionsAsync(
