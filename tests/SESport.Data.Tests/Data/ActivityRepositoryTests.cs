@@ -712,7 +712,8 @@ public sealed class ActivityRepositoryTests
    [Fact]
    public async Task GetPublishedDateCountsCanFilterBySport()
    {
-      var activityDate = DistantActivityDate.AddDays(1000);
+      var footballActivityDate = DistantActivityDate.AddDays(1000);
+      var cyclingActivityDate = footballActivityDate.AddDays(1);
       var footballActivityId = Guid.NewGuid();
       var cyclingActivityId = Guid.NewGuid();
       var footballPersonId = Guid.NewGuid();
@@ -738,16 +739,16 @@ public sealed class ActivityRepositoryTests
          await InsertActivityAsync(
             dataSource,
             footballActivityId,
-            activityDate,
-            ToUtc(activityDate),
+            footballActivityDate,
+            ToUtc(footballActivityDate),
             ActivityPublicationStatusIds.Published,
             sportId: "football"
          );
          await InsertActivityAsync(
             dataSource,
             cyclingActivityId,
-            activityDate,
-            ToUtc(activityDate, new TimeOnly(13, 0)),
+            cyclingActivityDate,
+            ToUtc(cyclingActivityDate, new TimeOnly(13, 0)),
             ActivityPublicationStatusIds.Published,
             sportId: "cycling"
          );
@@ -764,26 +765,36 @@ public sealed class ActivityRepositoryTests
 
          var allDates =
             await repository.GetPublishedDateParticipantCountsFromAsync(
-               activityDate,
+               footballActivityDate,
                CancellationToken.None
             );
-         var allCount = Assert.Single(
+         var allFootballCount = Assert.Single(
             allDates,
-            item => item.Date == activityDate
+            item => item.Date == footballActivityDate
          );
-         Assert.Equal(2, allCount.ParticipantCount);
+         Assert.Equal(1, allFootballCount.ParticipantCount);
+         var allCyclingCount = Assert.Single(
+            allDates,
+            item => item.Date == cyclingActivityDate
+         );
+         Assert.Equal(1, allCyclingCount.ParticipantCount);
 
          var footballDates =
             await repository.GetPublishedDateParticipantCountsFromAsync(
-               activityDate,
+               footballActivityDate,
                CancellationToken.None,
                "football"
             );
          var footballCount = Assert.Single(
             footballDates,
-            item => item.Date == activityDate
+            item => item.Date == footballActivityDate
          );
          Assert.Equal(1, footballCount.ParticipantCount);
+         var otherSportCount = Assert.Single(
+            footballDates,
+            item => item.Date == cyclingActivityDate
+         );
+         Assert.Equal(0, otherSportCount.ParticipantCount);
       }
       finally
       {

@@ -175,7 +175,8 @@
                               @dateOption.DateLabel
                            </span>
                         </span>
-                        @if(!dateOption.IsSelected)
+                        @if(!dateOption.IsSelected &&
+                           dateOption.ParticipantCount > 0)
                         {
                            <span class="date-option-participant-count">
                               <img class="date-option-country-flag"

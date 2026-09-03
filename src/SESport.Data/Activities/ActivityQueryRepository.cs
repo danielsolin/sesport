@@ -200,13 +200,14 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
       )
    {
       var normalizedSportId = sportId?.Trim();
-      var sportFilter = string.IsNullOrWhiteSpace(normalizedSportId)
+      var sportCountFilter = string.IsNullOrWhiteSpace(normalizedSportId)
          ? string.Empty
-         : "and a.sport_id = @sport_id";
+         : "and dated.sport_id = @sport_id";
       var sql = $$"""
          with dated_activities as (
             select
                a.id,
+               a.sport_id,
                case
                   when coalesce(
                      ag.public_date_mode,
@@ -225,7 +226,6 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                '{{ActivityPublicationStatusIds.Published}}'
                and a.starts_at is not null
                and a.ends_at is not null
-               {{sportFilter}}
                {{PublicActivityQuerySupport.ExclusionClause}}
          )
          select
@@ -237,6 +237,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   '{{TrackedEntityTypeIds.Pair}}'
                )
                   and al.is_active
+                  {{sportCountFilter}}
             )::integer as participant_count
          from dated_activities dated
          left join activity_entity_links al on al.activity_id = dated.id
