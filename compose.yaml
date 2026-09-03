@@ -23,6 +23,8 @@ services:
    searxng:
       image: docker.io/searxng/searxng:latest
       container_name: sesport-searxng
+      environment:
+         SESPORT_BRAVE_API_KEY: ${SESPORT_BRAVE_API_KEY}
       dns:
          - 10.255.255.254
          - 1.1.1.1

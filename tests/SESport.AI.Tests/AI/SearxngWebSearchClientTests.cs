@@ -68,17 +68,18 @@ public class SearxngWebSearchClientTests
       await AssertRequestUsesEngine(0, "google");
       await AssertRequestUsesEngine(1, "brave");
       await AssertRequestUsesEngine(2, "duckduckgo");
-      await AssertRequestUsesEngine(3, "bing");
-      await AssertRequestUsesEngine(4, "mojeek");
-      await AssertRequestUsesEngine(5, "privacywall");
-      await AssertRequestUsesEngine(6, "seznam");
-      await AssertRequestUsesEngine(7, "naver");
-      await AssertRequestUsesEngine(8, "boardreader");
-      await AssertRequestUsesEngine(9, "yep");
-      await AssertRequestUsesEngine(10, "yahoo");
-      await AssertRequestUsesEngine(11, "google_cse");
-      await AssertRequestUsesEngine(12, "gmx");
-      await AssertRequestUsesEngine(13, "resulthunter");
+      await AssertRequestUsesEngine(3, "privacywall");
+      await AssertRequestUsesEngine(4, "bing");
+      await AssertRequestUsesEngine(5, "mojeek");
+      await AssertRequestUsesEngine(6, "braveapi");
+      await AssertRequestUsesEngine(7, "seznam");
+      await AssertRequestUsesEngine(8, "naver");
+      await AssertRequestUsesEngine(9, "boardreader");
+      await AssertRequestUsesEngine(10, "yep");
+      await AssertRequestUsesEngine(11, "yahoo");
+      await AssertRequestUsesEngine(12, "google_cse");
+      await AssertRequestUsesEngine(13, "gmx");
+      await AssertRequestUsesEngine(14, "resulthunter");
    }
 
    [Fact]

@@ -9,6 +9,12 @@ search:
     - html
     - json
 
+# Brave Search API engine (api_key from .env via compose.yaml).
+engines:
+  - name: braveapi
+    engine: braveapi
+    api_key: "${SESPORT_BRAVE_API_KEY}"
+
 server:
   base_url: http://127.0.0.1:8088/
   bind_address: "0.0.0.0"
