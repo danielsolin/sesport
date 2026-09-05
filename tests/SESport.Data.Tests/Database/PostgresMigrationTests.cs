@@ -123,6 +123,29 @@ public partial class PostgresMigrationTests
    }
 
    [Fact]
+   public void BroadcastProcessingMigrationAddsProcessedAt()
+   {
+      var migration = File.ReadAllText(
+         Path.Combine(
+            FindRepositoryRoot(),
+            "database",
+            "migrations",
+            "040_broadcast_processing.sql"
+         )
+      ).ToLowerInvariant();
+
+      Assert.Contains("alter table public.broadcasts", migration);
+      Assert.Contains(
+         "add column processed_at timestamp with time zone",
+         migration
+      );
+      Assert.Contains(
+         "broadcasts_unprocessed_visible_starts_at_idx",
+         migration
+      );
+   }
+
+   [Fact]
    public void SportStartTimeMigrationAddsRequiresStartTime()
    {
       var migration = File.ReadAllText(

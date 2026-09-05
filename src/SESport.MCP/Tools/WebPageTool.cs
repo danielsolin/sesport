@@ -20,7 +20,7 @@ public sealed class WebPageTool
    }
 
    [McpServerTool(
-      Name = "web_get_page",
+      Name = McpToolNames.WebGetPage,
       UseStructuredContent = true
    )]
    [WebGetPageDescription]

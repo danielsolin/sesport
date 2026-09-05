@@ -2,6 +2,7 @@ using ModelContextProtocol.AspNetCore;
 
 using SESport.Data;
 using SESport.Data.Activities;
+using SESport.Data.Broadcasts;
 using SESport.MCP.Models;
 using SESport.MCP.Tools;
 
@@ -38,6 +39,7 @@ builder.Services.AddSingleton(
    ).Get<ActivityDatabaseToolOptions>() ?? new ActivityDatabaseToolOptions()
 );
 builder.Services.AddScoped<ActivityReadRepository>();
+builder.Services.AddScoped<BroadcastReadRepository>();
 
 builder.Services.AddSingleton<SearchRateLimiter>();
 builder.Services.AddSingleton<WebSearchCache>();
@@ -70,6 +72,7 @@ builder.Services.AddScoped<WebSearchTool>();
 builder.Services.AddScoped<WebPageTool>();
 builder.Services.AddScoped<WebFindInPageTool>();
 builder.Services.AddScoped<DatabaseActivityTool>();
+builder.Services.AddScoped<DatabaseBroadcastTool>();
 
 var serializerOptions = new JsonSerializerOptions
 {
@@ -85,7 +88,8 @@ builder.Services.AddMcpServer()
    .WithTools<WebSearchTool>(serializerOptions)
    .WithTools<WebPageTool>(serializerOptions)
    .WithTools<WebFindInPageTool>(serializerOptions)
-   .WithTools<DatabaseActivityTool>(serializerOptions);
+   .WithTools<DatabaseActivityTool>(serializerOptions)
+   .WithTools<DatabaseBroadcastTool>(serializerOptions);
 
 var app = builder.Build();
 

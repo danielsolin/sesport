@@ -1,4 +1,3 @@
-using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Activities;
 using SESport.Data.Models;
@@ -15,7 +14,7 @@ public sealed class DatabaseActivityTool(
 )
 {
    [McpServerTool(
-      Name = DatabaseToolNames.SearchActivity,
+      Name = McpToolNames.DbSearchActivity,
       UseStructuredContent = true
    )]
    [Description(
@@ -81,7 +80,7 @@ public sealed class DatabaseActivityTool(
    }
 
    [McpServerTool(
-      Name = DatabaseToolNames.GetActivity,
+      Name = McpToolNames.DbGetActivity,
       UseStructuredContent = true
    )]
    [Description(

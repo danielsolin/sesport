@@ -10,7 +10,7 @@ public sealed class WebSearchTool
    }
 
    [McpServerTool(
-      Name = "web_search",
+      Name = McpToolNames.WebSearch,
       UseStructuredContent = true
    )]
    [Description(

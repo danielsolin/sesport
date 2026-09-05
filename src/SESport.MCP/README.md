@@ -3,8 +3,8 @@
 An MCP (Model Context Protocol) server that exposes the project's web research
 and activity lookup tools to external MCP clients such as Codex CLI.
 
-The server registers five tools and owns the search, page-fetch, and activity
-lookup implementations behind them:
+The server registers seven tools and owns the search, page-fetch, activity
+lookup, and broadcast-editing implementations behind them:
 
 | Tool | Implementation | Returns |
 | --- | --- | --- |
@@ -13,6 +13,8 @@ lookup implementations behind them:
 | `web_find_in_page` | `IWebPageContentClient` | text |
 | `db_search_activity` | `ActivityReadRepository` | activity summaries |
 | `db_get_activity` | `ActivityReadRepository` | activity details |
+| `db_get_broadcast` | `BroadcastReadRepository` | one broadcast |
+| `db_update_broadcast` | `BroadcastReadRepository` | update result |
 
 `db_search_activity` searches published activities using at least one of
 `text`, `date`, or `sport`. Text and sport matching are case-insensitive. The
@@ -27,6 +29,16 @@ organization context, and person participants. Participant rows include
 their birth date, formative club, and any stored start time.
 The response intentionally omits facts, source metadata, broadcasts,
 publication state, teaser, TV channel, and other operational relations.
+
+`db_get_broadcast` returns at most one visible, unprocessed broadcast for the
+requested SESport date. It includes the broadcast source fields, schedule,
+categories, organization and activity-group context, source references, and
+linked activity IDs. Call `db_update_broadcast` with the returned ID after
+reviewing it, then call `db_get_broadcast` again until `found` is false.
+
+`db_update_broadcast` currently updates only the title and description. The
+text update and the `processed_at` marker are written atomically. A processed
+broadcast remains visible to the normal administration UI and is not hidden.
 
 The server does not summarize the fetched content. The MCP response projects
 the fetcher result to the public response contract and deliberately omits the

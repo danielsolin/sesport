@@ -6,7 +6,7 @@ public sealed class WebFindInPageTool(
    IWebPageContentClient pageContentClient
 )
 {
-   [McpServerTool(Name = "web_find_in_page")]
+   [McpServerTool(Name = McpToolNames.WebFindInPage)]
    [WebFindInPageDescription]
    public async Task<string> FindInPageAsync(
       [Description("The absolute URL of the page to search.")]
