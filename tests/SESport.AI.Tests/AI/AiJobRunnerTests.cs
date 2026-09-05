@@ -128,6 +128,76 @@ public class AiJobRunnerTests
    }
 
    [Fact]
+   public async Task RunAsyncAcceptsCompletionPersistedBeforeUpdateFailure()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new SuccessfulProviderClient();
+      var runRepository = new RecordingRunRepository
+      {
+         AlwaysFailUpdates = true,
+         PersistBeforeUpdateFailure = true
+      };
+      var executionGate = new AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var result = await runner.RunAsync(
+         new AiJobRequest("job", "{\"event\":\"test\"}"),
+         CancellationToken.None
+      );
+
+      Assert.Null(result.ErrorMessage);
+      Assert.Equal(3, runRepository.UpdateCallCount);
+      Assert.NotNull(runRepository.UpdatedRun);
+      Assert.Equal(
+         AiJobRunStatus.Completed,
+         runRepository.UpdatedRun!.Status
+      );
+   }
+
+   [Fact]
+   public async Task RunAsyncAcceptsFailurePersistedBeforeUpdateFailure()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new ThrowingProviderClient();
+      var runRepository = new RecordingRunRepository
+      {
+         AlwaysFailUpdates = true,
+         PersistBeforeUpdateFailure = true
+      };
+      var executionGate = new AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var result = await runner.RunAsync(
+         new AiJobRequest("job", "{\"event\":\"test\"}"),
+         CancellationToken.None
+      );
+
+      Assert.Equal("Failed run", result.ErrorMessage);
+      Assert.Equal(3, runRepository.UpdateCallCount);
+      Assert.NotNull(runRepository.UpdatedRun);
+      Assert.Equal(
+         AiJobRunStatus.Failed,
+         runRepository.UpdatedRun!.Status
+      );
+   }
+
+   [Fact]
    public async Task ProcessRunAsyncDoesNotFailWhenCompletionStateIsUnknown()
    {
       var jobRepository = new RecordingJobDefinitionRepository();
@@ -138,6 +208,73 @@ public class AiJobRunnerTests
          AlwaysFailUpdates = true
       };
       var executionGate = new AiJobExecutionGate();
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var runId = await runner.QueueAsync(
+         new AiJobRequest("job", "{\"event\":\"test\"}"),
+         CancellationToken.None
+      );
+
+      await runner.ProcessRunAsync(runId, CancellationToken.None);
+
+      Assert.Equal(3, runRepository.UpdateCallCount);
+      Assert.False(runRepository.FailRunCalled);
+      Assert.Null(runRepository.UpdatedRun);
+   }
+
+   [Fact]
+   public async Task RunAsyncDoesNotReturnCompletedWhenUpdateMissesRun()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new SuccessfulProviderClient();
+      var runRepository = new RecordingRunRepository
+      {
+         UpdateReturnsFalse = true
+      };
+      var executionGate = new AiJobExecutionGate();
+
+      var runner = new AiJobRunner(
+         jobRepository,
+         promptRenderer,
+         [providerClient],
+         runRepository,
+         executionGate
+      );
+
+      var exception = await Assert.ThrowsAnyAsync<Exception>(
+         () => runner.RunAsync(
+            new AiJobRequest("job", "{\"event\":\"test\"}"),
+            CancellationToken.None
+         )
+      );
+
+      Assert.Contains(
+         "Unable to persist completed AI run",
+         exception.Message
+      );
+      Assert.Equal(3, runRepository.UpdateCallCount);
+      Assert.Null(runRepository.UpdatedRun);
+   }
+
+   [Fact]
+   public async Task ProcessRunAsyncKeepsUnknownFailureStateUnchanged()
+   {
+      var jobRepository = new RecordingJobDefinitionRepository();
+      var promptRenderer = new RecordingPromptRenderer();
+      var providerClient = new ThrowingProviderClient();
+      var runRepository = new RecordingRunRepository
+      {
+         AlwaysFailUpdates = true
+      };
+      var executionGate = new AiJobExecutionGate();
+
       var runner = new AiJobRunner(
          jobRepository,
          promptRenderer,
@@ -683,6 +820,10 @@ public class AiJobRunnerTests
 
       public bool FailRunCalled { get; private set; }
 
+      public bool UpdateReturnsFalse { get; set; }
+
+      public bool PersistBeforeUpdateFailure { get; set; }
+
       public CancellationToken ToolTraceCancellationToken
       {
          get;
@@ -866,18 +1007,18 @@ public class AiJobRunnerTests
          return Task.CompletedTask;
       }
 
-      public Task UpdateAsync(
+      public Task<bool> UpdateAsync(
          AiJobRun run,
          CancellationToken cancellationToken
       )
       {
          UpdateCallCount++;
 
-         if(AlwaysFailUpdates || UpdateFailuresRemaining > 0)
+         if(AlwaysFailUpdates)
          {
-            if(UpdateFailuresRemaining > 0)
+            if(PersistBeforeUpdateFailure)
             {
-               UpdateFailuresRemaining--;
+               UpdatedRun = run;
             }
 
             throw new InvalidOperationException(
@@ -885,8 +1026,21 @@ public class AiJobRunnerTests
             );
          }
 
+         if(UpdateFailuresRemaining > 0)
+         {
+            UpdateFailuresRemaining--;
+            throw new InvalidOperationException(
+               "Run persistence is temporarily unavailable."
+            );
+         }
+
+         if(UpdateReturnsFalse)
+         {
+            return Task.FromResult(false);
+         }
+
          UpdatedRun = run;
-         return Task.CompletedTask;
+         return Task.FromResult(true);
       }
 
       public Task UpdateToolTraceAsync(

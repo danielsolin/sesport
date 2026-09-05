@@ -186,7 +186,7 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
    ) =>
       jobRuns.FailRunAsync(id, errorMessage, cancellationToken);
 
-   public Task UpdateAsync(
+   public Task<bool> UpdateAsync(
       AiJobRun run,
       CancellationToken cancellationToken
    ) =>

@@ -196,17 +196,33 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
       GetPublishedDateParticipantCountsFromAsync(
          DateOnly firstDate,
          CancellationToken cancellationToken,
-         string? sportId = null
+         string? sportId = null,
+         string? countryId = null
       )
    {
       var normalizedSportId = sportId?.Trim();
-      var sportFilter = string.IsNullOrWhiteSpace(normalizedSportId)
+      var normalizedCountryId = countryId?.Trim().ToLowerInvariant();
+      var sportCountFilter = string.IsNullOrWhiteSpace(normalizedSportId)
          ? string.Empty
-         : "and a.sport_id = @sport_id";
+         : "and dated.sport_id = @sport_id";
+      var countryCountFilter = string.IsNullOrWhiteSpace(
+         normalizedCountryId
+      )
+         ? string.Empty
+         : "and dated.organization_country_id = @country_id";
+      var organizationCountryPredicate =
+         BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
+            "organization.entity_type_id"
+         );
       var sql = $$"""
          with dated_activities as (
             select
                a.id,
+               a.sport_id,
+               case
+                  when {{organizationCountryPredicate}}
+                  then organization.country_id
+               end as organization_country_id,
                case
                   when coalesce(
                      ag.public_date_mode,
@@ -221,11 +237,13 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             from activities a
             left join activity_groups ag
                on ag.id = a.activity_group_id
+            left join entities organization
+               on organization.id =
+                  {{GetActivityOrganizationEntityIdSql("a")}}
             where a.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
                and a.starts_at is not null
                and a.ends_at is not null
-               {{sportFilter}}
                {{PublicActivityQuerySupport.ExclusionClause}}
          )
          select
@@ -237,6 +255,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   '{{TrackedEntityTypeIds.Pair}}'
                )
                   and al.is_active
+                  {{sportCountFilter}}
+                  {{countryCountFilter}}
             )::integer as participant_count
          from dated_activities dated
          left join activity_entity_links al on al.activity_id = dated.id
@@ -262,6 +282,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
       if(!string.IsNullOrWhiteSpace(normalizedSportId))
       {
          command.Parameters.AddWithValue("sport_id", normalizedSportId);
+      }
+      if(!string.IsNullOrWhiteSpace(normalizedCountryId))
+      {
+         command.Parameters.AddWithValue("country_id", normalizedCountryId);
       }
       PublicActivityQuerySupport.AddExclusionParameters(command);
       await using var reader = await command.ExecuteReaderAsync(

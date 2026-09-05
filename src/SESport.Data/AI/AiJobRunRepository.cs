@@ -875,7 +875,7 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   public async Task UpdateAsync(
+   public async Task<bool> UpdateAsync(
       AiJobRun run,
       CancellationToken cancellationToken
    )
@@ -901,11 +901,14 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
             output_tokens = @output_tokens,
             reasoning_tokens = @reasoning_tokens
          where id = @id
+         returning id
          """;
 
       await using var command = dataSource.CreateCommand(sql);
       AddRunUpdateParameters(command, run);
-      await command.ExecuteNonQueryAsync(cancellationToken);
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+
+      return result is not null && result is not DBNull;
    }
 
    public async Task UpdateRunExecutionEnvironmentAsync(

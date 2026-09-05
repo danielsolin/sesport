@@ -63,6 +63,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("data-date-dropdown", html);
       Assert.Contains("data-date-dropdown-toggle", html);
       Assert.Contains("data-date-dropdown-menu", html);
+      Assert.Contains("dateOption.ParticipantCount > 0", html);
       Assert.Contains("Request.Query.Count > 0", html);
       Assert.Contains("PublicRoutePaths.Watched", html);
       Assert.Contains("publicActivityAllSportsUrl", html);
