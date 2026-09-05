@@ -1,4 +1,4 @@
-namespace SESport.MCP;
+namespace SESport.MCP.Models;
 
 public sealed record DbActivitySearchResponse(
    [property: JsonPropertyName("results")]

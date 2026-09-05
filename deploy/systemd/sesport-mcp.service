@@ -1,5 +1,5 @@
 [Unit]
-Description=SESport MCP (web research tools over Streamable HTTP)
+Description=SESport MCP (sesport tools over Streamable HTTP)
 After=network.target
 Wants=network.target
 

@@ -1,4 +1,4 @@
-namespace SESport.MCP;
+namespace SESport.MCP.Models;
 
 public sealed record WebPageToolResponse(
    string Title,

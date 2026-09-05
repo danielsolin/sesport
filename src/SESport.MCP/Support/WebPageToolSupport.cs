@@ -1,4 +1,4 @@
-namespace SESport.MCP;
+namespace SESport.MCP.Support;
 
 public static class WebPageToolSupport
 {

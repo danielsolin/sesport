@@ -1,4 +1,4 @@
-namespace SESport.MCP;
+namespace SESport.MCP.Tools;
 
 public sealed class WebSearchTool
 {

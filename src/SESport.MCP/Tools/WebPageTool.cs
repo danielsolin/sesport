@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace SESport.MCP;
+using SESport.MCP.Models;
+using SESport.MCP.Support;
+
+namespace SESport.MCP.Tools;
 
 public sealed class WebPageTool
 {

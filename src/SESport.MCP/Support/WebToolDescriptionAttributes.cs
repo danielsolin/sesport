@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace SESport.MCP;
+namespace SESport.MCP.Support;
 
 [AttributeUsage(AttributeTargets.Method)]
 internal sealed class WebGetPageDescriptionAttribute : DescriptionAttribute

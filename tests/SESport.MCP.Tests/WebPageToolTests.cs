@@ -1,7 +1,7 @@
 using System.Text.Json;
 
 using SESport.AI.WebPages;
-using SESport.MCP;
+using SESport.MCP.Tools;
 
 namespace SESport.Core.Tests.MCP;
 

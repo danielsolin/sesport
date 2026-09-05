@@ -5,7 +5,8 @@ using SESport.Data.Models;
 
 using System.Globalization;
 
-namespace SESport.MCP;
+namespace SESport.MCP.Tools;
+using SESport.MCP.Models;
 
 public sealed class DatabaseActivityTool(
    ActivityReadRepository repository,
