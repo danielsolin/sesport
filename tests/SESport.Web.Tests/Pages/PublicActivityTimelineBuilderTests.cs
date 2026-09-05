@@ -1350,8 +1350,9 @@ public class PublicActivityTimelineBuilderTests
          sportName,
          null,
          startsAt is null
-            ? activityDate.ToString("yyyy-MM-dd")
-            : $"{activityDate:yyyy-MM-dd} {startsAt.Value:HH:mm}",
+            ? activityDate.ToString(DateDisplay.DateOnlyFormat)
+            : $"{activityDate:" + DateDisplay.DateOnlyFormat + $"}" +
+              $"{startsAt.Value:" + DateDisplay.TimeOnlyMinutesFormat + $"}",
          startsAt,
          tvChannelName,
          "Published",

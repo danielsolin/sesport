@@ -1,9 +1,10 @@
-using System.Reflection;
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using SESport.Core.Formatting;
 using SESport.Data.Models;
+
+using System.Reflection;
 
 namespace SESport.Core.Tests.Services;
 
@@ -98,7 +99,7 @@ public sealed class ActivityIndexPageServiceTests
          "football",
          "Football",
          null,
-         startsAt?.ToString("yyyy-MM-dd HH:mm") ?? "2026-07-25",
+         startsAt?.ToString(DateDisplay.DateTimeMinutesFormat) ?? "2026-07-25",
          startsAt,
          null,
          ActivityPublicationStatusIds.Published,

@@ -1,8 +1,9 @@
-using System.Globalization;
-
 using SESport.Core.Domain;
+using SESport.Core.Formatting;
 using SESport.Data.Activities;
 using SESport.Data.Models;
+
+using System.Globalization;
 
 namespace SESport.MCP;
 
@@ -122,7 +123,7 @@ public sealed class DatabaseActivityTool(
 
       if(DateOnly.TryParseExact(
          value.Trim(),
-         "yyyy-MM-dd",
+         DateDisplay.DateOnlyFormat,
          CultureInfo.InvariantCulture,
          DateTimeStyles.None,
          out var date

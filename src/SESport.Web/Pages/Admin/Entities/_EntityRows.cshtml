@@ -51,7 +51,8 @@
          ? $"{SESport.Web.Pages.IndexModel.CalculateAge(
                birthdate,
                DateOnly.FromDateTime(DateTime.Now)
-            )} ({birthdate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)})"
+            )} ({birthdate.ToString(DateDisplay.DateOnlyFormat,
+                  CultureInfo.InvariantCulture)})"
          : null;
       var watchPriorityPlaceholder = "Add watch priority..";
       var watchPriorityIsEmpty = string.IsNullOrWhiteSpace(

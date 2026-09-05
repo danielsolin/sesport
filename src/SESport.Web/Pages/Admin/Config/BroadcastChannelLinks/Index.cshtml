@@ -46,7 +46,7 @@
                </td>
                <td><code>@row.Url</code></td>
                <td>@(row.IsActive ? "Yes" : "No")</td>
-               <td>@row.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+               <td>@row.UpdatedAt.ToString(DateDisplay.DateTimeMinutesFormat)</td>
                <td class="table-actions">
                   <a asp-page="./Edit"
                      asp-route-canonicalName="@row.CanonicalName">
