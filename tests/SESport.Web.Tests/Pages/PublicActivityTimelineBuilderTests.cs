@@ -1340,6 +1340,9 @@ public class PublicActivityTimelineBuilderTests
       var resolvedEndsAt = omitEndTime
          ? null
          : endsAt ?? startsAt?.AddHours(1);
+      TimeOnly? startTime = startsAt is null
+         ? null
+         : TimeOnly.FromDateTime(startsAt.Value.DateTime);
       return new ActivityListItem(
          Guid.NewGuid(),
          title,
@@ -1349,10 +1352,7 @@ public class PublicActivityTimelineBuilderTests
          sportId,
          sportName,
          null,
-         startsAt is null
-            ? activityDate.ToString(DateDisplay.DateOnlyFormat)
-            : $"{activityDate:" + DateDisplay.DateOnlyFormat + $"}" +
-              $"{startsAt.Value:" + DateDisplay.TimeOnlyMinutesFormat + $"}",
+         DateDisplay.Format(activityDate, startTime),
          startsAt,
          tvChannelName,
          "Published",
