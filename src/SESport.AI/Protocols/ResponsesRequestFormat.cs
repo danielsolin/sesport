@@ -1,6 +1,6 @@
-using System.Text.Json.Nodes;
-
 using SESport.Core.AI;
+
+using System.Text.Json.Nodes;
 
 namespace SESport.AI.Protocols;
 

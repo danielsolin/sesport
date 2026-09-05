@@ -1,6 +1,3 @@
-using System.Net;
-using System.Text.Json;
-
 using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
 
@@ -8,6 +5,9 @@ using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Models;
 using SESport.Web.Formatting;
+
+using System.Net;
+using System.Text.Json;
 
 namespace SESport.Web.Services;
 

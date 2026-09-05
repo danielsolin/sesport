@@ -1,11 +1,11 @@
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SESport.Web.Pages.Admin;
 

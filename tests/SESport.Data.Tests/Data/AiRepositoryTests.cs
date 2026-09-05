@@ -1,8 +1,8 @@
-using System.Text.Json;
-
 using Npgsql;
 
 using SESport.Core.Formatting;
+
+using System.Text.Json;
 
 namespace SESport.Core.Tests.Data;
 

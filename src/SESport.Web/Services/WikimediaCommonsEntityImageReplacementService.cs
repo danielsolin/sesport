@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-
 using SESport.Core.Sources;
 using SESport.Data.Models;
+
+using System.Security.Cryptography;
 
 namespace SESport.Web.Services;
 

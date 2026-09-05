@@ -1,4 +1,5 @@
 namespace SESport.MCP.Tools;
+
 using SESport.MCP.Support;
 
 public sealed class WebFindInPageTool(

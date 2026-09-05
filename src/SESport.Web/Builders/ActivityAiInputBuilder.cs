@@ -1,7 +1,7 @@
-using System.Text.Json;
-
 using SESport.Core.Formatting;
 using SESport.Data.Models;
+
+using System.Text.Json;
 
 namespace SESport.Web.Builders;
 

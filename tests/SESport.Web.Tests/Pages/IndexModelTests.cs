@@ -1,8 +1,8 @@
-using System.Reflection;
-
 using SESport.Core.Configuration;
 using SESport.Data.Models;
 using SESport.Web.Pages;
+
+using System.Reflection;
 
 namespace SESport.Core.Tests.Pages;
 

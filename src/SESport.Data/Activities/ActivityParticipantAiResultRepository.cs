@@ -1,10 +1,10 @@
-using System.Text.Json;
-
 using Npgsql;
 
 using SESport.Core.AI;
 using SESport.Core.Sources;
 using SESport.Data.Models;
+
+using System.Text.Json;
 
 namespace SESport.Data.Activities;
 

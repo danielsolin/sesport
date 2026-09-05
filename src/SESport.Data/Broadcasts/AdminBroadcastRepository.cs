@@ -1,5 +1,3 @@
-using System.Globalization;
-
 using Npgsql;
 
 using NpgsqlTypes;
@@ -9,6 +7,8 @@ using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Data.Activities;
 using SESport.Data.Models;
+
+using System.Globalization;
 
 namespace SESport.Data.Broadcasts;
 

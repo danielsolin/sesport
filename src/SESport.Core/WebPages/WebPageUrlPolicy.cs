@@ -1,7 +1,7 @@
+using SESport.Core.Configuration;
+
 using System.Net;
 using System.Net.Sockets;
-
-using SESport.Core.Configuration;
 
 namespace SESport.AI.WebPages;
 

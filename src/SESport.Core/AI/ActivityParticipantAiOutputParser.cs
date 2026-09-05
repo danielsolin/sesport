@@ -1,7 +1,7 @@
-using System.Text.Json;
-
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
+
+using System.Text.Json;
 
 namespace SESport.Core.AI;
 

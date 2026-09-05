@@ -1,7 +1,7 @@
+using Microsoft.Playwright;
+
 using System.Diagnostics;
 using System.Text;
-
-using Microsoft.Playwright;
 
 namespace SESport.AI.WebPages;
 

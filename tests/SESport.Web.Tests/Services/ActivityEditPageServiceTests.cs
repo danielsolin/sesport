@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -10,6 +8,8 @@ using SESport.Core.Configuration;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;
+
+using System.Text.Json;
 
 namespace SESport.Core.Tests.Services;
 

@@ -2,10 +2,8 @@ using ModelContextProtocol.AspNetCore;
 
 using SESport.Data;
 using SESport.Data.Activities;
-
-using SESport.MCP.Tools;
 using SESport.MCP.Models;
-using SESport.MCP.Support;
+using SESport.MCP.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
 

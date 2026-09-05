@@ -6,14 +6,14 @@ public sealed record PublicSportRoute(
     string DisplayName
 )
 {
-    public string Path => "/" + Slug;
+   public string Path => "/" + Slug;
 }
 
 public static class PublicSportRoutes
 {
-    public static IReadOnlyList<PublicSportRoute> All { get; } =
-    [
-        new("alpine-skiing", "alpint", "Alpint"),
+   public static IReadOnlyList<PublicSportRoute> All { get; } =
+   [
+       new("alpine-skiing", "alpint", "Alpint"),
         new("athletics", "friidrott", "Friidrott"),
         new("basketball", "basket", "Basket"),
         new("beach-volleyball", "beachvolleyboll", "Beachvolleyboll"),
@@ -65,34 +65,34 @@ public static class PublicSportRoutes
         new("thai-boxing", "thaiboxning", "Thaiboxning"),
         new("ultra-endurance", "extremsport", "Extremsport"),
         new("volleyball", "volleyboll", "Volleyboll")
-    ];
+   ];
 
-    public static PublicSportRoute? FindByPath(string? path)
-    {
-        var normalizedPath = path?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(normalizedPath))
-        {
-            return null;
-        }
+   public static PublicSportRoute? FindByPath(string? path)
+   {
+      var normalizedPath = path?.TrimEnd('/');
+      if(string.IsNullOrWhiteSpace(normalizedPath))
+      {
+         return null;
+      }
 
-        return All.FirstOrDefault(route => string.Equals(
-            route.Path,
-            normalizedPath,
-            StringComparison.OrdinalIgnoreCase
-        ));
-    }
+      return All.FirstOrDefault(route => string.Equals(
+          route.Path,
+          normalizedPath,
+          StringComparison.OrdinalIgnoreCase
+      ));
+   }
 
-    public static string? GetPath(string? sportId)
-    {
-        return FindBySportId(sportId)?.Path;
-    }
+   public static string? GetPath(string? sportId)
+   {
+      return FindBySportId(sportId)?.Path;
+   }
 
-    public static PublicSportRoute? FindBySportId(string? sportId)
-    {
-        return All.FirstOrDefault(route => string.Equals(
-            route.SportId,
-            sportId,
-            StringComparison.OrdinalIgnoreCase
-        ));
-    }
+   public static PublicSportRoute? FindBySportId(string? sportId)
+   {
+      return All.FirstOrDefault(route => string.Equals(
+          route.SportId,
+          sportId,
+          StringComparison.OrdinalIgnoreCase
+      ));
+   }
 }

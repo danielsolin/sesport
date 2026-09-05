@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+
+using System.Security.Cryptography;
 
 namespace SESport.Web.Services;
 

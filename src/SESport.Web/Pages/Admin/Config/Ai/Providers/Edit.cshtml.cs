@@ -1,10 +1,10 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Core.AI;
+
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SESport.Web.Pages.Admin.Config.Ai.Providers;
 

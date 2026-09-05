@@ -1,9 +1,3 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-
 using Microsoft.Extensions.Logging;
 
 using SESport.AI.Llama;
@@ -11,6 +5,12 @@ using SESport.AI.Protocols;
 using SESport.AI.WebPages;
 using SESport.AI.WebSearch;
 using SESport.Core.AI;
+
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace SESport.AI.Clients;
 

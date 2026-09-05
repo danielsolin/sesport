@@ -1,6 +1,6 @@
-using System.Text.Json;
-
 using SESport.AI.Clients;
+
+using System.Text.Json;
 
 namespace SESport.Core.Tests.AI;
 

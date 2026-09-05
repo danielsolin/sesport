@@ -1,6 +1,6 @@
-using System.Text.RegularExpressions;
-
 using SESport.Core.Formatting;
+
+using System.Text.RegularExpressions;
 
 namespace SESport.MCP;
 

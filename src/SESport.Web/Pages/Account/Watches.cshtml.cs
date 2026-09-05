@@ -1,11 +1,11 @@
-using System.Security.Claims;
-using System.Text.Json;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using SESport.Data.Models;
+
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace SESport.Web.Pages.Account;
 
