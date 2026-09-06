@@ -4,6 +4,7 @@ using SESport.Data;
 using SESport.Data.Activities;
 using SESport.Data.Broadcasts;
 using SESport.MCP.Models;
+using SESport.MCP.Support;
 using SESport.MCP.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -84,6 +85,12 @@ builder.Services.AddMcpServer()
    .WithHttpTransport(options =>
    {
       options.SessionMode = HttpServerSessionMode.Stateless;
+   })
+   .WithRequestFilters(filters =>
+   {
+      filters.AddCallToolFilter(
+         McpToolArgumentValidation.CreateFilter()
+      );
    })
    .WithTools<WebSearchTool>(serializerOptions)
    .WithTools<WebPageTool>(serializerOptions)

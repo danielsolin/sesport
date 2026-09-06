@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using UglyToad.PdfPig;
 
 namespace SESport.AI.WebPages;
@@ -46,6 +48,13 @@ internal sealed class WebPageFetchOrchestrator
       CancellationToken cancellationToken
    )
    {
+      var stopwatch = Stopwatch.StartNew();
+      _logger.LogInformation(
+         "Page fetch started for {Url}; total timeout {TimeoutSeconds} s.",
+         url,
+         WebPageFetchDefaults.TotalFetchTimeout.TotalSeconds
+      );
+
       using var budget = new WebPageFetchBudget(
          WebPageFetchDefaults.TotalFetchTimeout,
          cancellationToken
@@ -54,15 +63,23 @@ internal sealed class WebPageFetchOrchestrator
       try
       {
          var result = await RunAsync(url, budget, budget.DeadlineToken);
-         return await AppendImageTextAsync(
+         result = await AppendImageTextAsync(
             result,
             budget,
             budget.DeadlineToken
          );
+         LogCompleted(url, result, stopwatch);
+         return result;
       }
       catch(OperationCanceledException)
          when(budget.CallerCanceled)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url} canceled by caller after " +
+            "{ElapsedMilliseconds} ms.",
+            url,
+            stopwatch.ElapsedMilliseconds
+         );
          throw;
       }
       catch(OperationCanceledException)
@@ -72,14 +89,35 @@ internal sealed class WebPageFetchOrchestrator
             url
          );
 
-         return WebPageContentFetchSupport.BuildFailureContent(
-            url,
-            null,
-            WebPageFetchErrorKind.Timeout,
-            "Web page fetch exceeded its configured total timeout.",
-            "timeout"
-         );
+         var timeoutResult =
+            WebPageContentFetchSupport.BuildFailureContent(
+               url,
+               null,
+               WebPageFetchErrorKind.Timeout,
+               "Web page fetch exceeded its configured total timeout.",
+               "timeout"
+            );
+         LogCompleted(url, timeoutResult, stopwatch);
+         return timeoutResult;
       }
+   }
+
+   private void LogCompleted(
+      Uri url,
+      WebPageContent? page,
+      Stopwatch stopwatch
+   )
+   {
+      _logger.LogInformation(
+         "Page fetch completed for {Url} after {ElapsedMilliseconds} ms; " +
+         "fetcher {Fetcher}, error {ErrorKind}, text {TextCharacters} " +
+         "characters.",
+         url,
+         stopwatch.ElapsedMilliseconds,
+         page?.Fetcher ?? "none",
+         page?.FetchErrorKind?.ToString() ?? "none",
+         page?.MainTextFull.Length ?? 0
+      );
    }
 
    private async Task<WebPageContent?> AppendImageTextAsync(
@@ -93,19 +131,47 @@ internal sealed class WebPageFetchOrchestrator
          return page;
       }
 
+      _logger.LogInformation(
+         "Page fetch for {Url}: found {ImageCount} relevant image(s); " +
+         "considering image OCR.",
+         page.Url,
+         images.Count
+      );
+
       // OCR only runs while the text is still insufficient. A page that
       // already has rich text does not need its images read.
       if(page.HasBodyText &&
          page.MainTextFull.Length >=
             WebPageFetchDefaults.RichContentMinimumCharacters)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: skipped image OCR because text has " +
+            "{TextCharacters} characters, meeting the {MinimumCharacters} " +
+            "character minimum.",
+            page.Url,
+            page.MainTextFull.Length,
+            WebPageFetchDefaults.RichContentMinimumCharacters
+         );
          return page;
       }
 
       if(budget.Remaining <= TimeSpan.Zero)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: skipped image OCR because no budget " +
+            "remains.",
+            page.Url
+         );
          return page;
       }
+
+      _logger.LogInformation(
+         "Page fetch for {Url}: starting image OCR for {ImageCount} " +
+         "image(s); {RemainingMilliseconds} ms remain.",
+         page.Url,
+         images.Count,
+         budget.Remaining.TotalMilliseconds
+      );
 
       string imageText;
       try
@@ -115,6 +181,11 @@ internal sealed class WebPageFetchOrchestrator
       catch(OperationCanceledException)
          when(!budget.CallerCanceled)
       {
+         _logger.LogWarning(
+            "Page fetch for {Url}: image OCR timed out; keeping the " +
+            "fetched page.",
+            page.Url
+         );
          return page;
       }
       catch(OperationCanceledException)
@@ -133,6 +204,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(string.IsNullOrWhiteSpace(imageText))
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: image OCR produced no text; keeping " +
+            "the fetched page.",
+            page.Url
+         );
          return page;
       }
 
@@ -151,6 +227,14 @@ internal sealed class WebPageFetchOrchestrator
          ),
          HasBodyText = true
       };
+
+      _logger.LogInformation(
+         "Page fetch for {Url}: image OCR appended {ImageTextCharacters} " +
+         "characters; total text is {TextCharacters} characters.",
+         page.Url,
+         imageText.Length,
+         fullText.Length
+      );
 
       // OCR success may clear a stale error when the resulting candidate
       // is intentionally selected as usable.
@@ -174,13 +258,23 @@ internal sealed class WebPageFetchOrchestrator
       CancellationToken token
    )
    {
-      var ledger = new WebPageFetchLedger(url);
+      var ledger = new WebPageFetchLedger(url, _logger);
+      _logger.LogInformation(
+         "Page fetch for {Url}: resolving browser user agent.",
+         url
+      );
       var browserUserAgent = await GetBrowserUserAgentAsync(
          budget,
          token
       );
 
       // ---- Direct HTTP stage (with bounded transient retries) ----
+      _logger.LogInformation(
+         "Page fetch for {Url}: starting direct HTTP stage; " +
+         "{RemainingMilliseconds} ms remain.",
+         url,
+         budget.Remaining.TotalMilliseconds
+      );
       var httpResponse = await SendDirectHttpAsync(
          url,
          browserUserAgent,
@@ -191,6 +285,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(httpResponse?.RedirectPolicyError is { } redirectError)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: stopping after direct HTTP because " +
+            "the redirect was blocked.",
+            url
+         );
          ledger.Add("http", $"Redirect blocked: {redirectError}");
          return WebPageContentFetchSupport.BuildFailureContent(
             url,
@@ -204,6 +303,11 @@ internal sealed class WebPageFetchOrchestrator
       if(httpResponse?.ErrorKind ==
          WebPageFetchErrorKind.ResponseTooLarge)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: stopping after direct HTTP because " +
+            "the response was too large.",
+            url
+         );
          ledger.Add(
             "decision",
             "Direct HTTP response exceeded the configured byte limit."
@@ -213,6 +317,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(IsPdfResponse(httpResponse))
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: direct HTTP returned a PDF; " +
+            "starting PDF extraction.",
+            url
+         );
          return await HandlePdfAsync(
             url,
             httpResponse,
@@ -224,6 +333,19 @@ internal sealed class WebPageFetchOrchestrator
       }
 
       var htmlEvidence = ClassifyHtml(httpResponse, url, "http");
+      _logger.LogInformation(
+         "Page fetch for {Url}: direct HTTP classified content as " +
+         "{Classification} ({Reason}); text {TextCharacters} characters, " +
+         "{HeadingCount} headings, {LinkCount} links, {ImageCount} " +
+         "images.",
+         url,
+         htmlEvidence.Assessment?.Classification.ToString() ?? "none",
+         htmlEvidence.Assessment?.Reason ?? "no assessment",
+         htmlEvidence.Candidate?.TextContent.Length ?? 0,
+         htmlEvidence.Candidate?.Headings.Count ?? 0,
+         htmlEvidence.Candidate?.RelevantLinks.Count ?? 0,
+         htmlEvidence.Candidate?.RelevantImages.Count ?? 0
+      );
       WebPageHtmlCandidate? bestCandidate = null;
       WebPageAssessment? bestAssessment = null;
       WebPageAssessment? blockedAssessment = null;
@@ -236,8 +358,22 @@ internal sealed class WebPageFetchOrchestrator
       if(ShouldFailNotFound(httpResponse, htmlEvidence.Assessment) &&
          !directNotFoundEvidence)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: stopping because direct HTTP " +
+            "content proved not-found.",
+            url
+         );
          ledger.Add("decision", "Direct HTTP proved not-found.");
          return BuildNotFoundFailure(url, htmlEvidence.Assessment);
+      }
+
+      if(directNotFoundEvidence)
+      {
+         _logger.LogInformation(
+            "Page fetch for {Url}: direct HTTP has not-found evidence; " +
+            "seeking independent confirmation.",
+            url
+         );
       }
 
       if(htmlEvidence.Assessment?.Classification ==
@@ -249,6 +385,11 @@ internal sealed class WebPageFetchOrchestrator
       if(httpResponse is { StatusCode: >= 200 and < 300 } &&
          htmlEvidence.CleanSuccess is not null)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: direct HTTP produced usable HTML; " +
+            "skipping browser and curl stages.",
+            url
+         );
          return htmlEvidence.CleanSuccess;
       }
 
@@ -259,6 +400,15 @@ internal sealed class WebPageFetchOrchestrator
       var curlEligible = ShouldTryCurl(
          httpResponse,
          htmlEvidence.Assessment
+      );
+      _logger.LogInformation(
+         "Page fetch for {Url}: browser eligible {BrowserEligible}, " +
+         "curl eligible {CurlEligible}; {RemainingMilliseconds} ms " +
+         "remain.",
+         url,
+         browserEligible,
+         curlEligible,
+         budget.Remaining.TotalMilliseconds
       );
 
       if(httpResponse is { StatusCode: >= 200 and < 300 } &&
@@ -273,11 +423,29 @@ internal sealed class WebPageFetchOrchestrator
       if(browserEligible &&
          budget.Remaining >= WebPageFetchDefaults.MinBrowserStageBudget)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: starting browser stage; " +
+            "{RemainingMilliseconds} ms remain.",
+            url,
+            budget.Remaining.TotalMilliseconds
+         );
          var browserEvidence = await RunBrowserStageAsync(
             url,
             budget,
             token,
             ledger
+         );
+
+         _logger.LogInformation(
+            "Page fetch for {Url}: browser stage returned " +
+            "{AttemptCount} attempt(s), classification {Classification}, " +
+            "clean success {CleanSuccess}; {RemainingMilliseconds} ms " +
+            "remain.",
+            url,
+            browserEvidence.AttemptCount,
+            browserEvidence.Assessment?.Classification.ToString() ?? "none",
+            browserEvidence.CleanSuccess is not null,
+            budget.Remaining.TotalMilliseconds
          );
 
          if(browserEvidence.Assessment is not null &&
@@ -286,12 +454,24 @@ internal sealed class WebPageFetchOrchestrator
                browserEvidence.Candidate
             ))
          {
+            _logger.LogInformation(
+               "Page fetch for {Url}: browser candidate is now the best " +
+               "available candidate with {TextCharacters} text " +
+               "characters.",
+               url,
+               browserEvidence.Candidate?.TextContent.Length ?? 0
+            );
             bestCandidate = browserEvidence.Candidate;
             bestAssessment = browserEvidence.Assessment;
          }
 
          if(browserEvidence.CleanSuccess is not null)
          {
+            _logger.LogInformation(
+               "Page fetch for {Url}: browser stage produced usable " +
+               "content; returning it.",
+               url
+            );
             return browserEvidence.CleanSuccess;
          }
 
@@ -303,9 +483,23 @@ internal sealed class WebPageFetchOrchestrator
       }
       else if(browserEligible)
       {
+         var remainingMilliseconds = budget.Remaining.TotalMilliseconds;
+         var minimumMilliseconds =
+            WebPageFetchDefaults.MinBrowserStageBudget.TotalMilliseconds;
          ledger.Add(
             "browser",
-            "Skipped: not enough budget remains."
+            "Skipped: not enough budget remains (" +
+               $"{remainingMilliseconds:0} ms < " +
+               $"{minimumMilliseconds:0} " +
+               "ms minimum)."
+         );
+      }
+      else
+      {
+         ledger.Add(
+            "browser",
+            "Skipped: direct HTTP evidence did not require browser " +
+            "rendering."
          );
       }
 
@@ -313,9 +507,18 @@ internal sealed class WebPageFetchOrchestrator
       if(curlEligible &&
          budget.Remaining >= WebPageFetchDefaults.MinCurlStageBudget)
       {
+         var curlTimeoutSeconds = CurlBudgetSeconds(budget);
+         _logger.LogInformation(
+            "Page fetch for {Url}: starting curl fallback; " +
+            "timeout {TimeoutSeconds} s, {RemainingMilliseconds} ms " +
+            "remain.",
+            url,
+            curlTimeoutSeconds,
+            budget.Remaining.TotalMilliseconds
+         );
          var curlResponse = await _curlTransport(
             url,
-            CurlBudgetSeconds(budget),
+            curlTimeoutSeconds,
             token
          );
          ledger.Add("curl", DescribeResponse(curlResponse));
@@ -369,6 +572,11 @@ internal sealed class WebPageFetchOrchestrator
 
             if(curlEvidence.CleanSuccess is not null)
             {
+               _logger.LogInformation(
+                  "Page fetch for {Url}: curl fallback produced usable " +
+                  "HTML; returning it.",
+                  url
+               );
                return curlEvidence.CleanSuccess;
             }
 
@@ -381,6 +589,11 @@ internal sealed class WebPageFetchOrchestrator
                if(directNotFoundEvidence ||
                   httpResponse is { StatusCode: 404 or 410 })
                {
+                  _logger.LogInformation(
+                     "Page fetch for {Url}: curl confirmed not-found; " +
+                     "returning not-found result.",
+                     url
+                  );
                   return BuildNotFoundFailure(
                      url,
                      curlEvidence.Assessment
@@ -391,6 +604,11 @@ internal sealed class WebPageFetchOrchestrator
             if(httpResponse is { StatusCode: 404 or 410 } &&
                curlResponse is { StatusCode: 404 or 410 })
             {
+               _logger.LogInformation(
+                  "Page fetch for {Url}: curl confirmed the direct " +
+                  "not-found status; returning not-found result.",
+                  url
+               );
                ledger.Add(
                   "decision",
                   "Curl confirmed the direct HTTP not-found status."
@@ -406,6 +624,13 @@ internal sealed class WebPageFetchOrchestrator
                   curlEvidence.Candidate
                ))
             {
+               _logger.LogInformation(
+                  "Page fetch for {Url}: curl candidate is now the best " +
+                  "available candidate with {TextCharacters} text " +
+                  "characters.",
+                  url,
+                  curlEvidence.Candidate.TextContent.Length
+               );
                bestCandidate = curlEvidence.Candidate;
                bestAssessment = curlEvidence.Assessment;
             }
@@ -413,9 +638,23 @@ internal sealed class WebPageFetchOrchestrator
       }
       else if(curlEligible)
       {
+         var remainingMilliseconds = budget.Remaining.TotalMilliseconds;
+         var minimumMilliseconds =
+            WebPageFetchDefaults.MinCurlStageBudget.TotalMilliseconds;
          ledger.Add(
             "curl",
-            "Skipped: not enough budget remains."
+            "Skipped: not enough budget remains (" +
+               $"{remainingMilliseconds:0} ms < " +
+               $"{minimumMilliseconds:0} " +
+               "ms minimum)."
+         );
+      }
+      else
+      {
+         ledger.Add(
+            "curl",
+            "Skipped: direct HTTP evidence did not require curl " +
+            "fallback."
          );
       }
 
@@ -537,18 +776,47 @@ internal sealed class WebPageFetchOrchestrator
       if(httpResponse?.ErrorKind ==
          WebPageFetchErrorKind.ResponseTooLarge)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: stopping PDF handling because the " +
+            "response was too large.",
+            url
+         );
          return BuildResponseTooLargeFailure(url, stage);
       }
 
-      if(!allowCurlFallback ||
-         budget.Remaining < WebPageFetchDefaults.MinCurlStageBudget)
+      if(!allowCurlFallback)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: skipping curl PDF fallback because " +
+            "the current stage disallows it.",
+            url
+         );
          return BuildPdfFailure(url, pdfError);
       }
 
+      if(budget.Remaining < WebPageFetchDefaults.MinCurlStageBudget)
+      {
+         _logger.LogInformation(
+            "Page fetch for {Url}: skipping curl PDF fallback because " +
+            "{RemainingMilliseconds} ms remain, below the " +
+            "{MinimumMilliseconds} ms minimum.",
+            url,
+            budget.Remaining.TotalMilliseconds,
+            WebPageFetchDefaults.MinCurlStageBudget.TotalMilliseconds
+         );
+         return BuildPdfFailure(url, pdfError);
+      }
+
+      var curlTimeoutSeconds = CurlBudgetSeconds(budget);
+      _logger.LogInformation(
+         "Page fetch for {Url}: starting curl PDF fallback with " +
+         "timeout {TimeoutSeconds} s.",
+         url,
+         curlTimeoutSeconds
+      );
       var curlResponse = await _curlTransport(
          url,
-         CurlBudgetSeconds(budget),
+         curlTimeoutSeconds,
          token
       );
       ledger.Add("curl", DescribeResponse(curlResponse));
@@ -556,6 +824,11 @@ internal sealed class WebPageFetchOrchestrator
       if(curlResponse.ErrorKind ==
          WebPageFetchErrorKind.ResponseTooLarge)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: stopping curl PDF fallback because " +
+            "the response was too large.",
+            url
+         );
          return BuildResponseTooLargeFailure(url, "curl");
       }
 
@@ -568,6 +841,11 @@ internal sealed class WebPageFetchOrchestrator
          );
          if(extraction.Success)
          {
+            _logger.LogInformation(
+               "Page fetch for {Url}: curl PDF text extraction " +
+               "succeeded.",
+               url
+            );
             ledger.Add("curl", "PDF text extracted successfully.");
             return BuildPdfSuccess(
                curlResponse.EffectiveUrl,
@@ -624,6 +902,11 @@ internal sealed class WebPageFetchOrchestrator
    )
    {
       var strategies = _browserStrategyPolicy.GetStrategies(url);
+      _logger.LogInformation(
+         "Page fetch for {Url}: browser strategy order is {Strategies}.",
+         url,
+         string.Join(", ", strategies.Select(strategy => strategy.Id))
+      );
 
       WebPageBrowserOutcome outcome;
       try
@@ -637,6 +920,12 @@ internal sealed class WebPageFetchOrchestrator
       }
       catch(Exception exception)
       {
+         _logger.LogWarning(
+            "Page fetch for {Url}: browser stage failed; continuing " +
+            "without browser content. Reason: {Reason}.",
+            url,
+            WebPageFetchLogging.SummarizeException(exception)
+         );
          ledger.Add(
             "browser",
             "Stage failed: " +
@@ -666,6 +955,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(outcome.Render is not { } render)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: browser stage produced no render; " +
+            "continuing with other evidence.",
+            url
+         );
          return BrowserStageEvidence.None;
       }
 
@@ -678,6 +972,11 @@ internal sealed class WebPageFetchOrchestrator
             out _
          ))
          {
+            _logger.LogInformation(
+               "Page fetch for {Url}: browser effective URL failed " +
+               "URL policy validation; discarding browser result.",
+               url
+            );
             ledger.Add(
                "browser",
                "Final browser URL was rejected by the URL policy."
@@ -715,10 +1014,18 @@ internal sealed class WebPageFetchOrchestrator
             );
          }
 
+         _logger.LogInformation(
+            "Page fetch for {Url}: browser content is usable with " +
+            "{TextCharacters} text characters.",
+            url,
+            candidate.TextContent.Length
+         );
+
          return new BrowserStageEvidence(
             candidate,
             assessment,
-            BuildSuccess(candidate, "playwright", render)
+            BuildSuccess(candidate, "playwright", render),
+            outcome.Attempts.Count
          );
       }
 
@@ -726,7 +1033,19 @@ internal sealed class WebPageFetchOrchestrator
          candidate.TextContent.Length > 0 &&
          cleanStatus)
       {
-         return new BrowserStageEvidence(candidate, assessment, null);
+         _logger.LogInformation(
+            "Page fetch for {Url}: browser content is partial with " +
+            "{TextCharacters} text characters; retaining it as a " +
+            "fallback candidate.",
+            url,
+            candidate.TextContent.Length
+         );
+         return new BrowserStageEvidence(
+            candidate,
+            assessment,
+            null,
+            outcome.Attempts.Count
+         );
       }
 
       if(assessment.Classification ==
@@ -734,17 +1053,29 @@ internal sealed class WebPageFetchOrchestrator
       {
          // Blocked evidence is kept for the final failure message;
          // the blocked body itself is never returned as content.
+         _logger.LogInformation(
+            "Page fetch for {Url}: browser content was classified as " +
+            "blocked; retaining only block evidence.",
+            url
+         );
          return new BrowserStageEvidence(
             null,
             assessment,
-            null
+            null,
+            outcome.Attempts.Count
          );
       }
 
+      _logger.LogInformation(
+         "Page fetch for {Url}: browser content was not usable " +
+         "({Classification}); discarding it.",
+         url,
+         assessment.Classification
+      );
       return BrowserStageEvidence.None;
    }
 
-   private static WebPageContent? SelectFinalResult(
+   private WebPageContent? SelectFinalResult(
       Uri url,
       WebPageHttpResponse? httpResponse,
       WebPageHtmlCandidate? bestCandidate,
@@ -758,6 +1089,13 @@ internal sealed class WebPageFetchOrchestrator
       if(bestCandidate is { TextContent.Length: > 0 } candidate &&
          bestAssessment is { IsSuccess: false } assessment)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: returning the best partial candidate; " +
+            "reason {Reason}, {TextCharacters} text characters.",
+            url,
+            assessment.Reason ?? "content was not classified as usable",
+            candidate.TextContent.Length
+         );
          var warning = $"Content may be incomplete: {assessment.Reason}.";
          var content = BuildSuccess(candidate, "partial", warning: warning);
 
@@ -769,6 +1107,11 @@ internal sealed class WebPageFetchOrchestrator
       if(bestAssessment?.Classification ==
          WebPageContentClassification.NotFound)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: final decision is not-found based on " +
+            "the best content assessment.",
+            url
+         );
          return WebPageContentFetchSupport.BuildFailureContent(
             url,
             null,
@@ -781,6 +1124,12 @@ internal sealed class WebPageFetchOrchestrator
       if(blockedAssessment is { } blocked &&
          blockedAssessment.BlockSignature is { } marker)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: final decision is blocked; marker " +
+            "{BlockMarker}.",
+            url,
+            marker
+         );
          return WebPageContentFetchSupport.BuildFailureContent(
             url,
             null,
@@ -793,6 +1142,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(blockedAssessment is not null)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: final decision is blocked; no block " +
+            "marker was available.",
+            url
+         );
          return WebPageContentFetchSupport.BuildFailureContent(
             url,
             null,
@@ -804,6 +1158,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(directNotFoundEvidence)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: final decision is an unconfirmed " +
+            "direct not-found result.",
+            url
+         );
          return WebPageContentFetchSupport.BuildFailureContent(
             url,
             null,
@@ -816,6 +1175,11 @@ internal sealed class WebPageFetchOrchestrator
 
       if(budget.Remaining <= TimeSpan.Zero)
       {
+         _logger.LogInformation(
+            "Page fetch for {Url}: final decision is timeout because no " +
+            "usable content was retrieved before the budget expired.",
+            url
+         );
          return WebPageContentFetchSupport.BuildFailureContent(
             url,
             null,
@@ -825,6 +1189,11 @@ internal sealed class WebPageFetchOrchestrator
          );
       }
 
+      _logger.LogInformation(
+         "Page fetch for {Url}: final decision is no usable content; " +
+         "all eligible stages were exhausted.",
+         url
+      );
       return WebPageContentFetchSupport.BuildFailureContent(
          url,
          null,
@@ -1187,7 +1556,8 @@ internal sealed class WebPageFetchOrchestrator
    private sealed record BrowserStageEvidence(
       WebPageHtmlCandidate? Candidate,
       WebPageAssessment? Assessment,
-      WebPageContent? CleanSuccess
+      WebPageContent? CleanSuccess,
+      int AttemptCount = 0
    )
    {
       internal static readonly BrowserStageEvidence None = new(
