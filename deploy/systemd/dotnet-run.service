@@ -6,13 +6,13 @@ Wants=network.target
 [Service]
 Type=simple
 User=daniel
-WorkingDirectory=/home/daniel/sesport/src/SESport.Web
+WorkingDirectory=/home/daniel/src/sesport/src/SESport.Web
 
 Environment=HOME=/home/daniel
 Environment=DOTNET_CLI_HOME=/home/daniel
 Environment=DOTNET_NOLOGO=true
 Environment=ASPNETCORE_ENVIRONMENT=Development
-EnvironmentFile=/home/daniel/sesport/.env
+EnvironmentFile=/home/daniel/src/sesport/.env
 
 ExecStart=/usr/bin/dotnet \
    run \

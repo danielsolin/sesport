@@ -8,7 +8,7 @@ Type=simple
 User=daniel
 Group=daniel
 Environment=HOME=/home/daniel
-WorkingDirectory=/home/daniel/sesport
+WorkingDirectory=/home/daniel/src/sesport
 ExecStart=/usr/bin/unison sesport
 Restart=always
 RestartSec=30

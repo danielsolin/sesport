@@ -67,8 +67,9 @@ docker compose up -d postgres
   the source tree for changes.
 - Keep a host-local `.env` in the repository root on each machine that runs
   a systemd service. The file is intentionally ignored by git, but
-  `sesport.service`, `sesport-dev.service`, and related service units load it
-  through `EnvironmentFile=/home/daniel/sesport/.env`.
+  local AI-run service units load it through
+  `EnvironmentFile=/home/daniel/src/sesport/.env`. VPS units use the remote
+  checkout path `/home/daniel/sesport/.env`.
 - The SearXNG override is mounted directly from the repo by `compose.yaml`
 - SearXNG is intended to run locally on the machine that runs AI jobs.
   It is not exposed through the public `*.sesport.se` sites.

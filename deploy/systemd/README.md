@@ -4,11 +4,13 @@ Copy only the units that belong on the target machine to
 `/etc/systemd/system/` with `sudo. Then reload systemd and enable the
 services or timer you want active.
 
-The SESport web services load `/home/daniel/sesport/.env` through
+The local SESport web services load `/home/daniel/src/sesport/.env` through
 `EnvironmentFile`. Keep the single active PostgreSQL connection there.
+The production `sesport.service` template retains its target host's deployment
+paths and is not a local checkout unit.
 
 The `dotnet-run.service` unit runs the local web app from
-`/home/daniel/sesport/src/SESport.Web` with the Release build configuration
+`/home/daniel/src/sesport/src/SESport.Web` with the Release build configuration
 and the Development runtime environment. It builds on start with:
 
 ```text
@@ -18,17 +20,17 @@ dotnet run --configuration Release
 It does not enable Browser Refresh or Hot Reload.
 
 The separate `sesport-dev.service` unit runs
-`/home/daniel/sesport/src/SESport.Web` with `dotnet watch`. Changes to source
-files and static assets are therefore available at `dev.sesport.se` without a
-publish step. Caddy proxies that hostname to port 5001.
+the VPS checkout at `/home/daniel/sesport/src/SESport.Web` with `dotnet watch`.
+Source and static-file changes are therefore available at `dev.sesport.se`
+without a publish step. Caddy proxies that hostname to port 5001.
 
 The `llama-server.service` unit invokes the locally configured LLM startup
 command. Keep the service's startup command stable and update its model
 configuration when switching the active model.
 
-The `sesport-unison.service` unit is a user service for the local two-way
-sync client. The remote host only needs a matching Unison binary and SSH
-access; do not run a second Unison service on the remote host.
+The `sesport-unison.service` unit is a system service for the local two-way
+sync client and runs as `daniel`. The remote host only needs a matching
+Unison binary and SSH access; do not run a second Unison service there.
 
 The `sesport-mcp.service` unit runs `SESport.MCP` directly from
 `src/SESport.MCP` with `dotnet run --configuration Release`. It builds on
@@ -100,18 +102,16 @@ Install the same Unison version on the local sync client and the remote host.
 The profile in `deploy/unison/sesport.prf` is intended for the local client
 and synchronizes only `bin/`, `data/`, and `jobs/`.
 
-Install the profile and user service on the local client:
+Install the profile and system service on the local client:
 
 ```bash
 mkdir -p /home/daniel/.unison
 cp deploy/unison/sesport.prf /home/daniel/.unison/sesport.prf
-mkdir -p /home/daniel/.config/systemd/user
-cp deploy/systemd/sesport-unison.service \
-   /home/daniel/.config/systemd/user/sesport-unison.service
 unison sesport
-systemctl --user daemon-reload
-systemctl --user enable --now sesport-unison.service
-sudo loginctl enable-linger daniel
+sudo cp deploy/systemd/sesport-unison.service \
+   /etc/systemd/system/sesport-unison.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now sesport-unison.service
 ```
 
 The first `unison sesport` run must be manual if the replicas have not been
@@ -122,8 +122,8 @@ resolution.
 Inspect the service with:
 
 ```bash
-systemctl --user status sesport-unison.service
-journalctl --user -u sesport-unison.service -f
+sudo systemctl status sesport-unison.service
+sudo journalctl -u sesport-unison.service -f
 ```
 
 Do not enable `searxng.service` on a web or database host unless that
