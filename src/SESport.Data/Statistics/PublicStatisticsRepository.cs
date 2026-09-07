@@ -12,11 +12,15 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
       DateOnly month,
       int leaderRankLimit,
       CancellationToken cancellationToken,
-      string? sportId = null
+      string? sportId = null,
+      DateOnly? lastIncludedDate = null
    )
    {
       var monthStart = new DateOnly(month.Year, month.Month, 1);
-      var nextMonth = monthStart.AddMonths(1);
+      var monthEndExclusive = GetMonthEndExclusive(
+         monthStart,
+         lastIncludedDate
+      );
       sportId = string.IsNullOrWhiteSpace(sportId)
          ? null
          : sportId.Trim();
@@ -62,7 +66,7 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
                and person.entity_type_id =
                   '{{TrackedEntityTypeIds.Person}}'
             where activity.display_date >= @month_start
-               and activity.display_date < @next_month
+               and activity.display_date < @month_end
                {{sportFilter}}
          ),
          person_counts as (
@@ -119,7 +123,7 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("month_start", monthStart);
-      command.Parameters.AddWithValue("next_month", nextMonth);
+      command.Parameters.AddWithValue("month_end", monthEndExclusive);
       command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
       command.Parameters.AddWithValue(
          "cutoff",
@@ -160,11 +164,15 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
    public async Task<PublicStatisticsSportSnapshot>
       GetMonthlySportOptionsAsync(
          DateOnly month,
-         CancellationToken cancellationToken
+         CancellationToken cancellationToken,
+         DateOnly? lastIncludedDate = null
       )
    {
       var monthStart = new DateOnly(month.Year, month.Month, 1);
-      var nextMonth = monthStart.AddMonths(1);
+      var monthEndExclusive = GetMonthEndExclusive(
+         monthStart,
+         lastIncludedDate
+      );
       var sql = $$"""
          with public_activities as (
             select
@@ -202,7 +210,7 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
                and person.entity_type_id =
                   '{{TrackedEntityTypeIds.Person}}'
             where activity.display_date >= @month_start
-               and activity.display_date < @next_month
+               and activity.display_date < @month_end
          ),
          total_participants as (
             select count(distinct person_id)::int as participant_count
@@ -232,7 +240,7 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("month_start", monthStart);
-      command.Parameters.AddWithValue("next_month", nextMonth);
+      command.Parameters.AddWithValue("month_end", monthEndExclusive);
       command.Parameters.AddWithValue("time_zone", SportDay.TimeZoneId);
       command.Parameters.AddWithValue(
          "cutoff",
@@ -259,5 +267,21 @@ public sealed class PublicStatisticsRepository(NpgsqlDataSource dataSource)
       }
 
       return new PublicStatisticsSportSnapshot(participantCount, options);
+   }
+
+   internal static DateOnly GetMonthEndExclusive(
+      DateOnly monthStart,
+      DateOnly? lastIncludedDate
+   )
+   {
+      var nextMonth = monthStart.AddMonths(1);
+      if(lastIncludedDate is null || lastIncludedDate.Value >= nextMonth)
+      {
+         return nextMonth;
+      }
+
+      return lastIncludedDate.Value < monthStart
+         ? monthStart
+         : lastIncludedDate.Value.AddDays(1);
    }
 }

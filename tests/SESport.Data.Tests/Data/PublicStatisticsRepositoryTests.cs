@@ -3,6 +3,24 @@ namespace SESport.Core.Tests.Data;
 
 public sealed class PublicStatisticsRepositoryTests
 {
+   [Theory]
+   [InlineData("2026-09-01", "2026-09-07", "2026-09-08")]
+   [InlineData("2026-08-01", "2026-09-07", "2026-09-01")]
+   [InlineData("2026-10-01", "2026-09-07", "2026-10-01")]
+   public void GetMonthEndExclusiveStopsAtTheLastIncludedDate(
+      string monthStartValue,
+      string lastIncludedDateValue,
+      string expectedValue
+   )
+   {
+      var result = PublicStatisticsRepository.GetMonthEndExclusive(
+         DateOnly.Parse(monthStartValue),
+         DateOnly.Parse(lastIncludedDateValue)
+      );
+
+      Assert.Equal(DateOnly.Parse(expectedValue), result);
+   }
+
    [Fact]
    public async Task GetMonthlyAsyncHandlesAnEmptyDistantMonth()
    {

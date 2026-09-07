@@ -94,7 +94,8 @@ public sealed class StatisticsModel(
          var sportSnapshot =
             await repository.GetMonthlySportOptionsAsync(
                SelectedMonth,
-               cancellationToken
+               cancellationToken,
+               currentSportDate
             );
          TotalParticipantCount = sportSnapshot.ParticipantCount;
          SportOptions = sportSnapshot.Options;
@@ -108,7 +109,8 @@ public sealed class StatisticsModel(
             SelectedMonth,
             options.TopParticipantLimit,
             cancellationToken,
-            Sport
+            Sport,
+            currentSportDate
          );
       }
       catch(Exception exception)
