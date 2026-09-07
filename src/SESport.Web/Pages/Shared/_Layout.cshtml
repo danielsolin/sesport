@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.WebUtilities
 @{
    var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
    var pageTitle = (ViewData["Title"] as string ?? string.Empty).Trim();
@@ -41,6 +42,9 @@
    );
    var isPublicIndex = requestPath == "/" ||
       requestPath.Equals("/Index", StringComparison.OrdinalIgnoreCase);
+   var publicSportRoute = PublicSportRoutes.FindByPath(requestPath);
+   var isPublicSportPage = publicSportRoute is not null;
+   var isPublicSchedule = isPublicIndex || isPublicSportPage;
    var isPublicWatchedIndex = requestPath.Equals(
       PublicRoutePaths.Watched,
       StringComparison.OrdinalIgnoreCase
@@ -63,6 +67,13 @@
    );
    var publicScheduleHref = isPublicIndex
       ? PublicRoutePaths.Home + Context.Request.QueryString.Value
+      : isPublicSportPage
+         ? QueryHelpers.AddQueryString(
+            PublicRoutePaths.Home +
+               (Context.Request.QueryString.Value ?? string.Empty),
+            RouteKeys.Sport,
+            publicSportRoute!.SportId
+         )
       : PublicFilterPreferenceStore.ReadScheduleUrl(
          Context.Request
       ) ?? PublicRoutePaths.Home;
@@ -112,7 +123,7 @@
    var publicStatisticsClass = isPublicStatistics
       ? "public-member-link is-active"
       : "public-member-link";
-   var publicScheduleClass = isPublicIndex
+   var publicScheduleClass = isPublicSchedule
       ? "public-member-link is-active"
       : "public-member-link";
    var publicWatchedIndexClass = isPublicWatchedIndex
@@ -216,7 +227,7 @@
                   <a class="@publicScheduleClass"
                      href="@publicScheduleHref"
                      aria-current="@(
-                        isPublicIndex ? "page" : null
+                        isPublicSchedule ? "page" : null
                      )">
                      TABLÅ
                   </a>
