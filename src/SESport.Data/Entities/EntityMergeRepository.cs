@@ -157,6 +157,13 @@ public sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
          targetEntityId,
          cancellationToken
       );
+      await MoveOwnedRecordsAsync(
+         connection,
+         transaction,
+         sourceEntityId,
+         targetEntityId,
+         cancellationToken
+      );
       var duplicateEntityLinksDeleted =
          await DeleteDuplicateEntityLinksAsync(
             connection,
@@ -201,6 +208,56 @@ public sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
          duplicateActivityLinksDeleted,
          duplicateEntityLinksDeleted,
          entityLinksMoved
+      );
+   }
+
+   private static Task<int> MoveOwnedRecordsAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid sourceEntityId,
+      Guid targetEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = """
+         update activity_entity_links
+         set represented_entity_id = @target_entity_id
+         where represented_entity_id = @source_entity_id;
+
+         update facts
+         set entity_id = @target_entity_id, updated_at = now()
+         where entity_id = @source_entity_id;
+
+         update activity_participant_ai_results
+         set entity_id = @target_entity_id, updated_at = now()
+         where entity_id = @source_entity_id;
+
+         insert into member_entity_watches (
+            member_id, entity_id, created_at
+         )
+         select member_id, @target_entity_id, created_at
+         from member_entity_watches
+         where entity_id = @source_entity_id
+         on conflict (member_id, entity_id) do nothing;
+
+         update entity_images
+         set entity_id = @target_entity_id,
+            is_primary = is_primary and not exists (
+               select 1 from entity_images target_image
+               where target_image.entity_id = @target_entity_id
+                  and target_image.is_primary
+            ),
+            updated_at = now()
+         where entity_id = @source_entity_id;
+         """;
+
+      return ExecuteMergeCommandAsync(
+         connection,
+         transaction,
+         sql,
+         sourceEntityId,
+         targetEntityId,
+         cancellationToken
       );
    }
 
@@ -483,6 +540,7 @@ public sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
          """
          delete from entity_to_entity_links
          where source_entity_id = target_entity_id
+            and source_entity_id = @target_entity_id
          """,
          sourceEntityId,
          targetEntityId,

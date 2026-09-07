@@ -66,6 +66,7 @@ public sealed class MemberRepository(NpgsqlDataSource dataSource)
       const string cleanupSql = """
          delete from member_login_tokens
          where member_id = @member_id
+            and requested_at < @retention_start
             and (
                consumed_at is not null
                or expires_at <= @requested_at
@@ -76,6 +77,10 @@ public sealed class MemberRepository(NpgsqlDataSource dataSource)
       cleanupCommand.CommandText = cleanupSql;
       cleanupCommand.Parameters.AddWithValue("member_id", memberId);
       cleanupCommand.Parameters.AddWithValue("requested_at", requestedAt);
+      cleanupCommand.Parameters.AddWithValue(
+         "retention_start",
+         windowStart < cooldownThreshold ? windowStart : cooldownThreshold
+      );
       await cleanupCommand.ExecuteNonQueryAsync(cancellationToken);
 
       const string rateLimitSql = """

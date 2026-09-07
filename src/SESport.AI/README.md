@@ -112,7 +112,6 @@ generic client adapters and the Llama implementation.
 
 Examples:
 
-- `ResponsesRequestBuilder` builds an OpenAI Responses-style request.
 - `ResponsesRequestFormat` applies JSON-object and JSON-schema output modes.
 - `ResponsesOutputValidator` extracts and validates structured output.
 - `AiRequestJsonSerializer` serializes captured provider request payloads.

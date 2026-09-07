@@ -6,7 +6,6 @@
 /jobs/
 /bin/
 /tests/SESport.BroadcastImporter.Tests/
-/tests/SESport.AI.Tests/AI/SesportWebToolsServerTests.cs
 **/bin/
 **/obj/
 *.swp

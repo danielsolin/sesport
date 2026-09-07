@@ -33,15 +33,18 @@ public static class SourceDisplay
    )
    {
       if(
-         string.IsNullOrWhiteSpace(sourceUrl) ||
-         !Uri.TryCreate(
+         !SourceUrlNormalizer.TryNormalize(
             sourceUrl,
+            out var normalizedUrl
+         ) ||
+         !Uri.TryCreate(
+            normalizedUrl,
             UriKind.Absolute,
             out var parsedUrl
          )
       )
       {
-         return true;
+         return false;
       }
 
       var sourceHost = parsedUrl.Host.TrimEnd('.');

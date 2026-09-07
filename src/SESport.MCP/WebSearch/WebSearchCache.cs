@@ -5,15 +5,20 @@ public sealed class WebSearchCache
    private readonly Lock stateLock = new();
    private readonly Dictionary<WebSearchCacheKey, CacheEntry> entries = [];
    private readonly TimeProvider timeProvider;
+   private readonly int maximumEntryCount;
 
    public WebSearchCache()
       : this(null)
    {
    }
 
-   internal WebSearchCache(TimeProvider? timeProvider)
+   internal WebSearchCache(
+      TimeProvider? timeProvider,
+      int maximumEntryCount = WebSearchCacheDefaults.MaximumEntryCount
+   )
    {
       this.timeProvider = timeProvider ?? TimeProvider.System;
+      this.maximumEntryCount = maximumEntryCount;
    }
 
    public bool TryGet(
@@ -57,9 +62,29 @@ public sealed class WebSearchCache
 
       lock(stateLock)
       {
+         var now = timeProvider.GetUtcNow();
+         foreach(var pair in entries.ToArray())
+         {
+            if(pair.Value.ExpiresAt <= now)
+            {
+               entries.Remove(pair.Key);
+            }
+         }
+
+         if(maximumEntryCount <= 0)
+         {
+            return;
+         }
+
+         if(!entries.ContainsKey(key) && entries.Count >= maximumEntryCount)
+         {
+            var oldest = entries.MinBy(pair => pair.Value.ExpiresAt);
+            entries.Remove(oldest.Key);
+         }
+
          entries[key] = new CacheEntry(
             response,
-            timeProvider.GetUtcNow() + WebSearchCacheDefaults.DefaultTtl
+            now + WebSearchCacheDefaults.DefaultTtl
          );
       }
    }

@@ -1184,12 +1184,18 @@ public sealed class AdminRepositoryTests
       }
    }
 
-   [Fact]
-   public async Task MergeEntityMovesReferencesAndDeletesSource()
+   [Theory]
+   [InlineData(false)]
+   [InlineData(true)]
+   public async Task MergeEntityMovesReferencesAndDeletesSource(
+      bool targetHasImage
+   )
    {
       var sourceId = Guid.NewGuid();
       var targetId = Guid.NewGuid();
       var linkedId = Guid.NewGuid();
+      var memberId = Guid.NewGuid();
+      var otherMemberId = Guid.NewGuid();
       var sourceActivityId = Guid.NewGuid();
       var targetActivityId = Guid.NewGuid();
 
@@ -1247,11 +1253,82 @@ public sealed class AdminRepositoryTests
 
       try
       {
+         await InsertEntityImageAsync(dataSource, sourceId);
+         if(targetHasImage)
+         {
+            await InsertEntityImageAsync(dataSource, targetId);
+         }
+
+         const string ownedRecordsSql = """
+            insert into members (id, email, email_normalized)
+            values
+               (@member, @member::text, @member::text),
+               (@other, @other::text, @other::text);
+            insert into member_entity_watches (member_id, entity_id)
+            values (@member, @source), (@member, @target), (@other, @source);
+            insert into facts (id, entity_id, fact_text)
+            values (@source, @source, 'Merge fact');
+            insert into activity_participant_ai_results (
+               id, activity_id, entity_id, job_id,
+               field_key, value_json, sort_order
+            )
+            select @source, @activity, @source, id, 'test', '{}', 0
+            from ai_jobs order by id limit 1;
+            update activity_entity_links
+            set represented_entity_id = @source
+            where activity_id = @activity;
+            """;
+         await using(var setup = dataSource.CreateCommand(ownedRecordsSql))
+         {
+            setup.Parameters.AddWithValue("member", memberId);
+            setup.Parameters.AddWithValue("other", otherMemberId);
+            setup.Parameters.AddWithValue("source", sourceId);
+            setup.Parameters.AddWithValue("target", targetId);
+            setup.Parameters.AddWithValue("activity", sourceActivityId);
+            await setup.ExecuteNonQueryAsync();
+         }
+
          var result = await repository.MergeEntityAsync(
             sourceId,
             targetId,
             CancellationToken.None
          );
+
+         const string retainedRecordsSql = """
+            select
+               (select count(*) from member_entity_watches
+                  where entity_id = @target
+                     and member_id in (@member, @other)),
+               (select count(*) from facts
+                  where id = @source and entity_id = @target),
+               (select count(*) from activity_participant_ai_results
+                  where id = @source and entity_id = @target),
+               (select count(*) from entity_images
+                  where entity_id = @target),
+               (select count(*) from entity_images
+                  where entity_id = @target and is_primary),
+               (select count(*) from activity_entity_links
+                  where activity_id = @activity
+                     and represented_entity_id = @target)
+            """;
+         await using(var verify = dataSource.CreateCommand(
+            retainedRecordsSql
+         ))
+         {
+            verify.Parameters.AddWithValue("member", memberId);
+            verify.Parameters.AddWithValue("other", otherMemberId);
+            verify.Parameters.AddWithValue("source", sourceId);
+            verify.Parameters.AddWithValue("target", targetId);
+            verify.Parameters.AddWithValue("activity", sourceActivityId);
+            await using var reader = await verify.ExecuteReaderAsync();
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(2L, reader.GetInt64(0));
+            Assert.Equal(1L, reader.GetInt64(1));
+            Assert.Equal(1L, reader.GetInt64(2));
+            Assert.Equal(targetHasImage ? 2L : 1L, reader.GetInt64(3));
+            Assert.Equal(1L, reader.GetInt64(4));
+            Assert.Equal(1L, reader.GetInt64(5));
+         }
 
          Assert.Equal(1, result.ActivityEntityLinksMoved);
          Assert.Equal(1, result.DuplicateEntityLinksDeleted);
@@ -1284,6 +1361,14 @@ public sealed class AdminRepositoryTests
       }
       finally
       {
+         await using(var cleanup = dataSource.CreateCommand(
+            "delete from members where id in (@member, @other)"
+         ))
+         {
+            cleanup.Parameters.AddWithValue("member", memberId);
+            cleanup.Parameters.AddWithValue("other", otherMemberId);
+            await cleanup.ExecuteNonQueryAsync();
+         }
          await sourceRepository.DeleteByCorrelationAsync(
             SourceCorrelationTypes.Entity,
             sourceId.ToString(),

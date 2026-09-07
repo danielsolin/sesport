@@ -8,7 +8,7 @@ public sealed class MemberPushRepositoryTests
    {
       await using var dataSource = CreateDataSource();
       var repository = new MemberPushRepository(dataSource);
-      var now = DateTimeOffset.UtcNow;
+      var now = new DateTimeOffset(2199, 12, 1, 0, 0, 0, TimeSpan.Zero);
 
       var notifications = await repository.ClaimDueNotificationsAsync(
          now,
@@ -28,7 +28,7 @@ public sealed class MemberPushRepositoryTests
       var personId = Guid.NewGuid();
       var activityId = Guid.NewGuid();
       var subscriptionId = Guid.NewGuid();
-      var now = DateTimeOffset.UtcNow;
+      var now = new DateTimeOffset(2199, 12, 1, 0, 0, 0, TimeSpan.Zero);
       var startsAt = now.AddMinutes(5);
 
       await using var dataSource = CreateDataSource();

@@ -1,3 +1,5 @@
+using System.Data.Common;
+
 namespace SESport.Core.Configuration;
 
 public static class PostgresConnectionStrings
@@ -26,10 +28,15 @@ public static class PostgresConnectionStrings
          Environment.GetEnvironmentVariable("SESPORT_POSTGRES_PASSWORD") ??
          DefaultPassword;
 
-      return "Host=" + host +
-         ";Port=" + port +
-         ";Database=" + database +
-         ";Username=" + user +
-         ";Password=" + password;
+      var builder = new DbConnectionStringBuilder
+      {
+         ["Host"] = host,
+         ["Port"] = port,
+         ["Database"] = database,
+         ["Username"] = user,
+         ["Password"] = password
+      };
+
+      return builder.ConnectionString;
    }
 }

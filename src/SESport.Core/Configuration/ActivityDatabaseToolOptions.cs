@@ -1,4 +1,4 @@
-namespace SESport.MCP.Models;
+namespace SESport.Core.Configuration;
 
 public sealed class ActivityDatabaseToolOptions
 {

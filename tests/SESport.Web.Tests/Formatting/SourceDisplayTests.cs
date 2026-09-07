@@ -109,6 +109,11 @@ public sealed class SourceDisplayTests
    [InlineData("https://subdomain.blocked.example/event", false)]
    [InlineData("https://blocked.example.other/event", true)]
    [InlineData("https://allowed.example/event", true)]
+   [InlineData("javascript:alert(1)", false)]
+   [InlineData("data:text/html,test", false)]
+   [InlineData("file:///etc/hosts", false)]
+   [InlineData("/relative-path", false)]
+   [InlineData("", false)]
    public void IsPubliclyVisibleSourceUrlMatchesConfiguredHost(
       string sourceUrl,
       bool expected
