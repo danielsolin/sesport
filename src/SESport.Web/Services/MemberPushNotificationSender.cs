@@ -69,7 +69,7 @@ public sealed class MemberPushNotificationSender(
             var message = new PushMessage(payload)
             {
                TimeToLive = timeToLive,
-               Urgency = PushMessageUrgency.Normal
+               Urgency = PushMessageUrgency.High
             };
 
             try
