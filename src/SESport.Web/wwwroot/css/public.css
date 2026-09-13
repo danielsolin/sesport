@@ -1445,6 +1445,14 @@
       animation: none;
       content: "...";
    }
+
+   .activity-entry-notification-target {
+      animation: none;
+      outline: 3px solid #d8ad00;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 7px rgba(255, 204, 0, 0.25),
+         0 1px 0 rgba(20, 22, 20, 0.02);
+   }
 }
 
 .activity-ended-badge {
@@ -1477,6 +1485,29 @@
    box-shadow: 0 1px 0 rgba(20, 22, 20, 0.02);
    font-size: 13px;
    line-height: 1.35;
+}
+
+.activity-entry-notification-target {
+   position: relative;
+   z-index: 1;
+   animation: activity-notification-target 3.6s ease-in-out;
+}
+
+@keyframes activity-notification-target {
+   0%,
+   100% {
+      outline: 0 solid transparent;
+      outline-offset: 0;
+      box-shadow: 0 1px 0 rgba(20, 22, 20, 0.02);
+   }
+
+   15%,
+   70% {
+      outline: 3px solid #ffcc00;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 7px rgba(255, 204, 0, 0.25),
+         0 1px 0 rgba(20, 22, 20, 0.02);
+   }
 }
 
 .activity-entry h2,
