@@ -13,6 +13,13 @@ public sealed record MemberPushOptions
    public int DefaultNotificationLeadTimeMinutes { get; init; } =
       MemberNotificationLeadTimes.NoNotificationsMinutes;
 
+   public const int DefaultNotificationGracePeriodMinutes = 30;
+
+   public int NotificationGracePeriodMinutes { get; init; } =
+      DefaultNotificationGracePeriodMinutes;
+
+   public const int MaximumNotificationTtlSeconds = 28 * 24 * 60 * 60;
+
    public const int DefaultMaxVisiblePersonNames = 3;
 
    public int MaxVisiblePersonNames { get; init; } =

@@ -39,12 +39,17 @@ public sealed class MemberPushNotificationSender(
       {
          Subject = options.Subject
       };
+      var notificationExpiry = GetNotificationExpiry(notification);
       var payload = CreatePayloadWithPersonLimit(
          notification,
          options.MaxVisiblePersonNames,
+         now,
+         notificationExpiry
+      );
+      var timeToLive = GetTimeToLiveSeconds(
+         notificationExpiry,
          now
       );
-      var timeToLive = GetTimeToLiveSeconds(notification, now);
       var successfulDeliveries = 0;
       var permanentFailures = 0;
       var transientFailures = 0;
@@ -126,14 +131,18 @@ public sealed class MemberPushNotificationSender(
       return CreatePayloadWithPersonLimit(
          notification,
          MemberPushOptions.DefaultMaxVisiblePersonNames,
-         DateTimeOffset.UtcNow
+         DateTimeOffset.UtcNow,
+         notification.StartsAt.AddMinutes(
+            MemberPushOptions.DefaultNotificationGracePeriodMinutes
+         )
       );
    }
 
    private static string CreatePayloadWithPersonLimit(
       MemberActivityPushNotification notification,
       int maxVisiblePersonNames,
-      DateTimeOffset sentAt
+      DateTimeOffset sentAt,
+      DateTimeOffset expiresAt
    )
    {
       var displayDate = ActivityDisplayDateResolver.Resolve(
@@ -169,7 +178,7 @@ public sealed class MemberPushNotificationSender(
             badge = "/icon-192.png",
             tag = activityAnchor,
             sentAt = sentAt.ToUniversalTime(),
-            expiresAt = notification.StartsAt.ToUniversalTime()
+            expiresAt = expiresAt.ToUniversalTime()
          },
          JsonOptions
       );
@@ -209,15 +218,28 @@ public sealed class MemberPushNotificationSender(
       );
    }
 
+   private DateTimeOffset GetNotificationExpiry(
+      MemberActivityPushNotification notification
+   )
+   {
+      return notification.StartsAt.AddMinutes(
+         Math.Max(0, options.NotificationGracePeriodMinutes)
+      );
+   }
+
    private static int GetTimeToLiveSeconds(
-      MemberActivityPushNotification notification,
+      DateTimeOffset expiresAt,
       DateTimeOffset now
    )
    {
       var seconds = (int)Math.Ceiling(
-         (notification.StartsAt - now).TotalSeconds
+         (expiresAt - now).TotalSeconds
       );
-      return Math.Clamp(seconds, 60, 3600);
+      return Math.Clamp(
+         seconds,
+         60,
+         MemberPushOptions.MaximumNotificationTtlSeconds
+      );
    }
 
    private void ValidateOptions()

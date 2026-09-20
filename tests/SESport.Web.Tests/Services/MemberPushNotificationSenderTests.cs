@@ -40,7 +40,7 @@ public sealed class MemberPushNotificationSenderTests
          document.RootElement.GetProperty("url").GetString()
       );
       Assert.Equal(
-         DateTimeOffset.Parse("2026-08-21T18:00:00Z"),
+         DateTimeOffset.Parse("2026-08-21T18:30:00Z"),
          document.RootElement.GetProperty("expiresAt")
             .GetDateTimeOffset()
       );
