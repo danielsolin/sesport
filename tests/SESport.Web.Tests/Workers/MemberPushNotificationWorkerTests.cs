@@ -2,6 +2,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 
 using SESport.Core.Configuration;
+using SESport.Web.Services;
 using SESport.Web.Workers;
 
 namespace SESport.Core.Tests.Workers;
@@ -53,6 +54,34 @@ public sealed class MemberPushNotificationWorkerTests
             options,
             environment
          )
+      );
+   }
+
+   [Fact]
+   public void NotificationIsRetriedWhenAnyDeliveryHasTransientFailure()
+   {
+      var result = new MemberPushDeliveryResult(
+         1,
+         0,
+         1
+      );
+
+      Assert.False(
+         MemberPushNotificationWorker.ShouldMarkNotificationSent(result)
+      );
+   }
+
+   [Fact]
+   public void NotificationIsCompletedWhenNoDeliveryHasTransientFailure()
+   {
+      var result = new MemberPushDeliveryResult(
+         1,
+         1,
+         0
+      );
+
+      Assert.True(
+         MemberPushNotificationWorker.ShouldMarkNotificationSent(result)
       );
    }
 

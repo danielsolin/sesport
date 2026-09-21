@@ -55,6 +55,13 @@ public sealed class MemberPushNotificationWorker(
       return environment.IsProduction() && options.WorkerEnabled;
    }
 
+   internal static bool ShouldMarkNotificationSent(
+      MemberPushDeliveryResult result
+   )
+   {
+      return !result.HasTransientFailure;
+   }
+
    private async Task SweepAsync(CancellationToken cancellationToken)
    {
       try
@@ -83,13 +90,33 @@ public sealed class MemberPushNotificationWorker(
                cancellationToken
             );
 
-            if(result.HasDelivery || !result.HasTransientFailure)
+            if(!ShouldMarkNotificationSent(result))
+            {
+               logger.LogWarning(
+                  "Member push notification for activity {ActivityId} " +
+                  "has {SuccessfulDeliveries} accepted deliveries and " +
+                  "{TransientFailures} transient failures; it will be retried.",
+                  notification.ActivityId,
+                  result.SuccessfulDeliveries,
+                  result.TransientFailures
+               );
+            }
+            else
             {
                await repository.MarkNotificationSentAsync(
                   notification.MemberId,
                   notification.ActivityId,
                   now,
                   cancellationToken
+               );
+
+               logger.LogInformation(
+                  "Member push notification for activity {ActivityId} " +
+                  "completed with {SuccessfulDeliveries} accepted deliveries " +
+                  "and {PermanentFailures} expired subscriptions removed.",
+                  notification.ActivityId,
+                  result.SuccessfulDeliveries,
+                  result.PermanentFailures
                );
             }
          }

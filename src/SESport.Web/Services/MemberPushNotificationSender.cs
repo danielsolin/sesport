@@ -110,8 +110,10 @@ public sealed class MemberPushNotificationSender(
                transientFailures++;
                logger.LogWarning(
                   exception,
-                  "Could not send push notification for activity {ActivityId}",
-                  notification.ActivityId
+                  "Could not send push notification for activity " +
+                  "{ActivityId} to subscription {SubscriptionId}.",
+                  notification.ActivityId,
+                  subscription.Id
                );
             }
          }
@@ -266,7 +268,5 @@ public sealed record MemberPushDeliveryResult(
    int TransientFailures
 )
 {
-   public bool HasDelivery => SuccessfulDeliveries > 0;
-
    public bool HasTransientFailure => TransientFailures > 0;
 }
