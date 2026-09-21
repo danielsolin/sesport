@@ -1004,6 +1004,13 @@ else
                         var watchPriorityBadgeClass =
                            "activity-participant-watch-" +
                            "priority-badge";
+                        var hasPrimaryCountryTeam = participants.Any(
+                           participant => string.Equals(
+                              participant.TeamCountryId,
+                              PrimaryCountry.Id,
+                              StringComparison.OrdinalIgnoreCase
+                           )
+                        );
                         var watchedParticipantBadgeClass =
                            "activity-participant-watched-badge";
                         <div class="activity-participant-table-wrap">
@@ -1091,6 +1098,13 @@ else
                                        participant.Birthdate,
                                        Model.CurrentDate
                                     );
+                                    var teamCountryFlagPath =
+                                       PublicParticipantTeamFlag.GetPath(
+                                          activity.IsTeamSport,
+                                          activity.ActivityType,
+                                          participant.TeamCountryId,
+                                          hasPrimaryCountryTeam
+                                       );
                                     var isWatchedParticipant =
                                        participant.IsWatchedByMember;
                                     var activeParticipantIndex =
@@ -1130,6 +1144,18 @@ else
                                        <td class="activity-participant-name
                                           activity-participant-col-name">
                                           @participant.Name
+                                          @if(teamCountryFlagPath is not null)
+                                          {
+                                             <img class=
+                                                "participant-country-flag"
+                                                src="@teamCountryFlagPath"
+                                                alt="@(
+                                                   participant.TeamCountryName
+                                                )"
+                                                title="@(
+                                                   participant.TeamCountryName
+                                                )" />
+                                          }
                                           @if(participant.WatchPriority == 0)
                                           {
                                              <span class=
