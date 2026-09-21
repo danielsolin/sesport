@@ -437,14 +437,10 @@ else if(Model.TimelineEntries.Count == 0 &&
       </a>
    </div>
 }
-else if(!Model.HasVisibleActivities)
+else if(!Model.HasVisibleActivities && Model.IsWatchedActivitiesView)
 {
    <div class="notice">
-      @(Model.IsWatchedActivitiesView
-         ? "Det finns inga publicerade framtida aktiviteter för dina " +
-            "bevakningar just nu."
-         : "Vi har inte lyckats identifiera några internationellt " +
-            "sportande svenskar på valt datum... :-(")
+      Det finns inga publicerade framtida aktiviteter för dina bevakningar just nu.
    </div>
 }
 else
@@ -1304,6 +1300,12 @@ else
                   </article>
                </div>
             </section>
+      }
+      @if(!Model.HasVisibleActivities && !Model.IsWatchedActivitiesView)
+      {
+         <p class="activity-empty-message">
+            Inga internationellt sportande svenskar på valt datum.
+         </p>
       }
       @if(Model.HasPublishedActivitiesTomorrow &&
          !Model.IsWatchedActivitiesView)
