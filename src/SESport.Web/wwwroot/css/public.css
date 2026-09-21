@@ -803,6 +803,11 @@
    width: 100%;
 }
 
+.index-heading-watched .index-heading-left {
+   justify-content: center;
+   width: 100%;
+}
+
 @media (min-width: 721px) {
    .index-heading:not(.index-heading-watched) .index-heading-left {
       width: calc(
@@ -813,7 +818,17 @@
       );
    }
 
-   .index-heading:not(.index-heading-watched) .date-select {
+   .index-heading-watched .index-heading-left {
+      width: calc(
+         100% - var(--activity-time-column) - var(--activity-time-gap)
+      );
+      margin-left: calc(
+         var(--activity-time-column) + var(--activity-time-gap)
+      );
+   }
+
+   .index-heading:not(.index-heading-watched) .date-select,
+   .index-heading-watched .index-watched-title {
       flex: 0 0 50%;
       width: 50%;
       min-width: 0;
@@ -908,10 +923,10 @@
    width: 100%;
 }
 
-.date-dropdown-toggle {
+.date-dropdown-toggle,
+.index-watched-title {
    display: flex;
    align-items: center;
-   justify-content: space-between;
    gap: 10px;
    width: 100%;
    min-height: 48px;
@@ -924,7 +939,33 @@
    font-size: 15px;
    font-weight: 800;
    line-height: 1.2;
+}
+
+.date-dropdown-toggle {
+   justify-content: space-between;
    cursor: pointer;
+}
+
+.index-watched-title {
+   position: relative;
+   justify-content: center;
+   gap: 0;
+   text-decoration: none;
+}
+
+.index-watched-title:hover {
+   background: #005f98;
+   color: #ffcc00;
+}
+
+.index-watched-title:focus-visible {
+   outline: 2px solid rgba(255, 204, 0, 0.35);
+   outline-offset: 2px;
+}
+
+.index-watched-title-arrow {
+   position: absolute;
+   right: 17px;
 }
 
 .date-dropdown-toggle:hover {

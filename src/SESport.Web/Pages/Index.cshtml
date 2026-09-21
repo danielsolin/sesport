@@ -122,6 +122,26 @@
 <section class="page-heading index-heading
    @(Model.IsWatchedActivitiesView ? "index-heading-watched" : "")">
    <div class="index-heading-left">
+      @if(Model.IsWatchedActivitiesView)
+      {
+         <a class="index-watched-title"
+            href="@PublicRoutePaths.Settings"
+            role="heading"
+            aria-level="1">
+            Bevakningar
+            @if(Model.TotalParticipantsCount is not null)
+            {
+               <span>&nbsp;(@Model.TotalParticipantsCount)</span>
+            }
+            <svg class="activity-tomorrow-link-arrow index-watched-title-arrow"
+                 viewBox="0 0 16 16"
+                 aria-hidden="true"
+                 focusable="false">
+               <path d="M3 8h10"></path>
+               <path d="m9 4 4 4-4 4"></path>
+            </svg>
+         </a>
+      }
       @if(!Model.IsWatchedActivitiesView)
       {
       <div class="date-select">
