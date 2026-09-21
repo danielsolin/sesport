@@ -754,6 +754,8 @@
 }
 
 .index-heading {
+   --activity-time-column: 160px;
+   --activity-time-gap: 14px;
    display: flex;
    align-items: flex-start;
    justify-content: flex-start;
@@ -790,6 +792,32 @@
    position: relative;
    width: 180px;
    min-width: 180px;
+}
+
+.index-heading .sport-select {
+   display: none;
+}
+
+.index-heading:not(.index-heading-watched) .index-heading-left {
+   justify-content: center;
+   width: 100%;
+}
+
+@media (min-width: 721px) {
+   .index-heading:not(.index-heading-watched) .index-heading-left {
+      width: calc(
+         100% - var(--activity-time-column) - var(--activity-time-gap)
+      );
+      margin-left: calc(
+         var(--activity-time-column) + var(--activity-time-gap)
+      );
+   }
+
+   .index-heading:not(.index-heading-watched) .date-select {
+      flex: 0 0 50%;
+      width: 50%;
+      min-width: 0;
+   }
 }
 
 .index-participants {
@@ -1123,6 +1151,7 @@
 .activity-tomorrow-link {
    display: inline-flex;
    align-items: center;
+   gap: 8px;
    padding: 7px 14px;
    border: 1px solid rgba(0, 106, 168, 0.45);
    border-radius: 999px;
@@ -1135,6 +1164,17 @@
    white-space: nowrap;
    box-shadow: 0 8px 18px rgba(20, 22, 20, 0.04);
    cursor: pointer;
+}
+
+.activity-tomorrow-link-arrow {
+   width: 14px;
+   height: 14px;
+   flex: 0 0 14px;
+   fill: none;
+   stroke: currentColor;
+   stroke-linecap: round;
+   stroke-linejoin: round;
+   stroke-width: 1.8;
 }
 
 .activity-past-toggle-button:hover,

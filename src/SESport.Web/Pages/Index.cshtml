@@ -1304,7 +1304,7 @@ else
       @if(!Model.HasVisibleActivities && !Model.IsWatchedActivitiesView)
       {
          <p class="activity-empty-message">
-            Inga internationellt sportande svenskar på valt datum.
+            <em>Inga internationellt sportande svenskar på valt datum.</em>
          </p>
       }
       @if(Model.HasPublishedActivitiesTomorrow &&
@@ -1337,6 +1337,13 @@ else
                href="@tomorrowUrl"
                aria-label="Visa aktiviteter @Model.NextDateLinkLabel">
                @Model.NextDateLinkLabel
+               <svg class="activity-tomorrow-link-arrow"
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                    focusable="false">
+                  <path d="M3 8h10"></path>
+                  <path d="m9 4 4 4-4 4"></path>
+               </svg>
             </a>
             <span class="activity-tomorrow-link-line"></span>
          </div>
