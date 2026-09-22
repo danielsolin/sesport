@@ -4,6 +4,7 @@
 /data/
 /tools/
 /bin/
+/jobs/report
 /tests/SESport.BroadcastImporter.Tests/
 **/bin/
 **/obj/
