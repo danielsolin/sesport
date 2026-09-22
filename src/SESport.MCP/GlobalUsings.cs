@@ -5,6 +5,8 @@ global using ModelContextProtocol.Server;
 global using SESport.AI.WebPages;
 global using SESport.AI.WebSearch;
 global using SESport.Core.Configuration;
+global using SESport.MCP.WebPages;
+global using SESport.MCP.WebSearch;
 
 global using System.ComponentModel;
 global using System.Text.Json;

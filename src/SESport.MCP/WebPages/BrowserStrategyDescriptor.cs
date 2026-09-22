@@ -1,4 +1,4 @@
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 /// <summary>
 /// A Playwright launch strategy: which bundled browser or channel to use.

@@ -2,9 +2,11 @@ using Microsoft.Playwright;
 
 using SESport.AI.WebPages;
 
+using SESport.MCP.WebPages;
+
 using System.Diagnostics;
 
-namespace SESport.Core.Tests.AI;
+namespace SESport.Core.Tests.MCP;
 
 public class WebPageContentClientLiveTests
 {

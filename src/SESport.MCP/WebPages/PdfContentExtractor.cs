@@ -2,7 +2,7 @@ using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 internal static class PdfContentExtractor
 {

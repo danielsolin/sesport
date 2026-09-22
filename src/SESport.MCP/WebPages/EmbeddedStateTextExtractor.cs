@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 internal static class EmbeddedStateTextExtractor
 {

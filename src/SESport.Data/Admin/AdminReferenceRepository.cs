@@ -5,7 +5,7 @@ using SESport.Data.Models;
 
 namespace SESport.Data.Admin;
 
-public sealed class AdminReferenceRepository(NpgsqlDataSource dataSource)
+internal sealed class AdminReferenceRepository(NpgsqlDataSource dataSource)
 {
    private static readonly IReadOnlyDictionary<string, ReferenceTable> Tables =
       new Dictionary<string, ReferenceTable>(StringComparer.OrdinalIgnoreCase)

@@ -1,4 +1,4 @@
-namespace SESport.AI.WebSearch;
+namespace SESport.MCP.WebSearch;
 
 public sealed class WebSearchCache
 {

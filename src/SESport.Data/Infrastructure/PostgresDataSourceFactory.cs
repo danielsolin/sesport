@@ -2,7 +2,7 @@ using Npgsql;
 
 using SESport.Core.Configuration;
 
-namespace SESport.Data;
+namespace SESport.Data.Infrastructure;
 
 public static class PostgresDataSourceFactory
 {

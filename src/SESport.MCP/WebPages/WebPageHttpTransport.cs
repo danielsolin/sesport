@@ -1,4 +1,4 @@
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 /// <summary>
 /// Direct HTTP transport. Redirect following is manual so every hop target

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace SESport.AI.WebSearch;
+namespace SESport.MCP.WebSearch;
 
 internal static partial class SearchResultRelevanceGuard
 {

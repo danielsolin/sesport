@@ -1,4 +1,4 @@
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 /// <summary>
 /// Shared content-quality classification used by every transport. Only

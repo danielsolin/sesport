@@ -1,4 +1,4 @@
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 public sealed class WebPageContentCache
 {

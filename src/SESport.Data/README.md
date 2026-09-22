@@ -66,33 +66,34 @@ src/SESport.Data/
 |-- Broadcasts/      Broadcast repositories and SQL
 |-- Entities/        Entity repositories and SQL
 |-- Facts/           Fact repository and SQL
+|-- Infrastructure/  PostgreSQL connection and reader helpers
 |-- Members/         Member and watch repositories and SQL
-|-- PostgresDataSourceFactory.cs
-|-- PostgreSqlJson.cs
 |-- Sources/         Source reference repository and SQL
 |-- Statistics/      Public statistics repository and SQL
-|-- EntityLinkEntityNotFoundException.cs
 |-- Models/          Query, command, and result models for repositories
 ```
 
-The directory layout mirrors the namespaces. The root namespace contains the
-small infrastructure entry points and shared persistence helpers. There are
-no entity classes representing an ORM state model; repositories use explicit
-SQL projections and application-facing records instead.
+The directory layout mirrors the namespaces. There are no entity classes
+representing an ORM state model; repositories use explicit SQL projections and
+application-facing records instead.
 
 ## Namespace overview
 
-### `SESport.Data`
+### `SESport.Data.Infrastructure`
 
-This is the root infrastructure namespace. It contains the public data-source
-factory used by the web host, an internal PostgreSQL JSON normalization helper,
-and a repository-facing exception that the web layer can translate into an
-HTTP result.
+This namespace contains the PostgreSQL connection factory, JSON normalization
+helper, and shared reader helpers used by the repository implementations.
 
 Examples:
 
 - `PostgresDataSourceFactory` creates the configured `NpgsqlDataSource`.
 - `PostgreSqlJson` normalizes JSON before it is persisted in PostgreSQL.
+
+### `SESport.Data.Entities`
+
+This namespace contains entity repositories and entity-specific persistence
+exceptions.
+
 - `EntityLinkEntityNotFoundException` represents a failed entity-link
   operation when a referenced entity disappeared.
 

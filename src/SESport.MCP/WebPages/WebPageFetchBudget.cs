@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 /// <summary>
 /// Total-timeout budget for one page fetch. The deadline token is linked to

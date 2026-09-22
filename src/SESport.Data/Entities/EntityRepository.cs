@@ -4,7 +4,7 @@ using SESport.Data.Models;
 
 namespace SESport.Data.Entities;
 
-public sealed class EntityRepository(NpgsqlDataSource dataSource)
+internal sealed class EntityRepository(NpgsqlDataSource dataSource)
 {
    private readonly EntityQueryRepository queries = new(dataSource);
    private readonly EntityMutationRepository mutations = new(dataSource);

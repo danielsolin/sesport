@@ -646,19 +646,19 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          {
             Id = reader.GetGuid(0),
             Title = reader.GetString(1),
-            Description = ReadString(reader, 2),
-            Teaser = ReadString(reader, 3),
+            Description = PostgresHelpers.ReadNullableString(reader, 2),
+            Teaser = PostgresHelpers.ReadNullableString(reader, 3),
             ActivityType = reader.GetString(4),
             SportId = reader.GetString(5),
             ActivityDate = reader.GetFieldValue<DateOnly>(6),
-            LocalStartTime = ReadTimeOnly(reader, 7),
-            LocalEndTime = ReadTimeOnly(reader, 8),
+            LocalStartTime = PostgresHelpers.ReadTimeOnly(reader, 7),
+            LocalEndTime = PostgresHelpers.ReadTimeOnly(reader, 8),
             TimeZoneId = reader.GetString(9),
             IsPublished =
                reader.GetString(10) == ActivityPublicationStatusIds.Published,
-            TvChannelName = ReadString(reader, 11),
+            TvChannelName = PostgresHelpers.ReadNullableString(reader, 11),
             ActivityGroupId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
-            ActivityGroupTitle = ReadString(reader, 13),
+            ActivityGroupTitle = PostgresHelpers.ReadNullableString(reader, 13),
             OrganizationEntityId = reader.IsDBNull(14)
                ? null
                : reader.GetGuid(14)
@@ -731,8 +731,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   Id = sourceReader.GetGuid(0),
                   Kind = sourceReader.GetString(1),
                   Url = sourceReader.GetString(2),
-                  Title = ReadString(sourceReader, 3),
-                  Excerpt = ReadString(sourceReader, 4),
+                  Title = PostgresHelpers.ReadNullableString(sourceReader, 3),
+                  Excerpt = PostgresHelpers.ReadNullableString(sourceReader, 4),
                   ObservedAt = sourceReader.GetFieldValue<DateTimeOffset>(5)
                }
             );
@@ -1553,14 +1553,6 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
 
       return options;
    }
-   internal static string? ReadString(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-   }
-
    private static EntityOption ReadEntityOption(NpgsqlDataReader reader)
    {
       return new EntityOption(
@@ -1569,8 +1561,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          reader.GetString(2),
          reader.GetString(3),
          reader.GetString(4),
-         ReadString(reader, 5),
-         ReadString(reader, 6)
+         PostgresHelpers.ReadNullableString(reader, 5),
+         PostgresHelpers.ReadNullableString(reader, 6)
       );
    }
 
@@ -1591,71 +1583,44 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             new ActivityListItem(
                reader.GetGuid(0),
                reader.GetString(1),
-               ReadString(reader, 2),
-               ReadString(reader, 3),
+               PostgresHelpers.ReadNullableString(reader, 2),
+               PostgresHelpers.ReadNullableString(reader, 3),
                reader.GetString(4),
                reader.GetString(5),
                reader.GetString(6),
-               GetSportIconPath(ReadString(reader, 7)),
+               GetSportIconPath(PostgresHelpers.ReadNullableString(reader, 7)),
                DateDisplay.Format(
                   reader.GetFieldValue<DateOnly>(8),
-                  ReadTimeOnly(reader, 9)
+                  PostgresHelpers.ReadTimeOnly(reader, 9)
                ),
-               ReadDateTimeOffset(reader, 10),
-               ReadString(reader, 12),
+               PostgresHelpers.ReadDateTimeOffset(reader, 10),
+               PostgresHelpers.ReadNullableString(reader, 12),
                reader.GetString(11),
                reader.GetString(14),
-               ReadGuidArray(reader, 15),
+               PostgresHelpers.ReadGuidArray(reader, 15),
                reader.GetString(17)
             )
             {
-               ActiveRelatedPersonEntityIds = ReadGuidArray(reader, 16),
+               ActiveRelatedPersonEntityIds = PostgresHelpers.ReadGuidArray(reader, 16),
                ActivityDate = reader.GetFieldValue<DateOnly>(8),
-               LocalStartTime = ReadTimeOnly(reader, 9),
-               LocalEndTime = ReadTimeOnly(reader, 18),
-               EndsAt = ReadDateTimeOffset(reader, 19),
+               LocalStartTime = PostgresHelpers.ReadTimeOnly(reader, 9),
+               LocalEndTime = PostgresHelpers.ReadTimeOnly(reader, 18),
+               EndsAt = PostgresHelpers.ReadDateTimeOffset(reader, 19),
                ActivityGroupId = reader.IsDBNull(20)
                   ? null
                   : reader.GetGuid(20),
-               ActivityGroupTitle = ReadString(reader, 21),
+               ActivityGroupTitle = PostgresHelpers.ReadNullableString(reader, 21),
                NoGrouping = reader.GetBoolean(22),
                RelatedOrganizationCanonicalEntities =
                   reader.GetString(23),
                IsTeamSport = reader.GetBoolean(24),
                PublicDateMode = reader.GetString(25),
-               OrganizationCountryId = ReadString(reader, 26)
+               OrganizationCountryId = PostgresHelpers.ReadNullableString(reader, 26)
             }
          );
       }
 
       return activities;
-   }
-
-   internal static TimeOnly? ReadTimeOnly(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetFieldValue<TimeOnly>(ordinal);
-   }
-
-   private static DateTimeOffset? ReadDateTimeOffset(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetFieldValue<DateTimeOffset>(ordinal);
-   }
-
-   private static Guid[] ReadGuidArray(NpgsqlDataReader reader, int ordinal)
-   {
-      return reader.IsDBNull(ordinal)
-         ? []
-         : reader.GetFieldValue<Guid[]>(ordinal);
    }
 
    private static DateTimeOffset ToUtc(DateOnly date, TimeOnly time)

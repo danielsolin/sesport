@@ -1,4 +1,6 @@
-namespace SESport.Core.Tests.AI;
+using SESport.Core.Configuration;
+
+namespace SESport.Core.Tests.Configuration;
 
 public sealed class WebSearchRateLimitOptionsTests
 {

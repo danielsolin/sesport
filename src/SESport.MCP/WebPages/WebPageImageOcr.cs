@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 internal static class WebPageImageOcr
 {

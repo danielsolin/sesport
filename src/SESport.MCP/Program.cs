@@ -1,8 +1,8 @@
 using ModelContextProtocol.AspNetCore;
 
-using SESport.Data;
 using SESport.Data.Activities;
 using SESport.Data.Broadcasts;
+using SESport.Data.Infrastructure;
 using SESport.MCP.Models;
 using SESport.MCP.Support;
 using SESport.MCP.Tools;

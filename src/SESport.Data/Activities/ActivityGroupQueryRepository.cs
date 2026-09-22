@@ -262,13 +262,13 @@ public sealed class ActivityGroupQueryRepository(
             new ActivityGroupActivityListItem(
                reader.GetGuid(0),
                reader.GetString(1),
-               ActivityQueryRepository.ReadString(reader, 2),
+               PostgresHelpers.ReadNullableString(reader, 2),
                reader.GetFieldValue<DateOnly>(3),
-               ActivityQueryRepository.ReadTimeOnly(reader, 4),
-               ActivityQueryRepository.ReadTimeOnly(reader, 5)
+               PostgresHelpers.ReadTimeOnly(reader, 4),
+               PostgresHelpers.ReadTimeOnly(reader, 5)
             )
             {
-               OrganizationName = ActivityQueryRepository.ReadString(
+               OrganizationName = PostgresHelpers.ReadNullableString(
                   reader,
                   6
                )
@@ -316,8 +316,8 @@ public sealed class ActivityGroupQueryRepository(
             new ActivityGroupSourceListItem(
                reader.GetString(0),
                reader.GetString(1),
-               ActivityQueryRepository.ReadString(reader, 2),
-               ActivityQueryRepository.ReadString(reader, 3),
+               PostgresHelpers.ReadNullableString(reader, 2),
+               PostgresHelpers.ReadNullableString(reader, 3),
                reader.GetFieldValue<DateTimeOffset>(4)
             )
          );

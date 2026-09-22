@@ -1,6 +1,8 @@
 using SESport.AI.WebPages;
 
-namespace SESport.Core.Tests.AI;
+using SESport.MCP.WebPages;
+
+namespace SESport.Core.Tests.MCP;
 
 public class WebPageContentCacheTests
 {

@@ -3,7 +3,7 @@ using Microsoft.Playwright;
 using System.Diagnostics;
 using System.Text;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 internal sealed record WebPageBrowserRenderResult(
    string FullHtml,

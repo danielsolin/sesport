@@ -2,7 +2,7 @@ using Npgsql;
 
 using NpgsqlTypes;
 
-namespace SESport.Data;
+namespace SESport.Data.Infrastructure;
 
 internal static class PostgresHelpers
 {
@@ -44,6 +44,36 @@ internal static class PostgresHelpers
       return reader.IsDBNull(ordinal)
          ? null
          : reader.GetString(ordinal);
+   }
+
+   public static TimeOnly? ReadTimeOnly(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? null
+         : reader.GetFieldValue<TimeOnly>(ordinal);
+   }
+
+   public static DateTimeOffset? ReadDateTimeOffset(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? null
+         : reader.GetFieldValue<DateTimeOffset>(ordinal);
+   }
+
+   public static Guid[] ReadGuidArray(
+      NpgsqlDataReader reader,
+      int ordinal
+   )
+   {
+      return reader.IsDBNull(ordinal)
+         ? []
+         : reader.GetFieldValue<Guid[]>(ordinal);
    }
 
    public static Guid? ReadNullableGuid(

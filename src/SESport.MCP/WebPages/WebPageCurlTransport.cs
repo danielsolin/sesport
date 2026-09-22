@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 /// <summary>
 /// Curl transport. Produces the same structured evidence as the direct

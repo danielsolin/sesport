@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("SESport.AI.Tests")]
+[assembly: InternalsVisibleTo("SESport.MCP.Tests")]

@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using SESport.AI.WebPages;
 
+using SESport.MCP.WebPages;
+
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -11,7 +13,7 @@ using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.Fonts.Standard14Fonts;
 using UglyToad.PdfPig.Writer;
 
-namespace SESport.Core.Tests.AI;
+namespace SESport.Core.Tests.MCP;
 
 /// <summary>
 /// Tests for the unified fetch pipeline: direct HTTP, browser and curl

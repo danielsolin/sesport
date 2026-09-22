@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 using UglyToad.PdfPig;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 internal static class WebPageContentFetchSupport
 {
@@ -223,7 +223,7 @@ internal static class WebPageContentFetchSupport
       }
 
       text = UnicodeTextSanitizer.Sanitize(text);
-      text = NormalizeGluedTableCellText(text);
+      text = WebPageTextNormalization.NormalizeGluedTableCellText(text);
 
       var normalizedLines = text.Replace("\r", "\n", StringComparison.Ordinal)
          .Split('\n', StringSplitOptions.RemoveEmptyEntries)
@@ -236,11 +236,6 @@ internal static class WebPageContentFetchSupport
       ).Trim();
 
       return CollapseAdjacentCountryNameDuplicates(normalizedText);
-   }
-
-   internal static string NormalizeGluedTableCellText(string text)
-   {
-      return WebPageTextNormalization.NormalizeGluedTableCellText(text);
    }
 
    internal static string ApplyResponseCutoff(string text)

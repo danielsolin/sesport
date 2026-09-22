@@ -1,6 +1,8 @@
 using SESport.AI.WebSearch;
 
-namespace SESport.Core.Tests.AI;
+using SESport.MCP.WebSearch;
+
+namespace SESport.Core.Tests.MCP;
 
 public sealed class WebSearchCacheTests
 {

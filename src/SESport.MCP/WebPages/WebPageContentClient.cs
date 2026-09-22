@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 public sealed class WebPageContentClient : IWebPageContentClient
 {

@@ -1,4 +1,4 @@
-namespace SESport.Data;
+namespace SESport.Data.Entities;
 
 public sealed class EntityLinkEntityNotFoundException : Exception
 {

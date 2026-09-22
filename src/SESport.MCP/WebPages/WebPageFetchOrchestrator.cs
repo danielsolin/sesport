@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 using UglyToad.PdfPig;
 
-namespace SESport.AI.WebPages;
+namespace SESport.MCP.WebPages;
 
 /// <summary>
 /// Central owner of the page fetch decision tree. Transports return

@@ -6,7 +6,7 @@ using SESport.Data.Models;
 
 namespace SESport.Data.Entities;
 
-public sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
+internal sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
 {
    public async Task<EntityMergePreview?> GetEntityMergePreviewAsync(
       Guid sourceEntityId,
