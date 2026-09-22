@@ -1146,6 +1146,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             priority.sort_order,
             participant_team.team_country_id,
             participant_team.team_country_name,
+            participant_team.team_canonical_name,
             al.is_active,
             al.represented_entity_id is not null
                as has_represented_entity,
@@ -1217,7 +1218,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          left join lateral (
             select
                min(team.country_id) as team_country_id,
-               min(team.country_name) as team_country_name
+               min(team.country_name) as team_country_name,
+               min(team.team_name) as team_canonical_name
             from (
                select distinct
                   linked.country_id,
@@ -1290,30 +1292,33 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                reader.GetString(6),
                reader.IsDBNull(10) ? null : reader.GetString(10),
                reader.IsDBNull(11) ? null : reader.GetString(11),
-               reader.GetBoolean(12),
+               reader.GetBoolean(13),
                reader.GetBoolean(7),
                reader.IsDBNull(8) ? null : reader.GetString(8)
             )
             {
                WatchPriority = reader.GetInt32(9),
-               HasRepresentedEntity = reader.GetBoolean(13),
-               HasNonNationalTeamRepresentation = reader.GetBoolean(14),
-               RepresentedEntityName = reader.IsDBNull(15)
+               TeamCanonicalName = reader.IsDBNull(12)
                   ? null
-                  : reader.GetString(15),
-               RepresentedEntityCanonicalName = reader.IsDBNull(16)
+                  : reader.GetString(12),
+               HasRepresentedEntity = reader.GetBoolean(14),
+               HasNonNationalTeamRepresentation = reader.GetBoolean(15),
+               RepresentedEntityName = reader.IsDBNull(16)
                   ? null
                   : reader.GetString(16),
-               StartTimeSourceUrl = reader.IsDBNull(17)
+               RepresentedEntityCanonicalName = reader.IsDBNull(17)
                   ? null
                   : reader.GetString(17),
-               IsWatchedByMember = reader.GetBoolean(18),
-               RepresentedEntityId = reader.IsDBNull(19)
+               StartTimeSourceUrl = reader.IsDBNull(18)
                   ? null
-                  : reader.GetGuid(19),
-               RepresentedEntityCountryId = reader.IsDBNull(20)
+                  : reader.GetString(18),
+               IsWatchedByMember = reader.GetBoolean(19),
+               RepresentedEntityId = reader.IsDBNull(20)
                   ? null
-                  : reader.GetString(20)
+                  : reader.GetGuid(20),
+               RepresentedEntityCountryId = reader.IsDBNull(21)
+                  ? null
+                  : reader.GetString(21)
             }
          );
       }

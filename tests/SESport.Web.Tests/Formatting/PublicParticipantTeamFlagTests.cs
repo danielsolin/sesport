@@ -13,7 +13,8 @@ public sealed class PublicParticipantTeamFlagTests
          true,
          nameof(ActivityType.Match),
          "pl",
-         true
+         true,
+         false
       );
 
       Assert.Equal("/images/flags/pl.svg", path);
@@ -26,6 +27,7 @@ public sealed class PublicParticipantTeamFlagTests
          true,
          nameof(ActivityType.Match),
          "pl",
+         false,
          false
       );
 
@@ -39,10 +41,25 @@ public sealed class PublicParticipantTeamFlagTests
          true,
          nameof(ActivityType.Match),
          PrimaryCountry.Id,
-         true
+         true,
+         false
       );
 
       Assert.Null(path);
+   }
+
+   [Fact]
+   public void GetPathReturnsPrimaryCountryTeamFlagForNationalTeamActivity()
+   {
+      var path = PublicParticipantTeamFlag.GetPath(
+         true,
+         nameof(ActivityType.Match),
+         PrimaryCountry.Id,
+         false,
+         true
+      );
+
+      Assert.Equal("/images/flags/se.svg", path);
    }
 
    [Theory]
@@ -57,7 +74,8 @@ public sealed class PublicParticipantTeamFlagTests
          isTeamSport,
          activityType,
          "pl",
-         true
+         true,
+         false
       );
 
       Assert.Null(path);
@@ -73,7 +91,8 @@ public sealed class PublicParticipantTeamFlagTests
          true,
          nameof(ActivityType.Match),
          countryId,
-         true
+         true,
+         false
       );
 
       Assert.Null(path);

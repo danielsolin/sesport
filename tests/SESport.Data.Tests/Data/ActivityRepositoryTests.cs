@@ -1939,6 +1939,7 @@ public sealed class ActivityRepositoryTests
 
          Assert.Equal("pl", participant.TeamCountryId);
          Assert.Equal("Poland", participant.TeamCountryName);
+         Assert.Equal("Canonical Foreign Team", participant.TeamCanonicalName);
          Assert.True(participant.HasRepresentedEntity);
          Assert.True(participant.HasNonNationalTeamRepresentation);
          Assert.Equal(teamId, participant.RepresentedEntityId);

@@ -1103,7 +1103,8 @@ else
                                           activity.IsTeamSport,
                                           activity.ActivityType,
                                           participant.TeamCountryId,
-                                          hasPrimaryCountryTeam
+                                          hasPrimaryCountryTeam,
+                                          activity.HasNationalTeamRelatedOrganization
                                        );
                                     var isWatchedParticipant =
                                        participant.IsWatchedByMember;
@@ -1153,7 +1154,7 @@ else
                                                    participant.TeamCountryName
                                                 )"
                                                 title="@(
-                                                   participant.TeamCountryName
+                                                   participant.TeamCanonicalName
                                                 )" />
                                           }
                                           @if(participant.WatchPriority == 0)

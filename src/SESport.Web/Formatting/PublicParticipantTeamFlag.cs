@@ -9,7 +9,8 @@ public static class PublicParticipantTeamFlag
       bool isTeamSport,
       string activityType,
       string? teamCountryId,
-      bool hasPrimaryCountryTeam
+      bool hasPrimaryCountryTeam,
+      bool isNationalTeamActivity
    )
    {
       if(!isTeamSport || !string.Equals(
@@ -22,14 +23,21 @@ public static class PublicParticipantTeamFlag
       }
 
       var normalizedTeamCountryId = teamCountryId?.Trim().ToLowerInvariant();
-      if(!hasPrimaryCountryTeam ||
-         string.IsNullOrWhiteSpace(normalizedTeamCountryId) ||
-         string.Equals(
-            normalizedTeamCountryId,
-            PrimaryCountry.Id,
-            StringComparison.Ordinal
-         ) ||
+      if(string.IsNullOrWhiteSpace(normalizedTeamCountryId) ||
          normalizedTeamCountryId is CountryIds.Europe or CountryIds.International)
+      {
+         return null;
+      }
+
+      var isPrimaryCountryTeam = string.Equals(
+         normalizedTeamCountryId,
+         PrimaryCountry.Id,
+         StringComparison.Ordinal
+      );
+      var showPrimaryCountryTeam =
+         isPrimaryCountryTeam && isNationalTeamActivity;
+      var showForeignTeam = !isPrimaryCountryTeam && hasPrimaryCountryTeam;
+      if(!showPrimaryCountryTeam && !showForeignTeam)
       {
          return null;
       }

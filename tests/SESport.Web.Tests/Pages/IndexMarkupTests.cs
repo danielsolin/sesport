@@ -182,6 +182,7 @@ public sealed class IndexMarkupTests
          ".RepresentedEntityCanonicalName",
          html
       );
+      Assert.Contains("participant.TeamCanonicalName", html);
       Assert.Contains(
          "activity-team-name-portrait",
          html
@@ -240,8 +241,8 @@ public sealed class IndexMarkupTests
          html
       );
       Assert.Contains("participant.DisciplineAliasName", html);
-      Assert.DoesNotContain("PublicParticipantTeamFlag", html);
-      Assert.DoesNotContain("teamCountryFlagPath", html);
+      Assert.Contains("PublicParticipantTeamFlag", html);
+      Assert.Contains("teamCountryFlagPath", html);
       Assert.Contains("participant.WatchPriority", html);
       Assert.Contains("participant.WatchPriority == 0", html);
       Assert.Contains("participant.IsWatchedByMember", html);
