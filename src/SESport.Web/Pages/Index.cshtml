@@ -161,6 +161,17 @@
                   <span class="date-option-date">
                      @selectedDateOption.DateLabel
                   </span>
+                  @if(selectedDateOption.ParticipantCount > 0)
+                  {
+                     <span class="date-option-participant-count">
+                        <img class="date-option-country-flag"
+                             src="~/images/flags/se.svg"
+                             alt="@(
+                                PrimaryCountry.LocalDisplayName
+                             )" /><span>@(
+                           selectedDateOption.ParticipantCount)</span>
+                     </span>
+                  }
                </span>
                <span class="date-dropdown-chevron"
                      aria-hidden="true"></span>
@@ -210,15 +221,14 @@
                               @dateOption.DateLabel
                            </span>
                         </span>
-                        @if(!dateOption.IsSelected &&
-                           dateOption.ParticipantCount > 0)
+                        @if(dateOption.ParticipantCount > 0)
                         {
                            <span class="date-option-participant-count">
                               <img class="date-option-country-flag"
                                    src="~/images/flags/se.svg"
                                    alt="@(
                                       PrimaryCountry.LocalDisplayName
-                                   )" /><span>x@(
+                                   )" /><span>@(
                                 dateOption.ParticipantCount)</span>
                            </span>
                         }
