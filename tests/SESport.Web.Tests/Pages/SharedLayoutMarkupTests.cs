@@ -176,8 +176,11 @@ public sealed class SharedLayoutMarkupTests
          publicHeaderMenuScript
       );
       Assert.Contains(
-         "const isRootPath = currentPath === \"/\";\n\n" +
-         "   if(isRootPath)",
+         "const isRootPath = currentPath === \"/\";\n" +
+         "   const isStandaloneApp =\n" +
+         "      window.matchMedia(\"(display-mode: standalone)\").matches ||\n" +
+         "      window.navigator.standalone === true;\n\n" +
+         "   if(isRootPath && isStandaloneApp)",
          siteJs
       );
       Assert.Contains("partial-loader.js", html);

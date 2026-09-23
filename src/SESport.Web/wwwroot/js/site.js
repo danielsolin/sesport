@@ -1,8 +1,11 @@
 (() => {
    const currentPath = window.location.pathname.toLowerCase();
    const isRootPath = currentPath === "/";
+   const isStandaloneApp =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
 
-   if(isRootPath)
+   if(isRootPath && isStandaloneApp)
    {
       const autoReloadMarkerKey = "sesport-public-auto-reload";
 
