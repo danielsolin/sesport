@@ -375,6 +375,25 @@ public class EditModel(
          );
       }
 
+      if(string.IsNullOrWhiteSpace(Entity.Url))
+      {
+         Entity.Url = null;
+      }
+      else if(!SourceUrlNormalizer.TryNormalize(
+         Entity.Url,
+         out var normalizedUrl
+      ))
+      {
+         ModelState.AddModelError(
+            "Entity.Url",
+            "URL must be a valid HTTP or HTTPS URL."
+         );
+      }
+      else
+      {
+         Entity.Url = normalizedUrl;
+      }
+
       if(string.IsNullOrWhiteSpace(Entity.SportId))
       {
          ModelState.AddModelError("Entity.SportId", "Sport is required.");

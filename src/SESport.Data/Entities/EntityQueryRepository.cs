@@ -432,7 +432,8 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
          HasPrimaryThumbnail = reader.GetBoolean(17),
          PrimaryImageSourceUrl = reader.IsDBNull(18)
             ? null
-            : reader.GetString(18)
+            : reader.GetString(18),
+         Url = reader.IsDBNull(19) ? null : reader.GetString(19)
       };
 
       await reader.DisposeAsync();
@@ -1275,7 +1276,8 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                      '{{EntityImageReviewStatusIds.Approved}}'
                   and image.is_primary
                limit 1
-            ) as primary_image_source_url
+            ) as primary_image_source_url,
+            url
          from entities
          where id = @id
          """;

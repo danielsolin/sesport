@@ -58,6 +58,16 @@ public sealed class EditMarkupTests
       Assert.Contains("Entity.FormativeClubId", html);
       Assert.Contains("data-formative-club-picker", html);
       Assert.Contains("formative-club-lookup.js", html);
+      Assert.Contains("asp-for=\"Entity.Url\"", html);
+      Assert.True(
+         html.IndexOf(
+            "asp-for=\"Entity.Url\"",
+            StringComparison.Ordinal
+         ) < html.IndexOf(
+            "<span>Image source URL</span>",
+            StringComparison.Ordinal
+         )
+      );
       Assert.Contains("asp-page-handler=\"AddSource\"", html);
       Assert.Contains("id=\"add-entity-source-form\"", html);
       Assert.Contains("name=\"sourceUrl\"", html);

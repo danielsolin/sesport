@@ -284,6 +284,7 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                watch_priority_id,
                expected_stability_id,
                alias_name,
+               url,
                bio,
                birthdate,
                height,
@@ -303,6 +304,7 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                @watch_priority_id,
                @expected_stability_id,
                @alias_name,
+               @url,
                @bio,
                @birthdate,
                @height,
@@ -324,6 +326,7 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                watch_priority_id,
                expected_stability_id,
                alias_name,
+               url,
                bio,
                birthdate,
                height,
@@ -342,6 +345,7 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                @watch_priority_id,
                @expected_stability_id,
                @alias_name,
+               @url,
                @bio,
                @birthdate,
                @height,
@@ -367,6 +371,7 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                watch_priority_id = @watch_priority_id,
                expected_stability_id = @expected_stability_id,
                alias_name = @alias_name,
+               url = @url,
                bio = @bio,
                birthdate = @birthdate,
                height = @height,
@@ -391,6 +396,7 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                watch_priority_id = @watch_priority_id,
                expected_stability_id = @expected_stability_id,
                alias_name = @alias_name,
+               url = @url,
                bio = @bio,
                birthdate = @birthdate,
                height = @height,
@@ -825,6 +831,10 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
       command.Parameters.AddWithValue(
          "alias_name",
          (object?)NormalizeAliasName(model.AliasName) ?? DBNull.Value
+      );
+      command.Parameters.AddWithValue(
+         "url",
+         (object?)NormalizeNullable(model.Url) ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
          "bio",

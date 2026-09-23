@@ -739,6 +739,7 @@ public sealed class AdminRepositoryTests
       var entityKey = Guid.NewGuid();
       var entityName = $"Alias Entity {entityKey:N}";
       var aliasName = $"Alias {entityKey:N}";
+      var url = $"https://example.test/entities/{entityKey:N}";
       var bio = $"Bio {entityKey:N}";
       var birthdate = new DateOnly(1995, 10, 9);
       var height = 185;
@@ -761,6 +762,7 @@ public sealed class AdminRepositoryTests
          Id = null,
          CanonicalName = entityName,
          AliasName = aliasName,
+         Url = url,
          Bio = bio,
          Birthdate = birthdate,
          Height = height,
@@ -788,6 +790,7 @@ public sealed class AdminRepositoryTests
 
          Assert.NotNull(loaded);
          Assert.Equal(aliasName, loaded!.AliasName);
+         Assert.Equal(url, loaded.Url);
          Assert.Equal(bio, loaded.Bio);
          Assert.Equal(birthdate, loaded.Birthdate);
          Assert.Equal(height, loaded.Height);

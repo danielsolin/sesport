@@ -260,6 +260,13 @@
             </div>
             <span asp-validation-for="Entity.FormativeClubId"></span>
          </label>
+         <label>
+            <span>URL</span>
+            <input asp-for="Entity.Url"
+                   type="url"
+                   placeholder="https://" />
+            <span asp-validation-for="Entity.Url"></span>
+         </label>
          <div class="entity-image-source-control">
             <label>
                <span>Image source URL</span>
