@@ -169,7 +169,7 @@ public sealed class AiJobPostProcessor(
          facts.Birthdate,
          facts.Height,
          facts.Weight,
-         facts.FormativeClub,
+         facts.FormativeClubName,
          cancellationToken
       );
       if(!wasApplied)
@@ -397,7 +397,7 @@ public sealed class AiJobPostProcessor(
 
          int? height = ReadNullableInt32(root, "height");
          int? weight = ReadNullableInt32(root, "weight");
-         var formativeClub = ReadNullableString(
+         var formativeClubName = ReadNullableString(
             root,
             "formative_club"
          );
@@ -407,7 +407,7 @@ public sealed class AiJobPostProcessor(
             birthdate,
             height,
             weight,
-            formativeClub,
+            formativeClubName,
             sources
          );
       }
@@ -492,7 +492,7 @@ public sealed class AiJobPostProcessor(
       DateOnly? Birthdate,
       int? Height,
       int? Weight,
-      string? FormativeClub,
+      string? FormativeClubName,
       IReadOnlyList<PersonFactSource> Sources
    );
 

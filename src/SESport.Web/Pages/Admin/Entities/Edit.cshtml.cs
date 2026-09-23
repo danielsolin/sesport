@@ -57,6 +57,8 @@ public class EditModel(
       private set;
    } = [];
 
+   public EntityLinkOption? FormativeClubOption { get; private set; }
+
    public IReadOnlyList<EntityActivityListItem> Activities
    {
       get;
@@ -306,10 +308,19 @@ public class EditModel(
                Entity.Id,
                cancellationToken
             );
+         var formativeClubOptions = Entity.FormativeClubId is Guid clubId
+            ? await repository.GetEntityLinkOptionsByIdsAsync(
+               [clubId],
+               Entity.Id,
+               cancellationToken
+            )
+            : [];
+         FormativeClubOption = formativeClubOptions.SingleOrDefault();
          var entityLinkOptionsById = entityLinkOptions
             .ToDictionary(option => option.Id);
          LinkedEntityOptions = Entity.LinkedEntityIds
             .Distinct()
+            .Where(id => id != Entity.FormativeClubId)
             .Select(id => entityLinkOptionsById.TryGetValue(
                id,
                out var option
@@ -318,6 +329,11 @@ public class EditModel(
                : null)
             .Where(option => option is not null)
             .Select(option => option!)
+            .Where(option => !string.Equals(
+               option.EntityType,
+               TrackedEntityTypeIds.Club,
+               StringComparison.OrdinalIgnoreCase
+            ))
             .ToList();
          Activities = Entity.Id is null
             ? []

@@ -226,7 +226,7 @@ public sealed class EntityEditModel
 
    public int? Weight { get; set; }
 
-   public string? FormativeClub { get; set; }
+   public Guid? FormativeClubId { get; set; }
 
    public string? PersonGenderId { get; set; }
 

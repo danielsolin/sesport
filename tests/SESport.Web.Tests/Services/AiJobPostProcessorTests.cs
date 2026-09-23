@@ -125,7 +125,7 @@ public sealed class AiJobPostProcessorTests
       Assert.Equal(new DateOnly(1991, 4, 8), result!.Birthdate);
       Assert.Equal(181, result.Height);
       Assert.Equal(77, result.Weight);
-      Assert.Null(result.FormativeClub);
+      Assert.Null(result.FormativeClubName);
       Assert.Single(result.Sources);
    }
 }

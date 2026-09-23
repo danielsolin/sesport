@@ -4,6 +4,12 @@
    ViewData["Title"] = Model.Entity.Id is null ? "New Entity" : "Edit Entity";
    var entitySearchUrl = Url.Page("/Admin/Ajax/Search/Entity");
    var entityLinkUpdateUrl = Url.Page("/Admin/Ajax/Update/EntityLink");
+   var linkedEntityTypeIds = string.Join(
+      ",",
+      Model.EntityTypes
+         .Where(type => type.Id != TrackedEntityTypeIds.Club)
+         .Select(type => type.Id)
+   );
    var replaceImageUrl = Model.Entity.Id is null
       ? null
       : Url.Page(
@@ -224,8 +230,35 @@
          <label data-person-formative-club-field
                 hidden="@(isPersonEntity ? null : "hidden")">
             <span>Formative Club</span>
-            <input asp-for="Entity.FormativeClub" />
-            <span asp-validation-for="Entity.FormativeClub"></span>
+            <div class="entity-formative-club-picker"
+                 data-formative-club-picker
+                 data-formative-club-search-url="@entitySearchUrl">
+               <input asp-for="Entity.FormativeClubId"
+                      type="hidden"
+                      data-formative-club-id />
+               <div class="entity-formative-club-input-wrap">
+                  <input class="broadcast-org-entity-input"
+                         type="text"
+                         value="@Model.FormativeClubOption?.Name"
+                         placeholder="Search clubs"
+                         autocomplete="off"
+                         spellcheck="false"
+                         aria-label="Search formative clubs"
+                         data-formative-club-input />
+                  <button class="entity-formative-club-clear"
+                          type="button"
+                          data-formative-club-clear
+                          hidden="@(Model.FormativeClubOption is null
+                             ? "hidden"
+                             : null)">
+                     Clear
+                  </button>
+                  <div class="broadcast-org-entity-suggestions"
+                       hidden
+                       data-formative-club-suggestions></div>
+               </div>
+            </div>
+            <span asp-validation-for="Entity.FormativeClubId"></span>
          </label>
          <div class="entity-image-source-control">
             <label>
@@ -255,6 +288,7 @@
               data-entity-linked-entities-picker
               data-entity-linked-entities-search-url="@entitySearchUrl"
               data-entity-linked-entities-update-url="@entityLinkUpdateUrl"
+              data-entity-type-ids="@linkedEntityTypeIds"
               data-entity-id="@(Model.Entity.Id?.ToString() ?? string.Empty)"
               data-organization-only="false"
               data-max-results="20">
@@ -479,6 +513,8 @@
 </form>
 
 @section Scripts {
+   <script src="~/Admin/js/formative-club-lookup.js"
+           asp-append-version="true"></script>
    <script src="~/Admin/js/entity-linked-entities.js"
            asp-append-version="true"></script>
 }

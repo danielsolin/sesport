@@ -202,10 +202,7 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             e.birthdate,
             e.height,
             e.weight,
-            coalesce(
-               formative_club_entity.club_name,
-               e.formative_club
-            ),
+            formative_club_entity.club_name,
             formative_club_entity.club_url
          from entities e
          join entity_types et on et.id = e.entity_type_id
@@ -425,20 +422,17 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             : reader.GetFieldValue<DateOnly>(11),
          Height = reader.IsDBNull(12) ? null : reader.GetInt32(12),
          Weight = reader.IsDBNull(13) ? null : reader.GetInt32(13),
-         FormativeClub = reader.IsDBNull(14)
+         PersonGenderId = reader.IsDBNull(14) ? null : reader.GetString(14),
+         PrimaryCountryParticipationStatusId = reader.IsDBNull(15)
             ? null
-            : reader.GetString(14),
-         PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15),
-         PrimaryCountryParticipationStatusId = reader.IsDBNull(16)
+            : reader.GetString(15),
+         PrimaryCountryParticipationReason = reader.IsDBNull(16)
             ? null
             : reader.GetString(16),
-         PrimaryCountryParticipationReason = reader.IsDBNull(17)
+         HasPrimaryThumbnail = reader.GetBoolean(17),
+         PrimaryImageSourceUrl = reader.IsDBNull(18)
             ? null
-            : reader.GetString(17),
-         HasPrimaryThumbnail = reader.GetBoolean(18),
-         PrimaryImageSourceUrl = reader.IsDBNull(19)
-            ? null
-            : reader.GetString(19)
+            : reader.GetString(18)
       };
 
       await reader.DisposeAsync();
@@ -446,8 +440,11 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
       var linkSql = $$"""
          select
             {{GetOtherSideEntityIdSql("@id")}}
-               as linked_entity_id
+               as linked_entity_id,
+            linked.entity_type_id
          from entity_to_entity_links
+         join entities linked
+            on linked.id = {{GetOtherSideEntityIdSql("@id")}}
          where source_entity_id = @id or target_entity_id = @id
          order by linked_entity_id
          """;
@@ -461,6 +458,17 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
       while(await linkReader.ReadAsync(cancellationToken))
       {
          model.LinkedEntityIds.Add(linkReader.GetGuid(0));
+
+         if(model.EntityTypeId == TrackedEntityTypeIds.Person &&
+            model.FormativeClubId is null &&
+            string.Equals(
+               linkReader.GetString(1),
+               TrackedEntityTypeIds.Club,
+               StringComparison.Ordinal
+            ))
+         {
+            model.FormativeClubId = linkReader.GetGuid(0);
+         }
       }
 
       return model;
@@ -610,10 +618,7 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             : reader.GetFieldValue<DateOnly>(11),
          Height = reader.IsDBNull(12) ? null : reader.GetInt32(12),
          Weight = reader.IsDBNull(13) ? null : reader.GetInt32(13),
-         FormativeClub = reader.IsDBNull(14)
-            ? null
-            : reader.GetString(14),
-         PersonGenderId = reader.IsDBNull(15) ? null : reader.GetString(15)
+         PersonGenderId = reader.IsDBNull(14) ? null : reader.GetString(14)
       };
 
       await reader.DisposeAsync();
@@ -633,6 +638,7 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             and {BroadcastEntityFilter.GetNonOrganizationEntityTypePredicateSql(
                "linked.entity_type_id"
             )}
+            and linked.entity_type_id <> '{TrackedEntityTypeIds.Club}'
          order by linked_entity_id
          """;
 
@@ -1247,10 +1253,6 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             birthdate,
             height,
             weight,
-            coalesce(
-               formative_club_entity.club_name,
-               entities.formative_club
-            ),
             {{personGenderColumn}},
             primary_country_participation_status_id,
             primary_country_participation_reason,
@@ -1275,7 +1277,6 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                limit 1
             ) as primary_image_source_url
          from entities
-         {{ActivityQueryRepository.GetFormativeClubLateralSql("entities")}}
          where id = @id
          """;
    }

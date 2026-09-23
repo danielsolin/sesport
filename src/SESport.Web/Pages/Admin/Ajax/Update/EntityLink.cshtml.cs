@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
+using SESport.Core.Domain;
 using SESport.Data.Entities;
 using SESport.Web.Pages.Admin.Entities;
 
@@ -67,11 +68,23 @@ public sealed class EntityLinkModel(AdminRepository repository)
                return NotFound(new { error = "Entity not found." });
             }
 
-            var options = await repository.GetEntityLinkOptionsByIdsAsync(
-               entity.LinkedEntityIds,
-               id,
-               cancellationToken
-            );
+            var options = (
+               await repository.GetEntityLinkOptionsByIdsAsync(
+                  entity.LinkedEntityIds
+                     .Where(linkedEntityId =>
+                        linkedEntityId != entity.FormativeClubId
+                     )
+                     .ToArray(),
+                  id,
+                  cancellationToken
+               )
+            )
+               .Where(option => !string.Equals(
+                  option.EntityType,
+                  TrackedEntityTypeIds.Club,
+                  StringComparison.OrdinalIgnoreCase
+               ))
+               .ToArray();
 
             return Partial(
                "/Pages/Admin/Entities/_EntityLinkedEntitiesGrid.cshtml",

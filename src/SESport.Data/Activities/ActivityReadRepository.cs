@@ -371,10 +371,7 @@ public sealed class ActivityReadRepository(NpgsqlDataSource dataSource)
             person.id,
             person.canonical_name,
             person.birthdate,
-            coalesce(
-               formative_club_entity.club_name,
-               person.formative_club
-            ),
+            formative_club_entity.club_name,
             participant_start.start_time
          from activity_entity_links participant_link
          join activities activity

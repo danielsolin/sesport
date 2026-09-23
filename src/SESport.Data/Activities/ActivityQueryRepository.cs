@@ -1140,11 +1140,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             participant_start.start_time,
             person.birthdate,
             person.height,
-            coalesce(
-               formative_club_entity.club_name,
-               person.formative_club,
-               ''
-            ) as club,
+            coalesce(formative_club_entity.club_name, '') as club,
             discipline.id is not null as has_discipline,
             nullif(btrim(discipline.alias_name), '') as discipline_alias_name,
             priority.sort_order,

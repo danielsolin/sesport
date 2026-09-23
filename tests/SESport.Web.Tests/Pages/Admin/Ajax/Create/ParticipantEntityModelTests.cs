@@ -14,7 +14,7 @@ public sealed class ParticipantEntityModelTests
          Birthdate = new DateOnly(2000, 1, 2),
          Height = 180,
          Weight = 75,
-         FormativeClub = "Source club"
+         FormativeClubId = Guid.NewGuid()
       };
 
       ParticipantEntityModel.ClearPersonalData(entity);
@@ -23,6 +23,6 @@ public sealed class ParticipantEntityModelTests
       Assert.Null(entity.Birthdate);
       Assert.Null(entity.Height);
       Assert.Null(entity.Weight);
-      Assert.Null(entity.FormativeClub);
+      Assert.Null(entity.FormativeClubId);
    }
 }

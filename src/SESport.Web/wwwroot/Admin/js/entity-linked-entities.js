@@ -212,6 +212,9 @@
          organizationOnly ? "true" : "false"
       );
       url.searchParams.set("includeRelatedEntityNames", "false");
+      getEntityTypeIds(picker).forEach(entityTypeId => {
+         url.searchParams.append("entityTypeIds", entityTypeId);
+      });
 
       if(excludeEntityId !== "")
       {
@@ -573,6 +576,14 @@
 
       return Array.from(grid.querySelectorAll(hiddenInputSelector))
          .map(input => input instanceof HTMLInputElement ? input.value : "")
+         .map(value => value.trim())
+         .filter(value => value !== "");
+   }
+
+   function getEntityTypeIds(picker)
+   {
+      return (picker.dataset.entityTypeIds ?? "")
+         .split(",")
          .map(value => value.trim())
          .filter(value => value !== "");
    }

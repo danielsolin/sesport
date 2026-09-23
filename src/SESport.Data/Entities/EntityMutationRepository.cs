@@ -288,7 +288,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                birthdate,
                height,
                weight,
-               formative_club,
                person_gender_id,
                primary_country_participation_status_id,
                primary_country_participation_reason
@@ -308,7 +307,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                @birthdate,
                @height,
                @weight,
-               @formative_club,
                @person_gender_id,
                @primary_country_participation_status_id,
                @primary_country_participation_reason
@@ -330,7 +328,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                birthdate,
                height,
                weight,
-               formative_club,
                primary_country_participation_status_id,
                primary_country_participation_reason
             )
@@ -349,7 +346,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                @birthdate,
                @height,
                @weight,
-               @formative_club,
                @primary_country_participation_status_id,
                @primary_country_participation_reason
             )
@@ -375,7 +371,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                birthdate = @birthdate,
                height = @height,
                weight = @weight,
-               formative_club = @formative_club,
                person_gender_id = @person_gender_id,
                primary_country_participation_status_id =
                   @primary_country_participation_status_id,
@@ -400,7 +395,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
                birthdate = @birthdate,
                height = @height,
                weight = @weight,
-               formative_club = @formative_club,
                primary_country_participation_status_id =
                   @primary_country_participation_status_id,
                primary_country_participation_reason =
@@ -447,6 +441,15 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          );
       }
 
+      await SaveFormativeClubLinkAsync(
+         connection,
+         transaction,
+         id,
+         model.EntityTypeId,
+         model.FormativeClubId,
+         cancellationToken
+      );
+
       await transaction.CommitAsync(cancellationToken);
       model.Id = id;
    }
@@ -476,40 +479,122 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
       DateOnly? birthdate,
       int? height,
       int? weight,
-      string? formativeClub,
+      string? formativeClubName,
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
+      const string updateSql = """
          update entities
          set birthdate = coalesce(birthdate, @birthdate),
              height = coalesce(height, @height),
              weight = coalesce(weight, @weight),
-             formative_club = coalesce(
-                formative_club,
-                @formative_club
-             ),
              updated_at = now()
          where id = @id
          """;
 
-      await using var command = dataSource.CreateCommand(sql);
-      command.Parameters.AddWithValue("id", entityId);
-      command.Parameters.AddWithValue(
+      await using var updateCommand = new NpgsqlCommand(
+         updateSql,
+         connection,
+         transaction
+      );
+      updateCommand.Parameters.AddWithValue("id", entityId);
+      updateCommand.Parameters.AddWithValue(
          "birthdate",
          (object?)birthdate ?? DBNull.Value
       );
-      command.Parameters.AddWithValue(
+      updateCommand.Parameters.AddWithValue(
          "height",
          (object?)height ?? DBNull.Value
       );
-      command.Parameters.AddWithValue(
+      updateCommand.Parameters.AddWithValue(
          "weight",
          (object?)weight ?? DBNull.Value
       );
+      var wasUpdated = await updateCommand.ExecuteNonQueryAsync(
+         cancellationToken
+      ) > 0;
+      if(!wasUpdated)
+      {
+         await transaction.RollbackAsync(cancellationToken);
+         return false;
+      }
+
+      var wasClubLinked = await AddFormativeClubLinkByNameAsync(
+         connection,
+         transaction,
+         entityId,
+         formativeClubName,
+         cancellationToken
+      );
+
+      await transaction.CommitAsync(cancellationToken);
+      return wasUpdated || wasClubLinked;
+   }
+
+   private static async Task<bool> AddFormativeClubLinkByNameAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid personId,
+      string? formativeClubName,
+      CancellationToken cancellationToken
+   )
+   {
+      if(string.IsNullOrWhiteSpace(formativeClubName))
+      {
+         return false;
+      }
+
+      const string sql = $$"""
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         select
+            md5(@person_id::text || club.id::text)::uuid,
+            @person_id,
+            club.id
+         from entities club
+         where club.entity_type_id = '{{TrackedEntityTypeIds.Club}}'
+            and lower(btrim(club.canonical_name)) =
+               lower(btrim(@formative_club_name))
+            and not exists (
+               select 1
+               from entity_to_entity_links existing_link
+               join entities existing_club
+                  on existing_club.id = case
+                     when existing_link.source_entity_id = @person_id
+                        then existing_link.target_entity_id
+                     else existing_link.source_entity_id
+                  end
+               where (
+                  existing_link.source_entity_id = @person_id
+                  or existing_link.target_entity_id = @person_id
+               )
+                  and existing_club.entity_type_id =
+                     '{{TrackedEntityTypeIds.Club}}'
+            )
+         order by club.canonical_name, club.id
+         limit 1
+         on conflict do nothing
+         """;
+
+      await using var command = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
+      command.Parameters.AddWithValue("person_id", personId);
       command.Parameters.AddWithValue(
-         "formative_club",
-         (object?)NormalizeNullable(formativeClub) ?? DBNull.Value
+         "formative_club_name",
+         formativeClubName.Trim()
       );
 
       return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
@@ -526,16 +611,34 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          return false;
       }
 
-      const string sql = """
+      const string sql = $$"""
          insert into entity_to_entity_links (
             id,
             source_entity_id,
             target_entity_id
          )
-         values (
+         select
             md5(@source_entity_id::text || @target_entity_id::text)::uuid,
             @source_entity_id,
             @target_entity_id
+         where not exists (
+            select 1
+            from entities source
+            join entities target
+               on target.id = @target_entity_id
+            where source.id = @source_entity_id
+               and (
+                  (
+                     source.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+                     and target.entity_type_id =
+                        '{{TrackedEntityTypeIds.Club}}'
+                  )
+                  or (
+                     source.entity_type_id = '{{TrackedEntityTypeIds.Club}}'
+                     and target.entity_type_id =
+                        '{{TrackedEntityTypeIds.Person}}'
+                  )
+               )
          )
          on conflict do nothing
          """;
@@ -590,10 +693,13 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          from unnest(@source_entity_ids) as source_entity_id
          join entities source_entity
             on source_entity.id = source_entity_id
+         join entities target_entity
+            on target_entity.id = @target_entity_id
          where source_entity.entity_type_id in (
             '{{TrackedEntityTypeIds.Person}}',
             '{{TrackedEntityTypeIds.Pair}}'
          )
+            and target_entity.entity_type_id <> '{{TrackedEntityTypeIds.Club}}'
          on conflict do nothing
          """;
 
@@ -737,10 +843,6 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          (object?)model.Weight ?? DBNull.Value
       );
       command.Parameters.AddWithValue(
-         "formative_club",
-         (object?)NormalizeNullable(model.FormativeClub) ?? DBNull.Value
-      );
-      command.Parameters.AddWithValue(
          "person_gender_id",
          (object?)NormalizePersonGenderId(model) ?? DBNull.Value
       );
@@ -814,6 +916,81 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          : NormalizeNullable(model.PrimaryCountryParticipationReason);
    }
 
+   private static async Task SaveFormativeClubLinkAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid personId,
+      string entityTypeId,
+      Guid? formativeClubId,
+      CancellationToken cancellationToken
+   )
+   {
+      if(!string.Equals(
+            entityTypeId,
+            TrackedEntityTypeIds.Person,
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return;
+      }
+
+      const string deleteSql = $$"""
+         delete from entity_to_entity_links link
+         using entities club
+         where (
+               (
+                  link.source_entity_id = @person_id
+                  and link.target_entity_id = club.id
+               )
+               or (
+                  link.target_entity_id = @person_id
+                  and link.source_entity_id = club.id
+               )
+            )
+            and club.entity_type_id = '{{TrackedEntityTypeIds.Club}}'
+         """;
+
+      await using(var deleteCommand = new NpgsqlCommand(
+         deleteSql,
+         connection,
+         transaction
+      ))
+      {
+         deleteCommand.Parameters.AddWithValue("person_id", personId);
+         await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+      }
+
+      if(formativeClubId is null)
+      {
+         return;
+      }
+
+      const string insertSql = $$"""
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         select
+            md5(@person_id::text || club.id::text)::uuid,
+            @person_id,
+            club.id
+         from entities club
+         where club.id = @club_id
+            and club.entity_type_id = '{{TrackedEntityTypeIds.Club}}'
+         on conflict do nothing
+         """;
+
+      await using var insertCommand = new NpgsqlCommand(
+         insertSql,
+         connection,
+         transaction
+      );
+      insertCommand.Parameters.AddWithValue("person_id", personId);
+      insertCommand.Parameters.AddWithValue("club_id", formativeClubId.Value);
+      await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+   }
+
    private static async Task SaveEntityLinksAsync(
       NpgsqlConnection connection,
       NpgsqlTransaction transaction,
@@ -841,17 +1018,20 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
          await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
       }
 
-      const string insertSql = """
+      const string insertSql = $$"""
          insert into entity_to_entity_links (
             id,
             source_entity_id,
             target_entity_id
          )
-         values (
+         select
             md5(@source_entity_id::text || @target_entity_id::text)::uuid,
             @source_entity_id,
             @target_entity_id
-         )
+         from entities target_entity
+         where target_entity.id = @target_entity_id
+            and target_entity.entity_type_id <>
+               '{{TrackedEntityTypeIds.Club}}'
          on conflict do nothing
          """;
 

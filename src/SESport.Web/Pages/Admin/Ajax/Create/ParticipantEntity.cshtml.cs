@@ -110,7 +110,7 @@ public sealed class ParticipantEntityModel(
       entity.Birthdate = null;
       entity.Height = null;
       entity.Weight = null;
-      entity.FormativeClub = null;
+      entity.FormativeClubId = null;
    }
 
 }

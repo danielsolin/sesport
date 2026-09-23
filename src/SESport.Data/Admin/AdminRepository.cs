@@ -366,7 +366,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
       DateOnly? birthdate,
       int? height,
       int? weight,
-      string? formativeClub,
+      string? formativeClubName,
       CancellationToken cancellationToken
    ) =>
       entities.UpdateEntityPersonFactsAsync(
@@ -374,7 +374,7 @@ public sealed class AdminRepository(NpgsqlDataSource dataSource)
          birthdate,
          height,
          weight,
-         formativeClub,
+         formativeClubName,
          cancellationToken
       );
 

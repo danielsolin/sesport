@@ -256,26 +256,23 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
                         and participant.entity_type_id = @person_type
                         and (
                            participant.birthdate is null
-                           or nullif(
-                              btrim(participant.formative_club), ''
-                           ) is null
-                              and not exists (
-                                 select 1
-                                 from entity_to_entity_links club_link
-                                 join entities formative_club
-                                    on formative_club.id = case
-                                       when club_link.source_entity_id =
-                                          participant.id
-                                       then club_link.target_entity_id
-                                       else club_link.source_entity_id
-                                    end
-                                 where (
-                                    club_link.source_entity_id = participant.id
-                                    or club_link.target_entity_id = participant.id
-                                 )
-                                    and formative_club.entity_type_id =
-                                       '{{TrackedEntityTypeIds.Club}}'
+                           or not exists (
+                              select 1
+                              from entity_to_entity_links club_link
+                              join entities formative_club
+                                 on formative_club.id = case
+                                    when club_link.source_entity_id =
+                                       participant.id
+                                    then club_link.target_entity_id
+                                    else club_link.source_entity_id
+                                 end
+                              where (
+                                 club_link.source_entity_id = participant.id
+                                 or club_link.target_entity_id = participant.id
                               )
+                                 and formative_club.entity_type_id =
+                                    '{{TrackedEntityTypeIds.Club}}'
+                           )
                         )
                   ) as participant_missing_person_data,
                coalesce(

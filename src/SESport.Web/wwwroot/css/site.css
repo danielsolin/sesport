@@ -807,6 +807,29 @@ h2 {
    line-height: 1.2;
 }
 
+.entity-formative-club-picker {
+   width: 100%;
+   min-width: 0;
+}
+
+.entity-formative-club-input-wrap {
+   position: relative;
+   width: min(280px, 100%);
+   min-width: 0;
+}
+
+.entity-formative-club-picker .broadcast-org-entity-input {
+   padding: 2px 5px;
+   font-size: 11px;
+   line-height: 1.2;
+}
+
+.entity-formative-club-clear {
+   margin-top: 3px;
+   padding: 1px 5px;
+   font-size: 10px;
+}
+
 .entity-linked-entities-picker {
    display: grid;
    gap: 4px;

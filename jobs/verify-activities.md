@@ -112,8 +112,9 @@ entities of type Person.
   participant has the correct discipline.
 
 - When adding a Person entity, set the correct gender, birth date, and formative
-  club as defined by the project rules. Also create organization-entity
-  relationships matching those of the event's existing participants.
+  Club relationship as defined by the project rules. Also create
+  organization-entity relationships matching those of the event's existing
+  participants.
 
 ### 5. Verify Stars
 

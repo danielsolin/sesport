@@ -695,6 +695,45 @@ public sealed class AdminRepositoryTests
    }
 
    [Fact]
+   public async Task AddEntityLinkAsyncRejectsDirectPersonClubLinks()
+   {
+      var personId = Guid.NewGuid();
+      var clubId = Guid.NewGuid();
+
+      await using var dataSource = CreateDataSource();
+      var repository = new AdminRepository(dataSource);
+
+      await InsertEntityAsync(dataSource, personId, $"Person {personId:N}");
+      await InsertRelatedEntityAsync(
+         dataSource,
+         clubId,
+         $"Club {clubId:N}",
+         TrackedEntityTypeIds.Club,
+         "football"
+      );
+
+      try
+      {
+         var changed = await repository.AddEntityLinkAsync(
+            personId,
+            clubId,
+            CancellationToken.None
+         );
+
+         Assert.False(changed);
+         Assert.Equal(
+            0,
+            await CountEntityLinksAsync(dataSource, personId, clubId)
+         );
+      }
+      finally
+      {
+         await DeleteEntityAsync(dataSource, personId);
+         await DeleteEntityAsync(dataSource, clubId);
+      }
+   }
+
+   [Fact]
    public async Task SaveEntityAsyncPersistsAliasName()
    {
       var entityKey = Guid.NewGuid();
@@ -704,10 +743,18 @@ public sealed class AdminRepositoryTests
       var birthdate = new DateOnly(1995, 10, 9);
       var height = 185;
       var weight = 82;
-      var formativeClub = $"Formative Club {entityKey:N}";
+      var formativeClubId = Guid.NewGuid();
+      var formativeClubName = $"Formative Club {entityKey:N}";
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
+      await InsertRelatedEntityAsync(
+         dataSource,
+         formativeClubId,
+         formativeClubName,
+         TrackedEntityTypeIds.Club,
+         "football"
+      );
 
       var model = new EntityEditModel
       {
@@ -718,7 +765,7 @@ public sealed class AdminRepositoryTests
          Birthdate = birthdate,
          Height = height,
          Weight = weight,
-         FormativeClub = formativeClub,
+         FormativeClubId = formativeClubId,
          EntityTypeId = TrackedEntityTypeIds.Person,
          SportId = "football",
          CountryId = PrimaryCountry.Id,
@@ -745,7 +792,7 @@ public sealed class AdminRepositoryTests
          Assert.Equal(birthdate, loaded.Birthdate);
          Assert.Equal(height, loaded.Height);
          Assert.Equal(weight, loaded.Weight);
-         Assert.Equal(formativeClub, loaded.FormativeClub);
+         Assert.Equal(formativeClubId, loaded.FormativeClubId);
       }
       finally
       {
@@ -753,6 +800,8 @@ public sealed class AdminRepositoryTests
          {
             await DeleteEntityAsync(dataSource, model.Id.Value);
          }
+
+         await DeleteEntityAsync(dataSource, formativeClubId);
       }
    }
 
@@ -942,18 +991,25 @@ public sealed class AdminRepositoryTests
       var incomingBirthdate = new DateOnly(1998, 8, 24);
       var incomingHeight = 190;
       var incomingWeight = 84;
-      var incomingFormativeClub = $"Incoming Club {entityId:N}";
+      var incomingFormativeClubName = $"Incoming Club {entityId:N}";
+      var incomingFormativeClubId = Guid.NewGuid();
 
       await using var dataSource = CreateDataSource();
       var repository = new AdminRepository(dataSource);
 
       await InsertEntityAsync(dataSource, entityId, entityName);
+      await InsertRelatedEntityAsync(
+         dataSource,
+         incomingFormativeClubId,
+         incomingFormativeClubName,
+         TrackedEntityTypeIds.Club,
+         "football"
+      );
       await SetEntityPersonFactsAsync(
          dataSource,
          entityId,
          currentBirthdate,
          currentHeight,
-         null,
          null
       );
 
@@ -964,7 +1020,7 @@ public sealed class AdminRepositoryTests
             incomingBirthdate,
             incomingHeight,
             incomingWeight,
-            incomingFormativeClub,
+            incomingFormativeClubName,
             CancellationToken.None
          );
 
@@ -979,11 +1035,12 @@ public sealed class AdminRepositoryTests
          Assert.Equal(currentBirthdate, loaded!.Birthdate);
          Assert.Equal(currentHeight, loaded.Height);
          Assert.Equal(incomingWeight, loaded.Weight);
-         Assert.Equal(incomingFormativeClub, loaded.FormativeClub);
+         Assert.Equal(incomingFormativeClubId, loaded.FormativeClubId);
       }
       finally
       {
          await DeleteEntityAsync(dataSource, entityId);
+         await DeleteEntityAsync(dataSource, incomingFormativeClubId);
       }
    }
 
@@ -1676,8 +1733,7 @@ public sealed class AdminRepositoryTests
       Guid entityId,
       DateOnly? birthdate,
       int? height,
-      int? weight,
-      string? formativeClub
+      int? weight
    )
    {
       await using var connection = await dataSource.OpenConnectionAsync();
@@ -1686,8 +1742,7 @@ public sealed class AdminRepositoryTests
          update entities
          set birthdate = @birthdate,
              height = @height,
-             weight = @weight,
-             formative_club = @formative_club
+             weight = @weight
          where id = @id
          """;
       command.Parameters.AddWithValue("id", entityId);
@@ -1702,10 +1757,6 @@ public sealed class AdminRepositoryTests
       command.Parameters.AddWithValue(
          "weight",
          (object?)weight ?? DBNull.Value
-      );
-      command.Parameters.AddWithValue(
-         "formative_club",
-         (object?)formativeClub ?? DBNull.Value
       );
 
       await command.ExecuteNonQueryAsync();

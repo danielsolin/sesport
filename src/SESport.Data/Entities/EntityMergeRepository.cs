@@ -1,5 +1,6 @@
 using Npgsql;
 
+using SESport.Core.Domain;
 using SESport.Core.Sources;
 using SESport.Data.Activities;
 using SESport.Data.Models;
@@ -164,6 +165,21 @@ internal sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
          targetEntityId,
          cancellationToken
       );
+      if(string.Equals(
+            source.EntityTypeId,
+            TrackedEntityTypeIds.Person,
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         await DeleteConflictingFormativeClubLinksAsync(
+            connection,
+            transaction,
+            sourceEntityId,
+            targetEntityId,
+            cancellationToken
+         );
+      }
+
       var duplicateEntityLinksDeleted =
          await DeleteDuplicateEntityLinksAsync(
             connection,
@@ -179,6 +195,20 @@ internal sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
          targetEntityId,
          cancellationToken
       );
+      if(string.Equals(
+            source.EntityTypeId,
+            TrackedEntityTypeIds.Person,
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         await NormalizeFormativeClubLinksAsync(
+            connection,
+            transaction,
+            targetEntityId,
+            cancellationToken
+         );
+      }
+
       var duplicateActivityLinksDeleted =
          await DeleteDuplicateActivityEntityLinksAsync(
             connection,
@@ -495,6 +525,99 @@ internal sealed class EntityMergeRepository(NpgsqlDataSource dataSource)
          transaction,
          sql,
          sourceEntityId,
+         targetEntityId,
+         cancellationToken
+      );
+   }
+
+   private static Task<int> DeleteConflictingFormativeClubLinksAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid sourceEntityId,
+      Guid targetEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = $$"""
+         delete from entity_to_entity_links source_link
+         using entities source_club
+         where (
+               (
+                  source_link.source_entity_id = @source_entity_id
+                  and source_link.target_entity_id = source_club.id
+               )
+               or (
+                  source_link.target_entity_id = @source_entity_id
+                  and source_link.source_entity_id = source_club.id
+               )
+            )
+            and source_club.entity_type_id = '{{TrackedEntityTypeIds.Club}}'
+            and exists (
+               select 1
+               from entity_to_entity_links target_link
+               join entities target_club
+                  on target_club.id = case
+                     when target_link.source_entity_id = @target_entity_id
+                        then target_link.target_entity_id
+                     else target_link.source_entity_id
+                  end
+               where (
+                  target_link.source_entity_id = @target_entity_id
+                  or target_link.target_entity_id = @target_entity_id
+               )
+                  and target_club.entity_type_id =
+                     '{{TrackedEntityTypeIds.Club}}'
+            )
+         """;
+
+      return ExecuteMergeCommandAsync(
+         connection,
+         transaction,
+         sql,
+         sourceEntityId,
+         targetEntityId,
+         cancellationToken
+      );
+   }
+
+   private static Task<int> NormalizeFormativeClubLinksAsync(
+      NpgsqlConnection connection,
+      NpgsqlTransaction transaction,
+      Guid targetEntityId,
+      CancellationToken cancellationToken
+   )
+   {
+      const string sql = $$"""
+         with ranked_links as (
+            select
+               link.id,
+               row_number() over (
+                  order by club.canonical_name, club.id
+               ) as link_number
+            from entity_to_entity_links link
+            join entities club
+               on club.id = case
+                  when link.source_entity_id = @target_entity_id
+                     then link.target_entity_id
+                  else link.source_entity_id
+               end
+            where (
+               link.source_entity_id = @target_entity_id
+               or link.target_entity_id = @target_entity_id
+            )
+               and club.entity_type_id = '{{TrackedEntityTypeIds.Club}}'
+         )
+         delete from entity_to_entity_links link
+         using ranked_links duplicate
+         where link.id = duplicate.id
+            and duplicate.link_number > 1
+         """;
+
+      return ExecuteMergeCommandAsync(
+         connection,
+         transaction,
+         sql,
+         targetEntityId,
          targetEntityId,
          cancellationToken
       );

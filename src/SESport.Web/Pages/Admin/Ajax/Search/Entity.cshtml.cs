@@ -102,6 +102,15 @@ public sealed class EntityModel(AdminRepository repository) : PageModel
 
       if(string.Equals(
             format,
+            "formative-club-suggestions",
+            StringComparison.OrdinalIgnoreCase
+         ))
+      {
+         return Partial("_EntityLinkedEntitySuggestions", results);
+      }
+
+      if(string.Equals(
+            format,
             "entity-rows",
             StringComparison.OrdinalIgnoreCase
          ))

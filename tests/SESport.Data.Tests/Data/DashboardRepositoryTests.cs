@@ -16,6 +16,7 @@ public sealed class DashboardRepositoryTests
       var currentActivityId = Guid.NewGuid();
       var variantActivityId = Guid.NewGuid();
       var personId = Guid.NewGuid();
+      var formativeClubId = Guid.NewGuid();
       var runId = Guid.NewGuid();
 
       await using var dataSource = CreateDataSource();
@@ -29,6 +30,7 @@ public sealed class DashboardRepositoryTests
             currentActivityId,
             variantActivityId,
             personId,
+            formativeClubId,
             runId
          );
 
@@ -51,6 +53,7 @@ public sealed class DashboardRepositoryTests
             currentActivityId,
             variantActivityId,
             personId,
+            formativeClubId,
             runId
          );
       }
@@ -65,6 +68,7 @@ public sealed class DashboardRepositoryTests
       var currentActivityId = Guid.NewGuid();
       var variantActivityId = Guid.NewGuid();
       var personId = Guid.NewGuid();
+      var formativeClubId = Guid.NewGuid();
       var runId = Guid.NewGuid();
 
       await using var dataSource = CreateDataSource();
@@ -78,6 +82,7 @@ public sealed class DashboardRepositoryTests
             currentActivityId,
             variantActivityId,
             personId,
+            formativeClubId,
             runId,
             string.Empty,
             true
@@ -104,6 +109,7 @@ public sealed class DashboardRepositoryTests
             currentActivityId,
             variantActivityId,
             personId,
+            formativeClubId,
             runId
          );
       }
@@ -157,6 +163,7 @@ public sealed class DashboardRepositoryTests
       Guid currentActivityId,
       Guid variantActivityId,
       Guid personId,
+      Guid formativeClubId,
       Guid runId,
       string variantStartTime = "10:30",
       bool includeDescription = false
@@ -181,8 +188,7 @@ public sealed class DashboardRepositoryTests
             country_relevance_reason,
             watch_priority_id,
             expected_stability_id,
-            birthdate,
-            formative_club
+            birthdate
          )
          values (
             @person_id,
@@ -194,8 +200,41 @@ public sealed class DashboardRepositoryTests
             'Dashboard grouping regression test',
             'tier_3',
             'short_term',
-            date '1990-01-01',
-            'Test club'
+            date '1990-01-01'
+         );
+
+         insert into entities (
+            id,
+            canonical_name,
+            entity_type_id,
+            sport_id,
+            country_id,
+            country_relevance_kind_id,
+            country_relevance_reason,
+            watch_priority_id,
+            expected_stability_id
+         )
+         values (
+            @formative_club_id,
+            @formative_club_name,
+            @club_type,
+            'golf',
+            @country_id,
+            'NationalityOrSportingIdentity',
+            'Dashboard grouping regression test',
+            'tier_3',
+            'short_term'
+         );
+
+         insert into entity_to_entity_links (
+            id,
+            source_entity_id,
+            target_entity_id
+         )
+         values (
+            @formative_club_link_id,
+            @person_id,
+            @formative_club_id
          );
 
          insert into activity_groups (
@@ -374,6 +413,15 @@ public sealed class DashboardRepositoryTests
          TrackedEntityTypeIds.Person
       );
       command.Parameters.AddWithValue("country_id", PrimaryCountry.Id);
+      command.Parameters.AddWithValue("formative_club_id", formativeClubId);
+      command.Parameters.AddWithValue(
+         "formative_club_name",
+         $"Dashboard test club {formativeClubId:N}"
+      );
+      command.Parameters.AddWithValue(
+         "club_type",
+         TrackedEntityTypeIds.Club
+      );
       command.Parameters.AddWithValue(
          "activity_group_id",
          activityGroupId
@@ -421,6 +469,10 @@ public sealed class DashboardRepositoryTests
       );
       command.Parameters.AddWithValue(
          "variant_link_id",
+         Guid.NewGuid()
+      );
+      command.Parameters.AddWithValue(
+         "formative_club_link_id",
          Guid.NewGuid()
       );
       command.Parameters.AddWithValue("run_id", runId);
@@ -472,6 +524,7 @@ public sealed class DashboardRepositoryTests
       Guid currentActivityId,
       Guid variantActivityId,
       Guid personId,
+      Guid formativeClubId,
       Guid runId
    )
    {
@@ -503,6 +556,9 @@ public sealed class DashboardRepositoryTests
 
          delete from entities
          where id = @person_id;
+
+         delete from entities
+         where id = @formative_club_id;
          """,
          connection,
          transaction
@@ -522,6 +578,7 @@ public sealed class DashboardRepositoryTests
       command.Parameters.AddWithValue("run_id", runId);
       command.Parameters.AddWithValue("activity_group_id", activityGroupId);
       command.Parameters.AddWithValue("person_id", personId);
+      command.Parameters.AddWithValue("formative_club_id", formativeClubId);
 
       await command.ExecuteNonQueryAsync();
       await transaction.CommitAsync();

@@ -75,9 +75,10 @@ Stores the canonical identities followed by SESport. An entity is associated
 with a type, sport, country, country relevance, stability, and watch priority.
 The optional `url` stores the entity's primary website or social profile.
 Person-specific fields such as gender, birthdate, height, weight, and
-formative club are nullable and constrained to person entities. Person
-entities may also have a primary-country participation status and optional
-explanation when they should not be counted for the primary country.
+gender are nullable and constrained to person entities. A person-to-`Club`
+relationship stores the person's formative club. Person entities may also
+have a primary-country participation status and optional explanation when
+they should not be counted for the primary country.
 
 ### `entity_images`
 

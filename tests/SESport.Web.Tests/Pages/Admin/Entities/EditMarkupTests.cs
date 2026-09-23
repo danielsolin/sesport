@@ -55,7 +55,9 @@ public sealed class EditMarkupTests
       Assert.Contains("data-person-birthdate-field", html);
       Assert.Contains("Entity.Birthdate", html);
       Assert.Contains("data-person-formative-club-field", html);
-      Assert.Contains("Entity.FormativeClub", html);
+      Assert.Contains("Entity.FormativeClubId", html);
+      Assert.Contains("data-formative-club-picker", html);
+      Assert.Contains("formative-club-lookup.js", html);
       Assert.Contains("asp-page-handler=\"AddSource\"", html);
       Assert.Contains("id=\"add-entity-source-form\"", html);
       Assert.Contains("name=\"sourceUrl\"", html);

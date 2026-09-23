@@ -205,7 +205,7 @@ internal sealed class EntityRepository(NpgsqlDataSource dataSource)
       DateOnly? birthdate,
       int? height,
       int? weight,
-      string? formativeClub,
+      string? formativeClubName,
       CancellationToken cancellationToken
    ) =>
       mutations.UpdateEntityPersonFactsAsync(
@@ -213,7 +213,7 @@ internal sealed class EntityRepository(NpgsqlDataSource dataSource)
          birthdate,
          height,
          weight,
-         formativeClub,
+         formativeClubName,
          cancellationToken
       );
 
