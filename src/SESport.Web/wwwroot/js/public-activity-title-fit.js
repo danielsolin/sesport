@@ -88,7 +88,8 @@
          return textLines.every(textLine =>
             textLine.bottom <= obstacleRect.top ||
             textLine.top >= obstacleRect.bottom ||
-            textLine.right <= obstacleRect.left
+            textLine.right <= obstacleRect.left ||
+            textLine.left >= obstacleRect.right
          );
       });
    };

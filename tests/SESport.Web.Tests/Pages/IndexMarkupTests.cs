@@ -124,6 +124,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("getBoundingClientRect", titleFitScript);
       Assert.Contains("fitsAroundSportIcon", titleFitScript);
       Assert.Contains("activity-entry-sport-icon", titleFitScript);
+      Assert.Contains("textLine.left >= obstacleRect.right", titleFitScript);
       Assert.Contains("minimumScale = 0.8", titleFitScript);
       Assert.Contains("narrowMinimumScale = 0.4", titleFitScript);
       Assert.DoesNotContain("narrowActivityCardWidth", titleFitScript);
@@ -261,6 +262,7 @@ public sealed class IndexMarkupTests
       Assert.Contains("participant.IsWatchedByMember;", html);
       Assert.Contains("activity-participant-watched", html);
       Assert.Contains("activity-participant-watched-badge", html);
+      Assert.Contains("activity-participant-name-text", html);
       Assert.Contains("watchPriorityBadgeClass", html);
       Assert.Contains("★", html);
       Assert.True(
@@ -293,6 +295,16 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(".activity-participant-watched", css);
       Assert.Contains(".activity-participant-watched-badge", css);
+      Assert.Contains(
+         ".activity-participant-name-text {\n" +
+         "   font-weight: 750;",
+         css
+      );
+      Assert.Contains(
+         ".activity-participant-watched .activity-participant-name-text {\n" +
+         "   font-weight: 850;",
+         css
+      );
       Assert.Contains(".activity-date-separator-label", css);
       Assert.Contains(".activity-date-separator-label.is-today", css);
       Assert.Contains(
@@ -497,7 +509,14 @@ public sealed class IndexMarkupTests
       Assert.Contains("slot.TvChannels", html);
       Assert.DoesNotContain("slot.EndTimeLabel", html);
       Assert.Contains("activity-group-description", html);
+      Assert.Contains("activity-entry-description", html);
       Assert.Contains("activity-group-slot-channel-list", css);
+      Assert.Contains(
+         ".activity-entry-description {\n" +
+         "   display: none;\n" +
+         "   margin-top: 4px;",
+         css
+      );
       Assert.Contains(
          ".activity-group-description {\n" +
          "   margin-bottom: 0;",
@@ -633,19 +652,18 @@ public sealed class IndexMarkupTests
          css
       );
       Assert.Contains(
-         ".activity-status-badge {\n      right: auto;\n" +
-         "      left: 14px;",
+         ".activity-status-badge {\n      right: 14px;\n" +
+         "      left: auto;",
          css
       );
       Assert.Contains(
-         ".activity-entry-sport-icon {\n      right: 14px;\n" +
-         "      left: auto;",
+         ".activity-entry-sport-icon {\n      left: 14px;",
          css
       );
       Assert.Contains(
          ".activity-entry-sport-icon {\n   display: inline-block;\n" +
          "   position: absolute;\n   top: 13px;\n" +
-         "   right: 14px;\n   width: 42px;\n" +
+         "   left: 14px;\n   width: 42px;\n" +
          "   height: 42px;",
          css
       );

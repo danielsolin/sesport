@@ -1609,7 +1609,8 @@
 
 .activity-entry-organization,
 .activity-entry-title {
-   padding-right: 42px;
+   padding-right: 0;
+   padding-left: 52px;
 }
 
 .activity-entry-organization {
@@ -1642,7 +1643,8 @@
    line-height: 1.16;
 }
 
-.activity-entry-title + p {
+.activity-entry-description {
+   display: none;
    margin-top: 4px;
 }
 
@@ -1816,6 +1818,14 @@
 
 .activity-participant-name {
    font-weight: 750;
+}
+
+.activity-participant-name-text {
+   font-weight: 750;
+}
+
+.activity-participant-watched .activity-participant-name-text {
+   font-weight: 850;
 }
 
 .activity-participant-watched {
@@ -2084,7 +2094,7 @@
    display: inline-block;
    position: absolute;
    top: 13px;
-   right: 14px;
+   left: 14px;
    width: 42px;
    height: 42px;
    background-color: #006aa8;
@@ -2103,7 +2113,7 @@
    position: absolute;
    z-index: 2;
    top: 42px;
-   right: 8px;
+   left: 8px;
    box-sizing: border-box;
    width: 24px;
    height: 15px;
@@ -2117,7 +2127,7 @@
 
 .activity-entry-sport-country-tag-symbol {
    top: 34px;
-   right: 12px;
+   left: 12px;
    width: 22px;
    height: 29px;
    border: 0;
@@ -2390,13 +2400,12 @@
    }
 
    .activity-status-badge {
-      right: auto;
-      left: 14px;
+      right: 14px;
+      left: auto;
    }
 
    .activity-entry-sport-icon {
-      right: 14px;
-      left: auto;
+      left: 14px;
    }
 
    .activity-agenda-section-grouped

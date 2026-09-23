@@ -800,11 +800,13 @@ else
                         activity.Description
                      ))
                      {
-                        <p class="@(
-                           isGrouped ? "activity-group-description" : ""
-                        )">
-                           @activity.Description
-                        </p>
+                        <div class="activity-entry-description">
+                           <p class="@(
+                              isGrouped ? "activity-group-description" : ""
+                           )">
+                              @activity.Description
+                           </p>
+                        </div>
                      }
                      @if(isGrouped)
                      {
@@ -916,8 +918,11 @@ else
                                        {
                                           <span class=
                                              "activity-group-slot-participants">
-                                             (@string.Join(", ",
-                                                slotParticipantNames))
+                                             <span class=
+                                                "activity-participant-name-text">
+                                                (@string.Join(", ",
+                                                   slotParticipantNames))
+                                             </span>
                                           </span>
                                        }
                                     </span>
@@ -1159,7 +1164,10 @@ else
                                            "@participant.Club">
                                        <td class="activity-participant-name
                                           activity-participant-col-name">
-                                          @participant.Name
+                                          <span class=
+                                             "activity-participant-name-text">
+                                             @participant.Name
+                                          </span>
                                           @if(teamCountryFlagPath is not null)
                                           {
                                              <img class=
