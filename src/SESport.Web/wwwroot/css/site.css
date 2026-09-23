@@ -1126,6 +1126,11 @@ h2 {
    font-size: 12px;
 }
 
+.entity-formative-club-link {
+   text-decoration: underline;
+   text-underline-offset: 2px;
+}
+
 .broadcast-categories-list {
    display: grid;
    gap: 2px;

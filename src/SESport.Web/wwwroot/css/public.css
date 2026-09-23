@@ -1857,6 +1857,16 @@
    color: var(--accent-strong);
 }
 
+.activity-formative-club-link {
+   color: inherit;
+   text-decoration: underline;
+   text-underline-offset: 2px;
+}
+
+.activity-formative-club-link:hover {
+   color: var(--accent-strong);
+}
+
 .activity-participant-col-discipline {
    width: 1%;
    white-space: nowrap;
