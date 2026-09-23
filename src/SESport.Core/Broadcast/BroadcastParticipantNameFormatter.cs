@@ -24,6 +24,18 @@ public static partial class BroadcastParticipantNameFormatter
       );
    }
 
+   public static string GetLastName(string value)
+   {
+      var formattedName = Format(value);
+      return formattedName
+         .Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries |
+               StringSplitOptions.TrimEntries
+         )
+         .LastOrDefault() ?? string.Empty;
+   }
+
    private static string OrderCommaSeparatedName(string value)
    {
       var commaIndex = value.IndexOf(',');

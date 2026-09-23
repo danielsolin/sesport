@@ -849,7 +849,11 @@ else
                                              participant.IsActive
                                        )
                                        .Select(
-                                          participant => participant.Name
+                                          participant =>
+                                             BroadcastParticipantNameFormatter
+                                                .GetLastName(
+                                                   participant.Name
+                                                )
                                        )
                                        .ToArray()
                                     : [];

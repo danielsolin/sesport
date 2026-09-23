@@ -28,4 +28,20 @@ public sealed class BroadcastParticipantNameFormatterTests
    {
       Assert.Equal(value, BroadcastParticipantNameFormatter.Format(value));
    }
+
+   [Theory]
+   [InlineData("Ludvig Åberg", "Åberg")]
+   [InlineData("Anna Maria Andersson", "Andersson")]
+   [InlineData("Åberg, Ludvig", "Åberg")]
+   [InlineData("McLaren", "McLaren")]
+   public void GetLastNameReturnsLastNamePart(
+      string value,
+      string expected
+   )
+   {
+      Assert.Equal(
+         expected,
+         BroadcastParticipantNameFormatter.GetLastName(value)
+      );
+   }
 }
