@@ -73,6 +73,7 @@ activity relationship table.
 
 Stores the canonical identities followed by SESport. An entity is associated
 with a type, sport, country, country relevance, stability, and watch priority.
+The optional `url` stores the entity's primary website or social profile.
 Person-specific fields such as gender, birthdate, height, weight, and
 formative club are nullable and constrained to person entities. Person
 entities may also have a primary-country participation status and optional
