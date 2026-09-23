@@ -1,5 +1,6 @@
 @using System.Globalization
 @using SESport.Core.Domain
+@using SESport.Core.Sources
 @using SESport.Web.Pages
 @model SESport.Web.Pages.Admin.Entities.EntityRowsViewModel
 
@@ -26,6 +27,10 @@
                ? $"P:{entity.RelatedPersonCount}"
                : null
          }.Where(value => !string.IsNullOrWhiteSpace(value))
+      );
+      var hasFormativeClubUrl = SourceUrlNormalizer.TryNormalize(
+         entity.FormativeClubUrl,
+         out var formativeClubUrl
       );
       var searchQuery = string.Join(
          " ",
@@ -133,7 +138,18 @@
          <td>
             @if(!string.IsNullOrWhiteSpace(entity.FormativeClub))
             {
-               @entity.FormativeClub
+               @if(hasFormativeClubUrl)
+               {
+                  <a href="@formativeClubUrl"
+                     target="_blank"
+                     rel="noopener noreferrer">
+                     @entity.FormativeClub
+                  </a>
+               }
+               else
+               {
+                  @entity.FormativeClub
+               }
             }
             else
             {

@@ -205,13 +205,14 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
             coalesce(
                formative_club_entity.club_name,
                e.formative_club
-            )
+            ),
+            formative_club_entity.club_url
          from entities e
          join entity_types et on et.id = e.entity_type_id
          join sports s on s.id = e.sport_id
          join entity_watch_priorities p on p.id = e.watch_priority_id
          left join countries c on c.id = e.country_id
-         {ActivityQueryRepository.GetFormativeClubNameLateralSql("e")}
+         {ActivityQueryRepository.GetFormativeClubLateralSql("e")}
          left join lateral (
             select
                string_agg(linked_name, ', ' order by linked_name)
@@ -320,6 +321,11 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                reader.IsDBNull(12) ? null : reader.GetInt32(12),
                reader.IsDBNull(13) ? null : reader.GetString(13)
             )
+            {
+               FormativeClubUrl = reader.IsDBNull(14)
+                  ? null
+                  : reader.GetString(14)
+            }
          );
       }
 
@@ -1269,7 +1275,7 @@ public sealed class EntityQueryRepository(NpgsqlDataSource dataSource)
                limit 1
             ) as primary_image_source_url
          from entities
-         {{ActivityQueryRepository.GetFormativeClubNameLateralSql("entities")}}
+         {{ActivityQueryRepository.GetFormativeClubLateralSql("entities")}}
          where id = @id
          """;
    }

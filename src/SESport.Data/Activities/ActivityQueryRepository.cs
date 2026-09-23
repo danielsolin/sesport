@@ -1170,7 +1170,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             {{watchedByMemberSql}} as is_watched_by_member,
             represented_entity.id as represented_entity_id,
             represented_entity.country_id
-               as represented_entity_country_id
+               as represented_entity_country_id,
+            formative_club_entity.club_url
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
@@ -1178,7 +1179,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             on represented_entity.id = al.represented_entity_id
          join entity_watch_priorities priority
             on priority.id = person.watch_priority_id
-         {{GetFormativeClubNameLateralSql("person")}}
+         {{GetFormativeClubLateralSql("person")}}
          left join lateral (
             select
                nullif(btrim(r.value_text), '') as start_time,
@@ -1323,7 +1324,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   : reader.GetGuid(20),
                RepresentedEntityCountryId = reader.IsDBNull(21)
                   ? null
-                  : reader.GetString(21)
+                  : reader.GetString(21),
+               FormativeClubUrl = reader.IsDBNull(22)
+                  ? null
+                  : reader.GetString(22)
             }
          );
       }
@@ -1689,15 +1693,18 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          """;
    }
 
-   internal static string GetFormativeClubNameLateralSql(
+   internal static string GetFormativeClubLateralSql(
       string entityAlias
    )
    {
       var entityIdSql = $"{entityAlias}.id";
+      var entityTypeSql = $"{entityAlias}.entity_type_id";
 
       return $$"""
          left join lateral (
-            select linked.canonical_name as club_name
+            select
+               linked.canonical_name as club_name,
+               linked.url as club_url
             from entity_to_entity_links link
             join entities linked
                on linked.id = case
@@ -1709,6 +1716,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                link.source_entity_id = {{entityIdSql}}
                or link.target_entity_id = {{entityIdSql}}
             )
+               and {{entityTypeSql}} =
+                  '{{TrackedEntityTypeIds.Person}}'
                and linked.entity_type_id =
                   '{{TrackedEntityTypeIds.Club}}'
             order by linked.canonical_name, linked.id

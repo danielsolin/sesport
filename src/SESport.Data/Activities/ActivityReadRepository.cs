@@ -381,7 +381,7 @@ public sealed class ActivityReadRepository(NpgsqlDataSource dataSource)
             on activity.id = participant_link.activity_id
          join entities person
             on person.id = participant_link.entity_id
-         {{ActivityQueryRepository.GetFormativeClubNameLateralSql("person")}}
+         {{ActivityQueryRepository.GetFormativeClubLateralSql("person")}}
          left join lateral (
             select nullif(btrim(result.value_text), '') as start_time
             from activity_participant_ai_results result

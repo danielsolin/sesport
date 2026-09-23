@@ -119,7 +119,10 @@ public sealed record EntityListItem(
    int? Height,
    int? Weight,
    string? FormativeClub
-);
+)
+{
+   public string? FormativeClubUrl { get; init; }
+}
 
 public sealed record EntityLinkOption(
    Guid Id,

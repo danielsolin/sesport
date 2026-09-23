@@ -1099,6 +1099,11 @@ else
                                  {
                                     var participant =
                                        participants[participantIndex];
+                                    var hasFormativeClubUrl =
+                                       SourceUrlNormalizer.TryNormalize(
+                                          participant.FormativeClubUrl,
+                                          out var formativeClubUrl
+                                       );
                                     var representedEntityCanonicalName =
                                        participant
                                           .RepresentedEntityCanonicalName ??
@@ -1265,7 +1270,21 @@ else
                                        </td>
                                        <td class=
                                               "activity-participant-col-club">
-                                          @participant.Club
+                                          @if(hasFormativeClubUrl &&
+                                             !string.IsNullOrWhiteSpace(
+                                                participant.Club
+                                             ))
+                                          {
+                                             <a href="@formativeClubUrl"
+                                                target="_blank"
+                                                rel="noopener noreferrer">
+                                                @participant.Club
+                                             </a>
+                                          }
+                                          else
+                                          {
+                                             @participant.Club
+                                          }
                                        </td>
                                        <td class=
                                           "activity-participant-col-country">
