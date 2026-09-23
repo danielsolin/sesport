@@ -193,3 +193,14 @@ Provide the operator with:
 2. A summary of anything that could not be resolved.
 3. Number of activity cards counted in step 1 and step 7. If the numbers do not
    match, explain why.
+
+## 8. Commit and Push the Approved Report
+
+After the operator has approved the report and all approved changes have been
+applied, commit and push the report for the provided date.
+
+- Use the commit message `Add activity verification report YYYY-MM-DD`, replacing
+  `YYYY-MM-DD` with the actual report date.
+- Include only the approved report and the intended job-instruction changes in
+  the commit.
+- Push the commit to the configured remote.
