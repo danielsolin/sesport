@@ -36,7 +36,7 @@ public static class PublicParticipantTeamFlag
       );
       var showPrimaryCountryTeam =
          isPrimaryCountryTeam && isNationalTeamActivity;
-      var showForeignTeam = !isPrimaryCountryTeam && hasPrimaryCountryTeam;
+      var showForeignTeam = !isPrimaryCountryTeam;
       if(!showPrimaryCountryTeam && !showForeignTeam)
       {
          return null;
