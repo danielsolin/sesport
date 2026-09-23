@@ -201,6 +201,4 @@ applied, commit and push the report for the provided date.
 
 - Use the commit message `Add activity verification report YYYY-MM-DD`, replacing
   `YYYY-MM-DD` with the actual report date.
-- Include only the approved report and the intended job-instruction changes in
-  the commit.
 - Push the commit to the configured remote.
