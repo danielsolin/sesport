@@ -93,7 +93,9 @@ metadata and content remain part of the same backup and transaction.
 
 Stores relationships between two entities, such as an athlete and a team.
 The pair is unique in both directions, preventing the same relationship from
-being inserted twice with source and target reversed.
+being inserted twice with source and target reversed. A person-to-`Team` link
+represents a current team relationship, while a person-to-`Club` link
+represents the person's formative club.
 
 ### `sources`
 

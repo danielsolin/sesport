@@ -1140,7 +1140,11 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             participant_start.start_time,
             person.birthdate,
             person.height,
-            coalesce(person.formative_club, '') as club,
+            coalesce(
+               formative_club_entity.club_name,
+               person.formative_club,
+               ''
+            ) as club,
             discipline.id is not null as has_discipline,
             nullif(btrim(discipline.alias_name), '') as discipline_alias_name,
             priority.sort_order,
@@ -1174,6 +1178,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             on represented_entity.id = al.represented_entity_id
          join entity_watch_priorities priority
             on priority.id = person.watch_priority_id
+         {{GetFormativeClubNameLateralSql("person")}}
          left join lateral (
             select
                nullif(btrim(r.value_text), '') as start_time,
@@ -1681,6 +1686,34 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                      )}
             ) organizations
          ) org on true
+         """;
+   }
+
+   internal static string GetFormativeClubNameLateralSql(
+      string entityAlias
+   )
+   {
+      var entityIdSql = $"{entityAlias}.id";
+
+      return $$"""
+         left join lateral (
+            select linked.canonical_name as club_name
+            from entity_to_entity_links link
+            join entities linked
+               on linked.id = case
+                  when link.source_entity_id = {{entityIdSql}}
+                     then link.target_entity_id
+                  else link.source_entity_id
+               end
+            where (
+               link.source_entity_id = {{entityIdSql}}
+               or link.target_entity_id = {{entityIdSql}}
+            )
+               and linked.entity_type_id =
+                  '{{TrackedEntityTypeIds.Club}}'
+            order by linked.canonical_name, linked.id
+            limit 1
+         ) formative_club_entity on true
          """;
    }
 }

@@ -166,11 +166,13 @@ priority:
 2. The earliest known club in the athlete's development.
 3. The athlete's current club.
 
-The stored value may therefore be a fallback. `formative_club` must not be
-interpreted as proof of the actual formative club unless the available source
-evidence supports that conclusion. A missing value is a data-quality
-exception that should be investigated, rather than an intended outcome when
-an earlier or current club can be established.
+The normalized representation is a link from the person to a `Club` entity.
+During the transition, `formative_club` remains a compatibility fallback and
+must not be cleared until all consumers use the normalized relationship. The
+value must not be interpreted as proof of the actual formative club unless the
+available source evidence supports that conclusion. A missing value is a
+data-quality exception that should be investigated, rather than an intended
+outcome when an earlier or current club can be established.
 
 Examples:
 

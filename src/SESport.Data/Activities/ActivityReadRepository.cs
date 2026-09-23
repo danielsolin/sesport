@@ -366,18 +366,22 @@ public sealed class ActivityReadRepository(NpgsqlDataSource dataSource)
          CancellationToken cancellationToken
       )
    {
-      const string sql = $$"""
+      var sql = $$"""
          select
             person.id,
             person.canonical_name,
             person.birthdate,
-            person.formative_club,
+            coalesce(
+               formative_club_entity.club_name,
+               person.formative_club
+            ),
             participant_start.start_time
          from activity_entity_links participant_link
          join activities activity
             on activity.id = participant_link.activity_id
          join entities person
             on person.id = participant_link.entity_id
+         {{ActivityQueryRepository.GetFormativeClubNameLateralSql("person")}}
          left join lateral (
             select nullif(btrim(result.value_text), '') as start_time
             from activity_participant_ai_results result
