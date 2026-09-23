@@ -2579,6 +2579,21 @@
    .activity-participant-watched-badge {
       display: none;
    }
+
+   .activity-entry-sport-icon,
+   .activity-entry-sport-country-tag {
+      display: none;
+   }
+
+   .activity-entry-organization,
+   .activity-entry-title {
+      padding-left: 0;
+   }
+
+   .activity-entry-title {
+      overflow: hidden;
+      white-space: nowrap;
+   }
 }
 
 @media (max-width: 720px) {

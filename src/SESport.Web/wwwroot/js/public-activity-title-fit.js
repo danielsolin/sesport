@@ -20,6 +20,9 @@
 
    const minimumScale = 0.8;
    const narrowMinimumScale = 0.4;
+   const portraitMinimumScale = 0.2;
+   const portraitTitleMediaQuery =
+      "(max-width: 720px) and (orientation: portrait)";
    const baseFontSizes = new Map();
 
    const readFontSize = element => {
@@ -97,6 +100,11 @@
    const fitsTitle = title =>
       fits(title) && fitsAroundSportIcon(title);
 
+   const getTitleFallbackMinimumScale = () =>
+      window.matchMedia(portraitTitleMediaQuery).matches
+         ? portraitMinimumScale
+         : narrowMinimumScale;
+
    const setScale = (elements, scale) => {
       elements.forEach(element => {
          const baseFontSize = baseFontSizes.get(element);
@@ -169,7 +177,7 @@
          [title],
          () => fitsTitle(title),
          minimumScale,
-         narrowMinimumScale
+         getTitleFallbackMinimumScale()
       );
    };
 
