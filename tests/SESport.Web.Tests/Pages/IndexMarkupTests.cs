@@ -296,6 +296,15 @@ public sealed class IndexMarkupTests
       Assert.Contains(".activity-participant-watched", css);
       Assert.Contains(".activity-participant-watched-badge", css);
       Assert.Contains(
+         "@media (max-width: 720px) and (orientation: portrait) {\n" +
+         "   .activity-group-description {\n" +
+         "      display: block;\n" +
+         "   }\n\n" +
+         "   .activity-participant-watched-badge {\n" +
+         "      display: none;",
+         css
+      );
+      Assert.Contains(
          ".activity-participant-name-text {\n" +
          "   font-weight: 750;",
          css

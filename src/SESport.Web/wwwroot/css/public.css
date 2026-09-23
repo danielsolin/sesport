@@ -2575,6 +2575,10 @@
    .activity-group-description {
       display: block;
    }
+
+   .activity-participant-watched-badge {
+      display: none;
+   }
 }
 
 @media (max-width: 720px) {
