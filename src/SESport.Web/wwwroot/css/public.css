@@ -1817,14 +1817,10 @@
 }
 
 .activity-participant-name {
-   font-weight: 750;
+   font-weight: 850;
 }
 
 .activity-participant-name-text {
-   font-weight: 750;
-}
-
-.activity-participant-watched .activity-participant-name-text {
    font-weight: 850;
 }
 
@@ -1834,7 +1830,6 @@
 
 .activity-participant-watched .activity-participant-name {
    color: inherit;
-   font-weight: 850;
 }
 
 .activity-participant-watched-badge {
