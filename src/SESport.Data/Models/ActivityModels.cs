@@ -78,6 +78,8 @@ public sealed record PublicActivityParticipant(
    string? DisciplineAliasName
 )
 {
+   public string? PersonUrl { get; init; }
+
    public string? FormativeClubUrl { get; init; }
 
    public string? TeamCanonicalName { get; init; }

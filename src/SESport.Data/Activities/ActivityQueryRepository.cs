@@ -1167,7 +1167,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             represented_entity.id as represented_entity_id,
             represented_entity.country_id
                as represented_entity_country_id,
-            formative_club_entity.club_url
+            formative_club_entity.club_url,
+            person.url
          from activity_entity_links al
          join activities activity on activity.id = al.activity_id
          join entities person on person.id = al.entity_id
@@ -1323,7 +1324,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   : reader.GetString(21),
                FormativeClubUrl = reader.IsDBNull(22)
                   ? null
-                  : reader.GetString(22)
+                  : reader.GetString(22),
+               PersonUrl = reader.IsDBNull(23)
+                  ? null
+                  : reader.GetString(23)
             }
          );
       }

@@ -1108,6 +1108,11 @@ else
                                  {
                                     var participant =
                                        participants[participantIndex];
+                                    var hasPersonUrl =
+                                       SourceUrlNormalizer.TryNormalize(
+                                          participant.PersonUrl,
+                                          out var personUrl
+                                       );
                                     var hasFormativeClubUrl =
                                        SourceUrlNormalizer.TryNormalize(
                                           participant.FormativeClubUrl,
@@ -1170,7 +1175,20 @@ else
                                           activity-participant-col-name">
                                           <span class=
                                              "activity-participant-name-text">
-                                             @participant.Name
+                                             @if(hasPersonUrl)
+                                             {
+                                                <a class=
+                                                   "activity-formative-club-link"
+                                                   href="@personUrl"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer">
+                                                   @participant.Name
+                                                </a>
+                                             }
+                                             else
+                                             {
+                                                @participant.Name
+                                             }
                                           </span>
                                           @if(teamCountryFlagPath is not null)
                                           {
