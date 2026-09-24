@@ -1837,10 +1837,10 @@
    align-items: center;
    margin-left: 6px;
    padding: 1px 5px;
-   border: 1px solid rgba(0, 106, 168, 0.45);
+   border: 1px solid rgba(138, 101, 0, 0.55);
    border-radius: 999px;
-   background: rgba(0, 106, 168, 0.1);
-   color: var(--accent-strong);
+   background: rgba(255, 204, 0, 0.2);
+   color: var(--warning);
    font-size: 9px;
    font-weight: 800;
    line-height: 1.2;
