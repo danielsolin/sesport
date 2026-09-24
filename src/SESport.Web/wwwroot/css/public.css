@@ -2571,6 +2571,12 @@
    }
 }
 
+@media (orientation: portrait) {
+   .activity-participant-col-age {
+      display: none;
+   }
+}
+
 @media (max-width: 720px) and (orientation: portrait) {
    .activity-group-description {
       display: block;
