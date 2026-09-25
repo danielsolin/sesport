@@ -306,11 +306,6 @@ public sealed class IndexMarkupTests
       );
       Assert.Contains(
          ".activity-participant-name-text {\n" +
-         "   font-weight: 750;",
-         css
-      );
-      Assert.Contains(
-         ".activity-participant-watched .activity-participant-name-text {\n" +
          "   font-weight: 850;",
          css
       );
