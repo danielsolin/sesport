@@ -362,7 +362,6 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             participant_activity_date
          from dashboard_issues
          where publication_status_id = @draft_status
-            or missing_description
             or no_participants
             or no_group
             or no_related_source
@@ -372,7 +371,6 @@ public sealed class DashboardRepository(NpgsqlDataSource dataSource)
             (publication_status_id = @draft_status) desc,
             activity_date,
             no_participants desc,
-            missing_description desc,
             no_group desc,
             no_related_source desc,
             missing_participant_start_time desc,

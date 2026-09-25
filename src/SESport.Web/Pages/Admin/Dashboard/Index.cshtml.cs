@@ -71,11 +71,6 @@ public class IndexModel(
          labels.Add("Draft");
       }
 
-      if(issue.IsMissingDescription)
-      {
-         labels.Add("Missing description");
-      }
-
       if(issue.HasNoParticipants)
       {
          labels.Add("No participants");
