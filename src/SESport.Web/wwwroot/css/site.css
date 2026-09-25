@@ -1039,8 +1039,8 @@ h2 {
    background: #edf3ee;
 }
 
-.admin-table-hover tbody tr.activity-description-missing > td,
-.admin-table-hover tbody tr.activity-description-missing:hover > td {
+.admin-table-hover tbody tr.activity-missing-participants > td,
+.admin-table-hover tbody tr.activity-missing-participants:hover > td {
    background: var(--warning-bg);
 }
 

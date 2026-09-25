@@ -177,12 +177,8 @@
             <tbody>
                @foreach(var activity in Model.Activities)
                {
-                  var missingDescription = string.IsNullOrWhiteSpace(
-                     activity.Description
-                  );
                   var noParticipants =
                      activity.RelatedPersonEntityIds.Length < 1;
-                  var highlightRow = missingDescription || noParticipants;
                   var activitySearchUrl =
                      $"{searchUrlBase}{System.Uri.EscapeDataString(
                         activity.Title
@@ -195,8 +191,8 @@
                      DateDisplay.TimeOnlyMinutesFormat
                   )
                      ?? "?";
-                  <tr class="@(highlightRow
-                     ? "activity-description-missing"
+                  <tr class="@(noParticipants
+                     ? "activity-missing-participants"
                      : string.Empty)">
                      <td>
                         @activity.ActivityDate.ToString(
