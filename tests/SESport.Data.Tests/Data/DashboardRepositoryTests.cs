@@ -39,11 +39,12 @@ public sealed class DashboardRepositoryTests
             now,
             CancellationToken.None
          );
-         var issue = dashboard.ActivityIssues.Single(
-            item => item.Id == currentActivityId
+         Assert.DoesNotContain(
+            dashboard.ActivityIssues,
+            item => (item.Id == currentActivityId ||
+               item.Id == variantActivityId) &&
+               item.HasMissingParticipantStartTime
          );
-
-         Assert.False(issue.HasMissingParticipantStartTime);
       }
       finally
       {

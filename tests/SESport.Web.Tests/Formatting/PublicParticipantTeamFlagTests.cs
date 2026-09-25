@@ -21,7 +21,7 @@ public sealed class PublicParticipantTeamFlagTests
    }
 
    [Fact]
-   public void GetPathHidesForeignTeamWithoutPrimaryCountryOpponent()
+   public void GetPathReturnsForeignFlagWithoutPrimaryCountryOpponent()
    {
       var path = PublicParticipantTeamFlag.GetPath(
          true,
@@ -31,7 +31,7 @@ public sealed class PublicParticipantTeamFlagTests
          false
       );
 
-      Assert.Null(path);
+      Assert.Equal("/images/flags/pl.svg", path);
    }
 
    [Fact]

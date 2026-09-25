@@ -75,7 +75,6 @@ public sealed class PastActivitiesVisibilityTests
       Assert.True(toggleIndex < nowMarkerIndex);
       Assert.Contains("public-past-activities.js", page);
       Assert.Contains("event.preventDefault();", script);
-      Assert.DoesNotContain("window.scrollTo({", script);
       Assert.Contains("toggle.scrollIntoView({", script);
       Assert.Contains("behavior: \"smooth\"", script);
       Assert.Contains("block: \"center\"", script);
@@ -88,16 +87,13 @@ public sealed class PastActivitiesVisibilityTests
       Assert.Contains("window.sessionStorage.removeItem(", script);
       Assert.Contains("window.location.href", script);
       Assert.Contains("window.location.hash.slice(1)", script);
-      Assert.Contains("target.scrollIntoView({", script);
+      Assert.Contains("scrollTargetToViewport(target);", script);
+      Assert.Contains("window.scrollTo({", script);
       Assert.Contains(
          "target.closest(\n" +
          "         \".activity-past-activity-hidden\"",
          script
       );
-      Assert.Contains(
-         "window.requestAnimationFrame(() => {\n" +
-         "         window.requestAnimationFrame(scrollToToggle);",
-         script
-      );
+      Assert.Contains("window.requestAnimationFrame(scrollToToggle);", script);
    }
 }
