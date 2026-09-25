@@ -332,7 +332,7 @@ internal sealed class WebPageFetchOrchestrator
          );
       }
 
-      var htmlEvidence = ClassifyHtml(httpResponse, url, "http");
+      var htmlEvidence = ClassifyHtml(httpResponse, "http");
       _logger.LogInformation(
          "Page fetch for {Url}: direct HTTP classified content as " +
          "{Classification} ({Reason}); text {TextCharacters} characters, " +
@@ -560,7 +560,6 @@ internal sealed class WebPageFetchOrchestrator
          {
             var curlEvidence = ClassifyHtml(
                curlResponse,
-               url,
                "curl"
             );
 
@@ -1513,7 +1512,6 @@ internal sealed class WebPageFetchOrchestrator
 
    private static ClassifyResult ClassifyHtml(
       WebPageHttpResponse? response,
-      Uri requestedUrl,
       string fetcher
    )
    {
@@ -1525,7 +1523,11 @@ internal sealed class WebPageFetchOrchestrator
       // Error statuses are assessed for evidence (block pages,
       // not-found markers), but their bodies are never returned as
       // clean content.
-      var candidate = CreateCandidate(response, requestedUrl);
+      var html = System.Text.Encoding.UTF8.GetString(response.Body);
+      var candidate = WebPageHtmlCandidate.FromHtml(
+         html,
+         response.EffectiveUrl
+      );
       var assessment = candidate.Assess(WebPageBlockSource.HtmlFallback);
 
       WebPageContent? cleanSuccess = null;
@@ -1536,15 +1538,6 @@ internal sealed class WebPageFetchOrchestrator
       }
 
       return new ClassifyResult(candidate, assessment, cleanSuccess);
-   }
-
-   private static WebPageHtmlCandidate CreateCandidate(
-      WebPageHttpResponse response,
-      Uri requestedUrl
-   )
-   {
-      var html = System.Text.Encoding.UTF8.GetString(response.Body);
-      return WebPageHtmlCandidate.FromHtml(html, response.EffectiveUrl);
    }
 
    private sealed record ClassifyResult(

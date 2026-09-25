@@ -441,36 +441,6 @@
       });
    }
 
-   function normalizeOrgSearchResult(item)
-   {
-      if(!(item && typeof item === "object"))
-      {
-         return null;
-      }
-
-      const id = typeof item.id === "string"
-         ? item.id.trim()
-         : typeof item.Id === "string"
-            ? item.Id.trim()
-            : "";
-      const text = typeof item.text === "string"
-         ? item.text.trim()
-         : typeof item.name === "string"
-            ? item.name.trim()
-            : typeof item.Name === "string"
-               ? item.Name.trim()
-               : "";
-      const sport = typeof item.sport === "string"
-         ? item.sport.trim()
-         : typeof item.Sport === "string"
-            ? item.Sport.trim()
-            : "";
-
-      return id === "" || text === ""
-         ? null
-         : { id, text, sport };
-   }
-
    function getBroadcastOrganizationSearchUrl()
    {
       const container = document.querySelector(

@@ -7,25 +7,6 @@ namespace SESport.Data.AI;
 
 public sealed class AiRunApplicationRepository(NpgsqlDataSource dataSource)
 {
-   private static readonly string[] ActivityJobIds =
-   [
-      AiJobIds.GenerateActivityTeaser,
-      AiJobIds.FindParticipantsStart,
-      AiJobIds.FindParticipantsResult
-   ];
-
-   private const string ActivityGroupJobId =
-      AiJobIds.FindActivityGroupFacts;
-
-   private const string BroadcastJobId =
-      AiJobIds.DecidePrimaryCountryParticipation;
-
-   private static readonly string[] PersonJobIds =
-   [
-      AiJobIds.FindPersonData,
-      AiJobIds.TranslateText
-   ];
-
    public async Task<IReadOnlyList<CompletedActivityTeaserRun>>
       GetCompletedActivityTeaserRunsWithEmptyActivityTeasersAsync(
          int maxRuns,
@@ -220,7 +201,7 @@ public sealed class AiRunApplicationRepository(NpgsqlDataSource dataSource)
             BroadcastParticipationCheck>>();
       }
 
-      const string sql = """
+      var sql = $"""
          select
             r.correlation_id,
             r.id,
@@ -232,7 +213,7 @@ public sealed class AiRunApplicationRepository(NpgsqlDataSource dataSource)
          from ai_job_runs r
          where r.job_id = @job_id
             and r.correlation_id = any(@correlation_ids)
-            and r.status_id <> 'archived'
+            and r.status_id <> '{AiJobRunStatusIds.Archived}'
          order by r.correlation_id, r.started_at desc
          """;
 

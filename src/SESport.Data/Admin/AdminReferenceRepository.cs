@@ -713,18 +713,6 @@ internal sealed class AdminReferenceRepository(NpgsqlDataSource dataSource)
       return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
    }
 
-   private static void AddNullableParameter(
-      NpgsqlCommand command,
-      string name,
-      string? value
-   )
-   {
-      command.Parameters.AddWithValue(
-         name,
-         (object?)NormalizeNullable(value) ?? DBNull.Value
-      );
-   }
-
    private static ReferenceTable GetTable(string tableKey)
    {
       if(TryGetTable(tableKey, out var table))

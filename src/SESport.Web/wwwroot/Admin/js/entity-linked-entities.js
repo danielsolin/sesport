@@ -42,14 +42,6 @@
          .trim();
       const excludeEntityId = (picker.dataset.entityId ?? "").trim();
       const isExistingEntity = excludeEntityId !== "";
-      const organizationOnly = (
-         picker.dataset.organizationOnly ?? "true"
-      ).trim().toLowerCase() !== "false";
-      const maxResults = Number.parseInt(
-         picker.dataset.maxResults ?? "",
-         10
-      );
-
       if(!(input instanceof HTMLInputElement)
          || !(suggestions instanceof HTMLElement)
          || searchUrl === "")
@@ -154,9 +146,7 @@
             excludeEntityId,
             isExistingEntity,
             updateUrl,
-            removeButton.closest(rowSelector),
-            organizationOnly,
-            maxResults
+            removeButton.closest(rowSelector)
          );
       });
 
@@ -423,9 +413,7 @@
       excludeEntityId,
       isExistingEntity,
       updateUrl,
-      row,
-      organizationOnly,
-      maxResults
+      row
    )
    {
       if(!(row instanceof HTMLElement))
@@ -463,9 +451,7 @@
             html = await loadGridAsync(
                searchUrl,
                excludeEntityId,
-               getSelectedEntityIds(grid).filter(id => id !== entityId),
-               organizationOnly,
-               maxResults
+               getSelectedEntityIds(grid).filter(id => id !== entityId)
             );
          }
 

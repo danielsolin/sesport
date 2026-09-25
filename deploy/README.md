@@ -6,8 +6,8 @@ This folder contains the non-code deployment assets for SESport.
 
 - `deploy/systemd/`
   - systemd units and timer for the web app, SearXNG, backups, and LLM
-- `deploy/unison/`
-  - Unison profile for the local SESport two-way sync client
+- `deploy/systemd/sesport-unison.service`
+  - service for a sync client with a separately configured Unison profile
 - `deploy/caddy/Caddyfile`
   - reverse proxy config for `sesport.se` and `dev.sesport.se`
 - `deploy/mail.md`

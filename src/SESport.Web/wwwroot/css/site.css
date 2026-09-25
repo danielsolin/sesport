@@ -1360,7 +1360,7 @@ h2 {
    border: 1px solid var(--line);
    border-radius: 8px;
    background: #f7faf9;
-   color: var(--ink);
+   color: var(--text);
    font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
@@ -1375,7 +1375,7 @@ h2 {
    border: 1px solid var(--line);
    border-radius: 8px;
    background: #f7faf9;
-   color: var(--ink);
+   color: var(--text);
    font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
@@ -1581,7 +1581,7 @@ h2 {
    min-width: 0;
    gap: 6px;
    overflow: hidden;
-   color: var(--ink);
+   color: var(--text);
    font-size: 12px;
 }
 
@@ -1754,7 +1754,7 @@ h2 {
    min-width: 0;
    flex: 1 1 240px;
    overflow: hidden;
-   color: var(--ink);
+   color: var(--text);
    font-size: 12px;
    font-weight: 700;
    text-overflow: ellipsis;
@@ -1772,7 +1772,7 @@ h2 {
    display: grid;
    gap: 4px;
    min-width: 0;
-   color: var(--ink);
+   color: var(--text);
    font-size: 12px;
    overflow-wrap: anywhere;
 }

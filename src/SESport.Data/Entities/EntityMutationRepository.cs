@@ -753,12 +753,23 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
+      await using var connection = await dataSource.OpenConnectionAsync(
+         cancellationToken
+      );
+      await using var transaction = await connection.BeginTransactionAsync(
+         cancellationToken
+      );
+
       const string sql = """
          delete from sources
          where correlation_type = @correlation_type
             and correlation_id = @correlation_id
          """;
-      await using var sourceCommand = dataSource.CreateCommand(sql);
+      await using var sourceCommand = new NpgsqlCommand(
+         sql,
+         connection,
+         transaction
+      );
       sourceCommand.Parameters.AddWithValue(
          "correlation_type",
          SourceCorrelationTypes.Entity
@@ -771,9 +782,15 @@ public sealed class EntityMutationRepository(NpgsqlDataSource dataSource)
 
       const string deleteEntitySql =
          "delete from entities where id = @id";
-      await using var command = dataSource.CreateCommand(deleteEntitySql);
+      await using var command = new NpgsqlCommand(
+         deleteEntitySql,
+         connection,
+         transaction
+      );
       command.Parameters.AddWithValue("id", id);
       await command.ExecuteNonQueryAsync(cancellationToken);
+
+      await transaction.CommitAsync(cancellationToken);
    }
 
    public async Task<bool> UpdateEntityWatchPriorityAsync(

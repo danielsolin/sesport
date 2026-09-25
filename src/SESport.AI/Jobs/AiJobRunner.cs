@@ -154,12 +154,12 @@ public sealed class AiJobRunner(
 
          if(!string.Equals(
             run.StatusId,
-            "pending",
+            AiJobRunStatusIds.Pending,
             StringComparison.Ordinal
          ) &&
             !string.Equals(
                run.StatusId,
-               "running",
+               AiJobRunStatusIds.Running,
                StringComparison.Ordinal
             ))
          {
@@ -1041,11 +1041,11 @@ internal static class AiRunDetailExtensions
    {
       return statusId switch
       {
-         "pending" => AiJobRunStatus.Pending,
-         "running" => AiJobRunStatus.Running,
-         "completed" => AiJobRunStatus.Completed,
-         "failed" => AiJobRunStatus.Failed,
-         "archived" => AiJobRunStatus.Archived,
+         AiJobRunStatusIds.Pending => AiJobRunStatus.Pending,
+         AiJobRunStatusIds.Running => AiJobRunStatus.Running,
+         AiJobRunStatusIds.Completed => AiJobRunStatus.Completed,
+         AiJobRunStatusIds.Failed => AiJobRunStatus.Failed,
+         AiJobRunStatusIds.Archived => AiJobRunStatus.Archived,
          _ => AiJobRunStatus.Pending
       };
    }

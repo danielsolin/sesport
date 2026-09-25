@@ -83,9 +83,7 @@ public static class BroadcastEntityFilter
       IReadOnlyCollection<string> participantNames
    )
    {
-      var personEntities = FilterSelectableEntities(entities)
-         .Where(entity => entity.Type == TrackedEntityTypeIds.Person)
-         .ToList();
+      var personEntities = FilterSelectableEntities(entities);
       var entityByName = CreateNameLookup(
          personEntities,
          entity => entity.Name,

@@ -1788,13 +1788,6 @@
    grid-row: 2;
 }
 
-.activity-group-slot-description {
-   margin-left: 5px;
-   color: var(--muted);
-   font-size: 11px;
-   line-height: 1.35;
-}
-
 .activity-group-description {
    margin-bottom: 0;
 }
@@ -2523,10 +2516,6 @@
 
 @media (max-width: 600px) and (orientation: portrait),
    (max-width: 720px) {
-   .activity-group-slot-description {
-      display: none;
-   }
-
    .activity-group-description {
       display: none;
    }

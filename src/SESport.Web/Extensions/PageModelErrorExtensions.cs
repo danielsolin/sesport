@@ -6,7 +6,7 @@ namespace SESport.Web.Extensions;
 internal static class PageModelErrorExtensions
 {
    internal const string UnexpectedErrorMessage =
-      "An unexpected error occurred. Please try again.";
+      "Ett oväntat fel inträffade. Försök igen.";
 
    internal static string LogUnexpectedError(
       this PageModel pageModel,

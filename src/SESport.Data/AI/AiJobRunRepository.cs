@@ -42,17 +42,6 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
 
       if(date is not null)
       {
-         var dateStart = TimeZoneHelper.ToUtc(
-            date.Value,
-            TimeOnly.MinValue,
-            SportDay.TimeZoneId
-         );
-         var dateEnd = TimeZoneHelper.ToUtc(
-            date.Value.AddDays(1),
-            TimeOnly.MinValue,
-            SportDay.TimeZoneId
-         );
-
          where.Add("r.started_at >= @start");
          where.Add("r.started_at < @end");
       }
@@ -1300,12 +1289,12 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
    {
       return status switch
       {
-         AiJobRunStatus.Pending => "pending",
-         AiJobRunStatus.Running => "running",
-         AiJobRunStatus.Completed => "completed",
-         AiJobRunStatus.Failed => "failed",
-         AiJobRunStatus.Archived => "archived",
-         _ => "pending"
+         AiJobRunStatus.Pending => AiJobRunStatusIds.Pending,
+         AiJobRunStatus.Running => AiJobRunStatusIds.Running,
+         AiJobRunStatus.Completed => AiJobRunStatusIds.Completed,
+         AiJobRunStatus.Failed => AiJobRunStatusIds.Failed,
+         AiJobRunStatus.Archived => AiJobRunStatusIds.Archived,
+         _ => AiJobRunStatusIds.Pending
       };
    }
 

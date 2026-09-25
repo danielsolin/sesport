@@ -290,25 +290,4 @@ public sealed class AiJobDefinitionRepository(NpgsqlDataSource dataSource)
          reader.GetBoolean(7)
       );
    }
-
-   private static DateOnly? ReadNullableDateOnly(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetFieldValue<DateOnly>(ordinal);
-   }
-
-   private static DateTimeOffset? ReadNullableDateTimeOffset(
-      NpgsqlDataReader reader,
-      int ordinal
-   )
-   {
-      return reader.IsDBNull(ordinal)
-         ? null
-         : reader.GetFieldValue<DateTimeOffset>(ordinal);
-   }
-
 }

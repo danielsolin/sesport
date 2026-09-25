@@ -156,6 +156,7 @@ public sealed class BroadcastImportRepository : IAsyncDisposable
          set hidden_at = coalesce(hidden_at, now()),
             updated_at = now()
          where hidden_at is null
+           and broadcast.source_key = @source_key
            and exists (
               select 1
               from broadcast_ignore as rule

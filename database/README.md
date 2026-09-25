@@ -93,8 +93,9 @@ using the new migration history without changing the schema, record the
 baseline as applied using the environment's database administration
 procedure.
 
-If the Postgres volume for the active database drifted from the baseline,
-recreate the volume before rerunning migrations.
+If the active database schema differs from the migration history, inspect
+the drift and reconcile it against a verified backup and target before
+running further migrations.
 
 On Windows, run the bash script from WSL if Docker is only available there.
 

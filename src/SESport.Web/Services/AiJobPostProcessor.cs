@@ -177,13 +177,6 @@ public sealed class AiJobPostProcessor(
          return;
       }
 
-      await runRepository.RecordApplicationAsync(
-         runId,
-         AiJobRunApplicationTargetTypes.Entity,
-         entityId.ToString(),
-         cancellationToken
-      );
-
       await sourceRepository.DeleteByCorrelationAsync(
          SourceCorrelationTypes.Entity,
          entityId.ToString(),
@@ -204,6 +197,13 @@ public sealed class AiJobPostProcessor(
             cancellationToken
          );
       }
+
+      await runRepository.RecordApplicationAsync(
+         runId,
+         AiJobRunApplicationTargetTypes.Entity,
+         entityId.ToString(),
+         cancellationToken
+      );
    }
 
    private async Task SaveCompletedTranslationAsync(

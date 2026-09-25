@@ -1,7 +1,7 @@
 # systemd Units
 
 Copy only the units that belong on the target machine to
-`/etc/systemd/system/` with `sudo. Then reload systemd and enable the
+`/etc/systemd/system/` with `sudo`. Then reload systemd and enable the
 services or timer you want active.
 
 The local SESport web services load `/home/daniel/src/sesport/.env` through
@@ -99,14 +99,13 @@ sudo systemctl enable --now sesport-db-vacuum-full.timer
 ## Unison Two-Way Sync
 
 Install the same Unison version on the local sync client and the remote host.
-The profile in `deploy/unison/sesport.prf` is intended for the local client
-and synchronizes only `bin/`, `data/`, and `jobs/`.
+The `sesport` Unison profile must be configured on the local client before
+enabling the service. It is host-local and is not part of this repository.
 
 Install the profile and system service on the local client:
 
 ```bash
 mkdir -p /home/daniel/.unison
-cp deploy/unison/sesport.prf /home/daniel/.unison/sesport.prf
 unison sesport
 sudo cp deploy/systemd/sesport-unison.service \
    /etc/systemd/system/sesport-unison.service

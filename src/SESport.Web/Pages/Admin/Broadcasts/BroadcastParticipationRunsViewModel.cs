@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 
+using SESport.Core.AI;
+
 namespace SESport.Web.Pages.Admin.Broadcasts;
 
 public sealed record BroadcastParticipationRunsViewModel(
@@ -26,17 +28,17 @@ public sealed record BroadcastParticipationRunsViewModel(
    public string? ParticipationRunId => LatestCheck?.RunId.ToString();
 
    public string? ParticipationStatusId => IsPending
-      ? "pending"
+      ? AiJobRunStatusIds.Pending
       : LatestCheck?.StatusId;
 
    public bool IsFinal => !IsPending && LatestCheck is not null &&
       !string.Equals(
          LatestCheck.StatusId,
-         "running",
+         AiJobRunStatusIds.Running,
          StringComparison.OrdinalIgnoreCase
       ) && !string.Equals(
          LatestCheck.StatusId,
-         "pending",
+         AiJobRunStatusIds.Pending,
          StringComparison.OrdinalIgnoreCase
       );
 
@@ -117,10 +119,10 @@ public sealed record BroadcastParticipationRunsViewModel(
    public static string FormatStatus(string? statusId) =>
       statusId?.Trim().ToLowerInvariant() switch
       {
-         "running" => "Running",
-         "pending" => "Queued",
-         "completed" => "Completed",
-         "failed" => "Failed",
+         AiJobRunStatusIds.Running => "Running",
+         AiJobRunStatusIds.Pending => "Queued",
+         AiJobRunStatusIds.Completed => "Completed",
+         AiJobRunStatusIds.Failed => "Failed",
          _ when !string.IsNullOrWhiteSpace(statusId) => statusId.Trim(),
          _ => "Not checked yet"
       };

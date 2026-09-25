@@ -347,7 +347,8 @@ public sealed class ActivityGroupQueryRepository(
             e.id,
             e.canonical_name
          from activities a
-         join activity_entity_links al on al.activity_id = a.id
+         join activity_entity_links al
+            on al.activity_id = a.id and al.is_active
          join entities e on e.id = al.entity_id
          where a.activity_group_id = any(@activity_group_ids)
             and e.entity_type_id in (

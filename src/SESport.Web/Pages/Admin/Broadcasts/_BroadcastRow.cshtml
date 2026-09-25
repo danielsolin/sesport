@@ -113,7 +113,7 @@
                <strong data-broadcast-title-text>@broadcast.Title</strong>
                <a class="ses-entity-search-link"
                   data-broadcast-title-search-link
-                  href="@Model.SearchUrlBase@broadcast.Title"
+                  href="@Model.SearchUrlBase@Uri.EscapeDataString(broadcast.Title)"
                   target="_blank">
                   <span class="ses-icon-search"></span>
                </a>

@@ -1,4 +1,5 @@
 @using Microsoft.AspNetCore.WebUtilities
+@using SESport.Core.AI
 @using SESport.Core.Broadcast
 @model SESport.Web.Pages.Admin.Broadcasts.BroadcastParticipationRunsViewModel
 
@@ -80,7 +81,7 @@
                var participation = check.Participation?.Trim() ?? string.Empty;
                var isRunning = string.Equals(
                   check.StatusId,
-                  "running",
+                  AiJobRunStatusIds.Running,
                   StringComparison.OrdinalIgnoreCase
                );
                var activityUrl = Model.ActivityUrl(check.RunId);
@@ -253,7 +254,11 @@
                            }
                         </div>
                      }
-                     @if(check.RunId != Guid.Empty && !string.Equals(check.StatusId, "archived", StringComparison.OrdinalIgnoreCase))
+                     @if(check.RunId != Guid.Empty && !string.Equals(
+                        check.StatusId,
+                        AiJobRunStatusIds.Archived,
+                        StringComparison.OrdinalIgnoreCase
+                     ))
                      {
                         <form method="post"
                               action="@Model.RunFieldUrl"

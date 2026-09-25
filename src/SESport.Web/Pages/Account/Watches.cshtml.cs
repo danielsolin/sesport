@@ -168,7 +168,7 @@ public sealed class WatchesModel(
          ))
       {
          return BadRequest(
-            "A valid push subscription is required."
+            "En giltig push-prenumeration krävs."
          );
       }
 
@@ -190,7 +190,7 @@ public sealed class WatchesModel(
             notificationLeadTimeMinutes
          ))
       {
-         return BadRequest("The notification lead time is not supported.");
+         return BadRequest("Den valda tiden för notiser stöds inte.");
       }
 
       await pushRepository.SetNotificationLeadTimeMinutesAsync(

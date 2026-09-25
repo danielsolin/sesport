@@ -163,7 +163,7 @@ sets a profile such as `local` and leaves the model field empty.
 The host can configure the executable and working directory with the
 `CodexCli__ExecutablePath` and `CodexCli__WorkingDirectory` configuration
 keys. `CodexCli__TimeoutSeconds` controls the process timeout and defaults to
-20 minutes. The provider intentionally runs with full Codex access for its
+60 minutes. The provider intentionally runs with full Codex access for its
 agent-backed use case.
 
 `GoogleTranslateClient` uses a browser-backed translation request. The MCP
@@ -190,7 +190,7 @@ settings.
 The host can configure the executable and working directory with the
 `OpenCodeCli__ExecutablePath` and `OpenCodeCli__WorkingDirectory` configuration
 keys. `OpenCodeCli__TimeoutSeconds` controls the process timeout and defaults
-to 20 minutes. The process inherits the host user's OpenCode environment.
+to 60 minutes. The process inherits the host user's OpenCode environment.
 When no working directory is configured, the client uses the Git repository
 root when it can find one above the host process directory. When the default
 executable name is used, an installed `~/.opencode/bin/opencode` is preferred
