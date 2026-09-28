@@ -149,7 +149,17 @@ Start after Step 3 has finalized the activities and their broadcasts.
    and that the public page displays an age. Verify that the person's formative
    club, or otherwise the earliest documented club, appears in the public club
    column. Include inactive participants when they are displayed.
-3. If a birthdate or club is missing, research authoritative athlete,
+3. Ensure every person participant linked to an activity created or updated in
+   Step 3 has an informative `entities.url`, including inactive participants.
+   Prefer a person profile from their federation, club, team, or another
+   relevant organization. If none is available, use Wikipedia for a
+   sufficiently known person, or the person's own website or sport-related
+   social media page. Verify that the page is about the correct person and that
+   it is in Swedish or English. Verify that the public participant name links
+   to this URL. Do not use a generic homepage or search results page. If no
+   suitable URL can be found, report the participant rather than inventing a
+   URL.
+4. If a birthdate or club is missing, research authoritative athlete,
    federation, or club sources. Use the actual formative club when verified;
    otherwise use the earliest documented club in the athlete's development.
    Never use the current club for this field; current club affiliation belongs
@@ -157,21 +167,21 @@ Start after Step 3 has finalized the activities and their broadcasts.
    available. Do not describe a club as formative without supporting evidence.
    If evidence is conflicting or insufficient, leave the fact unchanged and
    report it for review rather than using the current club as a fallback.
-4. Save source URLs for verified person facts as `PersonFacts` evidence. Make
+5. Save source URLs for verified person facts as `PersonFacts` evidence. Make
    data changes only in a guarded manual `psql` transaction. Create a Club
    entity only when no matching entity exists, then link it to the person.
-5. For team-sport matches, verify the team-based flag beside each applicable
+6. For team-sport matches, verify the team-based flag beside each applicable
    participant. Follow the existing rules for foreign teams and national-team
    participants. Check linked Team countries before changing the query; when
    several linked teams share one known country, that country can be used.
    Do not infer a rendering bug from a participant's row position alone.
-6. Confirm each displayed flag has a supported country ID and a matching SVG
+7. Confirm each displayed flag has a supported country ID and a matching SVG
    asset. If either is missing, make the focused code or asset change needed,
    then verify the rendered page and that the asset loads successfully.
-7. Verify that no displayed participant is missing an age or club, and that
-   applicable team flags render. Check the hosted page separately from local
-   rendering. Report any difference; do not describe a local-only change as
-   fixed on the hosted site.
+8. Verify every linked person has an `entities.url`, no displayed participant
+   is missing an age, club, or URL, and applicable team flags render. Check the
+   hosted page separately from local rendering. Report any difference; do not
+   describe a local-only change as fixed on the hosted site.
 
 ## Final Visible Broadcast Check
 
