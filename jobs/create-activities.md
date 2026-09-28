@@ -150,15 +150,19 @@ Start after Step 3 has finalized the activities and their broadcasts.
    club, or otherwise the earliest documented club, appears in the public club
    column. Include inactive participants when they are displayed.
 3. Ensure every person participant linked to an activity created or updated in
-   Step 3 has an informative `entities.url`, including inactive participants.
-   Prefer a person profile from their federation, club, team, or another
-   relevant organization. If none is available, use Wikipedia for a
-   sufficiently known person, or the person's own website or sport-related
-   social media page. Verify that the page is about the correct person and that
-   it is in Swedish or English. Verify that the public participant name links
-   to this URL. Do not use a generic homepage or search results page. If no
-   suitable URL can be found, report the participant rather than inventing a
-   URL.
+   Step 3 has a dedicated person profile or athlete information page in
+   `entities.url`, including inactive participants. Prefer a profile from the
+   person's federation, club, team, or another relevant organization. If none
+   is available, use a dedicated Wikipedia page for a sufficiently known
+   person, or the person's own website or sport-related social media page.
+   The page's primary purpose must be to provide information about the person
+   or their athletic career. Do not use news stories, signing or transfer
+   announcements, interviews, match reports, or other articles that merely
+   mention or discuss the person. Verify that the page is about the correct
+   person and is in Swedish or English. Verify that the public participant
+   name links to this URL. Do not use a generic homepage or search results
+   page. If no suitable URL can be found, report the participant rather than
+   inventing a URL.
 4. If a birthdate or club is missing, research authoritative athlete,
    federation, or club sources. Use the actual formative club when verified;
    otherwise use the earliest documented club in the athlete's development.
