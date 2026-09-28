@@ -39,14 +39,21 @@ Do this before creating or updating activities.
    that it is outside scope. Examples include a fixture between foreign
    national teams, a fixture between foreign clubs, or a studio programme about
    domestic competitions.
-3. Generic highlights, recaps, and studio programmes are not specific events
+3. Hide listings that do not communicate what will be shown. Judge the title
+   together with its categories, description, channel, and linked event context.
+   A bare title such as `EM` with no sport or event category is junk. A day or
+   round label such as `Dag 2` with only a broad category such as `Golf` is also
+   junk when no other metadata identifies the competition. Generic placeholder
+   descriptions do not identify an event. Keep a short title when other fields
+   make the event clear.
+4. Generic highlights, recaps, and studio programmes are not specific events
    to convert. Hide them when the listing clearly identifies them as such.
-4. Do not treat a missing participant name or missing Swedish team name as
+5. Do not treat a missing participant name or missing Swedish team name as
    proof that an individual competition has no Swedish participant. Leave
    uncertain broadcasts visible and unprocessed for later review.
-5. No web research is needed to hide clearly out-of-scope broadcasts. Do not
+6. No web research is needed to hide clearly out-of-scope broadcasts. Do not
    use external research in this step to resolve uncertain participation.
-6. Before writing, select the exact broadcast IDs to hide. Update only those
+7. Before writing, select the exact broadcast IDs to hide. Update only those
    rows; do not change their text or mark them processed. Confirm the affected
    IDs and report each reason.
 
@@ -55,6 +62,8 @@ Examples:
 - Hide a Lithuania–Andorra match because neither national team is Swedish.
 - Hide an NHL fixture between two North American clubs, regardless of whether
   Swedish athletes may play for those clubs.
+- Hide a bare `EM` listing with no sport or event category.
+- Hide a `Dag 2` golf listing when no other metadata identifies the tournament.
 - Keep a Swedish national team match against another country in the queue.
 - Keep a Swedish club's international match against a non-Swedish club in the
   queue.
@@ -77,10 +86,15 @@ participation scope.
    source metadata, channel, and timing point to one event and no competing
    event fits. Otherwise leave them visible and unprocessed.
 2. Manually research whether Swedish participation is established. Do not run
-   the `decide-swedish-participation` AI job. Prefer current official entry
-   lists, start lists, rosters, and event or team sources. A partial article,
-   search result, or missing name is not proof that no Swedish participant is
-   involved.
+   the `decide-swedish-participation` AI job. Start with a broad search for
+   Swedish participants in the sport or series for the current season. For
+   established series such as Formula 1, MotoGP/Moto2/Moto3, and professional
+   snooker, a reliable sport-level finding applies to all visible broadcasts
+   for that series and season. If it establishes there are no Swedish
+   participants, reject and hide those broadcasts without checking
+   event-specific entry lists, draws, or participant lists. Record the broad
+   search and its supporting source. An unanswered query or a missing name in
+   one incomplete source is not proof by itself.
 3. Apply the participation scope above to the evidence:
    - If Swedish representation is confirmed, record the event and exact
      broadcast IDs for Step 3. Do not create the activity yet.
@@ -158,3 +172,19 @@ Start after Step 3 has finalized the activities and their broadcasts.
    applicable team flags render. Check the hosted page separately from local
    rendering. Report any difference; do not describe a local-only change as
    fixed on the hosted site.
+
+## Final Visible Broadcast Check
+
+Before reporting completion, inspect every broadcast whose `hidden_at` is unset.
+This final check also covers broadcasts imported after the run's initial
+selection; assign their organization marker without otherwise processing them.
+
+1. Ensure every visible broadcast is assigned to its relevant event or
+   competition organization. This organization marker shows that the broadcast
+   was considered and remains under investigation; it does not confirm Swedish
+   participation or mark the broadcast as processed.
+2. If available metadata cannot identify what the broadcast covers or its
+   relevant organization, hide it under Step 1's junk-listing rule. Do not leave
+   a visible broadcast unassigned.
+3. Keep unresolved broadcasts unprocessed. Report their IDs and assigned
+   organizations, and confirm that no visible broadcast is unassigned.
