@@ -248,6 +248,11 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          )
          select
             dated.display_date,
+            count(distinct dated.id) filter (
+               where true
+                  {{sportCountFilter}}
+                  {{countryCountFilter}}
+            )::integer as activity_count,
             count(distinct e.id) filter (
                where e.entity_type_id in (
                   '{{TrackedEntityTypeIds.Person}}',
@@ -298,6 +303,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
          dates.Add(
             new PublishedDateParticipantCount(
                reader.GetFieldValue<DateOnly>(0),
+               reader.GetInt32(2),
                reader.GetInt32(1)
             )
          );

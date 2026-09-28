@@ -205,9 +205,13 @@
                          Uri.EscapeDataString(normalizedCountry);
                    }
                   <a class="date-dropdown-option
-                     @(dateOption.IsSelected ? "is-selected" : "")"
+                     @(dateOption.IsSelected ? "is-selected" : "")
+                     @(!dateOption.HasActivities ? "is-empty" : "")"
                      href="@dateUrl"
                      role="option"
+                     aria-label="@(dateOption.HasActivities
+                        ? dateOption.Label
+                        : $"{dateOption.Label}, inga aktiviteter")"
                      aria-selected="@(
                         dateOption.IsSelected ? "true" : "false"
                      )">

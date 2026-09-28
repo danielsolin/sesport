@@ -105,7 +105,8 @@ public sealed record PublicActivityParticipant(
 
 public sealed record PublishedDateParticipantCount(
    DateOnly Date,
-   int ParticipantCount
+   int ParticipantCount,
+   int ActivityCount = 1
 );
 
 public sealed record EntityOption(

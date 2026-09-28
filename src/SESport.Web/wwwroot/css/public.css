@@ -1043,6 +1043,21 @@
    color: #ffcc00;
 }
 
+.date-dropdown-option.is-empty {
+   color: #87949b;
+}
+
+.date-dropdown-option.is-empty:hover,
+.date-dropdown-option.is-empty:focus-visible {
+   color: #667780;
+}
+
+.date-dropdown-option.is-empty.is-selected {
+   border-left-color: #87949b;
+   background: #e4e8ea;
+   color: #667780;
+}
+
 .date-option-country-flag {
    display: block;
    flex: 0 0 auto;

@@ -144,7 +144,7 @@ public class IndexModel(
       {
          var publishedDateCounts =
             await repository.GetPublishedDateParticipantCountsFromAsync(
-               sportToday,
+               SelectedDate < sportToday ? SelectedDate : sportToday,
                cancellationToken,
                Sport,
                Country
@@ -291,7 +291,9 @@ public class IndexModel(
    )
    {
       var tomorrowDate = selectedDate.AddDays(1);
-      return publishedDateCounts.Any(item => item.Date == tomorrowDate);
+      return publishedDateCounts.Any(
+         item => item.Date == tomorrowDate && item.ActivityCount > 0
+      );
    }
 
    internal static string FormatNextDateLinkLabel(
@@ -593,26 +595,49 @@ public class IndexModel(
       IEnumerable<PublishedDateParticipantCount> publishedDateCounts
    )
    {
-      return publishedDateCounts
-         .Where(item => item.Date >= todayDate)
-         .Append(new PublishedDateParticipantCount(todayDate, 0))
-         .Append(new PublishedDateParticipantCount(selectedDate, 0))
+      var participantCountsByDate = publishedDateCounts
+         .Where(
+            item => item.Date >= todayDate || item.Date == selectedDate
+         )
          .GroupBy(item => item.Date)
-         .Select(group => new PublishedDateParticipantCount(
-            group.Key,
-            group.Max(item => item.ParticipantCount)
-         ))
-         .OrderBy(item => item.Date)
-         .Select(item =>
+         .ToDictionary(
+            group => group.Key,
+            group => new
+            {
+               ParticipantCount = group.Max(
+                  item => item.ParticipantCount
+               ),
+               HasActivities = group.Max(item => item.ActivityCount) > 0
+            }
+         );
+      var tomorrowDate = todayDate.AddDays(1);
+      var lastDate = participantCountsByDate.Keys
+         .Append(tomorrowDate)
+         .Max();
+      var dateCount = lastDate.DayNumber - todayDate.DayNumber + 1;
+      var dates = Enumerable.Range(0, dateCount)
+         .Select(dayOffset => todayDate.AddDays(dayOffset))
+         .Append(selectedDate)
+         .Distinct()
+         .OrderBy(date => date);
+
+      return dates
+         .Select(date =>
             new DateOption(
-               DateDisplay.Format(item.Date),
+               DateDisplay.Format(date),
                FormatDateOptionDayLabel(
-                  item.Date,
+                  date,
                   todayDate
                ),
-               FormatDateOptionDateLabel(item.Date),
-               item.ParticipantCount,
-               item.Date == selectedDate
+               FormatDateOptionDateLabel(date),
+               participantCountsByDate.TryGetValue(
+                  date,
+                  out var counts
+               )
+                  ? counts.ParticipantCount
+                  : 0,
+               date == selectedDate,
+               counts?.HasActivities == true
             )
          )
          .ToList();
@@ -681,7 +706,8 @@ public sealed record DateOption(
    string DayLabel,
    string DateLabel,
    int ParticipantCount,
-   bool IsSelected
+   bool IsSelected,
+   bool HasActivities
 )
 {
    public string Label => $"{DayLabel} {DateLabel}";
