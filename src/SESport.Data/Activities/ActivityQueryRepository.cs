@@ -1242,7 +1242,7 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   and linked.entity_type_id =
                      '{{TrackedEntityTypeIds.Team}}'
             ) team
-            having count(*) = 1
+            having count(distinct team.country_id) = 1
          ) participant_team on true
          where al.activity_id = any(@activity_ids)
             and person.entity_type_id =

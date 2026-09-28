@@ -158,18 +158,14 @@ consistent across web, AI, data, and import tooling.
 
 #### Person club policy
 
-SESport should always store a club for an athlete whenever a reliable club
-can be established. The formative club follows this priority:
-
-1. The athlete's actual formative club.
-2. The earliest known club in the athlete's development.
-3. The athlete's current club.
-
-The normalized representation is a link from the person to a `Club` entity.
-The value must not be interpreted as proof of the actual formative club unless
-the available source evidence supports that conclusion. A missing value is a
-data-quality exception that should be investigated, rather than an intended
-outcome when an earlier or current club can be established.
+SESport should store an athlete's actual formative club when verified. If it
+cannot be established, use the earliest documented club in the athlete's
+development. The normalized representation is a link from the person to a
+`Club` entity. Do not use a current club as a fallback; current club affiliation
+belongs in the person's `Team` link and duplicating it as a `Club` obscures this
+club-history field. Do not describe a club as formative unless source evidence
+supports that conclusion. If neither a formative nor an earlier club can be
+verified, leave the club unset and report the data-quality exception.
 
 Examples:
 

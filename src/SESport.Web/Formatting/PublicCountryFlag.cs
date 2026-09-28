@@ -13,6 +13,7 @@ public static class PublicCountryFlag
          "ba",
          "be",
          "bg",
+         "ca",
          "ch",
          "cy",
          "cz",
