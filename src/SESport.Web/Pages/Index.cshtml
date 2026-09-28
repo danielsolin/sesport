@@ -817,6 +817,10 @@ else
                         <ol class="activity-group-schedule">
                            @foreach(var slot in agendaSection.Slots)
                            {
+                              var slotTimeRangeLabel =
+                                 slot.EndTimeLabel is null
+                                    ? slot.StartTimeLabel
+                                    : $"{slot.StartTimeLabel}–{slot.EndTimeLabel}";
                               var slotStreamSources = slot.Activity.Sources
                                  .Where(source => string.Equals(
                                     source.Kind,
@@ -915,7 +919,7 @@ else
                                  }
                                  <span class="activity-group-slot-time"
                                        data-activity-slot-time>
-                                    @slot.StartTimeLabel
+                                    @slotTimeRangeLabel
                                  </span>
                                  <span class="activity-group-slot-content">
                                     <span class=

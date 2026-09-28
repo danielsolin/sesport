@@ -116,22 +116,40 @@ Step 2.
 
 1. Review comparable activities to follow existing conventions. Check for an
    existing activity for each confirmed event before creating one. Reuse a
-   matching activity to avoid duplicates. Create one activity per supported
-   event-day or match, not one per channel listing.
-2. Set the appropriate title, sport, activity type, date, broadcast times,
-   time zone, channel, and organization. Save authoritative source URLs as
-   activity evidence. Create activities in a guarded manual `psql` transaction,
-   following existing activity data and publication conventions. All daily
-   activities from the same competition must share one activity group. Reuse
-   an existing group or create one spanning the competition dates, then attach
-   every related daily activity to that group.
+   matching activity to avoid duplicates. For competitions with many
+   broadcasts, such as a rally, create one activity per distinct timed segment,
+   not one per channel listing. Compare each listing's title, description,
+   channel, and exact start and end times to identify its segment. Link channel
+   listings that cover the same segment to one activity and set
+   `tv_channel_name` to their comma-separated channel names. If the descriptions
+   identify different segments or the schedules do not fit the same segment,
+   create separate activities. When channel listings for the same segment have
+   different end times, use the time range for the segment itself; do not
+   extend it to match a broader channel listing. Keep different time segments
+   separate instead of combining a full day into one activity. Keep all
+   activities from the same competition in one activity group so the public
+   page can group them into one card per date.
+2. Use the shortest title that clearly identifies the event or broadcast, and
+   prefer Swedish wording when available. For a grouped competition, use its
+   shortest clear Swedish event name as the activity-group title; the public
+   grouped card uses that title. Keep each activity title short and specific
+   to its broadcast segment, such as `Sträcka 2–4`. Repeat the event name when
+   needed to make a standalone card clear, including when only one activity
+   is rendered or the public view does not create a grouped card. Set the
+   correct sport, activity type, date,
+   broadcast times, time zone, channel, and organization. Save authoritative
+   source URLs as activity evidence. Create activities in a guarded manual
+   `psql` transaction, following existing activity data and publication
+   conventions. Reuse an existing group or create one spanning the competition
+   dates, then attach every related activity to that group.
 3. Link every Swedish participant confirmed in Step 2 to the activity. Create
    an active person-participant link only when one does not already exist, and
    set the event organization in that link's organization context. Verify the
    participant list.
-4. Link every broadcast that covers the event to its activity. Verify that the
-   activity and all broadcast links were saved successfully before continuing.
-   Create only missing broadcast links.
+4. Link every broadcast that covers the event to its activity. For a
+   multi-broadcast competition, each activity must link only its corresponding
+   broadcast listing. Verify that the activity and all broadcast links were
+   saved successfully before continuing. Create only missing broadcast links.
 5. Set each linked broadcast's organization to the activity's organization
    and mark it processed. Then hide those broadcasts. Update only the verified
    source broadcast IDs.
@@ -143,8 +161,15 @@ Step 2.
 Start after Step 3 has finalized the activities and their broadcasts.
 
 1. Open the public activity listing for each activity date using
-   `/?date=YYYY-MM-DD`. Inspect the rendered participant lists for every
-   activity created or updated in Step 3.
+   `/?date=YYYY-MM-DD`. Verify the actual rendered result for every activity
+   created or updated in Step 3, including the card title and event context.
+   A standalone card may not use its activity-group title, so its activity
+   title must identify the event when the group title is not displayed. Do not
+   infer the public title or grouping from database values alone. Inspect the
+   rendered participant lists as well.
+   For grouped multi-broadcast competitions, verify that every schedule row has
+   the correct segment title, broadcast channels, stream links, and exact time
+   range.
 2. For every displayed person participant, verify that a birthdate is stored
    and that the public page displays an age. Verify that the person's formative
    club, or otherwise the earliest documented club, appears in the public club
