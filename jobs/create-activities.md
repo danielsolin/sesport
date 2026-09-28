@@ -130,7 +130,10 @@ Step 2.
    activities from the same competition in one activity group so the public
    page can group them into one card per date.
 2. Use the shortest title that clearly identifies the event or broadcast, and
-   prefer Swedish wording when available. For a grouped competition, use its
+   prefer Swedish wording when available. Remove sponsor names that add no
+   identifying value, such as `Wanda` in `Wanda Diamond League`. Keep a sponsor
+   name when it is needed to identify the competition, such as in
+   `BMW Championship`. For a grouped competition, use its
    shortest clear Swedish event name as the activity-group title; the public
    grouped card uses that title. Keep each activity title short and specific
    to its broadcast segment, such as `Sträcka 2–4`. Repeat the event name when
