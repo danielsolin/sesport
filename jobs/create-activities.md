@@ -107,9 +107,10 @@ Step 2.
 2. Set the appropriate title, sport, activity type, date, broadcast times,
    time zone, channel, and organization. Save authoritative source URLs as
    activity evidence. Create activities in a guarded manual `psql` transaction,
-   following existing activity data and publication conventions. For a
-   multi-day event, create or reuse an activity group spanning the official
-   event dates and attach the daily activity to it.
+   following existing activity data and publication conventions. All daily
+   activities from the same competition must share one activity group. Reuse
+   an existing group or create one spanning the competition dates, then attach
+   every related daily activity to that group.
 3. Link every Swedish participant confirmed in Step 2 to the activity. Create
    an active person-participant link only when one does not already exist, and
    set the event organization in that link's organization context. Verify the
