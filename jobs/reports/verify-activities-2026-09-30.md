@@ -36,25 +36,26 @@
   Women's Europa Cup squad list.
 - Created 14 Person entities and linked them to their activity organization and
   represented entity.
-- Created the missing `IF Sundsvall Hockey` and `Gamla Upsala` Club entities to
-  record verified formative or earliest documented club relationships.
-- Verified birth dates and formative or earliest documented clubs:
+- Created `IF Sundsvall Hockey`, `Gamla Upsala`, and `Lerkils IF` Club entities
+  for verified club relationships.
+- Verified birth dates and documented club entries:
   - Bleon Kurtulus: 2007-06-24; Halmstads BK.
-  - Lukas Björklund: 2004-02-16; no earlier club verified.
+  - Lukas Björklund: 2004-02-16; Malmö FF.
   - Oscar Sjöstrand: 2004-11-08; Nacka FC.
   - Wilma Sundin: 2003-09-24; IF Sundsvall Hockey.
   - Ella Hellman: 2006-06-16; Hovås HC, earliest club found.
-  - Stella Söderbom: 2007-04-11; no earlier club verified.
-  - Lilly Mikaelsson: 2009-08-13; no earlier club verified.
-  - Svea Carlzon: 2009-05-21; no earlier club verified.
-  - Emma Lind: 2009-03-27; no earlier club verified.
-  - Livia Grou: 2010-04-27; no earlier club verified.
-  - Erza Qela: 2007-05-20; no earlier club verified.
+  - Stella Söderbom: 2007-04-11; Lerkils IF.
+  - Lilly Mikaelsson: 2009-08-13; BK Häcken.
+  - Svea Carlzon: 2009-05-21; BK Häcken.
+  - Emma Lind: 2009-03-27; BK Häcken.
+  - Livia Grou: 2010-04-27; BK Häcken.
+  - Erza Qela: 2007-05-20; BK Häcken.
   - Emma Holmgren: 1997-05-13; Gamla Upsala, earliest club in the source.
-  - Alice Olsson: 2009-02-02; no earlier club verified.
-  - Inga Ebba Kristina Hedlund: 2009-07-21; no earlier club verified.
-- Left the formative Club unset where no earlier club is verified and recorded
-  the data-quality exception below.
+  - Alice Olsson: 2009-02-02; Hammarby IF.
+  - Inga Ebba Kristina Hedlund: 2009-07-21; Hammarby IF.
+- Added Club links for all nine previously unresolved Persons. The sources
+  document club representation before 2026-09-30; they do not all establish a
+  first or formative club.
 
 ### Stars
 
@@ -65,9 +66,10 @@
 
 ## Unresolved items
 
-- Earlier clubs remain unverified for nine new Persons listed above. Their
-  formative Club relationship is unset rather than inferred from a current
-  team.
+- No Persons remain without a documented prior club affiliation under the
+  operator's requested standard. For seven, the available historical roster
+  shows the same club as their current team and does not establish their first
+  formative club.
 
 ## Evidence saved
 
@@ -124,3 +126,16 @@
   `https://www.uefa.com/womenseuropacup/clubs/players/250208632--alice-olsson/`
 - Inga Ebba Kristina Hedlund:
   `https://www.zerozero.pt/jogador/ebba-hedlund/3608973`
+
+### Earlier club affiliation evidence (PersonFacts)
+
+- Lukas Björklund: AC Milan's official September 2020 signing announcement.
+- Stella Söderbom: SvFF's spring 2023 regional camp roster for girls born in 2009.
+- Lilly Mikaelsson: LOHILO Girls Elite Cup 2025 G15 roster.
+- Svea Carlzon: SvFF's 2024 national camp roster for girls born in 2009.
+- Emma Lind: BK Häcken F17 match roster from 2024.
+- Livia Grou: SvFF's 2025 national camp roster for girls born in 2010.
+- Erza Qela: Gothenburg girls' regional roster from 2022.
+- Alice Olsson: SvFF's first F15 national team roster from September 2024.
+- Inga Ebba Kristina Hedlund: Stockholm FF's East development camp roster from 2024.
+- The exact source URLs are stored as PersonFacts evidence on each Person entity.
