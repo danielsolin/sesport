@@ -135,8 +135,9 @@ corrections to the verification set; read related records as context.
 ### D. Person Facts and Profiles
 
 - Store verified birthdates for displayed and new people, including inactive participants.
-  Link their formative club when verified; otherwise use their earliest documented development club.
-  Record current affiliation in Team links.
+  Link their formative club when verified; otherwise use their earliest documented development club. 
+- Record current affiliation in Team links, and make sure the related team has a relevalt team url
+  in `entities.url`.
 - Use authoritative athlete, federation, or club sources. Reuse matching Clubs; create/link missing
   ones. New Persons also need correct gender and organization-entity links matching the event's
   existing participants.
