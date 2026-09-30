@@ -1,18 +1,20 @@
 # Activities
 
-Create activities from visible broadcasts and verify published activities.
-Complete the steps in order without approval stops. Deliver one final report.
+Create or update activities from visible broadcasts.
+Derive scope and dates from the database snapshot.
+Run Steps 1–3, repeat Steps 4–6 per event, then finish Steps 7–8 with one final report.
 
 ## Rules
 
-- Follow `AGENTS.md`; this job authorizes the changes below without further approval.
-- Prioritize accurate, thoroughly researched data over execution time or cost.
-- Use concise, correct Swedish for public content. Preserve clear short forms for small screens.
-- Read database settings from `.env`. Inspect the target, schema, and comparable records first.
-- Make data changes through guarded manual `psql` transactions: exact IDs, expected row counts,
-  rollback on mismatch, and readback verification. Preserve unrelated fields and records.
-- Leave unsupported or conflicting facts unchanged. Record unresolved items and continue.
-- Save every source used under the appropriate evidence type:
+- Follow `AGENTS.md`; execute this authorized job without approval stops.
+- Prioritize accuracy over time/cost. Use concise, correct Swedish for public content;
+  preserve clear short forms.
+- Read database settings from `.env`; inspect the target, schema, and comparable records.
+- Use guarded manual `psql` transactions: exact IDs, expected row counts, rollback on mismatch,
+  and readback verification. Preserve unrelated data.
+- Apply supported changes; retain and report unresolved/conflicting facts, then continue.
+- Track created/changed activity IDs, including group/link changes. Steps 5–6 verify only this set.
+- Save every evidence source with its type:
 
   | Evidence | Type |
   | --- | --- |
@@ -22,198 +24,184 @@ Complete the steps in order without approval stops. Deliver one final report.
   | Star qualification | `ParticipantStarEvidence` |
   | Birthdate, formative club, person profile | `PersonFacts` |
 
-## 1. Select Broadcasts and Verification Dates
+## 1. Snapshot Broadcasts
 
-1. Snapshot every broadcast with `hidden_at` unset, regardless of date or `processed_at`.
-   Record IDs, titles, descriptions, categories, channels, times, organizations, and entity links.
-   Later imports enter only the final queue check in Step 7.
-2. Verify the operator's date range plus the dates covered by selected broadcasts and changed
-   activities. Without a supplied range, use the selected broadcasts' dates.
-3. Interpret public dates using `src/SESport.Core/Domain/SportDay.cs`; store actual calendar times.
-4. Retrieve `https://sesport.se/?date=YYYY-MM-DD` for each date before changes. The rendered page
-   defines the published activities to verify. Record their IDs and card counts per date;
-   a card containing several activities counts once. Capture any newly added date before editing it.
+1. Record the start timestamp. Snapshot every broadcast with `hidden_at` unset, across all dates
+   and `processed_at` states. Later imports enter Step 7.
+2. Record IDs, `processed_at`, titles, descriptions, categories, channels, times, organizations,
+   and existing entity/activity links.
 
 ## 2. Hide Clearly Irrelevant Broadcasts
 
-Complete this step before activity changes. Use listing metadata only; research follows in Step 3.
-
-Create activities only for international competition involving:
+Eligible international competitions involve:
 
 - Swedish athletes competing individually.
 - A Swedish national team.
 - A Swedish club against a non-Swedish opponent.
 
-Hide listings clearly outside this scope: domestic competitions, foreign-team fixtures even with
-Swedish players, and generic highlights, recaps, or studio programmes.
+Using only title, description, categories, channel, and linked context, hide:
 
-- Judge title, description, categories, channel, and linked context together.
-- Hide unidentified listings: for example, bare `EM` without a sport/event category, or `Dag 2`
-  with only `Golf` and no identifiable tournament. Placeholder descriptions provide no identity.
-- Keep short titles when other metadata identifies the event.
-- Missing Swedish names do not prove non-participation. Keep uncertain listings for Step 3.
-- Select and verify exact IDs before hiding. Change only hidden status, retain processed state
-  and text, and record each ID and reason.
+- Domestic competitions, foreign-team fixtures (even with Swedish players), generic highlights,
+  recaps, and studio programmes.
+- Unidentified events, such as bare `EM` or `Dag 2`/`Golf` without competition context.
+  Require identifying metadata beyond placeholder descriptions. Keep short titles when other
+  fields identify the event.
+
+Keep uncertain Swedish participation for Step 3, including listings missing participant names.
+For these and later rejections, verify exact IDs, change only hidden status, and record IDs/reasons.
 
 ## 3. Research Swedish Participation
 
 Work only on selected broadcasts that remain visible.
 
-1. For processed broadcasts, inspect the existing activity and links. Reuse a matching activity;
-   if absent or conflicting, leave the broadcast unchanged and report it.
-2. Group listings for the same event across channels and research once. Assign a generic or
-   event-wide listing only when metadata, channel, and timing identify one event without ambiguity.
-3. Research manually, without running `decide-swedish-participation`. Start with Swedish
-   participation in the sport or series for the current season. A reliable, complete finding of
-   no Swedish participants in an established series applies to all selected broadcasts for that
-   series and season; skip event-by-event lists. Record the broad search and supporting source.
-4. Otherwise check complete official entries, start lists, confirmed rosters, or equivalent
-   authoritative evidence. Partial articles, unanswered searches, and missing names do not suffice.
+1. For processed broadcasts, inspect existing activities/links. Reuse consistent matches;
+   preserve and report broadcasts with missing/conflicting matches.
+2. Group identical events across channels; research once. Associate generic/event-wide listings
+   when metadata, channel, and timing identify exactly one event.
+3. Research participation manually from web sources, starting with the sport/series and broadcast
+   season. Record the search and source. A reliable, complete finding of no Swedish participants
+   covers all selected broadcasts for that established series/season; proceed directly to hiding.
+4. Otherwise use complete official entries, start lists, confirmed rosters, or equivalent authority.
 5. Apply the result:
 
    | Result | Action |
    | --- | --- |
    | Confirmed in scope | Record event, participants, evidence, and exact broadcast IDs. |
-   | Confirmed outside scope | Verify IDs, hide broadcasts, preserve processed state. |
+   | Confirmed outside scope | Hide broadcasts under Step 2. |
    | Uncertain participation/mapping | Keep visible and unprocessed; set event organization. |
 
-6. Verify classifications, hidden IDs, and organization markers. Create activities only in Step 4.
+6. Verify classifications, hidden IDs, and organization markers.
 
-## 4. Create or Reuse Activities
+## 4. Create or Update Activities
 
-Process each confirmed event from Step 3:
+For one confirmed event, prepare each affected public date before its first change in Steps 4–6:
 
-1. Inspect comparable records and search for a matching activity. Reuse matches; create only
-   missing activities, groups, participant links, and broadcast links.
-2. Create one activity per distinct timed segment, not per channel or whole competition day.
-   Compare titles, descriptions, channels, and exact start/end times. Merge channel listings only
-   when they cover the same segment; store comma-separated names in `tv_channel_name`.
-   Keep different segments separate. Use the segment's broadcast range, not a broader listing's end.
-3. Reuse or create one activity group spanning the competition dates; attach all related activities.
-   Use its shortest clear Swedish event name. Give activities short segment titles such as
-   `Sträcka 2–4`; include the event name wherever a standalone card needs it.
-   Remove nonessential sponsors (`Wanda` in `Wanda Diamond League`);
-   retain identifying ones (`BMW Championship`).
+- Derive dates from stored/planned activity times using `SportDay.cs`, group `public_date_mode`,
+  and `ActivityQueryRepository`. Persist actual calendar times.
+- Retrieve `https://sesport.se/?date=YYYY-MM-DD`; count cards once per date per run, including both
+  dates before a move. A grouped card counts once.
+
+Then:
+
+1. Reuse matching activities, groups, participant links, and broadcast links; create missing ones.
+2. Create one activity per distinct timed segment, identified by title, description, channel,
+   and exact start/end times. Combine channels covering that segment in `tv_channel_name`,
+   comma-separated. Use the segment's own broadcast range; keep different segments separate.
+3. Attach all competition activities to one group spanning its dates. Use the shortest clear
+   Swedish event name for the group and segment titles such as `Sträcka 2–4` for activities.
+   Include event names for standalone clarity. Retain identifying sponsors (`BMW Championship`);
+   remove nonessential ones (`Wanda` in `Wanda Diamond League`).
 4. Set sport, activity type, calendar date, broadcast times, time zone, channels, and organization.
    Follow existing publication conventions and save authoritative event evidence.
-5. Link every confirmed Swedish competitor as a Person participant. Add missing active links with
-   the event organization as context; verify the complete list. Apply the person rules in Step 5.
-6. Link every corresponding broadcast to its activity; each segment gets only its own listings.
-   Verify saved activities and links before finalizing broadcasts.
-7. Set linked broadcasts' organization to the activity organization, mark processed, then hide.
-   Update only verified source IDs. Read back activity details, links, organizations, and statuses.
+5. Link every confirmed Swedish competitor as a Person participant; add missing active links
+   with the event organization as context. Link each broadcast to its corresponding segment.
+6. Verify saved activities and links. Set linked broadcasts' organization to the activity's,
+   mark processed, then hide. Read back details, links, organizations, and statuses.
 
-## 5. Verify Every Activity
+## 5. Verify Created or Changed Activities
 
-Process each published activity from Step 1 and each activity created or updated in Step 4.
-Complete all checks below for one activity before moving to the next. Apply supported corrections.
+When activities changed, complete A–F for each before moving to the next. Add IDs changed by
+corrections to the verification set; read related records as context.
 
-### A. Titles and Times
+### A. Times
 
-- Check clear, concise Swedish titles and event context, including standalone cards.
-- For main activities, verify broadcast start/end times against Swedish TV schedules such as TV.nu
-  or SVT. Store broadcast times rather than competition times; round to the nearest five minutes.
-  Use F for detail activity times.
-- Preserve each grouped segment's time range rather than extending it to broader coverage.
+- Verify each main activity's broadcast start/end against Swedish TV schedules such as TV.nu/SVT;
+  round to the nearest five minutes. Use each segment's own range and F for detail activity times.
 
 ### B. Stream Links
 
-- Check every displayed provider independently. Resolve the activity's existing `StreamLink`
-  first, then `BroadcastChannelLinkCatalog`. Match source title after trimming, ignoring case.
-- Use fixed-channel mappings as presentation fallbacks; keep them out of activity/broadcast sources.
-- For missing or stale links, inspect the matching TV.nu detail page's provider link. Verify event,
-  operator date, broadcast start time, and provider before saving.
+- Resolve each displayed provider through existing `StreamLink` sources first, then
+  `BroadcastChannelLinkCatalog`. Match trimmed source titles case-insensitively.
+  Keep catalog links as presentation fallbacks only.
+- Find missing/stale provider links on TV.nu event details; verify event, broadcast date/start,
+  and provider before saving.
 - Follow wrappers to the direct provider URL. Remove affiliate wrappers, attribution parameters,
   `utm_*`, and `tag`; preserve parameters selecting the event. Save TV.nu as activity evidence.
-- Use verified direct links rather than generic homepages or search results. Mark unresolved only
-  when neither a valid activity link nor a fixed-channel mapping resolves it; record failed checks.
+- Accept verified direct event/channel URLs. When both activity and catalog resolution fail,
+  report the unresolved provider and failed checks.
 
 ### C. Participants
 
-- List competing athletes using Person entities; exclude coaches, managers, and support crew.
+- Use Person entities for competing athletes only.
 - Base inclusion/exclusion on complete official lists, confirmed rosters, or equivalent authority.
   Official squad inclusion takes precedence over rumors of non-participation.
-- Delete incorrect participation records from `activity_entity_links`. Retain eliminated
-  competitors with `is_active = false`, including golfers who missed a cut.
-- For multi-round Golf, lists may shrink after cuts but never grow on later days. Investigate
-  later-only participants; add valid omissions from Day 1 through every applicable later round.
-  Compare equivalent tournament coverage, including parallel Day 1 broadcasts.
-- Record all participant start times when the sport requires them. Save all supporting evidence;
-  the public start-time link must open a human-readable page.
-- Verify each discipline when the participant table displays one.
-- New Person entities need correct gender, birthdate, formative Club, and organization-entity
-  relationships matching the event's existing participants.
+- Delete incorrect `activity_entity_links`; retain eliminated competitors with `is_active = false`.
+- Golf: compare equivalent coverage, combining parallel Day 1 broadcasts. Investigate later-only
+  participants; add valid omissions from Day 1 through all applicable rounds. Later lists may
+  shrink after cuts but never grow.
+- Record all required participant start times; link displayed times to human-readable sources.
+- Verify every displayed participant discipline.
 
 ### D. Person Facts and Profiles
 
-- Check linked people, including inactive participants. Every displayed person needs a stored
-  birthdate, visible age, and formative club or earliest documented development club.
-- Research authoritative athlete, federation, or club sources. Reuse matching Club entities;
-  create and link missing ones. Use current affiliation in Team links, never as a formative-club
-  fallback. Describe a club as formative only with evidence; report conflicting or missing facts.
-- Every linked Person needs a verified dedicated profile in `entities.url`. Prefer federation,
-  club, team, or other relevant organization profiles; otherwise use dedicated Wikipedia pages
-  for sufficiently known people, personal websites, or sport-related social profiles.
-- Prefer Swedish/English; another language is a last resort with verified identity and content.
-  The page must primarily describe the person or athletic career. Exclude articles, interviews,
-  match/transfer reports, generic homepages, and search results. Report missing profiles.
-- Save verified facts and profile sources as `PersonFacts`; verify public names link to these URLs.
+- Store verified birthdates for displayed and new people, including inactive participants.
+  Link their formative club when verified; otherwise use their earliest documented development club.
+  Record current affiliation in Team links.
+- Use authoritative athlete, federation, or club sources. Reuse matching Clubs; create/link missing
+  ones. New Persons also need correct gender and organization-entity links matching the event's
+  existing participants.
+- Give every linked Person a verified dedicated profile in `entities.url`, primarily about their
+  identity/career. Prefer federation, club, team, or relevant organization profiles; alternatives
+  are dedicated Wikipedia pages for known people, personal websites, or sport-related social
+  profiles.
+- Prefer Swedish/English; use another language as a last resort with verified identity/content.
+  Use articles, interviews, and match/transfer reports as evidence only; choose person-specific
+  profile destinations rather than generic homepages or search results.
 
 ### E. Stars
 
-- Set Person `Watch Priority = tier_0` only for current athletes at or near the international senior
-  top in their discipline, with meaningful mainstream or equivalent accessible coverage relevant
-  to Swedish sports audiences. Verify results and public relevance; correct stale stars.
-- Use senior Worlds, Olympics, major championships, or comparable top-level results as evidence.
-  Domestic medals, junior success, career legacy, niche results without audience relevance, and
-  lower-tier, developmental, age-group, or senior-tour results alone do not qualify.
+- Assign Person `Watch Priority = tier_0` when both requirements hold; correct stale stars:
+  - Current performance at/near the absolute international senior top in their discipline,
+    evidenced by senior Worlds, Olympics, major championships, or comparable results.
+  - Meaningful mainstream or equivalent accessible coverage relevant to Swedish sports audiences.
+- Treat domestic medals, junior results, career legacy, and lower-tier, developmental, age-group, or
+  senior-tour results as context; require current qualification under both criteria above.
 
 ### F. Detail Activities
 
-- When sourced times identify Swedish participation within a broader event, reuse or create a
-  detail activity with the parent's sport and group, correct Persons, and a specific title such as
-  `Stavhopp - Final`. Omit the collective event name unless standalone rendering needs it.
-- Use a sourced end time; otherwise estimate a generous discipline-appropriate duration, capped
-  at the main activity's end. Set both `local_end_time` and `ends_at`.
-- Skip details fully outside the broadcast; include when broadcast coverage is uncertain.
-- For sports already showing individual start times, such as Golf, create details only when
-  coverage follows specific Swedish players. Apply checks A–E to new detail activities.
+- For sourced Swedish participation times within broader events, reuse/create details with the
+  parent's sport/group, correct Persons, and specific titles such as `Stavhopp - Final`.
+  Include the event name only for standalone clarity. Include confirmed or uncertain broadcast
+  coverage; exclude details entirely outside it.
+- Set `local_end_time` and `ends_at`: use a sourced end, otherwise estimate a generous
+  discipline-appropriate duration capped at the parent activity's end.
+- For sports with individual start times, such as Golf, add details only for coverage following
+  specific Swedish players. Record created/changed detail IDs; apply A–E and Step 6.
 
 ## 6. Verify Public Presentation
 
-Retrieve the hosted pages again for every verification date. Inspect rendered output, not only data.
-Correct supported discrepancies and retrieve affected pages again.
+Retrieve the recorded activities' hosted pages, including old dates after moves. Inspect their
+rendered cards/group context, correct supported discrepancies, and retrieve affected pages again.
 
-- Check every affected activity: publication, card title, event context, grouping, and participants.
-  For grouped schedules, check each segment title, channels, stream links, and correct time range.
-- Verify displayed people, including inactive ones, have ages, clubs, and working profile links.
-- In team sports, verify applicable team-based flags using existing foreign/national-team rules.
-  Check linked Team countries before changing queries; several teams sharing one known country can
-  supply it. Row position alone does not demonstrate a rendering bug.
-- Verify supported country IDs, matching SVG assets, and successful asset loads. Make focused
-  code/asset fixes when required; follow `AGENTS.md` validation rules and recheck rendering.
-- Check local rendering separately from the hosted site. Report differences and deployment gaps;
-  claim hosted fixes only after hosted verification.
-- Recount cards per date and explain changes from Step 1. Report incomplete verification explicitly.
+- Check publication, clear Swedish titles, event context, grouping, and participants; check changed
+  schedule rows' segment titles, channels, stream links, and time ranges.
+- Verify displayed people, including inactive ones, have ages, clubs, and names linking to
+  working `entities.url` profiles.
+- Verify team-sport flags under existing foreign/national-team rules. Base query corrections on
+  linked Team countries; several teams sharing one known country can supply it.
+- Verify supported country IDs and successful loads of matching SVGs. Make focused code/asset fixes,
+  validate under `AGENTS.md`, and recheck rendering.
+- Verify local/hosted rendering separately; report differences, deployment gaps, and incomplete
+  checks. Confirm hosted fixes on the hosted site.
+- Recount cards per date and explain differences from Step 4. Continue with the next event.
 
 ## 7. Check the Remaining Broadcast Queue
 
-Inspect every broadcast still visible, including imports after Step 1.
+Inspect all visible broadcasts, including later imports:
 
-- Assign each its relevant event/competition organization. This marks investigation, not confirmed
-  participation or processing. Keep unresolved broadcasts unprocessed.
-- Hide listings whose event or organization cannot be identified under Step 2's junk rule.
-- For later imports, change only organization or junk-listing visibility; defer creation/processing.
-- Verify no visible broadcast lacks an organization. Record unresolved IDs and organizations.
+- Assign the relevant event/competition organization as an investigation marker; retain unresolved
+  broadcasts unprocessed. Hide unidentified events/organizations under Step 2.
+- For later imports, assign organizations or hide junk; defer creation/processing to the next run.
+- Confirm every visible broadcast has an organization; record unresolved IDs/organizations.
 
 ## 8. Save the Final Report
 
-Write `jobs/reports/activities-YYYY-MM-DD.md`, using the run date. Keep it complete but condensed:
+Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 
-- Verification dates; created/updated activities and corresponding broadcast IDs.
-- Hidden broadcast IDs with reasons; other applied corrections and supporting evidence.
-- Unresolved items, failed checks, and visible broadcast IDs with organization markers.
-- Card counts before/after per date, reasons for differences, and local/hosted discrepancies.
+- Start timestamp; created/changed activity IDs, public dates, and linked broadcast IDs.
+- Hidden broadcast IDs/reasons, applied corrections, and evidence.
+- Unresolved items, failed checks, and visible broadcast IDs/organizations.
+- Card counts before/after per date, explanations, and local/hosted discrepancies.
 
-Omit already-correct details. Give the operator the report link and a brief result summary.
-Commit or push only on explicit operator request.
+Report when activity verification was unnecessary because nothing changed.
+Keep the report to changes, unresolved items, and counts; return its link with a brief summary.
