@@ -37,7 +37,7 @@ Eligible international competitions involve:
 
 - Swedish athletes competing individually.
 - A Swedish national team.
-- A Swedish club against a non-Swedish opponent.
+- A Swedish club/team.
 
 Using only title, description, categories, channel, and linked context, hide:
 
