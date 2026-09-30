@@ -173,6 +173,7 @@ corrections to the verification set; read related records as context.
 Retrieve the recorded activities' hosted pages, including old dates after moves. Inspect their
 rendered cards/group context, correct supported discrepancies, and retrieve affected pages again.
 
+- Every activity should have at least one Swedish participant (person-entity). 
 - Check publication, clear Swedish titles, event context, grouping, and participants; check changed
   schedule rows' segment titles, channels, stream links, and time ranges.
 - Verify displayed people, including inactive ones, have ages, clubs, and names linking to
