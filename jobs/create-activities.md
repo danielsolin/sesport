@@ -187,10 +187,12 @@ Start after Step 3 has finalized the activities and their broadcasts.
    or their athletic career. Do not use news stories, signing or transfer
    announcements, interviews, match reports, or other articles that merely
    mention or discuss the person. Verify that the page is about the correct
-   person and is in Swedish or English. Verify that the public participant
-   name links to this URL. Do not use a generic homepage or search results
-   page. If no suitable URL can be found, report the participant rather than
-   inventing a URL.
+   person. Prefer a page in Swedish or English. If no suitable page in either
+   language is available, a dedicated page in another language may be used as
+   a last resort, provided the identity and profile content can be verified.
+   Verify that the public participant name links to this URL. Do not use a
+   generic homepage or search results page. If no suitable URL can be found,
+   report the participant rather than inventing a URL.
 4. If a birthdate or club is missing, research authoritative athlete,
    federation, or club sources. Use the actual formative club when verified;
    otherwise use the earliest documented club in the athlete's development.
