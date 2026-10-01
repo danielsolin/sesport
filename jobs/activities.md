@@ -91,6 +91,8 @@ Then:
    Swedish event name for the group and segment titles such as `Sträcka 2–4` for activities.
    Include event names for standalone clarity. Retain identifying sponsors (`BMW Championship`);
    remove nonessential ones (`Wanda` in `Wanda Diamond League`).
+   Keep titles as short as possible. Omit details already clear from the organization, group, date,
+   or participant list while retaining enough context to identify the event or segment.
 4. Set sport, activity type, calendar date, broadcast times, time zone, channels, and organization.
    Follow existing publication conventions and save authoritative event evidence.
 5. Link every confirmed Swedish competitor as a Person participant; add missing active links
