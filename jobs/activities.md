@@ -88,7 +88,7 @@ Then:
    and exact start/end times. Combine channels covering that segment in `tv_channel_name`,
    comma-separated. Use the segment's own broadcast range; keep different segments separate.
 3. Attach all competition activities to one group spanning its dates. Use the shortest clear
-   Swedish event name for the group and segment titles such as `Sträcka 2–4` for activities.
+   event name for the group and segment titles such as `Sträcka 2–4` for activities.
    Include event names for standalone clarity. Retain identifying sponsors (`BMW Championship`);
    remove nonessential ones (`Wanda` in `Wanda Diamond League`).
    Keep titles as short as possible, but not an abbreviation only. Omit details already clear from
