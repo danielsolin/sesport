@@ -54,8 +54,9 @@ For these and later rejections, verify exact IDs, change only hidden status, and
 
 Work only on selected broadcasts that remain visible.
 
-1. For processed broadcasts, inspect existing activities/links. Reuse consistent matches;
-   preserve and report broadcasts with missing/conflicting matches.
+1. If present, match every broadcast to existing activities using the event, date, time, and
+   context, regardless of processed state. Identify what changed and research only the facts needed
+   to resolve those changes.
 2. Group identical events across channels; research once. Associate generic/event-wide listings
    when metadata, channel, and timing identify exactly one event.
 3. Research participation manually from web sources, starting with the sport/series and broadcast
@@ -138,7 +139,7 @@ corrections to the verification set; read related records as context.
 ### D. Person Facts and Profiles
 
 - Store verified birthdates for displayed and new people, including inactive participants.
-  Link their formative club when verified; otherwise use their earliest documented development club. 
+  Link their formative club when verified; otherwise use their earliest documented development club.
 - Record current affiliation in Team links, and make sure the related team has a relevalt team url
   in `entities.url`.
 - Use authoritative athlete, federation, or club sources. Reuse matching Clubs; create/link missing
