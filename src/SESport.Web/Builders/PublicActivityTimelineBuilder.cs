@@ -284,13 +284,13 @@ public sealed class PublicActivityTimelineBuilder
          ?? slots.FirstOrDefault(slot => slot.Activity.StartsAt >= now)
          ?? slots[^1];
       var timelineStart = TimeZoneHelper.ToLocal(
-         activity.StartsAt!.Value,
+         timelineSlot.Activity.StartsAt!.Value,
          SportDay.TimeZoneId
       );
       var timelineTimeLabel =
          PublicTimeDisplay.FormatApproximateTimeText(
-            activity.TimeText,
-            activity.LocalStartTime
+            timelineSlot.Activity.TimeText,
+            timelineSlot.Activity.LocalStartTime
          );
       var timelineEndTimeLabel =
          PublicTimeDisplay.FormatApproximateTime(
