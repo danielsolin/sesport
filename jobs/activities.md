@@ -1,12 +1,12 @@
 # Activities
 
-Create or update activities from visible broadcasts.
-Derive scope and dates from the database snapshot.
-Run Steps 1–3, repeat Steps 4–6 per event, then finish Steps 7–8 with one final report.
+Create or update activities from visible broadcasts. Run Steps 1–3, repeat Steps 4–6 per event,
+then finish Steps 7–8 with one final report. All unhidden broadcast records should be investigated
+and processed according to the rules defined. 
 
 ## Rules
 
-- Follow `AGENTS.md`; execute this authorized job without approval stops.
+- Execute this authorized job without approval stops.
 - Prioritize accuracy over time/cost. Use concise, correct Swedish for public content;
   preserve clear short forms.
 - Read database settings from `.env`; inspect the target, schema, and comparable records.
@@ -91,9 +91,9 @@ Then:
    event name for the group and segment titles such as `Sträcka 2–4` for activities.
    Include event names for standalone clarity. Retain identifying sponsors (`BMW Championship`);
    remove nonessential ones (`Wanda` in `Wanda Diamond League`).
-   Keep titles as short as possible, but not an abbreviation only. Omit details already clear from
-   the organization, group, date, or participant list while retaining enough context to identify
-   the event or segment.
+   Keep titles as short as possible, but longer than one single abbreviation. Omit details already
+   clear from the organization, group, date, or participant list while retaining enough context to
+   identify the event or segment.
 4. Set sport, activity type, calendar date, broadcast times, time zone, channels, and organization.
    Follow existing publication conventions and save authoritative event evidence.
 5. Link every confirmed Swedish competitor as a Person participant; add missing active links
