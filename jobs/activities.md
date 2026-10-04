@@ -9,7 +9,7 @@ No broadcast should be left unattended.
 
 ## Rules
 
-- Follow `AGENTS.md`; execute this authorized job without approval stops.
+- Execute this authorized job without approval stops.
 - Prioritize accuracy over time/cost. Use concise, correct Swedish for public content;
   preserve clear short forms.
 - Read database settings from `.env`; inspect the target, schema, and comparable records.
@@ -57,8 +57,9 @@ For these and later rejections, verify exact IDs, change only hidden status, and
 
 Work only on selected broadcasts that remain visible.
 
-1. For processed broadcasts, inspect existing activities/links. Reuse consistent matches;
-   preserve and report broadcasts with missing/conflicting matches.
+1. If present, match every broadcast to existing activities using the event, date, time, and
+   context, regardless of processed state. Identify what changed and research only the facts needed
+   to resolve those changes.
 2. Group identical events across channels; research once. Associate generic/event-wide listings
    when metadata, channel, and timing identify exactly one event.
 3. Research participation manually from web sources, starting with the sport/series and broadcast
@@ -94,9 +95,9 @@ Then:
    event name for the group and segment titles such as `Sträcka 2–4` for activities.
    Include event names for standalone clarity. Retain identifying sponsors (`BMW Championship`);
    remove nonessential ones (`Wanda` in `Wanda Diamond League`).
-   Keep titles as short as possible, but not an abbreviation only. Omit details already clear from
-   the organization, group, date, or participant list while retaining enough context to identify
-   the event or segment.
+   Keep titles as short as possible, but longer than one single abbreviation. Omit details already
+   clear from the organization, group, date, or participant list while retaining enough context to
+   identify the event or segment.
 4. Set sport, activity type, calendar date, broadcast times, time zone, channels, and organization.
    Follow existing publication conventions and save authoritative event evidence.
 5. Link every confirmed Swedish competitor as a Person participant; add missing active links
@@ -141,7 +142,7 @@ corrections to the verification set; read related records as context.
 ### D. Person Facts and Profiles
 
 - Store verified birthdates for displayed and new people, including inactive participants.
-  Link their formative club when verified; otherwise use their earliest documented development club. 
+  Link their formative club when verified; otherwise use their earliest documented development club.
 - Record current affiliation in Team links, and make sure the related team has a relevalt team url
   in `entities.url`.
 - Use authoritative athlete, federation, or club sources. Reuse matching Clubs; create/link missing

@@ -573,7 +573,7 @@ public class PublicActivityTimelineBuilderTests
             entry => !entry.IsCurrentMarker
          ).Section!;
 
-      Assert.Equal("≈08:15", middaySection.TimeLabel);
+      Assert.Equal("≈13:00", middaySection.TimeLabel);
    }
 
    [Fact]

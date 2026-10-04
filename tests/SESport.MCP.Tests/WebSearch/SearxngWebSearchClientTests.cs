@@ -794,7 +794,7 @@ public class SearxngWebSearchClientTests
 
          if(RequestCount == 1)
          {
-            await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+            throw new TaskCanceledException("Simulated request timeout.");
          }
 
          return new HttpResponseMessage(HttpStatusCode.OK)
