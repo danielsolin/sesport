@@ -196,7 +196,7 @@ rendered cards/group context, correct supported discrepancies, and retrieve affe
 
 ## 7. Save the Final Report
 
-Was any broadcast should be left unattended? If so, return to Step 2. Otherwise:
+Was any broadcast left unattended? If so, return to Step 2. Otherwise:
 
 Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 
