@@ -511,7 +511,11 @@ public sealed class IndexMarkupTests
       Assert.Contains("participant.IsActive", html);
       Assert.Contains("activity-group-slot-participants", html);
       Assert.Contains("slot.TvChannels", html);
-      Assert.DoesNotContain("slot.EndTimeLabel", html);
+      Assert.Contains(
+         "slot.EndTimeLabel is null\n" +
+            "                                    ? slot.StartTimeLabel",
+         html
+      );
       Assert.Contains("activity-group-description", html);
       Assert.Contains("activity-entry-description", html);
       Assert.Contains("activity-group-slot-channel-list", css);

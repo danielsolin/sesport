@@ -506,21 +506,24 @@ public sealed class IndexModelTests
          [today, selectedDate, publishedDateCounts]
       )!;
 
-      Assert.Equal(3, options.Count);
+      Assert.Equal(6, options.Count);
       Assert.Equal(
-         [today, today.AddDays(2), today.AddDays(5)],
+         Enumerable.Range(0, 6).Select(today.AddDays),
          options.Select(option => DateOnly.Parse(option.Value))
       );
       Assert.Equal(
          [
             "Idag 24 juli",
+            "Imorgon 25 juli",
             "Söndag 26 juli",
+            "Måndag 27 juli",
+            "Tisdag 28 juli",
             "Onsdag 29 juli"
          ],
          options.Select(option => option.Label)
       );
       Assert.Equal(
-         [10, 7, 3],
+         [10, 0, 7, 0, 0, 3],
          options.Select(option => option.ParticipantCount)
       );
    }
@@ -544,7 +547,7 @@ public sealed class IndexModelTests
          ]
       )!;
 
-      Assert.Equal(2, options.Count);
+      Assert.Equal(3, options.Count);
       var selectedOption = Assert.Single(
          options,
          option => option.IsSelected
