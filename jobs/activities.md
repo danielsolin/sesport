@@ -1,8 +1,11 @@
 # Activities
 
-Create or update activities from visible broadcasts.
-Derive scope and dates from the database snapshot.
-Run Steps 1–3, repeat Steps 4–6 per event, then finish Steps 7–8 with one final report.
+Create or update activities from currently visible broadcasts. This is an unattanded job - do not
+stop until all steps are completed and the final report is produced.
+
+Run Steps 1–3, repeat Steps 4–6 per event, then finish Step 7 with one final report.
+
+No broadcast should be left unattended.
 
 ## Rules
 
@@ -27,7 +30,7 @@ Run Steps 1–3, repeat Steps 4–6 per event, then finish Steps 7–8 with one 
 ## 1. Snapshot Broadcasts
 
 1. Record the start timestamp. Snapshot every broadcast with `hidden_at` unset, across all dates
-   and `processed_at` states. Later imports enter Step 7.
+   and `processed_at` states.
 2. Record IDs, `processed_at`, titles, descriptions, categories, channels, times, organizations,
    and existing entity/activity links.
 
@@ -190,16 +193,9 @@ rendered cards/group context, correct supported discrepancies, and retrieve affe
   checks. Confirm hosted fixes on the hosted site.
 - Recount cards per date and explain differences from Step 4. Continue with the next event.
 
-## 7. Check the Remaining Broadcast Queue
+## 7. Save the Final Report
 
-Inspect all visible broadcasts, including later imports:
-
-- Assign the relevant event/competition organization as an investigation marker; retain unresolved
-  broadcasts unprocessed. Hide unidentified events/organizations under Step 2.
-- For later imports, assign organizations or hide junk; defer creation/processing to the next run.
-- Confirm every visible broadcast has an organization; record unresolved IDs/organizations.
-
-## 8. Save the Final Report
+Was any broadcast should be left unattended? If so, return to Step 2. Otherwise:
 
 Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 
