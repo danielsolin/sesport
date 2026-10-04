@@ -1,17 +1,11 @@
 # Activities
 
-<<<<<<< HEAD
 Create or update activities from currently visible broadcasts. This is an unattanded job - do not
 stop until all steps are completed and the final report is produced.
 
 Run Steps 1–3, repeat Steps 4–6 per event, then finish Step 7 with one final report.
 
 No broadcast should be left unattended.
-=======
-Create or update activities from visible broadcasts. Run Steps 1–3, repeat Steps 4–6 per event,
-then finish Steps 7–8 with one final report. All unhidden broadcast records should be investigated
-and processed according to the rules defined. 
->>>>>>> cac99d089d716db6f7b73e0f1b54841e065ef232
 
 ## Rules
 
