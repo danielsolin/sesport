@@ -102,12 +102,3 @@
   manual use.
 - `tests/`: test projects. Database-backed tests resolve their connection
   from `.env` through the shared test bootstrap.
-
-## Private Local Content
-
-- `AGENTS.md`, `bin/`, `data/`, and `tools/` are private local workspace content
-  and are intentionally excluded from the public Git repository. Do not add, stage,
-  commit, or publish them unless explicitly requested for a specific task.
-- These directories may contain operational scripts, job definitions,
-  collected source files, database files, or legacy tools. Their absence
-  from a public checkout is intentional.
