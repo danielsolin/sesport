@@ -44,7 +44,7 @@ http://localhost:5109
 
 ## Development hostname
 
-On the web host, `dev.sesport.se` is served by `sesport-dev.service`. The
+On the web host, `https://dev.sesport.se` is served by `sesport-dev.service`. The
 service runs the project from `/home/daniel/sesport/src/SESport.Web` with
 `dotnet watch`, so source and static-file changes are picked up without
 publishing. Caddy forwards the hostname to the service on port 5001.

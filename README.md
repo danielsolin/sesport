@@ -261,8 +261,9 @@ The solution targets the .NET 10 SDK.
    dotnet run --project src/SESport.Web
    ```
 
-The local HTTP endpoint is `http://localhost:5109`. The administrative area is
-under `/Admin` and requires the configured administrator credentials.
+The local HTTP endpoint is `http://localhost:5109`. The hosted development site is
+`https://dev.sesport.se`. The administrative area is under `/Admin` and requires
+the configured administrator credentials.
 
 ## Testing
 

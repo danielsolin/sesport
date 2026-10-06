@@ -190,8 +190,8 @@ rendered cards/group context, correct supported discrepancies, and retrieve affe
   linked Team countries; several teams sharing one known country can supply it.
 - Verify supported country IDs and successful loads of matching SVGs. Make focused code/asset fixes,
   validate under `AGENTS.md`, and recheck rendering.
-- Verify local/hosted rendering separately; report differences, deployment gaps, and incomplete
-  checks. Confirm hosted fixes on the hosted site.
+- Verify `https://dev.sesport.se` and `https://sesport.se` separately; report differences,
+  deployment gaps, and incomplete checks. Confirm hosted fixes on the relevant site.
 - Recount cards per date and explain differences from Step 4. Continue with the next event.
 
 ## 7. Save the Final Report

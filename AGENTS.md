@@ -65,9 +65,9 @@
 - Build the solution with `dotnet build`.
 - Run all tests with `dotnet test`, or run a specific project, for example:
   `dotnet test tests/SESport.Core.Tests`.
-- Run the web application with
-  `dotnet run --project src/SESport.Web`. The HTTP development endpoint is
-  `http://localhost:5109`.
+- Run a local web instance with `dotnet run --project src/SESport.Web`; its local HTTP
+  endpoint is `http://localhost:5109`.
+- The hosted development site is `https://dev.sesport.se`.
 
 ## Project Structure
 
