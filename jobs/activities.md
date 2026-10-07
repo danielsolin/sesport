@@ -208,4 +208,5 @@ Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 - Card counts before/after per date, explanations, and local/hosted discrepancies.
 
 Report when activity verification was unnecessary because nothing changed.
-Keep the report to changes, unresolved items, and counts; return its link with a brief summary.
+Keep the report to changes, unresolved items, and counts; return its link with a brief summary
+pointing out anything needing the operator's attention.

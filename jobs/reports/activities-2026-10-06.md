@@ -5,7 +5,9 @@ Run began: 2026-10-06 07:21:18 UTC. Initial snapshot: 116 visible broadcasts.
 ## Outcome
 
 - Hid 63 broadcasts after the snapshot: 44 hide-only, 19 processed into activities.
-- Created 15 activities and updated 6; all 21 are Published in Europe/Stockholm.
+- Created 15 activities and updated 6 existing rows. Renamed seven golf titles and their
+  group to remove the sponsor name from public activity titles.
+- All 21 unique activity rows are Published in Europe/Stockholm.
 - Added 20 broadcast links for the 19 processed broadcasts.
 - 53 visible, unprocessed broadcasts remain; each has a named organization marker.
 - No broadcast was left without a classification.
@@ -19,15 +21,16 @@ Counts are grouped cards per date, including grouped multi-channel segments.
 
 - 2026-10-06: 5 → 5. China Smash time and source updates only.
 - 2026-10-07: 2 → 2. Jakob's detail is grouped within the UEC card.
-- 2026-10-08: 3 → 4. Added Aramco Korea round 1.
-- 2026-10-09: 7 → 8. Added Aramco Korea round 2.
-- 2026-10-10: 8 → 9. Added Aramco Korea round 3.
-- 2026-10-11: 5 → 7. Added Aramco round 4 and one grouped darts card.
+- 2026-10-08: 3 → 4. Added Korea Championship round 1.
+- 2026-10-09: 7 → 8. Added Korea Championship round 2.
+- 2026-10-10: 8 → 9. Added Korea Championship round 3.
+- 2026-10-11: 5 → 7. Added Korea Championship round 4 and one grouped darts card.
 - 2026-10-12: 0 → 2. Added one grouped table tennis card and one U23 match card.
+- The title correction below changed no card counts.
 
 ## Activity groups
 
-- Created Aramco Korea Championship, 2026-10-08–11, sport_day:
+- Created Korea Championship, 2026-10-08–11, sport_day:
   1642d9ee-e173-48a3-9dfc-7448cc472e08
 - Extended Sveriges U23-damer through 2026-10-12, sport_day:
   50ec51fb-69f4-4bfa-a56b-ae0f56f18fe6
@@ -68,43 +71,43 @@ links retained on changed activities are listed separately.
 - The same UEC broadcast links to both activities; Jakob's 16:58 start has
   ParticipantStartEvidence from the official start list.
 
-### 2026-10-08 — Aramco Korea Championship and U23
+### 2026-10-08 — Korea Championship and U23
 
-- Runda 1, Viaplay, new, 06:30–11:00.
+- Korea Championship: Runda 1, Viaplay, new, 06:30–11:00.
   Activity: 682f39d3-27f9-4848-8b77-15cef7f91422
   Broadcast: 0807e823-6f75-8e3f-a25c-f3fdc5c38e32
-- Runda 1, V Sport Golf, new, 06:30–10:30.
+- Korea Championship: Runda 1, V Sport Golf, new, 06:30–10:30.
   Activity: 92db5612-080b-4196-9b28-4b81d98a0e60
   Broadcast: f761b20a-3ddb-803f-be46-3f99179d0bd3
-- Sverige–Finland, updated, 18:20–20:30.
+- U23-damer: Sverige–Finland, updated, 18:20–20:30.
   Activity: dfe194d0-7dcb-4e02-840a-7bd556175eb7
   New broadcast: da019af0-024b-723d-b523-439e8e7121eb
   Retained broadcast: c4d3a50a-95f7-8330-be3b-6576c9546b75
 
-### 2026-10-09 — Aramco Korea Championship
+### 2026-10-09 — Korea Championship
 
-- Runda 2, V Sport Golf, new, 06:30–10:30.
+- Korea Championship: Runda 2, V Sport Golf, new, 06:30–10:30.
   Activity: 4d1a77c4-fea0-415b-8b4d-0c8be239cdbe
   Broadcast: 05334258-4a63-7c3b-8a81-b092d5782be1
-- Runda 2, Viaplay, new, 06:30–11:00.
+- Korea Championship: Runda 2, Viaplay, new, 06:30–11:00.
   Activity: a4c5668e-c954-402e-a872-289aa07879b9
   Broadcast: e0dfce1f-7b9b-1f38-891b-d98d55bf66dd
 
-### 2026-10-10 — Aramco Korea Championship
+### 2026-10-10 — Korea Championship
 
-- Runda 3, Viaplay, new, 06:00–10:30.
+- Korea Championship: Runda 3, Viaplay, new, 06:00–10:30.
   Activity: 01f4c9b7-a873-4bfb-a1ed-cd5706b99d68
   Broadcast: bc5ffa12-5610-bc37-a49b-9b21ef862140
-- Runda 3, V Sport Golf, new, 06:00–10:00.
+- Korea Championship: Runda 3, V Sport Golf, new, 06:00–10:00.
   Activity: 84d6215c-6bdd-409a-95ae-3f108e318945
   Broadcast: a71f67bd-34fd-2f3d-8bec-e4627db00ffc
 
-### 2026-10-11 — Aramco, ADAC GT4, darts and table tennis
+### 2026-10-11 — Korea Championship, ADAC GT4, darts and table tennis
 
-- Runda 4, Viaplay, new, 06:00–10:30.
+- Korea Championship: Runda 4, Viaplay, new, 06:00–10:30.
   Activity: 25491675-e727-45b0-bd22-7fab0df0453e
   Broadcast: d081d942-f3de-483f-8803-c8b3ea0a434f
-- Lopp 3, ADAC GT4 Germany, updated, 10:50–12:40.
+- ADAC GT4 Germany: Lopp 3, updated, 10:50–12:40.
   Activity: 86841011-0000-4000-8000-000000000003
   New broadcast: db494d7e-c96d-0c35-ae24-411d0854d3d4
   Retained hidden duplicate: ba3ab4eb-c3fc-4731-930a-42d17d43a987
@@ -114,7 +117,7 @@ links retained on changed activities are listed separately.
 - Kvartsfinaler till final, Swiss Darts Trophy, new, 18:00–22:30.
   Activity: d5e3f738-c529-4757-a316-4d85ea5f53a9
   Broadcast: 6d3b310e-2a45-3c30-88f6-265c0ce97f7c
-- Dag ett: kväll, Bordtennis-EM 2026, updated, 19:35–22:00.
+- Bordtennis-EM 2026: Dag 1 kväll, updated, 19:35–22:00.
   Activity: 86841011-0000-4000-8000-000000000009
   Retained broadcast: 49873cf0-a460-f03d-b333-0ea797951646
 
@@ -129,12 +132,45 @@ links retained on changed activities are listed separately.
 - Kväll, Bordtennis-EM 2026, new, 15:30–18:15.
   Activity: 150d5bb0-b70c-4b64-aa08-91583a532ef0
   Broadcast: 0d9fd410-af86-bc3f-9030-8923e30a0826
-- Sverige–Tyskland, Viaplay, new, 18:20–21:00.
+- U23-damer: Sverige–Tyskland, Viaplay, new, 18:20–21:00.
   Activity: 6c194916-6eeb-4276-bed8-7d8a108f2af3
   Broadcast: b7f0b8d5-961e-1931-9f2c-c61a089c0443
-- Sverige–Tyskland, Viaplay Sport, new, 18:20–20:30.
+- U23-damer: Sverige–Tyskland, Viaplay Sport, new, 18:20–20:30.
   Activity: 90b50c6a-6e56-4a9e-a39b-5ed543b85c54
   Broadcast: 824637bf-2739-ff35-963a-1805d4c71f70
+
+### Follow-up title correction
+
+All seven Korea Championship rounds belong to the Korea Championship group. Public
+cards do not show the group name, so each round title includes the tournament name.
+Times, channels, participants, group membership and broadcast links were preserved.
+Development and public pages for October 8–11 returned HTTP 200 and show the final
+titles. Card counts remain 4, 8, 9 and 7, respectively.
+
+### Follow-up public title review
+
+Reviewed all seven date pages offered by both public sites for October 6–12: 37 cards.
+Updated eight published activity rows across seven cards whose titles lacked competition
+context. The group names supplied the event context:
+
+- October 8: U23-damer: Sverige–Finland
+  Activity: dfe194d0-7dcb-4e02-840a-7bd556175eb7
+- October 9: VM-playoff: Litauen–Sverige
+  Activity: 397f36e9-2ca6-4b79-a8e4-17f37bd24d26
+- October 10: Porsche Carrera Cup Deutschland: Lopp 1
+  Activity: 1d94a936-812e-44b4-b45e-44398d6935e2
+- October 10: Indianapolis 8 Hour: Race
+  Activity: 131ac48f-ef84-4f6d-bfa4-95f7a83c8941
+- October 11: ADAC GT4 Germany: Lopp 3
+  Activity: 86841011-0000-4000-8000-000000000003
+- October 11: Bordtennis-EM 2026: Dag 1 kväll
+  Activity: 86841011-0000-4000-8000-000000000009
+- October 12: U23-damer: Sverige–Tyskland
+  Activities: 6c194916-6eeb-4276-bed8-7d8a108f2af3,
+  90b50c6a-6e56-4a9e-a39b-5ed543b85c54
+
+Dev and production returned HTTP 200 on every date. Card counts stayed 5, 2, 4, 8,
+9, 7 and 2.
 
 ### Broadcasts processed into activities
 
@@ -147,7 +183,7 @@ were read back. The UEC broadcast is linked twice, making 20 new links.
 - The four Bordtennis-EM activities use the confirmed 10-person roster. Anders Eriksson
   replaces injured Mattias Karlsson, based on SBTF's September 30 update.
 - The U23 match rosters are saved for both Sweden–Finland and Sweden–Germany broadcasts.
-- Each Aramco round has the same five Swedes: Moa Folke, Louise Rydqvist, Corinne
+- Each Korea Championship round has the same five Swedes: Moa Folke, Louise Rydqvist, Corinne
   Vidén, Kajsa Arwefjäll and Andrea Lignell.
 - No official Korean tee sheet was found. Five rounds have coverage-level activities;
   no individual golfer start details were invented.
@@ -298,7 +334,7 @@ Motorsport — 1:
 
 The authenticated Admin Dashboard still shows four table tennis warnings:
 
-- 2026-10-11, Dag ett: kväll
+- 2026-10-11, Bordtennis-EM 2026: Dag 1 kväll
 - 2026-10-12, Förmiddag
 - 2026-10-12, Eftermiddag
 - 2026-10-12, Kväll
