@@ -7,9 +7,9 @@ Run began: 2026-10-07 06:57:32 UTC. Initial snapshot: 116 visible broadcasts.
 - Hid 46 broadcasts: 28 hide-only and 18 processed into activities, then hidden.
 - Created 29 activities. Updated links or participation on 12 existing activities.
 - The 18 processed broadcasts have 18 activity links and were marked processed and hidden.
-- All 59 remaining visible broadcasts are unprocessed. 58 have organization markers.
-- One visible item maps to an event, but participation in the televised segment
-  remains uncertain and the database has no compatible organization marker.
+- All 59 remaining visible broadcasts are unprocessed and have organization markers.
+- One item's event is mapped to ESC, but Swedish participation in the televised
+  segment remains uncertain.
 - No broadcast was unattended: every item was classified, processed, hidden, or
   documented as unresolved.
 - Current activity and group titles came from the live database. No existing title or
@@ -290,7 +290,7 @@ b791aade-3759-8d37-a38b-aeb4525222c6
 
 1c811918-1f45-ad38-8e9a-d9920f68d566
 
-### No organization (1 unresolved)
+### European Shooting Confederation (1)
 
 147e7bd1-026f-2634-bf76-0e426075ed6a
 
@@ -326,6 +326,9 @@ e9bb80fc-c6c5-6332-915c-28162cbb828a, fc306d96-a965-5232-a75e-8c10c469612d
   was incorrectly recorded as a Team.
 - Checked watch priorities in the event groups. Current tier_0 assignments were
   retained; no star priority changes were needed.
+- Added the `shooting` sport (`Sportskytte`) and European Shooting Confederation
+  Organization entity a2e6cd5c-53b0-4fa3-972f-4a0b8d45c618. Linked the Malakasa
+  broadcast to ESC. Its imported category still says Motorsport.
 - All event, participation, start-time and person-fact evidence was stored with its
   required evidence type.
 - All 13 direct provider StreamLink sources and catalog fallbacks were checked.
@@ -336,16 +339,11 @@ e9bb80fc-c6c5-6332-915c-28162cbb828a, fc306d96-a965-5232-a75e-8c10c469612d
 Broadcast 147e7bd1-026f-2634-bf76-0e426075ed6a remains visible and unprocessed.
 The event maps to Men's Trap Solo at the European Championship Shotgun in Malakasa.
 The broadcast title and the 16:15 Eurosport 2 listing support this mapping. Its
-category still incorrectly says Motorsport. ISSF's complete entry list includes
-Swedish athletes Rickard Levin Andersson and Andreas Nörlen in Trap Men, but I found
-no complete official entry or start list for the Men's Trap Solo segment on October 11.
-Swedish participation in that segment therefore remains uncertain, so it stays visible
-and unprocessed. No activity was created.
-
-The database has no shooting sport ID or European Shooting Confederation entity.
-Organization entities require a sport ID, so no valid marker can be assigned until
-shooting is represented in the sport taxonomy. The broadcast remains without an
-organization marker; Motorsport was not reused.
+imported category still says Motorsport. ISSF's complete entry list includes Swedish
+athletes Rickard Levin Andersson and Andreas Nörlen in Trap Men, but I found no complete
+official entry or start list for the Men's Trap Solo segment on October 11. Swedish
+participation in that segment remains uncertain, so no activity was created. Its ESC
+organization marker is now set.
 
 Evidence: [ISSF schedule](https://www.issf-sports.org/competitions/3461/schedule),
 [ISSF entry list](https://www.issf-sports.org/competitions/3461/information),
