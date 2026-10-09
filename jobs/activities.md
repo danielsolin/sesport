@@ -46,6 +46,7 @@ Using only title, description, categories, channel, and linked context, hide:
 
 - Domestic competitions, foreign-team fixtures (even with Swedish players), generic highlights,
   recaps, and studio programmes.
+- Participant-specific broadcasts for a competition already covered by general broadcasts.
 - Unidentified events, such as bare `EM` or `Dag 2`/`Golf` without competition context.
   Require identifying metadata beyond placeholder descriptions. Keep short titles when other
   fields identify the event.
