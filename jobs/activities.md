@@ -12,6 +12,7 @@ No broadcast should be left unattended.
 
 - Prioritize accuracy over time/cost. Use concise, correct Swedish for public content;
   preserve clear short forms.
+- Use `https://sesport.se` as the only site for public activity checks. Do not check other sites.
 - Read database settings from `.env`; inspect the target, schema, and comparable records.
 - Use guarded manual `psql` transactions: exact IDs, expected row counts, rollback on mismatch,
   and readback verification. Preserve unrelated data.
@@ -135,6 +136,11 @@ corrections to the verification set; read related records as context.
 - Base inclusion/exclusion on complete official lists, confirmed rosters, or equivalent authority.
   Official squad inclusion takes precedence over rumors of non-participation.
 - Delete incorrect `activity_entity_links`; retain eliminated competitors with `is_active = false`.
+- Set `is_active = false` only after complete official results confirm a person is eliminated from
+  the named event. A person remains active while competing in any part of that event.
+- When complete official results confirm every Swedish participant has been eliminated from an
+  activity or tournament, set affected activities to unpublished (`Draft`; `Published = false`).
+  Apply this to today's and future activities as well.
 - Golf: compare equivalent coverage, combining parallel Day 1 broadcasts. Investigate later-only
   participants; add valid omissions from Day 1 through all applicable rounds. Later lists may
   shrink after cuts but never grow.
@@ -183,7 +189,7 @@ corrections to the verification set; read related records as context.
 Retrieve the recorded activities' hosted pages, including old dates after moves. Inspect their
 rendered cards/group context, correct supported discrepancies, and retrieve affected pages again.
 
-- Every activity should have at least one Swedish participant (person-entity). 
+- Every activity should have at least one Swedish participant (person-entity).
 - Check publication, clear Swedish titles, event context, grouping, and participants; check changed
   schedule rows' segment titles, channels, stream links, and time ranges.
 - Verify displayed people, including inactive ones, have ages, clubs, and names linking to
@@ -192,8 +198,8 @@ rendered cards/group context, correct supported discrepancies, and retrieve affe
   linked Team countries; several teams sharing one known country can supply it.
 - Verify supported country IDs and successful loads of matching SVGs. Make focused code/asset fixes,
   validate under `AGENTS.md`, and recheck rendering.
-- Verify `https://dev.sesport.se` and `https://sesport.se` separately; report differences,
-  deployment gaps, and incomplete checks. Confirm hosted fixes on the relevant site.
+- Verify only `https://sesport.se`. Confirm hosted fixes there; do not check dev, localhost,
+  or other sites.
 - Recount cards per date and explain differences from Step 4. Continue with the next event.
 
 ## 7. Save the Final Report
@@ -207,7 +213,7 @@ Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 - Start timestamp; created/changed activity IDs, public dates, and linked broadcast IDs.
 - Hidden broadcast IDs/reasons, applied corrections, and evidence.
 - Unresolved items, failed checks, and visible broadcast IDs/organizations.
-- Card counts before/after per date, explanations, and local/hosted discrepancies.
+- Card counts before/after per date on `https://sesport.se`, with explanations.
 
 Report when activity verification was unnecessary because nothing changed.
 Keep the report to changes, unresolved items, and counts; return its link with a brief summary
