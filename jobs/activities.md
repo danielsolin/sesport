@@ -1,7 +1,8 @@
 # Activities
 
-Create or update activities from currently visible broadcasts. This is an unattanded job - do not
-stop until all steps are completed and the final report is produced.
+Create or update activities from currently visible broadcasts. This is an unattended job.
+The operator authorizes all database and report-file changes needed to complete these steps.
+Do not stop for approval; continue until the final report is produced.
 
 Run Steps 1–3, repeat Steps 4–6 per event, then finish Step 7 with one final report.
 
@@ -9,7 +10,6 @@ No broadcast should be left unattended.
 
 ## Rules
 
-- Execute this authorized job without approval stops.
 - Prioritize accuracy over time/cost. Use concise, correct Swedish for public content;
   preserve clear short forms.
 - Read database settings from `.env`; inspect the target, schema, and comparable records.
