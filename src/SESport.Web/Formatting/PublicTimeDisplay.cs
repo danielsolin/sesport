@@ -14,7 +14,9 @@ public static class PublicTimeDisplay
       TimeOnly? localTime = null
    )
    {
-      return localTime?.ToString(
+      var time = localTime ?? ParseTime(timeText);
+
+      return time?.ToString(
          DateDisplay.TimeOnlyMinutesFormat,
          CultureInfo.InvariantCulture
       ) ?? TimeTextFormatter.FormatTimeOnlyText(timeText);
