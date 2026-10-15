@@ -354,6 +354,8 @@ public sealed class PublicActivityTimelineBuilder
    {
       return first.ActivityGroupId == candidate.ActivityGroupId &&
          first.NoGrouping == candidate.NoGrouping &&
+         first.StartsAt == candidate.StartsAt &&
+         first.EndsAt == candidate.EndsAt &&
          string.Equals(
             ActivityTitleNormalizer.NormalizeForGrouping(first.Title),
             ActivityTitleNormalizer.NormalizeForGrouping(candidate.Title),
