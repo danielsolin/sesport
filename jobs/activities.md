@@ -179,6 +179,12 @@ corrections to the verification set; read related records as context.
   parent's sport/group, correct Persons, and specific titles such as `Stavhopp - Final`.
   Include the event name only for standalone clarity. Include confirmed or uncertain broadcast
   coverage; exclude details entirely outside it.
+- Within the same group, merge activities when one time window is fully contained in another
+  and both use the same stream link.
+- Keep the more specific activity, its sourced time window, and its correct Person links; remove
+  the generic duplicate.
+- Keep another activity only when a source confirms a separately scheduled broadcast with
+  coverage not represented by the retained activity.
 - Set `local_end_time` and `ends_at`: use a sourced end, otherwise estimate a generous
   discipline-appropriate duration capped at the parent activity's end.
 - For sports with individual start times, such as Golf, add details only for coverage following
