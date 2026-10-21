@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="sesport-curling" viewBox="0 0 24 24">
+  <path d="M7 12h10l-1.4 5.3a3 3 0 0 1-2.9 2.2h-1.4a3 3 0 0 1-2.9-2.2L7 12Z" />
+  <path d="M9 12V8a3 3 0 0 1 6 0v4M8 14h8" fill="none" stroke="currentColor"
+    stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+  <path d="M3 21h18" fill="none" stroke="currentColor" stroke-linecap="round"
+    stroke-width="1.8" />
+</svg>
