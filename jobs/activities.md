@@ -150,6 +150,9 @@ corrections to the verification set; read related records as context.
 ### D. Person Facts and Profiles
 
 - Store verified birthdates for displayed and new people, including inactive participants.
+  If the exact date is unavailable but the birth year is stated or can be reliably inferred,
+  store January 1 of that year. Record in PersonFacts evidence that month and day are
+  placeholders.
   Link their formative club when verified; otherwise use their earliest documented development club.
 - Record current affiliation in Team links, and make sure the related team has a relevalt team url
   in `entities.url`.
