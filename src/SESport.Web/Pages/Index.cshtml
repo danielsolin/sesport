@@ -551,7 +551,7 @@ else
          var agendaSection = timelineEntry.Section;
          var activity = agendaSection.Activities[0];
          var activityAnchorId = "activity-" + activity.Id.ToString("N");
-         var isGrouped = agendaSection.ActivityGroupTitle is not null;
+         var isGrouped = agendaSection.UsesGroupedLayout;
          var allActivitySources = agendaSection.Activities
             .SelectMany(item => item.Sources)
             .Where(source => SourceDisplay.IsPubliclyVisibleSourceUrl(

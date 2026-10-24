@@ -678,6 +678,7 @@ public sealed record ActivityAgendaSection(
    bool IsOngoing,
    bool HasEnded,
    string? ActivityGroupTitle,
+   bool UsesGroupedLayout,
    string DisplayTitle,
    IReadOnlyList<ActivityAgendaSlot> Slots,
    ActivityAgendaSlot TimelineSlot

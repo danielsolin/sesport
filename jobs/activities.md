@@ -94,10 +94,13 @@ Then:
 2. Create one activity per distinct timed segment, identified by title, description, channel,
    and exact start/end times. Combine channels covering that segment in `tv_channel_name`,
    comma-separated. Use the segment's own broadcast range; keep different segments separate.
-3. Attach all competition activities to one group spanning its dates. Use the shortest clear
-   event name for the group and segment titles such as `Sträcka 2–4` for activities.
-   Include event names for standalone clarity. Retain identifying sponsors (`BMW Championship`);
-   remove nonessential ones (`Wanda` in `Wanda Diamond League`).
+3. Create or reuse one titled group for every event, including events with one activity. Attach
+   every event activity to its group, which spans all event dates. Use the shortest clear event
+   name for the group and concise, segment-specific activity titles such as `Sträcka 2–4`.
+   A card combining multiple activities in a schedule displays only the group title. Separate
+   cards display `Group title: activity title`. Do not repeat the group title in activity titles;
+   the public page adds it to separate card headings. Retain identifying sponsors
+   (`BMW Championship`); remove nonessential ones (`Wanda` in `Wanda Diamond League`).
    Keep titles as short as possible, but longer than one single abbreviation. Omit details already
    clear from the organization, group, date, or participant list while retaining enough context to
    identify the event or segment.
@@ -179,9 +182,9 @@ corrections to the verification set; read related records as context.
 ### F. Detail Activities
 
 - For sourced Swedish participation times within broader events, reuse/create details with the
-  parent's sport/group, correct Persons, and specific titles such as `Stavhopp - Final`.
-  Include the event name only for standalone clarity. Include confirmed or uncertain broadcast
-  coverage; exclude details entirely outside it.
+  parent's sport/group, correct Persons, and specific titles such as `Stavhopp - Final`. Omit the
+  group title from activity titles; the card heading adds it. Include confirmed or uncertain
+  broadcast coverage; exclude details entirely outside it.
 - Within the same group, merge activities when one time window is fully contained in another
   and both use the same stream link.
 - Keep the more specific activity, its sourced time window, and its correct Person links; remove
@@ -199,8 +202,10 @@ Retrieve the recorded activities' hosted pages, including old dates after moves.
 rendered cards/group context, correct supported discrepancies, and retrieve affected pages again.
 
 - Every activity should have at least one Swedish participant (person-entity).
-- Check publication, clear Swedish titles, event context, grouping, and participants; check changed
-  schedule rows' segment titles, channels, stream links, and time ranges.
+- Check publication, clear Swedish titles, event context, grouping, and participants. Verify every
+  activity has a titled group, grouped schedule cards use only the group title, and separate card
+  headings use `Group title: activity title`. Check schedule rows' segment titles, channels, stream
+  links, and time ranges.
 - Verify displayed people, including inactive ones, have ages, clubs, and names linking to
   working `entities.url` profiles.
 - Verify team-sport flags under existing foreign/national-team rules. Base query corrections on

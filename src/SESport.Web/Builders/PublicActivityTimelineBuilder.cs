@@ -106,8 +106,9 @@ public sealed class PublicActivityTimelineBuilder
          .ThenBy(section => section.TimelineSlot.Activity.StartsAt)
          .ThenBy(section => section.TimeLabel, StringComparer.Ordinal)
          .ThenBy(
-            section => section.ActivityGroupTitle ??
-               section.Activities[0].Title,
+            section => section.UsesGroupedLayout
+               ? section.ActivityGroupTitle ?? section.Activities[0].Title
+               : section.Activities[0].Title,
             StringComparer.OrdinalIgnoreCase
          )
          .ToList();
@@ -296,13 +297,13 @@ public sealed class PublicActivityTimelineBuilder
          PublicTimeDisplay.FormatApproximateTime(
             latestActivity?.LocalEndTime
          );
-      var activityGroupTitle = showGroupedLayout &&
-         orderedActivities.Count > 1
-            ? activity.ActivityGroupTitle
-            : null;
-      var displayTitle = string.IsNullOrWhiteSpace(activityGroupTitle)
-         ? activity.Title
-         : activityGroupTitle!;
+      var activityGroupTitle = activity.ActivityGroupTitle;
+      var usesGroupedLayout = showGroupedLayout &&
+         orderedActivities.Count > 1;
+      var displayTitle = usesGroupedLayout &&
+         !string.IsNullOrWhiteSpace(activityGroupTitle)
+            ? activityGroupTitle.Trim()
+            : FormatActivityCardTitle(activityGroupTitle, activity.Title);
 
       return new ActivityAgendaSection(
          timelineTimeLabel,
@@ -314,10 +315,73 @@ public sealed class PublicActivityTimelineBuilder
          slots.Any(slot => slot.IsOngoing),
          slots.All(slot => slot.HasEnded),
          activityGroupTitle,
+         usesGroupedLayout,
          displayTitle,
          slots,
          timelineSlot
       );
+   }
+
+   private static string FormatActivityCardTitle(
+      string? activityGroupTitle,
+      string activityTitle
+   )
+   {
+      var groupTitle = activityGroupTitle?.Trim();
+      if(string.IsNullOrWhiteSpace(groupTitle))
+      {
+         return activityTitle;
+      }
+
+      var activityDetailTitle = RemoveRepeatedGroupTitle(
+         groupTitle,
+         activityTitle
+      );
+      if(string.IsNullOrWhiteSpace(activityDetailTitle))
+      {
+         return groupTitle;
+      }
+
+      return $"{groupTitle}: {activityDetailTitle}";
+   }
+
+   private static string RemoveRepeatedGroupTitle(
+      string groupTitle,
+      string activityTitle
+   )
+   {
+      var trimmedActivityTitle = activityTitle.Trim();
+      if(string.Equals(
+         trimmedActivityTitle,
+         groupTitle,
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return string.Empty;
+      }
+
+      if(!trimmedActivityTitle.StartsWith(
+         groupTitle,
+         StringComparison.OrdinalIgnoreCase
+      ))
+      {
+         return trimmedActivityTitle;
+      }
+
+      var remainingTitle = trimmedActivityTitle[groupTitle.Length..].TrimStart();
+      if(
+         remainingTitle.Length == 0 ||
+         remainingTitle[0] != ':' &&
+         remainingTitle[0] != '-' &&
+         remainingTitle[0] != '–' &&
+         remainingTitle[0] != '—' &&
+         remainingTitle[0] != '|'
+      )
+      {
+         return trimmedActivityTitle;
+      }
+
+      return remainingTitle.Trim(' ', '\t', ':', '-', '–', '—', '|');
    }
 
    private static bool IsInvisibleChannelVariantGroup(

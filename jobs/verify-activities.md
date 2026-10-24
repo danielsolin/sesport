@@ -34,6 +34,9 @@ Process the identified activities one at a time using steps 2–6 below.
 
 - Record the number of activity cards. A card containing multiple grouped
   activities still counts as one.
+- Verify every activity belongs to a titled group. Schedule cards combining
+  multiple activities display only the group title; separate cards display
+  `Group title: activity title`. Schedule rows retain their activity titles.
 
 ### 2. Verify Times
 
