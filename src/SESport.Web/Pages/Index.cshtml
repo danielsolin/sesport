@@ -1422,9 +1422,11 @@ else
             <em>Inga internationellt sportande svenskar på valt datum.</em>
          </p>
       }
-      @if(Model.HasPublishedActivitiesTomorrow &&
-         !Model.IsWatchedActivitiesView)
+      @if(!Model.IsWatchedActivitiesView)
       {
+         var tomorrowLinkAction = Model.HasPublishedActivitiesTomorrow
+            ? "Visa aktiviteter"
+            : "Visa datum";
          var tomorrowPath = Model.IsPublicSportPage
             ? Model.SportRoute!.Path
             : PublicRoutePaths.Home;
@@ -1450,7 +1452,7 @@ else
             <span class="activity-tomorrow-link-line"></span>
             <a class="activity-tomorrow-link"
                href="@tomorrowUrl"
-               aria-label="Visa aktiviteter @Model.NextDateLinkLabel">
+               aria-label="@tomorrowLinkAction @Model.NextDateLinkLabel">
                @Model.NextDateLinkLabel
                <svg class="activity-tomorrow-link-arrow"
                     viewBox="0 0 16 16"
