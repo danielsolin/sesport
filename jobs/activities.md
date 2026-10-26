@@ -212,7 +212,7 @@ already completed in this run instead of repeating research.
 Retrieve the recorded activities' hosted pages, including old dates after moves. Inspect their
 rendered cards/group context, correct supported data discrepancies, and retrieve affected pages
 again.
-Record code or asset defects as unresolved and continue with the remaining checks.
+Record code or asset defects as unresolved report items and continue with the remaining checks.
 
 - Every activity should have at least one Swedish participant (person-entity).
 - Check publication, clear Swedish titles, event context, grouping, and participants. Verify every
@@ -235,7 +235,8 @@ Record code or asset defects as unresolved and continue with the remaining check
   authentication details). Correct data problems under the same evidence rules. Before changing a
   newly affected date, capture its card count under Step 4. Add affected activity IDs to the
   verification set and complete Steps 5–6 for those changes.
-- Record dashboard issues requiring code/asset changes or unavailable evidence as unresolved.
+- Record dashboard issues requiring code/asset changes or unavailable evidence as unresolved
+  report items.
 
 Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 
