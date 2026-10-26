@@ -1,23 +1,33 @@
 # Activities
 
 Create or update activities from currently visible broadcasts. This is an unattended job.
-The operator authorizes all database and report-file changes needed to complete these steps.
+The operator authorizes application-data changes and writing the run's report.
+Code, assets, database schema, configuration, and deployment are outside this job's scope.
 Do not stop for approval; continue until the final report is produced.
 
 Run Steps 1–3, repeat Steps 4–6 per event, then finish Step 7 with one final report.
 
-No broadcast should be left unattended.
+Assign every broadcast in the starting snapshot exactly one final outcome:
+
+- Rejected: hidden, with a recorded reason.
+- Processed: linked to an activity, marked processed, and hidden.
+- Unresolved: visible and unprocessed, with a recorded reason and organization when identifiable.
+
+Unresolved counts as handled. Revisit it within this run only when new evidence becomes available.
 
 ## Rules
 
 - Prioritize accuracy over time/cost. Use concise, correct Swedish for public content;
   preserve clear short forms.
-- Use `https://sesport.se` as the only site for public activity checks. Do not check other sites.
+- Use external sources for research. Verify public presentation only on `https://sesport.se`.
 - Read database settings from `.env`; inspect the target, schema, and comparable records.
 - Use guarded manual `psql` transactions: exact IDs, expected row counts, rollback on mismatch,
   and readback verification. Preserve unrelated data.
 - Apply supported changes; retain and report unresolved/conflicting facts, then continue.
 - Track created/changed activity IDs, including group/link changes. Steps 5–6 verify only this set.
+- Verify shared facts once per run and reuse them where applicable: person facts, event participant
+  lists, and sources. Recheck when new evidence conflicts or the event, round, or date differs.
+  Verify each segment's own times and links separately.
 - Save every evidence source with its type:
 
   | Evidence | Type |
@@ -75,7 +85,7 @@ Work only on selected broadcasts that remain visible.
    | --- | --- |
    | Confirmed in scope | Record event, participants, evidence, and exact broadcast IDs. |
    | Confirmed outside scope | Hide broadcasts under Step 2. |
-   | Uncertain participation/mapping | Keep visible and unprocessed; set event organization. |
+   | Uncertain participation/mapping | Keep visible and unprocessed; set organization if known. |
 
 6. Verify classifications, hidden IDs, and organization markers.
 
@@ -114,7 +124,8 @@ Then:
 ## 5. Verify Created or Changed Activities
 
 When activities changed, complete A–F for each before moving to the next. Add IDs changed by
-corrections to the verification set; read related records as context.
+corrections to the verification set; read related records as context. Reuse applicable checks
+already completed in this run instead of repeating research.
 
 ### A. Times
 
@@ -199,7 +210,9 @@ corrections to the verification set; read related records as context.
 ## 6. Verify Public Presentation
 
 Retrieve the recorded activities' hosted pages, including old dates after moves. Inspect their
-rendered cards/group context, correct supported discrepancies, and retrieve affected pages again.
+rendered cards/group context, correct supported data discrepancies, and retrieve affected pages
+again.
+Record code or asset defects as unresolved and continue with the remaining checks.
 
 - Every activity should have at least one Swedish participant (person-entity).
 - Check publication, clear Swedish titles, event context, grouping, and participants. Verify every
@@ -208,19 +221,21 @@ rendered cards/group context, correct supported discrepancies, and retrieve affe
   links, and time ranges.
 - Verify displayed people, including inactive ones, have ages, clubs, and names linking to
   working `entities.url` profiles.
-- Verify team-sport flags under existing foreign/national-team rules. Base query corrections on
-  linked Team countries; several teams sharing one known country can supply it.
-- Verify supported country IDs and successful loads of matching SVGs. Make focused code/asset fixes,
-  validate under `AGENTS.md`, and recheck rendering.
-- Verify only `https://sesport.se`. Confirm hosted fixes there; do not check dev, localhost,
-  or other sites.
+- Verify team-sport flags under existing foreign/national-team rules. Base data corrections on
+  sourced Team countries; several teams sharing one known country can supply the display country.
+- Verify supported country IDs and successful loads of matching SVGs.
+- Verify public presentation and data corrections only on `https://sesport.se`.
 - Recount cards per date and explain differences from Step 4. Continue with the next event.
 
 ## 7. Save the Final Report
 
-- Was any broadcast left unattended? If so, return to Step 2.
+- Verify every starting-snapshot ID has exactly one final outcome. Process any missing IDs through
+  Steps 2–6; leave documented unresolved outcomes for a later run unless new evidence is available.
 - Check "Activities needing attention" at https://sesport.se/Admin/Dashboard (see .env for
-  authentication details) and resolve any problems listed.
+  authentication details). Correct data problems under the same evidence rules. Before changing a
+  newly affected date, capture its card count under Step 4. Add affected activity IDs to the
+  verification set and complete Steps 5–6 for those changes.
+- Record dashboard issues requiring code/asset changes or unavailable evidence as unresolved.
 
 Write `jobs/reports/activities-YYYY-MM-DD.md` using the run date. Include:
 
