@@ -1658,6 +1658,10 @@
    line-height: 1.16;
 }
 
+.activity-entry-title-group::after {
+   content: ": ";
+}
+
 .activity-entry-description {
    display: none;
    margin-top: 4px;
@@ -2573,6 +2577,15 @@
 @media (orientation: portrait) {
    .activity-participant-col-age {
       display: none;
+   }
+
+   .activity-entry-title-group,
+   .activity-entry-title-detail {
+      display: block;
+   }
+
+   .activity-entry-title-group::after {
+      content: none;
    }
 }
 

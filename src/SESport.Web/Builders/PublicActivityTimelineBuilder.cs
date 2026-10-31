@@ -300,6 +300,21 @@ public sealed class PublicActivityTimelineBuilder
       var activityGroupTitle = activity.ActivityGroupTitle;
       var usesGroupedLayout = showGroupedLayout &&
          orderedActivities.Count > 1;
+      var displayTitleGroup = !usesGroupedLayout &&
+         !string.IsNullOrWhiteSpace(activityGroupTitle)
+            ? activityGroupTitle.Trim()
+            : null;
+      var displayTitleDetail = displayTitleGroup is null
+         ? null
+         : RemoveRepeatedGroupTitle(
+            displayTitleGroup,
+            activity.Title
+         );
+      if(string.IsNullOrWhiteSpace(displayTitleDetail))
+      {
+         displayTitleGroup = null;
+         displayTitleDetail = null;
+      }
       var displayTitle = usesGroupedLayout &&
          !string.IsNullOrWhiteSpace(activityGroupTitle)
             ? activityGroupTitle.Trim()
@@ -317,6 +332,8 @@ public sealed class PublicActivityTimelineBuilder
          activityGroupTitle,
          usesGroupedLayout,
          displayTitle,
+         displayTitleGroup,
+         displayTitleDetail,
          slots,
          timelineSlot
       );

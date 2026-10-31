@@ -797,8 +797,24 @@ else
                         </span>
                      </h3>
                      <h2 class="activity-entry-title"
+                         aria-label="@agendaSection.DisplayTitle"
                          data-activity-title-fit>
-                        @agendaSection.DisplayTitle
+                        @if(
+                           agendaSection.DisplayTitleGroup is not null &&
+                           agendaSection.DisplayTitleDetail is not null
+                        )
+                        {
+                           <span class="activity-entry-title-group">
+                              @agendaSection.DisplayTitleGroup
+                           </span>
+                           <span class="activity-entry-title-detail">
+                              @agendaSection.DisplayTitleDetail
+                           </span>
+                        }
+                        else
+                        {
+                           @agendaSection.DisplayTitle
+                        }
                      </h2>
                      @if(!string.IsNullOrWhiteSpace(
                         activity.Description

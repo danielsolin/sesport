@@ -680,6 +680,8 @@ public sealed record ActivityAgendaSection(
    string? ActivityGroupTitle,
    bool UsesGroupedLayout,
    string DisplayTitle,
+   string? DisplayTitleGroup,
+   string? DisplayTitleDetail,
    IReadOnlyList<ActivityAgendaSlot> Slots,
    ActivityAgendaSlot TimelineSlot
 );
