@@ -804,12 +804,12 @@ else
                            agendaSection.DisplayTitleDetail is not null
                         )
                         {
-                           <span class="activity-entry-title-group">
-                              @agendaSection.DisplayTitleGroup
-                           </span>
-                           <span class="activity-entry-title-detail">
-                              @agendaSection.DisplayTitleDetail
-                           </span>
+                           <span class="activity-entry-title-group"
+                              >@agendaSection.DisplayTitleGroup</span><span
+                              class="activity-entry-title-separator"
+                              >: </span><span
+                              class="activity-entry-title-detail"
+                              >@agendaSection.DisplayTitleDetail</span>
                         }
                         else
                         {

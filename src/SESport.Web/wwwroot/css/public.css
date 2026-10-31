@@ -1658,10 +1658,6 @@
    line-height: 1.16;
 }
 
-.activity-entry-title-group::after {
-   content: ": ";
-}
-
 .activity-entry-description {
    display: none;
    margin-top: 4px;
@@ -2584,8 +2580,8 @@
       display: block;
    }
 
-   .activity-entry-title-group::after {
-      content: none;
+   .activity-entry-title-separator {
+      display: none;
    }
 }
 
