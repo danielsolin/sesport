@@ -123,16 +123,19 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
    )
    {
       var sql = $$"""
-         with eligible as (
+         with watched_activities as (
             select
                member.id as member_id,
+               watch.entity_id as watched_person_id,
+               person.canonical_name as person_name,
                activity.id as activity_id,
+               activity.activity_group_id,
+               activity.activity_date,
+               activity.activity_type_id,
+               activity.sport_id,
                activity.title,
-               string_agg(
-                  distinct person.canonical_name,
-                  ', ' order by person.canonical_name
-               ) as person_names,
                activity.starts_at,
+               activity.ends_at,
                coalesce(
                   activity_group.public_date_mode,
                   '{{ActivityGroupPublicDateModeIds.SportDay}}'
@@ -154,21 +157,12 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                on activity.id = link.activity_id
             left join activity_groups activity_group
                on activity_group.id = activity.activity_group_id
-            left join member_activity_push_notifications notification
-               on notification.member_id = member.id
-               and notification.activity_id = activity.id
             where activity.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
                and activity.starts_at is not null
-               and activity.starts_at > @now
                and person.entity_type_id =
                   '{{TrackedEntityTypeIds.Person}}'
                and member.push_notification_lead_time_minutes > 0
-               and notification.sent_at is null
-               and (
-                  notification.claimed_at is null
-                  or notification.claimed_at < @claim_before
-               )
                and exists (
                   select 1
                   from member_push_subscriptions subscription
@@ -178,30 +172,148 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                         or subscription.expiration_at > @now
                      )
                )
+         ), eligible_activities as (
+            select watched.*
+            from watched_activities watched
+            where watched.starts_at > @now
+               and not (
+                  watched.activity_type_id = 'Event'
+                  and watched.activity_group_id is not null
+                  and exists (
+                     select 1
+                     from watched_activities detailed
+                     where detailed.member_id = watched.member_id
+                        and detailed.watched_person_id =
+                           watched.watched_person_id
+                        and detailed.activity_group_id =
+                           watched.activity_group_id
+                        and detailed.activity_date = watched.activity_date
+                        and detailed.activity_type_id <> 'Event'
+                        and detailed.starts_at >= watched.starts_at
+                        and (
+                           watched.ends_at is null
+                           or (
+                              detailed.ends_at is not null
+                              and detailed.ends_at <= watched.ends_at
+                           )
+                        )
+                  )
+               )
+         ), logical_notifications as (
+            select
+               eligible.member_id,
+               coalesce(
+                  eligible.activity_group_id,
+                  eligible.activity_id
+               ) as notification_group_id,
+               eligible.activity_date,
+               eligible.activity_type_id,
+               eligible.sport_id,
+               eligible.title,
+               eligible.starts_at,
+               eligible.public_date_mode,
+               eligible.lead_time_minutes,
+               (
+                  array_agg(
+                     distinct eligible.activity_id
+                     order by eligible.activity_id
+                  )
+               )[1] as activity_id,
+               array_agg(
+                  distinct eligible.activity_id
+                  order by eligible.activity_id
+               ) as activity_ids,
+               string_agg(
+                  distinct eligible.person_name,
+                  ', ' order by eligible.person_name
+               ) as person_names,
+               string_agg(
+                  distinct nullif(btrim(channel.channel_name), ''),
+                  ', ' order by nullif(btrim(channel.channel_name), '')
+               ) as tv_channel_name
+            from eligible_activities eligible
+            left join lateral unnest(
+               string_to_array(eligible.tv_channel_name, ',')
+            ) channel(channel_name) on true
             group by
-               member.id,
-               activity.id,
-               activity.title,
-               activity.tv_channel_name,
-               activity.starts_at,
-               activity_group.public_date_mode,
-               member.push_notification_lead_time_minutes
+               eligible.member_id,
+               coalesce(
+                  eligible.activity_group_id,
+                  eligible.activity_id
+               ),
+               eligible.activity_date,
+               eligible.activity_type_id,
+               eligible.sport_id,
+               eligible.title,
+               eligible.starts_at,
+               eligible.public_date_mode,
+               eligible.lead_time_minutes
+         ), notifications_with_history as (
+            select
+               logical.*,
+               array(
+                  select distinct broad.activity_id
+                  from watched_activities broad
+                  where broad.member_id = logical.member_id
+                     and broad.activity_group_id =
+                        logical.notification_group_id
+                     and broad.activity_date = logical.activity_date
+                     and broad.activity_type_id = 'Event'
+                     and exists (
+                        select 1
+                        from watched_activities detailed
+                        where detailed.member_id = broad.member_id
+                           and detailed.watched_person_id =
+                              broad.watched_person_id
+                           and detailed.activity_group_id =
+                              broad.activity_group_id
+                           and detailed.activity_date = broad.activity_date
+                           and detailed.activity_type_id <> 'Event'
+                           and detailed.activity_id = any(
+                              logical.activity_ids
+                           )
+                           and detailed.starts_at >= broad.starts_at
+                           and (
+                              broad.ends_at is null
+                              or (
+                                 detailed.ends_at is not null
+                                 and detailed.ends_at <= broad.ends_at
+                              )
+                           )
+                     )
+               ) as broad_activity_ids
+            from logical_notifications logical
          ), candidates as (
             select
-               eligible.*,
-               eligible.starts_at - (
-                  eligible.lead_time_minutes::double precision *
-                  interval '1 minute'
+               notifications_with_history.*,
+               notifications_with_history.starts_at - (
+                  notifications_with_history.lead_time_minutes::double
+                  precision * interval '1 minute'
                ) as scheduled_at
-            from eligible
-            where eligible.starts_at - (
-                  eligible.lead_time_minutes::double precision *
-                  interval '1 minute'
+            from notifications_with_history
+            where notifications_with_history.starts_at - (
+                  notifications_with_history.lead_time_minutes::double
+                  precision * interval '1 minute'
                ) <= @now
+               and not exists (
+                  select 1
+                  from member_activity_push_notifications notification
+                  where notification.member_id =
+                     notifications_with_history.member_id
+                     and notification.activity_id = any(
+                        notifications_with_history.activity_ids ||
+                        notifications_with_history.broad_activity_ids
+                     )
+                     and (
+                        notification.sent_at is not null
+                        or notification.claimed_at is null
+                        or notification.claimed_at >= @claim_before
+                     )
+               )
             order by
                scheduled_at,
-               eligible.member_id,
-               eligible.activity_id
+               notifications_with_history.member_id,
+               notifications_with_history.activity_id
             limit @batch_size
          ), claimed as (
             insert into member_activity_push_notifications (
