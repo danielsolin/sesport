@@ -7,6 +7,11 @@ Do not stop for approval; continue until the final report is produced.
 
 Run Steps 1–3, repeat Steps 4–6 per event, then finish Step 7 with one final report.
 
+Persist run state to `jobs/reports/.run-YYYY-MM-DD.md` at the end of Step 3 and
+after each event in Steps 4–6: snapshot, outcome per broadcast ID, verified
+shared facts, and created/changed activity IDs. Resume a rerun from the latest
+checkpoint. Delete the file when Step 7 is complete.
+
 Assign every broadcast in the starting snapshot exactly one final outcome:
 
 - Rejected: hidden, with a recorded reason.
@@ -153,7 +158,7 @@ already completed in this run instead of repeating research.
 - Set `is_active = false` only after complete official results confirm a person is eliminated from
   the named event. A person remains active while competing in any part of that event.
 - When complete official results confirm every Swedish participant has been eliminated from an
-  activity or tournament, set affected activities to unpublished (`Draft`; `Published = false`).
+  activity or tournament, set affected activities to unpublished (`Draft`, `Published = false`).
   Apply this to today's and future activities as well.
 - Golf: compare equivalent coverage, combining parallel Day 1 broadcasts. Investigate later-only
   participants; add valid omissions from Day 1 through all applicable rounds. Later lists may
@@ -168,7 +173,7 @@ already completed in this run instead of repeating research.
   store January 1 of that year. Record in PersonFacts evidence that month and day are
   placeholders.
   Link their formative club when verified; otherwise use their earliest documented development club.
-- Record current affiliation in Team links, and make sure the related team has a relevalt team url
+- Record current affiliation in Team links, and make sure the related team has a relevant team url
   in `entities.url`.
 - Use authoritative athlete, federation, or club sources. Reuse matching Clubs; create/link missing
   ones. New Persons also need correct gender and organization-entity links matching the event's
