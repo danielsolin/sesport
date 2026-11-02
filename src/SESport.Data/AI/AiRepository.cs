@@ -226,4 +226,15 @@ public sealed class AiRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    ) =>
       jobRuns.FailStaleRunningRunsAsync(maxAge, cancellationToken);
+
+   public Task<int> FailStaleRunningRunsForJobAsync(
+      string jobId,
+      TimeSpan maxAge,
+      CancellationToken cancellationToken
+   ) =>
+      jobRuns.FailStaleRunningRunsForJobAsync(
+         jobId,
+         maxAge,
+         cancellationToken
+      );
 }

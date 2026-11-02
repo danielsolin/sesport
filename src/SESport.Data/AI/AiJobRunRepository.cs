@@ -971,12 +971,42 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
       await command.ExecuteNonQueryAsync(cancellationToken);
    }
 
-   public async Task<int> FailStaleRunningRunsAsync(
+   public Task<int> FailStaleRunningRunsAsync(
       TimeSpan maxAge,
       CancellationToken cancellationToken
    )
    {
-      const string sql = """
+      return FailStaleRunningRunsAsyncCore(
+         null,
+         maxAge,
+         cancellationToken
+      );
+   }
+
+   public Task<int> FailStaleRunningRunsForJobAsync(
+      string jobId,
+      TimeSpan maxAge,
+      CancellationToken cancellationToken
+   )
+   {
+      ArgumentException.ThrowIfNullOrWhiteSpace(jobId);
+      return FailStaleRunningRunsAsyncCore(
+         jobId,
+         maxAge,
+         cancellationToken
+      );
+   }
+
+   private async Task<int> FailStaleRunningRunsAsyncCore(
+      string? jobId,
+      TimeSpan maxAge,
+      CancellationToken cancellationToken
+   )
+   {
+      var jobFilter = jobId is null
+         ? string.Empty
+         : "and job_id = @job_id";
+      var sql = $"""
          update ai_job_runs
          set
             status_id = 'failed',
@@ -987,6 +1017,7 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
             )
          where status_id = 'running'
             and started_at < @cutoff
+            {jobFilter}
          returning id
          """;
 
@@ -994,6 +1025,11 @@ public sealed class AiJobRunRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("cutoff", cutoff);
+      if(jobId is not null)
+      {
+         command.Parameters.AddWithValue("job_id", jobId);
+      }
+
       command.Parameters.AddWithValue(
          "error_message",
          "Run timed out after 1 hour."

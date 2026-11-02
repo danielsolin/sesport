@@ -912,7 +912,7 @@ public sealed class AiRepositoryTests
    }
 
    [Fact]
-   public async Task FailStaleRunningRunsAsyncMarksOldRunsAsFailed()
+   public async Task FailStaleRunningRunsForJobAsyncMarksOldRunsAsFailed()
    {
       var providerId = $"test-provider-{Guid.NewGuid():N}";
       var jobId = $"test-job-{Guid.NewGuid():N}";
@@ -935,12 +935,13 @@ public sealed class AiRepositoryTests
 
       try
       {
-         var updatedCount = await repository.FailStaleRunningRunsAsync(
+         var updatedCount = await repository.FailStaleRunningRunsForJobAsync(
+            jobId,
             TimeSpan.FromHours(1),
             CancellationToken.None
          );
 
-         Assert.True(updatedCount >= 1);
+         Assert.Equal(1, updatedCount);
 
          await using var connection = await dataSource.OpenConnectionAsync();
          await using var command = connection.CreateCommand();
