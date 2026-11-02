@@ -8,7 +8,6 @@ public sealed class MemberAuthService(
 {
    public async Task RequestLoginLinkAsync(
       string email,
-      HttpRequest request,
       CancellationToken cancellationToken
    )
    {
@@ -17,8 +16,7 @@ public sealed class MemberAuthService(
             "The email address is not valid.",
             nameof(email)
          );
-      ValidateOptions();
-      ValidateRequestOrigin(request);
+      var publicBaseUri = ValidateOptions();
 
       var now = DateTimeOffset.UtcNow;
       var rawToken = MemberLoginToken.Generate();
@@ -40,7 +38,7 @@ public sealed class MemberAuthService(
          return;
       }
 
-      var loginLink = BuildLoginLink(rawToken, request);
+      var loginLink = BuildLoginLink(rawToken, publicBaseUri);
 
       try
       {
@@ -89,11 +87,10 @@ public sealed class MemberAuthService(
 
    private static string BuildLoginLink(
       string rawToken,
-      HttpRequest request
+      Uri publicBaseUri
    )
    {
-      var baseUrl = request.Scheme + "://" +
-         request.Host.ToUriComponent();
+      var baseUrl = publicBaseUri.GetLeftPart(UriPartial.Authority);
       var link = baseUrl +
          "/Account/Verify?token=" +
          Uri.EscapeDataString(rawToken);
@@ -101,18 +98,7 @@ public sealed class MemberAuthService(
       return link;
    }
 
-   private static void ValidateRequestOrigin(HttpRequest request)
-   {
-      if(request.Scheme is not ("http" or "https") ||
-         string.IsNullOrWhiteSpace(request.Host.Host))
-      {
-         throw new InvalidOperationException(
-            "The request must have an absolute HTTP origin."
-         );
-      }
-   }
-
-   private void ValidateOptions()
+   private Uri ValidateOptions()
    {
       if(options.LoginTokenLifetime <= TimeSpan.Zero ||
          options.LoginRequestCooldown < TimeSpan.Zero ||
@@ -123,5 +109,25 @@ public sealed class MemberAuthService(
             "Member authentication timing options are invalid."
          );
       }
+
+      if(!Uri.TryCreate(
+            options.PublicBaseUrl,
+            UriKind.Absolute,
+            out var publicBaseUri
+         ) ||
+         (publicBaseUri.Scheme != Uri.UriSchemeHttp &&
+            publicBaseUri.Scheme != Uri.UriSchemeHttps) ||
+         string.IsNullOrWhiteSpace(publicBaseUri.Host) ||
+         !string.IsNullOrEmpty(publicBaseUri.UserInfo) ||
+         publicBaseUri.AbsolutePath != "/" ||
+         !string.IsNullOrEmpty(publicBaseUri.Query) ||
+         !string.IsNullOrEmpty(publicBaseUri.Fragment))
+      {
+         throw new InvalidOperationException(
+            "MemberAuth:PublicBaseUrl must be an absolute HTTP(S) origin."
+         );
+      }
+
+      return publicBaseUri;
    }
 }

@@ -39,7 +39,6 @@ public sealed class LoginModel(
       {
          await memberAuthService.RequestLoginLinkAsync(
             Email,
-            Request,
             cancellationToken
          );
          LinkRequested = true;

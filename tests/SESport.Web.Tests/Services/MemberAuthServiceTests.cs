@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 using SESport.Core.Configuration;
 using SESport.Core.Members;
 using SESport.Core.Members.Interfaces;
@@ -12,8 +10,8 @@ public sealed class MemberAuthServiceTests
    [InlineData("https://sesport.se")]
    [InlineData("https://dev.sesport.se")]
    [InlineData("http://localhost:5109")]
-   public async Task RequestLoginLinkBuildsUrlFromRequestOrigin(
-      string requestOrigin
+   public async Task RequestLoginLinkUsesConfiguredPublicBaseUrl(
+      string publicBaseUrl
    )
    {
       var repository = new FakeMemberRepository();
@@ -21,12 +19,11 @@ public sealed class MemberAuthServiceTests
       var service = new MemberAuthService(
          repository,
          sender,
-         CreateOptions()
+         CreateOptions(publicBaseUrl)
       );
 
       await service.RequestLoginLinkAsync(
          " Person@Example.COM ",
-         CreateRequest(requestOrigin),
          CancellationToken.None
       );
 
@@ -35,7 +32,7 @@ public sealed class MemberAuthServiceTests
       Assert.Equal("person@example.com", sender.RecipientEmail);
       Assert.NotNull(sender.LoginLink);
       Assert.StartsWith(
-         requestOrigin + "/Account/Verify?token=",
+         publicBaseUrl.TrimEnd('/') + "/Account/Verify?token=",
          sender.LoginLink,
          StringComparison.Ordinal
       );
@@ -57,38 +54,27 @@ public sealed class MemberAuthServiceTests
       var service = new MemberAuthService(
          repository,
          sender,
-         CreateOptions()
+         CreateOptions("https://sesport.test")
       );
 
       await service.RequestLoginLinkAsync(
          "person@example.com",
-         CreateRequest("https://sesport.test"),
          CancellationToken.None
       );
 
       Assert.Null(sender.LoginLink);
    }
 
-   private static MemberAuthOptions CreateOptions()
+   private static MemberAuthOptions CreateOptions(string publicBaseUrl)
    {
       return new MemberAuthOptions
       {
+         PublicBaseUrl = publicBaseUrl,
          LoginTokenLifetime = TimeSpan.FromMinutes(15),
          LoginRequestCooldown = TimeSpan.FromMinutes(1),
          LoginRequestWindow = TimeSpan.FromHours(1),
          MaxLoginRequestsPerWindow = 5
       };
-   }
-
-   private static HttpRequest CreateRequest(string requestOrigin)
-   {
-      var uri = new Uri(requestOrigin);
-      var context = new DefaultHttpContext();
-      context.Request.Scheme = uri.Scheme;
-      context.Request.Host = uri.IsDefaultPort
-         ? new HostString(uri.Host)
-         : new HostString(uri.Host, uri.Port);
-      return context.Request;
    }
 
    private sealed class FakeMemberRepository : IMemberRepository
