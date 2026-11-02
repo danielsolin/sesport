@@ -41,6 +41,10 @@ reporting that the review is done.
   not establish dead code, duplication, ownership, or a behavior defect.
 - Check each area for the concerns in sections 3-6. Continue across remaining
   areas after finding or fixing an issue.
+- Continue the review until every required first-party file has been read and
+  the completion gate is satisfied. Do not stop after finding issues or after
+  writing a partial report. If a specific external blocker prevents progress,
+  finish every independent review area and record only the blocked items.
 - Keep a coverage record with each area's file count, files actually read,
   checks performed, evidence for findings or no finding, and remaining work.
   Update the operator after inventory and again when inspection is done.
@@ -132,4 +136,6 @@ Do not report the review as complete until:
 Summarize coverage by project or area, findings and changes, checks run, and
 remaining risks or gaps in the final response, with a link to the report.
 Call reviews with incomplete required coverage partial and continue when
-possible. Zero findings is valid only with the same coverage and evidence.
+possible. Continue working until coverage is complete; a partial report is a
+progress record, not a stopping point. Zero findings is valid only with the
+same coverage and evidence.
