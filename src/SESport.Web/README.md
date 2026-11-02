@@ -92,13 +92,12 @@ dotnet run --project src\SESport.Web\SESport.Web.csproj --launch-profile http
 
 Public membership uses passwordless email links. Development logs the login
 link when SMTP is not configured. The production VPS uses the HostUp
-smarthost relay. Set MemberAuth__PublicBaseUrl to the trusted site origin:
-https://sesport.se in production, https://dev.sesport.se on the hosted
-development site, or the local address used during local development. The
-setting is included in .env.example with the production URL.
+smarthost relay. Login links use MemberAuth:PublicBaseUrl from the
+environment-specific appsettings file. Production uses https://sesport.se;
+Development uses https://dev.sesport.se. For local development, override it
+with MemberAuth__PublicBaseUrl=http://localhost:5109 in the process environment.
 
 ```text
-MemberAuth__PublicBaseUrl=https://sesport.se
 Smtp__Host=relay.hostup.se
 Smtp__Port=587
 Smtp__UseSsl=true
