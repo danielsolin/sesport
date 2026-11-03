@@ -579,9 +579,6 @@ else
          var displaySportIconPath = usesGroupSport
             ? activity.ActivityGroupSportIconPath
             : activity.SportIconPath;
-         var accessibleActivityTitle = usesGroupSport
-            ? $"{displaySportName}: {agendaSection.DisplayTitle}"
-            : agendaSection.DisplayTitle;
          var allActivitySources = agendaSection.Activities
             .SelectMany(item => item.Sources)
             .Where(source => SourceDisplay.IsPubliclyVisibleSourceUrl(
@@ -827,7 +824,7 @@ else
                         </span>
                      </h3>
                      <h2 class="activity-entry-title"
-                         aria-label="@accessibleActivityTitle"
+                         aria-label="@agendaSection.DisplayTitle"
                          data-activity-title-fit>
                         @if(
                            agendaSection.DisplayTitleGroup is not null &&
