@@ -561,6 +561,27 @@ else
          var activity = agendaSection.Activities[0];
          var activityAnchorId = "activity-" + activity.Id.ToString("N");
          var isGrouped = agendaSection.UsesGroupedLayout;
+         var hasMultipleSports = isGrouped && agendaSection.Activities
+            .Select(item => item.SportId)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Skip(1)
+            .Any();
+         var usesGroupSport = activity.ActivityGroupId is not null &&
+            activity.ActivityGroupSportId is not null &&
+            agendaSection.Activities.Any(item => !string.Equals(
+               item.SportId,
+               item.ActivityGroupSportId,
+               StringComparison.OrdinalIgnoreCase
+            ));
+         var displaySportName = usesGroupSport
+            ? activity.ActivityGroupSportName ?? activity.SportName
+            : activity.SportName;
+         var displaySportIconPath = usesGroupSport
+            ? activity.ActivityGroupSportIconPath
+            : activity.SportIconPath;
+         var accessibleActivityTitle = usesGroupSport
+            ? $"{displaySportName}: {agendaSection.DisplayTitle}"
+            : agendaSection.DisplayTitle;
          var allActivitySources = agendaSection.Activities
             .SelectMany(item => item.Sources)
             .Where(source => SourceDisplay.IsPubliclyVisibleSourceUrl(
@@ -748,7 +769,7 @@ else
                            Avslutad
                         </span>
                      }
-                     @if(activity.SportIconPath is not null)
+                     @if(displaySportIconPath is not null)
                      {
                         var sportIconCountryPath = PublicCountryFlag.GetPath(
                            activity.OrganizationCountryId
@@ -761,9 +782,9 @@ else
                            : null;
                         <span class="activity-entry-sport-icon"
                               role="img"
-                              aria-label="@activity.SportName"
+                              aria-label="@displaySportName"
                               style="--sport-icon-url:
-                                        url('@activity.SportIconPath');">
+                                        url('@displaySportIconPath');">
                         </span>
                         @if(sportIconCountryPath is not null)
                         {
@@ -806,8 +827,14 @@ else
                         </span>
                      </h3>
                      <h2 class="activity-entry-title"
-                         aria-label="@agendaSection.DisplayTitle"
+                         aria-label="@accessibleActivityTitle"
                          data-activity-title-fit>
+                        @if(usesGroupSport)
+                        {
+                           <span class="activity-entry-group-sport-label">
+                              @displaySportName
+                           </span>
+                        }
                         @if(
                            agendaSection.DisplayTitleGroup is not null &&
                            agendaSection.DisplayTitleDetail is not null
@@ -825,9 +852,10 @@ else
                            @agendaSection.DisplayTitle
                         }
                      </h2>
-                     @if(!string.IsNullOrWhiteSpace(
-                        activity.Description
-                     ))
+                     @if(
+                        !(isGrouped && usesGroupSport) &&
+                        !string.IsNullOrWhiteSpace(activity.Description)
+                     )
                      {
                         <div class="activity-entry-description">
                            <p class="@(
@@ -947,6 +975,23 @@ else
                                     @slotTimeRangeLabel
                                  </span>
                                  <span class="activity-group-slot-content">
+                                    @if(hasMultipleSports)
+                                    {
+                                       <span class=
+                                          "activity-group-slot-sport">
+                                          @if(slot.Activity.SportIconPath
+                                             is not null)
+                                          {
+                                             <span class=
+                                                "activity-group-slot-sport-icon"
+                                                aria-hidden="true"
+                                                style="--sport-icon-url:
+                                                   url('@slot.Activity.SportIconPath');">
+                                             </span>
+                                          }
+                                          <span>@slot.Activity.SportName</span>
+                                       </span>
+                                    }
                                     <span class=
                                        "activity-group-slot-title"
                                        data-activity-title-fit>

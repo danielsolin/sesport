@@ -1405,11 +1405,15 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             $"   coalesce(ag.public_date_mode, " +
             $"'{ActivityGroupPublicDateModeIds.SportDay}'),"
          )
-         .AppendLine("   ro.organization_country_id")
+         .AppendLine("   ro.organization_country_id,")
+         .AppendLine("   ag.sport_id,")
+         .AppendLine("   coalesce(ags.display_name, ags.name),")
+         .AppendLine("   ags.icon_id")
          .AppendLine("from activities a")
          .AppendLine(
             "left join activity_groups ag on ag.id = a.activity_group_id"
          )
+         .AppendLine("left join sports ags on ags.id = ag.sport_id")
          .AppendLine("join sports s on s.id = a.sport_id")
          .AppendLine("join activity_types at on at.id = a.activity_type_id")
          .AppendLine(
@@ -1517,6 +1521,8 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             "         ro.related_organization_canonical_entities,"
          )
          .AppendLine("         ro.organization_country_id,")
+         .AppendLine("         ag.sport_id,")
+         .AppendLine("         ags.display_name, ags.name, ags.icon_id,")
          .AppendLine(
             "         a.ends_at, ag.title, ag.no_grouping, " +
             "s.is_team_sport, ag.public_date_mode"
@@ -1635,7 +1641,21 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                   reader.GetString(23),
                IsTeamSport = reader.GetBoolean(24),
                PublicDateMode = reader.GetString(25),
-               OrganizationCountryId = PostgresHelpers.ReadNullableString(reader, 26)
+               OrganizationCountryId = PostgresHelpers.ReadNullableString(
+                  reader,
+                  26
+               ),
+               ActivityGroupSportId = PostgresHelpers.ReadNullableString(
+                  reader,
+                  27
+               ),
+               ActivityGroupSportName = PostgresHelpers.ReadNullableString(
+                  reader,
+                  28
+               ),
+               ActivityGroupSportIconPath = GetSportIconPath(
+                  PostgresHelpers.ReadNullableString(reader, 29)
+               )
             }
          );
       }
