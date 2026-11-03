@@ -176,6 +176,9 @@ Work only on selected broadcasts that remain visible.
 - [ ] Do not repeat the group title in activity titles.
 - [ ] For a card combining multiple activities in a schedule, display only the group title.
 - [ ] For separate cards, use `Group title: activity title`.
+- [ ] For a single-activity card in a multisport event group, include the sport in the
+  activity title when the event-level organization or group title does not identify it
+  (for example, `Hästhoppning Kval 2` under `Ungdoms-OS Dakar`).
 - [ ] Retain identifying sponsors, such as `BMW Championship`.
 - [ ] Remove nonessential sponsors, such as `Wanda` in `Wanda Diamond League`.
 - [ ] Keep titles as short as possible, but longer than a single abbreviation.
