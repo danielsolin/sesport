@@ -471,6 +471,15 @@ else if(Model.TimelineEntries.Count == 0 &&
       </a>
    </div>
 }
+else if(Model.IsWatchedActivitiesView && Model.IsMember &&
+   Model.TotalParticipantsCount == 0)
+{
+   <div class="notice">
+      <a class="button button-primary" asp-page="/Account/Watches">
+         Lägg till personer att bevaka
+      </a>
+   </div>
+}
 else if(!Model.HasVisibleActivities && Model.IsWatchedActivitiesView)
 {
    <div class="notice">
