@@ -171,6 +171,7 @@ Work only on selected broadcasts that remain visible.
 
 ### Group and activity titles
 
+- [ ] Omit years and season-year labels, such as `26/27`, from group and activity titles.
 - [ ] Use the shortest clear event name for the group.
 - [ ] Use concise, segment-specific activity titles, such as `Sträcka 2–4`.
 - [ ] Do not repeat the group title in activity titles.
