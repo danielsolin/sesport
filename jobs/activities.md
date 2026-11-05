@@ -42,7 +42,8 @@ Treat Unresolved as handled. Revisit it during this run only if new evidence app
 - [ ] Write concise, correct Swedish for public content; preserve clear short forms.
 - [ ] Use external sources for research.
 - [ ] Verify public presentation only on `https://sesport.se`.
-- [ ] Read database settings from `.env`.
+- [ ] Use `bin/dbc.sh` from the repository root for `psql` access; it reads `.env`.
+- [ ] Pass SQL through standard input, such as `bin/dbc.sh <<'SQL'`; CLI arguments are ignored.
 - [ ] Inspect the database target, schema, and comparable records.
 - [ ] Make manual changes only in guarded `psql` transactions.
 - [ ] Use exact IDs and expected row counts; roll back on any mismatch.
