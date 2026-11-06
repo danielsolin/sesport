@@ -134,6 +134,8 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                activity.activity_type_id,
                activity.sport_id,
                activity.title,
+               coalesce(title_base.title, activity.title)
+                  as notification_title,
                activity.starts_at,
                activity.ends_at,
                coalesce(
@@ -157,6 +159,36 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                on activity.id = link.activity_id
             left join activity_groups activity_group
                on activity_group.id = activity.activity_group_id
+            left join lateral (
+               select base_activity.title
+               from activities base_activity
+               where activity.activity_group_id is not null
+                  and base_activity.activity_group_id =
+                     activity.activity_group_id
+                  and base_activity.activity_date = activity.activity_date
+                  and base_activity.activity_type_id =
+                     activity.activity_type_id
+                  and base_activity.sport_id = activity.sport_id
+                  and base_activity.publication_status_id =
+                     '{{ActivityPublicationStatusIds.Published}}'
+                  and (
+                     left(
+                        activity.title,
+                        length(base_activity.title) + 3
+                     ) = base_activity.title || ' – '
+                     or left(
+                        activity.title,
+                        length(base_activity.title) + 3
+                     ) = base_activity.title || ' — '
+                     or left(
+                        activity.title,
+                        length(base_activity.title) + 3
+                     ) = base_activity.title || ' - '
+                  )
+               order by length(base_activity.title) desc,
+                  base_activity.title
+               limit 1
+            ) title_base on true
             where activity.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
                and activity.starts_at is not null
@@ -209,14 +241,17 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                eligible.activity_date,
                eligible.activity_type_id,
                eligible.sport_id,
-               eligible.title,
-               eligible.starts_at,
+               eligible.notification_title as title,
+               min(eligible.starts_at) as starts_at,
                eligible.public_date_mode,
                eligible.lead_time_minutes,
                (
                   array_agg(
-                     distinct eligible.activity_id
-                     order by eligible.activity_id
+                     eligible.activity_id
+                     order by
+                        (eligible.title <> eligible.notification_title),
+                        eligible.starts_at,
+                        eligible.activity_id
                   )
                )[1] as activity_id,
                array_agg(
@@ -244,8 +279,7 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                eligible.activity_date,
                eligible.activity_type_id,
                eligible.sport_id,
-               eligible.title,
-               eligible.starts_at,
+               eligible.notification_title,
                eligible.public_date_mode,
                eligible.lead_time_minutes
          ), notifications_with_history as (
