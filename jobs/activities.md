@@ -374,4 +374,4 @@ Include:
 - [ ] Delete the run checkpoint after Step 7 is complete.
 - [ ] Return the report link with a brief summary.
 - [ ] Point out anything requiring the operator's attention.
-- [ ] Commit and push the final report and all pending worktree changes.
+- [ ] Commit and push the final report.
