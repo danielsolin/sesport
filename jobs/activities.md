@@ -92,6 +92,7 @@ broadcasts.
 
 - [ ] Domestic competition.
 - [ ] Foreign-team fixture, even when Swedish players participate.
+- [ ] Standalone opening or closing ceremonies.
 - [ ] Generic highlights, recap, or studio programme.
 - [ ] Participant-specific broadcast for a competition already covered by a general
   broadcast. Example: a broadcast following only `Ludvig Åberg` in `US Open`.
