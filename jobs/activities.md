@@ -175,6 +175,7 @@ Work only on selected broadcasts that remain visible.
 
 - [ ] Omit years and season-year labels, such as `26/27`, from group and activity titles.
 - [ ] Use the shortest clear event name for the group.
+- [ ] Mention gender only when needed to distinguish the event.
 - [ ] Use concise, segment-specific activity titles, such as `Sträcka 2–4`.
 - [ ] Do not repeat the group title in activity titles.
 - [ ] For a card combining multiple activities in a schedule, display only the group title.
