@@ -11,7 +11,7 @@ public sealed record MemberPushOptions
    public bool WorkerEnabled { get; init; } = false;
 
    public int DefaultNotificationLeadTimeMinutes { get; init; } =
-      MemberNotificationLeadTimes.NoNotificationsMinutes;
+      MemberNotificationLeadTimes.TenMinutes;
 
    public const int DefaultNotificationGracePeriodMinutes = 30;
 

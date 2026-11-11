@@ -33,7 +33,7 @@ public sealed class WatchesModel(
       private set;
    } = MemberNotificationLeadTimes.Normalize(
       null,
-      MemberNotificationLeadTimes.NoNotificationsMinutes
+      MemberNotificationLeadTimes.TenMinutes
    );
 
    public bool NotificationsEnabled =>
@@ -68,7 +68,7 @@ public sealed class WatchesModel(
                memberId,
                cancellationToken
             ),
-            MemberNotificationLeadTimes.NoNotificationsMinutes
+            pushOptions.DefaultNotificationLeadTimeMinutes
          );
    }
 
@@ -335,7 +335,10 @@ public sealed class WatchesModel(
             memberId,
             cancellationToken
          );
-      return minutes > MemberNotificationLeadTimes.NoNotificationsMinutes;
+      return MemberNotificationLeadTimes.Normalize(
+         minutes,
+         pushOptions.DefaultNotificationLeadTimeMinutes
+      ) > MemberNotificationLeadTimes.NoNotificationsMinutes;
    }
 
    private sealed record PushSubscriptionRequest(

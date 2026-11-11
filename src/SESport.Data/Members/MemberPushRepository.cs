@@ -194,7 +194,10 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                and activity.starts_at is not null
                and person.entity_type_id =
                   '{{TrackedEntityTypeIds.Person}}'
-               and member.push_notification_lead_time_minutes > 0
+               and coalesce(
+                  member.push_notification_lead_time_minutes,
+                  @default_lead_time_minutes
+               ) > 0
                and exists (
                   select 1
                   from member_push_subscriptions subscription
